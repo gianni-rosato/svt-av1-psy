@@ -24,8 +24,8 @@ extern "C" {
      * ModeDecisionSb
      *   performs CL (SB)
      *******************************************/
-extern EbErrorType mode_decision_sb_light_pd0(SequenceControlSet *   scs_ptr,
-                                              PictureControlSet *    pcs_ptr,
+extern EbErrorType mode_decision_sb_light_pd0(SequenceControlSet    *scs_ptr,
+                                              PictureControlSet     *pcs_ptr,
                                               const MdcSbData *const mdcResultTbPtr,
                                               SuperBlock *sb_ptr, uint16_t sb_origin_x,
                                               uint16_t sb_origin_y, uint32_t sb_addr,
@@ -1100,8 +1100,8 @@ static const int32_t me_idx_128x128[4][BLOCK_MAX_COUNT_SB_128] = {
      20, 83, 84, 75, 83, 20, 20, 76, 84, 20, 20, 20, 20, 20, 20, 20, 20, 75, 75, 75, 75, 75, 75, 75,
      75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84,
      84, 84, 84, 84, 84}};
-EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_control_set_ptr,
-                                                PictureControlSet *  pcs_ptr,
+EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet  *sequence_control_set_ptr,
+                                                PictureControlSet   *pcs_ptr,
                                                 ModeDecisionContext *context_ptr);
 
 void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,

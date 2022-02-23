@@ -16,9 +16,9 @@
 #include "EbLambdaRateTables.h"
 
 uint8_t get_bypass_encdec(EbEncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
-void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt,
-                                               uint8_t block_based_depth_refinement_level);
-int         svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
+void    set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt,
+                                                  uint8_t block_based_depth_refinement_level);
+int     svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 static void mode_decision_context_dctor(EbPtr p) {
     ModeDecisionContext *obj = (ModeDecisionContext *)p;
 
@@ -89,10 +89,9 @@ static void mode_decision_context_dctor(EbPtr p) {
 
 uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
 uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
-#if FIX_NIC_BUFF
-void set_nics(NicScalingCtrls* scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
-    uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL], uint8_t pic_type);
-#endif
+void    set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
+                 uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL],
+                 uint8_t pic_type);
 /*
 * return the max canidate count for MDS0
   Used by candidate injection and memory allocation
@@ -129,11 +128,10 @@ uint16_t get_max_can_count(EbEncMode enc_mode) {
  * Mode Decision Context Constructor
  ******************************************************/
 EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColorFormat color_format,
-                                       uint8_t sb_size, uint8_t enc_mode,
-                                       uint16_t max_block_cnt,
+                                       uint8_t sb_size, uint8_t enc_mode, uint16_t max_block_cnt,
                                        uint32_t encoder_bit_depth,
-                                       EbFifo *mode_decision_configuration_input_fifo_ptr,
-                                       EbFifo *mode_decision_output_fifo_ptr,
+                                       EbFifo  *mode_decision_configuration_input_fifo_ptr,
+                                       EbFifo  *mode_decision_output_fifo_ptr,
                                        uint8_t enable_hbd_mode_decision, uint8_t cfg_palette) {
     uint32_t buffer_index;
     uint32_t cand_index;
@@ -154,31 +152,17 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 
     // Maximum number of candidates MD can support
     // determine MAX_NICS for a given preset
-#if !FIX_NIC_BUFF
-    uint32_t max_nics = 0;
-
-    // get max number of NICS
-    for (uint8_t pic_type = 0; pic_type < NICS_PIC_TYPE; pic_type++) {
-        uint32_t nics = 0;
-        for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
-             cand_class_it++) {
-            nics += MD_STAGE_NICS[pic_type][cand_class_it];
-        }
-        max_nics = MAX(max_nics, nics);
-    }
-#endif
     // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
     for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS;
-            temporal_layer_index++) {
-        uint8_t nic_level = get_nic_level(enc_mode, temporal_layer_index);
+         temporal_layer_index++) {
+        uint8_t nic_level         = get_nic_level(enc_mode, temporal_layer_index);
         uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
         min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
     }
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
 
     // scale max_nics
-#if FIX_NIC_BUFF
     uint32_t max_nics = 0;
     {
         NicScalingCtrls scaling_ctrls;
@@ -189,7 +173,6 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
         uint32_t mds2_count[CAND_CLASS_TOTAL];
         uint32_t mds3_count[CAND_CLASS_TOTAL];
         for (uint8_t pic_type = 0; pic_type < NICS_PIC_TYPE; pic_type++) {
-
             set_nics(&scaling_ctrls, mds1_count, mds2_count, mds3_count, pic_type);
 
             uint32_t nics = 0;
@@ -199,9 +182,6 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             max_nics = MAX(max_nics, nics);
         }
     }
-#else
-    max_nics = MAX(2, DIVIDE_AND_ROUND(max_nics * stage1_scaling_num, MD_STAGE_NICS_SCAL_DENUM));
-#endif
 
     max_nics += CAND_CLASS_TOTAL; //need one extra temp buffer for each fast loop call
     context_ptr->max_nics    = max_nics;
@@ -338,8 +318,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
         context_ptr->md_blk_arr_nsq[coded_leaf_index].segment_id = 0;
         const BlockGeom *blk_geom = get_blk_geom_mds(coded_leaf_index);
 
-        if (get_bypass_encdec(enc_mode, context_ptr->hbd_mode_decision, encoder_bit_depth))
-        {
+        if (get_bypass_encdec(enc_mode, context_ptr->hbd_mode_decision, encoder_bit_depth)) {
             EbPictureBufferDescInitData init_data;
 
             init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -375,8 +354,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             EB_NEW(context_ptr->md_blk_arr_nsq[coded_leaf_index].recon_tmp,
                    svt_picture_buffer_desc_ctor,
                    (EbPtr)&init_data);
-        }
-        else {
+        } else {
             context_ptr->md_blk_arr_nsq[coded_leaf_index].coeff_tmp = NULL;
             context_ptr->md_blk_arr_nsq[coded_leaf_index].recon_tmp = NULL;
         }
@@ -614,7 +592,7 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
     context_ptr->disallow_4x4 = pcs_ptr->pic_disallow_4x4;
     //each segment enherits the bypass encdec from the picture level
     context_ptr->bypass_encdec = pcs_ptr->pic_bypass_encdec;
-    context_ptr->skip_pd0 = pcs_ptr->pic_skip_pd0;
+    context_ptr->skip_pd0      = pcs_ptr->pic_skip_pd0;
     set_block_based_depth_refinement_controls(context_ptr,
                                               pcs_ptr->pic_block_based_depth_refinement_level);
     return;

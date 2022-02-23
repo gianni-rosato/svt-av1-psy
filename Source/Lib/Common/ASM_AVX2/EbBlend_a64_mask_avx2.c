@@ -1428,7 +1428,7 @@ void svt_aom_highbd_blend_a64_d16_mask_avx2(uint8_t *dst8, uint32_t dst_stride,
                                             const uint8_t *mask, uint32_t mask_stride, int w, int h,
                                             int subw, int subh, ConvolveParams *conv_params,
                                             const int bd) {
-    uint16_t *    dst        = (uint16_t *)(dst8); //CONVERT_TO_SHORTPTR(dst8);
+    uint16_t     *dst        = (uint16_t *)(dst8); //CONVERT_TO_SHORTPTR(dst8);
     const int     round_bits = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
     const int32_t round_offset =
         ((1 << (round_bits + bd)) + (1 << (round_bits + bd - 1)) - (1 << (round_bits - 1)))

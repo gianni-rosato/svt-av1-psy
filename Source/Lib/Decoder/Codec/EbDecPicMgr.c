@@ -108,14 +108,14 @@ static INLINE EbErrorType mvs_8x8_memory_alloc(TemporalMvRef **mvs, FrameHeader 
 */
 
 EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
-    EbDecPicMgr * ps_pic_mgr   = (EbDecPicMgr *)dec_handle_ptr->pv_pic_mgr;
-    SeqHeader *   seq_header   = &dec_handle_ptr->seq_header;
-    FrameHeader * frame_info   = &dec_handle_ptr->frame_header;
+    EbDecPicMgr  *ps_pic_mgr   = (EbDecPicMgr *)dec_handle_ptr->pv_pic_mgr;
+    SeqHeader    *seq_header   = &dec_handle_ptr->seq_header;
+    FrameHeader  *frame_info   = &dec_handle_ptr->frame_header;
     EbColorFormat color_format = seq_header->color_config.mono_chrome
         ? EB_YUV400
         : dec_handle_ptr->dec_config.max_color_format;
     int32_t       i;
-    EbDecPicBuf * pic_buf = NULL;
+    EbDecPicBuf  *pic_buf = NULL;
     /* TODO: Add lock and unlock for MT */
     // Find a free buffer.
     for (i = 0; i < MAX_PIC_BUFS; i++) {
@@ -286,7 +286,7 @@ void generate_next_ref_frame_map(EbDecHandle *dec_handle_ptr) {
 // These functions take a reference frame label between LAST_FRAME and
 // EXTREF_FRAME inclusive.  Note that this is different to the indexing
 // previously used by the frame_refs[] array.
-static INLINE int32_t get_ref_frame_map_with_idx(EbDecHandle *          dec_handle_ptr,
+static INLINE int32_t get_ref_frame_map_with_idx(EbDecHandle           *dec_handle_ptr,
                                                  const MvReferenceFrame ref_frame) {
     return (ref_frame >= LAST_FRAME && ref_frame <= REF_FRAMES)
         ? dec_handle_ptr->remapped_ref_idx[ref_frame - LAST_FRAME]

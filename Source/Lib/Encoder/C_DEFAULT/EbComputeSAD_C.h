@@ -24,9 +24,9 @@ uint32_t svt_fast_loop_nxm_sad_kernel(const uint8_t *src, // input parameter, so
                                       uint32_t height, // input parameter, block height (M)
                                       uint32_t width); // input parameter, block width (N)
 void     svt_sad_loop_kernel_c(
-        uint8_t * src, // input parameter, source samples Ptr
+        uint8_t  *src, // input parameter, source samples Ptr
         uint32_t  src_stride, // input parameter, source stride
-        uint8_t * ref, // input parameter, reference samples Ptr
+        uint8_t  *ref, // input parameter, reference samples Ptr
         uint32_t  ref_stride, // input parameter, reference stride
         uint32_t  block_height, // input parameter, block height (M)
         uint32_t  block_width, // input parameter, block width (N)

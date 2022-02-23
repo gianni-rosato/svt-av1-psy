@@ -212,7 +212,7 @@ void generate_padding_compressed_10bit(
         temp_src_pic2 -= src_stride;
         svt_memcpy(
             temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * src_stride); // uint8_t to be modified
-            // bottom part data copy
+        // bottom part data copy
         temp_src_pic3 += src_stride;
         svt_memcpy(
             temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * src_stride); // uint8_t to be modified

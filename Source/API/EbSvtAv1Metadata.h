@@ -124,7 +124,7 @@ EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1Metadata
  * \return Returns 1 on success. 0 on failure.
  */
 EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi,
-                                           const char *                         md_str);
+                                           const char                          *md_str);
 
 /*!\brief Parse string into EbContentLightLevel struct.
  *

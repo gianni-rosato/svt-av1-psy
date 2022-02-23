@@ -111,10 +111,10 @@ static int64_t highbd_frame_error(const uint16_t *const ref, int stride, const u
 }
 
 static int64_t highbd_warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref8,
-                                 const uint8_t *const ref_2b, int width,
-                                 int height, int stride, const uint8_t *const dst8, int p_col,
-                                 int p_row, int p_width, int p_height, int p_stride,
-                                 int subsampling_x, int subsampling_y, int bd, int64_t best_error) {
+                                 const uint8_t *const ref_2b, int width, int height, int stride,
+                                 const uint8_t *const dst8, int p_col, int p_row, int p_width,
+                                 int p_height, int p_stride, int subsampling_x, int subsampling_y,
+                                 int bd, int64_t best_error) {
     int64_t   gm_sumerr     = 0;
     const int error_bsize_w = AOMMIN(p_width, WARP_ERROR_BLOCK);
     const int error_bsize_h = AOMMIN(p_height, WARP_ERROR_BLOCK);
@@ -227,10 +227,9 @@ int64_t svt_av1_frame_error(int use_hbd, int bd, const uint8_t *ref, int stride,
 }
 
 int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
-                           const uint8_t *ref_2b,
-                           int width, int height, int stride, uint8_t *dst, int p_col, int p_row,
-                           int p_width, int p_height, int p_stride, int subsampling_x,
-                           int subsampling_y, int64_t best_error) {
+                           const uint8_t *ref_2b, int width, int height, int stride, uint8_t *dst,
+                           int p_col, int p_row, int p_width, int p_height, int p_stride,
+                           int subsampling_x, int subsampling_y, int64_t best_error) {
     if (wm->wmtype <= AFFINE)
         if (!svt_get_shear_params(wm))
             return 1;

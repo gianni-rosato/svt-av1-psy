@@ -28,7 +28,7 @@ typedef struct DlfContext {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType dlf_context_ctor(EbThreadContext *  thread_context_ptr,
+extern EbErrorType dlf_context_ctor(EbThreadContext   *thread_context_ptr,
                                     const EbEncHandle *enc_handle_ptr, int index);
 
 extern void *dlf_kernel(void *input_ptr);

@@ -603,7 +603,7 @@ uint64_t svt_av1_wedge_sse_from_residuals_sse2(const int16_t *r1, const int16_t 
 }
 
 int8_t svt_av1_wedge_sign_from_residuals_sse2(const int16_t *ds, const uint8_t *m, int N,
-                                          int64_t limit) {
+                                              int64_t limit) {
     int64_t acc;
 
     __m128i v_sign_d;

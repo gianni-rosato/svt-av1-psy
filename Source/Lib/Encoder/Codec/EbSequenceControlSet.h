@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 typedef struct MiniGopSizeCtrls {
-    int adptive_enable; // 0: Off, 1: Switch at clip level, 2: Switch at GOP level
+    int    adptive_enable; // 0: Off, 1: Switch at clip level, 2: Switch at GOP level
     double short_shot_th; // Threshold to determine short scene.
     double animation_type_th; // Threshold to determine animation scene
     double lm_th; // Threshold to determine low motion scene
@@ -247,9 +247,7 @@ typedef struct SequenceControlSet {
     int32_t          nmv_vec_cost[MV_JOINTS];
     int32_t          nmv_costs[2][MV_VALS];
     uint8_t          mvrate_set;
-#if ADD_VQ_MODE
-    VqCtrls         vq_ctrls;
-#endif
+    VqCtrls          vq_ctrls;
     MiniGopSizeCtrls mgs_ctls;
     TfControls       tf_params_per_type[3]; // [I_SLICE][BASE][L1]
     MrpCtrls         mrp_ctrls;
@@ -293,8 +291,8 @@ typedef struct SequenceControlSet {
     *
     * Default is 1. */
     EbBool enable_global_motion;
-    int sg_filter_mode;
-    int wn_filter_mode;
+    int    sg_filter_mode;
+    int    wn_filter_mode;
 
     /* inter intra compound
     *
@@ -454,7 +452,7 @@ typedef struct EbSequenceControlSetInitData {
 
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;
-    EncodeContext *     encode_context_ptr;
+    EncodeContext      *encode_context_ptr;
     SequenceControlSet *scs_ptr;
     EbHandle            config_mutex;
 } EbSequenceControlSetInstance;

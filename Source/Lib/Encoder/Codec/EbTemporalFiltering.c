@@ -4582,7 +4582,6 @@ static EbErrorType produce_temporally_filtered_pic(
                 input_picture_ptr_central->stride_bit_inc_cr +
             (input_picture_ptr_central->origin_x >> ss_x),
     };
-#if ADD_VQ_MODE
     int decay_control;
     if (picture_control_set_ptr_central->scs_ptr->vq_ctrls.sharpness_ctrls.tf && picture_control_set_ptr_central->is_noise_level) {
 
@@ -4597,15 +4596,6 @@ static EbErrorType produce_temporally_filtered_pic(
         if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH)
             decay_control--;
     }
-#else
-    // Hyper-parameter for filter weight adjustment.
-    int decay_control = (context_ptr->tf_ctrls.use_fast_filter)                                 ? 5
-        : (picture_control_set_ptr_central->scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 3
-                                                                                                : 4;
-    // Decrease the filter strength for low QPs
-    if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH)
-        decay_control--;
-#endif
     // Adjust filtering based on q.
     // Larger q -> stronger filtering -> larger weight.
     // Smaller q -> weaker filtering -> smaller weight.

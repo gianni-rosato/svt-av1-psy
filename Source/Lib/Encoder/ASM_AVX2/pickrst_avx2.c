@@ -3107,7 +3107,7 @@ void svt_av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd, const ui
     const int32_t height   = v_end - v_start;
     const int32_t d_stride = (width + 2 * wiener_halfwin + 15) & ~15;
     const int32_t s_stride = (width + 15) & ~15;
-    int16_t *     d, *s;
+    int16_t      *d, *s;
 
     // The maximum input size is width * height, which is
     // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to
@@ -3157,7 +3157,7 @@ void svt_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, 
     const int32_t d_stride = (width + 2 * wiener_halfwin + 15) & ~15;
     const int32_t s_stride = (width + 15) & ~15;
     int32_t       k;
-    int16_t *     d, *s;
+    int16_t      *d, *s;
 
     // The maximum input size is width * height, which is
     // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to

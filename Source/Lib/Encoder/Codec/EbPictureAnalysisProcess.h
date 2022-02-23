@@ -20,15 +20,15 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType picture_analysis_context_ctor(EbThreadContext   *thread_context_ptr,
                                           const EbEncHandle *enc_handle_ptr, int index);
 
 extern void *picture_analysis_kernel(void *input_ptr);
 
 void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
-                                        EbPictureBufferDesc *    input_padded_picture_ptr,
-                                        EbPictureBufferDesc *    quarter_picture_ptr,
-                                        EbPictureBufferDesc *    sixteenth_picture_ptr);
+                                        EbPictureBufferDesc     *input_padded_picture_ptr,
+                                        EbPictureBufferDesc     *quarter_picture_ptr,
+                                        EbPictureBufferDesc     *sixteenth_picture_ptr);
 
 void pad_input_pictures(SequenceControlSet *scs_ptr, EbPictureBufferDesc *input_picture_ptr);
 

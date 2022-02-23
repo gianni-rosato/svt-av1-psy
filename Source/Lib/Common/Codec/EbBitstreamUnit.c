@@ -304,9 +304,9 @@ void svt_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *icdf, int
 }
 
 uint8_t *svt_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
-    uint8_t *  out;
+    uint8_t   *out;
     uint32_t   storage;
-    uint16_t * buf;
+    uint16_t  *buf;
     uint32_t   offs;
     OdEcWindow m;
     OdEcWindow e;

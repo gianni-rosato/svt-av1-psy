@@ -53,7 +53,7 @@ typedef struct EbObjectWrapper {
     //   only in the implemenation of a single-linked Fifo.
     struct EbObjectWrapper *next_ptr;
 #if SRM_REPORT
-    uint64_t  pic_number;
+    uint64_t pic_number;
 #endif
 } EbObjectWrapper;
 
@@ -95,7 +95,7 @@ typedef struct EbFifo {
      *********************************************************************/
 typedef struct EbCircularBuffer {
     EbDctor  dctor;
-    EbPtr *  array_ptr;
+    EbPtr   *array_ptr;
     uint32_t head_index;
     uint32_t tail_index;
     uint32_t buffer_total_count;
@@ -111,10 +111,10 @@ typedef struct EbMuxingQueue {
     EbCircularBuffer *object_queue;
     EbCircularBuffer *process_queue;
     uint32_t          process_total_count;
-    EbFifo **         process_fifo_ptr_array;
+    EbFifo          **process_fifo_ptr_array;
 #if SRM_REPORT
-    uint32_t         curr_count; //run time fullness
-    uint8_t          log;//if set monitor out the queue size
+    uint32_t curr_count; //run time fullness
+    uint8_t  log; //if set monitor out the queue size
 #endif
 } EbMuxingQueue;
 
@@ -305,7 +305,7 @@ extern EbErrorType svt_post_full_object(EbObjectWrapper *object_ptr);
      *********************************************************************/
 extern EbErrorType svt_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_dbl_ptr);
 
-extern EbErrorType svt_get_full_object_non_blocking(EbFifo *          full_fifo_ptr,
+extern EbErrorType svt_get_full_object_non_blocking(EbFifo           *full_fifo_ptr,
                                                     EbObjectWrapper **wrapper_dbl_ptr);
 
 /*********************************************************************

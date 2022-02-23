@@ -36,7 +36,7 @@
 #include "EbDecCdef.h"
 #include "EbLog.h"
 
-void dec_av1_loop_filter_frame_mt(EbDecHandle *        dec_handle_ptr,
+void dec_av1_loop_filter_frame_mt(EbDecHandle         *dec_handle_ptr,
                                   EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
                                   int32_t plane_start, int32_t plane_end,
                                   DecThreadCtxt *thread_ctxt);
@@ -572,7 +572,7 @@ void read_render_size(Bitstrm *bs, FrameHeader *frame_info) {
 
 static void frame_size_with_refs(Bitstrm *bs, EbDecHandle *dec_handle_ptr,
                                  int frame_size_override_flag) {
-    SeqHeader *  seq_header = &dec_handle_ptr->seq_header;
+    SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
     FrameHeader *frame_info = &dec_handle_ptr->frame_header;
 
     int found_ref;
@@ -580,7 +580,7 @@ static void frame_size_with_refs(Bitstrm *bs, EbDecHandle *dec_handle_ptr,
         found_ref = dec_get_bits(bs, 1);
         PRINT_FRAME("found_ref", found_ref);
         if (found_ref == 1) {
-            FrameSize *  frame_size = &frame_info->frame_size;
+            FrameSize   *frame_size = &frame_info->frame_size;
             EbDecPicBuf *ref_buf    = get_ref_frame_buf(dec_handle_ptr, (i + 1));
             assert(ref_buf != NULL);
 
@@ -833,8 +833,8 @@ static INLINE void segfeatures_copy(SegmentationParams *dst, SegmentationParams 
 
 void read_segmentation_params(Bitstrm *bs, EbDecHandle *dec_handle_ptr, FrameHeader *frame_info) {
     SegmentationParams *seg_params = &frame_info->segmentation_params;
-    EbDecPicBuf *       cur_buf    = dec_handle_ptr->cur_pic_buf[0];
-    EbDecPicBuf *       prev_buf   = dec_handle_ptr->prev_frame;
+    EbDecPicBuf        *cur_buf    = dec_handle_ptr->cur_pic_buf[0];
+    EbDecPicBuf        *prev_buf   = dec_handle_ptr->prev_frame;
 
     seg_params->segmentation_enabled = dec_get_bits(bs, 1);
     PRINT_FRAME("segmentation_enabled", seg_params->segmentation_enabled);
@@ -935,7 +935,7 @@ static void av1_set_default_ref_and_mode_deltas(int8_t *ref_deltas, int8_t *mode
 }
 
 void read_loop_filter_params(Bitstrm *bs, EbDecHandle *dec_handle, int num_planes) {
-    FrameHeader *      frame_info = &dec_handle->frame_header;
+    FrameHeader       *frame_info = &dec_handle->frame_header;
     struct LoopFilter *lf         = &frame_info->loop_filter_params;
 
     if (frame_info->coded_lossless || frame_info->allow_intrabc) {
@@ -1172,7 +1172,7 @@ void read_global_motion_params(Bitstrm *bs, EbDecHandle *dec_handle, FrameHeader
                                int frame_is_intra) {
     int                ref, i;
     TransformationType type;
-    EbDecPicBuf *      cur_buf = dec_handle->cur_pic_buf[0];
+    EbDecPicBuf       *cur_buf = dec_handle->cur_pic_buf[0];
     for (ref = LAST_FRAME; ref <= ALTREF_FRAME; ref++) {
         cur_buf->global_motion[ref].gm_type = IDENTITY;
         for (i = 0; i < 6; i++) {
@@ -1311,7 +1311,7 @@ void load_grain_params(EbDecHandle *dec_handle_ptr, AomFilmGrain *grain_params,
 
 // Read film grain parameters
 void read_film_grain_params(EbDecHandle *dec_handle, Bitstrm *bs, AomFilmGrain *grain_params) {
-    SeqHeader *  seq_header = &dec_handle->seq_header;
+    SeqHeader   *seq_header = &dec_handle->seq_header;
     FrameHeader *frame_info = &dec_handle->frame_header;
     int          i, num_pos_luma, num_pos_chroma;
 
@@ -1494,7 +1494,7 @@ void setup_frame_sign_bias(EbDecHandle *dec_handle) {
 
 void setup_past_independence(EbDecHandle *dec_handle_ptr, FrameHeader *frame_info) {
     int                ref, i, j;
-    EbDecPicBuf *      cur_buf = dec_handle_ptr->cur_pic_buf[0];
+    EbDecPicBuf       *cur_buf = dec_handle_ptr->cur_pic_buf[0];
     SegmentationParams seg     = dec_handle_ptr->frame_header.segmentation_params;
 
     SeqHeader *seq_header = &dec_handle_ptr->seq_header;
@@ -1526,7 +1526,7 @@ void setup_past_independence(EbDecHandle *dec_handle_ptr, FrameHeader *frame_inf
     frame_info->loop_filter_params.mode_deltas[1] = 0;
 }
 
-static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle *  dec_handle_ptr,
+static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle   *dec_handle_ptr,
                                                           MainParseCtxt *main_parse_ctx,
                                                           int            num_instances) {
     SeqHeader *seq_header = &dec_handle_ptr->seq_header;
@@ -1572,7 +1572,7 @@ static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle *  dec_han
             int32_t num_mi_wide = num_instances == 1 ? num_mi_frame : num_mi_tile;
             num_mi_wide         = ALIGN_POWER_OF_TWO(num_mi_wide, sb_size_log2 - MI_SIZE_LOG2);
             ParseAboveNbr4x4Ctxt *above_ctx = &main_parse_ctx->parse_above_nbr4x4_ctxt[instance];
-            ParseLeftNbr4x4Ctxt * left_ctx  = &main_parse_ctx->parse_left_nbr4x4_ctxt[instance];
+            ParseLeftNbr4x4Ctxt  *left_ctx  = &main_parse_ctx->parse_left_nbr4x4_ctxt[instance];
             EB_MALLOC_DEC(
                 uint8_t *, above_ctx->above_tx_wd, num_mi_wide * sizeof(uint8_t), EB_N_PTR);
             EB_MALLOC_DEC(
@@ -1734,7 +1734,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr) {
 
 void read_uncompressed_header(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeader *obu_header,
                               int num_planes) {
-    SeqHeader *  seq_header = &dec_handle_ptr->seq_header;
+    SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
     FrameHeader *frame_info = &dec_handle_ptr->frame_header;
     int          id_len = 0, all_frames, frame_is_intra = 0, frame_size_override_flag = 0;
     uint32_t     prev_frame_id = 0;

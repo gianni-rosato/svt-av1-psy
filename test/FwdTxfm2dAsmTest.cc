@@ -104,7 +104,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_avx2_func[TX_SIZES_ALL] = {
 };
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N2_sse4_1_func[TX_SIZES_ALL] = {
-    svt_av1_fwd_txfm2d_4x4_N2_sse4_1, svt_av1_fwd_txfm2d_8x8_N2_sse4_1,
+    svt_av1_fwd_txfm2d_4x4_N2_sse4_1,   svt_av1_fwd_txfm2d_8x8_N2_sse4_1,
     svt_av1_fwd_txfm2d_16x16_N2_sse4_1, svt_av1_fwd_txfm2d_32x32_N2_sse4_1,
     svt_av1_fwd_txfm2d_64x64_N2_sse4_1, svt_av1_fwd_txfm2d_4x8_N2_sse4_1,
     svt_av1_fwd_txfm2d_8x4_N2_sse4_1,   svt_av1_fwd_txfm2d_8x16_N2_sse4_1,
@@ -117,7 +117,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N2_sse4_1_func[TX_SIZES_ALL] = {
 };
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N4_sse4_1_func[TX_SIZES_ALL] = {
-    svt_av1_fwd_txfm2d_4x4_N4_sse4_1, svt_av1_fwd_txfm2d_8x8_N4_sse4_1,
+    svt_av1_fwd_txfm2d_4x4_N4_sse4_1,   svt_av1_fwd_txfm2d_8x8_N4_sse4_1,
     svt_av1_fwd_txfm2d_16x16_N4_sse4_1, svt_av1_fwd_txfm2d_32x32_N4_sse4_1,
     svt_av1_fwd_txfm2d_64x64_N4_sse4_1, svt_av1_fwd_txfm2d_4x8_N4_sse4_1,
     svt_av1_fwd_txfm2d_8x4_N4_sse4_1,   svt_av1_fwd_txfm2d_8x16_N4_sse4_1,
@@ -503,7 +503,6 @@ TEST_P(FwdTxfm2dAsmTest, match_test_avx2_N2) {
 TEST_P(FwdTxfm2dAsmTest, match_test_avx2_N4) {
     run_match_test_avx2_N4();
 }
-
 
 TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1_N2) {
     run_match_test_sse4_1_N2();

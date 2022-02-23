@@ -29,9 +29,9 @@
  **************************************/
 typedef struct EntropyCodingContext {
     EbDctor  dctor;
-    EbFifo * enc_dec_input_fifo_ptr;
-    EbFifo * entropy_coding_output_fifo_ptr; // to packetization
-    EbFifo * rate_control_output_fifo_ptr; // feedback to rate control
+    EbFifo  *enc_dec_input_fifo_ptr;
+    EbFifo  *entropy_coding_output_fifo_ptr; // to packetization
+    EbFifo  *rate_control_output_fifo_ptr; // feedback to rate control
     uint32_t sb_total_count;
     // Coding Unit Workspace---------------------------
     EbPictureBufferDesc *coeff_buffer_sb; //Used to hold quantized coeff for one TB in EncPass.
@@ -71,7 +71,7 @@ typedef struct EntropyCodingContext {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType entropy_coding_context_ctor(EbThreadContext *  thread_context_ptr,
+extern EbErrorType entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
                                                const EbEncHandle *enc_handle_ptr, int index,
                                                int rate_control_index);
 

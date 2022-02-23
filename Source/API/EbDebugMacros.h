@@ -35,43 +35,6 @@
 extern "C" {
 #endif // __cplusplus
 
-#define OPT_RES_CHECKS          1 // Reduce resolution checks in M7/M8
-#define OPT_RES_CHECKS_2        1 // Reduce resolution checks in M9-M13
-#define OPT_RES_CHECKS_3        1 // Reduce resolutions checks for M3+
-#define OPT_REMOVE_SC_RES_CHECKS 1 // Remove resolution checks for SC content
-#define CLN_REMOVE_UNUSED_RES   1 // Remove unused resolution checks
-
-    // For 4k tuning
-#define OPT_M12_4K              1 // Tune M12 for 4k
-#define OPT_M11_4K              1 // Tune M11 for 4k
-#define OPT_M10_4K              1 // Tune M10 for 4k
-#define OPT_M9_4K               1 // Tune M9 for 4k
-#define OPT_M8_4K               1 // Tune M8 for 4k
-#define OPT_M7_4K               1 // Tune M7 for 4k
-#define OPT_M12_4K_SPACING      1 // Adjusted M12 spacing for 4k
-#define OPT_M13_4K              1 // Tune M13 for 4k
-#define OPT_M13_10BIT           1 // Tune M13 for 10bit
-#define OPT_M6_4K               1 // Tune M6 for 4k
-
-#define FIX_VBR_DIV0            1 // Fix the VBR div by zero in multipass mode
-
-#define FIX_CHECK_NON_INITIALIZED_VAR       1 // Move around the condition to avoid non-initialized variable
-#define FIX_USE_ME_DATA_ISLICE              1 // Properly initialize the ME data when the picture is I-SLICE and used as reference
-#define FIX_PALETTE_10BIT                   1 // Remove palette scaling for non-intra candidates
-#define FIX_CHROMA_PREDICTION_AVAILABILITY  1 // Align chroma prediction generation and use
-#define FIX_SB_TOTAL_COUNT                  1 // Fix the use of sb_total_count by sb_total_count_pix which takes into account the actual SB size
-
-
-#define TPL_LAD_MG_ZERO         1 // Set tpl_lad_mg to 0 when lookAhead is smalller than mini_gop size
-#define TUNE_LP_VBR             1 // Tune lp 16 and above for VBR
-#define FIX_UPDATE_COEF         1 // Don't allow bypass_encdec when update_coef is used for non_ISLICE (causes r2r)
-#define OPT_DECODER             1 // Decoder speedup optimizations for M5-M10
-#define FIX_NIC_BUFF            1 // Fix the way the max NICs are derived
-
-#define TUNE_PRESET_GAP         1 // Correct the preset gap between M6 to M9
-#define TUNE_M8                 1 // Tune M8
-
-#define ADD_VQ_MODE             1 // Add a VQ mode
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

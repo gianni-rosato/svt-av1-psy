@@ -652,7 +652,7 @@ static INLINE unsigned int svt_aom_sub_pixel_variance32xh_avx512(const uint8_t *
                                                               int            y_offset,           \
                                                               const uint8_t *dst,                \
                                                               int            dst_stride,         \
-                                                              unsigned int * sse_ptr) {           \
+                                                              unsigned int  *sse_ptr) {           \
         /*Avoid overflow in helper by capping height.*/                                          \
         const int    hf  = AOMMIN(h, 64);                                                        \
         const int    wf2 = AOMMIN(wf, 128);                                                      \
@@ -827,7 +827,7 @@ static INLINE void variance128_avx512(const uint8_t *src, const int src_stride, 
                                                       int            src_stride,            \
                                                       const uint8_t *ref,                   \
                                                       int            ref_stride,            \
-                                                      unsigned int * sse) {                  \
+                                                      unsigned int  *sse) {                  \
         __m512i vsse = _mm512_setzero_si512();                                              \
         __m512i vsum = _mm512_setzero_si512();                                              \
         for (int i = 0; i < (bh / uh); i++) {                                               \
@@ -852,7 +852,7 @@ AOM_VAR_LOOP_AVX512(128, 128, 14, 16); // 128x16 * (128/16)
                                                       int            src_stride,   \
                                                       const uint8_t *ref,          \
                                                       int            ref_stride,   \
-                                                      unsigned int * sse) {         \
+                                                      unsigned int  *sse) {         \
         __m512i vsse = _mm512_setzero_si512();                                     \
         __m512i vsum = _mm512_setzero_si512();                                     \
         variance##bw##_avx512(src, src_stride, ref, ref_stride, bh, &vsse, &vsum); \

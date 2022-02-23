@@ -45,7 +45,7 @@ void svt_cfl_predict_lbd_avx2(const int16_t *pred_buf_q3, uint8_t *pred, int32_t
         const __m128i  alpha_sign = _mm_set1_epi16(alpha_q3);
         const __m128i  alpha_q12  = _mm_slli_epi16(_mm_abs_epi16(alpha_sign), 9);
         const __m128i  dc_q0      = _mm_set1_epi16(*pred);
-        __m128i *      row        = (__m128i *)pred_buf_q3;
+        __m128i       *row        = (__m128i *)pred_buf_q3;
         const __m128i *row_end    = row + height * CFL_BUF_LINE_I128;
         do {
             __m128i res = predict_unclipped_ssse3(row, alpha_q12, alpha_sign, dc_q0);
@@ -66,7 +66,7 @@ void svt_cfl_predict_lbd_avx2(const int16_t *pred_buf_q3, uint8_t *pred, int32_t
         const __m256i  alpha_sign = _mm256_set1_epi16(alpha_q3);
         const __m256i  alpha_q12  = _mm256_slli_epi16(_mm256_abs_epi16(alpha_sign), 9);
         const __m256i  dc_q0      = _mm256_set1_epi16(*pred);
-        __m256i *      row        = (__m256i *)pred_buf_q3;
+        __m256i       *row        = (__m256i *)pred_buf_q3;
         const __m256i *row_end    = row + height * CFL_BUF_LINE_I256;
 
         do {
@@ -101,9 +101,9 @@ static INLINE __m128i highbd_clamp_epi16_ssse3(__m128i u, __m128i zero, __m128i 
 }
 
 void svt_cfl_predict_hbd_avx2(const int16_t *pred_buf_q3,
-                              uint16_t *     pred, // AMIR ADDED
+                              uint16_t      *pred, // AMIR ADDED
                               int32_t        pred_stride,
-                              uint16_t *     dst, // AMIR changed to 8 bit
+                              uint16_t      *dst, // AMIR changed to 8 bit
                               int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth,
                               int32_t width, int32_t height) {
     (void)pred_stride;
@@ -114,7 +114,7 @@ void svt_cfl_predict_hbd_avx2(const int16_t *pred_buf_q3,
         const __m128i  dc_q0      = _mm_set1_epi16(*pred);
         const __m128i  max        = highbd_max_epi16_ssse3(bit_depth);
         const __m128i  zeros      = _mm_setzero_si128();
-        __m128i *      row        = (__m128i *)pred_buf_q3;
+        __m128i       *row        = (__m128i *)pred_buf_q3;
         const __m128i *row_end    = row + height * CFL_BUF_LINE_I128;
         do {
             __m128i res = predict_unclipped_ssse3(row, alpha_q12, alpha_sign, dc_q0);
@@ -132,7 +132,7 @@ void svt_cfl_predict_hbd_avx2(const int16_t *pred_buf_q3,
         const __m256i dc_q0      = _mm256_loadu_si256((__m256i *)pred);
         const __m256i max        = highbd_max_epi16(bit_depth);
 
-        __m256i *      row     = (__m256i *)pred_buf_q3;
+        __m256i       *row     = (__m256i *)pred_buf_q3;
         const __m256i *row_end = row + height * CFL_BUF_LINE_I256;
         do {
             const __m256i res = predict_unclipped(row, alpha_q12, alpha_sign, dc_q0);
@@ -183,7 +183,7 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
     if ((width == 4) || (width == 8)) {
         const __m128i        zeros              = _mm_setzero_si128();
         const __m128i        round_offset_epi32 = _mm_set1_epi32(round_offset);
-        const __m128i *      src                = (__m128i *)pred_buf_q3;
+        const __m128i       *src                = (__m128i *)pred_buf_q3;
         const __m128i *const end                = src + height * CFL_BUF_LINE_I128;
         const int32_t        step = CFL_BUF_LINE_I128 * (1 + (width == 8) + 3 * (width == 4));
 
@@ -232,7 +232,7 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
             dst += CFL_BUF_LINE_I128;
         } while (src < end);
     } else {
-        const __m256i *      src = (__m256i *)pred_buf_q3;
+        const __m256i       *src = (__m256i *)pred_buf_q3;
         const __m256i *const end = src + height * CFL_BUF_LINE_I256;
         // To maximize usage of the AVX2 registers, we sum two rows per loop
         // iteration
@@ -289,7 +289,7 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
 void svt_cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stride,
                                            int16_t *output_q3, int32_t width, int32_t height) {
     const int      luma_stride = input_stride << 1;
-    __m256i *      row         = (__m256i *)output_q3;
+    __m256i       *row         = (__m256i *)output_q3;
     const __m256i *row_end     = row + (height >> 1) * CFL_BUF_LINE_I256;
     do {
         if (width == 4) {
@@ -349,7 +349,7 @@ void svt_cfl_luma_subsampling_420_lbd_avx2(const uint8_t *input, int32_t input_s
     const __m128i  twos_128    = _mm_set1_epi8(2);
     const __m256i  twos_256    = _mm256_set1_epi8(2); // Thirty two twos
     const int      luma_stride = input_stride << 1;
-    __m256i *      row         = (__m256i *)output_q3;
+    __m256i       *row         = (__m256i *)output_q3;
     const __m256i *row_end     = row + (height >> 1) * CFL_BUF_LINE_I256;
     do {
         if (width == 4) {

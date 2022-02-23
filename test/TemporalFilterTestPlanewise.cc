@@ -530,14 +530,14 @@ void svt_av1_apply_temporal_filter_planewise_fast_sse4_1_wraper(
     UNUSED(v_accum);
     UNUSED(v_count);
     svt_av1_apply_temporal_filter_planewise_fast_sse4_1(context_ptr,
-                                                      y_src,
-                                                      y_src_stride,
-                                                      y_pre,
-                                                      y_pre_stride,
-                                                      block_width,
-                                                      block_height,
-                                                      y_accum,
-                                                      y_count);
+                                                        y_src,
+                                                        y_src_stride,
+                                                        y_pre,
+                                                        y_pre_stride,
+                                                        block_width,
+                                                        block_height,
+                                                        y_accum,
+                                                        y_count);
 }
 
 void svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper(

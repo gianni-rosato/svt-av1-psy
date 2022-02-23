@@ -33,7 +33,7 @@ static INLINE int16_t get_ac_quant(int32_t qindex, int32_t delta, AomBitDepth bi
 
 // Called in read_frame_header_obu() -> av1_decode_frame_headers_and_setup() -> read_uncompressed_header()
 void setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt) {
-    SeqHeader *  seq_header = dec_mod_ctxt->seq_header;
+    SeqHeader   *seq_header = dec_mod_ctxt->seq_header;
     FrameHeader *frame_info = dec_mod_ctxt->frame_header;
     int          bit_depth  = seq_header->color_config.bit_depth;
     /*int max_segments = frame_info->segmentation_params.segmentation_enabled ?
@@ -92,7 +92,7 @@ void av1_init_sb(FrameHeader *frame)
 // Called in parse_decode_block()
 // Update de-quantization parameter based on delta qp param
 void update_dequant(DecModCtxt *dec_mod_ctxt, SBInfo *sb_info) {
-    SeqHeader *  seq_header = dec_mod_ctxt->seq_header;
+    SeqHeader   *seq_header = dec_mod_ctxt->seq_header;
     FrameHeader *frame      = dec_mod_ctxt->frame_header;
 
     int bit_depth                  = seq_header->color_config.bit_depth;
@@ -126,16 +126,16 @@ int32_t inverse_quantize(DecModCtxt *dec_mod_ctxt, PartitionInfo *part, BlockMod
                          int32_t *level, int32_t *qcoeffs, TxType tx_type, TxSize tx_size,
                          int plane) {
     (void)part;
-    SeqHeader *            seq   = dec_mod_ctxt->seq_header;
-    FrameHeader *          frame = dec_mod_ctxt->frame_header;
+    SeqHeader             *seq   = dec_mod_ctxt->seq_header;
+    FrameHeader           *frame = dec_mod_ctxt->frame_header;
     const ScanOrder *const scan_order =
         &av1_scan_orders[tx_size][tx_type]; //get_scan(tx_size, tx_type);
     const int16_t *scan      = scan_order->scan;
     const int32_t  max_value = (1 << (7 + seq->color_config.bit_depth)) - 1;
     const int32_t  min_value = -(1 << (7 + seq->color_config.bit_depth));
     int            n_coeffs, i, pos, qmlevel;
-    int16_t *      dequant;
-    const QmVal *  iqmatrix;
+    int16_t       *dequant;
+    const QmVal   *iqmatrix;
     const TxSize   qm_tx_size = av1_get_adjusted_tx_size(tx_size);
 
     int using_qm    = frame->quantization_params.using_qmatrix;

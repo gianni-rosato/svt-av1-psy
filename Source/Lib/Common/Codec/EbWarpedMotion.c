@@ -843,9 +843,9 @@ void dec_svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref, i
 }
 void svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint8_t *ref8b, const uint8_t *ref2b,
                                   int width, int height, int stride8b, int stride2b, uint16_t *pred,
-                                  int p_col, int p_row, int p_width,
-                                  int p_height, int p_stride, int subsampling_x, int subsampling_y,
-                                  int bd, ConvolveParams *conv_params, int16_t alpha, int16_t beta,
+                                  int p_col, int p_row, int p_width, int p_height, int p_stride,
+                                  int subsampling_x, int subsampling_y, int bd,
+                                  ConvolveParams *conv_params, int16_t alpha, int16_t beta,
                                   int16_t gamma, int16_t delta) {
     int32_t   tmp[15 * 8];
     const int reduce_bits_horiz = conv_params->round_0 +
@@ -899,7 +899,7 @@ void svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint8_t *ref8b, cons
                     int32_t sum = 1 << offset_bits_horiz;
                     for (int m = 0; m < 8; ++m) {
                         const int sample_x = clamp(ix + m, 0, width - 1);
-                        uint16_t ref = (ref8b[iy * stride8b + sample_x] << 2) |
+                        uint16_t  ref      = (ref8b[iy * stride8b + sample_x] << 2) |
                             ((ref2b[iy * stride2b + sample_x] >> 6) & 3);
                         sum += ref * coeffs[m];
                     }
@@ -997,10 +997,10 @@ void dec_svt_highbd_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const re
                                    delta);
 }
 void svt_highbd_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref8,
-                           const uint8_t *const ref_2b, int width,
-                           int height, int stride, const uint8_t *const pred8, int p_col, int p_row,
-                           int p_width, int p_height, int p_stride, int subsampling_x,
-                           int subsampling_y, int bd, ConvolveParams *conv_params) {
+                           const uint8_t *const ref_2b, int width, int height, int stride,
+                           const uint8_t *const pred8, int p_col, int p_row, int p_width,
+                           int p_height, int p_stride, int subsampling_x, int subsampling_y, int bd,
+                           ConvolveParams *conv_params) {
     assert(wm->wmtype <= AFFINE);
     if (wm->wmtype == ROTZOOM) {
         wm->wmmat[5] = wm->wmmat[2];
@@ -1074,10 +1074,9 @@ void dec_svt_av1_warp_plane(EbWarpedMotionParams *wm, int use_hbd, int bd, const
                        conv_params);
 }
 void svt_av1_warp_plane(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
-                        const uint8_t *ref_2b,
-                        int width, int height, int stride, uint8_t *pred, int p_col, int p_row,
-                        int p_width, int p_height, int p_stride, int subsampling_x,
-                        int subsampling_y, ConvolveParams *conv_params) {
+                        const uint8_t *ref_2b, int width, int height, int stride, uint8_t *pred,
+                        int p_col, int p_row, int p_width, int p_height, int p_stride,
+                        int subsampling_x, int subsampling_y, ConvolveParams *conv_params) {
     if (use_hbd)
         svt_highbd_warp_plane(wm,
                               ref,

@@ -56,9 +56,9 @@ static INLINE void build_obmc_inter_pred_above(
                               ? 1
                               : 0;
     const int overlap = AOMMIN(block_size_high[bsize], block_size_high[BLOCK_64X64]) >> 1;
-    uint8_t * above_buf;
+    uint8_t  *above_buf;
     int32_t   above_stride;
-    uint8_t * tmp_recon_buf;
+    uint8_t  *tmp_recon_buf;
     int32_t   tmp_recon_stride;
 
     for (int plane = 0; plane < num_planes; ++plane) {
@@ -198,9 +198,9 @@ static INLINE void dec_build_prediction_by_above_pred(
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     const int            above_mi_col      = mi_col + rel_mi_col;
     int                  mi_x, mi_y;
-    uint8_t *            tmp_recon_buf;
+    uint8_t             *tmp_recon_buf;
     int32_t              tmp_recon_stride;
-    BlockModeInfo *      bakup_abv_mbmi = malloc(sizeof(*bakup_abv_mbmi));
+    BlockModeInfo       *bakup_abv_mbmi = malloc(sizeof(*bakup_abv_mbmi));
     if (!bakup_abv_mbmi)
         return;
     BlockModeInfo *backup_pi_mi = backup_pi->mi;
@@ -283,7 +283,7 @@ static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHa
     backup_pi.hpx[0] = bh;
 
     EbColorConfig *cc         = &dec_handle->seq_header.color_config;
-    FrameHeader *  frame_info = &dec_handle->frame_header;
+    FrameHeader   *frame_info = &dec_handle->frame_header;
     const int      num_planes = av1_num_planes(cc);
     int            nb_count   = 0;
     uint8_t        mi_step;
@@ -292,7 +292,7 @@ static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHa
     const int end_col = AOMMIN(mi_col + bw4, (int)frame_info->mi_cols);
 
     //Calculating buffers for current block i.e getting recon_buffer for blending
-    void *               curr_blk_recon_buf[MAX_MB_PLANE];
+    void                *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t              curr_recon_stride[MAX_MB_PLANE];
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     for (int plane = 0; plane < num_planes; ++plane) {
@@ -363,9 +363,9 @@ static INLINE void dec_build_prediction_by_left_pred(
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     const int            left_mi_row       = mi_row + rel_mi_row;
     int                  mi_x, mi_y;
-    uint8_t *            tmp_recon_buf;
+    uint8_t             *tmp_recon_buf;
     int32_t              tmp_recon_stride;
-    BlockModeInfo *      bakup_left_mbmi = malloc(sizeof(*bakup_left_mbmi));
+    BlockModeInfo       *bakup_left_mbmi = malloc(sizeof(*bakup_left_mbmi));
     if (!bakup_left_mbmi)
         return;
     BlockModeInfo *backup_pi_mi = backup_pi->mi;
@@ -450,7 +450,7 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
     backup_pi.wpx[0] = bw;
 
     EbColorConfig *cc         = &dec_handle->seq_header.color_config;
-    FrameHeader *  frame_info = &dec_handle->frame_header;
+    FrameHeader   *frame_info = &dec_handle->frame_header;
     const int      num_planes = av1_num_planes(cc);
     int            nb_count   = 0;
     uint8_t        mi_step;
@@ -459,7 +459,7 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
     const int end_row = AOMMIN(mi_row + bh4, (int)frame_info->mi_rows);
 
     //Calculating buffers for current block i.e getting recon_buffer
-    void *               curr_blk_recon_buf[MAX_MB_PLANE];
+    void                *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t              curr_recon_stride[MAX_MB_PLANE];
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     for (int plane = 0; plane < num_planes; ++plane) {
@@ -518,7 +518,7 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
 void dec_build_obmc_inter_predictors_sb(void *pv_dec_mod_ctxt, EbDecHandle *dec_handle,
                                         PartitionInfo *pi, int mi_row, int mi_col) {
     DecModCtxt *dec_mod_ctxt = (DecModCtxt *)pv_dec_mod_ctxt;
-    uint8_t *   dst_buf[MAX_MB_PLANE];
+    uint8_t    *dst_buf[MAX_MB_PLANE];
     dec_mod_ctxt->obmc_ctx.dst_stride[AOM_PLANE_Y] = MAX_SB_SIZE;
     dec_mod_ctxt->obmc_ctx.dst_stride[AOM_PLANE_U] = MAX_SB_SIZE;
     dec_mod_ctxt->obmc_ctx.dst_stride[AOM_PLANE_V] = MAX_SB_SIZE;

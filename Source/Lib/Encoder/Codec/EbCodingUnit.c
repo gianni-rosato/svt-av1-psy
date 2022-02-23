@@ -35,12 +35,10 @@ Tasks & Questions
 */
 EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_size_pix,
                                      uint16_t sb_origin_x, uint16_t sb_origin_y, uint16_t sb_index,
-                                     uint8_t enc_mode,
-                                     uint16_t max_block_cnt,
+                                     uint8_t enc_mode, uint16_t max_block_cnt,
                                      PictureControlSet *picture_control_set)
 
 {
-
     larget_coding_unit_ptr->dctor = largest_coding_unit_dctor;
 
     // ************ SB ***************

@@ -281,13 +281,13 @@ typedef struct MacroBlockD {
     int                      mi_row; // Row position in mi units
     int                      mi_col; // Column position in mi units
     uint8_t                  neighbors_ref_counts[TOTAL_REFS_PER_FRAME];
-    MbModeInfo *             above_mbmi;
-    MbModeInfo *             left_mbmi;
-    MbModeInfo *             chroma_above_mbmi;
-    MbModeInfo *             chroma_left_mbmi;
-    FRAME_CONTEXT *          tile_ctx;
-    TXFM_CONTEXT *           above_txfm_context;
-    TXFM_CONTEXT *           left_txfm_context;
+    MbModeInfo              *above_mbmi;
+    MbModeInfo              *left_mbmi;
+    MbModeInfo              *chroma_above_mbmi;
+    MbModeInfo              *chroma_left_mbmi;
+    FRAME_CONTEXT           *tile_ctx;
+    TXFM_CONTEXT            *above_txfm_context;
+    TXFM_CONTEXT            *left_txfm_context;
     struct macroblockd_plane plane[MAX_MB_PLANE];
     BlockSize                sb_type;
 } MacroBlockD;
@@ -315,13 +315,13 @@ typedef struct IntraBcContext {
     // Store the second best motion vector during full-pixel motion search
     IntMv        second_best_mv;
     MacroBlockD *xd;
-    int *        nmv_vec_cost;
-    int **       mv_cost_stack;
+    int         *nmv_vec_cost;
+    int        **mv_cost_stack;
     // buffer for hash value calculation of a block
     // used only in svt_av1_get_block_hash_value()
     // [first hash/second hash]
     // [two buffers used ping-pong]
-    uint32_t *     hash_value_buffer[2][2];
+    uint32_t      *hash_value_buffer[2][2];
     uint8_t        is_exhaustive_allowed;
     CRC_CALCULATOR crc_calculator1;
     CRC_CALCULATOR crc_calculator2;
@@ -332,11 +332,11 @@ typedef struct IntraBcContext {
 typedef struct BlkStruct {
     TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
     PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
-    PaletteInfo *          palette_info; // ec
+    PaletteInfo           *palette_info; // ec
     uint8_t                palette_mem; // status of palette info alloc
     uint8_t                palette_size[2];
     IntMv                  predmv[2]; // ec
-    MacroBlockD *          av1xd;
+    MacroBlockD           *av1xd;
     InterInterCompoundData interinter_comp; // ec
     uint32_t               interp_filters; // ec
     int32_t                interintra_wedge_index; // ec
@@ -361,7 +361,7 @@ typedef struct BlkStruct {
     EbPictureBufferDesc
         *coeff_tmp; // buffer to store quantized coeffs from MD for the final mode of each block
     EbPictureBufferDesc
-        *   recon_tmp; // buffer to store recon from MD for the final mode of each block
+           *recon_tmp; // buffer to store recon from MD for the final mode of each block
     uint8_t drl_index; // ec
     int8_t  drl_ctx[2]; // Store the drl ctx in coding loop to avoid storing
         // final_ref_mv_stack and ref_mv_count for EC
@@ -411,7 +411,7 @@ typedef struct SuperBlock {
 
     BlkStruct *final_blk_arr;
     //for memory free only
-    MacroBlockD *  av1xd;
+    MacroBlockD   *av1xd;
     PartitionType *cu_partition_array;
     unsigned       picture_left_edge_flag : 1;
     unsigned       picture_top_edge_flag : 1;

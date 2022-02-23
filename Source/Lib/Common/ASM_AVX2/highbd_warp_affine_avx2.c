@@ -738,7 +738,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                         int32_t sum = 1 << offset_bits_horiz;
                         for (int m = 0; m < 8; ++m) {
                             const int sample_x = clamp(ix + m, 0, width - 1);
-                            uint16_t ref = (ref8b[iy * stride8b + sample_x] << 2) |
+                            uint16_t  ref      = (ref8b[iy * stride8b + sample_x] << 2) |
                                 ((ref2b[iy * stride2b + sample_x] >> 6) & 3);
                             sum += ref * coeffs[m];
                         }
@@ -770,7 +770,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                                                        &ref2b[iy * stride2b + ix4 - 7],
                                                        &ref8b[iy * stride8b + ix4 + 1],
                                                        &ref2b[iy * stride2b + ix4 + 1]);
-                        __m256i v_ref = _mm256_permute4x64_epi64(v_refl, 0xEE);
+                        __m256i v_ref  = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
                         v_refl         = _mm256_inserti128_si256(
@@ -829,7 +829,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                                                        &ref2b[iy * stride2b + ix4 - 7],
                                                        &ref8b[iy * stride8b + ix4 + 1],
                                                        &ref2b[iy * stride2b + ix4 + 1]);
-                        __m256i v_ref = _mm256_permute4x64_epi64(v_refl, 0xEE);
+                        __m256i v_ref  = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
@@ -1042,7 +1042,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                                                        &ref2b[iy * stride2b + ix4 - 7],
                                                        &ref8b[iy * stride8b + ix4 + 1],
                                                        &ref2b[iy * stride2b + ix4 + 1]);
-                        __m256i v_ref = _mm256_permute4x64_epi64(v_refl, 0xEE);
+                        __m256i v_ref  = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 

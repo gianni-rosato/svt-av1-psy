@@ -81,7 +81,7 @@ Filter81dFunction svt_aom_filter_block1d4_h2_ssse3;
 #define FUN_CONV_1D(name, step_q4, filter, dir, src_start, avg, opt)                               \
     void svt_aom_convolve8_##name##_##opt(const uint8_t *src,                                      \
                                           ptrdiff_t      src_stride,                               \
-                                          uint8_t *      dst,                                      \
+                                          uint8_t       *dst,                                      \
                                           ptrdiff_t      dst_stride,                               \
                                           const int16_t *filter_x,                                 \
                                           int            x_step_q4,                                \

@@ -179,7 +179,7 @@ typedef struct {
     // cpi->output_pkt_list[i].data.twopass_stats.buf points to actual data stored
     // here.
     const FIRSTPASS_STATS *stats_in;
-    STATS_BUFFER_CTX *     stats_buf_ctx;
+    STATS_BUFFER_CTX      *stats_buf_ctx;
     int                    first_pass_done;
     int64_t                bits_left;
     double                 modified_error_min;

@@ -2559,8 +2559,8 @@ static INLINE void lowbd_inv_txfm2d_add_h_identity_ssse3(const int32_t *input, u
         __m128i       mshift = _mm_set1_epi16(1 << (15 + shift[1]));
         int32_t       k      = ud_flip ? (txfm_size_row - 1) : 0;
         const int32_t step   = ud_flip ? -1 : 1;
-        uint8_t *     out_r  = output_r + 8 * i;
-        uint8_t *     out_w  = output_w + 8 * i;
+        uint8_t      *out_r  = output_r + 8 * i;
+        uint8_t      *out_w  = output_w + 8 * i;
         for (int32_t j = 0; j < txfm_size_row; ++j, k += step) {
             const __m128i v = _mm_loadl_epi64((__m128i const *)(out_r));
             ASSERT(k >= 0);
@@ -2765,7 +2765,7 @@ static void lowbd_inv_txfm2d_add_4x16_ssse3(const int32_t *input, uint8_t *outpu
     const int32_t row_one_loop = 8;
     for (int32_t i = 0; i < 2; ++i) {
         const int32_t *input_cur = input + i * txfm_size_col * row_one_loop;
-        __m128i *      buf_cur   = buf + i * row_one_loop;
+        __m128i       *buf_cur   = buf + i * row_one_loop;
         load_buffer_32bit_to_16bit_w4(input_cur, txfm_size_col, buf_cur, row_one_loop);
         transpose_16bit_4x8(buf_cur, buf_cur);
         if (row_txfm == iidentity4_new_ssse3) {
@@ -2822,7 +2822,7 @@ static void lowbd_inv_txfm2d_add_16x4_ssse3(const int32_t *input, uint8_t *outpu
     assert(buf_size_w_div8 > 0);
     for (int32_t i = 0; i < buf_size_w_div8; ++i) {
         const int32_t *input_cur = input + i * row_one_loop;
-        __m128i *      buf_cur   = buf + i * row_one_loop;
+        __m128i       *buf_cur   = buf + i * row_one_loop;
         load_buffer_32bit_to_16bit(input_cur, txfm_size_col, buf_cur, txfm_size_row);
         transpose_16bit_8x4(buf_cur, buf_cur);
     }

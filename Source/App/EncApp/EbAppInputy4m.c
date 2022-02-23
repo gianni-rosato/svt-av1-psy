@@ -27,7 +27,7 @@ void read_and_skip_y4m_header(FILE *input_file) {
 int32_t read_y4m_header(EbConfig *cfg) {
 #define CHROMA_MAX 4
     char          buffer[YFM_HEADER_MAX];
-    char *        tokstart = buffer;
+    char         *tokstart = buffer;
     uint32_t      bitdepth = 8;
     unsigned long width = 0, height = 0;
     long          fr_n = 0, fr_d = 0, aspect_n = 0, aspect_d = 0;
@@ -207,7 +207,7 @@ int32_t read_y4m_header(EbConfig *cfg) {
     cfg->config.frame_rate_denominator = fr_d;
     cfg->config.frame_rate             = fr_n / fr_d;
     cfg->config.encoder_bit_depth      = bitdepth;
-    cfg->mmap.y4m_seq_hdr = ftell(cfg->input_file);
+    cfg->mmap.y4m_seq_hdr              = ftell(cfg->input_file);
 
     /* TODO: when implemented, need to set input bit depth
         (instead of the encoder bit depth) and chroma format */

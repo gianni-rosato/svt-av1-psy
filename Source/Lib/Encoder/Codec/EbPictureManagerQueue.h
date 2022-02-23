@@ -30,8 +30,8 @@ typedef struct InputQueueEntry {
     EbDctor          dctor;
     EbObjectWrapper *input_object_ptr;
     uint32_t         dependent_count;
-    ReferenceList *  list0_ptr;
-    ReferenceList *  list1_ptr;
+    ReferenceList   *list0_ptr;
+    ReferenceList   *list1_ptr;
     uint32_t         use_count;
     EbBool           memory_mgmt_loop_done;
     EbBool           rate_control_loop_done;

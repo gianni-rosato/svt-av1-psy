@@ -46,7 +46,7 @@ static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
 }
 
 static void destroy_stats_buffer(STATS_BUFFER_CTX *stats_buf_context,
-                                 FIRSTPASS_STATS * frame_stats_buffer) {
+                                 FIRSTPASS_STATS  *frame_stats_buffer) {
     EB_FREE_ARRAY(stats_buf_context->total_left_stats);
     EB_FREE_ARRAY(stats_buf_context->total_stats);
     EB_FREE_ARRAY(frame_stats_buffer);

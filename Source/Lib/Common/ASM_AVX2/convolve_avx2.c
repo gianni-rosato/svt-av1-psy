@@ -675,7 +675,7 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
                 x = 0;
                 do {
                     const uint8_t *s = src_ptr + x;
-                    uint8_t *      d = dst + x;
+                    uint8_t       *d = dst + x;
 
                     s_256[0] = _mm256_loadu_si256((__m256i *)(s + 0 * src_stride));
                     s_256[1] = _mm256_loadu_si256((__m256i *)(s + 1 * src_stride));
@@ -888,7 +888,7 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
                 x = 0;
                 do {
                     const uint8_t *s = src_ptr + x;
-                    uint8_t *      d = dst + x;
+                    uint8_t       *d = dst + x;
 
                     s_256[0] = _mm256_loadu_si256((__m256i *)(s + 0 * src_stride));
                     s_256[1] = _mm256_loadu_si256((__m256i *)(s + 1 * src_stride));

@@ -118,10 +118,9 @@ static const vector<SvtAv1IntraRefreshType> default_intra_refresh_type = {
 };
 static const vector<SvtAv1IntraRefreshType> valid_intra_refresh_type = {
     SVT_AV1_FWDKF_REFRESH,  // CRA, open GOP
-    SVT_AV1_KF_REFRESH,  // IDR, closed GOP
+    SVT_AV1_KF_REFRESH,     // IDR, closed GOP
 };
-static const vector<SvtAv1IntraRefreshType> invalid_intra_refresh_type = {
-};
+static const vector<SvtAv1IntraRefreshType> invalid_intra_refresh_type = {};
 
 /* Number of hierarchical layers used to construct GOP.
  * Minigop size = 2^HierarchicalLevels.
@@ -405,7 +404,6 @@ static const vector<EbBool> valid_use_qp_file = {
 static const vector<EbBool> invalid_use_qp_file = {
     // none
 };
-
 
 // Deblock Filter
 /* Flag to enable the Deblocking Loop Filtering.

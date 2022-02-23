@@ -227,7 +227,7 @@ __attribute__((optimize("unroll-loops")))
 static void
 svt_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
     const unsigned char *src = src_ptr;
-    unsigned char *      dst = dst_ptr;
+    unsigned char       *dst = dst_ptr;
     size_t               i   = 0;
 
 #ifdef _INTEL_COMPILER
@@ -250,7 +250,7 @@ svt_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
 #define EB_MIN(a, b) (((a) < (b)) ? (a) : (b))
 static void svt_memcpy_sse(void *dst_ptr, void const *src_ptr, size_t size) {
     const unsigned char *src       = src_ptr;
-    unsigned char *      dst       = dst_ptr;
+    unsigned char       *dst       = dst_ptr;
     size_t               i         = 0;
     size_t               align_cnt = EB_MIN((64 - ((size_t)dst & 63)), size);
 

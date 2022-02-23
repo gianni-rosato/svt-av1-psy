@@ -200,13 +200,14 @@ typedef void (*svt_compressed_packmsb_fn)(
     uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
     uint32_t width, uint32_t height);
 
-
-typedef std::tuple<AreaSize, svt_compressed_packmsb_fn> svt_compressed_packmsb_param;
-class PackMsbTest : public ::testing::TestWithParam<svt_compressed_packmsb_param> {
+typedef std::tuple<AreaSize, svt_compressed_packmsb_fn>
+    svt_compressed_packmsb_param;
+class PackMsbTest
+    : public ::testing::TestWithParam<svt_compressed_packmsb_param> {
   public:
     PackMsbTest()
         : area_width_(std::get<0>(TEST_GET_PARAM(0))),
-          area_height_(std::get<1>(TEST_GET_PARAM(0))){
+          area_height_(std::get<1>(TEST_GET_PARAM(0))) {
         tst_fn = TEST_GET_PARAM(1);
         in8_stride_ = out_stride_ = MAX_TEST_SIZE;
         inn_stride_ = in8_stride_ >> 2;
@@ -322,9 +323,11 @@ typedef void (*svt_unpack_and_2bcompress_fn)(
     uint32_t out8b_stride, uint8_t *out2b_buffer, uint32_t out2b_stride,
     uint32_t width, uint32_t height);
 
-typedef std::tuple<AreaSize, svt_unpack_and_2bcompress_fn> Unpack2bCompressParam;
+typedef std::tuple<AreaSize, svt_unpack_and_2bcompress_fn>
+    Unpack2bCompressParam;
 
-class Unpack2bCompress : public ::testing::TestWithParam<Unpack2bCompressParam>{
+class Unpack2bCompress
+    : public ::testing::TestWithParam<Unpack2bCompressParam> {
   public:
     Unpack2bCompress()
         : area_width_(std::get<0>(TEST_GET_PARAM(0))),

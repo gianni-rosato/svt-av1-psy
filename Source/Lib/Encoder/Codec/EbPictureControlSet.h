@@ -231,12 +231,12 @@ typedef struct SpeedFeatures {
 } SpeedFeatures;
 typedef struct EncDecSet {
     EbDctor                         dctor;
-    EbPictureBufferDesc *           recon_picture_ptr;
-    EbPictureBufferDesc *           recon_picture16bit_ptr;
-    EbPictureBufferDesc **          quantized_coeff;
-    EbObjectWrapper *               enc_dec_wrapper_ptr;
+    EbPictureBufferDesc            *recon_picture_ptr;
+    EbPictureBufferDesc            *recon_picture16bit_ptr;
+    EbPictureBufferDesc           **quantized_coeff;
+    EbObjectWrapper                *enc_dec_wrapper_ptr;
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
-    EbObjectWrapper *               picture_parent_control_set_wrapper_ptr;
+    EbObjectWrapper                *picture_parent_control_set_wrapper_ptr;
 
     uint16_t sb_total_count_unscaled;
 
@@ -248,11 +248,11 @@ typedef struct CdefDirData {
 typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor              dctor;
-    EbObjectWrapper *    scs_wrapper_ptr;
+    EbObjectWrapper     *scs_wrapper_ptr;
     EbPictureBufferDesc *input_frame16bit;
 
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
-    EbObjectWrapper *               picture_parent_control_set_wrapper_ptr;
+    EbObjectWrapper                *picture_parent_control_set_wrapper_ptr;
     // Packetization (used to encode SPS, PPS, etc)
     Bitstream *bitstream_ptr;
 
@@ -289,7 +289,7 @@ typedef struct PictureControlSet {
     uint8_t  cdef_segments_row_count;
 
     uint64_t (*mse_seg[2])[TOTAL_STRENGTHS];
-    uint8_t *    skip_cdef_seg;
+    uint8_t     *skip_cdef_seg;
     CdefDirData *cdef_dir_data;
 
     uint16_t *src[3]; //dlfed recon in 16bit form
@@ -311,12 +311,10 @@ typedef struct PictureControlSet {
     // SB Array
     uint16_t     sb_total_count;
     SuperBlock **sb_ptr_array;
-    uint8_t *    sb_intra;
-    uint8_t *    sb_skip;
-    uint8_t *    sb_64x64_mvp;
-#if OPT_DECODER
-    uint32_t *    sb_count_nz_coeffs;
-#endif
+    uint8_t     *sb_intra;
+    uint8_t     *sb_skip;
+    uint8_t     *sb_64x64_mvp;
+    uint32_t    *sb_count_nz_coeffs;
 
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -377,13 +375,13 @@ typedef struct PictureControlSet {
         luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit **
         cr_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit **
-                          cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit **  txfm_context_array;
-    NeighborArrayUnit **  ref_frame_type_neighbor_array;
+    NeighborArrayUnit                   **
+        cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
+    NeighborArrayUnit   **txfm_context_array;
+    NeighborArrayUnit   **ref_frame_type_neighbor_array;
     NeighborArrayUnit32 **interpolation_type_neighbor_array;
 
-    NeighborArrayUnit **     segmentation_id_pred_array;
+    NeighborArrayUnit      **segmentation_id_pred_array;
     SegmentationNeighborMap *segmentation_neighbor_map;
 
     ModeInfo **mi_grid_base; //2 SB Rows of mi Data are enough
@@ -436,16 +434,16 @@ typedef struct PictureControlSet {
     CRC_CALCULATOR   crc_calculator1;
     CRC_CALCULATOR   crc_calculator2;
 
-    FRAME_CONTEXT *                 ec_ctx_array;
+    FRAME_CONTEXT                  *ec_ctx_array;
     FRAME_CONTEXT                   md_frame_context;
     CdfControls                     cdf_ctrl;
     FRAME_CONTEXT                   ref_frame_context[REF_FRAMES];
     EbWarpedMotionParams            ref_global_motion[TOTAL_REFS_PER_FRAME];
     struct MdRateEstimationContext *md_rate_estimation_array;
     int8_t                          ref_frame_side[REF_FRAMES];
-    TPL_MV_REF *                    tpl_mvs;
+    TPL_MV_REF                     *tpl_mvs;
     uint8_t                         pic_filter_intra_level;
-    TOKENEXTRA *                    tile_tok[64][64];
+    TOKENEXTRA                     *tile_tok[64][64];
     //Put it here for deinit, don't need to go pcs->ppcs->av1_cm which may already be released
     uint16_t tile_row_count;
     uint16_t tile_column_count;
@@ -515,13 +513,13 @@ typedef struct TileGroupInfo {
 } TileGroupInfo;
 typedef struct MotionEstimationData {
     EbDctor        dctor;
-    MeSbResults ** me_results;
+    MeSbResults  **me_results;
     uint16_t       sb_total_count_unscaled;
     uint8_t        max_cand; //total max me candidates given the active references
     uint8_t        max_refs; //total max active references
     uint8_t        max_l0; //max active refs in L0
     OisMbResults **ois_mb_results;
-    TplStats **    tpl_stats;
+    TplStats     **tpl_stats;
 
     TplSrcStats *tpl_src_stats_buffer; //tpl src based stats
 
@@ -603,25 +601,36 @@ typedef struct GmControls {
 typedef struct CdefControls {
     uint8_t enabled;
     uint8_t number_of_prim_in_second_loop[2];
-    uint8_t first_pass_fs_num; // Number of primary filters considered in the first pass. (luma and chroma)
-    uint8_t default_first_pass_fs[TOTAL_STRENGTHS]; //Primary filter strengths to consider in the first pass.
-    uint8_t default_second_pass_fs_num; // Number of secondary filters considered in the second pass. (luma and chroma)
-    uint8_t default_second_pass_fs[TOTAL_STRENGTHS]; // Secondary filter strengths to consider in the second pass.
-    int8_t  default_first_pass_fs_uv[TOTAL_STRENGTHS]; // Mask for primary filters to be considered for chroma and indicates a subset of the primary
-                                                       // filter strengths considered in default_first_pass_fs[64]
-    int8_t  default_second_pass_fs_uv[TOTAL_STRENGTHS]; // Mask for secondary filters to be considered for chroma and indicates a subset of the secondary
-                                                        // filter strengths considered in default_second_pass_fs[64]
-    int8_t  use_reference_cdef_fs; // Flag to indicate the use of reference frames' filter strengths.
-    int8_t  pred_y_f; // Predicted filter strength pair index for the luma component based on reference picture filter strength pairs.
-    int8_t  pred_uv_f; // Predicted filter strength pair index for the chroma component based on reference picture filter strength pairs.
-    uint8_t subsampling_factor; // Allowable levels: [1,2,4] ---> 1: no subsampling; 2: process every 2nd row; 4: process every 4th row for 8x8 blocks, every 2nd row for smaller sizes.
-                                // NB subsampling is capped for certain block sizes, based on how many points the intrinsics can process at once.
-    uint8_t search_best_ref_fs; // Only search best filter strengths of the nearest ref frames (skips the search if the filters of list0/list1 are the same).
-    uint16_t zero_fs_cost_bias; // 0: OFF, higher is safer. Scaling factor to decrease the zero filter strength cost: : <x>/64
-#if OPT_DECODER
-    uint8_t scale_cost_bias_on_nz_coeffs; // When enabled, use non-zero coeff info to make the cost-biasing factor more aggressive (when cost biasing is enabled)
-#endif
-    uint8_t use_skip_detector; // Shut CDEF at the picture level based on the skip area of the nearest reference frames.
+    uint8_t
+        first_pass_fs_num; // Number of primary filters considered in the first pass. (luma and chroma)
+    uint8_t default_first_pass_fs
+        [TOTAL_STRENGTHS]; //Primary filter strengths to consider in the first pass.
+    uint8_t
+            default_second_pass_fs_num; // Number of secondary filters considered in the second pass. (luma and chroma)
+    uint8_t default_second_pass_fs
+        [TOTAL_STRENGTHS]; // Secondary filter strengths to consider in the second pass.
+    int8_t default_first_pass_fs_uv
+        [TOTAL_STRENGTHS]; // Mask for primary filters to be considered for chroma and indicates a subset of the primary
+        // filter strengths considered in default_first_pass_fs[64]
+    int8_t default_second_pass_fs_uv
+        [TOTAL_STRENGTHS]; // Mask for secondary filters to be considered for chroma and indicates a subset of the secondary
+        // filter strengths considered in default_second_pass_fs[64]
+    int8_t use_reference_cdef_fs; // Flag to indicate the use of reference frames' filter strengths.
+    int8_t
+        pred_y_f; // Predicted filter strength pair index for the luma component based on reference picture filter strength pairs.
+    int8_t
+        pred_uv_f; // Predicted filter strength pair index for the chroma component based on reference picture filter strength pairs.
+    uint8_t
+        subsampling_factor; // Allowable levels: [1,2,4] ---> 1: no subsampling; 2: process every 2nd row; 4: process every 4th row for 8x8 blocks, every 2nd row for smaller sizes.
+        // NB subsampling is capped for certain block sizes, based on how many points the intrinsics can process at once.
+    uint8_t
+        search_best_ref_fs; // Only search best filter strengths of the nearest ref frames (skips the search if the filters of list0/list1 are the same).
+    uint16_t
+        zero_fs_cost_bias; // 0: OFF, higher is safer. Scaling factor to decrease the zero filter strength cost: : <x>/64
+    uint8_t
+        scale_cost_bias_on_nz_coeffs; // When enabled, use non-zero coeff info to make the cost-biasing factor more aggressive (when cost biasing is enabled)
+    uint8_t
+        use_skip_detector; // Shut CDEF at the picture level based on the skip area of the nearest reference frames.
 } CdefControls;
 
 typedef struct List0OnlyBase {
@@ -631,9 +640,8 @@ typedef struct List0OnlyBase {
 typedef struct DlfCtrls {
     uint8_t enabled;
     uint8_t sb_based_dlf; // if true, perform DLF per SB, not per picture
-#if OPT_DECODER
-    uint8_t min_filter_level; // when DLF filter level is selected from QP, if the filter level is less than or equal to this TH, the filter level is set to 0
-#endif
+    uint8_t
+        min_filter_level; // when DLF filter level is selected from QP, if the filter level is less than or equal to this TH, the filter level is set to 0
 } DlfCtrls;
 typedef struct IntraBCCtrls {
     uint8_t enabled;
@@ -659,23 +667,23 @@ typedef struct PaletteCtrls {
 // Parent is created before the Child, and continue to live more. Child PCS only lives the exact time needed to encode the picture: from ME to EC/ALF.
 typedef struct PictureParentControlSet {
     EbDctor              dctor;
-    EbObjectWrapper *    scs_wrapper_ptr;
-    EbObjectWrapper *    input_picture_wrapper_ptr;
-    EbObjectWrapper *    eb_y8b_wrapper_ptr;
-    EbObjectWrapper *    reference_picture_wrapper_ptr;
-    EbObjectWrapper *    pa_reference_picture_wrapper_ptr;
+    EbObjectWrapper     *scs_wrapper_ptr;
+    EbObjectWrapper     *input_picture_wrapper_ptr;
+    EbObjectWrapper     *eb_y8b_wrapper_ptr;
+    EbObjectWrapper     *reference_picture_wrapper_ptr;
+    EbObjectWrapper     *pa_reference_picture_wrapper_ptr;
     EbPictureBufferDesc *enhanced_picture_ptr;
     EbPictureBufferDesc *enhanced_downscaled_picture_ptr;
     EbPictureBufferDesc *enhanced_unscaled_picture_ptr;
     EbPictureBufferDesc
-        *  chroma_downsampled_picture_ptr; //if 422/444 input, down sample to 420 for MD
+          *chroma_downsampled_picture_ptr; //if 422/444 input, down sample to 420 for MD
     EbBool is_chroma_downsampled_picture_ptr_owner;
-    PredictionStructure *      pred_struct_ptr; // need to check
+    PredictionStructure       *pred_struct_ptr; // need to check
     struct SequenceControlSet *scs_ptr;
-    EbObjectWrapper *          p_pcs_wrapper_ptr;
-    EbObjectWrapper *          previous_picture_control_set_wrapper_ptr;
-    EbObjectWrapper *          output_stream_wrapper_ptr;
-    Av1Common *                av1_cm;
+    EbObjectWrapper           *p_pcs_wrapper_ptr;
+    EbObjectWrapper           *previous_picture_control_set_wrapper_ptr;
+    EbObjectWrapper           *output_stream_wrapper_ptr;
+    Av1Common                 *av1_cm;
 
     uint8_t hbd_mode_decision;
     // Data attached to the picture. This includes data passed from the application, or other data the encoder attaches
@@ -688,16 +696,14 @@ typedef struct PictureParentControlSet {
     uint8_t             log2_tile_rows;
     uint8_t             log2_tile_cols;
     uint8_t             log2_sb_sz;
-    TileGroupInfo *     tile_group_info;
+    TileGroupInfo      *tile_group_info;
     uint8_t             tile_group_cols;
     uint8_t             tile_group_rows;
 
     EbBool   idr_flag;
     EbBool   cra_flag;
     EbBool   scene_change_flag;
-#if ADD_VQ_MODE
     EbBool   transition_present;
-#endif
     EbBool   end_of_sequence_flag;
     uint8_t  picture_qp;
     uint64_t picture_number;
@@ -734,7 +740,7 @@ typedef struct PictureParentControlSet {
     double                                  cr_ssim;
     double                                  cb_ssim;
 
-    EbObjectWrapper *           down_scaled_picture_wrapper_ptr;
+    EbObjectWrapper            *down_scaled_picture_wrapper_ptr;
     EbDownScaledBufDescPtrArray ds_pics; // Pointer array for down scaled pictures
 
     TPLData          tpl_data;
@@ -742,7 +748,7 @@ typedef struct PictureParentControlSet {
     // Pre Analysis
     EbObjectWrapper *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint64_t         ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint16_t **      variance;
+    uint16_t       **variance;
     uint32_t         pre_assignment_buffer_count;
     uint16_t         pic_avg_variance;
     EbBool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
@@ -762,8 +768,8 @@ typedef struct PictureParentControlSet {
     // Motion Estimation Results
     uint8_t   max_number_of_pus_per_sb;
     uint32_t *rc_me_distortion;
-    uint8_t *
-             stationary_block_present_sb; // 1 when a % of the SB is stationary relative to reference frame(s) ((0,0) MV: decode order), 0 otherwise
+    uint8_t      *
+        stationary_block_present_sb; // 1 when a % of the SB is stationary relative to reference frame(s) ((0,0) MV: decode order), 0 otherwise
     uint8_t *rc_me_allow_gm;
 
     uint32_t *me_8x8_cost_variance;
@@ -772,8 +778,8 @@ typedef struct PictureParentControlSet {
     uint32_t *me_16x16_distortion;
     uint32_t *me_8x8_distortion;
     // Global motion estimation results
-    EbBool               is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    EbWarpedMotionParams global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    EbBool                is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    EbWarpedMotionParams  global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint16_t              me_processed_b64_count;
     EbHandle              me_processed_b64_mutex;
     FirstPassData         firstpass_data;
@@ -902,9 +908,9 @@ typedef struct PictureParentControlSet {
     int16_t              tilt_mvx;
     int16_t              tilt_mvy;
     EbWarpedMotionParams global_motion[TOTAL_REFS_PER_FRAME];
-    PictureControlSet *  child_pcs;
-    EncDecSet *          enc_dec_ptr;
-    Macroblock *         av1x;
+    PictureControlSet   *child_pcs;
+    EncDecSet           *enc_dec_ptr;
+    Macroblock          *av1x;
     int32_t      film_grain_params_present; //todo (AN): Do we need this flag at picture level?
     int8_t       cdef_level;
     uint8_t      palette_level;
@@ -944,12 +950,12 @@ typedef struct PictureParentControlSet {
     EbBool      temporal_filtering_on;
     uint64_t    filtered_sse_uv;
     FrameHeader frm_hdr;
-    uint16_t *  altref_buffer_highbd[3];
+    uint16_t   *altref_buffer_highbd[3];
     uint8_t     pic_obmc_level;
 
     EbBool            is_pcs_sb_params;
-    SbParams *        sb_params_array;
-    SbGeom *          sb_geom;
+    SbParams         *sb_params_array;
+    SbGeom           *sb_geom;
     EbInputResolution input_resolution;
     uint16_t          picture_sb_width;
     uint16_t          picture_sb_height;
@@ -975,13 +981,13 @@ typedef struct PictureParentControlSet {
            superres_denom_array[SCALE_NUMERATOR + 1]; // denom candidate array used in auto supreres
     double superres_rdcost[SCALE_NUMERATOR + 1]; // 9 slots, for denom 8 ~ 16
 
-    EbObjectWrapper *     me_data_wrapper_ptr;
+    EbObjectWrapper      *me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
     unsigned char         gf_group_index;
     struct PictureParentControlSet
-        *    tpl_group[MAX_TPL_GROUP_SIZE]; //stores pcs pictures needed for tpl algorithm
+            *tpl_group[MAX_TPL_GROUP_SIZE]; //stores pcs pictures needed for tpl algorithm
     uint32_t tpl_group_size; //size of above buffer
-    void *   pd_window
+    void    *pd_window
         [PD_WINDOW_SIZE]; //stores previous, current, future pictures from pd-reord-queue. empty for first I.
     uint8_t pd_window_count;
 
@@ -991,8 +997,8 @@ typedef struct PictureParentControlSet {
 
     int64_t ext_mg_id;
     int64_t ext_mg_size; //same as mg expect for MGops with [LDP-I] which are split into 2
-    uint8_t  tpl_valid_pic[MAX_TPL_EXT_GROUP_SIZE];
-    uint8_t  used_tpl_frame_num;
+    uint8_t tpl_valid_pic[MAX_TPL_EXT_GROUP_SIZE];
+    uint8_t used_tpl_frame_num;
 
     // Tune TPL for better chroma.Only for 240P
     uint8_t      tune_tpl_for_chroma;
@@ -1074,16 +1080,14 @@ typedef struct PictureParentControlSet {
     uint32_t tf_tot_horz_blks; //total horizontal motion blocks in TF
     int8_t   tf_motion_direction; //motion direction in TF   -1:invalid   0:horz  1:vert
     uint8_t  adjust_under_shoot_gf;
-#if ADD_VQ_MODE
-    int32_t is_noise_level;
-#endif
+    int32_t  is_noise_level;
 } PictureParentControlSet;
 
 typedef struct TplDispResults {
     EbDctor                  dctor;
-    EbObjectWrapper *        pcs_wrapper_ptr;
+    EbObjectWrapper         *pcs_wrapper_ptr;
     uint32_t                 frame_index;
-    EbFifo *                 sbo_feedback_fifo_ptr;
+    EbFifo                  *sbo_feedback_fifo_ptr;
     uint32_t                 input_type;
     int16_t                  enc_dec_segment_row;
     uint16_t                 tile_group_index;
@@ -1175,11 +1179,11 @@ extern EbErrorType recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_d
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
                                                       EbPtr  object_init_data_ptr);
 extern EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
-extern EbErrorType me_sb_results_ctor(MeSbResults *              obj_ptr,
+extern EbErrorType me_sb_results_ctor(MeSbResults               *obj_ptr,
                                       PictureControlSetInitData *init_data_ptr);
 
-extern void set_gm_controls(PictureParentControlSet* pcs_ptr, uint8_t gm_level);
-extern uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr);
+extern void    set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
+extern uint8_t derive_gm_level(PictureParentControlSet *pcs_ptr);
 
 #ifdef __cplusplus
 }

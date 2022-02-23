@@ -235,7 +235,7 @@ static EbErrorType svt_muxing_queue_ctor(EbMuxingQueue *queue_ptr, uint32_t obje
  **************************************/
 static EbErrorType svt_muxing_queue_assignation(EbMuxingQueue *queue_ptr) {
     EbErrorType      return_error = EB_ErrorNone;
-    EbFifo *         process_fifo_ptr;
+    EbFifo          *process_fifo_ptr;
     EbObjectWrapper *wrapper_ptr;
 
     // while loop
@@ -266,7 +266,7 @@ static EbErrorType svt_muxing_queue_assignation(EbMuxingQueue *queue_ptr) {
 /**************************************
  * svt_muxing_queue_object_push_back
  **************************************/
-static EbErrorType svt_muxing_queue_object_push_back(EbMuxingQueue *  queue_ptr,
+static EbErrorType svt_muxing_queue_object_push_back(EbMuxingQueue   *queue_ptr,
                                                      EbObjectWrapper *object_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -280,7 +280,7 @@ static EbErrorType svt_muxing_queue_object_push_back(EbMuxingQueue *  queue_ptr,
 /**************************************
 * svt_muxing_queue_object_push_front
 **************************************/
-static EbErrorType svt_muxing_queue_object_push_front(EbMuxingQueue *  queue_ptr,
+static EbErrorType svt_muxing_queue_object_push_front(EbMuxingQueue   *queue_ptr,
                                                       EbObjectWrapper *object_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -465,7 +465,6 @@ EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t ob
 #if SRM_REPORT
         resource_ptr->wrapper_ptr_pool[wrapper_index]->pic_number = 99999999;
 #endif
-
     }
 
     // Initialize the Empty Queue
@@ -481,7 +480,7 @@ EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t ob
 #if SRM_REPORT
     //at init time, the SRM is full
     resource_ptr->empty_queue->curr_count = resource_ptr->object_total_count;
-    resource_ptr->empty_queue->log = 0;
+    resource_ptr->empty_queue->log        = 0;
 #endif
     // Initialize the Full Queue
     if (consumer_process_total_count) {
@@ -592,7 +591,9 @@ EbErrorType svt_release_object(EbObjectWrapper *object_ptr) {
         //increment the fullness
         object_ptr->system_resource_ptr->empty_queue->curr_count++;
         if (object_ptr->system_resource_ptr->empty_queue->log)
-            SVT_LOG("SRM fullness+: %i/%i\n", object_ptr->system_resource_ptr->empty_queue->curr_count, object_ptr->system_resource_ptr->object_total_count);
+            SVT_LOG("SRM fullness+: %i/%i\n",
+                    object_ptr->system_resource_ptr->empty_queue->curr_count,
+                    object_ptr->system_resource_ptr->object_total_count);
 #endif
     }
 
@@ -625,14 +626,12 @@ EbErrorType svt_release_dual_object(EbObjectWrapper *object_ptr, EbObjectWrapper
         if (object_ptr->system_resource_ptr->empty_queue->log)
             SVT_LOG("SRM RELEASE: %lld\n", object_ptr->pic_number);
 
-
         object_ptr->pic_number = 99999999;
         //increment the fullness
         object_ptr->system_resource_ptr->empty_queue->curr_count++;
         //  if (object_ptr->system_resource_ptr->empty_queue->log)
         //      SVT_LOG("SRM fullness+: %i/%i\n", object_ptr->system_resource_ptr->empty_queue->curr_count, object_ptr->system_resource_ptr->object_total_count);
 #endif
-
     }
 
     svt_release_mutex(object_ptr->system_resource_ptr->empty_queue->lockout_mutex);
@@ -643,12 +642,12 @@ EbErrorType svt_release_dual_object(EbObjectWrapper *object_ptr, EbObjectWrapper
 /*
   dump pictures occuping the SRM
 */
-EbErrorType dump_srm_content(EbSystemResource *resource_ptr, uint8_t log)
-{
+EbErrorType dump_srm_content(EbSystemResource *resource_ptr, uint8_t log) {
     EbErrorType return_error = EB_ErrorNone;
     if (log) {
         SVT_LOG("SRM content:\n\n");
-        for (uint32_t wrapper_index = 0; wrapper_index < resource_ptr->object_total_count; ++wrapper_index) {
+        for (uint32_t wrapper_index = 0; wrapper_index < resource_ptr->object_total_count;
+             ++wrapper_index) {
             SVT_LOG("%lld ", resource_ptr->wrapper_ptr_pool[wrapper_index]->pic_number);
         }
     }
@@ -689,7 +688,9 @@ EbErrorType svt_get_empty_object(EbFifo *empty_fifo_ptr, EbObjectWrapper **wrapp
     //decrement the fullness
     empty_fifo_ptr->queue_ptr->curr_count--;
     if (empty_fifo_ptr->queue_ptr->log)
-        printf("SRM fullness-: %i/%i\n", empty_fifo_ptr->queue_ptr->curr_count, (*wrapper_dbl_ptr)->system_resource_ptr->object_total_count);
+        printf("SRM fullness-: %i/%i\n",
+               empty_fifo_ptr->queue_ptr->curr_count,
+               (*wrapper_dbl_ptr)->system_resource_ptr->object_total_count);
 #endif
 
     // Reset the wrapper's live_count
@@ -755,7 +756,7 @@ static EbBool svt_fifo_peak_front(EbFifo *fifoPtr) {
         return EB_FALSE;
 }
 
-EbErrorType svt_get_full_object_non_blocking(EbFifo *          full_fifo_ptr,
+EbErrorType svt_get_full_object_non_blocking(EbFifo           *full_fifo_ptr,
                                              EbObjectWrapper **wrapper_dbl_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     EbBool      fifo_empty;

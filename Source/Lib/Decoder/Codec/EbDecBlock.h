@@ -86,7 +86,7 @@ typedef struct TransformInfo {
 } TransformInfo_t;
 
 typedef struct SBInfo {
-    int8_t * sb_cdef_strength; /*!< At 64x64 blk level */
+    int8_t  *sb_cdef_strength; /*!< At 64x64 blk level */
     int32_t *sb_delta_q; /*!< At SB level */
     int32_t *sb_delta_lf; /*!< At SB level */
 

@@ -259,7 +259,7 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle, SBInfo *sb_info,
                                      EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
                                      const int32_t num_planes, const int32_t sb_mi_row,
                                      const int32_t sb_mi_col, int32_t *sb_delta_lf) {
-    FrameHeader *  frm_hdr      = &dec_handle->frame_header;
+    FrameHeader   *frm_hdr      = &dec_handle->frame_header;
     EbColorConfig *color_config = &dec_handle->seq_header.color_config;
     EbBitDepthEnum is16bit      = (recon_picture_buf->bit_depth > EB_8BIT ||
                               dec_handle->is_16bit_pipeline);
@@ -270,7 +270,7 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle, SBInfo *sb_info,
     uint8_t no_lf_u = !(frm_hdr->loop_filter_params.filter_level_u);
     uint8_t no_lf_v = !(frm_hdr->loop_filter_params.filter_level_v);
 
-    void *   blk_recon_buf;
+    void    *blk_recon_buf;
     int32_t  recon_stride;
     int32_t *sb_delta_lf_left;
 
@@ -346,7 +346,7 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle, SBInfo *sb_info,
             memset(&params, 0, sizeof(params));
 
             for (uint32_t tu = 0; tu < num_tu; tu++) {
-                void *  tu_recon_buf;
+                void   *tu_recon_buf;
                 int32_t tu_offset;
                 TxSize  cur_tx_size;
                 int32_t cur_txh, min_txh;
@@ -445,7 +445,7 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
                                      EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
                                      const int32_t num_planes, const int32_t sb_mi_row,
                                      const uint32_t sb_mi_col, int32_t *sb_delta_lf) {
-    FrameHeader *  frm_hdr      = &dec_handle->frame_header;
+    FrameHeader   *frm_hdr      = &dec_handle->frame_header;
     EbColorConfig *color_config = &dec_handle->seq_header.color_config;
 
     EbBool is16bit = (recon_picture_buf->bit_depth > EB_8BIT || dec_handle->is_16bit_pipeline);
@@ -458,7 +458,7 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
     uint8_t no_lf_u = !(frm_hdr->loop_filter_params.filter_level_u);
     uint8_t no_lf_v = !(frm_hdr->loop_filter_params.filter_level_v);
 
-    void *   blk_recon_buf;
+    void    *blk_recon_buf;
     int32_t  recon_stride;
     int32_t *sb_delta_lf_above;
 
@@ -533,7 +533,7 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
             memset(&params, 0, sizeof(params));
 
             for (uint32_t tu = 0; tu < num_tu; tu++) {
-                void *  tu_recon_buf;
+                void   *tu_recon_buf;
                 int32_t tu_offset;
                 TxSize  cur_tx_size;
                 int     cur_txw, min_txw;
@@ -700,9 +700,9 @@ void dec_loop_filter_row(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon
                          LfCtxt *lf_ctxt, uint32_t y_sb_index, int32_t plane_start,
                          int32_t plane_end) {
     MainFrameBuf *main_frame_buf  = &dec_handle_ptr->main_frame_buf;
-    CurFrameBuf * frame_buf       = &main_frame_buf->cur_frame_bufs[0];
-    FrameHeader * frm_hdr         = &dec_handle_ptr->frame_header;
-    SeqHeader *   seq_header      = &dec_handle_ptr->seq_header;
+    CurFrameBuf  *frame_buf       = &main_frame_buf->cur_frame_bufs[0];
+    FrameHeader  *frm_hdr         = &dec_handle_ptr->frame_header;
+    SeqHeader    *seq_header      = &dec_handle_ptr->seq_header;
     uint8_t       sb_size_log2    = seq_header->sb_size_log2;
     int32_t       sb_size_w       = block_size_wide[seq_header->sb_size];
     int32_t       pic_width_in_sb = (frm_hdr->frame_size.frame_width + sb_size_w - 1) / sb_size_w;
@@ -755,7 +755,7 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc 
         return;
 
     FrameHeader *frm_hdr      = &dec_handle_ptr->frame_header;
-    SeqHeader *  seq_header   = &dec_handle_ptr->seq_header;
+    SeqHeader   *seq_header   = &dec_handle_ptr->seq_header;
     uint8_t      sb_size_log2 = seq_header->sb_size_log2;
 
     LoopFilterInfoN *lf_info = &lf_ctxt->lf_info;
@@ -790,7 +790,7 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc 
                 EbBool   end_of_row_flag = x_sb_index == pic_width_in_sb - 1;
 
                 MainFrameBuf *main_frame_buf = &dec_handle_ptr->main_frame_buf;
-                CurFrameBuf * frame_buf      = &main_frame_buf->cur_frame_bufs[0];
+                CurFrameBuf  *frame_buf      = &main_frame_buf->cur_frame_bufs[0];
 
                 SBInfo *sb_info = frame_buf->sb_info +
                     (((y_sb_index * main_frame_buf->sb_cols) + x_sb_index));

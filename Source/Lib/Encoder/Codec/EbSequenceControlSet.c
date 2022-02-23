@@ -52,7 +52,7 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->mvrate_set = 0;
     scs_ptr->dctor      = svt_sequence_control_set_dctor;
 
-    scs_ptr->sb_sz           = 64;
+    scs_ptr->sb_sz = 64;
 
     // Segments
     for (segment_index = 0; segment_index < MAX_TEMPORAL_LAYERS; ++segment_index) {
@@ -86,9 +86,9 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->max_ref_count = 1;
 
     // SB
-    scs_ptr->sb_sz = 64;
-    scs_ptr->super_block_size        = 128;
-    scs_ptr->max_sb_depth = 3;
+    scs_ptr->sb_sz            = 64;
+    scs_ptr->super_block_size = 128;
+    scs_ptr->max_sb_depth     = 3;
 
     // CU
     scs_ptr->max_blk_size   = 64;
@@ -98,31 +98,30 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     // Quantization
     scs_ptr->static_config.qp = 20;
     // AV1 features
-    scs_ptr->enable_warped_motion = DEFAULT;
-    scs_ptr->enable_global_motion = 1;
-    scs_ptr->sg_filter_mode = DEFAULT;
-    scs_ptr->wn_filter_mode = DEFAULT;
-    scs_ptr->inter_intra_compound = DEFAULT;
-    scs_ptr->enable_paeth = DEFAULT;
-    scs_ptr->enable_smooth = DEFAULT;
+    scs_ptr->enable_warped_motion        = DEFAULT;
+    scs_ptr->enable_global_motion        = 1;
+    scs_ptr->sg_filter_mode              = DEFAULT;
+    scs_ptr->wn_filter_mode              = DEFAULT;
+    scs_ptr->inter_intra_compound        = DEFAULT;
+    scs_ptr->enable_paeth                = DEFAULT;
+    scs_ptr->enable_smooth               = DEFAULT;
     scs_ptr->spatial_sse_full_loop_level = DEFAULT;
-    scs_ptr->over_bndry_blk = DEFAULT;
-    scs_ptr->new_nearest_comb_inject = DEFAULT;
-    scs_ptr->nsq_table = DEFAULT;
-    scs_ptr->frame_end_cdf_update = DEFAULT;
-    scs_ptr->set_chroma_mode = DEFAULT;
-    scs_ptr->disable_cfl_flag = DEFAULT;
-    scs_ptr->obmc_level = DEFAULT;
-    scs_ptr->rdoq_level = DEFAULT;
-    scs_ptr->pred_me = DEFAULT;
-    scs_ptr->bipred_3x3_inject = DEFAULT;
-    scs_ptr->compound_level = DEFAULT;
-    scs_ptr->filter_intra_level = DEFAULT;
-    scs_ptr->enable_intra_edge_filter = DEFAULT;
-    scs_ptr->pic_based_rate_est = DEFAULT;
-    scs_ptr->ext_block_flag = EB_FALSE;
-    scs_ptr->ten_bit_format = EB_FALSE;
-
+    scs_ptr->over_bndry_blk              = DEFAULT;
+    scs_ptr->new_nearest_comb_inject     = DEFAULT;
+    scs_ptr->nsq_table                   = DEFAULT;
+    scs_ptr->frame_end_cdf_update        = DEFAULT;
+    scs_ptr->set_chroma_mode             = DEFAULT;
+    scs_ptr->disable_cfl_flag            = DEFAULT;
+    scs_ptr->obmc_level                  = DEFAULT;
+    scs_ptr->rdoq_level                  = DEFAULT;
+    scs_ptr->pred_me                     = DEFAULT;
+    scs_ptr->bipred_3x3_inject           = DEFAULT;
+    scs_ptr->compound_level              = DEFAULT;
+    scs_ptr->filter_intra_level          = DEFAULT;
+    scs_ptr->enable_intra_edge_filter    = DEFAULT;
+    scs_ptr->pic_based_rate_est          = DEFAULT;
+    scs_ptr->ext_block_flag              = EB_FALSE;
+    scs_ptr->ten_bit_format              = EB_FALSE;
 
     // Initialize SB params
     //allocation will happen in ress-corrd
@@ -136,8 +135,8 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->seq_header.delta_frame_id_length = DELTA_FRAME_ID_LENGTH;
 
     if (scs_init_data && scs_init_data->sb_size == 128) {
-        scs_ptr->seq_header.sb_size = BLOCK_128X128;
-        scs_ptr->sb_size_pix        = 128;
+        scs_ptr->seq_header.sb_size      = BLOCK_128X128;
+        scs_ptr->sb_size_pix             = 128;
         scs_ptr->seq_header.sb_mi_size   = 32; // Size of the superblock in units of MI blocks
         scs_ptr->seq_header.sb_size_log2 = 5;
     } else {
@@ -181,8 +180,7 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     if (scs_ptr->enable_intra_edge_filter == DEFAULT)
         scs_ptr->seq_header.enable_intra_edge_filter = 1;
     else
-        scs_ptr->seq_header.enable_intra_edge_filter =
-            (uint8_t)scs_ptr->enable_intra_edge_filter;
+        scs_ptr->seq_header.enable_intra_edge_filter = (uint8_t)scs_ptr->enable_intra_edge_filter;
 
     if (scs_ptr->pic_based_rate_est == DEFAULT)
         scs_ptr->seq_header.pic_based_rate_est = 0;
@@ -337,63 +335,61 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->enable_dec_order               = src->enable_dec_order;
     dst->lap_enabled                    = src->lap_enabled;
 
-    dst->lad_mg = src->lad_mg;
-    dst->tpl_lad_mg = src->tpl_lad_mg;
+    dst->lad_mg                        = src->lad_mg;
+    dst->tpl_lad_mg                    = src->tpl_lad_mg;
     dst->use_boundaries_in_rest_search = src->use_boundaries_in_rest_search;
-    dst->geom_idx      = src->geom_idx;
-    dst->max_block_cnt = src->max_block_cnt;
-    dst->rc_stat_gen_pass_mode = src->rc_stat_gen_pass_mode;
-    dst->cqp_base_q_tf = src->cqp_base_q_tf;
-    dst->cqp_base_q    = src->cqp_base_q;
-    dst->is_short_clip = src->is_short_clip;
-    dst->input_resolution = src->input_resolution;
-    dst->tf_params_per_type[0] = src->tf_params_per_type[0];
-    dst->tf_params_per_type[1] = src->tf_params_per_type[1];
-    dst->tf_params_per_type[2] = src->tf_params_per_type[2];
-#if ADD_VQ_MODE
-    dst->vq_ctrls = src->vq_ctrls;
-#endif
-    dst->mrp_ctrls = src->mrp_ctrls;
-    dst->passes            = src->passes;
-    dst->ipp_pass_ctrls    = src->ipp_pass_ctrls;
-    dst->mid_pass_ctrls    = src->mid_pass_ctrls;
-    dst->ipp_was_ds        = src->ipp_was_ds;
-    dst->final_pass_preset = src->final_pass_preset;
+    dst->geom_idx                      = src->geom_idx;
+    dst->max_block_cnt                 = src->max_block_cnt;
+    dst->rc_stat_gen_pass_mode         = src->rc_stat_gen_pass_mode;
+    dst->cqp_base_q_tf                 = src->cqp_base_q_tf;
+    dst->cqp_base_q                    = src->cqp_base_q;
+    dst->is_short_clip                 = src->is_short_clip;
+    dst->input_resolution              = src->input_resolution;
+    dst->tf_params_per_type[0]         = src->tf_params_per_type[0];
+    dst->tf_params_per_type[1]         = src->tf_params_per_type[1];
+    dst->tf_params_per_type[2]         = src->tf_params_per_type[2];
+    dst->vq_ctrls                      = src->vq_ctrls;
+    dst->mrp_ctrls                     = src->mrp_ctrls;
+    dst->passes                        = src->passes;
+    dst->ipp_pass_ctrls                = src->ipp_pass_ctrls;
+    dst->mid_pass_ctrls                = src->mid_pass_ctrls;
+    dst->ipp_was_ds                    = src->ipp_was_ds;
+    dst->final_pass_preset             = src->final_pass_preset;
     dst->palette_level                 = src->palette_level;
     dst->intra_angle_delta             = src->intra_angle_delta;
-    dst->is_16bit_pipeline = src->is_16bit_pipeline;
-    dst->enable_warped_motion = src->enable_warped_motion;
-    dst->enable_global_motion = src->enable_global_motion;
-    dst->sg_filter_mode = src->sg_filter_mode;
-    dst->wn_filter_mode = src->wn_filter_mode;
-    dst->inter_intra_compound = src->inter_intra_compound;
-    dst->enable_paeth = src->enable_paeth;
-    dst->enable_smooth = src->enable_smooth;
-    dst->spatial_sse_full_loop_level = src->spatial_sse_full_loop_level;
-    dst->over_bndry_blk = src->spatial_sse_full_loop_level;
-    dst->new_nearest_comb_inject = src->new_nearest_comb_inject;
-    dst->nsq_table = src->nsq_table;
-    dst->frame_end_cdf_update = src->frame_end_cdf_update;
-    dst->set_chroma_mode = src->set_chroma_mode;
-    dst->disable_cfl_flag = src->disable_cfl_flag;
-    dst->obmc_level = src->obmc_level;
-    dst->rdoq_level = src->rdoq_level;
-    dst->pred_me = src->pred_me;
-    dst->bipred_3x3_inject = src->bipred_3x3_inject;
-    dst->compound_level = src->compound_level;
-    dst->filter_intra_level = src->filter_intra_level;
-    dst->enable_intra_edge_filter = src->enable_intra_edge_filter;
-    dst->pic_based_rate_est = src->pic_based_rate_est;
-    dst->ext_block_flag = src->ext_block_flag;
-    dst->intrabc_mode = src->intrabc_mode;
+    dst->is_16bit_pipeline             = src->is_16bit_pipeline;
+    dst->enable_warped_motion          = src->enable_warped_motion;
+    dst->enable_global_motion          = src->enable_global_motion;
+    dst->sg_filter_mode                = src->sg_filter_mode;
+    dst->wn_filter_mode                = src->wn_filter_mode;
+    dst->inter_intra_compound          = src->inter_intra_compound;
+    dst->enable_paeth                  = src->enable_paeth;
+    dst->enable_smooth                 = src->enable_smooth;
+    dst->spatial_sse_full_loop_level   = src->spatial_sse_full_loop_level;
+    dst->over_bndry_blk                = src->spatial_sse_full_loop_level;
+    dst->new_nearest_comb_inject       = src->new_nearest_comb_inject;
+    dst->nsq_table                     = src->nsq_table;
+    dst->frame_end_cdf_update          = src->frame_end_cdf_update;
+    dst->set_chroma_mode               = src->set_chroma_mode;
+    dst->disable_cfl_flag              = src->disable_cfl_flag;
+    dst->obmc_level                    = src->obmc_level;
+    dst->rdoq_level                    = src->rdoq_level;
+    dst->pred_me                       = src->pred_me;
+    dst->bipred_3x3_inject             = src->bipred_3x3_inject;
+    dst->compound_level                = src->compound_level;
+    dst->filter_intra_level            = src->filter_intra_level;
+    dst->enable_intra_edge_filter      = src->enable_intra_edge_filter;
+    dst->pic_based_rate_est            = src->pic_based_rate_est;
+    dst->ext_block_flag                = src->ext_block_flag;
+    dst->intrabc_mode                  = src->intrabc_mode;
     dst->enable_hbd_mode_decision      = src->enable_hbd_mode_decision;
     dst->enable_qp_scaling_flag        = src->enable_qp_scaling_flag;
     dst->ten_bit_format                = src->ten_bit_format;
     dst->enable_adaptive_mini_gop      = src->enable_adaptive_mini_gop;
     dst->max_heirachical_level         = src->max_heirachical_level;
     dst->speed_control_flag            = src->speed_control_flag;
-    dst->tpl_level = src->tpl_level;
-    dst->calculate_variance = src->calculate_variance;
+    dst->tpl_level                     = src->tpl_level;
+    dst->calculate_variance            = src->calculate_variance;
     return EB_ErrorNone;
 }
 
@@ -464,23 +460,25 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
         scs_ptr->sb_params_array[sb_index].origin_y =
             scs_ptr->sb_params_array[sb_index].vertical_index * scs_ptr->sb_sz;
 
-        scs_ptr->sb_params_array[sb_index].width = (uint8_t)(
-            ((scs_ptr->seq_header.max_frame_width - scs_ptr->sb_params_array[sb_index].origin_x) <
-             scs_ptr->sb_sz)
-                ? scs_ptr->seq_header.max_frame_width - scs_ptr->sb_params_array[sb_index].origin_x
-                : scs_ptr->sb_sz);
+        scs_ptr->sb_params_array[sb_index].width =
+            (uint8_t)(((scs_ptr->seq_header.max_frame_width -
+                        scs_ptr->sb_params_array[sb_index].origin_x) < scs_ptr->sb_sz)
+                          ? scs_ptr->seq_header.max_frame_width -
+                              scs_ptr->sb_params_array[sb_index].origin_x
+                          : scs_ptr->sb_sz);
 
-        scs_ptr->sb_params_array[sb_index].height = (uint8_t)(
-            ((scs_ptr->seq_header.max_frame_height - scs_ptr->sb_params_array[sb_index].origin_y) <
-             scs_ptr->sb_sz)
-                ? scs_ptr->seq_header.max_frame_height - scs_ptr->sb_params_array[sb_index].origin_y
-                : scs_ptr->sb_sz);
+        scs_ptr->sb_params_array[sb_index].height =
+            (uint8_t)(((scs_ptr->seq_header.max_frame_height -
+                        scs_ptr->sb_params_array[sb_index].origin_y) < scs_ptr->sb_sz)
+                          ? scs_ptr->seq_header.max_frame_height -
+                              scs_ptr->sb_params_array[sb_index].origin_y
+                          : scs_ptr->sb_sz);
 
-        scs_ptr->sb_params_array[sb_index].is_complete_sb = (uint8_t)(
-            ((scs_ptr->sb_params_array[sb_index].width == scs_ptr->sb_sz) &&
-             (scs_ptr->sb_params_array[sb_index].height == scs_ptr->sb_sz))
-                ? 1
-                : 0);
+        scs_ptr->sb_params_array[sb_index].is_complete_sb =
+            (uint8_t)(((scs_ptr->sb_params_array[sb_index].width == scs_ptr->sb_sz) &&
+                       (scs_ptr->sb_params_array[sb_index].height == scs_ptr->sb_sz))
+                          ? 1
+                          : 0);
 
         scs_ptr->sb_params_array[sb_index].is_edge_sb =
             (scs_ptr->sb_params_array[sb_index].origin_x < scs_ptr->sb_sz) ||
@@ -539,23 +537,25 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
         scs_ptr->sb_geom[sb_index].origin_y = scs_ptr->sb_geom[sb_index].vertical_index *
             scs_ptr->sb_size_pix;
 
-        scs_ptr->sb_geom[sb_index].width = (uint8_t)(
-            ((scs_ptr->seq_header.max_frame_width - scs_ptr->sb_geom[sb_index].origin_x) <
-             scs_ptr->sb_size_pix)
-                ? scs_ptr->seq_header.max_frame_width - scs_ptr->sb_geom[sb_index].origin_x
-                : scs_ptr->sb_size_pix);
+        scs_ptr->sb_geom[sb_index].width = (uint8_t)(((scs_ptr->seq_header.max_frame_width -
+                                                       scs_ptr->sb_geom[sb_index].origin_x) <
+                                                      scs_ptr->sb_size_pix)
+                                                         ? scs_ptr->seq_header.max_frame_width -
+                                                             scs_ptr->sb_geom[sb_index].origin_x
+                                                         : scs_ptr->sb_size_pix);
 
-        scs_ptr->sb_geom[sb_index].height = (uint8_t)(
-            ((scs_ptr->seq_header.max_frame_height - scs_ptr->sb_geom[sb_index].origin_y) <
-             scs_ptr->sb_size_pix)
-                ? scs_ptr->seq_header.max_frame_height - scs_ptr->sb_geom[sb_index].origin_y
-                : scs_ptr->sb_size_pix);
+        scs_ptr->sb_geom[sb_index].height = (uint8_t)(((scs_ptr->seq_header.max_frame_height -
+                                                        scs_ptr->sb_geom[sb_index].origin_y) <
+                                                       scs_ptr->sb_size_pix)
+                                                          ? scs_ptr->seq_header.max_frame_height -
+                                                              scs_ptr->sb_geom[sb_index].origin_y
+                                                          : scs_ptr->sb_size_pix);
 
-        scs_ptr->sb_geom[sb_index].is_complete_sb = (uint8_t)(
-            ((scs_ptr->sb_geom[sb_index].width == scs_ptr->sb_size_pix) &&
-             (scs_ptr->sb_geom[sb_index].height == scs_ptr->sb_size_pix))
-                ? 1
-                : 0);
+        scs_ptr->sb_geom[sb_index].is_complete_sb =
+            (uint8_t)(((scs_ptr->sb_geom[sb_index].width == scs_ptr->sb_size_pix) &&
+                       (scs_ptr->sb_geom[sb_index].height == scs_ptr->sb_size_pix))
+                          ? 1
+                          : 0);
 
         uint16_t max_block_count = scs_ptr->max_block_cnt;
 

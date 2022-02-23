@@ -26,7 +26,7 @@
 #include "firstpass.h"
 #include "EbPictureAnalysisProcess.h"
 void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
-int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
+int  svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 #define FC_SKIP_TX_SR_TH025 125 // Fast cost skip tx search threshold.
 #define FC_SKIP_TX_SR_TH010 110 // Fast cost skip tx search threshold.
 void copy_mv_rate(PictureControlSet *pcs, MdRateEstimationContext *dst_rate);
@@ -44,9 +44,9 @@ void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *c
                                            int32_t optimized_lr);
 extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr,
                           EbBool is_highbd);
-void svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
-                                   uint8_t *in_compn_bit_buffer, uint32_t out_stride,
-                                   uint32_t height);
+void        svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
+                                          uint8_t *in_compn_bit_buffer, uint32_t out_stride,
+                                          uint32_t height);
 
 /*
 * return by-pass encdec
@@ -57,13 +57,8 @@ uint8_t get_bypass_encdec(EbEncMode enc_mode, uint8_t hbd_mode_decision,
     uint8_t bypass_encdec = 1;
     if (encoder_bit_depth == EB_8BIT) {
         // 8bit settings
-#if OPT_M6_4K
         if (enc_mode <= ENC_M5)
             bypass_encdec = 0;
-#else
-        if (enc_mode <= ENC_M6)
-            bypass_encdec = 0;
-#endif
         else
             bypass_encdec = 1;
     } else {
@@ -78,7 +73,7 @@ uint8_t get_bypass_encdec(EbEncMode enc_mode, uint8_t hbd_mode_decision,
 
 static void enc_dec_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
-    EncDecContext *  obj                = (EncDecContext *)thread_context_ptr->priv;
+    EncDecContext   *obj                = (EncDecContext *)thread_context_ptr->priv;
     EB_DELETE(obj->md_context);
     EB_DELETE(obj->residual_buffer);
     EB_DELETE(obj->transform_buffer);
@@ -90,13 +85,13 @@ static void enc_dec_context_dctor(EbPtr p) {
 /******************************************************
  * Enc Dec Context Constructor
  ******************************************************/
-EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
                                  const EbEncHandle *enc_handle_ptr, int index, int tasks_index)
 
 {
     const EbSvtAv1EncConfiguration *static_config =
         &enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config;
-    EbColorFormat color_format             = static_config->encoder_color_format;
+    EbColorFormat color_format = static_config->encoder_color_format;
     int8_t        enable_hbd_mode_decision =
         enc_handle_ptr->scs_instance_array[0]->scs_ptr->enable_hbd_mode_decision;
 
@@ -471,14 +466,11 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 
             EbPictureBufferDesc *recon_ptr;
             EbPictureBufferDesc *intermediate_buffer_ptr = NULL;
-            {
-
-                get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
-            }
+            { get_recon_pic(pcs_ptr, &recon_ptr, is_16bit); }
 
             // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
-            if ((scs_ptr->static_config.pass != ENC_FIRST_PASS)
-                && scs_ptr->seq_header.film_grain_params_present &&
+            if ((scs_ptr->static_config.pass != ENC_FIRST_PASS) &&
+                scs_ptr->seq_header.film_grain_params_present &&
                 pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params.apply_grain) {
                 AomFilmGrain *film_grain_ptr;
 
@@ -857,10 +849,9 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
             EB_FREE_ARRAY(buffer_cr);
         }
     } else {
-
         get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
-        EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc *)
-                                                     pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
+        EbPictureBufferDesc *input_picture_ptr =
+            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         EbByte    input_buffer;
         uint16_t *recon_coeff_buffer;
@@ -1032,10 +1023,12 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
                 uint8_t *uncompressed_pics[3];
                 EB_MALLOC_ARRAY(uncompressed_pics[0],
                                 pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->luma_size);
-                EB_MALLOC_ARRAY(uncompressed_pics[1],
-                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
-                EB_MALLOC_ARRAY(uncompressed_pics[2],
-                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
+                EB_MALLOC_ARRAY(
+                    uncompressed_pics[1],
+                    pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
+                EB_MALLOC_ARRAY(
+                    uncompressed_pics[2],
+                    pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
 
                 svt_c_unpack_compressed_10bit(input_picture_ptr->buffer_bit_inc_y,
                                               input_picture_ptr->stride_bit_inc_y / 4,
@@ -1222,10 +1215,10 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
 
         residual_distortion = 0;
         for (int row_index = 0;
-             row_index<(input_picture_ptr->height - scs_ptr->max_input_pad_bottom)>> ss_y;
+             row_index < (input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y;
              ++row_index) {
             for (int column_index = 0;
-                 column_index<(input_picture_ptr->width - scs_ptr->max_input_pad_right)>> ss_x;
+                 column_index < (input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x;
                  ++column_index) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
@@ -1245,10 +1238,10 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
         residual_distortion = 0;
 
         for (int row_index = 0;
-             row_index<(input_picture_ptr->height - scs_ptr->max_input_pad_bottom)>> ss_y;
+             row_index < (input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y;
              ++row_index) {
             for (int column_index = 0;
-                 column_index<(input_picture_ptr->width - scs_ptr->max_input_pad_right)>> ss_x;
+                 column_index < (input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x;
                  ++column_index) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
@@ -1530,10 +1523,12 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
                 uint8_t *uncompressed_pics[3];
                 EB_MALLOC_ARRAY(uncompressed_pics[0],
                                 pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->luma_size);
-                EB_MALLOC_ARRAY(uncompressed_pics[1],
-                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
-                EB_MALLOC_ARRAY(uncompressed_pics[2],
-                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
+                EB_MALLOC_ARRAY(
+                    uncompressed_pics[1],
+                    pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
+                EB_MALLOC_ARRAY(
+                    uncompressed_pics[2],
+                    pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
 
                 svt_c_unpack_compressed_10bit(input_picture_ptr->buffer_bit_inc_y,
                                               input_picture_ptr->stride_bit_inc_y / 4,
@@ -1601,10 +1596,10 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
 
             residual_distortion = 0;
             for (int row_index = 0;
-                 row_index<(input_picture_ptr->height - scs_ptr->max_input_pad_bottom)>> ss_y;
+                 row_index < (input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y;
                  ++row_index) {
-                for (int column_index = 0;
-                     column_index<(input_picture_ptr->width - scs_ptr->max_input_pad_right)>> ss_x;
+                for (int column_index = 0; column_index <
+                     (input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x;
                      ++column_index) {
                     residual_distortion += (int64_t)SQR(
                         (int64_t)((((input_buffer[column_index]) << 2) |
@@ -1633,10 +1628,10 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
             residual_distortion = 0;
 
             for (int row_index = 0;
-                 row_index<(input_picture_ptr->height - scs_ptr->max_input_pad_bottom)>> ss_y;
+                 row_index < (input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y;
                  ++row_index) {
-                for (int column_index = 0;
-                     column_index<(input_picture_ptr->width - scs_ptr->max_input_pad_right)>> ss_x;
+                for (int column_index = 0; column_index <
+                     (input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x;
                      ++column_index) {
                     residual_distortion += (int64_t)SQR(
                         (int64_t)((((input_buffer[column_index]) << 2) |
@@ -1752,23 +1747,23 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                   ref_pic_ptr->stride_bit_inc_y,
                   ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
                   ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
-            un_pack2d((uint16_t *)ref_pic_16bit_ptr->buffer_cb,
-                      ref_pic_16bit_ptr->stride_cb,
-                      ref_pic_ptr->buffer_cb,
-                      ref_pic_ptr->stride_cb,
-                      ref_pic_ptr->buffer_bit_inc_cb,
-                      ref_pic_ptr->stride_bit_inc_cb,
-                      (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
-                      (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
+        un_pack2d((uint16_t *)ref_pic_16bit_ptr->buffer_cb,
+                  ref_pic_16bit_ptr->stride_cb,
+                  ref_pic_ptr->buffer_cb,
+                  ref_pic_ptr->stride_cb,
+                  ref_pic_ptr->buffer_bit_inc_cb,
+                  ref_pic_ptr->stride_bit_inc_cb,
+                  (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
+                  (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
 
-            un_pack2d((uint16_t *)ref_pic_16bit_ptr->buffer_cr,
-                      ref_pic_16bit_ptr->stride_cr,
-                      ref_pic_ptr->buffer_cr,
-                      ref_pic_ptr->stride_cr,
-                      ref_pic_ptr->buffer_bit_inc_cr,
-                      ref_pic_ptr->stride_bit_inc_cr,
-                      (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
-                      (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
+        un_pack2d((uint16_t *)ref_pic_16bit_ptr->buffer_cr,
+                  ref_pic_16bit_ptr->stride_cr,
+                  ref_pic_ptr->buffer_cr,
+                  ref_pic_ptr->stride_cr,
+                  ref_pic_ptr->buffer_bit_inc_cr,
+                  ref_pic_ptr->stride_bit_inc_cr,
+                  (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
+                  (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
     }
     if ((scs_ptr->is_16bit_pipeline) && (!is_16bit)) {
         // Y samples
@@ -1799,7 +1794,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
 
         //Y
         uint16_t *buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_y);
-        uint8_t * buf_8bit  = ref_pic_ptr->buffer_y;
+        uint8_t  *buf_8bit  = ref_pic_ptr->buffer_y;
         svt_convert_16bit_to_8bit(buf_16bit,
                                   ref_pic_16bit_ptr->stride_y,
                                   buf_8bit,
@@ -1848,9 +1843,9 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
     ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->intra_coded_area = (uint8_t)(pcs_ptr->intra_coded_area);
     ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-        ->skip_coded_area = (uint8_t)(pcs_ptr->skip_coded_area);
+        ->skip_coded_area                   = (uint8_t)(pcs_ptr->skip_coded_area);
     struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
-    FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
+    FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
     ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->ref_cdef_strengths_num = ppcs->nb_cdef_strengths;
     for (int i = 0; i < ppcs->nb_cdef_strengths; i++) {
@@ -1870,7 +1865,8 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->sb_me_64x64_dist[sb_index] = pcs_ptr->parent_pcs_ptr->me_64x64_distortion[sb_index];
         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-            ->sb_me_8x8_cost_var[sb_index] = pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[sb_index];
+            ->sb_me_8x8_cost_var[sb_index] =
+            pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[sb_index];
     }
     ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->tmp_layer_idx = (uint8_t)pcs_ptr->temporal_layer_index;
@@ -1955,33 +1951,41 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
         if (depth_removal_ctrls->enabled) {
             // If variance is available, use in depth removal decision
             if (pcs_ptr->parent_pcs_ptr->variance) {
-                depth_removal_ctrls->disallow_below_16x16 =
-                    (sb_params->width % 16 == 0 && sb_params->height % 16 == 0)
+                depth_removal_ctrls->disallow_below_16x16 = (sb_params->width % 16 == 0 &&
+                                                             sb_params->height % 16 == 0)
                     ? (depth_removal_ctrls->disallow_below_16x16 ||
-                        pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] < disallow_below_16x16_variance_th)
+                       pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <
+                           disallow_below_16x16_variance_th)
                     : 0;
 
-                depth_removal_ctrls->disallow_below_32x32 =
-                    (sb_params->width % 32 == 0 && sb_params->height % 32 == 0)
+                depth_removal_ctrls->disallow_below_32x32 = (sb_params->width % 32 == 0 &&
+                                                             sb_params->height % 32 == 0)
                     ? (depth_removal_ctrls->disallow_below_32x32 ||
-                        pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] < disallow_below_32x32_variance_th)
+                       pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <
+                           disallow_below_32x32_variance_th)
                     : 0;
 
-                depth_removal_ctrls->disallow_below_64x64 =
-                    (sb_params->width % 64 == 0 && sb_params->height % 64 == 0)
+                depth_removal_ctrls->disallow_below_64x64 = (sb_params->width % 64 == 0 &&
+                                                             sb_params->height % 64 == 0)
                     ? (depth_removal_ctrls->disallow_below_64x64 ||
-                        pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] < disallow_below_64x64_variance_th)
+                       pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <
+                           disallow_below_64x64_variance_th)
                     : 0;
-            }
-            else {
-                depth_removal_ctrls->disallow_below_16x16 =
-                    (sb_params->width % 16 == 0 && sb_params->height % 16 == 0) ? depth_removal_ctrls->disallow_below_16x16 : 0;
+            } else {
+                depth_removal_ctrls->disallow_below_16x16 = (sb_params->width % 16 == 0 &&
+                                                             sb_params->height % 16 == 0)
+                    ? depth_removal_ctrls->disallow_below_16x16
+                    : 0;
 
-                depth_removal_ctrls->disallow_below_32x32 =
-                    (sb_params->width % 32 == 0 && sb_params->height % 32 == 0) ? depth_removal_ctrls->disallow_below_32x32 : 0;
+                depth_removal_ctrls->disallow_below_32x32 = (sb_params->width % 32 == 0 &&
+                                                             sb_params->height % 32 == 0)
+                    ? depth_removal_ctrls->disallow_below_32x32
+                    : 0;
 
-                depth_removal_ctrls->disallow_below_64x64 =
-                    (sb_params->width % 64 == 0 && sb_params->height % 64 == 0) ? depth_removal_ctrls->disallow_below_64x64 : 0;
+                depth_removal_ctrls->disallow_below_64x64 = (sb_params->width % 64 == 0 &&
+                                                             sb_params->height % 64 == 0)
+                    ? depth_removal_ctrls->disallow_below_64x64
+                    : 0;
             }
         }
     } else {
@@ -2258,7 +2262,7 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
         md_nsq_motion_search_ctrls->use_ssd                = 0;
         md_nsq_motion_search_ctrls->full_pel_search_width  = 31;
         md_nsq_motion_search_ctrls->full_pel_search_height = 31;
-        md_nsq_motion_search_ctrls->enable_psad = 1;
+        md_nsq_motion_search_ctrls->enable_psad            = 1;
         break;
 
     case 2:
@@ -2266,19 +2270,21 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
         md_nsq_motion_search_ctrls->use_ssd                = 0;
         md_nsq_motion_search_ctrls->full_pel_search_width  = 15;
         md_nsq_motion_search_ctrls->full_pel_search_height = 15;
-        md_nsq_motion_search_ctrls->enable_psad = 1;
+        md_nsq_motion_search_ctrls->enable_psad            = 1;
         break;
     case 3:
         md_nsq_motion_search_ctrls->enabled                = 1;
         md_nsq_motion_search_ctrls->use_ssd                = 0;
         md_nsq_motion_search_ctrls->full_pel_search_width  = 11;
         md_nsq_motion_search_ctrls->full_pel_search_height = 11;
-        md_nsq_motion_search_ctrls->enable_psad = 1;
+        md_nsq_motion_search_ctrls->enable_psad            = 1;
         break;
-    case 4: md_nsq_motion_search_ctrls->enabled = 1; md_nsq_motion_search_ctrls->use_ssd = 0;
+    case 4:
+        md_nsq_motion_search_ctrls->enabled                = 1;
+        md_nsq_motion_search_ctrls->use_ssd                = 0;
         md_nsq_motion_search_ctrls->full_pel_search_width  = 8;
         md_nsq_motion_search_ctrls->full_pel_search_height = 7;
-        md_nsq_motion_search_ctrls->enable_psad = 1;
+        md_nsq_motion_search_ctrls->enable_psad            = 1;
         break;
     default: assert(0); break;
     }
@@ -2302,43 +2308,43 @@ void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
         md_pme_ctrls->enable_psad                   = 0;
         break;
     case 2:
-        md_pme_ctrls->enabled = 1;
-        md_pme_ctrls->use_ssd = 1;
-        md_pme_ctrls->full_pel_search_width  = 20;
-        md_pme_ctrls->full_pel_search_height = 15;
-        md_pme_ctrls->early_check_mv_th_multiplier = MIN_SIGNED_VALUE;
-        md_pme_ctrls->pre_fp_pme_to_me_cost_th  = MAX_SIGNED_VALUE;
-        md_pme_ctrls->pre_fp_pme_to_me_mv_th    = MIN_SIGNED_VALUE;
-        md_pme_ctrls->post_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
-        md_pme_ctrls->post_fp_pme_to_me_mv_th   = MIN_SIGNED_VALUE;
+        md_pme_ctrls->enabled                       = 1;
+        md_pme_ctrls->use_ssd                       = 1;
+        md_pme_ctrls->full_pel_search_width         = 20;
+        md_pme_ctrls->full_pel_search_height        = 15;
+        md_pme_ctrls->early_check_mv_th_multiplier  = MIN_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th      = MAX_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th        = MIN_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th     = MAX_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th       = MIN_SIGNED_VALUE;
         md_pme_ctrls->modulate_pme_for_blk_size_res = 0;
-        md_pme_ctrls->enable_psad = 0;
+        md_pme_ctrls->enable_psad                   = 0;
         break;
     case 3:
-        md_pme_ctrls->enabled                = 1;
-        md_pme_ctrls->use_ssd                = 1;
-        md_pme_ctrls->full_pel_search_width  = 7;
-        md_pme_ctrls->full_pel_search_height = 5;
-        md_pme_ctrls->early_check_mv_th_multiplier = MIN_SIGNED_VALUE;
-        md_pme_ctrls->pre_fp_pme_to_me_cost_th  = MAX_SIGNED_VALUE;
-        md_pme_ctrls->pre_fp_pme_to_me_mv_th    = MIN_SIGNED_VALUE;
-        md_pme_ctrls->post_fp_pme_to_me_cost_th = MAX_SIGNED_VALUE;
-        md_pme_ctrls->post_fp_pme_to_me_mv_th   = MIN_SIGNED_VALUE;
+        md_pme_ctrls->enabled                       = 1;
+        md_pme_ctrls->use_ssd                       = 1;
+        md_pme_ctrls->full_pel_search_width         = 7;
+        md_pme_ctrls->full_pel_search_height        = 5;
+        md_pme_ctrls->early_check_mv_th_multiplier  = MIN_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th      = MAX_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th        = MIN_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th     = MAX_SIGNED_VALUE;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th       = MIN_SIGNED_VALUE;
         md_pme_ctrls->modulate_pme_for_blk_size_res = 0;
-        md_pme_ctrls->enable_psad = 0;
+        md_pme_ctrls->enable_psad                   = 0;
         break;
     case 4:
-        md_pme_ctrls->enabled                = 1;
-        md_pme_ctrls->use_ssd                = 1;
-        md_pme_ctrls->full_pel_search_width  = 7;
-        md_pme_ctrls->full_pel_search_height = 5;
-        md_pme_ctrls->early_check_mv_th_multiplier = MIN_SIGNED_VALUE;
-        md_pme_ctrls->pre_fp_pme_to_me_cost_th  = 100;
-        md_pme_ctrls->pre_fp_pme_to_me_mv_th    = 16;
-        md_pme_ctrls->post_fp_pme_to_me_cost_th = 25;
-        md_pme_ctrls->post_fp_pme_to_me_mv_th   = 32;
+        md_pme_ctrls->enabled                       = 1;
+        md_pme_ctrls->use_ssd                       = 1;
+        md_pme_ctrls->full_pel_search_width         = 7;
+        md_pme_ctrls->full_pel_search_height        = 5;
+        md_pme_ctrls->early_check_mv_th_multiplier  = MIN_SIGNED_VALUE;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th      = 100;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th        = 16;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th     = 25;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th       = 32;
         md_pme_ctrls->modulate_pme_for_blk_size_res = 0;
-        md_pme_ctrls->enable_psad = 0;
+        md_pme_ctrls->enable_psad                   = 0;
         break;
     case 5:
         md_pme_ctrls->enabled                       = 1;
@@ -2630,7 +2636,7 @@ void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_
         md_sq_me_ctrls->sprs_lev2_step    = 1;
         md_sq_me_ctrls->sprs_lev2_w       = 3;
         md_sq_me_ctrls->sprs_lev2_h       = 3;
-        md_sq_me_ctrls->enable_psad = 1;
+        md_sq_me_ctrls->enable_psad       = 1;
         break;
     case 2:
         md_sq_me_ctrls->enabled = 1;
@@ -2658,7 +2664,7 @@ void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_
         md_sq_me_ctrls->sprs_lev2_step    = 1;
         md_sq_me_ctrls->sprs_lev2_w       = 3;
         md_sq_me_ctrls->sprs_lev2_h       = 3;
-        md_sq_me_ctrls->enable_psad = 1;
+        md_sq_me_ctrls->enable_psad       = 1;
         break;
     case 3:
         md_sq_me_ctrls->enabled = 1;
@@ -2686,7 +2692,7 @@ void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_
         md_sq_me_ctrls->sprs_lev2_step    = 1;
         md_sq_me_ctrls->sprs_lev2_w       = 3;
         md_sq_me_ctrls->sprs_lev2_h       = 3;
-        md_sq_me_ctrls->enable_psad = 1;
+        md_sq_me_ctrls->enable_psad       = 1;
         break;
     case 4:
         md_sq_me_ctrls->enabled            = 1;
@@ -2713,7 +2719,7 @@ void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_
         md_sq_me_ctrls->sprs_lev2_step    = 1;
         md_sq_me_ctrls->sprs_lev2_w       = 3;
         md_sq_me_ctrls->sprs_lev2_h       = 3;
-        md_sq_me_ctrls->enable_psad = 1;
+        md_sq_me_ctrls->enable_psad       = 1;
         break;
     default: assert(0); break;
     }
@@ -2730,181 +2736,181 @@ void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_lev
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_8_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 2;
-        md_subpel_me_ctrls->max_precision = EIGHTH_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 0;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = EIGHTH_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 0;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 2:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 2;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 0;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 0;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 3:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 0;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 0;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 4:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_8_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 2;
-        md_subpel_me_ctrls->max_precision = EIGHTH_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 1;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = EIGHTH_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 1;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 5:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_8_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 2;
-        md_subpel_me_ctrls->max_precision = EIGHTH_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 2;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = EIGHTH_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 2;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 6:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 2;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 2;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 2;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 7:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 1;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 1;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 8:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 2;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 2;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 9:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 3;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 3;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 10:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 2;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 2;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 11:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th = 0;
-        md_subpel_me_ctrls->abs_th_mult      = 0;
-        md_subpel_me_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 3;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 0;
+        md_subpel_me_ctrls->abs_th_mult           = 0;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 3;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 12:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th     = 50;
-        md_subpel_me_ctrls->abs_th_mult          = 2;
-        md_subpel_me_ctrls->round_dev_th         = MAX_SIGNED_VALUE;
-        md_subpel_me_ctrls->skip_diag_refinement = 3;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 50;
+        md_subpel_me_ctrls->abs_th_mult           = 2;
+        md_subpel_me_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_me_ctrls->skip_diag_refinement  = 3;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 13:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th     = 100;
-        md_subpel_me_ctrls->abs_th_mult          = 2;
-        md_subpel_me_ctrls->round_dev_th         = -25;
-        md_subpel_me_ctrls->skip_diag_refinement = 4;
-        md_subpel_me_ctrls->skip_zz_mv = 0;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 100;
+        md_subpel_me_ctrls->abs_th_mult           = 2;
+        md_subpel_me_ctrls->round_dev_th          = -25;
+        md_subpel_me_ctrls->skip_diag_refinement  = 4;
+        md_subpel_me_ctrls->skip_zz_mv            = 0;
         break;
     case 14:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = QUARTER_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th     = 100;
-        md_subpel_me_ctrls->abs_th_mult          = 2;
-        md_subpel_me_ctrls->round_dev_th         = -25;
-        md_subpel_me_ctrls->skip_diag_refinement = 4;
-        md_subpel_me_ctrls->skip_zz_mv           = 1;
+        md_subpel_me_ctrls->max_precision         = QUARTER_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 100;
+        md_subpel_me_ctrls->abs_th_mult           = 2;
+        md_subpel_me_ctrls->round_dev_th          = -25;
+        md_subpel_me_ctrls->skip_diag_refinement  = 4;
+        md_subpel_me_ctrls->skip_zz_mv            = 1;
         break;
     case 15:
         md_subpel_me_ctrls->enabled               = 1;
         md_subpel_me_ctrls->subpel_search_type    = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
-        md_subpel_me_ctrls->max_precision = HALF_PEL;
-        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_me_ctrls->pred_variance_th     = 100;
-        md_subpel_me_ctrls->abs_th_mult          = 2;
-        md_subpel_me_ctrls->round_dev_th         = -25;
-        md_subpel_me_ctrls->skip_diag_refinement = 4;
-        md_subpel_me_ctrls->skip_zz_mv           = 1;
+        md_subpel_me_ctrls->max_precision         = HALF_PEL;
+        md_subpel_me_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_me_ctrls->pred_variance_th      = 100;
+        md_subpel_me_ctrls->abs_th_mult           = 2;
+        md_subpel_me_ctrls->round_dev_th          = -25;
+        md_subpel_me_ctrls->skip_diag_refinement  = 4;
+        md_subpel_me_ctrls->skip_zz_mv            = 1;
         break;
     default: assert(0); break;
     }
@@ -2922,45 +2928,45 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
         md_subpel_pme_ctrls->enabled               = 1;
         md_subpel_pme_ctrls->subpel_search_type    = USE_8_TAPS;
         md_subpel_pme_ctrls->subpel_iters_per_step = 2;
-        md_subpel_pme_ctrls->max_precision = EIGHTH_PEL;
-        md_subpel_pme_ctrls->subpel_search_method = SUBPEL_TREE;
-        md_subpel_pme_ctrls->pred_variance_th = 0;
-        md_subpel_pme_ctrls->abs_th_mult      = 0;
-        md_subpel_pme_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_pme_ctrls->skip_zz_mv = 0;
+        md_subpel_pme_ctrls->max_precision         = EIGHTH_PEL;
+        md_subpel_pme_ctrls->subpel_search_method  = SUBPEL_TREE;
+        md_subpel_pme_ctrls->pred_variance_th      = 0;
+        md_subpel_pme_ctrls->abs_th_mult           = 0;
+        md_subpel_pme_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_pme_ctrls->skip_zz_mv            = 0;
         break;
     case 2:
         md_subpel_pme_ctrls->enabled               = 1;
         md_subpel_pme_ctrls->subpel_search_type    = USE_8_TAPS;
         md_subpel_pme_ctrls->subpel_iters_per_step = 2;
-        md_subpel_pme_ctrls->max_precision = EIGHTH_PEL;
-        md_subpel_pme_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_pme_ctrls->pred_variance_th = 0;
-        md_subpel_pme_ctrls->abs_th_mult      = 0;
-        md_subpel_pme_ctrls->round_dev_th     = MAX_SIGNED_VALUE;
-        md_subpel_pme_ctrls->skip_zz_mv = 0;
+        md_subpel_pme_ctrls->max_precision         = EIGHTH_PEL;
+        md_subpel_pme_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_pme_ctrls->pred_variance_th      = 0;
+        md_subpel_pme_ctrls->abs_th_mult           = 0;
+        md_subpel_pme_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_pme_ctrls->skip_zz_mv            = 0;
         break;
     case 3:
         md_subpel_pme_ctrls->enabled               = 1;
         md_subpel_pme_ctrls->subpel_search_type    = USE_8_TAPS;
         md_subpel_pme_ctrls->subpel_iters_per_step = 2;
-        md_subpel_pme_ctrls->max_precision = EIGHTH_PEL;
-        md_subpel_pme_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_pme_ctrls->pred_variance_th     = 0;
-        md_subpel_pme_ctrls->abs_th_mult          = 0;
-        md_subpel_pme_ctrls->round_dev_th         = MAX_SIGNED_VALUE;
-        md_subpel_pme_ctrls->skip_zz_mv = 0;
+        md_subpel_pme_ctrls->max_precision         = EIGHTH_PEL;
+        md_subpel_pme_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_pme_ctrls->pred_variance_th      = 0;
+        md_subpel_pme_ctrls->abs_th_mult           = 0;
+        md_subpel_pme_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_pme_ctrls->skip_zz_mv            = 0;
         break;
     case 4:
         md_subpel_pme_ctrls->enabled               = 1;
         md_subpel_pme_ctrls->subpel_search_type    = USE_8_TAPS;
         md_subpel_pme_ctrls->subpel_iters_per_step = 2;
-        md_subpel_pme_ctrls->max_precision = HALF_PEL;
-        md_subpel_pme_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
-        md_subpel_pme_ctrls->pred_variance_th     = 0;
-        md_subpel_pme_ctrls->abs_th_mult          = 0;
-        md_subpel_pme_ctrls->round_dev_th         = MAX_SIGNED_VALUE;
-        md_subpel_pme_ctrls->skip_zz_mv           = 0;
+        md_subpel_pme_ctrls->max_precision         = HALF_PEL;
+        md_subpel_pme_ctrls->subpel_search_method  = SUBPEL_TREE_PRUNED;
+        md_subpel_pme_ctrls->pred_variance_th      = 0;
+        md_subpel_pme_ctrls->abs_th_mult           = 0;
+        md_subpel_pme_ctrls->round_dev_th          = MAX_SIGNED_VALUE;
+        md_subpel_pme_ctrls->skip_zz_mv            = 0;
         break;
     default: assert(0); break;
     }
@@ -2973,7 +2979,8 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
 
     switch (rdoq_level) {
     case 0: rdoq_ctrls->enabled = 0; break;
-    case 1: rdoq_ctrls->enabled = 1;
+    case 1:
+        rdoq_ctrls->enabled          = 1;
         rdoq_ctrls->eob_fast_y_inter = 0;
         rdoq_ctrls->eob_fast_y_intra = 0;
 #if TUNE_CHROMA_SSIM
@@ -2984,14 +2991,15 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->eob_fast_uv_intra = 0;
         rdoq_ctrls->fp_q_y            = 1;
         rdoq_ctrls->fp_q_uv           = 1;
-        rdoq_ctrls->satd_factor   = (uint8_t)~0;
-        rdoq_ctrls->early_exit_th = 0;
-        rdoq_ctrls->skip_uv      = 0;
-        rdoq_ctrls->dct_dct_only = 0;
-        rdoq_ctrls->eob_th = (uint8_t)~0;
-        rdoq_ctrls->eob_fast_th = (uint8_t)~0;
+        rdoq_ctrls->satd_factor       = (uint8_t)~0;
+        rdoq_ctrls->early_exit_th     = 0;
+        rdoq_ctrls->skip_uv           = 0;
+        rdoq_ctrls->dct_dct_only      = 0;
+        rdoq_ctrls->eob_th            = (uint8_t)~0;
+        rdoq_ctrls->eob_fast_th       = (uint8_t)~0;
         break;
-    case 2: rdoq_ctrls->enabled = 1;
+    case 2:
+        rdoq_ctrls->enabled          = 1;
         rdoq_ctrls->eob_fast_y_inter = 0;
         rdoq_ctrls->eob_fast_y_intra = 0;
 #if TUNE_CHROMA_SSIM
@@ -3002,12 +3010,12 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->eob_fast_uv_intra = 0;
         rdoq_ctrls->fp_q_y            = 1;
         rdoq_ctrls->fp_q_uv           = 1;
-        rdoq_ctrls->satd_factor   = (uint8_t)~0;
-        rdoq_ctrls->early_exit_th = 0;
-        rdoq_ctrls->skip_uv      = 1;
-        rdoq_ctrls->dct_dct_only = 0;
-        rdoq_ctrls->eob_th = (uint8_t)~0;
-        rdoq_ctrls->eob_fast_th = (uint8_t)~0;
+        rdoq_ctrls->satd_factor       = (uint8_t)~0;
+        rdoq_ctrls->early_exit_th     = 0;
+        rdoq_ctrls->skip_uv           = 1;
+        rdoq_ctrls->dct_dct_only      = 0;
+        rdoq_ctrls->eob_th            = (uint8_t)~0;
+        rdoq_ctrls->eob_fast_th       = (uint8_t)~0;
         break;
     case 3:
         rdoq_ctrls->enabled          = 1;
@@ -3023,10 +3031,10 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_q_uv           = 1;
         rdoq_ctrls->satd_factor       = (uint8_t)~0;
         rdoq_ctrls->early_exit_th     = 0;
-        rdoq_ctrls->skip_uv      = 1;
-        rdoq_ctrls->dct_dct_only = 1;
-        rdoq_ctrls->eob_th = (uint8_t)~0;
-        rdoq_ctrls->eob_fast_th = (uint8_t)~0;
+        rdoq_ctrls->skip_uv           = 1;
+        rdoq_ctrls->dct_dct_only      = 1;
+        rdoq_ctrls->eob_th            = (uint8_t)~0;
+        rdoq_ctrls->eob_fast_th       = (uint8_t)~0;
         break;
     case 4:
         rdoq_ctrls->enabled          = 1;
@@ -3042,10 +3050,10 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_q_uv           = 1;
         rdoq_ctrls->satd_factor       = (uint8_t)~0;
         rdoq_ctrls->early_exit_th     = 0;
-        rdoq_ctrls->skip_uv      = 1;
-        rdoq_ctrls->dct_dct_only = 1;
-        rdoq_ctrls->eob_th = (uint8_t)~0;
-        rdoq_ctrls->eob_fast_th = 30;
+        rdoq_ctrls->skip_uv           = 1;
+        rdoq_ctrls->dct_dct_only      = 1;
+        rdoq_ctrls->eob_th            = (uint8_t)~0;
+        rdoq_ctrls->eob_fast_th       = 30;
         break;
     case 5:
         rdoq_ctrls->enabled          = 1;
@@ -3064,7 +3072,7 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->skip_uv           = 1;
         rdoq_ctrls->dct_dct_only      = 1;
         rdoq_ctrls->eob_th            = 85;
-        rdoq_ctrls->eob_fast_th = 0;
+        rdoq_ctrls->eob_fast_th       = 0;
         break;
     default: assert(0); break;
     }
@@ -3245,12 +3253,7 @@ void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext *
     default: assert(0); break;
     }
 }
-#if OPT_RES_CHECKS_2
 void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
-#else
-void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t resolution) {
-#endif
-
     TxtControls *txt_ctrls = &mdctxt->txt_ctrls;
 
     switch (txt_level) {
@@ -3262,8 +3265,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
 
         txt_ctrls->txt_group_intra_lt_16x16    = 1;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 1;
-        txt_ctrls->early_exit_dist_th  = 0;
-        txt_ctrls->early_exit_coeff_th = 0;
+        txt_ctrls->early_exit_dist_th          = 0;
+        txt_ctrls->early_exit_coeff_th         = 0;
         break;
     case 1:
         txt_ctrls->enabled = 1;
@@ -3273,8 +3276,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
 
         txt_ctrls->txt_group_intra_lt_16x16    = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
-        txt_ctrls->early_exit_dist_th  = 0;
-        txt_ctrls->early_exit_coeff_th = 0;
+        txt_ctrls->early_exit_dist_th          = 0;
+        txt_ctrls->early_exit_coeff_th         = 0;
         break;
     case 2:
         txt_ctrls->enabled                     = 1;
@@ -3283,8 +3286,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
 
         txt_ctrls->txt_group_intra_lt_16x16    = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
-        txt_ctrls->early_exit_dist_th  = 0;
-        txt_ctrls->early_exit_coeff_th = 0;
+        txt_ctrls->early_exit_dist_th          = 0;
+        txt_ctrls->early_exit_coeff_th         = 0;
         break;
     case 3:
         txt_ctrls->enabled = 1;
@@ -3294,8 +3297,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
 
         txt_ctrls->txt_group_intra_lt_16x16    = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
-        txt_ctrls->early_exit_dist_th  = 0;
-        txt_ctrls->early_exit_coeff_th = 0;
+        txt_ctrls->early_exit_dist_th          = 0;
+        txt_ctrls->early_exit_coeff_th         = 0;
         break;
     case 4:
         txt_ctrls->enabled = 1;
@@ -3305,8 +3308,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
 
         txt_ctrls->txt_group_intra_lt_16x16    = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
-        txt_ctrls->early_exit_dist_th  = 0;
-        txt_ctrls->early_exit_coeff_th = 0;
+        txt_ctrls->early_exit_dist_th          = 0;
+        txt_ctrls->early_exit_coeff_th         = 0;
         break;
     case 5:
         txt_ctrls->enabled = 1;
@@ -3316,8 +3319,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
 
         txt_ctrls->txt_group_intra_lt_16x16    = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 4;
-        txt_ctrls->early_exit_dist_th  = 0;
-        txt_ctrls->early_exit_coeff_th = 0;
+        txt_ctrls->early_exit_dist_th          = 0;
+        txt_ctrls->early_exit_coeff_th         = 0;
         break;
     case 6:
         txt_ctrls->enabled = 1;
@@ -3329,11 +3332,7 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 4;
 
         txt_ctrls->early_exit_dist_th  = 100;
-#if OPT_RES_CHECKS_2
         txt_ctrls->early_exit_coeff_th = 4;
-#else
-        txt_ctrls->early_exit_coeff_th = (resolution <= INPUT_SIZE_720p_RANGE) ? 4 : 16;
-#endif
         break;
     case 7:
         txt_ctrls->enabled = 1;
@@ -3345,11 +3344,7 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 3;
 
         txt_ctrls->early_exit_dist_th  = 400;
-#if OPT_RES_CHECKS_2
         txt_ctrls->early_exit_coeff_th = 8;
-#else
-        txt_ctrls->early_exit_coeff_th = (resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 32;
-#endif
         break;
     case 8:
         txt_ctrls->enabled = 1;
@@ -3359,12 +3354,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
 
         txt_ctrls->txt_group_intra_lt_16x16    = 4;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 2;
-        txt_ctrls->early_exit_dist_th  = 400;
-#if OPT_RES_CHECKS_2
-        txt_ctrls->early_exit_coeff_th = 8;
-#else
-        txt_ctrls->early_exit_coeff_th = (resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 32;
-#endif
+        txt_ctrls->early_exit_dist_th          = 400;
+        txt_ctrls->early_exit_coeff_th         = 8;
         break;
     case 9:
         txt_ctrls->enabled = 1;
@@ -3374,12 +3365,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
 
         txt_ctrls->txt_group_intra_lt_16x16    = 4;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 2;
-        txt_ctrls->early_exit_dist_th  = 400;
-#if OPT_RES_CHECKS_2
-        txt_ctrls->early_exit_coeff_th = 8;
-#else
-        txt_ctrls->early_exit_coeff_th = (resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 32;
-#endif
+        txt_ctrls->early_exit_dist_th          = 400;
+        txt_ctrls->early_exit_coeff_th         = 8;
         break;
     case 10:
         txt_ctrls->enabled = 1;
@@ -3389,11 +3376,7 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
         txt_ctrls->txt_group_intra_lt_16x16    = 3;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 2;
         txt_ctrls->early_exit_dist_th          = 400;
-#if OPT_RES_CHECKS_2
-        txt_ctrls->early_exit_coeff_th = 8;
-#else
-        txt_ctrls->early_exit_coeff_th         = (resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 32;
-#endif
+        txt_ctrls->early_exit_coeff_th         = 8;
         break;
     default: assert(0); break;
     }
@@ -3404,96 +3387,54 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext *context_ptr,
 
     switch (interpolation_search_level) {
     case 0:
-        ifs_ctrls->level = IFS_OFF;
-        ifs_ctrls->quarter_pel_only               = 0;
-#if !CLN_REMOVE_UNUSED_RES
-        ifs_ctrls->modulate_filter_per_resolution = 0;
-#endif
+        ifs_ctrls->level                 = IFS_OFF;
+        ifs_ctrls->quarter_pel_only      = 0;
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
         break;
     case 1:
-        ifs_ctrls->level = IFS_MDS0;
-        ifs_ctrls->quarter_pel_only               = 0;
-#if !CLN_REMOVE_UNUSED_RES
-        ifs_ctrls->modulate_filter_per_resolution = 0;
-#endif
+        ifs_ctrls->level                 = IFS_MDS0;
+        ifs_ctrls->quarter_pel_only      = 0;
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
         break;
     case 2:
-        ifs_ctrls->level = IFS_MDS1;
-        ifs_ctrls->quarter_pel_only               = 0;
-#if !CLN_REMOVE_UNUSED_RES
-        ifs_ctrls->modulate_filter_per_resolution = 0;
-#endif
+        ifs_ctrls->level                 = IFS_MDS1;
+        ifs_ctrls->quarter_pel_only      = 0;
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
         break;
     case 3:
-        ifs_ctrls->level = IFS_MDS2;
-        ifs_ctrls->quarter_pel_only               = 0;
-#if !CLN_REMOVE_UNUSED_RES
-        ifs_ctrls->modulate_filter_per_resolution = 0;
-#endif
+        ifs_ctrls->level                 = IFS_MDS2;
+        ifs_ctrls->quarter_pel_only      = 0;
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
         break;
     case 4:
-        ifs_ctrls->level = IFS_MDS3;
-        ifs_ctrls->quarter_pel_only               = 0;
-#if !CLN_REMOVE_UNUSED_RES
-        ifs_ctrls->modulate_filter_per_resolution = 0;
-#endif
+        ifs_ctrls->level                 = IFS_MDS3;
+        ifs_ctrls->quarter_pel_only      = 0;
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
         break;
-#if CLN_REMOVE_UNUSED_RES
     case 5:
-        ifs_ctrls->level = IFS_MDS3;
-        ifs_ctrls->quarter_pel_only               = 0;
-        ifs_ctrls->early_skip                     = 1;
-        ifs_ctrls->subsampled_distortion          = 1;
-        ifs_ctrls->skip_sse_rd_model              = 1;
+        ifs_ctrls->level                 = IFS_MDS3;
+        ifs_ctrls->quarter_pel_only      = 0;
+        ifs_ctrls->early_skip            = 1;
+        ifs_ctrls->subsampled_distortion = 1;
+        ifs_ctrls->skip_sse_rd_model     = 1;
         break;
     case 6:
-        ifs_ctrls->level = IFS_MDS3;
-        ifs_ctrls->quarter_pel_only               = 1;
-        ifs_ctrls->early_skip                     = 1;
-        ifs_ctrls->subsampled_distortion          = 1;
-        ifs_ctrls->skip_sse_rd_model              = 1;
+        ifs_ctrls->level                 = IFS_MDS3;
+        ifs_ctrls->quarter_pel_only      = 1;
+        ifs_ctrls->early_skip            = 1;
+        ifs_ctrls->subsampled_distortion = 1;
+        ifs_ctrls->skip_sse_rd_model     = 1;
         break;
-#else
-    case 5:
-        ifs_ctrls->level = IFS_MDS3;
-        ifs_ctrls->quarter_pel_only               = 1;
-        ifs_ctrls->modulate_filter_per_resolution = 1;
-        ifs_ctrls->early_skip            = 0;
-        ifs_ctrls->subsampled_distortion = 0;
-        ifs_ctrls->skip_sse_rd_model     = 0;
-        break;
-    case 6:
-        ifs_ctrls->level = IFS_MDS3;
-        ifs_ctrls->quarter_pel_only               = 0;
-        ifs_ctrls->modulate_filter_per_resolution = 0;
-        ifs_ctrls->early_skip                     = 1;
-        ifs_ctrls->subsampled_distortion          = 1;
-        ifs_ctrls->skip_sse_rd_model              = 1;
-        break;
-    case 7:
-        ifs_ctrls->level = IFS_MDS3;
-        ifs_ctrls->quarter_pel_only               = 1;
-        ifs_ctrls->modulate_filter_per_resolution = 1;
-        ifs_ctrls->early_skip                     = 1;
-        ifs_ctrls->subsampled_distortion          = 1;
-        ifs_ctrls->skip_sse_rd_model              = 1;
-        break;
-#endif
     default: assert(0); break;
     }
 }
@@ -3807,7 +3748,7 @@ uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index) {
 uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level) {
     NicPruningCtrls *nic_pruning_ctrls = ctx ? &ctx->nic_ctrls.pruning_ctrls : NULL;
     uint8_t          nic_scaling_level = 0;
-    uint8_t md_staging_mode = MD_STAGING_MODE_0;
+    uint8_t          md_staging_mode   = MD_STAGING_MODE_0;
     switch (nic_level) {
     case 0: // MAX NIC scaling; no pruning
         // NIC scaling level
@@ -4549,24 +4490,18 @@ uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolu
                                                EB_SLICE slice_type, uint8_t sc_class1,
                                                uint8_t is_used_as_reference_flag,
                                                uint8_t temporal_layer_index) {
-
     uint8_t disallow_below_16x16 = 0;
 
     if (sc_class1)
         disallow_below_16x16 = 0;
     else if (enc_mode <= ENC_M8)
         disallow_below_16x16 = 0;
-#if OPT_M9_4K
     else if (enc_mode <= ENC_M9)
         if (resolution <= INPUT_SIZE_1080p_RANGE)
             disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
         else {
             disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
         }
-#else
-    else if (enc_mode <= ENC_M9)
-        disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
-#endif
     else if (enc_mode <= ENC_M11)
         disallow_below_16x16 = (resolution <= INPUT_SIZE_480p_RANGE)
             ? (temporal_layer_index == 0 ? 0 : 1)
@@ -4580,8 +4515,8 @@ uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolu
 /*
  * Generate per-SB MD settings (do not change per-PD)
  */
-EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet * scs_ptr,
-                                                    PictureControlSet *  pcs_ptr,
+EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr,
+                                                    PictureControlSet   *pcs_ptr,
                                                     ModeDecisionContext *ctx) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -4608,11 +4543,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet * scs_ptr
         depth_level = 0;
     set_depth_ctrls(ctx, depth_level);
     ctx->pred_depth_only = (depth_level == 0);
-    ctx->pd0_level = pcs_ptr->pic_pd0_level;
-    SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[ctx->sb_index];
+    ctx->pd0_level       = pcs_ptr->pic_pd0_level;
+    SbParams *sb_params  = &pcs_ptr->parent_pcs_ptr->sb_params_array[ctx->sb_index];
     ctx->depth_removal_ctrls.disallow_below_64x64 = 0;
     ctx->depth_removal_ctrls.disallow_below_32x32 = 0;
-/*
+    /*
 if disallow_below_16x16 is turned ON then enable_me_8x8 should be turned OFF for the same preset in order to save memory and cycles as that feature optimizes the me_candidate_array,
 me_mv_array and the total_me_candidate_index arrays when 8x8 blocks are not used
 
@@ -4628,7 +4563,7 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
     if (sb_params->width % 8 != 0 || sb_params->height % 8 != 0)
         ctx->depth_removal_ctrls.disallow_below_16x16 = EB_FALSE;
 
-        // me_distortion/variance generated for 64x64 blocks only
+    // me_distortion/variance generated for 64x64 blocks only
     if (scs_ptr->super_block_size == 64) {
         set_depth_removal_level_controls(pcs_ptr, ctx, pcs_ptr->pic_depth_removal_level);
     }
@@ -4880,7 +4815,7 @@ void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
         txs_ctrls->inter_class_max_depth   = 2;
         txs_ctrls->depth1_txt_group_offset = 0;
         txs_ctrls->depth2_txt_group_offset = 0;
-        txs_ctrls->min_sq_size = 0;
+        txs_ctrls->min_sq_size             = 0;
         break;
 
     case 2:
@@ -4890,7 +4825,7 @@ void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
         txs_ctrls->inter_class_max_depth   = 1;
         txs_ctrls->depth1_txt_group_offset = 0;
         txs_ctrls->depth2_txt_group_offset = 0;
-        txs_ctrls->min_sq_size = 0;
+        txs_ctrls->min_sq_size             = 0;
         break;
 
     case 3:
@@ -4900,17 +4835,17 @@ void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
         txs_ctrls->inter_class_max_depth   = 0;
         txs_ctrls->depth1_txt_group_offset = 0;
         txs_ctrls->depth2_txt_group_offset = 0;
-        txs_ctrls->min_sq_size = 0;
+        txs_ctrls->min_sq_size             = 0;
         break;
 
     case 4:
-        txs_ctrls->enabled               = 1;
-        txs_ctrls->prev_depth_coeff_exit = 1;
-        txs_ctrls->intra_class_max_depth = 1;
-        txs_ctrls->inter_class_max_depth = 0;
+        txs_ctrls->enabled                 = 1;
+        txs_ctrls->prev_depth_coeff_exit   = 1;
+        txs_ctrls->intra_class_max_depth   = 1;
+        txs_ctrls->inter_class_max_depth   = 0;
         txs_ctrls->depth1_txt_group_offset = 4;
         txs_ctrls->depth2_txt_group_offset = 4;
-        txs_ctrls->min_sq_size = 0;
+        txs_ctrls->min_sq_size             = 0;
         break;
     case 5:
         txs_ctrls->enabled                 = 1;
@@ -4929,19 +4864,17 @@ void set_spatial_sse_full_loop_level(ModeDecisionContext *ctx,
     SpatialSSECtrls *spatial_sse_ctrls = &ctx->spatial_sse_ctrls;
 
     switch (spatial_sse_full_loop_level) {
-    case 0: spatial_sse_ctrls->spatial_sse_full_loop_level = EB_FALSE;
-        break;
-    case 1: spatial_sse_ctrls->spatial_sse_full_loop_level = EB_TRUE;
-        break;
+    case 0: spatial_sse_ctrls->spatial_sse_full_loop_level = EB_FALSE; break;
+    case 1: spatial_sse_ctrls->spatial_sse_full_loop_level = EB_TRUE; break;
     default: assert(0); break;
     }
 }
 // Compute a qp-aware threshold based on the variance of the SB, used to apply selectively subres
 uint64_t compute_subres_th(SequenceControlSet *scs, PictureControlSet *pcs,
                            ModeDecisionContext *ctx) {
-    uint32_t fast_lambda = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
-                                                  : ctx->fast_lambda_md[EB_8_BIT_MD];
-    uint32_t sb_size = scs->super_block_size * scs->super_block_size;
+    uint32_t fast_lambda   = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
+                                                    : ctx->fast_lambda_md[EB_8_BIT_MD];
+    uint32_t sb_size       = scs->super_block_size * scs->super_block_size;
     uint64_t cost_th_rate  = 1 << 13;
     uint64_t use_subres_th = 0;
 
@@ -4952,17 +4885,16 @@ uint64_t compute_subres_th(SequenceControlSet *scs, PictureControlSet *pcs,
             use_subres_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 7);
         else
             use_subres_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 6);
-    }
-    else {
+    } else {
         use_subres_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 6);
     }
     return use_subres_th;
 }
 // Compute a qp-aware threshold based on the variance of the SB, used to apply selectively apply PF
 uint64_t compute_pf_th(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx) {
-    uint32_t fast_lambda = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
-                                                  : ctx->fast_lambda_md[EB_8_BIT_MD];
-    uint32_t sb_size = scs->super_block_size * scs->super_block_size;
+    uint32_t fast_lambda  = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
+                                                   : ctx->fast_lambda_md[EB_8_BIT_MD];
+    uint32_t sb_size      = scs->super_block_size * scs->super_block_size;
     uint64_t cost_th_rate = 1 << 13;
     uint64_t use_pf_th    = 0;
 
@@ -4973,8 +4905,7 @@ uint64_t compute_pf_th(SequenceControlSet *scs, PictureControlSet *pcs, ModeDeci
             use_pf_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
         else
             use_pf_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
-    }
-    else {
+    } else {
         use_pf_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
     }
 
@@ -4982,13 +4913,13 @@ uint64_t compute_pf_th(SequenceControlSet *scs, PictureControlSet *pcs, ModeDeci
 }
 
 void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
-    PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
-    Lpd1TxCtrls *ctrls = &ctx->lpd1_tx_ctrls;
+    PictureParentControlSet *ppcs  = pcs->parent_pcs_ptr;
+    Lpd1TxCtrls             *ctrls = &ctx->lpd1_tx_ctrls;
 
     switch (lpd1_tx_level) {
     case 0:
-        ctrls->zero_y_coeff_exit = 0;
-        ctrls->skip_nrst_nrst_luma_tx = 0;
+        ctrls->zero_y_coeff_exit            = 0;
+        ctrls->skip_nrst_nrst_luma_tx       = 0;
         ctrls->skip_tx_th                   = 0;
         ctrls->use_uv_shortcuts_on_y_coeffs = 0;
 
@@ -4996,60 +4927,60 @@ void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
         ctrls->use_neighbour_info    = 0;
         break;
     case 1:
-        ctrls->zero_y_coeff_exit = 1;
-        ctrls->chroma_detector_level = 1;
-        ctrls->skip_nrst_nrst_luma_tx = 0;
-        ctrls->skip_tx_th             = 0;
+        ctrls->zero_y_coeff_exit            = 1;
+        ctrls->chroma_detector_level        = 1;
+        ctrls->skip_nrst_nrst_luma_tx       = 0;
+        ctrls->skip_tx_th                   = 0;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 25;
         ctrls->use_neighbour_info    = 0;
         break;
     case 2:
-        ctrls->zero_y_coeff_exit = 1;
-        ctrls->chroma_detector_level = 1;
-        ctrls->skip_nrst_nrst_luma_tx = 1;
-        ctrls->skip_tx_th             = 25;
+        ctrls->zero_y_coeff_exit            = 1;
+        ctrls->chroma_detector_level        = 1;
+        ctrls->skip_nrst_nrst_luma_tx       = 1;
+        ctrls->skip_tx_th                   = 25;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 25;
         ctrls->use_neighbour_info    = 0;
         break;
     case 3:
-        ctrls->zero_y_coeff_exit = 1;
-        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 2 : 3;
-        ctrls->skip_nrst_nrst_luma_tx = 1;
-        ctrls->skip_tx_th             = 25;
+        ctrls->zero_y_coeff_exit            = 1;
+        ctrls->chroma_detector_level        = ppcs->is_used_as_reference_flag ? 2 : 3;
+        ctrls->skip_nrst_nrst_luma_tx       = 1;
+        ctrls->skip_tx_th                   = 25;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 25;
         ctrls->use_neighbour_info    = 0;
         break;
     case 4:
-        ctrls->zero_y_coeff_exit = 1;
-        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 2 : 3;
-        ctrls->skip_nrst_nrst_luma_tx = 1;
-        ctrls->skip_tx_th             = 25;
+        ctrls->zero_y_coeff_exit            = 1;
+        ctrls->chroma_detector_level        = ppcs->is_used_as_reference_flag ? 2 : 3;
+        ctrls->skip_nrst_nrst_luma_tx       = 1;
+        ctrls->skip_tx_th                   = 25;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 50;
         ctrls->use_neighbour_info    = 1;
         break;
     case 5:
-        ctrls->zero_y_coeff_exit = 1;
-        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 2 : 3;
-        ctrls->skip_nrst_nrst_luma_tx = 1;
-        ctrls->skip_tx_th             = 50;
+        ctrls->zero_y_coeff_exit            = 1;
+        ctrls->chroma_detector_level        = ppcs->is_used_as_reference_flag ? 2 : 3;
+        ctrls->skip_nrst_nrst_luma_tx       = 1;
+        ctrls->skip_tx_th                   = 50;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 50;
         ctrls->use_neighbour_info    = 2;
         break;
     case 6:
-        ctrls->zero_y_coeff_exit = 1;
-        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 2 : 3;
-        ctrls->skip_nrst_nrst_luma_tx = 1;
-        ctrls->skip_tx_th             = 70;
+        ctrls->zero_y_coeff_exit            = 1;
+        ctrls->chroma_detector_level        = ppcs->is_used_as_reference_flag ? 2 : 3;
+        ctrls->skip_nrst_nrst_luma_tx       = 1;
+        ctrls->skip_tx_th                   = 70;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 100;
@@ -5178,9 +5109,10 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
     }
 }
 
-void set_tx_shortcut_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t tx_shortcut_level) {
-    PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
-    TxShortcutCtrls *ctrls = &ctx->tx_shortcut_ctrls;
+void set_tx_shortcut_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                           uint8_t tx_shortcut_level) {
+    PictureParentControlSet *ppcs  = pcs->parent_pcs_ptr;
+    TxShortcutCtrls         *ctrls = &ctx->tx_shortcut_ctrls;
 
     switch (tx_shortcut_level) {
     case 0:
@@ -5230,7 +5162,9 @@ void set_tx_shortcut_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uin
 
     // Chroma detector should be used in M12 and below (at least in REF frames) to prevent blurring artifacts in some clips
     if (tx_shortcut_level && ppcs->is_used_as_reference_flag && pcs->enc_mode <= ENC_M12)
-        assert(ctrls->chroma_detector_level && "Chroma detector should be used for ref frames in low presets to prevent blurring artifacts.");
+        assert(ctrls->chroma_detector_level &&
+               "Chroma detector should be used for ref frames in low presets to prevent blurring "
+               "artifacts.");
 }
 void set_mds0_controls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t mds0_level) {
     Mds0Ctrls *ctrls = &ctx->mds0_ctrls;
@@ -5270,8 +5204,8 @@ void set_mds0_controls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
 
 // Set signals used for light-pd0 path; only PD0 should call this function
 // assumes NSQ OFF, no 4x4, no chroma, no TXT/TXS/RDOQ/SSSE, SB_64x64
-EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * scs,
-                                                          PictureControlSet *  pcs,
+EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *scs,
+                                                          PictureControlSet   *pcs,
                                                           ModeDecisionContext *ctx) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -5282,24 +5216,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
     ctx->shut_fast_rate = EB_TRUE;
 
     uint8_t intra_level = 0;
-#if ADD_VQ_MODE // intra lvl for light PD0
     if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
-#else
-    if (pcs->slice_type == I_SLICE)
-#endif
         intra_level = 1;
     else if (ctx->pd0_level <= LIGHT_PD0_LVL1)
         intra_level = (pcs->temporal_layer_index == 0) ? 1 : 0;
     else
         intra_level = 0;
     set_intra_ctrls(pcs, ctx, intra_level);
-#if ADD_VQ_MODE
     if (ctx->pd0_level == VERY_LIGHT_PD0) {
         // Modulate the inter-depth bias based on the QP and the temporal complexity of the SB
         // towards more split for low QPs or/and complex SBs,
         // and less split for high QPs or/and easy SBs (to compensate for the absence of the coeff rate)
-        ctx->inter_depth_bias = 950 +
-            pcs->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+        ctx->inter_depth_bias = 950 + pcs->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
         if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 1000)
             ctx->inter_depth_bias = ctx->inter_depth_bias - 150;
         else if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 500)
@@ -5308,29 +5236,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
             ctx->inter_depth_bias = ctx->inter_depth_bias + 50;
         else
             ctx->inter_depth_bias = ctx->inter_depth_bias + 150;
-    }
-    else {
+    } else {
         ctx->inter_depth_bias = 0;
     }
-#else
-    if (ctx->pd0_level == VERY_LIGHT_PD0) {
-        // Modulate the inter-depth bias based on the QP and the temporal complexity of the SB
-        // towards more split for low QPs or/and complex SBs,
-        // and less split for high QPs or/and easy SBs (to compensate for the absence of the coeff rate)
-        ctx->pd0_inter_depth_bias = 950 +
-            pcs->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-        if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 1000)
-            ctx->pd0_inter_depth_bias = ctx->pd0_inter_depth_bias - 150;
-        else if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 500)
-            ctx->pd0_inter_depth_bias = ctx->pd0_inter_depth_bias - 50;
-        else if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 250)
-            ctx->pd0_inter_depth_bias = ctx->pd0_inter_depth_bias + 50;
-        else
-            ctx->pd0_inter_depth_bias = ctx->pd0_inter_depth_bias + 150;
-    } else {
-        ctx->pd0_inter_depth_bias = 0;
-    }
-#endif
     if (ctx->pd0_level == VERY_LIGHT_PD0)
         return return_error;
 
@@ -5344,11 +5252,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
     set_chroma_controls(ctx, 0 /*chroma off*/);
 
     uint8_t pf_level = 1;
-#if ADD_VQ_MODE // shut PF
     if (pcs->slice_type != I_SLICE && !pcs->parent_pcs_ptr->transition_present) {
-#else
-    if (pcs->slice_type != I_SLICE) {
-#endif
         if (ctx->pd0_level <= LIGHT_PD0_LVL2) {
             pf_level = 1;
         } else {
@@ -5360,14 +5264,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
                 fast_lambda, 0, pcs->parent_pcs_ptr->me_64x64_distortion[ctx->sb_index]);
 
             if (ctx->pd0_level <= LIGHT_PD0_LVL3) {
-#if CLN_REMOVE_UNUSED_RES
                 pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
-#else
-                if (pcs->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
-                    pf_level = 1;
-                else
-                    pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
-#endif
             } else {
                 if (pcs->parent_pcs_ptr->is_used_as_reference_flag)
                     pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
@@ -5434,20 +5331,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
                 fast_lambda, 0, pcs->parent_pcs_ptr->me_64x64_distortion[ctx->sb_index]);
 
             if (ctx->pd0_level <= LIGHT_PD0_LVL2) {
-#if ADD_VQ_MODE // shut subres
                 if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
-#else
-                if (pcs->slice_type == I_SLICE)
-#endif
                     subres_level = 1;
                 else
                     subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
             } else if (ctx->pd0_level <= LIGHT_PD0_LVL3) {
-#if ADD_VQ_MODE // shut subres
                 if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
-#else
-                if (pcs->slice_type == I_SLICE)
-#endif
                     subres_level = 1;
                 else if (pcs->parent_pcs_ptr->is_used_as_reference_flag)
                     subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
@@ -5484,7 +5373,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
     return return_error;
 }
 
-void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
+void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
                                                    ModeDecisionContext *context_ptr) {
     EbEncMode lpd1_level = context_ptr->lpd1_ctrls.pd1_level;
 
@@ -5558,36 +5447,32 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
             : 15;
     else if (lpd1_level <= LPD1_LVL_2) {
         context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-            INPUT_SIZE_1080p_RANGE
+                INPUT_SIZE_1080p_RANGE
             ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 13 : 14)
             : 15;
-    }
-    else if (lpd1_level <= LPD1_LVL_3) {
+    } else if (lpd1_level <= LPD1_LVL_3) {
         context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-            INPUT_SIZE_1080p_RANGE
+                INPUT_SIZE_1080p_RANGE
             ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 13 : 14)
             : 15;
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 50) ||
-            (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
+             (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
             me_8x8_cost_variance < (200 * picture_qp) && me_64x64_distortion < (200 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
-    }
-    else if (lpd1_level <= LPD1_LVL_4) {
+    } else if (lpd1_level <= LPD1_LVL_4) {
         context_ptr->md_subpel_me_level = 15;
 
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 30) ||
-            (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
-            me_8x8_cost_variance < (500 * picture_qp) &&
-            me_64x64_distortion < (500 * picture_qp))
+             (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
+            me_8x8_cost_variance < (500 * picture_qp) && me_64x64_distortion < (500 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
-    }
-    else {
-        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 15 : 0;
+    } else {
+        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 15
+                                                                                             : 0;
 
         if ((((l0_was_skip || l1_was_skip) && ref_skip_perc > 20) ||
-            (l0_was_64x64_mvp || l1_was_64x64_mvp)) &&
-            me_8x8_cost_variance < (800 * picture_qp) &&
-            me_64x64_distortion < (800 * picture_qp))
+             (l0_was_64x64_mvp || l1_was_64x64_mvp)) &&
+            me_8x8_cost_variance < (800 * picture_qp) && me_64x64_distortion < (800 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
     }
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
@@ -5611,16 +5496,15 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
     else if (lpd1_level <= LPD1_LVL_3) {
         lpd1_tx_level = 4;
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
-            me_8x8_cost_variance < (800 * picture_qp) &&
-            me_64x64_distortion < (800 * picture_qp)) ||
+             me_8x8_cost_variance < (800 * picture_qp) &&
+             me_64x64_distortion < (800 * picture_qp)) ||
             (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
             lpd1_tx_level = 6;
-    }
-    else {
+    } else {
         lpd1_tx_level = 5;
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
-            me_8x8_cost_variance < (800 * picture_qp) &&
-            me_64x64_distortion < (800 * picture_qp)) ||
+             me_8x8_cost_variance < (800 * picture_qp) &&
+             me_64x64_distortion < (800 * picture_qp)) ||
             (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
             lpd1_tx_level = 6;
     }
@@ -5654,21 +5538,21 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
         if (lpd1_level <= LPD1_LVL_4) {
             context_ptr->lpd1_skip_inter_tx_level = 1;
             if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
-                me_8x8_cost_variance < (800 * picture_qp) &&
-                me_64x64_distortion < (800 * picture_qp)) ||
+                 me_8x8_cost_variance < (800 * picture_qp) &&
+                 me_64x64_distortion < (800 * picture_qp)) ||
                 (me_8x8_cost_variance < (100 * picture_qp) &&
-                    me_64x64_distortion < (100 * picture_qp))) {
+                 me_64x64_distortion < (100 * picture_qp))) {
                 context_ptr->lpd1_skip_inter_tx_level = 2;
             }
-        }
-        else {
-            context_ptr->lpd1_skip_inter_tx_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 2;
+        } else {
+            context_ptr->lpd1_skip_inter_tx_level =
+                pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 2;
             if (((((l0_was_skip || l1_was_skip) && ref_skip_perc > 20) ||
-                (l0_was_64x64_mvp || l1_was_64x64_mvp)) &&
-                me_8x8_cost_variance < (2000 * picture_qp) &&
-                me_64x64_distortion < (2000 * picture_qp)) ||
+                  (l0_was_64x64_mvp || l1_was_64x64_mvp)) &&
+                 me_8x8_cost_variance < (2000 * picture_qp) &&
+                 me_64x64_distortion < (2000 * picture_qp)) ||
                 (me_8x8_cost_variance < (400 * picture_qp) &&
-                    me_64x64_distortion < (400 * picture_qp))) {
+                 me_64x64_distortion < (400 * picture_qp))) {
                 context_ptr->lpd1_skip_inter_tx_level = 2;
             }
         }
@@ -5707,40 +5591,30 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
     context_ptr->uv_ctrls.uv_mode           = CHROMA_MODE_1;
     context_ptr->uv_ctrls.nd_uv_serach_mode = 0;
     set_cfl_ctrls(context_ptr, 0);
-    context_ptr->md_disallow_nsq         = pcs_ptr->parent_pcs_ptr->disallow_nsq;
-    context_ptr->new_nearest_injection   = 1;
-    context_ptr->inject_inter_candidates = 1;
+    context_ptr->md_disallow_nsq                            = pcs_ptr->parent_pcs_ptr->disallow_nsq;
+    context_ptr->new_nearest_injection                      = 1;
+    context_ptr->inject_inter_candidates                    = 1;
     context_ptr->blk_skip_decision                          = EB_TRUE;
     context_ptr->rate_est_ctrls.update_skip_ctx_dc_sign_ctx = 0;
     context_ptr->rate_est_ctrls.update_skip_coeff_ctx       = 0;
     context_ptr->subres_ctrls.odd_to_even_deviation_th      = 0;
 }
-#if OPT_DECODER
-EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet* scs,
-#else
-EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_control_set_ptr,
-#endif
-                                                PictureControlSet *  pcs_ptr,
+EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, PictureControlSet *pcs_ptr,
                                                 ModeDecisionContext *context_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-    EbEncMode   enc_mode     = pcs_ptr->enc_mode;
-    uint8_t     pd_pass      = context_ptr->pd_pass;
-#if OPT_DECODER
-    PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
-    const uint8_t           is_ref = ppcs->is_used_as_reference_flag;
-    const uint8_t           is_base = ppcs->temporal_layer_index == 0;
-    const EbInputResolution input_resolution = ppcs->input_resolution;
-    const EB_SLICE          slice_type = pcs_ptr->slice_type;
-    const uint8_t           fast_decode = scs->static_config.fast_decode;
-#endif
-    const uint32_t picture_qp           = pcs_ptr->picture_qp;
-    uint32_t       me_8x8_cost_variance = (uint32_t)~0;
-    uint32_t       me_64x64_distortion  = (uint32_t)~0;
-    uint8_t        l0_was_skip = 0, l1_was_skip = 0;
-    uint8_t        ref_skip_perc = pcs_ptr->ref_skip_percentage;
-#if !OPT_DECODER
-    UNUSED(sequence_control_set_ptr);
-#endif
+    EbErrorType              return_error         = EB_ErrorNone;
+    EbEncMode                enc_mode             = pcs_ptr->enc_mode;
+    uint8_t                  pd_pass              = context_ptr->pd_pass;
+    PictureParentControlSet *ppcs                 = pcs_ptr->parent_pcs_ptr;
+    const uint8_t            is_ref               = ppcs->is_used_as_reference_flag;
+    const uint8_t            is_base              = ppcs->temporal_layer_index == 0;
+    const EbInputResolution  input_resolution     = ppcs->input_resolution;
+    const EB_SLICE           slice_type           = pcs_ptr->slice_type;
+    const uint8_t            fast_decode          = scs->static_config.fast_decode;
+    const uint32_t           picture_qp           = pcs_ptr->picture_qp;
+    uint32_t                 me_8x8_cost_variance = (uint32_t)~0;
+    uint32_t                 me_64x64_distortion  = (uint32_t)~0;
+    uint8_t                  l0_was_skip = 0, l1_was_skip = 0;
+    uint8_t                  ref_skip_perc = pcs_ptr->ref_skip_percentage;
     set_cand_reduction_ctrls(pcs_ptr,
                              context_ptr,
                              pd_pass == PD_PASS_0 ? 0 : pcs_ptr->cand_reduction_level,
@@ -5750,16 +5624,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
                              l0_was_skip,
                              l1_was_skip,
                              ref_skip_perc);
-#if OPT_RES_CHECKS_2
-    set_txt_controls(context_ptr,
-                     pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txt_level);
-#else
-    set_txt_controls(context_ptr,
-                     pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txt_level,
-                     pcs_ptr->parent_pcs_ptr->input_resolution);
-#endif
+    set_txt_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txt_level);
 
-    set_tx_shortcut_ctrls(pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->tx_shortcut_level);
+    set_tx_shortcut_ctrls(
+        pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->tx_shortcut_level);
 
     set_interpolation_search_level_ctrls(
         context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->interpolation_search_level);
@@ -5809,8 +5677,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
             context_ptr->rdoq_level = 1;
         else
             context_ptr->rdoq_level = 0;
-    else
-        if (enc_mode <= ENC_M11)
+    else if (enc_mode <= ENC_M11)
         context_ptr->rdoq_level = 1;
     else
         context_ptr->rdoq_level = 5;
@@ -5876,7 +5743,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
                                   pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_nsq_mv_search_level);
 
     md_pme_search_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_pme_level);
-#if OPT_DECODER
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M5 ? 3 : 0;
     else if (enc_mode <= ENC_M0)
@@ -5891,89 +5757,22 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
     else
         context_ptr->md_subpel_me_level = is_base ? 9 : 0;
-#else
-    if (pd_pass == PD_PASS_0)
-        context_ptr->md_subpel_me_level = enc_mode <= ENC_M5 ? 3 : 0;
-    else if (enc_mode <= ENC_M0)
-        context_ptr->md_subpel_me_level = 1;
-    else if (enc_mode <= ENC_M6)
-        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-                INPUT_SIZE_480p_RANGE
-            ? 1
-            : 2;
-    else if (enc_mode <= ENC_M9)
-        context_ptr->md_subpel_me_level = (pcs_ptr->temporal_layer_index == 0)
-            ? 2
-            : ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 7);
-#if OPT_RES_CHECKS_2
-    else if (enc_mode <= ENC_M11)
-        context_ptr->md_subpel_me_level = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 7;
-    else if (enc_mode <= ENC_M12)
-        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 9 : 11;
-    else
-        context_ptr->md_subpel_me_level = pcs_ptr->temporal_layer_index == 0 ? 9 : 0;
-#else
-    else if (enc_mode <= ENC_M11)
-        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-                INPUT_SIZE_720p_RANGE
-            ? (4)
-            : ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 10);
-    else if (enc_mode <= ENC_M12)
-        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-            INPUT_SIZE_480p_RANGE
-        ? ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 9 : 11)
-        : pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE
-        ? ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 13)
-        : ((pcs_ptr->temporal_layer_index == 0) ? 12 : 15);
-    else {
-        if (pcs_ptr->temporal_layer_index != 0)
-            context_ptr->md_subpel_me_level = 0;
-        else
-            context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-                    INPUT_SIZE_480p_RANGE
-                ? ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 9 : 11)
-                : ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 13);
-    }
-#endif
-#endif
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M0 ? 3 : 0;
     else if (enc_mode <= ENC_M0)
         context_ptr->md_subpel_pme_level = 1;
-#if OPT_RES_CHECKS
-#if OPT_RES_CHECKS_2
     else
         context_ptr->md_subpel_pme_level = 2;
-#else
-    else if (enc_mode <= ENC_M8)
-        context_ptr->md_subpel_pme_level = 2;
-    else // temp level
-        context_ptr->md_subpel_pme_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-        INPUT_SIZE_720p_RANGE
-        ? 2
-        : 4;
-#endif
-#else
-    else if (enc_mode <= ENC_M5)
-        context_ptr->md_subpel_pme_level = 2;
-    else
-        context_ptr->md_subpel_pme_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-        INPUT_SIZE_720p_RANGE
-        ? 2
-        : 4;
-#endif
 
     md_subpel_pme_controls(context_ptr, context_ptr->md_subpel_pme_level);
     uint8_t rate_est_level = 0;
-#if OPT_DECODER
     if (pd_pass == PD_PASS_0) {
         if (enc_mode <= ENC_M2)
             rate_est_level = 1;
         else
             rate_est_level = 2;
-    }
-    else if (fast_decode == 0) {
+    } else if (fast_decode == 0) {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M10)
@@ -5982,8 +5781,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
             rate_est_level = (slice_type == I_SLICE) ? 3 : 4;
         else
             rate_est_level = (slice_type == I_SLICE) ? 3 : 0;
-    }
-    else if (fast_decode <= 2) {
+    } else if (fast_decode <= 2) {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M4)
@@ -5994,8 +5792,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
             rate_est_level = (slice_type == I_SLICE) ? 3 : 4;
         else
             rate_est_level = (slice_type == I_SLICE) ? 3 : 0;
-    }
-    else {
+    } else {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M4)
@@ -6007,37 +5804,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         else
             rate_est_level = (slice_type == I_SLICE) ? 3 : 0;
     }
-#else
-    if (pd_pass == PD_PASS_0) {
-        if (enc_mode <= ENC_M2)
-            rate_est_level = 1;
-        else
-            rate_est_level = 2;
-    } else {
-        if (enc_mode <= ENC_M3)
-            rate_est_level = 1;
-#if !OPT_M10_4K
-        else if (enc_mode <= ENC_M9)
-            rate_est_level = 2;
-#else
-        else if (enc_mode <= ENC_M10)
-            rate_est_level = 2;
-#endif
-#if OPT_RES_CHECKS_2
-        else if (enc_mode <= ENC_M12)
-            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 4;
-        else
-            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 0;
-#else
-        else if (enc_mode <= ENC_M11)
-            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 4;
-        else
-            rate_est_level = pcs_ptr->slice_type == I_SLICE                            ? 3
-                : (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 4
-                                                                                       : 0;
-#endif
-    }
-#endif
     set_rate_est_ctrls(context_ptr, rate_est_level);
 
     // set at pic-level b/c feature depends on some pic-level initializations
@@ -6051,11 +5817,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
     // intra_level must be greater than 0 for I_SLICE
     uint8_t intra_level = 0;
     if (pd_pass == PD_PASS_0) {
-#if ADD_VQ_MODE // intra lvl for PD0
         if (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present)
-#else
-        if (pcs_ptr->slice_type == I_SLICE)
-#endif
             intra_level = 5;
         else if (enc_mode <= ENC_M1)
             intra_level = 5;
@@ -6067,40 +5829,24 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         intra_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 4;
     else if (enc_mode <= ENC_M5)
         intra_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 4;
-#if OPT_M7_4K
     else if (enc_mode <= ENC_M7)
-#if ADD_VQ_MODE // intra lvl for PD1
-        intra_level = (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present) ? 1
-#else
-        intra_level = pcs_ptr->slice_type == I_SLICE ? 1
-#endif
-        : (pcs_ptr->temporal_layer_index == 0)   ? 2
-        : 4;
-#else
-    else if (enc_mode <= ENC_M6)
-        intra_level = pcs_ptr->slice_type == I_SLICE ? 1
-        : (pcs_ptr->temporal_layer_index == 0)   ? 2
-        : 4;
-#endif
-#if TUNE_M8
+        intra_level = (pcs_ptr->slice_type == I_SLICE ||
+                       pcs_ptr->parent_pcs_ptr->transition_present)
+            ? 1
+            : (pcs_ptr->temporal_layer_index == 0) ? 2
+                                                   : 4;
     else if (enc_mode <= ENC_M8)
         intra_level = pcs_ptr->slice_type == I_SLICE ? 1 : 4;
-#endif
     else
-#if ADD_VQ_MODE // intra lvl for PD1
-        intra_level = (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present) ? 3 : 4;
-#else
-        intra_level = pcs_ptr->slice_type == I_SLICE ? 3 : 4;
-#endif
+        intra_level = (pcs_ptr->slice_type == I_SLICE ||
+                       pcs_ptr->parent_pcs_ptr->transition_present)
+            ? 3
+            : 4;
 
     set_intra_ctrls(pcs_ptr, context_ptr, intra_level);
     set_mds0_controls(pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 2 : pcs_ptr->mds0_level);
     set_subres_controls(context_ptr, 0);
-#if ADD_VQ_MODE
     context_ptr->inter_depth_bias = 0;
-#else
-    context_ptr->pd0_inter_depth_bias = 0;
-#endif
     return return_error;
 }
 void copy_neighbour_arrays_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -6116,7 +5862,7 @@ static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_ind
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
     if (blk_geom->sq_size < ((sb_size == BLOCK_128X128) ? 128 : 64)) {
         //Set parent to be considered
-        uint32_t parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
+        uint32_t         parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
         const BlockGeom *parent_blk_geom      = get_blk_geom_mds(parent_depth_idx_mds);
         const uint32_t   parent_tot_d1_blocks = disallow_nsq ? 1
               : parent_blk_geom->sq_size == 128              ? 17
@@ -6157,7 +5903,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
             results_ptr->refined_split_flag[blk_index + block_1d_idx] = EB_TRUE;
         }
         //Set first child to be considered
-        uint32_t child_block_idx_1 = blk_index + blk_geom->d1_depth_offset;
+        uint32_t         child_block_idx_1    = blk_index + blk_geom->d1_depth_offset;
         const BlockGeom *child1_blk_geom      = get_blk_geom_mds(child_block_idx_1);
         const uint32_t   child1_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
               : child1_blk_geom->sq_size == 128                                       ? 17
@@ -6181,7 +5927,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
                                        pred_depth,
                                        pred_sq_idx,
                                        depth_step > 1 ? depth_step - 1 : 1);
-            //Set second child to be considered
+        //Set second child to be considered
         uint32_t child_block_idx_2 = child_block_idx_1 +
             ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
         const BlockGeom *child2_blk_geom      = get_blk_geom_mds(child_block_idx_2);
@@ -6206,7 +5952,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
                                        pred_depth,
                                        pred_sq_idx,
                                        depth_step > 1 ? depth_step - 1 : 1);
-            //Set third child to be considered
+        //Set third child to be considered
         uint32_t child_block_idx_3 = child_block_idx_2 +
             ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
         const BlockGeom *child3_blk_geom      = get_blk_geom_mds(child_block_idx_3);
@@ -6233,7 +5979,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
                                        pred_depth,
                                        pred_sq_idx,
                                        depth_step > 1 ? depth_step - 1 : 1);
-            //Set forth child to be considered
+        //Set forth child to be considered
         uint32_t child_block_idx_4 = child_block_idx_3 +
             ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
         const BlockGeom *child4_blk_geom      = get_blk_geom_mds(child_block_idx_4);
@@ -6303,9 +6049,9 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
     memset(context_ptr->tested_blk_flag, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
     memset(context_ptr->avail_blk_flag, EB_FALSE, sizeof(uint8_t) * scs_ptr->max_block_cnt);
 
-    MdcSbData *results_ptr  = context_ptr->mdc_sb_array;
-    results_ptr->leaf_count = 0;
-    uint32_t blk_index      = 0;
+    MdcSbData *results_ptr       = context_ptr->mdc_sb_array;
+    results_ptr->leaf_count      = 0;
+    uint32_t       blk_index     = 0;
     const uint16_t max_block_cnt = scs_ptr->max_block_cnt;
     int32_t        min_sq_size;
     if (context_ptr->pred_depth_only)
@@ -6331,8 +6077,8 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
             context_ptr->md_blk_arr_nsq[blk_index].part = PARTITION_SPLIT;
 
         // SQ/NSQ block(s) filter based on the SQ size
-        uint8_t is_block_tagged = (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE)
-                || (context_ptr->pred_depth_only && (blk_geom->sq_size < min_sq_size))
+        uint8_t is_block_tagged = (blk_geom->sq_size == 128 && pcs_ptr->slice_type == I_SLICE) ||
+                (context_ptr->pred_depth_only && (blk_geom->sq_size < min_sq_size))
             ? 0
             : 1;
         if (context_ptr->skip_pd0)
@@ -6410,10 +6156,11 @@ uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *mdctxt, const 
     uint32_t parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
     if (mdctxt->avail_blk_flag[parent_depth_idx_mds]) {
         mdctxt->parent_to_current_deviation =
-            (int64_t)(
-                ((int64_t)MAX(mdctxt->md_local_blk_unit[parent_depth_idx_mds].default_cost, 1) -
-                 (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1)) *
-                100) /
+            (int64_t)(((int64_t)MAX(mdctxt->md_local_blk_unit[parent_depth_idx_mds].default_cost,
+                                    1) -
+                       (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4),
+                                    1)) *
+                      100) /
             (int64_t)MAX((mdctxt->md_local_blk_unit[blk_geom->sqi_mds].default_cost * 4), 1);
     }
     if (mdctxt->parent_to_current_deviation <=
@@ -6423,7 +6170,7 @@ uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *mdctxt, const 
     return EB_FALSE;
 }
 
-uint8_t is_child_to_current_deviation_small(SequenceControlSet * scs_ptr,
+uint8_t is_child_to_current_deviation_small(SequenceControlSet  *scs_ptr,
                                             ModeDecisionContext *mdctxt, const BlockGeom *blk_geom,
                                             uint32_t blk_index, int64_t th_offset) {
     if (mdctxt->depth_refinement_ctrls.sub_to_current_th == MIN_SIGNED_VALUE)
@@ -6433,10 +6180,10 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet * scs_ptr,
     (void)scs_ptr;
     assert(blk_geom->depth < 6);
     const uint32_t ns_depth_plus1_offset = ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
-    const uint32_t child_block_idx_1 = blk_index + ns_d1_offset;
-    const uint32_t child_block_idx_2 = child_block_idx_1 + ns_depth_plus1_offset;
-    const uint32_t child_block_idx_3 = child_block_idx_2 + ns_depth_plus1_offset;
-    const uint32_t child_block_idx_4 = child_block_idx_3 + ns_depth_plus1_offset;
+    const uint32_t child_block_idx_1     = blk_index + ns_d1_offset;
+    const uint32_t child_block_idx_2     = child_block_idx_1 + ns_depth_plus1_offset;
+    const uint32_t child_block_idx_3     = child_block_idx_2 + ns_depth_plus1_offset;
+    const uint32_t child_block_idx_4     = child_block_idx_3 + ns_depth_plus1_offset;
 
     uint64_t child_cost = 0;
     uint8_t  child_cnt  = 0;
@@ -6476,9 +6223,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                           ModeDecisionContext *context_ptr, uint32_t sb_index) {
     MdcSbData *results_ptr = context_ptr->mdc_sb_array;
     uint32_t   blk_index   = 0;
-#if ADD_VQ_MODE
-    uint8_t use_cost_band_based_modulation = (!scs_ptr->vq_ctrls.stability_ctrls.depth_refinement || (pcs_ptr->slice_type != I_SLICE && pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[context_ptr->sb_index] < VQ_STABILITY_ME_VAR_TH));
-#endif
+    uint8_t    use_cost_band_based_modulation =
+        (!scs_ptr->vq_ctrls.stability_ctrls.depth_refinement ||
+         (pcs_ptr->slice_type != I_SLICE &&
+          pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[context_ptr->sb_index] <
+              VQ_STABILITY_ME_VAR_TH));
 
     if (pcs_ptr->parent_pcs_ptr->disallow_nsq) {
         if (context_ptr->disallow_4x4) {
@@ -6579,19 +6328,15 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         int64_t th_offset   = 0;
 
                         if (context_ptr->depth_refinement_ctrls.enabled &&
-#if ADD_VQ_MODE
-                            context_ptr->depth_refinement_ctrls.cost_band_based_modulation && use_cost_band_based_modulation &&
-#else
                             context_ptr->depth_refinement_ctrls.cost_band_based_modulation &&
-#endif
-                            (s_depth != 0 || e_depth != 0)) {
+                            use_cost_band_based_modulation && (s_depth != 0 || e_depth != 0)) {
                             update_pred_th_offset(
                                 context_ptr, blk_geom, &s_depth, &e_depth, &th_offset);
                         }
 
                         // Add block indices of upper depth(s)
                         // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
-                        uint8_t add_parent_depth = 1;
+                        uint8_t add_parent_depth                 = 1;
                         context_ptr->parent_to_current_deviation = MIN_SIGNED_VALUE;
                         if (context_ptr->depth_refinement_ctrls.enabled && s_depth == -1 &&
                             pcs_ptr->parent_pcs_ptr->sb_geom[sb_index]
@@ -6604,7 +6349,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 
                         // Add block indices of lower depth(s)
                         // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
-                        uint8_t add_sub_depth = 1;
+                        uint8_t add_sub_depth                   = 1;
                         context_ptr->child_to_current_deviation = MIN_SIGNED_VALUE;
                         if (context_ptr->depth_refinement_ctrls.enabled && e_depth == 1 &&
                             pcs_ptr->parent_pcs_ptr->sb_geom[sb_index]
@@ -6663,9 +6408,9 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                                             ModeDecisionContext *context_ptr, uint32_t sb_index) {
     memset(context_ptr->tested_blk_flag, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
     memset(context_ptr->avail_blk_flag, EB_FALSE, sizeof(uint8_t) * scs_ptr->max_block_cnt);
-    MdcSbData *results_ptr  = context_ptr->mdc_sb_array;
-    results_ptr->leaf_count = 0;
-    uint32_t blk_index      = 0;
+    MdcSbData *results_ptr       = context_ptr->mdc_sb_array;
+    results_ptr->leaf_count      = 0;
+    uint32_t       blk_index     = 0;
     const uint16_t max_block_cnt = scs_ptr->max_block_cnt;
     const int32_t  min_sq_size   = (context_ptr->depth_removal_ctrls.enabled &&
                                  context_ptr->depth_removal_ctrls.disallow_below_64x64)
@@ -6712,8 +6457,8 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                         }
                     }
 
-                    context_ptr->md_blk_arr_nsq[idx].palette_size[0] = 0;
-                    context_ptr->md_blk_arr_nsq[idx].palette_size[1] = 0;
+                    context_ptr->md_blk_arr_nsq[idx].palette_size[0]              = 0;
+                    context_ptr->md_blk_arr_nsq[idx].palette_size[1]              = 0;
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = idx;
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
                         tot_d1_blocks;
@@ -6750,7 +6495,7 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr, SequenceContr
     EncodeContext *const     encode_context_ptr = ppcs_ptr->scs_ptr->encode_context_ptr;
     RATE_CONTROL *const      rc                 = &(encode_context_ptr->rc);
     int32_t                  loop               = 0;
-    FrameHeader *            frm_hdr            = &ppcs_ptr->frm_hdr;
+    FrameHeader             *frm_hdr            = &ppcs_ptr->frm_hdr;
     int32_t                  q                  = frm_hdr->quantization_params.base_q_idx;
     if (ppcs_ptr->loop_count == 0) {
         ppcs_ptr->q_low  = ppcs_ptr->bottom_index;
@@ -6814,29 +6559,24 @@ void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PictureParentCont
 
         // Use light-PD1 path if the assumed features are off
         if (md_ctx->obmc_ctrls.enabled == 0 && md_ctx->md_allow_intrabc == 0 &&
-            md_ctx->hbd_mode_decision == 0 &&
-            md_ctx->ifs_ctrls.level == IFS_OFF &&
+            md_ctx->hbd_mode_decision == 0 && md_ctx->ifs_ctrls.level == IFS_OFF &&
             ppcs->frm_hdr.allow_warped_motion == 0 && md_ctx->inter_intra_comp_ctrls.enabled == 0 &&
             md_ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx == 0 &&
             md_ctx->spatial_sse_ctrls.spatial_sse_full_loop_level == 0 &&
-            md_ctx->md_sq_me_ctrls.enabled == 0 &&
-            md_ctx->md_pme_ctrls.enabled == 0 &&
-            md_ctx->txt_ctrls.enabled == 0 &&
-            md_ctx->mds0_ctrls.mds0_dist_type != MDS0_SSD &&
+            md_ctx->md_sq_me_ctrls.enabled == 0 && md_ctx->md_pme_ctrls.enabled == 0 &&
+            md_ctx->txt_ctrls.enabled == 0 && md_ctx->mds0_ctrls.mds0_dist_type != MDS0_SSD &&
             md_ctx->unipred3x3_injection == 0 && md_ctx->bipred3x3_injection == 0 &&
             md_ctx->inter_compound_mode == 0 && md_ctx->md_pic_obmc_level == 0 &&
             md_ctx->md_filter_intra_level == 0 && md_ctx->new_nearest_near_comb_injection == 0 &&
-            md_ctx->md_palette_level == 0 &&
-            md_ctx->cand_reduction_ctrls.merge_inter_classes &&
+            md_ctx->md_palette_level == 0 && md_ctx->cand_reduction_ctrls.merge_inter_classes &&
             ppcs->gm_ctrls.enabled == 0 &&
             // If TXS enabled at picture level, there are necessary context updates that must be added to LPD1
-            ppcs->frm_hdr.tx_mode != TX_MODE_SELECT &&
-            md_ctx->txs_ctrls.enabled == 0 && md_ctx->pred_depth_only &&
-            md_ctx->md_disallow_nsq == EB_TRUE && md_ctx->disallow_4x4 == EB_TRUE &&
-            ppcs->scs_ptr->super_block_size == 64 && ppcs->ref_list0_count_try == 1 &&
-            ppcs->ref_list1_count_try == 1 &&
-            md_ctx->cfl_ctrls.enabled == 0 &&
-            md_ctx->uv_ctrls.nd_uv_serach_mode == 0 && md_ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) {
+            ppcs->frm_hdr.tx_mode != TX_MODE_SELECT && md_ctx->txs_ctrls.enabled == 0 &&
+            md_ctx->pred_depth_only && md_ctx->md_disallow_nsq == EB_TRUE &&
+            md_ctx->disallow_4x4 == EB_TRUE && ppcs->scs_ptr->super_block_size == 64 &&
+            ppcs->ref_list0_count_try == 1 && ppcs->ref_list1_count_try == 1 &&
+            md_ctx->cfl_ctrls.enabled == 0 && md_ctx->uv_ctrls.nd_uv_serach_mode == 0 &&
+            md_ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) {
             light_pd1 = 1;
         } else {
             light_pd1 = 0;
@@ -6953,25 +6693,25 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
                         (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
                     uint8_t l0_was_intra = ref_obj_l0->sb_intra[md_ctx->sb_index], l1_was_intra = 0;
                     uint8_t l0_was_skip = ref_obj_l0->sb_skip[md_ctx->sb_index], l1_was_skip = 1;
-#if FIX_USE_ME_DATA_ISLICE
-                    uint32_t l0_me_64x64_dist = ref_obj_l0->slice_type != I_SLICE ? ref_obj_l0->sb_me_64x64_dist[md_ctx->sb_index] : 0, l1_me_64x64_dist = 0;
-                    uint32_t l0_me_8x8_cost_var = ref_obj_l0->slice_type != I_SLICE ? ref_obj_l0->sb_me_8x8_cost_var[md_ctx->sb_index] : 0, l1_me_8x8_cost_var = 0;
-#else
-                    uint32_t l0_me_64x64_dist = ref_obj_l0->sb_me_64x64_dist[md_ctx->sb_index], l1_me_64x64_dist = 0;
-                    uint32_t l0_me_8x8_cost_var = ref_obj_l0->sb_me_8x8_cost_var[md_ctx->sb_index], l1_me_8x8_cost_var = 0;
-#endif
+                    uint32_t l0_me_64x64_dist   = ref_obj_l0->slice_type != I_SLICE
+                          ? ref_obj_l0->sb_me_64x64_dist[md_ctx->sb_index]
+                          : 0,
+                             l1_me_64x64_dist   = 0;
+                    uint32_t l0_me_8x8_cost_var = ref_obj_l0->slice_type != I_SLICE
+                        ? ref_obj_l0->sb_me_8x8_cost_var[md_ctx->sb_index]
+                        : 0,
+                             l1_me_8x8_cost_var = 0;
                     if (pcs->slice_type == B_SLICE) {
                         EbReferenceObject *ref_obj_l1 =
                             (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
-                        l1_was_intra = ref_obj_l1->sb_intra[md_ctx->sb_index];
-                        l1_was_skip  = ref_obj_l1->sb_skip[md_ctx->sb_index];
-#if FIX_USE_ME_DATA_ISLICE
-                        l1_me_64x64_dist = ref_obj_l1->slice_type != I_SLICE ? ref_obj_l1->sb_me_64x64_dist[md_ctx->sb_index] : 0;
-                        l1_me_8x8_cost_var = ref_obj_l1->slice_type != I_SLICE ? ref_obj_l1->sb_me_8x8_cost_var[md_ctx->sb_index] : 0;
-#else
-                        l1_me_64x64_dist = ref_obj_l1->sb_me_64x64_dist[md_ctx->sb_index];
-                        l1_me_8x8_cost_var = ref_obj_l1->sb_me_8x8_cost_var[md_ctx->sb_index];
-#endif
+                        l1_was_intra       = ref_obj_l1->sb_intra[md_ctx->sb_index];
+                        l1_was_skip        = ref_obj_l1->sb_skip[md_ctx->sb_index];
+                        l1_me_64x64_dist   = ref_obj_l1->slice_type != I_SLICE
+                              ? ref_obj_l1->sb_me_64x64_dist[md_ctx->sb_index]
+                              : 0;
+                        l1_me_8x8_cost_var = ref_obj_l1->slice_type != I_SLICE
+                            ? ref_obj_l1->sb_me_8x8_cost_var[md_ctx->sb_index]
+                            : 0;
                     }
 
                     // Keep a complexity score for the SB, based on available information.
@@ -6989,15 +6729,18 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
                         score += 5;
 
                     if (pcs->slice_type == B_SLICE) {
-                        if (pcs->parent_pcs_ptr->me_64x64_distortion[md_ctx->sb_index] > (l0_me_64x64_dist * 3) ||
-                            pcs->parent_pcs_ptr->me_64x64_distortion[md_ctx->sb_index] > (l1_me_64x64_dist * 3))
+                        if (pcs->parent_pcs_ptr->me_64x64_distortion[md_ctx->sb_index] >
+                                (l0_me_64x64_dist * 3) ||
+                            pcs->parent_pcs_ptr->me_64x64_distortion[md_ctx->sb_index] >
+                                (l1_me_64x64_dist * 3))
                             score += 10;
 
-                        if (pcs->parent_pcs_ptr->me_8x8_cost_variance[md_ctx->sb_index] > (l0_me_8x8_cost_var * 3) ||
-                            pcs->parent_pcs_ptr->me_8x8_cost_variance[md_ctx->sb_index] > (l1_me_8x8_cost_var * 3))
+                        if (pcs->parent_pcs_ptr->me_8x8_cost_variance[md_ctx->sb_index] >
+                                (l0_me_8x8_cost_var * 3) ||
+                            pcs->parent_pcs_ptr->me_8x8_cost_variance[md_ctx->sb_index] >
+                                (l1_me_8x8_cost_var * 3))
                             score += 10;
-                    }
-                    else {
+                    } else {
                         score += 20;
                     }
 
@@ -7025,15 +6768,15 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
                     } else {
                         if (md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl] != (uint16_t)~0 &&
                             pcs->parent_pcs_ptr->me_64x64_distortion[md_ctx->sb_index] >
-                            ((pcs->parent_pcs_ptr->me_64x64_distortion[left_sb_index] +
-                              pcs->parent_pcs_ptr->me_64x64_distortion[top_sb_index])
-                             << md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl]))
+                                ((pcs->parent_pcs_ptr->me_64x64_distortion[left_sb_index] +
+                                  pcs->parent_pcs_ptr->me_64x64_distortion[top_sb_index])
+                                 << md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl]))
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                         else if (md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl] != (uint16_t)~0 &&
                                  pcs->parent_pcs_ptr->me_8x8_cost_variance[md_ctx->sb_index] >
-                                 ((pcs->parent_pcs_ptr->me_8x8_cost_variance[left_sb_index] +
-                                   pcs->parent_pcs_ptr->me_8x8_cost_variance[top_sb_index])
-                                  << md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl])) {
+                                     ((pcs->parent_pcs_ptr->me_8x8_cost_variance[left_sb_index] +
+                                       pcs->parent_pcs_ptr->me_8x8_cost_variance[top_sb_index])
+                                      << md_ctx->lpd1_ctrls.skip_pd0_me_shift[pd1_lvl])) {
                             md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                         } else if (md_ctx->lpd1_ctrls.use_ref_info[pd1_lvl]) {
                             // Use info from neighbouring SBs
@@ -7119,14 +6862,14 @@ uint8_t is_vlpd0_safe(PictureControlSet *pcs_ptr, ModeDecisionContext *md_ctx) {
 void *mode_decision_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext *thread_context_ptr = (EbThreadContext *)input_ptr;
-    EncDecContext *  context_ptr        = (EncDecContext *)thread_context_ptr->priv;
+    EncDecContext   *context_ptr        = (EncDecContext *)thread_context_ptr->priv;
 
     // Input
     EbObjectWrapper *enc_dec_tasks_wrapper_ptr;
 
     // Output
     EbObjectWrapper *enc_dec_results_wrapper_ptr;
-    EncDecResults *  enc_dec_results_ptr;
+    EncDecResults   *enc_dec_results_ptr;
     // SB Loop variables
     SuperBlock *sb_ptr;
     uint16_t    sb_index;
@@ -7134,7 +6877,7 @@ void *mode_decision_kernel(void *input_ptr) {
     uint32_t    y_sb_index;
     uint32_t    sb_origin_x;
     uint32_t    sb_origin_y;
-    MdcSbData * mdc_ptr;
+    MdcSbData  *mdc_ptr;
 
     // Segments
     uint16_t        segment_index;
@@ -7154,14 +6897,14 @@ void *mode_decision_kernel(void *input_ptr) {
         // Get Mode Decision Results
         EB_GET_FULL_OBJECT(context_ptr->mode_decision_input_fifo_ptr, &enc_dec_tasks_wrapper_ptr);
 
-        EncDecTasks *      enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
+        EncDecTasks       *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
         PictureControlSet *pcs_ptr           = (PictureControlSet *)
                                          enc_dec_tasks_ptr->pcs_wrapper_ptr->object_ptr;
-        SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-        ModeDecisionContext *md_ctx = context_ptr->md_context;
+        SequenceControlSet  *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        ModeDecisionContext *md_ctx  = context_ptr->md_context;
         struct PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
-        md_ctx->encoder_bit_depth = (uint8_t)scs_ptr->static_config.encoder_bit_depth;
-        md_ctx->corrupted_mv_check = (pcs_ptr->parent_pcs_ptr->aligned_width >=
+        md_ctx->encoder_bit_depth            = (uint8_t)scs_ptr->static_config.encoder_bit_depth;
+        md_ctx->corrupted_mv_check           = (pcs_ptr->parent_pcs_ptr->aligned_width >=
                                       (1 << (MV_IN_USE_BITS - 3))) ||
             (pcs_ptr->parent_pcs_ptr->aligned_height >= (1 << (MV_IN_USE_BITS - 3)));
         context_ptr->tile_group_index = enc_dec_tasks_ptr->tile_group_index;
@@ -7177,7 +6920,7 @@ void *mode_decision_kernel(void *input_ptr) {
                                               ->tile_group_info[context_ptr->tile_group_index]
                                               .tile_group_width_in_sb;
         context_ptr->tot_intra_coded_area = 0;
-        context_ptr->tot_skip_coded_area = 0;
+        context_ptr->tot_skip_coded_area  = 0;
         // Bypass encdec for the first pass
         if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
             (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag &&
@@ -7189,7 +6932,7 @@ void *mode_decision_kernel(void *input_ptr) {
             svt_get_empty_object(context_ptr->enc_dec_output_fifo_ptr,
                                  &enc_dec_results_wrapper_ptr);
             enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
-            enc_dec_results_ptr->pcs_wrapper_ptr              = enc_dec_tasks_ptr->pcs_wrapper_ptr;
+            enc_dec_results_ptr->pcs_wrapper_ptr = enc_dec_tasks_ptr->pcs_wrapper_ptr;
 
             // Post EncDec Results
             svt_post_full_object(enc_dec_results_wrapper_ptr);
@@ -7286,9 +7029,9 @@ void *mode_decision_kernel(void *input_ptr) {
                         uint16_t tile_group_x_sb_start =
                             pcs_ptr->parent_pcs_ptr->tile_group_info[context_ptr->tile_group_index]
                                 .tile_group_sb_start_x;
-                        sb_index = context_ptr->md_context->sb_index = (uint16_t)(
-                            (y_sb_index + tile_group_y_sb_start) * pic_width_in_sb + x_sb_index +
-                            tile_group_x_sb_start);
+                        sb_index = context_ptr->md_context->sb_index =
+                            (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
+                                       x_sb_index + tile_group_x_sb_start);
                         sb_ptr = context_ptr->md_context->sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
                         sb_origin_x = (x_sb_index + tile_group_x_sb_start) << sb_size_log2;
                         sb_origin_y = (y_sb_index + tile_group_y_sb_start) << sb_size_log2;
@@ -7409,7 +7152,6 @@ void *mode_decision_kernel(void *input_ptr) {
                             context_ptr->md_context->pd_pass = PD_PASS_0;
                             // skip_intra much be TRUE for non-I_SLICE pictures to use light_pd0 path
                             if (context_ptr->md_context->pd0_level != REGULAR_PD0) {
-
                                 // [PD_PASS_0] Signal(s) derivation
                                 signal_derivation_enc_dec_kernel_oq_light_pd0(
                                     scs_ptr, pcs_ptr, context_ptr->md_context);
@@ -7448,7 +7190,6 @@ void *mode_decision_kernel(void *input_ptr) {
                                         sb_origin_x,
                                         sb_origin_y);
                             } else {
-
                                 // [PD_PASS_0] Signal(s) derivation
                                 signal_derivation_enc_dec_kernel_oq(
                                     scs_ptr, pcs_ptr, context_ptr->md_context);
@@ -7508,11 +7249,9 @@ void *mode_decision_kernel(void *input_ptr) {
                         }
 
                         // Can only use light-PD1 under the following conditions
-                        if (!(md_ctx->hbd_mode_decision == 0 &&
-                              md_ctx->pred_depth_only && ppcs->disallow_nsq == EB_TRUE &&
-                              md_ctx->disallow_4x4 == EB_TRUE &&
+                        if (!(md_ctx->hbd_mode_decision == 0 && md_ctx->pred_depth_only &&
+                              ppcs->disallow_nsq == EB_TRUE && md_ctx->disallow_4x4 == EB_TRUE &&
                               scs_ptr->super_block_size == 64)) {
-
                             md_ctx->lpd1_ctrls.pd1_level = REGULAR_PD1;
                         }
                         exaustive_light_pd1_features(
@@ -7559,8 +7298,8 @@ void *mode_decision_kernel(void *input_ptr) {
                                              sb_origin_y,
                                              sb_index,
                                              context_ptr->md_context);
-                            //if (/*ppcs->is_used_as_reference_flag &&*/ md_ctx->hbd_mode_decision == 0 && scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
-                            //    md_ctx->bypass_encdec = 0;
+                        //if (/*ppcs->is_used_as_reference_flag &&*/ md_ctx->hbd_mode_decision == 0 && scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
+                        //    md_ctx->bypass_encdec = 0;
                         // Encode Pass
                         if (!context_ptr->md_context->bypass_encdec) {
                             av1_encode_decode(scs_ptr,

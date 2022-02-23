@@ -25,7 +25,7 @@
 #define GMV_ME_SAD_TH_1 5
 #define GMV_ME_SAD_TH_2 10
 void global_motion_estimation(PictureParentControlSet *pcs_ptr,
-                              EbPictureBufferDesc *    input_picture_ptr) {
+                              EbPictureBufferDesc     *input_picture_ptr) {
     // Get downsampled pictures with a downsampling factor of 2 in each dimension
     EbPaReferenceObject *pa_reference_object;
     EbPictureBufferDesc *quarter_ref_pic_ptr;

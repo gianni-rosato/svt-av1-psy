@@ -107,12 +107,12 @@ static INLINE const uint8_t *svt_get_buf_from_mv(const struct svt_buf_2d *buf, c
 static int svt_upsampled_pref_error(MacroBlockD *xd, const struct AV1Common *const cm,
                                     const MV *this_mv, const SUBPEL_SEARCH_VAR_PARAMS *var_params,
                                     unsigned int *sse) {
-    const AomVarianceFnPtr * vfp                = var_params->vfp;
+    const AomVarianceFnPtr  *vfp                = var_params->vfp;
     const SUBPEL_SEARCH_TYPE subpel_search_type = var_params->subpel_search_type;
 
     const MSBuffers *ms_buffers  = &var_params->ms_buffers;
-    const uint8_t *  src         = ms_buffers->src->buf;
-    const uint8_t *  ref         = svt_get_buf_from_mv(ms_buffers->ref, *this_mv);
+    const uint8_t   *src         = ms_buffers->src->buf;
+    const uint8_t   *ref         = svt_get_buf_from_mv(ms_buffers->ref, *this_mv);
     const int        src_stride  = ms_buffers->src->stride;
     const int        ref_stride  = ms_buffers->ref->stride;
     const int        w           = var_params->w;
@@ -149,14 +149,14 @@ static int svt_upsampled_pref_error(MacroBlockD *xd, const struct AV1Common *con
 
 // Estimates the variance of prediction residue using bilinear filter for fast
 // search.
-static INLINE int svt_estimated_pref_error(const MV *                      this_mv,
+static INLINE int svt_estimated_pref_error(const MV                       *this_mv,
                                            const SUBPEL_SEARCH_VAR_PARAMS *var_params,
-                                           unsigned int *                  sse) {
+                                           unsigned int                   *sse) {
     const AomVarianceFnPtr *vfp = var_params->vfp;
 
     const MSBuffers *ms_buffers = &var_params->ms_buffers;
-    const uint8_t *  src        = ms_buffers->src->buf;
-    const uint8_t *  ref        = svt_get_buf_from_mv(ms_buffers->ref, *this_mv);
+    const uint8_t   *src        = ms_buffers->src->buf;
+    const uint8_t   *ref        = svt_get_buf_from_mv(ms_buffers->ref, *this_mv);
     const int        src_stride = ms_buffers->src->stride;
     const int        ref_stride = ms_buffers->ref->stride;
     //const uint8_t *second_pred = ms_buffers->second_pred;
@@ -258,9 +258,9 @@ static INLINE MV svt_get_best_diag_step(int step_size, unsigned int left_cost,
 
 static AOM_FORCE_INLINE MV svt_first_level_check(MacroBlockD *xd, const struct AV1Common *const cm,
                                                  const MV this_mv, MV *best_mv, const int hstep,
-                                                 const SubpelMvLimits *          mv_limits,
+                                                 const SubpelMvLimits           *mv_limits,
                                                  const SUBPEL_SEARCH_VAR_PARAMS *var_params,
-                                                 const MV_COST_PARAMS *          mv_cost_params,
+                                                 const MV_COST_PARAMS           *mv_cost_params,
                                                  unsigned int *besterr, unsigned int *sse1,
                                                  int *distortion) {
     int      dummy     = 0;
@@ -398,12 +398,12 @@ static AOM_FORCE_INLINE void svt_second_level_check_v2(
 }
 
 // Gets the error at the beginning when the mv has fullpel precision
-static unsigned int svt_upsampled_setup_center_error(const MV *                      bestmv,
+static unsigned int svt_upsampled_setup_center_error(const MV                       *bestmv,
                                                      const SUBPEL_SEARCH_VAR_PARAMS *var_params,
-                                                     const MV_COST_PARAMS *          mv_cost_params,
-                                                     unsigned int *                  distortion) {
+                                                     const MV_COST_PARAMS           *mv_cost_params,
+                                                     unsigned int                   *distortion) {
     const MSBuffers *ms_buffers = &var_params->ms_buffers;
-    const uint8_t *  ref        = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
+    const uint8_t   *ref        = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
     *distortion                 = var_params->vfp->vf(
         ref, ms_buffers->ref->stride, ms_buffers->src->buf, ms_buffers->src->stride, distortion);
     return *distortion + svt_mv_err_cost_(bestmv, mv_cost_params);
@@ -509,9 +509,8 @@ static AOM_FORCE_INLINE MV first_level_check_fast(
 static AOM_FORCE_INLINE void second_level_check_fast(
     MacroBlockD *xd, const struct AV1Common *const cm, const MV this_mv, const MV diag_step,
     MV *best_mv, int hstep, const SubpelMvLimits *mv_limits,
-    const SUBPEL_SEARCH_VAR_PARAMS *var_params,
-    const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
-    unsigned int *sse1, int *distortion, int is_scaled) {
+    const SUBPEL_SEARCH_VAR_PARAMS *var_params, const MV_COST_PARAMS *mv_cost_params,
+    unsigned int *besterr, unsigned int *sse1, int *distortion, int is_scaled) {
     assert(diag_step.row == hstep || diag_step.row == -hstep);
     assert(diag_step.col == hstep || diag_step.col == -hstep);
     const int tr    = this_mv.row;
@@ -688,15 +687,15 @@ static const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
 int svt_av1_find_best_sub_pixel_tree_pruned(MacroBlockD *xd, const struct AV1Common *const cm,
                                             const SUBPEL_MOTION_SEARCH_PARAMS *ms_params,
-                                            MV start_mv, MV *bestmv,
-                                            int *distortion, unsigned int *sse1, int qp,
-                                            BlockSize bsize, uint8_t early_neigh_check_exit) {
+                                            MV start_mv, MV *bestmv, int *distortion,
+                                            unsigned int *sse1, int qp, BlockSize bsize,
+                                            uint8_t early_neigh_check_exit) {
     (void)cm;
-    const int allow_hp       = ms_params->allow_hp;
-    const int forced_stop    = ms_params->forced_stop;
-    const int iters_per_step = ms_params->iters_per_step;
-    const SubpelMvLimits *          mv_limits      = &ms_params->mv_limits;
-    const MV_COST_PARAMS *          mv_cost_params = &ms_params->mv_cost_params;
+    const int                       allow_hp       = ms_params->allow_hp;
+    const int                       forced_stop    = ms_params->forced_stop;
+    const int                       iters_per_step = ms_params->iters_per_step;
+    const SubpelMvLimits           *mv_limits      = &ms_params->mv_limits;
+    const MV_COST_PARAMS           *mv_cost_params = &ms_params->mv_cost_params;
     const SUBPEL_SEARCH_VAR_PARAMS *var_params     = &ms_params->var_params;
     int          hstep = INIT_SUBPEL_STEP_SIZE; // Step size, initialized to 4/8=1/2 pel
     unsigned int besterr;
@@ -704,7 +703,7 @@ int svt_av1_find_best_sub_pixel_tree_pruned(MacroBlockD *xd, const struct AV1Com
     *bestmv = start_mv;
 
     const int is_scaled = 0;
-    besterr = svt_upsampled_setup_center_error(
+    besterr             = svt_upsampled_setup_center_error(
         bestmv, var_params, mv_cost_params, (unsigned int *)distortion);
     if (early_neigh_check_exit)
         return besterr;
@@ -720,8 +719,8 @@ int svt_av1_find_best_sub_pixel_tree_pruned(MacroBlockD *xd, const struct AV1Com
     if (!round)
         return besterr;
     // Exit subpel search if the variance of the full-pel predicted samples is low (i.e. where likely interpolation will not modify the integer samples)
-    const MSBuffers *  ms_buffers = &var_params->ms_buffers;
-    const uint8_t *    ref        = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
+    const MSBuffers   *ms_buffers = &var_params->ms_buffers;
+    const uint8_t     *ref        = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
     unsigned int       sse;
     const unsigned int var = var_params->vfp->vf(
         ref, ms_buffers->ref->stride, eb_av1_var_offs, 0, &sse);
@@ -773,9 +772,9 @@ int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *co
     const int forced_stop    = ms_params->forced_stop;
     const int iters_per_step = ms_params->iters_per_step;
 
-    const MV_COST_PARAMS *          mv_cost_params = &ms_params->mv_cost_params;
+    const MV_COST_PARAMS           *mv_cost_params = &ms_params->mv_cost_params;
     const SUBPEL_SEARCH_VAR_PARAMS *var_params     = &ms_params->var_params;
-    const SubpelMvLimits *          mv_limits      = &ms_params->mv_limits;
+    const SubpelMvLimits           *mv_limits      = &ms_params->mv_limits;
 
     // How many steps to take. A round of 0 means fullpel search only, 1 means
     // half-pel, and so on.
@@ -786,13 +785,13 @@ int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *co
 
     *bestmv             = start_mv;
     const int is_scaled = 0;
-    besterr = svt_upsampled_setup_center_error(
+    besterr             = svt_upsampled_setup_center_error(
         bestmv, var_params, mv_cost_params, (unsigned int *)distortion);
     if (early_neigh_check_exit)
         return besterr;
     // Exit subpel search if the variance of the full-pel predicted samples is low (i.e. where likely interpolation will not modify the integer samples)
-    const MSBuffers *  ms_buffers = &var_params->ms_buffers;
-    const uint8_t *    ref        = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
+    const MSBuffers   *ms_buffers = &var_params->ms_buffers;
+    const uint8_t     *ref        = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
     unsigned int       sse;
     const unsigned int var = var_params->vfp->vf(
         ref, ms_buffers->ref->stride, eb_av1_var_offs, 0, &sse);

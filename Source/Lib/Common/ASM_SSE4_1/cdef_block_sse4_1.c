@@ -908,7 +908,7 @@ static INLINE __m128i fold_mul_and_sum(__m128i partiala, __m128i partialb, __m12
     __m128i tmp;
     /* Reverse partial B. */
     partialb = _mm_shuffle_epi8(partialb,
-                              _mm_set_epi32(0x0f0e0100, 0x03020504, 0x07060908, 0x0b0a0d0c));
+                                _mm_set_epi32(0x0f0e0100, 0x03020504, 0x07060908, 0x0b0a0d0c));
     /* Interleave the x and y values of identical indices and pair x8 with 0. */
     tmp      = partiala;
     partiala = _mm_unpacklo_epi16(partialb, partiala);
@@ -1033,7 +1033,7 @@ static INLINE void array_reverse_transpose_8x8(__m128i *in, __m128i *res) {
     res[0] = _mm_unpackhi_epi64(tr1_6, tr1_7);
 }
 uint8_t svt_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *var,
-                               int32_t coeff_shift) {
+                                 int32_t coeff_shift) {
     int     i;
     int32_t cost[8];
     int32_t best_cost = 0;
@@ -1071,7 +1071,7 @@ uint8_t svt_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *v
 }
 
 void svt_copy_rect8_8bit_to_16bit_sse4_1(uint16_t *dst, int32_t dstride, const uint8_t *src,
-                                       int32_t sstride, int32_t v, int32_t h) {
+                                         int32_t sstride, int32_t v, int32_t h) {
     int32_t i, j;
     for (i = 0; i < v; i++) {
         for (j = 0; j < (h & ~0x7); j += 8) {

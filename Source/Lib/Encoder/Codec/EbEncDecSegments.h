@@ -60,7 +60,7 @@ typedef struct EncDecSegSegmentRow {
 typedef struct EncDecSegments {
     EbDctor                dctor;
     EncDecSegDependencyMap dep_map;
-    EncDecSegSegmentRow *  row_array;
+    EncDecSegSegmentRow   *row_array;
 
     uint16_t *x_start_array;
     uint16_t *y_start_array;

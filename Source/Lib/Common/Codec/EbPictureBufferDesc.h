@@ -217,7 +217,7 @@ typedef struct Yv12BufferConfig {
     uint8_t *y_buffer_8bit;
     int32_t  buf_8bit_valid;
 
-    uint8_t *                  buffer_alloc;
+    uint8_t                   *buffer_alloc;
     size_t                     buffer_alloc_sz;
     int32_t                    border;
     size_t                     frame_size;
@@ -245,7 +245,7 @@ void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc, Yv12Buffer
 typedef struct AomCodecFrameBuffer {
     uint8_t *data; /**< pointer to the data buffer */
     size_t   size; /**< Size of data in bytes */
-    void *   priv; /**< Frame's private data */
+    void    *priv; /**< Frame's private data */
 } AomCodecFrameBuffer;
 
 /*!\brief get frame buffer callback prototype

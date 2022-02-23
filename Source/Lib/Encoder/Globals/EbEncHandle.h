@@ -43,7 +43,7 @@ struct _EbEncHandle {
     uint32_t ref_pic_pool_total_count;
 
     // Config Set Pool & Active Array
-    EbSystemResource *             scs_pool_ptr; // sequence_control_set_pool
+    EbSystemResource              *scs_pool_ptr; // sequence_control_set_pool
     EbSequenceControlSetInstance **scs_instance_array;
 
     // Full Results
@@ -81,45 +81,45 @@ struct _EbEncHandle {
     EbHandle packetization_thread_handle;
 
     // Contexts
-    EbThreadContext * resource_coordination_context_ptr;
+    EbThreadContext  *resource_coordination_context_ptr;
     EbThreadContext **picture_analysis_context_ptr_array;
-    EbThreadContext * picture_decision_context_ptr;
+    EbThreadContext  *picture_decision_context_ptr;
     EbThreadContext **motion_estimation_context_ptr_array;
-    EbThreadContext * initial_rate_control_context_ptr;
+    EbThreadContext  *initial_rate_control_context_ptr;
     EbThreadContext **source_based_operations_context_ptr_array;
     EbThreadContext **tpl_disp_context_ptr_array;
-    EbThreadContext * picture_manager_context_ptr;
-    EbThreadContext * rate_control_context_ptr;
+    EbThreadContext  *picture_manager_context_ptr;
+    EbThreadContext  *rate_control_context_ptr;
     EbThreadContext **mode_decision_configuration_context_ptr_array;
     EbThreadContext **enc_dec_context_ptr_array;
     EbThreadContext **entropy_coding_context_ptr_array;
     EbThreadContext **dlf_context_ptr_array;
     EbThreadContext **cdef_context_ptr_array;
     EbThreadContext **rest_context_ptr_array;
-    EbThreadContext * packetization_context_ptr;
+    EbThreadContext  *packetization_context_ptr;
 
     // System Resource Managers
-    EbSystemResource * input_buffer_resource_ptr;
-    EbSystemResource * input_y8b_buffer_resource_ptr;
-    EbSystemResource * input_cmd_resource_ptr;
+    EbSystemResource  *input_buffer_resource_ptr;
+    EbSystemResource  *input_y8b_buffer_resource_ptr;
+    EbSystemResource  *input_cmd_resource_ptr;
     EbSystemResource **output_stream_buffer_resource_ptr_array;
     EbSystemResource **output_recon_buffer_resource_ptr_array;
     EbSystemResource **output_statistics_buffer_resource_ptr_array;
-    EbSystemResource * resource_coordination_results_resource_ptr;
-    EbSystemResource * picture_analysis_results_resource_ptr;
-    EbSystemResource * picture_decision_results_resource_ptr;
-    EbSystemResource * motion_estimation_results_resource_ptr;
-    EbSystemResource * initial_rate_control_results_resource_ptr;
-    EbSystemResource * picture_demux_results_resource_ptr;
-    EbSystemResource * tpl_disp_res_srm;
-    EbSystemResource * rate_control_tasks_resource_ptr;
-    EbSystemResource * rate_control_results_resource_ptr;
-    EbSystemResource * enc_dec_tasks_resource_ptr;
-    EbSystemResource * enc_dec_results_resource_ptr;
-    EbSystemResource * entropy_coding_results_resource_ptr;
-    EbSystemResource * dlf_results_resource_ptr;
-    EbSystemResource * cdef_results_resource_ptr;
-    EbSystemResource * rest_results_resource_ptr;
+    EbSystemResource  *resource_coordination_results_resource_ptr;
+    EbSystemResource  *picture_analysis_results_resource_ptr;
+    EbSystemResource  *picture_decision_results_resource_ptr;
+    EbSystemResource  *motion_estimation_results_resource_ptr;
+    EbSystemResource  *initial_rate_control_results_resource_ptr;
+    EbSystemResource  *picture_demux_results_resource_ptr;
+    EbSystemResource  *tpl_disp_res_srm;
+    EbSystemResource  *rate_control_tasks_resource_ptr;
+    EbSystemResource  *rate_control_results_resource_ptr;
+    EbSystemResource  *enc_dec_tasks_resource_ptr;
+    EbSystemResource  *enc_dec_results_resource_ptr;
+    EbSystemResource  *entropy_coding_results_resource_ptr;
+    EbSystemResource  *dlf_results_resource_ptr;
+    EbSystemResource  *cdef_results_resource_ptr;
+    EbSystemResource  *rest_results_resource_ptr;
 
     // Callbacks
     EbCallback **app_callback_ptr_array;

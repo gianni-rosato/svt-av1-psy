@@ -25,8 +25,8 @@ typedef void (*SvtHbdFilterTapFn)(uint16_t *s, int32_t pitch, const uint8_t *bli
                                   const uint8_t *limit, const uint8_t *thresh, int32_t bd);
 
 typedef struct LfCtxt {
-    TxSize *        tx_size_l;
-    TxSize *        tx_size_uv;
+    TxSize         *tx_size_l;
+    TxSize         *tx_size_uv;
     LoopFilterInfoN lf_info;
     int32_t         delta_lf_stride;
 } LfCtxt;

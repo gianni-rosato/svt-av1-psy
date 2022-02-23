@@ -143,7 +143,8 @@ typedef uint32_t (*nxm_sad_kernel_fn_ptr)(const uint8_t *src,
                                           const uint8_t *ref,
                                           uint32_t ref_stride, uint32_t height,
                                           uint32_t width);
-typedef std::tuple<TestPattern, BlkSize, nxm_sad_kernel_fn_ptr> Testsad_Param_nxm_kernel;
+typedef std::tuple<TestPattern, BlkSize, nxm_sad_kernel_fn_ptr>
+    Testsad_Param_nxm_kernel;
 
 /**
  * @Brief Base class for SAD test. SADTestBase handle test vector in memory,
@@ -335,10 +336,12 @@ class SADTestBase : public ::testing::Test {
  *  Test vector pattern {REF_MAX, SRC_MAX, RANDOM, UNALIGN}
  *
  */
-class SADTestSubSample : public ::testing::WithParamInterface<Testsad_Param_nxm_kernel>,
-                         public SADTestBase {
+class SADTestSubSample
+    : public ::testing::WithParamInterface<Testsad_Param_nxm_kernel>,
+      public SADTestBase {
   protected:
     nxm_sad_kernel_fn_ptr fn_ptr;
+
   public:
     SADTestSubSample()
         : SADTestBase(std::get<0>(TEST_GET_PARAM(1)),
@@ -423,6 +426,7 @@ class SADTest : public ::testing::WithParamInterface<Testsad_Param_nxm_kernel>,
                 public SADTestBase {
   protected:
     nxm_sad_kernel_fn_ptr fn_ptr;
+
   public:
     SADTest()
         : SADTestBase(std::get<0>(TEST_GET_PARAM(1)),

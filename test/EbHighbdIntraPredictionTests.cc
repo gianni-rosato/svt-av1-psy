@@ -472,7 +472,7 @@ TEST(HighbdIntraPredictionTest, aom_h_predictor_kernels) {
                                                                 // Pairs
         for (uint16_t i = 0; i < EB_UNIT_TEST_NUM; i++) {  // Number of Test
                                                            // Runs
-            for (uint16_t x = 0; x < 3; x++) {  // Bit Depth
+            for (uint16_t x = 0; x < 3; x++) {             // Bit Depth
                 switch (loop) {
                 case 0:  // 32x8
                     for (uint16_t j = 0; j < 1; j++) {
@@ -605,7 +605,7 @@ TEST(HighbdIntraPredictionTest, aom_v_predictor_kernels) {
                                                                 // Pairs
         for (uint16_t i = 0; i < EB_UNIT_TEST_NUM; i++) {  // Number of Test
                                                            // Runs
-            for (uint16_t x = 0; x < 3; x++) {  // Bit Depth
+            for (uint16_t x = 0; x < 3; x++) {             // Bit Depth
                 switch (loop) {
                 case 0:  // 32x8
                     for (uint16_t j = 0; j < 1; j++) {

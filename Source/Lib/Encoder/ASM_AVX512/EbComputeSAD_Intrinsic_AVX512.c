@@ -1714,9 +1714,9 @@ static INLINE __m128i complement_4_to_6(uint8_t *ref, uint32_t ref_stride, uint8
  * General version for SAD computing that support any block width and height
 *******************************************************************************/
 void sad_loop_kernel_generalized_avx512(
-    uint8_t * src, // input parameter, source samples Ptr
+    uint8_t  *src, // input parameter, source samples Ptr
     uint32_t  src_stride, // input parameter, source stride
-    uint8_t * ref, // input parameter, reference samples Ptr
+    uint8_t  *ref, // input parameter, reference samples Ptr
     uint32_t  ref_stride, // input parameter, reference stride
     uint32_t  block_height, // input parameter, block height (M)
     uint32_t  block_width, // input parameter, block width (N)
@@ -1960,16 +1960,15 @@ void sad_loop_kernel_generalized_avx512(
 * Requirement: height % 2 = 0
 *******************************************************************************/
 void svt_sad_loop_kernel_avx512_intrin(
-    uint8_t * src, // input parameter, source samples Ptr
+    uint8_t  *src, // input parameter, source samples Ptr
     uint32_t  src_stride, // input parameter, source stride
-    uint8_t * ref, // input parameter, reference samples Ptr
+    uint8_t  *ref, // input parameter, reference samples Ptr
     uint32_t  ref_stride, // input parameter, reference stride
     uint32_t  height, // input parameter, block height (M)
     uint32_t  width, // input parameter, block width (N)
     uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center,
     uint32_t src_stride_raw, // input parameter, source stride (no line skipping)
-    uint8_t skip_search_line,
-    int16_t search_area_width, int16_t search_area_height) {
+    uint8_t skip_search_line, int16_t search_area_width, int16_t search_area_height) {
     const uint32_t height2 = height >> 1;
     const uint8_t *s, *r;
     int32_t        best_x = *x_search_center, best_y = *y_search_center;

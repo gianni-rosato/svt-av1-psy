@@ -56,8 +56,8 @@ static AOM_FORCE_INLINE void integral_images(const uint8_t *src, int32_t src_str
                                              int32_t height, int32_t *C, int32_t *D,
                                              int32_t buf_stride) {
     const uint8_t *src_t = src;
-    int32_t *      ct    = C + buf_stride + 1;
-    int32_t *      dt    = D + buf_stride + 1;
+    int32_t       *ct    = C + buf_stride + 1;
+    int32_t       *dt    = D + buf_stride + 1;
     const __m256i  zero  = _mm256_setzero_si256();
 
     memset(C, 0, sizeof(*C) * (width + 8));
@@ -151,8 +151,8 @@ static AOM_FORCE_INLINE void integral_images_highbd(const uint16_t *src, int32_t
                                                     int32_t width, int32_t height, int32_t *C,
                                                     int32_t *D, int32_t buf_stride) {
     const uint16_t *src_t = src;
-    int32_t *       ct    = C + buf_stride + 1;
-    int32_t *       dt    = D + buf_stride + 1;
+    int32_t        *ct    = C + buf_stride + 1;
+    int32_t        *dt    = D + buf_stride + 1;
     const __m256i   zero  = _mm256_setzero_si256();
 
     memset(C, 0, sizeof(*C) * (width + 8));
@@ -841,7 +841,7 @@ void svt_apply_selfguided_restoration_avx2(const uint8_t *dat8, int32_t width, i
     } else {
         const __m256i   max   = _mm256_set1_epi16((1 << bit_depth) - 1);
         const uint16_t *dat16 = CONVERT_TO_SHORTPTR(dat8);
-        uint16_t *      dst16 = CONVERT_TO_SHORTPTR(dst8);
+        uint16_t       *dst16 = CONVERT_TO_SHORTPTR(dst8);
 
         do {
             // Calculate output in batches of 16 pixels

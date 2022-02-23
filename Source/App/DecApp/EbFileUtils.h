@@ -51,10 +51,10 @@ struct Rational {
 };
 
 typedef struct CliInput {
-    const char *                   in_filename;
-    const char *                   out_filename;
-    FILE *                         in_file;
-    FILE *                         out_file;
+    const char                    *in_filename;
+    const char                    *out_filename;
+    FILE                          *in_file;
+    FILE                          *out_file;
     uint32_t                       width;
     uint32_t                       height;
     uint32_t                       fourcc;
@@ -78,7 +78,7 @@ typedef struct ObuDecInputContext {
 } ObuDecInputContext;
 
 typedef struct DecInputContext {
-    CliInput *          cli_ctx;
+    CliInput           *cli_ctx;
     ObuDecInputContext *obu_ctx;
 } DecInputContext;
 

@@ -22,7 +22,7 @@ static void convolve_2d_sr_hor_2tap_avx2(const uint8_t *const src, const int32_t
                                          const int32_t subpel_x_q4, int16_t *const im_block) {
     const uint8_t *src_ptr = src;
     int32_t        y       = h;
-    int16_t *      im      = im_block;
+    int16_t       *im      = im_block;
 
     if (w <= 8) {
         __m128i coeffs_128;
@@ -107,7 +107,7 @@ void convolve_2d_sr_hor_4tap_ssse3(const uint8_t *const src, const int32_t src_s
                                    const int32_t subpel_x_q4, int16_t *const im_block) {
     const uint8_t *src_ptr = src - 1;
     int32_t        y       = h;
-    int16_t *      im      = im_block;
+    int16_t       *im      = im_block;
     __m128i        coeffs_128[2];
 
     prepare_half_coeffs_4tap_ssse3(filter_params_x, subpel_x_q4, coeffs_128);
@@ -139,7 +139,7 @@ static void convolve_2d_sr_hor_6tap_avx2(const uint8_t *const src, const int32_t
                                          const int32_t subpel_x_q4, int16_t *const im_block) {
     const uint8_t *src_ptr = src - 2;
     int32_t        y       = h;
-    int16_t *      im      = im_block;
+    int16_t       *im      = im_block;
     __m256i        coeffs_256[3], filt_256[3];
 
     filt_256[0] = _mm256_loadu_si256((__m256i const *)filt1_global_avx);
@@ -199,7 +199,7 @@ static void convolve_2d_sr_hor_8tap_avx2(const uint8_t *const src, const int32_t
                                          const int32_t subpel_x_q4, int16_t *const im_block) {
     const uint8_t *src_ptr = src - 3;
     int32_t        y       = h;
-    int16_t *      im      = im_block;
+    int16_t       *im      = im_block;
     __m256i        coeffs_256[4], filt_256[4];
 
     filt_256[0] = _mm256_loadu_si256((__m256i const *)filt1_global_avx);
@@ -648,7 +648,7 @@ static void convolve_2d_sr_ver_4tap_avx2(const int16_t *const im_block, const in
             __m256i s_256[2][4], ss_256[2][4], tt_256[2][4], r0[4], r1[4];
             do {
                 const int16_t *s = im + x;
-                uint8_t *      d = dst + x;
+                uint8_t       *d = dst + x;
 
                 loadu_unpack_16bit_3rows_avx2(s, w, s_256[0], ss_256[0], tt_256[0]);
                 loadu_unpack_16bit_3rows_avx2(s + 16, w, s_256[1], ss_256[1], tt_256[1]);
@@ -825,7 +825,7 @@ static void convolve_2d_sr_ver_6tap_avx2(const int16_t *const im_block, const in
 
             do {
                 const int16_t *s = im + x;
-                uint8_t *      d = dst + x;
+                uint8_t       *d = dst + x;
 
                 loadu_unpack_16bit_5rows_avx2(s, w, s_256[0], ss_256[0], tt_256[0]);
                 loadu_unpack_16bit_5rows_avx2(s + 16, w, s_256[1], ss_256[1], tt_256[1]);
@@ -999,7 +999,7 @@ static void convolve_2d_sr_ver_8tap_avx2(const int16_t *const im_block, const in
 
             do {
                 const int16_t *s = im + x;
-                uint8_t *      d = dst + x;
+                uint8_t       *d = dst + x;
 
                 load_16bit_7rows_avx2(s, w, s_256[0]);
                 convolve_8tap_unapck_avx2(s_256[0], ss_256[0]);

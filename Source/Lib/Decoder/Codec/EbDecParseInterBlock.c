@@ -241,16 +241,16 @@ static int32_t get_pred_context_last3_or_gld(PartitionInfo *pi) {
 }
 
 static void read_ref_frames(ParseCtxt *parse_ctxt, PartitionInfo *const pi) {
-    SvtReader *         r          = &parse_ctxt->r;
+    SvtReader          *r          = &parse_ctxt->r;
     int                 segment_id = pi->mi->segment_id;
-    MvReferenceFrame *  ref_frame  = pi->mi->ref_frame;
-    AomCdfProb *        cdf;
+    MvReferenceFrame   *ref_frame  = pi->mi->ref_frame;
+    AomCdfProb         *cdf;
     SegmentationParams *seg_params = &parse_ctxt->frame_header->segmentation_params;
     if (pi->mi->skip_mode) {
-        ref_frame[0] = (MvReferenceFrame)(
-            parse_ctxt->frame_header->skip_mode_params.ref_frame_idx_0);
-        ref_frame[1] = (MvReferenceFrame)(
-            parse_ctxt->frame_header->skip_mode_params.ref_frame_idx_1);
+        ref_frame[0] =
+            (MvReferenceFrame)(parse_ctxt->frame_header->skip_mode_params.ref_frame_idx_0);
+        ref_frame[1] =
+            (MvReferenceFrame)(parse_ctxt->frame_header->skip_mode_params.ref_frame_idx_1);
     } else if (seg_feature_active(seg_params, segment_id, SEG_LVL_REF_FRAME)) {
         ref_frame[0] = (MvReferenceFrame)get_segdata(seg_params, segment_id, SEG_LVL_REF_FRAME);
         ref_frame[1] = NONE_FRAME;
@@ -634,7 +634,7 @@ static int add_tpl_ref_mv(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_
                           MvReferenceFrame ref_frame, int blk_row, int blk_col,
                           IntMv *gm_mv_candidates, uint8_t *num_mv_found,
                           CandidateMv ref_mv_stacks[][MAX_REF_MV_STACK_SIZE],
-                          int16_t *   mode_context) {
+                          int16_t    *mode_context) {
     uint8_t      idx;
     FrameHeader *frm_header = &dec_handle->frame_header;
     int          mv_row     = (mi_row + blk_row) | 1;
@@ -817,7 +817,7 @@ static void dec_setup_ref_mv_list(EbDecHandle *dec_handle, ParseCtxt *parse_ctx,
     const int        bs   = AOMMAX(n4_w, n4_h);
     MvReferenceFrame rf[2];
 
-    FrameHeader *         frame_info     = parse_ctx->frame_header;
+    FrameHeader          *frame_info     = parse_ctx->frame_header;
     const TileInfo *const tile           = &parse_ctx->cur_tile_info;
     int                   max_row_offset = 0, max_col_offset = 0;
     int32_t               mi_row         = pi->mi_row;
@@ -1387,7 +1387,7 @@ static INLINE void read_mv(SvtReader *r, MV *mv, MV *ref, NmvContext *ctx,
 static INLINE int assign_mv(ParseCtxt *parse_ctxt, PartitionInfo *pi, IntMv mv[2],
                             IntMv *global_mvs, IntMv ref_mv[2], IntMv nearest_mv[2],
                             IntMv near_mv[2], int is_compound, int allow_hp) {
-    SvtReader *    r    = &parse_ctxt->r;
+    SvtReader     *r    = &parse_ctxt->r;
     BlockModeInfo *mbmi = pi->mi;
 
     if (parse_ctxt->frame_header->force_integer_mv)
@@ -1545,7 +1545,7 @@ static INLINE int is_dv_valid(MV dv, ParseCtxt *parse_ctx, PartitionInfo *pi) {
 }
 
 int dec_assign_dv(ParseCtxt *parse_ctxt, PartitionInfo *pi, IntMv *mv, IntMv *ref_mv) {
-    SvtReader *    r       = &parse_ctxt->r;
+    SvtReader     *r       = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
     read_mv(r, &mv->as_mv, &ref_mv->as_mv, &frm_ctx->ndvc, MV_SUBPEL_NONE);
     // DV should not have sub-pel.
@@ -1577,7 +1577,7 @@ void assign_intrabc_mv(ParseCtxt *parse_ctxt, IntMv ref_mvs[INTRA_FRAME + 1][MAX
 }
 
 void read_interintra_mode(ParseCtxt *parse_ctxt, BlockModeInfo *mbmi) {
-    SvtReader *    r       = &parse_ctxt->r;
+    SvtReader     *r       = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
     BlockSize      bsize   = mbmi->sb_type;
     if (parse_ctxt->seq_header->enable_interintra_compound && !mbmi->skip_mode &&
@@ -1756,7 +1756,7 @@ int has_overlappable_cand(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, Partiti
     int                   mi_row = pi->mi_row;
     int                   mi_col = pi->mi_col;
     const TileInfo *const tile   = &parse_ctx->cur_tile_info;
-    BlockModeInfo *       mbmi   = pi->mi;
+    BlockModeInfo        *mbmi   = pi->mi;
     if (!is_motion_variation_allowed_bsize(mbmi->sb_type))
         return 0;
 
@@ -1814,9 +1814,9 @@ static INLINE MotionMode is_motion_mode_allowed(EbDecHandle *dec_handle, ParseCt
 }
 
 MotionMode read_motion_mode(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionInfo *pi) {
-    SvtReader *    r                   = &parse_ctxt->r;
+    SvtReader     *r                   = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx             = &parse_ctxt->cur_tile_ctx;
-    FrameHeader *  frame_info          = &dec_handle->frame_header;
+    FrameHeader   *frame_info          = &dec_handle->frame_header;
     int            allow_warped_motion = frame_info->allow_warped_motion;
     BlockModeInfo *mbmi                = pi->mi;
 
@@ -1868,8 +1868,8 @@ static INLINE int get_comp_group_idx_context(ParseCtxt *parse_ctxt, const Partit
 
 int get_comp_index_context(EbDecHandle *dec_handle, PartitionInfo *pi) {
     BlockModeInfo *mbmi       = pi->mi;
-    SeqHeader *    seq_params = &dec_handle->seq_header;
-    FrameHeader *  frm_header = &dec_handle->frame_header;
+    SeqHeader     *seq_params = &dec_handle->seq_header;
+    FrameHeader   *frm_header = &dec_handle->frame_header;
 
     int bck_frame_index = 0, fwd_frame_index = 0;
     int cur_frame_index = frm_header->order_hint;
@@ -1913,7 +1913,7 @@ int get_comp_index_context(EbDecHandle *dec_handle, PartitionInfo *pi) {
 void update_compound_ctx(ParseCtxt *parse_ctxt, PartitionInfo *pi, uint32_t blk_row,
                          uint32_t blk_col, uint32_t comp_grp_idx) {
     ParseAboveNbr4x4Ctxt *above_parse_ctx = parse_ctxt->parse_above_nbr4x4_ctxt;
-    ParseLeftNbr4x4Ctxt * left_parse_ctx  = parse_ctxt->parse_left_nbr4x4_ctxt;
+    ParseLeftNbr4x4Ctxt  *left_parse_ctx  = parse_ctxt->parse_left_nbr4x4_ctxt;
 
     const uint32_t bw = mi_size_wide[pi->mi->sb_type];
     const uint32_t bh = mi_size_high[pi->mi->sb_type];
@@ -1928,7 +1928,7 @@ void update_compound_ctx(ParseCtxt *parse_ctxt, PartitionInfo *pi, uint32_t blk_
 }
 
 void read_compound_type(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionInfo *pi) {
-    SvtReader *    r              = &parse_ctxt->r;
+    SvtReader     *r              = &parse_ctxt->r;
     BlockModeInfo *mbmi           = pi->mi;
     BlockSize      bsize          = mbmi->sb_type;
     int32_t        comp_group_idx = 0;
@@ -2060,8 +2060,8 @@ int get_context_interp(PartitionInfo *pi, int dir) {
 }
 
 void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionInfo *pi) {
-    BlockModeInfo *     mbmi     = pi->mi;
-    SvtReader *         r        = &parse_ctxt->r;
+    BlockModeInfo      *mbmi     = pi->mi;
+    SvtReader          *r        = &parse_ctxt->r;
     const int           allow_hp = dec_handle->frame_header.allow_high_precision_mv;
     IntMv               ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES] = {{{0}}};
     int16_t             inter_mode_ctx[MODE_CTX_REF_FRAMES];
@@ -2301,7 +2301,7 @@ void palette_tokens(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, PartitionInfo
     BlockModeInfo *mbmi             = pi->mi;
     BlockSize      bsize            = mbmi->sb_type;
     FRAME_CONTEXT *frm_ctx          = &parse_ctx->cur_tile_ctx;
-    SvtReader *    r                = &parse_ctx->r;
+    SvtReader     *r                = &parse_ctx->r;
     int            block_height     = block_size_high[bsize];
     int            block_width      = block_size_wide[bsize];
     int            mi_cols          = (&dec_handle->frame_header)->mi_cols;
@@ -2369,7 +2369,7 @@ void palette_tokens(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, PartitionInfo
         if ((plane_itr ? is_chroma_ref : 1)) {
             if (palette_size) {
                 /* Palette prediction process */
-                void *               blk_recon_buf;
+                void                *blk_recon_buf;
                 int32_t              recon_stride;
                 EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 

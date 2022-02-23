@@ -37,7 +37,7 @@ extern EbErrorType derive_delta_qp_for_each_leaf_sb(
     int32_t inter_max_distance, ModeDecisionConfigurationContext *context_ptr);
 
 void qpm_derive_delta_qp_map_weights(ModeDecisionConfigurationContext *context_ptr,
-                                     PictureControlSet *               pcs_ptr);
+                                     PictureControlSet                *pcs_ptr);
 /**************************************
 * Function Ptrs Definitions
 **************************************/

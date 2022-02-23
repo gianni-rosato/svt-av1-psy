@@ -24,16 +24,16 @@ extern "C" {
  ***************************************/
 typedef struct PictureManagerContext {
     EbDctor  dctor;
-    EbFifo * picture_input_fifo_ptr;
-    EbFifo * picture_manager_output_fifo_ptr;
-    EbFifo * picture_control_set_fifo_ptr;
-    EbFifo * recon_coef_fifo_ptr;
+    EbFifo  *picture_input_fifo_ptr;
+    EbFifo  *picture_manager_output_fifo_ptr;
+    EbFifo  *picture_control_set_fifo_ptr;
+    EbFifo  *recon_coef_fifo_ptr;
     uint64_t pmgr_dec_order;
 } PictureManagerContext;
 /***************************************
      * Extern Function Declaration
      ***************************************/
-EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType picture_manager_context_ctor(EbThreadContext   *thread_context_ptr,
                                          const EbEncHandle *enc_handle_ptr, int rate_control_index);
 
 extern void *picture_manager_kernel(void *input_ptr);

@@ -236,7 +236,7 @@ typedef struct RestorationInfo {
     // out as if all tiles are of full size.
     int32_t                     units_per_tile;
     int32_t                     vert_units_per_tile, horz_units_per_tile;
-    RestorationUnitInfo *       unit_info;
+    RestorationUnitInfo        *unit_info;
     RestorationStripeBoundaries boundaries;
     int32_t                     optimized_lr;
 } RestorationInfo;
@@ -381,12 +381,12 @@ void sgrproj_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t stripe
 
 void get_stripe_boundary_info(const RestorationTileLimits *limits, const Av1PixelRect *tile_rect,
                               int32_t ss_y, int32_t *copy_above, int32_t *copy_below);
-void setup_processing_stripe_boundary(const RestorationTileLimits *      limits,
+void setup_processing_stripe_boundary(const RestorationTileLimits       *limits,
                                       const RestorationStripeBoundaries *rsb, int32_t rsb_row,
                                       int32_t use_highbd, int32_t h, uint8_t *data8,
                                       int32_t data_stride, RestorationLineBuffers *rlbs,
                                       int32_t copy_above, int32_t copy_below, int32_t opt);
-void restore_processing_stripe_boundary(const RestorationTileLimits * limits,
+void restore_processing_stripe_boundary(const RestorationTileLimits  *limits,
                                         const RestorationLineBuffers *rlbs, int32_t use_highbd,
                                         int32_t h, uint8_t *data8, int32_t data_stride,
                                         int32_t copy_above, int32_t copy_below, int32_t opt);

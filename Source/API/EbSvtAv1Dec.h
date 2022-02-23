@@ -196,10 +196,10 @@ EB_API EbErrorType svt_av1_dec_frame(EbComponentType *svt_dec_component, const u
      *  Returns EB_ErrorNone if the picture has been returned successfully.
      *  Returns EB_DecNoOutputPicture if the next output picture has not
      *  been generated yet. Calling a decoding function is needed to generate more pictures. */
-EB_API EbErrorType svt_av1_dec_get_picture(EbComponentType *   svt_dec_component,
+EB_API EbErrorType svt_av1_dec_get_picture(EbComponentType    *svt_dec_component,
                                            EbBufferHeaderType *p_buffer,
-                                           EbAV1StreamInfo *   stream_info,
-                                           EbAV1FrameInfo *    frame_info);
+                                           EbAV1StreamInfo    *stream_info,
+                                           EbAV1FrameInfo     *frame_info);
 
 /* STEP 6: Deinitialize decoder library.
      *

@@ -281,8 +281,8 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
                                          Av1PixelRect *tile_rect, int optimized_lr, uint8_t *dst,
                                          int thread_cnt) {
     RestorationTileLimits tile_limit;
-    RestorationUnitInfo * lr_unit;
-    LrCtxt *              lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
+    RestorationUnitInfo  *lr_unit;
+    LrCtxt               *lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     const int32_t         num_planes = av1_num_planes(&dec_handle->seq_header.color_config);
     int                   bit_depth  = dec_handle->seq_header.color_config.bit_depth;
     int                   use_highbd = (bit_depth > EB_8BIT || dec_handle->is_16bit_pipeline);
@@ -292,7 +292,7 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
     uint8_t               dst_stride = RESTORATION_PROC_UNIT_SIZE;
 
     volatile int32_t *sb_lr_completed_in_prev_row = NULL;
-    int32_t *         sb_lr_completed_in_row, nsync = 1;
+    int32_t          *sb_lr_completed_in_row, nsync = 1;
     EbBool            is_mt = dec_handle->dec_config.threads > 1;
 
     int32_t sb_row_idx = (is_mt == 0) ? 0 : sb_row;
@@ -477,7 +477,7 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
 
     assert(!dec_handle->frame_header.all_lossless);
     int32_t      y, sb_row;
-    uint8_t *    curr_blk_recon_buf[MAX_MB_PLANE];
+    uint8_t     *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t      curr_recon_stride[MAX_MB_PLANE];
     Av1PixelRect tile_rect[MAX_MB_PLANE];
 
@@ -486,7 +486,7 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
 
     lr_pad_pic(recon_picture_ptr, &dec_handle->frame_header, &dec_handle->seq_header.color_config);
 
-    LrCtxt * lr_ctxt = (LrCtxt *)dec_handle->pv_lr_ctxt;
+    LrCtxt  *lr_ctxt = (LrCtxt *)dec_handle->pv_lr_ctxt;
     uint8_t *dst     = lr_ctxt->dst;
 
     for (int32_t pli = 0; pli < num_planes; pli++) {
@@ -528,10 +528,10 @@ void dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle, int a
                             dec_handle->is_16bit_pipeline);
 
     for (int p = 0; p < num_planes; ++p) {
-        LrCtxt *   lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
+        LrCtxt    *lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
         FrameSize *frame_size = &dec_handle->frame_header.frame_size;
         int32_t    sx = 0, sy = 0;
-        uint8_t *  src;
+        uint8_t   *src;
         int32_t    stride;
         if (p) {
             sx = dec_handle->seq_header.color_config.subsampling_x;

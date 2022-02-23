@@ -613,14 +613,14 @@ static INLINE void transpose_32bit_8x4(const __m128i *const in, __m128i *const o
 }
 
 static INLINE void transpose_64bit_4x4_sse2(const __m128i *const in, __m128i *const out) {
-    out[0]            = _mm_unpacklo_epi64(in[0], in[2]);
-    out[4]            = _mm_unpacklo_epi64(in[1], in[3]);
-    out[1]            = _mm_unpacklo_epi64(in[4], in[6]);
-    out[5]            = _mm_unpacklo_epi64(in[5], in[7]);
-    out[2]            = _mm_unpackhi_epi64(in[0], in[2]);
-    out[6]            = _mm_unpackhi_epi64(in[1], in[3]);
-    out[3]            = _mm_unpackhi_epi64(in[4], in[6]);
-    out[7]            = _mm_unpackhi_epi64(in[5], in[7]);
+    out[0] = _mm_unpacklo_epi64(in[0], in[2]);
+    out[4] = _mm_unpacklo_epi64(in[1], in[3]);
+    out[1] = _mm_unpacklo_epi64(in[4], in[6]);
+    out[5] = _mm_unpacklo_epi64(in[5], in[7]);
+    out[2] = _mm_unpackhi_epi64(in[0], in[2]);
+    out[6] = _mm_unpackhi_epi64(in[1], in[3]);
+    out[3] = _mm_unpackhi_epi64(in[4], in[6]);
+    out[7] = _mm_unpackhi_epi64(in[5], in[7]);
 }
 
 static INLINE void transpose_32bit_8x8_sse2(const __m128i *const in, __m128i *const out) {
@@ -642,21 +642,21 @@ static INLINE void transpose_32bit_8x8_sse2(const __m128i *const in, __m128i *co
     const __m128i a70 = _mm_unpackhi_epi32(in[12], in[14]);
     const __m128i a71 = _mm_unpackhi_epi32(in[13], in[15]);
 
-    out[0] = _mm_unpacklo_epi64(a00, a10);
-    out[8] = _mm_unpacklo_epi64(a01, a11);
-    out[1] = _mm_unpacklo_epi64(a20, a30);
-    out[9] = _mm_unpacklo_epi64(a21, a31);
-    out[2] = _mm_unpackhi_epi64(a00, a10);
+    out[0]  = _mm_unpacklo_epi64(a00, a10);
+    out[8]  = _mm_unpacklo_epi64(a01, a11);
+    out[1]  = _mm_unpacklo_epi64(a20, a30);
+    out[9]  = _mm_unpacklo_epi64(a21, a31);
+    out[2]  = _mm_unpackhi_epi64(a00, a10);
     out[10] = _mm_unpackhi_epi64(a01, a11);
-    out[3] = _mm_unpackhi_epi64(a20, a30);
+    out[3]  = _mm_unpackhi_epi64(a20, a30);
     out[11] = _mm_unpackhi_epi64(a21, a31);
-    out[4] = _mm_unpacklo_epi64(a40, a50);
+    out[4]  = _mm_unpacklo_epi64(a40, a50);
     out[12] = _mm_unpacklo_epi64(a41, a51);
-    out[5] = _mm_unpacklo_epi64(a60, a70);
+    out[5]  = _mm_unpacklo_epi64(a60, a70);
     out[13] = _mm_unpacklo_epi64(a61, a71);
-    out[6] = _mm_unpackhi_epi64(a40, a50);
+    out[6]  = _mm_unpackhi_epi64(a40, a50);
     out[14] = _mm_unpackhi_epi64(a41, a51);
-    out[7] = _mm_unpackhi_epi64(a60, a70);
+    out[7]  = _mm_unpackhi_epi64(a60, a70);
     out[15] = _mm_unpackhi_epi64(a61, a71);
 }
 

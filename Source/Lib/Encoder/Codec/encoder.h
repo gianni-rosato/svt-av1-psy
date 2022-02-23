@@ -646,7 +646,7 @@ typedef struct AV1_COMP {
 
     double  total_inconsistency;
     double  worst_consistency;
-    Ssimv * ssim_vars;
+    Ssimv  *ssim_vars;
     Metrics metrics;
     /*!\endcond */
 #endif

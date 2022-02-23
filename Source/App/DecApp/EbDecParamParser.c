@@ -111,8 +111,8 @@ static void show_help() {
 
 EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfiguration *configs,
                               CliInput *cli, ObuDecInputContext *obu_ctx) {
-    char *  cmd_copy[MAX_NUM_TOKENS]       = {NULL};
-    char *  config_strings[MAX_NUM_TOKENS] = {NULL};
+    char   *cmd_copy[MAX_NUM_TOKENS]       = {NULL};
+    char   *config_strings[MAX_NUM_TOKENS] = {NULL};
     int32_t cmd_token_cnt                  = 0;
     int     token_index                    = 0;
 

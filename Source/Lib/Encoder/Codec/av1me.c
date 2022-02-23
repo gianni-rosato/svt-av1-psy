@@ -487,7 +487,7 @@ int svt_av1_diamond_search_sad_c(IntraBcContext *x, const SearchSiteConfig *cfg,
                                  const AomVarianceFnPtr *fn_ptr, const MV *center_mv) {
     int i, j, step;
 
-    uint8_t *      what        = x->plane[0].src.buf;
+    uint8_t       *what        = x->plane[0].src.buf;
     const int      what_stride = x->plane[0].src.stride;
     const uint8_t *in_what;
     const int      in_what_stride = x->xdplane[0].pre[0].stride;
@@ -763,7 +763,7 @@ int svt_av1_refining_search_sad(IntraBcContext *x, MV *ref_mv, int error_per_bit
     const struct Buf2D *const what         = &x->plane[0].src;
     const struct Buf2D *const in_what      = &x->xdplane[0].pre[0];
     const MV                  fcenter_mv   = {center_mv->row >> 3, center_mv->col >> 3};
-    const uint8_t *           best_address = get_buf_from_mv(in_what, ref_mv);
+    const uint8_t            *best_address = get_buf_from_mv(in_what, ref_mv);
     unsigned int best_sad = fn_ptr->sdf(what->buf, what->stride, best_address, in_what->stride) +
         mvsad_err_cost(x, ref_mv, &fcenter_mv, error_per_bit);
     for (int i = 0; i < search_range; i++) {
@@ -897,7 +897,7 @@ int svt_av1_obmc_full_pixel_search(ModeDecisionContext *context_ptr, IntraBcCont
     const int32_t *mask         = context_ptr->mask_buf;
     const int      search_range = 8;
     *dst_mv                     = *mvp_full;
-    x->approx_inter_rate = context_ptr->approx_inter_rate;
+    x->approx_inter_rate        = context_ptr->approx_inter_rate;
     clamp_mv(dst_mv,
              x->mv_limits.col_min,
              x->mv_limits.col_max,
@@ -945,7 +945,7 @@ static unsigned int setup_obmc_center_error(const int32_t *mask, const MV *bestm
                                             int y_stride, int offset, int *mvjcost, int *mvcost[2],
                                             unsigned int *sse1,
                                             uint8_t       use_low_precision_cost_estimation,
-                                            int *         distortion) {
+                                            int          *distortion) {
     unsigned int besterr;
     besterr     = vfp->ovf(y + offset, y_stride, wsrc, mask, sse1);
     *distortion = besterr;
@@ -1130,7 +1130,7 @@ static unsigned int upsampled_setup_obmc_center_error(
 }
 
 // convert motion vector component to offset for sv[a]f calc
-static INLINE int   sp(int x) { return x & 7; }
+static INLINE int            sp(int x) { return x & 7; }
 static INLINE const uint8_t *pre(const uint8_t *buf, int stride, int r, int c) {
     const int offset = (r >> 3) * stride + (c >> 3);
     return buf + offset;
@@ -1143,11 +1143,11 @@ int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, I
                                              int forced_stop, int iters_per_step, int *mvjcost,
                                              int *mvcost[2], int *distortion, unsigned int *sse1,
                                              int is_second, int use_accurate_subpel_search) {
-    const int32_t *                wsrc        = context_ptr->wsrc_buf;
-    const int32_t *                mask        = context_ptr->mask_buf;
+    const int32_t                 *wsrc        = context_ptr->wsrc_buf;
+    const int32_t                 *mask        = context_ptr->mask_buf;
     const int *const               z           = wsrc;
     const int *const               src_address = z;
-    MacroBlockD *                  xd          = x->xd;
+    MacroBlockD                   *xd          = x->xd;
     struct MacroBlockDPlane *const pd          = &x->xdplane[0];
     unsigned int                   besterr     = INT_MAX;
     unsigned int                   sse;
@@ -1158,13 +1158,13 @@ int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, I
     int                            round = 3 - forced_stop;
     int                            tr;
     int                            tc;
-    const MV *                     search_step = search_step_table;
+    const MV                      *search_step = search_step_table;
     int                            best_idx    = -1;
     unsigned int                   cost_array[5];
-    const int                      w = block_size_wide[context_ptr->blk_geom->bsize];
-    const int                      h = block_size_high[context_ptr->blk_geom->bsize];
-    const uint8_t lp = context_ptr->approx_inter_rate;
-    int minc, maxc, minr, maxr;
+    const int                      w  = block_size_wide[context_ptr->blk_geom->bsize];
+    const int                      h  = block_size_high[context_ptr->blk_geom->bsize];
+    const uint8_t                  lp = context_ptr->approx_inter_rate;
+    int                            minc, maxc, minr, maxr;
 
     set_subpel_mv_search_range(&x->mv_limits, &minc, &maxc, &minr, &maxr, ref_mv);
 
@@ -1430,7 +1430,7 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
             block_width <= pcs->parent_pcs_ptr->intraBC_ctrls.max_block_size_hash) {
             if (block_width == 4 || block_width == 8 || block_width == 16 || block_width == 32 ||
                 block_width == 64 || block_width == 128) {
-                uint8_t * what        = x->plane[0].src.buf;
+                uint8_t  *what        = x->plane[0].src.buf;
                 const int what_stride = x->plane[0].src.stride;
                 uint32_t  hash_value1, hash_value2;
                 MV        best_hash_mv;

@@ -309,11 +309,11 @@ void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *i
 void svt_aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc, Yv12BufferConfig *dst_ybc) {
     int32_t        row;
     const uint8_t *src = src_ybc->y_buffer;
-    uint8_t *      dst = dst_ybc->y_buffer;
+    uint8_t       *dst = dst_ybc->y_buffer;
 
     if (src_ybc->flags & YV12_FLAG_HIGHBITDEPTH) {
         const uint16_t *src16 = CONVERT_TO_SHORTPTR(src);
-        uint16_t *      dst16 = CONVERT_TO_SHORTPTR(dst);
+        uint16_t       *dst16 = CONVERT_TO_SHORTPTR(dst);
         for (row = 0; row < src_ybc->y_height; ++row) {
             svt_memcpy(dst16, src16, src_ybc->y_width * sizeof(uint16_t));
             src16 += src_ybc->y_stride;
@@ -332,11 +332,11 @@ void svt_aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc, Yv12BufferConfig *ds
 void svt_aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_bc) {
     int32_t        row;
     const uint8_t *src = src_bc->u_buffer;
-    uint8_t *      dst = dst_bc->u_buffer;
+    uint8_t       *dst = dst_bc->u_buffer;
 
     if (src_bc->flags & YV12_FLAG_HIGHBITDEPTH) {
         const uint16_t *src16 = CONVERT_TO_SHORTPTR(src);
-        uint16_t *      dst16 = CONVERT_TO_SHORTPTR(dst);
+        uint16_t       *dst16 = CONVERT_TO_SHORTPTR(dst);
         for (row = 0; row < src_bc->uv_height; ++row) {
             svt_memcpy(dst16, src16, src_bc->uv_width * sizeof(uint16_t));
             src16 += src_bc->uv_stride;
@@ -355,11 +355,11 @@ void svt_aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst
 void svt_aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_bc) {
     int32_t        row;
     const uint8_t *src = src_bc->v_buffer;
-    uint8_t *      dst = dst_bc->v_buffer;
+    uint8_t       *dst = dst_bc->v_buffer;
 
     if (src_bc->flags & YV12_FLAG_HIGHBITDEPTH) {
         const uint16_t *src16 = CONVERT_TO_SHORTPTR(src);
-        uint16_t *      dst16 = CONVERT_TO_SHORTPTR(dst);
+        uint16_t       *dst16 = CONVERT_TO_SHORTPTR(dst);
         for (row = 0; row < src_bc->uv_height; ++row) {
             svt_memcpy(dst16, src16, src_bc->uv_width * sizeof(uint16_t));
             src16 += src_bc->uv_stride;

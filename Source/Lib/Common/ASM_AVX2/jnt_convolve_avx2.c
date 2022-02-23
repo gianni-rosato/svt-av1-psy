@@ -59,7 +59,7 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
     const int32_t  round_bits   = 2 * FILTER_BITS - round_0 - round_1;
     const int32_t  offset_bits  = bd + round_bits;
     const int32_t  round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType *  dst          = conv_params->dst;
+    ConvBufType   *dst          = conv_params->dst;
     int32_t        y            = h;
     __m128i        coeffs_128[4];
     __m256i        coeffs_256[4];
@@ -744,7 +744,7 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
     const int32_t  round_bits   = 2 * FILTER_BITS - round_0 - round_1;
     const int32_t  offset_bits  = bd + round_bits;
     const int32_t  round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType *  dst          = conv_params->dst;
+    ConvBufType   *dst          = conv_params->dst;
     int32_t        y            = h;
     __m128i        coeffs_128[4];
     __m256i        coeffs_256[4];
@@ -1140,7 +1140,7 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
     const int32_t  round_bits   = 2 * FILTER_BITS - round_0 - round_1;
     const int32_t  offset_bits  = bd + round_bits;
     const int32_t  round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType *  dst          = conv_params->dst;
+    ConvBufType   *dst          = conv_params->dst;
     int32_t        x;
     __m128i        coeffs_128[4];
     __m256i        coeffs_256[4];
@@ -1321,8 +1321,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
                     x = 0;
                     do {
                         const uint8_t *s  = src_ptr + x;
-                        ConvBufType *  d  = dst + x;
-                        uint8_t *      d8 = dst8 + x;
+                        ConvBufType   *d  = dst + x;
+                        uint8_t       *d8 = dst8 + x;
 
                         s_256[0] = _mm256_loadu_si256((__m256i *)(s + 0 * src_stride));
                         s_256[1] = _mm256_loadu_si256((__m256i *)(s + 1 * src_stride));
@@ -1527,8 +1527,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
                     x = 0;
                     do {
                         const uint8_t *s  = src_ptr + x;
-                        ConvBufType *  d  = dst + x;
-                        uint8_t *      d8 = dst8 + x;
+                        ConvBufType   *d  = dst + x;
+                        uint8_t       *d8 = dst8 + x;
 
                         s_256[0] = _mm256_loadu_si256((__m256i *)(s + 0 * src_stride));
                         s_256[1] = _mm256_loadu_si256((__m256i *)(s + 1 * src_stride));
@@ -1719,7 +1719,7 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
                 x = 0;
                 do {
                     const uint8_t *s = src_ptr + x;
-                    ConvBufType *  d = dst + x;
+                    ConvBufType   *d = dst + x;
 
                     s_256[0] = _mm256_loadu_si256((__m256i *)(s + 0 * src_stride));
                     s_256[1] = _mm256_loadu_si256((__m256i *)(s + 1 * src_stride));
@@ -1780,7 +1780,7 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
     const int32_t  round_bits   = 2 * FILTER_BITS - round_0 - round_1;
     const int32_t  offset_bits  = bd + round_bits;
     const int32_t  round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType *  dst          = conv_params->dst;
+    ConvBufType   *dst          = conv_params->dst;
     int32_t        x;
     __m128i        coeffs_128[4];
     __m256i        coeffs_256[4];
@@ -1987,8 +1987,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
                     x = 0;
                     do {
                         const uint8_t *s  = src_ptr + x;
-                        ConvBufType *  d  = dst + x;
-                        uint8_t *      d8 = dst8 + x;
+                        ConvBufType   *d  = dst + x;
+                        uint8_t       *d8 = dst8 + x;
 
                         s_256[0] = _mm256_loadu_si256((__m256i *)(s + 0 * src_stride));
                         s_256[1] = _mm256_loadu_si256((__m256i *)(s + 1 * src_stride));
@@ -2229,8 +2229,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
                     x = 0;
                     do {
                         const uint8_t *s  = src_ptr + x;
-                        ConvBufType *  d  = dst + x;
-                        uint8_t *      d8 = dst8 + x;
+                        ConvBufType   *d  = dst + x;
+                        uint8_t       *d8 = dst8 + x;
 
                         s_256[0] = _mm256_loadu_si256((__m256i *)(s + 0 * src_stride));
                         s_256[1] = _mm256_loadu_si256((__m256i *)(s + 1 * src_stride));
@@ -2457,7 +2457,7 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
                 x = 0;
                 do {
                     const uint8_t *s = src_ptr + x;
-                    ConvBufType *  d = dst + x;
+                    ConvBufType   *d = dst + x;
 
                     s_256[0] = _mm256_loadu_si256((__m256i *)(s + 0 * src_stride));
                     s_256[1] = _mm256_loadu_si256((__m256i *)(s + 1 * src_stride));
@@ -2579,7 +2579,7 @@ void svt_av1_jnt_convolve_2d_copy_avx2(const uint8_t *src, int32_t src_stride, u
     const int32_t bd           = 8;
     const int32_t offset_bits  = bd + bits;
     const int32_t round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType * dst          = conv_params->dst;
+    ConvBufType  *dst          = conv_params->dst;
     int32_t       dst_stride   = conv_params->dst_stride;
 
     (void)filter_params_x;
@@ -3054,7 +3054,7 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
     const int32_t  round_bits   = 2 * FILTER_BITS - round_0 - round_1;
     const int32_t  offset_bits  = bd + round_bits;
     const int32_t  round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType *  dst          = conv_params->dst;
+    ConvBufType   *dst          = conv_params->dst;
     int32_t        y            = h;
     __m128i        coeffs_128[4];
     __m256i        coeffs_256[4];
@@ -3392,7 +3392,7 @@ void jnt_convolve_x_4tap_ssse3(const uint8_t *const src, const int32_t src_strid
     const int32_t  round_bits   = 2 * FILTER_BITS - round_0 - round_1;
     const int32_t  offset_bits  = bd + round_bits;
     const int32_t  round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType *  dst          = conv_params->dst;
+    ConvBufType   *dst          = conv_params->dst;
     int32_t        y            = h;
     __m128i        coeffs_128[4];
 
@@ -3501,7 +3501,7 @@ static void jnt_convolve_x_6tap_avx2(const uint8_t *const src, const int32_t src
     const int32_t  round_bits   = 2 * FILTER_BITS - round_0 - round_1;
     const int32_t  offset_bits  = bd + round_bits;
     const int32_t  round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType *  dst          = conv_params->dst;
+    ConvBufType   *dst          = conv_params->dst;
     int32_t        y            = h;
     __m256i        coeffs_256[3], filt_256[3];
 
@@ -3752,7 +3752,7 @@ static void jnt_convolve_x_8tap_avx2(const uint8_t *const src, const int32_t src
     const int32_t  round_bits   = 2 * FILTER_BITS - round_0 - round_1;
     const int32_t  offset_bits  = bd + round_bits;
     const int32_t  round_offset = (1 << offset_bits) + (1 << (offset_bits - 1));
-    ConvBufType *  dst          = conv_params->dst;
+    ConvBufType   *dst          = conv_params->dst;
     int32_t        y            = h;
     __m256i        coeffs_256[4], filt_256[4];
 

@@ -3331,7 +3331,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
 static void highbd_fwd_txfm_64x64_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x64_N4(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
@@ -3339,7 +3339,7 @@ static void highbd_fwd_txfm_64x64_n4(int16_t *src_diff, TranLow *coeff, int diff
 static void highbd_fwd_txfm_32x64_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_32x64_N4(src_diff, dst_coeff, diff_stride, txfm_param->tx_type, bd);
 }
@@ -3347,7 +3347,7 @@ static void highbd_fwd_txfm_32x64_n4(int16_t *src_diff, TranLow *coeff, int diff
 static void highbd_fwd_txfm_64x32_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x32_N4(src_diff, dst_coeff, diff_stride, txfm_param->tx_type, bd);
 }
@@ -3355,7 +3355,7 @@ static void highbd_fwd_txfm_64x32_n4(int16_t *src_diff, TranLow *coeff, int diff
 static void highbd_fwd_txfm_16x64_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x64_N4(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
@@ -3363,14 +3363,14 @@ static void highbd_fwd_txfm_16x64_n4(int16_t *src_diff, TranLow *coeff, int diff
 static void highbd_fwd_txfm_64x16_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x16_N4(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
 
 static void highbd_fwd_txfm_32x32_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_32x32_N4(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3378,7 +3378,7 @@ static void highbd_fwd_txfm_32x32_n4(int16_t *src_diff, TranLow *coeff, int diff
 
 static void highbd_fwd_txfm_16x16_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x16_N4(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3386,7 +3386,7 @@ static void highbd_fwd_txfm_16x16_n4(int16_t *src_diff, TranLow *coeff, int diff
 
 static void highbd_fwd_txfm_8x8_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                    TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_8x8_N4(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3408,7 +3408,7 @@ static void highbd_fwd_txfm_8x4_n4(int16_t *src_diff, TranLow *coeff, int diff_s
 
 static void highbd_fwd_txfm_8x16_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                     TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_8x16_N4(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3416,7 +3416,7 @@ static void highbd_fwd_txfm_8x16_n4(int16_t *src_diff, TranLow *coeff, int diff_
 
 static void highbd_fwd_txfm_16x8_n4(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                     TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x8_N4(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3467,7 +3467,7 @@ static void highbd_fwd_txfm_32x8_n4(int16_t *src_diff, TranLow *coeff, int diff_
 static void highbd_fwd_txfm_64x64_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x64_N2(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
@@ -3475,7 +3475,7 @@ static void highbd_fwd_txfm_64x64_n2(int16_t *src_diff, TranLow *coeff, int diff
 static void highbd_fwd_txfm_32x64_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_32x64_N2(src_diff, dst_coeff, diff_stride, txfm_param->tx_type, bd);
 }
@@ -3483,7 +3483,7 @@ static void highbd_fwd_txfm_32x64_n2(int16_t *src_diff, TranLow *coeff, int diff
 static void highbd_fwd_txfm_64x32_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x32_N2(src_diff, dst_coeff, diff_stride, txfm_param->tx_type, bd);
 }
@@ -3491,7 +3491,7 @@ static void highbd_fwd_txfm_64x32_n2(int16_t *src_diff, TranLow *coeff, int diff
 static void highbd_fwd_txfm_16x64_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x64_N2(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
@@ -3499,14 +3499,14 @@ static void highbd_fwd_txfm_16x64_n2(int16_t *src_diff, TranLow *coeff, int diff
 static void highbd_fwd_txfm_64x16_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x16_N2(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
 
 static void highbd_fwd_txfm_32x32_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_32x32_N2(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3514,7 +3514,7 @@ static void highbd_fwd_txfm_32x32_n2(int16_t *src_diff, TranLow *coeff, int diff
 
 static void highbd_fwd_txfm_16x16_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                      TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x16_N2(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3522,7 +3522,7 @@ static void highbd_fwd_txfm_16x16_n2(int16_t *src_diff, TranLow *coeff, int diff
 
 static void highbd_fwd_txfm_8x8_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                    TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_8x8_N2(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3544,7 +3544,7 @@ static void highbd_fwd_txfm_8x4_n2(int16_t *src_diff, TranLow *coeff, int diff_s
 
 static void highbd_fwd_txfm_8x16_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                     TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_8x16_N2(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3552,7 +3552,7 @@ static void highbd_fwd_txfm_8x16_n2(int16_t *src_diff, TranLow *coeff, int diff_
 
 static void highbd_fwd_txfm_16x8_n2(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                     TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x8_N2(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3601,7 +3601,7 @@ static void highbd_fwd_txfm_32x8_n2(int16_t *src_diff, TranLow *coeff, int diff_
 static void highbd_fwd_txfm_64x64(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                   TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x64(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
@@ -3609,7 +3609,7 @@ static void highbd_fwd_txfm_64x64(int16_t *src_diff, TranLow *coeff, int diff_st
 static void highbd_fwd_txfm_32x64(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                   TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_32x64(src_diff, dst_coeff, diff_stride, txfm_param->tx_type, bd);
 }
@@ -3617,7 +3617,7 @@ static void highbd_fwd_txfm_32x64(int16_t *src_diff, TranLow *coeff, int diff_st
 static void highbd_fwd_txfm_64x32(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                   TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x32(src_diff, dst_coeff, diff_stride, txfm_param->tx_type, bd);
 }
@@ -3625,7 +3625,7 @@ static void highbd_fwd_txfm_64x32(int16_t *src_diff, TranLow *coeff, int diff_st
 static void highbd_fwd_txfm_16x64(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                   TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x64(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
@@ -3633,14 +3633,14 @@ static void highbd_fwd_txfm_16x64(int16_t *src_diff, TranLow *coeff, int diff_st
 static void highbd_fwd_txfm_64x16(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                   TxfmParam *txfm_param) {
     assert(txfm_param->tx_type == DCT_DCT);
-    int32_t * dst_coeff = (int32_t *)coeff;
+    int32_t  *dst_coeff = (int32_t *)coeff;
     const int bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_64x16(src_diff, dst_coeff, diff_stride, DCT_DCT, bd);
 }
 
 static void highbd_fwd_txfm_32x32(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                   TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_32x32(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3648,7 +3648,7 @@ static void highbd_fwd_txfm_32x32(int16_t *src_diff, TranLow *coeff, int diff_st
 
 static void highbd_fwd_txfm_16x16(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                   TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x16(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3656,7 +3656,7 @@ static void highbd_fwd_txfm_16x16(int16_t *src_diff, TranLow *coeff, int diff_st
 
 static void highbd_fwd_txfm_8x8(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                 TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_8x8(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3676,7 +3676,7 @@ static void highbd_fwd_txfm_8x4(int16_t *src_diff, TranLow *coeff, int diff_stri
 
 static void highbd_fwd_txfm_8x16(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                  TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_8x16(src_diff, dst_coeff, diff_stride, tx_type, bd);
@@ -3684,7 +3684,7 @@ static void highbd_fwd_txfm_8x16(int16_t *src_diff, TranLow *coeff, int diff_str
 
 static void highbd_fwd_txfm_16x8(int16_t *src_diff, TranLow *coeff, int diff_stride,
                                  TxfmParam *txfm_param) {
-    int32_t *    dst_coeff = (int32_t *)coeff;
+    int32_t     *dst_coeff = (int32_t *)coeff;
     const TxType tx_type   = txfm_param->tx_type;
     const int    bd        = txfm_param->bd;
     svt_av1_fwd_txfm2d_16x8(src_diff, dst_coeff, diff_stride, tx_type, bd);

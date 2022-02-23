@@ -160,9 +160,9 @@ int svt_av1_determine_correspondence(unsigned char *frm, int *frm_corners, int n
     const int       thresh              = (width < height ? height : width) >> 4;
     const int       threshSqr           = thresh * thresh;
     for (i = 0; i < num_frm_corners; ++i) {
-        double best_match_ncc = 0.0;
+        double  best_match_ncc = 0.0;
         int32_t template_norm;
-        int best_match_j = -1;
+        int     best_match_j = -1;
         if (!is_eligible_point(frm_corners[2 * i], frm_corners[2 * i + 1], width, height))
             continue;
         for (j = 0; j < num_ref_corners; ++j) {

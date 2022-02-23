@@ -83,16 +83,11 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea){240, 240};
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){480, 480};
         }
-#if OPT_RES_CHECKS_3
     }
     else if (pcs_ptr->enc_mode <= ENC_M5) {
-#else
-    } else if (pcs_ptr->enc_mode <= ENC_M4) {
-#endif
         me_context_ptr->hme_l0_sa.sa_min = (SearchArea){32, 32};
         me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
     }
-#if OPT_M6_4K
     else if (pcs_ptr->enc_mode <= ENC_M6) {
         if (input_resolution <= INPUT_SIZE_1080p_RANGE) {
             if (pcs_ptr->sc_class1) {
@@ -107,31 +102,16 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
         }
     }
-#endif
     else if (pcs_ptr->enc_mode <= ENC_M11) {
         if (pcs_ptr->sc_class1) {
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea){32, 32};
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
         } else {
-#if OPT_RES_CHECKS_3
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea) { 16, 16 };
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea) { 192, 192 };
-#else
-            if (input_resolution < INPUT_SIZE_1080p_RANGE) {
-                me_context_ptr->hme_l0_sa.sa_min = (SearchArea){32, 16};
-                me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
-            } else {
-                me_context_ptr->hme_l0_sa.sa_min = (SearchArea){16, 16};
-                me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
-            }
-#endif
         }
     }
-#if OPT_M12_4K_SPACING
     else if (pcs_ptr->enc_mode <= ENC_M13) {
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M12) {
-#endif
         if (pcs_ptr->sc_class1) {
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea){ 32, 32 };
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){ 192, 192 };
@@ -211,28 +191,10 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
         me_context_ptr->me_sa.sa_min = (SearchArea){16, 16};
         me_context_ptr->me_sa.sa_max = (SearchArea){64, 64};
     }
-#if OPT_M6_4K
     else if (pcs_ptr->enc_mode <= ENC_M5) {
         me_context_ptr->me_sa.sa_min = (SearchArea) { 16, 16 };
         me_context_ptr->me_sa.sa_max = (SearchArea) { 64, 32 };
     }
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M6) {
-        me_context_ptr->me_sa.sa_min = (SearchArea) { 16, 16 };
-        me_context_ptr->me_sa.sa_max = (SearchArea) { 64, 32 };
-}
-#endif
-#if !OPT_M7_4K
-    else if (pcs_ptr->enc_mode <= ENC_M7) {
-        if (input_resolution < INPUT_SIZE_1080p_RANGE) {
-            me_context_ptr->me_sa.sa_min = (SearchArea){16, 16};
-            me_context_ptr->me_sa.sa_max = (SearchArea){64, 32};
-        } else {
-            me_context_ptr->me_sa.sa_min = (SearchArea){16, 6};
-            me_context_ptr->me_sa.sa_max = (SearchArea){32, 30};
-        }
-    }
-#endif
     else if (pcs_ptr->enc_mode <= ENC_M9) {
         if (input_resolution < INPUT_SIZE_1080p_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea){16, 16};
@@ -241,12 +203,6 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
             me_context_ptr->me_sa.sa_min = (SearchArea){16, 6};
             me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
         }
-#if OPT_M11_4K
-#if !OPT_M10_4K
-    } else if (pcs_ptr->enc_mode <= ENC_M10) {
-        me_context_ptr->me_sa.sa_min = (SearchArea){8, 5};
-        me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
-#endif
     } else if (pcs_ptr->enc_mode <= ENC_M11) {
         if (input_resolution < INPUT_SIZE_4K_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea){8, 5};
@@ -256,11 +212,6 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
             me_context_ptr->me_sa.sa_min = (SearchArea){8, 1};
             me_context_ptr->me_sa.sa_max = (SearchArea){8, 1};
         }
-#else
-    } else if (pcs_ptr->enc_mode <= ENC_M11) {
-        me_context_ptr->me_sa.sa_min = (SearchArea){8, 5};
-        me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
-#endif
     } else if (pcs_ptr->enc_mode <= ENC_M12) {
         if (input_resolution < INPUT_SIZE_720p_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
@@ -370,26 +321,10 @@ void set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_le
         break;
     case 4:
         me_sr_adjustment_ctrls->enable_me_sr_adjustment = 2;
-#if OPT_REMOVE_SC_RES_CHECKS
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 16;
         me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 20000;
         me_sr_adjustment_ctrls->stationary_me_sr_divisor = 8;
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 20000;
-#else
-        me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th =
-            context_ptr->input_resolution <= INPUT_SIZE_720p_RANGE || context_ptr->clip_class ? 16
-                                                                                              : 20;
-        me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = context_ptr->input_resolution <=
-                    INPUT_SIZE_720p_RANGE ||
-                context_ptr->clip_class
-            ? 20000
-            : 22000;
-        me_sr_adjustment_ctrls->stationary_me_sr_divisor  = 8;
-        me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th =
-            context_ptr->input_resolution <= INPUT_SIZE_720p_RANGE || context_ptr->clip_class
-            ? 20000
-            : 22000;
-#endif
         me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
         me_sr_adjustment_ctrls->distance_based_hme_resizing   = 1;
         break;
@@ -397,26 +332,10 @@ void set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_le
     case 5:
 
         me_sr_adjustment_ctrls->enable_me_sr_adjustment = 2;
-#if OPT_REMOVE_SC_RES_CHECKS
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 20;
         me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 24000;
         me_sr_adjustment_ctrls->stationary_me_sr_divisor = 8;
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 24000;
-#else
-        me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th =
-            context_ptr->input_resolution <= INPUT_SIZE_720p_RANGE || context_ptr->clip_class ? 20
-                                                                                              : 24;
-        me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = context_ptr->input_resolution <=
-                    INPUT_SIZE_720p_RANGE ||
-                context_ptr->clip_class
-            ? 24000
-            : 26000;
-        me_sr_adjustment_ctrls->stationary_me_sr_divisor  = 8;
-        me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th =
-            context_ptr->input_resolution <= INPUT_SIZE_720p_RANGE || context_ptr->clip_class
-            ? 24000
-            : 26000;
-#endif
         me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
         me_sr_adjustment_ctrls->distance_based_hme_resizing   = 1;
 
@@ -515,10 +434,6 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 
     EbEncMode         enc_mode         = pcs_ptr->enc_mode;
     EbInputResolution input_resolution = scs_ptr->input_resolution;
-#if !OPT_REMOVE_SC_RES_CHECKS
-    context_ptr->me_context_ptr->input_resolution = input_resolution;
-    context_ptr->me_context_ptr->clip_class       = pcs_ptr->sc_class1;
-#endif
     // Set ME search area
     set_me_search_params(scs_ptr, pcs_ptr, context_ptr->me_context_ptr, input_resolution);
 
@@ -534,11 +449,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     context_ptr->me_context_ptr->me_search_method  = SUB_SAD_SEARCH;
     if (pcs_ptr->sc_class1)
         context_ptr->me_context_ptr->stat_factor = 100;
-#if OPT_M12_4K
     else if (pcs_ptr->enc_mode <= ENC_M12)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M11)
-#endif
         context_ptr->me_context_ptr->stat_factor = 100;
     else
         context_ptr->me_context_ptr->stat_factor = 80;
@@ -547,50 +458,14 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
         context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
     }
-#if OPT_RES_CHECKS
-#if OPT_RES_CHECKS_2
     else if (pcs_ptr->enc_mode <= ENC_M10) {
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M8) { // to be m9 level
-#endif
         context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
         context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
     }
-#if OPT_RES_CHECKS_2
     else {
         context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 8;
         context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 200;
     }
-#else
-    else /*if (pcs_ptr->enc_mode <= ENC_M8)*/ { // temp level
-        if (pcs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) {
-            context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 8;
-            context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 200;
-        }
-        else {
-            context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
-            context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
-        }
-    }
-    //else {
-    //    context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 8;
-    //    context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 200;
-    //}
-#endif
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M4) {
-        context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
-        context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
-    } else {
-        if (pcs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) {
-            context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 8;
-            context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 200;
-        } else {
-            context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
-            context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
-        }
-    }
-#endif
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;
     if (pcs_ptr->sc_class1)
@@ -646,43 +521,14 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 
     if (enc_mode <= ENC_M7)
         context_ptr->me_context_ptr->prune_me_candidates_th = 0;
-#if OPT_RES_CHECKS
-#if OPT_RES_CHECKS_2
     else
         context_ptr->me_context_ptr->prune_me_candidates_th = 65;
-#else
-    else if (enc_mode <= ENC_M8)
-        context_ptr->me_context_ptr->prune_me_candidates_th = 65;
-    else // temp level
-        context_ptr->me_context_ptr->prune_me_candidates_th = scs_ptr->input_resolution <=
-        INPUT_SIZE_720p_RANGE
-        ? 65
-        : 30;
-#endif
-#else
-    else if (enc_mode <= ENC_M13)
-        context_ptr->me_context_ptr->prune_me_candidates_th = scs_ptr->input_resolution <=
-                INPUT_SIZE_720p_RANGE
-            ? 65
-            : 30;
-    else
-        context_ptr->me_context_ptr->prune_me_candidates_th = 30;
-#endif
     // Set signal at picture level b/c may check signal in MD
     context_ptr->me_context_ptr->use_best_unipred_cand_only =
         pcs_ptr->use_best_me_unipred_cand_only;
-#if OPT_M7_4K
     if (pcs_ptr->enc_mode <= ENC_M6)
         context_ptr->me_context_ptr->me_early_exit_th = 0;
-#else
-    if (pcs_ptr->enc_mode <= ENC_M7)
-        context_ptr->me_context_ptr->me_early_exit_th = 0;
-#endif
-#if OPT_M12_4K
     else if (pcs_ptr->enc_mode <= ENC_M11)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M12)
-#endif
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
     else
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 9;

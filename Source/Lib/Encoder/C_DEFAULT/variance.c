@@ -209,7 +209,7 @@ static INLINE const InterpFilterParams *av1_get_filter(int subpel_search) {
 }
 
 // Get pred block from up-sampled reference.
-void svt_aom_upsampled_pred_c(MacroBlockD *                 xd,
+void svt_aom_upsampled_pred_c(MacroBlockD                  *xd,
                               const struct AV1Common *const cm, //const AV1_COMMON *const cm,
                               int mi_row, int mi_col, const MV *const mv, uint8_t *comp_pred,
                               int width, int height, int subpel_x_q3, int subpel_y_q3,
@@ -327,7 +327,7 @@ uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, i
                                                      int            yoffset,  \
                                                      const uint8_t *b,        \
                                                      int            b_stride, \
-                                                     uint32_t *     sse) {         \
+                                                     uint32_t      *sse) {         \
         uint16_t fdata3[(H + 1) * W];                                         \
         uint8_t  temp2[H * W];                                                \
                                                                               \
@@ -391,7 +391,7 @@ static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32
                                                     int            pre_stride, \
                                                     const int32_t *wsrc,       \
                                                     const int32_t *mask,       \
-                                                    unsigned int * sse) {       \
+                                                    unsigned int  *sse) {       \
         int sum;                                                               \
         obmc_variance(pre, pre_stride, wsrc, mask, W, H, sse, &sum);           \
         return *sse - (unsigned int)(((int64_t)sum * sum) / (W * H));          \
@@ -404,7 +404,7 @@ static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32
                                                               int            yoffset,    \
                                                               const int32_t *wsrc,       \
                                                               const int32_t *mask,       \
-                                                              unsigned int * sse) {       \
+                                                              unsigned int  *sse) {       \
         uint16_t fdata3[(H + 1) * W];                                                    \
         uint8_t  temp2[H * W];                                                           \
                                                                                          \

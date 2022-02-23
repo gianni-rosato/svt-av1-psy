@@ -177,7 +177,7 @@ static INLINE void transpose_16nx16m_avx512(const __m512i *in, __m512i *out, con
 
 static AOM_FORCE_INLINE void transpose_16nx16n_N2_half_avx512(int32_t        txfm_size,
                                                               const __m512i *input,
-                                                              __m512i *      output) {
+                                                              __m512i       *output) {
     const int32_t num_per_512 = 16;
     const int32_t row_size    = txfm_size;
     const int32_t col_size    = txfm_size / num_per_512;
@@ -199,7 +199,7 @@ static AOM_FORCE_INLINE void transpose_16nx16n_N2_half_avx512(int32_t        txf
 
 static AOM_FORCE_INLINE void transpose_16nx16n_N2_quad_avx512(int32_t        txfm_size,
                                                               const __m512i *input,
-                                                              __m512i *      output) {
+                                                              __m512i       *output) {
     const int32_t num_per_512 = 16;
     const int32_t row_size    = txfm_size;
     const int32_t col_size    = txfm_size / num_per_512;
@@ -563,7 +563,7 @@ static AOM_FORCE_INLINE void transpose_16nx16m_N2_quad_avx512(const __m512i *in,
 
 static AOM_FORCE_INLINE void transpose_16nx16n_N4_half_avx512(int32_t        txfm_size,
                                                               const __m512i *input,
-                                                              __m512i *      output) {
+                                                              __m512i       *output) {
     const int32_t num_per_512 = 16;
     const int32_t row_size    = txfm_size;
     const int32_t col_size    = txfm_size / num_per_512;
@@ -585,7 +585,7 @@ static AOM_FORCE_INLINE void transpose_16nx16n_N4_half_avx512(int32_t        txf
 
 static AOM_FORCE_INLINE void transpose_16nx16n_N4_quad_avx512(int32_t        txfm_size,
                                                               const __m512i *input,
-                                                              __m512i *      output) {
+                                                              __m512i       *output) {
     const int32_t num_per_512 = 16;
     const int32_t row_size    = txfm_size;
     const int32_t col_size    = txfm_size / num_per_512;

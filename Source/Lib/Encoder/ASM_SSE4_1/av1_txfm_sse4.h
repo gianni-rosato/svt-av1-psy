@@ -27,7 +27,7 @@ static INLINE __m128i av1_round_shift_32_sse4_1(__m128i vec, int32_t bit) {
 }
 
 static INLINE void av1_round_shift_array_32_sse4_1(__m128i *input, __m128i *output,
-                                                 const int32_t size, const int32_t bit) {
+                                                   const int32_t size, const int32_t bit) {
     int32_t i;
     if (bit > 0) {
         const __m128i round = _mm_set1_epi32(1 << (bit - 1));
@@ -35,15 +35,13 @@ static INLINE void av1_round_shift_array_32_sse4_1(__m128i *input, __m128i *outp
             output[i] = _mm_srai_epi32(_mm_add_epi32(input[i], round), bit);
         }
     } else {
-        for (i = 0; i < size; i++) {
-        output[i]     = _mm_slli_epi32(input[i], -bit);
-        }
+        for (i = 0; i < size; i++) { output[i] = _mm_slli_epi32(input[i], -bit); }
     }
 }
 
 static INLINE void av1_round_shift_rect_array_32_sse4_1(__m128i *input, __m128i *output,
                                                         const int32_t size, const int32_t bit) {
-    const __m128i sqrt2 = _mm_set1_epi32(new_sqrt2);
+    const __m128i sqrt2  = _mm_set1_epi32(new_sqrt2);
     const __m128i round2 = _mm_set1_epi32(1 << (new_sqrt2_bits - 1));
     int32_t       i;
     if (bit > 0) {

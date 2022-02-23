@@ -166,8 +166,8 @@ EbErrorType svt_destroy_thread(EbHandle thread_handle) {
     WaitForSingleObject(thread_handle, INFINITE);
     error_return = CloseHandle(thread_handle) ? EB_ErrorNone : EB_ErrorDestroyThreadFailed;
 #else
-    error_return = pthread_join(*((pthread_t *)thread_handle), NULL) ? EB_ErrorDestroyThreadFailed
-                                                                     : EB_ErrorNone;
+    error_return  = pthread_join(*((pthread_t *)thread_handle), NULL) ? EB_ErrorDestroyThreadFailed
+                                                                      : EB_ErrorNone;
     free(thread_handle);
 #endif // _WIN32
 
@@ -369,7 +369,7 @@ EbErrorType svt_create_cond_var(CondVar *cond_var) {
     return_error = EB_ErrorNone;
 #else
     pthread_mutex_init(&cond_var->m_mutex, NULL);
-    return_error = pthread_cond_init(&cond_var->m_cond, NULL);
+    return_error  = pthread_cond_init(&cond_var->m_cond, NULL);
 
 #endif
     return return_error;

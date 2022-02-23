@@ -192,7 +192,7 @@ static INLINE void variance_final_1024_pel_sse2(__m128i vsse, __m128i vsum, unsi
                                                     int            src_stride,   \
                                                     const uint8_t *ref,          \
                                                     int            ref_stride,   \
-                                                    unsigned int * sse) {         \
+                                                    unsigned int  *sse) {         \
         __m128i vsse = _mm_setzero_si128();                                      \
         __m128i vsum;                                                            \
         int     sum = 0;                                                         \
@@ -227,7 +227,7 @@ AOM_VAR_NO_LOOP_SSE2(32, 32, 10, 1024);
                                                     int            src_stride,         \
                                                     const uint8_t *ref,                \
                                                     int            ref_stride,         \
-                                                    unsigned int * sse) {               \
+                                                    unsigned int  *sse) {               \
         __m128i vsse = _mm_setzero_si128();                                            \
         __m128i vsum = _mm_setzero_si128();                                            \
         for (int i = 0; i < (bh / uh); ++i) {                                          \
@@ -265,9 +265,9 @@ AOM_VAR_NO_LOOP_SSE2(64, 16, 10, 1024);
                                                const uint8_t *dst,        \
                                                ptrdiff_t      dst_stride, \
                                                int            height,     \
-                                               unsigned int * sse,        \
-                                               void *         unused0,    \
-                                               void *         unused)
+                                               unsigned int  *sse,        \
+                                               void          *unused0,    \
+                                               void          *unused)
 DECL(4);
 DECL(8);
 DECL(16);
@@ -281,7 +281,7 @@ DECL(16);
                                                             int            y_offset,   \
                                                             const uint8_t *dst,        \
                                                             int            dst_stride, \
-                                                            unsigned int * sse_ptr) {   \
+                                                            unsigned int  *sse_ptr) {   \
         /*Avoid overflow in helper by capping height.*/                                \
         const int    hf  = AOMMIN(h, 64);                                              \
         const int    wf2 = AOMMIN(wf, 128);                                            \
@@ -547,11 +547,11 @@ void svt_aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const 
                                                                             subpel_x_q3 << 1);
         const int16_t *const kernel_y         = av1_get_interp_filter_subpel_kernel(*filter,
                                                                             subpel_y_q3 << 1);
-        const uint8_t *      ref_start        = ref - ref_stride * ((filter_taps >> 1) - 1);
-        uint8_t *            temp_start_horiz = (subpel_search <= USE_4_TAPS)
+        const uint8_t       *ref_start        = ref - ref_stride * ((filter_taps >> 1) - 1);
+        uint8_t             *temp_start_horiz = (subpel_search <= USE_4_TAPS)
                         ? temp + (filter_taps >> 1) * MAX_SB_SIZE
                         : temp;
-        uint8_t *            temp_start_vert  = temp + MAX_SB_SIZE * ((filter->taps >> 1) - 1);
+        uint8_t             *temp_start_vert  = temp + MAX_SB_SIZE * ((filter->taps >> 1) - 1);
         int intermediate_height = (((height - 1) * 8 + subpel_y_q3) >> 3) + filter_taps;
         assert(intermediate_height <= (MAX_SB_SIZE * 2 + 16) + 16);
         svt_aom_convolve8_horiz(ref_start,

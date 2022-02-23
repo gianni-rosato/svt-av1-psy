@@ -207,8 +207,10 @@ TEST_F(WedgeUtilTest, SseFromResidualRandomTest) {
         const int N = 64 * n_rnd.random();
 
         uint64_t ref_sse = svt_av1_wedge_sse_from_residuals_c(r0, r1, m, N);
-        uint64_t sse2_tst_sse = svt_av1_wedge_sse_from_residuals_sse2(r0, r1, m, N);
-        uint64_t avx2_tst_sse = svt_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
+        uint64_t sse2_tst_sse =
+            svt_av1_wedge_sse_from_residuals_sse2(r0, r1, m, N);
+        uint64_t avx2_tst_sse =
+            svt_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
 
         // check output
         ASSERT_EQ(ref_sse, sse2_tst_sse)
@@ -265,8 +267,10 @@ TEST_F(WedgeUtilTest, SseFromResidualExtremeTest) {
         const int N = 64 * n_rnd.random();
 
         uint64_t ref_sse = svt_av1_wedge_sse_from_residuals_c(r0, r1, m, N);
-        uint64_t sse2_tst_sse = svt_av1_wedge_sse_from_residuals_sse2(r0, r1, m, N);
-        uint64_t avx2_tst_sse = svt_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
+        uint64_t sse2_tst_sse =
+            svt_av1_wedge_sse_from_residuals_sse2(r0, r1, m, N);
+        uint64_t avx2_tst_sse =
+            svt_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
 
         // check output
         ASSERT_EQ(ref_sse, sse2_tst_sse)

@@ -335,7 +335,7 @@ int file_is_obu(CliInput *cli, ObuDecInputContext *obu_ctx) {
 
     uint8_t        detect_buf[OBU_DETECTION_SIZE] = {0};
     const uint32_t is_annexb                      = obu_ctx->is_annexb;
-    FILE *         f                              = cli->in_file;
+    FILE          *f                              = cli->in_file;
     size_t         payload_length                 = 0;
     ObuHeader      obu_header;
     memset(&obu_header, 0, sizeof(obu_header));
@@ -517,8 +517,8 @@ static int obudec_read_one_obu(FILE *f, uint8_t **obu_buffer, size_t obu_bytes_b
 
 int obudec_read_temporal_unit(DecInputContext *input, uint8_t **buffer, size_t *bytes_read,
                               size_t *buffer_size) {
-    CliInput *          cli     = input->cli_ctx;
-    FILE *              f       = cli->in_file;
+    CliInput           *cli     = input->cli_ctx;
+    FILE               *f       = cli->in_file;
     ObuDecInputContext *obu_ctx = input->obu_ctx;
     if (!f)
         return 0;

@@ -102,8 +102,8 @@
 extern "C" {
 #endif
 
-int svt_av1_init_temporal_filtering(PictureParentControlSet ** list_picture_control_set_ptr,
-                                    PictureParentControlSet *  picture_control_set_ptr_central,
+int svt_av1_init_temporal_filtering(PictureParentControlSet  **list_picture_control_set_ptr,
+                                    PictureParentControlSet   *picture_control_set_ptr_central,
                                     MotionEstimationContext_t *me_context_ptr,
                                     int32_t                    segment_index);
 

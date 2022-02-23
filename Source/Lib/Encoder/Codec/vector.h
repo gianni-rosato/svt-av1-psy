@@ -45,11 +45,11 @@ typedef struct Vector {
     uint32_t size;
     uint32_t capacity;
     uint32_t element_size;
-    void *   data;
+    void    *data;
 } Vector;
 
 typedef struct Iterator {
-    void * pointer;
+    void  *pointer;
     size_t element_size;
 } Iterator;
 

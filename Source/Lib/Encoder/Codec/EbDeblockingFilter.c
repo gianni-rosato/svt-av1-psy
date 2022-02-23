@@ -29,7 +29,7 @@ void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, 
  *************************************************************************************************/
 void svt_av1_loop_filter_init(PictureControlSet *pcs_ptr) {
     //assert(MB_MODE_COUNT == n_elements(mode_lf_lut));
-    LoopFilterInfoN *  lfi = &pcs_ptr->parent_pcs_ptr->lf_info;
+    LoopFilterInfoN   *lfi = &pcs_ptr->parent_pcs_ptr->lf_info;
     struct LoopFilter *lf  = &pcs_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params;
     int32_t            lvl;
 
@@ -169,7 +169,7 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                                  const PictureControlSet *const pcs_ptr, const EdgeDir edge_dir,
                                  const uint32_t x, const uint32_t y, const int32_t plane,
                                  const struct MacroblockdPlane *const plane_ptr) {
-    FrameHeader *          frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    FrameHeader           *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     const LoopFilterInfoN *lfi_n   = &pcs_ptr->parent_pcs_ptr->lf_info;
 
     // reset to initial values
@@ -194,7 +194,7 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
     const int32_t mi_col    = scale_horz | ((x << scale_horz) >> MI_SIZE_LOG2);
     uint32_t      mi_stride = pcs_ptr->mi_stride;
     const int32_t offset    = mi_row * mi_stride + mi_col;
-    ModeInfo **   mi        = (pcs_ptr->mi_grid_base + offset);
+    ModeInfo    **mi        = (pcs_ptr->mi_grid_base + offset);
     //MbModeInfo **mi = cm->mi_grid_visible + mi_row * cm->mi_stride + mi_col;
     const MbModeInfo *mbmi = &mi[0]->mbmi;
 
@@ -569,7 +569,7 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                     //Yv12BufferConfig *frame_buffer,
                     PictureControlSet *pcs_ptr, int32_t mi_row, int32_t mi_col, int32_t plane_start,
                     int32_t plane_end, uint8_t last_col) {
-    FrameHeader *           frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    FrameHeader            *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     struct MacroblockdPlane pd[3];
     int32_t                 plane;
 
@@ -942,7 +942,7 @@ static int64_t try_filter_frame(
     if (plane == 0 && dir == 1)
         filter_level[0] = frm_hdr->loop_filter_params.filter_level[0];
 
-    EbBool is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
+    EbBool               is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     EbPictureBufferDesc *recon_buffer;
     get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
 
@@ -982,7 +982,7 @@ static int32_t search_filter_level(
     int32_t       filt_direction   = 0;
     int64_t       best_err;
     int32_t       filt_best;
-    FrameHeader * frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    FrameHeader  *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     //Macroblock *x = &cpi->td.mb;
 
     // Start the search at the previous frame filter level unless it is now out of
@@ -997,7 +997,7 @@ static int32_t search_filter_level(
     int32_t filt_mid    = clamp(lvl, min_filter_level, max_filter_level);
     int32_t filter_step = filt_mid < 16 ? 4 : filt_mid / 4;
 
-    EbBool is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
+    EbBool               is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     EbPictureBufferDesc *recon_buffer;
     get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
     // Sum squared error at each filter level
@@ -1015,59 +1015,59 @@ static int32_t search_filter_level(
         sd, temp_lf_recon_buffer, pcs_ptr, filt_mid, partial_frame, plane, dir);
     filt_best        = filt_mid;
     ss_err[filt_mid] = best_err;
-        while (filter_step > 0) {
-            const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
-            const int32_t filt_low  = AOMMAX(filt_mid - filter_step, min_filter_level);
+    while (filter_step > 0) {
+        const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
+        const int32_t filt_low  = AOMMAX(filt_mid - filter_step, min_filter_level);
 
-            // Bias against raising loop filter in favor of lowering it.
-            int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
+        // Bias against raising loop filter in favor of lowering it.
+        int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
 
-            //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
-            //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
+        //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
+        //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
 
-            // yx, bias less for large block size
-            if (frm_hdr->tx_mode != ONLY_4X4)
-                bias >>= 1;
+        // yx, bias less for large block size
+        if (frm_hdr->tx_mode != ONLY_4X4)
+            bias >>= 1;
 
-            if (filt_direction <= 0 && filt_low != filt_mid) {
-                // Get Low filter error score
-                if (ss_err[filt_low] < 0) {
-                    ss_err[filt_low] = try_filter_frame(
-                        sd, temp_lf_recon_buffer, pcs_ptr, filt_low, partial_frame, plane, dir);
-                }
-                // If value is close to the best so far then bias towards a lower loop
-                // filter value.
-                if (ss_err[filt_low] < (best_err + bias)) {
-                    // Was it actually better than the previous best?
-                    if (ss_err[filt_low] < best_err)
-                        best_err = ss_err[filt_low];
-                    filt_best = filt_low;
-                }
+        if (filt_direction <= 0 && filt_low != filt_mid) {
+            // Get Low filter error score
+            if (ss_err[filt_low] < 0) {
+                ss_err[filt_low] = try_filter_frame(
+                    sd, temp_lf_recon_buffer, pcs_ptr, filt_low, partial_frame, plane, dir);
             }
-
-            // Now look at filt_high
-            if (filt_direction >= 0 && filt_high != filt_mid) {
-                if (ss_err[filt_high] < 0) {
-                    ss_err[filt_high] = try_filter_frame(
-                        sd, temp_lf_recon_buffer, pcs_ptr, filt_high, partial_frame, plane, dir);
-                }
-                // If value is significantly better than previous best, bias added against
-                // raising filter value
-                if (ss_err[filt_high] < (best_err - bias)) {
-                    best_err  = ss_err[filt_high];
-                    filt_best = filt_high;
-                }
-            }
-
-            // Half the step distance if the best filter value was the same as last time
-            if (filt_best == filt_mid) {
-                filter_step /= 2;
-                filt_direction = 0;
-            } else {
-                filt_direction = (filt_best < filt_mid) ? -1 : 1;
-                filt_mid       = filt_best;
+            // If value is close to the best so far then bias towards a lower loop
+            // filter value.
+            if (ss_err[filt_low] < (best_err + bias)) {
+                // Was it actually better than the previous best?
+                if (ss_err[filt_low] < best_err)
+                    best_err = ss_err[filt_low];
+                filt_best = filt_low;
             }
         }
+
+        // Now look at filt_high
+        if (filt_direction >= 0 && filt_high != filt_mid) {
+            if (ss_err[filt_high] < 0) {
+                ss_err[filt_high] = try_filter_frame(
+                    sd, temp_lf_recon_buffer, pcs_ptr, filt_high, partial_frame, plane, dir);
+            }
+            // If value is significantly better than previous best, bias added against
+            // raising filter value
+            if (ss_err[filt_high] < (best_err - bias)) {
+                best_err  = ss_err[filt_high];
+                filt_best = filt_high;
+            }
+        }
+
+        // Half the step distance if the best filter value was the same as last time
+        if (filt_best == filt_mid) {
+            filter_step /= 2;
+            filt_direction = 0;
+        } else {
+            filt_direction = (filt_best < filt_mid) ? -1 : 1;
+            filt_mid       = filt_best;
+        }
+    }
     // Update best error
     best_err = ss_err[filt_best];
 
@@ -1079,9 +1079,8 @@ static int32_t search_filter_level(
 * svt_av1_pick_filter_level
 * Choose the optimal loop filter levels
 *************************************************************************************************/
-EbErrorType svt_av1_pick_filter_level(
-    EbPictureBufferDesc *srcBuffer, // source input
-    PictureControlSet *pcs_ptr, LpfPickMethod method) {
+EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source input
+                                      PictureControlSet *pcs_ptr, LpfPickMethod method) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -1125,9 +1124,8 @@ EbErrorType svt_av1_pick_filter_level(
             filt_guess -= 4;
 
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
-#if OPT_DECODER
-        filt_guess = filt_guess > pcs_ptr->parent_pcs_ptr->dlf_ctrls.min_filter_level ? filt_guess : 0;
-#endif
+        filt_guess = filt_guess > pcs_ptr->parent_pcs_ptr->dlf_ctrls.min_filter_level ? filt_guess
+                                                                                      : 0;
         int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 
         lf->filter_level[0] = clamp(filt_guess, min_filter_level, max_filter_level);

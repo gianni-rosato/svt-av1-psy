@@ -24,7 +24,7 @@ void svt_av1_txb_init_levels_sse4_1(const TranLow *const coeff, const int32_t wi
     const __m128i zeros  = _mm_setzero_si128();
 
     int            i  = 0;
-    uint8_t *      ls = levels;
+    uint8_t       *ls = levels;
     const TranLow *cf = coeff;
     if (width == 4) {
         xx_storeu_128(ls - 16, zeros);

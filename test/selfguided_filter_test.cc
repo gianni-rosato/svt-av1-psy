@@ -489,8 +489,9 @@ TEST_P(AV1HighbdSelfguidedFilterTest, CorrectnessTest) {
 const int32_t highbd_params_avx2[] = {8, 10, 12};
 INSTANTIATE_TEST_CASE_P(
     SSE4_1, AV1HighbdSelfguidedFilterTest,
-    ::testing::Combine(::testing::Values(svt_apply_selfguided_restoration_sse4_1),
-                       ::testing::ValuesIn(highbd_params_avx2)));
+    ::testing::Combine(
+        ::testing::Values(svt_apply_selfguided_restoration_sse4_1),
+        ::testing::ValuesIn(highbd_params_avx2)));
 
 INSTANTIATE_TEST_CASE_P(
     AVX2, AV1HighbdSelfguidedFilterTest,

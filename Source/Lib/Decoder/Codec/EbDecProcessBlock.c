@@ -68,16 +68,16 @@ CflAllowedType store_cfl_required(const EbColorConfig *cc, PartitionInfo *xd,
 
 void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi_row,
                   int32_t mi_col, BlockSize bsize, TileInfo *tile, SBInfo *sb_info) {
-    EbDecHandle *        dec_handle        = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    EbColorConfig *      color_config      = &dec_mod_ctxt->seq_header->color_config;
+    EbDecHandle         *dec_handle        = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
+    EbColorConfig       *color_config      = &dec_mod_ctxt->seq_header->color_config;
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     uint32_t             mi_cols           = dec_mod_ctxt->frame_header->mi_cols;
     uint32_t             mi_rows           = dec_mod_ctxt->frame_header->mi_rows;
 
     int num_planes = av1_num_planes(color_config);
 
-    bool inter_block = is_inter_block_dec(mode_info);
-    EbBool is16b = dec_handle->is_16bit_pipeline;
+    bool   inter_block = is_inter_block_dec(mode_info);
+    EbBool is16b       = dec_handle->is_16bit_pipeline;
 #if MODE_INFO_DBG
     assert(mode_info->mi_row == mi_row);
     assert(mode_info->mi_col == mi_col);
@@ -256,7 +256,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
     }
 
     TxType           tx_type;
-    int32_t *        coeffs;
+    int32_t         *coeffs;
     TransformInfo_t *trans_info = NULL;
     TxSize           tx_size;
     uint32_t         num_tu;
@@ -293,7 +293,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
             num_tu = mode_info->num_tus[!!plane];
 
         assert(num_tu != 0);
-        void *  blk_recon_buf;
+        void   *blk_recon_buf;
         int32_t recon_stride;
 
         derive_blk_pointers(recon_picture_buf,
@@ -306,7 +306,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
                             sub_y);
 
         for (uint32_t tu = 0; tu < num_tu; tu++) {
-            void *  txb_recon_buf;
+            void   *txb_recon_buf;
             int32_t txb_offset;
 
             tx_size = trans_info->tx_size;

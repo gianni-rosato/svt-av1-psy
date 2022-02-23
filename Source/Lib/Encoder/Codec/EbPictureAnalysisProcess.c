@@ -65,16 +65,15 @@ typedef struct PictureAnalysisContext {
 } PictureAnalysisContext;
 
 static void picture_analysis_context_dctor(EbPtr p) {
-    EbThreadContext *       thread_context_ptr = (EbThreadContext *)p;
+    EbThreadContext        *thread_context_ptr = (EbThreadContext *)p;
     PictureAnalysisContext *obj                = (PictureAnalysisContext *)thread_context_ptr->priv;
     EB_FREE_ARRAY(obj);
 }
 /************************************************
 * Picture Analysis Context Constructor
 ************************************************/
-EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType picture_analysis_context_ctor(EbThreadContext   *thread_context_ptr,
                                           const EbEncHandle *enc_handle_ptr, int index) {
-
     PictureAnalysisContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -223,7 +222,7 @@ void downsample_2d_c(uint8_t *input_samples, // input parameter, input samples P
 * calculate_histogram
 *      creates n-bins histogram for the input
 ********************************************/
-void calculate_histogram(uint8_t * input_samples, // input parameter, input samples Ptr
+void calculate_histogram(uint8_t  *input_samples, // input parameter, input samples Ptr
                          uint32_t  input_area_width, // input parameter, input area width
                          uint32_t  input_area_height, // input parameter, input area height
                          uint32_t  stride, // input parameter, input stride
@@ -373,9 +372,9 @@ void svt_compute_interm_var_four8x8_c(uint8_t *input_samples, uint16_t input_str
 *   computes the variance and the block mean of all CUs inside the tree block
 *******************************************/
 EbErrorType compute_block_mean_compute_variance(
-    SequenceControlSet *     scs_ptr,
+    SequenceControlSet      *scs_ptr,
     PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
-    EbPictureBufferDesc *    input_padded_picture_ptr, // input parameter, Input Padded Picture
+    EbPictureBufferDesc     *input_padded_picture_ptr, // input parameter, Input Padded Picture
     uint32_t                 sb_index, // input parameter, SB address
     uint32_t
         input_luma_origin_index) // input parameter, SB index, used to point to source/reference samples
@@ -1565,358 +1564,359 @@ EbErrorType compute_block_mean_compute_variance(
         2;
     // 8x8 variances
     if (scs_ptr->static_config.enable_adaptive_quantization == 1) {
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_0] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[0] -
-             (mean_of8x8_blocks[0] * mean_of8x8_blocks[0])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_1] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[1] -
-             (mean_of8x8_blocks[1] * mean_of8x8_blocks[1])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_2] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[2] -
-             (mean_of8x8_blocks[2] * mean_of8x8_blocks[2])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_3] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[3] -
-             (mean_of8x8_blocks[3] * mean_of8x8_blocks[3])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_4] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[4] -
-             (mean_of8x8_blocks[4] * mean_of8x8_blocks[4])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_5] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[5] -
-             (mean_of8x8_blocks[5] * mean_of8x8_blocks[5])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_6] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[6] -
-             (mean_of8x8_blocks[6] * mean_of8x8_blocks[6])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_7] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[7] -
-             (mean_of8x8_blocks[7] * mean_of8x8_blocks[7])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_8] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[8] -
-             (mean_of8x8_blocks[8] * mean_of8x8_blocks[8])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_9] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[9] -
-             (mean_of8x8_blocks[9] * mean_of8x8_blocks[9])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_10] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[10] -
-             (mean_of8x8_blocks[10] * mean_of8x8_blocks[10])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_11] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[11] -
-             (mean_of8x8_blocks[11] * mean_of8x8_blocks[11])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_12] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[12] -
-             (mean_of8x8_blocks[12] * mean_of8x8_blocks[12])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_13] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[13] -
-             (mean_of8x8_blocks[13] * mean_of8x8_blocks[13])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_14] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[14] -
-             (mean_of8x8_blocks[14] * mean_of8x8_blocks[14])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_15] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[15] -
-             (mean_of8x8_blocks[15] * mean_of8x8_blocks[15])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_16] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[16] -
-             (mean_of8x8_blocks[16] * mean_of8x8_blocks[16])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_17] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[17] -
-             (mean_of8x8_blocks[17] * mean_of8x8_blocks[17])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_18] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[18] -
-             (mean_of8x8_blocks[18] * mean_of8x8_blocks[18])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_19] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[19] -
-             (mean_of8x8_blocks[19] * mean_of8x8_blocks[19])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_20] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[20] -
-             (mean_of8x8_blocks[20] * mean_of8x8_blocks[20])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_21] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[21] -
-             (mean_of8x8_blocks[21] * mean_of8x8_blocks[21])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_22] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[22] -
-             (mean_of8x8_blocks[22] * mean_of8x8_blocks[22])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_23] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[23] -
-             (mean_of8x8_blocks[23] * mean_of8x8_blocks[23])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_24] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[24] -
-             (mean_of8x8_blocks[24] * mean_of8x8_blocks[24])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_25] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[25] -
-             (mean_of8x8_blocks[25] * mean_of8x8_blocks[25])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_26] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[26] -
-             (mean_of8x8_blocks[26] * mean_of8x8_blocks[26])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_27] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[27] -
-             (mean_of8x8_blocks[27] * mean_of8x8_blocks[27])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_28] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[28] -
-             (mean_of8x8_blocks[28] * mean_of8x8_blocks[28])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_29] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[29] -
-             (mean_of8x8_blocks[29] * mean_of8x8_blocks[29])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_30] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[30] -
-             (mean_of8x8_blocks[30] * mean_of8x8_blocks[30])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_31] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[31] -
-             (mean_of8x8_blocks[31] * mean_of8x8_blocks[31])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_32] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[32] -
-             (mean_of8x8_blocks[32] * mean_of8x8_blocks[32])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_33] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[33] -
-             (mean_of8x8_blocks[33] * mean_of8x8_blocks[33])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_34] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[34] -
-             (mean_of8x8_blocks[34] * mean_of8x8_blocks[34])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_35] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[35] -
-             (mean_of8x8_blocks[35] * mean_of8x8_blocks[35])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_36] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[36] -
-             (mean_of8x8_blocks[36] * mean_of8x8_blocks[36])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_37] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[37] -
-             (mean_of8x8_blocks[37] * mean_of8x8_blocks[37])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_38] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[38] -
-             (mean_of8x8_blocks[38] * mean_of8x8_blocks[38])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_39] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[39] -
-             (mean_of8x8_blocks[39] * mean_of8x8_blocks[39])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_40] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[40] -
-             (mean_of8x8_blocks[40] * mean_of8x8_blocks[40])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_41] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[41] -
-             (mean_of8x8_blocks[41] * mean_of8x8_blocks[41])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_42] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[42] -
-             (mean_of8x8_blocks[42] * mean_of8x8_blocks[42])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_43] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[43] -
-             (mean_of8x8_blocks[43] * mean_of8x8_blocks[43])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_44] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[44] -
-             (mean_of8x8_blocks[44] * mean_of8x8_blocks[44])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_45] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[45] -
-             (mean_of8x8_blocks[45] * mean_of8x8_blocks[45])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_46] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[46] -
-             (mean_of8x8_blocks[46] * mean_of8x8_blocks[46])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_47] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[47] -
-             (mean_of8x8_blocks[47] * mean_of8x8_blocks[47])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_48] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[48] -
-             (mean_of8x8_blocks[48] * mean_of8x8_blocks[48])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_49] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[49] -
-             (mean_of8x8_blocks[49] * mean_of8x8_blocks[49])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_50] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[50] -
-             (mean_of8x8_blocks[50] * mean_of8x8_blocks[50])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_51] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[51] -
-             (mean_of8x8_blocks[51] * mean_of8x8_blocks[51])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_52] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[52] -
-             (mean_of8x8_blocks[52] * mean_of8x8_blocks[52])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_53] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[53] -
-             (mean_of8x8_blocks[53] * mean_of8x8_blocks[53])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_54] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[54] -
-             (mean_of8x8_blocks[54] * mean_of8x8_blocks[54])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_55] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[55] -
-             (mean_of8x8_blocks[55] * mean_of8x8_blocks[55])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_56] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[56] -
-             (mean_of8x8_blocks[56] * mean_of8x8_blocks[56])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_57] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[57] -
-             (mean_of8x8_blocks[57] * mean_of8x8_blocks[57])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_58] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[58] -
-             (mean_of8x8_blocks[58] * mean_of8x8_blocks[58])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_59] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[59] -
-             (mean_of8x8_blocks[59] * mean_of8x8_blocks[59])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_60] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[60] -
-             (mean_of8x8_blocks[60] * mean_of8x8_blocks[60])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_61] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[61] -
-             (mean_of8x8_blocks[61] * mean_of8x8_blocks[61])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_62] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[62] -
-             (mean_of8x8_blocks[62] * mean_of8x8_blocks[62])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_63] = (uint16_t)(
-            (mean_of_8x8_squared_values_blocks[63] -
-             (mean_of8x8_blocks[63] * mean_of8x8_blocks[63])) >>
-            VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_0] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[0] -
+                        (mean_of8x8_blocks[0] * mean_of8x8_blocks[0])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_1] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[1] -
+                        (mean_of8x8_blocks[1] * mean_of8x8_blocks[1])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_2] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[2] -
+                        (mean_of8x8_blocks[2] * mean_of8x8_blocks[2])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_3] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[3] -
+                        (mean_of8x8_blocks[3] * mean_of8x8_blocks[3])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_4] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[4] -
+                        (mean_of8x8_blocks[4] * mean_of8x8_blocks[4])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_5] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[5] -
+                        (mean_of8x8_blocks[5] * mean_of8x8_blocks[5])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_6] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[6] -
+                        (mean_of8x8_blocks[6] * mean_of8x8_blocks[6])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_7] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[7] -
+                        (mean_of8x8_blocks[7] * mean_of8x8_blocks[7])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_8] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[8] -
+                        (mean_of8x8_blocks[8] * mean_of8x8_blocks[8])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_9] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[9] -
+                        (mean_of8x8_blocks[9] * mean_of8x8_blocks[9])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_10] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[10] -
+                        (mean_of8x8_blocks[10] * mean_of8x8_blocks[10])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_11] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[11] -
+                        (mean_of8x8_blocks[11] * mean_of8x8_blocks[11])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_12] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[12] -
+                        (mean_of8x8_blocks[12] * mean_of8x8_blocks[12])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_13] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[13] -
+                        (mean_of8x8_blocks[13] * mean_of8x8_blocks[13])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_14] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[14] -
+                        (mean_of8x8_blocks[14] * mean_of8x8_blocks[14])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_15] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[15] -
+                        (mean_of8x8_blocks[15] * mean_of8x8_blocks[15])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_16] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[16] -
+                        (mean_of8x8_blocks[16] * mean_of8x8_blocks[16])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_17] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[17] -
+                        (mean_of8x8_blocks[17] * mean_of8x8_blocks[17])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_18] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[18] -
+                        (mean_of8x8_blocks[18] * mean_of8x8_blocks[18])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_19] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[19] -
+                        (mean_of8x8_blocks[19] * mean_of8x8_blocks[19])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_20] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[20] -
+                        (mean_of8x8_blocks[20] * mean_of8x8_blocks[20])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_21] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[21] -
+                        (mean_of8x8_blocks[21] * mean_of8x8_blocks[21])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_22] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[22] -
+                        (mean_of8x8_blocks[22] * mean_of8x8_blocks[22])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_23] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[23] -
+                        (mean_of8x8_blocks[23] * mean_of8x8_blocks[23])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_24] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[24] -
+                        (mean_of8x8_blocks[24] * mean_of8x8_blocks[24])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_25] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[25] -
+                        (mean_of8x8_blocks[25] * mean_of8x8_blocks[25])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_26] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[26] -
+                        (mean_of8x8_blocks[26] * mean_of8x8_blocks[26])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_27] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[27] -
+                        (mean_of8x8_blocks[27] * mean_of8x8_blocks[27])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_28] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[28] -
+                        (mean_of8x8_blocks[28] * mean_of8x8_blocks[28])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_29] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[29] -
+                        (mean_of8x8_blocks[29] * mean_of8x8_blocks[29])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_30] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[30] -
+                        (mean_of8x8_blocks[30] * mean_of8x8_blocks[30])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_31] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[31] -
+                        (mean_of8x8_blocks[31] * mean_of8x8_blocks[31])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_32] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[32] -
+                        (mean_of8x8_blocks[32] * mean_of8x8_blocks[32])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_33] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[33] -
+                        (mean_of8x8_blocks[33] * mean_of8x8_blocks[33])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_34] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[34] -
+                        (mean_of8x8_blocks[34] * mean_of8x8_blocks[34])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_35] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[35] -
+                        (mean_of8x8_blocks[35] * mean_of8x8_blocks[35])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_36] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[36] -
+                        (mean_of8x8_blocks[36] * mean_of8x8_blocks[36])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_37] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[37] -
+                        (mean_of8x8_blocks[37] * mean_of8x8_blocks[37])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_38] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[38] -
+                        (mean_of8x8_blocks[38] * mean_of8x8_blocks[38])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_39] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[39] -
+                        (mean_of8x8_blocks[39] * mean_of8x8_blocks[39])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_40] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[40] -
+                        (mean_of8x8_blocks[40] * mean_of8x8_blocks[40])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_41] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[41] -
+                        (mean_of8x8_blocks[41] * mean_of8x8_blocks[41])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_42] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[42] -
+                        (mean_of8x8_blocks[42] * mean_of8x8_blocks[42])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_43] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[43] -
+                        (mean_of8x8_blocks[43] * mean_of8x8_blocks[43])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_44] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[44] -
+                        (mean_of8x8_blocks[44] * mean_of8x8_blocks[44])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_45] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[45] -
+                        (mean_of8x8_blocks[45] * mean_of8x8_blocks[45])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_46] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[46] -
+                        (mean_of8x8_blocks[46] * mean_of8x8_blocks[46])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_47] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[47] -
+                        (mean_of8x8_blocks[47] * mean_of8x8_blocks[47])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_48] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[48] -
+                        (mean_of8x8_blocks[48] * mean_of8x8_blocks[48])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_49] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[49] -
+                        (mean_of8x8_blocks[49] * mean_of8x8_blocks[49])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_50] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[50] -
+                        (mean_of8x8_blocks[50] * mean_of8x8_blocks[50])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_51] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[51] -
+                        (mean_of8x8_blocks[51] * mean_of8x8_blocks[51])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_52] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[52] -
+                        (mean_of8x8_blocks[52] * mean_of8x8_blocks[52])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_53] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[53] -
+                        (mean_of8x8_blocks[53] * mean_of8x8_blocks[53])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_54] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[54] -
+                        (mean_of8x8_blocks[54] * mean_of8x8_blocks[54])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_55] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[55] -
+                        (mean_of8x8_blocks[55] * mean_of8x8_blocks[55])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_56] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[56] -
+                        (mean_of8x8_blocks[56] * mean_of8x8_blocks[56])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_57] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[57] -
+                        (mean_of8x8_blocks[57] * mean_of8x8_blocks[57])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_58] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[58] -
+                        (mean_of8x8_blocks[58] * mean_of8x8_blocks[58])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_59] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[59] -
+                        (mean_of8x8_blocks[59] * mean_of8x8_blocks[59])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_60] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[60] -
+                        (mean_of8x8_blocks[60] * mean_of8x8_blocks[60])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_61] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[61] -
+                        (mean_of8x8_blocks[61] * mean_of8x8_blocks[61])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_62] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[62] -
+                        (mean_of8x8_blocks[62] * mean_of8x8_blocks[62])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_63] =
+            (uint16_t)((mean_of_8x8_squared_values_blocks[63] -
+                        (mean_of8x8_blocks[63] * mean_of8x8_blocks[63])) >>
+                       VARIANCE_PRECISION);
 
         // 16x16 variances
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_0] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[0] -
-             (mean_of_16x16_blocks[0] * mean_of_16x16_blocks[0])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_1] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[1] -
-             (mean_of_16x16_blocks[1] * mean_of_16x16_blocks[1])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_2] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[2] -
-             (mean_of_16x16_blocks[2] * mean_of_16x16_blocks[2])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_3] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[3] -
-             (mean_of_16x16_blocks[3] * mean_of_16x16_blocks[3])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_4] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[4] -
-             (mean_of_16x16_blocks[4] * mean_of_16x16_blocks[4])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_5] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[5] -
-             (mean_of_16x16_blocks[5] * mean_of_16x16_blocks[5])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_6] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[6] -
-             (mean_of_16x16_blocks[6] * mean_of_16x16_blocks[6])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_7] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[7] -
-             (mean_of_16x16_blocks[7] * mean_of_16x16_blocks[7])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_8] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[8] -
-             (mean_of_16x16_blocks[8] * mean_of_16x16_blocks[8])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_9] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[9] -
-             (mean_of_16x16_blocks[9] * mean_of_16x16_blocks[9])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_10] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[10] -
-             (mean_of_16x16_blocks[10] * mean_of_16x16_blocks[10])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_11] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[11] -
-             (mean_of_16x16_blocks[11] * mean_of_16x16_blocks[11])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_12] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[12] -
-             (mean_of_16x16_blocks[12] * mean_of_16x16_blocks[12])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_13] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[13] -
-             (mean_of_16x16_blocks[13] * mean_of_16x16_blocks[13])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_14] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[14] -
-             (mean_of_16x16_blocks[14] * mean_of_16x16_blocks[14])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_15] = (uint16_t)(
-            (mean_of16x16_squared_values_blocks[15] -
-             (mean_of_16x16_blocks[15] * mean_of_16x16_blocks[15])) >>
-            VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_0] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[0] -
+                        (mean_of_16x16_blocks[0] * mean_of_16x16_blocks[0])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_1] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[1] -
+                        (mean_of_16x16_blocks[1] * mean_of_16x16_blocks[1])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_2] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[2] -
+                        (mean_of_16x16_blocks[2] * mean_of_16x16_blocks[2])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_3] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[3] -
+                        (mean_of_16x16_blocks[3] * mean_of_16x16_blocks[3])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_4] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[4] -
+                        (mean_of_16x16_blocks[4] * mean_of_16x16_blocks[4])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_5] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[5] -
+                        (mean_of_16x16_blocks[5] * mean_of_16x16_blocks[5])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_6] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[6] -
+                        (mean_of_16x16_blocks[6] * mean_of_16x16_blocks[6])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_7] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[7] -
+                        (mean_of_16x16_blocks[7] * mean_of_16x16_blocks[7])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_8] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[8] -
+                        (mean_of_16x16_blocks[8] * mean_of_16x16_blocks[8])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_9] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[9] -
+                        (mean_of_16x16_blocks[9] * mean_of_16x16_blocks[9])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_10] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[10] -
+                        (mean_of_16x16_blocks[10] * mean_of_16x16_blocks[10])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_11] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[11] -
+                        (mean_of_16x16_blocks[11] * mean_of_16x16_blocks[11])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_12] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[12] -
+                        (mean_of_16x16_blocks[12] * mean_of_16x16_blocks[12])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_13] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[13] -
+                        (mean_of_16x16_blocks[13] * mean_of_16x16_blocks[13])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_14] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[14] -
+                        (mean_of_16x16_blocks[14] * mean_of_16x16_blocks[14])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_15] =
+            (uint16_t)((mean_of16x16_squared_values_blocks[15] -
+                        (mean_of_16x16_blocks[15] * mean_of_16x16_blocks[15])) >>
+                       VARIANCE_PRECISION);
 
         // 32x32 variances
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_0] = (uint16_t)(
-            (mean_of32x32_squared_values_blocks[0] -
-             (mean_of_32x32_blocks[0] * mean_of_32x32_blocks[0])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_1] = (uint16_t)(
-            (mean_of32x32_squared_values_blocks[1] -
-             (mean_of_32x32_blocks[1] * mean_of_32x32_blocks[1])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_2] = (uint16_t)(
-            (mean_of32x32_squared_values_blocks[2] -
-             (mean_of_32x32_blocks[2] * mean_of_32x32_blocks[2])) >>
-            VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_3] = (uint16_t)(
-            (mean_of32x32_squared_values_blocks[3] -
-             (mean_of_32x32_blocks[3] * mean_of_32x32_blocks[3])) >>
-            VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_0] =
+            (uint16_t)((mean_of32x32_squared_values_blocks[0] -
+                        (mean_of_32x32_blocks[0] * mean_of_32x32_blocks[0])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_1] =
+            (uint16_t)((mean_of32x32_squared_values_blocks[1] -
+                        (mean_of_32x32_blocks[1] * mean_of_32x32_blocks[1])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_2] =
+            (uint16_t)((mean_of32x32_squared_values_blocks[2] -
+                        (mean_of_32x32_blocks[2] * mean_of_32x32_blocks[2])) >>
+                       VARIANCE_PRECISION);
+        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_3] =
+            (uint16_t)((mean_of32x32_squared_values_blocks[3] -
+                        (mean_of_32x32_blocks[3] * mean_of_32x32_blocks[3])) >>
+                       VARIANCE_PRECISION);
     }
     // 64x64 variance
-    pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] = (uint16_t)(
-        (mean_of64x64_squared_values_blocks - (mean_of_64x64_blocks * mean_of_64x64_blocks)) >>
-        VARIANCE_PRECISION);
+    pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] =
+        (uint16_t)((mean_of64x64_squared_values_blocks -
+                    (mean_of_64x64_blocks * mean_of_64x64_blocks)) >>
+                   VARIANCE_PRECISION);
 
     return return_error;
 }
 
 static int32_t apply_denoise_2d(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                                 EbPictureBufferDesc *inputPicturePointer) {
-    AomDenoiseAndModel *    denoise_and_model;
+    AomDenoiseAndModel     *denoise_and_model;
     DenoiseAndModelInitData fg_init_data;
     fg_init_data.encoder_bit_depth    = pcs_ptr->enhanced_picture_ptr->bit_depth;
     fg_init_data.encoder_color_format = pcs_ptr->enhanced_picture_ptr->color_format;
@@ -1938,7 +1938,7 @@ static int32_t apply_denoise_2d(SequenceControlSet *scs_ptr, PictureParentContro
     return 0;
 }
 
-EbErrorType denoise_estimate_film_grain(SequenceControlSet *     scs_ptr,
+EbErrorType denoise_estimate_film_grain(SequenceControlSet      *scs_ptr,
                                         PictureParentControlSet *pcs_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -1966,7 +1966,7 @@ EbErrorType denoise_estimate_film_grain(SequenceControlSet *     scs_ptr,
  ***** Denoising
  ************************************************/
 void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
-                                       SequenceControlSet *     scs_ptr) {
+                                       SequenceControlSet      *scs_ptr) {
     if (scs_ptr->static_config.film_grain_denoise_strength)
         denoise_estimate_film_grain(scs_ptr, pcs_ptr);
     return;
@@ -2036,11 +2036,13 @@ void sub_sample_luma_generate_pixel_intensity_histogram_bins(
                 &sum);
 
             pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
-                                                 [region_in_picture_height_index][0] = (uint8_t)(
-                (sum +
-                 (((region_width + region_width_offset) * (region_height + region_height_offset)) >>
-                  1)) /
-                ((region_width + region_width_offset) * (region_height + region_height_offset)));
+                                                 [region_in_picture_height_index][0] =
+                (uint8_t)((sum +
+                           (((region_width + region_width_offset) *
+                             (region_height + region_height_offset)) >>
+                            1)) /
+                          ((region_width + region_width_offset) *
+                           (region_height + region_height_offset)));
             (*sum_avg_intensity_ttl_regions_luma) += (sum << 4);
             for (histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
                  histogram_bin++) { // Loop over the histogram bins
@@ -2081,11 +2083,8 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
         for (region_in_picture_height_index = 0; region_in_picture_height_index <
              scs_ptr->picture_analysis_number_of_regions_per_height;
              region_in_picture_height_index++) { // loop over vertical regions
-#if ADD_VQ_MODE
-            if (scs_ptr->static_config.scene_change_detection || scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
-#else
-            if (scs_ptr->static_config.scene_change_detection) {
-#endif
+            if (scs_ptr->static_config.scene_change_detection ||
+                scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
                 // Initialize bins to 1
                 svt_initialize_buffer_32bits(
                     pcs_ptr->picture_histogram[region_in_picture_width_index]
@@ -2099,7 +2098,6 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
                     64,
                     0,
                     1);
-
             }
 
             region_width_offset = (region_in_picture_width_index ==
@@ -2134,12 +2132,14 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
             sum = (sum << decim_step);
             *sum_avg_intensity_ttl_regions_cb += sum;
             pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
-                                                 [region_in_picture_height_index][1] = (uint8_t)(
-                (sum +
-                 (((region_width + region_width_offset) * (region_height + region_height_offset)) >>
-                  3)) /
-                (((region_width + region_width_offset) * (region_height + region_height_offset)) >>
-                 2));
+                                                 [region_in_picture_height_index][1] =
+                (uint8_t)((sum +
+                           (((region_width + region_width_offset) *
+                             (region_height + region_height_offset)) >>
+                            3)) /
+                          (((region_width + region_width_offset) *
+                            (region_height + region_height_offset)) >>
+                           2));
 
             for (histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
                  histogram_bin++) { // Loop over the histogram bins
@@ -2170,12 +2170,14 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
             sum = (sum << decim_step);
             *sum_avg_intensity_ttl_regions_cr += sum;
             pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
-                                                 [region_in_picture_height_index][2] = (uint8_t)(
-                (sum +
-                 (((region_width + region_width_offset) * (region_height + region_height_offset)) >>
-                  3)) /
-                (((region_width + region_width_offset) * (region_height + region_height_offset)) >>
-                 2));
+                                                 [region_in_picture_height_index][2] =
+                (uint8_t)((sum +
+                           (((region_width + region_width_offset) *
+                             (region_height + region_height_offset)) >>
+                            3)) /
+                          (((region_width + region_width_offset) *
+                            (region_height + region_height_offset)) >>
+                           2));
 
             for (histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
                  histogram_bin++) { // Loop over the histogram bins
@@ -2195,9 +2197,9 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
  ** Compute Picture Variance
  ** Compute Block Mean for all blocks in the picture
  ************************************************/
-void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
+void compute_picture_spatial_statistics(SequenceControlSet      *scs_ptr,
                                         PictureParentControlSet *pcs_ptr,
-                                        EbPictureBufferDesc *    input_padded_picture_ptr,
+                                        EbPictureBufferDesc     *input_padded_picture_ptr,
                                         uint32_t                 sb_total_count) {
     // Variance
     uint64_t pic_tot_variance = 0;
@@ -2236,11 +2238,8 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
     uint64_t sum_avg_intensity_ttl_regions_cr   = 0;
 
     // Histogram bins
-#if ADD_VQ_MODE
-    if (scs_ptr->static_config.scene_change_detection || scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
-#else
-    if (scs_ptr->static_config.scene_change_detection) {
-#endif
+    if (scs_ptr->static_config.scene_change_detection ||
+        scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
         // Use 1/16 Luma for Histogram generation
         // 1/16 input ready
         sub_sample_luma_generate_pixel_intensity_histogram_bins(
@@ -2249,15 +2248,16 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
         // Use 1/4 Chroma for Histogram generation
         // 1/4 input not ready => perform operation on the fly
         sub_sample_chroma_generate_pixel_intensity_histogram_bins(scs_ptr,
-            pcs_ptr,
-            input_picture_ptr,
-            &sum_avg_intensity_ttl_regions_cb,
-            &sum_avg_intensity_ttl_regions_cr,
-            4);
+                                                                  pcs_ptr,
+                                                                  input_picture_ptr,
+                                                                  &sum_avg_intensity_ttl_regions_cb,
+                                                                  &sum_avg_intensity_ttl_regions_cr,
+                                                                  4);
     }
 
     if (scs_ptr->calculate_variance)
-        compute_picture_spatial_statistics(scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_total_count);
+        compute_picture_spatial_statistics(
+            scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_total_count);
     else
         pcs_ptr->pic_avg_variance = 0;
 
@@ -2344,7 +2344,7 @@ void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_stride,
  * Pad Picture at the right and bottom sides
  ** To match a multiple of min CU size in width and height
  ************************************************/
-void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs_ptr,
+void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs_ptr,
                                                         EbPictureBufferDesc *input_picture_ptr) {
     EbBool is16_bit_input = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
@@ -2490,9 +2490,9 @@ void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_
 * 1/4 & 1/16 input picture decimation
 ************************************************/
 void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
-                                         EbPictureBufferDesc *    input_padded_picture_ptr,
-                                         EbPictureBufferDesc *    quarter_decimated_picture_ptr,
-                                         EbPictureBufferDesc *    sixteenth_decimated_picture_ptr) {
+                                         EbPictureBufferDesc     *input_padded_picture_ptr,
+                                         EbPictureBufferDesc     *quarter_decimated_picture_ptr,
+                                         EbPictureBufferDesc     *sixteenth_decimated_picture_ptr) {
     // Decimate input picture for HME L0 and L1
     if (pcs_ptr->enable_hme_flag || pcs_ptr->tf_enable_hme_flag) {
         if (pcs_ptr->enable_hme_level1_flag || pcs_ptr->tf_enable_hme_level1_flag) {
@@ -2597,7 +2597,7 @@ const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
 
 unsigned int svt_av1_get_sby_perpixel_variance(
     const AomVarianceFnPtr *fn_ptr, //const AV1_COMP *cpi,
-    const uint8_t *         src,
+    const uint8_t          *src,
     int                     stride, //const struct Buf2D *ref,
     BlockSize               bs) {
     unsigned int       sse;
@@ -2647,7 +2647,7 @@ void is_screen_content(PictureParentControlSet *pcs_ptr) {
     int counts_2 = 0;
 
     const AomVarianceFnPtr *fn_ptr            = &mefn_ptr[BLOCK_16X16];
-    EbPictureBufferDesc *   input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc    *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
 
     for (int r = 0; r + blk_h <= input_picture_ptr->height; r += blk_h) {
         for (int c = 0; c + blk_w <= input_picture_ptr->width; c += blk_w) {
@@ -2686,9 +2686,9 @@ void is_screen_content(PictureParentControlSet *pcs_ptr) {
  * 1/4 & 1/16 input picture downsampling (filtering)
  ************************************************/
 void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
-                                        EbPictureBufferDesc *    input_padded_picture_ptr,
-                                        EbPictureBufferDesc *    quarter_picture_ptr,
-                                        EbPictureBufferDesc *    sixteenth_picture_ptr) {
+                                        EbPictureBufferDesc     *input_padded_picture_ptr,
+                                        EbPictureBufferDesc     *quarter_picture_ptr,
+                                        EbPictureBufferDesc     *sixteenth_picture_ptr) {
     // Downsample input picture for HME L0 and L1
     if (pcs_ptr->enable_hme_flag || pcs_ptr->tf_enable_hme_flag) {
         if (pcs_ptr->enable_hme_level1_flag || pcs_ptr->tf_enable_hme_level1_flag) {
@@ -2837,15 +2837,15 @@ void pad_input_pictures(SequenceControlSet *scs_ptr, EbPictureBufferDesc *input_
 *
 ********************************************************************************/
 void *picture_analysis_kernel(void *input_ptr) {
-    EbThreadContext *        thread_context_ptr = (EbThreadContext *)input_ptr;
-    PictureAnalysisContext * context_ptr = (PictureAnalysisContext *)thread_context_ptr->priv;
+    EbThreadContext         *thread_context_ptr = (EbThreadContext *)input_ptr;
+    PictureAnalysisContext  *context_ptr = (PictureAnalysisContext *)thread_context_ptr->priv;
     PictureParentControlSet *pcs_ptr;
-    SequenceControlSet *     scs_ptr;
+    SequenceControlSet      *scs_ptr;
 
-    EbObjectWrapper *            in_results_wrapper_ptr;
+    EbObjectWrapper             *in_results_wrapper_ptr;
     ResourceCoordinationResults *in_results_ptr;
-    EbObjectWrapper *            out_results_wrapper_ptr;
-    EbPaReferenceObject *        pa_ref_obj_;
+    EbObjectWrapper             *out_results_wrapper_ptr;
+    EbPaReferenceObject         *pa_ref_obj_;
 
     EbPictureBufferDesc *input_padded_picture_ptr;
     EbPictureBufferDesc *input_picture_ptr;
@@ -2860,14 +2860,13 @@ void *picture_analysis_kernel(void *input_ptr) {
         scs_ptr        = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
         // Mariana : save enhanced picture ptr, move this from here
-        pcs_ptr->enhanced_unscaled_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-        pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline =
-            scs_ptr->is_16bit_pipeline;
+        pcs_ptr->enhanced_unscaled_picture_ptr                    = pcs_ptr->enhanced_picture_ptr;
+        pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
 
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
         if (!pcs_ptr->is_overlay) {
             input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-            int copy_frame = 1;
+            int copy_frame    = 1;
             if (pcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 1)
                 copy_frame = (((pcs_ptr->picture_number % 8) == 0) ||
                               ((pcs_ptr->picture_number % 8) == 6) ||
@@ -2877,7 +2876,7 @@ void *picture_analysis_kernel(void *input_ptr) {
                               ((pcs_ptr->picture_number % 8) == 0) ||
                               ((pcs_ptr->picture_number % 8) == 6) ||
                               ((pcs_ptr->picture_number % 8) == 7));
-                // Bypass copy for the unecessary picture in IPPP pass
+            // Bypass copy for the unecessary picture in IPPP pass
             if (scs_ptr->static_config.pass != ENC_FIRST_PASS || copy_frame) {
                 // Padding for input pictures
                 pad_input_pictures(scs_ptr, input_picture_ptr);
@@ -2908,20 +2907,20 @@ void *picture_analysis_kernel(void *input_ptr) {
                 input_padded_picture_ptr    = (EbPictureBufferDesc *)
                                                pa_ref_obj_->input_padded_picture_ptr;
 
-                    // 1/4 & 1/16 input picture downsampling through filtering
-                    if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-                        downsample_filtering_input_picture(
-                            pcs_ptr,
-                            input_padded_picture_ptr,
-                            (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                            (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-                    } else {
-                        downsample_decimation_input_picture(
-                            pcs_ptr,
-                            input_padded_picture_ptr,
-                            (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                            (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-                    }
+                // 1/4 & 1/16 input picture downsampling through filtering
+                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                    downsample_filtering_input_picture(
+                        pcs_ptr,
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+                } else {
+                    downsample_decimation_input_picture(
+                        pcs_ptr,
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+                }
 
                 pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_downsampled_picture_ptr;
                 pcs_ptr->ds_pics.sixteenth_picture_ptr =
@@ -2939,7 +2938,7 @@ void *picture_analysis_kernel(void *input_ptr) {
 
             // If running multi-threaded mode, perform SC detection in picture_analysis_kernel, else in picture_decision_kernel
             if (scs_ptr->static_config.logical_processors != 1) {
-                    if ((scs_ptr->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {
+                if ((scs_ptr->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {
                     pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
                 } else if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
                     // SC Detection is OFF for 4K and higher

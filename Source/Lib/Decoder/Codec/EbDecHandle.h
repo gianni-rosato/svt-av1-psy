@@ -69,7 +69,7 @@ typedef struct EbDecPicBuf {
     TemporalMvRef *mvs;
 
     /* seg map */
-    uint8_t *          segment_maps;
+    uint8_t           *segment_maps;
     SegmentationParams seg_params;
 
     /* order hint */
@@ -92,7 +92,7 @@ typedef struct CurFrameBuf {
 
     TransformInfo_t *trans_info[MAX_MB_PLANE - 1];
 
-    int8_t * cdef_strength;
+    int8_t  *cdef_strength;
     int32_t *delta_q;
     int32_t *delta_lf;
 
@@ -240,7 +240,7 @@ typedef struct EbDecHandle {
     uint8_t is_lf_enabled;
 
     // Thread Handles
-    EbHandle *            decode_thread_handle_array;
+    EbHandle             *decode_thread_handle_array;
     EbBool                start_thread_process;
     EbHandle              thread_semaphore;
     struct DecThreadCtxt *thread_ctxt_pa;

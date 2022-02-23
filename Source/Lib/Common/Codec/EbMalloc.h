@@ -57,12 +57,12 @@ void svt_remove_mem_entry(void* ptr, EbPtrType type);
 #endif //DEBUG_MEMORY_USAGE
 
 #if EXCLUDE_HASH
-#define EB_NO_THROW_ADD_MEM(p, size, type)            \
-    do {                                              \
-        if (!p)                                       \
+#define EB_NO_THROW_ADD_MEM(p, size, type)     \
+    do {                                       \
+        if (!p)                                \
             svt_print_alloc_fail(__FILE__, 0); \
-        else                                          \
-            EB_ADD_MEM_ENTRY(p, type, size);          \
+        else                                   \
+            EB_ADD_MEM_ENTRY(p, type, size);   \
     } while (0)
 #else
 #define EB_NO_THROW_ADD_MEM(p, size, type)            \

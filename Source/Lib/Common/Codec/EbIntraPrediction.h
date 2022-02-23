@@ -177,21 +177,21 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_si
                                    const uint16_t *above, const uint16_t *left, int mode, int bd);
 
 typedef void (*EB_INTRA_NOANG_TYPE)(const uint32_t size, uint8_t *ref_samples,
-                                    uint8_t *      prediction_ptr,
+                                    uint8_t       *prediction_ptr,
                                     const uint32_t prediction_buffer_stride, const EbBool skip);
 typedef void (*EB_INTRA_DC_AV1_TYPE)(
     const uint32_t size, //input parameter, denotes the size of the current PU
-    uint8_t *      ref_samples, //input parameter, pointer to the reference samples
-    uint8_t *      dst, //output parameter, pointer to the prediction
+    uint8_t       *ref_samples, //input parameter, pointer to the reference samples
+    uint8_t       *dst, //output parameter, pointer to the prediction
     const uint32_t
         prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
     const EbBool skip); //skip half rows
 typedef void (*EB_INTRA_NOANG_16bit_TYPE)(const uint32_t size, uint16_t *ref_samples,
-                                          uint16_t *     prediction_ptr,
+                                          uint16_t      *prediction_ptr,
                                           const uint32_t prediction_buffer_stride,
                                           const EbBool   skip);
 typedef void (*EB_INTRA_ANG_Z1_Z2_Z3_16bit_TYPE)(const uint32_t size, uint16_t *ref_samples,
-                                                 uint16_t *     dst,
+                                                 uint16_t      *dst,
                                                  const uint32_t prediction_buffer_stride,
                                                  const EbBool skip, uint16_t dx, uint16_t dy,
                                                  uint16_t bd);
@@ -216,16 +216,16 @@ extern void svt_subtract_average_c(int16_t *pred_buf_q3, int32_t width, int32_t 
 //CFL_PREDICT_FN(c, lbd)
 
 void svt_cfl_predict_lbd_c(const int16_t *pred_buf_q3,
-                           uint8_t *      pred, // AMIR ADDED
+                           uint8_t       *pred, // AMIR ADDED
                            int32_t        pred_stride,
-                           uint8_t *      dst, // AMIR changed to 8 bit
+                           uint8_t       *dst, // AMIR changed to 8 bit
                            int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width,
                            int32_t height);
 
 void svt_cfl_predict_hbd_c(const int16_t *pred_buf_q3,
-                           uint16_t *     pred, // AMIR ADDED
+                           uint16_t      *pred, // AMIR ADDED
                            int32_t        pred_stride,
-                           uint16_t *     dst, // AMIR changed to 8 bit
+                           uint16_t      *dst, // AMIR changed to 8 bit
                            int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width,
                            int32_t height);
 

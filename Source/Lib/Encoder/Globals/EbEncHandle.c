@@ -817,7 +817,6 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->total_process_init_count += (scs_ptr->cdef_process_init_count                        = clamp(max_cdef_proc, 1, max_cdef_proc));
         scs_ptr->total_process_init_count += (scs_ptr->rest_process_init_count                        = clamp(max_rest_proc, 1, max_rest_proc));
     }
-#if TUNE_LP_VBR
     else {
         if (scs_ptr->static_config.rate_control_mode != 0)
         {
@@ -861,33 +860,6 @@ EbErrorType load_default_buffer_configuration_settings(
             }
         }
     }
-#else
-    else if (core_count < PARALLEL_LEVEL_32_RANGE) {
-        scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count = 1);
-        scs_ptr->total_process_init_count += (scs_ptr->picture_analysis_process_init_count = clamp(max_pa_proc, 1, max_pa_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count = clamp(50, 1, max_me_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->tpl_disp_process_init_count = clamp(max_tpl_proc, 1, max_tpl_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->mode_decision_configuration_process_init_count = clamp(max_mdc_proc, 1, max_mdc_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->enc_dec_process_init_count = clamp(200, scs_ptr->picture_control_set_pool_init_count_child, max_md_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->entropy_coding_process_init_count = clamp(max_ec_proc, 1, max_ec_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->dlf_process_init_count = clamp(max_dlf_proc, 1, max_dlf_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->cdef_process_init_count = clamp(max_cdef_proc, 1, max_cdef_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->rest_process_init_count = clamp(max_rest_proc, 1, max_rest_proc));
-    }
-    else {
-        scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count = 1);
-        scs_ptr->total_process_init_count += (scs_ptr->picture_analysis_process_init_count = clamp(max_pa_proc, 1, max_pa_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count = clamp(50, 1, max_me_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->tpl_disp_process_init_count = clamp(max_tpl_proc, 1, max_tpl_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->mode_decision_configuration_process_init_count = clamp(max_mdc_proc, 1, max_mdc_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->enc_dec_process_init_count = clamp(scs_ptr->picture_control_set_pool_init_count_child,
-            scs_ptr->picture_control_set_pool_init_count_child, max_md_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->entropy_coding_process_init_count = clamp(max_ec_proc, 1, max_ec_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->dlf_process_init_count = clamp(max_dlf_proc, 1, max_dlf_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->cdef_process_init_count = clamp(max_cdef_proc, 1, max_cdef_proc));
-        scs_ptr->total_process_init_count += (scs_ptr->rest_process_init_count = clamp(max_rest_proc, 1, max_rest_proc));
-    }
-#endif
 
     scs_ptr->total_process_init_count += 6; // single processes count
     if (scs_ptr->static_config.pass == 0 || scs_ptr->static_config.pass == 3){
@@ -1574,12 +1546,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.picture_width, input_data.picture_height);
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->calculate_variance;
-#if ADD_VQ_MODE
         input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection ||
                                             enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition;
-#else
-        input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection;
-#endif
         input_data.tpl_lad_mg = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_lad_mg;
         input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
 
@@ -2818,13 +2786,8 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].do_chroma = 0;
         scs_ptr->tf_params_per_type[0].pred_error_32x32_th = (uint64_t)~0;
         scs_ptr->tf_params_per_type[0].sub_sampling_shift = 1;
-#if OPT_RES_CHECKS_3
         scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
         scs_ptr->tf_params_per_type[0].use_medium_filter = 1;
-#else
-        scs_ptr->tf_params_per_type[0].use_fast_filter = (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) ? 1 : 0;
-        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) ? 0 : 1;
-#endif
         scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 1;
         scs_ptr->tf_params_per_type[0].use_2tap = 1;
         scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 1;
@@ -2848,13 +2811,8 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].do_chroma = 0;
         scs_ptr->tf_params_per_type[1].pred_error_32x32_th = (uint64_t)~0;
         scs_ptr->tf_params_per_type[1].sub_sampling_shift = 1;
-#if OPT_RES_CHECKS_3
         scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
         scs_ptr->tf_params_per_type[1].use_medium_filter = 1;
-#else
-        scs_ptr->tf_params_per_type[1].use_fast_filter = (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) ? 1 : 0;
-        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) ? 0 : 1;
-#endif
         scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 1;
         scs_ptr->tf_params_per_type[1].use_2tap = 1;
         scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 1;
@@ -2932,7 +2890,6 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
     scs_ptr->tf_params_per_type[2].use_fixed_point = 1;
 
 }
-#if ADD_VQ_MODE
 /*
  * Derive tune Params; 0: use objective mode params, 1: use subjective mode params
  */
@@ -2963,7 +2920,6 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
         vq_ctrl->stability_ctrls.depth_refinement = 0;
     }
 }
-#endif
 /*
  * Derive TF Params
  */
@@ -2981,11 +2937,7 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
         tf_level = 2;
     }
-#if TUNE_M8
     else if (scs_ptr->static_config.enc_mode <= ENC_M8) {
-#else
-    else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
-#endif
         tf_level = 3;
     }
     else if (scs_ptr->static_config.enc_mode <= ENC_M9) {
@@ -3160,27 +3112,12 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_
     }
     else if (enc_mode <= ENC_M5)
         tpl_level = 1;
-#if OPT_M7_4K
     else if (enc_mode <= ENC_M6)
         tpl_level = 3;
-#else
-    else if (enc_mode <= ENC_M7)
-        tpl_level = 3;
-#endif
-#if !OPT_M9_4K
-    else if (enc_mode <= ENC_M8)
-        tpl_level = 4;
-#else
     else if (enc_mode <= ENC_M9)
         tpl_level = 4;
-#if !OPT_M10_4K
-    else if (enc_mode <= ENC_M9)
-        tpl_level = 5;
-#else
     else if (enc_mode <= ENC_M10)
         tpl_level = 5;
-#endif
-#endif
     else
         tpl_level = 7;
 
@@ -3393,10 +3330,8 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     derive_input_resolution(
         &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
-#if ADD_VQ_MODE
     // Set tune params
     derive_vq_params(scs_ptr);
-#endif
 
     // Set TF level
     derive_tf_params(scs_ptr);
@@ -3424,11 +3359,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     // Update the scd_delay based on SCD, 1first pass
     // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
-#if ADD_VQ_MODE
     if (scs_ptr->static_config.scene_change_detection || scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_enabled)
-#else
-    if (scs_ptr->static_config.scene_change_detection || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_enabled)
-#endif
         scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
 
     // no future minigop is used for lowdelay prediction structure
@@ -3438,23 +3369,17 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
      {
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
-#if TPL_LAD_MG_ZERO
         uint32_t mg_size = 1 << scs_ptr->static_config.hierarchical_levels;
         if (scs_ptr->static_config.look_ahead_distance < mg_size)
             tpl_lad_mg = 0;
         else
-#endif
             if (scs_ptr->static_config.enc_mode <= ENC_M11 && scs_ptr->tpl_level != 0)
-#if OPT_DECODER
                 if (scs_ptr->static_config.fast_decode <= 1)
                     tpl_lad_mg = 1;
                 else if (scs_ptr->static_config.fast_decode <= 2)
                     tpl_lad_mg = scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE ? 1 : 0;
                 else
                     tpl_lad_mg = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
-#else
-                tpl_lad_mg = 1;
-#endif
             else
                 tpl_lad_mg = 0;
 
@@ -3583,7 +3508,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
         scs_ptr->over_boundary_block_mode = 0;
 
-#if OPT_M10_4K
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
         if (scs_ptr->static_config.enc_mode <= ENC_M5)
             scs_ptr->mfmv_enabled = 1;
@@ -3596,12 +3520,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->mfmv_enabled = 0;
     else
         scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
-#else
-    if (scs_ptr->static_config.enable_mfmv == DEFAULT)
-            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;
-    else
-        scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
-#endif
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->enable_hbd_mode_decision = 0;
@@ -3644,11 +3562,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.enable_adaptive_quantization == 1 ||
         scs_ptr->static_config.scene_change_detection == 1)
         scs_ptr->calculate_variance = 1;
-#if OPT_M11_4K
     else if (scs_ptr->static_config.enc_mode <= ENC_M10)
-#else
-    else if (scs_ptr->static_config.enc_mode <= ENC_M11)
-#endif
         scs_ptr->calculate_variance = 1;
     else
         scs_ptr->calculate_variance = 0;
@@ -3803,7 +3717,6 @@ void copy_api_from_app(
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
 
-#if OPT_DECODER
     // Decoder Optimization Flag
     scs_ptr->static_config.fast_decode = ((EbSvtAv1EncConfiguration*)config_struct)->fast_decode;
     //If the set fast_decode value is in the allowable range, check that the value is supported for the current preset.
@@ -3828,7 +3741,6 @@ void copy_api_from_app(
             SVT_WARN("Switching to decoder speedup level %d.\n", scs_ptr->static_config.fast_decode);
         }
     }
-#endif
 
     //Film Grain
     scs_ptr->static_config.film_grain_denoise_strength = ((EbSvtAv1EncConfiguration*)config_struct)->film_grain_denoise_strength;
@@ -3958,9 +3870,7 @@ void copy_api_from_app(
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     scs_ptr->static_config.enable_tf = config_struct->enable_tf;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
-#if ADD_VQ_MODE
     scs_ptr->static_config.tune = config_struct->tune;
-#endif
     scs_ptr->static_config.superres_mode = config_struct->superres_mode;
     scs_ptr->static_config.superres_denom = config_struct->superres_denom;
     scs_ptr->static_config.superres_kf_denom = config_struct->superres_kf_denom;

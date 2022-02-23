@@ -711,7 +711,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                 x = 0;
                 do {
                     const uint8_t *s = src_ptr + x;
-                    uint8_t *      d = dst + x;
+                    uint8_t       *d = dst + x;
 
                     s_512[0] = _mm512_loadu_si512((__m512i *)(s + 0 * src_stride));
                     s_512[1] = _mm512_loadu_si512((__m512i *)(s + 1 * src_stride));
@@ -971,7 +971,7 @@ void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_
                 x = 0;
                 do {
                     const uint8_t *s = src_ptr + x;
-                    uint8_t *      d = dst + x;
+                    uint8_t       *d = dst + x;
 
                     s_512[0] = _mm512_loadu_si512((__m512i *)(s + 0 * src_stride));
                     s_512[1] = _mm512_loadu_si512((__m512i *)(s + 1 * src_stride));

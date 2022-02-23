@@ -28,23 +28,23 @@
 void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
                  int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize);
 
-void *  svt_aom_memalign(size_t align, size_t size);
+void   *svt_aom_memalign(size_t align, size_t size);
 void    svt_aom_free(void *memblk);
-void *  svt_aom_malloc(size_t size);
+void   *svt_aom_malloc(size_t size);
 int32_t svt_sb_all_skip(PictureControlSet *pcs_ptr, const Av1Common *const cm, int32_t mi_row,
                         int32_t mi_col);
 int32_t svt_sb_compute_cdef_list(PictureControlSet *pcs_ptr, const Av1Common *const cm,
                                  int32_t mi_row, int32_t mi_col, CdefList *dlist, BlockSize bs);
-void finish_cdef_search(PictureControlSet *pcs_ptr);
-void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
-                         PictureControlSet *pCs);
-void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
-                        PictureControlSet *pCs);
-void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
-                                                  int32_t after_cdef);
-void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs_ptr,
-                                    SequenceControlSet *scs_ptr);
-void set_unscaled_input_16bit(PictureControlSet *pcs_ptr);
+void    finish_cdef_search(PictureControlSet *pcs_ptr);
+void    av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
+                            PictureControlSet *pCs);
+void    svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
+                           PictureControlSet *pCs);
+void    svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
+                                                     int32_t after_cdef);
+void    svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs_ptr,
+                                       SequenceControlSet *scs_ptr);
+void    set_unscaled_input_16bit(PictureControlSet *pcs_ptr);
 
 void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
 
@@ -58,14 +58,14 @@ typedef struct CdefContext {
 
 static void cdef_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
-    CdefContext *    obj                = (CdefContext *)thread_context_ptr->priv;
+    CdefContext     *obj                = (CdefContext *)thread_context_ptr->priv;
     EB_FREE_ARRAY(obj);
 }
 
 /******************************************************
  * Cdef Context Constructor
  ******************************************************/
-EbErrorType cdef_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType cdef_context_ctor(EbThreadContext   *thread_context_ptr,
                               const EbEncHandle *enc_handle_ptr, int index) {
     CdefContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
@@ -90,8 +90,8 @@ EbErrorType cdef_context_ctor(EbThreadContext *  thread_context_ptr,
 void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                      uint32_t segment_index) {
     struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
-    FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
-    Av1Common *                     cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
+    FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
+    Av1Common                      *cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
     uint32_t                        x_seg_idx;
     uint32_t                        y_seg_idx;
     uint32_t picture_width_in_b64  = (pcs_ptr->parent_pcs_ptr->aligned_width + 64 - 1) / 64;
@@ -118,8 +118,8 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t       pri_strength;
     uint64_t      curr_mse;
     int32_t       sec_strength;
-    uint8_t *     src[3];
-    uint8_t *     ref_coeff[3];
+    uint8_t      *src[3];
+    uint8_t      *ref_coeff[3];
     CdefList      dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
     int32_t       stride_src[3];
     int32_t       stride_ref[3];
@@ -182,7 +182,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
             int32_t           hb_step = 1; //these should be all time with 64x64 SBs
             int32_t           vb_step = 1;
             BlockSize         bs      = BLOCK_64X64;
-            ModeInfo **       mi      = pcs_ptr->mi_grid_base + lr * cm->mi_stride + lc;
+            ModeInfo        **mi      = pcs_ptr->mi_grid_base + lr * cm->mi_stride + lc;
             const MbModeInfo *mbmi    = &mi[0]->mbmi;
             const BlockSize   sb_type = mbmi->block_mi.sb_type;
             if (((fbc & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_128X64)) ||
@@ -359,8 +359,8 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     EbPictureBufferDesc *recon_pic_ptr;
     get_recon_pic(pcs_ptr, &recon_pic_ptr, 1);
     struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
-    FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
-    Av1Common *                     cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
+    FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
+    Av1Common                      *cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
     uint32_t                        x_seg_idx;
     uint32_t                        y_seg_idx;
     uint32_t picture_width_in_b64  = (pcs_ptr->parent_pcs_ptr->aligned_width + 64 - 1) / 64;
@@ -386,8 +386,8 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     CdefControls *cdef_ctrls                 = &pcs_ptr->parent_pcs_ptr->cdef_ctrls;
     const int     first_pass_fs_num          = cdef_ctrls->first_pass_fs_num;
     const int     default_second_pass_fs_num = cdef_ctrls->default_second_pass_fs_num;
-    uint16_t *    src[3];
-    uint16_t *    ref_coeff[3];
+    uint16_t     *src[3];
+    uint16_t     *ref_coeff[3];
     CdefList      dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
     int32_t       stride_src[3];
     int32_t       stride_ref[3];
@@ -442,7 +442,7 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
             int32_t           hb_step = 1; //these should be all time with 64x64 SBs
             int32_t           vb_step = 1;
             BlockSize         bs      = BLOCK_64X64;
-            ModeInfo **       mi      = pcs_ptr->mi_grid_base + lr * cm->mi_stride + lc;
+            ModeInfo        **mi      = pcs_ptr->mi_grid_base + lr * cm->mi_stride + lc;
             const MbModeInfo *mbmi    = &mi[0]->mbmi;
             const BlockSize   sb_type = mbmi->block_mi.sb_type;
             if (((fbc & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_128X64)) ||
@@ -459,7 +459,7 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                 vb_step = 2;
             }
             const uint32_t fb_idx = fbr * nhfb + fbc;
-            cdef_count = svt_sb_compute_cdef_list(
+            cdef_count            = svt_sb_compute_cdef_list(
                 pcs_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 
             if (cdef_count == 0) {
@@ -617,18 +617,18 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
  ******************************************************/
 void *cdef_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext *   thread_context_ptr = (EbThreadContext *)input_ptr;
-    CdefContext *       context_ptr        = (CdefContext *)thread_context_ptr->priv;
-    PictureControlSet * pcs_ptr;
+    EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
+    CdefContext        *context_ptr        = (CdefContext *)thread_context_ptr->priv;
+    PictureControlSet  *pcs_ptr;
     SequenceControlSet *scs_ptr;
 
     //// Input
     EbObjectWrapper *dlf_results_wrapper_ptr;
-    DlfResults *     dlf_results_ptr;
+    DlfResults      *dlf_results_ptr;
 
     //// Output
     EbObjectWrapper *cdef_results_wrapper_ptr;
-    CdefResults *    cdef_results_ptr;
+    CdefResults     *cdef_results_ptr;
 
     // SB Loop variables
 
@@ -642,9 +642,9 @@ void *cdef_kernel(void *input_ptr) {
         pcs_ptr         = (PictureControlSet *)dlf_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr         = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
-        EbBool     is_16bit = scs_ptr->is_16bit_pipeline;
-        Av1Common *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
-        frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+        EbBool     is_16bit      = scs_ptr->is_16bit_pipeline;
+        Av1Common *cm            = pcs_ptr->parent_pcs_ptr->av1_cm;
+        frm_hdr                  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         CdefControls *cdef_ctrls = &pcs_ptr->parent_pcs_ptr->cdef_ctrls;
         if (!cdef_ctrls->use_reference_cdef_fs) {
             if (scs_ptr->seq_header.cdef_level && pcs_ptr->parent_pcs_ptr->cdef_level) {

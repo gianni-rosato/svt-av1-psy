@@ -135,19 +135,19 @@ static INLINE void obmc_variance_w4(const uint8_t *pre, const int pre_stride, co
     *sse = xx_hsum_epi32_si32(v_sse_d);
 }
 
-#define OBMCVARWXH(W, H)                                                        \
-    unsigned int svt_aom_obmc_variance##W##x##H##_sse4_1(const uint8_t *pre,    \
-                                                     int            pre_stride, \
-                                                     const int32_t *wsrc,       \
-                                                     const int32_t *mask,       \
-                                                     unsigned int * sse) {      \
-        int sum;                                                                \
-        if (W == 4) {                                                           \
-            obmc_variance_w4(pre, pre_stride, wsrc, mask, sse, &sum, H);        \
-        } else {                                                                \
-            obmc_variance_w8n(pre, pre_stride, wsrc, mask, sse, &sum, W, H);    \
-        }                                                                       \
-        return *sse - (unsigned int)(((int64_t)sum * sum) / (W * H));           \
+#define OBMCVARWXH(W, H)                                                            \
+    unsigned int svt_aom_obmc_variance##W##x##H##_sse4_1(const uint8_t *pre,        \
+                                                         int            pre_stride, \
+                                                         const int32_t *wsrc,       \
+                                                         const int32_t *mask,       \
+                                                         unsigned int  *sse) {       \
+        int sum;                                                                    \
+        if (W == 4) {                                                               \
+            obmc_variance_w4(pre, pre_stride, wsrc, mask, sse, &sum, H);            \
+        } else {                                                                    \
+            obmc_variance_w8n(pre, pre_stride, wsrc, mask, sse, &sum, W, H);        \
+        }                                                                           \
+        return *sse - (unsigned int)(((int64_t)sum * sum) / (W * H));               \
     }
 
 OBMCVARWXH(128, 128)
@@ -180,7 +180,7 @@ OBMCVARWXH(64, 16)
                                                                int            yoffset,    \
                                                                const int32_t *wsrc,       \
                                                                const int32_t *mask,       \
-                                                               unsigned int * sse) {      \
+                                                               unsigned int  *sse) {       \
         uint16_t fdata3[(H + 1) * W];                                                     \
         uint8_t  temp2[H * W];                                                            \
                                                                                           \
@@ -216,7 +216,7 @@ OBMC_SUBPIX_VAR(16, 64)
 OBMC_SUBPIX_VAR(64, 16)
 
 static void aom_highbd_calc16x16var_sse4_1(const uint16_t *src, int src_stride, const uint16_t *ref,
-                                         int ref_stride, uint32_t *sse, int *sum) {
+                                           int ref_stride, uint32_t *sse, int *sum) {
     __m128i       v_sum_d = _mm_setzero_si128();
     __m128i       v_sse_d = _mm_setzero_si128();
     const __m128i one     = _mm_set1_epi16(1);
@@ -248,19 +248,19 @@ static void aom_highbd_calc16x16var_sse4_1(const uint16_t *src, int src_stride, 
 }
 
 static inline void variance_highbd_32x32_sse4_1(const uint16_t *src, int src_stride,
-                                              const uint16_t *ref, int ref_stride, uint32_t *sse,
-                                              int *sum) {
+                                                const uint16_t *ref, int ref_stride, uint32_t *sse,
+                                                int *sum) {
     uint32_t sse0;
     int      sum0;
 
     for (int i = 0; i < 32; i += 16) {
         for (int j = 0; j < 32; j += 16) {
             aom_highbd_calc16x16var_sse4_1(src + src_stride * i + j,
-                                         src_stride,
-                                         ref + ref_stride * i + j,
-                                         ref_stride,
-                                         &sse0,
-                                         &sum0);
+                                           src_stride,
+                                           ref + ref_stride * i + j,
+                                           ref_stride,
+                                           &sse0,
+                                           &sum0);
             *sum += sum0;
             *sse += sse0;
         }
@@ -271,7 +271,7 @@ static inline void variance_highbd_32x32_sse4_1(const uint16_t *src, int src_str
 * Helper function to compute variance with 16 bit input for square blocks of size 16 and 32
 */
 uint32_t variance_highbd_sse4_1(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
-                              int w, int h, uint32_t *sse) {
+                                int w, int h, uint32_t *sse) {
     assert(w == h);
 
     int sum = 0;

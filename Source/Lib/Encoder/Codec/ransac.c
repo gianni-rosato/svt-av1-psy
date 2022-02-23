@@ -90,15 +90,15 @@ static void normalize_homography(double *pts, int n, double *T) {
     }
     msqe /= n;
     scale = (msqe == 0 ? 1.0 : CONST_SQRT2 / msqe);
-    T[0] = scale;
-    T[1] = 0;
-    T[2] = -scale * mean[0];
-    T[3] = 0;
-    T[4] = scale;
-    T[5] = -scale * mean[1];
-    T[6] = 0;
-    T[7] = 0;
-    T[8] = 1;
+    T[0]  = scale;
+    T[1]  = 0;
+    T[2]  = -scale * mean[0];
+    T[3]  = 0;
+    T[4]  = scale;
+    T[5]  = -scale * mean[1];
+    T[6]  = 0;
+    T[7]  = 0;
+    T[8]  = 1;
     for (p = pts, i = 0; i < n; ++i, p += 2) {
         p[0] *= scale;
         p[1] *= scale;
@@ -212,9 +212,9 @@ static int find_translation(int np, double *pts1, double *pts2, double *mat) {
 
 static int find_rotzoom(int np, double *pts1, double *pts2, double *mat) {
     const int np2  = np * 2;
-    double *  a    = (double *)malloc(sizeof(*a) * (np2 * 5 + 20));
-    double *  b    = a + np2 * 4;
-    double *  temp = b + np2;
+    double   *a    = (double *)malloc(sizeof(*a) * (np2 * 5 + 20));
+    double   *b    = a + np2 * 4;
+    double   *temp = b + np2;
 
     double t1[9], t2[9];
     normalize_homography(pts1, np, t1);
@@ -250,7 +250,7 @@ static int find_rotzoom(int np, double *pts1, double *pts2, double *mat) {
 static int find_affine(int np, double *pts1, double *pts2, double *mat) {
     assert(np > 0);
     const int np2 = np * 2;
-    double *  a   = (double *)malloc(sizeof(*a) * (np2 * 7 + 42));
+    double   *a   = (double *)malloc(sizeof(*a) * (np2 * 7 + 42));
     if (a == NULL)
         return 1;
     double *b    = a + np2 * 6;
@@ -318,7 +318,7 @@ static int get_rand_indices(int npoints, int minpts, int *indices, unsigned int 
 typedef struct {
     int    num_inliers;
     double variance;
-    int *  inlier_indices;
+    int   *inlier_indices;
 } RANSAC_MOTION;
 
 // Return -1 if 'a' is a better motion, 1 if 'b' is better, 0 otherwise.
@@ -456,8 +456,8 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
         projectpoints(params_this_motion, corners1, image1_coord, npoints, 2, 2);
 
         for (int i = 0; i < npoints; ++i) {
-            double dx = image1_coord[i * 2] - corners2[i * 2];
-            double dy = image1_coord[i * 2 + 1] - corners2[i * 2 + 1];
+            double dx            = image1_coord[i * 2] - corners2[i * 2];
+            double dy            = image1_coord[i * 2 + 1] - corners2[i * 2 + 1];
             double distance_pow2 = dx * dx + dy * dy;
 
             if (distance_pow2 < INLIER_THRESHOLD_POW2) {

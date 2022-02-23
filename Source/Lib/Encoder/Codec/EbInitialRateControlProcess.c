@@ -44,8 +44,8 @@ EbErrorType lad_queue_entry_ctor(LadQueueEntry *entry_ptr) {
 }
 
 typedef struct InitialRateControlContext {
-    EbFifo *  motion_estimation_results_input_fifo_ptr;
-    EbFifo *  initialrate_control_results_output_fifo_ptr;
+    EbFifo   *motion_estimation_results_input_fifo_ptr;
+    EbFifo   *initialrate_control_results_output_fifo_ptr;
     LadQueue *lad_queue;
 
 } InitialRateControlContext;
@@ -54,7 +54,7 @@ typedef struct InitialRateControlContext {
 * Macros
 **************************************/
 static void initial_rate_control_context_dctor(EbPtr p) {
-    EbThreadContext *          thread_context_ptr = (EbThreadContext *)p;
+    EbThreadContext           *thread_context_ptr = (EbThreadContext *)p;
     InitialRateControlContext *obj = (InitialRateControlContext *)thread_context_ptr->priv;
 
     EB_DELETE_PTR_ARRAY(obj->lad_queue->cir_buf, REFERENCE_QUEUE_MAX_DEPTH);
@@ -65,7 +65,7 @@ static void initial_rate_control_context_dctor(EbPtr p) {
 /************************************************
 * Initial Rate Control Context Constructor
 ************************************************/
-EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType initial_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
                                               const EbEncHandle *enc_handle_ptr) {
     InitialRateControlContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
@@ -111,18 +111,17 @@ uint32_t get_lad_q_size(InitialRateControlContext *ctx) {
 /*
  dump the content of the  queue for debug purpose
 */
-void print_lad_queue(InitialRateControlContext *ctx, uint8_t log)
-{
+void print_lad_queue(InitialRateControlContext *ctx, uint8_t log) {
     if (log) {
-        LadQueue* queue = ctx->lad_queue;
-        uint32_t idx = queue->head;
-        LadQueueEntry   *queue_entry = queue->cir_buf[idx];
+        LadQueue      *queue       = ctx->lad_queue;
+        uint32_t       idx         = queue->head;
+        LadQueueEntry *queue_entry = queue->cir_buf[idx];
 
         SVT_LOG("\n lad_queue size:%i  ", get_lad_q_size(ctx));
 
         while (queue_entry->pcs != NULL) {
             SVT_LOG("%i-%lld ", queue_entry->pcs->ext_mg_id, queue_entry->pcs->picture_number);
-            idx = OUT_Q_ADVANCE(idx);
+            idx         = OUT_Q_ADVANCE(idx);
             queue_entry = queue->cir_buf[idx];
         }
         SVT_LOG("\n");
@@ -133,7 +132,7 @@ void print_lad_queue(InitialRateControlContext *ctx, uint8_t log)
  store pictures in the lad queue
 */
 void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlContext *ctx) {
-    LadQueue *     queue       = ctx->lad_queue;
+    LadQueue      *queue       = ctx->lad_queue;
     uint32_t       entry_idx   = pcs->decode_order % REFERENCE_QUEUE_MAX_DEPTH;
     LadQueueEntry *queue_entry = queue->cir_buf[entry_idx];
     assert_err(queue_entry->pcs == NULL, "lad queue overflow");
@@ -208,8 +207,7 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
         if (inject_frame) {
             if (pcs->slice_type != I_SLICE) {
                 // Discard low important pictures from tpl group
-                if (pcs->tpl_ctrls.tpl_opt_flag &&
-                    (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
+                if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
                     if (pcs->tpl_group[pic_index]->temporal_layer_index <=
                         pcs->tpl_ctrls.reduced_tpl_group) {
                         pcs->tpl_valid_pic[pic_index] = 1;
@@ -232,7 +230,7 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
 */
 void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContext *ctx,
                           uint32_t start_idx, int64_t end_mg) {
-    LadQueue *     queue = ctx->lad_queue;
+    LadQueue      *queue = ctx->lad_queue;
     uint32_t       pic_i = 0;
     uint32_t       q_idx = start_idx;
     LadQueueEntry *entry = queue->cir_buf[q_idx];
@@ -255,10 +253,9 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
     if (log) {
         SVT_LOG("\n EXT group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ext_group_size);
         for (uint32_t i = 0; i < pcs->ext_group_size; i++) {
-            if(pcs->ext_group[i]->temporal_layer_index==0)
+            if (pcs->ext_group[i]->temporal_layer_index == 0)
                 SVT_LOG(" | ");
             SVT_LOG("%lld ", pcs->ext_group[i]->picture_number);
-
         }
         SVT_LOG("\n");
     }
@@ -268,8 +265,8 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
     memset(pcs->tpl_valid_pic, 0, MAX_TPL_EXT_GROUP_SIZE * sizeof(uint8_t));
     pcs->tpl_valid_pic[0]   = 1;
     pcs->used_tpl_frame_num = 0;
-    uint8_t is_gop_end   = 0;
-    int64_t last_intra_mg_id;
+    uint8_t  is_gop_end     = 0;
+    int64_t  last_intra_mg_id;
     uint32_t mg_size;
     if (pcs->scs_ptr->enable_adaptive_mini_gop == 0) {
         mg_size = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
@@ -295,26 +292,25 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
                 } else {
                     pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
                     validate_pic_for_tpl(pcs, i);
-                    last_intra_mg_id                        = cur_pcs->ext_mg_id;
-                    is_gop_end                              = 1;
+                    last_intra_mg_id = cur_pcs->ext_mg_id;
+                    is_gop_end       = 1;
                 }
             }
         } else {
             if (is_gop_end == 0) {
                 pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
                 validate_pic_for_tpl(pcs, i);
-            }
-            else if (cur_pcs->ext_mg_id == last_intra_mg_id) {
+            } else if (cur_pcs->ext_mg_id == last_intra_mg_id) {
                 pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
                 validate_pic_for_tpl(pcs, i);
-            }
-            else
+            } else
                 break;
         }
     }
 #if LAD_MG_PRINT
     if (log) {
-        SVT_LOG("\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);
+        SVT_LOG(
+            "\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);
         for (uint32_t i = 0; i < pcs->ntpl_group_size; i++) {
             if (pcs->ext_group[i]->temporal_layer_index == 0)
                 SVT_LOG(" | ");
@@ -323,7 +319,6 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
         SVT_LOG("\n");
     }
 #endif
-
 }
 
 /*
@@ -332,7 +327,7 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
  only base pictures are hold. the rest including LDP ones are pass-thru
 */
 void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
-    LadQueue *     queue      = ctx->lad_queue;
+    LadQueue      *queue      = ctx->lad_queue;
     LadQueueEntry *head_entry = queue->cir_buf[queue->head];
 
     while (head_entry->pcs != NULL) {
@@ -403,17 +398,16 @@ void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
             if (head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                 head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS ||
                 head_pcs->scs_ptr->lap_enabled) {
-                head_pcs->stats_in_offset = head_pcs->decode_order;
+                head_pcs->stats_in_offset     = head_pcs->decode_order;
                 head_pcs->stats_in_end_offset = head_pcs->ext_group_size &&
                         !(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                           head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS)
-                    ?
-                    MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
-                                   head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
-                        head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1)
+                    ? MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
+                                     head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
+                          head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1)
                     : (uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
                                  head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);
-                head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset -
+                head_pcs->frames_in_sw        = (int)(head_pcs->stats_in_end_offset -
                                                head_pcs->stats_in_offset);
                 if (head_pcs->scs_ptr->enable_dec_order == 0 && head_pcs->scs_ptr->lap_enabled &&
                     head_pcs->temporal_layer_index == 0) {
@@ -472,7 +466,7 @@ void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
 *
 ********************************************************************************/
 void *initial_rate_control_kernel(void *input_ptr) {
-    EbThreadContext *          thread_context_ptr = (EbThreadContext *)input_ptr;
+    EbThreadContext           *thread_context_ptr = (EbThreadContext *)input_ptr;
     InitialRateControlContext *context_ptr = (InitialRateControlContext *)thread_context_ptr->priv;
 
     EbObjectWrapper *in_results_wrapper_ptr;
@@ -583,7 +577,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
             push_to_lad_queue(pcs_ptr, context_ptr);
 #if LAD_MG_PRINT
-            print_lad_queue(context_ptr,0);
+            print_lad_queue(context_ptr, 0);
 #endif
             uint8_t lad_queue_pass_thru = !(pcs_ptr->tpl_ctrls.enable &&
                                             !pcs_ptr->frame_superres_enabled);

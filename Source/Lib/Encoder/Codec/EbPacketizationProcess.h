@@ -20,7 +20,7 @@ extern "C" {
 /**************************************
      * Extern Function Declarations
      **************************************/
-EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType packetization_context_ctor(EbThreadContext   *thread_context_ptr,
                                        const EbEncHandle *enc_handle_ptr, int rate_control_index,
                                        int demux_index, int me_port_index);
 

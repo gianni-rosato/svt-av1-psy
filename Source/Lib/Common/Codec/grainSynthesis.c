@@ -959,9 +959,9 @@ void svt_av1_add_film_grain_run(AomFilmGrain *params, uint8_t *luma, uint8_t *cb
                                 int32_t chroma_subsamp_y, int32_t chroma_subsamp_x) {
     int32_t **pred_pos_luma;
     int32_t **pred_pos_chroma;
-    int32_t * luma_grain_block;
-    int32_t * cb_grain_block;
-    int32_t * cr_grain_block;
+    int32_t  *luma_grain_block;
+    int32_t  *cb_grain_block;
+    int32_t  *cr_grain_block;
 
     int32_t *y_line_buf;
     int32_t *cb_line_buf;

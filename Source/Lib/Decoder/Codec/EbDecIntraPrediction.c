@@ -63,7 +63,7 @@ static INLINE void cfl_pad(CflCtx *cfl, int32_t width, int32_t height) {
 
     if (diff_width > 0) {
         const int min_height   = height - diff_height;
-        int16_t * recon_buf_q3 = cfl->recon_buf_q3 + (width - diff_width);
+        int16_t  *recon_buf_q3 = cfl->recon_buf_q3 + (width - diff_width);
         for (int j = 0; j < min_height; j++) {
             const int16_t last_pixel = recon_buf_q3[-1];
             assert(recon_buf_q3 + diff_width <= cfl->recon_buf_q3 + CFL_BUF_SQUARE);
@@ -794,7 +794,7 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
                            int32_t blk_mi_row_off) {
     void *pv_top_neighbor_array, *pv_left_neighbor_array;
 
-    EbDecHandle *        dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
+    EbDecHandle         *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
     EbBool               is16b      = dec_handle->is_16bit_pipeline;
     const PredictionMode mode       = (plane == AOM_PLANE_Y) ? part_info->mi->mode
                                                              : get_uv_mode(part_info->mi->uv_mode);

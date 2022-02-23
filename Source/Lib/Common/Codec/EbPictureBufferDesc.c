@@ -279,7 +279,7 @@ EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBuffe
     return EB_ErrorNone;
 }
 void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc,
-                                     Yv12BufferConfig *   aomBuffDsc) {
+                                     Yv12BufferConfig    *aomBuffDsc) {
     //forces an 8 bit version
     //NOTe:  Not all fileds are connected. add more connections as needed.
     {

@@ -108,8 +108,8 @@ void upscale_normative_rect(const uint8_t *const input, int height, int width, i
     Note: Because we pass input-1 to av1_convolve_horiz_rs, we need one extra
     column of border pixels compared to what we'd naively think.*/
     const int      border_cols = UPSCALE_NORMATIVE_TAPS / 2 + 1;
-    uint8_t *      tmp_left    = NULL;
-    uint8_t *      tmp_right   = NULL;
+    uint8_t       *tmp_left    = NULL;
+    uint8_t       *tmp_right   = NULL;
     uint8_t *const in_tl       = (uint8_t *)(input - border_cols);
     uint8_t *const in_tr       = (uint8_t *)(input + width);
 
@@ -170,8 +170,8 @@ void highbd_upscale_normative_rect(const uint8_t *const input, int height, int w
     column of border pixels compared to what we'd naively think.*/
     const int       border_cols = UPSCALE_NORMATIVE_TAPS / 2 + 1;
     const int       border_size = border_cols * sizeof(uint16_t);
-    uint16_t *      tmp_left    = NULL;
-    uint16_t *      tmp_right   = NULL;
+    uint16_t       *tmp_left    = NULL;
+    uint16_t       *tmp_right   = NULL;
     uint16_t *const input16     = (uint16_t *)input; //CONVERT_TO_SHORTPTR(input);
     uint16_t *const in_tl       = input16 - border_cols;
     uint16_t *const in_tr       = input16 + width;

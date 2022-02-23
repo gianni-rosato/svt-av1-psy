@@ -44,7 +44,7 @@ typedef struct {
 void svt_av1_init_second_pass(struct SequenceControlSet *scs_ptr);
 void svt_av1_init_single_pass_lap(struct SequenceControlSet *scs_ptr);
 void svt_av1_new_framerate(struct SequenceControlSet *scs_ptr, double framerate);
-void find_init_qp_middle_pass(struct SequenceControlSet *     scs_ptr,
+void find_init_qp_middle_pass(struct SequenceControlSet      *scs_ptr,
                               struct PictureParentControlSet *pcs_ptr);
 void svt_av1_get_one_pass_rt_params(struct PictureParentControlSet *pcs_ptr);
 void svt_av1_get_second_pass_params(struct PictureParentControlSet *pcs_ptr);

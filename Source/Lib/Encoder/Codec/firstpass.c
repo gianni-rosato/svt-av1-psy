@@ -675,11 +675,6 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
                                                    PictureParentControlSet *  pcs_ptr,
                                                    MotionEstimationContext_t *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-#if !OPT_REMOVE_SC_RES_CHECKS
-    EbInputResolution input_resolution            = scs_ptr->input_resolution;
-    context_ptr->me_context_ptr->input_resolution = input_resolution;
-    context_ptr->me_context_ptr->clip_class       = pcs_ptr->sc_class1;
-#endif
     // Set ME/HME search regions
     set_first_pass_me_hme_params_oq(
         context_ptr->me_context_ptr, scs_ptr, scs_ptr->input_resolution);

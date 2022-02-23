@@ -266,7 +266,7 @@ static INLINE void svt_warp_horizontal_filter_alpha0_beta0(const uint8_t *ref, _
 static INLINE void svt_unpack_weights_and_set_round_const(ConvolveParams *conv_params,
                                                           const int       round_bits,
                                                           const int       offset_bits,
-                                                          __m128i *       res_sub_const,
+                                                          __m128i        *res_sub_const,
                                                           __m128i *round_bits_const, __m128i *wt) {
     *res_sub_const    = _mm_set1_epi16(-(1 << (offset_bits - conv_params->round_1)) -
                                     (1 << (offset_bits - conv_params->round_1 - 1)));
@@ -1098,11 +1098,11 @@ static INLINE void svt_highbd_warp_horizontal_filter_beta0(
 }
 
 static INLINE void svt_highbd_warp_horizontal_filter(const uint8_t *ref8b, const uint8_t *ref2b,
-                                                 __m128i *tmp, int stride8b, int stride2b,
-                                                 int32_t ix4, int32_t iy4, int32_t sx4, int alpha,
-                                                 int beta, int p_height, int height, int i,
-                                                 const int offset_bits_horiz,
-                                                 const int reduce_bits_horiz) {
+                                                     __m128i *tmp, int stride8b, int stride2b,
+                                                     int32_t ix4, int32_t iy4, int32_t sx4,
+                                                     int alpha, int beta, int p_height, int height,
+                                                     int i, const int offset_bits_horiz,
+                                                     const int reduce_bits_horiz) {
     int k;
     for (k = -7; k < AOMMIN(8, p_height - i); ++k) {
         int iy = iy4 + k;
@@ -1130,78 +1130,78 @@ static INLINE void svt_highbd_prepare_warp_horizontal_filter(
     const int offset_bits_horiz, const int reduce_bits_horiz) {
     if (alpha == 0 && beta == 0)
         svt_highbd_warp_horizontal_filter_alpha0_beta0(ref8b,
-                                                   ref2b,
-                                                   tmp,
-                                                   stride8b,
-                                                   stride2b,
-                                                   ix4,
-                                                   iy4,
-                                                   sx4,
-                                                   alpha,
-                                                   beta,
-                                                   p_height,
-                                                   height,
-                                                   i,
-                                                   offset_bits_horiz,
-                                                   reduce_bits_horiz);
+                                                       ref2b,
+                                                       tmp,
+                                                       stride8b,
+                                                       stride2b,
+                                                       ix4,
+                                                       iy4,
+                                                       sx4,
+                                                       alpha,
+                                                       beta,
+                                                       p_height,
+                                                       height,
+                                                       i,
+                                                       offset_bits_horiz,
+                                                       reduce_bits_horiz);
 
     else if (alpha == 0 && beta != 0)
         svt_highbd_warp_horizontal_filter_alpha0(ref8b,
-                                             ref2b,
-                                             tmp,
-                                             stride8b,
-                                             stride2b,
-                                             ix4,
-                                             iy4,
-                                             sx4,
-                                             alpha,
-                                             beta,
-                                             p_height,
-                                             height,
-                                             i,
-                                             offset_bits_horiz,
-                                             reduce_bits_horiz);
+                                                 ref2b,
+                                                 tmp,
+                                                 stride8b,
+                                                 stride2b,
+                                                 ix4,
+                                                 iy4,
+                                                 sx4,
+                                                 alpha,
+                                                 beta,
+                                                 p_height,
+                                                 height,
+                                                 i,
+                                                 offset_bits_horiz,
+                                                 reduce_bits_horiz);
 
     else if (alpha != 0 && beta == 0)
         svt_highbd_warp_horizontal_filter_beta0(ref8b,
-                                            ref2b,
-                                            tmp,
-                                            stride8b,
-                                            stride2b,
-                                            ix4,
-                                            iy4,
-                                            sx4,
-                                            alpha,
-                                            beta,
-                                            p_height,
-                                            height,
-                                            i,
-                                            offset_bits_horiz,
-                                            reduce_bits_horiz);
+                                                ref2b,
+                                                tmp,
+                                                stride8b,
+                                                stride2b,
+                                                ix4,
+                                                iy4,
+                                                sx4,
+                                                alpha,
+                                                beta,
+                                                p_height,
+                                                height,
+                                                i,
+                                                offset_bits_horiz,
+                                                reduce_bits_horiz);
     else
         svt_highbd_warp_horizontal_filter(ref8b,
-                                      ref2b,
-                                      tmp,
-                                      stride8b,
-                                      stride2b,
-                                      ix4,
-                                      iy4,
-                                      sx4,
-                                      alpha,
-                                      beta,
-                                      p_height,
-                                      height,
-                                      i,
-                                      offset_bits_horiz,
-                                      reduce_bits_horiz);
+                                          ref2b,
+                                          tmp,
+                                          stride8b,
+                                          stride2b,
+                                          ix4,
+                                          iy4,
+                                          sx4,
+                                          alpha,
+                                          beta,
+                                          p_height,
+                                          height,
+                                          i,
+                                          offset_bits_horiz,
+                                          reduce_bits_horiz);
 }
 
-void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint8_t *ref8b, const uint8_t *ref2b,
-                                   int width, int height, int stride8b, int stride2b,
-                                   uint16_t *pred, int p_col, int p_row, int p_width, int p_height,
-                                   int p_stride, int subsampling_x, int subsampling_y, int bd,
-                                   ConvolveParams *conv_params, int16_t alpha, int16_t beta,
-                                   int16_t gamma, int16_t delta) {
+void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint8_t *ref8b,
+                                       const uint8_t *ref2b, int width, int height, int stride8b,
+                                       int stride2b, uint16_t *pred, int p_col, int p_row,
+                                       int p_width, int p_height, int p_stride, int subsampling_x,
+                                       int subsampling_y, int bd, ConvolveParams *conv_params,
+                                       int16_t alpha, int16_t beta, int16_t gamma, int16_t delta) {
     __m128i   tmp[15];
     int       i, j, k;
     const int reduce_bits_horiz = conv_params->round_0 +
@@ -1281,8 +1281,7 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint8_t *ref8b,
                     uint16_t ref_val = (ref8b[iy * stride8b] << 2) |
                         ((ref2b[iy * stride2b] >> 6) & 3);
                     tmp[k + 7] = _mm_set1_epi16((1 << (bd + FILTER_BITS - reduce_bits_horiz - 1)) +
-                                                ref_val *
-                                                    (1 << (FILTER_BITS - reduce_bits_horiz)));
+                                                ref_val * (1 << (FILTER_BITS - reduce_bits_horiz)));
                 }
             } else if (ix4 >= width + 6) {
                 for (k = -7; k < AOMMIN(8, p_height - i); ++k) {
@@ -1294,8 +1293,7 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint8_t *ref8b,
                     uint16_t ref_val = (ref8b[iy * stride8b + (width - 1)] << 2) |
                         ((ref2b[iy * stride2b + (width - 1)] >> 6) & 3);
                     tmp[k + 7] = _mm_set1_epi16((1 << (bd + FILTER_BITS - reduce_bits_horiz - 1)) +
-                                                ref_val *
-                                                    (1 << (FILTER_BITS - reduce_bits_horiz)));
+                                                ref_val * (1 << (FILTER_BITS - reduce_bits_horiz)));
                 }
             } else if (((ix4 - 7) < 0) || ((ix4 + 9) > width)) {
                 const int out_of_boundary_left  = -(ix4 - 6);
@@ -1353,20 +1351,20 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint8_t *ref8b,
                 }
             } else {
                 svt_highbd_prepare_warp_horizontal_filter(ref8b,
-                                                      ref2b,
-                                                      tmp,
-                                                      stride8b,
-                                                      stride2b,
-                                                      ix4,
-                                                      iy4,
-                                                      sx4,
-                                                      alpha,
-                                                      beta,
-                                                      p_height,
-                                                      height,
-                                                      i,
-                                                      offset_bits_horiz,
-                                                      reduce_bits_horiz);
+                                                          ref2b,
+                                                          tmp,
+                                                          stride8b,
+                                                          stride2b,
+                                                          ix4,
+                                                          iy4,
+                                                          sx4,
+                                                          alpha,
+                                                          beta,
+                                                          p_height,
+                                                          height,
+                                                          i,
+                                                          offset_bits_horiz,
+                                                          reduce_bits_horiz);
             }
 
             // Vertical filter

@@ -892,7 +892,7 @@ void svt_aom_highbd_blend_a64_mask_8bit_sse4_1(uint8_t *dst_8, uint32_t dst_stri
                             uint32_t        src0_stride,
                             const uint16_t *src1,
                             uint32_t        src1_stride,
-                            const uint8_t * mask,
+                            const uint8_t  *mask,
                             uint32_t        mask_stride,
                             int             w,
                             int             h);
@@ -1153,7 +1153,7 @@ void svt_aom_highbd_blend_a64_vmask_8bit_sse4_1(uint8_t *dst_8, uint32_t dst_str
                             uint32_t        src0_stride,
                             const uint16_t *src1,
                             uint32_t        src1_stride,
-                            const uint8_t * mask,
+                            const uint8_t  *mask,
                             int             w,
                             int             h);
 
@@ -1221,7 +1221,7 @@ void svt_aom_highbd_blend_a64_mask_16bit_sse4_1(uint16_t *dst, uint32_t dst_stri
                             uint32_t        src0_stride,
                             const uint16_t *src1,
                             uint32_t        src1_stride,
-                            const uint8_t * mask,
+                            const uint8_t  *mask,
                             uint32_t        mask_stride,
                             int             w,
                             int             h);
@@ -1291,7 +1291,7 @@ void svt_aom_highbd_blend_a64_vmask_16bit_sse4_1(uint16_t *dst, uint32_t dst_str
                             uint32_t        src0_stride,
                             const uint16_t *src1,
                             uint32_t        src1_stride,
-                            const uint8_t * mask,
+                            const uint8_t  *mask,
                             int             w,
                             int             h);
 
@@ -1718,12 +1718,12 @@ static INLINE void highbd_blend_a64_d16_mask_subw1_subh1_w16_sse4_1(
 }
 
 void svt_aom_highbd_blend_a64_d16_mask_sse4_1(uint8_t *dst8, uint32_t dst_stride,
-                                          const CONV_BUF_TYPE *src0, uint32_t src0_stride,
-                                          const CONV_BUF_TYPE *src1, uint32_t src1_stride,
-                                          const uint8_t *mask, uint32_t mask_stride, int w, int h,
-                                          int subw, int subh, ConvolveParams *conv_params,
-                                          const int bd) {
-    uint16_t *    dst        = (uint16_t *)(dst8);
+                                              const CONV_BUF_TYPE *src0, uint32_t src0_stride,
+                                              const CONV_BUF_TYPE *src1, uint32_t src1_stride,
+                                              const uint8_t *mask, uint32_t mask_stride, int w,
+                                              int h, int subw, int subh,
+                                              ConvolveParams *conv_params, const int bd) {
+    uint16_t     *dst        = (uint16_t *)(dst8);
     const int     round_bits = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
     const int32_t round_offset =
         ((1 << (round_bits + bd)) + (1 << (round_bits + bd - 1)) - (1 << (round_bits - 1)))
@@ -2002,10 +2002,11 @@ static INLINE void lowbd_blend_a64_d16_mask_subw0_subh1_w16_sse4_1(
 }
 
 void svt_aom_lowbd_blend_a64_d16_mask_sse4_1(uint8_t *dst, uint32_t dst_stride,
-                                         const CONV_BUF_TYPE *src0, uint32_t src0_stride,
-                                         const CONV_BUF_TYPE *src1, uint32_t src1_stride,
-                                         const uint8_t *mask, uint32_t mask_stride, int w, int h,
-                                         int subw, int subh, ConvolveParams *conv_params) {
+                                             const CONV_BUF_TYPE *src0, uint32_t src0_stride,
+                                             const CONV_BUF_TYPE *src1, uint32_t src1_stride,
+                                             const uint8_t *mask, uint32_t mask_stride, int w,
+                                             int h, int subw, int subh,
+                                             ConvolveParams *conv_params) {
     const int bd         = 8;
     const int round_bits = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
 

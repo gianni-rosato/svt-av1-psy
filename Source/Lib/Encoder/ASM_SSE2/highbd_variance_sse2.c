@@ -87,7 +87,7 @@ static void highbd_10_variance_sse2(const uint16_t *src, int32_t src_stride, con
                                                         int32_t        src_stride,        \
                                                         const uint8_t *ref8,              \
                                                         int32_t        ref_stride,        \
-                                                        uint32_t *     sse) {                  \
+                                                        uint32_t      *sse) {                  \
         int32_t   sum;                                                                    \
         int64_t   var;                                                                    \
         uint16_t *src = CONVERT_TO_SHORTPTR(src8);                                        \

@@ -170,7 +170,7 @@ int32_t main(int32_t argc, char *argv[]) {
     if (!config_ptr)
         return EB_ErrorInsufficientResources;
     EbComponentType *p_handle;
-    void *           p_app_data = NULL;
+    void            *p_app_data = NULL;
 
     return_error |= svt_av1_dec_init_handle(&p_handle, p_app_data, config_ptr);
     if (return_error != EB_ErrorNone) {
@@ -211,7 +211,7 @@ int32_t main(int32_t argc, char *argv[]) {
         if (!init_pic_buffer((EbSvtIOFormat *)recon_buffer->p_buffer, &cli, config_ptr)) {
             fprintf(stderr, "Decoding \n");
             EbAV1StreamInfo *stream_info = (EbAV1StreamInfo *)malloc(sizeof(EbAV1StreamInfo));
-            EbAV1FrameInfo * frame_info  = (EbAV1FrameInfo *)malloc(sizeof(EbAV1FrameInfo));
+            EbAV1FrameInfo  *frame_info  = (EbAV1FrameInfo *)malloc(sizeof(EbAV1FrameInfo));
 
             if (config_ptr->skip_frames)
                 fprintf(stderr, "Skipping first %" PRIu64 " frames.\n", config_ptr->skip_frames);

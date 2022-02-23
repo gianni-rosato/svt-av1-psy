@@ -102,7 +102,7 @@ static INLINE void clamp_mv_ref(MV *mv, int32_t bw, int32_t bh, const MacroBlock
 static void add_ref_mv_candidate(const ModeInfo *const   candidate_mi,
                                  const MbModeInfo *const candidate, const MvReferenceFrame rf[2],
                                  uint8_t *refmv_count, uint8_t *ref_match_count,
-                                 uint8_t *   newmv_count,
+                                 uint8_t    *newmv_count,
                                  CandidateMv ref_mv_stack[MAX_REF_MV_STACK_SIZE], int32_t len,
                                  IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
                                  int32_t col, int32_t weight) {
@@ -111,7 +111,6 @@ static void add_ref_mv_candidate(const ModeInfo *const   candidate_mi,
     assert(weight % 2 == 0);
 
     if (rf[1] == NONE_FRAME) {
-
         // single reference frame
         for (int32_t ref = 0; ref < 2; ++ref) {
             if (candidate->block_mi.ref_frame[ref] == rf[0]) {
@@ -140,7 +139,6 @@ static void add_ref_mv_candidate(const ModeInfo *const   candidate_mi,
             }
         }
     } else {
-
         // compound reference frame
         if (candidate->block_mi.ref_frame[0] == rf[0] &&
             candidate->block_mi.ref_frame[1] == rf[1]) {
@@ -298,8 +296,7 @@ static void scan_blk_mbmi(const MacroBlockD *xd, const int32_t mi_row, const int
                           const MvReferenceFrame rf[2], int32_t row_offset, int32_t col_offset,
                           CandidateMv ref_mv_stack[MAX_REF_MV_STACK_SIZE], uint8_t *ref_match_count,
                           uint8_t *newmv_count, IntMv *gm_mv_candidates,
-                          const EbWarpedMotionParams *gm_params,
-                          uint8_t *refmv_count) {
+                          const EbWarpedMotionParams *gm_params, uint8_t *refmv_count) {
     const TileInfo *const tile   = &xd->tile;
     Position              mi_pos = {row_offset, col_offset};
 
@@ -1118,8 +1115,8 @@ void init_xd(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 
     int32_t       mi_row = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     int32_t       mi_col = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
-    Av1Common *   cm     = pcs_ptr->parent_pcs_ptr->av1_cm;
-    MacroBlockD * xd     = context_ptr->blk_ptr->av1xd;
+    Av1Common    *cm     = pcs_ptr->parent_pcs_ptr->av1_cm;
+    MacroBlockD  *xd     = context_ptr->blk_ptr->av1xd;
     BlockSize     bsize  = context_ptr->blk_geom->bsize;
     const int32_t bw     = mi_size_wide[bsize];
     const int32_t bh     = mi_size_high[bsize];
@@ -1163,7 +1160,7 @@ void init_xd(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
             (xd->mi_stride >> pcs_ptr->disallow_4x4_all_frames) +
         (mi_col >> pcs_ptr->disallow_4x4_all_frames);
     pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + mip_offset;
-    xd->mi = pcs_ptr->mi_grid_base + offset;
+    xd->mi                        = pcs_ptr->mi_grid_base + offset;
 
     //ModeInfo *mi_ptr = xd->mi[-(xd->mi_stride)]; /*&xd->mi[-xd->mi_stride]->mbmi*/
     xd->above_mbmi = (xd->up_available) ? &xd->mi[-(xd->mi_stride)]->mbmi : NULL;
@@ -1208,7 +1205,7 @@ void generate_av1_mvp_table(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr
                             PictureControlSet *pcs_ptr) {
     int32_t      mi_row  = blk_origin_y >> MI_SIZE_LOG2;
     int32_t      mi_col  = blk_origin_x >> MI_SIZE_LOG2;
-    Av1Common *  cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
+    Av1Common   *cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     MacroBlockD *xd      = blk_ptr->av1xd;
     BlockSize    bsize   = blk_geom->bsize;
@@ -1240,8 +1237,8 @@ void generate_av1_mvp_table(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr
         // If block is intra bordered we only inject NEW unipred, so must generate MVPs
         // If there is only 1 ME candidate, generate MVPs because that candidate will be injected (even if unipred)
         if (context_ptr->cand_reduction_ctrls.reduce_unipred_candidates >= 3 &&
-            context_ptr->lpd1_ctrls.pd1_level > REGULAR_PD1 &&
-            !context_ptr->is_intra_bordered && frm_hdr->reference_mode != SINGLE_REFERENCE &&
+            context_ptr->lpd1_ctrls.pd1_level > REGULAR_PD1 && !context_ptr->is_intra_bordered &&
+            frm_hdr->reference_mode != SINGLE_REFERENCE &&
             !frm_hdr
                  ->use_ref_frame_mvs && //MFMV generation re-uses projection information when symetric references are used.
             //so could not be skipped, as BWD or LAST_BWD might reuse projection info from LAST
@@ -1435,11 +1432,11 @@ void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origi
 
     ModeInfo *mi_ptr = *(pcs_ptr->mi_grid_base + offset);
     // use idx 0 as that's the first mbmmi in the block
-    MbModeInfo *      mbmi     = &mi_ptr[0].mbmi;
+    MbModeInfo       *mbmi     = &mi_ptr[0].mbmi;
     BlockModeInfoEnc *block_mi = &mi_ptr[0].mbmi.block_mi;
 
     // copy mbmi data
-    block_mi->tx_depth = blk_ptr->tx_depth;
+    block_mi->tx_depth       = blk_ptr->tx_depth;
     block_mi->comp_group_idx = blk_ptr->comp_group_idx;
     if (svt_av1_allow_palette(pcs_ptr->parent_pcs_ptr->palette_level, blk_geom->bsize)) {
         mbmi->palette_mode_info.palette_size = blk_ptr->palette_size[0];
@@ -1639,7 +1636,7 @@ int av1_find_samples(const Av1Common *cm, const BlockSize sb_size, MacroBlockD *
 void wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size, const BlockGeom *blk_geom,
                       uint16_t blk_origin_x, uint16_t blk_origin_y, uint8_t ref_frame_type,
                       PictureControlSet *pcs_ptr, uint16_t *num_samples) {
-    Av1Common *  cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+    Av1Common   *cm = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd = blk_ptr->av1xd;
 
     int32_t mi_row = blk_origin_y >> MI_SIZE_LOG2;
@@ -1765,7 +1762,7 @@ void wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size, const BlockGe
 uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
                          uint16_t blk_origin_y, MvReferenceFrame rf0, PictureControlSet *pcs_ptr,
                          int32_t *pts, int32_t *pts_inref) {
-    Av1Common *  cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+    Av1Common   *cm = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd = blk_ptr->av1xd;
 
     int32_t mi_row = blk_origin_y >> MI_SIZE_LOG2;
@@ -1889,7 +1886,7 @@ int count_overlappable_nb_left(const Av1Common *cm, MacroBlockD *xd, int32_t mi_
 
 void svt_av1_count_overlappable_neighbors(const PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                           const BlockSize bsize, int32_t mi_row, int32_t mi_col) {
-    Av1Common *  cm                                             = pcs_ptr->parent_pcs_ptr->av1_cm;
+    Av1Common   *cm                                             = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd                                             = blk_ptr->av1xd;
     blk_ptr->prediction_unit_array[0].overlappable_neighbors[0] = 0;
     blk_ptr->prediction_unit_array[0].overlappable_neighbors[1] = 0;

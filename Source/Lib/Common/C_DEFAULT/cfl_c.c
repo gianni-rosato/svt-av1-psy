@@ -23,9 +23,9 @@ static INLINE int32_t get_scaled_luma_q0(int32_t alpha_q3, int16_t pred_buf_q3) 
 * CFL prediction by multiplying alpha to ac values and addint the dc chroma pred
 ************************************************************************************************/
 void svt_cfl_predict_lbd_c(const int16_t *pred_buf_q3,
-                           uint8_t *      pred, // AMIR ADDED
+                           uint8_t       *pred, // AMIR ADDED
                            int32_t        pred_stride,
-                           uint8_t *      dst, // AMIR changed to 8 bit
+                           uint8_t       *dst, // AMIR changed to 8 bit
                            int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width,
                            int32_t height) {
     for (int32_t j = 0; j < height; j++) {
@@ -43,9 +43,9 @@ void svt_cfl_predict_lbd_c(const int16_t *pred_buf_q3,
 * CFL prediction by multiplying alpha to ac values and addint the dc chroma pred
 ************************************************************************************************/
 void svt_cfl_predict_hbd_c(const int16_t *pred_buf_q3,
-                           uint16_t *     pred, // AMIR ADDED
+                           uint16_t      *pred, // AMIR ADDED
                            int32_t        pred_stride,
-                           uint16_t *     dst, // AMIR changed to 8 bit
+                           uint16_t      *dst, // AMIR changed to 8 bit
                            int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width,
                            int32_t height) {
     for (int32_t j = 0; j < height; j++) {

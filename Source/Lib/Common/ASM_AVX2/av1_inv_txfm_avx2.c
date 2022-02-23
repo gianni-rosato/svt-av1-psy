@@ -1616,7 +1616,7 @@ static INLINE void lowbd_inv_txfm2d_add_no_identity_avx2(const int32_t *input, u
         __m256i        buf0[64];
         const int32_t *input_row = input + (i << 4) * input_stride;
         for (int j = 0; j < buf_size_nonzero_w_div16; ++j) {
-            __m256i *      buf0_cur  = buf0 + j * 16;
+            __m256i       *buf0_cur  = buf0 + j * 16;
             const int32_t *input_cur = input_row + j * 16;
             load_buffer_32bit_to_16bit_w16_avx2(input_cur, input_stride, buf0_cur, 16);
             transpose_16bit_16x16_avx2(buf0_cur, buf0_cur);

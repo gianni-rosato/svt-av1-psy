@@ -78,8 +78,8 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                     int32_t fbc, uint32_t *cdef_left, int32_t num_planes, uint16_t *src,
                     int32_t *curr_recon_stride, uint8_t **curr_blk_recon_buf,
                     uint16_t **linebuf_above, uint16_t **linebuf_curr, int32_t stride) {
-    MainFrameBuf *       main_frame_buf    = &dec_handle->main_frame_buf;
-    CurFrameBuf *        frame_buf         = &main_frame_buf->cur_frame_bufs[0];
+    MainFrameBuf        *main_frame_buf    = &dec_handle->main_frame_buf;
+    CurFrameBuf         *frame_buf         = &main_frame_buf->cur_frame_bufs[0];
     EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
     int8_t        use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
@@ -87,14 +87,14 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
     const int32_t cdef_mask  = 1;
     uint32_t      cdef_count;
     int32_t       coeff_shift = AOMMAX(recon_picture_ptr->bit_depth - 8, 0);
-    FrameHeader * frame_info  = &dec_handle->frame_header;
+    FrameHeader  *frame_info  = &dec_handle->frame_header;
     /*const int32_t stride = (frame_info->mi_cols << MI_SIZE_LOG2) +
         2 * CDEF_HBORDER;*/
     const int32_t nvfb = (frame_info->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     const int32_t nhfb = (frame_info->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     CdefList      dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
-    uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
-    int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
+    uint8_t       dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
+    int32_t       var[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
     /* Logic for getting SBinfo,
     SbInfo points to every super block.*/
     SBInfo *sb_info = NULL;
@@ -466,7 +466,7 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
 void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_high_l2,
                         uint16_t **colbuf, int32_t sb_fbr, uint16_t *src,
                         int32_t *curr_recon_stride, uint8_t **curr_blk_recon_buf) {
-    FrameHeader * frame_info = &dec_handle->frame_header;
+    FrameHeader  *frame_info = &dec_handle->frame_header;
     const int32_t nvfb       = (frame_info->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     const int32_t nhfb       = (frame_info->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     /*For SB SIZE 128x128, we need two colbuf because, because we do cdef for
@@ -494,7 +494,7 @@ void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *m
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile uint32_t *cdef_completed_in_prev_row = NULL;
-    uint32_t *         cdef_completed_in_row, nsync = 1;
+    uint32_t          *cdef_completed_in_row, nsync = 1;
 
     uint8_t *curr_row_cdef_map = dec_mt_frame_data->row_cdef_map;
     uint32_t cdef_map_stride   = dec_mt_frame_data->cdef_map_stride;
@@ -596,15 +596,15 @@ void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag) {
 
     EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
-    uint8_t *     curr_blk_recon_buf[MAX_MB_PLANE];
+    uint8_t      *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t       curr_recon_stride[MAX_MB_PLANE];
-    FrameHeader * frame_info = &dec_handle->frame_header;
+    FrameHeader  *frame_info = &dec_handle->frame_header;
     const int32_t num_planes = av1_num_planes(&dec_handle->seq_header.color_config);
 
     DECLARE_ALIGNED(16, uint16_t, src[CDEF_INBUF_SIZE]);
-    uint16_t *    linebuf[3];
-    uint16_t *    colbuf[3];
-    uint8_t *     row_cdef, *prev_row_cdef, *curr_row_cdef;
+    uint16_t     *linebuf[3];
+    uint16_t     *colbuf[3];
+    uint8_t      *row_cdef, *prev_row_cdef, *curr_row_cdef;
     int32_t       mi_wide_l2[3];
     int32_t       mi_high_l2[3];
     const int32_t nvfb = (frame_info->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;

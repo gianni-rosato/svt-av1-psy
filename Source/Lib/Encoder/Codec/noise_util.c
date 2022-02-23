@@ -28,8 +28,8 @@ float svt_aom_noise_psd_get_default_value(int32_t block_size, float factor) {
 // transformed data and a temporary working buffer to use during the
 // transform.
 struct aom_noise_tx_t {
-    float * tx_block;
-    float * temp;
+    float  *tx_block;
+    float  *temp;
     int32_t block_size;
     void (*fft)(const float *, float *, float *);
     void (*ifft)(const float *, float *, float *);
@@ -93,7 +93,7 @@ void svt_aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float psd) {
     const float   k_beta_m1_div_k_beta = (k_beta - 1.0f) / k_beta;
     const float   psd_mul_k_beta       = k_beta * psd;
     const float   k_eps                = 1e-6f;
-    float *       tx_block             = noise_tx->tx_block;
+    float        *tx_block             = noise_tx->tx_block;
     for (int32_t y = 0; y < block_size; ++y) {
         for (int32_t x = 0; x < block_size; ++x) {
             const float p = tx_block[0] * tx_block[0] + tx_block[1] * tx_block[1];

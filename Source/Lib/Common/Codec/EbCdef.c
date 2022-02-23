@@ -50,7 +50,7 @@ static void *get_actual_malloc_address(void *const mem) {
 }
 
 void *svt_aom_memalign(size_t align, size_t size) {
-    void *       x            = NULL;
+    void        *x            = NULL;
     const size_t aligned_size = get_aligned_malloc_size(size, align);
 #if defined(AOM_MAX_ALLOCABLE_MEMORY)
     if (!check_size_argument_overflow(1, aligned_size))
@@ -352,9 +352,9 @@ void svt_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_
         for (bi = 0; bi < cdef_count; bi++) {
             const uint8_t conv422[8] = {7, 0, 2, 4, 5, 6, 6, 6};
             const uint8_t conv440[8] = {1, 2, 2, 2, 3, 4, 6, 0};
-            by          = dlist[bi].by;
-            bx          = dlist[bi].bx;
-            dir[by][bx] = (xdec ? conv422 : conv440)[dir[by][bx]];
+            by                       = dlist[bi].by;
+            bx                       = dlist[bi].bx;
+            dir[by][bx]              = (xdec ? conv422 : conv440)[dir[by][bx]];
         }
     }
 

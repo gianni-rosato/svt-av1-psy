@@ -222,7 +222,6 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
         EXPECT_EQ(expect_rows, stream_info->tile_rows)
             << "Tile rows " << stream_info->tile_rows << " actual"
             << expect_rows;
-
     }
 };
 

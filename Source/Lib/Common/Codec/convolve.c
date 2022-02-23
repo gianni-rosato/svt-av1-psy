@@ -88,7 +88,7 @@ static void convolve_add_src_vert_hip(const uint16_t *src, ptrdiff_t src_stride,
     for (int32_t x = 0; x < w; ++x) {
         int32_t y_q4 = y0_q4;
         for (int32_t y = 0; y < h; ++y) {
-            const uint16_t *     src_y    = &src[(y_q4 >> SUBPEL_BITS) * src_stride];
+            const uint16_t      *src_y    = &src[(y_q4 >> SUBPEL_BITS) * src_stride];
             const int16_t *const y_filter = y_filters[y_q4 & SUBPEL_MASK];
             const int32_t        rounding = ((int32_t)src_y[(SUBPEL_TAPS / 2 - 1) * src_stride]
                                       << FILTER_BITS) -
@@ -152,7 +152,7 @@ static void highbd_convolve_add_src_horiz_hip(const uint8_t *src8, ptrdiff_t src
                                               int32_t x_step_q4, int32_t w, int32_t h,
                                               int32_t round0_bits, int32_t bd) {
     const int32_t extraprec_clamp_limit = WIENER_CLAMP_LIMIT(round0_bits, bd);
-    uint16_t *    src                   = CONVERT_TO_SHORTPTR(src8);
+    uint16_t     *src                   = CONVERT_TO_SHORTPTR(src8);
     src -= SUBPEL_TAPS / 2 - 1;
     for (int32_t y = 0; y < h; ++y) {
         int32_t x_q4 = x0_q4;
@@ -181,7 +181,7 @@ static void highbd_convolve_add_src_vert_hip(const uint16_t *src, ptrdiff_t src_
     for (int32_t x = 0; x < w; ++x) {
         int32_t y_q4 = y0_q4;
         for (int32_t y = 0; y < h; ++y) {
-            const uint16_t *     src_y    = &src[(y_q4 >> SUBPEL_BITS) * src_stride];
+            const uint16_t      *src_y    = &src[(y_q4 >> SUBPEL_BITS) * src_stride];
             const int16_t *const y_filter = y_filters[y_q4 & SUBPEL_MASK];
             const int32_t        rounding = ((int32_t)src_y[(SUBPEL_TAPS / 2 - 1) * src_stride]
                                       << FILTER_BITS) -

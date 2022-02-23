@@ -36,12 +36,12 @@ extern "C" {
      * Enc Dec Context
      **************************************/
 typedef struct EncDecContext {
-    EbFifo *             mode_decision_input_fifo_ptr;
-    EbFifo *             enc_dec_output_fifo_ptr;
-    EbFifo *             enc_dec_feedback_fifo_ptr;
-    EbFifo *             picture_demux_output_fifo_ptr; // to picture-manager
+    EbFifo              *mode_decision_input_fifo_ptr;
+    EbFifo              *enc_dec_output_fifo_ptr;
+    EbFifo              *enc_dec_feedback_fifo_ptr;
+    EbFifo              *picture_demux_output_fifo_ptr; // to picture-manager
     ModeDecisionContext *md_context;
-    const BlockGeom *    blk_geom;
+    const BlockGeom     *blk_geom;
     // MCP Context
     MotionCompensationPredictionContext *mcp_context;
 
@@ -90,7 +90,7 @@ typedef struct EncDecContext {
 /**************************************
      * Extern Function Declarations
      **************************************/
-extern EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
+extern EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
                                         const EbEncHandle *enc_handle_ptr, int index,
                                         int tasks_index);
 

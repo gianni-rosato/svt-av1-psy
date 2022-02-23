@@ -600,7 +600,7 @@ typedef struct PredictionStructureConfigArray {
 
 static void prediction_structure_config_array_dctor(EbPtr p) {
     PredictionStructureConfigArray *obj    = (PredictionStructureConfigArray *)p;
-    PredictionStructureConfig *     config = obj->prediction_structure_config_array;
+    PredictionStructureConfig      *config = obj->prediction_structure_config_array;
     if (!config)
         return;
     for (int i = 0; config[i].entry_count; i++) { EB_FREE_ARRAY(config[i].entry_array); }
@@ -614,7 +614,7 @@ static EbErrorType prediction_structure_config_array_ctor(
     EB_CALLOC_ARRAY(array_ptr->prediction_structure_config_array,
                     DIM(g_prediction_structure_config_array));
     const PredictionStructureConfig *src  = &g_prediction_structure_config_array[0];
-    PredictionStructureConfig *      dest = &array_ptr->prediction_structure_config_array[0];
+    PredictionStructureConfig       *dest = &array_ptr->prediction_structure_config_array[0];
     for (; src->entry_count; src++, dest++) {
         const uint32_t count = src->entry_count;
 
@@ -646,7 +646,7 @@ PredictionStructure *get_prediction_structure(PredictionStructureGroup *pred_str
 }
 
 static void prediction_structure_dctor(EbPtr p) {
-    PredictionStructure *      obj   = (PredictionStructure *)p;
+    PredictionStructure       *obj   = (PredictionStructure *)p;
     PredictionStructureEntry **pe    = obj->pred_struct_entry_ptr_array;
     uint32_t                   count = obj->pred_struct_entry_count;
     if (pe) {
@@ -837,7 +837,7 @@ static void prediction_structure_dctor(EbPtr p) {
  *  The RPS Ctor code follows these construction steps.
  ******************************************************************************************/
 static EbErrorType prediction_structure_ctor(
-    PredictionStructure *            predictionStructurePtr,
+    PredictionStructure             *predictionStructurePtr,
     const PredictionStructureConfig *predictionStructureConfigPtr, EbPred predType,
     uint32_t number_of_references) {
     uint32_t entry_index;
@@ -1183,7 +1183,7 @@ static EbErrorType prediction_structure_ctor(
                    predictionStructureConfigPtr->entry_array[config_entry_index]
                            .ref_list0[ref_index] != 0)
                 ++ref_index;
-                // Set Reference List 0 Count
+            // Set Reference List 0 Count
             // LDP is used for incomplete MGs, so should have the same ref structure as RA
             // otherwise the dependent_count of the RA pics will be off
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1729,17 +1729,17 @@ static void prediction_structure_group_dctor(EbPtr p) {
  *      # Random Access
  *
  *************************************************/
-EbErrorType prediction_structure_group_ctor(PredictionStructureGroup * pred_struct_group_ptr,
+EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_struct_group_ptr,
                                             struct SequenceControlSet *scs_ptr) {
-    EbSvtAv1EncConfiguration *config = &scs_ptr->static_config;
-    uint32_t pred_struct_index = 0;
-    uint32_t ref_idx;
-    uint32_t hierarchical_level_idx;
-    uint32_t pred_type_idx;
-    uint32_t number_of_references;
+    EbSvtAv1EncConfiguration *config            = &scs_ptr->static_config;
+    uint32_t                  pred_struct_index = 0;
+    uint32_t                  ref_idx;
+    uint32_t                  hierarchical_level_idx;
+    uint32_t                  pred_type_idx;
+    uint32_t                  number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
-    MrpCtrls *mrp_ctrl = &(scs_ptr->mrp_ctrls);
+    MrpCtrls *mrp_ctrl           = &(scs_ptr->mrp_ctrls);
     // Derive the max count at BASE
     uint8_t ref_count_used_base = MAX(
         mrp_ctrl->sc_base_ref_list0_count,
@@ -1752,9 +1752,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup * pred_stru
         MAX(mrp_ctrl->sc_non_base_ref_list1_count,
             MAX(mrp_ctrl->non_base_ref_list0_count, mrp_ctrl->non_base_ref_list1_count)));
 
-    if (mrp_ctrl->referencing_scheme == 1)
-    {
-
+    if (mrp_ctrl->referencing_scheme == 1) {
         {
             int32_t ref_list0_tmp[] = {1, 9, 2, 17}; // GOP Index 1 - Ref List 0
             memcpy(five_level_hierarchical_pred_struct[1].ref_list0,

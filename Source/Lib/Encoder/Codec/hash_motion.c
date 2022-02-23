@@ -136,7 +136,7 @@ Iterator svt_av1_hash_get_first_iterator(HashTable *p_hash_table, uint32_t hash_
 }
 
 void svt_av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture,
-                                           uint32_t *              pic_block_hash[2],
+                                           uint32_t               *pic_block_hash[2],
                                            int8_t *pic_block_same_info[3], PictureControlSet *pcs) {
     const int width  = 2;
     const int height = 2;
@@ -188,7 +188,7 @@ void svt_av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture,
 void svt_av1_generate_block_hash_value(const Yv12BufferConfig *picture, int block_size,
                                        uint32_t *src_pic_block_hash[2],
                                        uint32_t *dst_pic_block_hash[2],
-                                       int8_t *  src_pic_block_same_info[3],
+                                       int8_t   *src_pic_block_same_info[3],
                                        int8_t *dst_pic_block_same_info[3], PictureControlSet *pcs) {
     const int pic_width = picture->y_crop_width;
     const int x_end     = picture->y_crop_width - block_size + 1;
@@ -251,13 +251,13 @@ void svt_av1_generate_block_hash_value(const Yv12BufferConfig *picture, int bloc
 }
 
 void rtime_alloc_svt_av1_add_to_hash_map_by_row_with_precal_data(HashTable *p_hash_table,
-                                                                 uint32_t * pic_hash[2],
+                                                                 uint32_t  *pic_hash[2],
                                                                  int8_t *pic_is_same, int pic_width,
                                                                  int pic_height, int block_size) {
     const int x_end = pic_width - block_size + 1;
     const int y_end = pic_height - block_size + 1;
 
-    const int8_t *  src_is_added = pic_is_same;
+    const int8_t   *src_is_added = pic_is_same;
     const uint32_t *src_hash[2]  = {pic_hash[0], pic_hash[1]};
 
     int add_value = hash_block_size_to_index(block_size);

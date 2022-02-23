@@ -17,8 +17,8 @@ extern "C" {
 #endif
 
 extern EbMemoryMapEntry *svt_dec_memory_map;
-extern uint32_t *        svt_dec_memory_map_index;
-extern uint64_t *        svt_dec_total_lib_memory;
+extern uint32_t         *svt_dec_memory_map_index;
+extern uint64_t         *svt_dec_total_lib_memory;
 extern uint32_t          svt_dec_lib_malloc_count;
 
 extern EbMemoryMapEntry *memory_map_start_address;

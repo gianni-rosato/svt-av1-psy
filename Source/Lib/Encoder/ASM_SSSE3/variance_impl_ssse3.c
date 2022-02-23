@@ -26,9 +26,9 @@
                                                 const uint8_t *dst,        \
                                                 ptrdiff_t      dst_stride, \
                                                 int            height,     \
-                                                unsigned int * sse,        \
-                                                void *         unused0,    \
-                                                void *         unused)
+                                                unsigned int  *sse,        \
+                                                void          *unused0,    \
+                                                void          *unused)
 DECL(4);
 DECL(8);
 DECL(16);
@@ -41,7 +41,7 @@ DECL(16);
                                                              int            y_offset,    \
                                                              const uint8_t *dst,         \
                                                              int            dst_stride,  \
-                                                             unsigned int * sse_ptr) {    \
+                                                             unsigned int  *sse_ptr) {    \
         /*Avoid overflow in helper by capping height.*/                                  \
         const int    hf  = AOMMIN(h, 64);                                                \
         const int    wf2 = AOMMIN(wf, 128);                                              \

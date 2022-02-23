@@ -91,9 +91,9 @@ typedef struct EncContext {
     uint32_t   num_channels;
     EncChannel channels[MAX_CHANNEL_NUMBER];
     char*      warning[MAX_NUM_TOKENS];
-    EncPass enc_pass;
-    int32_t passes;
-    int32_t total_frames;
+    EncPass    enc_pass;
+    int32_t    passes;
+    int32_t    total_frames;
 } EncContext;
 
 //initilize memory mapped file handler
@@ -126,17 +126,16 @@ void init_memory_file_map(EbConfig* config) {
 
 static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc,
                                     char* argv[], EncPass enc_pass, int32_t passes) {
-
 #if LOG_ENC_DONE
-     tot_frames_done = 0;
+    tot_frames_done = 0;
 #endif
 
     memset(enc_context, 0, sizeof(*enc_context));
     uint32_t num_channels = get_number_of_channels(argc, argv);
     if (num_channels == 0)
         return EB_ErrorBadParameter;
-    enc_context->enc_pass = enc_pass;
-    enc_context->passes = passes;
+    enc_context->enc_pass    = enc_pass;
+    enc_context->passes      = passes;
     EbErrorType return_error = EB_ErrorNone;
 
     enc_context->num_channels = num_channels;
@@ -182,7 +181,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
                                  &config->performance_context.lib_start_time[1]);
             // Update pass
             config->config.pass = passes == 1 ? config->config.pass // Single-Pass
-                : (int)enc_pass; // Multi-Pass
+                                              : (int)enc_pass; // Multi-Pass
 
             c->return_error = handle_stats_file(
                 config, enc_pass, &enc_app->rc_twopasses_stats, num_channels);
@@ -215,8 +214,7 @@ static void print_summary(const EncContext* const enc_context) {
         if (c->exit_cond == APP_ExitConditionFinished && c->return_error == EB_ErrorNone &&
             (config->config.pass == 0 ||
              (config->config.pass == 2 && config->config.rate_control_mode == 0) ||
-                config->config.pass == 3)
-            ) {
+             config->config.pass == 3)) {
 #if LOG_ENC_DONE
             tot_frames_done = (int)config->performance_context.frame_count;
 #endif
@@ -337,18 +335,18 @@ static void print_performance(const EncContext* const enc_context) {
             EbConfig* config = c->config;
             if (config->stop_encoder == EB_FALSE) {
                 if ((config->config.pass == 0 ||
-                    (config->config.pass == 2 && config->config.rate_control_mode == 0) ||
-                        config->config.pass == 3))
+                     (config->config.pass == 2 && config->config.rate_control_mode == 0) ||
+                     config->config.pass == 3))
                     fprintf(stderr,
-                        "\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f "
-                        "ms\nTotal Execution Time:\t%.0f ms\nAverage Latency:\t%.0f ms\nMax "
-                        "Latency:\t\t%u ms\n",
-                        (uint32_t)(inst_cnt + 1),
-                        config->performance_context.average_speed,
-                        config->performance_context.total_encode_time * 1000,
-                        config->performance_context.total_execution_time * 1000,
-                        config->performance_context.average_latency,
-                        (uint32_t)(config->performance_context.max_latency));
+                            "\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f "
+                            "ms\nTotal Execution Time:\t%.0f ms\nAverage Latency:\t%.0f ms\nMax "
+                            "Latency:\t\t%u ms\n",
+                            (uint32_t)(inst_cnt + 1),
+                            config->performance_context.average_speed,
+                            config->performance_context.total_encode_time * 1000,
+                            config->performance_context.total_execution_time * 1000,
+                            config->performance_context.average_latency,
+                            (uint32_t)(config->performance_context.max_latency));
             } else
                 fprintf(stderr, "\nChannel %u Encoding Interrupted\n", (uint32_t)(inst_cnt + 1));
         } else if (c->return_error == EB_ErrorInsufficientResources)
@@ -436,7 +434,7 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
 
     // Get num_channels
     uint32_t num_channels = enc_context->num_channels;
-    EncPass enc_pass = enc_context->enc_pass;
+    EncPass  enc_pass     = enc_context->enc_pass;
     // Start the Encoder
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt)
         enc_channel_start(enc_context->channels + inst_cnt);
@@ -474,9 +472,9 @@ int32_t main(int32_t argc, char* argv[]) {
     // GLOBAL VARIABLES
     EbErrorType return_error = EB_ErrorNone; // Error Handling
     uint32_t    passes;
-    EncPass enc_pass[MAX_ENC_PASS];
-    EncApp     enc_app;
-    EncContext enc_context;
+    EncPass     enc_pass[MAX_ENC_PASS];
+    EncApp      enc_app;
+    EncContext  enc_context;
 
     signal(SIGINT, event_handler);
     if (get_version(argc, argv))

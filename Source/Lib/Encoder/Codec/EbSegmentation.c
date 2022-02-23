@@ -80,7 +80,7 @@ uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) 
 
 void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureControlSet *pcs_ptr,
                                            SuperBlock *sb_ptr, BlkStruct *blk_ptr) {
-    uint16_t *          variance_ptr        = pcs_ptr->parent_pcs_ptr->variance[sb_ptr->index];
+    uint16_t           *variance_ptr        = pcs_ptr->parent_pcs_ptr->variance[sb_ptr->index];
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     uint16_t            variance            = get_variance_for_cu(blk_geom, variance_ptr);
     for (int i = 0; i < MAX_SEGMENTS; i++) {
@@ -97,8 +97,8 @@ void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureCon
 
 void setup_segmentation(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
-    segmentation_params->segmentation_enabled = (EbBool)(
-        scs_ptr->static_config.enable_adaptive_quantization == 1);
+    segmentation_params->segmentation_enabled =
+        (EbBool)(scs_ptr->static_config.enable_adaptive_quantization == 1);
     if (segmentation_params->segmentation_enabled) {
         segmentation_params->segmentation_update_data =
             1; //always updating for now. Need to set this based on actual deltas
@@ -127,7 +127,7 @@ void calculate_segmentation_data(SegmentationParams *segmentation_params) {
 }
 
 void find_segment_qps(SegmentationParams *segmentation_params,
-                      PictureControlSet * pcs_ptr) { //QP needs to be specified as qpindex, not qp.
+                      PictureControlSet  *pcs_ptr) { //QP needs to be specified as qpindex, not qp.
 
     uint16_t    min_var = UINT16_MAX, max_var = MIN_UNSIGNED_VALUE, avg_var = 0;
     const float strength = 2; //to tune

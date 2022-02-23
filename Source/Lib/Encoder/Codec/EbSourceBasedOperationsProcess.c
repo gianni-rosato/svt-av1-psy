@@ -47,14 +47,14 @@ typedef struct SourceBasedOperationsContext {
 } SourceBasedOperationsContext;
 typedef struct TplDispenserContext {
     EbDctor  dctor;
-    EbFifo * tpl_disp_input_fifo_ptr;
-    EbFifo * tpl_disp_fb_fifo_ptr;
+    EbFifo  *tpl_disp_input_fifo_ptr;
+    EbFifo  *tpl_disp_fb_fifo_ptr;
     uint32_t sb_index;
     uint32_t coded_sb_count;
 } TplDispenserContext;
 
 static void source_based_operations_context_dctor(EbPtr p) {
-    EbThreadContext *             thread_context_ptr = (EbThreadContext *)p;
+    EbThreadContext              *thread_context_ptr = (EbThreadContext *)p;
     SourceBasedOperationsContext *obj = (SourceBasedOperationsContext *)thread_context_ptr->priv;
     EB_FREE_ARRAY(obj);
 }
@@ -66,7 +66,7 @@ static INLINE int coded_to_superres_mi(int mi_col, int denom) {
 /************************************************
 * Source Based Operation Context Constructor
 ************************************************/
-EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType source_based_operations_context_ctor(EbThreadContext   *thread_context_ptr,
                                                  const EbEncHandle *enc_handle_ptr, int tpl_index,
                                                  int index) {
     SourceBasedOperationsContext *context_ptr;
@@ -88,14 +88,14 @@ EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_conte
      TPL dispenser context dctor
 */
 static void tpl_disp_context_dctor(EbPtr p) {
-    EbThreadContext *    thread_context_ptr = (EbThreadContext *)p;
+    EbThreadContext     *thread_context_ptr = (EbThreadContext *)p;
     TplDispenserContext *obj                = (TplDispenserContext *)thread_context_ptr->priv;
     EB_FREE_ARRAY(obj);
 }
 /*
      TPL dispenser context cctor
 */
-EbErrorType tpl_disp_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType tpl_disp_context_ctor(EbThreadContext   *thread_context_ptr,
                                   const EbEncHandle *enc_handle_ptr, int index, int tasks_index) {
     TplDispenserContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
@@ -117,25 +117,25 @@ void tpl_prep_info(PictureParentControlSet *pcs);
 // Generate lambda factor to tune lambda based on TPL stats
 static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                                            int64_t                  mc_dep_cost_base) {
-    Av1Common *cm = pcs_ptr->av1_cm;
-    uint8_t   tpl_synth_size_offset = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
-          : pcs_ptr->tpl_ctrls.synth_blk_size == 16                          ? 2
-                                                                             : 3;
-    const int step                  = 1 << (tpl_synth_size_offset);
-    const int mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;
-    const int block_size = pcs_ptr->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
-    const int num_mi_w = mi_size_wide[block_size];
-    const int num_mi_h = mi_size_high[block_size];
-    const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
-    const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
-    const int stride = mi_cols_sr >> tpl_synth_size_offset;
-    const double c = 1.2;
+    Av1Common   *cm                    = pcs_ptr->av1_cm;
+    uint8_t      tpl_synth_size_offset = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
+             : pcs_ptr->tpl_ctrls.synth_blk_size == 16                          ? 2
+                                                                                : 3;
+    const int    step                  = 1 << (tpl_synth_size_offset);
+    const int    mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;
+    const int    block_size = pcs_ptr->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
+    const int    num_mi_w   = mi_size_wide[block_size];
+    const int    num_mi_h   = mi_size_high[block_size];
+    const int    num_cols   = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
+    const int    num_rows   = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
+    const int    stride     = mi_cols_sr >> tpl_synth_size_offset;
+    const double c          = 1.2;
 
     for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < num_cols; col++) {
-            int64_t recrf_dist_sum   = 0;
-            int64_t mc_dep_delta_sum = 0;
-            const int index = row * num_cols + col;
+            int64_t   recrf_dist_sum   = 0;
+            int64_t   mc_dep_delta_sum = 0;
+            const int index            = row * num_cols + col;
             for (int mi_row = row * num_mi_h; mi_row < (row + 1) * num_mi_h; mi_row += step) {
                 for (int mi_col = col * num_mi_w; mi_col < (col + 1) * num_mi_w; mi_col += step) {
                     if (mi_row >= cm->mi_rows || mi_col >= mi_cols_sr)
@@ -226,7 +226,7 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats *tpl_s
             pcs_ptr->pa_me_data->tpl_stats[(mb_origin_y >> 5) * stride + (mb_origin_x >> 5)];
 
         //write to a 16x16 grid
-            *dst_ptr = *tpl_stats_ptr;
+        *dst_ptr = *tpl_stats_ptr;
         /*if (size == 32) {
             *dst_ptr = *tpl_stats_ptr;
         }
@@ -242,7 +242,7 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats *tpl_s
             pcs_ptr->pa_me_data->tpl_stats[(mb_origin_y >> 4) * stride + (mb_origin_x >> 4)];
 
         //write to a 16x16 grid
-            if (size == 32) {
+        if (size == 32) {
             dst_ptr[0]          = *tpl_stats_ptr;
             dst_ptr[1]          = *tpl_stats_ptr;
             dst_ptr[stride]     = *tpl_stats_ptr;
@@ -257,8 +257,7 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats *tpl_s
             pcs_ptr->pa_me_data->tpl_stats[(mb_origin_y >> 3) * stride + (mb_origin_x >> 3)];
 
         //write to a 8x8 grid
-            if (size == 32) {
-
+        if (size == 32) {
             dst_ptr[0] = *tpl_stats_ptr;
             dst_ptr[1] = *tpl_stats_ptr;
             dst_ptr[2] = *tpl_stats_ptr;
@@ -388,9 +387,8 @@ extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode,
 
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
-static uint8_t is_me_data_valid(
-    MotionEstimationData *pa_me_data,
-    const MeSbResults *me_results, uint32_t me_mb_offset, uint8_t list_idx, uint8_t ref_idx) {
+static uint8_t is_me_data_valid(MotionEstimationData *pa_me_data, const MeSbResults *me_results,
+                                uint32_t me_mb_offset, uint8_t list_idx, uint8_t ref_idx) {
     uint8_t            total_me_cnt = me_results->total_me_candidate_index[me_mb_offset];
     const MeCandidate *me_block_results =
         &me_results->me_candidate_array[me_mb_offset * pa_me_data->max_cand];
@@ -447,7 +445,7 @@ void get_best_reference(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uin
     int16_t              y_curr_mv          = 0;
     uint32_t             best_reference_sad = UINT32_MAX;
     uint32_t             reference_sad;
-    uint8_t *            src_mb = input_ptr->buffer_y + input_ptr->origin_x + mb_origin_x +
+    uint8_t             *src_mb = input_ptr->buffer_y + input_ptr->origin_x + mb_origin_x +
         (input_ptr->origin_y + mb_origin_y) * input_ptr->stride_y;
 
     for (uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
@@ -456,12 +454,11 @@ void get_best_reference(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uin
         if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref0_count) ||
             (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref1_count))
             continue;
-        if (!is_me_data_valid(
-                pcs_ptr->pa_me_data,
-                pcs_ptr->pa_me_data->me_results[sb_index],
-                me_mb_offset,
-                list_index,
-                ref_pic_index))
+        if (!is_me_data_valid(pcs_ptr->pa_me_data,
+                              pcs_ptr->pa_me_data->me_results[sb_index],
+                              me_mb_offset,
+                              list_index,
+                              ref_pic_index))
             continue;
         ref_pic_ptr = (EbPictureBufferDesc *)pcs_ptr->tpl_data
                           .tpl_ref_ds_ptr_array[list_index][ref_pic_index]
@@ -547,7 +544,7 @@ TxSize   tx_size_array[MAX_TPL_MODE]      = {TX_16X16, TX_32X32, TX_64X64};
 TxSize   sub2_tx_size_array[MAX_TPL_MODE] = {TX_16X8, TX_32X16, TX_64X32};
 TxSize   sub4_tx_size_array[MAX_TPL_MODE] = {TX_16X4, TX_32X8, TX_64X16};
 
-void tpl_mc_flow_dispenser_sb_generic(EncodeContext *     encode_context_ptr,
+void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                       SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                                       int32_t frame_idx, uint32_t sb_index, int32_t qIndex,
                                       uint8_t dispenser_search_level) {
@@ -589,7 +586,7 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext *     encode_context_ptr,
     mb_plane.dequant_qtx     = scs_ptr->deq_8bit.y_dequant_qtx[qIndex];
 
     const uint32_t src_stride      = pcs_ptr->enhanced_picture_ptr->stride_y;
-    SbParams *     sb_params       = &scs_ptr->sb_params_array[sb_index];
+    SbParams      *sb_params       = &scs_ptr->sb_params_array[sb_index];
     const int      aligned16_width = (pcs_ptr->aligned_width + 15) >> 4;
 
     const uint8_t disable_intra_pred = (pcs_ptr->tpl_ctrls.disable_intra_pred_nref &&
@@ -724,12 +721,10 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext *     encode_context_ptr,
                                                                    bsize,
                                                                    bsize);
 
-                        EbBool  enable_paeth   = pcs_ptr->scs_ptr->enable_paeth ==
-                                DEFAULT
+                        EbBool  enable_paeth   = pcs_ptr->scs_ptr->enable_paeth == DEFAULT
                                ? EB_TRUE
                                : (EbBool)pcs_ptr->scs_ptr->enable_paeth;
-                        EbBool  enable_smooth  = pcs_ptr->scs_ptr->enable_smooth ==
-                                DEFAULT
+                        EbBool  enable_smooth  = pcs_ptr->scs_ptr->enable_smooth == DEFAULT
                               ? EB_TRUE
                               : (EbBool)pcs_ptr->scs_ptr->enable_smooth;
                         uint8_t intra_mode_end = pcs_ptr->tpl_ctrls.tpl_opt_flag ? DC_PRED
@@ -1498,20 +1493,20 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr,
                                           PictureParentControlSet *pcs_ptr, TplStats *tpl_stats_ptr,
                                           int mi_row, int mi_col, const int /*BLOCK_SIZE*/ bsize) {
     Av1Common *ref_cm = ref_pcs_ptr->av1_cm;
-    TplStats * ref_tpl_stats_ptr;
+    TplStats  *ref_tpl_stats_ptr;
 
     const FULLPEL_MV full_mv     = get_fullmv_from_mv(&tpl_stats_ptr->mv);
     const int        ref_pos_row = mi_row * MI_SIZE + full_mv.row;
     const int        ref_pos_col = mi_col * MI_SIZE + full_mv.col;
 
-    const int bw        = 4 << mi_size_wide_log2[bsize];
-    const int bh        = 4 << mi_size_high_log2[bsize];
-    const int mi_height = mi_size_high[bsize];
-    const int mi_width  = mi_size_wide[bsize];
-    const int pix_num   = bw * bh;
-    const int shift = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
-        : pcs_ptr->tpl_ctrls.synth_blk_size == 16            ? 2
-                                                             : 3;
+    const int bw         = 4 << mi_size_wide_log2[bsize];
+    const int bh         = 4 << mi_size_high_log2[bsize];
+    const int mi_height  = mi_size_high[bsize];
+    const int mi_width   = mi_size_wide[bsize];
+    const int pix_num    = bw * bh;
+    const int shift      = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
+             : pcs_ptr->tpl_ctrls.synth_blk_size == 16            ? 2
+                                                                  : 3;
     const int mi_cols_sr = ((ref_pcs_ptr->aligned_width + 15) / 16) << 2;
 
     // top-left on grid block location in pixel
@@ -1520,7 +1515,7 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr,
     int block;
 
     int64_t cur_dep_dist = tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist;
-    int64_t mc_dep_dist = tpl_stats_ptr->mc_dep_dist *
+    int64_t mc_dep_dist  = tpl_stats_ptr->mc_dep_dist *
         (tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist) / tpl_stats_ptr->recrf_dist;
     int64_t delta_rate  = tpl_stats_ptr->recrf_rate - tpl_stats_ptr->srcrf_rate;
     int64_t mc_dep_rate = pcs_ptr->tpl_ctrls.tpl_opt_flag
@@ -1539,9 +1534,9 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr,
             grid_pos_col < ref_cm->mi_cols * MI_SIZE) {
             int overlap_area = get_overlap_area(
                 grid_pos_row, grid_pos_col, ref_pos_row, ref_pos_col, block, bsize);
-            int ref_mi_row = round_floor(grid_pos_row, bh) * mi_height;
-            int ref_mi_col = round_floor(grid_pos_col, bw) * mi_width;
-            const int step = 1 << (shift);
+            int       ref_mi_row = round_floor(grid_pos_row, bh) * mi_height;
+            int       ref_mi_col = round_floor(grid_pos_col, bw) * mi_width;
+            const int step       = 1 << (shift);
 
             for (int idy = 0; idy < mi_height; idy += step) {
                 for (int idx = 0; idx < mi_width; idx += step) {
@@ -1579,8 +1574,8 @@ static AOM_INLINE void tpl_model_update(PictureParentControlSet *pcs_array[MAX_T
                             : pcs_ptr->tpl_ctrls.synth_blk_size == 16            ? 2
                                                                                  : 3;
     const int                step       = 1 << (shift);
-    const int mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
-    int       i          = 0;
+    const int                mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
+    int                      i          = 0;
 
     for (int idy = 0; idy < mi_height; idy += step) {
         for (int idx = 0; idx < mi_width; idx += step) {
@@ -1604,12 +1599,12 @@ static AOM_INLINE void tpl_model_update(PictureParentControlSet *pcs_array[MAX_T
 
 void tpl_mc_flow_synthesizer(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], int32_t frame_idx,
                              uint8_t frames_in_sw) {
-    Av1Common *cm = pcs_array[frame_idx]->av1_cm;
-    const int /*BLOCK_SIZE*/ bsize = pcs_array[frame_idx]->tpl_ctrls.synth_blk_size == 32
-        ? BLOCK_32X32
-        : BLOCK_16X16;
-    const int mi_height = mi_size_high[bsize];
-    const int mi_width  = mi_size_wide[bsize];
+    Av1Common               *cm        = pcs_array[frame_idx]->av1_cm;
+    const int /*BLOCK_SIZE*/ bsize     = pcs_array[frame_idx]->tpl_ctrls.synth_blk_size == 32
+            ? BLOCK_32X32
+            : BLOCK_16X16;
+    const int                mi_height = mi_size_high[bsize];
+    const int                mi_width  = mi_size_wide[bsize];
 
     for (int mi_row = 0; mi_row < cm->mi_rows; mi_row += mi_height) {
         for (int mi_col = 0; mi_col < cm->mi_cols; mi_col += mi_width) {
@@ -1620,16 +1615,16 @@ void tpl_mc_flow_synthesizer(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], 
 }
 
 static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
-    Av1Common *         cm      = pcs_ptr->av1_cm;
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    int64_t recrf_dist_base_sum   = 0;
-    int64_t mc_dep_delta_base_sum = 0;
-    int64_t mc_dep_cost_base = 0;
-    const int32_t shift       = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
-              : pcs_ptr->tpl_ctrls.synth_blk_size == 16                ? 2
-                                                                       : 3;
-    const int32_t step        = 1 << (shift);
-    const int32_t col_step_sr = coded_to_superres_mi(step, pcs_ptr->superres_denom);
+    Av1Common          *cm                    = pcs_ptr->av1_cm;
+    SequenceControlSet *scs_ptr               = pcs_ptr->scs_ptr;
+    int64_t             recrf_dist_base_sum   = 0;
+    int64_t             mc_dep_delta_base_sum = 0;
+    int64_t             mc_dep_cost_base      = 0;
+    const int32_t       shift                 = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
+                              : pcs_ptr->tpl_ctrls.synth_blk_size == 16                ? 2
+                                                                                       : 3;
+    const int32_t       step                  = 1 << (shift);
+    const int32_t       col_step_sr           = coded_to_superres_mi(step, pcs_ptr->superres_denom);
     // Super-res upscaled size should be used here.
     const int32_t mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16)
         << 2; // picture column boundary
@@ -1653,37 +1648,36 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
     if (mc_dep_cost_base != 0) {
         pcs_ptr->r0           = ((double)(recrf_dist_base_sum << (RDDIV_BITS))) / mc_dep_cost_base;
         pcs_ptr->tpl_is_valid = 1;
-    }
-    else {
+    } else {
         pcs_ptr->tpl_is_valid = 0;
     }
 #if DEBUG_TPL
     SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.5f\tbase_rdmult=%d\n",
-        pcs_ptr->picture_number,
-        (double)mc_dep_cost_base,
-        pcs_ptr->r0,
-        pcs_ptr->pa_me_data->base_rdmult);
+            pcs_ptr->picture_number,
+            (double)mc_dep_cost_base,
+            pcs_ptr->r0,
+            pcs_ptr->pa_me_data->base_rdmult);
 #endif
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
     // If superres scale down is on, should use scaled width instead of full size
-    const int32_t  sb_mi_sz         = (int32_t)(scs_ptr->sb_size_pix >> 2);
-    const uint32_t picture_sb_width = (uint32_t)(
-        (pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
-    const uint32_t picture_sb_height = (uint32_t)(
-        (pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
+    const int32_t  sb_mi_sz = (int32_t)(scs_ptr->sb_size_pix >> 2);
+    const uint32_t picture_sb_width =
+        (uint32_t)((pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
+    const uint32_t picture_sb_height =
+        (uint32_t)((pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
     const int32_t mi_high = sb_mi_sz; // sb size in 4x4 units
     const int32_t mi_wide = sb_mi_sz;
     for (uint32_t sb_y = 0; sb_y < picture_sb_height; ++sb_y) {
         for (uint32_t sb_x = 0; sb_x < picture_sb_width; ++sb_x) {
-            uint16_t mi_row = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_y >> 2;
-            uint16_t mi_col = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_x >> 2;
-            int64_t recrf_dist_sum   = 0;
-            int64_t mc_dep_delta_sum = 0;
-            const int mi_col_sr     = coded_to_superres_mi(mi_col, pcs_ptr->superres_denom);
-            const int mi_col_end_sr = coded_to_superres_mi(mi_col + mi_wide,
+            uint16_t  mi_row = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_y >> 2;
+            uint16_t  mi_col = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_x >> 2;
+            int64_t   recrf_dist_sum   = 0;
+            int64_t   mc_dep_delta_sum = 0;
+            const int mi_col_sr        = coded_to_superres_mi(mi_col, pcs_ptr->superres_denom);
+            const int mi_col_end_sr    = coded_to_superres_mi(mi_col + mi_wide,
                                                            pcs_ptr->superres_denom);
-            const int row_step      = step;
+            const int row_step         = step;
 
             // loop all mb in the sb
             for (int row = mi_row; row < mi_row + mi_high; row += row_step) {
@@ -1692,7 +1686,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
                         continue;
                     }
 
-                    int index = (row >> shift) * (mi_cols_sr >> shift) + (col >> shift);
+                    int       index = (row >> shift) * (mi_cols_sr >> shift) + (col >> shift);
                     TplStats *tpl_stats_ptr = pcs_ptr->pa_me_data->tpl_stats[index];
                     int64_t   mc_dep_delta  = RDCOST(pcs_ptr->pa_me_data->base_rdmult,
                                                   tpl_stats_ptr->mc_dep_rate,
@@ -1733,9 +1727,9 @@ EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr, PictureParentCon
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
     }
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
-    picture_buffer_desc_init_data.max_width  = pcs_ptr->enhanced_picture_ptr->max_width;
-    picture_buffer_desc_init_data.max_height = pcs_ptr->enhanced_picture_ptr->max_height;
-    picture_buffer_desc_init_data.bit_depth = EB_8BIT;
+    picture_buffer_desc_init_data.max_width          = pcs_ptr->enhanced_picture_ptr->max_width;
+    picture_buffer_desc_init_data.max_height         = pcs_ptr->enhanced_picture_ptr->max_height;
+    picture_buffer_desc_init_data.bit_depth          = EB_8BIT;
     picture_buffer_desc_init_data.color_format       = pcs_ptr->enhanced_picture_ptr->color_format;
     picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
     picture_buffer_desc_init_data.left_padding       = TPL_PADX;
@@ -1858,9 +1852,9 @@ void init_tpl_segments(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
 * Genrate TPL MC Flow Based on frames in the tpl group
 ************************************************/
 EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *scs_ptr,
-                        PictureParentControlSet *     pcs_ptr,
+                        PictureParentControlSet      *pcs_ptr,
                         SourceBasedOperationsContext *context_ptr) {
-    int32_t frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
+    int32_t  frames_in_sw         = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
     uint32_t picture_width_in_mb  = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
     uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
 
@@ -1920,66 +1914,73 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
 #if DEBUG_TPL
 
-
-            for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
-            {
-                PictureParentControlSet *pcs_ptr_tmp = pcs_ptr->tpl_group[frame_idx];
-                Av1Common *cm = pcs_ptr->av1_cm;
-                int64_t intra_cost_base = 0;
-                int64_t mc_dep_cost_base = 0;
-#if   FIX_R2R_TPL_IXX
-                const int           shift = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size == 16 ? 2 : 3;
-                const int           step = 1 << (shift);
-                const int           mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
+        for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
+            PictureParentControlSet *pcs_ptr_tmp      = pcs_ptr->tpl_group[frame_idx];
+            Av1Common               *cm               = pcs_ptr->av1_cm;
+            int64_t                  intra_cost_base  = 0;
+            int64_t                  mc_dep_cost_base = 0;
+#if FIX_R2R_TPL_IXX
+            const int shift      = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
+                     : pcs_ptr->tpl_ctrls.synth_blk_size == 16            ? 2
+                                                                          : 3;
+            const int step       = 1 << (shift);
+            const int mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
 #else
-                const int shift = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
-        : pcs_ptr->tpl_ctrls.synth_blk_size == 16            ? 2
-                                                             : 3;
-                const int step = 1 << (shift);
-                const int mi_cols_sr = ((pcs_ptr_tmp->aligned_width + 15) / 16) << 2;
+            const int shift      = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
+                     : pcs_ptr->tpl_ctrls.synth_blk_size == 16            ? 2
+                                                                          : 3;
+            const int step       = 1 << (shift);
+            const int mi_cols_sr = ((pcs_ptr_tmp->aligned_width + 15) / 16) << 2;
 #endif
-                for (int row = 0; row < cm->mi_rows; row += step) {
-                    for (int col = 0; col < mi_cols_sr; col += step) {
-                        TplStats *tpl_stats_ptr = pcs_ptr_tmp->pa_me_data->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
-                        int64_t mc_dep_delta =
-                            RDCOST(pcs_ptr->pa_me_data->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
-                        intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
-                        mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
-                    }
+            for (int row = 0; row < cm->mi_rows; row += step) {
+                for (int col = 0; col < mi_cols_sr; col += step) {
+                    TplStats *tpl_stats_ptr =
+                        pcs_ptr_tmp->pa_me_data
+                            ->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
+                    int64_t mc_dep_delta = RDCOST(pcs_ptr->pa_me_data->base_rdmult,
+                                                  tpl_stats_ptr->mc_dep_rate,
+                                                  tpl_stats_ptr->mc_dep_dist);
+                    intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
+                    mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
                 }
-
-                SVT_LOG("After mc_flow_synthesizer:\tframe_indx:%d\tdisplayorder:%ld\tIntra:%lld\tmc_dep:%lld rdmult:%i\n",
-                    frame_idx, pcs_ptr_tmp->picture_number, intra_cost_base, mc_dep_cost_base, pcs_ptr->pa_me_data->base_rdmult);
-
-
             }
-        }
-#else
-}
-#endif
 
-
-EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
-
-// When super-res recode is actived, don't release pa_ref_objs until final loop is finished
-// Although tpl-la won't be enabled in super-res FIXED or RANDOM mode, here we use the condition to align with that in initial rate control process
-EbBool release_pa_ref = (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM) ? EB_TRUE
-                                                                                  : EB_FALSE;
-for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
-    if (release_pa_ref) {
-        if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
-            if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
-                release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
-        } else {
-            if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id)
-                release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+            SVT_LOG(
+                "After "
+                "mc_flow_synthesizer:\tframe_indx:%d\tdisplayorder:%ld\tIntra:%lld\tmc_dep:%lld "
+                "rdmult:%i\n",
+                frame_idx,
+                pcs_ptr_tmp->picture_number,
+                intra_cost_base,
+                mc_dep_cost_base,
+                pcs_ptr->pa_me_data->base_rdmult);
         }
     }
-    if (pcs_ptr->tpl_group[i]->non_tf_input)
-        EB_DELETE(pcs_ptr->tpl_group[i]->non_tf_input);
-}
+#else
+    }
+#endif
 
-return EB_ErrorNone;
+    EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
+
+    // When super-res recode is actived, don't release pa_ref_objs until final loop is finished
+    // Although tpl-la won't be enabled in super-res FIXED or RANDOM mode, here we use the condition to align with that in initial rate control process
+    EbBool release_pa_ref = (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM) ? EB_TRUE
+                                                                                      : EB_FALSE;
+    for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
+        if (release_pa_ref) {
+            if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
+                if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
+                    release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+            } else {
+                if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id)
+                    release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+            }
+        }
+        if (pcs_ptr->tpl_group[i]->non_tf_input)
+            EB_DELETE(pcs_ptr->tpl_group[i]->non_tf_input);
+    }
+
+    return EB_ErrorNone;
 }
 
 /*
@@ -1988,10 +1989,10 @@ return EB_ErrorNone;
 */
 
 void *tpl_disp_kernel(void *input_ptr) {
-    EbThreadContext *    thread_context_ptr = (EbThreadContext *)input_ptr;
+    EbThreadContext     *thread_context_ptr = (EbThreadContext *)input_ptr;
     TplDispenserContext *context_ptr        = (TplDispenserContext *)thread_context_ptr->priv;
-    EbObjectWrapper *    in_results_wrapper_ptr;
-    TplDispResults *     in_results_ptr;
+    EbObjectWrapper     *in_results_wrapper_ptr;
+    TplDispResults      *in_results_ptr;
     for (;;) {
         // Get Input Full Object
         EB_GET_FULL_OBJECT(context_ptr->tpl_disp_input_fifo_ptr, &in_results_wrapper_ptr);
@@ -2143,7 +2144,7 @@ static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
  * to identify spatiotemporal characteristics of the input pictures.
  ************************************************/
 void *source_based_operations_kernel(void *input_ptr) {
-    EbThreadContext *             thread_context_ptr = (EbThreadContext *)input_ptr;
+    EbThreadContext              *thread_context_ptr = (EbThreadContext *)input_ptr;
     SourceBasedOperationsContext *context_ptr        = (SourceBasedOperationsContext *)
                                                     thread_context_ptr->priv;
     EbObjectWrapper *in_results_wrapper_ptr;

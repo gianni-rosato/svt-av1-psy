@@ -81,14 +81,14 @@ static void configure_picture_edges(SequenceControlSet *scs_ptr, PictureControlS
 void write_stat_to_file(SequenceControlSet *scs_ptr, StatStruct stat_struct, uint64_t ref_poc);
 
 static void picture_manager_context_dctor(EbPtr p) {
-    EbThreadContext *      thread_context_ptr = (EbThreadContext *)p;
+    EbThreadContext       *thread_context_ptr = (EbThreadContext *)p;
     PictureManagerContext *obj                = (PictureManagerContext *)thread_context_ptr->priv;
     EB_FREE_ARRAY(obj);
 }
 /************************************************
  * Picture Manager Context Constructor
  ************************************************/
-EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType picture_manager_context_ctor(EbThreadContext   *thread_context_ptr,
                                          const EbEncHandle *enc_handle_ptr,
                                          int                rate_control_index) {
     PictureManagerContext *context_ptr;
@@ -153,7 +153,7 @@ ReferenceQueueEntry *search_ref_in_ref_queue(EncodeContext *encode_context_ptr, 
   will attempt to do the cleaning
 */
 void clean_pictures_in_ref_queue(EncodeContext *ctx) {
-    PicQueueEntry **     queue         = ctx->dep_cnt_picture_queue;
+    PicQueueEntry      **queue         = ctx->dep_cnt_picture_queue;
     ReferenceQueueEntry *ref_entry_ptr = NULL;
 
     //all pictures needing the clean-up are stored in dep cnt queue
@@ -167,10 +167,10 @@ void clean_pictures_in_ref_queue(EncodeContext *ctx) {
                 int new_dep_cnt = (int)ref_entry_ptr->dependent_count + queue[q_idx]->dep_cnt_diff;
                 if (new_dep_cnt < 0)
                     SVT_ERROR(" PicMgr: Negative dep count\n");
-                    //printf(" search %I64i  ====Pic-MGR-Dep-Cnt-reduce found: %I64i  %i --> %i\n",
-                    //    queue[q_idx]->pic_num, ref_entry_ptr->picture_number, ref_entry_ptr->dependent_count, new_dep_cnt);
+                //printf(" search %I64i  ====Pic-MGR-Dep-Cnt-reduce found: %I64i  %i --> %i\n",
+                //    queue[q_idx]->pic_num, ref_entry_ptr->picture_number, ref_entry_ptr->dependent_count, new_dep_cnt);
                 ref_entry_ptr->dependent_count = new_dep_cnt;
-                queue[q_idx]->is_done = 1;
+                queue[q_idx]->is_done          = 1;
             }
         }
 
@@ -213,12 +213,12 @@ void copy_dep_cnt_cleaning_list(EncodeContext *ctx, PictureParentControlSet *pcs
 void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_ptr) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-    uint8_t pic_width_in_sb = (uint8_t)(
-        (parentpicture_control_set_ptr->aligned_width + scs_ptr->sb_size_pix - 1) /
-        scs_ptr->sb_size_pix);
-    uint8_t picture_height_in_sb = (uint8_t)(
-        (parentpicture_control_set_ptr->aligned_height + scs_ptr->sb_size_pix - 1) /
-        scs_ptr->sb_size_pix);
+    uint8_t pic_width_in_sb      = (uint8_t)((parentpicture_control_set_ptr->aligned_width +
+                                         scs_ptr->sb_size_pix - 1) /
+                                        scs_ptr->sb_size_pix);
+    uint8_t picture_height_in_sb = (uint8_t)((parentpicture_control_set_ptr->aligned_height +
+                                              scs_ptr->sb_size_pix - 1) /
+                                             scs_ptr->sb_size_pix);
     set_tile_info(parentpicture_control_set_ptr);
     int      sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
     uint32_t enc_dec_seg_col_cnt =
@@ -310,7 +310,7 @@ void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_pt
     }
 }
 
-void superres_setup_child_pcs(SequenceControlSet *     entry_scs_ptr,
+void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
                               PictureParentControlSet *entry_pcs_ptr) {
     PictureControlSet *child_pcs_ptr = entry_pcs_ptr->child_pcs;
 
@@ -321,9 +321,9 @@ void superres_setup_child_pcs(SequenceControlSet *     entry_scs_ptr,
 
     pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width + entry_scs_ptr->sb_size_pix - 1) /
                                 entry_scs_ptr->sb_size_pix);
-    picture_height_in_sb = (uint8_t)(
-        (entry_pcs_ptr->aligned_height + entry_scs_ptr->sb_size_pix - 1) /
-        entry_scs_ptr->sb_size_pix);
+    picture_height_in_sb = (uint8_t)((entry_pcs_ptr->aligned_height + entry_scs_ptr->sb_size_pix -
+                                      1) /
+                                     entry_scs_ptr->sb_size_pix);
 
     child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
 
@@ -412,32 +412,32 @@ void superres_setup_child_pcs(SequenceControlSet *     entry_scs_ptr,
  *
  ***************************************************************************************************/
 void *picture_manager_kernel(void *input_ptr) {
-    EbThreadContext *      thread_context_ptr = (EbThreadContext *)input_ptr;
+    EbThreadContext       *thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureManagerContext *context_ptr        = (PictureManagerContext *)thread_context_ptr->priv;
 
     EbObjectWrapper *enc_dec_wrapper_ptr;
-    EncDecSet *      enc_dec_ptr;
+    EncDecSet       *enc_dec_ptr;
 
-    EbObjectWrapper *        child_pcs_wrapper_ptr;
-    PictureControlSet *      child_pcs_ptr;
+    EbObjectWrapper         *child_pcs_wrapper_ptr;
+    PictureControlSet       *child_pcs_ptr;
     PictureParentControlSet *pcs_ptr;
-    SequenceControlSet *     scs_ptr;
-    EncodeContext *          encode_context_ptr;
+    SequenceControlSet      *scs_ptr;
+    EncodeContext           *encode_context_ptr;
 
-    EbObjectWrapper *    input_picture_demux_wrapper_ptr;
+    EbObjectWrapper     *input_picture_demux_wrapper_ptr;
     PictureDemuxResults *input_picture_demux_ptr;
 
     EbBool availability_flag;
 
     PredictionStructureEntry *pred_position_ptr;
-    InputQueueEntry *         input_entry_ptr;
+    InputQueueEntry          *input_entry_ptr;
     uint32_t                  input_queue_index;
-    ReferenceQueueEntry *     reference_entry_ptr;
+    ReferenceQueueEntry      *reference_entry_ptr;
     uint32_t                  reference_queue_index;
     uint64_t                  ref_poc;
     uint32_t                  dep_idx;
-    PictureParentControlSet * entry_pcs_ptr;
-    SequenceControlSet *      entry_scs_ptr;
+    PictureParentControlSet  *entry_pcs_ptr;
+    SequenceControlSet       *entry_scs_ptr;
 
     // Initialization
     uint16_t pic_width_in_sb;
@@ -831,7 +831,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
                         child_pcs_ptr->parent_pcs_ptr->total_num_bits = 0;
                         child_pcs_ptr->parent_pcs_ptr->picture_qp     = entry_pcs_ptr->picture_qp;
-                        child_pcs_ptr->enc_mode       = entry_pcs_ptr->enc_mode;
+                        child_pcs_ptr->enc_mode                       = entry_pcs_ptr->enc_mode;
                         child_pcs_ptr->sb_total_count = entry_pcs_ptr->sb_total_count;
 
                         child_pcs_ptr->enc_dec_coded_sb_count = 0;
@@ -900,10 +900,10 @@ void *picture_manager_kernel(void *input_ptr) {
                                              child_pcs_ptr->input_frame16bit);
                         }
 
-//                        child_pcs_ptr->parent_pcs_ptr->av1_cm->pcs_ptr = child_pcs_ptr;
-// Palette
+                        //                        child_pcs_ptr->parent_pcs_ptr->av1_cm->pcs_ptr = child_pcs_ptr;
+                        // Palette
                         rtime_alloc_palette_tokens(scs_ptr, child_pcs_ptr);
-                        TOKENEXTRA * pre_tok  = child_pcs_ptr->tile_tok[0][0];
+                        TOKENEXTRA  *pre_tok  = child_pcs_ptr->tile_tok[0][0];
                         unsigned int tile_tok = 0;
                         //Tile Loop
                         for (tile_row = 0; tile_row < tile_rows; tile_row++) {

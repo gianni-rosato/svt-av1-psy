@@ -31,7 +31,7 @@ extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **reco
 
 static void dlf_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
-    DlfContext *     obj                = (DlfContext *)thread_context_ptr->priv;
+    DlfContext      *obj                = (DlfContext *)thread_context_ptr->priv;
     EB_FREE_ARRAY(obj);
 }
 /******************************************************
@@ -57,17 +57,17 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
  ******************************************************/
 void *dlf_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext *   thread_context_ptr = (EbThreadContext *)input_ptr;
-    DlfContext *        context_ptr        = (DlfContext *)thread_context_ptr->priv;
-    PictureControlSet * pcs_ptr;
+    EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
+    DlfContext         *context_ptr        = (DlfContext *)thread_context_ptr->priv;
+    PictureControlSet  *pcs_ptr;
     SequenceControlSet *scs_ptr;
 
     //// Input
     EbObjectWrapper *enc_dec_results_wrapper_ptr;
-    EncDecResults *  enc_dec_results_ptr;
+    EncDecResults   *enc_dec_results_ptr;
 
     //// Output
-    EbObjectWrapper *  dlf_results_wrapper_ptr;
+    EbObjectWrapper   *dlf_results_wrapper_ptr;
     struct DlfResults *dlf_results_ptr;
 
     // SB Loop variables
@@ -80,8 +80,7 @@ void *dlf_kernel(void *input_ptr) {
         scs_ptr             = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
         EbBool is_16bit = scs_ptr->is_16bit_pipeline;
-        if (is_16bit &&
-            scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
+        if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
             svt_convert_pic_8bit_to_16bit(pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                                           pcs_ptr->input_frame16bit,
                                           pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
@@ -98,11 +97,12 @@ void *dlf_kernel(void *input_ptr) {
                                               pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
             }
         }
-        EbBool dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
-        const uint16_t tg_count = pcs_ptr->parent_pcs_ptr->tile_group_cols * pcs_ptr->parent_pcs_ptr->tile_group_rows;
+        EbBool         dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
+        const uint16_t tg_count        = pcs_ptr->parent_pcs_ptr->tile_group_cols *
+            pcs_ptr->parent_pcs_ptr->tile_group_rows;
         // Move sb level lf to here if tile_parallel
         if ((dlf_enable_flag && !pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf) ||
-            (dlf_enable_flag &&  pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf  && tg_count > 1)) {
+            (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf && tg_count > 1)) {
             EbPictureBufferDesc *recon_buffer;
             get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
             svt_av1_loop_filter_init(pcs_ptr);
@@ -116,7 +116,7 @@ void *dlf_kernel(void *input_ptr) {
 
         //pre-cdef prep
         {
-            Av1Common *          cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+            Av1Common           *cm = pcs_ptr->parent_pcs_ptr->av1_cm;
             EbPictureBufferDesc *recon_picture_ptr;
             get_recon_pic(pcs_ptr, &recon_picture_ptr, is_16bit);
             link_eb_to_aom_buffer_desc(recon_picture_ptr,

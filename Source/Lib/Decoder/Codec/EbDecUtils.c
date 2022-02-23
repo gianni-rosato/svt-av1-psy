@@ -23,7 +23,7 @@
 #include "EbDecMemInit.h"
 
 EbErrorType check_add_tplmv_buf(EbDecHandle *dec_handle_ptr) {
-    FrameHeader * ps_frm_hdr = &dec_handle_ptr->frame_header;
+    FrameHeader  *ps_frm_hdr = &dec_handle_ptr->frame_header;
     const int32_t tpl_size   = ((ps_frm_hdr->mi_rows + MAX_MIB_SIZE) >> 1) *
         (ps_frm_hdr->mi_stride >> 1);
 

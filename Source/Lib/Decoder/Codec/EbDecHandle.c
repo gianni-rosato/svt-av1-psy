@@ -56,8 +56,8 @@ cpu_set_t group_affinity;
 #endif
 
 EbMemoryMapEntry *svt_dec_memory_map;
-uint32_t *        svt_dec_memory_map_index;
-uint64_t *        svt_dec_total_lib_memory;
+uint32_t         *svt_dec_memory_map_index;
+uint64_t         *svt_dec_total_lib_memory;
 
 uint32_t svt_dec_lib_malloc_count = 0;
 
@@ -87,7 +87,7 @@ static void dec_switch_to_real_time() {
 * Decoder Library Handle Constructor
 ************************************/
 /*TODO : Add more features*/
-static EbErrorType svt_dec_handle_ctor(EbDecHandle **   decHandleDblPtr,
+static EbErrorType svt_dec_handle_ctor(EbDecHandle    **decHandleDblPtr,
                                        EbComponentType *ebHandlePtr) {
     (void)ebHandlePtr;
     EbErrorType return_error = EB_ErrorNone;
@@ -135,7 +135,7 @@ static void copy_even(uint8_t *luma, uint32_t wd, uint32_t ht, uint32_t stride, 
 /* Copy from recon buffer to out buffer! */
 int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
     EbPictureBufferDesc *recon_picture_buf = dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf;
-    EbSvtIOFormat *      out_img           = (EbSvtIOFormat *)p_buffer->p_buffer;
+    EbSvtIOFormat       *out_img           = (EbSvtIOFormat *)p_buffer->p_buffer;
 
     uint8_t *luma = NULL;
     uint8_t *cb   = NULL;
@@ -248,7 +248,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
     {
         if (recon_picture_buf->bit_depth == EB_8BIT) {
             if (dec_handle_ptr->is_16bit_pipeline) {
-                uint8_t * dst;
+                uint8_t  *dst;
                 uint16_t *pu2_src;
                 uint32_t  j;
                 ASSERT(recon_picture_buf->is_16bit_pipeline);
@@ -503,7 +503,7 @@ EB_API EbErrorType svt_av1_dec_init_handle(EbComponentType **p_handle, void *p_a
     return return_error;
 }
 
-EB_API EbErrorType svt_av1_dec_set_parameter(EbComponentType *         svt_dec_component,
+EB_API EbErrorType svt_av1_dec_set_parameter(EbComponentType          *svt_dec_component,
                                              EbSvtAv1DecConfiguration *config_struct) {
     if (svt_dec_component == NULL || config_struct == NULL)
         return EB_ErrorBadParameter;
@@ -569,8 +569,8 @@ EB_API EbErrorType svt_av1_dec_frame(EbComponentType *svt_dec_component, const u
         return EB_ErrorBadParameter;
 
     EbDecHandle *dec_handle_ptr       = (EbDecHandle *)svt_dec_component->p_component_private;
-    uint8_t *    data_start           = (uint8_t *)data;
-    uint8_t *    data_end             = (uint8_t *)data + data_size;
+    uint8_t     *data_start           = (uint8_t *)data;
+    uint8_t     *data_end             = (uint8_t *)data + data_size;
     dec_handle_ptr->seen_frame_header = 0;
 
     while (data_start < data_end) {
@@ -607,10 +607,10 @@ EB_API EbErrorType svt_av1_dec_frame(EbComponentType *svt_dec_component, const u
     return return_error;
 }
 
-EB_API EbErrorType svt_av1_dec_get_picture(EbComponentType *   svt_dec_component,
+EB_API EbErrorType svt_av1_dec_get_picture(EbComponentType    *svt_dec_component,
                                            EbBufferHeaderType *p_buffer,
-                                           EbAV1StreamInfo *   stream_info,
-                                           EbAV1FrameInfo *    frame_info) {
+                                           EbAV1StreamInfo    *stream_info,
+                                           EbAV1FrameInfo     *frame_info) {
     (void)stream_info;
     (void)frame_info;
 

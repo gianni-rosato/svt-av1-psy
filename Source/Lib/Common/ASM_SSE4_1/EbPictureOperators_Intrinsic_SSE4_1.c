@@ -186,8 +186,8 @@ uint64_t svt_full_distortion_kernel16_bits_sse4_1(uint8_t *input, uint32_t input
     const uint32_t leftover    = area_width & 7;
     __m128i        sum32       = _mm_setzero_si128();
     __m128i        sum64       = _mm_setzero_si128();
-    uint16_t *     input_16bit = (uint16_t *)input;
-    uint16_t *     recon_16bit = (uint16_t *)recon;
+    uint16_t      *input_16bit = (uint16_t *)input;
+    uint16_t      *recon_16bit = (uint16_t *)recon;
     input_16bit += input_offset;
     recon_16bit += recon_offset;
 
@@ -658,22 +658,22 @@ static INLINE void svt_unpack_and_2bcompress_remainder(uint16_t *in16b_buffer,
 }
 
 void svt_unpack_and_2bcompress_sse4_1(uint16_t *in16b_buffer, uint32_t in16b_stride,
-                                    uint8_t *out8b_buffer, uint32_t out8b_stride,
-                                    uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width,
-                                    uint32_t height) {
+                                      uint8_t *out8b_buffer, uint32_t out8b_stride,
+                                      uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width,
+                                      uint32_t height) {
     if (width == 32) {
         for (uint32_t h = 0; h < height; h++) {
             unpack_and_2bcompress_32_sse(in16b_buffer + h * in16b_stride,
-                                     out8b_buffer + h * out8b_stride,
-                                     out2b_buffer + h * out2b_stride,
-                                     2);
+                                         out8b_buffer + h * out8b_stride,
+                                         out2b_buffer + h * out2b_stride,
+                                         2);
         }
     } else if (width == 64) {
         for (uint32_t h = 0; h < height; h++) {
             unpack_and_2bcompress_32_sse(in16b_buffer + h * in16b_stride,
-                                     out8b_buffer + h * out8b_stride,
-                                     out2b_buffer + h * out2b_stride,
-                                     4);
+                                         out8b_buffer + h * out8b_stride,
+                                         out2b_buffer + h * out2b_stride,
+                                         4);
         }
     } else {
         uint32_t offset_rem   = width & 0xfffffff0;
@@ -681,9 +681,9 @@ void svt_unpack_and_2bcompress_sse4_1(uint16_t *in16b_buffer, uint32_t in16b_str
         uint32_t remainder    = width & 0xf;
         for (uint32_t h = 0; h < height; h++) {
             unpack_and_2bcompress_32_sse(in16b_buffer + h * in16b_stride,
-                                     out8b_buffer + h * out8b_stride,
-                                     out2b_buffer + h * out2b_stride,
-                                     width >> 4);
+                                         out8b_buffer + h * out8b_stride,
+                                         out2b_buffer + h * out2b_stride,
+                                         width >> 4);
             if (remainder)
                 svt_unpack_and_2bcompress_remainder(in16b_buffer + h * in16b_stride + offset_rem,
                                                     out8b_buffer + h * out8b_stride + offset_rem,
@@ -828,8 +828,8 @@ static INLINE void compressed_packmsb_64xh(uint8_t *in8_bit_buffer, uint32_t in8
 
 static INLINE void compressed_packmsb_64(uint8_t *in8_bit_buffer, uint8_t *inn_bit_buffer,
                                          uint16_t *out16_bit_buffer, uint32_t width_rep) {
-    __m128i  in_8_bit0, in_8_bit1, in_8_bit2, in_8_bit3;
-    __m128i  concat0, concat1, concat2, concat3;
+    __m128i in_8_bit0, in_8_bit1, in_8_bit2, in_8_bit3;
+    __m128i concat0, concat1, concat2, concat3;
 
     __m128i in_2_bit, ext0, ext1, ext2, ext3, ext01, ext23, ext01h, ext23h, ext0_15, ext16_31,
         ext32_47, ext48_63;
@@ -890,9 +890,9 @@ static INLINE void compressed_packmsb_64(uint8_t *in8_bit_buffer, uint8_t *inn_b
 }
 
 void svt_compressed_packmsb_sse4_1_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
-                                        uint8_t *inn_bit_buffer, uint32_t inn_stride,
-                                        uint16_t *out16_bit_buffer, uint32_t out_stride,
-                                        uint32_t width, uint32_t height) {
+                                          uint8_t *inn_bit_buffer, uint32_t inn_stride,
+                                          uint16_t *out16_bit_buffer, uint32_t out_stride,
+                                          uint32_t width, uint32_t height) {
     if (width == 32) {
         compressed_packmsb_32x2h(in8_bit_buffer,
                                  in8_stride,
@@ -917,9 +917,9 @@ void svt_compressed_packmsb_sse4_1_intrin(uint8_t *in8_bit_buffer, uint32_t in8_
             uint32_t offset = width & 0xffffff40;
             for (uint32_t y = 0; y < height; y++) {
                 compressed_packmsb_64(in8_bit_buffer + y * in8_stride,
-                                       inn_bit_buffer + y * inn_stride,
-                                       out16_bit_buffer + y * out_stride,
-                                       width >> 6);
+                                      inn_bit_buffer + y * inn_stride,
+                                      out16_bit_buffer + y * out_stride,
+                                      width >> 6);
             }
             offset8b_16b += offset;
             offset2b += offset >> 2;

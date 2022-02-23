@@ -144,7 +144,7 @@ typedef struct DecMtlfFrameInfo {
 
     /* Array to store SBs completed in every SB row of LF stage.
        Used for top sync */
-    int32_t *    sb_lf_completed_in_row;
+    int32_t     *sb_lf_completed_in_row;
     DecMtRowInfo lf_sb_row_info;
 } DecMtlfFrameInfo;
 
@@ -221,14 +221,14 @@ typedef struct DecMTFrameData {
     /*cdef_map_stride is indicates no. of 64x64 block in a frame along
       col wise, it is used to allocate memory for row_cdef_map */
     uint32_t cdef_map_stride;
-    EbFifo * cdef_fifo_ptr;
+    EbFifo  *cdef_fifo_ptr;
 
     /*It used to sync between cdef  and LR i.e ensures one
       complete cdef row done before LRF strats*/
     uint32_t *cdef_completed_for_row_map;
 
     /* EbFifo at Frame Row level : SR Stage */
-    EbFifo *     sr_fifo_ptr;
+    EbFifo      *sr_fifo_ptr;
     DecMtRowInfo lr_sb_row_info;
     /* Array to store SBs completed in every SB row of LR stage.
        Used for top sync */

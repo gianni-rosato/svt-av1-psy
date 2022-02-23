@@ -72,8 +72,8 @@ typedef struct MdBlkStruct {
                 default_cost; // Similar to cost but does not get updated @ d1_non_square_block_decision() and d2_inter_depth_block_decision()
     CandidateMv ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
-    uint8_t * neigh_left_recon[3]; //only for MD
-    uint8_t * neigh_top_recon[3];
+    uint8_t  *neigh_left_recon[3]; //only for MD
+    uint8_t  *neigh_top_recon[3];
     uint16_t *neigh_left_recon_16bit[3];
     uint16_t *neigh_top_recon_16bit[3];
     int32_t   quantized_dc[3][MAX_TXB_COUNT];
@@ -424,10 +424,6 @@ typedef struct InterpolationSearchCtrls {
         level; // Specifies the MD Stage where the interpolation filter search will take place (IFS_MDS0, IFS_MDS1, IFS_MDS2, or IFS_MDS3 for respectively MD Stage 0, MD Stage 1, MD Stage 2, and MD Stage 3)
     uint8_t
         quarter_pel_only; // Specifies whether the interpolation filter search will use 1/8-Pel precision or 1/4-Pel precision (0: 1/8-Pel precision, 1: 1/4-Pel precision)
-#if !CLN_REMOVE_UNUSED_RES
-    uint8_t
-        modulate_filter_per_resolution; // Specifies whether certain combination(s) will be skipped depending on the input resolution or not (0: NO, 1: only (regular, regular) and (sharp, sharp) if 480p and below, and only (regular, regular) and (smooth, smooth) otherwise
-#endif
     uint8_t
         early_skip; // Specifies whether an early interpolation filter search exit could take place based on the cost of signaling a switchable filter type (0: OFF, 1: ON)
     uint8_t
@@ -508,7 +504,8 @@ typedef struct IntraCtrls {
 typedef struct TxShortcutCtrls {
     uint8_t bypass_tx_when_zcoeff; // Skip TX at MDS3 if the MDS1 TX gave 0 coeffs
     uint8_t apply_pf_on_coeffs; // Apply pf based on the number of coeffs
-    uint8_t chroma_detector_level; // Use a detector to protect chroma from aggressive actions based on luma info: 0: OFF, 1: saftest, 2, 3: medium
+    uint8_t
+        chroma_detector_level; // Use a detector to protect chroma from aggressive actions based on luma info: 0: OFF, 1: saftest, 2, 3: medium
     uint32_t
         use_mds3_shortcuts_th; // if (best_mds0_distortion/QP < TH) use shortcuts for candidates at MDS3; 0: OFF, higher: more aggressive
     uint8_t
@@ -533,24 +530,24 @@ typedef struct CandReductionCtrls {
 } CandReductionCtrls;
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
-    EbFifo * mode_decision_configuration_input_fifo_ptr;
-    EbFifo * mode_decision_output_fifo_ptr;
+    EbFifo  *mode_decision_configuration_input_fifo_ptr;
+    EbFifo  *mode_decision_output_fifo_ptr;
     int16_t *transform_inner_array_ptr;
 
-    ModeDecisionCandidate **       fast_candidate_ptr_array;
-    ModeDecisionCandidate *        fast_candidate_array;
-    ModeDecisionCandidateBuffer ** candidate_buffer_ptr_array;
-    ModeDecisionCandidateBuffer *  candidate_buffer_tx_depth_1;
-    ModeDecisionCandidateBuffer *  candidate_buffer_tx_depth_2;
-    MdRateEstimationContext *      md_rate_estimation_ptr;
+    ModeDecisionCandidate        **fast_candidate_ptr_array;
+    ModeDecisionCandidate         *fast_candidate_array;
+    ModeDecisionCandidateBuffer  **candidate_buffer_ptr_array;
+    ModeDecisionCandidateBuffer   *candidate_buffer_tx_depth_1;
+    ModeDecisionCandidateBuffer   *candidate_buffer_tx_depth_2;
+    MdRateEstimationContext       *md_rate_estimation_ptr;
     EbBool                         is_md_rate_estimation_ptr_owner;
     struct MdRateEstimationContext rate_est_table;
-    InterPredictionContext *       inter_prediction_context;
-    MdBlkStruct *                  md_local_blk_unit;
-    BlkStruct *                    md_blk_arr_nsq;
-    uint8_t *                      avail_blk_flag;
-    uint8_t *                      tested_blk_flag; //tells whether this CU is tested in MD.
-    MdcSbData *                    mdc_sb_array;
+    InterPredictionContext        *inter_prediction_context;
+    MdBlkStruct                   *md_local_blk_unit;
+    BlkStruct                     *md_blk_arr_nsq;
+    uint8_t                       *avail_blk_flag;
+    uint8_t                       *tested_blk_flag; //tells whether this CU is tested in MD.
+    MdcSbData                     *mdc_sb_array;
 
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
     NeighborArrayUnit *mode_type_neighbor_array;
@@ -571,13 +568,13 @@ typedef struct ModeDecisionContext {
         tx_search_luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit *
         cr_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit *
-                       cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
+    NeighborArrayUnit                *
+        cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit *txfm_context_array;
     NeighborArrayUnit *leaf_partition_neighbor_array;
     NeighborArrayUnit *skip_coeff_neighbor_array;
     // Transform and Quantization Buffers
-    EbTransQuantBuffers * trans_quant_buffers_ptr;
+    EbTransQuantBuffers  *trans_quant_buffers_ptr;
     struct EncDecContext *enc_dec_context_ptr;
 
     uint64_t *fast_cost_array;
@@ -590,10 +587,10 @@ typedef struct ModeDecisionContext {
     // to block lambda and full_sb_lambda_md is the full lambda per sb
     EbBool blk_lambda_tuning;
     //  Context Variables---------------------------------
-    SuperBlock *     sb_ptr;
-    BlkStruct *      blk_ptr;
+    SuperBlock      *sb_ptr;
+    BlkStruct       *blk_ptr;
     const BlockGeom *blk_geom;
-    PredictionUnit * pu_ptr;
+    PredictionUnit  *pu_ptr;
     PALETTE_BUFFER   palette_buffer;
     PaletteInfo      palette_cand_array[MAX_PAL_CAND];
     // MD palette search
@@ -604,7 +601,7 @@ typedef struct ModeDecisionContext {
 
     uint8_t          sb64_sq_no4xn_geom; //simple geometry 64x64SB, Sq only, no 4xN
     uint8_t          pu_itr;
-    uint32_t *       best_candidate_index_array;
+    uint32_t        *best_candidate_index_array;
     uint16_t         blk_origin_x;
     uint16_t         blk_origin_y;
     uint32_t         sb_origin_x;
@@ -692,8 +689,8 @@ typedef struct ModeDecisionContext {
     uint8_t              similar_blk_avail;
     uint16_t             similar_blk_mds;
     uint8_t              inject_inter_candidates;
-    uint8_t *            cfl_temp_luma_recon;
-    uint16_t *           cfl_temp_luma_recon16bit;
+    uint8_t             *cfl_temp_luma_recon;
+    uint16_t            *cfl_temp_luma_recon16bit;
     EbBool               spatial_sse_full_loop_level;
     EbBool               blk_skip_decision;
     int8_t               rdoq_level;
@@ -712,7 +709,7 @@ typedef struct ModeDecisionContext {
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
     unsigned int prediction_mse;
     MdStage      md_stage;
-    uint32_t *   cand_buff_indices[CAND_CLASS_TOTAL];
+    uint32_t    *cand_buff_indices[CAND_CLASS_TOTAL];
     uint8_t      bypass_md_stage_1;
     uint8_t      bypass_md_stage_2;
     uint32_t     md_stage_0_count[CAND_CLASS_TOTAL];
@@ -753,24 +750,24 @@ typedef struct ModeDecisionContext {
     DECLARE_ALIGNED(16, int32_t, wsrc_buf[MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, int32_t, mask_buf[MAX_SB_SQUARE]);
     unsigned int pred_sse[REF_FRAMES];
-    uint8_t *    above_txfm_context;
-    uint8_t *    left_txfm_context;
+    uint8_t     *above_txfm_context;
+    uint8_t     *left_txfm_context;
     // square cost weighting for deciding if a/b shapes could be skipped
-    uint32_t       sq_weight;
-    uint32_t       max_part0_to_part1_dev;
-    IntraCtrls     intra_ctrls;
-    MdRateEstCtrls rate_est_ctrls;
-    uint8_t        shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
-    uint8_t        md_staging_fast_coeff_est_level; // Control fast_coeff_est_level per mds
-    uint8_t        md_staging_subres_step; // Control subres_step per mds
-    uint8_t              md_pic_obmc_level;
-    uint8_t              md_inter_intra_level;
-    uint8_t              md_filter_intra_level;
-    uint8_t              md_allow_intrabc;
-    uint8_t              md_palette_level;
-    uint8_t              dist_based_ref_pruning;
-    DepthRemovalCtrls    depth_removal_ctrls;
-    DepthCtrls           depth_ctrls; // control which depths can be considered in PD1
+    uint32_t          sq_weight;
+    uint32_t          max_part0_to_part1_dev;
+    IntraCtrls        intra_ctrls;
+    MdRateEstCtrls    rate_est_ctrls;
+    uint8_t           shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
+    uint8_t           md_staging_fast_coeff_est_level; // Control fast_coeff_est_level per mds
+    uint8_t           md_staging_subres_step; // Control subres_step per mds
+    uint8_t           md_pic_obmc_level;
+    uint8_t           md_inter_intra_level;
+    uint8_t           md_filter_intra_level;
+    uint8_t           md_allow_intrabc;
+    uint8_t           md_palette_level;
+    uint8_t           dist_based_ref_pruning;
+    DepthRemovalCtrls depth_removal_ctrls;
+    DepthCtrls        depth_ctrls; // control which depths can be considered in PD1
     DepthRefinementCtrls depth_refinement_ctrls;
     int64_t              parent_to_current_deviation;
     int64_t              child_to_current_deviation;
@@ -804,9 +801,9 @@ typedef struct ModeDecisionContext {
     uint64_t                                   default_cost_per_shape[NUMBER_OF_SHAPES];
     ParentSqCoeffAreaBasedCyclesReductionCtrls parent_sq_coeff_area_based_cycles_reduction_ctrls;
     uint8_t                                    sb_size;
-    EbPictureBufferDesc *                      recon_coeff_ptr[TX_TYPES];
-    EbPictureBufferDesc *                      recon_ptr[TX_TYPES];
-    EbPictureBufferDesc *                      quant_coeff_ptr[TX_TYPES];
+    EbPictureBufferDesc                       *recon_coeff_ptr[TX_TYPES];
+    EbPictureBufferDesc                       *recon_ptr[TX_TYPES];
+    EbPictureBufferDesc                       *quant_coeff_ptr[TX_TYPES];
 
     uint8_t              skip_intra;
     EbPictureBufferDesc *temp_residual_ptr;
@@ -868,16 +865,13 @@ typedef struct ModeDecisionContext {
     uint8_t
                 approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
     uint8_t     enable_psad; // Enable pSad
-#if ADD_VQ_MODE
     uint32_t    inter_depth_bias;
-#else
-    uint32_t    pd0_inter_depth_bias;
-#endif
     uint8_t     bipred_available;
     uint8_t     is_intra_bordered;
     uint8_t     updated_enable_pme;
     Lpd1TxCtrls lpd1_tx_ctrls;
-    uint8_t chroma_complexity; // Indicates which chroma components (if any) are complex, relative to luma. Chroma TX shortcuts based on luma should not be used when chroma is complex.
+    uint8_t
+        chroma_complexity; // Indicates which chroma components (if any) are complex, relative to luma. Chroma TX shortcuts based on luma should not be used when chroma is complex.
     uint8_t
         lpd1_skip_inter_tx_level; // Signal to skip INTER TX in LPD1; should only be used by M13 as this causes blocking artifacts.
     // 0: OFF, 1: Skip INTER TX if neighs have 0 coeffs, 2: skip all INTER TX
@@ -916,15 +910,12 @@ static const uint8_t quantizer_to_qindex[] = {
 static const int percents[2][FIXED_QP_OFFSET_COUNT] = {
     {75, 70, 60, 20, 15, 0}, {76, 60, 30, 15, 8, 4} // libaom offsets
 };
-#if ADD_VQ_MODE
-static const uint64_t uni_psy_bias[] =
-{
+static const uint64_t uni_psy_bias[] = {
     50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,
     60,  60,  60,  60,  60,  60,  60,  60,  70,  70,  70,  70,  70,  70,  70,  70,
     80,  80,  80,  80,  80,  80,  80,  80,  90,  90,  90,  90,  90,  90,  90,  90,
-   100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
 };
-#endif
 
 extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
                                 PictureControlSet *pcs_ptr, uint16_t tile_row_idx,
@@ -932,10 +923,10 @@ extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext
 
 extern void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                                        uint8_t sb_qp);
-extern void md_cfl_rd_pick_alpha(PictureControlSet *          pcs_ptr,
+extern void md_cfl_rd_pick_alpha(PictureControlSet           *pcs_ptr,
                                  ModeDecisionCandidateBuffer *candidate_buffer,
-                                 ModeDecisionContext *        context_ptr,
-                                 EbPictureBufferDesc *        input_picture_ptr,
+                                 ModeDecisionContext         *context_ptr,
+                                 EbPictureBufferDesc         *input_picture_ptr,
                                  uint32_t                     input_cb_origin_in_index,
                                  uint32_t                     blk_chroma_origin_index);
 

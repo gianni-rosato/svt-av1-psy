@@ -179,9 +179,7 @@ typedef struct RateControlIntervalParamContext {
     int64_t kf_group_error_left;
     uint8_t end_of_seq_seen;
     int32_t processed_frame_number;
-#if ADD_VQ_MODE
     uint8_t last_i_qp;
-#endif
 } RateControlIntervalParamContext;
 /**************************************
  * Input Port Types
@@ -227,7 +225,7 @@ int     svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_inte
 double  svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
                                                 int frame_count);
 
-EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr, int me_port_index);
 
 extern void *rate_control_kernel(void *input_ptr);

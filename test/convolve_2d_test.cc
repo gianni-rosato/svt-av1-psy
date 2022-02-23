@@ -1009,7 +1009,7 @@ class AV1HbdJntConvolve2DTest : public AV1HbdConvolve2DTest {
                 func_tst_ = svt_av1_highbd_jnt_convolve_y_avx2;
             else
                 func_tst_ = svt_av1_highbd_jnt_convolve_2d_copy_avx2;
-        } else {//SSE
+        } else {  // SSE
             if (has_subx == 1 && has_suby == 1)
                 func_tst_ = svt_av1_highbd_jnt_convolve_2d_sse4_1;
             else if (has_subx == 1)
@@ -1069,7 +1069,7 @@ class AV1HbdSrConvolve2DTest : public AV1HbdConvolve2DTest {
                 func_tst_ = svt_av1_highbd_convolve_y_sr_avx2;
             else
                 func_tst_ = svt_av1_highbd_convolve_2d_copy_sr_avx2;
-        } else {//SSE
+        } else {  // SSE
             if (has_subx == 1 && has_suby == 1)
                 func_tst_ = svt_av1_highbd_convolve_2d_sr_ssse3;
             else if (has_subx == 1)

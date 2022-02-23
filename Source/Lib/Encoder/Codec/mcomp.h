@@ -36,11 +36,11 @@ enum {
 } UENUM1BYTE(MV_COST_TYPE);
 typedef struct svt_mv_cost_param {
     // The reference mv used to compute the mv cost
-    const MV *   ref_mv;
+    const MV    *ref_mv;
     FULLPEL_MV   full_ref_mv;
     MV_COST_TYPE mv_cost_type;
-    const int *  mvjcost;
-    const int *  mvcost[2];
+    const int   *mvjcost;
+    const int   *mvcost[2];
     int          error_per_bit;
     int          early_exit_th;
     // A multiplier used to convert rate to sad cost
@@ -106,9 +106,9 @@ typedef int(fractional_mv_step_fp)(MacroBlockD *xd, const struct AV1Common *cons
 extern fractional_mv_step_fp svt_av1_find_best_sub_pixel_tree;
 extern fractional_mv_step_fp svt_av1_find_best_sub_pixel_tree_pruned;
 
-static INLINE void svt_av1_set_subpel_mv_search_range(SubpelMvLimits *    subpel_limits,
+static INLINE void svt_av1_set_subpel_mv_search_range(SubpelMvLimits     *subpel_limits,
                                                       const FullMvLimits *mv_limits,
-                                                      const MV *          ref_mv) {
+                                                      const MV           *ref_mv) {
     const int max_mv = GET_MV_SUBPEL(MAX_FULL_PEL_VAL);
     const int minc   = AOMMAX(GET_MV_SUBPEL(mv_limits->col_min), ref_mv->col - max_mv);
     const int maxc   = AOMMIN(GET_MV_SUBPEL(mv_limits->col_max), ref_mv->col + max_mv);

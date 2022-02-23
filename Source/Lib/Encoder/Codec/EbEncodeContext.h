@@ -113,7 +113,7 @@ typedef struct EncodeContext {
     uint32_t                picture_decision_pa_reference_queue_tail_index;
 
     // Picture Manager Circular Queues
-    InputQueueEntry **    input_picture_queue;
+    InputQueueEntry     **input_picture_queue;
     uint32_t              input_picture_queue_head_index;
     uint32_t              input_picture_queue_tail_index;
     ReferenceQueueEntry **reference_picture_queue;
@@ -186,7 +186,7 @@ typedef struct EncodeContext {
     GF_GROUP             gf_group;
     KeyFrameCfg          kf_cfg;
     GFConfig             gf_cfg;
-    FIRSTPASS_STATS *    frame_stats_buffer;
+    FIRSTPASS_STATS     *frame_stats_buffer;
     // Number of stats buffers required for look ahead
     int               num_lap_buffers;
     STATS_BUFFER_CTX  stats_buf_context;

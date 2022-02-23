@@ -453,9 +453,9 @@ void svt_av1_queue_parse_jobs(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info
 EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num) {
     EbErrorType status = EB_ErrorNone;
 
-    TilesInfo *    tiles_info      = &dec_handle_ptr->frame_header.tiles_info;
+    TilesInfo     *tiles_info      = &dec_handle_ptr->frame_header.tiles_info;
     MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
-    ParseCtxt *    parse_ctxt      = &main_parse_ctxt->tile_parse_ctxt[tile_num];
+    ParseCtxt     *parse_ctxt      = &main_parse_ctxt->tile_parse_ctxt[tile_num];
 
     parse_ctxt->seq_header   = &dec_handle_ptr->seq_header;
     parse_ctxt->frame_header = &dec_handle_ptr->frame_header;
@@ -473,7 +473,7 @@ void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_parse_frame = &dec_mt_frame_data->start_parse_frame;
 #if MT_WAIT_PROFILE
-    FILE *            fp = dec_mt_frame_data->fp;
+    FILE             *fp = dec_mt_frame_data->fp;
     struct EbDecTimer timer;
     int               th_cnt = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     dec_timer_start(&timer);
@@ -517,7 +517,7 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_decode_frame = &dec_mt_frame_data->start_decode_frame;
 #if MT_WAIT_PROFILE
-    FILE *            fp = dec_mt_frame_data->fp;
+    FILE             *fp = dec_mt_frame_data->fp;
     struct EbDecTimer timer;
     int               th_cnt = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     dec_timer_start(&timer);
@@ -625,7 +625,7 @@ void svt_av1_queue_lf_jobs(EbDecHandle *dec_handle_ptr) {
 }
 
 /* Store LF_boundary_line req for LR */
-static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle *  dec_handle,
+static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle   *dec_handle,
                                                      Av1PixelRect **tile_rect, int32_t sb_row,
                                                      uint8_t **src, int32_t *stride,
                                                      int32_t num_planes) {
@@ -635,7 +635,7 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle *  dec_handle,
     int32_t    num64s     = sb_128 ? 1 : 0;
     const int  use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
                             dec_handle->is_16bit_pipeline);
-    LrCtxt *   lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
+    LrCtxt    *lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     for (int32_t p = 0; p < num_planes; ++p) {
         int32_t                      ss_x          = p ? cm->subsampling_x : 0;
         int32_t                      ss_y          = p ? cm->subsampling_y : 0;
@@ -697,15 +697,15 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle *  dec_handle,
 }
 
 /* Store CDEF_boundary_line req for LR */
-static INLINE void dec_save_CDEF_boundary_lines_SB_row(EbDecHandle *  dec_handle,
+static INLINE void dec_save_CDEF_boundary_lines_SB_row(EbDecHandle   *dec_handle,
                                                        Av1PixelRect **tile_rect, int32_t sb_row,
                                                        uint8_t **src, int32_t *stride,
                                                        int32_t num_planes) {
-    Av1Common *     cm         = &dec_handle->cm;
-    FrameSize *     frame_size = &dec_handle->frame_header.frame_size;
+    Av1Common      *cm         = &dec_handle->cm;
+    FrameSize      *frame_size = &dec_handle->frame_header.frame_size;
     const int       use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
                             dec_handle->is_16bit_pipeline);
-    LrCtxt *        lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
+    LrCtxt         *lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     for (int32_t p = 0; p < num_planes; ++p) {
@@ -759,7 +759,7 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
 
     volatile EbBool *start_lf_frame = &dec_mt_frame_data1->start_lf_frame;
 #if MT_WAIT_PROFILE
-    FILE *            fp = dec_mt_frame_data1->fp;
+    FILE             *fp = dec_mt_frame_data1->fp;
     struct EbDecTimer timer;
     int               th_cnt = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     dec_timer_start(&timer);
@@ -799,10 +799,10 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
     // Get the tile rectangle, with height rounded up to the next multiple of 8
     // luma pixels (only relevant for the bottom tile of the frame)
     Av1PixelRect         tile_rect[MAX_MB_PLANE];
-    Av1PixelRect *       tile_rect_p[MAX_MB_PLANE];
+    Av1PixelRect        *tile_rect_p[MAX_MB_PLANE];
     const int            num_planes  = av1_num_planes(&dec_handle->seq_header.color_config);
     EbPictureBufferDesc *cur_pic_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
-    uint8_t *            src[MAX_MB_PLANE];
+    uint8_t             *src[MAX_MB_PLANE];
     int32_t              stride[MAX_MB_PLANE];
     for (int p = 0; p < num_planes; ++p) {
         int32_t is_uv  = p ? 1 : 0;
@@ -905,13 +905,13 @@ void svt_av1_queue_cdef_jobs(EbDecHandle *dec_handle_ptr) {
 }
 
 void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
-    uint8_t *       curr_blk_recon_buf[MAX_MB_PLANE];
+    uint8_t        *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t         curr_recon_stride[MAX_MB_PLANE];
     DecMtFrameData *dec_mt_frame_data1 =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_cdef_frame = &dec_mt_frame_data1->start_cdef_frame;
 #if MT_WAIT_PROFILE
-    FILE *            fp = dec_mt_frame_data1->fp;
+    FILE             *fp = dec_mt_frame_data1->fp;
     struct EbDecTimer timer;
     int               th_cnt = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     dec_timer_start(&timer);
@@ -1307,8 +1307,8 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
 
 void *dec_all_stage_kernel(void *input_ptr) {
     // Context
-    DecThreadCtxt * thread_ctxt    = (DecThreadCtxt *)input_ptr;
-    EbDecHandle *   dec_handle_ptr = thread_ctxt->dec_handle_ptr;
+    DecThreadCtxt  *thread_ctxt    = (DecThreadCtxt *)input_ptr;
+    EbDecHandle    *dec_handle_ptr = thread_ctxt->dec_handle_ptr;
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_thread = (volatile EbBool *)&dec_handle_ptr->start_thread_process;

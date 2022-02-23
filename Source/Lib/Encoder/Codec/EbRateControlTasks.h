@@ -32,7 +32,7 @@ typedef enum RateControlTaskTypes {
 typedef struct RateControlTasks {
     EbDctor              dctor;
     RateControlTaskTypes task_type;
-    EbObjectWrapper *    pcs_wrapper_ptr;
+    EbObjectWrapper     *pcs_wrapper_ptr;
 } RateControlTasks;
 
 typedef struct RateControlTasksInitData {

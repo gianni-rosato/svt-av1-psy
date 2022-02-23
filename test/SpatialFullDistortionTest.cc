@@ -187,7 +187,8 @@ INSTANTIATE_TEST_CASE_P(
     AVX2, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_avx2));
 
-INSTANTIATE_TEST_CASE_P(SSE4_1, SpatialFullDistortionTest,
+INSTANTIATE_TEST_CASE_P(
+    SSE4_1, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_sse4_1));
 
 #if EN_AVX512_SUPPORT
@@ -591,8 +592,10 @@ class fullDistortionKernel32Bits
     void RunCheckOutput();
 
     void init_data() {
-        svt_buf_random_u32_with_max((uint32_t *)coeff, MAX_SB_SIZE * coeff_stride_, (1<<15));
-        svt_buf_random_u32_with_max((uint32_t *)recon, MAX_SB_SIZE * recon_stride_, (1<<15));
+        svt_buf_random_u32_with_max(
+            (uint32_t *)coeff, MAX_SB_SIZE * coeff_stride_, (1 << 15));
+        svt_buf_random_u32_with_max(
+            (uint32_t *)recon, MAX_SB_SIZE * recon_stride_, (1 << 15));
     }
 
     uint64_t result_ref[DIST_CALC_TOTAL];
@@ -608,7 +611,8 @@ void fullDistortionKernel32Bits::RunCheckOutput() {
     for (int i = 0; i < 10; i++) {
         init_data();
         for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
-            for (uint32_t area_height = 4; area_height <= 128; area_height += 4) {
+            for (uint32_t area_height = 4; area_height <= 128;
+                 area_height += 4) {
                 svt_full_distortion_kernel32_bits_c(coeff,
                                                     coeff_stride_,
                                                     recon,
@@ -624,7 +628,8 @@ void fullDistortionKernel32Bits::RunCheckOutput() {
                       area_width,
                       area_height);
 
-                EXPECT_EQ(memcmp(result_ref, result_mod, sizeof(result_ref)), 0);
+                EXPECT_EQ(memcmp(result_ref, result_mod, sizeof(result_ref)),
+                          0);
             }
         }
     }
@@ -686,18 +691,13 @@ void fullDistortionKernelCbfZero32Bits::RunCheckOutput() {
         for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
             for (uint32_t area_height = 4; area_height <= 128;
                  area_height += 4) {
-                svt_full_distortion_kernel_cbf_zero32_bits_c(coeff,
-                                                    coeff_stride_,
-                                                    result_ref,
-                                                    area_width,
-                                                    area_height);
-                func_(coeff,
-                      coeff_stride_,
-                      result_mod,
-                      area_width,
-                      area_height);
+                svt_full_distortion_kernel_cbf_zero32_bits_c(
+                    coeff, coeff_stride_, result_ref, area_width, area_height);
+                func_(
+                    coeff, coeff_stride_, result_mod, area_width, area_height);
 
-                EXPECT_EQ(memcmp(result_ref, result_mod, sizeof(result_ref)), 0);
+                EXPECT_EQ(memcmp(result_ref, result_mod, sizeof(result_ref)),
+                          0);
             }
         }
     }

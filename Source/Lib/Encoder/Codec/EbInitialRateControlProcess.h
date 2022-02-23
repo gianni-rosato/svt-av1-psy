@@ -19,7 +19,7 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType initial_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
                                               const EbEncHandle *enc_handle_ptr);
 
 extern void *initial_rate_control_kernel(void *input_ptr);

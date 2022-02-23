@@ -50,7 +50,7 @@ enum {
 
 typedef struct {
     double params[MAX_PARAMDIM - 1];
-    int *  inliers;
+    int   *inliers;
     int    num_inliers;
 } MotionModel;
 

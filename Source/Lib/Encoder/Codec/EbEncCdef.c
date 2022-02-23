@@ -138,7 +138,6 @@ static INLINE uint64_t mse_4xn_8bit_c(const uint8_t *src, const uint8_t *dst, co
 uint64_t compute_cdef_dist_c(const uint16_t *dst, int32_t dstride, const uint16_t *src,
                              const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
                              int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor) {
-
     uint64_t sum = 0;
     int32_t  bi, bx, by;
     if (bsize == BLOCK_8X8) {
@@ -275,8 +274,8 @@ int32_t svt_sb_all_skip(PictureControlSet *pcs_ptr, const Av1Common *const cm, i
 int32_t svt_sb_compute_cdef_list(PictureControlSet *pcs_ptr, const Av1Common *const cm,
                                  int32_t mi_row, int32_t mi_col, CdefList *dlist, BlockSize bs) {
     //MbModeInfo **grid = cm->mi_grid_visible;
-    ModeInfo **grid = pcs_ptr->mi_grid_base;
-    int32_t mi_stride = pcs_ptr->mi_stride;
+    ModeInfo **grid      = pcs_ptr->mi_grid_base;
+    int32_t    mi_stride = pcs_ptr->mi_stride;
 
     int32_t maxc = cm->mi_cols - mi_col;
     int32_t maxr = cm->mi_rows - mi_row;
@@ -324,8 +323,8 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
     (void)context_ptr;
 
     struct PictureParentControlSet *ppcs    = pCs->parent_pcs_ptr;
-    Av1Common *                     cm      = ppcs->av1_cm;
-    FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
+    Av1Common                      *cm      = ppcs->av1_cm;
+    FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
 
     EbPictureBufferDesc *recon_picture_ptr;
     get_recon_pic(pCs, &recon_picture_ptr, EB_FALSE);
@@ -342,16 +341,16 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
 
     const int32_t num_planes = av1_num_planes(&scs_ptr->seq_header.color_config);
     DECLARE_ALIGNED(16, uint16_t, src[CDEF_INBUF_SIZE]);
-    uint16_t *linebuf[3];
-    uint16_t *colbuf[3];
-    CdefList  dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
-    uint8_t * row_cdef, *prev_row_cdef, *curr_row_cdef;
-    int32_t   cdef_count;
+    uint16_t      *linebuf[3];
+    uint16_t      *colbuf[3];
+    CdefList       dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
+    uint8_t       *row_cdef, *prev_row_cdef, *curr_row_cdef;
+    int32_t        cdef_count;
     const uint32_t sb_size = scs_ptr->super_block_size;
-    int32_t mi_wide_l2[3];
-    int32_t mi_high_l2[3];
-    int32_t xdec[3];
-    int32_t ydec[3];
+    int32_t        mi_wide_l2[3];
+    int32_t        mi_high_l2[3];
+    int32_t        xdec[3];
+    int32_t        ydec[3];
     int32_t coeff_shift = AOMMAX(scs_ptr->static_config.encoder_bit_depth /*cm->bit_depth*/ - 8, 0);
     const int32_t nvfb  = (cm->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     const int32_t nhfb  = (cm->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
@@ -454,7 +453,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
             if (sb_size == 128) {
                 const uint32_t    lc      = MI_SIZE_64X64 * fbc;
                 const uint32_t    lr      = MI_SIZE_64X64 * fbr;
-                ModeInfo **       mi      = pCs->mi_grid_base + lr * cm->mi_stride + lc;
+                ModeInfo        **mi      = pCs->mi_grid_base + lr * cm->mi_stride + lc;
                 const MbModeInfo *mbmi    = &mi[0]->mbmi;
                 const BlockSize   sb_type = mbmi->block_mi.sb_type;
                 if (((fbc & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_128X64)) ||
@@ -463,7 +462,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
             }
             uint8_t(*dir)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pCs->cdef_dir_data[fbr * nhfb + fbc].dir;
             int32_t(*var)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pCs->cdef_dir_data[fbr * nhfb + fbc].var;
-            curr_row_cdef[fbc] = 1;
+            curr_row_cdef[fbc]                        = 1;
             for (int32_t pli = 0; pli < num_planes; pli++) {
                 int32_t coffset;
                 int32_t rend, cend;
@@ -481,7 +480,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                 else
                     rend = vsize + CDEF_VBORDER;
 
-                coffset = fbc * MI_SIZE_64X64 << mi_wide_l2[pli];
+                coffset             = fbc * MI_SIZE_64X64 << mi_wide_l2[pli];
                 uint8_t *rec_buff   = 0;
                 uint32_t rec_stride = 0;
 
@@ -490,11 +489,15 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                     rec_buff   = recon_buffer_y;
                     rec_stride = recon_picture_ptr->stride_y;
                     break;
-                case 1: rec_buff = recon_buffer_cb; rec_stride = recon_picture_ptr->stride_cb;
+                case 1:
+                    rec_buff     = recon_buffer_cb;
+                    rec_stride   = recon_picture_ptr->stride_cb;
                     level        = uv_level;
                     sec_strength = uv_sec_strength;
                     break;
-                case 2: rec_buff = recon_buffer_cr; rec_stride = recon_picture_ptr->stride_cr;
+                case 2:
+                    rec_buff     = recon_buffer_cr;
+                    rec_stride   = recon_picture_ptr->stride_cr;
                     level        = uv_level;
                     sec_strength = uv_sec_strength;
                     break;
@@ -630,8 +633,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                 }
                 // if ppcs->cdef_ctrls.use_reference_cdef_fs is true, then search was not performed
                 // Therefore, need to make sure dir and var are initialized
-                if (level || sec_strength || !dirinit)
-                {
+                if (level || sec_strength || !dirinit) {
                     svt_cdef_filter_fb(
                         &rec_buff[rec_stride * (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
                                   (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
@@ -677,8 +679,8 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                          PictureControlSet *pCs) {
     (void)context_ptr;
     struct PictureParentControlSet *ppcs    = pCs->parent_pcs_ptr;
-    Av1Common *                     cm      = ppcs->av1_cm;
-    FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
+    Av1Common                      *cm      = ppcs->av1_cm;
+    FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
 
     EbPictureBufferDesc *recon_picture_ptr;
     get_recon_pic(pCs, &recon_picture_ptr, 1);
@@ -693,16 +695,16 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
 
     const int32_t num_planes = av1_num_planes(&scs_ptr->seq_header.color_config);
     DECLARE_ALIGNED(16, uint16_t, src[CDEF_INBUF_SIZE]);
-    uint16_t *linebuf[3];
-    uint16_t *colbuf[3];
-    CdefList  dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
-    uint8_t * row_cdef, *prev_row_cdef, *curr_row_cdef;
-    int32_t   cdef_count;
+    uint16_t      *linebuf[3];
+    uint16_t      *colbuf[3];
+    CdefList       dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
+    uint8_t       *row_cdef, *prev_row_cdef, *curr_row_cdef;
+    int32_t        cdef_count;
     const uint32_t sb_size = scs_ptr->super_block_size;
-    int32_t mi_wide_l2[3];
-    int32_t mi_high_l2[3];
-    int32_t xdec[3];
-    int32_t ydec[3];
+    int32_t        mi_wide_l2[3];
+    int32_t        mi_high_l2[3];
+    int32_t        xdec[3];
+    int32_t        ydec[3];
     int32_t coeff_shift = AOMMAX(scs_ptr->static_config.encoder_bit_depth /*cm->bit_depth*/ - 8, 0);
     const int32_t nvfb  = (cm->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     const int32_t nhfb  = (cm->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
@@ -801,7 +803,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
             if (sb_size == 128) {
                 const uint32_t    lc      = MI_SIZE_64X64 * fbc;
                 const uint32_t    lr      = MI_SIZE_64X64 * fbr;
-                ModeInfo **       mi      = pCs->mi_grid_base + lr * cm->mi_stride + lc;
+                ModeInfo        **mi      = pCs->mi_grid_base + lr * cm->mi_stride + lc;
                 const MbModeInfo *mbmi    = &mi[0]->mbmi;
                 const BlockSize   sb_type = mbmi->block_mi.sb_type;
                 if (((fbc & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_128X64)) ||
@@ -810,7 +812,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
             }
             uint8_t(*dir)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pCs->cdef_dir_data[fbr * nhfb + fbc].dir;
             int32_t(*var)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pCs->cdef_dir_data[fbr * nhfb + fbc].var;
-            curr_row_cdef[fbc] = 1;
+            curr_row_cdef[fbc]                        = 1;
             for (int32_t pli = 0; pli < num_planes; pli++) {
                 int32_t coffset;
                 int32_t rend, cend;
@@ -828,7 +830,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                 else
                     rend = vsize + CDEF_VBORDER;
 
-                coffset = fbc * MI_SIZE_64X64 << mi_wide_l2[pli];
+                coffset              = fbc * MI_SIZE_64X64 << mi_wide_l2[pli];
                 uint16_t *rec_buff   = 0;
                 uint32_t  rec_stride = 0;
 
@@ -837,11 +839,15 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                     rec_buff   = recon_buffer_y;
                     rec_stride = recon_picture_ptr->stride_y;
                     break;
-                case 1: rec_buff = recon_buffer_cb; rec_stride = recon_picture_ptr->stride_cb;
+                case 1:
+                    rec_buff     = recon_buffer_cb;
+                    rec_stride   = recon_picture_ptr->stride_cb;
                     level        = uv_level;
                     sec_strength = uv_sec_strength;
                     break;
-                case 2: rec_buff = recon_buffer_cr; rec_stride = recon_picture_ptr->stride_cr;
+                case 2:
+                    rec_buff     = recon_buffer_cr;
+                    rec_stride   = recon_picture_ptr->stride_cr;
                     level        = uv_level;
                     sec_strength = uv_sec_strength;
                     break;
@@ -1030,9 +1036,8 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
  * start_gi : starting strength index for the search of the additional strengths.
  * end_gi : End index for the for the search of the additional strengths.
 */
-uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
-                               uint64_t **mse[2], int sb_count, int start_gi,
-                               int end_gi) {
+uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths, uint64_t **mse[2],
+                               int sb_count, int start_gi, int end_gi) {
     uint64_t      tot_mse[TOTAL_STRENGTHS][TOTAL_STRENGTHS];
     int32_t       i, j;
     uint64_t      best_tot_mse    = (uint64_t)1 << 63;
@@ -1074,9 +1079,11 @@ uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
     /* Loop over the additionally searched (Luma_strength, Chroma_strength) pairs
        from the step above, and identify any such pair that provided the best mse for
        the whole frame. The identified pair would be added to the set of already selected pairs. */
-    for (j = start_gi; j < total_strengths; j++) { // Loop over the additionally searched luma strengths
+    for (j = start_gi; j < total_strengths;
+         j++) { // Loop over the additionally searched luma strengths
         int32_t k;
-        for (k = start_gi; k < total_strengths; k++) { // Loop over the additionally searched chroma strengths
+        for (k = start_gi; k < total_strengths;
+             k++) { // Loop over the additionally searched chroma strengths
             if (tot_mse[j][k] < best_tot_mse) {
                 best_tot_mse = tot_mse[j][k];
                 best_id0     = j; // index for the best luma strength
@@ -1084,8 +1091,10 @@ uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
             }
         }
     }
-    lev0[nb_strengths] = best_id0; // Add the identified luma strength to the list of selected luma strengths
-    lev1[nb_strengths] = best_id1; // Add the identified chroma strength to the list of selected chroma strengths
+    lev0[nb_strengths] =
+        best_id0; // Add the identified luma strength to the list of selected luma strengths
+    lev1[nb_strengths] =
+        best_id1; // Add the identified chroma strength to the list of selected chroma strengths
     return best_tot_mse;
 }
 /*
@@ -1141,12 +1150,12 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
     cdef_strength = pri_strength * CDEF_SEC_STRENGTHS + sec_strength;
 void finish_cdef_search(PictureControlSet *pcs_ptr) {
     struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
-    FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
-    Av1Common *                     cm      = ppcs->av1_cm;
+    FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
+    Av1Common                      *cm      = ppcs->av1_cm;
     int32_t                         mi_rows = ppcs->av1_cm->mi_rows;
     int32_t                         mi_cols = ppcs->av1_cm->mi_cols;
 
-    int32_t fbr, fbc;
+    int32_t  fbr, fbc;
     uint64_t best_tot_mse = (uint64_t)1 << 63;
     int32_t  sb_count;
     int32_t  nvfb = (mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
@@ -1218,19 +1227,17 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
         return;
     }
     int32_t *sb_index = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
-#if OPT_DECODER
     // to keep track of the sb_address in units of SBs (not mi_size)
-    int32_t *sb_addr = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
-#endif
-    int32_t start_gi = 0;
-    int32_t end_gi   = first_pass_fs_num + default_second_pass_fs_num;
+    int32_t *sb_addr  = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
+    int32_t  start_gi = 0;
+    int32_t  end_gi   = first_pass_fs_num + default_second_pass_fs_num;
     assert(sb_index != NULL);
     uint64_t **mse[2];
-    int32_t  i;
-    int32_t  nb_strengths;
-    int32_t  nb_strength_bits;
-    uint64_t lambda;
-    uint32_t fast_lambda, full_lambda = 0;
+    int32_t    i;
+    int32_t    nb_strengths;
+    int32_t    nb_strength_bits;
+    uint64_t   lambda;
+    uint32_t   fast_lambda, full_lambda = 0;
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
         pcs_ptr,
         &fast_lambda,
@@ -1238,9 +1245,9 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
         (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx,
         EB_FALSE);
-    lambda = full_lambda;
-    mse[0] = (uint64_t **)malloc(sizeof(*mse) * nvfb * nhfb);
-    mse[1] = (uint64_t **)malloc(sizeof(*mse) * nvfb * nhfb);
+    lambda   = full_lambda;
+    mse[0]   = (uint64_t **)malloc(sizeof(*mse) * nvfb * nhfb);
+    mse[1]   = (uint64_t **)malloc(sizeof(*mse) * nvfb * nhfb);
     sb_count = 0;
     for (fbr = 0; fbr < nvfb; ++fbr) {
         for (fbc = 0; fbc < nhfb; ++fbc) {
@@ -1265,9 +1272,7 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
             mse[1][sb_count] = pcs_ptr->mse_seg[1][fbr * nhfb + fbc];
 
             sb_index[sb_count] = MI_SIZE_64X64 * fbr * pcs_ptr->mi_stride + MI_SIZE_64X64 * fbc;
-#if OPT_DECODER
-            sb_addr[sb_count] = fbr * nhfb + fbc;
-#endif
+            sb_addr[sb_count]  = fbr * nhfb + fbc;
             sb_count++;
         }
     }
@@ -1276,24 +1281,16 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
     // Scale down the cost of the (0,0) filter strength to bias selection towards off.
     // When off, can save the cost of the application.
     if (cdef_ctrls->zero_fs_cost_bias) {
-#if OPT_DECODER
         for (i = 0; i < sb_count; i++) {
             uint16_t factor = cdef_ctrls->zero_fs_cost_bias;
             if (cdef_ctrls->scale_cost_bias_on_nz_coeffs) {
                 // count of nz-coeffs is divided by 256; adding 128 is for rounding
                 uint16_t factor_modifier = ((pcs_ptr->sb_count_nz_coeffs[sb_addr[i]] + 128) >> 8);
-                factor = factor_modifier < factor ? factor - factor_modifier : 0;
+                factor                   = factor_modifier < factor ? factor - factor_modifier : 0;
             }
             mse[0][i][0] = (factor * mse[0][i][0]) >> 6;
             mse[1][i][0] = (factor * mse[1][i][0]) >> 6;
         }
-#else
-        const uint16_t factor = cdef_ctrls->zero_fs_cost_bias;
-        for (i = 0; i < sb_count; i++) {
-            mse[0][i][0] = (factor * mse[0][i][0]) >> 6;
-            mse[1][i][0] = (factor * mse[1][i][0]) >> 6;
-        }
-#endif
     }
     /* Search for different number of signalling bits. */
     for (i = 0; i <= 3; i++) {
@@ -1376,7 +1373,5 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
     free(mse[0]);
     free(mse[1]);
     free(sb_index);
-#if OPT_DECODER
     free(sb_addr);
-#endif
 }

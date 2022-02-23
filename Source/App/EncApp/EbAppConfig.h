@@ -65,8 +65,8 @@ typedef struct EbMemoryMapEntry {
 } EbMemoryMapEntry;
 
 extern EbMemoryMapEntry *app_memory_map; // App Memory table
-extern uint32_t *        app_memory_map_index; // App Memory index
-extern uint64_t *        total_app_memory; // App Memory malloc'd
+extern uint32_t         *app_memory_map_index; // App Memory index
+extern uint64_t         *total_app_memory; // App Memory malloc'd
 extern uint32_t          app_malloc_count;
 
 #define MAX_APP_NUM_PTR (0x186A0 << 2) // Maximum number of pointers to be allocated for the app
@@ -176,22 +176,22 @@ typedef struct EbConfig {
     /****************************************
      * File I/O
      ****************************************/
-    FILE *     config_file;
-    FILE *     input_file;
+    FILE      *config_file;
+    FILE      *input_file;
     MemMapFile mmap; //memory mapped file handler
     EbBool     input_file_is_fifo;
-    FILE *     bitstream_file;
-    FILE *     recon_file;
-    FILE *     error_log_file;
-    FILE *     stat_file;
-    FILE *     buffer_file;
-    FILE *     qp_file;
+    FILE      *bitstream_file;
+    FILE      *recon_file;
+    FILE      *error_log_file;
+    FILE      *stat_file;
+    FILE      *buffer_file;
+    FILE      *qp_file;
     /* two pass */
-    const char *  stats;
-    FILE *        input_stat_file;
-    FILE *        output_stat_file;
-    FILE *        input_pred_struct_file;
-    char *        input_pred_struct_filename;
+    const char   *stats;
+    FILE         *input_stat_file;
+    FILE         *output_stat_file;
+    FILE         *input_pred_struct_file;
+    char         *input_pred_struct_filename;
     EbBool        y4m_input;
     unsigned char y4m_buf[9];
 
@@ -236,8 +236,8 @@ typedef struct EbConfig {
 } EbConfig;
 
 typedef struct EncChannel {
-    EbConfig *           config; // Encoder Configuration
-    EbAppContext *       app_callback; // Instances App callback date
+    EbConfig            *config; // Encoder Configuration
+    EbAppContext        *app_callback; // Instances App callback date
     EbErrorType          return_error; // Error Handling
     AppExitConditionType exit_cond_output; // Processing loop exit condition
     AppExitConditionType exit_cond_recon; // Processing loop exit condition
@@ -258,15 +258,15 @@ typedef struct EncApp {
 EbConfig *svt_config_ctor();
 void      svt_config_dtor(EbConfig *config_ptr);
 
-EbErrorType        enc_channel_ctor(EncChannel *c);
-void               enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
-EbErrorType        read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
-                                     uint32_t num_channels);
-int                get_version(int argc, char *argv[]);
-extern uint32_t    get_help(int32_t argc, char *const argv[]);
-extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
-uint32_t           get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS],
-                              MultiPassModes *multi_pass_mode);
-EbErrorType        handle_stats_file(EbConfig *config, EncPass pass,
-                                     const SvtAv1FixedBuf *rc_stats_buffer, uint32_t channel_number);
+EbErrorType     enc_channel_ctor(EncChannel *c);
+void            enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
+EbErrorType     read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
+                                  uint32_t num_channels);
+int             get_version(int argc, char *argv[]);
+extern uint32_t get_help(int32_t argc, char *const argv[]);
+extern uint32_t get_number_of_channels(int32_t argc, char *const argv[]);
+uint32_t        get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS],
+                           MultiPassModes *multi_pass_mode);
+EbErrorType handle_stats_file(EbConfig *config, EncPass pass, const SvtAv1FixedBuf *rc_stats_buffer,
+                              uint32_t channel_number);
 #endif //EbAppConfig_h

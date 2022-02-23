@@ -107,7 +107,7 @@ int32_t svt_aom_noise_strength_solver_solve(AomNoiseStrengthSolver *solver);
      */
 int32_t svt_aom_noise_strength_solver_fit_piecewise(const AomNoiseStrengthSolver *solver,
                                                     int32_t                       max_num_points,
-                                                    AomNoiseStrengthLut *         lut);
+                                                    AomNoiseStrengthLut          *lut);
 
 /*!\brief Helper for holding precomputed data for finding flat blocks.
      *
@@ -231,9 +231,9 @@ typedef struct AomDenoiseAndModel {
 
     // Buffers for image and noise_psd allocated on the fly
     float                noise_psd[3];
-    uint8_t *            denoised[3];
-    uint8_t *            flat_blocks;
-    uint16_t *           packed[3];
+    uint8_t             *denoised[3];
+    uint8_t             *flat_blocks;
+    uint16_t            *packed[3];
     EbPictureBufferDesc *denoised_pic;
     EbPictureBufferDesc *packed_pic;
 
@@ -296,7 +296,7 @@ void svt_aom_noise_model_save_latest(AomNoiseModel *noise_model);
      * function does the conversion by selecting the correct quantization levels.
      */
 int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_model,
-                                                 AomFilmGrain *       film_grain);
+                                                 AomFilmGrain        *film_grain);
 
 /*!\brief Perform a Wiener filter denoising in 2D using the provided noise psd.
      *

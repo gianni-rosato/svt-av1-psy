@@ -34,7 +34,7 @@ static void decode_partition(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t
         mi_col >= dec_mod_ctxt->frame_header->mi_cols)
         return;
 
-    EbDecHandle *  dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
+    EbDecHandle   *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
     BlockModeInfo *mode_info  = get_cur_mode_info(dec_handle, mi_row, mi_col, sb_info);
 
     for (int i = 0; i < sb_info->num_block; i++) {
@@ -68,11 +68,11 @@ EbErrorType decode_tile_row(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
                             DecMtParseReconTileInfo *parse_recon_tile_info_array, int32_t tile_col,
                             int32_t mi_row, int32_t sb_row) {
     EbErrorType       status                   = EB_ErrorNone;
-    EbDecHandle *     dec_handle_ptr           = (EbDecHandle *)(dec_mod_ctxt->dec_handle_ptr);
-    MainFrameBuf *    main_frame_buf           = &dec_handle_ptr->main_frame_buf;
-    CurFrameBuf *     frame_buf                = &main_frame_buf->cur_frame_bufs[0];
+    EbDecHandle      *dec_handle_ptr           = (EbDecHandle *)(dec_mod_ctxt->dec_handle_ptr);
+    MainFrameBuf     *main_frame_buf           = &dec_handle_ptr->main_frame_buf;
+    CurFrameBuf      *frame_buf                = &main_frame_buf->cur_frame_bufs[0];
     volatile int32_t *sb_completed_in_prev_row = NULL;
-    uint32_t *        sb_completed_in_row;
+    uint32_t         *sb_completed_in_row;
     int32_t           tile_wd_in_sb;
     int32_t           sb_mi_size_log2 = dec_mod_ctxt->seq_header->sb_size_log2 - MI_SIZE_LOG2;
 

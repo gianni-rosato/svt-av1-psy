@@ -61,7 +61,7 @@ EbErrorType        av1_txb_estimate_coeff_bits(
            COMPONENT_TYPE component_type);
 
 EbErrorType av1_txb_estimate_coeff_bits_light_pd0(
-    struct ModeDecisionContext *        md_context,
+    struct ModeDecisionContext         *md_context,
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t txb_origin_index,
     EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint64_t *y_txb_coeff_bits,
     TxSize txsize);
@@ -79,7 +79,7 @@ static INLINE int32_t frame_is_sframe(const PictureParentControlSet *pcs_ptr) {
 // Returns 1 if this frame might allow mvs from some reference frame.
 
 static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet *pcs_ptr,
-                                                      SequenceControlSet *           scs_ptr) {
+                                                      SequenceControlSet            *scs_ptr) {
     return !pcs_ptr->frm_hdr.error_resilient_mode &&
         scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs &&
         scs_ptr->seq_header.order_hint_info.enable_order_hint && !frame_is_intra_only(pcs_ptr);
@@ -87,7 +87,7 @@ static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControl
 
 // Returns 1 if this frame might use warped_motion
 static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs_ptr,
-                                                      SequenceControlSet *           scs_ptr) {
+                                                      SequenceControlSet            *scs_ptr) {
     return !pcs_ptr->frm_hdr.error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
         scs_ptr->enable_warped_motion;
 }
@@ -123,7 +123,7 @@ void svt_aom_wb_write_inv_signed_literal(struct AomWriteBitBuffer *wb, int32_t d
 // Bitstream.h
 struct AomWriteBitBuffer;
 
-void write_sequence_header(SequenceControlSet *      scs_ptr /*Av1Comp *cpi*/,
+void write_sequence_header(SequenceControlSet       *scs_ptr /*Av1Comp *cpi*/,
                            struct AomWriteBitBuffer *wb);
 
 uint32_t write_obu_header(ObuType ObuType, int32_t obuExtension, uint8_t *const dst);

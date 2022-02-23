@@ -66,10 +66,10 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, con
                                      const uint32_t mi_col);
 
 typedef struct LoopFilterWorkerData {
-    EbPictureBufferDesc *   frame_buffer; //reconpicture,
-    PictureControlSet *     pcs_ptr;
+    EbPictureBufferDesc    *frame_buffer; //reconpicture,
+    PictureControlSet      *pcs_ptr;
     struct MacroblockdPlane planes[MAX_MB_PLANE];
-    MacroBlockD *           xd;
+    MacroBlockD            *xd;
 } LFWorkerData;
 
 #ifdef __cplusplus

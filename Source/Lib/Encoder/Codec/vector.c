@@ -128,7 +128,7 @@ int _vector_adjust_capacity(Vector *vector) {
 
 int _vector_reallocate(Vector *vector, uint32_t new_capacity) {
     size_t new_capacity_in_bytes;
-    void * old;
+    void  *old;
     assert(vector != NULL);
 
     if (new_capacity < VECTOR_MINIMUM_CAPACITY) {

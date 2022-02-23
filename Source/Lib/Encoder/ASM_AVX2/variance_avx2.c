@@ -101,7 +101,7 @@ static INLINE void variance16_no_sum_avx2(const uint8_t *src, const int32_t src_
                                                    int32_t        src_stride,    \
                                                    const uint8_t *ref,           \
                                                    int32_t        ref_stride,    \
-                                                   uint32_t *     sse) {              \
+                                                   uint32_t      *sse) {              \
         __m256i vsse = _mm256_setzero_si256();                                   \
         variance##bw##_no_sum_avx2(src, src_stride, ref, ref_stride, bh, &vsse); \
         variance_final_##max_pixel##_no_sum_avx2(vsse, sse);                     \
@@ -250,7 +250,7 @@ static INLINE void variance128_avx2(const uint8_t *src, const int src_stride, co
                                                     int            src_stride,   \
                                                     const uint8_t *ref,          \
                                                     int            ref_stride,   \
-                                                    unsigned int * sse) {         \
+                                                    unsigned int  *sse) {         \
         __m256i vsse = _mm256_setzero_si256();                                   \
         __m256i vsum;                                                            \
         variance##bw##_avx2(src, src_stride, ref, ref_stride, bh, &vsse, &vsum); \
@@ -277,7 +277,7 @@ AOM_VAR_NO_LOOP_AVX2(64, 32, 11, 2048);
                                                     int            src_stride,            \
                                                     const uint8_t *ref,                   \
                                                     int            ref_stride,            \
-                                                    unsigned int * sse) {                  \
+                                                    unsigned int  *sse) {                  \
         __m256i vsse = _mm256_setzero_si256();                                            \
         __m256i vsum = _mm256_setzero_si256();                                            \
         for (int i = 0; i < (bh / uh); i++) {                                             \
@@ -311,7 +311,7 @@ unsigned int svt_aom_sub_pixel_variance16xh_avx2(const uint8_t *src, int src_str
                                                             int            y_offset,             \
                                                             const uint8_t *dst,                  \
                                                             int            dst_stride,           \
-                                                            unsigned int * sse_ptr) {             \
+                                                            unsigned int  *sse_ptr) {             \
         /*Avoid overflow in helper by capping height.*/                                          \
         const int    hf  = AOMMIN(h, 64);                                                        \
         const int    wf2 = AOMMIN(wf, 128);                                                      \

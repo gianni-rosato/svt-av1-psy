@@ -123,7 +123,7 @@ void clear_loop_filter_delta(ParseCtxt *parse_ctx) {
 EbErrorType start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
                              TilesInfo *tiles_info, int tile_num, int is_mt) {
     MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
-    FrameHeader *  frame_header    = &dec_handle_ptr->frame_header;
+    FrameHeader   *frame_header    = &dec_handle_ptr->frame_header;
     ParseTileData *parse_tile_data = &main_parse_ctxt->parse_tile_data[tile_num];
     int            tile_row        = tile_num / tiles_info->tile_cols;
     int            tile_col        = tile_num % tiles_info->tile_cols;
@@ -212,7 +212,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
 
             //clear_block_decoded_flags(r, c, sbSize4)
             MainFrameBuf *main_frame_buf = &dec_handle_ptr->main_frame_buf;
-            CurFrameBuf * frame_buf      = &main_frame_buf->cur_frame_bufs[0];
+            CurFrameBuf  *frame_buf      = &main_frame_buf->cur_frame_bufs[0];
             int32_t       num_mis_in_sb  = main_frame_buf->num_mis_in_sb;
 
             SBInfo *sb_info = frame_buf->sb_info + (sb_row * main_frame_buf->sb_cols) + sb_col;

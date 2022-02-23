@@ -229,7 +229,6 @@ void svt_compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_st
                                         uint8_t *inn_bit_buffer, uint32_t inn_stride,
                                         uint16_t *out16_bit_buffer, uint32_t out_stride,
                                         uint32_t width, uint32_t height) {
-
     if (width == 32) {
         compressed_packmsb_32x2h(in8_bit_buffer,
                                  in8_stride,
@@ -1745,8 +1744,8 @@ uint64_t svt_full_distortion_kernel16_bits_avx2(uint8_t *input, uint32_t input_o
     __m256i        sum32    = _mm256_setzero_si256();
     __m256i        sum64    = _mm256_setzero_si256();
     __m256i        in, re;
-    uint16_t *     input_16bit = (uint16_t *)input;
-    uint16_t *     recon_16bit = (uint16_t *)recon;
+    uint16_t      *input_16bit = (uint16_t *)input;
+    uint16_t      *recon_16bit = (uint16_t *)recon;
     input_16bit += input_offset;
     recon_16bit += recon_offset;
 
@@ -1838,7 +1837,7 @@ void svt_convert_8bit_to_16bit_avx2(uint8_t *src, uint32_t src_stride, uint16_t 
     __m128i tmp128, tmp128_2;
     __m256i tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
 
-    uint8_t * _src = src;
+    uint8_t  *_src = src;
     uint16_t *_dst = dst;
     int32_t   k;
 
@@ -1950,7 +1949,7 @@ void svt_convert_16bit_to_8bit_avx2(uint16_t *src, uint32_t src_stride, uint8_t 
                                     uint32_t dst_stride, uint32_t width, uint32_t height) {
     int32_t   k;
     __m256i   tmp1, tmp2, tmp3;
-    uint8_t * _dst = dst;
+    uint8_t  *_dst = dst;
     uint16_t *_src = src;
 
     for (uint32_t j = 0; j < height; j++) {

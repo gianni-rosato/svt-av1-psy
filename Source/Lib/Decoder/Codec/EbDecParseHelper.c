@@ -54,7 +54,7 @@ void set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis
 }
 
 static INLINE int get_tx_size_context(const PartitionInfo *xd, ParseCtxt *parse_ctxt) {
-    const BlockModeInfo *      mbmi        = xd->mi;
+    const BlockModeInfo       *mbmi        = xd->mi;
     const BlockModeInfo *const above_mbmi  = xd->above_mbmi;
     const BlockModeInfo *const left_mbmi   = xd->left_mbmi;
     const TxSize               max_tx_size = max_txsize_rect_lookup[mbmi->sb_type];
@@ -98,7 +98,7 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize
     int                   mi_row          = pi->mi_row;
     int                   mi_col          = pi->mi_col;
     ParseAboveNbr4x4Ctxt *above_parse_ctx = parse_ctxt->parse_above_nbr4x4_ctxt;
-    ParseLeftNbr4x4Ctxt * left_parse_ctx  = parse_ctxt->parse_left_nbr4x4_ctxt;
+    ParseLeftNbr4x4Ctxt  *left_parse_ctx  = parse_ctxt->parse_left_nbr4x4_ctxt;
     BlockSize             b_size          = bsize;
     if (is_inter_block_dec(pi->mi))
         b_size = txsize_to_bsize[tx_size];
@@ -117,7 +117,7 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize
 }
 
 TxSize read_selected_tx_size(PartitionInfo *xd, ParseCtxt *parse_ctxt) {
-    SvtReader *     r            = &parse_ctxt->r;
+    SvtReader      *r            = &parse_ctxt->r;
     const BlockSize bsize        = xd->mi->sb_type;
     const int32_t   tx_size_cat  = bsize_to_tx_size_cat(bsize);
     const int       max_tx_depth = bsize_to_max_depth(bsize);

@@ -83,9 +83,7 @@
 // --- start: ALTREF_FILTERING_SUPPORT
 #define ENABLE_TF_TOKEN "--enable-tf"
 #define ENABLE_OVERLAYS "--enable-overlays"
-#if ADD_VQ_MODE
 #define TUNE_TOKEN "--tune"
-#endif
 // --- end: ALTREF_FILTERING_SUPPORT
 // --- start: SUPER-RESOLUTION SUPPORT
 #define SUPERRES_MODE_INPUT "--superres-mode"
@@ -148,9 +146,7 @@
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define ENABLE_RESTORATION_TOKEN "--enable-restoration"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
-#if OPT_DECODER
 #define FAST_DECODE_TOKEN "--fast-decode"
-#endif
 #define HDR_INPUT_NEW_TOKEN "--enable-hdr"
 #define ADAPTIVE_QP_ENABLE_NEW_TOKEN "--aq-mode"
 #define INPUT_FILE_LONG_TOKEN "--input"
@@ -227,7 +223,7 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
     }
 
     if (!strcmp(filename, "stdin")) {
-        cfg->input_file = stdin;
+        cfg->input_file         = stdin;
         cfg->input_file_is_fifo = EB_TRUE;
     } else
         FOPEN(cfg->input_file, filename, "rb");
@@ -299,7 +295,7 @@ static void set_two_pass_stats(const char *value, EbConfig *cfg) {
 #ifndef _WIN32
     cfg->stats = strdup(value);
 #else
-    cfg->stats = _strdup(value);
+    cfg->stats                      = _strdup(value);
 #endif
 }
 
@@ -386,9 +382,9 @@ struct ParseOpt {
 };
 
 static struct ParseOpt split_colon_keyequalval_pairs(const char **p) {
-    const char *str = *p;
-    struct ParseOpt opt = { NULL, NULL };
-    const size_t string_len = strcspn(str, ":");
+    const char     *str        = *p;
+    struct ParseOpt opt        = {NULL, NULL};
+    const size_t    string_len = strcspn(str, ":");
 
     const char *val = strchr(str, '=');
     if (!val || !*++val)
@@ -402,8 +398,10 @@ static struct ParseOpt split_colon_keyequalval_pairs(const char **p) {
     opt.key = (char *)malloc(key_len + 1);
     opt.val = (char *)malloc(val_len + 1);
     if (!opt.key || !opt.val) {
-        free(opt.key); opt.key = NULL;
-        free(opt.val); opt.val = NULL;
+        free(opt.key);
+        opt.key = NULL;
+        free(opt.val);
+        opt.val = NULL;
         return opt;
     }
 
@@ -425,7 +423,8 @@ static void parse_svtav1_params(const char *value, EbConfig *cfg) {
         if (!opt.key || !opt.val)
             continue;
         if (EB_ErrorBadParameter == svt_av1_enc_parse_parameter(&cfg->config, opt.key, opt.val))
-            fprintf(stderr, "Warning: failed to set parameter '%s' with key '%s'\n", opt.key, opt.val);
+            fprintf(
+                stderr, "Warning: failed to set parameter '%s' with key '%s'\n", opt.key, opt.val);
         free(opt.key);
         free(opt.val);
     }
@@ -481,7 +480,7 @@ static void set_cfg_key_frame_chroma_qindex_offset(const char *value, EbConfig *
 //assume the input list of values are in the format of "[v1,v2,v3,...]"
 int arg_parse_list(const char *value, int *list, int n) {
     const char *ptr = value;
-    char *      endptr;
+    char       *endptr;
     int         i = 0;
     while (ptr[0] != '\0') {
         if (ptr[0] == '[' || ptr[0] == ']') {
@@ -539,11 +538,9 @@ static void set_enable_restoration_flag(const char *value, EbConfig *cfg) {
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_mfmv = strtol(value, NULL, 0);
 };
-#if OPT_DECODER
 static void set_fast_decode_flag(const char *value, EbConfig *cfg) {
     cfg->config.fast_decode = (uint8_t)strtol(value, NULL, 0);
 };
-#endif
 static void set_tile_row(const char *value, EbConfig *cfg) {
     cfg->config.tile_rows = strtoul(value, NULL, 0);
 };
@@ -587,7 +584,7 @@ static void set_under_shoot_pct(const char *value, EbConfig *cfg) {
     cfg->config.under_shoot_pct = strtoul(value, NULL, 0);
 };
 static void set_over_shoot_pct(const char *value, EbConfig *cfg) {
-    cfg->config.over_shoot_pct = strtoul(value, NULL, 0);
+    cfg->config.over_shoot_pct     = strtoul(value, NULL, 0);
     cfg->config.mbr_over_shoot_pct = strtoul(value, NULL, 0);
 };
 static void set_buf_sz(const char *value, EbConfig *cfg) {
@@ -617,11 +614,9 @@ static void set_enable_overlays(const char *value, EbConfig *cfg) {
     cfg->config.enable_overlays = (EbBool)strtoul(value, NULL, 0);
 };
 
-#if ADD_VQ_MODE
-static void set_tune(const char* value, EbConfig* cfg) {
+static void set_tune(const char *value, EbConfig *cfg) {
     cfg->config.tune = (EbBool)strtoul(value, NULL, 0);
 };
-#endif
 // --- end: ALTREF_FILTERING_SUPPORT
 // --- start: SUPER-RESOLUTION SUPPORT
 static void set_superres_mode(const char *value, EbConfig *cfg) {
@@ -751,8 +746,8 @@ enum CfgType {
  **********************************/
 typedef struct config_entry_s {
     enum CfgType type;
-    const char * token;
-    const char * name;
+    const char  *token;
+    const char  *name;
     void (*scf)(const char *, EbConfig *);
 } ConfigEntry;
 
@@ -923,12 +918,14 @@ ConfigEntry config_entry_global_options[] = {
      set_asm_type},
     {SINGLE_INPUT,
      THREAD_MGMNT,
-     "Target (best effort) number of logical cores to be used. 0 means all. Refer to Appendix A.1 of the user "
+     "Target (best effort) number of logical cores to be used. 0 means all. Refer to Appendix A.1 "
+     "of the user "
      "guide, default is 0 [0, core count of the machine]",
      set_logical_processors},
     {SINGLE_INPUT,
      PIN_TOKEN,
-     "Pin the execution to the first --lp cores. Overwritten to 0 when `--ss` is set. Refer to Appendix "
+     "Pin the execution to the first --lp cores. Overwritten to 0 when `--ss` is set. Refer to "
+     "Appendix "
      "A.1 of the user guide, default is 1 [0-1]",
      set_pinned_execution},
     {SINGLE_INPUT,
@@ -1092,7 +1089,8 @@ ConfigEntry config_entry_intra_refresh[] = {
      set_scene_change_detection},
     {SINGLE_INPUT,
      LOOKAHEAD_NEW_TOKEN,
-     "Number of frames in the future to look ahead, not including minigop, temporal filtering, and rate "
+     "Number of frames in the future to look ahead, not including minigop, temporal filtering, and "
+     "rate "
      "control, default is -1 [-1: auto, 0-120]",
      set_look_ahead_distance},
     {SINGLE_INPUT,
@@ -1144,12 +1142,10 @@ ConfigEntry config_entry_specific[] = {
      MFMV_ENABLE_NEW_TOKEN,
      "Motion Field Motion Vector control, default is -1 [-1: auto, 0-1]",
      set_enable_mfmv_flag},
-#if OPT_DECODER
     {SINGLE_INPUT,
-    FAST_DECODE_TOKEN,
-    "Fast Decoder levels, default is 0 [0-3]",
-    set_fast_decode_flag},
-#endif
+     FAST_DECODE_TOKEN,
+     "Fast Decoder levels, default is 0 [0-3]",
+     set_fast_decode_flag},
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      ENABLE_TF_TOKEN,
@@ -1162,12 +1158,11 @@ ConfigEntry config_entry_specific[] = {
      "frame for the base layer picture, default is 0 [0-1]",
      set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
-#if ADD_VQ_MODE
     {SINGLE_INPUT,
      TUNE_TOKEN,
-     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR], default is 1 [0-1]",
+     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR], default is 1 "
+     "[0-1]",
      set_tune},
-#endif
     // MD Parameters
     {SINGLE_INPUT,
      SCREEN_CONTENT_TOKEN,
@@ -1308,7 +1303,7 @@ ConfigEntry config_entry[] = {
 
     //   Thread Management
     {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
-    {SINGLE_INPUT, PIN_TOKEN, "PinnedExecution", set_pinned_execution },
+    {SINGLE_INPUT, PIN_TOKEN, "PinnedExecution", set_pinned_execution},
     {SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", set_target_socket},
 
     // Rate Control Options
@@ -1384,12 +1379,8 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, ENABLE_RESTORATION_TOKEN, "EnableRestoration", set_enable_restoration_flag},
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTPLModel", set_enable_tpl_la},
     {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv", set_enable_mfmv_flag},
-#if OPT_DECODER
     {SINGLE_INPUT, FAST_DECODE_TOKEN, "FastDecode", set_fast_decode_flag},
-#endif
-#if ADD_VQ_MODE
-     { SINGLE_INPUT, TUNE_TOKEN, "Tune", set_tune },
-#endif
+    {SINGLE_INPUT, TUNE_TOKEN, "Tune", set_tune},
     //   ALT-REF filtering support
     {SINGLE_INPUT, ENABLE_TF_TOKEN, "EnableTf", set_enable_tf},
     {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},
@@ -1590,7 +1581,7 @@ static void set_config_value(EbConfig *config, const char *name, const char *val
 **********************************/
 static void parse_config_file(EbConfig *config, char *buffer, int32_t size) {
     uint32_t argc;
-    char *   argv[CONFIG_FILE_MAX_ARG_COUNT];
+    char    *argv[CONFIG_FILE_MAX_ARG_COUNT];
     uint32_t arg_len[CONFIG_FILE_MAX_ARG_COUNT];
 
     char var_name[CONFIG_FILE_MAX_VAR_LEN];
@@ -1703,7 +1694,7 @@ static int32_t read_config_file(EbConfig *config, char *config_path, uint32_t in
 
     if (config->config_file != (FILE *)NULL) {
         int32_t config_file_size   = find_file_size(config->config_file);
-        char *  config_file_buffer = (char *)malloc(config_file_size);
+        char   *config_file_buffer = (char *)malloc(config_file_size);
 
         if (config_file_buffer != (char *)NULL) {
             int32_t result_size = (int32_t)fread(
@@ -1742,9 +1733,9 @@ EbBool load_twopass_stats_in(EbConfig *cfg) {
     struct _stat file_stat;
     int          ret = _fstat(fd, &file_stat);
 #else
-    int fd = fileno(cfg->input_stat_file);
+    int         fd                  = fileno(cfg->input_stat_file);
     struct stat file_stat;
-    int ret = fstat(fd, &file_stat);
+    int         ret         = fstat(fd, &file_stat);
 #endif
     if (ret) {
         return EB_FALSE;
@@ -1988,7 +1979,7 @@ int get_version(int argc, char *argv[]) {
 #ifdef NDEBUG
     static int debug_build = 1;
 #else
-    static int debug_build = 0;
+    static int  debug_build = 0;
 #endif
     if (find_token(argc, argv, VERSION_TOKEN, NULL))
         return 0;
@@ -2173,7 +2164,8 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
     const char *token;
     while ((token = conflicts[i])) {
         if (find_token(argc, argv, token, config_string) == 0) {
-            fprintf(stderr, "[SVT-Error]: --passes is not accepted in combination with %s\n", token);
+            fprintf(
+                stderr, "[SVT-Error]: --passes is not accepted in combination with %s\n", token);
             return EB_TRUE;
         }
         i++;
@@ -2198,15 +2190,15 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             fprintf(stderr, "Error: The rate control mode must be [0 - 2] \n");
             return 0;
         }
-        if (rc_mode == 2){
+        if (rc_mode == 2) {
             // this is covered in the library
             //fprintf(stderr, "[SVT-Warning]: CBR Rate control is currently not supported, switching to VBR \n");
             rc_mode = 1;
         }
     }
 
-    int32_t passes = -1;
-    int using_fifo = 0;
+    int32_t passes     = -1;
+    int     using_fifo = 0;
 
     if (find_token(argc, argv, INPUT_FILE_LONG_TOKEN, config_string) == 0 ||
         find_token(argc, argv, INPUT_FILE_TOKEN, config_string) == 0) {
@@ -2260,8 +2252,9 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             return 0;
         }
         if ((ip < 0) && rc_mode >= 1) {
-            fprintf(
-                stderr, "[SVT-Error]: The intra period must be > 0 for RateControlMode %d \n", rc_mode);
+            fprintf(stderr,
+                    "[SVT-Error]: The intra period must be > 0 for RateControlMode %d \n",
+                    rc_mode);
             return 0;
         }
     }
@@ -2270,7 +2263,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         passes = strtol(config_string, NULL, 0);
         if (passes == 0 || passes > 2) {
             fprintf(stderr,
-                    "[SVT-Error]: The number of passes has to be within the range [1,2], 2 being multi-pass encoding\n");
+                    "[SVT-Error]: The number of passes has to be within the range [1,2], 2 being "
+                    "multi-pass encoding\n");
             return 0;
         }
     }
@@ -2282,8 +2276,9 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     passes = (passes == -1) ? 1 : passes;
 
     if (using_fifo && passes > 1) {
-        fprintf(stderr,
-                "[SVT-Warning]: The number of passes has to be 1 when using a fifo, using 1-pass\n");
+        fprintf(
+            stderr,
+            "[SVT-Warning]: The number of passes has to be 1 when using a fifo, using 1-pass\n");
         *multi_pass_mode = SINGLE_PASS;
         passes           = 1;
     }
@@ -2291,10 +2286,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     if (rc_mode == 0) {
         if (ip > -1 && ip < 16) {
             passes = 1;
-            fprintf(stderr,
-                    "[SVT-Warning]: Multipass CRF is not supported for Intra_period %d. Switching to "
-                    "1-pass encoding\n\n",
-                    ip);
+            fprintf(
+                stderr,
+                "[SVT-Warning]: Multipass CRF is not supported for Intra_period %d. Switching to "
+                "1-pass encoding\n\n",
+                ip);
         }
         *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
     }
@@ -2388,7 +2384,7 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
 **********************************/
 static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t size) {
     uint32_t argc;
-    char *   argv[CONFIG_FILE_MAX_ARG_COUNT];
+    char    *argv[CONFIG_FILE_MAX_ARG_COUNT];
     uint32_t arg_len[CONFIG_FILE_MAX_ARG_COUNT];
 
     char var_name[CONFIG_FILE_MAX_VAR_LEN];
@@ -2516,7 +2512,7 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
 
     if (config->input_pred_struct_file != (FILE *)NULL) {
         int32_t config_file_size   = find_file_size(config->input_pred_struct_file);
-        char *  config_file_buffer = (char *)malloc(config_file_size);
+        char   *config_file_buffer = (char *)malloc(config_file_size);
 
         if (config_file_buffer != (char *)NULL) {
             int32_t result_size = (int32_t)fread(
@@ -2582,8 +2578,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
                               uint32_t num_channels) {
     EbErrorType return_error = EB_ErrorNone;
     char        config_string[COMMAND_LINE_MAX_SIZE]; // for one input options
-    char *      config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
-    char *      cmd_copy[MAX_NUM_TOKENS]; // keep track of extra tokens
+    char       *config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
+    char       *cmd_copy[MAX_NUM_TOKENS]; // keep track of extra tokens
     uint32_t    index         = 0;
     int32_t     cmd_token_cnt = 0; // total number of tokens
     int32_t     ret_y4m;
@@ -2686,7 +2682,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     /***************************************************************************************************/
     for (index = 0; index < num_channels; ++index) {
         EncChannel *c      = channels + index;
-        EbConfig *  config = c->config;
+        EbConfig   *config = c->config;
         if (config->config.enable_manual_pred_struct == EB_TRUE) {
             c->return_error = (EbErrorType)read_pred_struct_file(
                 config, config->input_pred_struct_filename, index);

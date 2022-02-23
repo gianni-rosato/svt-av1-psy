@@ -2482,10 +2482,10 @@ static INLINE void inv_txfm2d_add_c(const int32_t *input, uint16_t *output_r, in
     // AOMMAX(txfm_size_row, txfm_size_col)
     // it is used for intermediate data buffering
     const int32_t buf_offset = AOMMAX(txfm_size_row, txfm_size_col);
-    int32_t *     temp_in    = txfm_buf;
-    int32_t *     temp_out   = temp_in + buf_offset;
-    int32_t *     buf        = temp_out + buf_offset;
-    int32_t *     buf_ptr    = buf;
+    int32_t      *temp_in    = txfm_buf;
+    int32_t      *temp_out   = temp_in + buf_offset;
+    int32_t      *buf        = temp_out + buf_offset;
+    int32_t      *buf_ptr    = buf;
     int32_t       c, r;
 
     // Rows
@@ -2776,9 +2776,9 @@ void svt_av1_highbd_iwht4x4_16_add_c(const TranLow *input, uint8_t *dest8_r, int
     TranLow        output[16];
     TranLow        a1, b1, c1, d1, e1;
     const TranLow *ip     = input;
-    TranLow *      op     = output;
-    uint16_t *     dest_r = CONVERT_TO_SHORTPTR(dest8_r);
-    uint16_t *     dest_w = CONVERT_TO_SHORTPTR(dest8_w);
+    TranLow       *op     = output;
+    uint16_t      *dest_r = CONVERT_TO_SHORTPTR(dest8_r);
+    uint16_t      *dest_w = CONVERT_TO_SHORTPTR(dest8_w);
 
     for (i = 0; i < 4; i++) {
         a1 = ip[0] >> UNIT_QUANT_SHIFT;
@@ -2835,9 +2835,9 @@ void svt_av1_highbd_iwht4x4_1_add_c(const TranLow *in, uint8_t *dest8_r, int32_t
     TranLow        a1, e1;
     TranLow        tmp[4];
     const TranLow *ip     = in;
-    TranLow *      op     = tmp;
-    uint16_t *     dest_r = CONVERT_TO_SHORTPTR(dest8_r);
-    uint16_t *     dest_w = CONVERT_TO_SHORTPTR(dest8_w);
+    TranLow       *op     = tmp;
+    uint16_t      *dest_r = CONVERT_TO_SHORTPTR(dest8_r);
+    uint16_t      *dest_w = CONVERT_TO_SHORTPTR(dest8_w);
     (void)bd;
 
     a1 = ip[0] >> UNIT_QUANT_SHIFT;

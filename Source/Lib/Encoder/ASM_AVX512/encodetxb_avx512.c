@@ -46,7 +46,7 @@ void svt_av1_txb_init_levels_avx512(const TranLow *const coeff, const int32_t wi
                                     const int32_t height, uint8_t *const levels) {
     const TranLow *cf      = coeff;
     const __m128i  x_zeros = _mm_setzero_si128();
-    uint8_t *      ls      = levels;
+    uint8_t       *ls      = levels;
     int32_t        i       = height;
 
     if (width == 4) {

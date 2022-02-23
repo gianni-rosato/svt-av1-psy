@@ -24,7 +24,7 @@ extern "C" {
 
 void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                 ModeDecisionCandidateBuffer *candidate_buffer,
-                                EbPictureBufferDesc *        input_picture_ptr,
+                                EbPictureBufferDesc         *input_picture_ptr,
                                 uint32_t input_cb_origin_in_index, uint32_t blk_chroma_origin_index,
                                 COMPONENT_TYPE component_type, uint32_t chroma_qindex,
                                 uint64_t  cb_full_distortion[DIST_CALC_TOTAL],
@@ -43,13 +43,13 @@ void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uin
                                  TxSize txsize, TxType transform_type, PlaneType component_type,
                                  uint32_t eob);
 
-extern uint32_t d2_inter_depth_block_decision(SequenceControlSet * scs_ptr,
-                                              PictureControlSet *  pcs_ptr,
+extern uint32_t d2_inter_depth_block_decision(SequenceControlSet  *scs_ptr,
+                                              PictureControlSet   *pcs_ptr,
                                               ModeDecisionContext *context_ptr, uint32_t blk_mds,
                                               uint32_t sb_addr);
 // compute the cost of curr depth, and the depth above
-extern void compute_depth_costs_md_skip(ModeDecisionContext *    context_ptr,
-                                        SequenceControlSet *     scs_ptr,
+extern void compute_depth_costs_md_skip(ModeDecisionContext     *context_ptr,
+                                        SequenceControlSet      *scs_ptr,
                                         PictureParentControlSet *pcs_ptr, uint32_t above_depth_mds,
                                         uint32_t step, uint64_t *above_depth_cost,
                                         uint64_t *curr_depth_cost);

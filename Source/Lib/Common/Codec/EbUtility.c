@@ -417,8 +417,8 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 d1_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
             blk_geom_mds[*idx_mds].ns_depth_offset =
                 ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
-            blk_geom_mds[*idx_mds].totns = tot_num_ns_per_part;
-            blk_geom_mds[*idx_mds].nsi   = nsq_it;
+            blk_geom_mds[*idx_mds].totns   = tot_num_ns_per_part;
+            blk_geom_mds[*idx_mds].nsi     = nsq_it;
             blk_geom_mds[*idx_mds].bwidth  = quartsize * ns_quarter_size_mult[part_it][0][nsq_it];
             blk_geom_mds[*idx_mds].bheight = quartsize * ns_quarter_size_mult[part_it][1][nsq_it];
             blk_geom_mds[*idx_mds].bwidth_log2  = svt_log2f(blk_geom_mds[*idx_mds].bwidth);
@@ -1350,13 +1350,15 @@ void log_redundancy_similarity(uint32_t max_block_count) {
 
             if (cur_geom->bsize == search_geom->bsize &&
                 cur_geom->origin_x == search_geom->origin_x &&
-                cur_geom->origin_y == search_geom->origin_y && s_it != blk_it && cur_geom->similar_list.list_size < 3) {
+                cur_geom->origin_y == search_geom->origin_y && s_it != blk_it &&
+                cur_geom->similar_list.list_size < 3) {
                 //one block could have similar and redundant blocks
                 cur_geom->similar = 1;
                 cur_geom->similar_list.blk_mds_table[cur_geom->similar_list.list_size] =
                     search_geom->blkidx_mds;
                 cur_geom->similar_list.list_size++;
-                if (cur_geom->nsi == 0 && search_geom->nsi == 0 && cur_geom->redund_list.list_size < 3) {
+                if (cur_geom->nsi == 0 && search_geom->nsi == 0 &&
+                    cur_geom->redund_list.list_size < 3) {
                     cur_geom->redund = 1;
                     cur_geom->redund_list.blk_mds_table[cur_geom->redund_list.list_size] =
                         search_geom->blkidx_mds;
@@ -1402,7 +1404,7 @@ void build_blk_geom(GeomIndex geom) {
 uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_128x128) {
     (void)use_128x128;
     uint32_t max_block_count = max_num_active_blocks;
-    uint32_t mds = 0;
+    uint32_t mds             = 0;
 
     for (uint32_t blk_it = 0; blk_it < max_block_count; blk_it++) {
         BlockGeom* cur_geom = &blk_geom_mds[blk_it];

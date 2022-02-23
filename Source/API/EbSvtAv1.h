@@ -128,8 +128,8 @@ typedef struct EbBufferHeaderType {
 
 typedef struct EbComponentType {
     uint32_t size;
-    void *   p_component_private;
-    void *   p_application_private;
+    void    *p_component_private;
+    void    *p_application_private;
 } EbComponentType;
 
 typedef enum EbErrorType {

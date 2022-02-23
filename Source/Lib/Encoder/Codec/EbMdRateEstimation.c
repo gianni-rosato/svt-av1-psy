@@ -73,8 +73,7 @@ int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array, EbBool is_i_slice,
                               uint8_t pic_filter_intra_level, uint8_t allow_screen_content_tools,
                               uint8_t enable_restoration, uint8_t allow_intrabc,
-                              uint8_t partition_contexts,
-                              FRAME_CONTEXT *fc) {
+                              uint8_t partition_contexts, FRAME_CONTEXT *fc) {
     int32_t i, j;
 
     md_rate_estimation_array->initialized = 1;
@@ -365,7 +364,7 @@ void svt_av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2], const Nm
 * Estimate the rate of motion vectors
 * based on the frame CDF
 ***************************************************************************/
-void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
+void av1_estimate_mv_rate(PictureControlSet       *pcs_ptr,
                           MdRateEstimationContext *md_rate_estimation_array, FRAME_CONTEXT *fc)
 
 {
@@ -379,8 +378,8 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
             &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[1][MV_MAX];
         return;
     }
-    int32_t *    nmvcost[2];
-    int32_t *    nmvcost_hp[2];
+    int32_t     *nmvcost[2];
+    int32_t     *nmvcost_hp[2];
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     nmvcost[0]                      = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
@@ -467,7 +466,7 @@ void copy_mv_rate(PictureControlSet *pcs, MdRateEstimationContext *dst_rate) {
 * based on the frame CDF
 ***************************************************************************/
 void av1_estimate_coefficients_rate(MdRateEstimationContext *md_rate_estimation_array,
-                                    FRAME_CONTEXT *          fc) {
+                                    FRAME_CONTEXT           *fc) {
     const int32_t num_planes = 3; // NM - Hardcoded to 3
     const int32_t nplanes    = AOMMIN(num_planes, PLANE_TYPES);
 
@@ -801,13 +800,13 @@ static AOM_INLINE void update_inter_mode_stats(FRAME_CONTEXT *fc, PredictionMode
  ******************************************************************************/
 static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *const mbmi,
                                           BlkStruct *blk_ptr, const int mi_row, const int mi_col) {
-    FRAME_CONTEXT *  fc       = xd->tile_ctx;
-    const BlockGeom *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
-    const BlockSize  bsize    = blk_geom->bsize;
-    const int palette_bsize_ctx = av1_get_palette_bsize_ctx(bsize);
+    FRAME_CONTEXT   *fc                = xd->tile_ctx;
+    const BlockGeom *blk_geom          = get_blk_geom_mds(blk_ptr->mds_idx);
+    const BlockSize  bsize             = blk_geom->bsize;
+    const int        palette_bsize_ctx = av1_get_palette_bsize_ctx(bsize);
 
     if (mbmi->block_mi.mode == DC_PRED) {
-        const int n = blk_ptr->palette_size[0];
+        const int n                = blk_ptr->palette_size[0];
         const int palette_mode_ctx = av1_get_palette_mode_ctx(xd);
 
         update_cdf(fc->palette_y_mode_cdf[palette_bsize_ctx][palette_mode_ctx], n > 0, 2);
@@ -816,8 +815,8 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
                 fc->palette_y_size_cdf[palette_bsize_ctx], n - PALETTE_MIN_SIZE, PALETTE_SIZES);
         }
     }
-    uint32_t intra_chroma_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
-    const int uv_dc_pred = intra_chroma_mode == UV_DC_PRED &&
+    uint32_t  intra_chroma_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
+    const int uv_dc_pred        = intra_chroma_mode == UV_DC_PRED &&
         is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
 
     if (uv_dc_pred) {
@@ -835,11 +834,11 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
 static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                        const MbModeInfo *above_mi, const MbModeInfo *left_mi,
                                        const int intraonly, const int mi_row, const int mi_col) {
-    MacroBlockD *           xd       = blk_ptr->av1xd;
+    MacroBlockD            *xd       = blk_ptr->av1xd;
     const MbModeInfo *const mbmi     = &xd->mi[0]->mbmi;
-    FRAME_CONTEXT *         fc       = xd->tile_ctx;
+    FRAME_CONTEXT          *fc       = xd->tile_ctx;
     const PredictionMode    y_mode   = mbmi->block_mi.mode;
-    const BlockGeom *       blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
+    const BlockGeom        *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
     const BlockSize         bsize    = mbmi->block_mi.sb_type;
     assert(bsize < BlockSizeS_ALL);
     assert(y_mode < 13);
@@ -861,8 +860,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
         }
     }
     if (av1_is_directional_mode(y_mode) &&
-        av1_use_angle_delta(bsize,
-                            pcs_ptr->parent_pcs_ptr->scs_ptr->intra_angle_delta)) {
+        av1_use_angle_delta(bsize, pcs_ptr->parent_pcs_ptr->scs_ptr->intra_angle_delta)) {
         update_cdf(fc->angle_delta_cdf[y_mode - V_PRED],
                    blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
                    2 * MAX_ANGLE_DELTA + 1);
@@ -871,8 +869,8 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
     uint8_t sub_sampling_y = 1; // NM - subsampling_y is harcoded to 1 for 420 chroma sampling.
     if (!is_chroma_reference(mi_row, mi_col, bsize, sub_sampling_x, sub_sampling_y))
         return;
-    const UvPredictionMode uv_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
-    const int cfl_allowed = blk_geom->bwidth <= 32 && blk_geom->bheight <= 32;
+    const UvPredictionMode uv_mode     = blk_ptr->prediction_unit_array->intra_chroma_mode;
+    const int              cfl_allowed = blk_geom->bwidth <= 32 && blk_geom->bheight <= 32;
     update_cdf(fc->uv_mode_cdf[cfl_allowed][y_mode], uv_mode, UV_INTRA_MODES - !cfl_allowed);
     if (uv_mode == UV_CFL_PRED) {
         const int8_t  joint_sign = blk_ptr->prediction_unit_array->cfl_alpha_signs;
@@ -889,8 +887,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
         }
     }
     if (av1_is_directional_mode(get_uv_mode(uv_mode)) &&
-        av1_use_angle_delta(bsize,
-                            pcs_ptr->parent_pcs_ptr->scs_ptr->intra_angle_delta)) {
+        av1_use_angle_delta(bsize, pcs_ptr->parent_pcs_ptr->scs_ptr->intra_angle_delta)) {
         assert((uv_mode - UV_V_PRED) < DIRECTIONAL_MODES);
         assert((uv_mode - UV_V_PRED) >= 0);
         update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],
@@ -906,7 +903,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
  ******************************************************************************/
 void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, int mi_col) {
     //    const AV1_COMMON *const cm   = pcs_ptr->parent_pcs_ptr->av1_cm;
-    MacroBlockD *           xd   = blk_ptr->av1xd;
+    MacroBlockD            *xd   = blk_ptr->av1xd;
     const MbModeInfo *const mbmi = &xd->mi[0]->mbmi;
 
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
@@ -1165,10 +1162,10 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
 void update_part_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, uint16_t tile_idx,
                        int mi_row, int mi_col) {
     const AV1_COMMON *const cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
-    MacroBlockD *           xd       = blk_ptr->av1xd;
-    const BlockGeom *       blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
+    MacroBlockD            *xd       = blk_ptr->av1xd;
+    const BlockGeom        *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
     BlockSize               bsize    = blk_geom->bsize;
-    FRAME_CONTEXT *         fc       = xd->tile_ctx;
+    FRAME_CONTEXT          *fc       = xd->tile_ctx;
     assert(bsize < BlockSizeS_ALL);
 
     if (mi_row >= cm->mi_rows || mi_col >= cm->mi_cols)

@@ -31,17 +31,16 @@ int svt_av1_get_pred_context_uni_comp_ref_p1(const MacroBlockD *xd);
 int svt_av1_get_pred_context_uni_comp_ref_p2(const MacroBlockD *xd);
 int av1_get_comp_reference_type_context_new(const MacroBlockD *xd);
 
-int av1_get_palette_bsize_ctx(BlockSize bsize);
-int av1_get_palette_mode_ctx(const MacroBlockD *xd);
-int write_uniform_cost(int n, int v);
-int svt_get_palette_cache_y(const MacroBlockD *const xd, uint16_t *cache);
-int svt_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache,
-                                 const int palette_size,
-                                 int n_cache, int bit_depth);
-int svt_av1_cost_color_map(ModeDecisionCandidate *  candidate_ptr,
-                           MdRateEstimationContext *rate_table,
+int  av1_get_palette_bsize_ctx(BlockSize bsize);
+int  av1_get_palette_mode_ctx(const MacroBlockD *xd);
+int  write_uniform_cost(int n, int v);
+int  svt_get_palette_cache_y(const MacroBlockD *const xd, uint16_t *cache);
+int  svt_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache,
+                                  const int palette_size, int n_cache, int bit_depth);
+int  svt_av1_cost_color_map(ModeDecisionCandidate   *candidate_ptr,
+                            MdRateEstimationContext *rate_table,
 
-                           BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type);
+                            BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type);
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
 int  av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
@@ -63,7 +62,7 @@ MvJointType svt_av1_get_mv_joint(const MV *mv) {
 }
 int32_t mv_cost(const MV *mv, const int32_t *joint_cost, int32_t *const comp_cost[2]) {
     int32_t jn_c = svt_av1_get_mv_joint(mv);
-    int32_t res = joint_cost[jn_c] + comp_cost[0][CLIP3(MV_LOW, MV_UPP, mv->row)] +
+    int32_t res  = joint_cost[jn_c] + comp_cost[0][CLIP3(MV_LOW, MV_UPP, mv->row)] +
         comp_cost[1][CLIP3(MV_LOW, MV_UPP, mv->col)];
     return res;
 }
@@ -103,7 +102,7 @@ static INLINE int32_t get_golomb_cost(int32_t abs_qc) {
 void svt_av1_txb_init_levels_c(const TranLow *const coeff, const int32_t width,
                                const int32_t height, uint8_t *const levels) {
     const int32_t stride = width + TX_PAD_HOR;
-    uint8_t *     ls     = levels;
+    uint8_t      *ls     = levels;
 
     memset(levels - TX_PAD_TOP * stride, 0, sizeof(*levels) * TX_PAD_TOP * stride);
     memset(levels + stride * height, 0, sizeof(*levels) * (TX_PAD_BOTTOM * stride + TX_PAD_END));
@@ -310,8 +309,8 @@ static int get_eob_cost(int eob, const LvMapEobCost *txb_eob_costs, const LvMapC
 static INLINE int32_t av1_cost_skip_txb(struct ModeDecisionContext *ctx, uint8_t allow_update_cdf,
                                         FRAME_CONTEXT *ec_ctx, TxSize transform_size,
                                         PlaneType plane_type, int16_t txb_skip_ctx) {
-    const TxSize txs_ctx = (TxSize)(
-        (txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
+    const TxSize txs_ctx =
+        (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
     assert(txs_ctx < TX_SIZES);
     const LvMapCoeffCost *const coeff_costs =
         &ctx->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
@@ -410,7 +409,7 @@ static INLINE int32_t av1_cost_coeffs_txb_loop_cost_eob(
 
 // Note: don't call this function when eob is 0.
 uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_update_cdf,
-                                 FRAME_CONTEXT *                     ec_ctx,
+                                 FRAME_CONTEXT                      *ec_ctx,
                                  struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                  const TranLow *const qcoeff, uint16_t eob, PlaneType plane_type,
                                  TxSize transform_size, TxType transform_type, int16_t txb_skip_ctx,
@@ -420,8 +419,8 @@ uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_
     //Note: there is a different version of this function in AOM that seems to be efficient as its name is:
     //warehouse_efficients_txb
 
-    const TxSize txs_ctx = (TxSize)(
-        (txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
+    const TxSize txs_ctx =
+        (TxSize)((txsize_sqr_map[transform_size] + txsize_sqr_up_map[transform_size] + 1) >> 1);
     const TxClass          tx_class = tx_type_to_class[transform_type];
     int32_t                cost;
     const int32_t          bwl    = get_txb_bwl_tab[transform_size];
@@ -512,7 +511,7 @@ uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_
 
             if (level > NUM_BASE_LEVELS) {
                 const int base_range = level - 1 - NUM_BASE_LEVELS;
-                int br_ctx;
+                int       br_ctx;
                 if (eob == 1)
                     br_ctx = 0;
                 else
@@ -590,11 +589,11 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
         mv.row = mv_ref_y;
         mv.col = mv_ref_x;
         MV ref_mv;
-        ref_mv.row     = pred_ref_y;
-        ref_mv.col     = pred_ref_x;
-        int *dvcost[2] = {(int *)&ctx->md_rate_estimation_ptr->dv_cost[0][MV_MAX],
+        ref_mv.row        = pred_ref_y;
+        ref_mv.col        = pred_ref_x;
+        int    *dvcost[2] = {(int *)&ctx->md_rate_estimation_ptr->dv_cost[0][MV_MAX],
                           (int *)&ctx->md_rate_estimation_ptr->dv_cost[1][MV_MAX]};
-        int32_t mv_rate = svt_av1_mv_bit_cost(
+        int32_t mv_rate   = svt_av1_mv_bit_cost(
             &mv, &ref_mv, ctx->md_rate_estimation_ptr->dv_joint_cost, dvcost, MV_COST_WEIGHT_SUB);
 
         rate = mv_rate + ctx->md_rate_estimation_ptr->intrabc_fac_bits[candidate_ptr->use_intrabc];
@@ -669,8 +668,8 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
             const int use_palette = candidate_ptr->palette_info
                 ? (candidate_ptr->palette_size[0] > 0)
                 : 0;
-            const int bsize_ctx = av1_get_palette_bsize_ctx(blk_geom->bsize);
-            const int mode_ctx  = av1_get_palette_mode_ctx(blk_ptr->av1xd);
+            const int bsize_ctx   = av1_get_palette_bsize_ctx(blk_geom->bsize);
+            const int mode_ctx    = av1_get_palette_mode_ctx(blk_ptr->av1xd);
             intra_luma_mode_bits_num +=
                 ctx->md_rate_estimation_ptr
                     ->palette_ymode_fac_bits[bsize_ctx][mode_ctx][use_palette];
@@ -680,11 +679,11 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
                 av1_get_block_dimensions(
                     blk_geom->bsize, 0, blk_ptr->av1xd, &block_width, &block_height, &rows, &cols);
                 const int plt_size = candidate_ptr->palette_size[0];
-                int palette_mode_cost =
+                int       palette_mode_cost =
                     ctx->md_rate_estimation_ptr
                         ->palette_ysize_fac_bits[bsize_ctx][plt_size - PALETTE_MIN_SIZE] +
                     write_uniform_cost(plt_size, color_map[0]);
-                uint16_t color_cache[2 * PALETTE_MAX_SIZE];
+                uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
                 const int n_cache = svt_get_palette_cache_y(blk_ptr->av1xd, color_cache);
                 palette_mode_cost += svt_av1_palette_color_cost_y(
                     &candidate_ptr->palette_info->pmi,
@@ -792,9 +791,8 @@ static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
 }
 
 // This function encodes the reference frame
-uint64_t estimate_ref_frame_type_bits(
-    struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
-    uint8_t ref_frame_type, EbBool is_compound) {
+uint64_t estimate_ref_frame_type_bits(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
+                                      uint8_t ref_frame_type, EbBool is_compound) {
     uint64_t ref_rate_bits = 0;
 
     // const MbModeInfo *const mbmi = &blk_ptr->av1xd->mi[0]->mbmi;
@@ -971,10 +969,11 @@ int get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_frame_i
                                int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
 int get_comp_group_idx_context_enc(const MacroBlockD *xd);
 int is_any_masked_compound_used(BlockSize sb_type);
-static INLINE uint32_t get_compound_mode_rate(
-    struct ModeDecisionContext *ctx, ModeDecisionCandidate *candidate_ptr, BlkStruct *blk_ptr,
-    uint8_t ref_frame_type, BlockSize bsize, SequenceControlSet *scs_ptr,
-    PictureControlSet *pcs_ptr) {
+static INLINE uint32_t get_compound_mode_rate(struct ModeDecisionContext *ctx,
+                                              ModeDecisionCandidate      *candidate_ptr,
+                                              BlkStruct *blk_ptr, uint8_t ref_frame_type,
+                                              BlockSize bsize, SequenceControlSet *scs_ptr,
+                                              PictureControlSet *pcs_ptr) {
     uint32_t          comp_rate = 0;
     MbModeInfo *const mbmi      = &blk_ptr->av1xd->mi[0]->mbmi;
     MvReferenceFrame  rf[2];
@@ -1464,13 +1463,13 @@ uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
         }
     }
     //this func return 0 if masked=0 and distance=0
-        inter_mode_bits_num += get_compound_mode_rate(ctx,
-                                                      candidate_ptr,
-                                                      blk_ptr,
-                                                      candidate_ptr->ref_frame_type,
-                                                      blk_geom->bsize,
-                                                      pcs_ptr->parent_pcs_ptr->scs_ptr,
-                                                      pcs_ptr);
+    inter_mode_bits_num += get_compound_mode_rate(ctx,
+                                                  candidate_ptr,
+                                                  blk_ptr,
+                                                  candidate_ptr->ref_frame_type,
+                                                  blk_geom->bsize,
+                                                  pcs_ptr->parent_pcs_ptr->scs_ptr,
+                                                  pcs_ptr);
     // NM - To be added when the overlappable mode is adopted
     //    read_compound_type(is_compound)
     // NM - To be added when switchable filter is adopted
@@ -1518,7 +1517,7 @@ uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
 /*
 */
 EbErrorType av1_txb_estimate_coeff_bits_light_pd0(
-    struct ModeDecisionContext *        md_context,
+    struct ModeDecisionContext         *md_context,
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t txb_origin_index,
     EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint64_t *y_txb_coeff_bits,
     TxSize txsize) {
@@ -1654,7 +1653,7 @@ EbErrorType av1_txb_estimate_coeff_bits(
     return return_error;
 }
 
-EbErrorType av1_full_cost_light_pd0(ModeDecisionContext *               context_ptr,
+EbErrorType av1_full_cost_light_pd0(ModeDecisionContext                *context_ptr,
                                     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                     uint64_t *y_distortion, uint64_t lambda,
                                     uint64_t *y_coeff_bits) {
@@ -1752,7 +1751,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                                         candidate_buffer_ptr->candidate_ptr->tx_depth,
                                         candidate_buffer_ptr->candidate_ptr->block_has_coeff);
 
-        // Coeff rate
+    // Coeff rate
     if (context_ptr->blk_skip_decision && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
         // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
         uint64_t non_skip_cost = RDCOST(
@@ -2063,10 +2062,9 @@ EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext 
 ************************************************************/
 void coding_loop_context_generation(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                     BlkStruct *blk_ptr, uint32_t blk_origin_x,
-                                    uint32_t blk_origin_y,
+                                    uint32_t           blk_origin_y,
                                     NeighborArrayUnit *skip_coeff_neighbor_array,
                                     NeighborArrayUnit *leaf_partition_neighbor_array) {
-
     uint32_t partition_left_neighbor_index = get_neighbor_array_unit_left_index(
         leaf_partition_neighbor_array, blk_origin_y);
     uint32_t partition_above_neighbor_index = get_neighbor_array_unit_top_index(
@@ -2125,7 +2123,7 @@ void coding_loop_context_generation(PictureControlSet *pcs_ptr, ModeDecisionCont
     if (pcs_ptr->slice_type != I_SLICE || pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
         av1_collect_neighbors_ref_counts_new(blk_ptr->av1xd);
 
-        // Skip Coeff Context
+    // Skip Coeff Context
     if (context_ptr->rate_est_ctrls.update_skip_coeff_ctx) {
         uint32_t skip_coeff_left_neighbor_index = get_neighbor_array_unit_left_index(
             skip_coeff_neighbor_array, blk_origin_y);
@@ -2172,9 +2170,9 @@ EbErrorType av1_txb_calc_cost(
     uint64_t cr_txb_distortion
         [DIST_CALC_TOTAL], // input parameter, Cr distortion for both Normal and Cbf zero modes
     COMPONENT_TYPE component_type,
-    uint64_t *     y_txb_coeff_bits, // input parameter, Y quantized coefficients rate
-    uint64_t *     cb_txb_coeff_bits, // input parameter, Cb quantized coefficients rate
-    uint64_t *     cr_txb_coeff_bits, // input parameter, Cr quantized coefficients rate
+    uint64_t      *y_txb_coeff_bits, // input parameter, Y quantized coefficients rate
+    uint64_t      *cb_txb_coeff_bits, // input parameter, Cb quantized coefficients rate
+    uint64_t      *cr_txb_coeff_bits, // input parameter, Cr quantized coefficients rate
     TxSize         txsize,
     uint64_t       lambda) // input parameter, lambda for Luma
 

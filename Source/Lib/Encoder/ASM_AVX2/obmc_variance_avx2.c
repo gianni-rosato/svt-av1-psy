@@ -185,7 +185,7 @@ static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, 
                                                        int            pre_stride, \
                                                        const int32_t *wsrc,       \
                                                        const int32_t *mask,       \
-                                                       unsigned int * sse) {       \
+                                                       unsigned int  *sse) {       \
         int sum;                                                                  \
         if (W == 4) {                                                             \
             obmc_variance_w4(pre, pre_stride, wsrc, mask, sse, &sum, H);          \

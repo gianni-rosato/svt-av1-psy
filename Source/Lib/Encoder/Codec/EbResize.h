@@ -36,17 +36,17 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
 void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input_picture_ptr,
                           uint8_t hbd_mode_decision);
 
-void use_scaled_rec_refs_if_needed(PictureControlSet *  pcs_ptr,
+void use_scaled_rec_refs_if_needed(PictureControlSet   *pcs_ptr,
                                    EbPictureBufferDesc *input_picture_ptr,
                                    EbReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic,
                                    uint8_t hbd_mode_decision);
 
 void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
-                                      EbPictureBufferDesc *    input_picture_ptr,
-                                      EbPaReferenceObject *    ref_obj,
-                                      EbPictureBufferDesc **   ref_pic_ptr,
-                                      EbPictureBufferDesc **   quarter_ref_pic_ptr,
-                                      EbPictureBufferDesc **   sixteenth_ref_pic_ptr);
+                                      EbPictureBufferDesc     *input_picture_ptr,
+                                      EbPaReferenceObject     *ref_obj,
+                                      EbPictureBufferDesc    **ref_pic_ptr,
+                                      EbPictureBufferDesc    **quarter_ref_pic_ptr,
+                                      EbPictureBufferDesc    **sixteenth_ref_pic_ptr);
 
 void scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                       superres_params_type spr_params, uint16_t source_width,

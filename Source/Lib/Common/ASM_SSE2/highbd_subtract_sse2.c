@@ -186,7 +186,7 @@ static void subtract_8x8(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *s
     } while (0)
 
 #define SUBTRACT_FUN(size)                                   \
-    static void subtract_##size(int16_t *       diff,        \
+    static void subtract_##size(int16_t        *diff,        \
                                 ptrdiff_t       diff_stride, \
                                 const uint16_t *src,         \
                                 ptrdiff_t       src_stride,  \
@@ -276,8 +276,8 @@ static SubtractWxHFuncType get_subtract_func(int rows, int cols) {
 void svt_aom_highbd_subtract_block_sse2(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
                                         const uint8_t *src8, ptrdiff_t src_stride,
                                         const uint8_t *pred8, ptrdiff_t pred_stride, int bd) {
-    uint16_t *          src  = (uint16_t *)(src8);
-    uint16_t *          pred = (uint16_t *)(pred8);
+    uint16_t           *src  = (uint16_t *)(src8);
+    uint16_t           *pred = (uint16_t *)(pred8);
     SubtractWxHFuncType func;
     (void)bd;
 

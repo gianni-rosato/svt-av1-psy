@@ -154,7 +154,7 @@ static void vfilter8(const int16_t *src, int src_stride, uint8_t *dst, int dst_s
             // Divide down by (1 << round_1), rounding to nearest and subtract sub32.
             __m128i shifted = _mm_sra_epi32(_mm_add_epi32(conv, round_shift_add), round_shift);
 
-            uint8_t *      dst_x    = dst + y * dst_stride + x;
+            uint8_t       *dst_x    = dst + y * dst_stride + x;
             CONV_BUF_TYPE *dst_16_x = dst16 + y * dst16_stride + x;
             __m128i        result;
             __m128i        shifted_16 = _mm_packus_epi32(shifted, shifted);
@@ -388,7 +388,7 @@ static void highbd_vfilter8(const int16_t *src, int src_stride, uint16_t *dst, i
             // Divide down by (1 << round_1), rounding to nearest and subtract sub32.
             __m128i shifted = _mm_sra_epi32(_mm_add_epi32(conv, round_shift_add), round_shift);
 
-            uint16_t *     dst_x    = dst + y * dst_stride + x;
+            uint16_t      *dst_x    = dst + y * dst_stride + x;
             CONV_BUF_TYPE *dst_16_x = dst16 + y * dst16_stride + x;
 
             __m128i result;

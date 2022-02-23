@@ -77,11 +77,11 @@ typedef struct ParseCtxt {
     /** symbol decoder Handle */
     SvtReader r;
 
-    SeqHeader *  seq_header;
+    SeqHeader   *seq_header;
     FrameHeader *frame_header;
 
     ParseAboveNbr4x4Ctxt *parse_above_nbr4x4_ctxt;
-    ParseLeftNbr4x4Ctxt * parse_left_nbr4x4_ctxt;
+    ParseLeftNbr4x4Ctxt  *parse_left_nbr4x4_ctxt;
 
     //FRAME_CONTEXT   frm_ctx[DEC_MAX_NUM_FRM_PRLL];
     FRAME_CONTEXT cur_tile_ctx;

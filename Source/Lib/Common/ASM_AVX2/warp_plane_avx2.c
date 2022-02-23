@@ -526,7 +526,7 @@ static INLINE void warp_horizontal_filter_alpha0_beta0_avx2(
 static INLINE void unpack_weights_and_set_round_const_avx2(ConvolveParams *conv_params,
                                                            const int       round_bits,
                                                            const int       offset_bits,
-                                                           __m256i *       res_sub_const,
+                                                           __m256i        *res_sub_const,
                                                            __m256i *round_bits_const, __m256i *wt) {
     *res_sub_const    = _mm256_set1_epi16(-(1 << (offset_bits - conv_params->round_1)) -
                                        (1 << (offset_bits - conv_params->round_1 - 1)));

@@ -9,7 +9,6 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-
 #include <emmintrin.h>
 #include <smmintrin.h>
 
@@ -54,13 +53,102 @@ static const uint16_t mask_16bit[16][16] = {
     {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0, 0, 0, 0},
     {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0, 0, 0},
-    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0, 0},
-    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0, 0},
-    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0, 0},
-    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0, 0},
-    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0},
-    {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0}};
-
+    {0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0},
+    {0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0,
+     0,
+     0,
+     0,
+     0},
+    {0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0,
+     0,
+     0,
+     0},
+    {0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0,
+     0,
+     0},
+    {0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0,
+     0},
+    {0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0xFFFF,
+     0}};
 
 static INLINE void add_32_to_64_sse4_1(const __m128i src, __m128i *const sum) {
     const __m128i s0 = _mm_cvtepi32_epi64(src);
@@ -151,7 +239,7 @@ static uint16_t find_average_highbd_sse4_1(const uint16_t *src, int32_t h_start,
                 src_t += stride;
             } while (--i);
         } else {
-            const int32_t w8  = width - leftover;
+            const int32_t w8   = width - leftover;
             const __m128i mask = _mm_loadu_si128((__m128i *)(mask_16bit[leftover]));
 
             do {
@@ -808,7 +896,6 @@ static void derive_square_win3_sse4_1(const __m128i *d_is, const __m128i *d_ie, 
     msub_sse4_1(d_is[2], d_js[2], &deltas[1][2]);
     msub_sse4_1(d_is[3], d_js[3], &deltas[1][3]);
 
-
     madd_sse4_1(d_ie[0], d_je[0], &deltas[0][0]);
     madd_sse4_1(d_ie[1], d_je[1], &deltas[0][1]);
     madd_sse4_1(d_ie[0], d_je[2], &deltas[0][2]);
@@ -1378,16 +1465,16 @@ static void step3_win7_sse4_1(const int16_t **const d, const int32_t d_stride, c
         madd_sse4_1(dd[0], ds[12], &deltas[12]);
         madd_sse4_1(dd[1], ds[13], &deltas[13]);
 
-        ds[0] = ds[2];
-        ds[1] = ds[3];
-        ds[2] = ds[4];
-        ds[3] = ds[5];
-        ds[4] = ds[6];
-        ds[5] = ds[7];
-        ds[6] = ds[8];
-        ds[7] = ds[9];
-        ds[8] = ds[10];
-        ds[9] = ds[11];
+        ds[0]  = ds[2];
+        ds[1]  = ds[3];
+        ds[2]  = ds[4];
+        ds[3]  = ds[5];
+        ds[4]  = ds[6];
+        ds[5]  = ds[7];
+        ds[6]  = ds[8];
+        ds[7]  = ds[9];
+        ds[8]  = ds[10];
+        ds[9]  = ds[11];
         ds[10] = ds[12];
         ds[11] = ds[13];
 
@@ -1493,10 +1580,10 @@ static INLINE void hadd_update_6_stats_sse4_1(const int64_t *const src, const __
 static INLINE void shift_right_4b_2x128(__m128i vec[2]) {
     int32_t tmp1 = _mm_cvtsi128_si32(vec[0]);
     int32_t tmp2 = _mm_cvtsi128_si32(vec[1]);
-    vec[0]        = _mm_srli_si128(vec[0], 4);
-    vec[1]        = _mm_srli_si128(vec[1], 4);
-    vec[0]        = _mm_insert_epi32(vec[0], tmp2, 3);
-    vec[1]        = _mm_insert_epi32(vec[1], tmp1, 3);
+    vec[0]       = _mm_srli_si128(vec[0], 4);
+    vec[1]       = _mm_srli_si128(vec[1], 4);
+    vec[0]       = _mm_insert_epi32(vec[0], tmp2, 3);
+    vec[1]       = _mm_insert_epi32(vec[1], tmp1, 3);
 }
 
 static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_stride,
@@ -1551,18 +1638,24 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
                 d_t += d_stride;
             } while (--y);
 
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j], hadd_two_32_to_64_sse4_1(sum_m[0],sum_m[1]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1], hadd_two_32_to_64_sse4_1(sum_m[2],sum_m[3]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2], hadd_two_32_to_64_sse4_1(sum_m[4],sum_m[5]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j), hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1), hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2), hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j],
+                             hadd_two_32_to_64_sse4_1(sum_m[0], sum_m[1]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1],
+                             hadd_two_32_to_64_sse4_1(sum_m[2], sum_m[3]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2],
+                             hadd_two_32_to_64_sse4_1(sum_m[4], sum_m[5]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j),
+                             hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1),
+                             hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2),
+                             hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
         } while (++j < wiener_win);
 
         // Step 2: Calculate the left edge of each square on the top row.
         j = 1;
         do {
-            const int16_t *d_t                              = d;
+            const int16_t *d_t             = d;
             __m128i        sum_h[WIN_3TAP] = {_mm_setzero_si128()};
             __m128i        dgd[2];
 
@@ -1587,8 +1680,10 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
                 d_t += d_stride;
             } while (--y);
 
-            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
         } while (++j < wiener_win);
     } else {
         const int32_t num_bit_left = 32 - 1 /* sign */ - 2 * bit_depth /* energy */ + 3 /* SIMD */;
@@ -1655,19 +1750,25 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
                 height_t += h_t;
             } while (height_t < height);
 
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j], hadd_2_two_64_sse4_1(sum_m[0], sum_m[1]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1], hadd_2_two_64_sse4_1(sum_m[2], sum_m[3]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2], hadd_2_two_64_sse4_1(sum_m[4], sum_m[5]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j), hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1), hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2), hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j],
+                             hadd_2_two_64_sse4_1(sum_m[0], sum_m[1]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1],
+                             hadd_2_two_64_sse4_1(sum_m[2], sum_m[3]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2],
+                             hadd_2_two_64_sse4_1(sum_m[4], sum_m[5]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j),
+                             hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1),
+                             hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2),
+                             hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
         } while (++j < wiener_win);
 
         // Step 2: Calculate the left edge of each square on the top row.
         j = 1;
         do {
-            const int16_t *d_t                              = d;
-            int32_t        height_t                         = 0;
+            const int16_t *d_t             = d;
+            int32_t        height_t        = 0;
             __m128i        sum_h[WIN_3TAP] = {_mm_setzero_si128()};
             __m128i        dgd[2];
 
@@ -1705,8 +1806,10 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
                 height_t += h_t;
             } while (height_t < height);
 
-            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
         } while (++j < wiener_win);
     }
 
@@ -1729,14 +1832,15 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
         deltas[1] = _mm_hadd_epi32(deltas[1], deltas[3]);
         deltas[2] = _mm_hadd_epi32(deltas[4], deltas[4]);
         deltas[3] = _mm_hadd_epi32(deltas[5], deltas[5]);
-        delta[0] = _mm_sub_epi32(deltas[1], deltas[0]);
-        delta[1] = _mm_sub_epi32(deltas[3], deltas[2]);
+        delta[0]  = _mm_sub_epi32(deltas[1], deltas[0]);
+        delta[1]  = _mm_sub_epi32(deltas[3], deltas[2]);
 
         if (h4 != height) {
             // 16-bit idx: 0, 2, 1, 3, 0, 2, 1, 3
             const __m128i shf0 = _mm_setr_epi8(0, 1, 4, 5, 2, 3, 6, 7, 0, 1, 4, 5, 2, 3, 6, 7);
             // 16-bit idx: 0, 2, 1, 3, 4, 6, 5, 7, 0, 2, 1, 3, 4, 6, 5, 7
-            const __m128i shf1 = _mm_setr_epi8(0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15);
+            const __m128i shf1 = _mm_setr_epi8(
+                0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15);
 
             dd[0] = _mm_insert_epi32(dd[0], *(int32_t *)(d_t + 0 * d_stride), 0);
             dd[0] = _mm_insert_epi32(dd[0], *(int32_t *)(d_t + 0 * d_stride + width), 1);
@@ -1890,9 +1994,9 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
                 dd[0] = _mm_insert_epi16(dd[0], d_t[0 * d_stride + width], 1);
 
                 int32_t res = _mm_cvtsi128_si32(dd[0]);
-                dd[0] = _mm_set1_epi32(res);
-                res = _mm_cvtsi128_si32(dd[1]);
-                dd[1] = _mm_set1_epi32(res);
+                dd[0]       = _mm_set1_epi32(res);
+                res         = _mm_cvtsi128_si32(dd[1]);
+                dd[1]       = _mm_set1_epi32(res);
 
                 ds[1] = _mm_insert_epi16(ds[1], d_t[0 * d_stride + 1], 0);
                 ds[1] = _mm_insert_epi16(ds[1], d_t[0 * d_stride + 1], 2);
@@ -1933,12 +2037,12 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
 
         j = i + 1;
         do {
-            const int16_t *const d_j                                                    = d + j;
-            __m128i              deltas[WIENER_WIN_3TAP - 1][WIN_3TAP] = {
-                {_mm_setzero_si128()}, {_mm_setzero_si128()}};
-            __m128i d_is[WIN_3TAP], d_ie[WIN_3TAP];
-            __m128i d_js[WIN_3TAP], d_je[WIN_3TAP];
-            __m128i delta64[2];
+            const int16_t *const d_j                                   = d + j;
+            __m128i              deltas[WIENER_WIN_3TAP - 1][WIN_3TAP] = {{_mm_setzero_si128()},
+                                                             {_mm_setzero_si128()}};
+            __m128i              d_is[WIN_3TAP], d_ie[WIN_3TAP];
+            __m128i              d_js[WIN_3TAP], d_je[WIN_3TAP];
+            __m128i              delta64[2];
 
             x = 0;
             while (x < w16) {
@@ -1960,8 +2064,10 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
                 derive_square_win3_sse4_1(d_is, d_ie, d_js, d_je, deltas);
             }
 
-            delta64[0] = hadd_four_32_sse4_1(deltas[0][0], deltas[0][1], deltas[0][2], deltas[0][3]);
-            delta64[1] = hadd_four_32_sse4_1(deltas[1][0], deltas[1][1], deltas[1][2], deltas[1][3]);
+            delta64[0] = hadd_four_32_sse4_1(
+                deltas[0][0], deltas[0][1], deltas[0][2], deltas[0][3]);
+            delta64[1] = hadd_four_32_sse4_1(
+                deltas[1][0], deltas[1][1], deltas[1][2], deltas[1][3]);
             delta64[0] = _mm_cvtepi32_epi64(delta64[0]);
             delta64[1] = _mm_cvtepi32_epi64(delta64[1]);
 
@@ -2065,22 +2171,32 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
                 d_t += d_stride;
             } while (--y);
 
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j], hadd_two_32_to_64_sse4_1(sum_m[0],sum_m[1]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1], hadd_two_32_to_64_sse4_1(sum_m[2],sum_m[3]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2], hadd_two_32_to_64_sse4_1(sum_m[4],sum_m[5]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 3], hadd_two_32_to_64_sse4_1(sum_m[6],sum_m[7]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 4], hadd_two_32_to_64_sse4_1(sum_m[8],sum_m[9]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j), hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1), hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2), hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 3), hadd_two_32_to_64_sse4_1(sum_h[6], sum_h[7]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 4), hadd_two_32_to_64_sse4_1(sum_h[8], sum_h[9]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j],
+                             hadd_two_32_to_64_sse4_1(sum_m[0], sum_m[1]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1],
+                             hadd_two_32_to_64_sse4_1(sum_m[2], sum_m[3]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2],
+                             hadd_two_32_to_64_sse4_1(sum_m[4], sum_m[5]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 3],
+                             hadd_two_32_to_64_sse4_1(sum_m[6], sum_m[7]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 4],
+                             hadd_two_32_to_64_sse4_1(sum_m[8], sum_m[9]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j),
+                             hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1),
+                             hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2),
+                             hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 3),
+                             hadd_two_32_to_64_sse4_1(sum_h[6], sum_h[7]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 4),
+                             hadd_two_32_to_64_sse4_1(sum_h[8], sum_h[9]));
         } while (++j < wiener_win);
 
         // Step 2: Calculate the left edge of each square on the top row.
         j = 1;
         do {
-            const int16_t *d_t                                = d;
+            const int16_t *d_t               = d;
             __m128i        sum_h[WIN_CHROMA] = {_mm_setzero_si128()};
             __m128i        dgd[2];
 
@@ -2105,10 +2221,14 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
                 d_t += d_stride;
             } while (--y);
 
-            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
-            _mm_storel_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[6], sum_h[7]));
+            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[6], sum_h[7]));
         } while (++j < wiener_win);
     } else {
         const int32_t num_bit_left = 32 - 1 /* sign */ - 2 * bit_depth /* energy */ + 3 /* SIMD */;
@@ -2143,7 +2263,7 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
                         x += 16;
                     };
 
-                if (w16 != width) {
+                    if (w16 != width) {
                         src[0] = _mm_loadu_si128((__m128i *)(s_t + w16));
                         src[1] = _mm_loadu_si128((__m128i *)(s_t + w16 + 8));
                         dgd[0] = _mm_loadu_si128((__m128i *)(d_t + w16));
@@ -2183,23 +2303,33 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
                 height_t += h_t;
             } while (height_t < height);
 
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j], hadd_2_two_64_sse4_1(sum_m[0], sum_m[1]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1], hadd_2_two_64_sse4_1(sum_m[2], sum_m[3]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2], hadd_2_two_64_sse4_1(sum_m[4], sum_m[5]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 3], hadd_2_two_64_sse4_1(sum_m[6], sum_m[7]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 4], hadd_2_two_64_sse4_1(sum_m[8], sum_m[9]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j), hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1), hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2), hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 3), hadd_2_two_64_sse4_1(sum_h[6], sum_h[7]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 4), hadd_2_two_64_sse4_1(sum_h[8], sum_h[9]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j],
+                             hadd_2_two_64_sse4_1(sum_m[0], sum_m[1]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1],
+                             hadd_2_two_64_sse4_1(sum_m[2], sum_m[3]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2],
+                             hadd_2_two_64_sse4_1(sum_m[4], sum_m[5]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 3],
+                             hadd_2_two_64_sse4_1(sum_m[6], sum_m[7]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 4],
+                             hadd_2_two_64_sse4_1(sum_m[8], sum_m[9]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j),
+                             hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1),
+                             hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2),
+                             hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 3),
+                             hadd_2_two_64_sse4_1(sum_h[6], sum_h[7]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 4),
+                             hadd_2_two_64_sse4_1(sum_h[8], sum_h[9]));
         } while (++j < wiener_win);
 
         // Step 2: Calculate the left edge of each square on the top row.
         j = 1;
         do {
-            const int16_t *d_t                                = d;
-            int32_t        height_t                           = 0;
+            const int16_t *d_t               = d;
+            int32_t        height_t          = 0;
             __m128i        sum_h[WIN_CHROMA] = {_mm_setzero_si128()};
             __m128i        dgd[2];
 
@@ -2241,10 +2371,14 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
                 height_t += h_t;
             } while (height_t < height);
 
-            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
-            _mm_storel_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[6], sum_h[7]));
+            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[6], sum_h[7]));
         } while (++j < wiener_win);
     }
 
@@ -2461,7 +2595,7 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
             delta[2]  = _mm_sub_epi32(deltas[5], deltas[4]);
 
             if (h8 != height) {
-                __m128i       dd128, ds128;
+                __m128i dd128, ds128;
 
                 ds[0] = _mm_insert_epi16(ds[0], d_j[0 * d_stride], 0);
                 ds[0] = _mm_insert_epi16(ds[0], d_j[0 * d_stride + width], 1);
@@ -2542,11 +2676,11 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
 
         j = i + 1;
         do {
-            const int16_t *const d_j                                                        = d + j;
-            __m128i              deltas[WIENER_WIN_CHROMA - 1][WIN_CHROMA] = {
-                {_mm_setzero_si128()}, {_mm_setzero_si128()}};
-            __m128i d_is[WIN_CHROMA], d_ie[WIN_CHROMA];
-            __m128i d_js[WIN_CHROMA], d_je[WIN_CHROMA];
+            const int16_t *const d_j                                       = d + j;
+            __m128i              deltas[WIENER_WIN_CHROMA - 1][WIN_CHROMA] = {{_mm_setzero_si128()},
+                                                                 {_mm_setzero_si128()}};
+            __m128i              d_is[WIN_CHROMA], d_ie[WIN_CHROMA];
+            __m128i              d_js[WIN_CHROMA], d_je[WIN_CHROMA];
 
             x = 0;
             while (x < w16) {
@@ -2703,26 +2837,40 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
                 s_t += s_stride;
                 d_t += d_stride;
             } while (--y);
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j], hadd_two_32_to_64_sse4_1(sum_m[0],sum_m[1]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1], hadd_two_32_to_64_sse4_1(sum_m[2],sum_m[3]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2], hadd_two_32_to_64_sse4_1(sum_m[4],sum_m[5]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 3], hadd_two_32_to_64_sse4_1(sum_m[6],sum_m[7]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 4], hadd_two_32_to_64_sse4_1(sum_m[8],sum_m[9]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 5], hadd_two_32_to_64_sse4_1(sum_m[10],sum_m[11]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 6], hadd_two_32_to_64_sse4_1(sum_m[12],sum_m[13]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j), hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1), hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2), hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 3), hadd_two_32_to_64_sse4_1(sum_h[6], sum_h[7]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 4), hadd_two_32_to_64_sse4_1(sum_h[8], sum_h[9]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 5), hadd_two_32_to_64_sse4_1(sum_h[10], sum_h[11]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 6), hadd_two_32_to_64_sse4_1(sum_h[12], sum_h[13]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j],
+                             hadd_two_32_to_64_sse4_1(sum_m[0], sum_m[1]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1],
+                             hadd_two_32_to_64_sse4_1(sum_m[2], sum_m[3]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2],
+                             hadd_two_32_to_64_sse4_1(sum_m[4], sum_m[5]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 3],
+                             hadd_two_32_to_64_sse4_1(sum_m[6], sum_m[7]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 4],
+                             hadd_two_32_to_64_sse4_1(sum_m[8], sum_m[9]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 5],
+                             hadd_two_32_to_64_sse4_1(sum_m[10], sum_m[11]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 6],
+                             hadd_two_32_to_64_sse4_1(sum_m[12], sum_m[13]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j),
+                             hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1),
+                             hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2),
+                             hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 3),
+                             hadd_two_32_to_64_sse4_1(sum_h[6], sum_h[7]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 4),
+                             hadd_two_32_to_64_sse4_1(sum_h[8], sum_h[9]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 5),
+                             hadd_two_32_to_64_sse4_1(sum_h[10], sum_h[11]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 6),
+                             hadd_two_32_to_64_sse4_1(sum_h[12], sum_h[13]));
         } while (++j < wiener_win);
 
         // Step 2: Calculate the left edge of each square on the top row.
         j = 1;
         do {
-            const int16_t *d_t                         = d;
+            const int16_t *d_t          = d;
             __m128i        sum_h[WIN_7] = {_mm_setzero_si128()};
             __m128i        dgd[2];
 
@@ -2746,12 +2894,18 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
 
                 d_t += d_stride;
             } while (--y);
-            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
-            _mm_storel_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[6], sum_h[7]));
-            _mm_storel_epi64((__m128i *)&H[5 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[8], sum_h[9]));
-            _mm_storel_epi64((__m128i *)&H[6 * wiener_win2 + j * wiener_win],hadd_two_32_to_64_sse4_1(sum_h[10], sum_h[11]));
+            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[6], sum_h[7]));
+            _mm_storel_epi64((__m128i *)&H[5 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[8], sum_h[9]));
+            _mm_storel_epi64((__m128i *)&H[6 * wiener_win2 + j * wiener_win],
+                             hadd_two_32_to_64_sse4_1(sum_h[10], sum_h[11]));
         } while (++j < wiener_win);
     } else {
         const int32_t num_bit_left = 32 - 1 /* sign */ - 2 * bit_depth /* energy */ + 3 /* SIMD */;
@@ -2834,34 +2988,48 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
 
                 height_t += h_t;
             } while (height_t < height);
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j], hadd_2_two_64_sse4_1(sum_m[0], sum_m[1]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1], hadd_2_two_64_sse4_1(sum_m[2], sum_m[3]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2], hadd_2_two_64_sse4_1(sum_m[4], sum_m[5]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 3], hadd_2_two_64_sse4_1(sum_m[6], sum_m[7]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 4], hadd_2_two_64_sse4_1(sum_m[8], sum_m[9]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 5], hadd_2_two_64_sse4_1(sum_m[10], sum_m[11]));
-            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 6], hadd_2_two_64_sse4_1(sum_m[12], sum_m[13]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j],
+                             hadd_2_two_64_sse4_1(sum_m[0], sum_m[1]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 1],
+                             hadd_2_two_64_sse4_1(sum_m[2], sum_m[3]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2],
+                             hadd_2_two_64_sse4_1(sum_m[4], sum_m[5]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 3],
+                             hadd_2_two_64_sse4_1(sum_m[6], sum_m[7]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 4],
+                             hadd_2_two_64_sse4_1(sum_m[8], sum_m[9]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 5],
+                             hadd_2_two_64_sse4_1(sum_m[10], sum_m[11]));
+            _mm_storel_epi64((__m128i *)&M[wiener_win * j + 6],
+                             hadd_2_two_64_sse4_1(sum_m[12], sum_m[13]));
 
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j), hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1), hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2), hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 3), hadd_2_two_64_sse4_1(sum_h[6], sum_h[7]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 4), hadd_2_two_64_sse4_1(sum_h[8], sum_h[9]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 5), hadd_2_two_64_sse4_1(sum_h[10], sum_h[11]));
-            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 6), hadd_2_two_64_sse4_1(sum_h[12], sum_h[13]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j),
+                             hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 1),
+                             hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 2),
+                             hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 3),
+                             hadd_2_two_64_sse4_1(sum_h[6], sum_h[7]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 4),
+                             hadd_2_two_64_sse4_1(sum_h[8], sum_h[9]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 5),
+                             hadd_2_two_64_sse4_1(sum_h[10], sum_h[11]));
+            _mm_storel_epi64((__m128i *)(H + wiener_win * j + 6),
+                             hadd_2_two_64_sse4_1(sum_h[12], sum_h[13]));
         } while (++j < wiener_win);
 
         // Step 2: Calculate the left edge of each square on the top row.
         j = 1;
         do {
-            const int16_t *d_t                         = d;
-            int32_t        height_t                    = 0;
+            const int16_t *d_t          = d;
+            int32_t        height_t     = 0;
             __m128i        sum_h[WIN_7] = {_mm_setzero_si128()};
             __m128i        dgd[2];
 
             do {
-                const int32_t h_t = ((height - height_t) < h_allowed) ? (height - height_t)
-                                                                      : h_allowed;
+                const int32_t h_t          = ((height - height_t) < h_allowed) ? (height - height_t)
+                                                                               : h_allowed;
                 __m128i       row_h[WIN_7] = {_mm_setzero_si128()};
 
                 y = h_t;
@@ -2900,12 +3068,18 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
 
                 height_t += h_t;
             } while (height_t < height);
-            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
-            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
-            _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
-            _mm_storel_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[6], sum_h[7]));
-            _mm_storel_epi64((__m128i *)&H[5 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[8], sum_h[9]));
-            _mm_storel_epi64((__m128i *)&H[6 * wiener_win2 + j * wiener_win], hadd_2_two_64_sse4_1(sum_h[10], sum_h[11]));
+            _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[0], sum_h[1]));
+            _mm_storel_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[2], sum_h[3]));
+            _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[4], sum_h[5]));
+            _mm_storel_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[6], sum_h[7]));
+            _mm_storel_epi64((__m128i *)&H[5 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[8], sum_h[9]));
+            _mm_storel_epi64((__m128i *)&H[6 * wiener_win2 + j * wiener_win],
+                             hadd_2_two_64_sse4_1(sum_h[10], sum_h[11]));
         } while (++j < wiener_win);
     }
 
@@ -2966,23 +3140,39 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
             __m128i        deltas[(2 * WIENER_WIN - 1) * 2] = {_mm_setzero_si128()};
             __m128i        dd[WIENER_WIN * 2], ds[WIENER_WIN * 2];
 
-            dd[0] = _mm_setr_epi16(di[0 * d_stride], di[1 * d_stride],
-                                   di[2 * d_stride], di[3 * d_stride],
-                                   di[4 * d_stride], di[5 * d_stride],
-                                   0, 0);
-            dd[1] = _mm_setr_epi16(di[0 * d_stride + width], di[1 * d_stride + width],
-                                   di[2 * d_stride + width], di[3 * d_stride + width],
-                                   di[4 * d_stride + width], di[5 * d_stride + width],
-                                   0, 0);
+            dd[0] = _mm_setr_epi16(di[0 * d_stride],
+                                   di[1 * d_stride],
+                                   di[2 * d_stride],
+                                   di[3 * d_stride],
+                                   di[4 * d_stride],
+                                   di[5 * d_stride],
+                                   0,
+                                   0);
+            dd[1] = _mm_setr_epi16(di[0 * d_stride + width],
+                                   di[1 * d_stride + width],
+                                   di[2 * d_stride + width],
+                                   di[3 * d_stride + width],
+                                   di[4 * d_stride + width],
+                                   di[5 * d_stride + width],
+                                   0,
+                                   0);
 
-            ds[0] = _mm_setr_epi16(d_j[0 * d_stride], d_j[1 * d_stride],
-                                   d_j[2 * d_stride], d_j[3 * d_stride],
-                                   d_j[4 * d_stride], d_j[5 * d_stride],
-                                   0, 0);
-            ds[1] = _mm_setr_epi16(d_j[0 * d_stride + width], d_j[1 * d_stride + width],
-                                   d_j[2 * d_stride + width], d_j[3 * d_stride + width],
-                                   d_j[4 * d_stride + width], d_j[5 * d_stride + width],
-                                   0, 0);
+            ds[0] = _mm_setr_epi16(d_j[0 * d_stride],
+                                   d_j[1 * d_stride],
+                                   d_j[2 * d_stride],
+                                   d_j[3 * d_stride],
+                                   d_j[4 * d_stride],
+                                   d_j[5 * d_stride],
+                                   0,
+                                   0);
+            ds[1] = _mm_setr_epi16(d_j[0 * d_stride + width],
+                                   d_j[1 * d_stride + width],
+                                   d_j[2 * d_stride + width],
+                                   d_j[3 * d_stride + width],
+                                   d_j[4 * d_stride + width],
+                                   d_j[5 * d_stride + width],
+                                   0,
+                                   0);
 
             y = 0;
             while (y < h8) {
@@ -3078,31 +3268,39 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
             deltas[3]  = _mm_sub_epi32(deltas[7], deltas[6]);
 
             if (h8 != height) {
-                ds[0] = _mm_setr_epi16(d_j[0 * d_stride], d_j[0 * d_stride + width],
-                                       d_j[1 * d_stride], d_j[1 * d_stride + width],
-                                       d_j[2 * d_stride], d_j[2 * d_stride + width],
-                                       d_j[3 * d_stride], d_j[3 * d_stride + width]);
+                ds[0] = _mm_setr_epi16(d_j[0 * d_stride],
+                                       d_j[0 * d_stride + width],
+                                       d_j[1 * d_stride],
+                                       d_j[1 * d_stride + width],
+                                       d_j[2 * d_stride],
+                                       d_j[2 * d_stride + width],
+                                       d_j[3 * d_stride],
+                                       d_j[3 * d_stride + width]);
 
                 ds[1] = _mm_insert_epi16(ds[1], d_j[4 * d_stride], 0);
                 ds[1] = _mm_insert_epi16(ds[1], d_j[4 * d_stride + width], 1);
                 ds[1] = _mm_insert_epi16(ds[1], d_j[5 * d_stride], 2);
                 ds[1] = _mm_insert_epi16(ds[1], d_j[5 * d_stride + width], 3);
 
-                dd[4] = _mm_setr_epi16(-di[1 * d_stride], di[1 * d_stride + width],
-                                       -di[2 * d_stride], di[2 * d_stride + width],
-                                       -di[3 * d_stride], di[3 * d_stride + width],
-                                       -di[4 * d_stride], di[4 * d_stride + width]);
+                dd[4] = _mm_setr_epi16(-di[1 * d_stride],
+                                       di[1 * d_stride + width],
+                                       -di[2 * d_stride],
+                                       di[2 * d_stride + width],
+                                       -di[3 * d_stride],
+                                       di[3 * d_stride + width],
+                                       -di[4 * d_stride],
+                                       di[4 * d_stride + width]);
 
                 dd[5] = _mm_insert_epi16(dd[5], -di[5 * d_stride], 0);
                 dd[5] = _mm_insert_epi16(dd[5], di[5 * d_stride + width], 1);
                 do {
                     dd[0] = _mm_set1_epi16(-di[0 * d_stride]);
                     dd[2] = dd[3] = _mm_set1_epi16(di[0 * d_stride + width]);
-                    dd[0] = dd[1]  = _mm_unpacklo_epi16(dd[0], dd[2]);
+                    dd[0] = dd[1] = _mm_unpacklo_epi16(dd[0], dd[2]);
 
                     ds[4] = _mm_set1_epi16(d_j[0 * d_stride]);
                     ds[6] = ds[7] = _mm_set1_epi16(d_j[0 * d_stride + width]);
-                    ds[4] = ds[5]  = _mm_unpacklo_epi16(ds[4], ds[6]);
+                    ds[4] = ds[5] = _mm_unpacklo_epi16(ds[4], ds[6]);
 
                     dd[5] = _mm_insert_epi16(dd[5], -di[6 * d_stride], 2);
                     dd[5] = _mm_insert_epi16(dd[5], di[6 * d_stride + width], 3);
@@ -3158,9 +3356,8 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
 
         j = i + 1;
         do {
-            const int16_t *const d_j                             = d + j;
-            __m128i deltas[WIENER_WIN - 1][WIN_7] = {{_mm_setzero_si128()},
-                                                                    {_mm_setzero_si128()}};
+            const int16_t *const d_j              = d + j;
+            __m128i deltas[WIENER_WIN - 1][WIN_7] = {{_mm_setzero_si128()}, {_mm_setzero_si128()}};
             __m128i d_is[WIN_7], d_ie[WIN_7];
             __m128i d_js[WIN_7], d_je[WIN_7];
 
@@ -3315,7 +3512,6 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
     } while (++i < wiener_win);
 }
 
-
 void svt_av1_compute_stats_sse4_1(int32_t wiener_win, const uint8_t *dgd, const uint8_t *src,
                                   int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end,
                                   int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H) {
@@ -3326,7 +3522,7 @@ void svt_av1_compute_stats_sse4_1(int32_t wiener_win, const uint8_t *dgd, const 
     const int32_t height   = v_end - v_start;
     const int32_t d_stride = (width + 2 * wiener_halfwin + 15) & ~15;
     const int32_t s_stride = (width + 15) & ~15;
-    int16_t *     d, *s;
+    int16_t      *d, *s;
 
     // The maximum input size is width * height, which is
     // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to
@@ -3338,12 +3534,12 @@ void svt_av1_compute_stats_sse4_1(int32_t wiener_win, const uint8_t *dgd, const 
     sub_avg_block_sse4_1(
         src + v_start * src_stride + h_start, src_stride, avg, width, height, s, s_stride);
     sub_avg_block_sse4_1(dgd + (v_start - wiener_halfwin) * dgd_stride + h_start - wiener_halfwin,
-                       dgd_stride,
-                       avg,
-                       width + 2 * wiener_halfwin,
-                       height + 2 * wiener_halfwin,
-                       d,
-                       d_stride);
+                         dgd_stride,
+                         avg,
+                         width + 2 * wiener_halfwin,
+                         height + 2 * wiener_halfwin,
+                         d,
+                         d_stride);
 
     if (wiener_win == WIENER_WIN) {
         compute_stats_win7_sse4_1(d, d_stride, s, s_stride, width, height, M, H, 8);
@@ -3392,7 +3588,7 @@ void svt_av1_compute_stats_highbd_sse4_1(int32_t wiener_win, const uint8_t *dgd8
     const int32_t height   = v_end - v_start;
     const int32_t d_stride = (width + 2 * wiener_halfwin + 15) & ~15;
     const int32_t s_stride = (width + 15) & ~15;
-    int16_t *     d, *s;
+    int16_t      *d, *s;
 
     // The maximum input size is width * height, which is
     // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to
@@ -3425,7 +3621,7 @@ void svt_av1_compute_stats_highbd_sse4_1(int32_t wiener_win, const uint8_t *dgd8
     // We can copy it down to the lower triangle outside the (i, j) loops.
     if (bit_depth == AOM_BITS_8) {
         diagonal_copy_stats_sse4_1(wiener_win2, H);
-    } else{ //bit_depth == AOM_BITS_10
+    } else { //bit_depth == AOM_BITS_10
         const int32_t k4 = wiener_win2 & ~3;
 
         int32_t k = 0;
@@ -3453,10 +3649,11 @@ static INLINE __m128i pair_set_epi16(int a, int b) {
 }
 
 int64_t svt_av1_lowbd_pixel_proj_error_sse4_1(const uint8_t *src8, int32_t width, int32_t height,
-                                            int32_t src_stride, const uint8_t *dat8,
-                                            int32_t dat_stride, int32_t *flt0, int32_t flt0_stride,
-                                            int32_t *flt1, int32_t flt1_stride, int32_t xq[2],
-                                            const SgrParamsType *params) {
+                                              int32_t src_stride, const uint8_t *dat8,
+                                              int32_t dat_stride, int32_t *flt0,
+                                              int32_t flt0_stride, int32_t *flt1,
+                                              int32_t flt1_stride, int32_t xq[2],
+                                              const SgrParamsType *params) {
     int            i, j, k;
     const int32_t  shift    = SGRPROJ_RST_BITS + SGRPROJ_PRJ_BITS;
     const __m128i  rounding = _mm_set1_epi32(1 << (shift - 1));
@@ -3574,10 +3771,11 @@ int64_t svt_av1_lowbd_pixel_proj_error_sse4_1(const uint8_t *src8, int32_t width
 }
 
 int64_t svt_av1_highbd_pixel_proj_error_sse4_1(const uint8_t *src8, int32_t width, int32_t height,
-                                             int32_t src_stride, const uint8_t *dat8,
-                                             int32_t dat_stride, int32_t *flt0, int32_t flt0_stride,
-                                             int32_t *flt1, int32_t flt1_stride, int32_t xq[2],
-                                             const SgrParamsType *params) {
+                                               int32_t src_stride, const uint8_t *dat8,
+                                               int32_t dat_stride, int32_t *flt0,
+                                               int32_t flt0_stride, int32_t *flt1,
+                                               int32_t flt1_stride, int32_t xq[2],
+                                               const SgrParamsType *params) {
     int             i, j, k;
     const int32_t   shift    = SGRPROJ_RST_BITS + SGRPROJ_PRJ_BITS;
     const __m128i   rounding = _mm_set1_epi32(1 << (shift - 1));

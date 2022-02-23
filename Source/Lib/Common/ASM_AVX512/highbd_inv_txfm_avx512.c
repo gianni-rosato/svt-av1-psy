@@ -21,8 +21,8 @@
 #include "transpose_avx512.h"
 
 extern const int8_t *eb_inv_txfm_shift_ls[];
-const int32_t *      cospi_arr(int32_t n);
-const int32_t *      sinpi_arr(int32_t n);
+const int32_t       *cospi_arr(int32_t n);
+const int32_t       *sinpi_arr(int32_t n);
 
 #define ONE (uint8_t)1U
 
@@ -2767,7 +2767,7 @@ void svt_av1_inv_txfm2d_add_16x32_avx512(const int32_t *coeff, uint16_t *output_
                                          TxSize tx_size, int32_t eob, int32_t bd) {
     (void)eob;
     __m512i                       in[32], out[32];
-    const int8_t *                shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t                 *shift         = eb_inv_txfm_shift_ls[tx_size];
     const int32_t                 txw_idx       = tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     const int32_t                 txh_idx       = tx_size_high_log2[tx_size] - tx_size_high_log2[0];
     const int32_t                 txfm_size_col = tx_size_wide[tx_size];
@@ -2798,7 +2798,7 @@ void svt_av1_inv_txfm2d_add_32x16_avx512(const int32_t *coeff, uint16_t *output_
                                          TxSize tx_size, int32_t eob, int32_t bd) {
     (void)eob;
     __m512i                       in[32], out[32];
-    const int8_t *                shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t                 *shift         = eb_inv_txfm_shift_ls[tx_size];
     const int32_t                 txw_idx       = tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     const int32_t                 txh_idx       = tx_size_high_log2[tx_size] - tx_size_high_log2[0];
     const int32_t                 txfm_size_col = tx_size_wide[tx_size];

@@ -37,7 +37,7 @@ void svt_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t widt
     const TranLow *cf      = coeff;
     const __m128i  x_zeros = _mm_setzero_si128();
     const __m256i  y_zeros = _mm256_setzero_si256();
-    uint8_t *      ls      = levels;
+    uint8_t       *ls      = levels;
     int32_t        i       = height;
 
     if (width == 4) {
@@ -247,7 +247,7 @@ static INLINE void get_4_nz_map_contexts_2d_sse2(const uint8_t *levels, const in
                     : _mm_setr_epi8(0, 11, 11, 11, 11, 11, 11, 11, 6, 6, 21, 21, 6, 21, 21, 21);
     __m128i       count;
     __m128i       level[5];
-    int8_t *      cc  = coeff_contexts;
+    int8_t       *cc  = coeff_contexts;
     int32_t       row = height;
 
     assert(!(height % 4));
@@ -268,9 +268,9 @@ static INLINE void get_4_nz_map_contexts_2d_sse2(const uint8_t *levels, const in
 
 static INLINE void get_8_coeff_contexts_2d_avx2(const uint8_t *levels, const int32_t height,
                                                 const ptrdiff_t *const offsets,
-                                                int8_t *               coeff_contexts) {
+                                                int8_t                *coeff_contexts) {
     const int32_t stride = 8 + TX_PAD_HOR;
-    int8_t *      cc     = coeff_contexts;
+    int8_t       *cc     = coeff_contexts;
     int32_t       row    = height;
     __m256i       count;
     __m256i       level[5];
@@ -313,9 +313,9 @@ static INLINE void get_16_coeff_contexts_2d_avx2(const uint8_t *levels, const in
                                                  const int32_t real_height, const int32_t width,
                                                  const int32_t          height,
                                                  const ptrdiff_t *const offsets,
-                                                 int8_t *               coeff_contexts) {
+                                                 int8_t                *coeff_contexts) {
     const int32_t stride = width + TX_PAD_HOR;
-    int8_t *      cc     = coeff_contexts;
+    int8_t       *cc     = coeff_contexts;
     int32_t       row    = height;
     __m256i       pos_to_offset[3];
     __m256i       count;
@@ -363,9 +363,9 @@ static INLINE void get_32n_coeff_contexts_2d_avx2(const uint8_t *levels, const i
                                                   const int32_t real_height, const int32_t width,
                                                   const int32_t          height,
                                                   const ptrdiff_t *const offsets,
-                                                  int8_t *               coeff_contexts) {
+                                                  int8_t                *coeff_contexts) {
     const int32_t stride = width + TX_PAD_HOR;
-    int8_t *      cc     = coeff_contexts;
+    int8_t       *cc     = coeff_contexts;
     int32_t       row    = height;
     __m256i       pos_to_offset[5];
     __m256i       pos_to_offset_large[3];
@@ -426,7 +426,7 @@ static INLINE void get_32n_coeff_contexts_2d_avx2(const uint8_t *levels, const i
 
 static INLINE void get_4_nz_map_contexts_hor_sse2(const uint8_t *levels, const int32_t height,
                                                   const ptrdiff_t *const offsets,
-                                                  int8_t *               coeff_contexts) {
+                                                  int8_t                *coeff_contexts) {
     const int32_t stride        = 4 + TX_PAD_HOR;
     const __m128i pos_to_offset = _mm_setr_epi8(SIG_COEF_CONTEXTS_2D + 0,
                                                 SIG_COEF_CONTEXTS_2D + 5,
@@ -463,7 +463,7 @@ static INLINE void get_4_nz_map_contexts_hor_sse2(const uint8_t *levels, const i
 
 static INLINE void get_8_coeff_contexts_hor_avx2(const uint8_t *levels, const int32_t height,
                                                  const ptrdiff_t *const offsets,
-                                                 int8_t *               coeff_contexts) {
+                                                 int8_t                *coeff_contexts) {
     const int32_t stride              = 8 + TX_PAD_HOR;
     const __m128i pos_to_offset_small = _mm_setr_epi8(SIG_COEF_CONTEXTS_2D + 0,
                                                       SIG_COEF_CONTEXTS_2D + 5,
@@ -504,7 +504,7 @@ static INLINE void get_8_coeff_contexts_hor_avx2(const uint8_t *levels, const in
 static INLINE void get_16_coeff_contexts_hor_avx2(const uint8_t *levels, const int32_t width,
                                                   const int32_t          height,
                                                   const ptrdiff_t *const offsets,
-                                                  int8_t *               coeff_contexts) {
+                                                  int8_t                *coeff_contexts) {
     const int32_t stride = width + TX_PAD_HOR;
     __m256i       count;
     __m256i       level[5];
@@ -546,7 +546,7 @@ static INLINE void get_16_coeff_contexts_hor_avx2(const uint8_t *levels, const i
 static INLINE void get_32n_coeff_contexts_hor_avx2(const uint8_t *levels, const int32_t width,
                                                    const int32_t          height,
                                                    const ptrdiff_t *const offsets,
-                                                   int8_t *               coeff_contexts) {
+                                                   int8_t                *coeff_contexts) {
     const int32_t stride              = width + TX_PAD_HOR;
     const __m256i pos_to_offset_large = _mm256_set1_epi8(SIG_COEF_CONTEXTS_2D + 10);
     __m256i       count;
@@ -608,7 +608,7 @@ static INLINE void get_32n_coeff_contexts_hor_avx2(const uint8_t *levels, const 
 
 static INLINE void get_4_nz_map_contexts_ver_sse2(const uint8_t *levels, const int32_t height,
                                                   const ptrdiff_t *const offsets,
-                                                  int8_t *               coeff_contexts) {
+                                                  int8_t                *coeff_contexts) {
     const int32_t stride              = 4 + TX_PAD_HOR;
     const __m128i pos_to_offset_large = _mm_set1_epi8(SIG_COEF_CONTEXTS_2D + 10);
     __m128i       pos_to_offset       = _mm_setr_epi8(SIG_COEF_CONTEXTS_2D + 0,
@@ -647,7 +647,7 @@ static INLINE void get_4_nz_map_contexts_ver_sse2(const uint8_t *levels, const i
 
 static INLINE void get_8_coeff_contexts_ver_avx2(const uint8_t *levels, const int32_t height,
                                                  const ptrdiff_t *const offsets,
-                                                 int8_t *               coeff_contexts) {
+                                                 int8_t                *coeff_contexts) {
     const int32_t stride         = 8 + TX_PAD_HOR;
     __m128i       pos_to_off_128 = _mm_setr_epi8(SIG_COEF_CONTEXTS_2D + 0,
                                            SIG_COEF_CONTEXTS_2D + 0,
@@ -690,7 +690,7 @@ static INLINE void get_8_coeff_contexts_ver_avx2(const uint8_t *levels, const in
 static INLINE void get_16_coeff_contexts_ver_avx2(const uint8_t *levels, const int32_t width,
                                                   const int32_t          height,
                                                   const ptrdiff_t *const offsets,
-                                                  int8_t *               coeff_contexts) {
+                                                  int8_t                *coeff_contexts) {
     const int32_t stride = width + TX_PAD_HOR;
     __m256i       pos_to_offset[2];
     __m256i       count;
@@ -720,7 +720,7 @@ static INLINE void get_16_coeff_contexts_ver_avx2(const uint8_t *levels, const i
 static INLINE void get_32n_coeff_contexts_ver_avx2(const uint8_t *levels, const int32_t width,
                                                    const int32_t          height,
                                                    const ptrdiff_t *const offsets,
-                                                   int8_t *               coeff_contexts) {
+                                                   int8_t                *coeff_contexts) {
     const int32_t stride = width + TX_PAD_HOR;
     __m256i       pos_to_offset[3];
     __m256i       count;
