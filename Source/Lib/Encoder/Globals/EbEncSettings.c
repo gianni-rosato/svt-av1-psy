@@ -441,18 +441,34 @@ EbErrorType svt_av1_verify_settings(
         SVT_WARN("Instance %u: It is recommended to not use Film Grain for presets greater than 3 as it produces a significant compute overhead. This combination should only be used for debug purposes.\n", channel_number + 1);
     }
 
-    if (config->pred_structure == 1) {
-        SVT_WARN("Instance %u: The low delay encoding mode is a work-in-progress project, and is only available for demos, experimentation, and further development uses and should not be used for benchmarking until fully implemented.\n", channel_number + 1);
-    }
-
     // Limit 8K & 16K support
     if ((uint64_t)(scs_ptr->max_input_luma_width*scs_ptr->max_input_luma_height) > INPUT_SIZE_4K_TH) {
         SVT_WARN("Instance %u: 8K and higher resolution support is currently a work-in-progress project, and is only available for demos, experimentation, and further development uses and should not be used for benchmarking until fully implemented.\n", channel_number + 1);
     }
 
-    if (config->pred_structure == 1 && config->tune == 0) {
-        SVT_WARN("Instance %u: Tune 0 is not applicable for low-delay, tune will be forced to 1.\n", channel_number + 1);
-        config->tune = 1;
+    if (config->pred_structure == 1) {
+        SVT_WARN(
+            "Instance %u: The low delay encoding mode is a work-in-progress project, and is only "
+            "available for demos, experimentation, and further development uses and should not be "
+            "used for benchmarking until fully implemented.\n",
+            channel_number + 1);
+        if (config->tune == 0) {
+            SVT_WARN(
+                "Instance %u: Tune 0 is not applicable for low-delay, tune will be forced to 1.\n",
+                channel_number + 1);
+            config->tune = 1;
+        }
+
+        if (config->superres_mode != 0) {
+            SVT_ERROR("Instance %u: Superres is not supported for low-delay.\n",
+                      channel_number + 1);
+            return_error = EB_ErrorBadParameter;
+        }
+
+        if (config->enable_overlays) {
+            SVT_ERROR("Instance %u: Overlay is not supported for low-delay.\n", channel_number + 1);
+            return_error = EB_ErrorBadParameter;
+        }
     }
 
     return return_error;
