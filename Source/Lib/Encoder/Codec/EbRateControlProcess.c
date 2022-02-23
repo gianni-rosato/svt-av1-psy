@@ -3203,6 +3203,7 @@ void *rate_control_kernel(void *input_ptr) {
                         (int32_t)scs_ptr->static_config.min_qp_allowed,
                         (int32_t)scs_ptr->static_config.max_qp_allowed,
                         (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+
                     // max bit rate is only active for 1 pass CRF
                     if (scs_ptr->static_config.rate_control_mode == 0 &&
                         scs_ptr->static_config.max_bit_rate)

@@ -3808,6 +3808,18 @@ void copy_api_from_app(
         memcpy(scs_ptr->static_config.chroma_qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->chroma_qindex_offsets,
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
     }
+
+    scs_ptr->static_config.luma_y_dc_qindex_offset =
+      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->luma_y_dc_qindex_offset, 63));
+    scs_ptr->static_config.chroma_u_dc_qindex_offset =
+      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_u_dc_qindex_offset, 63));
+    scs_ptr->static_config.chroma_u_ac_qindex_offset =
+      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_u_ac_qindex_offset, 63));
+    scs_ptr->static_config.chroma_v_dc_qindex_offset =
+      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_v_dc_qindex_offset, 63));
+    scs_ptr->static_config.chroma_v_ac_qindex_offset =
+      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_v_ac_qindex_offset, 63));
+
     scs_ptr->static_config.rc_stats_buffer = ((EbSvtAv1EncConfiguration*)config_struct)->rc_stats_buffer;
     scs_ptr->static_config.pass = ((EbSvtAv1EncConfiguration*)config_struct)->pass;
     // Deblock Filter

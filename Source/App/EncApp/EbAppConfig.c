@@ -64,6 +64,11 @@
 #define KEY_FRAME_QINDEX_OFFSET_TOKEN "--key-frame-qindex-offset"
 #define KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN "--key-frame-chroma-qindex-offset"
 #define CHROMA_QINDEX_OFFSETS_TOKEN "--chroma-qindex-offsets"
+#define LUMA_Y_DC_QINDEX_OFFSET_TOKEN "--luma-y-dc-qindex-offset"
+#define CHROMA_U_DC_QINDEX_OFFSET_TOKEN "--chroma-u-dc-qindex-offset"
+#define CHROMA_U_AC_QINDEX_OFFSET_TOKEN "--chroma-u-ac-qindex-offset"
+#define CHROMA_V_DC_QINDEX_OFFSET_TOKEN "--chroma-v-dc-qindex-offset"
+#define CHROMA_V_AC_QINDEX_OFFSET_TOKEN "--chroma-v-ac-qindex-offset"
 
 #define FRAME_RATE_TOKEN "--fps"
 #define FRAME_RATE_NUMERATOR_TOKEN "--fps-num"
@@ -477,6 +482,26 @@ static void set_cfg_key_frame_qindex_offset(const char *value, EbConfig *cfg) {
 
 static void set_cfg_key_frame_chroma_qindex_offset(const char *value, EbConfig *cfg) {
     cfg->config.key_frame_chroma_qindex_offset = (int32_t)strtol(value, NULL, 0);
+}
+
+static void set_cfg_luma_y_dc_qindex_offset(const char *value, EbConfig *cfg) {
+  cfg->config.luma_y_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
+}
+
+static void set_cfg_chroma_u_dc_qindex_offset(const char *value, EbConfig *cfg) {
+  cfg->config.chroma_u_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
+}
+
+static void set_cfg_chroma_u_ac_qindex_offset(const char *value, EbConfig *cfg) {
+  cfg->config.chroma_u_ac_qindex_offset = (int32_t)strtol(value, NULL, 0);
+}
+
+static void set_cfg_chroma_v_dc_qindex_offset(const char *value, EbConfig *cfg) {
+  cfg->config.chroma_v_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
+}
+
+static void set_cfg_chroma_v_ac_qindex_offset(const char *value, EbConfig *cfg) {
+  cfg->config.chroma_v_ac_qindex_offset = (int32_t)strtol(value, NULL, 0);
 }
 
 //assume the input list of values are in the format of "[v1,v2,v3,...]"
@@ -1014,7 +1039,26 @@ ConfigEntry config_entry_rc[] = {
      "list of chroma Q index offsets per hierarchical layer, separated by `,` with each offset in "
      "the range of [-256-255], default is `0,0,..,0`",
      set_cfg_chroma_qindex_offsets},
-
+    {SINGLE_INPUT,
+     LUMA_Y_DC_QINDEX_OFFSET_TOKEN,
+     "Luma Y DC Qindex Offset",
+     set_cfg_luma_y_dc_qindex_offset},
+    {SINGLE_INPUT,
+     CHROMA_U_DC_QINDEX_OFFSET_TOKEN,
+     "Chroma U DC Qindex Offset",
+     set_cfg_chroma_u_dc_qindex_offset},
+    {SINGLE_INPUT,
+     CHROMA_U_AC_QINDEX_OFFSET_TOKEN,
+     "Chroma U AC Qindex Offset",
+     set_cfg_chroma_u_ac_qindex_offset},
+    {SINGLE_INPUT,
+     CHROMA_V_DC_QINDEX_OFFSET_TOKEN,
+     "Chroma V DC Qindex Offset",
+     set_cfg_chroma_v_dc_qindex_offset},
+    {SINGLE_INPUT,
+     CHROMA_V_AC_QINDEX_OFFSET_TOKEN,
+     "Chroma V AC Qindex Offset",
+     set_cfg_chroma_v_ac_qindex_offset},
     {SINGLE_INPUT,
      UNDER_SHOOT_PCT_TOKEN,
      "Allowable datarate undershoot (min) target (percentage), default is 25, but can change based "
@@ -1347,7 +1391,26 @@ ConfigEntry config_entry[] = {
      CHROMA_QINDEX_OFFSETS_TOKEN,
      "ChromaQIndexOffsets",
      set_cfg_chroma_qindex_offsets},
-
+    {SINGLE_INPUT,
+     LUMA_Y_DC_QINDEX_OFFSET_TOKEN,
+     "LumaYDCQindexOffset",
+     set_cfg_luma_y_dc_qindex_offset},
+    {SINGLE_INPUT,
+     CHROMA_U_DC_QINDEX_OFFSET_TOKEN,
+     "ChromaUDCQindexOffset",
+     set_cfg_chroma_u_dc_qindex_offset},
+    {SINGLE_INPUT,
+     CHROMA_U_AC_QINDEX_OFFSET_TOKEN,
+     "ChromaUACQindexOffset",
+     set_cfg_chroma_u_ac_qindex_offset},
+    {SINGLE_INPUT,
+     CHROMA_V_DC_QINDEX_OFFSET_TOKEN,
+     "ChromaVDCQindexOffset",
+     set_cfg_chroma_v_dc_qindex_offset},
+    {SINGLE_INPUT,
+     CHROMA_V_AC_QINDEX_OFFSET_TOKEN,
+     "ChromaVACQindexOffset",
+     set_cfg_chroma_v_ac_qindex_offset},
     {SINGLE_INPUT, UNDER_SHOOT_PCT_TOKEN, "UnderShootPct", set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "OverShootPct", set_over_shoot_pct},
     {SINGLE_INPUT, BUFFER_SIZE_TOKEN, "BufSz", set_buf_sz},

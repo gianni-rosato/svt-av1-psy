@@ -856,7 +856,6 @@ typedef struct PictureParentControlSet {
 #if CONFIG_ENTROPY_STATS
     int32_t coef_cdf_category;
 #endif
-    int32_t separate_uv_delta_q;
 
     // Global quant matrix tables
     const QmVal *giqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];

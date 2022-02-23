@@ -664,6 +664,11 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->key_frame_chroma_qindex_offset = 0;
     config_ptr->key_frame_qindex_offset        = 0;
     memset(config_ptr->chroma_qindex_offsets, 0, sizeof(config_ptr->chroma_qindex_offsets));
+    config_ptr->luma_y_dc_qindex_offset = 0;
+    config_ptr->chroma_u_dc_qindex_offset = 0;
+    config_ptr->chroma_u_ac_qindex_offset = 0;
+    config_ptr->chroma_v_dc_qindex_offset = 0;
+    config_ptr->chroma_v_ac_qindex_offset = 0;
 
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode      = 0;
@@ -1377,6 +1382,11 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     } int_opts[] = {
         {"key-frame-chroma-qindex-offset", &config_struct->key_frame_chroma_qindex_offset},
         {"key-frame-qindex-offset", &config_struct->key_frame_qindex_offset},
+        {"luma-y-dc-qindex-offset", &config_struct->luma_y_dc_qindex_offset},
+        {"chroma-u-dc-qindex-offset", &config_struct->chroma_u_dc_qindex_offset},
+        {"chroma-u-ac-qindex-offset", &config_struct->chroma_u_ac_qindex_offset},
+        {"chroma-v-dc-qindex-offset", &config_struct->chroma_v_dc_qindex_offset},
+        {"chroma-v-ac-qindex-offset", &config_struct->chroma_v_ac_qindex_offset},
         {"pass", &config_struct->pass},
         {"enable-cdef", &config_struct->cdef_level},
         {"enable-restoration", &config_struct->enable_restoration_filtering},

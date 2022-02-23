@@ -372,10 +372,6 @@ int svt_av1_compute_rd_mult_based_on_qindex(AomBitDepth bit_depth, int qindex) {
     return rdmult > 0 ? rdmult : 1;
 }
 
-void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
-                             int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
-                             Quants *const quants, Dequants *const deq);
-
 double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 
 int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);

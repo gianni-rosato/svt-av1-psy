@@ -632,14 +632,18 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 #endif
 
     frm_hdr->quantization_params.base_q_idx              = 31;
-    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y] = 0;
     frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_Y] = 0;
-    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] = 0;
-    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] = 0;
-    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V] = 0;
-    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] = 0;
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y] =
+      pcs_ptr->scs_ptr->static_config.luma_y_dc_qindex_offset;
+    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] =
+      pcs_ptr->scs_ptr->static_config.chroma_u_ac_qindex_offset;
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] =
+      pcs_ptr->scs_ptr->static_config.chroma_u_dc_qindex_offset;
+    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V] =
+      pcs_ptr->scs_ptr->static_config.chroma_v_ac_qindex_offset;
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] =
+      pcs_ptr->scs_ptr->static_config.chroma_v_dc_qindex_offset;
 
-    pcs_ptr->separate_uv_delta_q = 0;
     // Encoder
     frm_hdr->quantization_params.using_qmatrix   = 0;
     frm_hdr->quantization_params.qm[AOM_PLANE_Y] = 5;
@@ -1283,6 +1287,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->qp_on_the_fly = EB_FALSE;
                 pcs_ptr->picture_qp    = (uint8_t)scs_ptr->static_config.qp;
             }
+
             pcs_ptr->ts_duration = (double)10000000 * (1 << 16) / scs_ptr->frame_rate;
             scs_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
