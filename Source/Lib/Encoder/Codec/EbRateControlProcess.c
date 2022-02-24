@@ -3367,8 +3367,7 @@ void *rate_control_kernel(void *input_ptr) {
             scs_ptr = (SequenceControlSet *)
                           parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
 
-            if (scs_ptr->static_config.intra_period_length != -1 &&
-                scs_ptr->static_config.rate_control_mode != 0) {
+            {
                 uint32_t interval_index_temp = 0;
                 for (RateControlIntervalParamContext **rc_param_queue =
                          context_ptr->rate_control_param_queue;
