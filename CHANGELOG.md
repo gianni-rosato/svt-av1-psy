@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.9.1] - 2022-02-XX
+## [0.9.1] - 2022-02-23
 
 Encoder
 - New `key=val` API for setting encoder options along with `--svtav1-params` appside
