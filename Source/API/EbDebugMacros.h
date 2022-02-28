@@ -39,6 +39,7 @@ extern "C" {
 #define FTR_LDB_MT              1 // New Multi-Threading parameters for LD
 
 #define VMAF_OPT                1 // Optimizing Y-PSNR/Y-SSIM/VMAF
+#define TUNE_4L_M12              1 // Optimizing 4L compared to 5L
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -5753,8 +5753,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
     else if (enc_mode <= ENC_M11)
         context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
+#if TUNE_4L_M12
+    else if (enc_mode <= ENC_M12)
+        if (ppcs->hierarchical_levels <= 3)
+            context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
+        else
+            context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
+#else
     else if (enc_mode <= ENC_M12)
         context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
+#endif
     else
         context_ptr->md_subpel_me_level = is_base ? 9 : 0;
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
