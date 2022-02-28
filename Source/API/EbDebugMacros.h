@@ -38,6 +38,8 @@ extern "C" {
 #define FIX_TF_LDB              1 // Fix TF parameters for LD
 #define FTR_LDB_MT              1 // New Multi-Threading parameters for LD
 
+#define VMAF_OPT                1 // Optimizing Y-PSNR/Y-SSIM/VMAF
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

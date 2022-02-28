@@ -3571,10 +3571,17 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
         mrp_level = 4;
     }
+#if VMAF_OPT
+    else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
+
+        mrp_level = 5;
+    }
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M11) {
 
         mrp_level = 5;
     }
+#endif
     else {
         mrp_level = 0;
     }

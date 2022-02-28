@@ -5835,8 +5835,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             ? 1
             : (pcs_ptr->temporal_layer_index == 0) ? 2
                                                    : 4;
+#if VMAF_OPT
+    else if (enc_mode <= ENC_M9)
+        intra_level = pcs_ptr->slice_type == I_SLICE ? 1 : 4;
+#else
     else if (enc_mode <= ENC_M8)
         intra_level = pcs_ptr->slice_type == I_SLICE ? 1 : 4;
+#endif
     else
         intra_level = (pcs_ptr->slice_type == I_SLICE ||
                        pcs_ptr->parent_pcs_ptr->transition_present)

@@ -195,6 +195,17 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
         me_context_ptr->me_sa.sa_min = (SearchArea) { 16, 16 };
         me_context_ptr->me_sa.sa_max = (SearchArea) { 64, 32 };
     }
+#if VMAF_OPT
+    else if (pcs_ptr->enc_mode <= ENC_M8) {
+        if (input_resolution < INPUT_SIZE_1080p_RANGE) {
+            me_context_ptr->me_sa.sa_min = (SearchArea){16, 16};
+            me_context_ptr->me_sa.sa_max = (SearchArea){32, 16};
+    } else {
+            me_context_ptr->me_sa.sa_min = (SearchArea){16, 6};
+            me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
+        }
+    }
+#else
     else if (pcs_ptr->enc_mode <= ENC_M9) {
         if (input_resolution < INPUT_SIZE_1080p_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea){16, 16};
@@ -203,7 +214,9 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
             me_context_ptr->me_sa.sa_min = (SearchArea){16, 6};
             me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
         }
-    } else if (pcs_ptr->enc_mode <= ENC_M11) {
+    }
+#endif
+    else if (pcs_ptr->enc_mode <= ENC_M11) {
         if (input_resolution < INPUT_SIZE_4K_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea){8, 5};
             me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};

@@ -717,8 +717,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (scs_ptr->bipred_3x3_inject == DEFAULT) {
         if (enc_mode <= ENC_M1)
             pcs_ptr->bipred3x3_injection = 1;
+#if VMAF_OPT
+        else if (enc_mode <= ENC_M4)
+            pcs_ptr->bipred3x3_injection = 2;
+#else
         else if (enc_mode <= ENC_M5)
             pcs_ptr->bipred3x3_injection = 2;
+#endif
         else
             pcs_ptr->bipred3x3_injection = 0;
     } else {
@@ -857,8 +862,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->md_nsq_mv_search_level = 4;
 
     // Set the level for PME search
+#if VMAF_OPT
+    if (enc_mode <= ENC_MR)
+        pcs_ptr->md_pme_level = 1;
+#else
     if (enc_mode <= ENC_M0)
         pcs_ptr->md_pme_level = 1;
+#endif
     else if (enc_mode <= ENC_M5)
         pcs_ptr->md_pme_level = 3;
     else if (enc_mode <= ENC_M11)
