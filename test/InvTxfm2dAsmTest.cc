@@ -611,43 +611,24 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
 
     void run_HandleTransform_match_test() {
         using HandleTxfmFunc = uint64_t (*)(int32_t * output);
-        const int num_htf_sizes = 5;
+        const int num_htf_sizes = 10;
         const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
             svt_handle_transform16x64_c,
             svt_handle_transform32x64_c,
             svt_handle_transform64x16_c,
             svt_handle_transform64x32_c,
-            svt_handle_transform64x64_c};
-        const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
-            svt_handle_transform16x64_avx2,
-            svt_handle_transform32x64_avx2,
-            svt_handle_transform64x16_avx2,
-            svt_handle_transform64x32_avx2,
-            svt_handle_transform64x64_avx2};
-        DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
-
-        for (int idx = 0; idx < num_htf_sizes; ++idx) {
-            svt_buf_random_s32(input_, MAX_TX_SQUARE);
-            memcpy(input, input_, MAX_TX_SQUARE * sizeof(int32_t));
-
-            const uint64_t energy_ref = htf_ref_funcs[idx](input_);
-            const uint64_t energy_asm = htf_asm_funcs[idx](input);
-
-            ASSERT_EQ(energy_ref, energy_asm);
-        }
-    }
-
-
-    void run_HandleTransform_match_test_N2_N4() {
-        using HandleTxfmFunc = uint64_t (*)(int32_t * output);
-        const int num_htf_sizes = 5;
-        const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
+            svt_handle_transform64x64_c,
             svt_handle_transform16x64_N2_N4_c,
             svt_handle_transform32x64_N2_N4_c,
             svt_handle_transform64x16_N2_N4_c,
             svt_handle_transform64x32_N2_N4_c,
             svt_handle_transform64x64_N2_N4_c};
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
+            svt_handle_transform16x64_avx2,
+            svt_handle_transform32x64_avx2,
+            svt_handle_transform64x16_avx2,
+            svt_handle_transform64x32_avx2,
+            svt_handle_transform64x64_avx2,
             svt_handle_transform16x64_N2_N4_avx2,
             svt_handle_transform32x64_N2_N4_avx2,
             svt_handle_transform64x16_N2_N4_avx2,
@@ -668,11 +649,12 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                 memcmp(input_, input, MAX_TX_SQUARE * sizeof(int32_t)))
                 << "idx: " << idx;
         }
+
     }
 
     void run_handle_transform_speed_test() {
         using HandleTxfmFunc = uint64_t (*)(int32_t * output);
-        const int num_htf_sizes = 5;
+        const int num_htf_sizes = 10;
         const TxSize htf_tx_size[num_htf_sizes] = {
             TX_16X64, TX_32X64, TX_64X16, TX_64X32, TX_64X64};
         const int widths[num_htf_sizes] = {16, 32, 64, 64, 64};
@@ -682,13 +664,23 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             svt_handle_transform32x64_c,
             svt_handle_transform64x16_c,
             svt_handle_transform64x32_c,
-            svt_handle_transform64x64_c};
+            svt_handle_transform64x64_c,
+            svt_handle_transform16x64_N2_N4_c,
+            svt_handle_transform32x64_N2_N4_c,
+            svt_handle_transform64x16_N2_N4_c,
+            svt_handle_transform64x32_N2_N4_c,
+            svt_handle_transform64x64_N2_N4_c};
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
             svt_handle_transform16x64_avx2,
             svt_handle_transform32x64_avx2,
             svt_handle_transform64x16_avx2,
             svt_handle_transform64x32_avx2,
-            svt_handle_transform64x64_avx2};
+            svt_handle_transform64x64_avx2,
+            svt_handle_transform16x64_N2_N4_avx2,
+            svt_handle_transform32x64_N2_N4_avx2,
+            svt_handle_transform64x16_N2_N4_avx2,
+            svt_handle_transform64x32_N2_N4_avx2,
+            svt_handle_transform64x64_N2_N4_avx2};
         DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
         double time_c, time_o;
         uint64_t start_time_seconds, start_time_useconds;
@@ -880,10 +872,6 @@ TEST_P(InvTxfm2dAsmTest, lowbd_txfm_match_test) {
 
 TEST_P(InvTxfm2dAsmTest, HandleTransform_match_test) {
     run_HandleTransform_match_test();
-}
-
-TEST_P(InvTxfm2dAsmTest, HandleTransform_match_test_N2_N4) {
-    run_HandleTransform_match_test_N2_N4();
 }
 
 TEST_P(InvTxfm2dAsmTest, DISABLED_HandleTransform_speed_test) {
