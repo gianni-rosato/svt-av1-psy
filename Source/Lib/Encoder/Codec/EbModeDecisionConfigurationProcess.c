@@ -582,11 +582,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->skip_intra = 0;
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
         pcs_ptr->skip_intra = 0;
+#if TUNE_M13
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M13)
+        pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
+        pcs_ptr->ref_intra_percentage > 50
+        ? 0
+        : 1;
+#else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M12)
         pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
-                pcs_ptr->ref_intra_percentage > 50
-            ? 0
-            : 1;
+        pcs_ptr->ref_intra_percentage > 50
+        ? 0
+        : 1;
+#endif
     else
         pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 1;
 
@@ -635,8 +643,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->tx_shortcut_level = 0;
     else if (enc_mode <= ENC_M10)
         pcs_ptr->tx_shortcut_level = pcs_ptr->slice_type == I_SLICE ? 0 : 1;
+#if TUNE_M13
+    else if (enc_mode <= ENC_M13)
+        pcs_ptr->tx_shortcut_level = pcs_ptr->slice_type == I_SLICE ? 0 : 4;
+#else
     else if (enc_mode <= ENC_M12)
         pcs_ptr->tx_shortcut_level = pcs_ptr->slice_type == I_SLICE ? 0 : 4;
+#endif
     else
         pcs_ptr->tx_shortcut_level = pcs_ptr->slice_type == I_SLICE ? 0 : 5;
 

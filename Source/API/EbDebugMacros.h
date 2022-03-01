@@ -40,6 +40,7 @@ extern "C" {
 
 #define VMAF_OPT                1 // Optimizing Y-PSNR/Y-SSIM/VMAF
 #define TUNE_4L_M12              1 // Optimizing 4L compared to 5L
+#define TUNE_M13                1 // Optimizing M13 for better slope
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

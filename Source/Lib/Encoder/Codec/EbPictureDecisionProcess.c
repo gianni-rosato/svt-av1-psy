@@ -1953,9 +1953,16 @@ EbErrorType signal_derivation_multi_processes_oq(
                 else
                     pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17;
             }
+#if TUNE_M13
+            else
+                if (pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
+                    pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 15 : 0;
+                else
+                    pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : 0;
+#else
             else
                 pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : 0;
-
+#endif
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);

@@ -4462,6 +4462,27 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
         ctrls->skip_pd0_edge_dist_th[LPD1_LVL_3]   = (uint32_t)~0;
         ctrls->skip_pd0_me_shift[LPD1_LVL_3]       = (uint16_t)~0;
 
+#if TUNE_M13
+        // Set LPD1 level 4 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_4]       = 1;
+        ctrls->use_ref_info[LPD1_LVL_4]            = 1;
+        ctrls->cost_th_dist[LPD1_LVL_4]            = 256 << 13;
+        ctrls->coeff_th[LPD1_LVL_4]                = 8192 * 8;
+        ctrls->max_mv_length[LPD1_LVL_4]           = 2048 * 8;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_4] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_4]   = 16384 * 6;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_4]       = 5;
+
+        // Set LPD1 level 5 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_5]       = 1;
+        ctrls->use_ref_info[LPD1_LVL_5]            = 1;
+        ctrls->cost_th_dist[LPD1_LVL_5]            = 256 << 13;
+        ctrls->coeff_th[LPD1_LVL_5]                = 8192 * 8;
+        ctrls->max_mv_length[LPD1_LVL_5]           = 2048 * 8;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_5] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_5]   = 16384 * 6;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_5]       = 5;
+#else
         // Set LPD1 level 4 controls
         ctrls->use_lpd1_detector[LPD1_LVL_4]       = 1;
         ctrls->use_ref_info[LPD1_LVL_4]            = 1;
@@ -4481,6 +4502,7 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
         ctrls->me_8x8_cost_variance_th[LPD1_LVL_5] = (uint32_t)~0;
         ctrls->skip_pd0_edge_dist_th[LPD1_LVL_5]   = (uint32_t)~0;
         ctrls->skip_pd0_me_shift[LPD1_LVL_5]       = (uint16_t)~0;
+#endif
         break;
     default: assert(0); break;
     }
@@ -5450,31 +5472,46 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
                 INPUT_SIZE_1080p_RANGE
             ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 13 : 14)
             : 15;
-    } else if (lpd1_level <= LPD1_LVL_3) {
+    }
+#if TUNE_M13
+    else {
         context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-                INPUT_SIZE_1080p_RANGE
+            INPUT_SIZE_1080p_RANGE
             ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 13 : 14)
             : 15;
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 50) ||
-             (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
+            (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
+            me_8x8_cost_variance < (200 * picture_qp) && me_64x64_distortion < (200 * picture_qp))
+            context_ptr->md_subpel_me_level = 0;
+    }
+#else
+    else if (lpd1_level <= LPD1_LVL_3) {
+        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
+            INPUT_SIZE_1080p_RANGE
+            ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 13 : 14)
+            : 15;
+        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 50) ||
+            (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
             me_8x8_cost_variance < (200 * picture_qp) && me_64x64_distortion < (200 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
     } else if (lpd1_level <= LPD1_LVL_4) {
         context_ptr->md_subpel_me_level = 15;
 
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 30) ||
-             (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
+            (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
             me_8x8_cost_variance < (500 * picture_qp) && me_64x64_distortion < (500 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
-    } else {
+    }
+    else {
         context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 15
-                                                                                             : 0;
+            : 0;
 
         if ((((l0_was_skip || l1_was_skip) && ref_skip_perc > 20) ||
-             (l0_was_64x64_mvp || l1_was_64x64_mvp)) &&
+            (l0_was_64x64_mvp || l1_was_64x64_mvp)) &&
             me_8x8_cost_variance < (800 * picture_qp) && me_64x64_distortion < (800 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
     }
+#endif
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
 
     uint8_t mds0_level = 0;
@@ -5493,22 +5530,33 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     uint8_t lpd1_tx_level = 0;
     if (lpd1_level <= LPD1_LVL_2)
         lpd1_tx_level = 3;
-    else if (lpd1_level <= LPD1_LVL_3) {
+#if TUNE_M13
+    else {
         lpd1_tx_level = 4;
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
-             me_8x8_cost_variance < (800 * picture_qp) &&
-             me_64x64_distortion < (800 * picture_qp)) ||
-            (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
-            lpd1_tx_level = 6;
-    } else {
-        lpd1_tx_level = 5;
-        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
-             me_8x8_cost_variance < (800 * picture_qp) &&
-             me_64x64_distortion < (800 * picture_qp)) ||
+            me_8x8_cost_variance < (800 * picture_qp) &&
+            me_64x64_distortion < (800 * picture_qp)) ||
             (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
             lpd1_tx_level = 6;
     }
-
+#else
+    else if (lpd1_level <= LPD1_LVL_3) {
+        lpd1_tx_level = 4;
+        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
+            me_8x8_cost_variance < (800 * picture_qp) &&
+            me_64x64_distortion < (800 * picture_qp)) ||
+            (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
+            lpd1_tx_level = 6;
+    }
+    else {
+        lpd1_tx_level = 5;
+        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
+            me_8x8_cost_variance < (800 * picture_qp) &&
+            me_64x64_distortion < (800 * picture_qp)) ||
+            (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
+            lpd1_tx_level = 6;
+    }
+#endif
     set_lpd1_tx_ctrls(pcs_ptr, context_ptr, lpd1_tx_level);
 
     /* In modes below M13, only use level 1-3 for chroma detector, as more aggressive levels will cause
