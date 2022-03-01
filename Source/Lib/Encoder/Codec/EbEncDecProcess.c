@@ -5812,7 +5812,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
 #endif
     else
+#if OPT_REMOVE_TL_CHECKS
+        context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
+#else
         context_ptr->md_subpel_me_level = is_base ? 9 : 0;
+#endif
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M0 ? 3 : 0;

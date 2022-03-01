@@ -5652,12 +5652,20 @@ void  inject_palette_candidates(
 
     return;
 }
+#if OPT_REMOVE_TL_CHECKS
+static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionContext *context_ptr,
+    uint8_t is_used_as_ref,
+    uint8_t *dc_cand_only_flag)
+{
+    uint32_t th = is_used_as_ref ? 10 : 200;
+#else
 static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionContext *context_ptr,
     uint8_t temp_layer_idx,
     uint8_t is_used_as_ref,
     uint8_t *dc_cand_only_flag)
 {
     uint32_t th = temp_layer_idx == 0 ? 10 : is_used_as_ref ? 30 : 200;
+#endif
     th *= context_ptr->cand_reduction_ctrls.cand_elimination_ctrls.th_multiplier;
     if (context_ptr->updated_enable_pme || context_ptr->md_subpel_me_ctrls.enabled) {
         th = th * context_ptr->blk_geom->bheight * context_ptr->blk_geom->bwidth;
@@ -5782,11 +5790,18 @@ EbErrorType generate_md_stage_0_cand(
     context_ptr->inject_new_pme = 1;
     context_ptr->inject_new_warp = 1;
     uint8_t dc_cand_only_flag = context_ptr->intra_ctrls.enable_intra && (context_ptr->intra_ctrls.intra_mode_end == DC_PRED);
+#if OPT_REMOVE_TL_CHECKS
+    if (context_ptr->cand_reduction_ctrls.cand_elimination_ctrls.enabled)
+        eliminate_candidate_based_on_pme_me_results(context_ptr,
+            pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag,
+            &dc_cand_only_flag);
+#else
      if (context_ptr->cand_reduction_ctrls.cand_elimination_ctrls.enabled)
         eliminate_candidate_based_on_pme_me_results(context_ptr,
             pcs_ptr->parent_pcs_ptr->temporal_layer_index,
             pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag,
             &dc_cand_only_flag);
+#endif
     //----------------------
     // Intra
      if (context_ptr->intra_ctrls.enable_intra) {

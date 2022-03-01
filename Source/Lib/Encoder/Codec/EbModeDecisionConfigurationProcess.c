@@ -560,7 +560,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;
 
     pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
-
+#if !OPT_REMOVE_TL_CHECKS
     uint8_t use_selective_dlf_th;
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
         use_selective_dlf_th = (uint8_t)~0;
@@ -574,6 +574,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled = 0;
         }
     }
+#endif
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
         pcs_ptr->approx_inter_rate = 0;
     else
@@ -658,6 +659,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     if (enc_mode <= ENC_MR)
         pcs_ptr->interpolation_search_level = 2;
+#if OPT_REMOVE_TL_CHECKS
+    else
+        pcs_ptr->interpolation_search_level = 4;
+#else
     else if (enc_mode <= ENC_M6)
         pcs_ptr->interpolation_search_level = 4;
     else if (enc_mode <= ENC_M7) {
@@ -679,6 +684,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (skip_area > th[pcs_ptr->parent_pcs_ptr->input_resolution])
             pcs_ptr->interpolation_search_level = 0;
     }
+#endif
     // Set the level for the chroma path
     pcs_ptr->chroma_level = 0;
     if (scs_ptr->set_chroma_mode == DEFAULT) {
@@ -778,8 +784,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->dist_based_ref_pruning = 1;
         else if (enc_mode <= ENC_M0)
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 1 : 2;
+#if OPT_REMOVE_TL_CHECKS
+        else if (enc_mode <= ENC_M9)
+            pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
+        else
+            pcs_ptr->dist_based_ref_pruning = 4;
+#else
         else
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
+#endif
     } else {
         pcs_ptr->dist_based_ref_pruning = 0;
     }

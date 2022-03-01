@@ -1521,10 +1521,19 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uin
 #endif
         else if (enc_mode <= ENC_M8)
             dlf_level = 2;
+#if OPT_REMOVE_TL_CHECKS
+        else if (enc_mode <= ENC_M10)
+            dlf_level = is_used_as_reference_flag ? 2 : 0;
+        else if (enc_mode <= ENC_M12)
+            dlf_level = is_used_as_reference_flag ? 4 : 0;
+        else
+            dlf_level = (is_16bit && is_used_as_reference_flag) ? 4 : 0;
+#else
         else if (enc_mode <= ENC_M12)
             dlf_level = is_used_as_reference_flag ? 2 : 0;
         else
             dlf_level = (is_16bit && is_used_as_reference_flag) ? 2 : 0;
+#endif
     }
     else if (fast_decode <= 1) {
         if (enc_mode <= ENC_M4)
