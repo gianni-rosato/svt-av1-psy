@@ -249,16 +249,57 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
         }
     }
 #endif
-    else if (pcs_ptr->enc_mode <= ENC_M11) {
+#if TUNE_4L_M11
+    else if (pcs_ptr->enc_mode <= ENC_M10) {
         if (input_resolution < INPUT_SIZE_4K_RANGE) {
-            me_context_ptr->me_sa.sa_min = (SearchArea){8, 5};
-            me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 5 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 16, 9 };
         }
         else {
-            me_context_ptr->me_sa.sa_min = (SearchArea){8, 1};
-            me_context_ptr->me_sa.sa_max = (SearchArea){8, 1};
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 1 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 1 };
         }
-    } else if (pcs_ptr->enc_mode <= ENC_M12) {
+    }
+    else if (pcs_ptr->enc_mode <= ENC_M11) {
+        if (pcs_ptr->hierarchical_levels <= 3) {
+            if (input_resolution < INPUT_SIZE_720p_RANGE) {
+                me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
+                me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
+            } else if (input_resolution < INPUT_SIZE_1080p_RANGE) {
+                me_context_ptr->me_sa.sa_min = (SearchArea){8, 1};
+                me_context_ptr->me_sa.sa_max = (SearchArea){16, 7};
+            } else if (input_resolution < INPUT_SIZE_4K_RANGE) {
+                me_context_ptr->me_sa.sa_min = (SearchArea){8, 1};
+                me_context_ptr->me_sa.sa_max = (SearchArea){8, 7};
+            } else {
+                me_context_ptr->me_sa.sa_min = (SearchArea){8, 1};
+                me_context_ptr->me_sa.sa_max = (SearchArea){8, 1};
+            }
+        }
+        else {
+            if (input_resolution < INPUT_SIZE_4K_RANGE) {
+                me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 5 };
+                me_context_ptr->me_sa.sa_max = (SearchArea) { 16, 9 };
+            }
+            else {
+                me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 1 };
+                me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 1 };
+            }
+        }
+    }
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M11) {
+        if (input_resolution < INPUT_SIZE_4K_RANGE) {
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 5 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 16, 9 };
+        }
+        else {
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 1 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 1 };
+        }
+    }
+#endif
+    else if (pcs_ptr->enc_mode <= ENC_M12) {
         if (input_resolution < INPUT_SIZE_720p_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
             me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
@@ -518,8 +559,18 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         prehme_level = 1;
     else
     {
+#if TUNE_4L_M11
+        if (enc_mode <= ENC_M10)
+            prehme_level = 1;
+        if (enc_mode <= ENC_M11)
+            if (pcs_ptr->hierarchical_levels <= 3)
+                prehme_level = 3;
+            else
+                prehme_level = 1;
+#else
         if (enc_mode <= ENC_M11)
             prehme_level = 1;
+#endif
         else if (enc_mode <= ENC_M13)
             prehme_level = 3;
         else

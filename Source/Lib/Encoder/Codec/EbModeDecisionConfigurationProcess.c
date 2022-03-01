@@ -702,8 +702,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
     } else if (enc_mode <= ENC_M5)
         pcs_ptr->cfl_level = 1;
+#if TUNE_4L_M11
+    else if (enc_mode <= ENC_M10)
+        pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
+    else if (enc_mode <= ENC_M11)
+        if (ppcs->hierarchical_levels <= 3)
+            pcs_ptr->cfl_level = (pcs_ptr->slice_type == I_SLICE) ? 2 : 0;
+        else
+            pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
+#else
     else if (enc_mode <= ENC_M11)
         pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
+#endif
     else if (enc_mode <= ENC_M12)
         pcs_ptr->cfl_level = (pcs_ptr->slice_type == I_SLICE) ? 2 : 0;
     else
@@ -898,8 +908,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     // Set the level for mds0
     pcs_ptr->mds0_level = 0;
+#if TUNE_4L_M11
+    if (enc_mode <= ENC_M10)
+        pcs_ptr->mds0_level = 2;
+    if (enc_mode <= ENC_M11)
+        if (ppcs->hierarchical_levels <= 3)
+            pcs_ptr->mds0_level = pcs_ptr->slice_type == I_SLICE ? 2 : 4;
+        else
+            pcs_ptr->mds0_level = 2;
+#else
     if (enc_mode <= ENC_M11)
         pcs_ptr->mds0_level = 2;
+#endif
     else
         pcs_ptr->mds0_level = pcs_ptr->slice_type == I_SLICE ? 2 : 4;
     /*
