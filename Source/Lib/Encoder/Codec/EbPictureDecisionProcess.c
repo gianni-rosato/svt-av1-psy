@@ -1508,7 +1508,11 @@ uint8_t get_disallow_nsq(EbEncMode enc_mode){
 * 2 -- SB-Based DLF
 * 3 -- SB-Based DLF + skip DLF if SB has 0 coeffs
 */
+#if TUNE_4L_M8
+uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, uint8_t fast_decode, uint32_t hierarchical_levels) {
+#else
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, uint8_t fast_decode) {
+#endif
 
     uint8_t dlf_level;
     if (fast_decode == 0) {
@@ -1519,8 +1523,18 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uin
         if (enc_mode <= ENC_M4)
             dlf_level = 1;
 #endif
+#if TUNE_4L_M8
+        else if (enc_mode <= ENC_M7)
+            dlf_level = 2;
+        else if (enc_mode <= ENC_M8)
+            if (hierarchical_levels <= 3)
+                dlf_level = is_used_as_reference_flag ? 2 : 0;
+            else
+                dlf_level = 2;
+#else
         else if (enc_mode <= ENC_M8)
             dlf_level = 2;
+#endif
 #if OPT_REMOVE_TL_CHECKS
         else if (enc_mode <= ENC_M10)
             dlf_level = is_used_as_reference_flag ? 2 : 0;
@@ -1938,8 +1952,13 @@ EbErrorType signal_derivation_multi_processes_oq(
     set_palette_level(pcs_ptr, pcs_ptr->palette_level);
     uint8_t dlf_level = 0;
     if (pcs_ptr->scs_ptr->static_config.enable_dlf_flag && frm_hdr->allow_intrabc == 0) {
+#if TUNE_4L_M8        
+        dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag, scs_ptr->static_config.encoder_bit_depth > EB_8BIT, scs_ptr->static_config.fast_decode, scs_ptr->static_config.hierarchical_levels);
+    }
+#else
         dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag, scs_ptr->static_config.encoder_bit_depth > EB_8BIT, scs_ptr->static_config.fast_decode);
     }
+#endif
     set_dlf_controls(pcs_ptr, dlf_level, scs_ptr->static_config.encoder_bit_depth);
 
     // Set CDEF controls
@@ -2052,12 +2071,41 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->tune_tpl_for_chroma = 0;
 #endif
     uint8_t list0_only_base = 0;
-    if (pcs_ptr->enc_mode <= ENC_M7)
+#if TUNE_4L_M7
+    if (pcs_ptr->enc_mode <= ENC_M6)
         list0_only_base = 0;
-    else  if (pcs_ptr->enc_mode <= ENC_M9)
+    else if (pcs_ptr->enc_mode <= ENC_M7)
+        if (pcs_ptr->hierarchical_levels <= 3)
+            list0_only_base = 1;
+        else
+            list0_only_base = 0;
+    else  if (pcs_ptr->enc_mode <= ENC_M8)
         list0_only_base = 1;
+    else  if (pcs_ptr->enc_mode <= ENC_M9)
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            list0_only_base = 2;
+        else
+            list0_only_base = 1;
     else
         list0_only_base = 2;
+#else
+    if (pcs_ptr->enc_mode <= ENC_M7)
+        list0_only_base = 0;
+#if TUNE_4L_M9
+    else  if (pcs_ptr->enc_mode <= ENC_M8)
+        list0_only_base = 1;
+    else  if (pcs_ptr->enc_mode <= ENC_M9)
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            list0_only_base = 2;
+        else
+            list0_only_base = 1;
+#else
+    else  if (pcs_ptr->enc_mode <= ENC_M9)
+        list0_only_base = 1;
+#endif
+    else
+        list0_only_base = 2;
+#endif
     set_list0_only_base(pcs_ptr, list0_only_base);
 
     if (scs_ptr->enable_hbd_mode_decision == DEFAULT)
@@ -2076,8 +2124,18 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->hbd_mode_decision = scs_ptr->enable_hbd_mode_decision;
     pcs_ptr->max_can_count = get_max_can_count(pcs_ptr->enc_mode );
+#if TUNE_4L_M9
+    if (pcs_ptr->enc_mode <= ENC_M8)
+        pcs_ptr->use_best_me_unipred_cand_only = 0;
+    else if (pcs_ptr->enc_mode <= ENC_M9)
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            pcs_ptr->use_best_me_unipred_cand_only = 1;
+        else
+            pcs_ptr->use_best_me_unipred_cand_only = 0;
+#else
     if (pcs_ptr->enc_mode <= ENC_M9)
         pcs_ptr->use_best_me_unipred_cand_only = 0;
+#endif
     else
         pcs_ptr->use_best_me_unipred_cand_only = 1;
 

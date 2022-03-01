@@ -86,8 +86,11 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->temp_residual_ptr);
     EB_DELETE(obj->temp_recon_ptr);
 }
-
+#if TUNE_4L_M7
+uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index, uint8_t hierarchical_levels);
+#else
 uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
+#endif
 uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
 void    set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
                  uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL],
@@ -156,9 +159,18 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
     for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS;
          temporal_layer_index++) {
+#if TUNE_4L_M7
+        for (uint8_t hierarchical_levels = 0; hierarchical_levels < MAX_HIERARCHICAL_LEVEL;
+            hierarchical_levels++) {
+            uint8_t nic_level = get_nic_level(enc_mode, temporal_layer_index, hierarchical_levels);
+            uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
+            min_nic_scaling_level = MIN(min_nic_scaling_level, nic_scaling_level);
+        }
+#else
         uint8_t nic_level         = get_nic_level(enc_mode, temporal_layer_index);
         uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
         min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
+#endif
     }
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
 

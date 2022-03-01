@@ -3707,7 +3707,11 @@ void set_wm_controls(ModeDecisionContext *mdctxt, uint8_t wm_level) {
     }
 }
 // Get the nic_level used for each preset (to be passed to setting function: set_nic_controls())
+#if TUNE_4L_M7
+uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index, uint8_t hierarchical_levels) {
+#else
 uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index) {
+#endif
     uint8_t nic_level;
 
     if (enc_mode <= ENC_MRS)
@@ -3726,8 +3730,19 @@ uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index) {
         nic_level = 11;
     else if (enc_mode <= ENC_M5)
         nic_level = 12;
+#if TUNE_4L_M7
+    else if (enc_mode <= ENC_M6)
+        nic_level = 14;
+    else if (enc_mode <= ENC_M7) {
+        if (hierarchical_levels <= 3)
+            nic_level = 15;
+        else
+            nic_level = 14;
+    }
+#else
     else if (enc_mode <= ENC_M7)
         nic_level = 14;
+#endif
     else if (enc_mode <= ENC_M11)
         nic_level = 15;
     else

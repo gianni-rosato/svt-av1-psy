@@ -382,8 +382,13 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 
     return EB_ErrorNone;
 }
+#if TUNE_4L_M8
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
-                      uint8_t fast_decode);
+    uint8_t fast_decode, uint32_t hierarchical_levels);
+#else
+uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
+    uint8_t fast_decode);
+#endif
 
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
                                uint8_t input_resolution, uint8_t fast_decode);
@@ -460,6 +465,17 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         for (uint8_t is_used_as_reference_flag = 0; is_used_as_reference_flag < 2;
              is_used_as_reference_flag++) {
             for (uint8_t is_hbd = 0; is_hbd < 2; is_hbd++) {
+#if TUNE_4L_M8
+                lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode,
+                                                is_used_as_reference_flag,
+                                                is_hbd,
+                                                init_data_ptr->static_config.fast_decode,
+                                                init_data_ptr->static_config.hierarchical_levels) == 1
+                    ? 1
+                    : 0;
+                if (lf_recon_needed)
+                    break;
+#else
                 lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode,
                                                 is_used_as_reference_flag,
                                                 is_hbd,
@@ -468,6 +484,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     : 0;
                 if (lf_recon_needed)
                     break;
+#endif
             }
         }
     object_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;

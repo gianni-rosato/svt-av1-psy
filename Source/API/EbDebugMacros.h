@@ -43,6 +43,10 @@ extern "C" {
 #define TUNE_M13                1 // Optimizing M13 for better slope
 #define TUNE_4L_M11             1 // Optimizing 4L compared to 5L for M11
 #define OPT_REMOVE_TL_CHECKS    1 // Remove temporal layer checks in M7-M13
+#define TUNE_4L_M10             1 // Optimizing 4L compared to 5L for M10
+#define TUNE_4L_M9              1 // Optimizing 4L compared to 5L for M9
+#define TUNE_4L_M8              1 // Optimizing 4L compared to 5L for M8
+#define TUNE_4L_M7              1 // Optimizing 4L compared to 5L for M7
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

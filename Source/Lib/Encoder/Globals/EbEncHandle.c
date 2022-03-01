@@ -2957,9 +2957,21 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
         tf_level = 2;
     }
+#if TUNE_4L_M8
+    else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
+        tf_level = 3;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M8) {
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            tf_level = 4;
+        else
+            tf_level = 3;
+    }
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M8) {
         tf_level = 3;
     }
+#endif
     else if (scs_ptr->static_config.enc_mode <= ENC_M9) {
         tf_level = 4;
     }
@@ -3114,8 +3126,11 @@ void set_mid_pass_ctrls(
         break;
     }
 }
-
+#if TUNE_4L_M9 || TUNE_4L_M10
+uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels) {
+#else
 uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode) {
+#endif
     uint8_t tpl_level;
 
     if (pred_structure == EB_PRED_LOW_DELAY_B) {
@@ -3134,10 +3149,28 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_
         tpl_level = 1;
     else if (enc_mode <= ENC_M6)
         tpl_level = 3;
+#if TUNE_4L_M9
+    else if (enc_mode <= ENC_M8)
+        tpl_level = 4;
+    else if (enc_mode <= ENC_M9)
+        if (hierarchical_levels <= 3)
+            tpl_level = 5;
+        else
+            tpl_level = 4;
+#else
     else if (enc_mode <= ENC_M9)
         tpl_level = 4;
+#endif
+#if TUNE_4L_M10
+    else if (enc_mode <= ENC_M10)
+        if (hierarchical_levels <= 3)
+            tpl_level = 7;
+        else
+            tpl_level = 5;
+#else
     else if (enc_mode <= ENC_M10)
         tpl_level = 5;
+#endif
     else
         tpl_level = 7;
 
@@ -3270,9 +3303,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 {
     set_multi_pass_params(
         scs_ptr);
-
+#if TUNE_4L_M9 || TUNE_4L_M10
+    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels);
+#else
     scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode);
-
+#endif
     uint16_t subsampling_x = scs_ptr->subsampling_x;
     uint16_t subsampling_y = scs_ptr->subsampling_y;
     // Update picture width, and picture height
@@ -3571,6 +3606,14 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
         mrp_level = 4;
     }
+#if TUNE_4L_M7
+    else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            mrp_level = 4;
+        else
+            mrp_level = 5;
+    }
+#endif
 #if VMAF_OPT
     else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
 

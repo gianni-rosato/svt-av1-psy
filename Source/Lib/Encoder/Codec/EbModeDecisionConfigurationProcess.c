@@ -412,7 +412,11 @@ EbErrorType rtime_alloc_ec_ctx_array(PictureControlSet *pcs_ptr, uint16_t all_sb
     EB_MALLOC_ARRAY(pcs_ptr->ec_ctx_array, all_sb);
     return EB_ErrorNone;
 }
+#if TUNE_4L_M7
+uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index, uint8_t hierarchical_levels);
+#else
 uint8_t     get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
+#endif
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet *scs_ptr,
                                                              PictureControlSet  *pcs_ptr) {
     EbErrorType              return_error     = EB_ErrorNone;
@@ -581,8 +585,21 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->approx_inter_rate = 1;
     if (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present)
         pcs_ptr->skip_intra = 0;
+#if TUNE_4L_M8
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
         pcs_ptr->skip_intra = 0;
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            pcs_ptr->skip_intra = 0;
+        else
+            pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
+            pcs_ptr->ref_intra_percentage > 50
+            ? 0
+            : 1;
+#else
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+        pcs_ptr->skip_intra = 0;
+#endif
 #if TUNE_M13
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M13)
         pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
@@ -878,13 +895,26 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txs_level = 2;
     else if (enc_mode <= ENC_M6)
         pcs_ptr->txs_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
+#if TUNE_4L_M10
+    else if (enc_mode <= ENC_M9)
+        pcs_ptr->txs_level = 3;
+    else if (enc_mode <= ENC_M10)
+        if (ppcs->hierarchical_levels <= 3)
+            pcs_ptr->txs_level = 4;
+        else
+            pcs_ptr->txs_level = 3;
+#else
     else if (enc_mode <= ENC_M10)
         pcs_ptr->txs_level = 3;
+#endif
     else
         pcs_ptr->txs_level = 4;
     // Set the level for nic
+#if TUNE_4L_M7
+    pcs_ptr->nic_level = get_nic_level(enc_mode, pcs_ptr->temporal_layer_index, ppcs->hierarchical_levels);
+#else
     pcs_ptr->nic_level = get_nic_level(enc_mode, pcs_ptr->temporal_layer_index);
-
+#endif
     // Set the level for SQ me-search
     if (enc_mode <= ENC_M3)
         pcs_ptr->md_sq_mv_search_level = 1;
@@ -924,7 +954,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_4L_M11
     if (enc_mode <= ENC_M10)
         pcs_ptr->mds0_level = 2;
-    if (enc_mode <= ENC_M11)
+    else if (enc_mode <= ENC_M11)
         if (ppcs->hierarchical_levels <= 3)
             pcs_ptr->mds0_level = pcs_ptr->slice_type == I_SLICE ? 2 : 4;
         else
@@ -1054,8 +1084,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M4)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+#if TUNE_4L_M7
+    else if (enc_mode <= ENC_M6)
+        pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+    else if (enc_mode <= ENC_M7)
+        if (ppcs->hierarchical_levels <= 3)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
+        else
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+#else
     else if (enc_mode <= ENC_M7)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+#endif
     else if (enc_mode <= ENC_M8)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
     else
