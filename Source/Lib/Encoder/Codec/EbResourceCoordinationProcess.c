@@ -677,10 +677,15 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     pcs_ptr->frame_context_idx = 0; /* Context to use/update */
     for (int32_t i = 0; i < REF_FRAMES; i++) pcs_ptr->fb_of_context_type[i] = 0;
     frm_hdr->primary_ref_frame = PRIMARY_REF_NONE;
+#if FTR_CBR
+    if (pcs_ptr->scs_ptr->static_config.rate_control_mode == 2 &&
+        pcs_ptr->scs_ptr->static_config.intra_period_length != -1) {
+#else
     if (pcs_ptr->scs_ptr->static_config.rate_control_mode == 2 &&
         pcs_ptr->scs_ptr->static_config.pass != ENC_FIRST_PASS &&
         !(pcs_ptr->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
           pcs_ptr->scs_ptr->static_config.pass == ENC_LAST_PASS)) {
+#endif
         pcs_ptr->frame_offset = pcs_ptr->picture_number %
             (pcs_ptr->scs_ptr->static_config.intra_period_length + 1);
     } else

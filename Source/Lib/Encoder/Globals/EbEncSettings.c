@@ -106,8 +106,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         SVT_ERROR("Instance %u: The intra period must be [-2, 2^31-2]  \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if FTR_CBR
+    if ((config->intra_period_length < 0) && config->rate_control_mode == 1) {
+#else
     if ((config->intra_period_length < 0) && config->rate_control_mode >= 1) {
+#endif
         SVT_ERROR("Instance %u: The intra period must be > 0 for RateControlMode %d \n",
                   channel_number + 1,
                   config->rate_control_mode);
@@ -483,8 +486,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if FTR_CBR
+    if (config->rate_control_mode == 1 && config->intra_period_length == -1) {
+#else
     if (config->rate_control_mode != 0 && config->intra_period_length == -1) {
+#endif
         SVT_ERROR(
             "Instance %u: keyint = -1 is not supported for modes other than CRF rate control "
             "encoding modes.\n",
@@ -823,11 +829,19 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                 config->scene_change_detection);
             break;
         case 2:
+#if FTR_CBR
+            SVT_INFO(
+                "SVT [config]: BRC Mode / TargetBitrate (kbps)/ SceneChange\t\t\t: CBR "
+                "/ %d / %d\n",
+                (int)config->target_bit_rate / 1000,
+                config->scene_change_detection);
+#else
             SVT_INFO(
                 "SVT [config]: BRC Mode / TargetBitrate (kbps)/ SceneChange\t\t\t: Constraint VBR "
                 "/ %d / %d\n",
                 (int)config->target_bit_rate / 1000,
                 config->scene_change_detection);
+#endif
             break;
         }
     }
@@ -1265,7 +1279,9 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"lookahead", &config_struct->look_ahead_distance},
         {"tbr", &config_struct->target_bit_rate},
         {"mbr", &config_struct->max_bit_rate},
+#if !FTR_CBR
         {"vbv-bufsize", &config_struct->vbv_bufsize},
+#endif
         {"scd", &config_struct->scene_change_detection},
         {"max-qp", &config_struct->max_qp_allowed},
         {"min-qp", &config_struct->min_qp_allowed},

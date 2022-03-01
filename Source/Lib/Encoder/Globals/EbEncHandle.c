@@ -2881,10 +2881,30 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         assert(0);
         break;
     }
+#if FIX_TF_LDB
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B ||
+        scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+    {
+        //for Low Delay, filter only the base B , as Intra is not delayed.
+        //if speed not a concern we can add layer1 B
+
+        // I_SLICE TF Params
+        scs_ptr->tf_params_per_type[0].enabled = 0;
+
+        // BASE TF Params
+        scs_ptr->tf_params_per_type[1].num_future_pics = 0;
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = 0;
+
+        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0; //I frame not TF-ed
+
+        // L1 TF Params
+        scs_ptr->tf_params_per_type[2].enabled = 0;
+    }
+#else
     // Limit the future frames used in TF for lowdelay prediction structure
     if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
         scs_ptr->tf_params_per_type[1].max_num_future_pics = 0;
-
+#endif
     scs_ptr->tf_params_per_type[0].use_fixed_point = 1;
     scs_ptr->tf_params_per_type[1].use_fixed_point = 1;
     scs_ptr->tf_params_per_type[2].use_fixed_point = 1;
@@ -3486,7 +3506,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->enable_dec_order = 1;
 #else
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
+#if FTR_CBR
+        ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) || scs_ptr->static_config.rate_control_mode))
+#else
         ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) || scs_ptr->lap_enabled))
+#endif
         scs_ptr->enable_dec_order = 1;
     else
         scs_ptr->enable_dec_order = 0;
@@ -3755,12 +3779,36 @@ void copy_api_from_app(
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
-
+#if !FTR_CBR
     if (scs_ptr->static_config.rate_control_mode == 2) {
         SVT_WARN("CBR Rate control is currently not supported, switching to VBR\n");
         scs_ptr->static_config.rate_control_mode = 1;
     }
-
+#endif
+#if FTR_CBR
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P) {
+        scs_ptr->static_config.pred_structure = EB_PRED_LOW_DELAY_B;
+    }
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
+        if (scs_ptr->static_config.rate_control_mode == 1) {
+            scs_ptr->static_config.rate_control_mode = 2;
+            SVT_WARN("Low delay mode does not support VBR. Forcing RC mode to CBR\n");
+        }
+        if (scs_ptr->static_config.hierarchical_levels != 3) {
+            scs_ptr->static_config.hierarchical_levels = 3;
+            SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 3\n");
+        }
+        if (scs_ptr->static_config.enc_mode < ENC_M8) {
+            scs_ptr->static_config.enc_mode = ENC_M8;
+            SVT_WARN("Low delay mode only support encodermode [8-%d]. Forcing encoder mode to 8\n", ENC_M13);
+        }
+    }
+    if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass == ENC_SINGLE_PASS &&
+        scs_ptr->static_config.pred_structure != EB_PRED_LOW_DELAY_B) {
+        scs_ptr->static_config.pred_structure = EB_PRED_LOW_DELAY_B;
+        SVT_WARN("Forced 1pass CBR to be always low delay mode.\n");
+    }
+#else
     if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass != ENC_FIRST_PASS && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) &&
         scs_ptr->static_config.pred_structure != 0) {
         scs_ptr->static_config.pred_structure = 0;
@@ -3773,6 +3821,7 @@ void copy_api_from_app(
     // for 1pass CBR not real time mode
     //if (scs_ptr->static_config.rate_control_mode == 2 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
     //    scs_ptr->static_config.hierarchical_levels = 0;
+#endif
 
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
@@ -3786,8 +3835,9 @@ void copy_api_from_app(
         scs_ptr->static_config.max_bit_rate = 0;
         SVT_WARN("Maximum bit rate only supported with tpl on. max bit rate 0 is used instead.\n");
     }
+#if !FTR_CBR
     scs_ptr->static_config.vbv_bufsize = ((EbSvtAv1EncConfiguration*)config_struct)->vbv_bufsize;
-
+#endif
     scs_ptr->static_config.max_qp_allowed = (scs_ptr->static_config.rate_control_mode) ?
         ((EbSvtAv1EncConfiguration*)config_struct)->max_qp_allowed :
         63;
@@ -3847,6 +3897,12 @@ void copy_api_from_app(
     scs_ptr->static_config.channel_id = ((EbSvtAv1EncConfiguration*)config_struct)->channel_id;
     scs_ptr->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)config_struct)->active_channel_count;
     scs_ptr->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
+#if  FTR_LDB_MT
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B && scs_ptr->static_config.logical_processors > 3) {
+        scs_ptr->static_config.logical_processors = 3;
+        SVT_WARN("-lp is capped at 3 for low delay\n");
+    }
+#endif
     scs_ptr->static_config.pin_threads = ((EbSvtAv1EncConfiguration*)config_struct)->pin_threads;
     scs_ptr->static_config.target_socket = ((EbSvtAv1EncConfiguration*)config_struct)->target_socket;
     if ((scs_ptr->static_config.pin_threads == 0) && (scs_ptr->static_config.target_socket != -1)){
@@ -4242,7 +4298,7 @@ static EbErrorType downsample_copy_frame_buffer(
     else if (config->compressed_ten_bit_format == 1)
     {
         {
-            SVT_WARN("Compressed_ten_bit_format not supported in downsample_copy_frame_buffer");//anaghdin
+            SVT_WARN("Compressed_ten_bit_format not supported in downsample_copy_frame_buffer");
             uint32_t  luma_buffer_offset = (input_picture_ptr->stride_y*scs_ptr->top_padding + scs_ptr->left_padding);
             uint32_t  chroma_buffer_offset = (input_picture_ptr->stride_cr*(scs_ptr->top_padding >> 1) + (scs_ptr->left_padding >> 1));
             uint16_t  luma_stride = input_picture_ptr->stride_y;

@@ -34,6 +34,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
+#define FTR_CBR                 1 // Adding CBR mode for LD mode
+#define FIX_TF_LDB              1 // Fix TF parameters for LD
+#define FTR_LDB_MT              1 // New Multi-Threading parameters for LD
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

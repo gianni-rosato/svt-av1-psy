@@ -95,7 +95,11 @@ typedef struct {
     int    min_gf_interval;
     int    max_gf_interval;
     int    frames_till_gf_update_due;
+#if FTR_CBR
+    int    onepass_cbr_mode; // 0: not 1pass cbr, 1: 1pass cbr for low delay
+#else
     int    onepass_cbr_mode; // 0: not 1pass cbr, 1: 1pass cbr normal, 2: 1pass cbr real time
+#endif
     int    baseline_gf_interval;
     int    constrained_gf_group;
     int    frames_to_key;
