@@ -802,6 +802,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else if (enc_mode <= ENC_M0)
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 1 : 2;
 #if OPT_REMOVE_TL_CHECKS
+        else if (enc_mode <= ENC_M6)
+            pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
+        else if (enc_mode <= ENC_M8)
+            pcs_ptr->dist_based_ref_pruning = 4;
         else if (enc_mode <= ENC_M9)
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
         else
@@ -1036,14 +1040,25 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     pcs_ptr->pic_depth_removal_level = 0;
                 else
                     pcs_ptr->pic_depth_removal_level = 2;
-            } else if (enc_mode <= ENC_M7) {
+            }
+#if OPT_REMOVE_TL_CHECKS
+            else if (enc_mode <= ENC_M7) {
+                if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                    pcs_ptr->pic_depth_removal_level = 1;
+                else
+                    pcs_ptr->pic_depth_removal_level = 2;
+            }
+#else
+            else if (enc_mode <= ENC_M7) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs_ptr->pic_depth_removal_level = 1;
                 else if (input_resolution <= INPUT_SIZE_1080p_RANGE)
                     pcs_ptr->pic_depth_removal_level = is_base ? 1 : 2;
                 else
                     pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
-            } else if (enc_mode <= ENC_M9) {
+            }
+#endif
+            else if (enc_mode <= ENC_M9) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
                 else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -1087,11 +1102,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_4L_M7
     else if (enc_mode <= ENC_M6)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+#if OPT_REMOVE_TL_CHECKS
+    else if (enc_mode <= ENC_M7)
+            pcs_ptr->pic_block_based_depth_refinement_level = 2;
+#else
     else if (enc_mode <= ENC_M7)
         if (ppcs->hierarchical_levels <= 3)
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
         else
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+#endif
 #else
     else if (enc_mode <= ENC_M7)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
