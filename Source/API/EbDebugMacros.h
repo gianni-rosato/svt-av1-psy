@@ -53,6 +53,7 @@ extern "C" {
 #define OPT_CAND_BUFF_MEM       1 // Don't alloc memory for independent chroma search candidates when not used
 #define OPT_MV_INJ_CHECK        1 // Optimize memory structures for tracking previously injected MVs
 #define FIX_LPD1_W_OBMC         1 // Enable LPD1 to be used when OBMC is on at the frame level (previously caused corrupted bitstream)
+#define OPT_REMOVE_TL_CHECKS_2  1 // Remove temporal layer checks in M2-M4, M8-M9
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

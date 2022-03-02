@@ -673,6 +673,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
     else if (enc_mode <= ENC_M7)
         pcs_ptr->txt_level = 5;
+#if OPT_REMOVE_TL_CHECKS_2
+    else if (enc_mode <= ENC_M9)
+        pcs_ptr->txt_level = 6;
+#endif
     else if (enc_mode <= ENC_M10)
         pcs_ptr->txt_level = pcs_ptr->temporal_layer_index == 0 ? 6 : 8;
     else if (enc_mode <= ENC_M11) {
@@ -842,10 +846,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 1 : 2;
 #if OPT_REMOVE_TL_CHECKS
         else if (enc_mode <= ENC_M6)
-            pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
-        else if (enc_mode <= ENC_M8)
-            pcs_ptr->dist_based_ref_pruning = 4;
-        else if (enc_mode <= ENC_M9)
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
         else
             pcs_ptr->dist_based_ref_pruning = 4;

@@ -2043,9 +2043,15 @@ EbErrorType signal_derivation_multi_processes_oq(
         wn_filter_lvl = scs_ptr->wn_filter_mode;
 
     set_wn_filter_ctrls(cm, wn_filter_lvl);
+#if OPT_REMOVE_TL_CHECKS_2
+    // Set tx size search mode
+    if (pcs_ptr->enc_mode <= ENC_M4)
+        pcs_ptr->tx_size_search_mode = 1;
+#else
         // Set tx size search mode
     if (pcs_ptr->enc_mode <= ENC_M1)
         pcs_ptr->tx_size_search_mode = 1;
+#endif
     else if (pcs_ptr->enc_mode <= ENC_M6)
         pcs_ptr->tx_size_search_mode = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
     else if (pcs_ptr->enc_mode <= ENC_M11)
