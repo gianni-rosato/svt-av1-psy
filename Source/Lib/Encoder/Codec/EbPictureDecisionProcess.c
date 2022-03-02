@@ -2080,18 +2080,20 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_4L_M7
     if (pcs_ptr->enc_mode <= ENC_M6)
         list0_only_base = 0;
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-        if (pcs_ptr->hierarchical_levels <= 3)
+    else if (pcs_ptr->enc_mode <= ENC_M7) {
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
             list0_only_base = 1;
         else
             list0_only_base = 0;
+    }
     else  if (pcs_ptr->enc_mode <= ENC_M8)
         list0_only_base = 1;
-    else  if (pcs_ptr->enc_mode <= ENC_M9)
+    else  if (pcs_ptr->enc_mode <= ENC_M9) {
         if (scs_ptr->static_config.hierarchical_levels <= 3)
             list0_only_base = 2;
         else
             list0_only_base = 1;
+    }
     else
         list0_only_base = 2;
 #else
@@ -2133,11 +2135,12 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_4L_M9
     if (pcs_ptr->enc_mode <= ENC_M8)
         pcs_ptr->use_best_me_unipred_cand_only = 0;
-    else if (pcs_ptr->enc_mode <= ENC_M9)
+    else if (pcs_ptr->enc_mode <= ENC_M9) {
         if (scs_ptr->static_config.hierarchical_levels <= 3)
             pcs_ptr->use_best_me_unipred_cand_only = 1;
         else
             pcs_ptr->use_best_me_unipred_cand_only = 0;
+    }
 #else
     if (pcs_ptr->enc_mode <= ENC_M9)
         pcs_ptr->use_best_me_unipred_cand_only = 0;

@@ -3152,21 +3152,23 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_
 #if TUNE_4L_M9
     else if (enc_mode <= ENC_M8)
         tpl_level = 4;
-    else if (enc_mode <= ENC_M9)
+    else if (enc_mode <= ENC_M9) {
         if (hierarchical_levels <= 3)
             tpl_level = 5;
         else
             tpl_level = 4;
+    }
 #else
     else if (enc_mode <= ENC_M9)
         tpl_level = 4;
 #endif
 #if TUNE_4L_M10
-    else if (enc_mode <= ENC_M10)
+    else if (enc_mode <= ENC_M10) {
         if (hierarchical_levels <= 3)
             tpl_level = 7;
         else
             tpl_level = 5;
+    }
 #else
     else if (enc_mode <= ENC_M10)
         tpl_level = 5;

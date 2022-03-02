@@ -65,8 +65,15 @@ EbErrorType check_00_center(PictureParentControlSet *pcs_ptr, EbPictureBufferDes
 /************************************************
  * Set HME Search area parameters
  ************************************************/
+#if TUNE_4L_M12
+void set_hme_search_params(SequenceControlSet *scs, PictureParentControlSet *pcs_ptr,
+                           MeContext *me_context_ptr, EbInputResolution input_resolution) {
+
+    uint32_t hierarchical_levels = scs->static_config.hierarchical_levels;
+#else
 void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_context_ptr,
                            EbInputResolution input_resolution) {
+#endif
     // Set number of HME level 0 search regions to use
     me_context_ptr->num_hme_sa_w = 2;
     me_context_ptr->num_hme_sa_h = 2;
@@ -115,7 +122,7 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
 
 #if TUNE_4L_M12
     else if (pcs_ptr->enc_mode <= ENC_M12) {
-        if (pcs_ptr->hierarchical_levels <= 3)
+        if (hierarchical_levels <= 3)
         {
             if (pcs_ptr->sc_class1) {
                 me_context_ptr->hme_l0_sa.sa_min = (SearchArea){ 32, 32 };
@@ -186,6 +193,9 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
  ************************************************/
 void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                           MeContext *me_context_ptr, EbInputResolution input_resolution) {
+#if TUNE_4L_M11
+    uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#endif
     // Set the min and max ME search area
     if (pcs_ptr->sc_class1) {
         if (pcs_ptr->enc_mode <= ENC_M2) {
@@ -241,7 +251,7 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
         }
     }
     else if (pcs_ptr->enc_mode <= ENC_M8) {
-        if (scs_ptr->static_config.hierarchical_levels <= 3) {
+        if (hierarchical_levels <= 3) {
             if (input_resolution < INPUT_SIZE_4K_RANGE) {
                 me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 5 };
                 me_context_ptr->me_sa.sa_max = (SearchArea) { 16, 9 };
@@ -251,7 +261,7 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
                 me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 1 };
             }
         }
-        if (input_resolution < INPUT_SIZE_1080p_RANGE) {
+        else if (input_resolution < INPUT_SIZE_1080p_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea) { 16, 16 };
             me_context_ptr->me_sa.sa_max = (SearchArea) { 32, 16 };
         }
@@ -295,7 +305,7 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
         }
     }
     else if (pcs_ptr->enc_mode <= ENC_M11) {
-        if (pcs_ptr->hierarchical_levels <= 3) {
+        if (hierarchical_levels <= 3) {
             if (input_resolution < INPUT_SIZE_720p_RANGE) {
                 me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
                 me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
@@ -557,9 +567,13 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     EbInputResolution input_resolution = scs_ptr->input_resolution;
     // Set ME search area
     set_me_search_params(scs_ptr, pcs_ptr, context_ptr->me_context_ptr, input_resolution);
-
+#if TUNE_4L_M12
+    // Set HME search area
+    set_hme_search_params(scs_ptr, pcs_ptr, context_ptr->me_context_ptr, input_resolution);
+#else
     // Set HME search area
     set_hme_search_params(pcs_ptr, context_ptr->me_context_ptr, input_resolution);
+#endif
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
@@ -597,7 +611,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         if (enc_mode <= ENC_M10)
             prehme_level = 1;
         else if (enc_mode <= ENC_M11)
-            if (pcs_ptr->hierarchical_levels <= 3)
+            if (scs_ptr->static_config.hierarchical_levels <= 3)
                 prehme_level = 3;
             else
                 prehme_level = 1;

@@ -459,6 +459,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const EbInputResolution  input_resolution = ppcs->input_resolution;
     const EB_SLICE           slice_type       = pcs_ptr->slice_type;
     const uint8_t            fast_decode      = scs_ptr->static_config.fast_decode;
+#if TUNE_4L_M12
+    const uint32_t           hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#endif
 
     //MFMV
     if (slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
@@ -623,14 +626,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_4L_M8
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
         pcs_ptr->skip_intra = 0;
-    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
-        if (scs_ptr->static_config.hierarchical_levels <= 3)
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
+        if (hierarchical_levels <= 3)
             pcs_ptr->skip_intra = 0;
         else
             pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
             pcs_ptr->ref_intra_percentage > 50
             ? 0
             : 1;
+    }
 #else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
         pcs_ptr->skip_intra = 0;
@@ -771,11 +775,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_4L_M11
     else if (enc_mode <= ENC_M10)
         pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
-    else if (enc_mode <= ENC_M11)
-        if (ppcs->hierarchical_levels <= 3)
+    else if (enc_mode <= ENC_M11) {
+        if (hierarchical_levels <= 3)
             pcs_ptr->cfl_level = (pcs_ptr->slice_type == I_SLICE) ? 2 : 0;
         else
             pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
+    }
 #else
     else if (enc_mode <= ENC_M11)
         pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
@@ -941,11 +946,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_4L_M10
     else if (enc_mode <= ENC_M9)
         pcs_ptr->txs_level = 3;
-    else if (enc_mode <= ENC_M10)
-        if (ppcs->hierarchical_levels <= 3)
+    else if (enc_mode <= ENC_M10) {
+        if (hierarchical_levels <= 3)
             pcs_ptr->txs_level = 4;
         else
             pcs_ptr->txs_level = 3;
+    }
 #else
     else if (enc_mode <= ENC_M10)
         pcs_ptr->txs_level = 3;
@@ -954,7 +960,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txs_level = 4;
     // Set the level for nic
 #if TUNE_4L_M7
-    pcs_ptr->nic_level = get_nic_level(enc_mode, pcs_ptr->temporal_layer_index, ppcs->hierarchical_levels);
+    pcs_ptr->nic_level = get_nic_level(enc_mode, pcs_ptr->temporal_layer_index, hierarchical_levels);
 #else
     pcs_ptr->nic_level = get_nic_level(enc_mode, pcs_ptr->temporal_layer_index);
 #endif
@@ -984,7 +990,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->md_pme_level = 6;
 #if TUNE_4L_M12
     else if (enc_mode <= ENC_M12)
-        if (ppcs->hierarchical_levels <= 3)
+        if (hierarchical_levels <= 3)
             pcs_ptr->md_pme_level = 0;
         else
             pcs_ptr->md_pme_level = 6;
@@ -997,11 +1003,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_4L_M11
     if (enc_mode <= ENC_M10)
         pcs_ptr->mds0_level = 2;
-    else if (enc_mode <= ENC_M11)
-        if (ppcs->hierarchical_levels <= 3)
+    else if (enc_mode <= ENC_M11) {
+        if (hierarchical_levels <= 3)
             pcs_ptr->mds0_level = pcs_ptr->slice_type == I_SLICE ? 2 : 4;
         else
             pcs_ptr->mds0_level = 2;
+    }
 #else
     if (enc_mode <= ENC_M11)
         pcs_ptr->mds0_level = 2;
