@@ -5200,9 +5200,13 @@ void inject_inter_candidates_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionC
     FrameHeader *frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     uint32_t     cand_total_cnt      = *candidate_total_cnt;
     EbBool       is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-
+#if FIX_LPD1_W_OBMC
+    // Needed in case WM/OBMC is on at the frame level (even though not used in light-PD1 path)
+    if (frm_hdr->is_motion_mode_switchable) {
+#else
     // Needed in case WM is on at the frame level (even though not tested in light-PD1 path)
     if (frm_hdr->allow_warped_motion) {
+#endif
         const uint16_t mi_row = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
         const uint16_t mi_col = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
         svt_av1_count_overlappable_neighbors(

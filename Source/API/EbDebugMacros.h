@@ -52,6 +52,7 @@ extern "C" {
 #define OPT_UPDATE_CDF_MEM      1 // Only allocate memory for update_cdf rate estimation table if feature is on
 #define OPT_CAND_BUFF_MEM       1 // Don't alloc memory for independent chroma search candidates when not used
 #define OPT_MV_INJ_CHECK        1 // Optimize memory structures for tracking previously injected MVs
+#define FIX_LPD1_W_OBMC         1 // Enable LPD1 to be used when OBMC is on at the frame level (previously caused corrupted bitstream)
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
