@@ -10948,10 +10948,11 @@ EbBool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_top_recon_16bit[2],
                    bwidth_uv * sz);
         }
-
+#if !CLN_MD_CTX
         memcpy(&ctx->md_ep_pipe_sb[blk_ptr->mds_idx],
                &ctx->md_ep_pipe_sb[redundant_blk_mds],
                sizeof(MdEncPassCuData));
+#endif
         return 1;
     }
     return 0;

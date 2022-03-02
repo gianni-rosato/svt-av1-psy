@@ -110,7 +110,9 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->new_nearest_comb_inject     = DEFAULT;
     scs_ptr->nsq_table                   = DEFAULT;
     scs_ptr->frame_end_cdf_update        = DEFAULT;
+#if !OPT_CAND_BUFF_MEM
     scs_ptr->set_chroma_mode             = DEFAULT;
+#endif
     scs_ptr->disable_cfl_flag            = DEFAULT;
     scs_ptr->obmc_level                  = DEFAULT;
     scs_ptr->rdoq_level                  = DEFAULT;
@@ -370,7 +372,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->new_nearest_comb_inject       = src->new_nearest_comb_inject;
     dst->nsq_table                     = src->nsq_table;
     dst->frame_end_cdf_update          = src->frame_end_cdf_update;
+#if !OPT_CAND_BUFF_MEM
     dst->set_chroma_mode               = src->set_chroma_mode;
+#endif
     dst->disable_cfl_flag              = src->disable_cfl_flag;
     dst->obmc_level                    = src->obmc_level;
     dst->rdoq_level                    = src->rdoq_level;

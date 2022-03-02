@@ -109,12 +109,13 @@ typedef struct WedgeParamsType {
     WedgeMasksType      *masks;
 } WedgeParamsType;
 
+#if !CLN_MD_CTX
 struct ModeDecisionContext;
-
 typedef struct InterPredictionContext {
     EbDctor                              dctor;
     MotionCompensationPredictionContext *mcp_context;
 } InterPredictionContext;
+#endif
 
 void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8_t *dst,
                                    int32_t dst_stride, int32_t w, int32_t h,

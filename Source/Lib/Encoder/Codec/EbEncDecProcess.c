@@ -3650,6 +3650,63 @@ void set_cand_reduction_ctrls(PictureControlSet *pcs_ptr, ModeDecisionContext *m
           pcs_ptr->parent_pcs_ptr->use_best_me_unipred_cand_only))
         cand_reduction_ctrls->lpd1_mvp_best_me_list = 0;
 }
+#if OPT_CAND_BUFF_MEM
+uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
+    UvCtrls *uv_ctrls = ctx ? &ctx->uv_ctrls : NULL;
+    uint8_t uv_mode = 0;
+
+    switch (uv_level) {
+    case 0:
+        uv_mode = CHROMA_MODE_2;
+        if (uv_ctrls) {
+            uv_ctrls->enabled = 0;
+            uv_ctrls->nd_uv_serach_mode = 0;
+        }
+        break;
+    case 1:
+        uv_mode = CHROMA_MODE_0;
+        if (uv_ctrls) {
+            uv_ctrls->enabled = 1;
+            uv_ctrls->nd_uv_serach_mode = 0;
+            uv_ctrls->uv_intra_th = (uint64_t)~0;
+            uv_ctrls->uv_cfl_th = (uint64_t)~0;
+        }
+        break;
+    case 2:
+        uv_mode = CHROMA_MODE_0;
+        if (uv_ctrls) {
+            uv_ctrls->enabled = 1;
+            uv_ctrls->nd_uv_serach_mode = 1;
+            uv_ctrls->uv_intra_th = 130;
+            uv_ctrls->uv_cfl_th = 130;
+        }
+        break;
+    case 3:
+        uv_mode = CHROMA_MODE_0;
+        if (uv_ctrls) {
+            uv_ctrls->enabled = 1;
+            uv_ctrls->nd_uv_serach_mode = 1;
+            uv_ctrls->uv_intra_th = 100;
+            uv_ctrls->uv_cfl_th = 100;
+        }
+        break;
+    case 4:
+        uv_mode = CHROMA_MODE_1;
+        if (uv_ctrls) {
+            uv_ctrls->enabled = 1;
+            uv_ctrls->nd_uv_serach_mode = 0;
+        }
+        break;
+    default: assert(0); break;
+    }
+
+    if (ctx) {
+        uv_ctrls->uv_mode = uv_mode;
+    }
+
+    return uv_mode;
+}
+#else
 void set_chroma_controls(ModeDecisionContext *mdctxt, uint8_t uv_level) {
     UvCtrls *uv_ctrls = &mdctxt->uv_ctrls;
 
@@ -3688,6 +3745,7 @@ void set_chroma_controls(ModeDecisionContext *mdctxt, uint8_t uv_level) {
     default: assert(0); break;
     }
 }
+#endif
 void set_wm_controls(ModeDecisionContext *mdctxt, uint8_t wm_level) {
     WmCtrls *wm_ctrls = &mdctxt->wm_ctrls;
 
@@ -7050,11 +7108,19 @@ void *mode_decision_kernel(void *input_ptr) {
 
             if (pcs_ptr->cdf_ctrl.enabled) {
                 if (!pcs_ptr->cdf_ctrl.update_mv)
+#if OPT_UPDATE_CDF_MEM
+                    copy_mv_rate(pcs_ptr, context_ptr->md_context->rate_est_table);
+#else
                     copy_mv_rate(pcs_ptr, &context_ptr->md_context->rate_est_table);
+#endif
                 if (!pcs_ptr->cdf_ctrl.update_se)
 
                     av1_estimate_syntax_rate(
+#if OPT_UPDATE_CDF_MEM
+                        context_ptr->md_context->rate_est_table,
+#else
                         &context_ptr->md_context->rate_est_table,
+#endif
                         pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
                         pcs_ptr->pic_filter_intra_level,
                         pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
@@ -7063,8 +7129,13 @@ void *mode_decision_kernel(void *input_ptr) {
                         pcs_ptr->parent_pcs_ptr->partition_contexts,
                         &pcs_ptr->md_frame_context);
                 if (!pcs_ptr->cdf_ctrl.update_coef)
+#if OPT_UPDATE_CDF_MEM
+                    av1_estimate_coefficients_rate(context_ptr->md_context->rate_est_table,
+                        &pcs_ptr->md_frame_context);
+#else
                     av1_estimate_coefficients_rate(&context_ptr->md_context->rate_est_table,
                                                    &pcs_ptr->md_frame_context);
+#endif
             }
             // Segment-loop
             while (assign_enc_dec_segments(segments_ptr,
@@ -7170,7 +7241,11 @@ void *mode_decision_kernel(void *input_ptr) {
                             // Initial Rate Estimation of the syntax elements
                             if (pcs_ptr->cdf_ctrl.update_se)
                                 av1_estimate_syntax_rate(
+#if OPT_UPDATE_CDF_MEM
+                                    context_ptr->md_context->rate_est_table,
+#else
                                     &context_ptr->md_context->rate_est_table,
+#endif
                                     pcs_ptr->slice_type == I_SLICE,
                                     pcs_ptr->pic_filter_intra_level,
                                     pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
@@ -7181,15 +7256,28 @@ void *mode_decision_kernel(void *input_ptr) {
                             // Initial Rate Estimation of the Motion vectors
                             if (pcs_ptr->cdf_ctrl.update_mv)
                                 av1_estimate_mv_rate(pcs_ptr,
+#if OPT_UPDATE_CDF_MEM
+                                                     context_ptr->md_context->rate_est_table,
+#else
                                                      &context_ptr->md_context->rate_est_table,
+#endif
                                                      &pcs_ptr->ec_ctx_array[sb_index]);
 
                             if (pcs_ptr->cdf_ctrl.update_coef)
                                 av1_estimate_coefficients_rate(
+#if OPT_UPDATE_CDF_MEM
+                                    context_ptr->md_context->rate_est_table,
+#else
                                     &context_ptr->md_context->rate_est_table,
+#endif
                                     &pcs_ptr->ec_ctx_array[sb_index]);
+#if OPT_UPDATE_CDF_MEM
+                            context_ptr->md_context->md_rate_estimation_ptr =
+                                context_ptr->md_context->rate_est_table;
+#else
                             context_ptr->md_context->md_rate_estimation_ptr =
                                 &context_ptr->md_context->rate_est_table;
+#endif
                         }
                         // Configure the SB
                         mode_decision_configure_sb(

@@ -1326,9 +1326,10 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->me_8x8_distortion);
 
     EB_FREE_ARRAY(obj->me_8x8_cost_variance);
+#if !CLN_MD_CTX
     // SB noise variance array
     EB_FREE_ARRAY(obj->sb_depth_mode_array);
-
+#endif
     if (obj->av1_cm) {
         EB_FREE_ARRAY(obj->av1_cm->frame_to_show);
         if (obj->av1_cm->rst_frame.buffer_alloc_sz) {
@@ -1464,7 +1465,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(object_ptr->me_8x8_cost_variance, object_ptr->sb_total_count);
     // SB noise variance array
     EB_CREATE_MUTEX(object_ptr->me_processed_b64_mutex);
+#if !CLN_MD_CTX
     EB_MALLOC_ARRAY(object_ptr->sb_depth_mode_array, object_ptr->sb_total_count);
+#endif
     EB_CREATE_SEMAPHORE(object_ptr->temp_filt_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->temp_filt_mutex);
     EB_CREATE_MUTEX(object_ptr->debug_mutex);

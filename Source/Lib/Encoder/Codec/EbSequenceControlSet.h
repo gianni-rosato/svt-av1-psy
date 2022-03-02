@@ -345,7 +345,7 @@ typedef struct SequenceControlSet {
     *
     * Default is -1. */
     int compound_level;
-
+#if !OPT_CAND_BUFF_MEM
     /* Chroma mode
     *
     * Level                Settings
@@ -356,6 +356,7 @@ typedef struct SequenceControlSet {
     *
     * Default is -1 (AUTO) */
     int set_chroma_mode;
+#endif
     /* Disable chroma from luma (CFL)
     *
     * Default is -1 (auto) */

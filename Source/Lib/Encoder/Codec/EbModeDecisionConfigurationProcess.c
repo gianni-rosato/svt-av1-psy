@@ -412,11 +412,43 @@ EbErrorType rtime_alloc_ec_ctx_array(PictureControlSet *pcs_ptr, uint16_t all_sb
     EB_MALLOC_ARRAY(pcs_ptr->ec_ctx_array, all_sb);
     return EB_ErrorNone;
 }
+
 #if TUNE_4L_M7
 uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index, uint8_t hierarchical_levels);
 #else
-uint8_t     get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
+    uint8_t     get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
 #endif
+#if OPT_UPDATE_CDF_MEM
+uint8_t get_update_cdf_level(EbEncMode enc_mode, EB_SLICE is_islice, uint8_t is_base) {
+    uint8_t update_cdf_level = 0;
+    if (enc_mode <= ENC_M2)
+        update_cdf_level = 1;
+    else if (enc_mode <= ENC_M6)
+        update_cdf_level = is_base ? 1 : 3;
+    else if (enc_mode <= ENC_M10)
+        update_cdf_level = is_islice ? 1 : 0;
+    else
+        update_cdf_level = 0;
+
+    return update_cdf_level;
+}
+#endif
+#if OPT_CAND_BUFF_MEM
+uint8_t get_chroma_level(EbEncMode enc_mode) {
+    uint8_t chroma_level = 0;
+    if (enc_mode <= ENC_MRS)
+        chroma_level = 1;
+    else if (enc_mode <= ENC_M1)
+        chroma_level = 2;
+    else if (enc_mode <= ENC_M5)
+        chroma_level = 3;
+    else
+        chroma_level = 4;
+
+    return chroma_level;
+}
+#endif
+
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet *scs_ptr,
                                                              PictureControlSet  *pcs_ptr) {
     EbErrorType              return_error     = EB_ErrorNone;
@@ -455,6 +487,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
     }
 
+#if OPT_UPDATE_CDF_MEM
+    uint8_t update_cdf_level = get_update_cdf_level(enc_mode, slice_type == I_SLICE, is_base);
+#else
     uint8_t update_cdf_level = 0;
     if (enc_mode <= ENC_M2)
         update_cdf_level = 1;
@@ -464,7 +499,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = slice_type == I_SLICE ? 1 : 0;
     else
         update_cdf_level = 0;
-
+#endif
     //set the conrols uisng the required level
     set_cdf_controls(pcs_ptr, update_cdf_level);
 
@@ -702,6 +737,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->interpolation_search_level = 0;
     }
 #endif
+
+#if OPT_CAND_BUFF_MEM
+    pcs_ptr->chroma_level = get_chroma_level(enc_mode);
+#else
     // Set the level for the chroma path
     pcs_ptr->chroma_level = 0;
     if (scs_ptr->set_chroma_mode == DEFAULT) {
@@ -715,7 +754,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->chroma_level = 4;
     } else // use specified level
         pcs_ptr->chroma_level = scs_ptr->set_chroma_mode;
-
+#endif
     // Set the level for cfl
     pcs_ptr->cfl_level = 0;
     if (pcs_ptr->parent_pcs_ptr->sc_class1) {

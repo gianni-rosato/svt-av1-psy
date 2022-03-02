@@ -56,7 +56,9 @@ typedef struct ModeDecisionCandidate {
     uint64_t        total_rate;
     uint32_t        luma_fast_distortion;
     uint64_t        full_distortion;
+#if !CLN_MD_CTX
     EbPtr           prediction_context_ptr;
+#endif
     EbPredDirection prediction_direction
         [MAX_NUM_OF_PU_PER_CU]; // 2 bits // Hsan: does not seem to be used why not removed ?
 
@@ -89,7 +91,9 @@ typedef struct ModeDecisionCandidate {
     uint8_t                ref_frame_type;
     TxType                 transform_type[MAX_TXB_COUNT];
     TxType                 transform_type_uv;
+#if !CLN_MD_CTX
     MacroblockPlane        candidate_plane[MAX_MB_PLANE];
+#endif
     uint16_t               eob[MAX_MB_PLANE][MAX_TXB_COUNT];
     int32_t                quantized_dc[3][MAX_TXB_COUNT];
     uint32_t               interp_filters;

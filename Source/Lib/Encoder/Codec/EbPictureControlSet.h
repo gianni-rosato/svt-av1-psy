@@ -818,7 +818,9 @@ typedef struct PictureParentControlSet {
 
     // MD
     EbEncMode         enc_mode;
+#if !CLN_MD_CTX
     EB_SB_DEPTH_MODE *sb_depth_mode_array;
+#endif
     // Multi-modes signal(s)
     MultiPassPdLevel multi_pass_pd_level;
     EbBool           disallow_nsq;

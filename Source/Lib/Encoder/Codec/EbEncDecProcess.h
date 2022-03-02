@@ -42,9 +42,10 @@ typedef struct EncDecContext {
     EbFifo              *picture_demux_output_fifo_ptr; // to picture-manager
     ModeDecisionContext *md_context;
     const BlockGeom     *blk_geom;
+#if !CLN_MD_CTX
     // MCP Context
     MotionCompensationPredictionContext *mcp_context;
-
+#endif
     // Coding Unit Workspace---------------------------
     EbPictureBufferDesc *residual_buffer;
     EbPictureBufferDesc *transform_buffer;

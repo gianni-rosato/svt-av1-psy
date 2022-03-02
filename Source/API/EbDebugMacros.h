@@ -48,6 +48,11 @@ extern "C" {
 #define TUNE_4L_M8              1 // Optimizing 4L compared to 5L for M8
 #define TUNE_4L_M7              1 // Optimizing 4L compared to 5L for M7
 
+#define CLN_MD_CTX              1 // Cleanup MD ctx fields and memory alloc
+#define OPT_UPDATE_CDF_MEM      1 // Only allocate memory for update_cdf rate estimation table if feature is on
+#define OPT_CAND_BUFF_MEM       1 // Don't alloc memory for independent chroma search candidates when not used
+#define OPT_MV_INJ_CHECK        1 // Optimize memory structures for tracking previously injected MVs
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

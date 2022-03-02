@@ -2056,8 +2056,13 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs, 
     get_recon_pic(pcs, &recon_buffer, is_16bit);
     // Set MvUnit
     ctx->mv_unit.pred_direction          = (uint8_t)pu_ptr->inter_pred_direction_index;
+#if OPT_MV_INJ_CHECK
+    ctx->mv_unit.mv[REF_LIST_0].as_int = pu_ptr->mv[REF_LIST_0].as_int;
+    ctx->mv_unit.mv[REF_LIST_1].as_int = pu_ptr->mv[REF_LIST_1].as_int;
+#else
     ctx->mv_unit.mv[REF_LIST_0].mv_union = pu_ptr->mv[REF_LIST_0].mv_union;
     ctx->mv_unit.mv[REF_LIST_1].mv_union = pu_ptr->mv[REF_LIST_1].mv_union;
+#endif
 
     // Inter Prediction
     EbPictureBufferDesc *ref_pic_list0;

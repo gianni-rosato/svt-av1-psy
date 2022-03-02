@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 #define USE_PRE_COMPUTE 0
-
+#if !CLN_MD_CTX
 typedef struct MotionCompensationPredictionContext {
     EbDctor dctor;
     EbByte  avc_style_mcp_intermediate_result_buf0; // For short filter in MD
@@ -25,7 +25,7 @@ typedef struct MotionCompensationPredictionContext {
     EbByte avc_style_mcp_two_d_interpolation_first_pass_filter_result_buf; // For short filter in MD
 #endif
 } MotionCompensationPredictionContext;
-
+#endif
 /** InterpolationFilter()
             is generally defined interpolation filter function.
             There is a whole group of these functions, each of which corresponds to a particular

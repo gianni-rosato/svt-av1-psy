@@ -2668,7 +2668,6 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define MAX_SUPPORTED_SEGMENTS                            7
 #define NUM_QPS                                           52
 
-
 // Aura detection definitions
 #define    AURA_4K_DISTORTION_TH    25
 #define    AURA_4K_DISTORTION_TH_6L 20
@@ -2697,10 +2696,12 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define ZZ_SAD_MODE_0  0        // ZZ SAD on Decimated resolution
 #define ZZ_SAD_MODE_1  1        // ZZ SAD on Full resolution
 
+#if !CLN_MD_CTX
 #define EbPfMode uint8_t
 #define PF_OFF  0
 #define PF_N2   1
 #define PF_N4   2
+#endif
 #define STAGE uint8_t
 #define ED_STAGE  1      // ENCDEC stage
 
@@ -2723,6 +2724,7 @@ typedef enum MultiPassPdLevel
     MULTI_PASS_PD_ON      = 1, // Multi-Pass PD ON  = PD0 | PD0_REFINEMENT | PD1
     MULTI_PASS_PD_INVALID = 0, // Invalid Multi-Pass PD Mode
 } MultiPassPdLevel;
+#if !CLN_MD_CTX
 #define EB_SB_DEPTH_MODE              uint8_t
 #define SB_SQ_BLOCKS_DEPTH_MODE             1
 #define SB_SQ_NON4_BLOCKS_DEPTH_MODE        2
@@ -2752,7 +2754,7 @@ static const int32_t hme_level_0_search_area_multiplier_y[MAX_HIERARCHICAL_LEVEL
     { 350, 200, 100, 100, 100 },
     { 525, 350, 200, 100, 100, 100 }
 };
-
+#endif
 typedef enum RasterScanCuIndex
 {
     // 2Nx2N [85 partitions]
@@ -3041,13 +3043,14 @@ typedef struct StatStruct
     uint8_t    temporal_layer_index;
 } StatStruct;
 #define SC_MAX_LEVEL 2 // 2 sets of HME/ME settings are used depending on the scene content mode
-
+#if !CLN_MD_CTX
 typedef enum HmeDecimation
 {
     ZERO_DECIMATION_HME = 0, // Perform HME search on full-res picture; no refinement
     ONE_DECIMATION_HME = 1, // HME search on quarter-res picture; 1 refinement level
     TWO_DECIMATION_HME = 2, // HME search on sixteenth-res picture; 2 refinement level
 } HmeDecimation;
+#endif
 static const uint8_t me_idx_85_8x8_to_16x16_conversion[] = {
     5,5,      6,6,      7,7,      8,8,
     5,5,      6,6,      7,7,      8,8,
