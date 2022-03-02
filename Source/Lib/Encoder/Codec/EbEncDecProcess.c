@@ -4366,7 +4366,11 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
         // Set LPD1 level 0 controls
         ctrls->use_lpd1_detector[LPD1_LVL_0]       = 1;
         ctrls->use_ref_info[LPD1_LVL_0]            = 0;
+#if OPT_LPD_LVL2
+        ctrls->cost_th_dist[LPD1_LVL_0]            = 128;
+#else
         ctrls->cost_th_dist[LPD1_LVL_0]            = 256;
+#endif
         ctrls->coeff_th[LPD1_LVL_0]                = 100;
         ctrls->max_mv_length[LPD1_LVL_0]           = 500;
         ctrls->me_8x8_cost_variance_th[LPD1_LVL_0] = (uint32_t)~0;
