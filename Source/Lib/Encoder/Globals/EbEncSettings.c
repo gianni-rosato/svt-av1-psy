@@ -1357,7 +1357,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"key-frame-chroma-qindex-offset", &config_struct->key_frame_chroma_qindex_offset},
         {"key-frame-qindex-offset", &config_struct->key_frame_qindex_offset},
         {"pass", &config_struct->pass},
-        {"pass", &config_struct->cdef_level},
+        {"enable-cdef", &config_struct->cdef_level},
         {"enable-restoration", &config_struct->enable_restoration_filtering},
         {"enable-mfmv", &config_struct->enable_mfmv},
         {"intra-period", &config_struct->intra_period_length},
