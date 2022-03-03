@@ -269,6 +269,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 
     EB_MALLOC_ARRAY(context_ptr->fast_candidate_ptr_array, max_can_count);
 #if OPT_MV_INJ_CHECK
+    assert_err(max_can_count > ind_uv_cands, "Max. candidates is too low");
     EB_MALLOC_2D(context_ptr->injected_mvs, (uint16_t)(max_can_count - ind_uv_cands), 2);
     EB_MALLOC_ARRAY(context_ptr->injected_ref_types, (max_can_count - ind_uv_cands));
 #endif

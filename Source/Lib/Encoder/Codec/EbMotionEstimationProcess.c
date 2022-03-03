@@ -148,8 +148,11 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
         }
     }
 #endif
-
+#if CLN_SIG_DERIV
+    else {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M13) {
+#endif
         if (pcs_ptr->sc_class1) {
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea){ 32, 32 };
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){ 192, 192 };
@@ -165,6 +168,7 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
             }
         }
     }
+#if !CLN_SIG_DERIV
     else {
         if (pcs_ptr->sc_class1) {
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea) { 16, 16 };
@@ -175,7 +179,7 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){ 96, 96 };
         }
     }
-
+#endif
     // Set the HME Level 1 and Level 2 refinement areas
     if (pcs_ptr->enc_mode <= ENC_M1) {
         me_context_ptr->hme_l1_sa = (SearchArea){16, 16};
@@ -563,6 +567,9 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 
     EbEncMode         enc_mode         = pcs_ptr->enc_mode;
     EbInputResolution input_resolution = scs_ptr->input_resolution;
+#if TUNE_4L_M11
+    const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#endif
     // Set ME search area
     set_me_search_params(scs_ptr, pcs_ptr, context_ptr->me_context_ptr, input_resolution);
 #if TUNE_4L_M12
@@ -609,7 +616,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         if (enc_mode <= ENC_M10)
             prehme_level = 1;
         else if (enc_mode <= ENC_M11) {
-            if (scs_ptr->static_config.hierarchical_levels <= 3)
+            if (hierarchical_levels <= 3)
                 prehme_level = 3;
             else
                 prehme_level = 1;
@@ -618,10 +625,15 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         if (enc_mode <= ENC_M11)
             prehme_level = 1;
 #endif
+#if CLN_SIG_DERIV
+        else
+            prehme_level = 3;
+#else
         else if (enc_mode <= ENC_M13)
             prehme_level = 3;
         else
             prehme_level = 0;
+#endif
     }
     if (pcs_ptr->enable_hme_level1_flag == 0)
         prehme_level = 0;

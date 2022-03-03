@@ -1820,6 +1820,16 @@ EbErrorType signal_derivation_multi_processes_oq(
     PictureDecisionContext *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
+#if CLN_SIG_DERIV
+    EbEncMode                enc_mode = pcs_ptr->enc_mode;
+    const uint8_t            is_islice = pcs_ptr->slice_type == I_SLICE;
+    const uint8_t            is_ref = pcs_ptr->is_used_as_reference_flag;
+    const uint8_t            is_base = pcs_ptr->temporal_layer_index == 0;
+    const EbInputResolution  input_resolution = pcs_ptr->input_resolution;
+    const uint32_t           bit_depth = scs_ptr->static_config.encoder_bit_depth;
+    const uint8_t            fast_decode = scs_ptr->static_config.fast_decode;
+    const uint32_t           hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#endif
 
     // If enabled here, the hme enable flags should also be enabled in ResourceCoordinationProcess
     // to ensure that resources are allocated for the downsampled pictures used in HME
@@ -1829,19 +1839,28 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 1;
     }
+#if CLN_SIG_DERIV
+    else if (enc_mode <= ENC_M6) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 1;
     }
+#if CLN_SIG_DERIV
+    else {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M13) {
+#endif
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 0;
     }
+#if !CLN_SIG_DERIV
     else {
         pcs_ptr->enable_hme_level1_flag = 0;
         pcs_ptr->enable_hme_level2_flag = 0;
     }
-
+#endif
     switch (pcs_ptr->tf_ctrls.hme_me_level) {
     case 0:
         pcs_ptr->tf_enable_hme_flag        = 1;
@@ -1870,7 +1889,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     // Set the Multi-Pass PD level
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_ON;
+#if CLN_SIG_DERIV
+    pcs_ptr->disallow_nsq = get_disallow_nsq(enc_mode);
+#else
     pcs_ptr->disallow_nsq = get_disallow_nsq (pcs_ptr->enc_mode);
+#endif
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
 
 
@@ -1887,13 +1910,21 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->disallow_all_nsq_blocks_above_32x32 = EB_FALSE;
     // disallow_all_nsq_blocks_above_16x16
     pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_FALSE;
-
+#if CLN_SIG_DERIV
+    if (enc_mode <= ENC_M1)
+        pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
+    else if (enc_mode <= ENC_M2)
+        pcs_ptr->disallow_HVA_HVB_HV4 = is_base ? EB_FALSE : EB_TRUE;
+    else
+        pcs_ptr->disallow_HVA_HVB_HV4 = EB_TRUE;
+#else
     if (pcs_ptr->enc_mode <= ENC_M1)
         pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
     else if (pcs_ptr->enc_mode <= ENC_M2)
         pcs_ptr->disallow_HVA_HVB_HV4 = (pcs_ptr->temporal_layer_index == 0) ? EB_FALSE : EB_TRUE;
     else
         pcs_ptr->disallow_HVA_HVB_HV4 = EB_TRUE;
+#endif
     pcs_ptr->disallow_HV4 = EB_FALSE;
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
@@ -1910,6 +1941,26 @@ EbErrorType signal_derivation_multi_processes_oq(
     //for now only I frames are allowed to use sc tools.
     //TODO: we can force all frames in GOP with the same detection status of leading I frame.
     uint8_t intrabc_level = 0;
+#if CLN_SIG_DERIV
+    if (is_islice) {
+        frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
+        if (scs_ptr->intrabc_mode == DEFAULT) {
+            if (enc_mode <= ENC_M5)
+                intrabc_level = 1;
+            else if (enc_mode <= ENC_M7)
+                intrabc_level = 4;
+            else if (enc_mode <= ENC_M9)
+                intrabc_level = 5;
+            else if (enc_mode <= ENC_M10)
+                intrabc_level = 6;
+            else
+                intrabc_level = 0;
+        }
+        else {
+            intrabc_level = (uint8_t)scs_ptr->intrabc_mode;
+        }
+    }
+#else
     if (pcs_ptr->slice_type == I_SLICE) {
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
         if (scs_ptr->intrabc_mode == DEFAULT) {
@@ -1927,6 +1978,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             intrabc_level = (uint8_t)scs_ptr->intrabc_mode;
         }
     }
+#endif
     else {
         //this will enable sc tools for P frames. hence change Bitstream even if palette mode is OFF
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
@@ -1937,12 +1989,21 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set palette_level
     if (frm_hdr->allow_screen_content_tools) {
         if (scs_ptr->palette_level == DEFAULT) { //auto mode; if not set by cfg
+#if CLN_SIG_DERIV
+            if (enc_mode <= ENC_M11)
+                pcs_ptr->palette_level = is_base ? 2 : 0;
+            else if (enc_mode <= ENC_M12)
+                pcs_ptr->palette_level = is_islice ? 2 : 0;
+            else
+                pcs_ptr->palette_level = 0;
+#else
             if (pcs_ptr->enc_mode <= ENC_M11)
                 pcs_ptr->palette_level = pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
             else if (pcs_ptr->enc_mode <= ENC_M12)
                 pcs_ptr->palette_level = pcs_ptr->slice_type == I_SLICE ? 2 : 0;
             else
                 pcs_ptr->palette_level = 0;
+#endif
         }
         else
             pcs_ptr->palette_level = scs_ptr->palette_level;
@@ -1953,18 +2014,50 @@ EbErrorType signal_derivation_multi_processes_oq(
     set_palette_level(pcs_ptr, pcs_ptr->palette_level);
     uint8_t dlf_level = 0;
     if (pcs_ptr->scs_ptr->static_config.enable_dlf_flag && frm_hdr->allow_intrabc == 0) {
-#if TUNE_4L_M8        
+#if TUNE_4L_M8
+#if CLN_SIG_DERIV
+        dlf_level = get_dlf_level(enc_mode, is_ref, bit_depth > EB_8BIT, fast_decode, hierarchical_levels);
+#else
         dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag, scs_ptr->static_config.encoder_bit_depth > EB_8BIT, scs_ptr->static_config.fast_decode, scs_ptr->static_config.hierarchical_levels);
+#endif
     }
 #else
         dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag, scs_ptr->static_config.encoder_bit_depth > EB_8BIT, scs_ptr->static_config.fast_decode);
     }
 #endif
+#if CLN_SIG_DERIV
+    set_dlf_controls(pcs_ptr, dlf_level, bit_depth);
+#else
     set_dlf_controls(pcs_ptr, dlf_level, scs_ptr->static_config.encoder_bit_depth);
+#endif
 
     // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
+#if CLN_SIG_DERIV
+            if (enc_mode <= ENC_M0)
+                pcs_ptr->cdef_level = 1;
+            else if (enc_mode <= ENC_M3)
+                pcs_ptr->cdef_level = 2;
+            else if (enc_mode <= ENC_M5)
+                pcs_ptr->cdef_level = 4;
+            else if (enc_mode <= ENC_M9)
+                pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
+            else if (enc_mode <= ENC_M11)
+                pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+            else if (enc_mode <= ENC_M12) {
+                if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                    pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+                else
+                    pcs_ptr->cdef_level = is_islice ? 15 : is_ref ? 16 : 17;
+            }
+            else {
+                if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                    pcs_ptr->cdef_level = is_base ? 15 : 0;
+                else
+                    pcs_ptr->cdef_level = is_islice ? 15 : 0;
+            }
+#else
             if (pcs_ptr->enc_mode <= ENC_M0)
                 pcs_ptr->cdef_level = 1;
             else if (pcs_ptr->enc_mode <= ENC_M3)
@@ -1993,13 +2086,18 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : 0;
 #endif
+#endif
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);
     }
     else
         pcs_ptr->cdef_level = 0;
+#if CLN_SIG_DERIV
+    set_cdef_controls(pcs_ptr, pcs_ptr->cdef_level, fast_decode);
+#else
     set_cdef_controls(pcs_ptr,pcs_ptr->cdef_level, scs_ptr->static_config.fast_decode);
+#endif
 
     // SG Level     Settings
     // 0             OFF
@@ -2009,12 +2107,21 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4             0 step refinement
     Av1Common* cm = pcs_ptr->av1_cm;
     if (scs_ptr->sg_filter_mode == DEFAULT) {
+#if CLN_SIG_DERIV
+        if (enc_mode <= ENC_M2)
+            cm->sg_filter_mode = 1;
+        else if (enc_mode <= ENC_M4)
+            cm->sg_filter_mode = is_base ? 1 : 4;
+        else
+            cm->sg_filter_mode = 0;
+#else
         if (pcs_ptr->enc_mode <= ENC_M2)
             cm->sg_filter_mode = 1;
         else if (pcs_ptr->enc_mode <= ENC_M4)
             cm->sg_filter_mode = (pcs_ptr->temporal_layer_index == 0) ? 1 : 4;
         else
             cm->sg_filter_mode = 0;
+#endif
     }
     else
         cm->sg_filter_mode = scs_ptr->sg_filter_mode;
@@ -2028,6 +2135,20 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 5               5-Tap luma/ 5-Tap chroma; refinement OFF; use prev. frame coeffs
     uint8_t wn_filter_lvl = 0;
     if (scs_ptr->wn_filter_mode == DEFAULT) {
+#if CLN_SIG_DERIV
+        if (fast_decode <= 2) {
+            if (enc_mode <= ENC_M5)
+                wn_filter_lvl = 1;
+            else
+                wn_filter_lvl = 4;
+        }
+        else {
+            if (enc_mode <= ENC_M4)
+                wn_filter_lvl = 1;
+            else
+                wn_filter_lvl = 4;
+        }
+#else
         if (scs_ptr->static_config.fast_decode <= 2) {
             if (pcs_ptr->enc_mode <= ENC_M5)
                 wn_filter_lvl = 1;
@@ -2040,11 +2161,23 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 wn_filter_lvl = 4;
         }
+#endif
     }
     else
         wn_filter_lvl = scs_ptr->wn_filter_mode;
 
     set_wn_filter_ctrls(cm, wn_filter_lvl);
+#if CLN_SIG_DERIV
+    // Set tx size search mode
+    if (enc_mode <= ENC_M4)
+        pcs_ptr->tx_size_search_mode = 1;
+    else if (enc_mode <= ENC_M6)
+        pcs_ptr->tx_size_search_mode = is_base ? 1 : 0;
+    else if (enc_mode <= ENC_M11)
+        pcs_ptr->tx_size_search_mode = is_islice ? 1 : 0;
+    else
+        pcs_ptr->tx_size_search_mode = 0;
+#else
 #if OPT_REMOVE_TL_CHECKS_2
     // Set tx size search mode
     if (pcs_ptr->enc_mode <= ENC_M4)
@@ -2060,7 +2193,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tx_size_search_mode = (pcs_ptr->slice_type == I_SLICE) ? 1 : 0;
     else
         pcs_ptr->tx_size_search_mode = 0;
-
+#endif
     // Set frame end cdf update mode      Settings
     // 0                                     OFF
     // 1                                     ON
@@ -2080,6 +2213,26 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     uint8_t list0_only_base = 0;
 #if TUNE_4L_M7
+#if CLN_SIG_DERIV
+    if (enc_mode <= ENC_M6)
+        list0_only_base = 0;
+    else if (enc_mode <= ENC_M7) {
+        if (hierarchical_levels <= 3)
+            list0_only_base = 1;
+        else
+            list0_only_base = 0;
+    }
+    else  if (enc_mode <= ENC_M8)
+        list0_only_base = 1;
+    else  if (enc_mode <= ENC_M9) {
+        if (hierarchical_levels <= 3)
+            list0_only_base = 2;
+        else
+            list0_only_base = 1;
+    }
+    else
+        list0_only_base = 2;
+#else
     if (pcs_ptr->enc_mode <= ENC_M6)
         list0_only_base = 0;
     else if (pcs_ptr->enc_mode <= ENC_M7) {
@@ -2098,6 +2251,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         list0_only_base = 2;
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M7)
         list0_only_base = 0;
@@ -2117,7 +2271,43 @@ EbErrorType signal_derivation_multi_processes_oq(
         list0_only_base = 2;
 #endif
     set_list0_only_base(pcs_ptr, list0_only_base);
+#if CLN_SIG_DERIV
+    if (scs_ptr->enable_hbd_mode_decision == DEFAULT)
+        if (enc_mode <= ENC_MR)
+            pcs_ptr->hbd_mode_decision = 1;
+        else if (enc_mode <= ENC_M1)
+            pcs_ptr->hbd_mode_decision = is_ref ? 1 : 2;
+        else if (enc_mode <= ENC_M3)
+            pcs_ptr->hbd_mode_decision = 2;
+        else if (enc_mode <= ENC_M4)
+            pcs_ptr->hbd_mode_decision = is_ref ? 2 : 0;
+        else if (enc_mode <= ENC_M7)
+            pcs_ptr->hbd_mode_decision = is_base ? 2 : 0;
+        else
+            pcs_ptr->hbd_mode_decision = is_islice ? 2 : 0;
+    else
+        pcs_ptr->hbd_mode_decision = scs_ptr->enable_hbd_mode_decision;
 
+    pcs_ptr->max_can_count = get_max_can_count(enc_mode);
+
+    if (enc_mode <= ENC_M8)
+        pcs_ptr->use_best_me_unipred_cand_only = 0;
+    else if (enc_mode <= ENC_M9) {
+        if (hierarchical_levels <= 3)
+            pcs_ptr->use_best_me_unipred_cand_only = 1;
+        else
+            pcs_ptr->use_best_me_unipred_cand_only = 0;
+    }
+    else
+        pcs_ptr->use_best_me_unipred_cand_only = 1;
+
+    //TPL level should not be modified outside of this function
+    set_tpl_extended_controls(pcs_ptr, scs_ptr->tpl_level);
+
+    pcs_ptr->adjust_under_shoot_gf = 0;
+    if (scs_ptr->passes == 1 && scs_ptr->static_config.rate_control_mode == 1)
+        pcs_ptr->adjust_under_shoot_gf = enc_mode <= ENC_M11 ? 1 : 2;
+#else
     if (scs_ptr->enable_hbd_mode_decision == DEFAULT)
         if (pcs_ptr->enc_mode <= ENC_MR)
             pcs_ptr->hbd_mode_decision = 1;
@@ -2156,6 +2346,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->adjust_under_shoot_gf = 0;
     if (scs_ptr->passes == 1 && scs_ptr->static_config.rate_control_mode == 1)
         pcs_ptr->adjust_under_shoot_gf = pcs_ptr->enc_mode <= ENC_M11 ? 1 : 2;
+#endif
     return return_error;
 }
 

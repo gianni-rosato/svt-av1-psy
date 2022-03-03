@@ -731,12 +731,13 @@ EbBool mv_is_already_injected(ModeDecisionContext *ctx, Mv mv0, Mv mv1, uint8_t 
             (!check_mv_validity(mv0.x, mv0.y, 0) || !check_mv_validity(mv1.x, mv1.y, 0)))
             return EB_TRUE;
 
-        if (ctx->cand_reduction_ctrls.redundant_cand_ctrls.score_th) {
+        RedundantCandCtrls* redund_ctrls = &ctx->cand_reduction_ctrls.redundant_cand_ctrls;
+        if (redund_ctrls->score_th) {
             uint8_t is_high_mag =
-                (ABS(mv0.x) > ctx->cand_reduction_ctrls.redundant_cand_ctrls.mag_th) &&
-                (ABS(mv0.y) > ctx->cand_reduction_ctrls.redundant_cand_ctrls.mag_th) &&
-                (ABS(mv1.x) > ctx->cand_reduction_ctrls.redundant_cand_ctrls.mag_th) &&
-                (ABS(mv1.y) > ctx->cand_reduction_ctrls.redundant_cand_ctrls.mag_th);
+                (ABS(mv0.x) > redund_ctrls->mag_th) &&
+                (ABS(mv0.y) > redund_ctrls->mag_th) &&
+                (ABS(mv1.x) > redund_ctrls->mag_th) &&
+                (ABS(mv1.y) > redund_ctrls->mag_th);
             for (int cand_idx = 0; cand_idx < ctx->injected_mv_count; cand_idx++) {
                 if (ctx->injected_ref_types[cand_idx] == ref_type) {
                     int score =
@@ -745,9 +746,7 @@ EbBool mv_is_already_injected(ModeDecisionContext *ctx, Mv mv0, Mv mv1, uint8_t 
                         ABS(ctx->injected_mvs[cand_idx][1].x - mv1.x) +
                         ABS(ctx->injected_mvs[cand_idx][1].y - mv1.y);
 
-                    if (score == 0 ||
-                        (score < ctx->cand_reduction_ctrls.redundant_cand_ctrls.score_th &&
-                            is_high_mag)) {
+                    if (score == 0 || (score < redund_ctrls->score_th && is_high_mag)) {
                         return EB_TRUE;
                     }
                 }

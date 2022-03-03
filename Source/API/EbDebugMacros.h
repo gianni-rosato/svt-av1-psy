@@ -56,6 +56,7 @@ extern "C" {
 #define OPT_REMOVE_TL_CHECKS_2  1 // Remove temporal layer checks in M2-M4, M8-M9
 #define OPT_LPD_LVL2            1 // Use a more conservative cost_th_dist
 #define CLN_DLF_MEM_ALLOC       1 // Remove unnecessary check for DLF level during PCS memory allocation
+#define CLN_SIG_DERIV           1 // Cleanup signal derivation functions
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

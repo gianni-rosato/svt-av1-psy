@@ -457,6 +457,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const uint8_t            is_ref           = ppcs->is_used_as_reference_flag;
     const uint8_t            is_base          = ppcs->temporal_layer_index == 0;
     const EbInputResolution  input_resolution = ppcs->input_resolution;
+#if CLN_SIG_DERIV
+    const uint8_t            is_islice        = pcs_ptr->slice_type == I_SLICE;
+#endif
     const EB_SLICE           slice_type       = pcs_ptr->slice_type;
     const uint8_t            fast_decode      = scs_ptr->static_config.fast_decode;
 #if TUNE_4L_M12
@@ -464,7 +467,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
 
     //MFMV
+#if CLN_SIG_DERIV
+    if (is_islice || scs_ptr->mfmv_enabled == 0) {
+#else
     if (slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
+#endif
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     } else {
         if (fast_decode == 0)
@@ -491,7 +498,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
 
 #if OPT_UPDATE_CDF_MEM
+#if CLN_SIG_DERIV
+    uint8_t update_cdf_level = get_update_cdf_level(enc_mode, is_islice, is_base);
+#else
     uint8_t update_cdf_level = get_update_cdf_level(enc_mode, slice_type == I_SLICE, is_base);
+#endif
 #else
     uint8_t update_cdf_level = 0;
     if (enc_mode <= ENC_M2)
@@ -507,8 +518,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     set_cdf_controls(pcs_ptr, update_cdf_level);
 
     if (pcs_ptr->cdf_ctrl.enabled) {
+#if CLN_SIG_DERIV
+        const uint16_t picture_sb_w = ppcs->picture_sb_width;
+        const uint16_t picture_sb_h = ppcs->picture_sb_height;
+#else
         const uint16_t picture_sb_w = pcs_ptr->parent_pcs_ptr->picture_sb_width;
         const uint16_t picture_sb_h = pcs_ptr->parent_pcs_ptr->picture_sb_height;
+#endif
         const uint16_t all_sb       = picture_sb_w * picture_sb_h;
         rtime_alloc_ec_ctx_array(pcs_ptr, all_sb);
     }
@@ -529,6 +545,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->pic_filter_intra_level = 0;
     } else
         pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
+
     if (fast_decode == 0) {
         if (pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
@@ -540,7 +557,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
     }
+#if CLN_SIG_DERIV
+    FrameHeader *frm_hdr = &ppcs->frm_hdr;
+#else
     FrameHeader *frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#endif
     frm_hdr->allow_high_precision_mv = frm_hdr->quantization_params.base_q_idx <
                 HIGH_PRECISION_MV_QTHRESH &&
             (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -569,9 +590,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
 
     EbBool enable_wm = pcs_ptr->wm_level ? 1 : 0;
+#if CLN_SIG_DERIV
+    if (scs_ptr->enable_warped_motion != DEFAULT)
+        enable_wm = (EbBool)scs_ptr->enable_warped_motion;
+#else
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->enable_warped_motion;
-
+#endif
     // Note: local warp should be disabled when super-res is ON
     // according to the AV1 spec 5.11.27
     frm_hdr->allow_warped_motion = enable_wm &&
@@ -586,6 +611,24 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //  pic_obmc_level  | Default Encoder Settings
     //         0        | OFF subject to possible constraints
     //       > 1        | Faster level subject to possible constraints
+#if CLN_SIG_DERIV
+    if (scs_ptr->obmc_level == DEFAULT) {
+        if (ppcs->enc_mode <= ENC_M3)
+            ppcs->pic_obmc_level = 1;
+        else if (enc_mode <= ENC_M6)
+            ppcs->pic_obmc_level = 2;
+        else
+            ppcs->pic_obmc_level = 0;
+
+    }
+    else
+        pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->obmc_level;
+
+    // Switchable Motion Mode
+    frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable || ppcs->pic_obmc_level;
+
+    ppcs->bypass_cost_table_gen = 0;
+#else
     if (scs_ptr->obmc_level == DEFAULT) {
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
@@ -602,6 +645,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;
 
     pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
+#endif
 #if !OPT_REMOVE_TL_CHECKS
     uint8_t use_selective_dlf_th;
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
@@ -617,6 +661,25 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
     }
 #endif
+#if CLN_SIG_DERIV
+    if (enc_mode <= ENC_M10)
+        pcs_ptr->approx_inter_rate = 0;
+    else
+        pcs_ptr->approx_inter_rate = 1;
+
+    if (is_islice || ppcs->transition_present)
+        pcs_ptr->skip_intra = 0;
+    else if (enc_mode <= ENC_M7)
+        pcs_ptr->skip_intra = 0;
+    else if (enc_mode <= ENC_M8) {
+        if (hierarchical_levels <= 3)
+            pcs_ptr->skip_intra = 0;
+        else
+            pcs_ptr->skip_intra = (is_ref || pcs_ptr->ref_intra_percentage > 50) ? 0 : 1;
+    }
+    else
+        pcs_ptr->skip_intra = (is_ref || pcs_ptr->ref_intra_percentage > 50) ? 0 : 1;
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
         pcs_ptr->approx_inter_rate = 0;
     else
@@ -654,10 +717,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
     else
         pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 1;
-
+#endif
     // Set the level for the candidate(s) reduction feature
     pcs_ptr->cand_reduction_level = 0;
+#if CLN_SIG_DERIV
+    if (is_islice)
+#else
     if (pcs_ptr->slice_type == I_SLICE)
+#endif
         pcs_ptr->cand_reduction_level = 0;
     else if (enc_mode <= ENC_M6)
         pcs_ptr->cand_reduction_level = 0;
@@ -665,16 +732,23 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->cand_reduction_level = 1;
     else
         pcs_ptr->cand_reduction_level = 2;
-
+#if CLN_SIG_DERIV
+    if (scs_ptr->rc_stat_gen_pass_mode)
+        pcs_ptr->cand_reduction_level = 5;
+#else
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->rc_stat_gen_pass_mode)
         pcs_ptr->cand_reduction_level = 5;
-
+#endif
     // Set the level for the txt search
     pcs_ptr->txt_level = 0;
     if (enc_mode <= ENC_M2)
         pcs_ptr->txt_level = 1;
     else if (enc_mode <= ENC_M4)
+#if CLN_SIG_DERIV
+        pcs_ptr->txt_level = is_base ? 1 : 3;
+#else
         pcs_ptr->txt_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
+#endif
     else if (enc_mode <= ENC_M7)
         pcs_ptr->txt_level = 5;
 #if OPT_REMOVE_TL_CHECKS_2
@@ -682,24 +756,56 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = 6;
 #endif
     else if (enc_mode <= ENC_M10)
+#if CLN_SIG_DERIV
+        pcs_ptr->txt_level = is_base ? 6 : 8;
+#else
         pcs_ptr->txt_level = pcs_ptr->temporal_layer_index == 0 ? 6 : 8;
+#endif
     else if (enc_mode <= ENC_M11) {
+#if CLN_SIG_DERIV
+        pcs_ptr->txt_level = is_base ? 6 : 8;
+        if (pcs_ptr->ref_intra_percentage < 85 && !is_base &&
+#else
         pcs_ptr->txt_level = pcs_ptr->temporal_layer_index == 0 ? 6 : 8;
         if (pcs_ptr->ref_intra_percentage < 85 && pcs_ptr->temporal_layer_index &&
+#endif
             !pcs_ptr->parent_pcs_ptr->sc_class1) {
             pcs_ptr->txt_level = 0;
         }
-    } else if (enc_mode <= ENC_M13) {
+#if CLN_SIG_DERIV
+    } else {
+        pcs_ptr->txt_level = is_base ? 6 : 8;
+#else
+    }
+    else if (enc_mode <= ENC_M13) {
         pcs_ptr->txt_level = pcs_ptr->temporal_layer_index == 0 ? 6 : 8;
+#endif
         if (pcs_ptr->ref_intra_percentage < 85 && !pcs_ptr->parent_pcs_ptr->sc_class1) {
             pcs_ptr->txt_level = 0;
         }
-    } else
+    }
+#if !CLN_SIG_DERIV
+    else
         pcs_ptr->txt_level = 0;
-
+#endif
     // Set the level for the txt shortcut feature
     // Any tx_shortcut_level having the chroma detector off in REF frames should be reserved for M13+
     pcs_ptr->tx_shortcut_level = 0;
+#if CLN_SIG_DERIV
+    if (enc_mode <= ENC_M5)
+        pcs_ptr->tx_shortcut_level = 0;
+    else if (enc_mode <= ENC_M10)
+        pcs_ptr->tx_shortcut_level = is_islice ? 0 : 1;
+#if CLN_SIG_DERIV
+    else
+        pcs_ptr->tx_shortcut_level = is_islice ? 0 : 4;
+#else
+    else if (enc_mode <= ENC_M13)
+        pcs_ptr->tx_shortcut_level = is_islice ? 0 : 4;
+    else
+        pcs_ptr->tx_shortcut_level = is_islice ? 0 : 5;
+#endif
+#else
     if (enc_mode <= ENC_M5)
         pcs_ptr->tx_shortcut_level = 0;
     else if (enc_mode <= ENC_M10)
@@ -713,7 +819,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
     else
         pcs_ptr->tx_shortcut_level = pcs_ptr->slice_type == I_SLICE ? 0 : 5;
-
+#endif
     // Set the level the interpolation search
     pcs_ptr->interpolation_search_level = 0;
 
@@ -769,9 +875,27 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (enc_mode <= ENC_M6)
             pcs_ptr->cfl_level = 1;
         else
+#if CLN_SIG_DERIV
+            pcs_ptr->cfl_level = is_base ? 2 : 0;
+#else
             pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
+#endif
     } else if (enc_mode <= ENC_M5)
         pcs_ptr->cfl_level = 1;
+#if CLN_SIG_DERIV
+    else if (enc_mode <= ENC_M10)
+        pcs_ptr->cfl_level = is_base ? 2 : 0;
+    else if (enc_mode <= ENC_M11) {
+        if (hierarchical_levels <= 3)
+            pcs_ptr->cfl_level = is_islice ? 2 : 0;
+        else
+            pcs_ptr->cfl_level = is_base ? 2 : 0;
+    }
+    else if (enc_mode <= ENC_M12)
+        pcs_ptr->cfl_level = is_islice ? 2 : 0;
+    else
+        pcs_ptr->cfl_level = 0;
+#else
 #if TUNE_4L_M11
     else if (enc_mode <= ENC_M10)
         pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
@@ -789,7 +913,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->cfl_level = (pcs_ptr->slice_type == I_SLICE) ? 2 : 0;
     else
         pcs_ptr->cfl_level = 0;
-
+#endif
     // Set the level for new/nearest/near injection
     if (scs_ptr->new_nearest_comb_inject == DEFAULT)
         if (enc_mode <= ENC_M0)
@@ -848,10 +972,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (enc_mode <= ENC_MR)
             pcs_ptr->dist_based_ref_pruning = 1;
         else if (enc_mode <= ENC_M0)
+#if CLN_SIG_DERIV
+            pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 2;
+#else
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 1 : 2;
+#endif
 #if OPT_REMOVE_TL_CHECKS
         else if (enc_mode <= ENC_M6)
+#if CLN_SIG_DERIV
+            pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
+#else
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
+#endif
         else
             pcs_ptr->dist_based_ref_pruning = 4;
 #else
@@ -873,8 +1005,21 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->spatial_sse_full_loop_level = 0;
     else
         pcs_ptr->spatial_sse_full_loop_level = scs_ptr->spatial_sse_full_loop_level;
+
     // Set the level for coeff-based NSQ accuracy reduction
     pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = 0;
+#if CLN_SIG_DERIV
+    if (enc_mode <= ENC_MRS)
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = 0;
+    else if (enc_mode <= ENC_MR)
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 1;
+    else if (enc_mode <= ENC_M1)
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 2;
+    else if (enc_mode <= ENC_M2)
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : is_base ? 2 : is_ref ? 4 : 7;
+    else
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 5 : is_ref ? 6 : 7;
+#else
     if (enc_mode <= ENC_MRS)
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = 0;
     else if (enc_mode <= ENC_MR)
@@ -896,7 +1041,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             ? 5
             : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 6
                                                                  : 7;
-
+#endif
     // Weighting (expressed as a percentage) applied to
     // square shape costs for determining if a and b
     // shapes should be skipped. Namely:
@@ -942,7 +1087,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_MR)
         pcs_ptr->txs_level = 2;
     else if (enc_mode <= ENC_M6)
+#if CLN_SIG_DERIV
+        pcs_ptr->txs_level = is_base ? 2 : 3;
+#else
         pcs_ptr->txs_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
+#endif
 #if TUNE_4L_M10
     else if (enc_mode <= ENC_M9)
         pcs_ptr->txs_level = 3;
@@ -1006,7 +1155,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->mds0_level = 2;
     else if (enc_mode <= ENC_M11) {
         if (hierarchical_levels <= 3)
+#if CLN_SIG_DERIV
+            pcs_ptr->mds0_level = is_islice ? 2 : 4;
+#else
             pcs_ptr->mds0_level = pcs_ptr->slice_type == I_SLICE ? 2 : 4;
+#endif
         else
             pcs_ptr->mds0_level = 2;
     }
@@ -1015,7 +1168,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->mds0_level = 2;
 #endif
     else
+#if CLN_SIG_DERIV
+        pcs_ptr->mds0_level = is_islice ? 2 : 4;
+#else
         pcs_ptr->mds0_level = pcs_ptr->slice_type == I_SLICE ? 2 : 4;
+#endif
     /*
        disallow_4x4
     */
@@ -1031,7 +1188,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // TODO: Bypassing EncDec doesn't work if pcs_ptr->cdf_ctrl.update_coef is enabled for non-ISLICE frames (causes r2r)
     if (ppcs->disallow_HVA_HVB_HV4 &&
         (scs_ptr->static_config.encoder_bit_depth == EB_8BIT || ppcs->disallow_nsq) &&
+#if CLN_SIG_DERIV
+        (!pcs_ptr->cdf_ctrl.update_coef || is_islice) &&
+#else
         (!pcs_ptr->cdf_ctrl.update_coef || slice_type == I_SLICE) &&
+#endif
         !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
         pcs_ptr->pic_bypass_encdec = get_bypass_encdec(
             enc_mode, ppcs->hbd_mode_decision, scs_ptr->static_config.encoder_bit_depth);
@@ -1065,7 +1226,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag,
         pcs_ptr->temporal_layer_index);
     if (scs_ptr->super_block_size == 64) {
+#if CLN_SIG_DERIV
+        if (is_islice || pcs_ptr->parent_pcs_ptr->transition_present) {
+#else
         if (slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present) {
+#endif
             pcs_ptr->pic_depth_removal_level = 0;
         } else {
             // Set depth_removal_level_controls
@@ -1138,10 +1303,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->pic_block_based_depth_refinement_level = 0;
         else if (enc_mode <= ENC_M9)
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 4;
+#if CLN_SIG_DERIV
+        else if (enc_mode <= ENC_M10)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_islice ? 1 : 4;
+        else
+            pcs_ptr->pic_block_based_depth_refinement_level = is_islice ? 6 : 11;
+#else
         else if (enc_mode <= ENC_M10)
             pcs_ptr->pic_block_based_depth_refinement_level = (slice_type == I_SLICE) ? 1 : 4;
         else
             pcs_ptr->pic_block_based_depth_refinement_level = (slice_type == I_SLICE) ? 6 : 11;
+#endif
     } else if (enc_mode <= ENC_M2)
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M4)
@@ -1163,13 +1335,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M7)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
 #endif
+#if CLN_SIG_DERIV
+    else
+        pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
+#else
     else if (enc_mode <= ENC_M8)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
     else
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 6 : 10;
+#endif
     if (scs_ptr->max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1))
         pcs_ptr->pic_block_based_depth_refinement_level = MAX(
             0, pcs_ptr->pic_block_based_depth_refinement_level - 1);
+
     if (pcs_ptr->parent_pcs_ptr->sc_class1) {
         if (enc_mode <= ENC_M7)
             pcs_ptr->pic_lpd1_lvl = 0;
