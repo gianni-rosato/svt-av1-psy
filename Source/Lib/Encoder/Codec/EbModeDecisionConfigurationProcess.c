@@ -414,7 +414,7 @@ EbErrorType rtime_alloc_ec_ctx_array(PictureControlSet *pcs_ptr, uint16_t all_sb
 }
 
 #if TUNE_4L_M7
-uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index, uint8_t hierarchical_levels);
+uint8_t get_nic_level(EbEncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
 #else
     uint8_t     get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
 #endif
@@ -960,7 +960,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txs_level = 4;
     // Set the level for nic
 #if TUNE_4L_M7
-    pcs_ptr->nic_level = get_nic_level(enc_mode, pcs_ptr->temporal_layer_index, hierarchical_levels);
+    pcs_ptr->nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels);
 #else
     pcs_ptr->nic_level = get_nic_level(enc_mode, pcs_ptr->temporal_layer_index);
 #endif
@@ -989,11 +989,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M11)
         pcs_ptr->md_pme_level = 6;
 #if TUNE_4L_M12
-    else if (enc_mode <= ENC_M12)
+    else if (enc_mode <= ENC_M12) {
         if (hierarchical_levels <= 3)
             pcs_ptr->md_pme_level = 0;
         else
             pcs_ptr->md_pme_level = 6;
+    }
 #endif
     else
         pcs_ptr->md_pme_level = 0;

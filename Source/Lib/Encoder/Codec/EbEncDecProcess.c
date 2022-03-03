@@ -161,7 +161,20 @@ EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
            });
 
     // Mode Decision Context
-
+#if TUNE_4L_M7
+    EB_NEW(context_ptr->md_context,
+        mode_decision_context_ctor,
+        color_format,
+        enc_handle_ptr->scs_instance_array[0]->scs_ptr->super_block_size,
+        static_config->enc_mode,
+        enc_handle_ptr->scs_instance_array[0]->scs_ptr->max_block_cnt,
+        static_config->encoder_bit_depth,
+        0,
+        0,
+        enable_hbd_mode_decision == DEFAULT ? 2 : enable_hbd_mode_decision,
+        static_config->screen_content_mode,
+        static_config->hierarchical_levels);
+#else
     EB_NEW(context_ptr->md_context,
            mode_decision_context_ctor,
            color_format,
@@ -173,6 +186,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
            0,
            enable_hbd_mode_decision == DEFAULT ? 2 : enable_hbd_mode_decision,
            static_config->screen_content_mode);
+#endif
     if (enable_hbd_mode_decision)
         context_ptr->md_context->input_sample16bit_buffer = context_ptr->input_sample16bit_buffer;
 
@@ -3766,7 +3780,8 @@ void set_wm_controls(ModeDecisionContext *mdctxt, uint8_t wm_level) {
 }
 // Get the nic_level used for each preset (to be passed to setting function: set_nic_controls())
 #if TUNE_4L_M7
-uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index, uint8_t hierarchical_levels) {
+// hierarchical_levels should be the sequence-level hierarchical structure (found in scs->static_config.hierarchical_levels
+uint8_t get_nic_level(EbEncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels) {
 #else
 uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index) {
 #endif
@@ -3777,7 +3792,11 @@ uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index) {
     else if (enc_mode <= ENC_MR)
         nic_level = 1;
     else if (enc_mode <= ENC_M0)
+#if TUNE_4L_M7
+        nic_level = is_base ? 2 : 4;
+#else
         nic_level = (temporal_layer_index == 0) ? 2 : 4;
+#endif
     else if (enc_mode <= ENC_M1)
         nic_level = 5;
     else if (enc_mode <= ENC_M2)

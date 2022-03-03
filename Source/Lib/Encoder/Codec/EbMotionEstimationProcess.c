@@ -69,7 +69,7 @@ EbErrorType check_00_center(PictureParentControlSet *pcs_ptr, EbPictureBufferDes
 void set_hme_search_params(SequenceControlSet *scs, PictureParentControlSet *pcs_ptr,
                            MeContext *me_context_ptr, EbInputResolution input_resolution) {
 
-    uint32_t hierarchical_levels = scs->static_config.hierarchical_levels;
+    const uint32_t hierarchical_levels = scs->static_config.hierarchical_levels;
 #else
 void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_context_ptr,
                            EbInputResolution input_resolution) {
@@ -119,11 +119,9 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea) { 192, 192 };
         }
     }
-
 #if TUNE_4L_M12
     else if (pcs_ptr->enc_mode <= ENC_M12) {
-        if (hierarchical_levels <= 3)
-        {
+        if (hierarchical_levels <= 3) {
             if (pcs_ptr->sc_class1) {
                 me_context_ptr->hme_l0_sa.sa_min = (SearchArea){ 32, 32 };
                 me_context_ptr->hme_l0_sa.sa_max = (SearchArea){ 192, 192 };
@@ -610,11 +608,12 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #if TUNE_4L_M11
         if (enc_mode <= ENC_M10)
             prehme_level = 1;
-        else if (enc_mode <= ENC_M11)
+        else if (enc_mode <= ENC_M11) {
             if (scs_ptr->static_config.hierarchical_levels <= 3)
                 prehme_level = 3;
             else
                 prehme_level = 1;
+        }
 #else
         if (enc_mode <= ENC_M11)
             prehme_level = 1;

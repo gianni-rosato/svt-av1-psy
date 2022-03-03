@@ -1526,11 +1526,12 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uin
 #if TUNE_4L_M8
         else if (enc_mode <= ENC_M7)
             dlf_level = 2;
-        else if (enc_mode <= ENC_M8)
+        else if (enc_mode <= ENC_M8) {
             if (hierarchical_levels <= 3)
                 dlf_level = is_used_as_reference_flag ? 2 : 0;
             else
                 dlf_level = 2;
+        }
 #else
         else if (enc_mode <= ENC_M8)
             dlf_level = 2;
@@ -1982,11 +1983,12 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17;
             }
 #if TUNE_M13
-            else
+            else {
                 if (pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
                     pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 15 : 0;
                 else
                     pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : 0;
+            }
 #else
             else
                 pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : 0;

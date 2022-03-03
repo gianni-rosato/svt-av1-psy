@@ -382,6 +382,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 
     return EB_ErrorNone;
 }
+#if !CLN_DLF_MEM_ALLOC
 #if TUNE_4L_M8
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
     uint8_t fast_decode, uint32_t hierarchical_levels);
@@ -389,7 +390,7 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uin
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
     uint8_t fast_decode);
 #endif
-
+#endif
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
                                uint8_t input_resolution, uint8_t fast_decode);
 uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
@@ -455,6 +456,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
 
     object_ptr->color_format = init_data_ptr->color_format;
+#if !CLN_DLF_MEM_ALLOC
     uint8_t lf_recon_needed  = 0;
     // recon output will also use temp_lf_recon_picture_ptr for adding film grain noise
     if (init_data_ptr->tile_row_count > 0 || init_data_ptr->tile_column_count > 0 ||
@@ -487,9 +489,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 #endif
             }
         }
+#endif
     object_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
+#if !CLN_DLF_MEM_ALLOC
     if (lf_recon_needed) {}
+#endif
     if (get_enable_restoration(init_data_ptr->enc_mode,
                                init_data_ptr->static_config.enable_restoration_filtering,
                                init_data_ptr->input_resolution,

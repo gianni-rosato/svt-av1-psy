@@ -101,7 +101,7 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->temp_recon_ptr);
 }
 #if TUNE_4L_M7
-uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index, uint8_t hierarchical_levels);
+uint8_t get_nic_level(EbEncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
 #else
 uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
 #endif
@@ -158,7 +158,12 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                                        uint32_t encoder_bit_depth,
                                        EbFifo  *mode_decision_configuration_input_fifo_ptr,
                                        EbFifo  *mode_decision_output_fifo_ptr,
+#if TUNE_4L_M7
+                                       uint8_t enable_hbd_mode_decision, uint8_t cfg_palette,
+                                       uint32_t hierarchical_levels) {
+#else
                                        uint8_t enable_hbd_mode_decision, uint8_t cfg_palette) {
+#endif
     uint32_t buffer_index;
     uint32_t cand_index;
 
@@ -180,20 +185,16 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     // determine MAX_NICS for a given preset
     // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
-    for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS;
-         temporal_layer_index++) {
 #if TUNE_4L_M7
-        for (uint8_t hierarchical_levels = 0; hierarchical_levels < MAX_HIERARCHICAL_LEVEL;
-            hierarchical_levels++) {
-            uint8_t nic_level = get_nic_level(enc_mode, temporal_layer_index, hierarchical_levels);
-            uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
-            min_nic_scaling_level = MIN(min_nic_scaling_level, nic_scaling_level);
-        }
+    for (uint8_t is_base = 0; is_base < 2; is_base++) {
+        uint8_t nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels);
 #else
+    for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS;
+        temporal_layer_index++) {
         uint8_t nic_level         = get_nic_level(enc_mode, temporal_layer_index);
+#endif
         uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
         min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
-#endif
     }
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
 
