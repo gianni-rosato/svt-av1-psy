@@ -1840,7 +1840,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->enable_hme_level2_flag = 1;
     }
 #if CLN_SIG_DERIV
+#if TUNE_M7
+    else if (enc_mode <= ENC_M7) {
+#else
     else if (enc_mode <= ENC_M6) {
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M6) {
 #endif

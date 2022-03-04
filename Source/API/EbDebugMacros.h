@@ -55,6 +55,7 @@ extern "C" {
 #define OPT_LPD_LVL2            1 // Use a more conservative cost_th_dist
 #define CLN_DLF_MEM_ALLOC       1 // Remove unnecessary check for DLF level during PCS memory allocation
 #define CLN_SIG_DERIV           1 // Cleanup signal derivation functions
+#define TUNE_M7                 1 // Slowdown M7 preset to improve spacing
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -1315,6 +1315,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M4)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+#if TUNE_M7
+    else if (enc_mode <= ENC_M7)
+        pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+#else
 #if TUNE_4L_M7
     else if (enc_mode <= ENC_M6)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
@@ -1331,6 +1335,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #else
     else if (enc_mode <= ENC_M7)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+#endif
 #endif
 #if CLN_SIG_DERIV
     else
