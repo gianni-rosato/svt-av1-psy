@@ -39,7 +39,6 @@ extern "C" {
 #define FTR_LDB_MT              1 // New Multi-Threading parameters for LD
 
 #define VMAF_OPT                1 // Optimizing Y-PSNR/Y-SSIM/VMAF
-#define TUNE_4L_M12             1 // Optimizing 4L compared to 5L for M12
 #define TUNE_M13                1 // Optimizing M13 for better slope
 #define TUNE_4L_M11             1 // Optimizing 4L compared to 5L for M11
 #define OPT_REMOVE_TL_CHECKS    1 // Remove temporal layer checks in M7-M13, more removal in M6-M7
@@ -53,7 +52,6 @@ extern "C" {
 #define OPT_CAND_BUFF_MEM       1 // Don't alloc memory for independent chroma search candidates when not used
 #define OPT_MV_INJ_CHECK        1 // Optimize memory structures for tracking previously injected MVs
 #define FIX_LPD1_W_OBMC         1 // Enable LPD1 to be used when OBMC is on at the frame level (previously caused corrupted bitstream)
-#define OPT_REMOVE_TL_CHECKS_2  1 // Remove temporal layer checks in M2-M4, M8-M9
 #define OPT_LPD_LVL2            1 // Use a more conservative cost_th_dist
 #define CLN_DLF_MEM_ALLOC       1 // Remove unnecessary check for DLF level during PCS memory allocation
 #define CLN_SIG_DERIV           1 // Cleanup signal derivation functions

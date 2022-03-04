@@ -462,7 +462,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
     const EB_SLICE           slice_type       = pcs_ptr->slice_type;
     const uint8_t            fast_decode      = scs_ptr->static_config.fast_decode;
-#if TUNE_4L_M12
+#if TUNE_4L_M11
     const uint32_t           hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
 #endif
 
@@ -751,10 +751,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
     else if (enc_mode <= ENC_M7)
         pcs_ptr->txt_level = 5;
-#if OPT_REMOVE_TL_CHECKS_2
-    else if (enc_mode <= ENC_M9)
-        pcs_ptr->txt_level = 6;
-#endif
     else if (enc_mode <= ENC_M10)
 #if CLN_SIG_DERIV
         pcs_ptr->txt_level = is_base ? 6 : 8;
@@ -826,8 +822,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (enc_mode <= ENC_MR)
         pcs_ptr->interpolation_search_level = 2;
 #if OPT_REMOVE_TL_CHECKS
-    else
+    else if (enc_mode <= ENC_M7)
         pcs_ptr->interpolation_search_level = 4;
+    else {
+        pcs_ptr->interpolation_search_level = 4;
+        if (!is_base) {
+            const uint8_t th[INPUT_SIZE_COUNT] = { 100, 100, 85, 50, 30, 30, 30 };
+            const uint8_t skip_area = pcs_ptr->ref_skip_percentage;
+            if (skip_area > th[input_resolution])
+                pcs_ptr->interpolation_search_level = 0;
+        }
+    }
 #else
     else if (enc_mode <= ENC_M6)
         pcs_ptr->interpolation_search_level = 4;
@@ -1137,14 +1142,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->md_pme_level = 3;
     else if (enc_mode <= ENC_M11)
         pcs_ptr->md_pme_level = 6;
-#if TUNE_4L_M12
-    else if (enc_mode <= ENC_M12) {
-        if (hierarchical_levels <= 3)
-            pcs_ptr->md_pme_level = 0;
-        else
-            pcs_ptr->md_pme_level = 6;
-    }
-#endif
     else
         pcs_ptr->md_pme_level = 0;
 

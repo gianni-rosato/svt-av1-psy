@@ -5497,7 +5497,6 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
 #if CLN_SIG_DERIV
     PictureParentControlSet *ppcs               = pcs_ptr->parent_pcs_ptr;
     const uint8_t            is_ref             = ppcs->is_used_as_reference_flag;
-    const uint8_t            is_base            = ppcs->temporal_layer_index == 0;
     const EbInputResolution  input_resolution   = ppcs->input_resolution;
     const uint8_t            is_islice          = pcs_ptr->slice_type == I_SLICE;
     const EB_SLICE           slice_type         = pcs_ptr->slice_type;
@@ -5802,9 +5801,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     const EB_SLICE           slice_type           = pcs_ptr->slice_type;
 #endif
     const uint8_t            fast_decode          = scs->static_config.fast_decode;
-#if TUNE_4L_M12
-    const uint32_t           hierarchical_levels = scs->static_config.hierarchical_levels;
-#endif
     const uint32_t           picture_qp           = pcs_ptr->picture_qp;
     uint32_t                 me_8x8_cost_variance = (uint32_t)~0;
     uint32_t                 me_64x64_distortion  = (uint32_t)~0;
@@ -5965,21 +5961,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
     else if (enc_mode <= ENC_M11)
         context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
-#if TUNE_4L_M12
-    else if (enc_mode <= ENC_M12) {
-        if (hierarchical_levels <= 3)
-            context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
-        else
-            context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
-    }
+#if OPT_REMOVE_TL_CHECKS
+    else
+        context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
 #else
     else if (enc_mode <= ENC_M12)
         context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
-#endif
     else
-#if OPT_REMOVE_TL_CHECKS
-        context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
-#else
         context_ptr->md_subpel_me_level = is_base ? 9 : 0;
 #endif
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
