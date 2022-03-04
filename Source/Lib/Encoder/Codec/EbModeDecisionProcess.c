@@ -250,7 +250,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
         }
     }
     if (use_update_cdf)
-        EB_MALLOC_ARRAY(context_ptr->rate_est_table, 1);
+        EB_CALLOC_ARRAY(context_ptr->rate_est_table, 1);
     else
         context_ptr->rate_est_table = NULL;
 #endif

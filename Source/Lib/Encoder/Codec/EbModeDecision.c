@@ -2186,7 +2186,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                 to_inject_mv_y = nearmv[0].as_mv.row;
 
 #if OPT_MV_INJ_CHECK
-                Mv to_inj_mv = { { to_inject_mv_x, to_inject_mv_y } };
+                to_inj_mv = (Mv){ { to_inject_mv_x, to_inject_mv_y } };
                 inj_mv = (context_ptr->injected_mv_count == 0 ||
                     mv_is_already_injected(context_ptr, to_inj_mv, to_inj_mv, frame_type) == EB_FALSE);
 #else
@@ -2447,8 +2447,8 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                     to_inject_mv_y_l1 = nearmv[1].as_mv.row;
 
 #if OPT_MV_INJ_CHECK
-                    Mv to_inj_mv0 = { { to_inject_mv_x_l0, to_inject_mv_y_l0 } };
-                    Mv to_inj_mv1 = { { to_inject_mv_x_l1, to_inject_mv_y_l1 } };
+                    to_inj_mv0 = (Mv) { { to_inject_mv_x_l0, to_inject_mv_y_l0 } };
+                    to_inj_mv1 = (Mv) { { to_inject_mv_x_l1, to_inject_mv_y_l1 } };
                     inj_mv = (context_ptr->injected_mv_count == 0 ||
                         mv_is_already_injected(context_ptr,
                             to_inj_mv0,
