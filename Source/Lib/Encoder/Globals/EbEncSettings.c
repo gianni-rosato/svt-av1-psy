@@ -542,6 +542,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
+#if FIX_AQ_MODE
+    if (config->enable_adaptive_quantization == 0 && config->rate_control_mode) {
+        SVT_ERROR("Instance %u: Adaptive quantization can not be turned OFF when RC ON\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     /* Warnings about the use of features that are incomplete */
 
     // color description
@@ -815,12 +821,27 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                     scs->static_config.qp,
                     (int)config->max_bit_rate / 1000,
                     config->scene_change_detection);
+#if FIX_AQ_MODE
+            else if (scs->tpl_level)
+                SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n",
+                    "Rate Factor",
+                    "CRF",
+                    scs->static_config.qp,
+                    config->scene_change_detection);
+            else
+                SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t: %s / %d / %d\n",
+                    "CQP Assignment",
+                    "CQP",
+                    scs->static_config.qp,
+                    config->scene_change_detection);
+#else
             else
                 SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n",
                          scs->tpl_level ? "Rate Factor" : "CQP Assignment",
                          scs->tpl_level ? "CRF" : "CQP",
                          scs->static_config.qp,
                          config->scene_change_detection);
+#endif
             break;
         case 1:
             SVT_INFO(

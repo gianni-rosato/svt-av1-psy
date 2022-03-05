@@ -3135,13 +3135,25 @@ void set_mid_pass_ctrls(
     }
 }
 #if TUNE_4L_M9 || TUNE_4L_M10
+#if FIX_AQ_MODE
+uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels, uint8_t aq_mode) {
+#else
 uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels) {
+#endif
 #else
 uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode) {
 #endif
     uint8_t tpl_level;
 
+#if FIX_AQ_MODE
+    if (aq_mode == 0) {
+        SVT_WARN("TPL is disabled for aq_mode 0\n");
+        tpl_level = 0;
+    }
+    else if (pred_structure == EB_PRED_LOW_DELAY_B) {
+#else
     if (pred_structure == EB_PRED_LOW_DELAY_B) {
+#endif
         SVT_WARN("TPL is disabled in low delay applications.\n");
         tpl_level = 0;
     }
@@ -3318,7 +3330,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     set_multi_pass_params(
         scs_ptr);
 #if TUNE_4L_M9 || TUNE_4L_M10
+#if FIX_AQ_MODE
+    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels, scs_ptr->static_config.enable_adaptive_quantization);
+#else
     scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels);
+#endif
 #else
     scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode);
 #endif
