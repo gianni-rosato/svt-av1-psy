@@ -1555,8 +1555,19 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uin
             dlf_level = 1;
         else if (enc_mode <= ENC_M6)
             dlf_level = 3;
+#if TUNE_4L_M8
+        else if (enc_mode <= ENC_M7)
+            dlf_level = 2;
+        else if (enc_mode <= ENC_M8) {
+            if (hierarchical_levels <= 3)
+                dlf_level = is_used_as_reference_flag ? 2 : 0;
+            else
+                dlf_level = 2;
+        }
+#else
         else if (enc_mode <= ENC_M8)
             dlf_level = 2;
+#endif
         else if (enc_mode <= ENC_M12)
             dlf_level = is_used_as_reference_flag ? 2 : 0;
         else
@@ -1793,14 +1804,31 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
 uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
     SequenceControlSet* scs_ptr = pcs_ptr->scs_ptr;
     uint8_t gm_level = 0;
+#if TUNE_4L_M5
+    const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+    const EbEncMode enc_mode = pcs_ptr->enc_mode;
+    const uint8_t is_ref = pcs_ptr->is_used_as_reference_flag;
+#endif
+
     if (scs_ptr->enable_global_motion == EB_TRUE &&
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
         if (pcs_ptr->enc_mode <= ENC_MRS)
             gm_level = 2;
         else if (pcs_ptr->enc_mode <= ENC_M2)
             gm_level = 3;
+#if TUNE_4L_M5
+        else if (enc_mode <= ENC_M4)
+            gm_level = is_ref ? 4 : 0;
+        else if (enc_mode <= ENC_M5) {
+            if (hierarchical_levels <= 3)
+                gm_level = is_ref ? 5 : 0;
+            else
+                gm_level = is_ref ? 4 : 0;
+        }
+#else
         else if (pcs_ptr->enc_mode <= ENC_M5)
             gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
+#endif
         else if (pcs_ptr->enc_mode <= ENC_M6)
             gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
         else
@@ -2220,8 +2248,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             list0_only_base = 0;
     }
+#if !OPT_M8_SUBJ
     else  if (enc_mode <= ENC_M8)
         list0_only_base = 1;
+#endif
     else  if (enc_mode <= ENC_M9) {
         if (hierarchical_levels <= 3)
             list0_only_base = 2;
@@ -5649,7 +5679,9 @@ EbErrorType derive_tf_window_params(
     // we will not change the number of frames for key frame filtering, which is
     // to avoid visual quality drop.
     int adjust_num = 0;
+#if !OPT_VQ_MODE
     if (scs_ptr->vq_ctrls.sharpness_ctrls.tf == 0) {
+#endif
     if (pcs_ptr->tf_ctrls.use_fixed_point || pcs_ptr->tf_ctrls.use_medium_filter) {
         if (noise_levels_log1p_fp16[0] < 26572 /*FLOAT2FP(log1p(0.5), 16, int32_t)*/) {
             adjust_num = 6;
@@ -5670,13 +5702,16 @@ EbErrorType derive_tf_window_params(
     else if (noise_levels[0] < 2.0) {
         adjust_num = 2;
     }
+#if !OPT_VQ_MODE
     }
+#endif
     (void)out_stride_diff64;
-
+#if !OPT_VQ_MODE
     if (scs_ptr->vq_ctrls.sharpness_ctrls.tf && pcs_ptr->is_noise_level) {
         pcs_ptr->tf_ctrls.num_past_pics = MIN(pcs_ptr->tf_ctrls.num_past_pics, 1);
         pcs_ptr->tf_ctrls.num_future_pics = MIN(pcs_ptr->tf_ctrls.num_future_pics, 1);
     }
+#endif
     if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS) {
         int num_past_pics = pcs_ptr->tf_ctrls.num_past_pics + (pcs_ptr->tf_ctrls.noise_adjust_past_pics ? (adjust_num >> 1) : 0);
         num_past_pics = MIN(pcs_ptr->tf_ctrls.max_num_past_pics, num_past_pics);

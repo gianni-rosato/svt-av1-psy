@@ -4515,6 +4515,9 @@ static EbErrorType produce_temporally_filtered_pic(
     uint16_t *predictor_16bit = {NULL};
     PictureParentControlSet *picture_control_set_ptr_central =
         list_picture_control_set_ptr[index_center];
+#if OPT_VQ_MODE
+    SequenceControlSet* scs = (SequenceControlSet*)picture_control_set_ptr_central->scs_wrapper_ptr->object_ptr;
+#endif
     EbPictureBufferDesc *input_picture_ptr_central = list_input_picture_ptr[index_center];
     MeContext *          context_ptr               = me_context_ptr->me_context_ptr;
 
@@ -4527,12 +4530,20 @@ static EbErrorType produce_temporally_filtered_pic(
     EbByte    pred[COLOR_CHANNELS] = {predictor, predictor + BLK_PELS, predictor + (BLK_PELS << 1)};
     uint16_t *pred_16bit[COLOR_CHANNELS] = {
         predictor_16bit, predictor_16bit + BLK_PELS, predictor_16bit + (BLK_PELS << 1)};
+#if OPT_VQ_MODE
+    int encoder_bit_depth = scs->static_config.encoder_bit_depth;
+
+    // chroma subsampling
+    uint32_t ss_x = scs->subsampling_x;
+    uint32_t ss_y = scs->subsampling_y;
+#else
     int encoder_bit_depth =
         (int)picture_control_set_ptr_central->scs_ptr->static_config.encoder_bit_depth;
 
     // chroma subsampling
     uint32_t ss_x          = picture_control_set_ptr_central->scs_ptr->subsampling_x;
     uint32_t ss_y          = picture_control_set_ptr_central->scs_ptr->subsampling_y;
+#endif
     uint16_t blk_width_ch  = (uint16_t)BW >> ss_x;
     uint16_t blk_height_ch = (uint16_t)BH >> ss_y;
 
@@ -4589,11 +4600,23 @@ static EbErrorType produce_temporally_filtered_pic(
             (input_picture_ptr_central->origin_x >> ss_x),
     };
     int decay_control;
+#if OPT_VQ_MODE
+    if (scs->vq_ctrls.sharpness_ctrls.tf && picture_control_set_ptr_central->is_noise_level && scs->calculate_variance && picture_control_set_ptr_central->pic_avg_variance < VQ_PIC_AVG_VARIANCE_TH) {
+#else
     if (picture_control_set_ptr_central->scs_ptr->vq_ctrls.sharpness_ctrls.tf && picture_control_set_ptr_central->is_noise_level) {
-
+#endif
         decay_control = 1;
     }
     else {
+#if OPT_VQ_MODE
+        // Hyper-parameter for filter weight adjustment.
+        decay_control = (context_ptr->tf_ctrls.use_fast_filter) ? 5
+            : (scs->input_resolution <= INPUT_SIZE_480p_RANGE) ? 3
+            : 4;
+        // Decrease the filter strength for low QPs
+        if (scs->static_config.qp <= ALT_REF_QP_THRESH)
+            decay_control--;
+#else
         // Hyper-parameter for filter weight adjustment.
         decay_control = (context_ptr->tf_ctrls.use_fast_filter) ? 5
             : (picture_control_set_ptr_central->scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 3
@@ -4601,16 +4624,24 @@ static EbErrorType produce_temporally_filtered_pic(
         // Decrease the filter strength for low QPs
         if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH)
             decay_control--;
+#endif
     }
     // Adjust filtering based on q.
     // Larger q -> stronger filtering -> larger weight.
     // Smaller q -> weaker filtering -> smaller weight.
 
     // Fixed-QP offsets are use here since final picture QP(s) are not generated @ this early stage
+#if OPT_VQ_MODE
+    const int bit_depth = scs->static_config.encoder_bit_depth;
+    int       active_best_quality = 0;
+    int       active_worst_quality =
+        quantizer_to_qindex[(uint8_t)scs->static_config.qp];
+#else
     const int bit_depth = picture_control_set_ptr_central->scs_ptr->static_config.encoder_bit_depth;
     int       active_best_quality = 0;
     int       active_worst_quality =
         quantizer_to_qindex[(uint8_t)picture_control_set_ptr_central->scs_ptr->static_config.qp];
+#endif
     int q;
     if (context_ptr->tf_ctrls.use_fixed_point || context_ptr->tf_ctrls.use_medium_filter) {
         FP_ASSERT(TF_FILTER_STRENGTH == 5);

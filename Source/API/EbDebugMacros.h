@@ -56,6 +56,14 @@ extern "C" {
 #define CLN_DLF_MEM_ALLOC       1 // Remove unnecessary check for DLF level during PCS memory allocation
 #define CLN_SIG_DERIV           1 // Cleanup signal derivation functions
 #define TUNE_M7                 1 // Slowdown M7 preset to improve spacing
+#define TUNE_4L_M6              1 // Optimizing 4L compared to 5L for M6
+#define TUNE_4L_M5              1 // Optimizing 4L compared to 5L for M5
+#define TUNE_4L_M4              1 // Optimizing 4L compared to 5L for M4
+#define TUNE_4L_M3              1 // Optimizing 4L compared to 5L for M3
+#define OPT_VQ_MODE             1 // Improve VMAF while preserving the VQ gain
+#define OPT_M10_SUBJ            1 // Speedup M10 for subjective mode
+#define OPT_M8_SUBJ             1 // Speedup M8 for subjective mode
+#define OPT_M7_SUBJ             1 // Speedup M7 for subjective mode
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -68,7 +68,9 @@ void assert_err(uint32_t condition, char *err_msg);
 
 #define VQ_NOISE_LVL_TH 15000
 #define VQ_STABILITY_ME_VAR_TH 750
-
+#if OPT_VQ_MODE
+#define VQ_PIC_AVG_VARIANCE_TH 500
+#endif
 typedef struct SharpnessCtrls {
     uint8_t scene_transition;
     uint8_t tf;

@@ -2925,7 +2925,11 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
         vq_ctrl->sharpness_ctrls.ifs              = 1;
         vq_ctrl->sharpness_ctrls.cdef             = 1;
         vq_ctrl->sharpness_ctrls.restoration      = 1;
+#if OPT_VQ_MODE
+        // Stability
+#else
         // Sharpness
+#endif
         vq_ctrl->stability_ctrls.depth_refinement = 1;
     }
     else {
@@ -2936,7 +2940,11 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
         vq_ctrl->sharpness_ctrls.ifs              = 0;
         vq_ctrl->sharpness_ctrls.cdef             = 0;
         vq_ctrl->sharpness_ctrls.restoration      = 0;
+#if OPT_VQ_MODE
+        // Stability
+#else
         // Sharpness
+#endif
         vq_ctrl->stability_ctrls.depth_refinement = 0;
     }
 }
@@ -3150,7 +3158,11 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_
     else if (enc_mode <= ENC_M6)
         tpl_level = 3;
 #if TUNE_4L_M9
+#if OPT_M8_SUBJ
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M8)
+#endif
         tpl_level = 4;
     else if (enc_mode <= ENC_M9) {
         if (hierarchical_levels <= 3)
@@ -3860,6 +3872,14 @@ void copy_api_from_app(
         scs_ptr->static_config.pred_structure = EB_PRED_LOW_DELAY_B;
         SVT_WARN("Forced 1pass CBR to be always low delay mode.\n");
     }
+#if OPT_VQ_MODE
+    scs_ptr->static_config.tune = config_struct->tune;
+    // 4L is forced when the VQ mode is used
+    if (scs_ptr->static_config.tune == 0) {
+        scs_ptr->static_config.hierarchical_levels = 3;
+        SVT_WARN("Forced VQ mode to use HierarchicalLevels = 3\n");
+    }
+#endif
 #else
     if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass != ENC_FIRST_PASS && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) &&
         scs_ptr->static_config.pred_structure != 0) {
@@ -3978,7 +3998,9 @@ void copy_api_from_app(
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     scs_ptr->static_config.enable_tf = config_struct->enable_tf;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
+#if !OPT_VQ_MODE
     scs_ptr->static_config.tune = config_struct->tune;
+#endif
     scs_ptr->static_config.superres_mode = config_struct->superres_mode;
     scs_ptr->static_config.superres_denom = config_struct->superres_denom;
     scs_ptr->static_config.superres_kf_denom = config_struct->superres_kf_denom;

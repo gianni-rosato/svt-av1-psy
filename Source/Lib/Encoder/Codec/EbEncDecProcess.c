@@ -3801,8 +3801,17 @@ uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index) {
         nic_level = 5;
     else if (enc_mode <= ENC_M2)
         nic_level = 9;
+#if TUNE_4L_M3
+    else if (enc_mode <= ENC_M3) {
+        if (hierarchical_levels <= 3)
+            nic_level = 11;
+        else
+            nic_level = 10;
+    }
+#else
     else if (enc_mode <= ENC_M3)
         nic_level = 10;
+#endif
     else if (enc_mode <= ENC_M4)
         nic_level = 11;
     else if (enc_mode <= ENC_M5)
@@ -5800,6 +5809,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
 #else
     const EB_SLICE           slice_type           = pcs_ptr->slice_type;
 #endif
+#if OPT_M7_SUBJ
+    const uint32_t           hierarchical_levels  = scs->static_config.hierarchical_levels;
+#endif
     const uint8_t            fast_decode          = scs->static_config.fast_decode;
     const uint32_t           picture_qp           = pcs_ptr->picture_qp;
     uint32_t                 me_8x8_cost_variance = (uint32_t)~0;
@@ -5956,8 +5968,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     else if (enc_mode <= ENC_M0)
         context_ptr->md_subpel_me_level = 1;
 #if TUNE_M7
+#if OPT_M7_SUBJ
+    else if (enc_mode <= ENC_M6)
+        context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
+    else if (enc_mode <= ENC_M7) {
+        if (hierarchical_levels <= 3)
+            context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
+        else
+            context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
+    }
+#else
     else if (enc_mode <= ENC_M7)
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
+#endif
 #else
     else if (enc_mode <= ENC_M6)
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;

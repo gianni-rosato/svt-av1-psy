@@ -644,11 +644,23 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     context_ptr->me_context_ptr->use_best_unipred_cand_only =
         pcs_ptr->use_best_me_unipred_cand_only;
 #if TUNE_M7
+#if OPT_M7_SUBJ
+    if (enc_mode <= ENC_M6)
+        context_ptr->me_context_ptr->me_early_exit_th = 0;
+    else if (enc_mode <= ENC_M7) {
+        if (hierarchical_levels <= 3)
+            context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
+        else
+            context_ptr->me_context_ptr->me_early_exit_th = 0;
+    }
+#else
     if (enc_mode <= ENC_M7)
+        context_ptr->me_context_ptr->me_early_exit_th = 0;
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
         context_ptr->me_context_ptr->me_early_exit_th = 0;
+#endif
     else if (pcs_ptr->enc_mode <= ENC_M11)
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
     else
