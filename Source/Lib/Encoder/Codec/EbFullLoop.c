@@ -1797,10 +1797,17 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
              context_ptr->chroma_complexity == COMPONENT_CHROMA_CR)) {
             const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[0][0] >> 4) *
                                  (context_ptr->blk_geom->tx_height_uv[0][0] >> 4));
+#if CLN_MOVE_COSTS_2
+            use_pfn4_cond = (candidate_buffer->count_non_zero_coeffs < th) ||
+                !candidate_buffer->block_has_coeff
+                ? 1
+                : 0;
+#else
             use_pfn4_cond     = (candidate_buffer->candidate_ptr->count_non_zero_coeffs < th) ||
                     !candidate_buffer->candidate_ptr->block_has_coeff
                     ? 1
                     : 0;
+#endif
         }
         if (use_pfn4_cond)
             pf_shape = N4_SHAPE;
@@ -1840,8 +1847,11 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             candidate_buffer->candidate_ptr->transform_type_uv,
             PLANE_TYPE_UV,
             pf_shape);
-
+#if CLN_MOVE_COSTS_2
+        candidate_buffer->quantized_dc[1][0] = av1_quantize_inv_quantize(
+#else
         candidate_buffer->candidate_ptr->quantized_dc[1][0] = av1_quantize_inv_quantize(
+#endif
             pcs_ptr,
             context_ptr,
             &(((int32_t *)
@@ -1854,7 +1864,11 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             context_ptr->blk_geom->tx_width_uv[0][0],
             context_ptr->blk_geom->tx_height_uv[0][0],
             tx_size_uv,
+#if CLN_MOVE_COSTS_2
+            &candidate_buffer->eob[1][0],
+#else
             &candidate_buffer->candidate_ptr->eob[1][0],
+#endif
             &nz_count_dummy,
             COMPONENT_CHROMA_CB,
             context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
@@ -1875,14 +1889,21 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             bwidth,
             bheight,
             cb_full_distortion,
+#if CLN_MOVE_COSTS_2
+            candidate_buffer->eob[1][0]);
+#else
             candidate_buffer->candidate_ptr->eob[1][0]);
+#endif
         cb_full_distortion[DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(
             cb_full_distortion[DIST_CALC_RESIDUAL], chroma_shift);
         cb_full_distortion[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
             cb_full_distortion[DIST_CALC_PREDICTION], chroma_shift);
-
+#if CLN_MOVE_COSTS_2
+        candidate_buffer->u_has_coeff = (candidate_buffer->eob[1][0] > 0);
+#else
         candidate_buffer->candidate_ptr->u_has_coeff = (candidate_buffer->candidate_ptr->eob[1][0] >
                                                         0);
+#endif
     }
 
     pf_shape = context_ptr->pf_ctrls.pf_shape;
@@ -1898,10 +1919,17 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
              context_ptr->chroma_complexity == COMPONENT_CHROMA_CB)) {
             const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[0][0] >> 4) *
                                  (context_ptr->blk_geom->tx_height_uv[0][0] >> 4));
+#if CLN_MOVE_COSTS_2
+            use_pfn4_cond = (candidate_buffer->count_non_zero_coeffs < th) ||
+                !candidate_buffer->block_has_coeff
+                ? 1
+                : 0;
+#else
             use_pfn4_cond     = (candidate_buffer->candidate_ptr->count_non_zero_coeffs < th) ||
                     !candidate_buffer->candidate_ptr->block_has_coeff
                     ? 1
                     : 0;
+#endif
         }
         if (use_pfn4_cond)
             pf_shape = N4_SHAPE;
@@ -1940,8 +1968,11 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             candidate_buffer->candidate_ptr->transform_type_uv,
             PLANE_TYPE_UV,
             pf_shape);
-
+#if CLN_MOVE_COSTS_2
+        candidate_buffer->quantized_dc[2][0] = av1_quantize_inv_quantize(
+#else
         candidate_buffer->candidate_ptr->quantized_dc[2][0] = av1_quantize_inv_quantize(
+#endif
             pcs_ptr,
             context_ptr,
             &(((int32_t *)
@@ -1954,7 +1985,11 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             context_ptr->blk_geom->tx_width_uv[0][0],
             context_ptr->blk_geom->tx_height_uv[0][0],
             tx_size_uv,
+#if CLN_MOVE_COSTS_2
+            &candidate_buffer->eob[2][0],
+#else
             &candidate_buffer->candidate_ptr->eob[2][0],
+#endif
             &nz_count_dummy,
             COMPONENT_CHROMA_CR,
             context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
@@ -1975,15 +2010,22 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             bwidth,
             bheight,
             cr_full_distortion,
+#if CLN_MOVE_COSTS_2
+            candidate_buffer->eob[2][0]);
+#else
             candidate_buffer->candidate_ptr->eob[2][0]);
+#endif
 
         cr_full_distortion[DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(
             cr_full_distortion[DIST_CALC_RESIDUAL], chroma_shift);
         cr_full_distortion[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
             cr_full_distortion[DIST_CALC_PREDICTION], chroma_shift);
-
+#if CLN_MOVE_COSTS_2
+        candidate_buffer->v_has_coeff = (candidate_buffer->eob[2][0] > 0);
+#else
         candidate_buffer->candidate_ptr->v_has_coeff = (candidate_buffer->candidate_ptr->eob[2][0] >
                                                         0);
+#endif
     }
 
     //CHROMA-ONLY
@@ -1996,8 +2038,13 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
                                 0,
                                 candidate_buffer->quant_coeff_ptr,
                                 NOT_USED_VALUE,
+#if CLN_MOVE_COSTS_2
+                                candidate_buffer->eob[1][0],
+                                candidate_buffer->eob[2][0],
+#else
                                 candidate_buffer->candidate_ptr->eob[1][0],
                                 candidate_buffer->candidate_ptr->eob[2][0],
+#endif
                                 NOT_USED_VALUE,
                                 cb_coeff_bits,
                                 cr_coeff_bits,
@@ -2023,8 +2070,13 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     uint32_t             *cb_count_non_zero_coeffs   = count_non_zero_coeffs[1];
     uint32_t             *cr_count_non_zero_coeffs   = count_non_zero_coeffs[2];
     EB_ALIGN(16) uint64_t txb_full_distortion[3][DIST_CALC_TOTAL];
+#if CLN_MOVE_COSTS_2
+    candidate_buffer->u_has_coeff = 0;
+    candidate_buffer->v_has_coeff = 0;
+#else
     candidate_buffer->candidate_ptr->u_has_coeff = 0;
     candidate_buffer->candidate_ptr->v_has_coeff = 0;
+#endif
     int16_t *chroma_residual_ptr;
     uint32_t full_lambda = context_ptr->hbd_mode_decision
         ? context_ptr->full_lambda_md[EB_10_BIT_MD]
@@ -2033,11 +2085,17 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     context_ptr->three_quad_energy = 0;
 
     const uint8_t tx_depth = candidate_buffer->candidate_ptr->tx_depth;
+#if CLN_REMOVE_REDUND_4
+    const EbBool is_inter = (is_inter_mode(candidate_buffer->candidate_ptr->pred_mode) ||
+        candidate_buffer->candidate_ptr->use_intrabc)
+        ? EB_TRUE
+        : EB_FALSE;
+#else
     const int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
                               candidate_buffer->candidate_ptr->use_intrabc)
         ? EB_TRUE
         : EB_FALSE;
-
+#endif
     const int tu_count      = tx_depth
              ? 1
              : context_ptr->blk_geom
@@ -2078,10 +2136,17 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 
             const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr] >> 4) *
                                  (context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr] >> 4));
+#if CLN_MOVE_COSTS_2
+            use_pfn4_cond = (candidate_buffer->count_non_zero_coeffs < th) ||
+                !candidate_buffer->block_has_coeff
+                ? 1
+                : 0;
+#else
             use_pfn4_cond     = (candidate_buffer->candidate_ptr->count_non_zero_coeffs < th) ||
                     !candidate_buffer->candidate_ptr->block_has_coeff
                     ? 1
                     : 0;
+#endif
 
             if (use_pfn4_cond)
                 pf_shape = N4_SHAPE;
@@ -2127,7 +2192,11 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                 ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
                       .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                 : 0;
+#if CLN_MOVE_COSTS_2
+            candidate_buffer->quantized_dc[1][0] = av1_quantize_inv_quantize(
+#else
             candidate_buffer->candidate_ptr->quantized_dc[1][0] = av1_quantize_inv_quantize(
+#endif
                 pcs_ptr,
                 context_ptr,
                 &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
@@ -2140,7 +2209,11 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                 context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
                 context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
+#if CLN_MOVE_COSTS_2
+                &candidate_buffer->eob[1][txb_itr],
+#else
                 &candidate_buffer->candidate_ptr->eob[1][txb_itr],
+#endif
                 &(cb_count_non_zero_coeffs[txb_itr]),
                 COMPONENT_CHROMA_CB,
                 context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
@@ -2170,7 +2243,11 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
                         PLANE_TYPE_UV,
+#if CLN_MOVE_COSTS_2
+                        (uint32_t)candidate_buffer->eob[1][txb_itr]);
+#else
                         (uint32_t)candidate_buffer->candidate_ptr->eob[1][txb_itr]);
+#endif
                 else
                     svt_av1_picture_copy(candidate_buffer->prediction_ptr,
                                          0,
@@ -2249,9 +2326,12 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                 txb_full_distortion[1][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
                     txb_full_distortion[1][DIST_CALC_PREDICTION], chroma_shift);
             }
-
+#if CLN_MOVE_COSTS_2
+            candidate_buffer->u_has_coeff |= ((cb_count_non_zero_coeffs[txb_itr] != 0) << txb_itr);
+#else
             candidate_buffer->candidate_ptr->u_has_coeff |=
                 ((cb_count_non_zero_coeffs[txb_itr] != 0) << txb_itr);
+#endif
             cb_full_distortion[DIST_CALC_RESIDUAL] += txb_full_distortion[1][DIST_CALC_RESIDUAL];
             cb_full_distortion[DIST_CALC_PREDICTION] +=
                 txb_full_distortion[1][DIST_CALC_PREDICTION];
@@ -2294,8 +2374,11 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                 ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
                       .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                 : 0;
-
+#if CLN_MOVE_COSTS_2
+            candidate_buffer->quantized_dc[2][0] = av1_quantize_inv_quantize(
+#else
             candidate_buffer->candidate_ptr->quantized_dc[2][0] = av1_quantize_inv_quantize(
+#endif
                 pcs_ptr,
                 context_ptr,
                 &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
@@ -2308,7 +2391,11 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                 context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                 context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
                 context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
+#if CLN_MOVE_COSTS_2
+                &candidate_buffer->eob[2][txb_itr],
+#else
                 &candidate_buffer->candidate_ptr->eob[2][txb_itr],
+#endif
                 &(cr_count_non_zero_coeffs[txb_itr]),
                 COMPONENT_CHROMA_CR,
                 context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
@@ -2337,7 +2424,11 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
                         PLANE_TYPE_UV,
+#if CLN_MOVE_COSTS_2
+                        (uint32_t)candidate_buffer->eob[2][txb_itr]);
+#else
                         (uint32_t)candidate_buffer->candidate_ptr->eob[2][txb_itr]);
+#endif
                 else
                     svt_av1_picture_copy(candidate_buffer->prediction_ptr,
                                          0,
@@ -2415,9 +2506,12 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                 txb_full_distortion[2][DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
                     txb_full_distortion[2][DIST_CALC_PREDICTION], chroma_shift);
             }
-
+#if CLN_MOVE_COSTS_2
+            candidate_buffer->v_has_coeff |= ((cr_count_non_zero_coeffs[txb_itr] != 0) << txb_itr);
+#else
             candidate_buffer->candidate_ptr->v_has_coeff |=
                 ((cr_count_non_zero_coeffs[txb_itr] != 0) << txb_itr);
+#endif
             cr_full_distortion[DIST_CALC_RESIDUAL] += txb_full_distortion[2][DIST_CALC_RESIDUAL];
             cr_full_distortion[DIST_CALC_PREDICTION] +=
                 txb_full_distortion[2][DIST_CALC_PREDICTION];

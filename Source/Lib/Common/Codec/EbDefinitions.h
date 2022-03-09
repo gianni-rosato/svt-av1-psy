@@ -1182,8 +1182,9 @@ typedef struct {
     // Temp buffer used for inter prediction
     uint8_t *seg_mask;
 } InterInterCompoundData;
-
+#if !CLN_CAND_TYPES
 #define InterIntraMode InterIntraMode
+#endif
 typedef enum ATTRIBUTE_PACKED {
     FILTER_DC_PRED,
     FILTER_V_PRED,
@@ -1745,7 +1746,14 @@ static INLINE int32_t get_ext_tx_set(TxSize tx_size, int32_t is_inter, int32_t u
     const TxSetType set_type = get_ext_tx_set_type(tx_size, is_inter, use_reduced_set);
     return ext_tx_set_index[is_inter][set_type];
 }
-
+#if CLN_REMOVE_REDUND_4
+static INLINE EbBool is_intra_mode(PredictionMode mode) {
+    return mode < INTRA_MODE_END;// && mode >= INTRA_MODE_START; // mode is always greater than INTRA_MODE_START
+}
+static INLINE EbBool is_inter_mode(PredictionMode mode) {
+    return mode >= SINGLE_INTER_MODE_START && mode < COMP_INTER_MODE_END;
+}
+#endif
 static INLINE int32_t is_inter_compound_mode(PredictionMode mode) {
     return mode >= NEAREST_NEARESTMV && mode <= NEW_NEWMV;
 }

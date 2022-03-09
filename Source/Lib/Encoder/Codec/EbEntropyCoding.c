@@ -1279,7 +1279,11 @@ static void encode_intra_luma_mode_av1(FRAME_CONTEXT *frame_context, AomWriter *
         ec_writer, luma_mode, frame_context->kf_y_cdf[top_context][left_context], INTRA_MODES);
 
     if (blk_ptr->pred_mode != INTRA_MODE_4x4)
+#if CLN_REMOVE_REDUND_6
+        if (bsize >= BLOCK_8X8 && av1_is_directional_mode(blk_ptr->pred_mode)) {
+#else
         if (bsize >= BLOCK_8X8 && blk_ptr->prediction_unit_array[0].is_directional_mode_flag) {
+#endif
             aom_write_symbol(
                 ec_writer,
                 blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
@@ -1300,7 +1304,11 @@ static void encode_intra_luma_mode_nonkey_av1(FRAME_CONTEXT *frame_context, AomW
         ec_writer, luma_mode, frame_context->y_mode_cdf[size_group_lookup[bsize]], INTRA_MODES);
 
     if (blk_ptr->pred_mode != INTRA_MODE_4x4)
+#if CLN_REMOVE_REDUND_6
+        if (bsize >= BLOCK_8X8 && av1_is_directional_mode(blk_ptr->pred_mode)) {
+#else
         if (bsize >= BLOCK_8X8 && blk_ptr->prediction_unit_array[0].is_directional_mode_flag) {
+#endif
             aom_write_symbol(
                 ec_writer,
                 blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
@@ -1344,8 +1352,13 @@ static void encode_intra_chroma_mode_av1(FRAME_CONTEXT *frame_context, AomWriter
                          ec_writer);
 
     if (blk_ptr->pred_mode != INTRA_MODE_4x4)
+#if CLN_REMOVE_REDUND_6
+        if (bsize >= BLOCK_8X8 &&
+            av1_is_directional_mode(get_uv_mode(blk_ptr->prediction_unit_array[0].intra_chroma_mode))) {
+#else
         if (bsize >= BLOCK_8X8 &&
             blk_ptr->prediction_unit_array[0].is_directional_chroma_mode_flag) {
+#endif
             aom_write_symbol(
                 ec_writer,
                 blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
@@ -1446,11 +1459,11 @@ static void encode_pred_mode_av1(FRAME_CONTEXT *frame_context, AomWriter *ec_wri
 * motion_mode_allowed
 *   checks the motion modes that are allowed for the current block
 *********************************************************************/
-
+#if !CLN_REMOVE_REDUND_4
 static INLINE int is_inter_mode(PredictionMode mode) {
     return mode >= SINGLE_INTER_MODE_START && mode < SINGLE_INTER_MODE_END;
 }
-
+#endif
 MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct *blk_ptr,
                                const BlockSize bsize, MvReferenceFrame rf0, MvReferenceFrame rf1,
                                PredictionMode mode) {
@@ -1463,8 +1476,11 @@ MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct
         if (is_global_mv_block(mode, bsize, gm_type))
             return SIMPLE_TRANSLATION;
     }
-
+#if CLN_REMOVE_REDUND_4
+    if (is_motion_variation_allowed_bsize(bsize) && is_inter_singleref_mode(mode) && rf1 != INTRA_FRAME &&
+#else
     if (is_motion_variation_allowed_bsize(bsize) && is_inter_mode(mode) && rf1 != INTRA_FRAME &&
+#endif
         !(rf1 > INTRA_FRAME)) // is_motion_variation_allowed_compound
     {
         if (!has_overlappable_candidates(blk_ptr)) // check_num_overlappable_neighbors
@@ -1883,9 +1899,14 @@ int32_t svt_av1_get_pred_context_switchable_interp(
 
     if (MIN(mi_size_wide[sb_type], mi_size_high[sb_type]) < 2)
         return 0;
-
+#if CLN_REMOVE_REDUND
+    const uint8_t is_compound = is_inter_compound_mode(blk_ptr->pred_mode);
+    // Now check if all global motion is non translational
+    for (ref = 0; ref < 1 + is_compound; ++ref) {
+#else
     // Now check if all global motion is non translational
     for (ref = 0; ref < 1 + blk_ptr->prediction_unit_array->is_compound; ++ref) {
+#endif
         if (pcs_ptr->global_motion[ref ? rf1 : rf0].wmtype == TRANSLATION)
             return 0;
     }
@@ -1893,7 +1914,11 @@ int32_t svt_av1_get_pred_context_switchable_interp(
 }
 static int32_t av1_is_interp_needed(MvReferenceFrame rf0, MvReferenceFrame rf1, BlkStruct *blk_ptr,
                                     BlockSize bsize, PictureParentControlSet *pcs_ptr) {
+#if CLN_SKIP_NAMING
+    if (blk_ptr->skip_mode)
+#else
     if (blk_ptr->skip_flag)
+#endif
         return 0;
 
     if (blk_ptr->prediction_unit_array[0].motion_mode == WARPED_CAUSAL)
@@ -4483,7 +4508,11 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
 
     // Update the Skip Flag Neighbor Array
     {
+#if CLN_SKIP_NAMING
+        uint8_t skip_flag = (uint8_t)blk_ptr->skip_mode;
+#else
         uint8_t skip_flag = (uint8_t)blk_ptr->skip_flag;
+#endif
         neighbor_array_unit_mode_write(skip_flag_neighbor_array,
                                        (uint8_t *)&skip_flag,
                                        blk_origin_x,
@@ -5514,14 +5543,26 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
         if (pcs_ptr->parent_pcs_ptr->skip_mode_flag && is_comp_ref_allowed(bsize)) {
             encode_skip_mode_av1(frame_context,
                                  ec_writer,
+#if CLN_SKIP_NAMING
+                                 blk_ptr->skip_mode,
+#else
                                  blk_ptr->skip_flag,
+#endif
                                  blk_origin_x,
                                  blk_origin_y,
                                  skip_flag_neighbor_array);
         }
+#if CLN_SKIP_NAMING
+        if (!pcs_ptr->parent_pcs_ptr->skip_mode_flag && blk_ptr->skip_mode)
+#else
         if (!pcs_ptr->parent_pcs_ptr->skip_mode_flag && blk_ptr->skip_flag)
+#endif
             SVT_ERROR("SKIP not supported\n");
+#if CLN_SKIP_NAMING
+        if (!blk_ptr->skip_mode) {
+#else
         if (!blk_ptr->skip_flag) {
+#endif
             //const int32_t skip = write_skip(cm, xd, mbmi->segment_id, mi, w);
             encode_skip_coeff_av1(frame_context,
                                   ec_writer,
@@ -5545,7 +5586,11 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                    tile_idx,
                    blk_ptr->av1xd,
                    ec_writer,
+#if CLN_SKIP_NAMING
+                   blk_ptr->skip_mode ? 1 : skip_coeff,
+#else
                    blk_ptr->skip_flag ? 1 : skip_coeff,
+#endif
                    blk_origin_x >> MI_SIZE_LOG2,
                    blk_origin_y >> MI_SIZE_LOG2);
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
@@ -5564,7 +5609,11 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
             }
         }
         if (frm_hdr->tx_mode == TX_MODE_SELECT) {
+#if CLN_SKIP_NAMING
+            if (blk_ptr->skip_mode) {
+#else
             if (blk_ptr->skip_flag) {
+#endif
                 code_tx_size(pcs_ptr,
                              blk_origin_x,
                              blk_origin_y,
@@ -5573,10 +5622,18 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                              txfm_context_array,
                              frame_context,
                              ec_writer,
+#if CLN_SKIP_NAMING
+                             blk_ptr->skip_mode);
+#else
                              blk_ptr->skip_flag);
+#endif
             }
         }
+#if CLN_SKIP_NAMING
+        if (!blk_ptr->skip_mode) {
+#else
         if (!blk_ptr->skip_flag) {
+#endif
             //write_is_inter(cm, xd, mbmi->segment_id, w, is_inter)
             encode_pred_mode_av1(frame_context,
                                  ec_writer,

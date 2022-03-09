@@ -76,6 +76,21 @@ extern "C" {
 #define FRFCTR_RC_P8            1 //remove EncodeFrameParams and CurrentFrame
 #define FRFCTR_RC_P9            1 //clean up rc variables
 
+#define CLN_MD_CAND             1 // Cleanup MD candidate struct
+#if CLN_MD_CAND
+#define CLN_CAND_MV             1 // Cleanup candidate MV arrays
+#define CLN_MOVE_COSTS          1 // Move info about candidate results (e.g. cost, distortion, etc.) to candidate_buffer
+#define CLN_REMOVE_REDUND       1 // Remove redundant fields that can be derived from other fields (is_compound)
+#define CLN_REMOVE_REDUND_2     1 // Remove redundant fields that can be derived from other fields (prediction_direction)
+#define CLN_REMOVE_REDUND_3     1 // Remove redundant fields that can be derived from other fields (intra_luma_mode)
+#define CLN_REMOVE_REDUND_4     1 // Remove redundant fields that can be derived from other fields (type)
+#define CLN_REMOVE_REDUND_5     1 // Remove redundant fields that can be derived from other fields (local_warp_valid)
+#define CLN_MOVE_COSTS_2        1 // Move info about candidate results (e.g. eob, quantized_dc, etc.) to candidate_buffer
+#define CLN_REMOVE_REDUND_6     1 // Remove redundant fields that can be derived from other fields (is_direction_mode_flag)
+#define CLN_CAND_TYPES          1 // Reorder entries in MD candidate struct and reduce size of some fields
+#endif
+#define CLN_SKIP_NAMING         1 // Rename skip_mode/skip coeff variables for clarity
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

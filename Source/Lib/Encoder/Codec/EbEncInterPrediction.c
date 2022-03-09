@@ -2749,10 +2749,18 @@ int32_t is_nontrans_global_motion(BlockSize                    sb_type,
         return 0;
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
+#if CLN_REMOVE_REDUND
+    const uint8_t is_compound = is_inter_compound_mode(candidate_buffer_ptr->candidate_ptr->pred_mode);
+    // Now check if all global motion is non translational
+    for (ref = 0;
+        ref < 1 + is_compound /*has_second_ref(mbmi)*/;
+        ++ref) {
+#else
     // Now check if all global motion is non translational
     for (ref = 0;
          ref < 1 + candidate_buffer_ptr->candidate_ptr->is_compound /*has_second_ref(mbmi)*/;
          ++ref) {
+#endif
         if (picture_control_set_ptr->parent_pcs_ptr->global_motion[ref ? rf[1] : rf[0]].wmtype ==
             TRANSLATION)
             //if (xd->global_motion[mbmi->ref_frame[ref]].wmtype == TRANSLATION)
@@ -3073,7 +3081,11 @@ void interpolation_filter_search(PictureControlSet           *picture_control_se
             candidate_buffer_ptr->candidate_ptr->interp_filters != 0)
             candidate_buffer_ptr->candidate_ptr->skip_mode_allowed = EB_FALSE;
         // Update fast_luma_rate to take into account switchable_rate
+#if CLN_MOVE_COSTS
+        candidate_buffer_ptr->fast_luma_rate += switchable_rate;
+#else
         candidate_buffer_ptr->candidate_ptr->fast_luma_rate += switchable_rate;
+#endif
     }
 }
 
@@ -5794,10 +5806,15 @@ EbBool calc_pred_masked_compound(PictureControlSet *pcs_ptr, ModeDecisionContext
     EbPictureBufferDesc *ref_pic_list1 = NULL;
     Mv                   mv_0;
     Mv                   mv_1;
+#if CLN_CAND_MV
+    mv_0.as_int = candidate_ptr->mv[0].as_int;
+    mv_1.as_int = candidate_ptr->mv[1].as_int;
+#else
     mv_0.x = candidate_ptr->motion_vector_xl0;
     mv_0.y = candidate_ptr->motion_vector_yl0;
     mv_1.x = candidate_ptr->motion_vector_xl1;
     mv_1.y = candidate_ptr->motion_vector_yl1;
+#endif
     MvUnit mv_unit;
     mv_unit.mv[0] = mv_0;
     mv_unit.mv[1] = mv_1;
@@ -5986,16 +6003,25 @@ EbErrorType inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_m
     ModeDecisionCandidate *const candidate_ptr = candidate_buffer_ptr->candidate_ptr;
 
     MvUnit mv_unit;
+#if !CLN_REMOVE_REDUND_2
     mv_unit.pred_direction = candidate_ptr->prediction_direction[0];
+#endif
+#if CLN_CAND_MV
+    mv_unit.mv[0].as_int = candidate_ptr->mv[0].as_int;
+    mv_unit.mv[1].as_int = candidate_ptr->mv[1].as_int;
+#else
     mv_unit.mv[0].x        = candidate_ptr->motion_vector_xl0;
     mv_unit.mv[0].y        = candidate_ptr->motion_vector_yl0;
     mv_unit.mv[1].x        = candidate_ptr->motion_vector_xl1;
     mv_unit.mv[1].y        = candidate_ptr->motion_vector_yl1;
-
+#endif
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
     const int8_t ref_idx_first  = get_ref_frame_idx(rf[0]);
     const int8_t list_idx_first = get_list_idx(rf[0]);
+#if CLN_REMOVE_REDUND_2
+    mv_unit.pred_direction = (rf[1] == NONE_FRAME) ? list_idx_first : BI_PRED;
+#endif
 
     if (rf[1] == NONE_FRAME) {
         if (list_idx_first == 0)
@@ -6067,16 +6093,25 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
     ModeDecisionCandidate *const candidate_ptr = candidate_buffer_ptr->candidate_ptr;
 
     MvUnit mv_unit;
+#if !CLN_REMOVE_REDUND_2
     mv_unit.pred_direction = candidate_ptr->prediction_direction[0];
+#endif
+#if CLN_CAND_MV
+    mv_unit.mv[0].as_int = candidate_ptr->mv[0].as_int;
+    mv_unit.mv[1].as_int = candidate_ptr->mv[1].as_int;
+#else
     mv_unit.mv[0].x        = candidate_ptr->motion_vector_xl0;
     mv_unit.mv[0].y        = candidate_ptr->motion_vector_yl0;
     mv_unit.mv[1].x        = candidate_ptr->motion_vector_xl1;
     mv_unit.mv[1].y        = candidate_ptr->motion_vector_yl1;
-
+#endif
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
     const int8_t ref_idx_first  = get_ref_frame_idx(rf[0]);
     const int8_t list_idx_first = get_list_idx(rf[0]);
+#if CLN_REMOVE_REDUND_2
+    mv_unit.pred_direction = (rf[1] == NONE_FRAME) ? list_idx_first : BI_PRED;
+#endif
 
     if (rf[1] == NONE_FRAME) {
         if (list_idx_first == 0)
@@ -6164,15 +6199,36 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     SequenceControlSet          *scs_ptr       = ((
         SequenceControlSet *)(picture_control_set_ptr->scs_wrapper_ptr->object_ptr));
 
+#if CLN_REMOVE_REDUND_2
+    MvReferenceFrame rf[2];
+    av1_set_ref_frame(rf, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
+    int8_t  ref_idx_l0 = get_ref_frame_idx(rf[0]);
+    int8_t  ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0]) : get_ref_frame_idx(rf[1]);
+    uint8_t list_idx0 = get_list_idx(rf[0]);
+    uint8_t list_idx1 = rf[1] == NONE_FRAME ? get_list_idx(rf[0]) : get_list_idx(rf[1]);
+    assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST && list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
+
+    const uint8_t is_compound = is_inter_compound_mode(candidate_ptr->pred_mode);
+#endif
+
     Mv mv_0;
     Mv mv_1;
+#if CLN_CAND_MV
+    mv_0.as_int = candidate_ptr->mv[0].as_int;
+    mv_1.as_int = candidate_ptr->mv[1].as_int;
+#else
     mv_0.x = candidate_buffer_ptr->candidate_ptr->motion_vector_xl0;
     mv_0.y = candidate_buffer_ptr->candidate_ptr->motion_vector_yl0;
     mv_1.x = candidate_buffer_ptr->candidate_ptr->motion_vector_xl1;
     mv_1.y = candidate_buffer_ptr->candidate_ptr->motion_vector_yl1;
+#endif
     MvUnit mv_unit;
+#if CLN_REMOVE_REDUND_2
+    mv_unit.pred_direction = (rf[1] == NONE_FRAME) ? list_idx0 : BI_PRED;
+#else
     mv_unit.pred_direction =
         candidate_buffer_ptr->candidate_ptr->prediction_direction[md_context_ptr->pu_itr];
+#endif
     mv_unit.mv[0] = mv_0;
     mv_unit.mv[1] = mv_1;
 
@@ -6216,8 +6272,12 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
 
         return return_error;
     }
+#if !CLN_REMOVE_REDUND_2
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
+#if CLN_REMOVE_REDUND
+    const uint8_t is_compound = is_inter_compound_mode(candidate_ptr->pred_mode);
+#endif
     int8_t  ref_idx_l0 = get_ref_frame_idx(rf[0]);
     int8_t  ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0]) : get_ref_frame_idx(rf[1]);
     uint8_t list_idx0, list_idx1;
@@ -6228,7 +6288,7 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         list_idx1 = get_list_idx(rf[1]);
     assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST);
     assert(list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
-
+#endif
     if (ref_idx_l0 >= 0) {
         ref_pic_list0 = get_ref_pic_buffer(
             picture_control_set_ptr, hbd_mode_decision, list_idx0, ref_idx_l0);
@@ -6410,7 +6470,11 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK &&
             !md_context_ptr->need_hbd_comp_mds3) {
             if (candidate_buffer_ptr->candidate_ptr->motion_mode == SIMPLE_TRANSLATION &&
+#if CLN_REMOVE_REDUND
+                (is_compound == 0 ||
+#else
                 (candidate_buffer_ptr->candidate_ptr->is_compound == 0 ||
+#endif
                  (is_masked_compound_type(
                      candidate_buffer_ptr->candidate_ptr->interinter_comp.type)) ==
                      0)) { // simple translation and not masked compound
