@@ -1216,6 +1216,11 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
                         intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
                         TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
                         const QuantParam *qparam, TxSize tx_size, TxType tx_type, Bool is_inter,
+#if FIX_VQ_MODE_RDOQ
+                        uint8_t use_sharpness,
+                        uint8_t delta_q_present,
+                        uint8_t picture_qp,
+#endif
                         uint32_t lambda, int plane)
 
 {
@@ -1262,8 +1267,22 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
         if (*eob == 0)
             return;
     }
+#if FIX_VQ_MODE_RDOQ
+    int rweight = 100;
+    const int rshift = 2;
+    if (use_sharpness && delta_q_present && plane == 0) {
+        int diff = md_context->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
+        if (diff < 0)
+        {
+            sharpness = 1;
+            rweight = 0;
+        }
+    }
+    const int64_t  rdmult = (((((int64_t)lambda * plane_rd_mult[is_inter][plane_type]) * rweight) / 100) + 2) >> rshift;
+#else
     const int      rshift = sharpness + 2;
     const int64_t  rdmult = (((int64_t)lambda * plane_rd_mult[is_inter][plane_type]) + 2) >> rshift;
+#endif
     uint8_t        levels_buf[TX_PAD_2D];
     uint8_t *const levels = set_levels(levels_buf, width);
 
@@ -1711,6 +1730,11 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                            txsize,
                            tx_type,
                            is_inter,
+#if FIX_VQ_MODE_RDOQ
+                           scs_ptr->vq_ctrls.sharpness_ctrls.rdoq,
+                           pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present,
+                           pcs_ptr->picture_qp,
+#endif
                            lambda,
                            (component_type == COMPONENT_LUMA) ? 0 : 1);
     }

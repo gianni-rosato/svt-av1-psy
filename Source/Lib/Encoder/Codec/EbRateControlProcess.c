@@ -567,13 +567,20 @@ static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor, doubl
     const int boost = (int)rint(factor / r0);
     return boost;
 }
-
+#if FIX_VQ_MODE_TPL
+int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta, uint8_t is_intra) {
+#else
 int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta, SliceType slice_type) {
+#endif
     assert(beta > 0.0);
     int q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
     int newq;
     // use a less aggressive action when lowering the q for non I_slice
+#if FIX_VQ_MODE_TPL
+    if (!is_intra && beta > 1)
+#else
     if (slice_type != I_SLICE && beta > 1)
+#endif
         newq = (int)rint(q / sqrt(sqrt(beta)));
     else
         newq = (int)rint(q / sqrt(beta));
@@ -1150,10 +1157,17 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
         for (sb_addr = 0; sb_addr < sb_cnt; ++sb_addr) {
             sb_ptr        = pcs_ptr->sb_ptr_array[sb_addr];
             double beta   = ppcs_ptr->pa_me_data->tpl_beta[sb_addr];
+#if FIX_VQ_MODE_TPL
+            int    offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth,
+                                                   ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+                                                   beta,
+                                                   pcs_ptr->parent_pcs_ptr->slice_type || pcs_ptr->parent_pcs_ptr->transition_present);
+#else
             int    offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth,
                                                    ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
                                                    beta,
                                                    pcs_ptr->parent_pcs_ptr->slice_type);
+#endif
             offset        = AOMMIN(
                 offset, pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
             offset = AOMMAX(

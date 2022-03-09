@@ -2925,6 +2925,9 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
         vq_ctrl->sharpness_ctrls.ifs              = 1;
         vq_ctrl->sharpness_ctrls.cdef             = 1;
         vq_ctrl->sharpness_ctrls.restoration      = 1;
+#if FIX_VQ_MODE_RDOQ
+        vq_ctrl->sharpness_ctrls.rdoq             = 1;
+#endif
 #if OPT_VQ_MODE
         // Stability
 #else
@@ -2940,6 +2943,9 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
         vq_ctrl->sharpness_ctrls.ifs              = 0;
         vq_ctrl->sharpness_ctrls.cdef             = 0;
         vq_ctrl->sharpness_ctrls.restoration      = 0;
+#if FIX_VQ_MODE_RDOQ
+        vq_ctrl->sharpness_ctrls.rdoq             = 0;
+#endif
 #if OPT_VQ_MODE
         // Stability
 #else
@@ -3908,11 +3914,13 @@ void copy_api_from_app(
     }
 #if OPT_VQ_MODE
     scs_ptr->static_config.tune = config_struct->tune;
+#if !FIX_VQ_PRED_STRUCT
     // 4L is forced when the VQ mode is used
     if (scs_ptr->static_config.tune == 0) {
         scs_ptr->static_config.hierarchical_levels = 3;
         SVT_WARN("Forced VQ mode to use HierarchicalLevels = 3\n");
     }
+#endif
 #endif
 #else
     if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass != ENC_FIRST_PASS && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) &&

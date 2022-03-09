@@ -75,6 +75,14 @@ extern "C" {
 #define FRFCTR_RC_P6            1 //CBR and flat VBR clean up
 #define FRFCTR_RC_P8            1 //remove EncodeFrameParams and CurrentFrame
 #define FRFCTR_RC_P9            1 //clean up rc variables
+#define FIX_TUNE_0              1
+#if FIX_TUNE_0
+#define FIX_VQ_PRED_STRUCT      1 // Undo the forcing of 4L if VQ mode
+#define FIX_VQ_MODE_TF          1 // Ignore the rate component at RDOQ for negative delta - QP towards quant - coeff preservation
+#define FIX_VQ_MODE_RDOQ        1 // Use a more conservative input variance threshold @ TF towards a weaker level selection
+#define FIX_VQ_MODE_TPL         1 // Treat the 1st BASE after a transition as an I_SLICE at the delta - QP derivation(aggressive action when lowering the QP)
+#endif
+
 
 #define CLN_MD_CAND             1 // Cleanup MD candidate struct
 #if CLN_MD_CAND
