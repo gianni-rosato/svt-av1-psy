@@ -381,7 +381,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                         config->pred_struct[i].temporal_layer_index);
                     return_error = EB_ErrorBadParameter;
                 }
-                EbBool  have_ref_frame_within_minigop_in_list0 = EB_FALSE;
+                Bool  have_ref_frame_within_minigop_in_list0 = FALSE;
                 int32_t entry_idx                              = i + 1;
                 for (int32_t j = 0; j < REF_LIST_MAX_DEPTH; j++) {
                     if ((entry_idx - config->pred_struct[i].ref_list1[j] >
@@ -407,7 +407,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                     if (!have_ref_frame_within_minigop_in_list0 &&
                         config->pred_struct[i].ref_list0[j] &&
                         entry_idx - config->pred_struct[i].ref_list0[j] >= 0) {
-                        have_ref_frame_within_minigop_in_list0 = EB_TRUE;
+                        have_ref_frame_within_minigop_in_list0 = TRUE;
                     }
                 }
                 if (!have_ref_frame_within_minigop_in_list0) {
@@ -657,9 +657,9 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
 #else
     config_ptr->qp = 50;
 #endif
-    config_ptr->use_qp_file = EB_FALSE;
+    config_ptr->use_qp_file = FALSE;
 
-    config_ptr->use_fixed_qindex_offsets = EB_FALSE;
+    config_ptr->use_fixed_qindex_offsets = FALSE;
     memset(config_ptr->qindex_offsets, 0, sizeof(config_ptr->qindex_offsets));
     config_ptr->key_frame_chroma_qindex_offset = 0;
     config_ptr->key_frame_qindex_offset        = 0;
@@ -684,14 +684,14 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->intra_period_length          = -2;
     config_ptr->intra_refresh_type           = 2;
     config_ptr->hierarchical_levels          = 4;
-    config_ptr->pred_structure               = EB_PRED_RANDOM_ACCESS;
-    config_ptr->enable_dlf_flag              = EB_TRUE;
+    config_ptr->pred_structure               = PRED_RANDOM_ACCESS;
+    config_ptr->enable_dlf_flag              = TRUE;
     config_ptr->cdef_level                   = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv                  = DEFAULT;
     config_ptr->fast_decode                  = 0;
     memset(config_ptr->pred_struct, 0, sizeof(config_ptr->pred_struct));
-    config_ptr->enable_manual_pred_struct    = EB_FALSE;
+    config_ptr->enable_manual_pred_struct    = FALSE;
     config_ptr->manual_pred_struct_entry_num = 0;
     config_ptr->encoder_color_format         = EB_YUV420;
     // Two pass data rate control options
@@ -708,7 +708,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;
-    config_ptr->restricted_motion_vector = EB_FALSE;
+    config_ptr->restricted_motion_vector = FALSE;
 
     config_ptr->high_dynamic_range_input = 0;
     config_ptr->screen_content_mode      = 2;
@@ -735,8 +735,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->recon_enabled = 0;
 
     // Alt-Ref default values
-    config_ptr->enable_tf       = EB_TRUE;
-    config_ptr->enable_overlays = EB_FALSE;
+    config_ptr->enable_tf       = TRUE;
+    config_ptr->enable_overlays = FALSE;
     config_ptr->tune            = 1;
     // Super-resolution default values
     config_ptr->superres_mode      = SUPERRES_NONE;
@@ -746,7 +746,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->superres_kf_qthres = 43; // random threshold, change
 
     // Color description default values
-    config_ptr->color_description_present_flag = EB_FALSE;
+    config_ptr->color_description_present_flag = FALSE;
     config_ptr->color_primaries                = 2;
     config_ptr->transfer_characteristics       = 2;
     config_ptr->matrix_coefficients            = 2;
@@ -994,13 +994,13 @@ static EbErrorType str_to_uint(const char *nptr, uint32_t *out) {
 #define strcasecmp _stricmp
 #endif
 
-static EbErrorType str_to_bool(const char *nptr, EbBool *out) {
-    EbBool val;
+static EbErrorType str_to_bool(const char *nptr, Bool *out) {
+    Bool val;
 
     if (!strcmp(nptr, "1") || !strcasecmp(nptr, "true") || !strcasecmp(nptr, "yes"))
-        val = EB_TRUE;
+        val = TRUE;
     else if (!strcmp(nptr, "0") || !strcasecmp(nptr, "false") || !strcasecmp(nptr, "no"))
-        val = EB_FALSE;
+        val = FALSE;
     else
         return EB_ErrorBadParameter;
 
@@ -1423,10 +1423,10 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         }
     }
 
-    // EbBool fields
+    // Bool fields
     const struct {
         const char *name;
-        EbBool     *out;
+        Bool     *out;
     } bool_opts[] = {
         {"use-q-file", &config_struct->use_qp_file},
         {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},

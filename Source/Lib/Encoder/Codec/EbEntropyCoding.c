@@ -766,8 +766,8 @@ static EbErrorType av1_encode_tx_coef_uv(PictureControlSet    *pcs_ptr,
                                          NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array) {
     EbErrorType return_error = EB_ErrorNone;
     int32_t     is_inter     = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc)
-                ? EB_TRUE
-                : EB_FALSE;
+                ? TRUE
+                : FALSE;
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
 
     if (!blk_geom->has_uv)
@@ -899,8 +899,8 @@ static EbErrorType av1_encode_coeff_1d(PictureControlSet    *pcs_ptr,
                                        NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array) {
     EbErrorType return_error = EB_ErrorNone;
     int32_t     is_inter     = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc)
-                ? EB_TRUE
-                : EB_FALSE;
+                ? TRUE
+                : FALSE;
     if (blk_ptr->tx_depth) {
         av1_encode_tx_coef_y(pcs_ptr,
                              context_ptr,
@@ -1201,7 +1201,7 @@ static void encode_partition_av1(PictureControlSet *pcs_ptr, FRAME_CONTEXT *fram
 *   Encodes the skip coefficient flag
 *********************************************************************/
 static void encode_skip_coeff_av1(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                  EbBool skipCoeffFlag, uint32_t blk_origin_x,
+                                  Bool skipCoeffFlag, uint32_t blk_origin_x,
                                   uint32_t           blk_origin_y,
                                   NeighborArrayUnit *skip_coeff_neighbor_array) {
     //TODO: need to code in syntax for segmentation map + skip
@@ -1374,7 +1374,7 @@ static void encode_intra_chroma_mode_av1(FRAME_CONTEXT *frame_context, AomWriter
 *   Encodes the skip Mode flag
 *********************************************************************/
 static void encode_skip_mode_av1(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                 EbBool skipModeFlag, uint32_t blk_origin_x, uint32_t blk_origin_y,
+                                 Bool skipModeFlag, uint32_t blk_origin_x, uint32_t blk_origin_y,
                                  NeighborArrayUnit *skip_flag_neighbor_array) {
     //TODO: not coded in syntax for skip mode/ref-frame/global-mv in segmentation map
     uint32_t skip_flag_left_neighbor_index = get_neighbor_array_unit_left_index(
@@ -1552,7 +1552,7 @@ EbErrorType encode_slice_finish(EntropyCoder *entropy_coder_ptr) {
 }
 
 EbErrorType reset_entropy_coder(EncodeContext *encode_context_ptr, EntropyCoder *entropy_coder_ptr,
-                                uint32_t qp, EB_SLICE slice_type) {
+                                uint32_t qp, SliceType slice_type) {
     EbErrorType return_error = EB_ErrorNone;
 
     (void)encode_context_ptr;
@@ -1572,7 +1572,7 @@ EbErrorType entropy_tile_info_ctor(EntropyTileInfo *eti, uint32_t buf_size) {
     EbErrorType return_error = EB_ErrorNone;
     eti->dctor               = entropy_tile_info_dctor;
     EB_NEW(eti->entropy_coder_ptr, entropy_coder_ctor, buf_size);
-    eti->entropy_coding_tile_done = EB_FALSE;
+    eti->entropy_coding_tile_done = FALSE;
     return return_error;
 }
 
@@ -3136,7 +3136,7 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
                 wb, scs_ptr->seq_header.color_config.chroma_sample_position, 2);
         }
     }
-    EbBool separate_uv_delta_q =
+    Bool separate_uv_delta_q =
       (scs_ptr->static_config.chroma_u_ac_qindex_offset != scs_ptr->static_config.chroma_v_ac_qindex_offset ||
        scs_ptr->static_config.chroma_u_dc_qindex_offset != scs_ptr->static_config.chroma_v_dc_qindex_offset);
     svt_aom_wb_write_bit(wb, separate_uv_delta_q);
@@ -4754,7 +4754,7 @@ void svt_av1_encode_dv(AomWriter *w, const MV *mv, const MV *ref, NmvContext *mv
         encode_mv_component(w, diff.col, &mvctx->comps[1], MV_SUBPEL_NONE);
 }
 
-int av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type) {
+int av1_allow_intrabc(const FrameHeader *frm_hdr, SliceType slice_type) {
     return (slice_type == I_SLICE && frm_hdr->allow_screen_content_tools && frm_hdr->allow_intrabc);
 }
 
@@ -5110,8 +5110,8 @@ int get_spatial_seg_prediction(PictureControlSet *pcs_ptr, uint32_t blk_origin_x
     uint32_t mi_col = blk_origin_x >> MI_SIZE_LOG2;
     uint32_t mi_row = blk_origin_y >> MI_SIZE_LOG2;
 
-    EbBool                   left_available   = mi_col > 0 ? EB_TRUE : EB_FALSE;
-    EbBool                   up_available     = mi_row > 0 ? EB_TRUE : EB_FALSE;
+    Bool                   left_available   = mi_col > 0 ? TRUE : FALSE;
+    Bool                   up_available     = mi_row > 0 ? TRUE : FALSE;
     Av1Common               *cm               = pcs_ptr->parent_pcs_ptr->av1_cm;
     SegmentationNeighborMap *segmentation_map = pcs_ptr->segmentation_neighbor_map;
 
@@ -5190,7 +5190,7 @@ static INLINE void update_segmentation_map(PictureControlSet *pcs_ptr, BlockSize
 
 void write_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context, AomWriter *ecWriter,
                       BlockSize bsize, uint32_t blk_origin_x, uint32_t blk_origin_y,
-                      BlkStruct *blk_ptr, EbBool skip_coeff) {
+                      BlkStruct *blk_ptr, Bool skip_coeff) {
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled)
         return;
@@ -5214,7 +5214,7 @@ void write_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context, 
 
 void write_inter_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context,
                             AomWriter *ecWriter, const BlockGeom *blockGeom, uint32_t blk_origin_x,
-                            uint32_t blk_origin_y, BlkStruct *blk_ptr, EbBool skip, int pre_skip) {
+                            uint32_t blk_origin_y, BlkStruct *blk_ptr, Bool skip, int pre_skip) {
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled)
         return;
@@ -5310,7 +5310,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     uint32_t           blk_origin_x       = context_ptr->sb_origin_x + blk_geom->origin_x;
     uint32_t           blk_origin_y       = context_ptr->sb_origin_y + blk_geom->origin_y;
     BlockSize          bsize              = blk_geom->bsize;
-    EbBool             skip_coeff         = !blk_ptr->block_has_coeff;
+    Bool             skip_coeff         = !blk_ptr->block_has_coeff;
 
     assert(bsize < BlockSizeS_ALL);
     int32_t       mi_row    = blk_origin_y >> MI_SIZE_LOG2;
@@ -5997,15 +5997,15 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
 
     context_ptr->coded_area_sb    = 0;
     context_ptr->coded_area_sb_uv = 0;
-    EbBool check_blk_out_of_bound = EB_FALSE;
+    Bool check_blk_out_of_bound = FALSE;
 
     SbGeom *sb_geom =
         &pcs_ptr->parent_pcs_ptr->sb_geom[tb_ptr->index]; // .block_is_inside_md_scan[blk_index])
 
     if (!(sb_geom->is_complete_sb))
-        check_blk_out_of_bound = EB_TRUE;
+        check_blk_out_of_bound = TRUE;
     do {
-        EbBool code_blk_cond = EB_TRUE; // Code cu only if it is inside the picture
+        Bool code_blk_cond = TRUE; // Code cu only if it is inside the picture
 
         BlkStruct *blk_ptr = &tb_ptr->final_blk_arr[final_blk_index];
 
@@ -6018,13 +6018,13 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
         if (check_blk_out_of_bound) {
             if (blk_geom->shape != PART_N)
                 blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
-            code_blk_cond = EB_FALSE;
+            code_blk_cond = FALSE;
             if (((blk_origin_x + blk_geom->bwidth / 2 < pcs_ptr->parent_pcs_ptr->aligned_width) ||
                  (blk_origin_y + blk_geom->bheight / 2 <
                   pcs_ptr->parent_pcs_ptr->aligned_height)) &&
                 blk_origin_x < pcs_ptr->parent_pcs_ptr->aligned_width &&
                 blk_origin_y < pcs_ptr->parent_pcs_ptr->aligned_height)
-                code_blk_cond = EB_TRUE;
+                code_blk_cond = TRUE;
         }
 
         if (code_blk_cond) {

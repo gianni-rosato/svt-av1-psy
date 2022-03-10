@@ -272,17 +272,17 @@ typedef struct IntraReferenceSamplesOpenLoop {
     // Scratch buffers used in the interpolaiton process
     uint8_t reference_above_line_y[MAX_INTRA_REFERENCE_SAMPLES];
     uint8_t reference_left_line_y[MAX_INTRA_REFERENCE_SAMPLES];
-    EbBool  above_ready_flag_y;
-    EbBool  left_ready_flag_y;
+    Bool  above_ready_flag_y;
+    Bool  left_ready_flag_y;
 } IntraReferenceSamplesOpenLoop;
 
 typedef struct MeHmeRefPruneCtrls {
-    EbBool enable_me_hme_ref_pruning;
+    Bool enable_me_hme_ref_pruning;
     uint16_t
         prune_ref_if_hme_sad_dev_bigger_than_th; // TH used to prune references based on hme sad deviation
     uint16_t
         prune_ref_if_me_sad_dev_bigger_than_th; // TH used to prune references based on me sad deviation
-    EbBool protect_closest_refs; // if true, do not prune closest ref frames
+    Bool protect_closest_refs; // if true, do not prune closest ref frames
 } MeHmeRefPruneCtrls;
 
 typedef struct MeSrCtrls {
@@ -378,10 +378,10 @@ typedef struct MeContext {
     EbBitFraction     *mvd_bits_array;
     uint8_t            hme_search_method;
     uint8_t            me_search_method;
-    EbBool             enable_hme_flag;
-    EbBool             enable_hme_level0_flag;
-    EbBool             enable_hme_level1_flag;
-    EbBool             enable_hme_level2_flag;
+    Bool             enable_hme_flag;
+    Bool             enable_hme_level0_flag;
+    Bool             enable_hme_level1_flag;
+    Bool             enable_hme_level2_flag;
     MeHmeRefPruneCtrls me_hme_prune_ctrls;
     MeSrCtrls          me_sr_adjustment_ctrls;
     uint8_t            max_hme_sr_area_multipler;
@@ -439,7 +439,7 @@ typedef struct MeContext {
     uint8_t                     num_of_list_to_search;
     uint8_t                     num_of_ref_pic_to_search[2];
     uint8_t                     temporal_layer_index;
-    EbBool                      is_used_as_reference_flag;
+    Bool                      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray me_ds_ref_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     // tf
     uint8_t      tf_chroma;

@@ -568,7 +568,7 @@ static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor, doubl
     return boost;
 }
 
-int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta, EB_SLICE slice_type) {
+int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta, SliceType slice_type) {
     assert(beta > 0.0);
     int q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
     int newq;
@@ -1017,8 +1017,8 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
                    100),
               0.0);
 
-    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P ||
-        scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
+    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
+        scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index) {
             int8_t boost = non_base_boost(pcs_ptr);
             if (boost)
@@ -1124,7 +1124,7 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
                 ppcs_ptr->pa_me_data->tpl_rdmult_scaling_factors[index];
         }
     }
-    ppcs_ptr->blk_lambda_tuning = EB_TRUE;
+    ppcs_ptr->blk_lambda_tuning = TRUE;
 }
 
 /******************************************************
@@ -1306,7 +1306,7 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
           scs_ptr->static_config.pass == ENC_LAST_PASS) &&
         scs_ptr->static_config.pass != ENC_FIRST_PASS && rc_cfg->mode == AOM_CBR) {
-        if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P) {
+        if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P) {
             rc->onepass_cbr_mode = 2;
         } else {
             rc->onepass_cbr_mode = 1;
@@ -3084,8 +3084,8 @@ static void store_param(PictureParentControlSet         *ppcs_ptr,
 static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
     int32_t                   queue_entry_index;
     coded_frames_stats_entry *queue_entry_ptr;
-    EbBool                    move_slide_window_flag = EB_TRUE;
-    EbBool                    end_of_sequence_flag   = EB_TRUE;
+    Bool                    move_slide_window_flag = TRUE;
+    Bool                    end_of_sequence_flag   = TRUE;
 
     SequenceControlSet *scs_ptr = (SequenceControlSet *)ppcs_ptr->scs_wrapper_ptr->object_ptr;
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -3105,7 +3105,7 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
     queue_entry_ptr->picture_number         = ppcs_ptr->picture_number;
     queue_entry_ptr->end_of_sequence_flag   = ppcs_ptr->end_of_sequence_flag;
 
-    move_slide_window_flag = EB_TRUE;
+    move_slide_window_flag = TRUE;
     while (move_slide_window_flag) {
         // Check if the sliding window condition is valid
         uint32_t queue_entry_index_temp = rc->coded_frames_stat_queue_head_index;
@@ -3113,7 +3113,7 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
             end_of_sequence_flag =
                 rc->coded_frames_stat_queue[queue_entry_index_temp]->end_of_sequence_flag;
         else
-            end_of_sequence_flag = EB_FALSE;
+            end_of_sequence_flag = FALSE;
         while (move_slide_window_flag && !end_of_sequence_flag &&
                queue_entry_index_temp <
                    rc->coded_frames_stat_queue_head_index + rc->rate_average_periodin_frames) {
@@ -3122,7 +3122,7 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
                 ? queue_entry_index_temp - CODED_FRAMES_STAT_QUEUE_MAX_DEPTH
                 : queue_entry_index_temp;
 
-            move_slide_window_flag = (EbBool)(move_slide_window_flag &&
+            move_slide_window_flag = (Bool)(move_slide_window_flag &&
                                               (rc->coded_frames_stat_queue[queue_entry_index_temp2]
                                                    ->frame_total_bit_actual != -1));
 
@@ -3132,7 +3132,7 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
                 end_of_sequence_flag =
                     rc->coded_frames_stat_queue[queue_entry_index_temp2]->end_of_sequence_flag;
             } else
-                end_of_sequence_flag = EB_FALSE;
+                end_of_sequence_flag = FALSE;
             queue_entry_index_temp++;
         }
 
@@ -3141,7 +3141,7 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
             queue_entry_ptr = (rc->coded_frames_stat_queue[rc->coded_frames_stat_queue_head_index]);
             queue_entry_index_temp = rc->coded_frames_stat_queue_head_index;
             // This is set to false, so the last frame would go inside the loop
-            end_of_sequence_flag        = EB_FALSE;
+            end_of_sequence_flag        = FALSE;
             uint32_t frames_in_sw       = 0;
             rc->total_bit_actual_per_sw = 0;
 
@@ -3250,8 +3250,8 @@ void *rate_control_kernel(void *input_ptr) {
 
         rate_control_tasks_ptr = (RateControlTasks *)rate_control_tasks_wrapper_ptr->object_ptr;
         task_type              = rate_control_tasks_ptr->task_type;
-        EbBool is_superres_recode_task = (task_type == RC_INPUT_SUPERRES_RECODE) ? EB_TRUE
-                                                                                 : EB_FALSE;
+        Bool is_superres_recode_task = (task_type == RC_INPUT_SUPERRES_RECODE) ? TRUE
+                                                                                 : FALSE;
 
         // Modify these for different temporal layers later
         switch (task_type) {
@@ -3271,19 +3271,19 @@ void *rate_control_kernel(void *input_ptr) {
             else
                 rc->rate_average_periodin_frames = 60;
             if (!is_superres_recode_task) {
-                pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
+                pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = FALSE;
             }
             reset_rc_param(pcs_ptr->parent_pcs_ptr);
             // Frame level RC. Find the ParamPtr for the current GOP
             {
                 uint32_t interval_index_temp = 0;
-                EbBool   interval_found      = EB_FALSE;
+                Bool   interval_found      = FALSE;
                 while ((interval_index_temp < PARALLEL_GOP_MAX_NUMBER) && !interval_found) {
                     if (pcs_ptr->picture_number >=
                             context_ptr->rate_control_param_queue[interval_index_temp]->first_poc &&
                         pcs_ptr->picture_number <=
                             context_ptr->rate_control_param_queue[interval_index_temp]->last_poc) {
-                        interval_found = EB_TRUE;
+                        interval_found = TRUE;
                     } else
                         interval_index_temp++;
                 }
@@ -3362,7 +3362,7 @@ void *rate_control_kernel(void *input_ptr) {
                            chroma_qindex);
 */
                 } else if (scs_ptr->enable_qp_scaling_flag &&
-                           pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
+                           pcs_ptr->parent_pcs_ptr->qp_on_the_fly == FALSE) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                     int32_t new_qindex;
@@ -3396,7 +3396,7 @@ void *rate_control_kernel(void *input_ptr) {
                     if (scs_ptr->static_config.rate_control_mode == 0 &&
                         scs_ptr->static_config.max_bit_rate)
                         crf_assign_max_rate(pcs_ptr->parent_pcs_ptr);
-                } else if (pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_TRUE) {
+                } else if (pcs_ptr->parent_pcs_ptr->qp_on_the_fly == TRUE) {
                     pcs_ptr->picture_qp = (uint8_t)CLIP3(
                         (int32_t)scs_ptr->static_config.min_qp_allowed,
                         (int32_t)scs_ptr->static_config.max_qp_allowed,

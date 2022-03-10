@@ -15,7 +15,7 @@
 #include "EbModeDecisionProcess.h"
 #include "EbLambdaRateTables.h"
 
-uint8_t get_bypass_encdec(EbEncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
+uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
 void    set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt,
                                                   uint8_t block_based_depth_refinement_level);
 int     svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
@@ -101,9 +101,9 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->temp_recon_ptr);
 }
 #if TUNE_4L_M7
-uint8_t get_nic_level(EbEncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
+uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
 #else
-uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
+uint8_t get_nic_level(EncMode enc_mode, uint8_t temporal_layer_index);
 #endif
 uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
 void    set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
@@ -111,10 +111,10 @@ void    set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_
                  uint8_t pic_type);
 
 #if OPT_UPDATE_CDF_MEM
-uint8_t get_update_cdf_level(EbEncMode enc_mode, EB_SLICE is_islice, uint8_t is_base);
+uint8_t get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base);
 #endif
 #if OPT_CAND_BUFF_MEM
-uint8_t get_chroma_level(EbEncMode enc_mode);
+uint8_t get_chroma_level(EncMode enc_mode);
 uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
 #endif
 
@@ -122,7 +122,7 @@ uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
 * return the max canidate count for MDS0
   Used by candidate injection and memory allocation
 */
-uint16_t get_max_can_count(EbEncMode enc_mode) {
+uint16_t get_max_can_count(EncMode enc_mode) {
     //NOTE: this is a memory feature and not a speed feature. it should not be have any speed/quality impact.
     uint16_t mem_max_can_count;
 
@@ -239,7 +239,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 #if !CLN_MD_CTX
     // MD rate Estimation tables
     EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
-    context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
+    context_ptr->is_md_rate_estimation_ptr_owner = TRUE;
 #endif
 #if OPT_UPDATE_CDF_MEM
     uint8_t use_update_cdf = 0;
@@ -401,7 +401,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             init_data.right_padding      = 0;
             init_data.top_padding        = 0;
             init_data.bot_padding        = 0;
-            init_data.split_mode         = EB_FALSE;
+            init_data.split_mode         = FALSE;
 
             EB_NEW(context_ptr->md_blk_arr_nsq[coded_leaf_index].coeff_tmp,
                    svt_picture_buffer_desc_ctor,
@@ -418,7 +418,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             init_data.right_padding = 0;
             init_data.top_padding   = 0;
             init_data.bot_padding   = 0;
-            init_data.split_mode    = EB_FALSE;
+            init_data.split_mode    = FALSE;
 
             EB_NEW(context_ptr->md_blk_arr_nsq[coded_leaf_index].recon_tmp,
                    svt_picture_buffer_desc_ctor,
@@ -450,7 +450,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     picture_buffer_desc_init_data.right_padding      = 0;
     picture_buffer_desc_init_data.top_padding        = 0;
     picture_buffer_desc_init_data.bot_padding        = 0;
-    picture_buffer_desc_init_data.split_mode         = EB_FALSE;
+    picture_buffer_desc_init_data.split_mode         = FALSE;
 
     thirty_two_width_picture_buffer_desc_init_data.max_width    = sb_size;
     thirty_two_width_picture_buffer_desc_init_data.max_height   = sb_size;
@@ -462,7 +462,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     thirty_two_width_picture_buffer_desc_init_data.right_padding = 0;
     thirty_two_width_picture_buffer_desc_init_data.top_padding   = 0;
     thirty_two_width_picture_buffer_desc_init_data.bot_padding   = 0;
-    thirty_two_width_picture_buffer_desc_init_data.split_mode    = EB_FALSE;
+    thirty_two_width_picture_buffer_desc_init_data.split_mode    = FALSE;
 
     for (uint32_t txt_itr = 0; txt_itr < TX_TYPES; ++txt_itr) {
         EB_NEW(context_ptr->recon_coeff_ptr[txt_itr],
@@ -488,7 +488,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     double_width_picture_buffer_desc_init_data.right_padding      = 0;
     double_width_picture_buffer_desc_init_data.top_padding        = 0;
     double_width_picture_buffer_desc_init_data.bot_padding        = 0;
-    double_width_picture_buffer_desc_init_data.split_mode         = EB_FALSE;
+    double_width_picture_buffer_desc_init_data.split_mode         = FALSE;
 
     // The temp_recon_ptr and temp_residual_ptr will be shared by all candidates
     // If you want to do something with residual or recon, you need to create one
@@ -597,7 +597,7 @@ void av1_lambda_assign_md(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 }
 
 void av1_lambda_assign(PictureControlSet *pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
-                       uint8_t bit_depth, uint16_t qp_index, EbBool multiply_lambda) {
+                       uint8_t bit_depth, uint16_t qp_index, Bool multiply_lambda) {
     if (bit_depth == 8) {
         *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr, (uint8_t)qp_index, bit_depth);
         *fast_lambda = av1_lambda_mode_decision8_bit_sad[qp_index];
@@ -636,7 +636,7 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
 #if !CLN_MD_CTX
     if (context_ptr->is_md_rate_estimation_ptr_owner) {
-        context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
+        context_ptr->is_md_rate_estimation_ptr_owner = FALSE;
         EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
     }
 #endif

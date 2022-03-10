@@ -272,7 +272,7 @@ EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b
 // set. Does not gaurantee the original order of the nodes.
 
 EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL,
-                                       EbBool (*predicate_func)(EbLinkedListNode*));
+                                       Bool (*predicate_func)(EbLinkedListNode*));
 
 #define MINI_GOP_MAX_COUNT 15
 #define MINI_GOP_WINDOW_MAX_COUNT 8 // widow subdivision: 8 x 3L

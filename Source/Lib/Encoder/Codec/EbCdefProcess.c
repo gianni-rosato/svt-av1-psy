@@ -46,7 +46,7 @@ void    svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *
                                        SequenceControlSet *scs_ptr);
 void    set_unscaled_input_16bit(PictureControlSet *pcs_ptr);
 
-void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
+void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 
 /**************************************
  * Cdef Context
@@ -143,7 +143,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc *)
                                                  pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *recon_picture_ptr;
-    if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+    if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE)
         recon_picture_ptr = ((EbReferenceObject *)
                                  pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                                 ->reference_picture;
@@ -642,7 +642,7 @@ void *cdef_kernel(void *input_ptr) {
         pcs_ptr         = (PictureControlSet *)dlf_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr         = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
-        EbBool     is_16bit      = scs_ptr->is_16bit_pipeline;
+        Bool     is_16bit      = scs_ptr->is_16bit_pipeline;
         Av1Common *cm            = pcs_ptr->parent_pcs_ptr->av1_cm;
         frm_hdr                  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         CdefControls *cdef_ctrls = &pcs_ptr->parent_pcs_ptr->cdef_ctrls;
@@ -705,9 +705,9 @@ void *cdef_kernel(void *input_ptr) {
             pcs_ptr->tot_seg_searched_rest      = 0;
             pcs_ptr->parent_pcs_ptr->av1_cm->use_boundaries_in_rest_search =
                 scs_ptr->use_boundaries_in_rest_search;
-            pcs_ptr->rest_extend_flag[0] = EB_FALSE;
-            pcs_ptr->rest_extend_flag[1] = EB_FALSE;
-            pcs_ptr->rest_extend_flag[2] = EB_FALSE;
+            pcs_ptr->rest_extend_flag[0] = FALSE;
+            pcs_ptr->rest_extend_flag[1] = FALSE;
+            pcs_ptr->rest_extend_flag[2] = FALSE;
 
             uint32_t segment_index;
             for (segment_index = 0; segment_index < pcs_ptr->rest_segments_total_count;

@@ -49,18 +49,18 @@ typedef struct IntraReferenceSamples {
     // Scratch buffers used in the interpolaiton process
     uint8_t reference_above_line_y[(MAX_PU_SIZE << 2) + 1];
     uint8_t reference_left_line_y[(MAX_PU_SIZE << 2) + 1];
-    EbBool  above_ready_flag_y;
-    EbBool  left_ready_flag_y;
+    Bool  above_ready_flag_y;
+    Bool  left_ready_flag_y;
 
     uint8_t reference_above_line_cb[(MAX_PU_SIZE << 2) + 2];
     uint8_t reference_left_line_cb[(MAX_PU_SIZE << 2) + 2];
-    EbBool  above_ready_flag_cb;
-    EbBool  left_ready_flag_cb;
+    Bool  above_ready_flag_cb;
+    Bool  left_ready_flag_cb;
 
     uint8_t reference_above_line_cr[(MAX_PU_SIZE << 2) + 2];
     uint8_t reference_left_line_cr[(MAX_PU_SIZE << 2) + 2];
-    EbBool  above_ready_flag_cr;
-    EbBool  left_ready_flag_cr;
+    Bool  above_ready_flag_cr;
+    Bool  left_ready_flag_cr;
 } IntraReferenceSamples;
 
 typedef struct IntraReference16bitSamples {
@@ -77,18 +77,18 @@ typedef struct IntraReference16bitSamples {
     // Scratch buffers used in the interpolaiton process
     uint16_t reference_above_line_y[(MAX_PU_SIZE << 2) + 1];
     uint16_t reference_left_line_y[(MAX_PU_SIZE << 2) + 1];
-    EbBool   above_ready_flag_y;
-    EbBool   left_ready_flag_y;
+    Bool   above_ready_flag_y;
+    Bool   left_ready_flag_y;
 
     uint16_t reference_above_line_cb[(MAX_PU_SIZE << 2) + 2];
     uint16_t reference_left_line_cb[(MAX_PU_SIZE << 2) + 2];
-    EbBool   above_ready_flag_cb;
-    EbBool   left_ready_flag_cb;
+    Bool   above_ready_flag_cb;
+    Bool   left_ready_flag_cb;
 
     uint16_t reference_above_line_cr[(MAX_PU_SIZE << 2) + 2];
     uint16_t reference_left_line_cr[(MAX_PU_SIZE << 2) + 2];
-    EbBool   above_ready_flag_cr;
-    EbBool   left_ready_flag_cr;
+    Bool   above_ready_flag_cr;
+    Bool   left_ready_flag_cr;
 } IntraReference16bitSamples;
 
 #define TOTAL_LUMA_MODES 35
@@ -178,32 +178,32 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_si
 
 typedef void (*EB_INTRA_NOANG_TYPE)(const uint32_t size, uint8_t *ref_samples,
                                     uint8_t       *prediction_ptr,
-                                    const uint32_t prediction_buffer_stride, const EbBool skip);
+                                    const uint32_t prediction_buffer_stride, const Bool skip);
 typedef void (*EB_INTRA_DC_AV1_TYPE)(
     const uint32_t size, //input parameter, denotes the size of the current PU
     uint8_t       *ref_samples, //input parameter, pointer to the reference samples
     uint8_t       *dst, //output parameter, pointer to the prediction
     const uint32_t
         prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool skip); //skip half rows
+    const Bool skip); //skip half rows
 typedef void (*EB_INTRA_NOANG_16bit_TYPE)(const uint32_t size, uint16_t *ref_samples,
                                           uint16_t      *prediction_ptr,
                                           const uint32_t prediction_buffer_stride,
-                                          const EbBool   skip);
+                                          const Bool   skip);
 typedef void (*EB_INTRA_ANG_Z1_Z2_Z3_16bit_TYPE)(const uint32_t size, uint16_t *ref_samples,
                                                  uint16_t      *dst,
                                                  const uint32_t prediction_buffer_stride,
-                                                 const EbBool skip, uint16_t dx, uint16_t dy,
+                                                 const Bool skip, uint16_t dx, uint16_t dy,
                                                  uint16_t bd);
 typedef void (*EB_INTRA_ANG_TYPE)(uint32_t size, uint8_t *ref_samp_main, uint8_t *prediction_ptr,
-                                  uint32_t prediction_buffer_stride, const EbBool skip,
+                                  uint32_t prediction_buffer_stride, const Bool skip,
                                   int32_t intra_pred_angle);
 typedef void (*EB_INTRA_ANG_16BIT_TYPE)(
     uint32_t  size, //input parameter, denotes the size of the current PU
     uint16_t *ref_samp_main, //input parameter, pointer to the reference samples
     uint16_t *prediction_ptr, //output parameter, pointer to the prediction
     uint32_t  prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool skip, int32_t intra_pred_angle);
+    const Bool skip, int32_t intra_pred_angle);
 
 extern void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, // AMIR-> Changed to 8 bit
                                                int32_t input_stride, int16_t *output_q3,
@@ -315,8 +315,8 @@ static INLINE int get_palette_bsize_ctx(BlockSize bsize) {
     return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
 }
 
-static INLINE EbBool av1_use_angle_delta(BlockSize bsize, uint8_t enable_angle_delta) {
-    return (enable_angle_delta ? bsize >= BLOCK_8X8 : (EbBool)enable_angle_delta);
+static INLINE Bool av1_use_angle_delta(BlockSize bsize, uint8_t enable_angle_delta) {
+    return (enable_angle_delta ? bsize >= BLOCK_8X8 : (Bool)enable_angle_delta);
 }
 
 #ifdef __cplusplus

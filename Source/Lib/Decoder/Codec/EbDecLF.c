@@ -448,7 +448,7 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
     FrameHeader   *frm_hdr      = &dec_handle->frame_header;
     EbColorConfig *color_config = &dec_handle->seq_header.color_config;
 
-    EbBool is16bit = (recon_picture_buf->bit_depth > EB_8BIT || dec_handle->is_16bit_pipeline);
+    Bool is16bit = (recon_picture_buf->bit_depth > EB_8BIT || dec_handle->is_16bit_pipeline);
 
     int32_t sub_x = color_config->subsampling_x;
     int32_t sub_y = color_config->subsampling_y;
@@ -719,7 +719,7 @@ void dec_loop_filter_row(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon
 
     for (int32_t x_sb_index = 0; x_sb_index < pic_width_in_sb; ++x_sb_index) {
         int32_t sb_origin_x     = x_sb_index << sb_size_log2;
-        int32_t end_of_row_flag = (x_sb_index == pic_width_in_sb - 1) ? EB_TRUE : EB_FALSE;
+        int32_t end_of_row_flag = (x_sb_index == pic_width_in_sb - 1) ? TRUE : FALSE;
 
         SBInfo *sb_info = frame_buf->sb_info +
             (((y_sb_index * main_frame_buf->sb_cols) + x_sb_index));
@@ -787,7 +787,7 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc 
             for (uint32_t x_sb_index = 0; x_sb_index < pic_width_in_sb; ++x_sb_index) {
                 uint32_t sb_origin_x     = x_sb_index << sb_size_log2;
                 uint32_t sb_origin_y     = y_sb_index << sb_size_log2;
-                EbBool   end_of_row_flag = x_sb_index == pic_width_in_sb - 1;
+                Bool   end_of_row_flag = x_sb_index == pic_width_in_sb - 1;
 
                 MainFrameBuf *main_frame_buf = &dec_handle_ptr->main_frame_buf;
                 CurFrameBuf  *frame_buf      = &main_frame_buf->cur_frame_bufs[0];

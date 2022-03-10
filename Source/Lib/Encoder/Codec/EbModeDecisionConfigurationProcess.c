@@ -32,10 +32,10 @@ void    invert_quant(int16_t *quant, int16_t *shift, int32_t d);
 int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
-uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
-uint8_t get_bypass_encdec(EbEncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
-uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolution resolution,
-                                               EB_SLICE slice_type, uint8_t sc_class1,
+uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
+uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
+uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
+                                               SliceType slice_type, uint8_t sc_class1,
                                                uint8_t is_used_as_reference_flag,
                                                uint8_t temporal_layer_index);
 
@@ -60,7 +60,7 @@ static MeshPattern intrabc_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
     {{64, 4}, {16, 1}, {0, 0}, {0, 0}},
 };
 static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = {100, 100, 100, 25, 25, 10};
-
+#if !CLN_DEFINITIONS
 // Adaptive Depth Partitioning
 // Shooting states
 #define UNDER_SHOOTING 0
@@ -106,7 +106,7 @@ static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = {100, 100, 100, 25, 25
 #define LOW_SB_SCORE 6000
 #define MAX_LUMINOSITY_BOOST 10
 int32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = {55, 55, 55, 55, 55, 55, 5, 5, 0};
-
+#endif
 void set_global_motion_field(PictureControlSet *pcs_ptr) {
     // Init Global Motion Vector
     uint8_t frame_index;
@@ -330,7 +330,7 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     }
     // Initial Rate Estimation of the syntax elements
     av1_estimate_syntax_rate(md_rate_estimation_array,
-                             pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
+                             pcs_ptr->slice_type == I_SLICE ? TRUE : FALSE,
                              pcs_ptr->pic_filter_intra_level,
                              pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
                              pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_restoration,
@@ -414,12 +414,12 @@ EbErrorType rtime_alloc_ec_ctx_array(PictureControlSet *pcs_ptr, uint16_t all_sb
 }
 
 #if TUNE_4L_M7
-uint8_t get_nic_level(EbEncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
+uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
 #else
-    uint8_t     get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
+    uint8_t     get_nic_level(EncMode enc_mode, uint8_t temporal_layer_index);
 #endif
 #if OPT_UPDATE_CDF_MEM
-uint8_t get_update_cdf_level(EbEncMode enc_mode, EB_SLICE is_islice, uint8_t is_base) {
+uint8_t get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base) {
     uint8_t update_cdf_level = 0;
     if (enc_mode <= ENC_M2)
         update_cdf_level = 1;
@@ -434,7 +434,7 @@ uint8_t get_update_cdf_level(EbEncMode enc_mode, EB_SLICE is_islice, uint8_t is_
 }
 #endif
 #if OPT_CAND_BUFF_MEM
-uint8_t get_chroma_level(EbEncMode enc_mode) {
+uint8_t get_chroma_level(EncMode enc_mode) {
     uint8_t chroma_level = 0;
     if (enc_mode <= ENC_MRS)
         chroma_level = 1;
@@ -453,14 +453,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                                                              PictureControlSet  *pcs_ptr) {
     EbErrorType              return_error     = EB_ErrorNone;
     PictureParentControlSet *ppcs             = pcs_ptr->parent_pcs_ptr;
-    const EbEncMode          enc_mode         = pcs_ptr->enc_mode;
+    const EncMode          enc_mode         = pcs_ptr->enc_mode;
     const uint8_t            is_ref           = ppcs->is_used_as_reference_flag;
     const uint8_t            is_base          = ppcs->temporal_layer_index == 0;
     const EbInputResolution  input_resolution = ppcs->input_resolution;
 #if CLN_SIG_DERIV
     const uint8_t            is_islice        = pcs_ptr->slice_type == I_SLICE;
 #endif
-    const EB_SLICE           slice_type       = pcs_ptr->slice_type;
+    const SliceType           slice_type       = pcs_ptr->slice_type;
     const uint8_t            fast_decode      = scs_ptr->static_config.fast_decode;
 #if TUNE_4L_M11
     const uint32_t           hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
@@ -600,13 +600,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
     }
 
-    EbBool enable_wm = pcs_ptr->wm_level ? 1 : 0;
+    Bool enable_wm = pcs_ptr->wm_level ? 1 : 0;
 #if CLN_SIG_DERIV
     if (scs_ptr->enable_warped_motion != DEFAULT)
-        enable_wm = (EbBool)scs_ptr->enable_warped_motion;
+        enable_wm = (Bool)scs_ptr->enable_warped_motion;
 #else
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->enable_warped_motion != DEFAULT)
-        enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->enable_warped_motion;
+        enable_wm = (Bool)pcs_ptr->parent_pcs_ptr->scs_ptr->enable_warped_motion;
 #endif
     // Note: local warp should be disabled when super-res is ON
     // according to the AV1 spec 5.11.27
@@ -1268,8 +1268,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M7)
         pcs_ptr->pic_pd0_level = LIGHT_PD0_LVL1;
 #endif
-    else if (enc_mode <= ENC_M7)
-        pcs_ptr->pic_pd0_level = LIGHT_PD0_LVL1;
     else if (enc_mode <= ENC_M10)
         pcs_ptr->pic_pd0_level = LIGHT_PD0_LVL2;
     else
@@ -1460,8 +1458,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // There is another check before PD1 is called; pred_depth_only is not checked here, because some modes
     // may force pred_depth_only at the light-pd1 detector
     if (pcs_ptr->pic_lpd1_lvl &&
-        !(ppcs->hbd_mode_decision == 0 && ppcs->disallow_nsq == EB_TRUE &&
-          pcs_ptr->pic_disallow_4x4 == EB_TRUE && scs_ptr->super_block_size == 64)) {
+        !(ppcs->hbd_mode_decision == 0 && ppcs->disallow_nsq == TRUE &&
+          pcs_ptr->pic_disallow_4x4 == TRUE && scs_ptr->super_block_size == 64)) {
         pcs_ptr->pic_lpd1_lvl = 0;
     }
 
@@ -1649,10 +1647,15 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
     }
 
     int ref_stamp = MFMV_STACK_SIZE - 1;
-
+#if CLN_DEFINITIONS
+    if (ref_buf[0 /*LAST_FRAME - LAST_FRAME*/] != NULL) {
+        const int alt_of_lst_order_hint =
+            ref_buf[0 /*LAST_FRAME - LAST_FRAME*/]->ref_order_hint[ALTREF_FRAME - LAST_FRAME];
+#else
     if (ref_buf[LAST_FRAME - LAST_FRAME] != NULL) {
         const int alt_of_lst_order_hint =
             ref_buf[LAST_FRAME - LAST_FRAME]->ref_order_hint[ALTREF_FRAME - LAST_FRAME];
+#endif
         const int is_lst_overlay = (alt_of_lst_order_hint ==
                                     ref_order_hint[GOLDEN_FRAME - LAST_FRAME]);
         if (!is_lst_overlay)
@@ -1787,7 +1790,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // -------
         if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled == 1 &&
             pcs_ptr->slice_type != I_SLICE) {
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE &&
                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // update mi_rows and mi_cols for the reference pic wrapper (used in mfmv for other pictures)
                 EbReferenceObject *reference_object =
@@ -1843,7 +1846,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         }
         // Initial Rate Estimation of the syntax elements
         av1_estimate_syntax_rate(md_rate_estimation_array,
-                                 pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
+                                 pcs_ptr->slice_type == I_SLICE ? TRUE : FALSE,
                                  pcs_ptr->pic_filter_intra_level,
                                  pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
                                  scs_ptr->seq_header.enable_restoration,

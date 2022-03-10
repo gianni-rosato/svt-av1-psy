@@ -39,10 +39,10 @@ typedef struct EbAV1StreamInfo {
     EbColorConfig color_config;
 
     /* Film Grain Synthesis Present */
-    EbBool film_grain_params_present;
+    Bool film_grain_params_present;
 
     /* The stream is in annex_b format */
-    EbBool is_annex_b;
+    Bool is_annex_b;
 } EbAV1StreamInfo;
 
 typedef struct EbAV1FrameInfo {
@@ -70,7 +70,7 @@ typedef struct EbSvtAv1DecConfiguration {
     /* Skip film grain synthesis if it is present in the bitstream. Can be used for debugging purpose.
      *
      * Default is 0 */
-    EbBool skip_film_grain;
+    Bool skip_film_grain;
 
     /* Skip N output frames in the display order.
      *
@@ -96,7 +96,7 @@ typedef struct EbSvtAv1DecConfiguration {
      *
      * Default is 0. */
 
-    EbBool eight_bit_output;
+    Bool eight_bit_output;
 
     /* Picture parameters */
     uint32_t max_picture_width;
@@ -139,7 +139,7 @@ typedef struct EbSvtAv1DecConfiguration {
     /* Decoder internal bit-depth is set to 16-bit even if the bitstream is 8-bit
  *
  * Default is 0. */
-    EbBool is_16bit_pipeline;
+    Bool is_16bit_pipeline;
 } EbSvtAv1DecConfiguration;
 
 /* STEP 1: Call the library to construct a Component Handle.

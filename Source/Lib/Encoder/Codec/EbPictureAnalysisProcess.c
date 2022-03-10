@@ -2346,7 +2346,7 @@ void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_stride,
  ************************************************/
 void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs_ptr,
                                                         EbPictureBufferDesc *input_picture_ptr) {
-    EbBool is16_bit_input = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    Bool is16_bit_input = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
     uint32_t       color_format  = input_picture_ptr->color_format;
     const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
@@ -2609,9 +2609,9 @@ unsigned int svt_av1_get_sby_perpixel_variance(
 
 // Check if the number of color of a block is superior to 1 and inferior
 // to a given threshold.
-EbBool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int cols,
+Bool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int cols,
                                   int nb_colors_threshold) {
-    EbBool has_color[1 << 8]; // Maximum (1 << 8) color levels.
+    Bool has_color[1 << 8]; // Maximum (1 << 8) color levels.
     memset(has_color, 0, (1 << 8) * sizeof(*has_color));
     int nb_colors = 0;
 
@@ -2622,14 +2622,14 @@ EbBool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int 
                 has_color[this_val] = 1;
                 nb_colors++;
                 if (nb_colors > nb_colors_threshold)
-                    return EB_FALSE;
+                    return FALSE;
             }
         }
     }
     if (nb_colors <= 1)
-        return EB_FALSE;
+        return FALSE;
 
-    return EB_TRUE;
+    return TRUE;
 }
 
 // Estimate if the source frame is screen content, based on the portion of

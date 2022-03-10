@@ -1577,7 +1577,7 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                              RESTORATION_BORDER,
                              RESTORATION_BORDER,
                              highbd);
-            pcs_ptr->rest_extend_flag[plane] = EB_TRUE;
+            pcs_ptr->rest_extend_flag[plane] = TRUE;
         }
         svt_release_mutex(pcs_ptr->rest_search_mutex);
 

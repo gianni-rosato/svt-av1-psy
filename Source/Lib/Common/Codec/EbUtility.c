@@ -255,7 +255,7 @@ EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b
 
 // split a linked list
 EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL,
-                                       EbBool (*predicate_func)(EbLinkedListNode*)) {
+                                       Bool (*predicate_func)(EbLinkedListNode*)) {
     EbLinkedListNode* ll_true_ptr = (EbLinkedListNode*)
         NULL; // list of nodes satifying predicate_func(node) == TRUE
     EbLinkedListNode* ll_rest_ptr = (EbLinkedListNode*)

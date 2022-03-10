@@ -122,7 +122,7 @@ typedef struct ParseCtxt {
     /*!< Reference Loop Restoration Unit  */
     RestorationUnitInfo ref_lr_unit[MAX_MB_PLANE];
 
-    EbBool read_deltas;
+    Bool read_deltas;
 
     /* Buffer holding the delta LF values*/
     int32_t delta_lf[FRAME_LF_COUNT];

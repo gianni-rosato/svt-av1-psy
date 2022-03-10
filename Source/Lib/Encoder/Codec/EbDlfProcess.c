@@ -20,14 +20,14 @@
 #include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
 #include "aom_dsp_rtcd.h"
-void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
+void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                   int32_t after_cdef);
 void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc *src_8bit, EbPictureBufferDesc *dst_16bit,
                                    uint16_t ss_x, uint16_t ss_y);
 
 extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr,
-                          EbBool is_highbd);
+                          Bool is_highbd);
 
 static void dlf_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
@@ -79,7 +79,7 @@ void *dlf_kernel(void *input_ptr) {
         pcs_ptr             = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr             = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
-        EbBool is_16bit = scs_ptr->is_16bit_pipeline;
+        Bool is_16bit = scs_ptr->is_16bit_pipeline;
         if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
             svt_convert_pic_8bit_to_16bit(pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                                           pcs_ptr->input_frame16bit,
@@ -97,7 +97,7 @@ void *dlf_kernel(void *input_ptr) {
                                               pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
             }
         }
-        EbBool         dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
+        Bool         dlf_enable_flag = (Bool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
         const uint16_t tg_count        = pcs_ptr->parent_pcs_ptr->tile_group_cols *
             pcs_ptr->parent_pcs_ptr->tile_group_rows;
         // Move sb level lf to here if tile_parallel

@@ -188,7 +188,7 @@ extern "C" {
     ***************************************************************************/
     extern void av1_estimate_syntax_rate(
         MdRateEstimationContext      *md_rate_estimation_array,
-        EbBool                          is_i_slice,
+        Bool                          is_i_slice,
         uint8_t pic_filter_intra_level,
         uint8_t allow_screen_content_tools,
         uint8_t enable_restoration,

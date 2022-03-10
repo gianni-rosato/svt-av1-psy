@@ -56,7 +56,7 @@ typedef struct ModeDecisionCandidate {
     CandClass               cand_class;
     PredictionMode          pred_mode;
     uint8_t                 skip_mode; // skip mode_info + coeff. as defined in section 6.10.10 of the av1 text
-    EbBool                  skip_mode_allowed;
+    Bool                  skip_mode_allowed;
     uint8_t                 use_intrabc;
 
     // Intra Mode
@@ -93,7 +93,7 @@ typedef struct ModeDecisionCandidate {
     int16_t         motion_vector_yl1;
 #endif
     uint8_t         skip_flag;
-    EbBool          skip_mode_allowed;
+    Bool          skip_mode_allowed;
 #if !CLN_MOVE_COSTS_2
     uint16_t        count_non_zero_coeffs;
 #endif
@@ -113,7 +113,7 @@ typedef struct ModeDecisionCandidate {
     EbPtr           prediction_context_ptr;
 #endif
 #if !CLN_REMOVE_REDUND_2
-    EbPredDirection prediction_direction
+    PredDirection prediction_direction
         [MAX_NUM_OF_PU_PER_CU]; // 2 bits // Hsan: does not seem to be used why not removed ?
 #endif
 #if !CLN_CAND_MV
@@ -134,8 +134,8 @@ typedef struct ModeDecisionCandidate {
     // Intra Mode
     int32_t  angle_delta[PLANE_TYPES];
 #if !CLN_REMOVE_REDUND_6
-    EbBool   is_directional_mode_flag;
-    EbBool   is_directional_chroma_mode_flag;
+    Bool   is_directional_mode_flag;
+    Bool   is_directional_chroma_mode_flag;
 #endif
     uint8_t  filter_intra_mode;
     uint32_t intra_chroma_mode; // AV1 mode, no need to convert
@@ -147,7 +147,7 @@ typedef struct ModeDecisionCandidate {
 
     // Inter Mode
 #if !CLN_REMOVE_REDUND
-    EbBool                 is_compound;
+    Bool                 is_compound;
 #endif
     uint8_t                ref_frame_type;
     TxType                 transform_type[MAX_TXB_COUNT];
@@ -163,7 +163,7 @@ typedef struct ModeDecisionCandidate {
     MotionMode             motion_mode;
     uint16_t               num_proj_ref;
 #if !CLN_REMOVE_REDUND_5
-    EbBool                 local_warp_valid;
+    Bool                 local_warp_valid;
 #endif
     EbWarpedMotionParams   wm_params_l0;
     EbWarpedMotionParams   wm_params_l1;

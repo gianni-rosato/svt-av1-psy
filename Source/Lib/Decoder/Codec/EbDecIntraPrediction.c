@@ -186,7 +186,7 @@ static void cfl_compute_parameters(CflCtx *cfl_ctx, TxSize tx_size) {
 
 static void cfl_predict_block(PartitionInfo *xd, CflCtx *cfl_ctx, uint8_t *dst, int32_t dst_stride,
                               TxSize tx_size, int32_t plane, EbColorConfig *cc, FrameHeader *fh,
-                              EbBool is_16bit) {
+                              Bool is_16bit) {
     BlockModeInfo *mbmi                = xd->mi;
     CflAllowedType is_cfl_allowed_flag = is_cfl_allowed_with_frame_header(xd, cc, fh);
     assert(is_cfl_allowed_flag == CFL_ALLOWED);
@@ -283,7 +283,7 @@ static INLINE void sub8x8_adjust_offset(PartitionInfo *xd, const CflCtx *cfl_ctx
 
 void svt_cfl_store_tx(PartitionInfo *xd, CflCtx *cfl_ctx, int row, int col, TxSize tx_size,
                       BlockSize bsize, EbColorConfig *cc, uint8_t *dst_buff, uint32_t dst_stride,
-                      EbBool is_16bit) {
+                      Bool is_16bit) {
     if (block_size_high[bsize] == 4 || block_size_wide[bsize] == 4) {
         // Only dimensions of size 4 can have an odd offset.
         assert(!((col & 1) && tx_size_wide[tx_size] != 4));
@@ -671,7 +671,7 @@ void svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize tx_size
                                 void *pv_pred_buf, int32_t pred_stride, void *top_neigh_array,
                                 void *left_neigh_array, int32_t ref_stride, SeqHeader *seq_header,
                                 const PredictionMode mode, int32_t blk_mi_col_off,
-                                int32_t blk_mi_row_off, EbBitDepthEnum bit_depth, EbBool is_16bit) {
+                                int32_t blk_mi_row_off, EbBitDepthEnum bit_depth, Bool is_16bit) {
     //ToDo:are_parameters_computed variable for CFL so that cal part for V plane we can skip,
     //once we compute for U plane, this parameter is block level parameter.
     const EbColorConfig *cc    = &seq_header->color_config;
@@ -795,7 +795,7 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
     void *pv_top_neighbor_array, *pv_left_neighbor_array;
 
     EbDecHandle         *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    EbBool               is16b      = dec_handle->is_16bit_pipeline;
+    Bool               is16b      = dec_handle->is_16bit_pipeline;
     const PredictionMode mode       = (plane == AOM_PLANE_Y) ? part_info->mi->mode
                                                              : get_uv_mode(part_info->mi->uv_mode);
 

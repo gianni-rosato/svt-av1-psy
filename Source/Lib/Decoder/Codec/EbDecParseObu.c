@@ -1628,7 +1628,7 @@ void set_prev_frame_info(EbDecHandle *dec_handle_ptr) {
         dec_handle_ptr->frame_header.frame_size.frame_width;
     dec_mt_frame_data->prev_frame_info.prev_max_frame_height =
         dec_handle_ptr->frame_header.frame_size.frame_height;
-    dec_mt_frame_data->prev_frame_info.frame_header_read = EB_TRUE;
+    dec_mt_frame_data->prev_frame_info.frame_header_read = TRUE;
     dec_mt_frame_data->prev_frame_info.prev_sb_size      = dec_handle_ptr->seq_header.sb_size;
     svt_memcpy(&dec_mt_frame_data->prev_frame_info.prev_tiles_info, &tiles_info, sizeof(TilesInfo));
 }
@@ -1655,32 +1655,32 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
-    if (dec_mt_frame_data->prev_frame_info.frame_header_read != EB_TRUE) {
+    if (dec_mt_frame_data->prev_frame_info.frame_header_read != TRUE) {
         set_prev_frame_info(dec_handle_ptr);
         return;
     }
 
-    EbBool do_realloc = EB_FALSE;
+    Bool do_realloc = FALSE;
     if (dec_mt_frame_data->prev_frame_info.prev_max_frame_width !=
             dec_handle_ptr->frame_header.frame_size.frame_width ||
         dec_mt_frame_data->prev_frame_info.prev_max_frame_height !=
             dec_handle_ptr->frame_header.frame_size.frame_height) {
-        do_realloc = EB_TRUE;
+        do_realloc = TRUE;
     }
 
     if (dec_mt_frame_data->prev_frame_info.prev_sb_size != dec_handle_ptr->seq_header.sb_size) {
-        do_realloc = EB_TRUE;
+        do_realloc = TRUE;
     }
 
     if (dec_mt_frame_data->prev_frame_info.prev_tiles_info.tile_cols != tiles_info.tile_cols ||
         dec_mt_frame_data->prev_frame_info.prev_tiles_info.tile_rows != tiles_info.tile_rows) {
-        do_realloc = EB_TRUE;
+        do_realloc = TRUE;
     }
 
     for (int i = 0; i <= tiles_info.tile_cols; i++) {
         if (dec_mt_frame_data->prev_frame_info.prev_tiles_info.tile_col_start_mi[i] !=
             tiles_info.tile_col_start_mi[i]) {
-            do_realloc = EB_TRUE;
+            do_realloc = TRUE;
             break;
         }
     }
@@ -1688,7 +1688,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr) {
     for (int i = 0; i <= tiles_info.tile_rows; i++) {
         if (dec_mt_frame_data->prev_frame_info.prev_tiles_info.tile_row_start_mi[i] !=
             tiles_info.tile_row_start_mi[i]) {
-            do_realloc = EB_TRUE;
+            do_realloc = TRUE;
             break;
         }
     }
@@ -2084,9 +2084,9 @@ void read_uncompressed_header(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeade
 
     if (dec_handle_ptr->dec_config.threads > 1) {
         /* Call System Resource Init only once */
-        if (EB_FALSE == dec_handle_ptr->start_thread_process) {
+        if (FALSE == dec_handle_ptr->start_thread_process) {
             dec_system_resource_init(dec_handle_ptr, &tiles_info);
-            dec_handle_ptr->start_thread_process = EB_TRUE;
+            dec_handle_ptr->start_thread_process = TRUE;
         }
         check_mt_support(dec_handle_ptr);
     }
@@ -2274,22 +2274,22 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
     int      is_mt       = num_threads != 1;
 
     /* PPF flags derivation */
-    EbBool no_ibc = !dec_handle_ptr->frame_header.allow_intrabc;
+    Bool no_ibc = !dec_handle_ptr->frame_header.allow_intrabc;
     /* LF */
-    EbBool do_lf_flag = no_ibc &&
+    Bool do_lf_flag = no_ibc &&
         (dec_handle_ptr->frame_header.loop_filter_params.filter_level[0] ||
          dec_handle_ptr->frame_header.loop_filter_params.filter_level[1]);
     /* CDEF */
-    EbBool do_cdef = no_ibc &&
+    Bool do_cdef = no_ibc &&
         (!frame_header->coded_lossless &&
          (frame_header->cdef_params.cdef_bits || frame_header->cdef_params.cdef_y_strength[0] ||
           frame_header->cdef_params.cdef_uv_strength[0]));
 
-    EbBool do_upscale = no_ibc && !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
+    Bool do_upscale = no_ibc && !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
     /* LR */
-    //EbBool opt_lr = !do_cdef && !do_upscale;
+    //Bool opt_lr = !do_cdef && !do_upscale;
     LrParams *lr_param = dec_handle_ptr->frame_header.lr_params;
-    EbBool    do_lr    = no_ibc &&
+    Bool    do_lr    = no_ibc &&
         (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);
@@ -2329,11 +2329,11 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         const int sb_mvs_rows = (mvs_rows + 7) >> 3; //64x64 unit level
         dec_mt_frame_data->motion_proj_info.num_motion_proj_rows       = sb_mvs_rows;
         dec_mt_frame_data->motion_proj_info.motion_proj_row_to_process = 0;
-        dec_mt_frame_data->motion_proj_info.motion_proj_init_done      = EB_FALSE;
+        dec_mt_frame_data->motion_proj_info.motion_proj_init_done      = FALSE;
         dec_mt_frame_data->num_threads_header                          = 0;
 
         svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
-        dec_mt_frame_data->start_motion_proj = EB_TRUE;
+        dec_mt_frame_data->start_motion_proj = TRUE;
         svt_release_mutex(dec_mt_frame_data->temp_mutex);
         svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
@@ -2344,7 +2344,7 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         svt_av1_queue_parse_jobs(dec_handle_ptr, tiles_info);
 
         svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
-        dec_mt_frame_data->start_parse_frame = EB_TRUE;
+        dec_mt_frame_data->start_parse_frame = TRUE;
 
         dec_mt_frame_data->num_threads_cdefed = 0;
         dec_mt_frame_data->num_threads_lred   = 0;
@@ -2358,12 +2358,12 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         svt_av1_queue_cdef_jobs(dec_handle_ptr);
         svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
 
-        dec_mt_frame_data->start_lf_frame = EB_TRUE;
+        dec_mt_frame_data->start_lf_frame = TRUE;
         /*ToDo : Post outside mutex lock */
         svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
             svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
-        dec_mt_frame_data->start_cdef_frame = EB_TRUE;
+        dec_mt_frame_data->start_cdef_frame = TRUE;
         svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
             svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
@@ -2446,7 +2446,7 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
     if (is_mt) {
         if (do_upscale)
             svt_av1_queue_lr_jobs(dec_handle_ptr);
-        dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.start_lr_frame = EB_TRUE;
+        dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.start_lr_frame = TRUE;
         svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
             svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);

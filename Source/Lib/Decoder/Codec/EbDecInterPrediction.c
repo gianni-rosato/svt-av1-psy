@@ -421,7 +421,7 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
                               void *dst_mod, int32_t dst_stride, EbDecPicBuf *ref_buf,
                               int32_t pre_x, int32_t pre_y, int32_t bw, int32_t bh,
                               ConvolveParams *conv_params, int32_t plane, int32_t do_warp,
-                              EbBool is_16bit) {
+                              Bool is_16bit) {
     const BlockModeInfo *mi         = part_info->mi;
     const int32_t        is_intrabc = is_intrabc_block_dec(mi);
     const int32_t        ss_x       = plane ? part_info->subsampling_x : 0;
@@ -599,7 +599,7 @@ void svt_make_masked_inter_predictor(PartitionInfo *part_info, int32_t ref, void
                                      int32_t src_stride, void *dst_ptr, int32_t dst_stride,
                                      EbDecPicBuf *ref_buf, int32_t pre_x, int32_t pre_y, int32_t bw,
                                      int32_t bh, ConvolveParams *conv_params, int32_t plane,
-                                     uint8_t *seg_mask, int32_t do_warp, EbBool is_16bit) {
+                                     uint8_t *seg_mask, int32_t do_warp, Bool is_16bit) {
     InterInterCompoundData *comp_data = &part_info->mi->inter_inter_compound;
     const BlockSize         bsize     = part_info->mi->sb_type;
     int32_t                 bit_depth = ref_buf->ps_pic_buf->bit_depth;
@@ -671,7 +671,7 @@ void svt_make_masked_inter_predictor(PartitionInfo *part_info, int32_t ref, void
 
 static void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, int plane,
                                    uint8_t *inter_pred, int inter_stride, uint8_t *intra_pred,
-                                   int intra_stride, EbBitDepthEnum bit_depth, EbBool is_16bit) {
+                                   int intra_stride, EbBitDepthEnum bit_depth, Bool is_16bit) {
     BlockModeInfo  *mi          = part_info->mi;
     int32_t         sub_x       = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t         sub_y       = (plane > 0) ? part_info->subsampling_y : 0;
@@ -717,7 +717,7 @@ static void av1_build_intra_predictors_for_interintra(DecModCtxt    *dec_mod_ctx
                                                       BlockSize bsize, int32_t plane, uint8_t *dst,
                                                       int dst_stride, EbBitDepthEnum bit_depth) {
     EbDecHandle   *dec_handle  = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    EbBool         is16b       = dec_handle->is_16bit_pipeline;
+    Bool         is16b       = dec_handle->is_16bit_pipeline;
     BlockModeInfo *mi          = part_info->mi;
     int32_t        sub_x       = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t        sub_y       = (plane > 0) ? part_info->subsampling_y : 0;
@@ -763,7 +763,7 @@ static void av1_build_intra_predictors_for_interintra(DecModCtxt    *dec_mod_ctx
 /* Build interintra_predictors */
 static void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info,
                                             void *pred, int32_t stride, int plane, BlockSize bsize,
-                                            EbBitDepthEnum bit_depth, EbBool is_16bit) {
+                                            EbBitDepthEnum bit_depth, Bool is_16bit) {
     if (bit_depth > EB_8BIT || is_16bit) {
         DECLARE_ALIGNED(16, uint16_t, intrapredictor[MAX_SB_SQUARE]);
         av1_build_intra_predictors_for_interintra(dec_mod_ctxt,
@@ -820,7 +820,7 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     //temporary buffer for joint compound, move this to context if stack does not hold.
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[128 * 128]);
 
-    EbBool is16b = (bit_depth > EB_8BIT) || dec_hdl->is_16bit_pipeline;
+    Bool is16b = (bit_depth > EB_8BIT) || dec_hdl->is_16bit_pipeline;
 
     const BlockSize bsize = mi->sb_type;
     assert(bsize < BlockSizeS_ALL);

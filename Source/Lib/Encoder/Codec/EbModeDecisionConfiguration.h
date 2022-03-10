@@ -42,7 +42,7 @@ void qpm_derive_delta_qp_map_weights(ModeDecisionConfigurationContext *context_p
 * Function Ptrs Definitions
 **************************************/
 typedef EbErrorType (*EB_MDC_FUNC)(MdcpLocalBlkStruct *localCuArray, uint32_t blk_index,
-                                   uint32_t depth, EbBool *mdcPrediction64);
+                                   uint32_t depth, Bool *mdcPrediction64);
 
 #define Pred 0x01
 #define Predp1 0x02

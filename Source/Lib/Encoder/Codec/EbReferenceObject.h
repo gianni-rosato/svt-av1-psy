@@ -32,12 +32,12 @@ typedef struct EbReferenceObject {
     EbHandle resize_mutex[NUM_SCALES];
     uint64_t ref_poc;
     uint16_t qp;
-    EB_SLICE slice_type;
+    SliceType slice_type;
     uint8_t  intra_coded_area; //percentage of intra coded area 0-100%
     uint8_t  skip_coded_area;
 
     uint8_t              tmp_layer_idx;
-    EbBool               is_scene_change;
+    Bool               is_scene_change;
     uint16_t             pic_avg_variance;
     AomFilmGrain         film_grain_params; //Film grain parameters for a reference frame
     int8_t               sg_frame_ep;

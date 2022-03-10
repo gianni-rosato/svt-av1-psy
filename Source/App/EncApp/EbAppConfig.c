@@ -172,7 +172,7 @@
 #define COLOR_RANGE_NEW_TOKEN "--color-range"
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
-
+#if !CLN_DEFINITIONS
 #define ENC_MRS -2 // Highest quality research mode (slowest)
 #define ENC_MR -1 //Research mode with higher quality than M0
 #define ENC_M0 0
@@ -189,32 +189,33 @@
 #define ENC_M11 11
 #define ENC_M12 12
 #define ENC_M13 13
+#endif
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE *fp) { return (HANDLE)_get_osfhandle(_fileno(fp)); }
 #endif
 
-static EbBool fopen_and_lock(FILE **file, const char *name, EbBool write) {
+static Bool fopen_and_lock(FILE **file, const char *name, Bool write) {
     if (!file || !name)
-        return EB_FALSE;
+        return FALSE;
 
     const char *mode = write ? "wb" : "rb";
     FOPEN(*file, name, mode);
     if (!*file)
-        return EB_FALSE;
+        return FALSE;
 
 #ifdef _WIN32
     HANDLE handle = get_file_handle(*file);
     if (handle == INVALID_HANDLE_VALUE)
-        return EB_FALSE;
+        return FALSE;
     if (LockFile(handle, 0, 0, MAXDWORD, MAXDWORD))
-        return EB_TRUE;
+        return TRUE;
 #else
     int fd = fileno(*file);
     if (flock(fd, LOCK_EX | LOCK_NB) == 0)
-        return EB_TRUE;
+        return TRUE;
 #endif
     fprintf(stderr, "ERROR: locking %s failed, is it used by other encoder?\n", name);
-    return EB_FALSE;
+    return FALSE;
 }
 
 /**********************************
@@ -231,7 +232,7 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
 
     if (!strcmp(filename, "stdin")) {
         cfg->input_file         = stdin;
-        cfg->input_file_is_fifo = EB_TRUE;
+        cfg->input_file_is_fifo = TRUE;
     } else
         FOPEN(cfg->input_file, filename, "rb");
 
@@ -263,7 +264,7 @@ static void set_pred_struct_file(const char *value, EbConfig *cfg) {
 #else
     cfg->input_pred_struct_filename = _strdup(value);
 #endif
-    cfg->config.enable_manual_pred_struct = EB_TRUE;
+    cfg->config.enable_manual_pred_struct = TRUE;
 }
 
 static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
@@ -469,11 +470,11 @@ static void set_cfg_crf(const char *value, EbConfig *cfg) {
     cfg->config.enable_tpl_la     = 1;
 }
 static void set_cfg_use_qp_file(const char *value, EbConfig *cfg) {
-    cfg->config.use_qp_file = (EbBool)strtol(value, NULL, 0);
+    cfg->config.use_qp_file = (Bool)strtol(value, NULL, 0);
 };
 
 static void set_cfg_use_fixed_qindex_offsets(const char *value, EbConfig *cfg) {
-    cfg->config.use_fixed_qindex_offsets = (EbBool)strtol(value, NULL, 0);
+    cfg->config.use_fixed_qindex_offsets = (Bool)strtol(value, NULL, 0);
 }
 
 static void set_cfg_key_frame_qindex_offset(const char *value, EbConfig *cfg) {
@@ -629,7 +630,7 @@ static void set_recode_loop(const char *value, EbConfig *cfg) {
     cfg->config.recode_loop = strtoul(value, NULL, 0);
 };
 static void set_adaptive_quantization(const char *value, EbConfig *cfg) {
-    cfg->config.enable_adaptive_quantization = (EbBool)strtol(value, NULL, 0);
+    cfg->config.enable_adaptive_quantization = (Bool)strtol(value, NULL, 0);
 };
 static void set_screen_content_mode(const char *value, EbConfig *cfg) {
     cfg->config.screen_content_mode = strtoul(value, NULL, 0);
@@ -640,11 +641,11 @@ static void set_enable_tf(const char *value, EbConfig *cfg) {
 };
 
 static void set_enable_overlays(const char *value, EbConfig *cfg) {
-    cfg->config.enable_overlays = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.enable_overlays = (Bool)strtoul(value, NULL, 0);
 };
 
 static void set_tune(const char *value, EbConfig *cfg) {
-    cfg->config.tune = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.tune = (Bool)strtoul(value, NULL, 0);
 };
 // --- end: ALTREF_FILTERING_SUPPORT
 // --- start: SUPER-RESOLUTION SUPPORT
@@ -1565,7 +1566,7 @@ EbErrorType enc_channel_ctor(EncChannel *c) {
     c->exit_cond_output = APP_ExitConditionError;
     c->exit_cond_recon  = APP_ExitConditionError;
     c->exit_cond_input  = APP_ExitConditionError;
-    c->active           = EB_FALSE;
+    c->active           = FALSE;
     return svt_av1_enc_init_handle(
         &c->app_callback->svt_encoder_handle, c->app_callback, &c->config->config);
 }
@@ -1794,7 +1795,7 @@ static int32_t read_config_file(EbConfig *config, char *config_path, uint32_t in
 }
 
 /* get config->rc_stats_buffer from config->input_stat_file */
-EbBool load_twopass_stats_in(EbConfig *cfg) {
+Bool load_twopass_stats_in(EbConfig *cfg) {
     EbSvtAv1EncConfiguration *config = &cfg->config;
 #ifdef _WIN32
     int          fd = _fileno(cfg->input_stat_file);
@@ -1806,17 +1807,17 @@ EbBool load_twopass_stats_in(EbConfig *cfg) {
     int         ret         = fstat(fd, &file_stat);
 #endif
     if (ret) {
-        return EB_FALSE;
+        return FALSE;
     }
     config->rc_stats_buffer.buf = malloc(file_stat.st_size);
     if (config->rc_stats_buffer.buf) {
         config->rc_stats_buffer.sz = (uint64_t)file_stat.st_size;
         if (fread(config->rc_stats_buffer.buf, 1, file_stat.st_size, cfg->input_stat_file) !=
             (size_t)file_stat.st_size) {
-            return EB_FALSE;
+            return FALSE;
         }
         if (file_stat.st_size == 0) {
-            return EB_FALSE;
+            return FALSE;
         }
     }
     return config->rc_stats_buffer.buf != NULL;
@@ -1827,7 +1828,7 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
     case ENC_SINGLE_PASS: {
         const char *stats = config->stats ? config->stats : "svtav1_2pass.log";
         if (config->config.pass == 1) {
-            if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
+            if (!fopen_and_lock(&config->output_stat_file, stats, TRUE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't open stats file %s for write \n",
                         channel_number + 1,
@@ -1840,7 +1841,7 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
         // In this pass, data is read from the file, copied to memory, updated and
         // written back to the same file
         else if (config->config.pass == 2 && config->config.rate_control_mode == 1) {
-            if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
+            if (!fopen_and_lock(&config->input_stat_file, stats, FALSE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
                         channel_number + 1,
@@ -1861,7 +1862,7 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
                 config->input_stat_file = (FILE *)NULL;
             }
             // Open the file in write mode
-            if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
+            if (!fopen_and_lock(&config->output_stat_file, stats, TRUE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't open stats file %s for write \n",
                         channel_number + 1,
@@ -1872,7 +1873,7 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
         // Final pass: pass = 2 for CRF and pass = 3 for VBR
         else if ((config->config.pass == 2 && config->config.rate_control_mode == 0) ||
                  (config->config.pass == 3 && config->config.rate_control_mode == 1)) {
-            if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
+            if (!fopen_and_lock(&config->input_stat_file, stats, FALSE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
                         channel_number + 1,
@@ -1894,7 +1895,7 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
         // for combined two passes,
         // we only ouptut first pass stats when user explicitly set the --stats
         if (config->stats) {
-            if (!fopen_and_lock(&config->output_stat_file, config->stats, EB_TRUE)) {
+            if (!fopen_and_lock(&config->output_stat_file, config->stats, TRUE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't open stats file %s for write \n",
                         channel_number + 1,
@@ -1970,7 +1971,7 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->config.use_qp_file == EB_TRUE && config->qp_file == NULL) {
+    if (config->config.use_qp_file == TRUE && config->qp_file == NULL) {
         fprintf(config->error_log_file,
                 "Error instance %u: Could not find QP file, UseQpFile is set to 1\n",
                 channel_number + 1);
@@ -2222,7 +2223,7 @@ uint32_t get_number_of_channels(int32_t argc, char *const argv[]) {
     return 1;
 }
 
-static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
+static Bool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
     char        config_string[COMMAND_LINE_MAX_SIZE];
     const char *conflicts[] = {
         PASS_TOKEN,
@@ -2234,11 +2235,11 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
         if (find_token(argc, argv, token, config_string) == 0) {
             fprintf(
                 stderr, "[SVT-Error]: --passes is not accepted in combination with %s\n", token);
-            return EB_TRUE;
+            return TRUE;
         }
         i++;
     }
-    return EB_FALSE;
+    return FALSE;
 }
 /*
 * Returns the number of passes, multi_pass_mode
@@ -2423,7 +2424,7 @@ void mark_token_as_read(const char *token, char *cmd_copy[], int32_t *cmd_token_
     }
 }
 
-static EbBool is_negative_number(const char *string) {
+static Bool is_negative_number(const char *string) {
     char *end;
     return strtol(string, &end, 10) < 0 && *end == '\0';
 }
@@ -2627,7 +2628,7 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
     return return_error;
 }
 
-static EbBool warn_legacy_token(const char *const token) {
+static Bool warn_legacy_token(const char *const token) {
     static struct warn_set {
         const char *old_token;
         const char *new_token;
@@ -2650,9 +2651,9 @@ static EbBool warn_legacy_token(const char *const token) {
                 "[SVT-Error]: %s has been removed, use %s instead\n",
                 tok->old_token,
                 tok->new_token);
-        return EB_TRUE;
+        return TRUE;
     }
-    return EB_FALSE;
+    return FALSE;
 }
 
 /******************************************
@@ -2753,7 +2754,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
 
     for (index = 0; index < num_channels; ++index) {
         EncChannel *c = channels + index;
-        if (c->config->y4m_input == EB_TRUE) {
+        if (c->config->y4m_input == TRUE) {
             ret_y4m = read_y4m_header(c->config);
             if (ret_y4m == EB_ErrorBadParameter) {
                 fprintf(stderr, "Error found when reading the y4m file parameters.\n");
@@ -2767,7 +2768,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     for (index = 0; index < num_channels; ++index) {
         EncChannel *c      = channels + index;
         EbConfig   *config = c->config;
-        if (config->config.enable_manual_pred_struct == EB_TRUE) {
+        if (config->config.enable_manual_pred_struct == TRUE) {
             c->return_error = (EbErrorType)read_pred_struct_file(
                 config, config->input_pred_struct_filename, index);
             return_error = (EbErrorType)(return_error & c->return_error);

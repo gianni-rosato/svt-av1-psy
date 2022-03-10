@@ -77,9 +77,9 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
          picture_buffer_desc_init_data_ptr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >>
         (3 - picture_buffer_desc_init_data_ptr->color_format);
-    pictureBufferDescPtr->packed_flag = EB_FALSE;
+    pictureBufferDescPtr->packed_flag = FALSE;
 
-    if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+    if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
         pictureBufferDescPtr->stride_bit_inc_y  = pictureBufferDescPtr->stride_y;
         pictureBufferDescPtr->stride_bit_inc_cb = pictureBufferDescPtr->stride_cb;
         pictureBufferDescPtr->stride_bit_inc_cr = pictureBufferDescPtr->stride_cr;
@@ -95,7 +95,7 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
         //    pictureBufferDescPtr->luma_size * bytes_per_pixel);
 
         pictureBufferDescPtr->buffer_bit_inc_y = 0;
-        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+        if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
             EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_y,
                                     pictureBufferDescPtr->luma_size * bytes_per_pixel / 4);
         }
@@ -105,7 +105,7 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
         EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cb,
                                 pictureBufferDescPtr->chroma_size * bytes_per_pixel);
         pictureBufferDescPtr->buffer_bit_inc_cb = 0;
-        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+        if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
             EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cb,
                                     pictureBufferDescPtr->chroma_size * bytes_per_pixel / 4);
         }
@@ -115,7 +115,7 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
         EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cr,
                                 pictureBufferDescPtr->chroma_size * bytes_per_pixel);
         pictureBufferDescPtr->buffer_bit_inc_cr = 0;
-        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+        if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
             EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cr,
                                     pictureBufferDescPtr->chroma_size * bytes_per_pixel / 4);
         }
@@ -138,7 +138,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
 
     if (picture_buffer_desc_init_data_ptr->bit_depth > EB_8BIT &&
         picture_buffer_desc_init_data_ptr->bit_depth <= EB_16BIT &&
-        picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE)
+        picture_buffer_desc_init_data_ptr->split_mode == TRUE)
         bytes_per_pixel = 1;
 
     // Set the Picture Buffer Static variables
@@ -166,9 +166,9 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
          picture_buffer_desc_init_data_ptr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >>
         (3 - picture_buffer_desc_init_data_ptr->color_format);
-    pictureBufferDescPtr->packed_flag = bytes_per_pixel > 1 ? EB_TRUE : EB_FALSE;
+    pictureBufferDescPtr->packed_flag = bytes_per_pixel > 1 ? TRUE : FALSE;
 
-    if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+    if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
         pictureBufferDescPtr->stride_bit_inc_y  = pictureBufferDescPtr->stride_y;
         pictureBufferDescPtr->stride_bit_inc_cb = pictureBufferDescPtr->stride_cb;
         pictureBufferDescPtr->stride_bit_inc_cr = pictureBufferDescPtr->stride_cr;
@@ -181,7 +181,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
         EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_y,
                                 pictureBufferDescPtr->luma_size * bytes_per_pixel);
         pictureBufferDescPtr->buffer_bit_inc_y = 0;
-        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+        if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
             EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_y,
                                     pictureBufferDescPtr->luma_size * bytes_per_pixel);
         }
@@ -191,7 +191,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
         EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cb,
                                 pictureBufferDescPtr->chroma_size * bytes_per_pixel);
         pictureBufferDescPtr->buffer_bit_inc_cb = 0;
-        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+        if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
             EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cb,
                                     pictureBufferDescPtr->chroma_size * bytes_per_pixel);
         }
@@ -201,7 +201,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
         EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cr,
                                 pictureBufferDescPtr->chroma_size * bytes_per_pixel);
         pictureBufferDescPtr->buffer_bit_inc_cr = 0;
-        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+        if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
             EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cr,
                                     pictureBufferDescPtr->chroma_size * bytes_per_pixel);
         }
@@ -314,7 +314,7 @@ void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc,
 }
 
 void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc,
-                                uint16_t pad_right, uint16_t pad_bottom, EbBool is_16bit) {
+                                uint16_t pad_right, uint16_t pad_bottom, Bool is_16bit) {
     (void)is_16bit;
 
     //NOTe:  Not all fileds are connected. add more connections as needed.

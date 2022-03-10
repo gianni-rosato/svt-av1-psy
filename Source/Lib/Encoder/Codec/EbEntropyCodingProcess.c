@@ -41,7 +41,7 @@ EbErrorType entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
     thread_context_ptr->dctor = rest_context_dctor;
 
     context_ptr->is_16bit =
-        (EbBool)(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.encoder_bit_depth >
+        (Bool)(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.encoder_bit_depth >
                  EB_8BIT);
     ;
 
@@ -170,7 +170,7 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
     uint16_t tile_idx = 0;
     uint32_t entropy_coding_qp;
 
-    context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    context_ptr->is_16bit = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
     FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     entropy_coding_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
@@ -284,11 +284,11 @@ void *entropy_coding_kernel(void *input_ptr) {
                                       cm->tiles_info.tile_row_start_mi[tile_row]) >>
             scs_ptr->seq_header.sb_size_log2;
 
-        EbBool frame_entropy_done = EB_FALSE;
+        Bool frame_entropy_done = FALSE;
 
         svt_block_on_mutex(pcs_ptr->entropy_coding_pic_mutex);
         if (pcs_ptr->entropy_coding_pic_reset_flag) {
-            pcs_ptr->entropy_coding_pic_reset_flag = EB_FALSE;
+            pcs_ptr->entropy_coding_pic_reset_flag = FALSE;
 
             reset_entropy_coding_picture(context_ptr, pcs_ptr, scs_ptr);
         }
@@ -326,16 +326,16 @@ void *entropy_coding_kernel(void *input_ptr) {
 #if TURN_OFF_EC_FIRST_PASS
         }
 #endif
-        EbBool pic_ready = EB_TRUE;
+        Bool pic_ready = TRUE;
 
         // Current tile ready
         encode_slice_finish(pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr);
 
         svt_block_on_mutex(pcs_ptr->entropy_coding_pic_mutex);
-        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_tile_done = EB_TRUE;
+        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_tile_done = TRUE;
         for (uint16_t i = 0; i < tile_cnt; i++) {
-            if (pcs_ptr->entropy_coding_info[i]->entropy_coding_tile_done == EB_FALSE) {
-                pic_ready = EB_FALSE;
+            if (pcs_ptr->entropy_coding_info[i]->entropy_coding_tile_done == FALSE) {
+                pic_ready = FALSE;
                 break;
             }
         }
@@ -361,7 +361,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                 if (pcs_ptr->tile_tok[0][0])
                     EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
             }
-            frame_entropy_done = EB_TRUE;
+            frame_entropy_done = TRUE;
         }
 
         if (frame_entropy_done) {

@@ -98,13 +98,13 @@ void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureCon
 void setup_segmentation(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     segmentation_params->segmentation_enabled =
-        (EbBool)(scs_ptr->static_config.enable_adaptive_quantization == 1);
+        (Bool)(scs_ptr->static_config.enable_adaptive_quantization == 1);
     if (segmentation_params->segmentation_enabled) {
         segmentation_params->segmentation_update_data =
             1; //always updating for now. Need to set this based on actual deltas
         segmentation_params->segmentation_update_map = 1;
         segmentation_params->segmentation_temporal_update =
-            EB_FALSE; //!(pcs_ptr->parent_pcs_ptr->av1FrameType == KEY_FRAME || pcs_ptr->parent_pcs_ptr->av1FrameType == INTRA_ONLY_FRAME);
+            FALSE; //!(pcs_ptr->parent_pcs_ptr->av1FrameType == KEY_FRAME || pcs_ptr->parent_pcs_ptr->av1FrameType == INTRA_ONLY_FRAME);
         find_segment_qps(segmentation_params, pcs_ptr);
         for (int i = 0; i < MAX_SEGMENTS; i++)
             segmentation_params->feature_enabled[i][SEG_LVL_ALT_Q] = 1;

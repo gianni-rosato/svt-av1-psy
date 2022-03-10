@@ -44,7 +44,7 @@
 #include <windows.h>
 extern uint8_t        num_groups;
 extern GROUP_AFFINITY group_affinity;
-extern EbBool         alternate_groups;
+extern Bool         alternate_groups;
 #elif defined(__linux__)
 extern cpu_set_t group_affinity;
 #endif
@@ -235,7 +235,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
             //    1, /* consumer prcos cnt : 1 Q per cnt is created inside, so kept 1*/
             //    &dec_mt_frame_data->parse_recon_tile_info_array[tiles_ctr].recon_tile_sbrow_producer_fifo_ptr, /* producer_fifo */
             //    &dec_mt_frame_data->parse_recon_tile_info_array[tiles_ctr].recon_tile_sbrow_consumer_fifo_ptr, /* consumer_fifo */
-            //    EB_TRUE, /* Full Queue*/
+            //    TRUE, /* Full Queue*/
             //    dec_dummy_creator, // Removed in "dec_dummy_creator: unusedFunction"
             //    &node_idx,
             //    NULL);
@@ -340,12 +340,12 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 
     dec_mt_frame_data->temp_mutex = svt_create_mutex();
 
-    dec_mt_frame_data->start_motion_proj  = EB_FALSE;
-    dec_mt_frame_data->start_parse_frame  = EB_FALSE;
-    dec_mt_frame_data->start_decode_frame = EB_FALSE;
-    dec_mt_frame_data->start_lf_frame     = EB_FALSE;
-    dec_mt_frame_data->start_cdef_frame   = EB_FALSE;
-    dec_mt_frame_data->start_lr_frame     = EB_FALSE;
+    dec_mt_frame_data->start_motion_proj  = FALSE;
+    dec_mt_frame_data->start_parse_frame  = FALSE;
+    dec_mt_frame_data->start_decode_frame = FALSE;
+    dec_mt_frame_data->start_lf_frame     = FALSE;
+    dec_mt_frame_data->start_cdef_frame   = FALSE;
+    dec_mt_frame_data->start_lr_frame     = FALSE;
     dec_mt_frame_data->num_threads_cdefed = 0;
     dec_mt_frame_data->num_threads_lred   = 0;
 
@@ -369,8 +369,8 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 
     memory_map_end_address = svt_dec_memory_map;
 
-    if (EB_FALSE == dec_handle_ptr->start_thread_process) {
-        dec_mt_frame_data->end_flag           = EB_FALSE;
+    if (FALSE == dec_handle_ptr->start_thread_process) {
+        dec_mt_frame_data->end_flag           = FALSE;
         dec_mt_frame_data->num_threads_exited = 0;
 
         if (num_lib_threads > 0) {
@@ -447,7 +447,7 @@ void svt_av1_queue_parse_jobs(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info
 
     dec_mt_frame_data->parse_tile_info.sb_row_to_process = 0;
     dec_mt_frame_data->recon_tile_info.sb_row_to_process = 0;
-    //dec_handle_ptr->start_thread_process = EB_TRUE;
+    //dec_handle_ptr->start_thread_process = TRUE;
 }
 
 EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num) {
@@ -471,14 +471,14 @@ EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num) {
 void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
-    volatile EbBool *start_parse_frame = &dec_mt_frame_data->start_parse_frame;
+    volatile Bool *start_parse_frame = &dec_mt_frame_data->start_parse_frame;
 #if MT_WAIT_PROFILE
     FILE             *fp = dec_mt_frame_data->fp;
     struct EbDecTimer timer;
     int               th_cnt = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     dec_timer_start(&timer);
 #endif
-    while (*start_parse_frame != EB_TRUE)
+    while (*start_parse_frame != TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle_ptr->thread_semaphore
                                                    : thread_ctxt->thread_semaphore);
 
@@ -491,7 +491,7 @@ void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 #endif
         int32_t tile_num = get_sb_row_to_process(&dec_mt_frame_data->parse_tile_info);
         if (-1 != tile_num) {
-            dec_mt_frame_data->start_decode_frame = EB_TRUE;
+            dec_mt_frame_data->start_decode_frame = TRUE;
             if (EB_ErrorNone != parse_tile_job(dec_handle_ptr, tile_num)) {
                 SVT_LOG("\nParse Issue for Tile %d", tile_num);
                 break;
@@ -515,14 +515,14 @@ EbErrorType decode_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num,
 void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
-    volatile EbBool *start_decode_frame = &dec_mt_frame_data->start_decode_frame;
+    volatile Bool *start_decode_frame = &dec_mt_frame_data->start_decode_frame;
 #if MT_WAIT_PROFILE
     FILE             *fp = dec_mt_frame_data->fp;
     struct EbDecTimer timer;
     int               th_cnt = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     dec_timer_start(&timer);
 #endif
-    while (*start_decode_frame != EB_TRUE)
+    while (*start_decode_frame != TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle_ptr->thread_semaphore
                                                    : thread_ctxt->thread_semaphore);
 
@@ -620,7 +620,7 @@ void svt_av1_queue_lf_jobs(EbDecHandle *dec_handle_ptr) {
     EB_MEMSET(dec_mt_frame_data->lf_row_map, 0, picture_height_in_sb * sizeof(uint32_t));
 
     memset(lf_frame_info->sb_lf_completed_in_row, -1, picture_height_in_sb * sizeof(int32_t));
-    lf_frame_info->lf_info_init_done                = EB_FALSE;
+    lf_frame_info->lf_info_init_done                = FALSE;
     lf_frame_info->lf_sb_row_info.sb_row_to_process = 0;
 }
 
@@ -631,7 +631,7 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle   *dec_handle,
                                                      int32_t num_planes) {
     Av1Common *cm         = &dec_handle->cm;
     FrameSize *frame_size = &dec_handle->frame_header.frame_size;
-    EbBool     sb_128     = dec_handle->seq_header.sb_size == BLOCK_128X128;
+    Bool     sb_128     = dec_handle->seq_header.sb_size == BLOCK_128X128;
     int32_t    num64s     = sb_128 ? 1 : 0;
     const int  use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
                             dec_handle->is_16bit_pipeline);
@@ -757,14 +757,14 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
     DecMtFrameData *dec_mt_frame_data1 =
         &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
-    volatile EbBool *start_lf_frame = &dec_mt_frame_data1->start_lf_frame;
+    volatile Bool *start_lf_frame = &dec_mt_frame_data1->start_lf_frame;
 #if MT_WAIT_PROFILE
     FILE             *fp = dec_mt_frame_data1->fp;
     struct EbDecTimer timer;
     int               th_cnt = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     dec_timer_start(&timer);
 #endif
-    while (*start_lf_frame != EB_TRUE)
+    while (*start_lf_frame != TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle->thread_semaphore
                                                    : thread_ctxt->thread_semaphore);
 #if MT_WAIT_PROFILE
@@ -780,14 +780,14 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
     //lock mutex
     svt_block_on_mutex(dec_mt_lf_frame_info->lf_sb_row_info.sbrow_mutex);
     //Check lf_info init done or not
-    if (dec_mt_lf_frame_info->lf_info_init_done == EB_FALSE) {
+    if (dec_mt_lf_frame_info->lf_info_init_done == FALSE) {
         /*init hev threshold const vectors*/
         for (int lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
             memset(lf_ctxt->lf_info.lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
 
         svt_av1_loop_filter_frame_init(frm_hdr, &lf_ctxt->lf_info, plane_start, plane_end);
 
-        dec_mt_lf_frame_info->lf_info_init_done = EB_TRUE;
+        dec_mt_lf_frame_info->lf_info_init_done = TRUE;
     }
     //unlock mutex
     svt_release_mutex(dec_mt_lf_frame_info->lf_sb_row_info.sbrow_mutex);
@@ -909,14 +909,14 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
     int32_t         curr_recon_stride[MAX_MB_PLANE];
     DecMtFrameData *dec_mt_frame_data1 =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
-    volatile EbBool *start_cdef_frame = &dec_mt_frame_data1->start_cdef_frame;
+    volatile Bool *start_cdef_frame = &dec_mt_frame_data1->start_cdef_frame;
 #if MT_WAIT_PROFILE
     FILE             *fp = dec_mt_frame_data1->fp;
     struct EbDecTimer timer;
     int               th_cnt = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     dec_timer_start(&timer);
 #endif
-    while (*start_cdef_frame != EB_TRUE)
+    while (*start_cdef_frame != TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle_ptr->thread_semaphore
                                                    : thread_ctxt->thread_semaphore);
 
@@ -934,10 +934,10 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
     Av1PixelRect  tile_rect[MAX_MB_PLANE];
     Av1PixelRect *tile_rect_p[MAX_MB_PLANE];
 
-    EbBool no_ibc      = !dec_handle_ptr->frame_header.allow_intrabc;
-    EbBool do_upscale  = no_ibc && !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
+    Bool no_ibc      = !dec_handle_ptr->frame_header.allow_intrabc;
+    Bool do_upscale  = no_ibc && !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
     LrParams *lr_param = dec_handle_ptr->frame_header.lr_params;
-    EbBool    do_lr    = no_ibc &&
+    Bool    do_lr    = no_ibc &&
         (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);
@@ -1155,8 +1155,8 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
 
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
-    volatile EbBool *start_lr_frame = &dec_mt_frame_data->start_lr_frame;
-    while (*start_lr_frame != EB_TRUE)
+    volatile Bool *start_lr_frame = &dec_mt_frame_data->start_lr_frame;
+    while (*start_lr_frame != TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle->thread_semaphore
                                                    : thread_ctxt->thread_semaphore);
 
@@ -1208,13 +1208,13 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
 
     FrameHeader *frame_header = &dec_handle->frame_header;
 
-    EbBool    no_ibc   = !frame_header->allow_intrabc;
+    Bool    no_ibc   = !frame_header->allow_intrabc;
     LrParams *lr_param = frame_header->lr_params;
-    EbBool    do_lr    = no_ibc &&
+    Bool    do_lr    = no_ibc &&
         (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);
-    EbBool do_upscale = no_ibc && !av1_superres_unscaled(&dec_handle->frame_header.frame_size);
+    Bool do_upscale = no_ibc && !av1_superres_unscaled(&dec_handle->frame_header.frame_size);
     int    th_cnt     = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     while (1) {
         int32_t sb_row = get_sb_row_to_process(&dec_mt_frame_data->lr_sb_row_info);
@@ -1290,18 +1290,18 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
     svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
     dec_mt_frame_data->num_threads_lred++;
     if (dec_handle->dec_config.threads == dec_mt_frame_data->num_threads_lred) {
-        dec_mt_frame_data->start_motion_proj  = EB_FALSE;
-        dec_mt_frame_data->start_parse_frame  = EB_FALSE;
-        dec_mt_frame_data->start_decode_frame = EB_FALSE;
-        dec_mt_frame_data->start_lf_frame     = EB_FALSE;
-        dec_mt_frame_data->start_cdef_frame   = EB_FALSE;
-        dec_mt_frame_data->start_lr_frame     = EB_FALSE;
+        dec_mt_frame_data->start_motion_proj  = FALSE;
+        dec_mt_frame_data->start_parse_frame  = FALSE;
+        dec_mt_frame_data->start_decode_frame = FALSE;
+        dec_mt_frame_data->start_lf_frame     = FALSE;
+        dec_mt_frame_data->start_cdef_frame   = FALSE;
+        dec_mt_frame_data->start_lr_frame     = FALSE;
     }
     svt_release_mutex(dec_mt_frame_data->temp_mutex);
 
     volatile uint32_t *num_threads_lred = &dec_mt_frame_data->num_threads_lred;
     while (*num_threads_lred != dec_handle->dec_config.threads &&
-           EB_FALSE == dec_mt_frame_data->end_flag)
+           FALSE == dec_mt_frame_data->end_flag)
         ;
 }
 
@@ -1311,8 +1311,8 @@ void *dec_all_stage_kernel(void *input_ptr) {
     EbDecHandle    *dec_handle_ptr = thread_ctxt->dec_handle_ptr;
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
-    volatile EbBool *start_thread = (volatile EbBool *)&dec_handle_ptr->start_thread_process;
-    while (*start_thread == EB_FALSE)
+    volatile Bool *start_thread = (volatile Bool *)&dec_handle_ptr->start_thread_process;
+    while (*start_thread == FALSE)
         ;
 
     while (1) {
@@ -1334,7 +1334,7 @@ void *dec_all_stage_kernel(void *input_ptr) {
         /*Frame LR */
         dec_av1_loop_restoration_filter_frame_mt(dec_handle_ptr, thread_ctxt);
 
-        if (EB_TRUE == dec_mt_frame_data->end_flag) {
+        if (TRUE == dec_mt_frame_data->end_flag) {
             svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
             dec_mt_frame_data->num_threads_exited++;
             svt_release_mutex(dec_mt_frame_data->temp_mutex);
@@ -1357,7 +1357,7 @@ static void svt_av1_sleep(const int milliseconds) {
 void dec_sync_all_threads(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
-    dec_mt_frame_data->end_flag = EB_TRUE;
+    dec_mt_frame_data->end_flag = TRUE;
 
     /* To make all worker exit except main thread! */
     dec_mt_frame_data->num_threads_cdefed = 1;
@@ -1366,25 +1366,25 @@ void dec_sync_all_threads(EbDecHandle *dec_handle_ptr) {
     /* To make all worker exit except main thread! */
     dec_mt_frame_data->num_threads_header          = 1;
     dec_handle_ptr->frame_header.use_ref_frame_mvs = 0;
-    dec_mt_frame_data->start_motion_proj           = EB_TRUE;
+    dec_mt_frame_data->start_motion_proj           = TRUE;
 
-    dec_mt_frame_data->start_parse_frame = EB_TRUE;
+    dec_mt_frame_data->start_parse_frame = TRUE;
     svt_post_semaphore(dec_handle_ptr->thread_semaphore);
     for (uint32_t lib_thrd = 0; lib_thrd < dec_handle_ptr->dec_config.threads - 1; lib_thrd++)
         svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
-    dec_mt_frame_data->start_decode_frame = EB_TRUE;
+    dec_mt_frame_data->start_decode_frame = TRUE;
     svt_post_semaphore(dec_handle_ptr->thread_semaphore);
     for (uint32_t lib_thrd = 0; lib_thrd < dec_handle_ptr->dec_config.threads - 1; lib_thrd++)
         svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
-    dec_mt_frame_data->start_lf_frame = EB_TRUE;
+    dec_mt_frame_data->start_lf_frame = TRUE;
     svt_post_semaphore(dec_handle_ptr->thread_semaphore);
     for (uint32_t lib_thrd = 0; lib_thrd < dec_handle_ptr->dec_config.threads - 1; lib_thrd++)
         svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
-    dec_mt_frame_data->start_cdef_frame = EB_TRUE;
+    dec_mt_frame_data->start_cdef_frame = TRUE;
     svt_post_semaphore(dec_handle_ptr->thread_semaphore);
     for (uint32_t lib_thrd = 0; lib_thrd < dec_handle_ptr->dec_config.threads - 1; lib_thrd++)
         svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
-    dec_mt_frame_data->start_lr_frame = EB_TRUE;
+    dec_mt_frame_data->start_lr_frame = TRUE;
     svt_post_semaphore(dec_handle_ptr->thread_semaphore);
     for (uint32_t lib_thrd = 0; lib_thrd < dec_handle_ptr->dec_config.threads - 1; lib_thrd++)
         svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);

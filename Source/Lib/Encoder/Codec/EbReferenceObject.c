@@ -151,14 +151,14 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     if (picture_buffer_desc_init_data_16bit_ptr.bit_depth == EB_10BIT) {
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
         // Use 10bit here to use in MD
-        picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_TRUE;
+        picture_buffer_desc_init_data_16bit_ptr.split_mode = TRUE;
         picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_10BIT;
         EB_NEW(reference_object->reference_picture,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
     } else {
         // Hsan: set split_mode to 0 to as 8BIT input
-        picture_buffer_desc_init_data_ptr->split_mode = EB_FALSE;
+        picture_buffer_desc_init_data_ptr->split_mode = FALSE;
         EB_NEW(reference_object->reference_picture,
                svt_picture_buffer_desc_ctor,
                (EbPtr)picture_buffer_desc_init_data_ptr);

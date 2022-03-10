@@ -320,7 +320,7 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                          PaletteInfo *palette_cand, uint8_t *palette_size_array,
                          uint32_t *tot_palette_cands) {
     int    colors;
-    EbBool is16bit = context_ptr->hbd_mode_decision > 0;
+    Bool is16bit = context_ptr->hbd_mode_decision > 0;
 
     EbPictureBufferDesc *src_pic    = is16bit ? pcs_ptr->input_frame16bit
                                               : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;

@@ -90,7 +90,7 @@ static EbErrorType svt_fifo_shutdown(EbFifo *fifo_ptr) {
 
     // Acquire lockout Mutex
     svt_block_on_mutex(fifo_ptr->lockout_mutex);
-    fifo_ptr->quit_signal = EB_TRUE;
+    fifo_ptr->quit_signal = TRUE;
     // Release Mutex
     svt_release_mutex(fifo_ptr->lockout_mutex);
     //Wake up the waiting process if any
@@ -121,11 +121,11 @@ static EbErrorType svt_circular_buffer_ctor(EbCircularBuffer *bufferPtr,
 /**************************************
  * svt_circular_buffer_empty_check
  **************************************/
-static EbBool svt_circular_buffer_empty_check(EbCircularBuffer *bufferPtr) {
+static Bool svt_circular_buffer_empty_check(EbCircularBuffer *bufferPtr) {
     return ((bufferPtr->head_index == bufferPtr->tail_index) &&
             (bufferPtr->array_ptr[bufferPtr->head_index] == NULL))
-        ? EB_TRUE
-        : EB_FALSE;
+        ? TRUE
+        : FALSE;
 }
 
 /**************************************
@@ -239,8 +239,8 @@ static EbErrorType svt_muxing_queue_assignation(EbMuxingQueue *queue_ptr) {
     EbObjectWrapper *wrapper_ptr;
 
     // while loop
-    while ((svt_circular_buffer_empty_check(queue_ptr->object_queue) == EB_FALSE) &&
-           (svt_circular_buffer_empty_check(queue_ptr->process_queue) == EB_FALSE)) {
+    while ((svt_circular_buffer_empty_check(queue_ptr->object_queue) == FALSE) &&
+           (svt_circular_buffer_empty_check(queue_ptr->process_queue) == FALSE)) {
         // Get the next process
         svt_circular_buffer_pop_front(queue_ptr->process_queue, (void **)&process_fifo_ptr);
 
@@ -315,7 +315,7 @@ EbErrorType svt_object_release_enable(EbObjectWrapper *wrapper_ptr) {
 
     svt_block_on_mutex(wrapper_ptr->system_resource_ptr->empty_queue->lockout_mutex);
 
-    wrapper_ptr->release_enable = EB_TRUE;
+    wrapper_ptr->release_enable = TRUE;
 
     svt_release_mutex(wrapper_ptr->system_resource_ptr->empty_queue->lockout_mutex);
 
@@ -341,7 +341,7 @@ EbErrorType svt_object_release_disable(EbObjectWrapper *wrapper_ptr) {
 
     svt_block_on_mutex(wrapper_ptr->system_resource_ptr->empty_queue->lockout_mutex);
 
-    wrapper_ptr->release_enable = EB_FALSE;
+    wrapper_ptr->release_enable = FALSE;
 
     svt_release_mutex(wrapper_ptr->system_resource_ptr->empty_queue->lockout_mutex);
 
@@ -398,7 +398,7 @@ static EbErrorType svt_object_wrapper_ctor(EbObjectWrapper *wrapper, EbSystemRes
     EbErrorType ret;
 
     wrapper->dctor               = svt_object_wrapper_dctor;
-    wrapper->release_enable      = EB_TRUE;
+    wrapper->release_enable      = TRUE;
     wrapper->system_resource_ptr = resource;
     wrapper->object_destroyer    = object_destroyer;
     ret                          = object_creator(&wrapper->object_ptr, object_init_data_ptr);
@@ -580,7 +580,7 @@ EbErrorType svt_release_object(EbObjectWrapper *object_ptr) {
     object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count
                                                            : object_ptr->live_count - 1;
 
-    if ((object_ptr->release_enable == EB_TRUE) && (object_ptr->live_count == 0)) {
+    if ((object_ptr->release_enable == TRUE) && (object_ptr->live_count == 0)) {
         // Set live_count to EB_ObjectWrapperReleasedValue
         object_ptr->live_count = EB_ObjectWrapperReleasedValue;
 
@@ -611,7 +611,7 @@ EbErrorType svt_release_dual_object(EbObjectWrapper *object_ptr, EbObjectWrapper
     object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count
                                                            : object_ptr->live_count - 1;
 
-    if ((object_ptr->release_enable == EB_TRUE) && (object_ptr->live_count == 0)) {
+    if ((object_ptr->release_enable == TRUE) && (object_ptr->live_count == 0)) {
         //release the second object
         svt_release_object(sec_object_ptr);
 
@@ -697,7 +697,7 @@ EbErrorType svt_get_empty_object(EbFifo *empty_fifo_ptr, EbObjectWrapper **wrapp
     (*wrapper_dbl_ptr)->live_count = 0;
 
     // Object release enable
-    (*wrapper_dbl_ptr)->release_enable = EB_TRUE;
+    (*wrapper_dbl_ptr)->release_enable = TRUE;
 
     // Release Mutex
     svt_release_mutex(empty_fifo_ptr->lockout_mutex);
@@ -748,18 +748,18 @@ EbErrorType svt_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper
 /**************************************
 * svt_fifo_pop_front
 **************************************/
-static EbBool svt_fifo_peak_front(EbFifo *fifoPtr) {
+static Bool svt_fifo_peak_front(EbFifo *fifoPtr) {
     // Set wrapper_ptr to head of BufferPool
     if (fifoPtr->first_ptr == (EbObjectWrapper *)NULL)
-        return EB_TRUE;
+        return TRUE;
     else
-        return EB_FALSE;
+        return FALSE;
 }
 
 EbErrorType svt_get_full_object_non_blocking(EbFifo           *full_fifo_ptr,
                                              EbObjectWrapper **wrapper_dbl_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-    EbBool      fifo_empty;
+    Bool      fifo_empty;
     // Queue the Fifo requesting the full fifo
     svt_release_process(full_fifo_ptr);
 
@@ -770,12 +770,12 @@ EbErrorType svt_get_full_object_non_blocking(EbFifo           *full_fifo_ptr,
     if (!full_fifo_ptr->quit_signal)
         fifo_empty = svt_fifo_peak_front(full_fifo_ptr);
     else
-        fifo_empty = EB_TRUE;
+        fifo_empty = TRUE;
 
     // Release Mutex
     svt_release_mutex(full_fifo_ptr->lockout_mutex);
 
-    if (fifo_empty == EB_FALSE)
+    if (fifo_empty == FALSE)
         svt_get_full_object(full_fifo_ptr, wrapper_dbl_ptr);
     else
         *wrapper_dbl_ptr = (EbObjectWrapper *)NULL;

@@ -275,7 +275,7 @@ typedef struct SequenceControlSet {
     * 1: 16 bit pipeline.
     * Now 16bit pipeline is only enabled in filter
     * Default is 0. */
-    EbBool is_16bit_pipeline;
+    Bool is_16bit_pipeline;
 
     /* Super block size (mm-signal)
     *
@@ -290,7 +290,7 @@ typedef struct SequenceControlSet {
     /* Global motion
     *
     * Default is 1. */
-    EbBool enable_global_motion;
+    Bool enable_global_motion;
     int    sg_filter_mode;
     int    wn_filter_mode;
 
@@ -400,7 +400,7 @@ typedef struct SequenceControlSet {
     /* Flag to enable the use of non-swaure partitions
     *
     * Default is 1. */
-    EbBool ext_block_flag;
+    Bool ext_block_flag;
 
     /* Flag to control intraBC mode
     *  0      OFF

@@ -44,7 +44,7 @@ int  svt_av1_cost_color_map(ModeDecisionCandidate   *candidate_ptr,
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
 int  av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
-int  av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type);
+int  av1_allow_intrabc(const FrameHeader *frm_hdr, SliceType slice_type);
 /* Symbols for coding which components are zero jointly */
 //#define MV_JOINTS 4
 //typedef enum {
@@ -117,8 +117,8 @@ void svt_av1_txb_init_levels_c(const TranLow *const coeff, const int32_t width,
 int32_t av1_transform_type_rate_estimation(struct ModeDecisionContext *ctx,
                                            uint8_t allow_update_cdf, FRAME_CONTEXT *fc,
                                            struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-                                           EbBool is_inter, TxSize transform_size,
-                                           TxType transform_type, EbBool reduced_tx_set_used) {
+                                           Bool is_inter, TxSize transform_size,
+                                           TxType transform_type, Bool reduced_tx_set_used) {
     //const MbModeInfo *mbmi = &xd->mi[0]->mbmi;
     //const int32_t is_inter = is_inter_block(mbmi);
 
@@ -413,7 +413,7 @@ uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_
                                  struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                  const TranLow *const qcoeff, uint16_t eob, PlaneType plane_type,
                                  TxSize transform_size, TxType transform_type, int16_t txb_skip_ctx,
-                                 int16_t dc_sign_ctx, EbBool reduced_transform_set_flag)
+                                 int16_t dc_sign_ctx, Bool reduced_transform_set_flag)
 
 {
     //Note: there is a different version of this function in AOM that seems to be efficient as its name is:
@@ -453,7 +453,7 @@ uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_
             height,
             levels); // NM - Needs to be optimized - to be combined with the quantisation.
 #if CLN_REMOVE_REDUND_4
-    const EbBool is_inter = is_inter_mode(candidate_buffer_ptr->candidate_ptr->pred_mode);
+    const Bool is_inter = is_inter_mode(candidate_buffer_ptr->candidate_ptr->pred_mode);
 #endif
     // Transform type bit estimation
     cost += plane_type > PLANE_TYPE_Y
@@ -466,7 +466,7 @@ uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_
 #if CLN_REMOVE_REDUND_4
               is_inter,
 #else
-              candidate_buffer_ptr->candidate_ptr->type == INTER_MODE ? EB_TRUE : EB_FALSE,
+              candidate_buffer_ptr->candidate_ptr->type == INTER_MODE ? TRUE : FALSE,
 #endif
               transform_size,
               transform_type,
@@ -593,7 +593,7 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
         candidate_ptr->use_intrabc) {
         uint64_t rate = 0;
 
-        EbReflist ref_list_idx = 0;
+        RefList ref_list_idx = 0;
 #if CLN_CAND_MV
         int16_t   pred_ref_x = candidate_ptr->pred_mv[ref_list_idx].x;
         int16_t   pred_ref_y = candidate_ptr->pred_mv[ref_list_idx].y;
@@ -630,12 +630,12 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
 
         return (RDCOST(lambda, rate, total_distortion));
     } else {
-        EbBool is_cfl_allowed = (blk_geom->bwidth <= 32 && blk_geom->bheight <= 32) ? 1 : 0;
+        Bool is_cfl_allowed = (blk_geom->bwidth <= 32 && blk_geom->bheight <= 32) ? 1 : 0;
 
         SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         if (scs_ptr->disable_cfl_flag != DEFAULT && is_cfl_allowed)
             // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
-            is_cfl_allowed = (EbBool)!scs_ptr->disable_cfl_flag;
+            is_cfl_allowed = (Bool)!scs_ptr->disable_cfl_flag;
 
         // In fast loop CFL alphas are not know yet. The chroma mode bits are calculated based on DC Mode, and if CFL is the winner compared to CFL, ChromaBits are updated
         uint32_t chroma_mode = candidate_ptr->intra_chroma_mode == UV_CFL_PRED
@@ -829,7 +829,7 @@ static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
 
 // This function encodes the reference frame
 uint64_t estimate_ref_frame_type_bits(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
-                                      uint8_t ref_frame_type, EbBool is_compound) {
+                                      uint8_t ref_frame_type, Bool is_compound) {
     uint64_t ref_rate_bits = 0;
 
     // const MbModeInfo *const mbmi = &blk_ptr->av1xd->mi[0]->mbmi;
@@ -1176,7 +1176,7 @@ uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkStruct *b
 #endif
             mv_rate = 0;
             if (inter_mode == NEW_NEWMV) {
-                for (EbReflist ref_list_idx = 0; ref_list_idx < 2; ++ref_list_idx) {
+                for (RefList ref_list_idx = 0; ref_list_idx < 2; ++ref_list_idx) {
 #if CLN_CAND_MV
                     MV mv = {
                         .row = candidate_ptr->mv[ref_list_idx].y,
@@ -1260,9 +1260,9 @@ uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkStruct *b
 #if CLN_CAND_MV
 #if CLN_REMOVE_REDUND_2
             assert(!is_compound); // single ref inter prediction
-            EbReflist ref_list_idx = get_list_idx(rf[0]);
+            RefList ref_list_idx = get_list_idx(rf[0]);
 #else
-            EbReflist ref_list_idx = candidate_ptr->prediction_direction[0] != 0;
+            RefList ref_list_idx = candidate_ptr->prediction_direction[0] != 0;
 #endif
             MV mv = {
                 .row = candidate_ptr->mv[ref_list_idx].y,
@@ -1274,7 +1274,7 @@ uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkStruct *b
                 .col = candidate_ptr->pred_mv[ref_list_idx].x,
             };
 #else
-            EbReflist ref_list_idx = candidate_ptr->prediction_direction[0] != 0;
+            RefList ref_list_idx = candidate_ptr->prediction_direction[0] != 0;
             MV mv = {
                 .row = ref_list_idx == 0 ? candidate_ptr->motion_vector_yl0
                                          : candidate_ptr->motion_vector_yl1,
@@ -1468,7 +1468,7 @@ uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
             mv_rate = 0;
 
             if (inter_mode == NEW_NEWMV) {
-                for (EbReflist ref_list_idx = 0; ref_list_idx < 2; ++ref_list_idx) {
+                for (RefList ref_list_idx = 0; ref_list_idx < 2; ++ref_list_idx) {
 #if CLN_CAND_MV
                     MV mv = {
                         .row = candidate_ptr->mv[ref_list_idx].y,
@@ -1558,9 +1558,9 @@ uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
 #if CLN_CAND_MV
 #if CLN_REMOVE_REDUND_2
             assert(!is_compound); // single ref inter prediction
-            EbReflist ref_list_idx = get_list_idx(rf[0]);
+            RefList ref_list_idx = get_list_idx(rf[0]);
 #else
-            EbReflist ref_list_idx = candidate_ptr->prediction_direction[0] != 0;
+            RefList ref_list_idx = candidate_ptr->prediction_direction[0] != 0;
 #endif
             MV mv = {
                 .row = candidate_ptr->mv[ref_list_idx].y,
@@ -1572,7 +1572,7 @@ uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
                 .col = candidate_ptr->pred_mv[ref_list_idx].x,
             };
 #else
-            EbReflist ref_list_idx = candidate_ptr->prediction_direction[0] != 0;
+            RefList ref_list_idx = candidate_ptr->prediction_direction[0] != 0;
 
             MV mv = {
                 .row = ref_list_idx == 0 ? candidate_ptr->motion_vector_yl0
@@ -1623,7 +1623,7 @@ uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
             }
         }
     }
-    EbBool is_inter = inter_mode >= SINGLE_INTER_MODE_START && inter_mode < SINGLE_INTER_MODE_END;
+    Bool is_inter = inter_mode >= SINGLE_INTER_MODE_START && inter_mode < SINGLE_INTER_MODE_END;
     if (is_inter && frm_hdr->is_motion_mode_switchable && rf[1] != INTRA_FRAME) {
         MotionMode motion_mode_rd                      = candidate_ptr->motion_mode;
         BlockSize  bsize                               = blk_geom->bsize;
@@ -1750,7 +1750,7 @@ EbErrorType av1_txb_estimate_coeff_bits(
     int16_t  cr_txb_skip_context   = md_context->cr_txb_skip_context;
     int16_t  cr_dc_sign_context    = md_context->cr_dc_sign_context;
 
-    EbBool reduced_transform_set_flag = frm_hdr->reduced_tx_set ? EB_TRUE : EB_FALSE;
+    Bool reduced_transform_set_flag = frm_hdr->reduced_tx_set ? TRUE : FALSE;
 
     //Estimate the rate of the transform type and coefficient for Luma
 
@@ -1907,7 +1907,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             if (candidate_buffer_ptr->candidate_ptr->type == INTRA_MODE &&
 #endif
                 candidate_buffer_ptr->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
-                EbBool              is_cfl_allowed = (context_ptr->blk_geom->bwidth <= 32 &&
+                Bool              is_cfl_allowed = (context_ptr->blk_geom->bwidth <= 32 &&
                                          context_ptr->blk_geom->bheight <= 32)
                                  ? 1
                                  : 0;
@@ -1915,7 +1915,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                                                   pcs_ptr->scs_wrapper_ptr->object_ptr;
                 if (scs_ptr->disable_cfl_flag != DEFAULT && is_cfl_allowed)
                     // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
-                    is_cfl_allowed = (EbBool)!scs_ptr->disable_cfl_flag;
+                    is_cfl_allowed = (Bool)!scs_ptr->disable_cfl_flag;
 
                 chroma_rate +=
                     context_ptr->md_rate_estimation_ptr->cfl_alpha_fac_bits
@@ -2105,7 +2105,7 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     // *Note - As in JCTVC-G1102, the JCT-VC uses the Mode Decision forumula where the chroma_sse has been weighted
     //  CostMode = (luma_sse + wchroma * chroma_sse) + lambda_sse * rateMode
 
-    //if (pcs_ptr->parent_pcs_ptr->pred_structure == EB_PRED_RANDOM_ACCESS) {
+    //if (pcs_ptr->parent_pcs_ptr->pred_structure == PRED_RANDOM_ACCESS) {
     //    // Random Access
     //    if (pcs_ptr->temporal_layer_index == 0) {
     //        merge_chroma_sse = (((merge_chroma_sse * chroma_weight_factor_ra[qp]) + CHROMA_WEIGHT_OFFSET) >> CHROMA_WEIGHT_SHIFT);
@@ -2159,7 +2159,7 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     // *Note - As in JCTVC-G1102, the JCT-VC uses the Mode Decision forumula where the chroma_sse has been weighted
     //  CostMode = (luma_sse + wchroma * chroma_sse) + lambda_sse * rateMode
 
-    //if (pcs_ptr->parent_pcs_ptr->pred_structure == EB_PRED_RANDOM_ACCESS) {
+    //if (pcs_ptr->parent_pcs_ptr->pred_structure == PRED_RANDOM_ACCESS) {
     //    if (pcs_ptr->temporal_layer_index == 0) {
     //        skip_chroma_sse = (((skip_chroma_sse * chroma_weight_factor_ra[qp]) + CHROMA_WEIGHT_OFFSET) >> CHROMA_WEIGHT_SHIFT);
     //    }
@@ -2186,12 +2186,12 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     // Assigne full cost
     *candidate_buffer_ptr->full_cost_ptr = (skip_cost <= merge_cost) ? skip_cost : merge_cost;
     // Assigne merge flag
-    candidate_buffer_ptr->candidate_ptr->skip_mode_allowed = EB_TRUE;
+    candidate_buffer_ptr->candidate_ptr->skip_mode_allowed = TRUE;
     // Assigne skip flag
 #if CLN_CAND_TYPES
-    candidate_buffer_ptr->candidate_ptr->skip_mode = (skip_cost <= merge_cost) ? EB_TRUE : EB_FALSE;
+    candidate_buffer_ptr->candidate_ptr->skip_mode = (skip_cost <= merge_cost) ? TRUE : FALSE;
 #else
-    candidate_buffer_ptr->candidate_ptr->skip_flag = (skip_cost <= merge_cost) ? EB_TRUE : EB_FALSE;
+    candidate_buffer_ptr->candidate_ptr->skip_flag = (skip_cost <= merge_cost) ? TRUE : FALSE;
 #endif
     // If skip_mode is selected, no coeffs can be sent
 #if CLN_CAND_TYPES
@@ -2286,7 +2286,7 @@ EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext 
                                 uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits, BlockSize bsize) {
     EbErrorType return_error = EB_ErrorNone;
 
-    if (candidate_buffer_ptr->candidate_ptr->skip_mode_allowed == EB_TRUE) {
+    if (candidate_buffer_ptr->candidate_ptr->skip_mode_allowed == TRUE) {
         av1_merge_skip_full_cost(pcs_ptr,
                                  context_ptr,
                                  candidate_buffer_ptr,

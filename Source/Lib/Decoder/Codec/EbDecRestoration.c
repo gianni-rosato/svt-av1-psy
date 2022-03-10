@@ -293,7 +293,7 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
 
     volatile int32_t *sb_lr_completed_in_prev_row = NULL;
     int32_t          *sb_lr_completed_in_row, nsync = 1;
-    EbBool            is_mt = dec_handle->dec_config.threads > 1;
+    Bool            is_mt = dec_handle->dec_config.threads > 1;
 
     int32_t sb_row_idx = (is_mt == 0) ? 0 : sb_row;
     int32_t index      = lr_ctxt->is_thread_min ? thread_cnt : sb_row_idx;

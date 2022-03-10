@@ -529,7 +529,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
                                            MotionEstimationContext_t *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
-    EbEncMode         enc_mode         = pcs_ptr->enc_mode;
+    EncMode         enc_mode         = pcs_ptr->enc_mode;
     EbInputResolution input_resolution = scs_ptr->input_resolution;
 #if TUNE_4L_M11
     const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
@@ -863,11 +863,11 @@ void *motion_estimation_kernel(void *input_ptr) {
             uint32_t y_b64_start_index = SEGMENT_START_IDX(y_segment_index, picture_height_in_b64, pcs_ptr->me_segments_row_count);
             uint32_t y_b64_end_index = SEGMENT_END_IDX(y_segment_index, picture_height_in_b64, pcs_ptr->me_segments_row_count);
 
-            EbBool skip_me = EB_FALSE;
+            Bool skip_me = FALSE;
             if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
                 (!pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode &&
                  !pcs_ptr->first_frame_in_minigop))
-                skip_me = EB_TRUE;
+                skip_me = TRUE;
             // skip me for the first pass. ME is already performed
             if (!skip_me) {
                 if (pcs_ptr->slice_type != I_SLICE) {
@@ -987,7 +987,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                         global_motion_estimation(pcs_ptr, input_picture_ptr);
                                     else
                                         // Initilize global motion to be OFF when GM is OFF
-                                        memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                                        memset(pcs_ptr->is_global_motion, FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
                                 }
 
                                 svt_release_mutex(pcs_ptr->me_processed_b64_mutex);

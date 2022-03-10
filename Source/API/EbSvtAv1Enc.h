@@ -25,7 +25,37 @@ extern "C" {
 
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
+#if CLN_DEFINITIONS
+/*!\brief Decorator indicating that given struct/union/enum is packed */
+#ifndef ATTRIBUTE_PACKED
+#if defined(__GNUC__) && __GNUC__
+#define ATTRIBUTE_PACKED __attribute__((packed))
+#else
+#define ATTRIBUTE_PACKED
+#endif
+#endif /* ATTRIBUTE_PACKED */
+    typedef enum ATTRIBUTE_PACKED {
+        ENC_MRS = -2, // Highest quality research mode (slowest)
+        ENC_MR = -1, //Research mode with higher quality than M0
+        ENC_M0 = 0,
+        ENC_M1 = 1,
+        ENC_M2 = 2,
+        ENC_M3 = 3,
+        ENC_M4 = 4,
+        ENC_M5 = 5,
+        ENC_M6 = 6,
+        ENC_M7 = 7,
+        ENC_M8 = 8,
+        ENC_M9 = 9,
+        ENC_M10 = 10,
+        ENC_M11 = 11,
+        ENC_M12 = 12,
+        ENC_M13 = 13,
+        MAX_ENC_PRESET = ENC_M13
+    } EncMode;
+#else
 #define MAX_ENC_PRESET 13
+#endif
 #define NUM_MV_COMPONENTS 2
 #define NUM_MV_HIST 2
 #define MAX_MV_HIST_SIZE 2 * REF_LIST_MAX_DEPTH *NUM_MV_COMPONENTS *NUM_MV_HIST
@@ -261,12 +291,12 @@ typedef struct EbSvtAv1EncConfiguration {
     /* force qp values for every picture that are passed in the header pointer
     *
     * Default is 0.*/
-    EbBool use_qp_file;
+    Bool use_qp_file;
 
     /* use fixed qp offset for every picture based on temporal layer index
     *
     * Default is 0.*/
-    EbBool  use_fixed_qindex_offsets;
+    Bool  use_fixed_qindex_offsets;
     int32_t qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
     int32_t key_frame_chroma_qindex_offset;
     int32_t key_frame_qindex_offset;
@@ -289,7 +319,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is true.
      */
-    EbBool enable_dlf_flag;
+    Bool enable_dlf_flag;
 
     /* Film grain denoising the input picture
     * Flag to enable the denoising
@@ -435,7 +465,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is false.
      */
-    EbBool high_dynamic_range_input;
+    Bool high_dynamic_range_input;
 
     /**
      * @brief Bitstream profile to use.
@@ -495,7 +525,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is false.
      */
-    EbBool restricted_motion_vector;
+    Bool restricted_motion_vector;
 
     // Threads management
 
@@ -530,7 +560,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is false.
      */
-    EbBool recon_enabled;
+    Bool recon_enabled;
 
     /* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the dimension
         * into 2
@@ -543,9 +573,9 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is true.
      */
-    EbBool enable_tf;
+    Bool enable_tf;
 
-    EbBool enable_overlays;
+    Bool enable_overlays;
     /**
      * @brief Tune for a particular metric; 0: VQ, 1: PSNR
      *
@@ -572,7 +602,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is false.
      */
-    EbBool enable_manual_pred_struct;
+    Bool enable_manual_pred_struct;
 
     /**
      * @brief API signal specifying the size (number of entries) of the manual prediction structure buffer.
@@ -592,7 +622,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * matrix coefficients is set to non-default value.
     *
     Default is false. */
-    EbBool color_description_present_flag;
+    Bool color_description_present_flag;
     /* Color primaries
     * values are from EbColorPrimaries
     Default is 2 (CP_UNSPECIFIED). */

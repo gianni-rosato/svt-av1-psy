@@ -90,6 +90,7 @@ extern "C" {
 #define CLN_CAND_TYPES          1 // Reorder entries in MD candidate struct and reduce size of some fields
 #endif
 #define CLN_SKIP_NAMING         1 // Rename skip_mode/skip coeff variables for clarity
+#define CLN_DEFINITIONS         1 // Cleanup EbDefinitions.h
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

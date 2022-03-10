@@ -24,4 +24,4 @@ void read_and_compute_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file
                                           uint32_t *frame_hdr);
 void read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file);
 
-EbBool check_if_y4m(EbConfig *cfg);
+Bool check_if_y4m(EbConfig *cfg);

@@ -41,7 +41,7 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
     uint32_t num_of_list_to_search =
         (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
     // Initilize global motion to be OFF for all references frames.
-    memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+    memset(pcs_ptr->is_global_motion, FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
     // Initilize wmtype to be IDENTITY for all references frames
     // Ref List Loop
     for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
@@ -145,9 +145,9 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
         // Ref Picture Loop
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
              ++ref_pic_index) {
-            pcs_ptr->is_global_motion[list_index][ref_pic_index] = EB_FALSE;
+            pcs_ptr->is_global_motion[list_index][ref_pic_index] = FALSE;
             if (pcs_ptr->global_motion_estimation[list_index][ref_pic_index].wmtype > TRANSLATION)
-                pcs_ptr->is_global_motion[list_index][ref_pic_index] = EB_TRUE;
+                pcs_ptr->is_global_motion[list_index][ref_pic_index] = TRUE;
         }
     }
 }
@@ -231,7 +231,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                     const int64_t warp_error = svt_av1_refine_integerized_param(
                         &tmp_wm_params,
                         tmp_wm_params.wmtype,
-                        EB_FALSE,
+                        FALSE,
                         EB_8BIT,
                         ref_buffer,
                         ref_buffer_2b,
@@ -269,7 +269,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
             if (global_motion.wmtype == IDENTITY)
                 continue;
 
-            const int64_t ref_frame_error = svt_av1_frame_error(EB_FALSE,
+            const int64_t ref_frame_error = svt_av1_frame_error(FALSE,
                                                                 EB_8BIT,
                                                                 ref_buffer,
                                                                 ref_pic->stride_y,

@@ -173,7 +173,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
             EbConfig* config                    = c->config;
             config->config.active_channel_count = num_channels;
             config->config.channel_id           = inst_cnt;
-            config->config.recon_enabled        = config->recon_file ? EB_TRUE : EB_FALSE;
+            config->config.recon_enabled        = config->recon_file ? TRUE : FALSE;
 
             init_memory_file_map(config);
 
@@ -190,7 +190,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
             }
             return_error = (EbErrorType)(return_error | c->return_error);
         } else
-            c->active = EB_FALSE;
+            c->active = FALSE;
     }
     return return_error;
 }
@@ -333,7 +333,7 @@ static void print_performance(const EncContext* const enc_context) {
         const EncChannel* c = enc_context->channels + inst_cnt;
         if (c->exit_cond == APP_ExitConditionFinished && c->return_error == EB_ErrorNone) {
             EbConfig* config = c->config;
-            if (config->stop_encoder == EB_FALSE) {
+            if (config->stop_encoder == FALSE) {
                 if ((config->config.pass == 0 ||
                      (config->config.pass == 2 && config->config.rate_control_mode == 0) ||
                      config->config.pass == 3))
@@ -369,15 +369,15 @@ static void print_warnnings(const EncContext* const enc_context) {
     }
 }
 
-static EbBool is_active(const EncChannel* c) { return c->active; }
+static Bool is_active(const EncChannel* c) { return c->active; }
 
-static EbBool has_active_channel(const EncContext* const enc_context) {
+static Bool has_active_channel(const EncContext* const enc_context) {
     // check if all channels are inactive
     for (uint32_t inst_cnt = 0; inst_cnt < enc_context->num_channels; ++inst_cnt) {
         if (is_active(enc_context->channels + inst_cnt))
-            return EB_TRUE;
+            return TRUE;
     }
-    return EB_FALSE;
+    return FALSE;
 }
 
 static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_context) {
@@ -392,7 +392,7 @@ static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_con
         ((c->exit_cond_recon == APP_ExitConditionError && config->recon_file) ||
          c->exit_cond_output == APP_ExitConditionError ||
          c->exit_cond_input == APP_ExitConditionError)) {
-        c->active = EB_FALSE;
+        c->active = FALSE;
         if (config->recon_file)
             c->exit_cond = (AppExitConditionType)(c->exit_cond_recon | c->exit_cond_output |
                                                   c->exit_cond_input);
@@ -423,7 +423,7 @@ static void enc_channel_start(EncChannel* c) {
         c->exit_cond_output = APP_ExitConditionNone;
         c->exit_cond_recon  = config->recon_file ? APP_ExitConditionNone : APP_ExitConditionError;
         c->exit_cond_input  = APP_ExitConditionNone;
-        c->active           = EB_TRUE;
+        c->active           = TRUE;
         app_svt_av1_get_time(&config->performance_context.encode_start_time[0],
                              &config->performance_context.encode_start_time[1]);
     }

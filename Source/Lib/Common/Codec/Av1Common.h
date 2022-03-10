@@ -32,13 +32,13 @@ extern "C" {
     ((((index) + 1) * (pic_size_in_sb)) / (num_of_seg))
 
 typedef struct WnFilterCtrls {
-    EbBool enabled;
+    Bool enabled;
     uint8_t
         filter_tap_lvl; // [1-3], 1 is Y-7tap, UV-5tap; 2 is Y-5tap, UV-5tap; 3 is Y-3tap, UV-3tap
-    EbBool
+    Bool
         use_refinement; // If true, perform a refinement search around initial filter coeff values
-    EbBool max_one_refinement_step; // Limit refinement search to one step
-    EbBool
+    Bool max_one_refinement_step; // Limit refinement search to one step
+    Bool
         use_prev_frame_coeffs; // Skip coeff generation and use the filter params from the colocated rest. unit on the previous frame, if available, else generate new
     // Requires that previous frames saved their params (only true if this flag is on for all frames)
 } WnFilterCtrls;

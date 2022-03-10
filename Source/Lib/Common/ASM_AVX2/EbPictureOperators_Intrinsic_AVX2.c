@@ -1238,7 +1238,7 @@ void svt_unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
 
 void svt_unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride,
                                          uint16_t *ref16_l1, uint32_t ref_l1_stride,
-                                         uint8_t *dst_ptr, uint32_t dst_stride, EbBool sub_pred,
+                                         uint8_t *dst_ptr, uint32_t dst_stride, Bool sub_pred,
                                          uint32_t width, uint32_t height) {
     uint32_t y;
     __m128i  in_pixel0, in_pixel1;

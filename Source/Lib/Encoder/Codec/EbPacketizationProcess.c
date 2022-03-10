@@ -51,7 +51,7 @@ typedef struct PacketizationContext {
     uint64_t     disp_order_continuity_count;
 } PacketizationContext;
 
-static EbBool is_passthrough_data(EbLinkedListNode *data_node) { return data_node->passthrough; }
+static Bool is_passthrough_data(EbLinkedListNode *data_node) { return data_node->passthrough; }
 
 int  compute_rdmult_sse(PictureControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth);
 void free_temporal_filtering_buffer(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
@@ -59,7 +59,7 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void update_rc_counts(PictureParentControlSet *ppcs_ptr);
-void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, EbBool free_memory);
+void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, Bool free_memory);
 
 // Extracts passthrough data from a linked list. The extracted data nodes are removed from the original linked list and
 // returned as a linked list. Does not gaurantee the original order of the nodes.
@@ -492,7 +492,7 @@ void *packetization_kernel(void *input_ptr) {
 
             if (parent_pcs_ptr->superres_recode_loop <=
                 parent_pcs_ptr->superres_total_recode_loop) {
-                EbBool do_recode = EB_FALSE;
+                Bool do_recode = FALSE;
                 if (parent_pcs_ptr->superres_recode_loop ==
                     parent_pcs_ptr->superres_total_recode_loop) {
                     // compare rdcosts to determine whether need to recode again
@@ -507,7 +507,7 @@ void *packetization_kernel(void *input_ptr) {
                     }
 
                     if (best_index != parent_pcs_ptr->superres_total_recode_loop - 1) {
-                        do_recode = EB_TRUE;
+                        do_recode = TRUE;
                         parent_pcs_ptr->superres_denom =
                             parent_pcs_ptr->superres_denom_array[best_index];
 #if DEBUG_SUPERRES_RECODE
@@ -518,7 +518,7 @@ void *packetization_kernel(void *input_ptr) {
 #endif
                     }
                 } else {
-                    do_recode = EB_TRUE;
+                    do_recode = TRUE;
                 }
 
                 if (do_recode) {
@@ -615,7 +615,7 @@ void *packetization_kernel(void *input_ptr) {
             {
                 if (scs_ptr->static_config.stat_report) {
                     // memory is freed in the ssim_calculations call
-                    ssim_calculations(pcs_ptr, scs_ptr, EB_TRUE);
+                    ssim_calculations(pcs_ptr, scs_ptr, TRUE);
                 } else {
                     // free memory used by psnr_calculations
                     free_temporal_filtering_buffer(pcs_ptr, scs_ptr);
@@ -739,9 +739,9 @@ void *packetization_kernel(void *input_ptr) {
         rate_control_tasks_ptr->pcs_wrapper_ptr = pcs_ptr->picture_parent_control_set_wrapper_ptr;
         rate_control_tasks_ptr->task_type       = RC_PACKETIZATION_FEEDBACK_RESULT;
         if (scs_ptr->enable_dec_order ||
-            (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+            (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE &&
              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)) {
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE &&
                 // Force each frame to update their data so future frames can use it,
                 // even if the current frame did not use it.  This enables REF frames to
                 // have the feature off, while NREF frames can have it on.  Used for multi-threading.
@@ -906,7 +906,7 @@ void *packetization_kernel(void *input_ptr) {
         // Post Rate Control Taks
         svt_post_full_object(rate_control_tasks_wrapper_ptr);
         if (scs_ptr->enable_dec_order ||
-            (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+            (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE &&
              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr))
             // Post the Full Results Object
             svt_post_full_object(picture_manager_results_wrapper_ptr);
@@ -932,7 +932,7 @@ void *packetization_kernel(void *input_ptr) {
             queue_entry_ptr           = get_reorder_queue_entry(encode_context_ptr, frames - 1);
             output_stream_wrapper_ptr = queue_entry_ptr->output_stream_wrapper_ptr;
             output_stream_ptr         = (EbBufferHeaderType *)output_stream_wrapper_ptr->object_ptr;
-            EbBool eos                = output_stream_ptr->flags & EB_BUFFERFLAG_EOS;
+            Bool eos                = output_stream_ptr->flags & EB_BUFFERFLAG_EOS;
 
             encode_tu(encode_context_ptr, frames, total_bytes, output_stream_ptr);
 

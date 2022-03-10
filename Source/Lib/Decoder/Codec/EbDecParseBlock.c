@@ -477,7 +477,7 @@ static void read_delta_params(ParseCtxt *parse_ctxt, PartitionInfo *xd) {
 
 int intra_angle_info(SvtReader *r, AomCdfProb *cdf, PredictionMode mode, BlockSize bsize) {
     int angle_delta_y = 0;
-    if (av1_use_angle_delta(bsize, EB_TRUE) && av1_is_directional_mode(mode)) {
+    if (av1_use_angle_delta(bsize, TRUE) && av1_is_directional_mode(mode)) {
         const int sym = svt_read_symbol(r, cdf, 2 * MAX_ANGLE_DELTA + 1, ACCT_STR);
         angle_delta_y = sym - MAX_ANGLE_DELTA;
     }
@@ -943,10 +943,15 @@ void motion_field_projections_row(EbDecHandle *dec_handle, int sb_row, const EbD
     }
 
     int ref_stamp = MFMV_STACK_SIZE - 1;
-
+#if CLN_DEFINITIONS
+    if (ref_buf[0 /*LAST_FRAME - LAST_FRAME*/] != NULL) {
+        const int alt_of_lst_order_hint =
+            ref_buf[0 /*LAST_FRAME - LAST_FRAME*/]->ref_order_hints[ALTREF_FRAME - LAST_FRAME];
+#else
     if (ref_buf[LAST_FRAME - LAST_FRAME] != NULL) {
         const int alt_of_lst_order_hint =
             ref_buf[LAST_FRAME - LAST_FRAME]->ref_order_hints[ALTREF_FRAME - LAST_FRAME];
+#endif
 
         const int is_lst_overlay = (alt_of_lst_order_hint ==
                                     ref_order_hint[GOLDEN_FRAME - LAST_FRAME]);
@@ -980,24 +985,24 @@ void motion_field_projections_row(EbDecHandle *dec_handle, int sb_row, const EbD
 void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
-    EbBool is_mt     = dec_handle->dec_config.threads > 1;
-    EbBool do_memset = EB_TRUE;
+    Bool is_mt     = dec_handle->dec_config.threads > 1;
+    Bool do_memset = TRUE;
 
     if (is_mt) {
-        volatile EbBool *start_motion_proj = &dec_mt_frame_data->start_motion_proj;
+        volatile Bool *start_motion_proj = &dec_mt_frame_data->start_motion_proj;
 
-        while (*start_motion_proj != EB_TRUE)
+        while (*start_motion_proj != TRUE)
             svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle->thread_semaphore
                                                        : thread_ctxt->thread_semaphore);
 
         DecMtMotionProjInfo *motion_proj_info = &dec_mt_frame_data->motion_proj_info;
-        do_memset                             = EB_FALSE;
+        do_memset                             = FALSE;
         //lock mutex
         svt_block_on_mutex(motion_proj_info->motion_proj_mutex);
         //Check memset needed
-        if (motion_proj_info->motion_proj_init_done == EB_FALSE) {
-            do_memset                               = EB_TRUE;
-            motion_proj_info->motion_proj_init_done = EB_TRUE;
+        if (motion_proj_info->motion_proj_init_done == FALSE) {
+            do_memset                               = TRUE;
+            motion_proj_info->motion_proj_init_done = TRUE;
         }
         //unlock mutex
         svt_release_mutex(motion_proj_info->motion_proj_mutex);
@@ -1009,7 +1014,7 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
                sizeof(dec_handle->main_frame_buf.ref_frame_side));
     }
 
-    EbBool no_proj_flag = (dec_handle->frame_header.show_existing_frame ||
+    Bool no_proj_flag = (dec_handle->frame_header.show_existing_frame ||
                            (0 == dec_handle->frame_header.use_ref_frame_mvs));
 
     OrderHintInfo *order_hint_info = &dec_handle->seq_header.order_hint_info;
@@ -1082,13 +1087,13 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
         svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
         dec_mt_frame_data->num_threads_header++;
         if (dec_handle->dec_config.threads == dec_mt_frame_data->num_threads_header) {
-            dec_mt_frame_data->start_motion_proj = EB_FALSE;
+            dec_mt_frame_data->start_motion_proj = FALSE;
         }
         svt_release_mutex(dec_mt_frame_data->temp_mutex);
 
         volatile uint32_t *num_threads_header = &dec_mt_frame_data->num_threads_header;
         while (*num_threads_header != dec_handle->dec_config.threads &&
-               (EB_FALSE == dec_mt_frame_data->end_flag))
+               (FALSE == dec_mt_frame_data->end_flag))
             ;
     }
 }

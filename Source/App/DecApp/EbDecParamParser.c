@@ -38,7 +38,7 @@ static void set_bit_depth(const char *value, EbSvtAv1DecConfiguration *cfg) {
     cfg->max_bit_depth = strtoul(value, NULL, 0);
 };
 static void set_decoder_16bit_pipeline(const char *value, EbSvtAv1DecConfiguration *cfg) {
-    cfg->is_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
+    cfg->is_16bit_pipeline = (Bool)strtoul(value, NULL, 0);
     if (cfg->is_16bit_pipeline != 1 && cfg->is_16bit_pipeline != 0) {
         fprintf(stderr, "Warning : Invalid value for is_16bit_pipeline, setting value to 0. \n");
         cfg->is_16bit_pipeline = 0;

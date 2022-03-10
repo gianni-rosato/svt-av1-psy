@@ -112,7 +112,7 @@
 static uint8_t                   num_groups = 0;
 #ifdef _WIN32
 static GROUP_AFFINITY            group_affinity;
-static EbBool                    alternate_groups = 0;
+static Bool                    alternate_groups = 0;
 #elif defined(__linux__)
 static cpu_set_t                 group_affinity;
 typedef struct logicalProcessorGroup {
@@ -124,8 +124,8 @@ static processorGroup           *lp_group = NULL;
 #endif
 uint8_t  get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
 
-uint8_t get_disallow_nsq(EbEncMode enc_mode);
-uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
+uint8_t get_disallow_nsq(EncMode enc_mode);
+uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 extern uint32_t tot_past_refs[];
 uint32_t  get_num_refs_in_one_mg(PredictionStructure *pred_struct_ptr);
 
@@ -247,7 +247,7 @@ void svt_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
             const uint32_t num_lp_per_group = num_logical_processors / num_groups;
             if (config_ptr->target_socket == -1) {
                 if (config_ptr->logical_processors > num_lp_per_group) {
-                    alternate_groups = EB_TRUE;
+                    alternate_groups = TRUE;
                     SVT_WARN("-lp(logical processors) setting is ignored. Run on both sockets. \n");
                 }
                 else
@@ -392,7 +392,7 @@ uint32_t get_max_wavefronts(uint32_t width, uint32_t height, uint32_t blk_size) 
 *
 * Return true if the pic width is a single SB width
 */
-EbBool is_pic_width_single_sb(uint32_t sb_size, uint16_t pic_width) {
+Bool is_pic_width_single_sb(uint32_t sb_size, uint16_t pic_width) {
     return ((pic_width + (sb_size >> 1)) / sb_size) == 1;
 }
 EbErrorType load_default_buffer_configuration_settings(
@@ -619,8 +619,8 @@ EbErrorType load_default_buffer_configuration_settings(
 
         min_recon = min_ref;
 
-        if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P ||
-            scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B)
+        if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
+            scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B)
         {
             min_input = min_parent = 1 + scs_ptr->scd_delay + eos_delay;
             min_child = 1;
@@ -1322,10 +1322,10 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         ref_pic_buf_desc_init_data.right_padding = scs_ptr->right_padding;
         ref_pic_buf_desc_init_data.top_padding = scs_ptr->top_padding;
         ref_pic_buf_desc_init_data.bot_padding = scs_ptr->bot_padding;
-        ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
+        ref_pic_buf_desc_init_data.split_mode = FALSE;
         ref_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
         ref_pic_buf_desc_init_data.mfmv                = 0;
-        ref_pic_buf_desc_init_data.is_16bit_pipeline   = EB_FALSE;
+        ref_pic_buf_desc_init_data.is_16bit_pipeline   = FALSE;
         ref_pic_buf_desc_init_data.enc_mode            = scs_ptr->static_config.enc_mode;
 
         quart_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width >> 1;
@@ -1337,11 +1337,11 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         quart_pic_buf_desc_init_data.right_padding = scs_ptr->sb_sz >> 1;
         quart_pic_buf_desc_init_data.top_padding = scs_ptr->sb_sz >> 1;
         quart_pic_buf_desc_init_data.bot_padding = scs_ptr->sb_sz >> 1;
-        quart_pic_buf_desc_init_data.split_mode = EB_FALSE;
-        quart_pic_buf_desc_init_data.down_sampled_filtered = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? EB_TRUE : EB_FALSE;
+        quart_pic_buf_desc_init_data.split_mode = FALSE;
+        quart_pic_buf_desc_init_data.down_sampled_filtered = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? TRUE : FALSE;
         quart_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
         quart_pic_buf_desc_init_data.mfmv                = 0;
-        quart_pic_buf_desc_init_data.is_16bit_pipeline   = EB_FALSE;
+        quart_pic_buf_desc_init_data.is_16bit_pipeline   = FALSE;
         quart_pic_buf_desc_init_data.enc_mode            = scs_ptr->static_config.enc_mode;
 
         sixteenth_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width >> 2;
@@ -1353,11 +1353,11 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         sixteenth_pic_buf_desc_init_data.right_padding = scs_ptr->sb_sz >> 2;
         sixteenth_pic_buf_desc_init_data.top_padding = scs_ptr->sb_sz >> 2;
         sixteenth_pic_buf_desc_init_data.bot_padding = scs_ptr->sb_sz >> 2;
-        sixteenth_pic_buf_desc_init_data.split_mode = EB_FALSE;
-        sixteenth_pic_buf_desc_init_data.down_sampled_filtered = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? EB_TRUE : EB_FALSE;
+        sixteenth_pic_buf_desc_init_data.split_mode = FALSE;
+        sixteenth_pic_buf_desc_init_data.down_sampled_filtered = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? TRUE : FALSE;
         sixteenth_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
         sixteenth_pic_buf_desc_init_data.mfmv                = 0;
-        sixteenth_pic_buf_desc_init_data.is_16bit_pipeline   = EB_FALSE;
+        sixteenth_pic_buf_desc_init_data.is_16bit_pipeline   = FALSE;
         sixteenth_pic_buf_desc_init_data.enc_mode            = scs_ptr->static_config.enc_mode;
 
         eb_pa_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
@@ -1386,7 +1386,7 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     EbReferenceObjectDescInitData     eb_ref_obj_ect_desc_init_data_structure;
     EbPictureBufferDescInitData       ref_pic_buf_desc_init_data;
     SequenceControlSet* scs_ptr = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr;
-    EbBool is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    Bool is_16bit = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
     // Initialize the various Picture types
     ref_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width;
     ref_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height;
@@ -1405,8 +1405,8 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     ref_pic_buf_desc_init_data.is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
     // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
 
-    ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
-    ref_pic_buf_desc_init_data.down_sampled_filtered = EB_FALSE;
+    ref_pic_buf_desc_init_data.split_mode = FALSE;
+    ref_pic_buf_desc_init_data.down_sampled_filtered = FALSE;
     ref_pic_buf_desc_init_data.enc_mode = scs_ptr->static_config.enc_mode;
     if (is_16bit)
         ref_pic_buf_desc_init_data.bit_depth = EB_10BIT;
@@ -1574,7 +1574,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             NULL);
 #if SRM_REPORT
         enc_handle_ptr->me_pool_ptr_array[instance_index]->empty_queue->log = 0;
-        dump_srm_content(enc_handle_ptr->me_pool_ptr_array[instance_index], EB_FALSE);
+        dump_srm_content(enc_handle_ptr->me_pool_ptr_array[instance_index], FALSE);
 #endif
     }
 
@@ -2882,8 +2882,8 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         break;
     }
 #if FIX_TF_LDB
-    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B ||
-        scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B ||
+        scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P)
     {
         //for Low Delay, filter only the base B , as Intra is not delayed.
         //if speed not a concern we can add layer1 B
@@ -2902,7 +2902,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
     }
 #else
     // Limit the future frames used in TF for lowdelay prediction structure
-    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P)
         scs_ptr->tf_params_per_type[1].max_num_future_pics = 0;
 #endif
     scs_ptr->tf_params_per_type[0].use_fixed_point = 1;
@@ -2954,7 +2954,7 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
 void derive_tf_params(SequenceControlSet *scs_ptr) {
 
     // Do not perform TF if LD or 1 Layer or 1st pass
-    EbBool do_tf = scs_ptr->static_config.enable_tf && scs_ptr->static_config.hierarchical_levels >= 1 && scs_ptr->static_config.pass != ENC_FIRST_PASS;
+    Bool do_tf = scs_ptr->static_config.enable_tf && scs_ptr->static_config.hierarchical_levels >= 1 && scs_ptr->static_config.pass != ENC_FIRST_PASS;
     uint8_t tf_level = 0;
     if (do_tf == 0) {
         tf_level = 0;
@@ -3150,9 +3150,9 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
         SVT_WARN("TPL is disabled for aq_mode 0\n");
         tpl_level = 0;
     }
-    else if (pred_structure == EB_PRED_LOW_DELAY_B) {
+    else if (pred_structure == PRED_LOW_DELAY_B) {
 #else
-    if (pred_structure == EB_PRED_LOW_DELAY_B) {
+    if (pred_structure == PRED_LOW_DELAY_B) {
 #endif
         SVT_WARN("TPL is disabled in low delay applications.\n");
         tpl_level = 0;
@@ -3454,7 +3454,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
 
     // no future minigop is used for lowdelay prediction structure
-    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P || scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
+    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P || scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
         scs_ptr->lad_mg = scs_ptr->tpl_lad_mg = 0;
     }
     else
@@ -3506,7 +3506,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
     if (scs_ptr->static_config.restricted_motion_vector && scs_ptr->super_block_size == 128) {
-        scs_ptr->static_config.restricted_motion_vector = EB_FALSE;
+        scs_ptr->static_config.restricted_motion_vector = FALSE;
         SVT_WARN("Restricted_motion_vector and SB 128x128 not supoorted, setting rmv to false\n");
     }
     if (scs_ptr->static_config.intra_refresh_type == SVT_AV1_FWDKF_REFRESH && scs_ptr->static_config.hierarchical_levels != 4){
@@ -3515,7 +3515,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
     uint8_t disallow_nsq = get_disallow_nsq(scs_ptr->static_config.enc_mode);
     uint8_t disallow_4x4 = 1;
-    for (EB_SLICE slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
+    for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(scs_ptr->static_config.enc_mode, slice_type));
 
     if (scs_ptr->super_block_size == 128) {
@@ -3884,10 +3884,10 @@ void copy_api_from_app(
     }
 #endif
 #if FTR_CBR
-    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P) {
-        scs_ptr->static_config.pred_structure = EB_PRED_LOW_DELAY_B;
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P) {
+        scs_ptr->static_config.pred_structure = PRED_LOW_DELAY_B;
     }
-    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
         if (scs_ptr->static_config.rate_control_mode == 1) {
             scs_ptr->static_config.rate_control_mode = 2;
             SVT_WARN("Low delay mode does not support VBR. Forcing RC mode to CBR\n");
@@ -3902,8 +3902,8 @@ void copy_api_from_app(
         }
     }
     if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass == ENC_SINGLE_PASS &&
-        scs_ptr->static_config.pred_structure != EB_PRED_LOW_DELAY_B) {
-        scs_ptr->static_config.pred_structure = EB_PRED_LOW_DELAY_B;
+        scs_ptr->static_config.pred_structure != PRED_LOW_DELAY_B) {
+        scs_ptr->static_config.pred_structure = PRED_LOW_DELAY_B;
         SVT_WARN("Forced 1pass CBR to be always low delay mode.\n");
     }
 #if OPT_VQ_MODE
@@ -3982,7 +3982,7 @@ void copy_api_from_app(
     scs_ptr->chroma_format_idc = (uint32_t)(scs_ptr->static_config.encoder_color_format);
     scs_ptr->encoder_bit_depth = (uint32_t)(scs_ptr->static_config.encoder_bit_depth);
     //16bit pipeline
-    scs_ptr->is_16bit_pipeline = ((((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth) > EB_8BIT) ? EB_TRUE: EB_FALSE;
+    scs_ptr->is_16bit_pipeline = ((((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth) > EB_8BIT) ? TRUE: FALSE;
     scs_ptr->subsampling_x = (scs_ptr->chroma_format_idc == EB_YUV444 ? 1 : 2) - 1;
     scs_ptr->subsampling_y = (scs_ptr->chroma_format_idc >= EB_YUV422 ? 1 : 2) - 1;
     scs_ptr->static_config.compressed_ten_bit_format = ((EbSvtAv1EncConfiguration*)config_struct)->compressed_ten_bit_format;
@@ -4008,7 +4008,7 @@ void copy_api_from_app(
     scs_ptr->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)config_struct)->active_channel_count;
     scs_ptr->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
 #if  FTR_LDB_MT
-    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B && scs_ptr->static_config.logical_processors > 3) {
+    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B && scs_ptr->static_config.logical_processors > 3) {
         scs_ptr->static_config.logical_processors = 3;
         SVT_WARN("-lp is capped at 3 for low delay\n");
     }
@@ -4349,7 +4349,7 @@ static EbErrorType downsample_copy_frame_buffer(
     EbPictureBufferDesc           *input_picture_ptr = (EbPictureBufferDesc*)destination;
     EbPictureBufferDesc           *y8b_input_picture_ptr = (EbPictureBufferDesc*)destination_y8b;
     EbSvtIOFormat                   *input_ptr = (EbSvtIOFormat*)source;
-    EbBool                           is_16bit_input = (EbBool)(config->encoder_bit_depth > EB_8BIT);
+    Bool                           is_16bit_input = (Bool)(config->encoder_bit_depth > EB_8BIT);
 
     uint8_t                         *src, *dst;
 
@@ -4552,7 +4552,7 @@ static EbErrorType copy_frame_buffer(
     EbPictureBufferDesc           *input_picture_ptr = (EbPictureBufferDesc*)destination;
     EbPictureBufferDesc           *y8b_input_picture_ptr = (EbPictureBufferDesc*)destination_y8b;
     EbSvtIOFormat                   *input_ptr = (EbSvtIOFormat*)source;
-    EbBool                           is_16bit_input = (EbBool)(config->encoder_bit_depth > EB_8BIT);
+    Bool                           is_16bit_input = (Bool)(config->encoder_bit_depth > EB_8BIT);
 
     uint8_t                         *src, *dst;
 
@@ -5039,7 +5039,7 @@ EbErrorType init_svt_av1_encoder_handle(
 static EbErrorType allocate_frame_buffer(
     SequenceControlSet       *scs_ptr,
     EbBufferHeaderType       *input_buffer,
-    EbBool                   noy8b)
+    Bool                   noy8b)
 {
     EbErrorType   return_error = EB_ErrorNone;
     EbPictureBufferDescInitData input_pic_buf_desc_init_data;
@@ -5064,7 +5064,7 @@ static EbErrorType allocate_frame_buffer(
     input_pic_buf_desc_init_data.top_padding = scs_ptr->top_padding;
     input_pic_buf_desc_init_data.bot_padding = scs_ptr->bot_padding;
 
-    input_pic_buf_desc_init_data.split_mode = is_16bit ? EB_TRUE : EB_FALSE;
+    input_pic_buf_desc_init_data.split_mode = is_16bit ? TRUE : FALSE;
 
     input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     input_pic_buf_desc_init_data.is_16bit_pipeline = 0;
@@ -5120,7 +5120,7 @@ static EbErrorType allocate_y8b_frame_buffer(
     input_pic_buf_desc_init_data.top_padding = scs_ptr->top_padding;
     input_pic_buf_desc_init_data.bot_padding = scs_ptr->bot_padding;
 
-    input_pic_buf_desc_init_data.split_mode = is_16bit ? EB_TRUE : EB_FALSE;
+    input_pic_buf_desc_init_data.split_mode = is_16bit ? TRUE : FALSE;
 
     input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK; //allocate for 8bit Luma only
     input_pic_buf_desc_init_data.is_16bit_pipeline = 0;
@@ -5202,7 +5202,7 @@ EbErrorType svt_input_buffer_header_creator(
     EbErrorType return_error = allocate_frame_buffer(
         scs_ptr,
         input_buffer,
-        EB_TRUE);
+        TRUE);
     if (return_error != EB_ErrorNone)
         return return_error;
 
@@ -5241,7 +5241,7 @@ EbErrorType svt_overlay_buffer_header_creator(
     EbErrorType return_error = allocate_frame_buffer(
         scs_ptr,
         input_buffer,
-        EB_FALSE);
+        FALSE);
     if (return_error != EB_ErrorNone)
         return return_error;
 

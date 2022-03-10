@@ -35,7 +35,7 @@ static PartitionType from_shape_to_part[] = {PARTITION_NONE,
 
 void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *pred,
                      uint32_t pred_offset, uint32_t pred_stride, int16_t *residual,
-                     uint32_t residual_offset, uint32_t residual_stride, EbBool hbd,
+                     uint32_t residual_offset, uint32_t residual_stride, Bool hbd,
                      uint32_t area_width, uint32_t area_height);
 
 void svt_aom_quantize_b_c_ii(const TranLow *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr,
@@ -1215,7 +1215,7 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
                         int16_t dc_sign_context, const TranLow *coeff_ptr, int32_t stride,
                         intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
                         TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
-                        const QuantParam *qparam, TxSize tx_size, TxType tx_type, EbBool is_inter,
+                        const QuantParam *qparam, TxSize tx_size, TxType tx_type, Bool is_inter,
                         uint32_t lambda, int plane)
 
 {
@@ -1480,8 +1480,8 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                                   uint32_t component_type, uint32_t bit_depth, TxType tx_type,
                                   ModeDecisionCandidateBuffer *candidate_buffer,
                                   int16_t txb_skip_context, int16_t dc_sign_context,
-                                  PredictionMode pred_mode, EbBool is_intra_bc, uint32_t lambda,
-                                  EbBool is_encode_pass) {
+                                  PredictionMode pred_mode, Bool is_intra_bc, uint32_t lambda,
+                                  Bool is_encode_pass) {
     (void)candidate_buffer;
     (void)is_encode_pass;
     (void)coeff_stride;
@@ -1571,11 +1571,11 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     qparam.qmatrix   = q_matrix;
     qparam.iqmatrix  = iq_matrix;
 
-    EbBool is_inter = (pred_mode >= NEARESTMV);
-    EbBool perform_rdoq;
+    Bool is_inter = (pred_mode >= NEARESTMV);
+    Bool perform_rdoq;
 
     // If rdoq_level is specified in the command line instruction, set perform_rdoq accordingly.
-    perform_rdoq            = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
+    perform_rdoq            = ((md_context->md_staging_skip_rdoq == FALSE || is_encode_pass) &&
                     md_context->rdoq_level);
     const int dequant_shift = md_context->hbd_mode_decision
         ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5
@@ -1739,7 +1739,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
 
 void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,
                                  uint8_t *rec_buffer, uint32_t rec_offset, uint32_t rec_stride,
-                                 int32_t *rec_coeff_buffer, uint32_t coeff_offset, EbBool hbd,
+                                 int32_t *rec_coeff_buffer, uint32_t coeff_offset, Bool hbd,
                                  TxSize txsize, TxType transform_type, PlaneType component_type,
                                  uint32_t eob) {
     if (hbd) {
@@ -1879,7 +1879,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             candidate_buffer->candidate_ptr->pred_mode,
             0,
             full_lambda,
-            EB_FALSE);
+            FALSE);
 
         picture_full_distortion32_bits_single(
             &(((int32_t *)
@@ -2000,7 +2000,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             candidate_buffer->candidate_ptr->pred_mode,
             0,
             full_lambda,
-            EB_FALSE);
+            FALSE);
 
         picture_full_distortion32_bits_single(
             &(((int32_t *)
@@ -2063,7 +2063,7 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                  uint32_t chroma_qindex, uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU],
                  uint64_t cb_full_distortion[DIST_CALC_TOTAL],
                  uint64_t cr_full_distortion[DIST_CALC_TOTAL], uint64_t *cb_coeff_bits,
-                 uint64_t *cr_coeff_bits, EbBool is_full_loop) {
+                 uint64_t *cr_coeff_bits, Bool is_full_loop) {
     EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
         ? svt_full_distortion_kernel16_bits
         : svt_spatial_full_distortion_kernel;
@@ -2086,15 +2086,15 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 
     const uint8_t tx_depth = candidate_buffer->candidate_ptr->tx_depth;
 #if CLN_REMOVE_REDUND_4
-    const EbBool is_inter = (is_inter_mode(candidate_buffer->candidate_ptr->pred_mode) ||
+    const Bool is_inter = (is_inter_mode(candidate_buffer->candidate_ptr->pred_mode) ||
         candidate_buffer->candidate_ptr->use_intrabc)
-        ? EB_TRUE
-        : EB_FALSE;
+        ? TRUE
+        : FALSE;
 #else
     const int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
                               candidate_buffer->candidate_ptr->use_intrabc)
-        ? EB_TRUE
-        : EB_FALSE;
+        ? TRUE
+        : FALSE;
 #endif
     const int tu_count      = tx_depth
              ? 1
@@ -2224,7 +2224,7 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                 candidate_buffer->candidate_ptr->pred_mode,
                 candidate_buffer->candidate_ptr->use_intrabc,
                 full_lambda,
-                EB_FALSE);
+                FALSE);
 
             if (is_full_loop && context_ptr->md_staging_spatial_sse_full_loop_level) {
                 uint32_t cb_has_coeff = cb_count_non_zero_coeffs[txb_itr] > 0;
@@ -2406,7 +2406,7 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                 candidate_buffer->candidate_ptr->pred_mode,
                 candidate_buffer->candidate_ptr->use_intrabc,
                 full_lambda,
-                EB_FALSE);
+                FALSE);
             if (is_full_loop && context_ptr->md_staging_spatial_sse_full_loop_level) {
                 uint32_t cr_has_coeff = cr_count_non_zero_coeffs[txb_itr] > 0;
 
@@ -2708,7 +2708,7 @@ uint32_t d2_inter_depth_block_decision(SequenceControlSet *scs_ptr, PictureContr
                                        ModeDecisionContext *context_ptr, uint32_t blk_mds,
                                        uint32_t sb_addr) {
     uint64_t parent_depth_cost = 0, current_depth_cost = 0;
-    EbBool   last_depth_flag = (context_ptr->md_blk_arr_nsq[blk_mds].split_flag == EB_FALSE);
+    Bool   last_depth_flag = (context_ptr->md_blk_arr_nsq[blk_mds].split_flag == FALSE);
     uint32_t last_blk_index = blk_mds, current_depth_idx_mds = blk_mds;
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_mds);
     if (last_depth_flag) {
@@ -2733,13 +2733,13 @@ uint32_t d2_inter_depth_block_decision(SequenceControlSet *scs_ptr, PictureContr
                 current_depth_cost = (current_depth_cost * context_ptr->inter_depth_bias) / 1000;
             }
             if (parent_depth_cost <= current_depth_cost) {
-                context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_FALSE;
+                context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = FALSE;
                 context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost    = parent_depth_cost;
                 last_blk_index                                               = parent_depth_idx_mds;
             } else {
                 context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost    = current_depth_cost;
                 context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].part       = PARTITION_SPLIT;
-                context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_TRUE;
+                context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = TRUE;
             }
 
             //setup next parent inter depth

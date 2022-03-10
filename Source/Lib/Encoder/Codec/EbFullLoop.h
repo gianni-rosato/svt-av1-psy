@@ -36,10 +36,10 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                  uint32_t chroma_qindex, uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU],
                  uint64_t cb_full_distortion[DIST_CALC_TOTAL],
                  uint64_t cr_full_distortion[DIST_CALC_TOTAL], uint64_t *cb_coeff_bits,
-                 uint64_t *cr_coeff_bits, EbBool is_full_loop);
+                 uint64_t *cr_coeff_bits, Bool is_full_loop);
 void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,
                                  uint8_t *rec_buffer, uint32_t rec_offset, uint32_t rec_stride,
-                                 int32_t *rec_coeff_buffer, uint32_t coeff_offset, EbBool hbd,
+                                 int32_t *rec_coeff_buffer, uint32_t coeff_offset, Bool hbd,
                                  TxSize txsize, TxType transform_type, PlaneType component_type,
                                  uint32_t eob);
 

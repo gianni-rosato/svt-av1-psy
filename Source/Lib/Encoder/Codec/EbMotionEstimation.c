@@ -36,7 +36,7 @@
  ********************************************/
 #define TF_HME_MV_SAD_TH 512 // SAD_TH beyond which a penalty is applied to hme_mv_cost
 #define TF_HME_MV_COST_WEIGHT 125 // MV_COST weight when the SAD_TH condition is valid
-EbBool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
+Bool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
     MV mv;
     //go to 1/8th if input is 1/4pel
     mv.row = y_mv << need_shift;
@@ -47,9 +47,9 @@ EbBool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
       -2048 < MV_x_in_full_pel or MV_y_in_full_pel < 2048
     */
     if (!is_mv_valid(&mv)) {
-        return EB_FALSE;
+        return FALSE;
     }
-    return EB_TRUE;
+    return TRUE;
 }
 
 #define MAX_INTRA_IN_MD 9
@@ -123,7 +123,7 @@ void svt_ext_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint
                                          uint32_t ref_stride, uint32_t *p_best_sad_8x8,
                                          uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
                                          uint32_t *p_best_mv16x16, uint32_t mv,
-                                         uint32_t *p_sad16x16, uint32_t *p_sad8x8, EbBool sub_sad) {
+                                         uint32_t *p_sad16x16, uint32_t *p_sad8x8, Bool sub_sad) {
     uint32_t sad16x16;
 
     if (sub_sad) {
@@ -235,7 +235,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t mv,
     uint32_t start_16x16_pos, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
     uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
-    uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
+    uint32_t p_eight_sad8x8[64][8], Bool sub_sad) {
     const uint32_t start_8x8_pos = 4 * start_16x16_pos;
     int16_t        x_mv, y_mv;
 
@@ -362,7 +362,7 @@ void svt_ext_all_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, 
                                              uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
                                              uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
                                              uint32_t p_eight_sad16x16[16][8],
-                                             uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
+                                             uint32_t p_eight_sad8x8[64][8], Bool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
     (void)out_8x8;
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
@@ -465,7 +465,7 @@ static void open_loop_me_get_eight_search_point_results_block(
 ) {
     // uint32_t ref_luma_stride = ref_pic_ptr->stride_y; // NADER
     // uint8_t  *ref_ptr = ref_pic_ptr->buffer_y; // NADER
-    const EbBool sub_sad         = (context_ptr->me_search_method == SUB_SAD_SEARCH);
+    const Bool sub_sad         = (context_ptr->me_search_method == SUB_SAD_SEARCH);
     uint32_t     ref_luma_stride = context_ptr->interpolated_full_stride[list_index][ref_pic_index];
     uint8_t *    ref_ptr         = context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
         ((ME_FILTER_TAP >> 1) * context_ptr->interpolated_full_stride[list_index][ref_pic_index]) +
@@ -511,7 +511,7 @@ static void open_loop_me_get_search_point_results_block(
     int32_t y_search_index) // input parameter, search region position in the
 // vertical direction, used to derive yMV
 {
-    const EbBool sub_sad = (context_ptr->me_search_method == SUB_SAD_SEARCH);
+    const Bool sub_sad = (context_ptr->me_search_method == SUB_SAD_SEARCH);
     uint8_t *    src_ptr = context_ptr->b64_src_ptr;
 
     // uint8_t  *ref_ptr = ref_pic_ptr->buffer_y; // NADER
@@ -1363,7 +1363,7 @@ void integer_search_b64(PictureParentControlSet *pcs_ptr, uint32_t b64_index, ui
                 if (!scs_ptr->ipp_pass_ctrls.bypass_zz_check ||
                     context_ptr->me_type != ME_FIRST_PASS)
                     if ((x_search_center != 0 || y_search_center != 0) &&
-                        (context_ptr->is_used_as_reference_flag == EB_TRUE)) {
+                        (context_ptr->is_used_as_reference_flag == TRUE)) {
 
                         best_hme_sad = check_00_center(
                             ref_pic_ptr,
@@ -1743,7 +1743,7 @@ uint32_t get_zz_sad(EbPictureBufferDesc *ref_pic_ptr, MeContext *context_ptr, ui
 // Determine if pre-HME for the current picture and search region should be skipped.
 // Return 1 if can early exit (i.e. skip pre-hme for current frame and search region)
 // Return 0 if can't skip
-static EbBool check_prehme_early_exit(MeContext *ctx, uint8_t list_i, uint8_t ref_i, uint8_t sr_i) {
+static Bool check_prehme_early_exit(MeContext *ctx, uint8_t list_i, uint8_t ref_i, uint8_t sr_i) {
     SearchInfo *prehme_data = &ctx->prehme_data[list_i][ref_i][sr_i];
 
     if (ctx->me_early_exit_th) {
@@ -2130,9 +2130,9 @@ void set_final_seach_centre_sb(PictureParentControlSet *pcs_ptr, MeContext *cont
     uint32_t list_index;
     uint8_t  ref_pic_index;
     // Configure HME level 0, level 1 and level 2 from static config parameters
-    EbBool enable_hme_level0_flag = context_ptr->enable_hme_level0_flag;
-    EbBool enable_hme_level1_flag = context_ptr->enable_hme_level1_flag;
-    EbBool enable_hme_level2_flag = context_ptr->enable_hme_level2_flag;
+    Bool enable_hme_level0_flag = context_ptr->enable_hme_level0_flag;
+    Bool enable_hme_level1_flag = context_ptr->enable_hme_level1_flag;
+    Bool enable_hme_level2_flag = context_ptr->enable_hme_level2_flag;
 
     uint64_t best_cost         = (uint64_t)~0;
     context_ptr->best_list_idx = 0;
@@ -3031,7 +3031,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
         const CodedBlockStats *blk_stats_ptr;
         blk_stats_ptr              = get_coded_blk_stats(pa_blk_index);
         uint8_t bsize              = blk_stats_ptr->size;
-        EbBool  small_boundary_blk = EB_FALSE;
+        Bool  small_boundary_blk = FALSE;
 
         //if(sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]])
         {
@@ -3040,7 +3040,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
             if ((blk_stats_ptr->origin_x % 16) == 0 && (blk_stats_ptr->origin_y % 16) == 0 &&
                 ((pcs_ptr->enhanced_picture_ptr->width - cu_origin_x) < 16 ||
                  (pcs_ptr->enhanced_picture_ptr->height - cu_origin_y) < 16))
-                small_boundary_blk = EB_TRUE;
+                small_boundary_blk = TRUE;
         }
 
         if (bsize != 16 && !small_boundary_blk) {
@@ -3078,12 +3078,12 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
                                                        bsize);
             uint8_t        ois_intra_mode;
             uint8_t        intra_mode_start = DC_PRED;
-            EbBool         enable_paeth   = pcs_ptr->scs_ptr->enable_paeth == DEFAULT
-                          ? EB_TRUE
-                          : (EbBool)pcs_ptr->scs_ptr->enable_paeth;
-            EbBool         enable_smooth  = pcs_ptr->scs_ptr->enable_smooth == DEFAULT
-                         ? EB_TRUE
-                         : (EbBool)pcs_ptr->scs_ptr->enable_smooth;
+            Bool         enable_paeth   = pcs_ptr->scs_ptr->enable_paeth == DEFAULT
+                          ? TRUE
+                          : (Bool)pcs_ptr->scs_ptr->enable_paeth;
+            Bool         enable_smooth  = pcs_ptr->scs_ptr->enable_smooth == DEFAULT
+                         ? TRUE
+                         : (Bool)pcs_ptr->scs_ptr->enable_smooth;
             uint8_t        intra_mode_end = pcs_ptr->tpl_ctrls.tpl_opt_flag ? DC_PRED
                        : enable_paeth                                       ? PAETH_PRED
                        : enable_smooth                                      ? SMOOTH_H_PRED

@@ -88,7 +88,7 @@ typedef struct PredictionStructureEntry {
     DependentList dep_list1;
     uint32_t      temporal_layer_index;
     uint32_t      decode_order;
-    EbBool        is_referenced;
+    Bool        is_referenced;
 } PredictionStructureEntry;
 
 /************************************************
@@ -100,7 +100,7 @@ typedef struct PredictionStructure {
     EbDctor                    dctor;
     uint32_t                   pred_struct_entry_count;
     PredictionStructureEntry **pred_struct_entry_ptr_array;
-    EbPred                     pred_type;
+    PredStructure                     pred_type;
     uint32_t                   temporal_layer_count;
     uint32_t                   pred_struct_period;
     uint32_t                   maximum_extent;
@@ -131,7 +131,7 @@ typedef struct PredictionStructureGroup {
 //   PredictionStructureGroup* pred_struct_group_ptr,
 //   struct SequenceControlSet* scs_ptr);
 extern PredictionStructure *get_prediction_structure(
-    PredictionStructureGroup *prediction_structure_group_ptr, EbPred pred_structure,
+    PredictionStructureGroup *prediction_structure_group_ptr, PredStructure pred_structure,
     uint32_t number_of_references, uint32_t levels_of_hierarchy);
 typedef enum {
     LAST  = 0,

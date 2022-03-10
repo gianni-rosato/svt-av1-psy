@@ -144,7 +144,7 @@ void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlContext *
 
 /* send picture out from irc process */
 void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs,
-                          EbBool superres_recode) {
+                          Bool superres_recode) {
     EbObjectWrapper *out_results_wrapper_ptr;
     // Get Empty Results Object
     svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr,
@@ -360,7 +360,7 @@ void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
                                 (uint8_t)(tmp_pcs->ext_mg_id - head_pcs->ext_mg_id +
                                           1)); //+1: to include the MG where the head belongs
                         if (tmp_pcs->end_of_sequence_flag)
-                            head_pcs->end_of_sequence_region = EB_TRUE;
+                            head_pcs->end_of_sequence_region = TRUE;
                         if (tmp_pcs->ext_mg_id >= cur_mg) {
                             if (tmp_pcs->ext_mg_id > cur_mg)
                                 assert_err(tmp_pcs->ext_mg_id == cur_mg + 1,
@@ -427,7 +427,7 @@ void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
                 }
             }
             //take the picture out from iRc process
-            irc_send_picture_out(ctx, head_pcs, EB_FALSE);
+            irc_send_picture_out(ctx, head_pcs, FALSE);
             //advance the head
             head_entry->pcs = NULL;
             queue->head     = OUT_Q_ADVANCE(queue->head);
@@ -518,11 +518,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     /*In case Look-Ahead is zero there is no need to place pictures in the
                       re-order queue. this will cause an artificial delay since pictures come in dec-order*/
                     pcs_ptr->frames_in_sw           = 0;
-                    pcs_ptr->end_of_sequence_region = EB_FALSE;
+                    pcs_ptr->end_of_sequence_region = FALSE;
                 }
 
                 // post to downstream process
-                irc_send_picture_out(context_ptr, pcs_ptr, EB_TRUE);
+                irc_send_picture_out(context_ptr, pcs_ptr, TRUE);
 
                 // Release the Input Results
                 svt_release_object(in_results_wrapper_ptr);
@@ -573,7 +573,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
             pcs_ptr->frames_in_sw           = 0;
-            pcs_ptr->end_of_sequence_region = EB_FALSE;
+            pcs_ptr->end_of_sequence_region = FALSE;
 
             push_to_lad_queue(pcs_ptr, context_ptr);
 #if LAD_MG_PRINT

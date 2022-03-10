@@ -43,7 +43,7 @@ EbErrorType svt_av1_picture_copy(EbPictureBufferDesc *src, uint32_t src_luma_ori
                                  uint32_t dst_luma_origin_index, uint32_t dst_chroma_origin_index,
                                  uint32_t area_width, uint32_t area_height,
                                  uint32_t chroma_area_width, uint32_t chroma_area_height,
-                                 uint32_t component_mask, EbBool hbd) {
+                                 uint32_t component_mask, Bool hbd) {
     EbErrorType return_error = EB_ErrorNone;
 
     if (hbd) {

@@ -62,7 +62,7 @@ typedef struct ResourceCoordinationContext {
 
     uint64_t first_in_pic_arrived_time_seconds;
     uint64_t first_in_pic_arrived_timeu_seconds;
-    EbBool   start_flag;
+    Bool   start_flag;
 } ResourceCoordinationContext;
 
 static void resource_coordination_context_dctor(EbPtr p) {
@@ -127,7 +127,7 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
     context_ptr->prevs_time_seconds                 = 0;
     context_ptr->prevs_timeu_seconds                = 0;
     context_ptr->prev_frame_out                     = 0;
-    context_ptr->start_flag                         = EB_FALSE;
+    context_ptr->start_flag                         = FALSE;
 
     context_ptr->previous_buffer_check1 = 0;
     context_ptr->prev_change_cond       = 0;
@@ -343,7 +343,7 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
 * return the restoration level
   Used by signal_derivation_pre_analysis_oq and memory allocation
 */
-uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
+uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
                                uint8_t input_resolution, uint8_t fast_decode) {
     uint8_t enable_restoration;
     if (fast_decode <= 2)
@@ -452,7 +452,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
         svt_av1_get_time(&context_ptr->first_in_pic_arrived_time_seconds,
                          &context_ptr->first_in_pic_arrived_timeu_seconds);
     else if (scs_ptr->encode_context_ptr->sc_frame_in == SC_FRAMES_TO_IGNORE)
-        context_ptr->start_flag = EB_TRUE;
+        context_ptr->start_flag = TRUE;
     // Compute duration since the start of the encode and since the previous checkpoint
     svt_av1_get_time(&curs_time_seconds, &curs_time_useconds);
 
@@ -517,7 +517,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
             change_cond = 7;
         }
         encoder_mode_delta                    = CLIP3(-1, 1, encoder_mode_delta);
-        scs_ptr->encode_context_ptr->enc_mode = (EbEncMode)CLIP3(
+        scs_ptr->encode_context_ptr->enc_mode = (EncMode)CLIP3(
             1, MAX_ENC_PRESET, (int8_t)scs_ptr->encode_context_ptr->enc_mode + encoder_mode_delta);
 
         // Update previous stats
@@ -553,7 +553,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
         }
 
         encoder_mode_delta                    = CLIP3(-1, 1, encoder_mode_delta);
-        scs_ptr->encode_context_ptr->enc_mode = (EbEncMode)CLIP3(
+        scs_ptr->encode_context_ptr->enc_mode = (EncMode)CLIP3(
             1, MAX_ENC_PRESET, (int8_t)scs_ptr->encode_context_ptr->enc_mode + encoder_mode_delta);
 
         // Update previous stats
@@ -579,7 +579,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
                                                     context_ptr->prev_frame_out) *
                     1000 / (uint64_t)(inst_duration);
         }
-        context_ptr->start_flag = EB_FALSE;
+        context_ptr->start_flag = FALSE;
 
         // Update previous stats
         context_ptr->previous_frame_in_check3 = scs_ptr->encode_context_ptr->sc_frame_in;
@@ -757,7 +757,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
     EbPictureBufferDesc *dst_picture_ptr = (EbPictureBufferDesc *)dst;
     EbPictureBufferDesc *src_picture_ptr = (EbPictureBufferDesc *)src;
-    EbBool               is_16bit_input  = (EbBool)(config->encoder_bit_depth > EB_8BIT);
+    Bool               is_16bit_input  = (Bool)(config->encoder_bit_depth > EB_8BIT);
 
     // Need to include for Interlacing on the fly with pictureScanType = 1
 
@@ -917,7 +917,7 @@ static EbErrorType realloc_sb_param(SequenceControlSet *scs_ptr, PictureParentCo
     EB_FREE_ARRAY(pcs_ptr->sb_geom);
     EB_MALLOC_ARRAY(pcs_ptr->sb_geom, scs_ptr->sb_tot_cnt);
     memcpy(pcs_ptr->sb_geom, scs_ptr->sb_geom, sizeof(SbGeom) * scs_ptr->sb_tot_cnt);
-    pcs_ptr->is_pcs_sb_params = EB_TRUE;
+    pcs_ptr->is_pcs_sb_params = TRUE;
     return EB_ErrorNone;
 }
 
@@ -970,7 +970,7 @@ void *resource_coordination_kernel(void *input_ptr) {
     EbObjectWrapper             *input_picture_wrapper_ptr;
     EbObjectWrapper             *reference_picture_wrapper_ptr;
 
-    EbBool end_of_sequence_flag = EB_FALSE;
+    Bool end_of_sequence_flag = FALSE;
 
     uint32_t         input_size           = 0;
     EbObjectWrapper *prev_pcs_wrapper_ptr = 0;
@@ -1116,7 +1116,7 @@ void *resource_coordination_kernel(void *input_ptr) {
         // for every picture (except first picture), we allocate two: 1. original picture, 2. potential Overlay picture.
         // In Picture Decision Process, where the overlay frames are known, they extra pictures are released
         uint8_t has_overlay =
-            (scs_ptr->static_config.enable_overlays == EB_FALSE ||
+            (scs_ptr->static_config.enable_overlays == FALSE ||
              context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture)
             ? 0
             : 1;
@@ -1139,7 +1139,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             else {
                 pcs_ptr->sb_params_array  = scs_ptr->sb_params_array;
                 pcs_ptr->sb_geom          = scs_ptr->sb_geom;
-                pcs_ptr->is_pcs_sb_params = EB_FALSE;
+                pcs_ptr->is_pcs_sb_params = FALSE;
             }
             pcs_ptr->input_resolution  = scs_ptr->input_resolution;
             pcs_ptr->picture_sb_width  = scs_ptr->pic_width_in_sb;
@@ -1185,8 +1185,8 @@ void *resource_coordination_kernel(void *input_ptr) {
             //make pcs input buffer access the luma8bit part from the Luma8bit Pool
             pcs_ptr->enhanced_picture_ptr->buffer_y = buff_y8b;
             pcs_ptr->input_ptr                      = eb_input_ptr;
-            end_of_sequence_flag = (pcs_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? EB_TRUE
-                                                                                   : EB_FALSE;
+            end_of_sequence_flag = (pcs_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? TRUE
+                                                                                   : FALSE;
             // Check whether super-res is previously enabled in this recycled parent pcs and restore to non-scale-down default if so.
             if (pcs_ptr->frame_superres_enabled)
                 reset_resized_picture(scs_ptr, pcs_ptr, pcs_ptr->enhanced_picture_ptr);
@@ -1227,15 +1227,15 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->idr_flag = scs_ptr->encode_context_ptr->initial_picture ||
                 (pcs_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE);
             pcs_ptr->cra_flag          = (pcs_ptr->input_ptr->pic_type == EB_AV1_INTRA_ONLY_PICTURE)
-                         ? EB_TRUE
-                         : EB_FALSE;
-            pcs_ptr->scene_change_flag = EB_FALSE;
-            pcs_ptr->qp_on_the_fly     = EB_FALSE;
+                         ? TRUE
+                         : FALSE;
+            pcs_ptr->scene_change_flag = FALSE;
+            pcs_ptr->qp_on_the_fly     = FALSE;
             pcs_ptr->sb_total_count    = scs_ptr->sb_total_count;
             if (scs_ptr->speed_control_flag) {
                 speed_buffer_control(context_ptr, pcs_ptr, scs_ptr);
             } else
-                pcs_ptr->enc_mode = (EbEncMode)scs_ptr->static_config.enc_mode;
+                pcs_ptr->enc_mode = (EncMode)scs_ptr->static_config.enc_mode;
             //  If the mode of the second pass is not set from CLI, it is set to enc_mode
 
             // Pre-Analysis Signal(s) derivation
@@ -1279,19 +1279,19 @@ void *resource_coordination_kernel(void *input_ptr) {
                     SVT_LOG("Error reading data in multi pass encoding\n");
             }
             if (scs_ptr->static_config.use_qp_file == 1) {
-                pcs_ptr->qp_on_the_fly = EB_TRUE;
+                pcs_ptr->qp_on_the_fly = TRUE;
                 if (pcs_ptr->input_ptr->qp > MAX_QP_VALUE) {
                     SVT_WARN("INPUT QP/CRF OUTSIDE OF RANGE\n");
-                    pcs_ptr->qp_on_the_fly = EB_FALSE;
+                    pcs_ptr->qp_on_the_fly = FALSE;
                 }
                 pcs_ptr->picture_qp = (uint8_t)pcs_ptr->input_ptr->qp;
             } else {
-                pcs_ptr->qp_on_the_fly = EB_FALSE;
+                pcs_ptr->qp_on_the_fly = FALSE;
                 pcs_ptr->picture_qp    = (uint8_t)scs_ptr->static_config.qp;
             }
 
             pcs_ptr->ts_duration = (double)10000000 * (1 << 16) / scs_ptr->frame_rate;
-            scs_ptr->encode_context_ptr->initial_picture = EB_FALSE;
+            scs_ptr->encode_context_ptr->initial_picture = FALSE;
 
             // Get Empty Reference Picture Object
             svt_get_empty_object(scs_ptr->encode_context_ptr->pa_reference_picture_pool_fifo_ptr,
@@ -1368,7 +1368,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 ppcs_out->end_of_sequence_flag = end_of_sequence_flag;
                 // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
                 if (ppcs_out->is_overlay && end_of_sequence_flag)
-                    ppcs_out->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
+                    ppcs_out->alt_ref_ppcs_ptr->end_of_sequence_flag = TRUE;
 
                 reset_pcs_av1(ppcs_out);
 

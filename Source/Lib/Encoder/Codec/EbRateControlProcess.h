@@ -84,7 +84,7 @@ typedef struct coded_frames_stats_entry {
     EbDctor  dctor;
     uint64_t picture_number;
     int64_t  frame_total_bit_actual;
-    EbBool   end_of_sequence_flag;
+    Bool   end_of_sequence_flag;
 } coded_frames_stats_entry;
 
 extern EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,

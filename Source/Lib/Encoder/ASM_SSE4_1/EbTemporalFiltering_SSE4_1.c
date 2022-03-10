@@ -1979,7 +1979,7 @@ void get_final_filtered_pixels_sse4_1(MeContext *context_ptr, EbByte *src_center
                                       uint16_t **count, const uint32_t *stride,
                                       int blk_y_src_offset, int blk_ch_src_offset,
                                       uint16_t blk_width_ch, uint16_t blk_height_ch,
-                                      EbBool is_highbd) {
+                                      Bool is_highbd) {
     assert(blk_width_ch % 16 == 0);
     assert(BW % 16 == 0);
 

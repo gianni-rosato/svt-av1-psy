@@ -90,7 +90,7 @@ typedef struct LrCtxt {
 
     /* Flag to indicate if the access of buffers must be
        based on thread index or SB row index */
-    EbBool is_thread_min;
+    Bool is_thread_min;
 
 } LrCtxt;
 

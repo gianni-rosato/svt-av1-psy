@@ -478,7 +478,7 @@ void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *m
 
     const int32_t num_planes = av1_num_planes(&dec_handle->seq_header.color_config);
 
-    EbBool sb_128 = dec_handle->seq_header.sb_size == BLOCK_128X128;
+    Bool sb_128 = dec_handle->seq_header.sb_size == BLOCK_128X128;
     for (int32_t pli = 0; pli < num_planes; pli++) {
         const int32_t block_height = (MI_SIZE_64X64 << mi_high_l2[pli]) + 2 * CDEF_VBORDER;
         /*Filling the colbuff's with some values.*/

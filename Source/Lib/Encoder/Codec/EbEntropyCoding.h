@@ -50,7 +50,7 @@ extern EbErrorType encode_slice_finish(EntropyCoder *entropy_coder_ptr);
 
 extern EbErrorType reset_entropy_coder(EncodeContext *encode_context_ptr,
                                        EntropyCoder *entropy_coder_ptr, uint32_t qp,
-                                       EB_SLICE slice_type);
+                                       SliceType slice_type);
 EbErrorType        av1_txb_estimate_coeff_bits(
            struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
            PictureControlSet *pcs_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,

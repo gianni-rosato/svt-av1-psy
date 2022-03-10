@@ -32,7 +32,7 @@ extern uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t
                                         const TranLow *const qcoeff, uint16_t eob,
                                         PlaneType plane_type, TxSize transform_size,
                                         TxType transform_type, int16_t txb_skip_ctx,
-                                        int16_t dc_sign_ctx, EbBool reduced_transform_set_flag);
+                                        int16_t dc_sign_ctx, Bool reduced_transform_set_flag);
 
 extern void coding_loop_context_generation(PictureControlSet   *pcs_ptr,
                                            ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
@@ -146,7 +146,7 @@ extern EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionC
                                        BlockSize bsize);
 extern uint64_t    get_tx_size_bits(ModeDecisionCandidateBuffer *candidateBuffer,
                                     ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
-                                    uint8_t tx_depth, EbBool block_has_coeff);
+                                    uint8_t tx_depth, Bool block_has_coeff);
 
 MvJointType svt_av1_get_mv_joint(const MV *mv);
 

@@ -30,7 +30,7 @@ EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffer
     trans_coeff_32bit_init_array.right_padding      = 0;
     trans_coeff_32bit_init_array.top_padding        = 0;
     trans_coeff_32bit_init_array.bot_padding        = 0;
-    trans_coeff_32bit_init_array.split_mode         = EB_FALSE;
+    trans_coeff_32bit_init_array.split_mode         = FALSE;
 
     EB_NEW(trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr,
            svt_picture_buffer_desc_ctor,

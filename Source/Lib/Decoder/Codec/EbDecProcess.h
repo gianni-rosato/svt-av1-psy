@@ -85,7 +85,7 @@ typedef struct DecMtMotionProjInfo {
     /* Motion Projection row state context */
     int32_t motion_proj_row_to_process;
 
-    EbBool motion_proj_init_done;
+    Bool motion_proj_init_done;
 
 } DecMtMotionProjInfo;
 
@@ -140,7 +140,7 @@ typedef struct DecMtRowInfo {
 typedef struct DecMtlfFrameInfo {
     /* Flag to check lf_info initialization done or not.
        First thread entering LF stage should do the init */
-    EbBool lf_info_init_done;
+    Bool lf_info_init_done;
 
     /* Array to store SBs completed in every SB row of LF stage.
        Used for top sync */
@@ -152,7 +152,7 @@ typedef struct DecMtlfFrameInfo {
 typedef struct PrevFrameMtCheck {
     /* Flag to indicate if the first
        frame header has been read */
-    EbBool frame_header_read;
+    Bool frame_header_read;
 
     /* Previous frame's height */
     uint16_t prev_max_frame_height;
@@ -172,13 +172,13 @@ typedef struct DecMTFrameData {
     uint32_t num_threads_cdefed; /*Should be Removed after PAD MT*/
     uint32_t num_threads_lred; /*Should be Removed after PAD MT*/
     uint32_t num_threads_exited;
-    EbBool   end_flag;
-    EbBool   start_motion_proj;
-    EbBool   start_parse_frame;
-    EbBool   start_decode_frame;
-    EbBool   start_lf_frame;
-    EbBool   start_cdef_frame;
-    EbBool   start_lr_frame;
+    Bool   end_flag;
+    Bool   start_motion_proj;
+    Bool   start_parse_frame;
+    Bool   start_decode_frame;
+    Bool   start_lf_frame;
+    Bool   start_cdef_frame;
+    Bool   start_lr_frame;
 
     EbHandle temp_mutex;
 

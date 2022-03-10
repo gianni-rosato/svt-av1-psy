@@ -198,13 +198,13 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
             header_ptr->n_filled_len = 0;
 
             if (config->mmap.enable) {
-                if (config->y4m_input == EB_TRUE && config->processed_frame_count == 0) {
+                if (config->y4m_input == TRUE && config->processed_frame_count == 0) {
                     read_and_compute_y4m_frame_delimiter(
                         config->input_file, config->error_log_file, &config->mmap.y4m_frm_hdr);
                 }
             } else {
                 /* if input is a y4m file, read next line which contains "FRAME" */
-                if (config->y4m_input == EB_TRUE)
+                if (config->y4m_input == TRUE)
                     read_y4m_frame_delimiter(config->input_file, config->error_log_file);
             }
             uint64_t luma_read_size = (uint64_t)input_padded_width * input_padded_height
@@ -263,7 +263,7 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
                     header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
                 } else if (!config->input_file_is_fifo) {
                     fseek(input_file, 0, SEEK_SET);
-                    if (config->y4m_input == EB_TRUE) {
+                    if (config->y4m_input == TRUE) {
                         read_and_skip_y4m_header(config->input_file);
                         read_y4m_frame_delimiter(config->input_file, config->error_log_file);
                     }
@@ -479,7 +479,7 @@ static long get_next_qp_from_qp_file(FILE *const qp_file, int *const qp_read_fro
     return qp;
 }
 
-static unsigned char send_qp_on_the_fly(FILE *const qp_file, EbBool *use_qp_file) {
+static unsigned char send_qp_on_the_fly(FILE *const qp_file, Bool *use_qp_file) {
     long tmp_qp            = 0;
     int  qp_read_from_file = 0;
 
@@ -488,7 +488,7 @@ static unsigned char send_qp_on_the_fly(FILE *const qp_file, EbBool *use_qp_file
         tmp_qp = get_next_qp_from_qp_file(qp_file, &qp_read_from_file);
 
     if (tmp_qp == -1) {
-        *use_qp_file = EB_FALSE;
+        *use_qp_file = FALSE;
         fprintf(stderr, "\nWarning: QP File did not contain any valid QPs");
     }
     return (unsigned)CLIP3(0, 63, tmp_qp);
@@ -562,7 +562,7 @@ void process_input_buffer(EncChannel *channel) {
         : total_bytes_to_process_count - (int64_t)config->processed_byte_count;
 
     // If there are bytes left to encode, configure the header
-    if (remaining_byte_count != 0 && config->stop_encoder == EB_FALSE) {
+    if (remaining_byte_count != 0 && config->stop_encoder == FALSE) {
         read_input_frames(config, is_16bit, header_ptr);
         if (header_ptr->n_filled_len) {
             // Update the context parameters
@@ -577,7 +577,7 @@ void process_input_buffer(EncChannel *channel) {
                 header_ptr->qp = send_qp_on_the_fly(config->qp_file, &config->config.use_qp_file);
 
             if (keep_running == 0 && !config->stop_encoder)
-                config->stop_encoder = EB_TRUE;
+                config->stop_encoder = TRUE;
             // Fill in Buffers Header control data
             header_ptr->pts      = config->processed_frame_count - 1;
             header_ptr->pic_type = EB_AV1_INVALID_PICTURE;

@@ -41,8 +41,8 @@ typedef struct PacketizationReorderEntry {
     uint64_t   total_num_bits;
     FrameType  frame_type;
     Av1RpsNode av1_ref_signal;
-    EbBool     show_frame;
-    EbBool     has_show_existing;
+    Bool     show_frame;
+    Bool     has_show_existing;
     uint8_t    show_existing_frame;
     //small size bitstream for show existing frame
     Bitstream *bitstream_ptr;

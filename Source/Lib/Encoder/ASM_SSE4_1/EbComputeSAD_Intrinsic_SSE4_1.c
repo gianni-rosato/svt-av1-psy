@@ -2062,7 +2062,7 @@ void svt_sad_loop_kernel_sse4_1_intrin(
 void svt_ext_sad_calculation_8x8_16x16_sse4_1_intrin(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8,
     uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t mv,
-    uint32_t *p_sad16x16, uint32_t *p_sad8x8, EbBool sub_sad) {
+    uint32_t *p_sad16x16, uint32_t *p_sad8x8, Bool sub_sad) {
     __m128i xmm_sad16x16, xmm_sad16x16_total, sad8x8_0_3;
     __m128i sad8x8_less_than_bitmask, best_mv8x8;
     __m128i best_sad8x8, xmm_best_sad8x8, xmm_best_mv8x8;
@@ -2159,7 +2159,7 @@ void svt_ext_all_sad_calculation_8x8_16x16_sse4_1(uint8_t *src, uint32_t src_str
                                                   uint32_t *p_best_sad_16x16,
                                                   uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
                                                   uint32_t p_eight_sad16x16[16][8],
-                                                  uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
+                                                  uint32_t p_eight_sad8x8[64][8], Bool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
 
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15

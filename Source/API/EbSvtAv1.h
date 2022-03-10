@@ -83,14 +83,17 @@ typedef enum EbAv1PictureType {
     EB_AV1_INVALID_PICTURE       = 0xFF
 } EbAv1PictureType;
 
-/** The EbBool type is intended to be used to represent a true or a false
+/** The Bool type is intended to be used to represent a true or a false
 value when passing parameters to and from the eBrisk API.  The
-EbBool is a 32 bit quantity and is aligned on a 32 bit word boundary.
+Bool is a 32 bit quantity and is aligned on a 32 bit word boundary.
 */
-
-#define EbBool uint8_t
-#define EB_FALSE 0
-#define EB_TRUE 1
+#if CLN_DEFINITIONS
+typedef uint8_t Bool;
+#else
+#define Bool uint8_t
+#endif
+#define FALSE 0
+#define TRUE 1
 
 typedef struct EbBufferHeaderType {
     // EbBufferHeaderType size
@@ -243,7 +246,7 @@ typedef struct EbColorConfig {
 
     /*!< 1: Indicates that the video does not contain U and V color planes.
      *   0: Indicates that the video contains Y, U, and V color planes. */
-    EbBool mono_chrome;
+    Bool mono_chrome;
 
     /*!< Specify the chroma subsampling format */
     uint8_t subsampling_x;
@@ -255,7 +258,7 @@ typedef struct EbColorConfig {
             matrix_coefficients are present. color_description_present_flag
      *   0: Specifies that color_primaries, transfer_characteristics and
             matrix_coefficients are not present */
-    EbBool color_description_present_flag;
+    Bool color_description_present_flag;
 
     /*!< An integer that is defined by the "Color primaries" section of
      * ISO/IEC 23091-4/ITU-T H.273 */
@@ -279,13 +282,13 @@ typedef struct EbColorConfig {
     /*!< 1: Indicates that the U and V planes may have separate delta quantizer
      *   0: Indicates that the U and V planes will share the same delta
             quantizer value */
-    EbBool separate_uv_delta_q;
+    Bool separate_uv_delta_q;
 
 } EbColorConfig;
 
 typedef struct EbTimingInfo {
     /*!< Timing info present flag */
-    EbBool timing_info_present;
+    Bool timing_info_present;
 
     /*!< Number of time units of a clock operating at the frequency time_scale
      * Hz that corresponds to one increment of a clock tick counter*/

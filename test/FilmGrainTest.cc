@@ -372,7 +372,7 @@ class DenoiseModelRunTest : public ::testing::Test {
         pbd_init_data.top_padding = 0;
         pbd_init_data.bot_padding = 0;
         pbd_init_data.color_format = EB_YUV420;
-        pbd_init_data.split_mode = EB_FALSE;
+        pbd_init_data.split_mode = FALSE;
 
         subsampling_x_ = (pbd_init_data.color_format == EB_YUV444 ? 1 : 2) - 1;
         subsampling_y_ = (pbd_init_data.color_format >= EB_YUV422 ? 1 : 2) - 1;

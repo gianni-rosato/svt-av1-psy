@@ -62,7 +62,7 @@ void av1_inter_prediction_light_pd0(SequenceControlSet *scs_ptr, MvUnit *mv_unit
 
 void search_compound_diff_wedge(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                                 ModeDecisionCandidate *candidate_ptr);
-EbBool calc_pred_masked_compound(PictureControlSet          *pcs_ptr,
+Bool calc_pred_masked_compound(PictureControlSet          *pcs_ptr,
                                  struct ModeDecisionContext *context_ptr,
                                  ModeDecisionCandidate      *candidate_ptr);
 
@@ -87,8 +87,8 @@ EbErrorType warped_motion_prediction(
     uint16_t dst_origin_y, NeighborArrayUnit *luma_recon_neighbor_array,
     NeighborArrayUnit *cb_recon_neighbor_array, NeighborArrayUnit *cr_recon_neighbor_array,
     ModeDecisionCandidate *candidate_ptr, EbWarpedMotionParams *wm_params_l0,
-    EbWarpedMotionParams *wm_params_l1, uint8_t bit_depth, EbBool perform_chroma,
-    EbBool is_encode_pass);
+    EbWarpedMotionParams *wm_params_l1, uint8_t bit_depth, Bool perform_chroma,
+    Bool is_encode_pass);
 
 const uint8_t *svt_av1_get_obmc_mask(int length);
 void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, uint64_t sse,

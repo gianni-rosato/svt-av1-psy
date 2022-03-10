@@ -1184,7 +1184,7 @@ typedef void (*get_final_filtered_pixels_fn)(
     struct MeContext *context_ptr, EbByte *src_center_ptr_start,
     uint16_t **altref_buffer_highbd_start, uint32_t **accum, uint16_t **count,
     const uint32_t *stride, int blk_y_src_offset, int blk_ch_src_offset,
-    uint16_t blk_width_ch, uint16_t blk_height_ch, EbBool is_highbd);
+    uint16_t blk_width_ch, uint16_t blk_height_ch, Bool is_highbd);
 
 class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
   private:
@@ -1251,7 +1251,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
         }
     }
 
-    void SetRandData(EbBool is_highbd) {
+    void SetRandData(Bool is_highbd) {
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             for (int i = 0; i < BH * BW; ++i) {
                 if (is_highbd) {
@@ -1272,7 +1272,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
         context_ptr->tf_chroma = rand() % 2;
     }
 
-    void RunTest(EbBool is_highbd, get_final_filtered_pixels_fn tst_fn) {
+    void RunTest(Bool is_highbd, get_final_filtered_pixels_fn tst_fn) {
         int blk_y_src_offset = 1;
         int blk_ch_src_offset = 2;
         uint16_t blk_width_ch = 48;
@@ -1359,7 +1359,11 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
     uint32_t width;
     uint32_t height;
     EbByte src[3];
+#if CLN_DEFINITIONS
+    int src_size;
+#else
     size_t src_size;
+#endif
     uint16_t *src_highbd[3];
     size_t src_highbd_size;
 
@@ -1425,10 +1429,12 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
         input_picture_central.stride_y = BW + 5;
     }
 
-    void RunTest(EbBool is_highbd, apply_filtering_central_fn lbd_fn_ptr,
+    void RunTest(Bool is_highbd, apply_filtering_central_fn lbd_fn_ptr,
                  apply_filtering_central_highbd_fn hbd_fn_ptr) {
+#if !CLN_DEFINITIONS
         int blk_y_src_offset = 1;
         int blk_ch_src_offset = 2;
+#endif
         uint16_t blk_width_ch = 48;
         uint16_t blk_height_ch = 61;
         uint32_t ss_x = rand() % 2;

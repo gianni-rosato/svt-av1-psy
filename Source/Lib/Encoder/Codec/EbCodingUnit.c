@@ -22,8 +22,8 @@ void largest_coding_unit_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->final_blk_arr);
     EB_FREE_ARRAY(obj->cu_partition_array);
 }
-uint8_t get_disallow_nsq(EbEncMode enc_mode);
-uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
+uint8_t get_disallow_nsq(EncMode enc_mode);
+uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 /*
 Tasks & Questions
     -Need a GetEmptyChain function for testing sub partitions.  Tie it to an Itr?
@@ -53,7 +53,7 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     larget_coding_unit_ptr->index = sb_index;
     uint8_t disallow_nsq          = get_disallow_nsq(enc_mode);
     uint8_t disallow_4x4          = 1;
-    for (EB_SLICE slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
+    for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(enc_mode, slice_type));
 
     uint32_t tot_blk_num;

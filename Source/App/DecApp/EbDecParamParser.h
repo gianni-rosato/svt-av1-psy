@@ -59,7 +59,7 @@
 typedef struct ConfigEntry {
     const char *token;
     const char *name;
-    EbBool      value_required;
+    Bool      value_required;
     void (*scf)(const char *, EbSvtAv1DecConfiguration *);
 } ConfigEntry;
 

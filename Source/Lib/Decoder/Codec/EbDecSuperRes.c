@@ -20,7 +20,7 @@
 
 void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
                                     uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
-                                    EbBool is_16bit_pipeline);
+                                    Bool is_16bit_pipeline);
 
 static void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHeader *frm_hdr,
                                                    SeqHeader *seq_hdr, EbPictureBufferDesc *src,

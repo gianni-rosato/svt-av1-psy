@@ -70,7 +70,7 @@ int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 * Estimate the rate for each syntax elements and for
 * all scenarios based on the frame CDF
 **************************************************************/
-void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array, EbBool is_i_slice,
+void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array, Bool is_i_slice,
                               uint8_t pic_filter_intra_level, uint8_t allow_screen_content_tools,
                               uint8_t enable_restoration, uint8_t allow_intrabc,
                               uint8_t partition_contexts, FRAME_CONTEXT *fc) {
@@ -609,7 +609,7 @@ int32_t have_newmv_in_inter_mode(PredictionMode mode);
                 ? av1_extract_interp_filter(ref_mbmi->interp_filters, dir & 0x01)
                 : SWITCHABLE_FILTERS);
 }
-extern int av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type);
+extern int av1_allow_intrabc(const FrameHeader *frm_hdr, SliceType slice_type);
 
 int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size,
                              uint32_t mode);

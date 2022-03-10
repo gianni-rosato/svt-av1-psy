@@ -66,16 +66,16 @@ void jnt_convolve_2d_ver_4tap_avx2(const int16_t *const im_block, const int32_t 
                                    const ConvolveParams *const conv_params, uint8_t *dst8,
                                    const int32_t dst8_stride);
 
-static INLINE EbBool is_convolve_2tap(const int16_t *const filter) {
+static INLINE Bool is_convolve_2tap(const int16_t *const filter) {
     return (const void *)filter == (const void *)bilinear_filters;
 }
 
-static INLINE EbBool is_convolve_4tap(const int16_t *const filter) {
+static INLINE Bool is_convolve_4tap(const int16_t *const filter) {
     return (const void *)filter == (const void *)sub_pel_filters_4 ||
         (const void *)filter == (const void *)sub_pel_filters_4smooth;
 }
 
-static INLINE EbBool is_convolve_6tap(const int16_t *const filter) {
+static INLINE Bool is_convolve_6tap(const int16_t *const filter) {
     return (const void *)filter == (const void *)sub_pel_filters_8 ||
         (const void *)filter == (const void *)sub_pel_filters_8smooth;
 }

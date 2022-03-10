@@ -50,7 +50,7 @@
 #ifdef _WIN32
 uint8_t        num_groups = 0;
 GROUP_AFFINITY group_affinity;
-EbBool         alternate_groups = 0;
+Bool         alternate_groups = 0;
 #elif defined(__linux__)
 cpu_set_t group_affinity;
 #endif
@@ -108,7 +108,7 @@ static EbErrorType svt_dec_handle_ctor(EbDecHandle    **decHandleDblPtr,
     svt_dec_memory_map_index = &dec_handle_ptr->memory_map_index;
     svt_dec_lib_malloc_count = 0;
 
-    dec_handle_ptr->start_thread_process = EB_FALSE;
+    dec_handle_ptr->start_thread_process = FALSE;
     memory_map_start_address             = NULL;
     memory_map_end_address               = NULL;
 

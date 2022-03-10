@@ -717,12 +717,12 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                                                    bsize,
                                                                    bsize);
 
-                        EbBool  enable_paeth   = pcs_ptr->scs_ptr->enable_paeth == DEFAULT
-                               ? EB_TRUE
-                               : (EbBool)pcs_ptr->scs_ptr->enable_paeth;
-                        EbBool  enable_smooth  = pcs_ptr->scs_ptr->enable_smooth == DEFAULT
-                              ? EB_TRUE
-                              : (EbBool)pcs_ptr->scs_ptr->enable_smooth;
+                        Bool  enable_paeth   = pcs_ptr->scs_ptr->enable_paeth == DEFAULT
+                               ? TRUE
+                               : (Bool)pcs_ptr->scs_ptr->enable_paeth;
+                        Bool  enable_smooth  = pcs_ptr->scs_ptr->enable_smooth == DEFAULT
+                              ? TRUE
+                              : (Bool)pcs_ptr->scs_ptr->enable_smooth;
                         uint8_t intra_mode_end = pcs_ptr->tpl_ctrls.tpl_opt_flag ? DC_PRED
                             : enable_paeth                                       ? PAETH_PRED
                             : enable_smooth                                      ? SMOOTH_H_PRED
@@ -1200,9 +1200,9 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
 /*
    Assign TPL dispenser segments
 */
-EbBool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutIndex,
+Bool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutIndex,
                            TplDispResults *taskPtr, int32_t frame_idx, EbFifo *srmFifoPtr) {
-    EbBool   continue_processing_flag = EB_FALSE;
+    Bool   continue_processing_flag = FALSE;
     uint32_t row_segment_index        = 0;
     uint32_t segment_index;
     uint32_t right_segment_index;
@@ -1210,7 +1210,7 @@ EbBool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutInd
 
     int16_t feedback_row_index = -1;
 
-    uint32_t self_assigned = EB_FALSE;
+    uint32_t self_assigned = FALSE;
 
     //static FILE *trace = 0;
     //
@@ -1232,7 +1232,7 @@ EbBool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutInd
         *segmentInOutIndex  = segmentPtr->row_array[0].current_seg_index;
         taskPtr->input_type = TPL_TASKS_CONTINUE;
         ++segmentPtr->row_array[0].current_seg_index;
-        continue_processing_flag = EB_TRUE;
+        continue_processing_flag = TRUE;
 
         //fprintf(trace, "Start  Pic: %u Seg: %u\n",
         //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
@@ -1249,7 +1249,7 @@ EbBool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutInd
         *segmentInOutIndex  = segmentPtr->row_array[taskPtr->enc_dec_segment_row].current_seg_index;
         taskPtr->input_type = TPL_TASKS_CONTINUE;
         ++segmentPtr->row_array[taskPtr->enc_dec_segment_row].current_seg_index;
-        continue_processing_flag = EB_TRUE;
+        continue_processing_flag = TRUE;
 
         //fprintf(trace, "Start  Pic: %u Seg: %u\n",
         //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
@@ -1275,8 +1275,8 @@ EbBool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutInd
             if (segmentPtr->dep_map.dependency_map[right_segment_index] == 0) {
                 *segmentInOutIndex = segmentPtr->row_array[row_segment_index].current_seg_index;
                 ++segmentPtr->row_array[row_segment_index].current_seg_index;
-                self_assigned            = EB_TRUE;
-                continue_processing_flag = EB_TRUE;
+                self_assigned            = TRUE;
+                continue_processing_flag = TRUE;
 
                 //fprintf(trace, "Start  Pic: %u Seg: %u\n",
                 //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
@@ -1295,13 +1295,13 @@ EbBool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutInd
             --segmentPtr->dep_map.dependency_map[bottom_left_segment_index];
 
             if (segmentPtr->dep_map.dependency_map[bottom_left_segment_index] == 0) {
-                if (self_assigned == EB_TRUE)
+                if (self_assigned == TRUE)
                     feedback_row_index = (int16_t)row_segment_index + 1;
                 else {
                     *segmentInOutIndex =
                         segmentPtr->row_array[row_segment_index + 1].current_seg_index;
                     ++segmentPtr->row_array[row_segment_index + 1].current_seg_index;
-                    continue_processing_flag = EB_TRUE;
+                    continue_processing_flag = TRUE;
 
                     //fprintf(trace, "Start  Pic: %u Seg: %u\n",
                     //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
@@ -1732,7 +1732,7 @@ EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr, PictureParentCon
     picture_buffer_desc_init_data.right_padding      = TPL_PADX;
     picture_buffer_desc_init_data.top_padding        = TPL_PADY;
     picture_buffer_desc_init_data.bot_padding        = TPL_PADY;
-    picture_buffer_desc_init_data.split_mode         = EB_FALSE;
+    picture_buffer_desc_init_data.split_mode         = FALSE;
 
     rtime_alloc_mc_flow_rec_picture_buffer_noref(encode_context_ptr,
                                                  &picture_buffer_desc_init_data);
@@ -1960,8 +1960,8 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
     // When super-res recode is actived, don't release pa_ref_objs until final loop is finished
     // Although tpl-la won't be enabled in super-res FIXED or RANDOM mode, here we use the condition to align with that in initial rate control process
-    EbBool release_pa_ref = (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM) ? EB_TRUE
-                                                                                      : EB_FALSE;
+    Bool release_pa_ref = (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM) ? TRUE
+                                                                                      : FALSE;
     for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
         if (release_pa_ref) {
             if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
@@ -2025,7 +2025,7 @@ void *tpl_disp_kernel(void *input_ptr) {
                                        &segment_index,
                                        in_results_ptr,
                                        frame_idx,
-                                       context_ptr->tpl_disp_fb_fifo_ptr) == EB_TRUE) {
+                                       context_ptr->tpl_disp_fb_fifo_ptr) == TRUE) {
                 uint32_t x_sb_start_index;
                 uint32_t y_sb_start_index;
                 uint32_t sb_start_index;
@@ -2091,7 +2091,7 @@ void *tpl_disp_kernel(void *input_ptr) {
 
             svt_block_on_mutex(pcs_ptr->tpl_disp_mutex);
             pcs_ptr->tpl_disp_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
-            EbBool last_sb_flag = (pcs_ptr->sb_total_count == pcs_ptr->tpl_disp_coded_sb_count);
+            Bool last_sb_flag = (pcs_ptr->sb_total_count == pcs_ptr->tpl_disp_coded_sb_count);
 
             svt_release_mutex(pcs_ptr->tpl_disp_mutex);
             if (last_sb_flag)
@@ -2118,7 +2118,7 @@ void *tpl_disp_kernel(void *input_ptr) {
 }
 
 static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
-                                 PictureParentControlSet *pcs, EbBool superres_recode) {
+                                 PictureParentControlSet *pcs, Bool superres_recode) {
     EbObjectWrapper *out_results_wrapper_ptr;
 
     // Get Empty Results Object
@@ -2162,7 +2162,7 @@ void *source_based_operations_kernel(void *input_ptr) {
                 // regenerate r0 and tpl_beta since they are frame size dependency
                 generate_r0beta(pcs_ptr);
             }
-            sbo_send_picture_out(context_ptr, pcs_ptr, EB_TRUE);
+            sbo_send_picture_out(context_ptr, pcs_ptr, TRUE);
 
             // Release the Input Results
             svt_release_object(in_results_wrapper_ptr);
@@ -2175,9 +2175,9 @@ void *source_based_operations_kernel(void *input_ptr) {
                 tpl_prep_info(pcs_ptr);
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr, context_ptr);
             }
-            EbBool release_pa_ref = (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
-                ? EB_TRUE
-                : EB_FALSE;
+            Bool release_pa_ref = (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
+                ? TRUE
+                : FALSE;
             // Release Pa Ref if lad_mg is 0 and P slice and not flat struct (not belonging to any TPL group)
             if (release_pa_ref && /*scs_ptr->lad_mg == 0 &&*/ pcs_ptr->reference_released == 0) {
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
@@ -2192,13 +2192,13 @@ void *source_based_operations_kernel(void *input_ptr) {
         uint32_t sb_index;
         for (sb_index = 0; sb_index < sb_cnt; ++sb_index) {
             SbParams *sb_params      = &pcs_ptr->sb_params_array[sb_index];
-            EbBool    is_complete_sb = sb_params->is_complete_sb;
+            Bool    is_complete_sb = sb_params->is_complete_sb;
             if (is_complete_sb) {
                 context_ptr->complete_sb_count++;
             }
         }
         /*********************************************Picture-based operations**********************************************************/
-        sbo_send_picture_out(context_ptr, pcs_ptr, EB_FALSE);
+        sbo_send_picture_out(context_ptr, pcs_ptr, FALSE);
 
         // Release the Input Results
         svt_release_object(in_results_wrapper_ptr);

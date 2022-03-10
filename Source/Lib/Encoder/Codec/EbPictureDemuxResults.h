@@ -60,7 +60,7 @@ typedef struct PictureManagerResults {
     uint8_t          tpl_ref_list0_count;
     uint8_t          tpl_ref_list1_count;
     uint8_t          temporal_layer_index;
-    EbBool           is_used_as_reference_flag;
+    Bool           is_used_as_reference_flag;
 } PictureManagerResults;
 
 typedef struct PictureManagerResultInitData {

@@ -94,7 +94,7 @@ extern EbMemoryMapEntry *memory_map_end_address;
     } while (0)
 
 EbErrorType dec_eb_recon_picture_buffer_desc_ctor(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr,
-                                                  EbBool is_16bit_pipeline);
+                                                  Bool is_16bit_pipeline);
 
 EbErrorType dec_mem_init(EbDecHandle *dec_handle_ptr);
 

@@ -65,12 +65,12 @@ typedef struct EbPictureBufferDesc {
     // Buffer Parameters
     uint32_t luma_size; // Size of the luma buffer
     uint32_t chroma_size; // Size of the chroma buffers
-    EbBool   packed_flag; // Indicates if sample buffers are packed or not
+    Bool   packed_flag; // Indicates if sample buffers are packed or not
 
-    EbBool   film_grain_flag; // Indicates if film grain parameters are present for the frame
+    Bool   film_grain_flag; // Indicates if film grain parameters are present for the frame
     uint32_t buffer_enable_mask;
 
-    EbBool
+    Bool
         is_16bit_pipeline; // internal bit-depth: when equals 1 internal bit-depth is 16bits regardless of the input bit-depth
 } EbPictureBufferDesc;
 
@@ -238,7 +238,7 @@ typedef struct Yv12BufferConfig {
 } Yv12BufferConfig;
 
 void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc,
-                                uint16_t pad_right, uint16_t pad_bottom, EbBool is_16bit);
+                                uint16_t pad_right, uint16_t pad_bottom, Bool is_16bit);
 
 void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc);
 
@@ -289,12 +289,12 @@ typedef struct EbPictureBufferDescInitData {
     uint16_t       right_padding;
     uint16_t       top_padding;
     uint16_t       bot_padding;
-    EbBool         split_mode; //ON: allocate 8bit data seperately from nbit data
+    Bool         split_mode; //ON: allocate 8bit data seperately from nbit data
 
-    EbBool down_sampled_filtered;
+    Bool down_sampled_filtered;
 
     uint8_t mfmv;
-    EbBool  is_16bit_pipeline;
+    Bool  is_16bit_pipeline;
     int8_t  enc_mode;
     int32_t sb_total_count;
 } EbPictureBufferDescInitData;

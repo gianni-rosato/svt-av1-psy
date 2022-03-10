@@ -19,7 +19,7 @@
  * Macros
  **********************************************************/
 #define PRED_STRUCT_INDEX(hierarchicalLevelCount, predType, refCount) \
-    (((hierarchicalLevelCount)*EB_PRED_TOTAL_COUNT + (predType)) * REF_LIST_MAX_DEPTH + (refCount))
+    (((hierarchicalLevelCount)*PRED_TOTAL_COUNT + (predType)) * REF_LIST_MAX_DEPTH + (refCount))
 
 //#define DEP_INDEX(predIdx, entry_index, entryTotalCount) ((((predIdx) - ((int32_t) entry_index)) % (entryTotalCount)))
 #define DEP_INDEX(predIdx, entry_index, entryTotalCount) \
@@ -628,7 +628,7 @@ static EbErrorType prediction_structure_config_array_ctor(
  * Get Prediction Structure
  ************************************************/
 PredictionStructure *get_prediction_structure(PredictionStructureGroup *pred_struct_group_ptr,
-                                              EbPred pred_struct, uint32_t number_of_references,
+                                              PredStructure pred_struct, uint32_t number_of_references,
                                               uint32_t levels_of_hierarchy) {
     PredictionStructure *pred_struct_ptr;
     uint32_t             pred_struct_index;
@@ -838,7 +838,7 @@ static void prediction_structure_dctor(EbPtr p) {
  ******************************************************************************************/
 static EbErrorType prediction_structure_ctor(
     PredictionStructure             *predictionStructurePtr,
-    const PredictionStructureConfig *predictionStructureConfigPtr, EbPred predType,
+    const PredictionStructureConfig *predictionStructureConfigPtr, PredStructure predType,
     uint32_t number_of_references) {
     uint32_t entry_index;
     uint32_t config_entry_index;
@@ -890,7 +890,7 @@ static EbErrorType prediction_structure_ctor(
             }
 
             // Increment through Reference List 1 (Random Access only)
-            if (predType == EB_PRED_RANDOM_ACCESS) {
+            if (predType == PRED_RANDOM_ACCESS) {
                 ref_index = 0;
                 while (ref_index < number_of_references &&
                        predictionStructureConfigPtr->entry_array[config_entry_index]
@@ -916,14 +916,14 @@ static EbErrorType prediction_structure_ctor(
             max_ref, predictionStructurePtr->pred_struct_period);
 
         // Set the Section Sizes
-        leading_pic_count = (predType == EB_PRED_RANDOM_ACCESS)
+        leading_pic_count = (predType == PRED_RANDOM_ACCESS)
             ? // No leading pictures in low-delay configurations
             predictionStructurePtr->pred_struct_period - 1
             : 0;
         init_pic_count    = predictionStructurePtr->maximum_extent -
             predictionStructurePtr->pred_struct_period + 1;
         steady_state_pic_count = predictionStructurePtr->pred_struct_period;
-        //trailingPicCount        = (predType == EB_PRED_RANDOM_ACCESS) ?     // No trailing pictures in low-delay configurations
+        //trailingPicCount        = (predType == PRED_RANDOM_ACCESS) ?     // No trailing pictures in low-delay configurations
         //    predictionStructurePtr->pred_struct_period - 1:
         //    0;
 
@@ -1003,7 +1003,7 @@ static EbErrorType prediction_structure_ctor(
 
             // Set the Decode Order
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->decode_order =
-                (predType == EB_PRED_RANDOM_ACCESS)
+                (predType == PRED_RANDOM_ACCESS)
                 ? predictionStructureConfigPtr->entry_array[config_entry_index].decode_order
                 : entry_index;
         }
@@ -1041,7 +1041,7 @@ static EbErrorType prediction_structure_ctor(
             // LDP is used for incomplete MGs, so should have the same ref structure as RA
             // otherwise the dependent_count of the RA pics will be off
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B)
+                ->ref_list0.reference_list_count = (predType == PRED_LOW_DELAY_B)
                 ? MIN(3, ref_index)
                 : ref_index;
 
@@ -1066,7 +1066,7 @@ static EbErrorType prediction_structure_ctor(
                                                                 .ref_list0[ref_index];
             // REFERENCE LIST 1
             switch (predType) {
-            case EB_PRED_LOW_DELAY_P:
+            case PRED_LOW_DELAY_P:
 
                 // Null out List 1
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1076,7 +1076,7 @@ static EbErrorType prediction_structure_ctor(
 
                 break;
 
-            case EB_PRED_LOW_DELAY_B:
+            case PRED_LOW_DELAY_B:
 
                 // Copy List 0 => List 1
 
@@ -1107,7 +1107,7 @@ static EbErrorType prediction_structure_ctor(
                             ->ref_list0.reference_list[ref_index];
                 break;
 
-            case EB_PRED_RANDOM_ACCESS:
+            case PRED_RANDOM_ACCESS:
 
                 // Find the Size of the Config's Reference List 1
                 ref_index = 0;
@@ -1156,7 +1156,7 @@ static EbErrorType prediction_structure_ctor(
 
             // Set the Decode Order
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->decode_order =
-                (predType == EB_PRED_RANDOM_ACCESS)
+                (predType == PRED_RANDOM_ACCESS)
                 ? predictionStructureConfigPtr->entry_array[config_entry_index].decode_order
                 : entry_index;
 
@@ -1187,7 +1187,7 @@ static EbErrorType prediction_structure_ctor(
             // LDP is used for incomplete MGs, so should have the same ref structure as RA
             // otherwise the dependent_count of the RA pics will be off
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B)
+                ->ref_list0.reference_list_count = (predType == PRED_LOW_DELAY_B)
                 ? MIN(3, ref_index)
                 : ref_index;
 
@@ -1207,7 +1207,7 @@ static EbErrorType prediction_structure_ctor(
                                                                 .ref_list0[ref_index];
             // REFERENCE LIST 1
             switch (predType) {
-            case EB_PRED_LOW_DELAY_P:
+            case PRED_LOW_DELAY_P:
 
                 // Null out List 1
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1217,7 +1217,7 @@ static EbErrorType prediction_structure_ctor(
 
                 break;
 
-            case EB_PRED_LOW_DELAY_B:
+            case PRED_LOW_DELAY_B:
 
                 // Copy List 0 => List 1
 
@@ -1248,7 +1248,7 @@ static EbErrorType prediction_structure_ctor(
                             ->ref_list0.reference_list[ref_index];
                 break;
 
-            case EB_PRED_RANDOM_ACCESS:
+            case PRED_RANDOM_ACCESS:
 
                 // Find the Size of the Config's Reference List 1
                 ref_index = 0;
@@ -1290,7 +1290,7 @@ static EbErrorType prediction_structure_ctor(
 
             // Set the Decode Order
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->decode_order =
-                (predType == EB_PRED_RANDOM_ACCESS)
+                (predType == PRED_RANDOM_ACCESS)
                 ? predictionStructureConfigPtr->entry_array[config_entry_index].decode_order
                 : entry_index;
 
@@ -1332,7 +1332,7 @@ static EbErrorType prediction_structure_ctor(
     //        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->temporal_layer_index = predictionStructureConfigPtr->entry_array[config_entry_index].temporal_layer_index;
     //
     //        // Set the Decode Order
-    //        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->decode_order = (predType == EB_PRED_RANDOM_ACCESS) ?
+    //        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->decode_order = (predType == PRED_RANDOM_ACCESS) ?
     //            predictionStructureConfigPtr->entry_array[config_entry_index].decode_order :
     //            entry_index;
     //    }
@@ -1630,8 +1630,8 @@ static EbErrorType prediction_structure_ctor(
                   ->dep_list0.list_count > 0) ||
              (predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                   ->dep_list1.list_count > 0))
-            ? EB_TRUE
-            : EB_FALSE;
+            ? TRUE
+            : FALSE;
     }
 
     return EB_ErrorNone;
@@ -1916,13 +1916,13 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_stru
         ++pred_struct_index;
     }
 
-    pred_struct_group_ptr->prediction_structure_count = MAX_TEMPORAL_LAYERS * EB_PRED_TOTAL_COUNT *
+    pred_struct_group_ptr->prediction_structure_count = MAX_TEMPORAL_LAYERS * PRED_TOTAL_COUNT *
         REF_LIST_MAX_DEPTH;
     EB_ALLOC_PTR_ARRAY(pred_struct_group_ptr->prediction_structure_ptr_array,
                        pred_struct_group_ptr->prediction_structure_count);
     for (hierarchical_level_idx = 0; hierarchical_level_idx < MAX_TEMPORAL_LAYERS;
          ++hierarchical_level_idx) {
-        for (pred_type_idx = 0; pred_type_idx < EB_PRED_TOTAL_COUNT; ++pred_type_idx) {
+        for (pred_type_idx = 0; pred_type_idx < PRED_TOTAL_COUNT; ++pred_type_idx) {
             for (ref_idx = 0; ref_idx < REF_LIST_MAX_DEPTH; ++ref_idx) {
                 pred_struct_index = PRED_STRUCT_INDEX(
                     hierarchical_level_idx, pred_type_idx, ref_idx);
@@ -1931,7 +1931,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_stru
                 EB_NEW(pred_struct_group_ptr->prediction_structure_ptr_array[pred_struct_index],
                        prediction_structure_ctor,
                        &(prediction_structure_config_array[hierarchical_level_idx]),
-                       (EbPred)pred_type_idx,
+                       (PredStructure)pred_type_idx,
                        number_of_references);
             }
         }

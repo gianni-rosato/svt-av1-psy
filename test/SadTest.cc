@@ -61,7 +61,7 @@ extern "C" void svt_ext_all_sad_calculation_8x8_16x16_c(
     uint32_t mv, uint8_t out_8x8, uint32_t *p_best_sad_8x8,
     uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
     uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
-    uint32_t p_eight_sad8x8[64][8], EbBool sub_sad);
+    uint32_t p_eight_sad8x8[64][8], Bool sub_sad);
 extern "C" void svt_ext_eigth_sad_calculation_nsq_c(
     uint32_t p_sad8x8[64][8], uint32_t p_sad16x16[16][8],
     uint32_t p_sad32x32[4][8], uint32_t *p_best_sad_64x32,
@@ -630,8 +630,11 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                 skip_search_line,
                 search_area_width_,
                 search_area_height_);
-
+#if CLN_DEFINITIONS
+        for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+#else
         for (int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+#endif
             Ebsad_LoopKernelNxMType func_o_ = func_o_list[f];
             uint64_t best_sad1 = UINT64_MAX;
             int16_t x_search_center1 = 0;
@@ -716,8 +719,11 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                                                 start_time_useconds,
                                                 finish_time_seconds,
                                                 finish_time_useconds);
-
+#if CLN_DEFINITIONS
+        for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+#else
         for (int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+#endif
             Ebsad_LoopKernelNxMType func_o_ = func_o_list[f];
 
             svt_av1_get_time(&start_time_seconds, &start_time_useconds);
@@ -804,7 +810,7 @@ typedef void (*get_eight_sad_8_16_func)(uint8_t *src, uint32_t src_stride,
                                         uint32_t *p_best_mv8x8,
                                         uint32_t *p_best_sad_16x16,
                                         uint32_t *p_best_mv16x16, uint32_t mv,
-                                        uint16_t *p_sad16x16, EbBool sub_sad);
+                                        uint16_t *p_sad16x16, Bool sub_sad);
 
 typedef void (*get_eight_sad_32_64_func)(uint16_t *p_sad16x16,
                                          uint32_t *p_best_sad_32x32,
@@ -816,7 +822,7 @@ typedef void (*svt_ext_all_sad_calculation_8x8_16x16_fn)(
     uint32_t mv, uint8_t out_8x8, uint32_t *p_best_sad_8x8,
     uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
     uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
-    uint32_t p_eight_sad8x8[64][8], EbBool sub_sad);
+    uint32_t p_eight_sad8x8[64][8], Bool sub_sad);
 
 typedef void (*svt_ext_eight_sad_calculation_32x32_64x64_fn)(
     uint32_t p_sad16x16[16][8], uint32_t *p_best_sad_32x32,
@@ -866,7 +872,7 @@ class Allsad_CalculationTest
         uint32_t best_mv16x16[2][16] = {{0}};
         uint32_t eight_sad16x16[2][16][8];
         uint32_t eight_sad8x8[2][64][8];
-        EbBool sub_sad = false;
+        Bool sub_sad = false;
         fill_buf_with_value(&best_sad8x8[0][0], 2 * 64, BEST_SAD_MAX);
         fill_buf_with_value(&best_sad16x16[0][0], 2 * 16, UINT_MAX);
         fill_buf_with_value(&eight_sad16x16[0][0][0], 2 * 16 * 8, UINT_MAX);
@@ -1083,7 +1089,7 @@ typedef void (*svt_ext_sad_calculation_8x8_16x16_fn)(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
     uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
     uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t mv,
-    uint32_t *p_sad16x16, uint32_t *p_sad8x8, EbBool sub_sad);
+    uint32_t *p_sad16x16, uint32_t *p_sad8x8, Bool sub_sad);
 
 class Extsad_CalculationTest
     : public ::testing::WithParamInterface<sad_CalTestParam>,
@@ -1106,7 +1112,7 @@ class Extsad_CalculationTest
         uint32_t best_sad16x16[2], best_mv16x16[2] = {0};
         uint32_t sad16x16[2];
         uint32_t sad_8x8[2][4];
-        EbBool sub_sad = false;
+        Bool sub_sad = false;
         fill_buf_with_value(&best_sad8x8[0][0], 2 * 4, BEST_SAD_MAX);
         fill_buf_with_value(&best_sad16x16[0], 2, UINT_MAX);
         fill_buf_with_value(&sad16x16[0], 2, UINT_MAX);
@@ -1659,8 +1665,11 @@ class PmeSadLoopTest
                 search_step,
                 mvx,
                 mvy);
-
+#if CLN_DEFINITIONS
+        for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+#else
         for (int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+#endif
             PmeSadLoopKernel func_o_ = func_o_list[f];
             uint32_t best_sad1 = UINT32_MAX;
             int16_t best_mvx1 = 0;

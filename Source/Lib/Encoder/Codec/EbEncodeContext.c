@@ -141,13 +141,13 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
                picture_index);
     }
 
-    encode_context_ptr->initial_picture = EB_TRUE;
+    encode_context_ptr->initial_picture = TRUE;
 
     // Sequence Termination Flags
     encode_context_ptr->terminating_picture_number = ~0u;
 
     // Signalling the need for a td structure to be written in the Bitstream - on when the sequence starts
-    encode_context_ptr->td_needed = EB_TRUE;
+    encode_context_ptr->td_needed = TRUE;
 
     EB_CREATE_MUTEX(encode_context_ptr->sc_buffer_mutex);
     encode_context_ptr->enc_mode                      = SPEED_CONTROL_INIT_MOD;

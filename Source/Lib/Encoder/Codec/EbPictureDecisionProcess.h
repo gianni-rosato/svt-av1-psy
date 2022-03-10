@@ -47,7 +47,7 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
 void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
                         EbPictureBufferDesc *outputPicturePtr);
 
-EbBool is_delayed_intra(PictureParentControlSet *pcs);
+Bool is_delayed_intra(PictureParentControlSet *pcs);
 
 /**************************************
  * Context
@@ -59,12 +59,12 @@ typedef struct PictureDecisionContext {
     EbFifo  *me_fifo_ptr;
     uint64_t last_solid_color_frame_poc;
 
-    EbBool     reset_running_avg;
+    Bool     reset_running_avg;
     int8_t     tf_motion_direction; // -1: invalid   0: horz  1: vert
     uint32_t **ahd_running_avg_cb;
     uint32_t **ahd_running_avg_cr;
     uint32_t **ahd_running_avg;
-    EbBool     is_scene_change_detected;
+    Bool     is_scene_change_detected;
     uint8_t    transition_present;
     // Dynamic GOP
     uint32_t ttl_region_activity_cost[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
@@ -78,7 +78,7 @@ typedef struct PictureDecisionContext {
     uint32_t mini_gop_intra_count[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t mini_gop_idr_count[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t mini_gop_hierarchical_levels[MINI_GOP_WINDOW_MAX_COUNT];
-    EbBool   mini_gop_activity_array[MINI_GOP_MAX_COUNT];
+    Bool   mini_gop_activity_array[MINI_GOP_MAX_COUNT];
     uint32_t mini_gop_region_activity_cost_array[MINI_GOP_MAX_COUNT][MAX_NUMBER_OF_REGIONS_IN_WIDTH]
                                                 [MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
 
@@ -87,7 +87,7 @@ typedef struct PictureDecisionContext {
     uint8_t  lay0_toggle; //3 way toggle 0->1->2
     uint8_t  lay1_toggle; //2 way toggle 0->1
     uint8_t  lay2_toggle; //2 way toggle 0->1
-    EbBool
+    Bool
         mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t                  last_i_picture_sc_class0;
     uint8_t                  last_i_picture_sc_class1;

@@ -31,14 +31,14 @@ typedef struct PredictionUnit {
 #else
     int32_t  angle_delta[PLANE_TYPES];
 #if !CLN_REMOVE_REDUND_6
-    EbBool   is_directional_mode_flag;
-    EbBool   is_directional_chroma_mode_flag;
+    Bool   is_directional_mode_flag;
+    Bool   is_directional_chroma_mode_flag;
 #endif
     uint32_t intra_chroma_mode;
 #endif
     // Inter Mode
 #if !CLN_REMOVE_REDUND
-    EbBool     is_compound;
+    Bool     is_compound;
 #endif
     uint8_t    ref_frame_type;
     MotionMode motion_mode;

@@ -27,7 +27,7 @@ void setup_segmentation(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr)
 void find_segment_qps(SegmentationParams *segmentation_params, PictureControlSet *pcs_ptr);
 
 void temporally_update_qps(int32_t *segment_qp_ptr, int32_t *prev_segment_qp_ptr,
-                           EbBool temporal_update);
+                           Bool temporal_update);
 
 void calculate_segmentation_data(SegmentationParams *segmentation_params);
 

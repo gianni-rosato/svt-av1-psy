@@ -34,10 +34,10 @@ static const uint32_t ns_blk_num[10]    = {1, 2, 2, 4, 3, 3, 3, 3, 4, 4};
 
 typedef struct MdcpLocalBlkStruct {
     uint64_t early_cost;
-    EbBool   early_split_flag;
+    Bool   early_split_flag;
     uint32_t split_context;
-    EbBool   selected_cu;
-    EbBool   stop_split;
+    Bool   selected_cu;
+    Bool   stop_split;
 } MdcpLocalBlkStruct;
 
 typedef struct ModeDecisionConfigurationContext {

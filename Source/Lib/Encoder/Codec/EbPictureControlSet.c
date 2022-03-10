@@ -26,8 +26,8 @@ void *svt_aom_malloc(size_t size);
 
 EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs, Av1Common *cm);
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
-uint8_t     get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolution resolution,
-                                                   EB_SLICE slice_type, uint8_t sc_class1,
+uint8_t     get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
+                                                   SliceType slice_type, uint8_t sc_class1,
                                                    uint8_t is_used_as_reference_flag,
                                                    uint8_t temporal_layer_index);
 
@@ -87,7 +87,7 @@ void get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_u
         (ref_count_used_list0 * ref_count_used_list1) + (ref_count_used_list0 - 1) +
         (ref_count_used_list1 == 3 ? 1 : 0);
 }
-uint8_t get_enable_me_16x16(EbEncMode enc_mode) {
+uint8_t get_enable_me_16x16(EncMode enc_mode) {
     uint8_t enable_me_16x16;
 
     if (enc_mode <= ENC_M12)
@@ -309,7 +309,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
                                                    init_data_ptr->sb_sz - 1) /
                                                   init_data_ptr->sb_sz);
     uint16_t       sb_index;
-    EbBool         is_16bit = init_data_ptr->bit_depth > 8 ? EB_TRUE : EB_FALSE;
+    Bool         is_16bit = init_data_ptr->bit_depth > 8 ? TRUE : FALSE;
 
     //object_ptr->tile_row_count  = init_data_ptr->tile_row_count;
     //object_ptr->tile_column_count = init_data_ptr->tile_column_count;
@@ -327,7 +327,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     input_pic_buf_desc_init_data.right_padding      = padding;
     input_pic_buf_desc_init_data.top_padding        = padding;
     input_pic_buf_desc_init_data.bot_padding        = padding;
-    input_pic_buf_desc_init_data.split_mode         = EB_FALSE;
+    input_pic_buf_desc_init_data.split_mode         = FALSE;
 
     //object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
 
@@ -373,7 +373,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     coeff_init_data.right_padding      = 0;
     coeff_init_data.top_padding        = 0;
     coeff_init_data.bot_padding        = 0;
-    coeff_init_data.split_mode         = EB_FALSE;
+    coeff_init_data.split_mode         = FALSE;
     for (sb_index = 0; sb_index < object_ptr->sb_total_count_unscaled; ++sb_index) {
         EB_NEW(object_ptr->quantized_coeff[sb_index], //OMK2
                svt_picture_buffer_desc_ctor,
@@ -384,17 +384,17 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 }
 #if !CLN_DLF_MEM_ALLOC
 #if TUNE_4L_M8
-uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
+uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
     uint8_t fast_decode, uint32_t hierarchical_levels);
 #else
-uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
+uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
     uint8_t fast_decode);
 #endif
 #endif
-uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
+uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
                                uint8_t input_resolution, uint8_t fast_decode);
-uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
-uint8_t get_disallow_nsq(EbEncMode enc_mode);
+uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
+uint8_t get_disallow_nsq(EncMode enc_mode);
 
 uint32_t get_out_buffer_size(uint32_t picture_width, uint32_t picture_height) {
     uint32_t frame_size = picture_width * picture_height * 3 / 2; //assuming 4:2:0;
@@ -423,7 +423,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     uint16_t       sb_origin_y;
     EbErrorType    return_error;
 
-    EbBool         is_16bit      = init_data_ptr->bit_depth > 8 ? EB_TRUE : EB_FALSE;
+    Bool         is_16bit      = init_data_ptr->bit_depth > 8 ? TRUE : FALSE;
     const uint16_t subsampling_x = (init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t subsampling_y = (init_data_ptr->color_format >= EB_YUV422 ? 1 : 2) - 1;
 
@@ -450,7 +450,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     coeff_buffer_desc_init_data.right_padding     = padding;
     coeff_buffer_desc_init_data.top_padding       = padding;
     coeff_buffer_desc_init_data.bot_padding       = padding;
-    coeff_buffer_desc_init_data.split_mode        = EB_FALSE;
+    coeff_buffer_desc_init_data.split_mode        = FALSE;
     coeff_buffer_desc_init_data.is_16bit_pipeline = init_data_ptr->is_16bit_pipeline;
 
     object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
@@ -1224,7 +1224,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     // If NSQ is allowed, then need a 4x4 MI grid because 8x8 NSQ shapes will require 4x4 granularity
     uint8_t disallow_4x4 = get_disallow_nsq(init_data_ptr->enc_mode);
-    for (EB_SLICE slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
+    for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
 
     object_ptr->disallow_4x4_all_frames = disallow_4x4;
@@ -1396,11 +1396,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         input_pic_buf_desc_init_data.top_padding        = init_data_ptr->top_padding;
         input_pic_buf_desc_init_data.bot_padding        = init_data_ptr->bot_padding;
         input_pic_buf_desc_init_data.color_format       = EB_YUV420; //set to 420 for MD
-        input_pic_buf_desc_init_data.split_mode         = EB_FALSE;
+        input_pic_buf_desc_init_data.split_mode         = FALSE;
         EB_NEW(object_ptr->chroma_downsampled_picture_ptr,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&input_pic_buf_desc_init_data);
-        object_ptr->is_chroma_downsampled_picture_ptr_owner = EB_TRUE;
+        object_ptr->is_chroma_downsampled_picture_ptr_owner = TRUE;
     } else if (init_data_ptr->color_format == EB_YUV420) {
         object_ptr->chroma_downsampled_picture_ptr = NULL;
     } else
@@ -1408,13 +1408,13 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     // GOP
     object_ptr->pred_struct_index       = 0;
     object_ptr->picture_number          = 0;
-    object_ptr->idr_flag                = EB_FALSE;
+    object_ptr->idr_flag                = FALSE;
     object_ptr->temporal_layer_index    = 0;
     object_ptr->total_num_bits          = 0;
     object_ptr->last_idr_picture        = 0;
     object_ptr->sb_total_count          = picture_sb_width * picture_sb_height;
     object_ptr->sb_total_count_unscaled = object_ptr->sb_total_count;
-    object_ptr->is_pcs_sb_params        = EB_FALSE;
+    object_ptr->is_pcs_sb_params        = FALSE;
 
     object_ptr->data_ll_head_ptr         = (EbLinkedListNode *)NULL;
     object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;
@@ -1535,7 +1535,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         object_ptr->tile_group_info,
         (object_ptr->av1_cm->tiles_info.tile_rows * object_ptr->av1_cm->tiles_info.tile_cols));
 
-    object_ptr->frame_superres_enabled = EB_FALSE;
+    object_ptr->frame_superres_enabled = FALSE;
     object_ptr->aligned_width          = init_data_ptr->picture_width;
     object_ptr->aligned_height         = init_data_ptr->picture_height;
     object_ptr->frame_width            = init_data_ptr->picture_width;
@@ -1702,8 +1702,8 @@ EbErrorType sb_params_init_pcs(SequenceControlSet *scs_ptr, PictureParentControl
                       raster_scan_blk_y[raster_scan_blk_index] +
                       raster_scan_blk_size[raster_scan_blk_index] >
                   encoding_height))
-                ? EB_FALSE
-                : EB_TRUE;
+                ? FALSE
+                : TRUE;
         }
 
         // super-res can not work with multi-tiles, just set up it for no tiling
@@ -1769,16 +1769,16 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSe
                      (pcs_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y +
                           blk_geom->bheight / 2 <
                       encoding_height))
-                    ? EB_TRUE
-                    : EB_FALSE;
+                    ? TRUE
+                    : FALSE;
 
                 if (blk_geom->shape != PART_N)
                     blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
                 pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
                     ((pcs_ptr->sb_geom[sb_index].origin_x >= encoding_width) ||
                      (pcs_ptr->sb_geom[sb_index].origin_y >= encoding_height))
-                    ? EB_FALSE
-                    : EB_TRUE;
+                    ? FALSE
+                    : TRUE;
             } else {
                 if (blk_geom->shape != PART_N)
                     blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
@@ -1788,16 +1788,16 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSe
                       encoding_width) ||
                      (pcs_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight >
                       encoding_height))
-                    ? EB_FALSE
-                    : EB_TRUE;
+                    ? FALSE
+                    : TRUE;
 
                 pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
                     ((pcs_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth >
                       encoding_width) ||
                      (pcs_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight >
                       encoding_height))
-                    ? EB_FALSE
-                    : EB_TRUE;
+                    ? FALSE
+                    : TRUE;
             }
         }
     }

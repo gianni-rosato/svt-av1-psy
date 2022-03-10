@@ -241,11 +241,11 @@ typedef struct EbDecHandle {
 
     // Thread Handles
     EbHandle             *decode_thread_handle_array;
-    EbBool                start_thread_process;
+    Bool                start_thread_process;
     EbHandle              thread_semaphore;
     struct DecThreadCtxt *thread_ctxt_pa;
 
-    EbBool
+    Bool
         is_16bit_pipeline; // internal bit-depth: when equals 1 internal bit-depth is 16bits regardless of the input bit-depth
 } EbDecHandle;
 

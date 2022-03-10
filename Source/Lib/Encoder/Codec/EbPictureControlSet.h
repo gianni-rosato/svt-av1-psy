@@ -175,7 +175,7 @@ typedef struct EbMdcLeafData {
 typedef struct MdcSbData {
     uint32_t      leaf_count;
     EbMdcLeafData leaf_data_array[BLOCK_MAX_COUNT_SB_128];
-    EbBool        split_flag[BLOCK_MAX_COUNT_SB_128];
+    Bool        split_flag[BLOCK_MAX_COUNT_SB_128];
     uint8_t       consider_block[BLOCK_MAX_COUNT_SB_128];
     uint8_t       refined_split_flag[BLOCK_MAX_COUNT_SB_128];
 } MdcSbData;
@@ -189,7 +189,7 @@ typedef struct MdSegmentCtrl {
     uint32_t total_count;
     uint32_t column_count;
     uint32_t row_count;
-    EbBool   in_progress;
+    Bool   in_progress;
     uint32_t current_row_idx;
 } MdSegmentCtrl;
 
@@ -264,7 +264,7 @@ typedef struct PictureControlSet {
     //EB_S64                                refPicPocArray[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
     uint8_t  ref_pic_qp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    EB_SLICE ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    SliceType ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     double   ref_pic_r0[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     // GOP
     uint64_t         picture_number;
@@ -276,7 +276,7 @@ typedef struct PictureControlSet {
     // Entropy Process Rows
     EntropyTileInfo **entropy_coding_info;
     EbHandle          entropy_coding_pic_mutex;
-    EbBool            entropy_coding_pic_reset_flag;
+    Bool            entropy_coding_pic_reset_flag;
     uint8_t           tile_size_bytes_minus_1;
     EbHandle          intra_mutex;
     uint32_t          intra_coded_area;
@@ -300,11 +300,11 @@ typedef struct PictureControlSet {
     uint16_t rest_segments_total_count;
     uint8_t  rest_segments_column_count;
     uint8_t  rest_segments_row_count;
-    EbBool   rest_extend_flag
+    Bool   rest_extend_flag
         [3]; // flag to indicate whether the frame is extended for restoration search
 
     // Slice Type
-    EB_SLICE slice_type;
+    SliceType slice_type;
 
     // Rate Control
     uint8_t picture_qp;
@@ -422,9 +422,9 @@ typedef struct PictureControlSet {
     uint8_t
                      pic_block_based_depth_refinement_level; // block_based_depth_refinement_level signal set at the picture level
     uint8_t          pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
-    EbBool           pic_bypass_encdec;
-    EbReflist        colocated_pu_ref_list;
-    EbEncMode        enc_mode;
+    Bool           pic_bypass_encdec;
+    RefList        colocated_pu_ref_list;
+    EncMode        enc_mode;
     int32_t          cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo       wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];
     SgrprojInfo      sgrproj_info[MAX_TILE_CNTS][MAX_MB_PLANE];
@@ -478,7 +478,7 @@ typedef struct SbParams {
     uint8_t  width;
     uint8_t  height;
     uint8_t  is_complete_sb;
-    EbBool   raster_scan_blk_validity[CU_MAX_COUNT];
+    Bool   raster_scan_blk_validity[CU_MAX_COUNT];
     uint8_t  is_edge_sb;
     uint32_t tile_start_x;
     uint32_t tile_start_y;
@@ -494,8 +494,8 @@ typedef struct SbGeom {
     uint8_t  width;
     uint8_t  height;
     uint8_t  is_complete_sb;
-    EbBool   block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
-    EbBool   block_is_allowed[BLOCK_MAX_COUNT_SB_128];
+    Bool   block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
+    Bool   block_is_allowed[BLOCK_MAX_COUNT_SB_128];
 } SbGeom;
 
 typedef struct TileGroupInfo {
@@ -568,16 +568,16 @@ typedef struct {
 } RefreshFrameFlagsInfo;
 typedef struct {
     uint8_t  tpl_temporal_layer_index;
-    EB_SLICE tpl_slice_type;
+    SliceType tpl_slice_type;
     uint8_t  tpl_ref0_count;
     uint8_t  tpl_ref1_count;
     uint64_t tpl_decode_order;
-    EbBool   ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    Bool   ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int32_t  ref_tpl_group_idx
         [MAX_NUM_OF_REF_PIC_LIST]
         [REF_LIST_MAX_DEPTH]; //tpl group index of all ref pictures; -1 if the reference is not in the TPL group (aka sliding window)
     struct PictureParentControlSet *base_pcs; //TPL base picture
-    EbBool                          is_used_as_reference_flag;
+    Bool                          is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 } TPLData;
 typedef struct GmControls {
@@ -675,7 +675,7 @@ typedef struct PictureParentControlSet {
     EbPictureBufferDesc *enhanced_unscaled_picture_ptr;
     EbPictureBufferDesc
           *chroma_downsampled_picture_ptr; //if 422/444 input, down sample to 420 for MD
-    EbBool is_chroma_downsampled_picture_ptr_owner;
+    Bool is_chroma_downsampled_picture_ptr_owner;
     PredictionStructure       *pred_struct_ptr; // need to check
     struct SequenceControlSet *scs_ptr;
     EbObjectWrapper           *p_pcs_wrapper_ptr;
@@ -698,20 +698,20 @@ typedef struct PictureParentControlSet {
     uint8_t             tile_group_cols;
     uint8_t             tile_group_rows;
 
-    EbBool   idr_flag;
-    EbBool   cra_flag;
-    EbBool   scene_change_flag;
-    EbBool   transition_present;
-    EbBool   end_of_sequence_flag;
+    Bool   idr_flag;
+    Bool   cra_flag;
+    Bool   scene_change_flag;
+    Bool   transition_present;
+    Bool   end_of_sequence_flag;
     uint8_t  picture_qp;
     uint64_t picture_number;
     uint32_t cur_order_hint;
     uint32_t ref_order_hint[7];
-    EB_SLICE slice_type;
+    SliceType slice_type;
     uint8_t  pred_struct_index;
     uint8_t  temporal_layer_index;
     uint64_t decode_order;
-    EbBool   is_used_as_reference_flag;
+    Bool   is_used_as_reference_flag;
     uint8_t  reference_released; // status of PA reference 0: Not release; 1: Released
     uint8_t  ref_list0_count;
     uint8_t  ref_list1_count;
@@ -724,10 +724,10 @@ typedef struct PictureParentControlSet {
     // Rate Control
     uint64_t                                total_num_bits;
     uint16_t                                sb_total_count;
-    EbBool                                  end_of_sequence_region;
+    Bool                                  end_of_sequence_region;
     int                                     frames_in_sw; // used for Look ahead
     struct RateControlIntervalParamContext *rate_control_param_ptr;
-    EbBool                                  qp_on_the_fly;
+    Bool                                  qp_on_the_fly;
     uint64_t                                last_idr_picture;
     uint64_t                                start_time_seconds;
     uint64_t                                start_time_u_seconds;
@@ -749,7 +749,7 @@ typedef struct PictureParentControlSet {
     uint16_t       **variance;
     uint32_t         pre_assignment_buffer_count;
     uint16_t         pic_avg_variance;
-    EbBool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
+    Bool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
 
     // Histograms
     uint32_t ****picture_histogram;
@@ -776,7 +776,7 @@ typedef struct PictureParentControlSet {
     uint32_t *me_16x16_distortion;
     uint32_t *me_8x8_distortion;
     // Global motion estimation results
-    EbBool                is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    Bool                is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbWarpedMotionParams  global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint16_t              me_processed_b64_count;
     EbHandle              me_processed_b64_mutex;
@@ -785,11 +785,11 @@ typedef struct PictureParentControlSet {
     double                ts_duration;
     double                r0;
     uint8_t tpl_src_data_ready; //track pictures that are processd in two different TPL groups
-    EbBool  blk_lambda_tuning;
+    Bool  blk_lambda_tuning;
     // Dynamic GOP
-    EbPred  pred_structure;
+    PredStructure  pred_structure;
     uint8_t hierarchical_levels;
-    EbBool  init_pred_struct_position_flag;
+    Bool  init_pred_struct_position_flag;
     int8_t  hierarchical_layers_diff;
     //Dep-Cnt Clean up is done using 2 mechanism
     //1: a triggering picture that will clean up all previous pictures;
@@ -803,44 +803,44 @@ typedef struct PictureParentControlSet {
     uint32_t
         other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
     // HME Flags
-    EbBool enable_hme_flag;
-    EbBool enable_hme_level0_flag;
-    EbBool enable_hme_level1_flag;
-    EbBool enable_hme_level2_flag;
+    Bool enable_hme_flag;
+    Bool enable_hme_level0_flag;
+    Bool enable_hme_level1_flag;
+    Bool enable_hme_level2_flag;
 
     // HME Flags form Temporal Filtering
-    EbBool tf_enable_hme_flag;
-    EbBool tf_enable_hme_level0_flag;
-    EbBool tf_enable_hme_level1_flag;
-    EbBool tf_enable_hme_level2_flag;
+    Bool tf_enable_hme_flag;
+    Bool tf_enable_hme_level0_flag;
+    Bool tf_enable_hme_level1_flag;
+    Bool tf_enable_hme_level2_flag;
 
     // MD
-    EbEncMode         enc_mode;
+    EncMode         enc_mode;
 #if !CLN_MD_CTX
     EB_SB_DEPTH_MODE *sb_depth_mode_array;
 #endif
     // Multi-modes signal(s)
     MultiPassPdLevel multi_pass_pd_level;
-    EbBool           disallow_nsq;
-    EbBool           disallow_all_nsq_blocks_below_8x8;
-    EbBool           disallow_all_nsq_blocks_below_16x16;
-    EbBool           disallow_all_non_hv_nsq_blocks_below_16x16;
-    EbBool           disallow_all_h4_v4_blocks_below_16x16;
+    Bool           disallow_nsq;
+    Bool           disallow_all_nsq_blocks_below_8x8;
+    Bool           disallow_all_nsq_blocks_below_16x16;
+    Bool           disallow_all_non_hv_nsq_blocks_below_16x16;
+    Bool           disallow_all_h4_v4_blocks_below_16x16;
 
-    EbBool   disallow_all_nsq_blocks_below_64x64; //disallow nsq in 64x64 and below
-    EbBool   disallow_all_nsq_blocks_below_32x32; //disallow nsq in 32x32 and below
-    EbBool   disallow_all_nsq_blocks_above_64x64; //disallow nsq in 64x64 and above
-    EbBool   disallow_all_nsq_blocks_above_32x32; //disallow nsq in 32x32 and above
-    EbBool   disallow_all_nsq_blocks_above_16x16; //disallow nsq in 16x16 and above
-    EbBool   disallow_HV4; //disallow             H4/V4
-    EbBool   disallow_HVA_HVB_HV4; //disallow HA/HB/VA/VB H4/V4
+    Bool   disallow_all_nsq_blocks_below_64x64; //disallow nsq in 64x64 and below
+    Bool   disallow_all_nsq_blocks_below_32x32; //disallow nsq in 32x32 and below
+    Bool   disallow_all_nsq_blocks_above_64x64; //disallow nsq in 64x64 and above
+    Bool   disallow_all_nsq_blocks_above_32x32; //disallow nsq in 32x32 and above
+    Bool   disallow_all_nsq_blocks_above_16x16; //disallow nsq in 16x16 and above
+    Bool   disallow_HV4; //disallow             H4/V4
+    Bool   disallow_HVA_HVB_HV4; //disallow HA/HB/VA/VB H4/V4
     DlfCtrls dlf_ctrls;
     uint8_t  intra_pred_mode;
     uint8_t  tx_size_search_mode;
     uint8_t  frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON
     //**********************************************************************************************************//
     Av1RpsNode av1_ref_signal;
-    EbBool     has_show_existing;
+    Bool     has_show_existing;
     int32_t    ref_frame_map[REF_FRAMES]; /* maps fb_idx to reference slot */
     int32_t    is_skip_mode_allowed;
     int32_t    skip_mode_flag;
@@ -946,13 +946,13 @@ typedef struct PictureParentControlSet {
     uint8_t     tf_segments_row_count;
     uint8_t     past_altref_nframes;
     uint8_t     future_altref_nframes;
-    EbBool      temporal_filtering_on;
+    Bool      temporal_filtering_on;
     uint64_t    filtered_sse_uv;
     FrameHeader frm_hdr;
     uint16_t   *altref_buffer_highbd[3];
     uint8_t     pic_obmc_level;
 
-    EbBool            is_pcs_sb_params;
+    Bool            is_pcs_sb_params;
     SbParams         *sb_params_array;
     SbGeom           *sb_geom;
     EbInputResolution input_resolution;
@@ -970,7 +970,7 @@ typedef struct PictureParentControlSet {
     uint16_t frame_width;
     uint16_t frame_height;
 
-    EbBool  frame_superres_enabled;
+    Bool  frame_superres_enabled;
     uint8_t superres_denom;
     // recode for auto superres
     int32_t
@@ -1114,17 +1114,17 @@ typedef struct PictureControlSetInitData {
         sb_size_pix; //since we still have lot of code assuming 64x64 SB, we add a new paramter supporting both128x128 and 64x64,
     //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
     uint32_t max_depth;
-    //EbBool                             is_16bit;
+    //Bool                             is_16bit;
     uint32_t                 ten_bit_format;
     uint32_t                 compressed_ten_bit_format;
     uint16_t                 enc_dec_segment_col;
     uint16_t                 enc_dec_segment_row;
-    EbEncMode                enc_mode;
+    EncMode                enc_mode;
     EbSvtAv1EncConfiguration static_config;
     uint8_t                  speed_control;
     int8_t                   hbd_mode_decision;
     uint16_t                 film_grain_noise_level;
-    EbBool                   ext_block_flag;
+    Bool                   ext_block_flag;
     uint8_t                  cdf_mode;
     uint8_t                  over_boundary_block_mode;
     uint8_t                  mfmv;
@@ -1136,7 +1136,7 @@ typedef struct PictureControlSetInitData {
     uint8_t log2_tile_rows; //from command line
     uint8_t log2_tile_cols;
     uint8_t log2_sb_sz; //in mi unit
-    EbBool  is_16bit_pipeline;
+    Bool  is_16bit_pipeline;
 
     uint16_t   non_m8_pad_w;
     uint16_t   non_m8_pad_h;

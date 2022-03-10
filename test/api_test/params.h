@@ -147,23 +147,23 @@ static const vector<uint32_t> invalid_hierarchical_levels = {
  * same reference picture.
  *
  * Following values are supported and defined in EbDefinitions.h
- * #define EB_PRED_LOW_DELAY_P     0
- * #define EB_PRED_LOW_DELAY_B     1
- * #define EB_PRED_RANDOM_ACCESS   2
- * #define EB_PRED_TOTAL_COUNT     3
+ * #define PRED_LOW_DELAY_P     0
+ * #define PRED_LOW_DELAY_B     1
+ * #define PRED_RANDOM_ACCESS   2
+ * #define PRED_TOTAL_COUNT     3
 
  * In Random Access structure, the b/b pictures can refer to reference pictures
  * from both directions (past and future).
  *
  * Default is 2. */
 static const vector<uint8_t> default_pred_structure = {
-    EB_PRED_RANDOM_ACCESS,
+    PRED_RANDOM_ACCESS,
 };
 static const vector<uint8_t> valid_pred_structure = {
-    EB_PRED_LOW_DELAY_P, EB_PRED_LOW_DELAY_B, EB_PRED_RANDOM_ACCESS};
+    PRED_LOW_DELAY_P, PRED_LOW_DELAY_B, PRED_RANDOM_ACCESS};
 static const vector<uint8_t> invalid_pred_structure = {
     /* _pred_structure override in code
-    EB_PRED_TOTAL_COUNT, EB_PRED_TOTAL_COUNT + 1, EB_PRED_INVALID*/};
+    PRED_TOTAL_COUNT, PRED_TOTAL_COUNT + 1, EB_PRED_INVALID*/};
 
 // Input Info
 /* The width of input source in units of picture luma pixels.
@@ -394,14 +394,14 @@ static const vector<uint32_t> invalid_qp = {
 /* force qp values for every picture that are passed in the header pointer
  *
  * Default is 0.*/
-static const vector<EbBool> default_use_qp_file = {
-    EB_FALSE,
+static const vector<Bool> default_use_qp_file = {
+    FALSE,
 };
-static const vector<EbBool> valid_use_qp_file = {
-    EB_FALSE,
-    EB_TRUE,
+static const vector<Bool> valid_use_qp_file = {
+    FALSE,
+    TRUE,
 };
-static const vector<EbBool> invalid_use_qp_file = {
+static const vector<Bool> invalid_use_qp_file = {
     // none
 };
 
@@ -409,14 +409,14 @@ static const vector<EbBool> invalid_use_qp_file = {
 /* Flag to enable the Deblocking Loop Filtering.
  *
  * Default is true. */
-static const vector<EbBool> default_enable_dlf_flag = {
-    EB_TRUE,
+static const vector<Bool> default_enable_dlf_flag = {
+    TRUE,
 };
-static const vector<EbBool> valid_enable_dlf_flag = {
-    EB_FALSE,
-    EB_TRUE,
+static const vector<Bool> valid_enable_dlf_flag = {
+    FALSE,
+    TRUE,
 };
-static const vector<EbBool> invalid_enable_dlf_flag = {
+static const vector<Bool> invalid_enable_dlf_flag = {
     // none
 };
 
@@ -425,13 +425,13 @@ static const vector<EbBool> invalid_enable_dlf_flag = {
  *
  * Default is 0. */
 // TODO: the description of this parameter is incorrect, refer to source code,
-// it should be a EbBool
+// it should be a Bool
 static const vector<uint32_t> default_film_grain_denoise_strength = {
-    EB_FALSE,
+    FALSE,
 };
 static const vector<uint32_t> valid_film_grain_denoise_strength = {
-    EB_FALSE,
-    EB_TRUE,
+    FALSE,
+    TRUE,
 };
 static const vector<uint32_t> invalid_film_grain_denoise_strength = {
     // none
@@ -440,70 +440,70 @@ static const vector<uint32_t> invalid_film_grain_denoise_strength = {
 /* Warped motion
  *
  * Default is 0. */
-static const vector<EbBool> default_enable_warped_motion = {
-    EB_TRUE,
+static const vector<Bool> default_enable_warped_motion = {
+    TRUE,
 };
-static const vector<EbBool> valid_enable_warped_motion = {
-    EB_FALSE,
-    EB_TRUE,
+static const vector<Bool> valid_enable_warped_motion = {
+    FALSE,
+    TRUE,
 };
-static const vector<EbBool> invalid_enable_warped_motion = {
+static const vector<Bool> invalid_enable_warped_motion = {
     // none
 };
 
 /* Global motion
  *
  * Default is 1. */
-static const vector<EbBool> default_enable_global_motion = {
-    EB_TRUE,
+static const vector<Bool> default_enable_global_motion = {
+    TRUE,
 };
-static const vector<EbBool> valid_enable_global_motion = {
-    EB_FALSE,
-    EB_TRUE,
+static const vector<Bool> valid_enable_global_motion = {
+    FALSE,
+    TRUE,
 };
-static const vector<EbBool> invalid_enable_global_motion = {
+static const vector<Bool> invalid_enable_global_motion = {
     // none
 };
 
 /* Flag to enable the use of default ME HME parameters.
  *
  * Default is 1. */
-static const vector<EbBool> default_use_default_me_hme = {
-    EB_TRUE,
+static const vector<Bool> default_use_default_me_hme = {
+    TRUE,
 };
-static const vector<EbBool> valid_use_default_me_hme = {
-    EB_FALSE,
-    EB_TRUE,
+static const vector<Bool> valid_use_default_me_hme = {
+    FALSE,
+    TRUE,
 };
-static const vector<EbBool> invalid_use_default_me_hme = {
+static const vector<Bool> invalid_use_default_me_hme = {
     // none
 };
 
 /* Flag to enable Hierarchical Motion Estimation.
  *
  * Default is 1. */
-static const vector<EbBool> default_enable_hme_flag = {
-    EB_TRUE,
+static const vector<Bool> default_enable_hme_flag = {
+    TRUE,
 };
-static const vector<EbBool> valid_enable_hme_flag = {
-    EB_FALSE,
-    EB_TRUE,
+static const vector<Bool> valid_enable_hme_flag = {
+    FALSE,
+    TRUE,
 };
-static const vector<EbBool> invalid_enable_hme_flag = {
+static const vector<Bool> invalid_enable_hme_flag = {
     // none
 };
 
 /* Flag to enable the use of non-swaure partitions
  *
  * Default is 0. */
-static const vector<EbBool> default_ext_block_flag = {
-    EB_FALSE,
+static const vector<Bool> default_ext_block_flag = {
+    FALSE,
 };
-static const vector<EbBool> valid_ext_block_flag = {
-    EB_FALSE,
-    EB_TRUE,
+static const vector<Bool> valid_ext_block_flag = {
+    FALSE,
+    TRUE,
 };
-static const vector<EbBool> invalid_ext_block_flag = {
+static const vector<Bool> invalid_ext_block_flag = {
     // none
 };
 
@@ -554,14 +554,14 @@ static const vector<int32_t> invalid_palette_level = {-2, 7};
  * parameter sets in the elementary streams .
  *
  * Default is 0. */
-static const vector<EbBool> default_constrained_intra = {
-    EB_FALSE,
+static const vector<Bool> default_constrained_intra = {
+    FALSE,
 };
-static const vector<EbBool> valid_constrained_intra = {
-    EB_FALSE,
-    EB_TRUE,
+static const vector<Bool> valid_constrained_intra = {
+    FALSE,
+    TRUE,
 };
-static const vector<EbBool> invalid_constrained_intra = {
+static const vector<Bool> invalid_constrained_intra = {
     // none
 };
 
@@ -878,8 +878,8 @@ static const vector<int32_t> invalid_target_socket = {
  * ReconFile token (-o) and using the feature will affect the speed of encoder.
  *
  * Default is 0. */
-static const vector<uint32_t> default_recon_enabled = {EB_FALSE};
-static const vector<uint32_t> valid_recon_enabled = {EB_FALSE, EB_TRUE};
+static const vector<uint32_t> default_recon_enabled = {FALSE};
+static const vector<uint32_t> valid_recon_enabled = {FALSE, TRUE};
 static const vector<uint32_t> invalid_recon_enabled = {/** none */};
 
 #if TILES
@@ -929,9 +929,9 @@ static const vector<uint32_t> invalid_screen_content_mode = {3};
 
 /* Variables to control the use of ALT-REF (temporally filtered frames)
  */
-static const vector<EbBool> default_enable_tf = {EB_TRUE};
-static const vector<EbBool> valid_enable_tf = {EB_FALSE, EB_TRUE};
-static const vector<EbBool> invalid_enable_tf = {/*none*/};
+static const vector<Bool> default_enable_tf = {TRUE};
+static const vector<Bool> valid_enable_tf = {FALSE, TRUE};
+static const vector<Bool> invalid_enable_tf = {/*none*/};
 
 static const vector<uint8_t> default_altref_strength = {5};
 static const vector<uint8_t> valid_altref_strength = {0, 1, 2, 3, 4, 5, 6};
@@ -942,9 +942,9 @@ static const vector<uint8_t> valid_altref_nframes = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 static const vector<uint8_t> invalid_altref_nframes = {11};
 
-static const vector<EbBool> default_enable_overlays = {EB_FALSE};
-static const vector<EbBool> valid_enable_overlays = {EB_FALSE, EB_TRUE};
-static const vector<EbBool> invalid_enable_overlays = {/*none*/};
+static const vector<Bool> default_enable_overlays = {FALSE};
+static const vector<Bool> valid_enable_overlays = {FALSE, TRUE};
+static const vector<Bool> invalid_enable_overlays = {/*none*/};
 
 /* Variables to control the super-resolution tool
  */

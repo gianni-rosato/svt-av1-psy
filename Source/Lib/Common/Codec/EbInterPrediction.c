@@ -2505,7 +2505,7 @@ void build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF
                                     const InterInterCompoundData *const comp_data,
                                     uint8_t *seg_mask, BlockSize sb_type, int h, int w,
                                     ConvolveParams *conv_params, uint8_t bit_depth,
-                                    EbBool is_16bit) {
+                                    Bool is_16bit) {
     // Derive subsampling from h and w passed in. May be refactored to
     // pass in subsampling factors directly.
     const int      subh = (2 << mi_size_high_log2[sb_type]) == h;
