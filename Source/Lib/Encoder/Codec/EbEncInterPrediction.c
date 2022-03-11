@@ -3723,11 +3723,15 @@ void compute_subpel_params(SequenceControlSet *scs_ptr, int16_t pre_y, int16_t p
         *pos_x += SCALE_EXTRA_OFF;
         *pos_y += SCALE_EXTRA_OFF;
 
-        // Equations of top and left are expanded from macro -AOM_LEFT_TOP_MARGIN_SCALED(ss_y),
-        // except padding in svt is 'scs_ptr->static_config.super_block_size + 32' instead of 288
+        // Note old: Equations of top and left are expanded from macro -AOM_LEFT_TOP_MARGIN_SCALED(ss_y),
+        //      except padding in svt is 'scs_ptr->static_config.super_block_size + 32' instead of 288.
+        //
+        // Note for issue 1835 "Segmentation Fault With Super Resolution on Ubuntu 18.04":
+        //      Limit top & left offset from AOM_INTERP_EXTEND(4) to INTERPOLATION_OFFSET(8) to avoid memory access underflow,
+        //      because pack_block() may access src_mod - INTERPOLATION_OFFSET - (INTERPOLATION_OFFSET * src_stride) later.
         const int border_in_pixels = scs_ptr->sb_size_pix + 32;
-        const int top    = -(((border_in_pixels >> ss_y) - AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS);
-        const int left   = -(((border_in_pixels >> ss_x) - AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS);
+        const int top    = -(((border_in_pixels >> ss_y) - INTERPOLATION_OFFSET) << SCALE_SUBPEL_BITS);
+        const int left   = -(((border_in_pixels >> ss_x) - INTERPOLATION_OFFSET) << SCALE_SUBPEL_BITS);
         const int bottom = ((frame_height >> ss_y) + AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS;
         const int right  = ((frame_width >> ss_x) + AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS;
 
