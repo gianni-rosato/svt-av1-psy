@@ -2568,8 +2568,10 @@ static void  av1_generate_rps_info(
         frm_hdr->frame_type = pcs_ptr->idr_flag ? KEY_FRAME : INTRA_ONLY_FRAME;
     else
         frm_hdr->frame_type = INTER_FRAME;
+#if !FRFCTR_RC_P8
     Av1Common *  cm = pcs_ptr->av1_cm;
     cm->current_frame.frame_type = frm_hdr->frame_type;
+#endif
 
     pcs_ptr->intra_only = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
     // When a hierarchical change happens, the references should be chosen properly. In the following case, we switch from 6L to 5L or 4L.
@@ -6155,7 +6157,7 @@ void* picture_decision_kernel(void *input_ptr)
                 frame_passthrough = EB_FALSE;
             window_avail = EB_TRUE;
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
-            if (scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_enabled) {
+            if (scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_rc) {
                 for (window_index = 0; window_index < scs_ptr->scd_delay + 1; window_index++)
                 {
                     entry_index = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, window_index);

@@ -886,7 +886,7 @@ void setup_two_pass(SequenceControlSet *scs_ptr) {
         const size_t packet_sz = sizeof(FIRSTPASS_STATS);
         const int    packets   = (int)(encode_context_ptr->rc_stats_buffer.sz / packet_sz);
 
-        if (!scs_ptr->lap_enabled) {
+        if (!scs_ptr->lap_rc) {
             /*Re-initialize to stats buffer, populated by application in the case of
                 * two pass*/
             scs_ptr->twopass.stats_buf_ctx->stats_in_start =
@@ -901,7 +901,7 @@ void setup_two_pass(SequenceControlSet *scs_ptr) {
                 ? 1
                 : 0; //less than 200 frames, used in VBR and set in multipass encode
         }
-    } else if (scs_ptr->lap_enabled)
+    } else if (scs_ptr->lap_rc)
         svt_av1_init_single_pass_lap(scs_ptr);
 }
 
@@ -1254,18 +1254,20 @@ void *resource_coordination_kernel(void *input_ptr) {
                 if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                     scs_ptr->static_config.pass == ENC_LAST_PASS)
                     read_stat(scs_ptr);
-                if (scs_ptr->static_config.pass != ENC_SINGLE_PASS || scs_ptr->lap_enabled)
+                if (scs_ptr->static_config.pass != ENC_SINGLE_PASS || scs_ptr->lap_rc)
                     setup_two_pass(scs_ptr);
                 else
                     set_rc_param(scs_ptr);
                 if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
                     find_init_qp_middle_pass(scs_ptr, pcs_ptr);
+#if !FRFCTR_RC_P9
                 if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                       scs_ptr->static_config.pass == ENC_LAST_PASS) &&
                     scs_ptr->static_config.pass != ENC_FIRST_PASS &&
                     scs_ptr->static_config.rate_control_mode == 2) {
                     setup_two_pass(scs_ptr);
                 }
+#endif
             }
             if (scs_ptr->passes == 3 && !end_of_sequence_flag &&
                 scs_ptr->static_config.pass == ENC_LAST_PASS &&

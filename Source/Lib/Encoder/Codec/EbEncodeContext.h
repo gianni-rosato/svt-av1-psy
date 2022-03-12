@@ -184,8 +184,12 @@ typedef struct EncodeContext {
     RATE_CONTROL         rc;
     RateControlCfg       rc_cfg;
     GF_GROUP             gf_group;
+#if !FRFCTR_RC_P3
     KeyFrameCfg          kf_cfg;
+#endif
+#if !FRFCTR_RC_P4
     GFConfig             gf_cfg;
+#endif
     FIRSTPASS_STATS     *frame_stats_buffer;
     // Number of stats buffers required for look ahead
     int               num_lap_buffers;

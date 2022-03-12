@@ -387,7 +387,7 @@ typedef struct SkipModeInfo {
     int ref_frame_idx_1;
 
 } SkipModeInfo;
-
+#if !FRFCTR_RC_P8
 typedef struct {
     /*FRAME_TYPE*/ FrameType frame_type;
     //REFERENCE_MODE reference_mode;
@@ -400,16 +400,7 @@ typedef struct {
     int          frame_refs_short_signaling;
 } CurrentFrame;
 
-//typedef struct GlobalMotionParams {
-//
-//    /*!< Specifies the transform type */
-//    TransformationType  gm_type[ALTREF_FRAME - LAST_FRAME + 1];
-//
-//    /*!< Global motion parameter */
-//    int32_t             gm_params[ALTREF_FRAME - LAST_FRAME + 1][6];
-//
-//} GlobalMotionParams;
-
+#endif
 typedef struct GlobalMotionParams {
     /*!< Specifies the transform type */
     TransformationType gm_type;
@@ -417,8 +408,6 @@ typedef struct GlobalMotionParams {
     /*!< Global motion parameter */
     int32_t gm_params[6];
 
-    /*!< Previous global motion parameter */
-    //int32_t             prev_gm_params[6];
 } GlobalMotionParams;
 
 typedef struct FrameHeader {

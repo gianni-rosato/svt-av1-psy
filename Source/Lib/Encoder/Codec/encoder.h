@@ -45,19 +45,20 @@ enum aom_rc_mode {
     AOM_Q, /**< Constant Quality (Q) mode */
 };
 //**********************************************************************************************************************//
-
+#if !FRFCTR_RC_P4
 enum {
     DISABLE_SCENECUT, // For LAP, lag_in_frames < 19
     ENABLE_SCENECUT_MODE_1, // For LAP, lag_in_frames >=19 and < 33
     ENABLE_SCENECUT_MODE_2 // For twopass and LAP - lag_in_frames >=33
 } UENUM1BYTE(SCENECUT_MODE);
-
+#endif
 //struct AV1LevelParams;
-
+#if !FRFCTR_RC_P3
 typedef struct {
     // Indicates the maximum distance to a key frame.
     int key_freq_max;
 } KeyFrameCfg;
+#endif
 
 /*!\endcond */
 /*!
@@ -109,10 +110,11 @@ typedef struct {
     /*!\endcond */
 } RateControlCfg;
 
+#if !FRFCTR_RC_P4
 /*!\cond */
 typedef struct {
     // Indicates the number of frames lag before encoding is started.
-    int lag_in_frames;
+   // int lag_in_frames;
     // Indicates the minimum gf/arf interval to be used.
     int min_gf_interval;
     // Indicates the maximum gf/arf interval to be used.
@@ -122,6 +124,7 @@ typedef struct {
     // Indicates the maximum height for GF group pyramid structure to be used.
     int gf_max_pyr_height;
 } GFConfig;
+#endif
 
 typedef int aom_bit_depth_t;
 typedef struct {
@@ -135,12 +138,12 @@ typedef struct {
     int             subsampling_y;
 } FrameInfo;
 
+#if !FRFCTR_RC_P8
 typedef struct EncodeFrameInput {
     //YV12_BUFFER_CONFIG *source;
     //YV12_BUFFER_CONFIG *last_source;
     int64_t ts_duration;
 } EncodeFrameInput;
-
 // EncodeFrameParams contains per-frame encoding parameters decided upon by
 // av1_encode_strategy() and passed down to av1_encode()
 struct EncodeFrameParams {
@@ -166,7 +169,7 @@ struct EncodeFrameParams {
     // Speed level to use for this frame: Bigger number means faster.
     int speed;
 };
-
+#endif
 typedef struct {
     // stats_in buffer contains all of the stats packets produced in the first
     // pass, concatenated.
@@ -185,9 +188,9 @@ typedef struct {
     // of the target bitrate.
     int vbrmax_section;
 } TwoPassCfg;
-
+#if !FRFCTR_RC_P8
 typedef struct EncodeFrameParams EncodeFrameParams;
-
+#endif
 /*!
  * \brief Main encoder configuration data structure.
  */
@@ -208,10 +211,10 @@ typedef struct AV1EncoderConfig {
 
     int /*MODE*/ mode;
     int          pass;
-
+#if !FRFCTR_RC_P3
     // Configuration related to key-frame.
     KeyFrameCfg kf_cfg;
-
+#endif
     // ----------------------------------------------------------------
     // DATARATE CONTROL OPTIONS
 
@@ -263,9 +266,10 @@ typedef struct AV1EncoderConfig {
 
     int arnr_max_frames;
     int arnr_strength;
-
+#if !FRFCTR_RC_P4
     // Configuration related to Group of frames.
     GFConfig gf_cfg;
+#endif
 
     // Tile related configuration parameters.
     //TileConfig tile_cfg;
@@ -341,7 +345,7 @@ typedef struct AV1EncoderConfig {
 
     /*!\endcond */
 } AV1EncoderConfig;
-
+#if !FRFCTR_RC_P1
 /*!
  * \brief Top level encoder structure.
  */
@@ -568,7 +572,6 @@ typedef struct AV1_COMP {
    * i.e., all the reference frames are output before the current frame.
    */
     int all_one_sided_refs;
-
     /*!
    * Segmentation related information for current frame.
    */
@@ -595,7 +598,6 @@ typedef struct AV1_COMP {
    * Information related to two pass encoding.
    */
     TWO_PASS twopass;
-
     /*!
    * Information related to a gf group.
    */
@@ -854,7 +856,7 @@ typedef struct AV1_COMP {
     /*!
    * Flag indicating whether look ahead processing (LAP) is enabled.
    */
-    int lap_enabled;
+    int lap_rc;
     /*!
    * Indicates whether current processing stage is encode stage or LAP stage.
    */
@@ -900,7 +902,7 @@ typedef struct AV1_COMP {
    */
     uint8_t *consec_zero_mv;
 } AV1_COMP;
-
+#endif
 #define MAX_GFUBOOST_FACTOR 10.0
 #define MIN_GFUBOOST_FACTOR 4.0
 

@@ -553,7 +553,6 @@ typedef struct TplControls {
     //modified inside the get_ function, as it is linked to memory allocation at init time
     uint8_t vq_adjust_lambda_sb;
 } TplControls;
-
 /*!
  * \brief Refresh frame flags for different type of frames.
  *
@@ -567,7 +566,6 @@ typedef struct {
     bool bwd_ref_frame; /*!< Refresh flag for bwd-ref frame */
     bool alt_ref_frame; /*!< Refresh flag for alt-ref frame */
 } RefreshFrameFlagsInfo;
-
 typedef struct {
     uint8_t  tpl_temporal_layer_index;
     EB_SLICE tpl_slice_type;
@@ -1046,7 +1044,9 @@ typedef struct PictureParentControlSet {
     //GF_GROUP parameters store in PCS
     int update_type;
     int layer_depth;
+#if !FRFCTR_RC_P1
     int arf_boost;
+#endif
     int gf_group_size;
     //RATE_CONTROL parameters store in PCS
     int base_frame_target; // A baseline frame target before adjustment.
@@ -1055,11 +1055,13 @@ typedef struct PictureParentControlSet {
     int max_frame_size;
     int frames_to_key;
     int frames_since_key;
+#if !FRFCTR_RC_P2
     int is_src_frame_alt_ref;
     // Total number of stats used only for gfu_boost calculation.
     int num_stats_used_for_gfu_boost;
     // Total number of stats required by gfu_boost calculation.
     int num_stats_required_for_gfu_boost;
+#endif
     int top_index;
     int bottom_index;
     // stores gf group (minigop) length

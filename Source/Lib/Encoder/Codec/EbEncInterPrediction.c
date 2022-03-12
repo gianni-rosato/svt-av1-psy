@@ -488,8 +488,6 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
 // Choose the best wedge index the specified sign
 int64_t pick_wedge_fixed_sign(PictureControlSet   *picture_control_set_ptr,
                               ModeDecisionContext *context_ptr,
-                              //const AV1_COMP *const cpi,
-                              //const MACROBLOCK *const x,
                               const BlockSize bsize, const int16_t *const residual1,
                               const int16_t *const diff10, const int8_t wedge_sign,
                               int8_t *const best_wedge_index) {

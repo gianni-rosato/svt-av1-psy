@@ -66,6 +66,15 @@ extern "C" {
 #define OPT_M7_SUBJ             1 // Speedup M7 for subjective mode
 
 #define FIX_AQ_MODE             1 // Fix aq-mode 0
+// RC refactoring
+#define FRFCTR_RC_P1            1 // clean up extra variables
+#define FRFCTR_RC_P2            1 // clean up overlay signals and num_stats_required_for_gfu_boost
+#define FRFCTR_RC_P3            1 //remove KeyFrameCfg
+#define FRFCTR_RC_P4            1 //remove GFConfig
+#define FRFCTR_RC_P5            1 //remove rc min max interval
+#define FRFCTR_RC_P6            1 //CBR and flat VBR clean up
+#define FRFCTR_RC_P8            1 //remove EncodeFrameParams and CurrentFrame
+#define FRFCTR_RC_P9            1 //clean up rc variables
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

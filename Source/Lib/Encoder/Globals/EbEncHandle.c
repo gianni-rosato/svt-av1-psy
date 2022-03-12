@@ -3136,12 +3136,12 @@ void set_mid_pass_ctrls(
 }
 #if TUNE_4L_M9 || TUNE_4L_M10
 #if FIX_AQ_MODE
-uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels, uint8_t aq_mode) {
+uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels, uint8_t aq_mode) {
 #else
-uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels) {
+uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels) {
 #endif
 #else
-uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode) {
+uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode) {
 #endif
     uint8_t tpl_level;
 
@@ -3157,7 +3157,7 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_
         SVT_WARN("TPL is disabled in low delay applications.\n");
         tpl_level = 0;
     }
-    else if (pass == ENC_FIRST_PASS && lap_enabled == 0) {
+    else if (pass == ENC_FIRST_PASS && lap_rc == 0) {
         tpl_level = 0;
     }
     // allow TPL with auto-dual and auto-all
@@ -3300,7 +3300,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
         scs_ptr->max_input_luma_height = (scs_ptr->max_input_luma_height >> 2) << 1;
     }
 
-    if (scs_ptr->lap_enabled) {
+    if (scs_ptr->lap_rc) {
         scs_ptr->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
     }
 
@@ -3310,9 +3310,15 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
         scs_ptr->rc_stat_gen_pass_mode = 0;
 
     if (scs_ptr->static_config.recode_loop > 0 &&
+#if FRFCTR_RC_P9
+        ((scs_ptr->static_config.rate_control_mode == 0 && scs_ptr->static_config.max_bit_rate == 0) ||
+        (scs_ptr->static_config.rate_control_mode == 2))) {
+        // Only allow re-encoding for VBR or capped CRF, otherwise force recode_loop to DISALLOW_RECODE or 0
+#else
         (!scs_ptr->static_config.rate_control_mode && scs_ptr->static_config.max_bit_rate == 0) &&
-        (!scs_ptr->static_config.rate_control_mode || (!scs_ptr->lap_enabled && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS)))) {
+        (!scs_ptr->static_config.rate_control_mode || (!scs_ptr->lap_rc && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS)))) {
         // Only allow re-encoding for 2pass VBR/CBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
+#endif
         scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
     }
     else if (scs_ptr->static_config.recode_loop == ALLOW_RECODE_DEFAULT) {
@@ -3331,12 +3337,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr);
 #if TUNE_4L_M9 || TUNE_4L_M10
 #if FIX_AQ_MODE
-    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels, scs_ptr->static_config.enable_adaptive_quantization);
+    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels, scs_ptr->static_config.enable_adaptive_quantization);
 #else
-    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels);
+    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels);
 #endif
 #else
-    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode);
+    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode);
 #endif
     uint16_t subsampling_x = scs_ptr->subsampling_x;
     uint16_t subsampling_y = scs_ptr->subsampling_y;
@@ -3444,7 +3450,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     // Update the scd_delay based on SCD, 1first pass
     // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
-    if (scs_ptr->static_config.scene_change_detection || scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_enabled)
+    if (scs_ptr->static_config.scene_change_detection || scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_rc)
         scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
 
     // no future minigop is used for lowdelay prediction structure
@@ -3495,7 +3501,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->super_block_size = 128;
         else
             scs_ptr->super_block_size = 64;
-    if (scs_ptr->static_config.rate_control_mode && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && !scs_ptr->lap_enabled)
+    if (scs_ptr->static_config.rate_control_mode && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && !scs_ptr->lap_rc)
         scs_ptr->super_block_size = 64;
 
     // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
@@ -3574,7 +3580,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FTR_CBR
         ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) || scs_ptr->static_config.rate_control_mode))
 #else
-        ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) || scs_ptr->lap_enabled))
+        ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) || scs_ptr->lap_rc))
 #endif
         scs_ptr->enable_dec_order = 1;
     else
@@ -3957,10 +3963,14 @@ void copy_api_from_app(
     scs_ptr->static_config.starting_buffer_level_ms = ((EbSvtAv1EncConfiguration*)config_struct)->starting_buffer_level_ms;
     scs_ptr->static_config.optimal_buffer_level_ms  = ((EbSvtAv1EncConfiguration*)config_struct)->optimal_buffer_level_ms;
     scs_ptr->static_config.recode_loop         = ((EbSvtAv1EncConfiguration*)config_struct)->recode_loop;
+#if FRFCTR_RC_P9
+    if (scs_ptr->static_config.rate_control_mode == 1 && scs_ptr->static_config.pass == ENC_SINGLE_PASS)
+#else
     if (scs_ptr->static_config.rate_control_mode == 1 && scs_ptr->static_config.pass != ENC_MIDDLE_PASS && scs_ptr->static_config.pass != ENC_FIRST_PASS && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS))
-        scs_ptr->lap_enabled = 1;
+#endif
+        scs_ptr->lap_rc = 1;
     else
-        scs_ptr->lap_enabled = 0;
+        scs_ptr->lap_rc = 0;
     //Segmentation
     //TODO: check RC mode and set only when RC is enabled in the final version.
     scs_ptr->static_config.enable_adaptive_quantization = config_struct->enable_adaptive_quantization;

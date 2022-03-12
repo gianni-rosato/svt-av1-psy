@@ -774,7 +774,7 @@ void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuf
         }
     }
 }
-
+#if !FRFCTR_RC_P1
 //int32_t av1_get_max_filter_level(const Av1Comp *cpi) {
 //    if (cpi->oxcf.pass == 2) {
 //        return cpi->twopass.section_intra_rating > 8 ? MAX_LOOP_FILTER * 3 / 4
@@ -784,7 +784,7 @@ void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuf
 //        return MAX_LOOP_FILTER;
 //    }
 //}
-
+#endif
 uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDesc *recon_ptr,
                                   int32_t plane)
 
@@ -1021,9 +1021,10 @@ static int32_t search_filter_level(
 
         // Bias against raising loop filter in favor of lowering it.
         int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
-
+#if !FRFCTR_RC_P1
         //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
         //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
+#endif
 
         // yx, bias less for large block size
         if (frm_hdr->tx_mode != ONLY_4X4)

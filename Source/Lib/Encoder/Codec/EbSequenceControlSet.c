@@ -335,7 +335,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->in_loop_ois                    = src->in_loop_ois;
     dst->enable_pic_mgr_dec_order       = src->enable_pic_mgr_dec_order;
     dst->enable_dec_order               = src->enable_dec_order;
-    dst->lap_enabled                    = src->lap_enabled;
+    dst->lap_rc                    = src->lap_rc;
 
     dst->lad_mg                        = src->lad_mg;
     dst->tpl_lad_mg                    = src->tpl_lad_mg;

@@ -58,7 +58,7 @@ static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStats
         size_t capability = (int64_t)frame_number >= (int64_t)STATS_CAPABILITY_INIT - 1
             ? STATS_CAPABILITY_GROW(frame_number)
             : STATS_CAPABILITY_INIT;
-        if (scs_ptr->lap_enabled) {
+        if (scs_ptr->lap_rc) {
             //store the data points before re-allocation
             uint64_t stats_in_start_offset = 0;
             uint64_t stats_in_offset       = 0;
@@ -1331,7 +1331,7 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
                              me_context_ptr->me_context_ptr->skip_frame,
                              me_context_ptr->me_context_ptr->bypass_blk_step,
                              ppcs_ptr->ts_duration);
-        if (ppcs_ptr->end_of_sequence_flag && !ppcs_ptr->scs_ptr->lap_enabled)
+        if (ppcs_ptr->end_of_sequence_flag && !ppcs_ptr->scs_ptr->lap_rc)
             svt_av1_end_first_pass(ppcs_ptr);
         // Signal that the first pass is done
         svt_post_semaphore(ppcs_ptr->first_pass_done_semaphore);

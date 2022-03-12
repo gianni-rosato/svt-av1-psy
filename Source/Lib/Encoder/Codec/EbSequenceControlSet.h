@@ -236,7 +236,7 @@ typedef struct SequenceControlSet {
     uint32_t         rest_process_init_count;
     uint32_t         tpl_disp_process_init_count;
     uint32_t         total_process_init_count;
-    int32_t          lap_enabled;
+    int32_t          lap_rc;
     TWO_PASS         twopass;
     double           double_frame_rate;
     Quants           quants_bd; // follows input bit depth

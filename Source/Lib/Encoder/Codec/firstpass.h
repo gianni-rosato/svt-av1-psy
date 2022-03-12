@@ -144,12 +144,16 @@ enum {
 typedef struct {
     unsigned char             index;
     /*frame_update_type*/ int update_type[MAX_STATIC_GF_GROUP_LENGTH];
+#if !FRFCTR_RC_P1
     unsigned char             frame_disp_idx[MAX_STATIC_GF_GROUP_LENGTH];
+#endif
 
     // TODO(jingning): Unify the data structure used here after the new control
     // mechanism is in place.
     int layer_depth[MAX_STATIC_GF_GROUP_LENGTH];
+#if !FRFCTR_RC_P1
     int arf_boost[MAX_STATIC_GF_GROUP_LENGTH];
+#endif
     int max_layer_depth;
     int max_layer_depth_allowed;
     int bit_allocation[MAX_STATIC_GF_GROUP_LENGTH];
@@ -173,8 +177,10 @@ typedef struct {
  * \brief Two pass status and control data.
  */
 typedef struct {
+#if !FRFCTR_RC_P1
     /*!\cond */
     unsigned int section_intra_rating;
+#endif
     // Circular queue of first pass stats stored for most recent frames.
     // cpi->output_pkt_list[i].data.twopass_stats.buf points to actual data stored
     // here.
@@ -185,9 +191,10 @@ typedef struct {
     double                 modified_error_min;
     double                 modified_error_max;
     double                 modified_error_left;
-
+#if !FRFCTR_RC_P1
     // An indication of the content type of the current frame
     FRAME_CONTENT_TYPE fr_content_type;
+#endif
 
     // Projected total bits available for a key frame group of frames
     int64_t kf_group_bits;
@@ -196,7 +203,6 @@ typedef struct {
     int64_t kf_group_error_left;
 
     int     kf_zeromotion_pct;
-    int     last_kfgroup_zeromotion_pct;
     int     extend_minq;
     int     extend_maxq;
     int     extend_minq_fast;
@@ -256,8 +262,9 @@ typedef struct {
     // the ith MB in raster scan order.
     int *raw_motion_err_list;
 } FirstPassData;
-
+#if !FRFCTR_RC_P8
 struct EncodeFrameParams;
+#endif
 struct AV1EncoderConfig;
 struct TileDataEnc;
 

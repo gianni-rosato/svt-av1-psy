@@ -6808,7 +6808,11 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr, SequenceContr
                          ppcs_ptr->loop_count);
 
     // Special case for overlay frame.
+#if FRFCTR_RC_P2
+    if (loop && ppcs_ptr->is_overlay &&
+#else
     if (loop && ppcs_ptr->is_src_frame_alt_ref &&
+#endif
         ppcs_ptr->projected_frame_size < rc->max_frame_bandwidth) {
         loop = 0;
     }
@@ -7656,9 +7660,14 @@ void *mode_decision_kernel(void *input_ptr) {
 
             if (last_sb_flag) {
                 EbBool do_recode = EB_FALSE;
+#if FRFCTR_RC_P9
+                if ((scs_ptr->static_config.rate_control_mode == 1 ||
+                    scs_ptr->static_config.max_bit_rate != 0) &&
+#else
                 if ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
-                     scs_ptr->static_config.pass == ENC_LAST_PASS || scs_ptr->lap_enabled ||
+                     scs_ptr->static_config.pass == ENC_LAST_PASS || scs_ptr->lap_rc ||
                      scs_ptr->static_config.max_bit_rate != 0) &&
+#endif
                     scs_ptr->encode_context_ptr->recode_loop != DISALLOW_RECODE) {
                     recode_loop_decision_maker(pcs_ptr, scs_ptr, &do_recode);
                 }

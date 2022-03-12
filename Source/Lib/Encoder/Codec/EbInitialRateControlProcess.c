@@ -397,7 +397,7 @@ void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
         if (send_out) {
             if (head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                 head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS ||
-                head_pcs->scs_ptr->lap_enabled) {
+                head_pcs->scs_ptr->lap_rc) {
                 head_pcs->stats_in_offset     = head_pcs->decode_order;
                 head_pcs->stats_in_end_offset = head_pcs->ext_group_size &&
                         !(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
@@ -409,7 +409,7 @@ void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
                                  head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);
                 head_pcs->frames_in_sw        = (int)(head_pcs->stats_in_end_offset -
                                                head_pcs->stats_in_offset);
-                if (head_pcs->scs_ptr->enable_dec_order == 0 && head_pcs->scs_ptr->lap_enabled &&
+                if (head_pcs->scs_ptr->enable_dec_order == 0 && head_pcs->scs_ptr->lap_rc &&
                     head_pcs->temporal_layer_index == 0) {
                     for (uint64_t num_frames = head_pcs->stats_in_offset;
                          num_frames < head_pcs->stats_in_end_offset;

@@ -2596,7 +2596,7 @@ const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
 
 unsigned int svt_av1_get_sby_perpixel_variance(
-    const AomVarianceFnPtr *fn_ptr, //const AV1_COMP *cpi,
+    const AomVarianceFnPtr *fn_ptr,
     const uint8_t          *src,
     int                     stride, //const struct Buf2D *ref,
     BlockSize               bs) {

@@ -1186,7 +1186,7 @@ static uint8_t get_superres_denom_from_qindex_energy(int qindex, double *energy,
 
 int32_t get_frame_update_type(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
     // Reasons why not use gf_group->update_type:
-    //   1. It is valid only in 2nd pass of 2-pass encoding or lap_enabled is true. E.g. It's invalid in 1-pass CQP mode.
+    //   1. It is valid only in 2nd pass of 2-pass encoding or lap_rc is true. E.g. It's invalid in 1-pass CQP mode.
     //   2. It is set in RC process, so can't use it in processes before RC.
     if (pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
         return KF_UPDATE;
