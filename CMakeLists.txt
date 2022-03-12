@@ -42,9 +42,9 @@ option(COMPILE_C_ONLY "Compile only C code with no simds (autodetect, default of
 include(CheckCSourceCompiles)
 
 check_c_source_compiles("
-#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__)
 #else
-#error \"Non-x86\"
+#error \"Non-x64\"
 #endif
 int main(void) {}
 " HAVE_X86_PLATFORM)
