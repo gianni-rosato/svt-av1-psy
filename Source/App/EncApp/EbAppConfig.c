@@ -2665,8 +2665,10 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     char        config_string[COMMAND_LINE_MAX_SIZE]; // for one input options
     char       *config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
     char       *cmd_copy[MAX_NUM_TOKENS]; // keep track of extra tokens
+    char       *arg_copy[MAX_NUM_TOKENS]; // keep track of extra arguments
     uint32_t    index         = 0;
     int32_t     cmd_token_cnt = 0; // total number of tokens
+    int32_t     cmd_arg_cnt = 0; // total number of arguments
     int32_t     ret_y4m;
 
     for (index = 0; index < MAX_CHANNEL_NUMBER; ++index)
@@ -2674,10 +2676,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     // Copy tokens (except for CHANNEL_NUMBER_TOKEN and PASSES_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
     size_t len = COMMAND_LINE_MAX_SIZE;
     for (int32_t token_index = 0; token_index < argc; ++token_index) {
-        if ((argv[token_index][0] == '-') &&
-            strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
-            strncmp(argv[token_index], PASSES_TOKEN, len) && !is_negative_number(argv[token_index]))
-            cmd_copy[cmd_token_cnt++] = argv[token_index];
+        if (strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
+            strncmp(argv[token_index], PASSES_TOKEN, len) && !is_negative_number(argv[token_index])) {
+            if (argv[token_index][0] == '-')
+                cmd_copy[cmd_token_cnt++] = argv[token_index];
+            else if (token_index)
+                arg_copy[cmd_arg_cnt++] = argv[token_index];
+        }
     }
 
     /***************************************************************************************************/
@@ -2690,6 +2695,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
             EncChannel *c   = channels + index;
+            mark_token_as_read(config_strings[index], arg_copy, &cmd_arg_cnt);
             c->return_error = (EbErrorType)read_config_file(
                 c->config, config_strings[index], index);
             return_error = (EbErrorType)(return_error & c->return_error);
@@ -2700,6 +2706,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
             EncChannel *c   = channels + index;
+            mark_token_as_read(config_strings[index], arg_copy, &cmd_arg_cnt);
             c->return_error = (EbErrorType)read_config_file(
                 c->config, config_strings[index], index);
             return_error = (EbErrorType)(return_error & c->return_error);
@@ -2743,6 +2750,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         for (uint32_t chan = 0; chan < num_channels; ++chan) {
             if (!strcmp(config_strings[chan], " "))
                 break;
+            // Mark the value as found in the temp argument buffer
+            mark_token_as_read(config_strings[chan], arg_copy, &cmd_arg_cnt);
             (entry->scf)(config_strings[chan], channels[chan].config);
         }
     }
@@ -2822,6 +2831,19 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         fprintf(stderr, "Unprocessed tokens: ");
         for (cmd_copy_index = 0; cmd_copy_index < cmd_token_cnt; ++cmd_copy_index)
             fprintf(stderr, " %s ", cmd_copy[cmd_copy_index]);
+        fprintf(stderr, "\n\n");
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (cmd_arg_cnt > 0) {
+        int32_t arg_copy_index, maybe_token = 0;
+        fprintf(stderr, "Unprocessed arguments: ");
+        for (arg_copy_index = 0; arg_copy_index < cmd_arg_cnt; ++arg_copy_index) {
+            maybe_token |= !!strchr(arg_copy[arg_copy_index], '-');
+            fprintf(stderr, " %s ", arg_copy[arg_copy_index]);
+        }
+        if (maybe_token)
+            fprintf(stderr, "\nMissing spacing between tokens");
         fprintf(stderr, "\n\n");
         return_error = EB_ErrorBadParameter;
     }
