@@ -1191,10 +1191,17 @@ ConfigEntry config_entry_specific[] = {
      MFMV_ENABLE_NEW_TOKEN,
      "Motion Field Motion Vector control, default is -1 [-1: auto, 0-1]",
      set_enable_mfmv_flag},
+#if TUNE_FAST_DECODE
+    {SINGLE_INPUT,
+     FAST_DECODE_TOKEN,
+     "Fast Decoder levels, default is 0 [0-4]",
+     set_fast_decode_flag},
+#else
     {SINGLE_INPUT,
      FAST_DECODE_TOKEN,
      "Fast Decoder levels, default is 0 [0-3]",
      set_fast_decode_flag},
+#endif
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      ENABLE_TF_TOKEN,

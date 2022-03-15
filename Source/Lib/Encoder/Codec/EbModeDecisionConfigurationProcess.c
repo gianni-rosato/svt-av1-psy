@@ -552,10 +552,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
     } else {
+#if TUNE_FAST_DECODE
+        pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
+#else
         if (pcs_ptr->enc_mode <= ENC_M4)
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
+#endif
     }
 #if CLN_SIG_DERIV
     FrameHeader *frm_hdr = &ppcs->frm_hdr;
@@ -598,6 +602,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         } else {
             pcs_ptr->wm_level = is_base ? 2 : 0;
         }
+
+#if TUNE_FAST_DECODE
+        // For fast-decode level 4+, disable WM in non-BASE frames in high resolutions
+        if (fast_decode >= 4 && input_resolution >= INPUT_SIZE_720p_RANGE && !is_base)
+            pcs_ptr->wm_level = 0;
+#endif
     }
 
     Bool enable_wm = pcs_ptr->wm_level ? 1 : 0;
@@ -624,13 +634,29 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //       > 1        | Faster level subject to possible constraints
 #if CLN_SIG_DERIV
     if (scs_ptr->obmc_level == DEFAULT) {
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 2 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+            if (ppcs->enc_mode <= ENC_M3)
+                ppcs->pic_obmc_level = 1;
+            else if (enc_mode <= ENC_M6)
+                ppcs->pic_obmc_level = 2;
+            else
+                ppcs->pic_obmc_level = 0;
+        }
+        else {
+            if (ppcs->enc_mode <= ENC_M3)
+                ppcs->pic_obmc_level = input_resolution <= INPUT_SIZE_720p_RANGE ? 2 : 0;
+            else
+                ppcs->pic_obmc_level = 0;
+        }
+#else
         if (ppcs->enc_mode <= ENC_M3)
             ppcs->pic_obmc_level = 1;
         else if (enc_mode <= ENC_M6)
             ppcs->pic_obmc_level = 2;
         else
             ppcs->pic_obmc_level = 0;
-
+#endif
     }
     else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->obmc_level;
@@ -1012,6 +1038,21 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // Set the level for the distance-based red pruning
     if (pcs_ptr->parent_pcs_ptr->ref_list0_count_try > 1 ||
         pcs_ptr->parent_pcs_ptr->ref_list1_count_try > 1) {
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 3 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+            if (enc_mode <= ENC_MR)
+                pcs_ptr->dist_based_ref_pruning = 1;
+            else if (enc_mode <= ENC_M0)
+                pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 2;
+            else if (enc_mode <= ENC_M6)
+                pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
+            else
+                pcs_ptr->dist_based_ref_pruning = 4;
+        }
+        else {
+            pcs_ptr->dist_based_ref_pruning = 5;
+        }
+#else
         if (enc_mode <= ENC_MR)
             pcs_ptr->dist_based_ref_pruning = 1;
         else if (enc_mode <= ENC_M0)
@@ -1032,6 +1073,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #else
         else
             pcs_ptr->dist_based_ref_pruning = (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
+#endif
 #endif
     } else {
         pcs_ptr->dist_based_ref_pruning = 0;

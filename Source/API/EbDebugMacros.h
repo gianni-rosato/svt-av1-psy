@@ -100,6 +100,7 @@ extern "C" {
 #define CLN_SKIP_NAMING         1 // Rename skip_mode/skip coeff variables for clarity
 #define CLN_DEFINITIONS         1 // Cleanup EbDefinitions.h
 #define CLN_IS_VALID_MV_DIFF    1 // Cleanup arguments of is_valid_mv_diff()
+#define TUNE_FAST_DECODE        1 // Tune existing fast-decode levels and add support for --fast-decode in M0-M4
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

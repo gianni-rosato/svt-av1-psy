@@ -349,9 +349,13 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
     if (fast_decode <= 2)
         enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
     else
+#if TUNE_FAST_DECODE
+        enable_restoration = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
+#else
         enable_restoration = (enc_mode <= ENC_M4)       ? 1
             : input_resolution <= INPUT_SIZE_360p_RANGE ? 1
                                                         : 0;
+#endif
 
     // higher resolutions will shut restoration to save memory
     if (input_resolution >= INPUT_SIZE_8K_RANGE)

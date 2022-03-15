@@ -6017,7 +6017,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             rate_est_level = 1;
         else
             rate_est_level = 2;
+#if TUNE_FAST_DECODE
+    }
+    else if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+#else
     } else if (fast_decode == 0) {
+#endif
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M10)
@@ -6033,13 +6038,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         else
             rate_est_level = (slice_type == I_SLICE) ? 3 : 0;
 #endif
-    } else if (fast_decode <= 2) {
+    }
+#if TUNE_FAST_DECODE
+    else {
+        if (enc_mode <= ENC_M10)
+            rate_est_level = 3;
+#else
+    else if (fast_decode <= 2) {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M4)
             rate_est_level = 2;
         else if (enc_mode <= ENC_M10)
             rate_est_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 3;
+#endif
 #if CLN_SIG_DERIV
         else if (enc_mode <= ENC_M12)
             rate_est_level = is_islice ? 3 : 4;
@@ -6051,7 +6063,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         else
             rate_est_level = (slice_type == I_SLICE) ? 3 : 0;
 #endif
-    } else {
+    }
+#if !TUNE_FAST_DECODE
+    else {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M4)
@@ -6070,6 +6084,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             rate_est_level = (slice_type == I_SLICE) ? 3 : 0;
 #endif
     }
+#endif
     set_rate_est_ctrls(context_ptr, rate_est_level);
 
     // set at pic-level b/c feature depends on some pic-level initializations

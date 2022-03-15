@@ -649,12 +649,22 @@ typedef struct EbSvtAv1EncConfiguration {
     * values are from set using svt_aom_parse_content_light_level()
     */
     struct EbContentLightLevel content_light_level;
+#if TUNE_FAST_DECODE
+    /* Decoder speed optimization level
+    * 0: No decoder speed optimization
+    * 1: Low-level decoder speed optimization (fast decode)
+    * 2: Medium-level decoder speed optimization (faster decode)
+    * 3: High-level decoder speed optimization (faster decode)
+    * 4: Very-High-level decoder speed optimization (fastest decode)
+    */
+#else
     /* Decoder speed optimization level
     * 0: No decoder speed optimization
     * 1: Low-level decoder speed optimization (fast decode)
     * 2: Medium-level decoder speed optimization (faster decode)
     * 3: High-level decoder speed optimization (fastest decode)
     */
+#endif
     uint8_t fast_decode;
 } EbSvtAv1EncConfiguration;
 

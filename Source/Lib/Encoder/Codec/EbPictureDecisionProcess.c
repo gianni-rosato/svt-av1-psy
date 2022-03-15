@@ -829,8 +829,17 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 1;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         cdef_ctrls->zero_fs_cost_bias = 0;
         cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
+#endif
         break;
     case 2: // N
         // pf_set {0,1,2,4,5,6,8,9,10,12,13,14}
@@ -866,8 +875,17 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 1;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         cdef_ctrls->zero_fs_cost_bias = 0;
         cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
+#endif
         break;
     case 3:
         // pf_set {0,2,4,6,8,10,12,14}
@@ -899,8 +917,17 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 1;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         cdef_ctrls->zero_fs_cost_bias = 0;
         cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
+#endif
         break;
     case 4:
         // pf_set {0,4,8,12,15}
@@ -929,6 +956,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 1;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -941,6 +976,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         break;
     case 5:
         // pf_set {0,5,10,15}
@@ -968,6 +1004,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 1;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -980,6 +1024,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         break;
     case 6:
         // pf_set {0,7,15}
@@ -1006,6 +1051,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 1;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1018,6 +1071,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         break;
     case 7:
         // pf_set {0,7,15}
@@ -1043,6 +1097,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 1;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1055,6 +1117,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         break;
     case 8:
         // pf_set {0,7,15}
@@ -1077,6 +1140,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 1;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1089,6 +1160,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         break;
         case 9:
         // pf_set {0,15}
@@ -1110,6 +1182,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 4;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1122,6 +1202,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         break;
     case 10:
         // pf_set {0,15}
@@ -1145,6 +1226,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1157,6 +1246,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         break;
     case 11:
         // pf_set {0,15}
@@ -1179,6 +1269,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 1;
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1191,6 +1289,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         break;
         case 12:
         // pf_set {0,15}
@@ -1212,6 +1311,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 4;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1224,6 +1331,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         cdef_ctrls->use_skip_detector = 0;
         break;
     case 13:
@@ -1248,6 +1356,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1260,6 +1376,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         cdef_ctrls->use_skip_detector = 0;
         break;
     case 14:
@@ -1283,6 +1400,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->use_reference_cdef_fs = 1;
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
+#if TUNE_FAST_DECODE
+        if (fast_decode <= 1) {
+            cdef_ctrls->zero_fs_cost_bias = 0;
+        }
+        else {
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+        }
+#else
         if (fast_decode <= 1) {
             cdef_ctrls->zero_fs_cost_bias = 0;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
@@ -1295,6 +1420,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
             cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         cdef_ctrls->use_skip_detector = 0;
         break;
     case 15:
@@ -1318,12 +1444,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 62;
+#if !TUNE_FAST_DECODE
         if (fast_decode <= 2) {
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
         }
         else {
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         cdef_ctrls->use_skip_detector = 0;
         break;
     case 16:
@@ -1349,12 +1477,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 62;
+#if !TUNE_FAST_DECODE
         if (fast_decode <= 2) {
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
         }
         else {
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         cdef_ctrls->use_skip_detector = 1;
         break;
     case 17:
@@ -1379,12 +1509,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 62;
+#if !TUNE_FAST_DECODE
         if (fast_decode <= 2) {
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
         }
         else {
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         cdef_ctrls->use_skip_detector = 1;
         break;
     case 18:
@@ -1400,12 +1532,14 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, uin
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 62;
+#if !TUNE_FAST_DECODE
         if (fast_decode <= 2) {
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 0;
         }
         else {
             cdef_ctrls->scale_cost_bias_on_nz_coeffs = 1;
         }
+#endif
         cdef_ctrls->use_skip_detector = 1;
         break;
     default:
@@ -1509,13 +1643,22 @@ uint8_t get_disallow_nsq(EncMode enc_mode){
 * 3 -- SB-Based DLF + skip DLF if SB has 0 coeffs
 */
 #if TUNE_4L_M8
+#if TUNE_FAST_DECODE
+uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, uint8_t fast_decode, uint32_t hierarchical_levels, EbInputResolution resolution) {
+#else
 uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, uint8_t fast_decode, uint32_t hierarchical_levels) {
+#endif
 #else
 uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, uint8_t fast_decode) {
 #endif
 
     uint8_t dlf_level;
+#if TUNE_FAST_DECODE
+    // Don't disable DLF for low resolutions when fast-decode is used
+    if (fast_decode == 0 || resolution <= INPUT_SIZE_480p_RANGE) {
+#else
     if (fast_decode == 0) {
+#endif
 #if VMAF_OPT
         if (enc_mode <= ENC_M5)
             dlf_level = 1;
@@ -1551,9 +1694,13 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
 #endif
     }
     else if (fast_decode <= 1) {
+#if TUNE_FAST_DECODE
+        if (enc_mode <= ENC_M6)
+#else
         if (enc_mode <= ENC_M4)
             dlf_level = 1;
         else if (enc_mode <= ENC_M6)
+#endif
             dlf_level = 3;
 #if TUNE_4L_M8
         else if (enc_mode <= ENC_M7)
@@ -1574,17 +1721,25 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
             dlf_level = (is_16bit && is_used_as_reference_flag) ? 2 : 0;
     }
     else if (fast_decode <= 2) {
+#if TUNE_FAST_DECODE
+        if (enc_mode <= ENC_M12)
+#else
         if (enc_mode <= ENC_M4)
             dlf_level = 1;
         else if (enc_mode <= ENC_M12)
+#endif
             dlf_level = is_used_as_reference_flag ? 3 : 0;
         else
             dlf_level = (is_16bit && is_used_as_reference_flag) ? 3 : 0;
     }
     else {
+#if TUNE_FAST_DECODE
+        if (enc_mode <= ENC_M12)
+#else
         if (enc_mode <= ENC_M4)
             dlf_level = 1;
         else if (enc_mode <= ENC_M12)
+#endif
             dlf_level = is_used_as_reference_flag ? 4 : 0;
         else
             dlf_level = (is_16bit && is_used_as_reference_flag) ? 4 : 0;
@@ -2048,7 +2203,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->scs_ptr->static_config.enable_dlf_flag && frm_hdr->allow_intrabc == 0) {
 #if TUNE_4L_M8
 #if CLN_SIG_DERIV
+#if TUNE_FAST_DECODE
+        dlf_level = get_dlf_level(enc_mode, is_ref, bit_depth > EB_8BIT, fast_decode, hierarchical_levels, input_resolution);
+#else
         dlf_level = get_dlf_level(enc_mode, is_ref, bit_depth > EB_8BIT, fast_decode, hierarchical_levels);
+#endif
 #else
         dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag, scs_ptr->static_config.encoder_bit_depth > EB_8BIT, scs_ptr->static_config.fast_decode, scs_ptr->static_config.hierarchical_levels);
 #endif
@@ -2089,6 +2248,12 @@ EbErrorType signal_derivation_multi_processes_oq(
                 else
                     pcs_ptr->cdef_level = is_islice ? 15 : 0;
             }
+#if TUNE_FAST_DECODE
+            // For fast-decode level 4+, disable CDEF in non-BASE frames in high resolutions
+            if (fast_decode >= 4 && input_resolution >= INPUT_SIZE_720p_RANGE && !is_base) {
+                pcs_ptr->cdef_level = 0;
+            }
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M0)
                 pcs_ptr->cdef_level = 1;
@@ -2175,10 +2340,14 @@ EbErrorType signal_derivation_multi_processes_oq(
                 wn_filter_lvl = 4;
         }
         else {
+#if TUNE_FAST_DECODE
+            wn_filter_lvl = 4;
+#else
             if (enc_mode <= ENC_M4)
                 wn_filter_lvl = 1;
             else
                 wn_filter_lvl = 4;
+#endif
         }
 #else
         if (scs_ptr->static_config.fast_decode <= 2) {

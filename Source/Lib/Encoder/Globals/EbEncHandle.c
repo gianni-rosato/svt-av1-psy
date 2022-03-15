@@ -3471,12 +3471,16 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             tpl_lad_mg = 0;
         else
             if (scs_ptr->static_config.enc_mode <= ENC_M11 && scs_ptr->tpl_level != 0)
+#if TUNE_FAST_DECODE
+                tpl_lad_mg = 1;
+#else
                 if (scs_ptr->static_config.fast_decode <= 1)
                     tpl_lad_mg = 1;
                 else if (scs_ptr->static_config.fast_decode <= 2)
                     tpl_lad_mg = scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE ? 1 : 0;
                 else
                     tpl_lad_mg = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
+#endif
             else
                 tpl_lad_mg = 0;
 
@@ -3849,6 +3853,31 @@ void copy_api_from_app(
     scs_ptr->static_config.fast_decode = ((EbSvtAv1EncConfiguration*)config_struct)->fast_decode;
     //If the set fast_decode value is in the allowable range, check that the value is supported for the current preset.
     // If the value is valid, but not supported in the current preset, change the value to one that is supported.
+#if TUNE_FAST_DECODE
+    if (scs_ptr->static_config.fast_decode &&
+        (scs_ptr->static_config.fast_decode <= 4)) {
+        if (scs_ptr->static_config.enc_mode <= ENC_MR ||
+            (scs_ptr->static_config.enc_mode >= ENC_M5 && scs_ptr->static_config.fast_decode > 3) ||
+            (scs_ptr->static_config.enc_mode >= ENC_M8 && scs_ptr->static_config.fast_decode > 2) ||
+            (scs_ptr->static_config.enc_mode >= ENC_M10 && scs_ptr->static_config.fast_decode > 1) ||
+            scs_ptr->static_config.enc_mode >= ENC_M11) {
+            SVT_WARN("Decoder speedup level %d is not supported in M%d.\n", scs_ptr->static_config.fast_decode, scs_ptr->static_config.enc_mode);
+            SVT_WARN("Decoder speedup levels are supported as follows:\
+                \n\t<= MR: not supported\n\tM0-M4: levels 1-4 supported\n\tM5-M7: levels 1-3 supported\n\tM8-M9:levels 1-2 supported\n\tM10: level 1 supported\n\t>= M11: not supported\n");
+            if (scs_ptr->static_config.enc_mode <= ENC_MR)
+                scs_ptr->static_config.fast_decode = 0;
+            else if (scs_ptr->static_config.enc_mode <= ENC_M7)
+                scs_ptr->static_config.fast_decode = 3;
+            else if (scs_ptr->static_config.enc_mode <= ENC_M9)
+                scs_ptr->static_config.fast_decode = 2;
+            else if (scs_ptr->static_config.enc_mode <= ENC_M10)
+                scs_ptr->static_config.fast_decode = 1;
+            else
+                scs_ptr->static_config.fast_decode = 0;
+            SVT_WARN("Switching to decoder speedup level %d.\n", scs_ptr->static_config.fast_decode);
+        }
+    }
+#else
     if (scs_ptr->static_config.fast_decode &&
         (scs_ptr->static_config.fast_decode <=3)) {
         if (scs_ptr->static_config.enc_mode <= ENC_M4 ||
@@ -3869,7 +3898,7 @@ void copy_api_from_app(
             SVT_WARN("Switching to decoder speedup level %d.\n", scs_ptr->static_config.fast_decode);
         }
     }
-
+#endif
     //Film Grain
     scs_ptr->static_config.film_grain_denoise_strength = ((EbSvtAv1EncConfiguration*)config_struct)->film_grain_denoise_strength;
 

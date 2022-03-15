@@ -625,8 +625,10 @@ typedef struct CdefControls {
         search_best_ref_fs; // Only search best filter strengths of the nearest ref frames (skips the search if the filters of list0/list1 are the same).
     uint16_t
         zero_fs_cost_bias; // 0: OFF, higher is safer. Scaling factor to decrease the zero filter strength cost: : <x>/64
+#if !TUNE_FAST_DECODE
     uint8_t
         scale_cost_bias_on_nz_coeffs; // When enabled, use non-zero coeff info to make the cost-biasing factor more aggressive (when cost biasing is enabled)
+#endif
     uint8_t
         use_skip_detector; // Shut CDEF at the picture level based on the skip area of the nearest reference frames.
 } CdefControls;
