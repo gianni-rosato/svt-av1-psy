@@ -77,15 +77,31 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
         NULL); // new thread ID
 
 #else
-
+    pthread_attr_t attr;
+    if (pthread_attr_init(&attr)) {
+        return NULL;
+    }
+    size_t stack_size;
+    if (pthread_attr_getstacksize(&attr, &stack_size)) {
+        pthread_attr_destroy(&attr);
+        return NULL;
+    }
+    // 420 KiB in bytes, gotten empirically by encoding /dev/zero as a 1920x1080 rawvideo with ffmpeg
+    const size_t min_stack_size = 420 * 1024;
+    if (stack_size < min_stack_size && pthread_attr_setstacksize(&attr, min_stack_size)) {
+        pthread_attr_destroy(&attr);
+        return NULL;
+    }
     pthread_t *th = malloc(sizeof(*th));
     if (th == NULL)
         return NULL;
 
-    if (pthread_create(th, NULL, thread_function, thread_context)) {
+    if (pthread_create(th, &attr, thread_function, thread_context)) {
         free(th);
         return NULL;
     }
+
+    pthread_attr_destroy(&attr);
 
     /* We can only use realtime priority if we are running as root, so
      * check if geteuid() == 0 (meaning either root or sudo).
