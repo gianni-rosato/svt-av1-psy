@@ -3862,8 +3862,13 @@ void copy_api_from_app(
             (scs_ptr->static_config.enc_mode >= ENC_M10 && scs_ptr->static_config.fast_decode > 1) ||
             scs_ptr->static_config.enc_mode >= ENC_M11) {
             SVT_WARN("Decoder speedup level %d is not supported in M%d.\n", scs_ptr->static_config.fast_decode, scs_ptr->static_config.enc_mode);
-            SVT_WARN("Decoder speedup levels are supported as follows:\
-                \n\t<= MR: not supported\n\tM0-M4: levels 1-4 supported\n\tM5-M7: levels 1-3 supported\n\tM8-M9:levels 1-2 supported\n\tM10: level 1 supported\n\t>= M11: not supported\n");
+            SVT_WARN("Decoder speedup levels are supported as follows:\n"
+                     "\t<= MR: not supported\n"
+                     "\tM0-M4: levels 1-4 supported\n"
+                     "\tM5-M7: levels 1-3 supported\n"
+                     "\tM8-M9:levels 1-2 supported\n"
+                     "\tM10: level 1 supported\n"
+                     "\t>= M11: not supported\n");
             if (scs_ptr->static_config.enc_mode <= ENC_MR)
                 scs_ptr->static_config.fast_decode = 0;
             else if (scs_ptr->static_config.enc_mode <= ENC_M7)
