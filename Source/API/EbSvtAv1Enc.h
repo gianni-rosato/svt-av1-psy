@@ -650,11 +650,11 @@ typedef struct EbSvtAv1EncConfiguration {
     */
     struct EbContentLightLevel content_light_level;
 #if TUNE_FAST_DECODE
-    /* Decoder speed optimization level
+    /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
     * 0: No decoder speed optimization
     * 1: Low-level decoder speed optimization (fast decode)
     * 2: Medium-level decoder speed optimization (faster decode)
-    * 3: High-level decoder speed optimization (faster decode)
+    * 3: High-level decoder speed optimization (veryfast decode)
     * 4: Very-High-level decoder speed optimization (fastest decode)
     */
 #else
