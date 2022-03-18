@@ -1447,7 +1447,11 @@ int32_t av1_quantize_inv_quantize_light(PictureControlSet *pcs_ptr, int32_t *coe
                                         TxSize txsize, uint16_t *eob,
                                         uint32_t *count_non_zero_coeffs, uint32_t bit_depth,
                                         TxType tx_type) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet    *scs_ptr    = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     uint32_t               q_index    = qindex;
     const ScanOrder *const scan_order = &av1_scan_orders[txsize][tx_type];
     const int32_t          n_coeffs   = av1_get_max_eob(txsize);
@@ -1506,8 +1510,11 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     (void)coeff_stride;
     (void)is_intra_bc;
 
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     MacroblockPlane candidate_plane;
     const QmVal    *q_matrix  = pcs_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
     const QmVal    *iq_matrix = pcs_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];

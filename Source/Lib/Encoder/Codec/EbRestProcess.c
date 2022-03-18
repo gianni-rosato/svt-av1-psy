@@ -548,7 +548,11 @@ void *rest_kernel(void *input_ptr) {
 
         cdef_results_ptr      = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
         pcs_ptr               = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+        scs_ptr = pcs_ptr->scs_ptr;
+#else
         scs_ptr               = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
         FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         Bool       is_16bit = scs_ptr->is_16bit_pipeline;
         Av1Common   *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
@@ -733,7 +737,11 @@ void *rest_kernel(void *input_ptr) {
                                                     picture_demux_results_wrapper_ptr->object_ptr;
                     picture_demux_results_rtr->reference_picture_wrapper_ptr =
                         pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+                    picture_demux_results_rtr->scs_ptr = pcs_ptr->scs_ptr;
+#else
                     picture_demux_results_rtr->scs_wrapper_ptr = pcs_ptr->scs_wrapper_ptr;
+#endif
                     picture_demux_results_rtr->picture_number  = pcs_ptr->picture_number;
                     picture_demux_results_rtr->picture_type    = EB_PIC_REFERENCE;
 

@@ -1825,7 +1825,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             (RateControlResults *)rate_control_results_wrapper_ptr->object_ptr;
         PictureControlSet *pcs_ptr = (PictureControlSet *)
                                          rate_control_results_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
         SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
 
         // -------
         // Scale references if resolution of the reference is different than the input

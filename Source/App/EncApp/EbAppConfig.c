@@ -2682,7 +2682,27 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         config_strings[index] = (char *)malloc(sizeof(char) * COMMAND_LINE_MAX_SIZE);
     // Copy tokens (except for CHANNEL_NUMBER_TOKEN and PASSES_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
     size_t len = COMMAND_LINE_MAX_SIZE;
+#if FIX_NCH
+    Bool process_prev_token = 1;
+#endif
     for (int32_t token_index = 0; token_index < argc; ++token_index) {
+#if FIX_NCH
+        if (strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
+            strncmp(argv[token_index], PASSES_TOKEN, len)) {
+            if (!is_negative_number(argv[token_index]) && process_prev_token) {
+                if (argv[token_index][0] == '-')
+                    cmd_copy[cmd_token_cnt++] = argv[token_index];
+                else if (token_index)
+                    arg_copy[cmd_arg_cnt++] = argv[token_index];
+            }
+            else {
+                process_prev_token = 1;
+            }
+        }
+        else{
+            process_prev_token = 0;
+        }
+#else
         if (strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
             strncmp(argv[token_index], PASSES_TOKEN, len) && !is_negative_number(argv[token_index])) {
             if (argv[token_index][0] == '-')
@@ -2690,6 +2710,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             else if (token_index)
                 arg_copy[cmd_arg_cnt++] = argv[token_index];
         }
+#endif
     }
 
     /***************************************************************************************************/

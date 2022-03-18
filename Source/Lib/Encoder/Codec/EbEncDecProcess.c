@@ -7215,7 +7215,11 @@ void *mode_decision_kernel(void *input_ptr) {
         EncDecTasks       *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
         PictureControlSet *pcs_ptr           = (PictureControlSet *)
                                          enc_dec_tasks_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
         SequenceControlSet  *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
         ModeDecisionContext *md_ctx  = context_ptr->md_context;
         struct PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
         md_ctx->encoder_bit_depth            = (uint8_t)scs_ptr->static_config.encoder_bit_depth;

@@ -807,7 +807,11 @@ void *motion_estimation_kernel(void *input_ptr) {
                                                      in_results_wrapper_ptr->object_ptr;
         PictureParentControlSet *pcs_ptr = (PictureParentControlSet *)
                                                in_results_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
         SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
         if (in_results_ptr->task_type == TASK_TFME)
             context_ptr->me_context_ptr->me_type = ME_MCTF;
         else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME)

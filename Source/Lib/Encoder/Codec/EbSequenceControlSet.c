@@ -51,9 +51,9 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     uint32_t segment_index;
     scs_ptr->mvrate_set = 0;
     scs_ptr->dctor      = svt_sequence_control_set_dctor;
-
+#if !CLN_SCS_SIG_DERIV
     scs_ptr->sb_sz = 64;
-
+#endif
     // Segments
     for (segment_index = 0; segment_index < MAX_TEMPORAL_LAYERS; ++segment_index) {
         scs_ptr->me_segment_column_count_array[segment_index]   = 1;
@@ -224,7 +224,7 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
 
     return EB_ErrorNone;
 }
-
+#if !FIX_USE_ONE_SCS
 EbErrorType svt_sequence_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     SequenceControlSet *obj;
 
@@ -396,7 +396,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->calculate_variance            = src->calculate_variance;
     return EB_ErrorNone;
 }
-
+#endif
 extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
                                            uint32_t           inputSize) {
     EbErrorType return_error = EB_ErrorNone;
@@ -422,7 +422,9 @@ static void svt_sequence_control_set_instance_dctor(EbPtr p) {
     EbSequenceControlSetInstance *obj = (EbSequenceControlSetInstance *)p;
     EB_DELETE(obj->encode_context_ptr);
     EB_DELETE(obj->scs_ptr);
+#if !FIX_USE_ONE_SCS
     EB_DESTROY_MUTEX(obj->config_mutex);
+#endif
 }
 
 EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr) {
@@ -436,7 +438,9 @@ EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance 
     scs_init_data.sb_size = 64;
 
     EB_NEW(object_ptr->scs_ptr, svt_sequence_control_set_ctor, (void *)&scs_init_data);
+#if !FIX_USE_ONE_SCS
     EB_CREATE_MUTEX(object_ptr->config_mutex);
+#endif
 
     return EB_ErrorNone;
 }

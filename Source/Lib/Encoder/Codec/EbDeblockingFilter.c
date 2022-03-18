@@ -86,8 +86,12 @@ void svt_av1_setup_dst_planes(PictureControlSet *pcs_ptr, struct MacroblockdPlan
     //        src->crop_heights[is_uv], src->strides[is_uv], mi_row,
     //        mi_col, NULL, pd->subsampling_x, pd->subsampling_y);
     //}
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     for (int32_t i = plane_start; i < AOMMIN(plane_end, 3); ++i) {
         if (i == 0) {
             struct MacroblockdPlane *const pd = &planes[0];
@@ -305,8 +309,12 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
 void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     // TODO
     // when loop_filter_mode = 1, dblk is processed in encdec
     // 16 bit dblk for loop_filter_mode = 1 needs to enabled after 16bit encdec is done
@@ -433,8 +441,12 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, con
 void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     // when loop_filter_mode = 1, dblk is processed in encdec
     // 16 bit dblk for loop_filter_mode = 1 needs to enabled after 16bit encdec is done
     Bool         is_16bit   = scs_ptr->is_16bit_pipeline;
@@ -672,8 +684,12 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
 *************************************************************************************************/
 void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControlSet *pcs_ptr,
                                int32_t plane_start, int32_t plane_end) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     //SuperBlock                     *sb_ptr;
     //uint16_t                                   sb_index;
     uint8_t  sb_size_log2 = (uint8_t)svt_log2f(scs_ptr->sb_size_pix);
@@ -1082,8 +1098,12 @@ static int32_t search_filter_level(
 *************************************************************************************************/
 EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source input
                                       PictureControlSet *pcs_ptr, LpfPickMethod method) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     (void)srcBuffer;

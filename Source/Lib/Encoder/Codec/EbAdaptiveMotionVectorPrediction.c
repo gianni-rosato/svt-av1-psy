@@ -717,7 +717,11 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
                        int16_t *mode_context) {
     const int32_t bs     = AOMMAX(xd->n8_w, xd->n8_h);
     const int32_t has_tr = has_top_right(
+#if FIX_REMOVE_SCS_WRAPPER
+        pcs_ptr->scs_ptr->seq_header.sb_size,
+#else
         ((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header.sb_size,
+#endif
         xd,
         mi_row,
         mi_col,
@@ -1781,7 +1785,11 @@ uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t
 
     return (uint16_t)av1_find_samples(
         cm,
+#if FIX_REMOVE_SCS_WRAPPER
+        pcs_ptr->scs_ptr->seq_header.sb_size,
+#else
         ((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header.sb_size,
+#endif
         xd,
         mi_row,
         mi_col,

@@ -640,7 +640,11 @@ void *cdef_kernel(void *input_ptr) {
 
         dlf_results_ptr = (DlfResults *)dlf_results_wrapper_ptr->object_ptr;
         pcs_ptr         = (PictureControlSet *)dlf_results_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+        scs_ptr         = pcs_ptr->scs_ptr;
+#else
         scs_ptr         = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
 
         Bool     is_16bit      = scs_ptr->is_16bit_pipeline;
         Av1Common *cm            = pcs_ptr->parent_pcs_ptr->av1_cm;

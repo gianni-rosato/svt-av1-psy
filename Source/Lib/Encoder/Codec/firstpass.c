@@ -465,6 +465,45 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
     scs_ptr->seq_header.cdef_level /*enable_cdef*/ = 0;
     scs_ptr->seq_header.enable_warped_motion       = 0;
 
+#if CLN_SCS_SIG_DERIV
+    // Set the SCD Mode
+    scs_ptr->scd_mode = scs_ptr->static_config.scene_change_detection == 0 ? SCD_MODE_0
+        : SCD_MODE_1;
+
+    // initialize sequence level enable_superres
+    scs_ptr->seq_header.enable_superres = scs_ptr->static_config.superres_mode >
+        SUPERRES_NONE
+        ? 1
+        : 0;
+    if (scs_ptr->inter_intra_compound == DEFAULT)
+        scs_ptr->seq_header.enable_interintra_compound = 1;
+    else
+        scs_ptr->seq_header.enable_interintra_compound = scs_ptr->inter_intra_compound;
+    // Enable/Disable Filter Intra
+    // seq_header.filter_intra_level | Settings
+    // 0                             | Disable
+    // 1                             | Enable
+    if (scs_ptr->filter_intra_level == DEFAULT)
+        scs_ptr->seq_header.filter_intra_level = 1;
+    else
+        scs_ptr->seq_header.filter_intra_level = scs_ptr->filter_intra_level;
+    // Set compound mode      Settings
+    // 0                 OFF: No compond mode search : AVG only
+    // 1                 ON: full
+    if (scs_ptr->compound_level == DEFAULT)
+        scs_ptr->compound_mode = 1;
+    else
+        scs_ptr->compound_mode = scs_ptr->compound_level;
+    if (scs_ptr->compound_mode) {
+        scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 1; //DISTANCE
+        scs_ptr->seq_header.enable_masked_compound = 1; //DIFF+WEDGE
+    }
+    else {
+        scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
+        scs_ptr->seq_header.enable_masked_compound = 0;
+    }
+#endif
+
     return return_error;
 }
 

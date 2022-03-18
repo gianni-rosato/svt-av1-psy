@@ -631,8 +631,11 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
         return (RDCOST(lambda, rate, total_distortion));
     } else {
         Bool is_cfl_allowed = (blk_geom->bwidth <= 32 && blk_geom->bheight <= 32) ? 1 : 0;
-
+#if FIX_REMOVE_SCS_WRAPPER
+        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
         SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
         if (scs_ptr->disable_cfl_flag != DEFAULT && is_cfl_allowed)
             // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
             is_cfl_allowed = (Bool)!scs_ptr->disable_cfl_flag;
@@ -1911,8 +1914,12 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                                          context_ptr->blk_geom->bheight <= 32)
                                  ? 1
                                  : 0;
+#if FIX_REMOVE_SCS_WRAPPER
+                SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
                 SequenceControlSet *scs_ptr        = (SequenceControlSet *)
                                                   pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
                 if (scs_ptr->disable_cfl_flag != DEFAULT && is_cfl_allowed)
                     // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
                     is_cfl_allowed = (Bool)!scs_ptr->disable_cfl_flag;

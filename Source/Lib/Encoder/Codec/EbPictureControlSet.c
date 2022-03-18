@@ -329,8 +329,9 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     input_pic_buf_desc_init_data.bot_padding        = padding;
     input_pic_buf_desc_init_data.split_mode         = FALSE;
 
+#if !FIX_REMOVE_SCS_WRAPPER
     //object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
-
+#endif
     object_ptr->recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->recon_picture_ptr      = (EbPictureBufferDesc *)NULL; //OMK
     //object_ptr->color_format           = init_data_ptr->color_format;
@@ -452,9 +453,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     coeff_buffer_desc_init_data.bot_padding       = padding;
     coeff_buffer_desc_init_data.split_mode        = FALSE;
     coeff_buffer_desc_init_data.is_16bit_pipeline = init_data_ptr->is_16bit_pipeline;
-
+#if !FIX_REMOVE_SCS_WRAPPER
     object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
-
+#endif
     object_ptr->color_format = init_data_ptr->color_format;
 #if !CLN_DLF_MEM_ALLOC
     uint8_t lf_recon_needed  = 0;
@@ -1386,7 +1387,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 
     object_ptr->dctor = picture_parent_control_set_dctor;
 
+#if !FIX_REMOVE_SCS_WRAPPER
     object_ptr->scs_wrapper_ptr                 = (EbObjectWrapper *)NULL;
+#endif
     object_ptr->input_picture_wrapper_ptr       = (EbObjectWrapper *)NULL;
     object_ptr->reference_picture_wrapper_ptr   = (EbObjectWrapper *)NULL;
     object_ptr->enhanced_picture_ptr            = (EbPictureBufferDesc *)NULL;

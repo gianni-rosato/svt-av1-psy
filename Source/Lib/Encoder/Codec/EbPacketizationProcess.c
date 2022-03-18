@@ -448,7 +448,11 @@ void *packetization_kernel(void *input_ptr) {
             (EntropyCodingResults *)entropy_coding_results_wrapper_ptr->object_ptr;
         PictureControlSet *pcs_ptr = (PictureControlSet *)
                                          entropy_coding_results_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
         SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
         EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
         FrameHeader        *frm_hdr            = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         Av1Common *const    cm                 = pcs_ptr->parent_pcs_ptr->av1_cm;
@@ -639,7 +643,11 @@ void *packetization_kernel(void *input_ptr) {
                                                     picture_demux_results_wrapper_ptr->object_ptr;
                     picture_demux_results_rtr->reference_picture_wrapper_ptr =
                         parent_pcs_ptr->reference_picture_wrapper_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+                    picture_demux_results_rtr->scs_ptr = parent_pcs_ptr->scs_ptr;
+#else
                     picture_demux_results_rtr->scs_wrapper_ptr = parent_pcs_ptr->scs_wrapper_ptr;
+#endif
                     picture_demux_results_rtr->picture_number  = parent_pcs_ptr->picture_number;
                     picture_demux_results_rtr->picture_type    = EB_PIC_REFERENCE;
 
@@ -766,7 +774,11 @@ void *packetization_kernel(void *input_ptr) {
             picture_manager_results_ptr->picture_number  = pcs_ptr->picture_number;
             picture_manager_results_ptr->picture_type    = EB_PIC_FEEDBACK;
             picture_manager_results_ptr->decode_order    = pcs_ptr->parent_pcs_ptr->decode_order;
+#if FIX_REMOVE_SCS_WRAPPER
+            picture_manager_results_ptr->scs_ptr = pcs_ptr->scs_ptr;
+#else
             picture_manager_results_ptr->scs_wrapper_ptr = pcs_ptr->scs_wrapper_ptr;
+#endif
         }
         // Reset the Bitstream before writing to it
         bitstream_reset(pcs_ptr->bitstream_ptr);
@@ -912,9 +924,11 @@ void *packetization_kernel(void *input_ptr) {
              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr))
             // Post the Full Results Object
             svt_post_full_object(picture_manager_results_wrapper_ptr);
+#if !FIX_REMOVE_SCS_WRAPPER
         else
             // Since feedback is not set to PM, life count of is reduced here instead of PM
             svt_release_object(pcs_ptr->scs_wrapper_ptr);
+#endif
         svt_release_object(pcs_ptr->parent_pcs_ptr->enc_dec_ptr->enc_dec_wrapper_ptr); //Child
         //Release the Parent PCS then the Child PCS
         assert(entropy_coding_results_ptr->pcs_wrapper_ptr->live_count == 1);

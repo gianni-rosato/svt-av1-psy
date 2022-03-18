@@ -307,9 +307,12 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
     const int dequant_shift = 3;
     int32_t   current_q_index =
         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     Dequants *const dequants  = context_ptr->hbd_mode_decision ? &scs_ptr->deq_bd
                                                                : &scs_ptr->deq_8bit;
     int16_t         quantizer = dequants->y_dequant_q3[current_q_index][1];
@@ -1278,9 +1281,12 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
     const int                     above_mi_col = ctxt->mi_col + rel_mi_col;
     int                           mi_x, mi_y;
     MbModeInfo                    backup_mbmi = *above_mbmi;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = ctxt->picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet           *scs_ptr     = (SequenceControlSet *)
                                       ctxt->picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     av1_setup_build_prediction_by_above_pred(
         xd, rel_mi_col, above_mi_width, &backup_mbmi, ctxt, num_planes, is16bit);
 
@@ -1382,9 +1388,12 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
     const int                     left_mi_row = ctxt->mi_row + rel_mi_row;
     int                           mi_x, mi_y;
     MbModeInfo                    backup_mbmi = *left_mbmi;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = ctxt->picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet           *scs_ptr     = (SequenceControlSet *)
                                       ctxt->picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     av1_setup_build_prediction_by_left_pred(
         xd, rel_mi_row, left_mi_height, &backup_mbmi, ctxt, num_planes, is16bit);
 
@@ -2710,8 +2719,12 @@ static void model_rd_for_sb(PictureControlSet   *picture_control_set_ptr,
             dist = sse;
             dist_sum += dist * 10;
         } else {
+#if FIX_REMOVE_SCS_WRAPPER
+            SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
+#else
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
             const uint8_t current_q_index =
                 picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
             Dequants *const dequants  = md_context_ptr->hbd_mode_decision ? &scs_ptr->deq_bd
@@ -2800,8 +2813,12 @@ void interpolation_filter_search(PictureControlSet           *picture_control_se
                                  EbPictureBufferDesc *ref_pic_list0,
                                  EbPictureBufferDesc *ref_pic_list1, uint8_t hbd_mode_decision,
                                  uint8_t bit_depth) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm; //&cpi->common;
 
     int32_t tmp_rate;
@@ -3245,9 +3262,12 @@ void inter_intra_prediction(PictureControlSet   *picture_control_set_ptr,
                 pu_origin_y,
                 0, //uint32_t cuOrgX used only for prediction Ptr
                 0, //uint32_t cuOrgY used only for prediction Ptr
-
+#if FIX_REMOVE_SCS_WRAPPER
+                &picture_control_set_ptr->scs_ptr->seq_header);
+#else
                 &((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)
                      ->seq_header);
+#endif
         else
             svt_av1_predict_intra_block(
                 !ED_STAGE,
@@ -3276,10 +3296,12 @@ void inter_intra_prediction(PictureControlSet   *picture_control_set_ptr,
                 pu_origin_y,
                 0, //uint32_t cuOrgX used only for prediction Ptr
                 0, //uint32_t cuOrgY used only for prediction Ptr
-
+#if FIX_REMOVE_SCS_WRAPPER
+                &picture_control_set_ptr->scs_ptr->seq_header);
+#else
                 &((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)
                      ->seq_header);
-
+#endif
         //combine_interintra
 
         if (is16bit)
@@ -3329,8 +3351,12 @@ EbErrorType warped_motion_prediction(
     Bool perform_chroma, Bool is_encode_pass) {
     EbErrorType         return_error = EB_ErrorNone;
     uint8_t             is_compound  = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr      = (SequenceControlSet *)
                                       picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     Bool is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
     Bool is16bit = (Bool)(bit_depth > EB_8BIT) || (is_encode_pass && is_16bit_pipeline);
 
@@ -3988,9 +4014,12 @@ EbErrorType warped_motion_prediction_16bit_pipeline(
     Bool perform_chroma) {
     EbErrorType return_error = EB_ErrorNone;
     uint8_t     is_compound  = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
-
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     Bool is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
     Bool is16bit           = (Bool)(bit_depth > EB_8BIT) || is_16bit_pipeline;
 
@@ -5636,8 +5665,11 @@ EbErrorType av1_inter_prediction(
                     pu_origin_y,
                     0, //uint32_t cuOrgX used only for prediction Ptr
                     0, //uint32_t cuOrgY used only for prediction Ptr
+#if FIX_REMOVE_SCS_WRAPPER
+                    &pcs->scs_ptr->seq_header);
+#else
                     &((SequenceControlSet *)pcs->scs_wrapper_ptr->object_ptr)->seq_header);
-
+#endif
                 //combine_interintra
                 combine_interintra_highbd(interintra_mode,
                                           use_wedge_interintra,
@@ -5678,7 +5710,11 @@ EbErrorType av1_inter_prediction(
                     pu_origin_y,
                     0, //uint32_t cuOrgX used only for prediction Ptr
                     0, //uint32_t cuOrgY used only for prediction Ptr
+#if FIX_REMOVE_SCS_WRAPPER
+                    &pcs->scs_ptr->seq_header);
+#else
                     &((SequenceControlSet *)pcs->scs_wrapper_ptr->object_ptr)->seq_header);
+#endif
 
                 //combine_interintra
                 combine_interintra(interintra_mode,
@@ -5789,7 +5825,11 @@ EbErrorType av1_inter_prediction(
 
 Bool calc_pred_masked_compound(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                  ModeDecisionCandidate *candidate_ptr) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet  *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet  *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     uint8_t              hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                      ? EB_8_BIT_MD
                      : context_ptr->hbd_mode_decision;
@@ -6039,10 +6079,12 @@ EbErrorType inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_m
         ref_pic_list1 = get_ref_pic_buffer(
             picture_control_set_ptr, hbd_mode_decision, list_idx_sec, ref_idx_sec);
     }
-
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     ScaleFactors ref0_scale_factors = scs_ptr->sf_identity;
     if (!picture_control_set_ptr->parent_pcs_ptr->is_superres_none && ref_pic_list0 != NULL) {
         svt_av1_setup_scale_factors_for_frame(
@@ -6133,8 +6175,12 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_warped_motion) {
         wm_count_samples(
             md_context_ptr->blk_ptr,
+#if FIX_REMOVE_SCS_WRAPPER
+            picture_control_set_ptr->scs_ptr->seq_header.sb_size,
+#else
             ((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)
                 ->seq_header.sb_size,
+#endif
             md_context_ptr->blk_geom,
             md_context_ptr->blk_origin_x,
             md_context_ptr->blk_origin_y,
@@ -6147,9 +6193,12 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
         : md_context_ptr->lpd1_chroma_comp == COMPONENT_CHROMA    ? PICTURE_BUFFER_DESC_CHROMA_MASK
         : md_context_ptr->lpd1_chroma_comp == COMPONENT_CHROMA_CB ? PICTURE_BUFFER_DESC_Cb_FLAG
                                                                   : PICTURE_BUFFER_DESC_Cr_FLAG;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     ScaleFactors ref0_scale_factors = scs_ptr->sf_identity;
     if (!picture_control_set_ptr->parent_pcs_ptr->is_superres_none && ref_pic_list0 != NULL) {
         svt_av1_setup_scale_factors_for_frame(
@@ -6196,9 +6245,12 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     EbPictureBufferDesc         *ref_pic_list0 = (EbPictureBufferDesc *)NULL;
     EbPictureBufferDesc         *ref_pic_list1 = (EbPictureBufferDesc *)NULL;
     ModeDecisionCandidate *const candidate_ptr = candidate_buffer_ptr->candidate_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
+#else
     SequenceControlSet          *scs_ptr       = ((
         SequenceControlSet *)(picture_control_set_ptr->scs_wrapper_ptr->object_ptr));
-
+#endif
 #if CLN_REMOVE_REDUND_2
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
@@ -6303,8 +6355,12 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         candidate_ptr->motion_mode != WARPED_CAUSAL) {
         wm_count_samples(
             md_context_ptr->blk_ptr,
+#if FIX_REMOVE_SCS_WRAPPER
+            picture_control_set_ptr->scs_ptr->seq_header.sb_size,
+#else
             ((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)
                 ->seq_header.sb_size,
+#endif
             md_context_ptr->blk_geom,
             md_context_ptr->blk_origin_x,
             md_context_ptr->blk_origin_y,

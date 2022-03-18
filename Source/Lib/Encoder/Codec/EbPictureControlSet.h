@@ -248,7 +248,11 @@ typedef struct CdefDirData {
 typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor              dctor;
+#if FIX_REMOVE_SCS_WRAPPER
+    struct SequenceControlSet *scs_ptr;
+#else
     EbObjectWrapper     *scs_wrapper_ptr;
+#endif
     EbPictureBufferDesc *input_frame16bit;
 
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
@@ -671,7 +675,9 @@ typedef struct PaletteCtrls {
 // Parent is created before the Child, and continue to live more. Child PCS only lives the exact time needed to encode the picture: from ME to EC/ALF.
 typedef struct PictureParentControlSet {
     EbDctor              dctor;
+#if !FIX_REMOVE_SCS_WRAPPER
     EbObjectWrapper     *scs_wrapper_ptr;
+#endif
     EbObjectWrapper     *input_picture_wrapper_ptr;
     EbObjectWrapper     *eb_y8b_wrapper_ptr; // when overlay: y8b buffer is not used, should set to NULL.
     EbObjectWrapper     *reference_picture_wrapper_ptr;

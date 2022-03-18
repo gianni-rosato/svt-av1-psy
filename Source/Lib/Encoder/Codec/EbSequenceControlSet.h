@@ -455,12 +455,15 @@ typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;
     EncodeContext      *encode_context_ptr;
     SequenceControlSet *scs_ptr;
+#if !FIX_USE_ONE_SCS
     EbHandle            config_mutex;
+#endif
 } EbSequenceControlSetInstance;
 
 /**************************************
      * Extern Function Declarations
      **************************************/
+#if !FIX_USE_ONE_SCS
 extern EbErrorType svt_sequence_control_set_creator(EbPtr *object_dbl_ptr,
                                                     EbPtr  object_init_data_ptr);
 
@@ -468,7 +471,7 @@ extern EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *object,
                                                  EbPtr               object_init_data_ptr);
 
 extern EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSet *src);
-
+#endif
 extern EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr);
 
 extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr);

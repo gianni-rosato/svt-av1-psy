@@ -243,7 +243,11 @@ void combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int we
                         const uint8_t *intrapred, int intrastride);
 void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                         ModeDecisionCandidate *candidate_ptr) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     DECLARE_ALIGNED(16, uint8_t, tmp_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, ii_pred_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
     //get inter pred for ref0
@@ -3364,8 +3368,12 @@ void inject_warped_motion_candidates(PictureControlSet          *pcs_ptr,
     IntMv                  nearest_mv[2], near_mv[2], ref_mv[2];
 
     int                 inside_tile = 1;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr     = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     int              umv0_tile = scs_ptr->static_config.restricted_motion_vector;
     uint32_t         mi_row    = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t         mi_col    = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
@@ -6670,7 +6678,11 @@ void  inject_filter_intra_candidates(
 
     Bool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? TRUE : FALSE;
     disable_cfl_flag = context_ptr->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     if (scs_ptr->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
         disable_cfl_flag = (Bool)scs_ptr->disable_cfl_flag;
@@ -6849,7 +6861,11 @@ void  inject_palette_candidates(
     uint8_t  * palette_size_array_0  = context_ptr->palette_size_array_0;
     uint8_t  * palette_size_array_1  = context_ptr->palette_size_array_1;
 
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     if (scs_ptr->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
         disable_cfl_flag = (Bool)scs_ptr->disable_cfl_flag;
@@ -7007,7 +7023,11 @@ void generate_md_stage_0_cand_light_pd1(
     uint32_t            *candidate_total_count_ptr,
     PictureControlSet   *pcs_ptr)
 {
+#if FIX_REMOVE_SCS_WRAPPER
+    const SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     const SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     const SliceType slice_type = pcs_ptr->slice_type;
     uint32_t cand_total_cnt = 0;
     // Reset duplicates variables
@@ -7061,7 +7081,11 @@ EbErrorType generate_md_stage_0_cand(
     PictureControlSet   *pcs_ptr)
 {
 
+#if FIX_REMOVE_SCS_WRAPPER
+    const SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     const SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     const SliceType slice_type = pcs_ptr->slice_type;
     uint32_t cand_total_cnt = 0;
     // Reset duplicates variables
@@ -7485,7 +7509,11 @@ uint32_t product_full_mode_decision(
     uint32_t candidate_total_count,
     uint32_t *best_candidate_index_array)
 {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs->scs_ptr;
+#else
     SequenceControlSet* scs_ptr = (SequenceControlSet*)pcs->scs_wrapper_ptr->object_ptr;
+#endif
     uint32_t lowest_cost_index = best_candidate_index_array[0];
 
     // Find the candidate with the lowest cost

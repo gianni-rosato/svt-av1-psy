@@ -2061,8 +2061,11 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                     uint16_t **src_16bit, uint32_t *stride_src,
                                     uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t ss_x,
                                     int encoder_bit_depth) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     InterpFilters interp_filters = av1_make_interp_filters(EIGHTTAP_REGULAR, EIGHTTAP_REGULAR);
 
     Bool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)FALSE : (uint8_t)TRUE;
@@ -2469,8 +2472,11 @@ uint64_t svt_check_position_64x64(TF_SUBPEL_SEARCH_PARAMS  tf_sp_param,
     uint64_t th = ((tf_sp_param.bsize * tf_sp_param.bsize) << 2) << tf_sp_param.is_highbd;
     if (context_ptr->tf_64x64_block_error < th)
         return UINT_MAX;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     mv_unit.mv->x = tf_sp_param.mv_x + tf_sp_param.xd;
     mv_unit.mv->y = tf_sp_param.mv_y + tf_sp_param.yd;
 
@@ -2548,7 +2554,11 @@ uint64_t svt_check_position(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentCo
     if (context_ptr->tf_32x32_block_error[context_ptr->idx_32x32] < th)
         return UINT_MAX;
 
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     mv_unit.mv->x               = tf_sp_param.mv_x + tf_sp_param.xd;
     mv_unit.mv->y               = tf_sp_param.mv_y + tf_sp_param.yd;
 
@@ -4135,8 +4145,11 @@ static void tf_64x64_inter_prediction(PictureParentControlSet *pcs_ptr, MeContex
                                       EbPictureBufferDesc *pic_ptr_ref, EbByte *pred,
                                       uint16_t **pred_16bit, uint32_t sb_origin_x,
                                       uint32_t sb_origin_y, uint32_t ss_x, int encoder_bit_depth) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     const InterpFilters interp_filters = av1_make_interp_filters(MULTITAP_SHARP, MULTITAP_SHARP);
 
     Bool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)FALSE : (uint8_t)TRUE;
@@ -4243,7 +4256,11 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs_ptr, MeContex
                                       EbPictureBufferDesc *pic_ptr_ref, EbByte *pred,
                                       uint16_t **pred_16bit, uint32_t sb_origin_x,
                                       uint32_t sb_origin_y, uint32_t ss_x, int encoder_bit_depth) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr        = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     const InterpFilters interp_filters = av1_make_interp_filters(MULTITAP_SHARP, MULTITAP_SHARP);
 
     Bool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)FALSE : (uint8_t)TRUE;
@@ -4518,7 +4535,11 @@ static EbErrorType produce_temporally_filtered_pic(
     PictureParentControlSet *picture_control_set_ptr_central =
         list_picture_control_set_ptr[index_center];
 #if OPT_VQ_MODE
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs = picture_control_set_ptr_central->scs_ptr;
+#else
     SequenceControlSet* scs = (SequenceControlSet*)picture_control_set_ptr_central->scs_wrapper_ptr->object_ptr;
+#endif
 #endif
     EbPictureBufferDesc *input_picture_ptr_central = list_input_picture_ptr[index_center];
     MeContext *          context_ptr               = me_context_ptr->me_context_ptr;
@@ -5207,8 +5228,12 @@ double estimate_noise_highbd(const uint16_t *src, int width, int height, int str
 
 void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_ptr_central) {
     // reference structures (padded pictures + downsampled versions)
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = picture_control_set_ptr_central->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       picture_control_set_ptr_central->scs_wrapper_ptr->object_ptr;
+#endif
     EbPaReferenceObject *src_object = (EbPaReferenceObject *)picture_control_set_ptr_central
                                           ->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr_central->enhanced_picture_ptr;

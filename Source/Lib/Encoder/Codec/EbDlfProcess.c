@@ -77,7 +77,11 @@ void *dlf_kernel(void *input_ptr) {
 
         enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
         pcs_ptr             = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+        scs_ptr = pcs_ptr->scs_ptr;
+#else
         scs_ptr             = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
 
         Bool is_16bit = scs_ptr->is_16bit_pipeline;
         if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {

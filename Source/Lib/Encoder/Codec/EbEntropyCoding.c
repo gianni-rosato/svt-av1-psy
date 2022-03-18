@@ -3017,7 +3017,11 @@ static void write_render_size(struct AomWriteBitBuffer *wb, SequenceControlSet *
 
 static AOM_INLINE void write_superres_scale(struct AomWriteBitBuffer *wb,
                                             PictureParentControlSet  *pcs_ptr) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr        = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     Av1Common          *cm             = pcs_ptr->av1_cm;
     uint8_t             superres_denom = cm->frm_size.superres_denominator;
 
@@ -3040,7 +3044,11 @@ static AOM_INLINE void write_superres_scale(struct AomWriteBitBuffer *wb,
 
 static void write_frame_size(PictureParentControlSet *pcs_ptr, int32_t frame_size_override,
                              struct AomWriteBitBuffer *wb) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     (void)(*pcs_ptr);
     (void)frame_size_override;
     Av1Common    *cm           = pcs_ptr->av1_cm;
@@ -5287,7 +5295,11 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     EbErrorType         return_error  = EB_ErrorNone;
     FRAME_CONTEXT      *frame_context = entropy_coder_ptr->fc;
     AomWriter          *ec_writer     = &entropy_coder_ptr->ec_writer;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr       = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     FrameHeader        *frm_hdr       = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     NeighborArrayUnit *mode_type_neighbor_array = pcs_ptr->mode_type_neighbor_array[tile_idx];
@@ -5987,7 +5999,11 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
     EbErrorType         return_error  = EB_ErrorNone;
     FRAME_CONTEXT      *frame_context = entropy_coder_ptr->fc;
     AomWriter          *ec_writer     = &entropy_coder_ptr->ec_writer;
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr       = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     NeighborArrayUnit  *partition_context_neighbor_array =
         pcs_ptr->partition_context_neighbor_array[tile_idx];
 

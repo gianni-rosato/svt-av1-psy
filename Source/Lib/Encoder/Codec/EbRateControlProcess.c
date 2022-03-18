@@ -3297,8 +3297,11 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
     coded_frames_stats_entry *queue_entry_ptr;
     Bool                    move_slide_window_flag = TRUE;
     Bool                    end_of_sequence_flag   = TRUE;
-
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)ppcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
     // Determine offset from the Head Ptr
@@ -3472,8 +3475,11 @@ void *rate_control_kernel(void *input_ptr) {
             // intentionally reuse code in RC_INPUT
         case RC_INPUT:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
-
+#if FIX_REMOVE_SCS_WRAPPER
+            scs_ptr = pcs_ptr->scs_ptr;
+#else
             scs_ptr              = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
             FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
             rc                   = &scs_ptr->encode_context_ptr->rc;
             if (scs_ptr->passes > 1 && scs_ptr->static_config.max_bit_rate)
@@ -3814,9 +3820,12 @@ void *rate_control_kernel(void *input_ptr) {
 
             parentpicture_control_set_ptr = (PictureParentControlSet *)
                                                 rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+            scs_ptr = parentpicture_control_set_ptr->scs_ptr;
+#else
             scs_ptr = (SequenceControlSet *)
                           parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
             // Prevent double counting fames with overlay to so we don't
             // increase processed_frame_number twice per frame
             if (!parentpicture_control_set_ptr->is_overlay) {
@@ -3862,9 +3871,10 @@ void *rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.max_bit_rate)
                 coded_frames_stat_calc(parentpicture_control_set_ptr);
             total_number_of_fb_frames++;
-
+#if !FIX_REMOVE_SCS_WRAPPER
             // Release the SequenceControlSet
             svt_release_object(parentpicture_control_set_ptr->scs_wrapper_ptr);
+#endif
             // Release the ParentPictureControlSet
 
             if (parentpicture_control_set_ptr->eb_y8b_wrapper_ptr) {
@@ -3882,7 +3892,11 @@ void *rate_control_kernel(void *input_ptr) {
 
         default:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
+#if FIX_REMOVE_SCS_WRAPPER
+            scs_ptr = pcs_ptr->scs_ptr;
+#else
             scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
 
             break;
         }

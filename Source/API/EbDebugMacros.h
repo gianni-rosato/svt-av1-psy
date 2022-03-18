@@ -108,6 +108,12 @@ extern "C" {
 #define TUNE_MAX_PRESET_LOW_RES 1 // Limit 240p content to M11 and below and limit 360p content to M12 and below
 
 #define FIX_SCD                 1 // Optimize SCD, use SCD for both the subjective mode and the objective mode
+#define FIX_NCH                 1 // Fix CLI token processing for --nch
+#define FIX_USE_ONE_SCS         1 // Use a single scs for the sequence; remove need to copy between scs
+#if FIX_USE_ONE_SCS
+#define FIX_REMOVE_SCS_WRAPPER  1 // Remove the scs_wrapper_ptr from pcs; reference the scs directly
+#endif
+#define CLN_SCS_SIG_DERIV       1 // Cleanup setting scs signals in resource coordination kernel
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

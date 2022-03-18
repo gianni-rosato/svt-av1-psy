@@ -1468,7 +1468,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 context_ptr->blk_origin_y,
                 0,
                 0,
+#if FIX_REMOVE_SCS_WRAPPER
+                &pcs_ptr->scs_ptr->seq_header);
+#else
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+#endif
         } else {
             uint8_t        top_neigh_array[64 * 2 + 1];
             uint8_t        left_neigh_array[64 * 2 + 1];
@@ -1534,7 +1538,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 context_ptr->blk_origin_y,
                 0,
                 0,
+#if FIX_REMOVE_SCS_WRAPPER
+                &pcs_ptr->scs_ptr->seq_header);
+#else
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+#endif
         }
         // Encode Transform Unit -INTRA-
         av1_encode_loop_func_table[is_16bit](pcs_ptr,
@@ -1730,7 +1738,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     context_ptr->blk_origin_y,
                     0,
                     0,
+#if FIX_REMOVE_SCS_WRAPPER
+                    &pcs_ptr->scs_ptr->seq_header);
+#else
                     &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+#endif
             }
         } else {
             uint8_t        top_neigh_array[64 * 2 + 1];
@@ -1830,7 +1842,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     context_ptr->blk_origin_y,
                     0,
                     0,
+#if FIX_REMOVE_SCS_WRAPPER
+                    &pcs_ptr->scs_ptr->seq_header);
+#else
                     &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+#endif
             }
         }
 
@@ -2514,8 +2530,12 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
     input_picture = ctx->input_samples = (EbPictureBufferDesc *)
                                              pcs->parent_pcs_ptr->enhanced_picture_ptr;
 
+#if FIX_REMOVE_SCS_WRAPPER
+    EncodeContext *encode_context_ptr = pcs->scs_ptr->encode_context_ptr;
+#else
     EncodeContext *encode_context_ptr =
         ((SequenceControlSet *)(pcs->scs_wrapper_ptr->object_ptr))->encode_context_ptr;
+#endif
     // Dereferencing early
     uint16_t           tile_idx                    = ctx->tile_index;
     NeighborArrayUnit *ep_mode_type_neighbor_array = pcs->ep_mode_type_neighbor_array[tile_idx];

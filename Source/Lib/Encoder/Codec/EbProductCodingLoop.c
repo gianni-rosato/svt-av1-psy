@@ -1971,8 +1971,11 @@ void md_stage_0(
     uint32_t input_cr_origin_in_index, BlkStruct *blk_ptr, uint32_t blk_origin_index,
     uint32_t blk_chroma_origin_index, uint32_t candidate_buffer_start_index, uint32_t max_buffers,
     Bool scratch_buffer_pesent_flag) {
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     int32_t  fast_loop_cand_index;
     uint32_t highest_cost_index;
     // Set MD Staging fast_loop_core settings
@@ -3050,8 +3053,11 @@ void read_refine_me_mvs_light_pd1(PictureControlSet   *pcs_ptr,
 // MD buffers (context_ptr->sb_me_mv)
 void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                         EbPictureBufferDesc *input_picture_ptr) {
+#if FIX_REMOVE_SCS_WRAPPER
+    const SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#else
     const SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     derive_me_offsets(scs_ptr, pcs_ptr, context_ptr);
     uint8_t hbd_mode_decision = EB_8_BIT_MD;
     input_picture_ptr         = hbd_mode_decision ? pcs_ptr->input_frame16bit
@@ -4610,7 +4616,11 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext         *md_context_pt
             md_context_ptr->blk_geom
                 ->tx_org_y[is_inter][md_context_ptr->tx_depth]
                           [md_context_ptr->txb_itr], //uint32_t cuOrgY used only for prediction Ptr
+#if FIX_REMOVE_SCS_WRAPPER
+            &pcs_ptr->scs_ptr->seq_header);
+#else
             &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+#endif
     } else {
         uint16_t top_neigh_array[64 * 2 + 1];
         uint16_t left_neigh_array[64 * 2 + 1];
@@ -4702,7 +4712,11 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext         *md_context_pt
             md_context_ptr->blk_geom
                 ->tx_org_y[is_inter][md_context_ptr->tx_depth]
                           [md_context_ptr->txb_itr], //uint32_t cuOrgY used only for prediction Ptr
+#if FIX_REMOVE_SCS_WRAPPER
+            &pcs_ptr->scs_ptr->seq_header);
+#else
             &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+#endif
     }
 
     return return_error;
@@ -7915,7 +7929,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
             context_ptr->blk_geom->bwidth,
             context_ptr->blk_geom->bheight >> context_ptr->md_staging_subres_step);
     // Check if should perform TX type search
+#if FIX_REMOVE_SCS_WRAPPER
+    if (pcs_ptr->scs_ptr->super_block_size == 64 &&
+#else
     if (((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->super_block_size == 64 &&
+#endif
         start_tx_depth == 0 && end_tx_depth == 0 && // TXS off
         !pcs_ptr->parent_pcs_ptr
              ->sc_class1 && // Can't be SC b/c SC tries DCT_DCT and IDTX when only_dct_dct is 1
