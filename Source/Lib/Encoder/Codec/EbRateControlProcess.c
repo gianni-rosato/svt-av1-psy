@@ -3318,6 +3318,12 @@ void *rate_control_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = FALSE;
             }
             reset_rc_param(pcs_ptr->parent_pcs_ptr);
+
+            if (pcs_ptr->parent_pcs_ptr->is_overlay) {
+                // overlay: ppcs->picture_qp has been updated by altref RC_INPUT
+                pcs_ptr->picture_qp = pcs_ptr->parent_pcs_ptr->picture_qp;
+            }
+            else {
             // Frame level RC. Find the ParamPtr for the current GOP
             {
                 uint32_t interval_index_temp = 0;
@@ -3515,7 +3521,20 @@ void *rate_control_kernel(void *input_ptr) {
 
                 frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
             }
+            }
             pcs_ptr->parent_pcs_ptr->picture_qp = pcs_ptr->picture_qp;
+
+            if (pcs_ptr->parent_pcs_ptr->is_alt_ref) {
+                // overlay use the same QP with alt_ref, to align with
+                // rate_control_param_queue update code in below RC_PACKETIZATION_FEEDBACK_RESULT.
+                PictureParentControlSet *overlay_ppcs_ptr =
+                    pcs_ptr->parent_pcs_ptr->overlay_ppcs_ptr;
+                FrameHeader *overlay_frm_hdr = &overlay_ppcs_ptr->frm_hdr;
+                overlay_ppcs_ptr->picture_qp = pcs_ptr->picture_qp;
+                memcpy(&overlay_frm_hdr->quantization_params,
+                       &frm_hdr->quantization_params,
+                       sizeof(overlay_frm_hdr->quantization_params));
+            }
 
             if (!is_superres_recode_task) {
                 // Determine superres parameters for 1-pass encoding or 2nd pass of 2-pass encoding
@@ -3625,7 +3644,9 @@ void *rate_control_kernel(void *input_ptr) {
             scs_ptr = (SequenceControlSet *)
                           parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
 
-            {
+            // Prevent double counting fames with overlay to so we don't
+            // increase processed_frame_number twice per frame
+            if (!parentpicture_control_set_ptr->is_overlay) {
                 uint32_t interval_index_temp = 0;
                 for (RateControlIntervalParamContext **rc_param_queue =
                          context_ptr->rate_control_param_queue;
@@ -3640,6 +3661,7 @@ void *rate_control_kernel(void *input_ptr) {
                                    EB_ENC_RC_ERROR2);
                 rate_control_param_ptr = context_ptr->rate_control_param_queue[interval_index_temp];
                 rate_control_param_ptr->processed_frame_number++;
+
                 // check if all the frames in the interval have arrived
                 if (scs_ptr->static_config.intra_period_length + 1 ==
                     rate_control_param_ptr->processed_frame_number) {
