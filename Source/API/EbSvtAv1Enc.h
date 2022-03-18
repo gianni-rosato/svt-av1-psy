@@ -470,6 +470,7 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* Enable adaptive quantization within a frame using segmentation.
      *
+     * For rate control mode 0, setting this to 0 will use CQP mode, else CRF mode will be used.
      * Default is 2. */
     uint8_t enable_adaptive_quantization;
 

@@ -92,9 +92,10 @@ The intra period defines the interval of frames after which you insert an Intra 
 
 `--rc integer` **[Optional]**
 
-This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP OR Constant Rate Factor]. When `--rc` is set to 1.
+The rc token sets the bitrate control encoding mode [0: Constant QP OR Constant Rate Factor, 1: Variable Bitrate, 2: Constant Bitrate].
 
-With `--rc` set to 0, if `--crf` is used then enable-tpl-la is forced to 1, however, if `-q`/`--qp` is used then the encoder will work in CRF mode if `--enable-tpl-la` is set to 1 and in CQP mode (fixed qp offsets regardless of the content) when `--enable-tpl-la` is set to 0.
+With `--rc` set to 0, CQP (fixed qp offsets regardless of the content) mode is enabled using `--aq-mode 0`, else CRF mode (default) will be used.
+If `--crf` is set, then aq-mode will be forced to 2, however, if `-q`/`--qp` is set, then the encoder will use whatever is set for aq-mode.
 
 If a qp/crf value is not specified, a default value is assigned (50).
 
@@ -208,9 +209,9 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 
 | **Configuration file parameter** | **Command line**                 | **Range**      | **Default**     | **Description**                                                                                                      |
 |----------------------------------|----------------------------------|----------------|-----------------|----------------------------------------------------------------------------------------------------------------------|
-| **RateControlMode**              | --rc                             | [0-2]          | 0               | Rate control mode [0: CRF or CQP (if `--enable-tpl-la` is 0) [Default], 1: VBR, 2: CBR]                              |
+| **RateControlMode**              | --rc                             | [0-2]          | 0               | Rate control mode [0: CRF or CQP (if `--aq-mode` is 0) [Default], 1: VBR, 2: CBR]                                    |
 | **QP**                           | --qp                             | [1-63]         | 50              | Initial QP level value                                                                                               |
-| **CRF**                          | --crf                            | [1-63]         | 50              | Constant Rate Factor value, setting this value is equal to `--rc 0 --enable-tpl-la 1 --qp x`                         |
+| **CRF**                          | --crf                            | [1-63]         | 50              | Constant Rate Factor value, setting this value is equal to `--rc 0 --aq-mode 2 --qp x`                               |
 | **TargetBitRate**                | --tbr                            | [1-4294967]    | 2000            | Target Bitrate (kbps), only applicable for VBR and CBR encoding                                                      |
 | **MaxBitRate**                   | --mbr                            | [1-4294967]    | 0               | Maximum Bitrate (kbps) only applicable for CRF and VBR encoding                                                      |
 | **UseQpFile**                    | --use-q-file                     | [0-1]          | 0               | Overwrite the encoder default picture based QP assignments and use QP values from `--qp-file`                        |

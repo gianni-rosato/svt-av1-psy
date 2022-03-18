@@ -115,7 +115,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     if (config->qp > MAX_QP_VALUE) {
         SVT_ERROR("Instance %u: %s must be [0 - %d]\n",
                   channel_number + 1,
-                  config->enable_tpl_la ? "CRF" : "QP",
+                  config->enable_adaptive_quantization ? "CRF" : "QP",
                   MAX_QP_VALUE);
         return_error = EB_ErrorBadParameter;
     }
@@ -1077,9 +1077,9 @@ static EbErrorType str_to_crf(const char *nptr, EbSvtAv1EncConfiguration *config
     if (return_error == EB_ErrorBadParameter)
         return return_error;
 
-    config_struct->qp                = crf;
-    config_struct->rate_control_mode = 0;
-    config_struct->enable_tpl_la     = 1;
+    config_struct->qp                           = crf;
+    config_struct->rate_control_mode            = 0;
+    config_struct->enable_adaptive_quantization = 2;
 
     return EB_ErrorNone;
 }

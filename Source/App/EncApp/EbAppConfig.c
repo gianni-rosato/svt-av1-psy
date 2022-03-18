@@ -478,7 +478,7 @@ static void set_cfg_qp(const char *value, EbConfig *cfg) {
 static void set_cfg_crf(const char *value, EbConfig *cfg) {
     cfg->config.qp                = strtoul(value, NULL, 0);
     cfg->config.rate_control_mode = 0;
-    cfg->config.enable_tpl_la     = 1;
+    cfg->config.enable_adaptive_quantization = 2;
 }
 static void set_cfg_use_qp_file(const char *value, EbConfig *cfg) {
     cfg->config.use_qp_file = (Bool)strtol(value, NULL, 0);
@@ -997,13 +997,13 @@ ConfigEntry config_entry_rc[] = {
     // Rate Control
     {SINGLE_INPUT,
      RATE_CONTROL_ENABLE_TOKEN,
-     "Rate control mode, default is 0 [0: CRF or CQP (if `--enable-tpl-la` is 0), 1: VBR, 2: CBR]",
+     "Rate control mode, default is 0 [0: CRF or CQP (if `--aq-mode` is 0), 1: VBR, 2: CBR]",
      set_rate_control_mode},
     {SINGLE_INPUT, QP_TOKEN, "Initial QP level value, default is 50 [1-63]", set_cfg_qp},
     {SINGLE_INPUT, QP_LONG_TOKEN, "Initial QP level value, default is 50 [1-63]", set_cfg_qp},
     {SINGLE_INPUT,
      CRF_LONG_TOKEN,
-     "Constant Rate Factor value, setting this value is equal to `--rc 0 --enable-tpl-la 1 --qp "
+     "Constant Rate Factor value, setting this value is equal to `--rc 0 --aq-mode 2 --qp "
      "x`, default is 50 [1-63]",
      set_cfg_crf},
 
