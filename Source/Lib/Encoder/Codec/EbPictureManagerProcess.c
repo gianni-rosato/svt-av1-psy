@@ -495,7 +495,9 @@ void *picture_manager_kernel(void *input_ptr) {
             pred_position_ptr =
                 pcs_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[pcs_ptr->pred_struct_index];
 
-            copy_dep_cnt_cleaning_list(encode_context_ptr, pcs_ptr);
+            // overlay dep is counted by alt-ref, does not copy to cleaning list
+            if (!pcs_ptr->is_overlay)
+                copy_dep_cnt_cleaning_list(encode_context_ptr, pcs_ptr);
 
             clean_pictures_in_ref_queue(encode_context_ptr);
 
