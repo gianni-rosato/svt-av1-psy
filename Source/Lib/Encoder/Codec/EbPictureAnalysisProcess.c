@@ -2958,6 +2958,8 @@ void *picture_analysis_kernel(void *input_ptr) {
 
         PictureAnalysisResults *out_results_ptr = (PictureAnalysisResults *)
                                                       out_results_wrapper_ptr->object_ptr;
+
+        // ppcs: ResourceCoordination has +1 before post, keep live_count for PD, will svt_release_object(ppcs) in PD.
         out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
 
         // Release the Input Results

@@ -1390,6 +1390,8 @@ void *resource_coordination_kernel(void *input_ptr) {
                 svt_get_empty_object(context_ptr->resource_coordination_results_output_fifo_ptr,
                                      &output_wrapper_ptr);
                 out_results_ptr = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;
+
+                svt_object_inc_live_count(prev_pcs_wrapper_ptr, 1);      // ppcs live_count + 1 for PA & PD, will svt_release_object(ppcs) in PD.
                 out_results_ptr->pcs_wrapper_ptr = prev_pcs_wrapper_ptr;
                 // Post the finished Results Object
                 svt_post_full_object(output_wrapper_ptr);

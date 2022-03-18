@@ -7425,6 +7425,9 @@ void* picture_decision_kernel(void *input_ptr)
                 break;
         }
 
+        // release ppcs, since live_count + 1 before post in ResourceCoordination
+        svt_release_object(in_results_ptr->pcs_wrapper_ptr);
+
         // Release the Input Results
         svt_release_object(in_results_wrapper_ptr);
     }
