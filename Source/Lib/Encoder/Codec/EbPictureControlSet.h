@@ -552,6 +552,10 @@ typedef struct TplControls {
         synth_blk_size; //syntheszier block size, support 8x8 and 16x16 for now. NOTE: this field must be
     //modified inside the get_ function, as it is linked to memory allocation at init time
     uint8_t vq_adjust_lambda_sb;
+#if OPT_TPL
+    // Calculated qindex based on r0 using qstep calculation
+    bool              qstep_based_q_calc; // 0: OFF; 1: ON
+#endif
 } TplControls;
 /*!
  * \brief Refresh frame flags for different type of frames.

@@ -3470,7 +3470,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         if (scs_ptr->static_config.look_ahead_distance < mg_size)
             tpl_lad_mg = 0;
         else
+#if OPT_TPL_M12_M13
+            if (scs_ptr->static_config.enc_mode <= ENC_M13 && scs_ptr->tpl_level != 0)
+#else
             if (scs_ptr->static_config.enc_mode <= ENC_M11 && scs_ptr->tpl_level != 0)
+#endif
 #if TUNE_FAST_DECODE
                 tpl_lad_mg = 1;
 #else
@@ -3812,6 +3816,16 @@ void copy_api_from_app(
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
+#if TUNE_MAX_PRESET_LOW_RES
+    EbInputResolution input_resolution;
+    derive_input_resolution(
+        &input_resolution,
+        scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height);
+    if (scs_ptr->static_config.enc_mode > ENC_M12 && input_resolution <= INPUT_SIZE_360p_RANGE) {
+        scs_ptr->static_config.enc_mode = ENC_M12;
+        SVT_WARN("Setting preset to M12 as it is the highest supported preset for 360p and lower resolutions\n");
+    }
+#endif
     scs_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
     scs_ptr->static_config.use_fixed_qindex_offsets = ((EbSvtAv1EncConfiguration*)config_struct)->use_fixed_qindex_offsets;
     scs_ptr->static_config.key_frame_chroma_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_chroma_qindex_offset;

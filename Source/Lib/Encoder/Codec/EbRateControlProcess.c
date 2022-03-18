@@ -794,7 +794,19 @@ static void adjust_active_best_and_worst_quality(PictureControlSet *pcs_ptr, RAT
     *active_best  = active_best_quality;
     *active_worst = active_worst_quality;
 }
-
+#if OPT_TPL
+static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio, const int bit_depth) {
+    const double leaf_qstep = svt_av1_dc_quant_qtx(leaf_qindex, 0, bit_depth);
+    const double target_qstep = leaf_qstep * qstep_ratio;
+    int          qindex;
+    for (qindex = leaf_qindex; qindex > 0; --qindex) {
+        const double qstep = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
+        if (qstep + 0.1 <= target_qstep)
+            break;
+    }
+    return qindex;
+}
+#endif
 /******************************************************
  * cqp_qindex_calc_tpl_la
  * Assign the q_index per frame.
@@ -945,6 +957,23 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
     } else
         active_best_quality = cq_level;
 
+#if OPT_TPL
+    // Calculated qindex based on r0 using qstep calculation
+    if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.qstep_based_q_calc && pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
+        double weight = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 0.7 : 0.9;
+        // adjust the weight for base layer frames with shorter minigops
+        if (scs_ptr->lad_mg && !frame_is_intra_only(pcs_ptr->parent_pcs_ptr) && (pcs_ptr->parent_pcs_ptr->tpl_group_size < (uint32_t)(2 << pcs_ptr->parent_pcs_ptr->hierarchical_levels)))
+            weight *= 0.9;
+
+        const double qstep_ratio = sqrt(pcs_ptr->parent_pcs_ptr->r0)*weight;
+        const int q_qstep_ratio = svt_av1_get_q_index_from_qstep_ratio(qindex, qstep_ratio, bit_depth);
+        if(!frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
+            rc->arf_q = q_qstep_ratio;
+        active_best_quality = clamp(q_qstep_ratio, rc->best_quality, qindex);
+        active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
+    }
+
+#endif
     if (pcs_ptr->parent_pcs_ptr->temporal_layer_index)
         active_best_quality = MAX(active_best_quality, rc->arf_q);
     adjust_active_best_and_worst_quality(
@@ -962,7 +991,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 
 #define DEFAULT_KF_BOOST 2700
 #define DEFAULT_GF_BOOST 1350
-
+#if !OPT_TPL
 int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio, const int bit_depth) {
     const double leaf_qstep   = svt_av1_dc_quant_qtx(leaf_qindex, 0, bit_depth);
     const double target_qstep = leaf_qstep * qstep_ratio;
@@ -974,6 +1003,7 @@ int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio, co
     }
     return qindex;
 }
+#endif
 /******************************************************
  * non_base_boost
  * Compute a non-base frame boost.

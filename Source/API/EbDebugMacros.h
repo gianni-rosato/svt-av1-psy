@@ -102,6 +102,9 @@ extern "C" {
 #define CLN_IS_VALID_MV_DIFF    1 // Cleanup arguments of is_valid_mv_diff()
 #define TUNE_FAST_DECODE        1 // Tune existing fast-decode levels and add support for --fast-decode in M0-M4
 
+#define OPT_TPL                 1 // Improve TPL based QP assignment
+#define OPT_TPL_M12_M13         1 // Setting tpl_lad_mg to 1 for M12 and M13
+#define TUNE_MAX_PRESET_LOW_RES 1 // Limit 240p content to M11 and below and limit 360p content to M12 and below
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

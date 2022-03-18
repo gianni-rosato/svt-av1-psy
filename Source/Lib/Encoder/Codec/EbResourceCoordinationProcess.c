@@ -338,6 +338,13 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         if (pcs_ptr->scs_ptr->max_heirachical_level < 4)
             tpl_ctrls->r0_adjust_factor = 0.1;
     }
+#if OPT_TPL
+    // Calculated qindex based on r0 using qstep calculation
+    if (scs_ptr->static_config.hierarchical_levels == 4)
+        tpl_ctrls->qstep_based_q_calc = 1;
+    else
+        tpl_ctrls->qstep_based_q_calc = 0;
+#endif
 }
 /*
 * return the restoration level
