@@ -582,6 +582,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 #endif
     /* Warnings about the use of features that are incomplete */
+    if (config->enable_adaptive_quantization == 1) {
+        config->enable_adaptive_quantization = 2;
+        SVT_WARN(
+            "Instance %u: Adaptive quantization mode 1 has been disabled, mode 2 will be forced!\n",
+            channel_number + 1);
+    }
 
     // color description
     if (config->color_primaries == 0 || config->color_primaries == 3 ||
