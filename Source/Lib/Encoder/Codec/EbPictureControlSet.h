@@ -757,11 +757,15 @@ typedef struct PictureParentControlSet {
     uint16_t         pic_avg_variance;
     Bool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
 
+#if FIX_SCD
+    uint32_t*** picture_histogram;
+    uint64_t    average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
+#else
     // Histograms
     uint32_t ****picture_histogram;
     uint64_t     average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
                                          [MAX_NUMBER_OF_REGIONS_IN_HEIGHT][3];
-
+#endif
     // Segments
     uint16_t me_segments_total_count;
     uint8_t  me_segments_column_count;

@@ -1262,7 +1262,11 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
             int    offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth,
                                                    ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
                                                    beta,
+#if FIX_SCD
+                                                   pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present);
+#else
                                                    pcs_ptr->parent_pcs_ptr->slice_type || pcs_ptr->parent_pcs_ptr->transition_present);
+#endif
 #else
             int    offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth,
                                                    ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
@@ -3670,6 +3674,12 @@ void *rate_control_kernel(void *input_ptr) {
             if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) {
                 rate_control_param_ptr->last_i_qp = pcs_ptr->picture_qp;
             } else if (pcs_ptr->parent_pcs_ptr->transition_present) {
+#if FIX_SCD // RC
+                pcs_ptr->picture_qp = (uint8_t)CLIP3(
+                    scs_ptr->static_config.min_qp_allowed,
+                    scs_ptr->static_config.max_qp_allowed,
+                    (uint32_t) ((pcs_ptr->picture_qp + rate_control_param_ptr->last_i_qp) / 2));
+#else
                 uint32_t min_ref_qp = rate_control_param_ptr->last_i_qp;
                 if (pcs_ptr->ref_slice_type_array[0][0] != I_SLICE)
                     min_ref_qp = pcs_ptr->ref_pic_qp_array[0][0];
@@ -3681,7 +3691,7 @@ void *rate_control_kernel(void *input_ptr) {
                     scs_ptr->static_config.min_qp_allowed,
                     scs_ptr->static_config.max_qp_allowed,
                     (min_ref_qp + rate_control_param_ptr->last_i_qp) / 2);
-
+#endif
                 frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
             }
             }

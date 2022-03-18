@@ -1303,11 +1303,19 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
              region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
              region_in_picture_width_index++) {
             if (obj->picture_histogram[region_in_picture_width_index]) {
+#if FIX_SCD
+                for (int region_in_picture_height_index = 0;
+                    region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
+                    region_in_picture_height_index++) {
+                    EB_FREE_ARRAY(obj->picture_histogram[region_in_picture_width_index]
+                        [region_in_picture_height_index]);
+#else
                 for (int region_in_picture_height_index = 0;
                      region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
                      region_in_picture_height_index++) {
                     EB_FREE_2D(obj->picture_histogram[region_in_picture_width_index]
                                                      [region_in_picture_height_index]);
+#endif
                 }
             }
             EB_FREE_PTR_ARRAY(obj->picture_histogram[region_in_picture_width_index],
@@ -1428,15 +1436,31 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, block_count);
     }
 
+
+#if FIX_SCD
+    if (init_data_ptr->scene_change_detection) {
+        EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
+
+        for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH; region_in_picture_width_index++) { // loop over horizontal regions
+            EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram[region_in_picture_width_index], MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
+            for (uint32_t region_in_picture_height_index = 0;
+                region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
+                region_in_picture_height_index++) {
+                EB_MALLOC_ARRAY(object_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index],
+                    HISTOGRAM_NUMBER_OF_BINS);
+            }
+        }
+    }
+#else
     uint8_t plane = init_data_ptr->scene_change_detection ? 3 : 0;
     if (plane) {
         EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
 
         for (uint32_t region_in_picture_width_index = 0;
-             region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
-             region_in_picture_width_index++) { // loop over horizontal regions
+            region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
+            region_in_picture_width_index++) { // loop over horizontal regions
             EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram[region_in_picture_width_index],
-                               MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
+                MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
             for (uint32_t region_in_picture_height_index = 0;
                  region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
                  region_in_picture_height_index++) {
@@ -1447,6 +1471,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
             }
         }
     }
+#endif
 
     if (init_data_ptr->pass == ENC_FIRST_PASS ||
         (init_data_ptr->rate_control_mode && init_data_ptr->pass == ENC_SINGLE_PASS)) {

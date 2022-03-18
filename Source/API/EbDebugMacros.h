@@ -106,6 +106,9 @@ extern "C" {
 #define OPT_TPL                 1 // Improve TPL based QP assignment
 #define OPT_TPL_M12_M13         1 // Setting tpl_lad_mg to 1 for M12 and M13
 #define TUNE_MAX_PRESET_LOW_RES 1 // Limit 240p content to M11 and below and limit 360p content to M12 and below
+
+#define FIX_SCD                 1 // Optimize SCD, use SCD for both the subjective mode and the objective mode
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

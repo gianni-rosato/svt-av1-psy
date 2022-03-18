@@ -638,7 +638,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             return_error = EB_ErrorBadParameter;
         }
     }
-
+#if FIX_SCD
+    if (scs_ptr->static_config.scene_change_detection) {
+        scs_ptr->static_config.scene_change_detection = 0;
+        SVT_WARN("SVT-AV1 has an integrated mode decision mechanism to handle scene changes and will not insert a key frame at scene changes\n");
+    }
+#endif
     return return_error;
 }
 

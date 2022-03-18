@@ -2095,11 +2095,19 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     {
         // Initialize the various Picture types
         instance_index = 0;
-
+#if FIX_SCD
+        EB_NEW(
+            enc_handle_ptr->picture_decision_context_ptr,
+            picture_decision_context_ctor,
+            enc_handle_ptr,
+            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection ||
+            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition);
+#else
         EB_NEW(
             enc_handle_ptr->picture_decision_context_ptr,
             picture_decision_context_ctor,
             enc_handle_ptr);
+#endif
     }
 
     // Motion Analysis Context
@@ -2938,7 +2946,11 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
     else {
 
         // Sharpness
+#if FIX_SCD
+        vq_ctrl->sharpness_ctrls.scene_transition = 1;
+#else
         vq_ctrl->sharpness_ctrls.scene_transition = 0;
+#endif
         vq_ctrl->sharpness_ctrls.unipred_bias     = 0;
         vq_ctrl->sharpness_ctrls.ifs              = 0;
         vq_ctrl->sharpness_ctrls.cdef             = 0;
@@ -2953,6 +2965,11 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
 #endif
         vq_ctrl->stability_ctrls.depth_refinement = 0;
     }
+#if FIX_SCD
+    // Do not use scene_transition if LD or 1st pass or middle pass
+    if (scs_ptr->static_config.pred_structure != PRED_RANDOM_ACCESS || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
+        vq_ctrl->sharpness_ctrls.scene_transition = 0;
+#endif
 }
 /*
  * Derive TF Params
@@ -3930,6 +3947,7 @@ void copy_api_from_app(
 
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
+
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
 #if !FTR_CBR
     if (scs_ptr->static_config.rate_control_mode == 2) {
