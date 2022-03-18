@@ -5328,7 +5328,8 @@ void low_delay_store_tf_pictures(
         svt_object_inc_live_count(pcs->p_pcs_wrapper_ptr, 1);
         svt_object_inc_live_count(pcs->input_picture_wrapper_ptr, 1);
         svt_object_inc_live_count(pcs->pa_reference_picture_wrapper_ptr, 1);
-        svt_object_inc_live_count(pcs->eb_y8b_wrapper_ptr, 1);
+        if (pcs->eb_y8b_wrapper_ptr)
+            svt_object_inc_live_count(pcs->eb_y8b_wrapper_ptr, 1);
     }
 }
 /*
@@ -5343,7 +5344,10 @@ void low_delay_release_tf_pictures(
         //printf("                   Release:%lld \n", past_pcs->picture_number);
 
         svt_release_object(past_pcs->input_picture_wrapper_ptr);
-        svt_release_object(past_pcs->eb_y8b_wrapper_ptr);
+
+        if (past_pcs->eb_y8b_wrapper_ptr)
+            svt_release_object(past_pcs->eb_y8b_wrapper_ptr);
+
         svt_release_object(past_pcs->pa_reference_picture_wrapper_ptr);
         //ppcs should be the last one to release
         svt_release_object(past_pcs->p_pcs_wrapper_ptr);
@@ -7181,12 +7185,14 @@ void* picture_decision_kernel(void *input_ptr)
                                             pa_reference_entry_ptr->input_object_ptr,
                                             1);
 
-                                         pcs_ptr->ref_y8b_array[REF_LIST_0][ref_pic_index] = pa_reference_entry_ptr->eb_y8b_wrapper_ptr;
+                                        pcs_ptr->ref_y8b_array[REF_LIST_0][ref_pic_index] = pa_reference_entry_ptr->eb_y8b_wrapper_ptr;
 
-                                        //y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
-                                        svt_object_inc_live_count(
-                                            pa_reference_entry_ptr->eb_y8b_wrapper_ptr,
-                                            1);
+                                        if (pa_reference_entry_ptr->eb_y8b_wrapper_ptr) {
+                                            //y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
+                                            svt_object_inc_live_count(
+                                                pa_reference_entry_ptr->eb_y8b_wrapper_ptr,
+                                                1);
+                                        }
                                         --pa_reference_entry_ptr->dependent_count;
                                     }
                                 }
@@ -7218,10 +7224,12 @@ void* picture_decision_kernel(void *input_ptr)
                                             1);
                                         pcs_ptr->ref_y8b_array[REF_LIST_1][ref_pic_index] = pa_reference_entry_ptr->eb_y8b_wrapper_ptr;
 
-                                        //y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
-                                        svt_object_inc_live_count(
-                                            pa_reference_entry_ptr->eb_y8b_wrapper_ptr,
-                                            1);
+                                        if (pa_reference_entry_ptr->eb_y8b_wrapper_ptr) {
+                                            //y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
+                                            svt_object_inc_live_count(
+                                                pa_reference_entry_ptr->eb_y8b_wrapper_ptr,
+                                                1);
+                                        }
                                         --pa_reference_entry_ptr->dependent_count;
                                     }
                                 }
@@ -7381,9 +7389,13 @@ void* picture_decision_kernel(void *input_ptr)
                         // Release the nominal live_count value
                         //assert((int32_t)input_entry_ptr->input_object_ptr->live_count > 0);
                         svt_release_object(input_entry_ptr->input_object_ptr);
-                        //y8b needs to get decremented at the same time of pa ref
-                        //  svt_release_object_with_call_stack(input_entry_ptr->eb_y8b_wrapper_ptr,1000, input_entry_ptr->picture_number);
-                      svt_release_object(input_entry_ptr->eb_y8b_wrapper_ptr);
+
+                        if (input_entry_ptr->eb_y8b_wrapper_ptr) {
+                            //y8b needs to get decremented at the same time of pa ref
+                            //  svt_release_object_with_call_stack(input_entry_ptr->eb_y8b_wrapper_ptr,1000, input_entry_ptr->picture_number);
+                            svt_release_object(input_entry_ptr->eb_y8b_wrapper_ptr);
+                        }
+
                         input_entry_ptr->input_object_ptr = (EbObjectWrapper*)NULL;
                     }
 

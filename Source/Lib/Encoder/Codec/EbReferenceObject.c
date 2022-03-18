@@ -315,9 +315,12 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
                 if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
                     //assert((int32_t)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->live_count > 0);
                     svt_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
-                    //y8b  needs to get decremented at the same time of pa ref
-                    // svt_release_object_with_call_stack(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->friend_wrapper, 2000, pcs_ptr->picture_number);
-                    svt_release_object(pcs_ptr->ref_y8b_array[list_index][ref_pic_index]);
+
+                    if (pcs_ptr->ref_y8b_array[list_index][ref_pic_index]) {
+                        //y8b  needs to get decremented at the same time of pa ref
+                        // svt_release_object_with_call_stack(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->friend_wrapper, 2000, pcs_ptr->picture_number);
+                        svt_release_object(pcs_ptr->ref_y8b_array[list_index][ref_pic_index]);
+                    }
                 }
             }
         }
@@ -326,9 +329,12 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
     if (pcs_ptr->pa_reference_picture_wrapper_ptr != NULL) {
         //assert((int32_t)pcs_ptr->pa_reference_picture_wrapper_ptr->live_count > 0);
         svt_release_object(pcs_ptr->pa_reference_picture_wrapper_ptr);
-        //y8b needs to get decremented at the same time of pa ref
-        // svt_release_object_with_call_stack(pcs_ptr->eb_y8b_wrapper_ptr, 2500,  pcs_ptr->picture_number);
-        svt_release_object(pcs_ptr->eb_y8b_wrapper_ptr);
+
+        if (pcs_ptr->eb_y8b_wrapper_ptr) {
+            //y8b needs to get decremented at the same time of pa ref
+            // svt_release_object_with_call_stack(pcs_ptr->eb_y8b_wrapper_ptr, 2500,  pcs_ptr->picture_number);
+            svt_release_object(pcs_ptr->eb_y8b_wrapper_ptr);
+        }
     }
     // Mark that the PCS released PA references
     pcs_ptr->reference_released = 1;

@@ -1233,6 +1233,9 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->input_ptr = (EbBufferHeaderType *)input_pic_wrapper_ptr->object_ptr;
                 pcs_ptr->enhanced_picture_ptr = (EbPictureBufferDesc *)pcs_ptr->input_ptr->p_buffer;
                 pcs_ptr->input_picture_wrapper_ptr = input_pic_wrapper_ptr;
+
+                // overlay does NOT use y8b buffer, set to NULL to avoid eb_y8b_wrapper_ptr->live_count disorder
+                pcs_ptr->eb_y8b_wrapper_ptr        = NULL;
             }
             // Set Picture Control Flags
             pcs_ptr->idr_flag = scs_ptr->encode_context_ptr->initial_picture ||
@@ -1321,9 +1324,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                 svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
             else
                 svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 2);
-            // y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
-            if (!pcs_ptr->is_overlay)
+            if (pcs_ptr->eb_y8b_wrapper_ptr) {
+                // y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
                 svt_object_inc_live_count(pcs_ptr->eb_y8b_wrapper_ptr, 2);
+            }
             if (scs_ptr->static_config.restricted_motion_vector) {
                 struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
                 Av1Common *const                cm       = ppcs_ptr->av1_cm;

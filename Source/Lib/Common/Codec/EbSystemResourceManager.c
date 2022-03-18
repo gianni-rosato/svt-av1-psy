@@ -367,6 +367,8 @@ EbErrorType svt_object_inc_live_count(EbObjectWrapper *wrapper_ptr, uint32_t inc
 
     svt_block_on_mutex(wrapper_ptr->system_resource_ptr->empty_queue->lockout_mutex);
 
+    assert(wrapper_ptr->live_count != EB_ObjectWrapperReleasedValue);
+
     wrapper_ptr->live_count += increment_number;
 
     svt_release_mutex(wrapper_ptr->system_resource_ptr->empty_queue->lockout_mutex);
@@ -576,6 +578,8 @@ EbErrorType svt_release_object(EbObjectWrapper *object_ptr) {
 
     svt_block_on_mutex(object_ptr->system_resource_ptr->empty_queue->lockout_mutex);
 
+    assert(object_ptr->live_count != EB_ObjectWrapperReleasedValue);
+
     // Decrement live_count
     object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count
                                                            : object_ptr->live_count - 1;
@@ -692,6 +696,8 @@ EbErrorType svt_get_empty_object(EbFifo *empty_fifo_ptr, EbObjectWrapper **wrapp
                empty_fifo_ptr->queue_ptr->curr_count,
                (*wrapper_dbl_ptr)->system_resource_ptr->object_total_count);
 #endif
+
+    assert((*wrapper_dbl_ptr)->live_count == 0 || (*wrapper_dbl_ptr)->live_count == EB_ObjectWrapperReleasedValue);
 
     // Reset the wrapper's live_count
     (*wrapper_dbl_ptr)->live_count = 0;

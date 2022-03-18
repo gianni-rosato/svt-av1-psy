@@ -673,7 +673,7 @@ typedef struct PictureParentControlSet {
     EbDctor              dctor;
     EbObjectWrapper     *scs_wrapper_ptr;
     EbObjectWrapper     *input_picture_wrapper_ptr;
-    EbObjectWrapper     *eb_y8b_wrapper_ptr;
+    EbObjectWrapper     *eb_y8b_wrapper_ptr; // when overlay: y8b buffer is not used, should set to NULL.
     EbObjectWrapper     *reference_picture_wrapper_ptr;
     EbObjectWrapper     *pa_reference_picture_wrapper_ptr;
     EbPictureBufferDesc *enhanced_picture_ptr;
