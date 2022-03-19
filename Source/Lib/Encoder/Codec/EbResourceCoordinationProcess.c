@@ -1142,6 +1142,14 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             pcs_ptr = (PictureParentControlSet *)pcs_wrapper_ptr->object_ptr;
 
+            // - p_pcs_wrapper_ptr is a direct copy of pcs_wrapper_ptr (live_count == 1).
+            // - Most of p_pcs_wrapper_ptr in pre-allocated overlay candidates will be released & recycled to empty fifo
+            //     by altref candidate's svt_release_object(pcs_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr) in PictureDecision.
+            // - The recycled ppcs may be assigned a new picture_number in ResourceCoordination.
+            // - If the to-be-removed overlay candidate runs in picture_decision_kernel() after above release/recycle/assign,
+            //     picture_decision_reorder_queue will update by the same picture_number (of the same ppcs ptr) twice and CHECK_REPORT_ERROR_NC occur.
+            // - So need ppcs live_count + 1 before post ResourceCoordinationResults, and release ppcs before end of PictureDecision,
+            //     to avoid recycling overlay candidate's ppcs to empty fifo too early.
             pcs_ptr->p_pcs_wrapper_ptr = pcs_wrapper_ptr;
 
             // reallocate sb_param_array and sb_geom for super-res mode on
@@ -1391,7 +1399,11 @@ void *resource_coordination_kernel(void *input_ptr) {
                                      &output_wrapper_ptr);
                 out_results_ptr = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;
 
-                svt_object_inc_live_count(prev_pcs_wrapper_ptr, 1);      // ppcs live_count + 1 for PA & PD, will svt_release_object(ppcs) in PD.
+                if (scs_ptr->static_config.enable_overlays == TRUE) {
+                    // ppcs live_count + 1 for PictureAnalysis & PictureDecision, will svt_release_object(ppcs) at the end of picture_decision_kernel.
+                    svt_object_inc_live_count(prev_pcs_wrapper_ptr, 1);
+                }
+
                 out_results_ptr->pcs_wrapper_ptr = prev_pcs_wrapper_ptr;
                 // Post the finished Results Object
                 svt_post_full_object(output_wrapper_ptr);

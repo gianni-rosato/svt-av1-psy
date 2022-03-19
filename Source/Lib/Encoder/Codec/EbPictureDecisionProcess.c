@@ -6704,6 +6704,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     // release the pa_reference_picture
                                     svt_release_object(pcs_ptr->overlay_ppcs_ptr->pa_reference_picture_wrapper_ptr);
                                     // release the parent pcs
+                                    // Note: this release will recycle ppcs to empty fifo if not live_count+1 in ResourceCoordination.
                                     svt_release_object(pcs_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
                                     pcs_ptr->overlay_ppcs_ptr = NULL;
                                 }
@@ -7392,7 +7393,6 @@ void* picture_decision_kernel(void *input_ptr)
 
                         if (input_entry_ptr->eb_y8b_wrapper_ptr) {
                             //y8b needs to get decremented at the same time of pa ref
-                            //  svt_release_object_with_call_stack(input_entry_ptr->eb_y8b_wrapper_ptr,1000, input_entry_ptr->picture_number);
                             svt_release_object(input_entry_ptr->eb_y8b_wrapper_ptr);
                         }
 
@@ -7425,8 +7425,10 @@ void* picture_decision_kernel(void *input_ptr)
                 break;
         }
 
-        // release ppcs, since live_count + 1 before post in ResourceCoordination
-        svt_release_object(in_results_ptr->pcs_wrapper_ptr);
+        if (scs_ptr->static_config.enable_overlays == TRUE) {
+            // release ppcs, since live_count + 1 before post in ResourceCoordination
+            svt_release_object(in_results_ptr->pcs_wrapper_ptr);
+        }
 
         // Release the Input Results
         svt_release_object(in_results_wrapper_ptr);

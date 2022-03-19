@@ -3859,7 +3859,6 @@ void *rate_control_kernel(void *input_ptr) {
 
             if (parentpicture_control_set_ptr->eb_y8b_wrapper_ptr) {
                 //y8b needs to get decremented at the same time of regular input
-                //  svt_release_object_with_call_stack(parentpicture_control_set_ptr->eb_y8b_wrapper_ptr, 3000, parentpicture_control_set_ptr->picture_number);
                 svt_release_object(parentpicture_control_set_ptr->eb_y8b_wrapper_ptr);
             }
 
