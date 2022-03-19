@@ -37,6 +37,7 @@ extern "C" {
 #define FTR_CBR                 1 // Adding CBR mode for LD mode
 #define FIX_TF_LDB              1 // Fix TF parameters for LD
 #define FTR_LDB_MT              1 // New Multi-Threading parameters for LD
+#define FTR_IMPROVE_SI          1 // Improve bitrate matching and violation for low intra refresh
 
 #define VMAF_OPT                1 // Optimizing Y-PSNR/Y-SSIM/VMAF
 #define TUNE_M13                1 // Optimizing M13 for better slope
