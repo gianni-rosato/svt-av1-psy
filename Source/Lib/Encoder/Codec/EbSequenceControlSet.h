@@ -321,11 +321,12 @@ typedef struct SequenceControlSet {
     *
     * Default is -1. */
     int new_nearest_comb_inject;
-
+#if !CLN_SCS_CTOR
     /* nsq table
     *
     * Default is -1. */
     int nsq_table;
+#endif
     /* frame end cdf update
     *
     * Default is -1. */
@@ -396,12 +397,12 @@ typedef struct SequenceControlSet {
     *
     * Default is - 1. */
     int pic_based_rate_est;
-
+#if !CLN_SCS_CTOR
     /* Flag to enable the use of non-swaure partitions
     *
     * Default is 1. */
     Bool ext_block_flag;
-
+#endif
     /* Flag to control intraBC mode
     *  0      OFF
     *  1      slow
@@ -445,12 +446,12 @@ typedef struct SequenceControlSet {
     uint8_t calculate_variance;
 
 } SequenceControlSet;
-
+#if !CLN_SCS_CTOR
 typedef struct EbSequenceControlSetInitData {
     EncodeContext *encode_context_ptr;
     int32_t        sb_size;
 } EbSequenceControlSetInitData;
-
+#endif
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;
     EncodeContext      *encode_context_ptr;

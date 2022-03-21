@@ -488,6 +488,32 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
     } else
         scs_ptr->seq_header.enable_warped_motion = (uint8_t)scs_ptr->enable_warped_motion;
 
+#if CLN_SCS_CTOR
+    scs_ptr->seq_header.frame_width_bits = 16;
+    scs_ptr->seq_header.frame_height_bits = 16;
+    scs_ptr->seq_header.frame_id_numbers_present_flag = 0;
+    scs_ptr->seq_header.frame_id_length = FRAME_ID_LENGTH;
+    scs_ptr->seq_header.delta_frame_id_length = DELTA_FRAME_ID_LENGTH;
+
+    // 0 - disable dual interpolation filter
+    // 1 - enable vertical and horiz filter selection
+    scs_ptr->seq_header.enable_dual_filter = 0;
+
+    // 0 - force off
+    // 1 - force on
+    // 2 - adaptive
+    scs_ptr->seq_header.seq_force_screen_content_tools = 2;
+
+    // 0 - Not to force. MV can be in 1/4 or 1/8
+    // 1 - force to integer
+    // 2 - adaptive
+    scs_ptr->seq_header.seq_force_integer_mv = 2;
+
+    scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs = 1;
+    scs_ptr->seq_header.order_hint_info.enable_order_hint = 1;
+    scs_ptr->seq_header.order_hint_info.order_hint_bits = 7;
+#endif
+
     return return_error;
 }
 

@@ -114,6 +114,7 @@ extern "C" {
 #define FIX_REMOVE_SCS_WRAPPER  1 // Remove the scs_wrapper_ptr from pcs; reference the scs directly
 #endif
 #define CLN_SCS_SIG_DERIV       1 // Cleanup setting scs signals in resource coordination kernel
+#define CLN_SCS_CTOR            1 // Cleanup the SCS ctor; remove initializations based on unknown info
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

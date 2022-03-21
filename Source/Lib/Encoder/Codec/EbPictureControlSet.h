@@ -1140,7 +1140,9 @@ typedef struct PictureControlSetInitData {
     uint8_t                  speed_control;
     int8_t                   hbd_mode_decision;
     uint16_t                 film_grain_noise_level;
+#if !CLN_SCS_CTOR
     Bool                   ext_block_flag;
+#endif
     uint8_t                  cdf_mode;
     uint8_t                  over_boundary_block_mode;
     uint8_t                  mfmv;

@@ -1513,7 +1513,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enable_hbd_mode_decision;
         input_data.film_grain_noise_level = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.film_grain_denoise_strength;
         input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_bit_depth;
+#if !CLN_SCS_CTOR
         input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ext_block_flag;
+#endif
         input_data.log2_tile_rows = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_rows;
         input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
 #if CLN_SCS_SIG_DERIV
@@ -3851,6 +3853,37 @@ void copy_api_from_app(
     scs_ptr->max_intra_size = (uint8_t)32;
     scs_ptr->min_intra_size = (uint8_t)8;
     scs_ptr->max_ref_count = 1;
+#if CLN_SCS_CTOR
+    scs_ptr->reference_count = 4;
+
+    // Set Picture Parameters for statistics gathering
+    scs_ptr->picture_analysis_number_of_regions_per_width =
+        HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_WIDTH;
+    scs_ptr->picture_analysis_number_of_regions_per_height =
+        HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_HEIGHT;
+
+    scs_ptr->enable_warped_motion        = DEFAULT;
+    scs_ptr->enable_global_motion        = TRUE;
+    scs_ptr->sg_filter_mode              = DEFAULT;
+    scs_ptr->wn_filter_mode              = DEFAULT;
+    scs_ptr->inter_intra_compound        = DEFAULT;
+    scs_ptr->enable_paeth                = DEFAULT;
+    scs_ptr->enable_smooth               = DEFAULT;
+    scs_ptr->spatial_sse_full_loop_level = DEFAULT;
+    scs_ptr->over_bndry_blk              = DEFAULT;
+    scs_ptr->new_nearest_comb_inject     = DEFAULT;
+    scs_ptr->frame_end_cdf_update        = DEFAULT;
+    scs_ptr->disable_cfl_flag            = DEFAULT;
+    scs_ptr->obmc_level                  = DEFAULT;
+    scs_ptr->rdoq_level                  = DEFAULT;
+    scs_ptr->pred_me                     = DEFAULT;
+    scs_ptr->bipred_3x3_inject           = DEFAULT;
+    scs_ptr->compound_level              = DEFAULT;
+    scs_ptr->filter_intra_level          = DEFAULT;
+    scs_ptr->enable_intra_edge_filter    = DEFAULT;
+    scs_ptr->pic_based_rate_est          = DEFAULT;
+    scs_ptr->block_mean_calc_prec        = BLOCK_MEAN_PREC_SUB;
+#endif
     scs_ptr->palette_level = DEFAULT;
     scs_ptr->intra_angle_delta = DEFAULT;
     scs_ptr->intrabc_mode = DEFAULT;
