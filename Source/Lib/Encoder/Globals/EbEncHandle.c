@@ -3848,10 +3848,12 @@ void copy_api_from_app(
         SVT_WARN("TPL is disabled in low delay applications.\n");
     }
     scs_ptr->enable_qp_scaling_flag = 1;
+#if !CLN_SCS_CTOR
     scs_ptr->max_blk_size = (uint8_t)64;
     scs_ptr->min_blk_size = (uint8_t)8;
     scs_ptr->max_intra_size = (uint8_t)32;
     scs_ptr->min_intra_size = (uint8_t)8;
+#endif
     scs_ptr->max_ref_count = 1;
 #if CLN_SCS_CTOR
     scs_ptr->reference_count = 4;

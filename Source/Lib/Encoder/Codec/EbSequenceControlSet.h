@@ -167,12 +167,13 @@ typedef struct SequenceControlSet {
     uint16_t max_block_cnt;
     /*!< Restoration Unit parameters set for the stream */
     int32_t rest_units_per_tile;
+#if !CLN_SCS_CTOR
     /*!< Block limits */
     uint8_t max_blk_size;
     uint8_t min_blk_size;
     uint8_t max_intra_size;
     uint8_t min_intra_size;
-
+#endif
     /*!< Sub picture reagions for picture analysis */
     uint32_t picture_analysis_number_of_regions_per_width;
     uint32_t picture_analysis_number_of_regions_per_height;
