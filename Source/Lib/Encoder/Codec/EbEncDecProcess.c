@@ -5017,6 +5017,7 @@ uint64_t compute_subres_th(SequenceControlSet *scs, PictureControlSet *pcs,
     }
     return use_subres_th;
 }
+#if !TUNE_LPD0
 // Compute a qp-aware threshold based on the variance of the SB, used to apply selectively apply PF
 uint64_t compute_pf_th(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx) {
     uint32_t fast_lambda  = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
@@ -5038,7 +5039,7 @@ uint64_t compute_pf_th(SequenceControlSet *scs, PictureControlSet *pcs, ModeDeci
 
     return use_pf_th;
 }
-
+#endif
 void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
     PictureParentControlSet *ppcs  = pcs->parent_pcs_ptr;
     Lpd1TxCtrls             *ctrls = &ctx->lpd1_tx_ctrls;
@@ -5369,15 +5370,23 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *s
     if (ctx->pd0_level == VERY_LIGHT_PD0)
         return return_error;
 
+#if TUNE_LPD0
+    uint8_t mds0_level = 4;
+    set_mds0_controls(pcs, ctx, mds0_level);
+#else
     uint8_t mds0_level = 0;
     if (ctx->pd0_level <= LIGHT_PD0_LVL2)
         mds0_level = 4;
     else
         mds0_level = 0;
-
     set_mds0_controls(pcs, ctx, mds0_level);
+#endif
     set_chroma_controls(ctx, 0 /*chroma off*/);
 
+#if TUNE_LPD0
+    // Using PF in LPD0 may cause some VQ issues
+    set_pf_controls(ctx, 1);
+#else
     uint8_t pf_level = 1;
     if (pcs->slice_type != I_SLICE && !pcs->parent_pcs_ptr->transition_present) {
         if (ctx->pd0_level <= LIGHT_PD0_LVL2) {
@@ -5438,6 +5447,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *s
         pf_level = 1;
     }
     set_pf_controls(ctx, pf_level);
+#endif
 
     uint8_t subres_level;
     if (ctx->pd0_level <= LIGHT_PD0_LVL1) {

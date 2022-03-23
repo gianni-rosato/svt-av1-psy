@@ -122,6 +122,7 @@ extern "C" {
 #define FIX_RMV                 1  // fix for restricted MVs
 
 #define FIX_UNIPSY_BIAS         1 // Adjust uni_psy_bias to fix jittering for issue 1847
+#define TUNE_LPD0               1 // Tune settings used in LPD0 LVL4+
 
 
 //FOR DEBUGGING - Do not remove
