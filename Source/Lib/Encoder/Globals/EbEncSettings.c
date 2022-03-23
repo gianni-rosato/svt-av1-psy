@@ -1163,6 +1163,53 @@ static EbErrorType str_to_intra_rt(const char *nptr, SvtAv1IntraRefreshType *out
     return EB_ErrorBadParameter;
 }
 
+static EbErrorType str_to_asm(const char *nptr, CPU_FLAGS *out) {
+    // need to keep in sync with set_asm_type()
+    // need to handle numbers in here since the numbers to no match the
+    // internal representation
+    const struct {
+        const char *name;
+        CPU_FLAGS   flag;
+    } simds[] = {
+        {"c", 0},
+        {"0", 0},
+        {"mmx", (CPU_FLAGS_MMX << 1) - 1},
+        {"1", (CPU_FLAGS_MMX << 1) - 1},
+        {"sse", (CPU_FLAGS_SSE << 1) - 1},
+        {"2", (CPU_FLAGS_SSE << 1) - 1},
+        {"sse2", (CPU_FLAGS_SSE2 << 1) - 1},
+        {"3", (CPU_FLAGS_SSE2 << 1) - 1},
+        {"sse3", (CPU_FLAGS_SSE3 << 1) - 1},
+        {"4", (CPU_FLAGS_SSE3 << 1) - 1},
+        {"ssse3", (CPU_FLAGS_SSSE3 << 1) - 1},
+        {"5", (CPU_FLAGS_SSSE3 << 1) - 1},
+        {"sse4_1", (CPU_FLAGS_SSE4_1 << 1) - 1},
+        {"6", (CPU_FLAGS_SSE4_1 << 1) - 1},
+        {"sse4_2", (CPU_FLAGS_SSE4_2 << 1) - 1},
+        {"7", (CPU_FLAGS_SSE4_2 << 1) - 1},
+        {"avx", (CPU_FLAGS_AVX << 1) - 1},
+        {"8", (CPU_FLAGS_AVX << 1) - 1},
+        {"avx2", (CPU_FLAGS_AVX2 << 1) - 1},
+        {"9", (CPU_FLAGS_AVX2 << 1) - 1},
+        {"avx512", (CPU_FLAGS_AVX512VL << 1) - 1},
+        {"10", (CPU_FLAGS_AVX512VL << 1) - 1},
+        {"max", CPU_FLAGS_ALL},
+        {"11", CPU_FLAGS_ALL},
+    };
+    const size_t simds_size = sizeof(simds) / sizeof(simds[0]);
+
+    for (size_t i = 0; i < simds_size; i++) {
+        if (!strcmp(nptr, simds[i].name)) {
+            *out = simds[i].flag;
+            return EB_ErrorNone;
+        }
+    }
+
+    *out = CPU_FLAGS_INVALID;
+
+    return EB_ErrorBadParameter;
+}
+
 static EbErrorType str_to_color_primaries(const char *nptr, uint8_t *out) {
     const struct {
         const char      *name;
@@ -1354,6 +1401,9 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         return str_to_sframe_mode(value, &config_struct->sframe_mode) == EB_ErrorBadParameter
             ? str_to_uint(value, (uint32_t *)&config_struct->sframe_mode)
             : EB_ErrorNone;
+
+    if (!strcmp(name, "asm"))
+        return str_to_asm(value, &config_struct->use_cpu_flags);
 
     COLOR_OPT("color-primaries", color_primaries);
     COLOR_OPT("transfer-characteristics", transfer_characteristics);
