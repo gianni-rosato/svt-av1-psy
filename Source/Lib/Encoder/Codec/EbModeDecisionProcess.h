@@ -943,6 +943,14 @@ static const uint8_t quantizer_to_qindex[] = {
 static const int percents[2][FIXED_QP_OFFSET_COUNT] = {
     {75, 70, 60, 20, 15, 0}, {76, 60, 30, 15, 8, 4} // libaom offsets
 };
+#if FIX_UNIPSY_BIAS
+static const uint8_t uni_psy_bias[] = {
+    85,  85,  85,  85,  85,  85,  85,  85,  85,  85,  85,  85,  85,  85,  85,  85,
+    95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,
+    95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+};
+#else
 #if OPT_VQ_MODE
 static const uint8_t uni_psy_bias[] = {
      70,  70,  70,  70,  70,  70,  70,  70,  70,  70,  70,  70,  70,  70,  70,  70,
@@ -957,6 +965,7 @@ static const uint64_t uni_psy_bias[] = {
     80,  80,  80,  80,  80,  80,  80,  80,  90,  90,  90,  90,  90,  90,  90,  90,
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
 };
+#endif
 #endif
 extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
                                 PictureControlSet *pcs_ptr, uint16_t tile_row_idx,
