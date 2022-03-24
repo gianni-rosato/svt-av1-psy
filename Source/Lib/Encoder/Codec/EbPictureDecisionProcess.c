@@ -60,10 +60,11 @@ uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
 {
     uint64_t ref_poc;
-
-    if ((int64_t)curr_picture_number - (int64_t)delta_poc < (int64_t)context->key_poc) {
-        ref_poc = context->key_poc;
-    } else {
+    uint64_t boundary_poc = MAX(context->key_poc, context->sframe_poc);
+    if ((int64_t)curr_picture_number - (int64_t)delta_poc < (int64_t)boundary_poc) {
+        ref_poc = boundary_poc;
+    }
+    else {
         ref_poc = (int64_t)curr_picture_number - (int64_t)delta_poc;
     }
 
@@ -325,6 +326,8 @@ EbErrorType picture_decision_context_ctor(
 #else
     context_ptr->transition_present = 0;
 #endif
+    context_ptr->sframe_poc = 0;
+    context_ptr->sframe_due = 0;
     return EB_ErrorNone;
 }
 #if FIX_SCD
@@ -2545,7 +2548,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->frame_end_cdf_update_mode = scs_ptr->frame_end_cdf_update;
 
-
     (void)context_ptr;
 
     // Tune TPL for better chroma.Only for 240P. 0 is OFF
@@ -2845,6 +2847,68 @@ static void set_key_frame_rps(PictureParentControlSet *pcs, PictureDecisionConte
     return;
 }
 
+// Decide whether to make an inter frame into an S-Frame
+static void set_sframe_type(PictureParentControlSet *ppcs, EncodeContext *encode_context_ptr, PictureDecisionContext *context_ptr)
+{
+#if FIX_REMOVE_SCS_WRAPPER
+    SequenceControlSet* scs = ppcs->scs_ptr;
+#else
+    SequenceControlSet *scs = (SequenceControlSet*)ppcs->scs_wrapper_ptr->object_ptr;
+#endif
+    FrameHeader *frm_hdr = &ppcs->frm_hdr;
+    const int sframe_dist = encode_context_ptr->sf_cfg.sframe_dist;
+    const EbSFrameMode sframe_mode = encode_context_ptr->sf_cfg.sframe_mode;
+
+    // s-frame supports low-delay
+    assert_err(scs->static_config.pred_structure == 0 || scs->static_config.pred_structure == 1,
+        "S-frame supports only low delay");
+    // handle multiple hierarchical levels only, no flat IPPP support
+    assert_err(ppcs->hierarchical_levels > 0, "S-frame doesn't support flat IPPP...");
+
+    const int is_arf = ppcs->temporal_layer_index == 0 ? TRUE : FALSE;
+    const uint64_t frames_since_key = ppcs->picture_number - context_ptr->key_poc;
+    if (sframe_mode == SFRAME_STRICT_BASE) {
+        // SFRAME_STRICT_ARF: insert sframe if it matches altref frame.
+        if (is_arf && (frames_since_key % sframe_dist) == 0) {
+            frm_hdr->frame_type = S_FRAME;
+        }
+    }
+    else {
+        // SFRAME_NEAREST_ARF: if sframe will be inserted at the next available altref frame
+        if ((frames_since_key % sframe_dist) == 0) {
+            context_ptr->sframe_due = 1;
+        }
+        if (context_ptr->sframe_due && is_arf) {
+            frm_hdr->frame_type = S_FRAME;
+            context_ptr->sframe_due = 0;
+        }
+    }
+
+#if DEBUG_SFRAME
+    if (frm_hdr->frame_type == S_FRAME) {
+        fprintf(stderr, "\nFrame %d - set sframe\n", (int)ppcs->picture_number);
+    }
+#endif
+    return;
+}
+
+// Update RPS info for S-Frame
+static void set_sframe_rps(PictureParentControlSet *ppcs, EncodeContext *encode_context_ptr, PictureDecisionContext *context_ptr)
+{
+    ppcs->frm_hdr.error_resilient_mode = 1;
+    ppcs->av1_ref_signal.refresh_frame_mask = 0xFF;
+
+    context_ptr->lay0_toggle = 0;
+    context_ptr->lay1_toggle = 0;
+    context_ptr->lay2_toggle = 0;
+
+    // Bookmark latest switch frame poc to prevent following frames referencing frames before the switch frame
+    context_ptr->sframe_poc = ppcs->picture_number;
+    // Reset pred_struct_position
+    encode_context_ptr->elapsed_non_cra_count = 0;
+    return;
+}
+
 /*************************************************
 * AV1 Reference Picture Signalling:
 * Stateless derivation of RPS info to be stored in
@@ -2885,10 +2949,22 @@ static void  av1_generate_rps_info(
 #endif
     PredictionStructureEntry *pred_position_ptr = pcs_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[pcs_ptr->pred_struct_index];
     //Set frame type
-    if (pcs_ptr->slice_type == I_SLICE)
+    if (pcs_ptr->slice_type == I_SLICE) {
         frm_hdr->frame_type = pcs_ptr->idr_flag ? KEY_FRAME : INTRA_ONLY_FRAME;
-    else
+        pcs_ptr->av1_ref_signal.refresh_frame_mask = 0xFF;
+#if DEBUG_SFRAME
+        fprintf(stderr, "\nFrame %d - key frame\n", (int)pcs_ptr->picture_number);
+#endif
+    }
+    else {
         frm_hdr->frame_type = INTER_FRAME;
+
+        // test s-frame on base layer inter frames
+        if (encode_context_ptr->sf_cfg.sframe_dist > 0) {
+            set_sframe_type(pcs_ptr, encode_context_ptr, context_ptr);
+        }
+    }
+
 #if !FRFCTR_RC_P8
     Av1Common *  cm = pcs_ptr->av1_cm;
     cm->current_frame.frame_type = frm_hdr->frame_type;
@@ -4846,6 +4922,10 @@ static void  av1_generate_rps_info(
         SVT_ERROR("Not supported GOP structure!");
         exit(0);
     }
+
+    if (frm_hdr->frame_type == S_FRAME) {
+        set_sframe_rps(pcs_ptr, encode_context_ptr, context_ptr);
+    }
 }
 
 static EbErrorType av1_generate_rps_info_from_user_config(
@@ -6302,6 +6382,23 @@ void update_count_try(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_
         }
     }
 }
+/*
+* Switch frame's pcs_ptr->dpb_order_hint[8] will be packed to uncompressed_header as ref_order_hint[8], ref to spec 5.9.2.
+* Pictures are inputted in this process in display order and no need to consider reordering since the switch frame feature only supports low delay pred structure by design (not by spec).
+*/
+static void update_sframe_ref_order_hint(PictureParentControlSet *ppcs, PictureDecisionContext *context_ptr)
+{
+    assert(sizeof(ppcs->dpb_order_hint) == sizeof(context_ptr->ref_order_hint));
+    memcpy(ppcs->dpb_order_hint, context_ptr->ref_order_hint, sizeof(ppcs->dpb_order_hint));
+    if (ppcs->av1_ref_signal.refresh_frame_mask != 0) {
+        const uint32_t cur_order_hint = ppcs->picture_number % ((uint64_t)1 << (ppcs->scs_ptr->seq_header.order_hint_info.order_hint_bits));
+        for (int32_t i = 0; i < REF_FRAMES; i++) {
+            if ((ppcs->av1_ref_signal.refresh_frame_mask >> i) & 1) {
+                context_ptr->ref_order_hint[i] = cur_order_hint;
+            }
+        }
+    }
+}
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -7125,8 +7222,8 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->frm_hdr.tx_mode = (pcs_ptr->tx_size_search_mode) ?
                                     TX_MODE_SELECT :
                                     TX_MODE_LARGEST;
-                                // Update the Dependant List Count - If there was an I-frame or Scene Change, then cleanup the Picture Decision PA Reference Queue Dependent Counts
-                                if (pcs_ptr->slice_type == I_SLICE)
+                                // Update the Dependant List Count - If there was an I-frame or Scene Change or S-frame, then cleanup the Picture Decision PA Reference Queue Dependent Counts
+                                if (pcs_ptr->slice_type == I_SLICE || pcs_ptr->frm_hdr.frame_type == S_FRAME)
                                 {
                                     input_queue_index = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
 
@@ -7145,8 +7242,19 @@ void* picture_decision_kernel(void *input_ptr)
                                                 input_entry_ptr->list0.list[dep_idx]/*,
                                                 scs_ptr->bits_for_picture_order_count*/);
 
-                                                // If Dependent POC is greater or equal to the IDR POC
-                                            if (dep_poc >=(int64_t) pcs_ptr->picture_number && input_entry_ptr->list0.list[dep_idx]) {
+                                            // If Dependent POC is greater or equal to the IDR POC
+                                            Bool cleanup_dep = FALSE;
+                                            if (pcs_ptr->slice_type == I_SLICE) {
+                                                if (dep_poc >= (int64_t)pcs_ptr->picture_number && input_entry_ptr->list0.list[dep_idx]) {
+                                                    cleanup_dep = TRUE;
+                                                }
+                                            }
+                                            else if (dep_poc > (int64_t)pcs_ptr->picture_number && input_entry_ptr->list0.list[dep_idx]) {  // s-frame
+                                                // Reason for why using condition 'dep_poc > (int64_t)pcs_ptr->picture_number', but not '>=' like I-SLICE case:
+                                                // s-frame is allowed to use forward reference frames while I_SLICE has no reference frame.
+                                                cleanup_dep = TRUE;
+                                            }
+                                            if (cleanup_dep) {
                                                 input_entry_ptr->list0.list[dep_idx] = 0;
 
                                                 // Decrement the Reference's referenceCount
@@ -7172,8 +7280,19 @@ void* picture_decision_kernel(void *input_ptr)
                                                 input_entry_ptr->list1.list[dep_idx]/*,
                                                 scs_ptr->bits_for_picture_order_count*/);
 
-                                                // If Dependent POC is greater or equal to the IDR POC
-                                            if (((dep_poc >= (int64_t)pcs_ptr->picture_number) || (((pcs_ptr->pre_assignment_buffer_count != pcs_ptr->pred_struct_ptr->pred_struct_period) || (pcs_ptr->idr_flag == TRUE)) && (dep_poc > ((int64_t)pcs_ptr->picture_number - (int64_t)pcs_ptr->pre_assignment_buffer_count)))) && input_entry_ptr->list1.list[dep_idx]) {
+                                            // If Dependent POC is greater or equal to the IDR POC
+                                            Bool cleanup_dep = FALSE;
+                                            if (pcs_ptr->slice_type == I_SLICE) {
+                                                if (((dep_poc >= (int64_t)pcs_ptr->picture_number) || (((pcs_ptr->pre_assignment_buffer_count != pcs_ptr->pred_struct_ptr->pred_struct_period) || (pcs_ptr->idr_flag == TRUE)) && (dep_poc > ((int64_t)pcs_ptr->picture_number - (int64_t)pcs_ptr->pre_assignment_buffer_count)))) && input_entry_ptr->list1.list[dep_idx]) {
+                                                    cleanup_dep = TRUE;
+                                                }
+                                            }
+                                            else if (dep_poc > (int64_t)pcs_ptr->picture_number && input_entry_ptr->list1.list[dep_idx]) {  // s-frame
+                                                cleanup_dep = TRUE;
+                                            }
+
+                                            if (cleanup_dep)
+                                            {
                                                 input_entry_ptr->list1.list[dep_idx] = 0;
 
                                                 // Decrement the Reference's referenceCount
@@ -7318,6 +7437,10 @@ void* picture_decision_kernel(void *input_ptr)
                             }
                             else {
                                 pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[out_stride_diff64]->object_ptr;
+
+                                if (scs_ptr->static_config.sframe_dist != 0) {
+                                    update_sframe_ref_order_hint(pcs_ptr, context_ptr);
+                                }
                             }
                             pcs_ptr->picture_number_alt = encode_context_ptr->picture_number_alt++;
 

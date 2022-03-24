@@ -117,6 +117,10 @@ extern "C" {
 #define CLN_SCS_CTOR            1 // Cleanup the SCS ctor; remove initializations based on unknown info
 
 #define FIX_RC_CRASH            1 // Fix the RC crash in debug mode
+
+#define SFRAME_FORCE_RMV        1  // force restricted MVs on s-frame
+#define FIX_RMV                 1  // fix for restricted MVs
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -142,6 +146,9 @@ extern "C" {
 #define DEBUG_SUPERRES_RECODE   0
 #define DEBUG_SUPERRES_ENERGY   0
 #define DEBUG_RC_CAP_LOG        0 // Prints for RC cap
+
+// Switch frame debugging code
+#define DEBUG_SFRAME            0
 
 #ifdef __cplusplus
 }

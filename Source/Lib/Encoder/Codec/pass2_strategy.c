@@ -219,11 +219,11 @@ static int get_twopass_worst_quality(PictureParentControlSet *pcs_ptr, const dou
     uint32_t                    mb_cols;
     uint32_t                    mb_rows;
     if (scs_ptr->mid_pass_ctrls.ds) {
-        mb_cols = 2 * (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
-        mb_rows = 2 * (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+        mb_cols = 2 * (scs_ptr->max_input_luma_width + 16 - 1) / 16;
+        mb_rows = 2 * (scs_ptr->max_input_luma_height + 16 - 1) / 16;
     } else {
-        mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
-        mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+        mb_cols = (scs_ptr->max_input_luma_width + 16 - 1) / 16;
+        mb_rows = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
     }
     inactive_zone = fclamp(inactive_zone, 0.0, 1.0);
 
@@ -2106,9 +2106,9 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
     const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
     uint32_t                    mb_rows;
     if (scs_ptr->mid_pass_ctrls.ds) {
-        mb_rows = 2 * (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+        mb_rows = 2 * (scs_ptr->max_input_luma_height + 16 - 1) / 16;
     } else {
-        mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+        mb_rows = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
     }
 #if FRFCTR_RC_P9
     if (pcs_ptr->picture_number == 0 && twopass->stats_buf_ctx->total_stats &&
@@ -2418,8 +2418,8 @@ void process_rc_stat(PictureParentControlSet *pcs_ptr) {
 // from aom ratectrl.c
 static void av1_rc_set_gf_interval_range(SequenceControlSet *scs_ptr, RATE_CONTROL *const rc) {
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
-    const uint32_t width              = scs_ptr->seq_header.max_frame_width;
-    const uint32_t height             = scs_ptr->seq_header.max_frame_height;
+    const uint32_t width              = scs_ptr->max_input_luma_width;
+    const uint32_t height             = scs_ptr->max_input_luma_height;
     {
         // Set Maximum gf/arf interval
 #if FRFCTR_RC_P4
@@ -2504,15 +2504,15 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
 
     const int is_vbr = scs_ptr->static_config.rate_control_mode == 1;
     if (scs_ptr->mid_pass_ctrls.ds) {
-        frame_info->frame_width  = scs_ptr->seq_header.max_frame_width << 1;
-        frame_info->frame_height = scs_ptr->seq_header.max_frame_height << 1;
-        frame_info->mb_cols      = ((scs_ptr->seq_header.max_frame_width + 16 - 1) / 16) << 1;
-        frame_info->mb_rows      = ((scs_ptr->seq_header.max_frame_height + 16 - 1) / 16) << 1;
+        frame_info->frame_width  = scs_ptr->max_input_luma_width << 1;
+        frame_info->frame_height = scs_ptr->max_input_luma_height << 1;
+        frame_info->mb_cols      = ((scs_ptr->max_input_luma_width + 16 - 1) / 16) << 1;
+        frame_info->mb_rows      = ((scs_ptr->max_input_luma_height + 16 - 1) / 16) << 1;
     } else {
-        frame_info->frame_width  = scs_ptr->seq_header.max_frame_width;
-        frame_info->frame_height = scs_ptr->seq_header.max_frame_height;
-        frame_info->mb_cols      = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
-        frame_info->mb_rows      = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+        frame_info->frame_width  = scs_ptr->max_input_luma_width;
+        frame_info->frame_height = scs_ptr->max_input_luma_height;
+        frame_info->mb_cols      = (scs_ptr->max_input_luma_width + 16 - 1) / 16;
+        frame_info->mb_rows      = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
     }
     frame_info->num_mbs   = frame_info->mb_cols * frame_info->mb_rows;
     frame_info->bit_depth = scs_ptr->static_config.encoder_bit_depth;
@@ -2551,6 +2551,8 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
 #if !FRFCTR_RC_P3
     encode_context_ptr->kf_cfg.key_freq_max      = scs_ptr->static_config.intra_period_length + 1;
 #endif
+    encode_context_ptr->sf_cfg.sframe_dist = scs_ptr->static_config.sframe_dist;
+    encode_context_ptr->sf_cfg.sframe_mode = scs_ptr->static_config.sframe_mode;
 }
 /******************************************************
  * Read Stat from File
@@ -2682,9 +2684,9 @@ void find_init_qp_middle_pass(SequenceControlSet *scs_ptr, PictureParentControlS
         rc->best_quality                   = rc_cfg->best_allowed_q;
         uint32_t mb_rows;
         if (scs_ptr->mid_pass_ctrls.ds)
-            mb_rows = 2 * (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+            mb_rows = 2 * (scs_ptr->max_input_luma_height + 16 - 1) / 16;
         else
-            mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+            mb_rows = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
         const int    section_target_bandwidth = get_section_target_bandwidth(pcs_ptr);
         const double section_length           = twopass->stats_buf_ctx->total_left_stats->count;
         const double section_error = twopass->stats_buf_ctx->total_left_stats->coded_error /

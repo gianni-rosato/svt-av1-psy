@@ -1361,8 +1361,8 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     RATE_CONTROL               *rc                 = &encode_context_ptr->rc;
     const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
 #if !FRFCTR_RC_P5
-    const uint32_t              width              = scs_ptr->seq_header.max_frame_width;
-    const uint32_t              height             = scs_ptr->seq_header.max_frame_height;
+    const uint32_t              width              = scs_ptr->max_input_luma_width;
+    const uint32_t              height             = scs_ptr->max_input_luma_height;
 #endif
     int                         i;
 #if FTR_CBR

@@ -3408,8 +3408,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     scs_ptr->chroma_width = scs_ptr->max_input_luma_width >> subsampling_x;
     scs_ptr->chroma_height = scs_ptr->max_input_luma_height >> subsampling_y;
-    scs_ptr->seq_header.max_frame_width = scs_ptr->max_input_luma_width;
-    scs_ptr->seq_header.max_frame_height = scs_ptr->max_input_luma_height;
     scs_ptr->static_config.source_width = scs_ptr->max_input_luma_width;
     scs_ptr->static_config.source_height = scs_ptr->max_input_luma_height;
     if (scs_ptr->static_config.superres_mode == SUPERRES_FIXED &&
@@ -3462,7 +3460,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #endif
     derive_input_resolution(
         &scs_ptr->input_resolution,
-        scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
+        scs_ptr->max_input_luma_width *scs_ptr->max_input_luma_height);
     // Set tune params
     derive_vq_params(scs_ptr);
 
@@ -3552,6 +3550,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         else
             scs_ptr->super_block_size = 64;
     if (scs_ptr->static_config.rate_control_mode && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && !scs_ptr->lap_rc)
+        scs_ptr->super_block_size = 64;
+    // When switch frame is on, all renditions must have same super block size. See spec 5.5.1, 5.9.15.
+    if (scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.sframe_dist != 0)
         scs_ptr->super_block_size = 64;
 #if CLN_SCS_SIG_DERIV
     // Set config info related to SB size
@@ -3783,11 +3784,11 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
         if (scs_ptr->mid_pass_ctrls.ds)
             derive_input_resolution(
                 &input_resolution,
-                (scs_ptr->seq_header.max_frame_width << 1)*(scs_ptr->seq_header.max_frame_height << 1));
+                (scs_ptr->max_input_luma_width << 1)*(scs_ptr->max_input_luma_height << 1));
         else
             derive_input_resolution(
                 &input_resolution,
-                scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
+                scs_ptr->max_input_luma_width*scs_ptr->max_input_luma_height);
         double lm_th = (0.6 + resolution_offset[scs_ptr->ipp_was_ds][input_resolution]);
         uint32_t fps = (uint32_t)((scs_ptr->static_config.frame_rate > 1000) ?
             scs_ptr->static_config.frame_rate >> 16 :
@@ -4231,6 +4232,13 @@ void copy_api_from_app(
     scs_ptr->static_config.mastering_display = config_struct->mastering_display;
     scs_ptr->static_config.content_light_level = config_struct->content_light_level;
 
+    // switch frame
+    scs_ptr->static_config.sframe_dist = config_struct->sframe_dist;
+    scs_ptr->static_config.sframe_mode = config_struct->sframe_mode;
+    scs_ptr->seq_header.max_frame_width = config_struct->forced_max_frame_width > 0 ? config_struct->forced_max_frame_width
+        : scs_ptr->static_config.sframe_dist > 0 ? 16384 : scs_ptr->max_input_luma_width;
+    scs_ptr->seq_header.max_frame_height = config_struct->forced_max_frame_height > 0 ? config_struct->forced_max_frame_height
+        : scs_ptr->static_config.sframe_dist > 0 ? 8704 : scs_ptr->max_input_luma_height;
     return;
 }
 
@@ -4265,6 +4273,10 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
     MiniGopSizeCtrls *mgs_ctls = &enc_handle->scs_instance_array[instance_index]->scs_ptr->mgs_ctls;
     uint8_t mg_level = (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.pass == ENC_MIDDLE_PASS || enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.pass == ENC_LAST_PASS) ? 1 : 0;
+    if (mg_level != 0 && enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.sframe_dist > 0) {
+        // Respect hierarchical_levels setting when switch frame is on, otherwise would break mini GOP alignment
+        mg_level = 0;
+    }
     enc_handle->scs_instance_array[instance_index]->scs_ptr->max_heirachical_level = enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.hierarchical_levels;
     enc_handle->scs_instance_array[instance_index]->scs_ptr->enable_adaptive_mini_gop = 0;
     set_mini_gop_size_controls(mgs_ctls, mg_level, enc_handle->scs_instance_array[instance_index]->scs_ptr->input_resolution);

@@ -1082,6 +1082,15 @@ void *picture_manager_kernel(void *input_ptr) {
                                     // Decrement the Reference's dependent_count Count
                                     --reference_entry_ptr->dependent_count;
 
+#if DEBUG_SFRAME
+                                    if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
+                                    {
+                                        fprintf(stderr, "\nframe %d, layer %d, ref-list-0 count %u, ref frame %d, ref frame remain dep count %d\n",
+                                            (int)child_pcs_ptr->picture_number, entry_pcs_ptr->temporal_layer_index,
+                                            entry_pcs_ptr->ref_list0_count, (int)child_pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][ref_idx], reference_entry_ptr->dependent_count);
+                                    }
+#endif
+
                                     CHECK_REPORT_ERROR(
                                         (reference_entry_ptr->dependent_count != ~0u),
                                         encode_context_ptr->app_callback_ptr,
@@ -1170,6 +1179,15 @@ void *picture_manager_kernel(void *input_ptr) {
                                     // Decrement the Reference's dependent_count Count
                                     --reference_entry_ptr->dependent_count;
 
+#if DEBUG_SFRAME
+                                    if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
+                                    {
+                                        fprintf(stderr, "\nframe %d, layer %d, ref-list-1 count %u, ref frame %d, ref frame remain dep count %d\n",
+                                            (int)child_pcs_ptr->picture_number, entry_pcs_ptr->temporal_layer_index,
+                                            entry_pcs_ptr->ref_list1_count, (int)child_pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][ref_idx], reference_entry_ptr->dependent_count);
+                                    }
+#endif
+
                                     CHECK_REPORT_ERROR(
                                         (reference_entry_ptr->dependent_count != ~0u),
                                         encode_context_ptr->app_callback_ptr,
@@ -1186,7 +1204,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         }
 
                         if (entry_pcs_ptr->frame_end_cdf_update_mode) {
-                            if (entry_pcs_ptr->slice_type != I_SLICE)
+                            if (entry_pcs_ptr->slice_type != I_SLICE && entry_pcs_ptr->frm_hdr.frame_type != S_FRAME)
                                 child_pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame =
                                     ref_index;
                             else

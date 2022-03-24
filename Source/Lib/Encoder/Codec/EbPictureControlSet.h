@@ -1100,6 +1100,8 @@ typedef struct PictureParentControlSet {
     int8_t   tf_motion_direction; //motion direction in TF   -1:invalid   0:horz  1:vert
     uint8_t  adjust_under_shoot_gf;
     int32_t  is_noise_level;
+
+    uint32_t dpb_order_hint[REF_FRAMES];  // spec 6.8.2. ref_order_hint[]
 } PictureParentControlSet;
 
 typedef struct TplDispResults {

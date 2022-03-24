@@ -468,9 +468,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     //MFMV
 #if CLN_SIG_DERIV
-    if (is_islice || scs_ptr->mfmv_enabled == 0) {
+    if (is_islice || scs_ptr->mfmv_enabled == 0 || pcs_ptr->parent_pcs_ptr->frm_hdr.error_resilient_mode) {
 #else
-    if (slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
+    if (slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0 || pcs_ptr->parent_pcs_ptr->frm_hdr.error_resilient_mode) {
 #endif
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     } else {
@@ -755,6 +755,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 1;
 #endif
+
     // Set the level for the candidate(s) reduction feature
     pcs_ptr->cand_reduction_level = 0;
 #if CLN_SIG_DERIV

@@ -136,12 +136,18 @@ typedef struct SeqHeader {
      * height syntax elements*/
     uint8_t frame_height_bits;
 
-    /*!< Specifies the maximum frame width minus 1 for the frames represented
-     * by this sequence header */
+    /*!< Specifies the maximum frame width for the frames represented by this sequence header
+     * (equals to max_frame_width_minus_1 + 1, spec 5.5.1).
+     * Actual frame width could be equal to or less than this value. E.g. Use this value to indicate
+     * the maximum width between renditions when switch frame feature is on.
+     * Use original un-aligned max width when writing seq header.*/
     uint16_t max_frame_width;
 
-    /*!< Specifies the maximum frame height minus 1 for the frames represented
-     * by this sequence header */
+    /*!< Specifies the maximum frame height for the frames represented by this sequence header
+     * (equals to max_frame_height_minus_1 + 1, spec 5.5.1).
+     * Actual frame height could be equal to or less than this value. E.g. Use this value to indicate
+     * the maximum height between renditions when switch frame feature is on.
+     * Use original un-aligned max height when writing seq header.*/
     uint16_t max_frame_height;
 
     /*!< Specifies whether frame id numbers are present in the coded video

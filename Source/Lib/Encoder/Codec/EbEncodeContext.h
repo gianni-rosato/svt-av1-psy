@@ -190,7 +190,8 @@ typedef struct EncodeContext {
 #if !FRFCTR_RC_P4
     GFConfig             gf_cfg;
 #endif
-    FIRSTPASS_STATS     *frame_stats_buffer;
+    SwitchFrameCfg       sf_cfg;
+    FIRSTPASS_STATS *    frame_stats_buffer;
     // Number of stats buffers required for look ahead
     int               num_lap_buffers;
     STATS_BUFFER_CTX  stats_buf_context;

@@ -504,9 +504,9 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
     uint16_t    sb_index;
     uint16_t    raster_scan_blk_index;
 
-    uint16_t picture_sb_width = (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) /
+    uint16_t picture_sb_width = (scs_ptr->max_input_luma_width + scs_ptr->sb_sz - 1) /
         scs_ptr->sb_sz;
-    uint16_t picture_sb_height = (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_sz - 1) /
+    uint16_t picture_sb_height = (scs_ptr->max_input_luma_height + scs_ptr->sb_sz - 1) /
         scs_ptr->sb_sz;
     //free old one;
     EB_FREE_ARRAY(scs_ptr->sb_params_array);
@@ -523,16 +523,16 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
             scs_ptr->sb_params_array[sb_index].vertical_index * scs_ptr->sb_sz;
 
         scs_ptr->sb_params_array[sb_index].width =
-            (uint8_t)(((scs_ptr->seq_header.max_frame_width -
+            (uint8_t)(((scs_ptr->max_input_luma_width -
                         scs_ptr->sb_params_array[sb_index].origin_x) < scs_ptr->sb_sz)
-                          ? scs_ptr->seq_header.max_frame_width -
+                          ? scs_ptr->max_input_luma_width -
                               scs_ptr->sb_params_array[sb_index].origin_x
                           : scs_ptr->sb_sz);
 
         scs_ptr->sb_params_array[sb_index].height =
-            (uint8_t)(((scs_ptr->seq_header.max_frame_height -
+            (uint8_t)(((scs_ptr->max_input_luma_height -
                         scs_ptr->sb_params_array[sb_index].origin_y) < scs_ptr->sb_sz)
-                          ? scs_ptr->seq_header.max_frame_height -
+                          ? scs_ptr->max_input_luma_height -
                               scs_ptr->sb_params_array[sb_index].origin_y
                           : scs_ptr->sb_sz);
 
@@ -546,9 +546,9 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
             (scs_ptr->sb_params_array[sb_index].origin_x < scs_ptr->sb_sz) ||
                 (scs_ptr->sb_params_array[sb_index].origin_y < scs_ptr->sb_sz) ||
                 (scs_ptr->sb_params_array[sb_index].origin_x >
-                 scs_ptr->seq_header.max_frame_width - scs_ptr->sb_sz) ||
+                 scs_ptr->max_input_luma_width - scs_ptr->sb_sz) ||
                 (scs_ptr->sb_params_array[sb_index].origin_y >
-                 scs_ptr->seq_header.max_frame_height - scs_ptr->sb_sz)
+                 scs_ptr->max_input_luma_height - scs_ptr->sb_sz)
             ? 1
             : 0;
 
@@ -559,11 +559,11 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
                 ((scs_ptr->sb_params_array[sb_index].origin_x +
                       raster_scan_blk_x[raster_scan_blk_index] +
                       raster_scan_blk_size[raster_scan_blk_index] >
-                  scs_ptr->seq_header.max_frame_width) ||
+                  scs_ptr->max_input_luma_width) ||
                  (scs_ptr->sb_params_array[sb_index].origin_y +
                       raster_scan_blk_y[raster_scan_blk_index] +
                       raster_scan_blk_size[raster_scan_blk_index] >
-                  scs_ptr->seq_header.max_frame_height))
+                  scs_ptr->max_input_luma_height))
                 ? FALSE
                 : TRUE;
         }
@@ -583,9 +583,9 @@ EbErrorType rtime_alloc_sb_geom(SequenceControlSet *scs_ptr, uint32_t size) {
 EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
     uint16_t sb_index;
     uint16_t md_scan_block_index;
-    uint16_t picture_sb_width = (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_size_pix - 1) /
+    uint16_t picture_sb_width = (scs_ptr->max_input_luma_width + scs_ptr->sb_size_pix - 1) /
         scs_ptr->sb_size_pix;
-    uint16_t picture_sb_height = (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_size_pix - 1) /
+    uint16_t picture_sb_height = (scs_ptr->max_input_luma_height + scs_ptr->sb_size_pix - 1) /
         scs_ptr->sb_size_pix;
 
     EB_FREE_ARRAY(scs_ptr->sb_geom);
@@ -599,17 +599,17 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
         scs_ptr->sb_geom[sb_index].origin_y = scs_ptr->sb_geom[sb_index].vertical_index *
             scs_ptr->sb_size_pix;
 
-        scs_ptr->sb_geom[sb_index].width = (uint8_t)(((scs_ptr->seq_header.max_frame_width -
+        scs_ptr->sb_geom[sb_index].width = (uint8_t)(((scs_ptr->max_input_luma_width -
                                                        scs_ptr->sb_geom[sb_index].origin_x) <
                                                       scs_ptr->sb_size_pix)
-                                                         ? scs_ptr->seq_header.max_frame_width -
+                                                         ? scs_ptr->max_input_luma_width -
                                                              scs_ptr->sb_geom[sb_index].origin_x
                                                          : scs_ptr->sb_size_pix);
 
-        scs_ptr->sb_geom[sb_index].height = (uint8_t)(((scs_ptr->seq_header.max_frame_height -
+        scs_ptr->sb_geom[sb_index].height = (uint8_t)(((scs_ptr->max_input_luma_height -
                                                         scs_ptr->sb_geom[sb_index].origin_y) <
                                                        scs_ptr->sb_size_pix)
-                                                          ? scs_ptr->seq_header.max_frame_height -
+                                                          ? scs_ptr->max_input_luma_height -
                                                               scs_ptr->sb_geom[sb_index].origin_y
                                                           : scs_ptr->sb_size_pix);
 
@@ -628,18 +628,18 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
                 scs_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
                     ((scs_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x +
                           blk_geom->bwidth / 2 <
-                      scs_ptr->seq_header.max_frame_width) &&
+                      scs_ptr->max_input_luma_width) &&
                      (scs_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y +
                           blk_geom->bheight / 2 <
-                      scs_ptr->seq_header.max_frame_height))
+                      scs_ptr->max_input_luma_height))
                     ? TRUE
                     : FALSE;
 
                 if (blk_geom->shape != PART_N)
                     blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
                 scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
-                    ((scs_ptr->sb_geom[sb_index].origin_x >= scs_ptr->seq_header.max_frame_width) ||
-                     (scs_ptr->sb_geom[sb_index].origin_y >= scs_ptr->seq_header.max_frame_height))
+                    ((scs_ptr->sb_geom[sb_index].origin_x >= scs_ptr->max_input_luma_width) ||
+                     (scs_ptr->sb_geom[sb_index].origin_y >= scs_ptr->max_input_luma_height))
                     ? FALSE
                     : TRUE;
             } else {
@@ -648,17 +648,17 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
 
                 scs_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] =
                     ((scs_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth >
-                      scs_ptr->seq_header.max_frame_width) ||
+                      scs_ptr->max_input_luma_width) ||
                      (scs_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight >
-                      scs_ptr->seq_header.max_frame_height))
+                      scs_ptr->max_input_luma_height))
                     ? FALSE
                     : TRUE;
 
                 scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
                     ((scs_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth >
-                      scs_ptr->seq_header.max_frame_width) ||
+                      scs_ptr->max_input_luma_width) ||
                      (scs_ptr->sb_geom[sb_index].origin_y + blk_geom->origin_y + blk_geom->bheight >
-                      scs_ptr->seq_header.max_frame_height))
+                      scs_ptr->max_input_luma_height))
                     ? FALSE
                     : TRUE;
             }

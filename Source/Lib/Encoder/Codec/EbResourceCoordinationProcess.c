@@ -1090,8 +1090,6 @@ void *resource_coordination_kernel(void *input_ptr) {
 
         if (context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture) {
             // Update picture width, picture height, cropping right offset, cropping bottom offset, and conformance windows
-            scs_ptr->seq_header.max_frame_width = scs_ptr->max_input_luma_width;
-            scs_ptr->seq_header.max_frame_height = scs_ptr->max_input_luma_height;
             scs_ptr->chroma_width = (scs_ptr->max_input_luma_width >> 1);
             scs_ptr->chroma_height = (scs_ptr->max_input_luma_height >> 1);
 
@@ -1105,7 +1103,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 signal_derivation_pre_analysis_oq_scs(scs_ptr);
 
             // Init SB Params
-            const uint32_t input_size = scs_ptr->seq_header.max_frame_width * scs_ptr->seq_header.max_frame_height;
+            const uint32_t input_size = scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height;
             derive_input_resolution(&scs_ptr->input_resolution, input_size);
 
             sb_params_init(scs_ptr);
@@ -1130,10 +1128,6 @@ void *resource_coordination_kernel(void *input_ptr) {
 #endif
         if (context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture) {
             // Update picture width, picture height, cropping right offset, cropping bottom offset, and conformance windows
-            context_ptr->scs_instance_array[instance_index]->scs_ptr->seq_header.max_frame_width =
-                context_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width;
-            context_ptr->scs_instance_array[instance_index]->scs_ptr->seq_header.max_frame_height =
-                context_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_height;
             context_ptr->scs_instance_array[instance_index]->scs_ptr->chroma_width =
                 (context_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width >>
                  1);
@@ -1146,9 +1140,9 @@ void *resource_coordination_kernel(void *input_ptr) {
             context_ptr->scs_instance_array[instance_index]->scs_ptr->pad_bottom =
                 context_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_bottom;
             input_size = context_ptr->scs_instance_array[instance_index]
-                             ->scs_ptr->seq_header.max_frame_width *
+                             ->scs_ptr->max_input_luma_width *
                 context_ptr->scs_instance_array[instance_index]
-                    ->scs_ptr->seq_header.max_frame_height;
+                    ->scs_ptr->max_input_luma_height;
 
 #if FIX_USE_ONE_SCS
             context_ptr->sequence_control_set_active_array[instance_index] = context_ptr->scs_instance_array[instance_index]->scs_ptr;

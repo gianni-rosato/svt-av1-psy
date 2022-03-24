@@ -138,8 +138,8 @@ typedef struct SequenceControlSet {
     uint32_t          chroma_format_idc;
     uint16_t          subsampling_x; // add chroma subsampling parameters
     uint16_t          subsampling_y;
-    uint16_t          max_input_luma_width;
-    uint16_t          max_input_luma_height;
+    uint16_t          max_input_luma_width;   // input luma width aligned to 8, this is used during encoding
+    uint16_t          max_input_luma_height;  // input luma height aligned to 8, this is used during encoding
     uint16_t          max_input_chroma_width;
     uint16_t          max_input_chroma_height;
     uint16_t          max_input_pad_bottom;

@@ -826,8 +826,8 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
                               input_picture_ptr->stride_y,
                               recon_coeff_buffer,
                               recon_ptr->stride_y,
-                              scs_ptr->seq_header.max_frame_width,
-                              scs_ptr->seq_header.max_frame_height);
+                              scs_ptr->max_input_luma_width,
+                              scs_ptr->max_input_luma_height);
 
         recon_coeff_buffer = &(
             (recon_ptr->buffer_cb)[recon_ptr->origin_x / 2 +
@@ -1085,8 +1085,8 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
                                          input_picture_ptr->stride_bit_inc_y,
                                          recon_coeff_buffer,
                                          recon_ptr->stride_y,
-                                         scs_ptr->seq_header.max_frame_width,
-                                         scs_ptr->seq_header.max_frame_height,
+                                         scs_ptr->max_input_luma_width,
+                                         scs_ptr->max_input_luma_height,
                                          bd,
                                          shift);
 

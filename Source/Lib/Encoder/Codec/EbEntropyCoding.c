@@ -3151,10 +3151,8 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
 }
 
 void write_sequence_header(SequenceControlSet *scs_ptr, struct AomWriteBitBuffer *wb) {
-    const int32_t max_frame_width = scs_ptr->seq_header.max_frame_width -
-        scs_ptr->max_input_pad_right;
-    const int32_t max_frame_height = scs_ptr->seq_header.max_frame_height -
-        scs_ptr->max_input_pad_bottom;
+    const int32_t max_frame_width = scs_ptr->seq_header.max_frame_width;
+    const int32_t max_frame_height = scs_ptr->seq_header.max_frame_height;
     unsigned frame_width_bits  = svt_log2f(max_frame_width);
     unsigned frame_height_bits = svt_log2f(max_frame_height);
     if (max_frame_width > (1 << frame_width_bits)) {
@@ -3163,6 +3161,9 @@ void write_sequence_header(SequenceControlSet *scs_ptr, struct AomWriteBitBuffer
     if (max_frame_height > (1 << frame_height_bits)) {
         ++frame_height_bits;
     }
+    scs_ptr->seq_header.frame_width_bits = frame_width_bits;
+    scs_ptr->seq_header.frame_height_bits = frame_height_bits;
+
     svt_aom_wb_write_literal(wb, frame_width_bits - 1, 4);
     svt_aom_wb_write_literal(wb, frame_height_bits - 1, 4);
     svt_aom_wb_write_literal(wb, max_frame_width - 1, frame_width_bits);
@@ -3608,6 +3609,65 @@ static void write_film_grain_params(PictureParentControlSet  *pcs_ptr,
     svt_aom_wb_write_bit(wb, pars->clip_to_restricted_range);
 }
 
+static uint32_t get_ref_order_hint(PictureParentControlSet* pcs_ptr, MvReferenceFrame ref_frame) {
+    int32_t ref_idx = get_ref_frame_map_idx(pcs_ptr, ref_frame);
+    if (ref_idx == INVALID_IDX) {
+        return INVALID_IDX;
+    }
+    return pcs_ptr->dpb_order_hint[ref_idx];
+}
+
+static void write_frame_size_with_refs(PictureParentControlSet* pcs_ptr, struct AomWriteBitBuffer* wb) {
+#if DEBUG_SFRAME
+    fprintf(stderr, "\nFrame %d, dpb buf order hint %u,%u,%u,%u,%u,%u,%u\n", (int)pcs_ptr->picture_number,
+        get_ref_order_hint(pcs_ptr, LAST_FRAME), get_ref_order_hint(pcs_ptr, LAST2_FRAME), get_ref_order_hint(pcs_ptr, LAST3_FRAME),
+        get_ref_order_hint(pcs_ptr, GOLDEN_FRAME), get_ref_order_hint(pcs_ptr, BWDREF_FRAME), get_ref_order_hint(pcs_ptr, ALTREF2_FRAME),
+        get_ref_order_hint(pcs_ptr, ALTREF_FRAME));
+#endif
+    for (uint32_t ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ++ref_frame) {
+        int32_t found = 0;
+        uint32_t ref_order_hint = get_ref_order_hint(pcs_ptr, ref_frame);
+        if ((int32_t)ref_order_hint != INVALID_IDX) {
+            for (uint8_t i = 0; i < pcs_ptr->ref_list0_count; ++i) {
+                EbReferenceObject* ref = (EbReferenceObject*)pcs_ptr->child_pcs->ref_pic_ptr_array[REF_LIST_0][i]->object_ptr;
+                if (ref->order_hint != ref_order_hint) {
+                    continue;
+                }
+                // Both super-res upscaled size and render size should be checked as per spec 5.9.7,
+                // but in current implementation, render_and_frame_size_different is fixed to 0, see function write_render_size()
+                found = pcs_ptr->enhanced_picture_ptr->width == ref->reference_picture->width &&
+                    pcs_ptr->enhanced_picture_ptr->height == ref->reference_picture->height;
+                if (found) {
+                    break;
+                }
+            }
+            if (!found) {
+                for (uint8_t i = 0; i < pcs_ptr->ref_list1_count; ++i) {
+                    EbReferenceObject* ref = (EbReferenceObject*)pcs_ptr->child_pcs->ref_pic_ptr_array[REF_LIST_1][i]->object_ptr;
+                    if (ref->order_hint != ref_order_hint) {
+                        continue;
+                    }
+                    found = pcs_ptr->enhanced_picture_ptr->width == ref->reference_picture->width &&
+                        pcs_ptr->enhanced_picture_ptr->height == ref->reference_picture->height;
+                    if (found) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        svt_aom_wb_write_bit(wb, found);
+        if (found) {
+            write_superres_scale(wb, pcs_ptr);
+            return;
+        }
+    }
+
+    // not found
+    const int frame_size_override = 1;  // Always equal to 1 in this function
+    write_frame_size(pcs_ptr, frame_size_override, wb);
+}
+
 // New function based on HLS R18
 static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1Comp *cpi*/,
                                           PictureParentControlSet *pcs_ptr,
@@ -3687,6 +3747,10 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
     } else
         assert(frm_hdr->force_integer_mv == 0);
 
+    const int32_t frame_size_override_flag = frame_is_sframe(pcs_ptr) ? 1 :
+        ((pcs_ptr->av1_cm->frm_size.superres_upscaled_width != scs_ptr->seq_header.max_frame_width) ||
+            (pcs_ptr->av1_cm->frm_size.superres_upscaled_height != scs_ptr->seq_header.max_frame_height));
+
     if (!scs_ptr->seq_header.reduced_still_picture_header) {
         if (scs_ptr->seq_header.frame_id_numbers_present_flag) {
             int32_t frame_id_len = scs_ptr->seq_header.frame_id_length;
@@ -3699,11 +3763,9 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
         //        "Frame dimensions are larger than the maximum values");
         //}
 
-        /*        (pcs_ptr->frame_type == S_FRAME) ? 1
-        : (cm->width != cm->seq_params.max_frame_width ||
-        cm->height != cm->seq_params.max_frame_height);*/
-        if (frm_hdr->frame_type != S_FRAME)
-            svt_aom_wb_write_bit(wb, 0);
+        if (!frame_is_sframe(pcs_ptr)) {
+            svt_aom_wb_write_bit(wb, frame_size_override_flag);
+        }
 
         if (scs_ptr->seq_header.order_hint_info.enable_order_hint)
             svt_aom_wb_write_literal(wb,
@@ -3712,8 +3774,10 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
 
         if (!frm_hdr->error_resilient_mode && !frame_is_intra_only(pcs_ptr))
             svt_aom_wb_write_literal(wb, frm_hdr->primary_ref_frame, PRIMARY_REF_BITS);
+    } else {  // reduced_still_picture_header
+        assert(frame_size_override_flag == 0);
     }
-    const int32_t frame_size_override_flag = 0;
+
     if (frm_hdr->frame_type == KEY_FRAME) {
         if (!frm_hdr->show_frame)
             svt_aom_wb_write_literal(wb, pcs_ptr->av1_ref_signal.refresh_frame_mask, REF_FRAMES);
@@ -3741,6 +3805,14 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
             else
                 assert(frame_is_sframe(pcs_ptr) &&
                        pcs_ptr->av1_ref_signal.refresh_frame_mask == 0xFF);
+
+            // write ref order hint map into bitstream
+            if (pcs_ptr->frm_hdr.error_resilient_mode && scs_ptr->seq_header.order_hint_info.enable_order_hint) {
+                for (int32_t ref_idx = 0; ref_idx < REF_FRAMES; ref_idx++) {
+                    svt_aom_wb_write_literal(wb, pcs_ptr->dpb_order_hint[ref_idx], scs_ptr->seq_header.order_hint_info.order_hint_bits);
+                }
+            }
+
             int32_t updated_fb = -1;
             for (int32_t i = 0; i < REF_FRAMES; i++) {
                 // If more than one frame is refreshed, it doesn't matter which one
@@ -3760,6 +3832,16 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
             }
         }
     }
+
+#if DEBUG_SFRAME
+    {
+        uint32_t* _ref_frame_map = pcs_ptr->dpb_order_hint;
+        fprintf(stderr, "\nFrame %d, use_ref_frame_mvs %u, ref_order_hint_map %d,%d,%d,%d,%d,%d,%d,%d\n", (int)pcs_ptr->picture_number,
+            frm_hdr->use_ref_frame_mvs,
+            _ref_frame_map[0], _ref_frame_map[1], _ref_frame_map[2], _ref_frame_map[3],
+            _ref_frame_map[4], _ref_frame_map[5], _ref_frame_map[6], _ref_frame_map[7]);
+    }
+#endif
 
     if (frm_hdr->frame_type == KEY_FRAME) {
         write_frame_size(pcs_ptr, frame_size_override_flag, wb);
@@ -3815,7 +3897,13 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
                 }
             }
 
-            write_frame_size(pcs_ptr, frame_size_override_flag, wb);
+            if (!pcs_ptr->frm_hdr.error_resilient_mode && frame_size_override_flag) {
+                write_frame_size_with_refs(pcs_ptr, wb);
+            }
+            else {
+                write_frame_size(pcs_ptr, frame_size_override_flag, wb);
+            }
+
             if (frm_hdr->force_integer_mv)
                 frm_hdr->allow_high_precision_mv = 0;
             else

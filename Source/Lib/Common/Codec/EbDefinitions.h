@@ -3201,6 +3201,7 @@ typedef enum IntrabcMotionDirection
 } IntrabcMotionDirection;
 typedef struct _EbEncHandle EbEncHandle;
 typedef struct _EbThreadContext EbThreadContext;
+
 #ifdef __cplusplus
 }
 #endif

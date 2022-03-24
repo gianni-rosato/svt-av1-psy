@@ -155,6 +155,13 @@ typedef struct SvtAv1FixedBuf {
     uint64_t sz; /**< Length of the buffer, in chars */
 } SvtAv1FixedBuf; /**< alias for struct aom_fixed_buf */
 
+/** Indicates how an S-Frame should be inserted.
+*/
+typedef enum EbSFrameMode {
+    SFRAME_STRICT_BASE  = 1,  /**< The considered frame will be made into an S-Frame only if it is a base layer inter frame */
+    SFRAME_NEAREST_BASE = 2,  /**< If the considered frame is not an altref frame, the next base layer inter frame will be made into an S-Frame */
+} EbSFrameMode;
+
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
@@ -234,6 +241,14 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0.
      */
     uint32_t source_height;
+
+    /* Specifies the maximum frame width/height for the frames represented by the sequence header
+     * (max_frame_width_minus_1 and max_frame_height_minus_1, spec 5.5.1).
+     * Actual frame height could be equal to or less than this value. E.g. Use this value to indicate
+     * the maximum height between renditions when switch frame feature is on.
+     */
+    uint32_t forced_max_frame_width;
+    uint32_t forced_max_frame_height;
 
     /* The frequecy of images being displayed. If the number is less than 1000,
      * the input frame rate is an integer number between 1 and 60, else the input
@@ -666,6 +681,18 @@ typedef struct EbSvtAv1EncConfiguration {
     */
 #endif
     uint8_t fast_decode;
+
+    /* S-Frame interval (frames)
+    * 0: S-Frame off
+    * >0: S-Frame on and indicates the number of frames after which a frame may be coded as an S-Frame
+    */
+    int32_t sframe_dist;
+    /* Indicates how an S-Frame should be inserted
+    * values are from EbSFrameMode
+    * SFRAME_STRICT_ARF: the considered frame will be made into an S-Frame only if it is an altref frame
+    * SFRAME_NEAREST_ARF: if the considered frame is not an altref frame, the next altref frame will be made into an S-Frame
+    */
+    EbSFrameMode sframe_mode;
 } EbSvtAv1EncConfiguration;
 
 /**

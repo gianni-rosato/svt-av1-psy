@@ -165,6 +165,8 @@
 #define QP_LONG_TOKEN "--qp"
 #define CRF_LONG_TOKEN "--crf"
 #define LOOP_FILTER_ENABLE "--enable-dlf"
+#define FORCED_MAX_FRAME_WIDTH_TOKEN "--forced-max-frame-width"
+#define FORCED_MAX_FRAME_HEIGHT_TOKEN "--forced-max-frame-height"
 
 #define COLOR_PRIMARIES_NEW_TOKEN "--color-primaries"
 #define TRANSFER_CHARACTERISTICS_NEW_TOKEN "--transfer-characteristics"
@@ -172,6 +174,9 @@
 #define COLOR_RANGE_NEW_TOKEN "--color-range"
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
+
+#define SFRAME_DIST_TOKEN "--sframe-dist"
+#define SFRAME_MODE_TOKEN "--sframe-mode"
 #if !CLN_DEFINITIONS
 #define ENC_MRS -2 // Highest quality research mode (slowest)
 #define ENC_MR -1 //Research mode with higher quality than M0
@@ -328,6 +333,12 @@ static void set_cfg_source_width(const char *value, EbConfig *cfg) {
 static void set_cfg_source_height(const char *value, EbConfig *cfg) {
     cfg->config.source_height = strtoul(value, NULL, 0);
 };
+static void set_cfg_forced_max_frame_width(const char* value, EbConfig* cfg) {
+    cfg->config.forced_max_frame_width = strtoul(value, NULL, 0);
+}
+static void set_cfg_forced_max_frame_height(const char* value, EbConfig* cfg) {
+    cfg->config.forced_max_frame_height = strtoul(value, NULL, 0);
+}
 static void set_cfg_frames_to_be_encoded(const char *value, EbConfig *cfg) {
     cfg->frames_to_be_encoded = strtol(value, NULL, 0);
 };
@@ -765,6 +776,12 @@ static void set_cfg_content_light(const char *value, EbConfig *cfg) {
     if (!svt_aom_parse_content_light_level(&cfg->config.content_light_level, value))
         fprintf(stderr, "Failed to parse content light level info properly\n");
 }
+static void set_cfg_sframe_dist(const char* value, EbConfig* cfg) {
+    cfg->config.sframe_dist = (int32_t)strtol(value, NULL, 0);
+}
+static void set_cfg_sframe_mode(const char* value, EbConfig* cfg) {
+    cfg->config.sframe_mode = (EbSFrameMode)strtoul(value, NULL, 0);
+}
 
 enum CfgType {
     SINGLE_INPUT, // Configuration parameters that have only 1 value input
@@ -871,6 +888,16 @@ ConfigEntry config_entry_global_options[] = {
      HEIGHT_LONG_TOKEN,
      "Frame height in pixels, inferred if y4m, default is 0 [64-8704]",
      set_cfg_source_height},
+
+    {SINGLE_INPUT,
+     FORCED_MAX_FRAME_WIDTH_TOKEN,
+     "Maximum frame width value to force, default is 0 [64-16384]",
+     set_cfg_forced_max_frame_width},
+
+    {SINGLE_INPUT,
+    FORCED_MAX_FRAME_HEIGHT_TOKEN,
+    "Maximum frame height value to force, default is 0 [64-8704]",
+    set_cfg_forced_max_frame_height},
 
     {SINGLE_INPUT,
      NUMBER_OF_PICTURES_TOKEN,
@@ -1262,6 +1289,19 @@ ConfigEntry config_entry_specific[] = {
      "[0-63]",
      set_superres_kf_qthres},
     // --- end: SUPER-RESOLUTION SUPPORT
+
+    // --- start: SWITCH_FRAME SUPPORT
+    {SINGLE_INPUT,
+     SFRAME_DIST_TOKEN,
+     "S-Frame interval (frames) (0: OFF[default], > 0: ON)",
+     set_cfg_sframe_dist},
+    {SINGLE_INPUT,
+     SFRAME_MODE_TOKEN,
+     "S-Frame insertion mode ([1-2], 1: the considered frame will be made into an S-Frame only if it is an altref frame,"
+     " 2: the next altref frame will be made into an S-Frame[default])",
+     set_cfg_sframe_mode},
+    // --- end: SWITCH_FRAME SUPPORT
+
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1320,7 +1360,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, WIDTH_LONG_TOKEN, "SourceWidth", set_cfg_source_width},
     {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_source_height},
     {SINGLE_INPUT, HEIGHT_LONG_TOKEN, "SourceHeight", set_cfg_source_height},
-
+    {SINGLE_INPUT, FORCED_MAX_FRAME_WIDTH_TOKEN, "ForcedMaximumFrameWidth", set_cfg_forced_max_frame_width},
+    {SINGLE_INPUT, FORCED_MAX_FRAME_HEIGHT_TOKEN, "ForcedMaximumFrameHeight", set_cfg_forced_max_frame_height},
+    // Prediction Structure
     {SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, NUMBER_OF_PICTURES_LONG_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", set_buffered_input},
@@ -1473,6 +1515,10 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SUPERRES_KF_DENOM, "SuperresKfDenom", set_superres_kf_denom},
     {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
     {SINGLE_INPUT, SUPERRES_KF_QTHRES, "SuperresKfQthres", set_superres_kf_qthres},
+
+    // Switch frame support
+    {SINGLE_INPUT, SFRAME_DIST_TOKEN, "SframeInterval", set_cfg_sframe_dist},
+    {SINGLE_INPUT, SFRAME_MODE_TOKEN, "SframeMode", set_cfg_sframe_mode},
 
     // Color Description Options
     {SINGLE_INPUT, COLOR_PRIMARIES_NEW_TOKEN, "ColorPrimaries", set_cfg_color_primaries},

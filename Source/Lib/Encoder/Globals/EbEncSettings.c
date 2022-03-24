@@ -85,6 +85,28 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (scs_ptr->seq_header.max_frame_width < 64) {
+        SVT_ERROR("Instance %u: Forced Max Width must be at least 64\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (scs_ptr->seq_header.max_frame_height < 64) {
+        SVT_ERROR("Instance %u: Forced Max Height must be at least 64\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (scs_ptr->seq_header.max_frame_width > 16384) {
+        SVT_ERROR("Instance %u: Forced Max Width must be less than or equal to 16384\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (scs_ptr->seq_header.max_frame_height > 8704) {
+        SVT_ERROR("Instance %u: Forced Max Height must be less than or equal to 8704)\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if ((scs_ptr->max_input_luma_width > scs_ptr->seq_header.max_frame_width) || (scs_ptr->max_input_luma_height > scs_ptr->seq_header.max_frame_height)) {
+        SVT_ERROR("Error instance %u: Source Width/Height must be less than or equal to Forced Max Width/Height\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->level != 0 && (config->level < 20 || config->level > 73)) {
         SVT_ERROR("Instance %u: Level must be in the range of [2.0-7.3]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -644,6 +666,23 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         SVT_WARN("SVT-AV1 has an integrated mode decision mechanism to handle scene changes and will not insert a key frame at scene changes\n");
     }
 #endif
+
+    if (config->sframe_dist < 0) {
+        SVT_ERROR("Error instance %u: switch frame interval must be >= 0\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->sframe_dist > 0 && config->pred_structure != PRED_LOW_DELAY_P && config->pred_structure != PRED_LOW_DELAY_B) {
+        SVT_ERROR("Error instance %u: switch frame feature only supports low delay prediction structure\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->sframe_dist > 0 && config->hierarchical_levels == 0) {
+        SVT_ERROR("Error instance %u: switch frame feature does not support flat IPPP\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->sframe_dist > 0 && config->sframe_mode != SFRAME_STRICT_BASE && config->sframe_mode != SFRAME_NEAREST_BASE) {
+        SVT_ERROR("Error instance %u: invalid switch frame mode %d, should be in the range [%d - %d]\n", channel_number + 1, config->sframe_mode, SFRAME_STRICT_BASE, SFRAME_NEAREST_BASE);
+        return_error = EB_ErrorBadParameter;
+    }
     return return_error;
 }
 
@@ -663,11 +702,13 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->frame_rate_denominator    = 1000;
     config_ptr->encoder_bit_depth         = 8;
     config_ptr->compressed_ten_bit_format = 0;
-    config_ptr->source_width              = 0;
-    config_ptr->source_height             = 0;
-    config_ptr->stat_report               = 0;
-    config_ptr->tile_rows                 = 0;
-    config_ptr->tile_columns              = 0;
+    config_ptr->source_width = 0;
+    config_ptr->source_height = 0;
+    config_ptr->forced_max_frame_width = 0;
+    config_ptr->forced_max_frame_height = 0;
+    config_ptr->stat_report = 0;
+    config_ptr->tile_rows = 0;
+    config_ptr->tile_columns = 0;
 #if FIX_1PVBR
     config_ptr->qp = DEFAULT_QP;
 #else
@@ -770,6 +811,10 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->pass                           = 0;
     memset(&config_ptr->mastering_display, 0, sizeof(config_ptr->mastering_display));
     memset(&config_ptr->content_light_level, 0, sizeof(config_ptr->content_light_level));
+
+    // Switch frame default values
+    config_ptr->sframe_dist = 0;
+    config_ptr->sframe_mode = SFRAME_NEAREST_BASE;
     return return_error;
 }
 
@@ -1234,6 +1279,26 @@ static EbErrorType str_to_color_range(const char *nptr, uint8_t *out) {
     return EB_ErrorBadParameter;
 }
 
+static EbErrorType str_to_sframe_mode(const char* nptr, EbSFrameMode* out) {
+    const struct {
+        const char* name;
+        EbSFrameMode mode;
+    } sframe_mode[] = {
+        {"strict", SFRAME_STRICT_BASE},
+        {"nearest", SFRAME_NEAREST_BASE},
+    };
+    const size_t sframe_mode_size = sizeof(sframe_mode) / sizeof(sframe_mode[0]);
+
+    for (size_t i = 0; i < sframe_mode_size; i++) {
+        if (!strcmp(nptr, sframe_mode[i].name)) {
+            *out = sframe_mode[i].mode;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
 #define COLOR_OPT(par, opt)                                          \
     do {                                                             \
         if (!strcmp(name, par)) {                                    \
@@ -1283,6 +1348,11 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     if (!strcmp(name, "irefresh-type"))
         return str_to_intra_rt(value, &config_struct->intra_refresh_type) == EB_ErrorBadParameter
             ? str_to_uint(value, (uint32_t *)&config_struct->intra_refresh_type)
+            : EB_ErrorNone;
+
+    if (!strcmp(name, "sframe-mode"))
+        return str_to_sframe_mode(value, &config_struct->sframe_mode) == EB_ErrorBadParameter
+            ? str_to_uint(value, (uint32_t *)&config_struct->sframe_mode)
             : EB_ErrorNone;
 
     COLOR_OPT("color-primaries", color_primaries);
@@ -1337,6 +1407,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"scm", &config_struct->screen_content_mode},
         {"input-depth", &config_struct->encoder_bit_depth},
         {"compressed-ten-bit-format", &config_struct->compressed_ten_bit_format},
+        {"forced-max-frame-width", &config_struct->forced_max_frame_width},
+        {"forced-max-frame-height", &config_struct->forced_max_frame_height},
     };
     const size_t uint_opts_size = sizeof(uint_opts) / sizeof(uint_opts[0]);
 
@@ -1411,6 +1483,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"tile-rows", &config_struct->tile_rows},
         {"tile-columns", &config_struct->tile_columns},
         {"ss", &config_struct->target_socket},
+        {"sframe-dist", &config_struct->sframe_dist},
     };
     const size_t int_opts_size = sizeof(int_opts) / sizeof(int_opts[0]);
 

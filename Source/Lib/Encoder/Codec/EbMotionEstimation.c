@@ -3015,7 +3015,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
     uint8_t *     left_col;
     uint8_t *     above0_row;
     uint8_t *     left0_col;
-    uint32_t      mb_stride = (scs_ptr->seq_header.max_frame_width + 15) / 16;
+    uint32_t      mb_stride = (scs_ptr->max_input_luma_width + 15) / 16;
 
     DECLARE_ALIGNED(16, uint8_t, left0_data[MAX_TX_SIZE * 2 + 32]);
     DECLARE_ALIGNED(16, uint8_t, above0_data[MAX_TX_SIZE * 2 + 32]);
@@ -3105,8 +3105,8 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
                     left_col  = left_data + 16;
                     filter_intra_edge(ois_mb_results_ptr,
                                       ois_intra_mode,
-                                      scs_ptr->seq_header.max_frame_width,
-                                      scs_ptr->seq_header.max_frame_height,
+                                      scs_ptr->max_input_luma_width,
+                                      scs_ptr->max_input_luma_height,
                                       p_angle,
                                       (int32_t)cu_origin_x,
                                       (int32_t)cu_origin_y,
