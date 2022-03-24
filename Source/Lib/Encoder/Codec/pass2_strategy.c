@@ -764,7 +764,11 @@ static INLINE void set_baseline_gf_interval(PictureParentControlSet *pcs_ptr, in
     if (frame_is_intra_only(pcs_ptr) && pcs_ptr->idr_flag)
         rc->baseline_gf_interval = MAX(arf_position - 1, 1);
     else
+#if FIX_RC_CRASH
+        rc->baseline_gf_interval = pcs_ptr->gf_interval;
+#else
         rc->baseline_gf_interval = arf_position;
+#endif
 }
 
 // initialize GF_GROUP_STATS
