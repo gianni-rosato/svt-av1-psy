@@ -2008,10 +2008,17 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->buffered_input == 0) {
+        fprintf(config->error_log_file,
+                "Error instance %u: Buffered Input cannot be 0\n",
+                channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->buffered_input < -1) {
         fprintf(config->error_log_file,
-                "Error instance %u: Invalid buffered_input. buffered_input must greater or equal "
-                "to -1\n",
+                "Error instance %u: Invalid buffered_input. buffered_input must be -1 or greater "
+                "than or equal to 1\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
