@@ -84,7 +84,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 
     if (config->maximum_buffer_size_ms < 20 || config->maximum_buffer_size_ms > 10000) {
-        SVT_ERROR("Instance %u: The maximum buffer size must be between [20, 10000]  \n", channel_number + 1);
+        SVT_ERROR("Instance %u: The maximum buffer size must be between [20, 10000]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
