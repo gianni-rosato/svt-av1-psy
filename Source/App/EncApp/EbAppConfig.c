@@ -2016,6 +2016,13 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->buffered_input != -1 && config->y4m_input) {
+        fprintf(config->error_log_file,
+                "Error instance %u: Buffered input is currently not available with y4m inputs\n",
+                channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->buffered_input > config->frames_to_be_encoded) {
         fprintf(config->error_log_file,
                 "Error instance %u: Invalid buffered_input. buffered_input must be less or equal "
