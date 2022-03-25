@@ -624,9 +624,9 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             channel_number + 1);
     }
 
-    if (config->film_grain_denoise_strength > 0 && config->enc_mode > 3) {
+    if (config->film_grain_denoise_strength > 0 && config->enc_mode > 6) {
         SVT_WARN(
-            "Instance %u: It is recommended to not use Film Grain for presets greater than 3 as it "
+            "Instance %u: It is recommended to not use Film Grain for presets greater than 6 as it "
             "produces a significant compute overhead. This combination should only be used for "
             "debug purposes.\n",
             channel_number + 1);
