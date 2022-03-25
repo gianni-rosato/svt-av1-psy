@@ -61,10 +61,76 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         SVT_ERROR("Instance %u: Source Height must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->pred_structure > 2) {
-        SVT_ERROR("Instance %u: Pred Structure must be [0, 1 or 2]\n", channel_number + 1);
+    if (scs_ptr->max_input_luma_width % 2) {
+        SVT_ERROR("Error Instance %u: Source Width must be even for YUV_420 colorspace\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+    if (scs_ptr->max_input_luma_height % 2) {
+        SVT_ERROR("Error Instance %u: Source Height must be even for YUV_420 colorspace\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->pred_structure > 2 || config->pred_structure < 1) {
+        SVT_ERROR("Instance %u: Pred Structure must be [1 or 2]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->pred_structure == 1 && config->pass > 0) {
+        SVT_ERROR("Instance %u: Multi-passes is not support with Low Delay mode \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->vbr_bias_pct > 100) {
+        SVT_ERROR("Instance %u: The bias percentage must be [0, 100]  \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->maximum_buffer_size_ms < 20 || config->maximum_buffer_size_ms > 10000) {
+        SVT_ERROR("Instance %u: The maximum buffer size must be between [20, 10000]  \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->starting_buffer_level_ms < 20 || config->starting_buffer_level_ms > 10000) {
+        SVT_ERROR("Instance %u: The initial buffer size must be between [20, 10000] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    else if (config->starting_buffer_level_ms >= config->maximum_buffer_size_ms) {
+        SVT_WARN("The initial buffer size must be less than maximum buffer size. Defaulting optimal buffer size to maximum buffer size - 1 (%u)\n", config->maximum_buffer_size_ms - 1);
+        config->starting_buffer_level_ms = (config->maximum_buffer_size_ms - 1);
+    }
+
+    if (config->optimal_buffer_level_ms < 20 || config->optimal_buffer_level_ms > 10000) {
+        SVT_ERROR("Instance %u: The optimal buffer size must be between [20, 10000]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    else if (config->optimal_buffer_level_ms >= config->maximum_buffer_size_ms) {
+        SVT_WARN("The optimal buffer size must be less than maximum buffer size. Defaulting optimal buffer size to maximum buffer size - 1 (%u)\n", config->maximum_buffer_size_ms - 1);
+        config->optimal_buffer_level_ms = (config->maximum_buffer_size_ms - 1);
+    }
+
+    if (config->over_shoot_pct > 100) {
+        SVT_ERROR("Instance %u: The overshoot percentage must be between [0, 100] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->under_shoot_pct > 100) {
+        SVT_ERROR("Instance %u: The undershoot percentage must be between [0, 100] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->vbr_max_section_pct > 100) {
+        SVT_ERROR("Instance %u: The max section percentage must be between [0, 100] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->vbr_min_section_pct > 100) {
+        SVT_ERROR("Instance %u: The min section percentage must be between [0, 100] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if ((config->target_bit_rate >= config->max_bit_rate) && (config->max_bit_rate != 0)) {
+        SVT_ERROR("Instance %u: Max Bitrate must be greater than Target Bitrate\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (scs_ptr->max_input_luma_width % 8 &&
         scs_ptr->static_config.compressed_ten_bit_format == 1) {
         SVT_ERROR(
@@ -760,7 +826,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     // Two pass data rate control options
     config_ptr->vbr_bias_pct             = 50;
     config_ptr->vbr_min_section_pct      = 0;
-    config_ptr->vbr_max_section_pct      = 2000;
+    config_ptr->vbr_max_section_pct      = 100;
     config_ptr->under_shoot_pct          = 25;
     config_ptr->over_shoot_pct           = 25;
     config_ptr->mbr_over_shoot_pct       = 50;
