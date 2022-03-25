@@ -999,12 +999,12 @@ ConfigEntry config_entry_rc[] = {
      RATE_CONTROL_ENABLE_TOKEN,
      "Rate control mode, default is 0 [0: CRF or CQP (if `--aq-mode` is 0), 1: VBR, 2: CBR]",
      set_rate_control_mode},
-    {SINGLE_INPUT, QP_TOKEN, "Initial QP level value, default is 50 [1-63]", set_cfg_qp},
-    {SINGLE_INPUT, QP_LONG_TOKEN, "Initial QP level value, default is 50 [1-63]", set_cfg_qp},
+    {SINGLE_INPUT, QP_TOKEN, "Initial QP level value, default is 35 [1-63]", set_cfg_qp},
+    {SINGLE_INPUT, QP_LONG_TOKEN, "Initial QP level value, default 35 50 [1-63]", set_cfg_qp},
     {SINGLE_INPUT,
      CRF_LONG_TOKEN,
      "Constant Rate Factor value, setting this value is equal to `--rc 0 --aq-mode 2 --qp "
-     "x`, default is 50 [1-63]",
+     "x`, default is 35 [1-63]",
      set_cfg_crf},
 
     {SINGLE_INPUT,
