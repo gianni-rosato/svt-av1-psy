@@ -859,7 +859,7 @@ ConfigEntry config_entry_options[] = {
     {SINGLE_INPUT,
      PRESET_TOKEN,
      "Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with "
-     "a quality tradeoff, default is 12 [-2-13]",
+     "a quality tradeoff, default is 10 [-2-13]",
      set_enc_mode},
 
     {SINGLE_INPUT,

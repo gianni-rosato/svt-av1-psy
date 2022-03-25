@@ -743,7 +743,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->min_qp_allowed         = 1;
 
     config_ptr->enable_adaptive_quantization = 2;
-    config_ptr->enc_mode                     = 12;
+    config_ptr->enc_mode                     = 10;
     config_ptr->intra_period_length          = -2;
     config_ptr->intra_refresh_type           = 2;
     config_ptr->hierarchical_levels          = 4;
