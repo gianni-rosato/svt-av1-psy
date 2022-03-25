@@ -88,8 +88,7 @@ The number of frames of the sequence to encode. e.g. 100. If the input frame cou
 
 `--keyint integer` **[Optional]**
 
-The intra period defines the interval of frames after which you insert an Intra refresh. It is strongly recommended to use (multiple of 8) -1 the closest to 1 second (e.g. 55, 47, 31, 23 should be used for 60, 50, 30, (24 or 25) respectively). When using closed gop (-irefresh-type 2) add 1 to the value above (e.g. 56 instead of 55).
-
+The keyint defines the display order location at which the encoder would insert a keyframe. It is recommended to use a value that is (a multiple of the mini GOP size (default 16)) + 1 so that the keyframe does not break a mini GOP formation. When using forward frame, it's recommended that the keyint value is placed at a multiple of mini-gop size. The mini-gop size is measured by 1 << hierarchical-levels.
 `--rc integer` **[Optional]**
 
 The rc token sets the bitrate control encoding mode [0: Constant QP OR Constant Rate Factor, 1: Variable Bitrate, 2: Constant Bitrate].
@@ -101,7 +100,7 @@ If a qp/crf value is not specified, a default value is assigned (50).
 
 For example, the following command encodes 100 frames of the YUV video sequence into the bin bit stream file. The picture is 1920 luma pixels wide and 1080 pixels high using the `Sample.cfg` configuration. The QP equals 30 and the md5 checksum is not included in the bit stream.
 
-`SvtAv1EncApp.exe -c Sample.cfg -i CrowdRun_1920x1080.yuv -w 1920 -h 1080 -n 100 -q 30 --keyint 31 -b CrowdRun_1920x1080_qp30.bin`
+`SvtAv1EncApp.exe -c Sample.cfg -i CrowdRun_1920x1080.yuv -w 1920 -h 1080 -n 100 -q 30 --keyint 240 -b CrowdRun_1920x1080_qp30.bin`
 
 It should be noted that not all the encoder parameters present in the `Sample.cfg` can be changed using the command line.
 
@@ -306,7 +305,7 @@ For this command line, corresponding qindex values are:
 
 | **Configuration file parameter** | **Command line**      | **Range**       | **Default** | **Description**                                                                                                 |
 |----------------------------------|-----------------------|-----------------|-------------|-----------------------------------------------------------------------------------------------------------------|
-| **Keyint**                       | --keyint              | [-2-`(2^31)-1`] | -2          | GOP size (frames) [-2: ~2 seconds, -1: "infinite" and only applicable for CRF, 0: same as -1]                   |
+| **Keyint**                       | --keyint              | [-2-`(2^31)-1`] | -2          | GOP size (frames) [-2: ~5 seconds, -1: "infinite" and only applicable for CRF, 0: same as -1]                   |
 | **IntraRefreshType**             | --irefresh-type       | [1-2]           | 2           | Intra refresh type [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]                                         |
 | **SceneChangeDetection**         | --scd                 | [0-1]           | 0           | Scene change detection control                                                                                  |
 | **Lookahead**                    | --lookahead           | [-1,0-120]      | -1          | Number of frames in the future to look ahead, beyond minigop, temporal filtering, and rate control [-1: auto]   |
