@@ -3846,7 +3846,6 @@ void copy_api_from_app(
     // Tpl is disabled in low delay applications
     if (scs_ptr->static_config.pred_structure == 0) {
         ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la = 0;
-        SVT_WARN("TPL is disabled in low delay applications.\n");
     }
     scs_ptr->enable_qp_scaling_flag = 1;
 #if !CLN_SCS_CTOR
@@ -4164,7 +4163,6 @@ void copy_api_from_app(
     scs_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)config_struct)->recon_enabled;
     scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
     if (scs_ptr->static_config.enable_tpl_la != 1){
-        SVT_WARN("TPL off mode is not supported in this release, enable_tpl_la is set to 1\n");
         scs_ptr->static_config.enable_tpl_la = 1;
     }
     // Extract frame rate from Numerator and Denominator if not 0
