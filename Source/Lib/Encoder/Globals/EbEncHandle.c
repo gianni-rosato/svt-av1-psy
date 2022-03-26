@@ -4022,10 +4022,6 @@ void copy_api_from_app(
     }
 #endif
 #if FTR_CBR
-    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P) {
-        scs_ptr->static_config.pred_structure = PRED_LOW_DELAY_B;
-        SVT_WARN("P-Frame Low delay mode is not supported. Forced to B-frames Low delay Mode\n");
-    }
     if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
         if (scs_ptr->static_config.rate_control_mode == 1) {
             scs_ptr->static_config.rate_control_mode = 2;

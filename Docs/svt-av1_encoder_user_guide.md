@@ -310,7 +310,7 @@ For this command line, corresponding qindex values are:
 | **SceneChangeDetection**         | --scd                 | [0-1]           | 0           | Scene change detection control                                                                                  |
 | **Lookahead**                    | --lookahead           | [-1,0-120]      | -1          | Number of frames in the future to look ahead, beyond minigop, temporal filtering, and rate control [-1: auto]   |
 | **HierarchicalLevels**           | --hierarchical-levels | [3-5]           | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                      |
-| **PredStructure**                | --pred-struct         | [1-2]           | 2           | Set prediction structure [1: low delay B-frames, 2: random access]                                              |
+| **PredStructure**                | --pred-struct         | [1-2]           | 2           | Set prediction structure [1: low delay, 2: random access]                                                       |
 
 #### AV1 Specific Options
 

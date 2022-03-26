@@ -1099,15 +1099,15 @@ ConfigEntry config_entry_rc[] = {
      set_over_shoot_pct},
     {SINGLE_INPUT,
      BUFFER_SIZE_TOKEN,
-     "Client buffer size (ms), only applicable for CBR, default is 6000 [0-`(2^63)-1`]",
+     "Client buffer size (ms), only applicable for CBR, default is 6000 [0-10000]",
      set_buf_sz},
     {SINGLE_INPUT,
      BUFFER_INITIAL_SIZE_TOKEN,
-     "Client initial buffer size (ms), only applicable for CBR, default is 4000 [0-`(2^63)-1`]",
+     "Client initial buffer size (ms), only applicable for CBR, default is 4000 [0-10000]",
      set_buf_initial_sz},
     {SINGLE_INPUT,
      BUFFER_OPTIMAL_SIZE_TOKEN,
-     "Client optimal buffer size (ms), only applicable for CBR, default is 5000 [0-`(2^63)-1`]",
+     "Client optimal buffer size (ms), only applicable for CBR, default is 5000 [0-10000]",
      set_buf_optimal_sz},
     {SINGLE_INPUT,
      RECODE_LOOP_TOKEN,
@@ -1120,12 +1120,11 @@ ConfigEntry config_entry_rc[] = {
      set_vbr_bias_pct},
     {SINGLE_INPUT,
      VBR_MIN_SECTION_PCT_TOKEN,
-     "GOP min bitrate (expressed as a percentage of the target rate), default is 0 [0-`(2^32)-1`]",
+     "GOP min bitrate (expressed as a percentage of the target rate), default is 0 [0-100]",
      set_vbr_min_section_pct},
     {SINGLE_INPUT,
      VBR_MAX_SECTION_PCT_TOKEN,
-     "GOP max bitrate (expressed as a percentage of the target rate), default is 2000 "
-     "[0-`(2^32)-1`]",
+     "GOP max bitrate (expressed as a percentage of the target rate), default is 100 [0-100]",
      set_vbr_max_section_pct},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1176,7 +1175,7 @@ ConfigEntry config_entry_intra_refresh[] = {
      set_hierarchical_levels},
     {SINGLE_INPUT,
      PRED_STRUCT_TOKEN,
-     "Set prediction structure, default is 2 [0: low delay P-frames, 1: low delay B-frames, 2: "
+     "Set prediction structure, default is 2 [1: low delay frames, 2: "
      "random access]",
      set_cfg_pred_structure},
     // Termination
