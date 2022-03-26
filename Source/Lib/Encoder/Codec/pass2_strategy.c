@@ -2540,6 +2540,10 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
     encode_context_ptr->rc_cfg.optimal_buffer_level_ms  = is_vbr
          ? 60000
          : scs_ptr->static_config.optimal_buffer_level_ms;
+
+    // todo: to expose to a cli parameter
+    encode_context_ptr->rc_cfg.max_intra_bitrate_pct = 300;
+
 #if !FRFCTR_RC_P4
     encode_context_ptr->gf_cfg.lag_in_frames            = MAX(
         25, (1 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD + 1);

@@ -764,13 +764,10 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->under_shoot_pct          = 25;
     config_ptr->over_shoot_pct           = 25;
     config_ptr->mbr_over_shoot_pct       = 50;
-    config_ptr->maximum_buffer_size_ms   = 6000;
-    config_ptr->starting_buffer_level_ms = 4000;
-    config_ptr->optimal_buffer_level_ms  = 5000;
+    config_ptr->maximum_buffer_size_ms   = 1000; // default settings for CBR
+    config_ptr->starting_buffer_level_ms = 600; // default settings for CBR
+    config_ptr->optimal_buffer_level_ms  = 600; // default settings for CBR
     config_ptr->recode_loop              = ALLOW_RECODE_DEFAULT;
-    // Bitstream options
-    //config_ptr->codeVpsSpsPps = 0;
-    //config_ptr->codeEosNal = 0;
     config_ptr->restricted_motion_vector = FALSE;
 
     config_ptr->high_dynamic_range_input = 0;
