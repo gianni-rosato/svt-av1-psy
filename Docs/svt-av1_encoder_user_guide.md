@@ -231,13 +231,13 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **ChromaQIndexOffsets**          | --chroma-qindex-offsets          | any string     | `0,0,..,0`      | list of chroma Q index offsets per hierarchical layer, separated by `,` with each offset in the range of [-256-255]  |
 | **UnderShootPct**                | --undershoot-pct                 | [0-100]        | 25              | Allowable datarate undershoot (min) target (%), default depends on the rate control mode                             |
 | **OverShootPct**                 | --overshoot-pct                  | [0-100]        | 25              | Allowable datarate overshoot (max) target (%), default depends on the rate control mode                              |
-| **BufSz**                        | --buf-sz                         | [0-`(2^63)-1`] | 6000            | Client buffer size (ms), only applicable for CBR                                                                     |
-| **BufInitialSz**                 | --buf-initial-sz                 | [0-`(2^63)-1`] | 4000            | Client initial buffer size (ms), only applicable for CBR                                                             |
-| **BufOptimalSz**                 | --buf-optimal-sz                 | [0-`(2^63)-1`] | 5000            | Client optimal buffer size (ms), only applicable for CBR                                                             |
+| **BufSz**                        | --buf-sz                         | [20-10000]     | 6000            | Client buffer size (ms), only applicable for CBR                                                                     |
+| **BufInitialSz**                 | --buf-initial-sz                 | [20-10000]     | 4000            | Client initial buffer size (ms), only applicable for CBR                                                             |
+| **BufOptimalSz**                 | --buf-optimal-sz                 | [20-10000]     | 5000            | Client optimal buffer size (ms), only applicable for CBR                                                             |
 | **RecodeLoop**                   | --recode-loop                    | [0-4]          | 4               | Recode loop level, look at the "Recode loop level table" in the user's guide for more info [0: off, 4: preset based] |
 | **VBRBiasPct**                   | --bias-pct                       | [0-100]        | 50              | CBR/VBR bias [0: CBR-like, 100: VBR-like]                                                                            |
-| **MinSectionPct**                | --minsection-pct                 | [0-`(2^32)-1`] | 0               | GOP min bitrate (expressed as a percentage of the target rate)                                                       |
-| **MaxSectionPct**                | --maxsection-pct                 | [0-`(2^32)-1`] | 2000            | GOP max bitrate (expressed as a percentage of the target rate)                                                       |
+| **MinSectionPct**                | --minsection-pct                 | [0-100]        | 0               | GOP min bitrate (expressed as a percentage of the target rate)                                                       |
+| **MaxSectionPct**                | --maxsection-pct                 | [0-100]        | 100             | GOP max bitrate (expressed as a percentage of the target rate)                                                       |
 
 ##### **UseFixedQIndexOffsets** and more information
 
@@ -310,7 +310,7 @@ For this command line, corresponding qindex values are:
 | **SceneChangeDetection**         | --scd                 | [0-1]           | 0           | Scene change detection control                                                                                  |
 | **Lookahead**                    | --lookahead           | [-1,0-120]      | -1          | Number of frames in the future to look ahead, beyond minigop, temporal filtering, and rate control [-1: auto]   |
 | **HierarchicalLevels**           | --hierarchical-levels | [3-5]           | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                      |
-| **PredStructure**                | --pred-struct         | [0-2]           | 2           | Set prediction structure [0: low delay P-frames, 1: low delay B-frames, 2: random access]                       |
+| **PredStructure**                | --pred-struct         | [1-2]           | 2           | Set prediction structure [1: low delay B-frames, 2: random access]                                              |
 
 #### AV1 Specific Options
 
