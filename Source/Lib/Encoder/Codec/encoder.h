@@ -97,7 +97,6 @@ typedef struct {
     /*!\endcond */
 } RateControlCfg;
 
-
 typedef int aom_bit_depth_t;
 typedef struct {
     int             frame_width;

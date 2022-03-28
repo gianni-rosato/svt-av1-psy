@@ -137,11 +137,10 @@ class BlendA64MaskTest : public ACMRandom {
             RunOneTest(width, height, subx_, suby_, run_times);
         }
 
-        //Test small sizes
+        // Test small sizes
         if (small_sizes) {
             int swh[3] = {1, 2, 4};
-            for (int iter = 0;
-                 iter < 10 && !::testing::Test::HasFatalFailure();
+            for (int iter = 0; iter < 10 && !::testing::Test::HasFatalFailure();
                  ++iter) {
                 prepare_data(type);
                 subx_ = Rand1();
@@ -558,7 +557,8 @@ class BlendA64MaskTestHBD_d16
 };
 
 TEST_CLASS(BlendA64MaskTestHBD_d16, svt_aom_highbd_blend_a64_d16_mask_c,
-           svt_aom_highbd_blend_a64_d16_mask_sse4_1, _Mask_Blend_Hbd_d16_SSE4_1, 0)
+           svt_aom_highbd_blend_a64_d16_mask_sse4_1, _Mask_Blend_Hbd_d16_SSE4_1,
+           0)
 
 TEST_CLASS(BlendA64MaskTestHBD_d16, svt_aom_highbd_blend_a64_d16_mask_c,
            svt_aom_highbd_blend_a64_d16_mask_avx2, _Mask_Blend_Hbd_d16_AVX2, 0)

@@ -59,9 +59,9 @@ typedef struct DPBInfo {
     int32_t          dep_list0_count;
     int32_t          dep_list1_count;
     uint8_t          temporal_layer_index;
-    Bool           is_displayed;
-    Bool           is_used;
-    Bool           is_alt_ref;
+    Bool             is_displayed;
+    Bool             is_used;
+    Bool             is_alt_ref;
     DpbDependentList dep_list0;
     DpbDependentList dep_list1;
 } DPBInfo;
@@ -137,12 +137,12 @@ typedef struct EncodeContext {
     uint32_t pred_struct_position; // Current position within a prediction structure
     uint32_t elapsed_non_idr_count;
     uint32_t elapsed_non_cra_count;
-    Bool   initial_picture;
+    Bool     initial_picture;
     uint64_t last_idr_picture; // the most recently occured IDR picture (in decode order)
 
     // Sequence Termination Flags
     uint64_t terminating_picture_number;
-    Bool   terminating_sequence_flag_received;
+    Bool     terminating_sequence_flag_received;
 
     // Signalling the need for a td structure to be written in the Bitstream - only used in the PK process so no need for a mutex
     Bool td_needed;
@@ -151,11 +151,11 @@ typedef struct EncodeContext {
     PredictionStructureGroup *prediction_structure_group_ptr;
 
     // Speed Control
-    int64_t   sc_buffer;
-    int64_t   sc_frame_in;
-    int64_t   sc_frame_out;
-    EbHandle  sc_buffer_mutex;
-    EncMode enc_mode;
+    int64_t  sc_buffer;
+    int64_t  sc_frame_in;
+    int64_t  sc_frame_out;
+    EbHandle sc_buffer_mutex;
+    EncMode  enc_mode;
 
     // Rate Control
     uint32_t previous_selected_ref_qp;
@@ -173,8 +173,8 @@ typedef struct EncodeContext {
     //DPB list management
     DPBInfo              dpb_list[REF_FRAMES];
     uint64_t             display_picture_number;
-    Bool               is_mini_gop_changed;
-    Bool               is_i_slice_in_last_mini_gop;
+    Bool                 is_mini_gop_changed;
+    Bool                 is_i_slice_in_last_mini_gop;
     uint64_t             i_slice_picture_number_in_last_mini_gop;
     uint64_t             poc_map_idx[MAX_TPL_LA_SW];
     EbPictureBufferDesc *mc_flow_rec_picture_buffer[MAX_TPL_LA_SW];
@@ -185,7 +185,7 @@ typedef struct EncodeContext {
     RateControlCfg       rc_cfg;
     GF_GROUP             gf_group;
     SwitchFrameCfg       sf_cfg;
-    FIRSTPASS_STATS *    frame_stats_buffer;
+    FIRSTPASS_STATS     *frame_stats_buffer;
     // Number of stats buffers required for look ahead
     int               num_lap_buffers;
     STATS_BUFFER_CTX  stats_buf_context;

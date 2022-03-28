@@ -717,7 +717,7 @@ static void av1_build_intra_predictors_for_interintra(DecModCtxt    *dec_mod_ctx
                                                       BlockSize bsize, int32_t plane, uint8_t *dst,
                                                       int dst_stride, EbBitDepthEnum bit_depth) {
     EbDecHandle   *dec_handle  = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    Bool         is16b       = dec_handle->is_16bit_pipeline;
+    Bool           is16b       = dec_handle->is_16bit_pipeline;
     BlockModeInfo *mi          = part_info->mi;
     int32_t        sub_x       = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t        sub_y       = (plane > 0) ? part_info->subsampling_y : 0;

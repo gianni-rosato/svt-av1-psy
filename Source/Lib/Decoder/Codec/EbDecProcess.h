@@ -172,13 +172,13 @@ typedef struct DecMTFrameData {
     uint32_t num_threads_cdefed; /*Should be Removed after PAD MT*/
     uint32_t num_threads_lred; /*Should be Removed after PAD MT*/
     uint32_t num_threads_exited;
-    Bool   end_flag;
-    Bool   start_motion_proj;
-    Bool   start_parse_frame;
-    Bool   start_decode_frame;
-    Bool   start_lf_frame;
-    Bool   start_cdef_frame;
-    Bool   start_lr_frame;
+    Bool     end_flag;
+    Bool     start_motion_proj;
+    Bool     start_parse_frame;
+    Bool     start_decode_frame;
+    Bool     start_lf_frame;
+    Bool     start_cdef_frame;
+    Bool     start_lr_frame;
 
     EbHandle temp_mutex;
 

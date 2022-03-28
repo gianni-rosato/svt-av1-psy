@@ -20,10 +20,9 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType picture_decision_context_ctor(
-    EbThreadContext* thread_context_ptr,
-    const EbEncHandle* enc_handle_ptr,
-    uint8_t scene_change_detection);
+EbErrorType  picture_decision_context_ctor(EbThreadContext   *thread_context_ptr,
+                                           const EbEncHandle *enc_handle_ptr,
+                                           uint8_t            scene_change_detection);
 extern void *picture_decision_kernel(void *input_ptr);
 
 void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
@@ -59,14 +58,15 @@ typedef struct PictureDecisionContext {
     EbFifo  *me_fifo_ptr;
     uint64_t last_solid_color_frame_poc;
 
-    Bool     reset_running_avg;
-    int8_t     tf_motion_direction; // -1: invalid   0: horz  1: vert
-    uint32_t*** prev_picture_histogram;
-    uint64_t    prev_average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
+    Bool        reset_running_avg;
+    int8_t      tf_motion_direction; // -1: invalid   0: horz  1: vert
+    uint32_t ***prev_picture_histogram;
+    uint64_t    prev_average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
+                                              [MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
     uint32_t **ahd_running_avg_cb;
     uint32_t **ahd_running_avg_cr;
     uint32_t **ahd_running_avg;
-    Bool     is_scene_change_detected;
+    Bool       is_scene_change_detected;
     uint8_t    is_next_base_sc;
     // Dynamic GOP
     uint32_t ttl_region_activity_cost[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
@@ -80,7 +80,7 @@ typedef struct PictureDecisionContext {
     uint32_t mini_gop_intra_count[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t mini_gop_idr_count[MINI_GOP_WINDOW_MAX_COUNT];
     uint32_t mini_gop_hierarchical_levels[MINI_GOP_WINDOW_MAX_COUNT];
-    Bool   mini_gop_activity_array[MINI_GOP_MAX_COUNT];
+    Bool     mini_gop_activity_array[MINI_GOP_MAX_COUNT];
     uint32_t mini_gop_region_activity_cost_array[MINI_GOP_MAX_COUNT][MAX_NUMBER_OF_REGIONS_IN_WIDTH]
                                                 [MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
 
@@ -89,8 +89,7 @@ typedef struct PictureDecisionContext {
     uint8_t  lay0_toggle; //3 way toggle 0->1->2
     uint8_t  lay1_toggle; //2 way toggle 0->1
     uint8_t  lay2_toggle; //2 way toggle 0->1
-    Bool
-        mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
+    Bool mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t                  last_i_picture_sc_class0;
     uint8_t                  last_i_picture_sc_class1;
     uint8_t                  last_i_picture_sc_class2;
@@ -114,9 +113,9 @@ typedef struct PictureDecisionContext {
     double  last_i_noise_levels[MAX_MB_PLANE];
 
     // for switch frame feature
-    uint32_t                 ref_order_hint[REF_FRAMES];  // spec 6.8.2
-    uint64_t                 sframe_poc;
-    int32_t                  sframe_due;  // The flag indicates whether the next ARF will be made an s-frame
+    uint32_t ref_order_hint[REF_FRAMES]; // spec 6.8.2
+    uint64_t sframe_poc;
+    int32_t  sframe_due; // The flag indicates whether the next ARF will be made an s-frame
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

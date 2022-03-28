@@ -34,11 +34,11 @@ extern uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t
                                         TxType transform_type, int16_t txb_skip_ctx,
                                         int16_t dc_sign_ctx, Bool reduced_transform_set_flag);
 
-extern void coding_loop_context_generation(PictureControlSet   *pcs_ptr,
-                                           ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                           uint32_t blk_origin_x, uint32_t blk_origin_y,
-                                           NeighborArrayUnit *skip_coeff_neighbor_array,
-                                           NeighborArrayUnit *leaf_partition_neighbor_array);
+extern void        coding_loop_context_generation(PictureControlSet   *pcs_ptr,
+                                                  ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+                                                  uint32_t blk_origin_x, uint32_t blk_origin_y,
+                                                  NeighborArrayUnit *skip_coeff_neighbor_array,
+                                                  NeighborArrayUnit *leaf_partition_neighbor_array);
 extern EbErrorType intra_luma_mode_context(BlkStruct *blk_ptr, uint32_t luma_mode,
                                            int32_t *prediction_index);
 extern EbErrorType intra2_nx2_n_fast_cost_islice(

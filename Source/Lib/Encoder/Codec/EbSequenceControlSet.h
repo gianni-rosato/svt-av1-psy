@@ -135,25 +135,25 @@ typedef struct SequenceControlSet {
     uint8_t compound_mode;
 
     /*!< Sequence resolution parameters */
-    uint32_t          chroma_format_idc;
-    uint16_t          subsampling_x; // add chroma subsampling parameters
-    uint16_t          subsampling_y;
-    uint16_t          max_input_luma_width;   // input luma width aligned to 8, this is used during encoding
-    uint16_t          max_input_luma_height;  // input luma height aligned to 8, this is used during encoding
-    uint16_t          max_input_chroma_width;
-    uint16_t          max_input_chroma_height;
-    uint16_t          max_input_pad_bottom;
-    uint16_t          max_input_pad_right;
-    uint32_t          chroma_width;
-    uint32_t          chroma_height;
-    uint32_t          pad_right;
-    uint32_t          pad_bottom;
-    uint16_t          left_padding;
-    uint16_t          top_padding;
-    uint16_t          right_padding;
-    uint16_t          bot_padding;
-    uint32_t          frame_rate;
-    uint32_t          encoder_bit_depth;
+    uint32_t chroma_format_idc;
+    uint16_t subsampling_x; // add chroma subsampling parameters
+    uint16_t subsampling_y;
+    uint16_t max_input_luma_width; // input luma width aligned to 8, this is used during encoding
+    uint16_t max_input_luma_height; // input luma height aligned to 8, this is used during encoding
+    uint16_t max_input_chroma_width;
+    uint16_t max_input_chroma_height;
+    uint16_t max_input_pad_bottom;
+    uint16_t max_input_pad_right;
+    uint32_t chroma_width;
+    uint32_t chroma_height;
+    uint32_t pad_right;
+    uint32_t pad_bottom;
+    uint16_t left_padding;
+    uint16_t top_padding;
+    uint16_t right_padding;
+    uint16_t bot_padding;
+    uint32_t frame_rate;
+    uint32_t encoder_bit_depth;
     EbInputResolution input_resolution;
 
     /*!< Super block parameters set for the stream */
@@ -285,8 +285,8 @@ typedef struct SequenceControlSet {
     *
     * Default is 1. */
     Bool enable_global_motion;
-    int    sg_filter_mode;
-    int    wn_filter_mode;
+    int  sg_filter_mode;
+    int  wn_filter_mode;
 
     /* inter intra compound
     *

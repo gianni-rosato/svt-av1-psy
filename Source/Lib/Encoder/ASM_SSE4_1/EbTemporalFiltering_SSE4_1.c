@@ -2044,8 +2044,11 @@ static void apply_filtering_central_loop_lbd(uint16_t w, uint16_t h, uint8_t *sr
         for (uint16_t j = 0; j < w; j += 8) {
             __m128i src_16 = _mm_cvtepu8_epi16(
                 _mm_loadl_epi64((__m128i *)(src + i * src_stride + j)));
-            _mm_storeu_si128((__m128i *)(accum + k), _mm_mullo_epi32(modifier, _mm_cvtepu16_epi32(src_16)));
-            _mm_storeu_si128((__m128i *)(accum + k + 4), _mm_mullo_epi32(modifier, _mm_cvtepu16_epi32(_mm_srli_si128(src_16, 8))));
+            _mm_storeu_si128((__m128i *)(accum + k),
+                             _mm_mullo_epi32(modifier, _mm_cvtepu16_epi32(src_16)));
+            _mm_storeu_si128(
+                (__m128i *)(accum + k + 4),
+                _mm_mullo_epi32(modifier, _mm_cvtepu16_epi32(_mm_srli_si128(src_16, 8))));
             _mm_storeu_si128((__m128i *)(count + k), modifier_epi16);
             k += 8;
         }
@@ -2062,8 +2065,10 @@ static void apply_filtering_central_loop_hbd(uint16_t w, uint16_t h, uint16_t *s
 
     for (uint16_t k = 0, i = 0; i < h; i++) {
         for (uint16_t j = 0; j < w; j += 8) {
-            __m128i src_1 = _mm_cvtepu16_epi32(_mm_loadl_epi64((__m128i *)(src + i * src_stride + j)));
-            __m128i src_2 = _mm_cvtepu16_epi32(_mm_loadl_epi64((__m128i *)(src + i * src_stride + j + 4)));
+            __m128i src_1 = _mm_cvtepu16_epi32(
+                _mm_loadl_epi64((__m128i *)(src + i * src_stride + j)));
+            __m128i src_2 = _mm_cvtepu16_epi32(
+                _mm_loadl_epi64((__m128i *)(src + i * src_stride + j + 4)));
             _mm_storeu_si128((__m128i *)(accum + k), _mm_mullo_epi32(modifier, src_1));
             _mm_storeu_si128((__m128i *)(accum + k + 4), _mm_mullo_epi32(modifier, src_2));
             _mm_storeu_si128((__m128i *)(count + k), modifier_epi16);
@@ -2073,7 +2078,7 @@ static void apply_filtering_central_loop_hbd(uint16_t w, uint16_t h, uint16_t *s
 }
 
 // Apply filtering to the central picture
-void apply_filtering_central_sse4_1(MeContext *          context_ptr,
+void apply_filtering_central_sse4_1(MeContext           *context_ptr,
                                     EbPictureBufferDesc *input_picture_ptr_central, EbByte *src,
                                     uint32_t **accum, uint16_t **count, uint16_t blk_width,
                                     uint16_t blk_height, uint32_t ss_x, uint32_t ss_y) {
@@ -2096,7 +2101,7 @@ void apply_filtering_central_sse4_1(MeContext *          context_ptr,
 }
 
 // Apply filtering to the central picture
-void apply_filtering_central_highbd_sse4_1(MeContext *          context_ptr,
+void apply_filtering_central_highbd_sse4_1(MeContext           *context_ptr,
                                            EbPictureBufferDesc *input_picture_ptr_central,
                                            uint16_t **src_16bit, uint32_t **accum, uint16_t **count,
                                            uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
@@ -2118,4 +2123,3 @@ void apply_filtering_central_highbd_sse4_1(MeContext *          context_ptr,
             blk_width_ch, blk_height_ch, src_16bit[C_V], src_stride_ch, accum[C_V], count[C_V]);
     }
 }
-

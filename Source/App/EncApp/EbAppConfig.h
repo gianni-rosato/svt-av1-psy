@@ -179,7 +179,7 @@ typedef struct EbConfig {
     FILE      *config_file;
     FILE      *input_file;
     MemMapFile mmap; //memory mapped file handler
-    Bool     input_file_is_fifo;
+    Bool       input_file_is_fifo;
     FILE      *bitstream_file;
     FILE      *recon_file;
     FILE      *error_log_file;
@@ -192,7 +192,7 @@ typedef struct EbConfig {
     FILE         *output_stat_file;
     FILE         *input_pred_struct_file;
     char         *input_pred_struct_filename;
-    Bool        y4m_input;
+    Bool          y4m_input;
     unsigned char y4m_buf[9];
 
     uint8_t progress; // 0 = no progress output, 1 = normal, 2 = aomenc style verbose progress
@@ -220,7 +220,7 @@ typedef struct EbConfig {
     uint32_t hme_level1_row_index;
     uint32_t hme_level2_column_index;
     uint32_t hme_level2_row_index;
-    Bool   stop_encoder; // to signal CTRL+C Event, need to stop encoding.
+    Bool     stop_encoder; // to signal CTRL+C Event, need to stop encoding.
 
     uint64_t processed_frame_count;
     uint64_t processed_byte_count;
@@ -243,7 +243,7 @@ typedef struct EncChannel {
     AppExitConditionType exit_cond_recon; // Processing loop exit condition
     AppExitConditionType exit_cond_input; // Processing loop exit condition
     AppExitConditionType exit_cond; // Processing loop exit condition
-    Bool               active;
+    Bool                 active;
 } EncChannel;
 
 typedef enum MultiPassModes {

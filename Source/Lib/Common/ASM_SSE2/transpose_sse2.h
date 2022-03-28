@@ -24,7 +24,6 @@ extern "C" {
 }
 #endif
 
-
 static INLINE void partial_transpose_8bit_8x8(const __m128i *const in, __m128i *const out) {
     // Unpack 8 bit elements. Goes from:
     // in[0]: 00 01 02 03 04 05 06 07

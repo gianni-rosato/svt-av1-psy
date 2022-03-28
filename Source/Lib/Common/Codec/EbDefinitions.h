@@ -1748,7 +1748,8 @@ static INLINE int32_t get_ext_tx_set(TxSize tx_size, int32_t is_inter, int32_t u
     return ext_tx_set_index[is_inter][set_type];
 }
 static INLINE Bool is_intra_mode(PredictionMode mode) {
-    return mode < INTRA_MODE_END;// && mode >= INTRA_MODE_START; // mode is always greater than INTRA_MODE_START
+    return mode <
+        INTRA_MODE_END; // && mode >= INTRA_MODE_START; // mode is always greater than INTRA_MODE_START
 }
 static INLINE Bool is_inter_mode(PredictionMode mode) {
     return mode >= SINGLE_INTER_MODE_START && mode < COMP_INTER_MODE_END;

@@ -787,7 +787,7 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc 
             for (uint32_t x_sb_index = 0; x_sb_index < pic_width_in_sb; ++x_sb_index) {
                 uint32_t sb_origin_x     = x_sb_index << sb_size_log2;
                 uint32_t sb_origin_y     = y_sb_index << sb_size_log2;
-                Bool   end_of_row_flag = x_sb_index == pic_width_in_sb - 1;
+                Bool     end_of_row_flag = x_sb_index == pic_width_in_sb - 1;
 
                 MainFrameBuf *main_frame_buf = &dec_handle_ptr->main_frame_buf;
                 CurFrameBuf  *frame_buf      = &main_frame_buf->cur_frame_bufs[0];

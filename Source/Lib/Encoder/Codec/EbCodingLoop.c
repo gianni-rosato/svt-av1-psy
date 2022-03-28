@@ -1331,7 +1331,7 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
 void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, uint32_t sb_addr,
                                BlkStruct *blk_ptr, PredictionUnit *pu_ptr,
                                EncDecContext *context_ptr) {
-    Bool               is_16bit  = context_ptr->is_16bit;
+    Bool                 is_16bit  = context_ptr->is_16bit;
     uint32_t             bit_depth = context_ptr->bit_depth;
     uint8_t              is_inter  = 0; // set to 0 b/c this is the intra path
     EbPictureBufferDesc *recon_buffer;
@@ -2034,7 +2034,7 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs, 
     EbPictureBufferDesc *transform_buffer     = ctx->transform_buffer;
     EbPictureBufferDesc *inverse_quant_buffer = ctx->inverse_quant_buffer;
 
-    Bool               is_16bit = ctx->is_16bit;
+    Bool                 is_16bit = ctx->is_16bit;
     EbPictureBufferDesc *recon_buffer;
     EbPictureBufferDesc *coeff_buffer_sb =
         pcs->parent_pcs_ptr->enc_dec_ptr->quantized_coeff[sb_addr];
@@ -2055,7 +2055,7 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs, 
 
     get_recon_pic(pcs, &recon_buffer, is_16bit);
     // Set MvUnit
-    ctx->mv_unit.pred_direction          = (uint8_t)pu_ptr->inter_pred_direction_index;
+    ctx->mv_unit.pred_direction        = (uint8_t)pu_ptr->inter_pred_direction_index;
     ctx->mv_unit.mv[REF_LIST_0].as_int = pu_ptr->mv[REF_LIST_0].as_int;
     ctx->mv_unit.mv[REF_LIST_1].as_int = pu_ptr->mv[REF_LIST_1].as_int;
 
@@ -2313,7 +2313,7 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs, 
  */
 void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs, EncDecContext *ctx,
                            EbPictureBufferDesc *input_pic, uint32_t sb_org_x, uint32_t sb_org_y) {
-    Bool   is_16bit  = ctx->is_16bit;
+    Bool     is_16bit  = ctx->is_16bit;
     uint32_t sb_width  = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_width - sb_org_x);
     uint32_t sb_height = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_height - sb_org_y);
 
@@ -2473,7 +2473,7 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs, EncD
 EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs,
                                  SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_org_x,
                                  uint32_t sb_org_y, EncDecContext *ctx) {
-    Bool               is_16bit = ctx->is_16bit;
+    Bool                 is_16bit = ctx->is_16bit;
     EbPictureBufferDesc *recon_buffer;
     EbPictureBufferDesc *input_picture;
     ModeDecisionContext *md_ctx;
@@ -2650,7 +2650,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
 EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs,
                                         SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_org_x,
                                         uint32_t sb_org_y, EncDecContext *ctx) {
-    Bool               is_16bit = ctx->is_16bit;
+    Bool                 is_16bit = ctx->is_16bit;
     EbPictureBufferDesc *recon_buffer;
     ModeDecisionContext *md_ctx = ctx->md_context;
 

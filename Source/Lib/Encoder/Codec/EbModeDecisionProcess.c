@@ -159,7 +159,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
     for (uint8_t is_base = 0; is_base < 2; is_base++) {
-        uint8_t nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels);
+        uint8_t nic_level         = get_nic_level(enc_mode, is_base, hierarchical_levels);
         uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
         min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
     }
@@ -187,7 +187,10 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     }
 
     // If independent chroma search is used, need to allocate additional 84 candidate buffers
-    const uint8_t ind_uv_cands = set_chroma_controls(NULL, get_chroma_level(enc_mode)) == CHROMA_MODE_0 ? 84 : 0;
+    const uint8_t ind_uv_cands = set_chroma_controls(NULL, get_chroma_level(enc_mode)) ==
+            CHROMA_MODE_0
+        ? 84
+        : 0;
     max_nics += CAND_CLASS_TOTAL; //need one extra temp buffer for each fast loop call
     context_ptr->max_nics    = max_nics;
     context_ptr->max_nics_uv = max_nics + ind_uv_cands;
@@ -200,7 +203,8 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     uint8_t use_update_cdf = 0;
     for (uint8_t is_islice = 0; is_islice < 2; is_islice++) {
         for (uint8_t is_base = 0; is_base < 2; is_base++) {
-            if (use_update_cdf) break;
+            if (use_update_cdf)
+                break;
             use_update_cdf |= get_update_cdf_level(enc_mode, is_islice, is_base);
         }
     }

@@ -109,7 +109,6 @@ typedef struct WedgeParamsType {
     WedgeMasksType      *masks;
 } WedgeParamsType;
 
-
 void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8_t *dst,
                                    int32_t dst_stride, int32_t w, int32_t h,
                                    SubpelParams *subpel_params, ConvolveParams *conv_params);
@@ -553,7 +552,7 @@ static INLINE void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type
     }
 }
 static INLINE PredDirection av1_get_pred_dir(int8_t ref_frame_type) {
-    static uint8_t ref_type_to_list_idx[REFS_PER_FRAME + 1] = { 0, 0, 0, 0, 0, 1, 1, 1 };
+    static uint8_t   ref_type_to_list_idx[REFS_PER_FRAME + 1] = {0, 0, 0, 0, 0, 1, 1, 1};
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_frame_type);
     return (rf[1] == NONE_FRAME) ? (PredDirection)ref_type_to_list_idx[rf[0]] : BI_PRED;

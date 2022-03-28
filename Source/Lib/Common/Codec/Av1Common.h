@@ -34,9 +34,8 @@ extern "C" {
 typedef struct WnFilterCtrls {
     Bool enabled;
     uint8_t
-        filter_tap_lvl; // [1-3], 1 is Y-7tap, UV-5tap; 2 is Y-5tap, UV-5tap; 3 is Y-3tap, UV-3tap
-    Bool
-        use_refinement; // If true, perform a refinement search around initial filter coeff values
+         filter_tap_lvl; // [1-3], 1 is Y-7tap, UV-5tap; 2 is Y-5tap, UV-5tap; 3 is Y-3tap, UV-3tap
+    Bool use_refinement; // If true, perform a refinement search around initial filter coeff values
     Bool max_one_refinement_step; // Limit refinement search to one step
     Bool
         use_prev_frame_coeffs; // Skip coeff generation and use the filter params from the colocated rest. unit on the previous frame, if available, else generate new
@@ -76,8 +75,8 @@ typedef struct Av1Common {
     WnFilterCtrls wn_filter_ctrls;
     uint8_t use_boundaries_in_rest_search; // Use boundary pixels in restoration filtering search
 
-    FrameSize    frm_size;
-    TilesInfo    tiles_info;
+    FrameSize frm_size;
+    TilesInfo tiles_info;
 
 } Av1Common;
 

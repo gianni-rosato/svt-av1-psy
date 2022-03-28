@@ -319,7 +319,7 @@ int svt_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, i
 void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                          PaletteInfo *palette_cand, uint8_t *palette_size_array,
                          uint32_t *tot_palette_cands) {
-    int    colors;
+    int  colors;
     Bool is16bit = context_ptr->hbd_mode_decision > 0;
 
     EbPictureBufferDesc *src_pic    = is16bit ? pcs_ptr->input_frame16bit

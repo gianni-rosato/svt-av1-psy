@@ -65,8 +65,9 @@ using LowbdInvTxfm2dFunc = void (*)(const int32_t *input, uint8_t *output_r,
                                     int32_t stride_w, TxType tx_type,
                                     TxSize tx_size, int32_t eob);
 
-using LowbdInvTxfm2dAddFunc = void (*)(const TranLow *dqcoeff,uint8_t *dst_r,
-                                       int32_t stride_r, uint8_t *dst_w, int32_t stride_w,
+using LowbdInvTxfm2dAddFunc = void (*)(const TranLow *dqcoeff, uint8_t *dst_r,
+                                       int32_t stride_r, uint8_t *dst_w,
+                                       int32_t stride_w,
                                        const TxfmParam *txfm_param);
 
 typedef struct {
@@ -458,15 +459,15 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                                                 uint16_t *output_w,
                                                 int32_t stride_w,
                                                 TxType tx_type,
-                                        int32_t bd);
+                                                int32_t bd);
         using LowbdInvRectSmallTxfmRefFunc = void (*)(const int32_t *input,
-                                            uint16_t *output_r,
-                                            int32_t stride_r,
-                                            uint16_t *output_w,
-                                            int32_t stride_w,
-                                            TxType tx_type,
-                                            TxSize tx_size,
-                                            int32_t bd);
+                                                      uint16_t *output_r,
+                                                      int32_t stride_r,
+                                                      uint16_t *output_w,
+                                                      int32_t stride_w,
+                                                      TxType tx_type,
+                                                      TxSize tx_size,
+                                                      int32_t bd);
         const LowbdInvSqrTxfmRefFunc lowbd_sqr_ref_funcs[TX_SIZES_ALL] = {
             svt_av1_inv_txfm2d_add_4x4_c,
             svt_av1_inv_txfm2d_add_8x8_c,
@@ -508,32 +509,33 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             svt_av1_inv_txfm2d_add_16x64_c,
             svt_av1_inv_txfm2d_add_64x16_c};
 
-        const LowbdInvRectSmallTxfmRefFunc lowbd_rect_small_ref_funcs[TX_SIZES_ALL] = {
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            svt_av1_inv_txfm2d_add_4x8_c,
-            svt_av1_inv_txfm2d_add_8x4_c,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            svt_av1_inv_txfm2d_add_4x16_c,
-            svt_av1_inv_txfm2d_add_16x4_c,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr};
+        const LowbdInvRectSmallTxfmRefFunc
+            lowbd_rect_small_ref_funcs[TX_SIZES_ALL] = {
+                nullptr,
+                nullptr,
+                nullptr,
+                nullptr,
+                nullptr,
+                svt_av1_inv_txfm2d_add_4x8_c,
+                svt_av1_inv_txfm2d_add_8x4_c,
+                nullptr,
+                nullptr,
+                nullptr,
+                nullptr,
+                nullptr,
+                nullptr,
+                svt_av1_inv_txfm2d_add_4x16_c,
+                svt_av1_inv_txfm2d_add_16x4_c,
+                nullptr,
+                nullptr,
+                nullptr,
+                nullptr};
 
         if (lowbd_sqr_ref_funcs[tx_size] == nullptr &&
             lowbd_rect_ref_funcs[tx_size] == nullptr &&
             lowbd_rect_small_ref_funcs[tx_size] == nullptr) {
-                ASSERT_TRUE(0) << "Invalid size ref: " << tx_size;
-                return;
+            ASSERT_TRUE(0) << "Invalid size ref: " << tx_size;
+            return;
         }
 
         for (int tx_type = DCT_DCT; tx_type < TX_TYPES; ++tx_type) {
@@ -585,13 +587,13 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                                                  bd_);
                 } else {
                     lowbd_rect_small_ref_funcs[tx_size](input_,
-                                                output_ref_,
-                                                stride_,
-                                                output_ref_,
-                                                stride_,
-                                                type,
-                                                tx_size,
-                                                bd_);
+                                                        output_ref_,
+                                                        stride_,
+                                                        output_ref_,
+                                                        stride_,
+                                                        type,
+                                                        tx_size,
+                                                        bd_);
                 }
 
                 // compare, note the output buffer has stride.
@@ -645,11 +647,9 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
 
             ASSERT_EQ(energy_ref, energy_asm);
 
-            EXPECT_EQ(0,
-                memcmp(input_, input, MAX_TX_SQUARE * sizeof(int32_t)))
+            EXPECT_EQ(0, memcmp(input_, input, MAX_TX_SQUARE * sizeof(int32_t)))
                 << "idx: " << idx;
         }
-
     }
 
     void run_handle_transform_speed_test() {
@@ -934,33 +934,33 @@ class InvTxfm2dAddTest : public ::testing::TestWithParam<InvTxfm2AddParam> {
         txfm_param.eob = av1_get_max_eob(tx_size);
 
         if (bd_ > 8 && !lossless) {
-            //Not support 10 bit with not lossless
+            // Not support 10 bit with not lossless
             return;
         }
 
         const int txfm_support_matrix[19][16] = {
             //[Size][type]" // O - No; 1 - lossless; 2 - !lossless; 3 - any
-           /*0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15*/
-            {3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2}, //0  TX_4X4,
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, //1  TX_8X8,
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, //2  TX_16X16,
-            {3, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0}, //3  TX_32X32,
-            {3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, //4  TX_64X64,
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, //5  TX_4X8,
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, //6  TX_8X4,
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, //7  TX_8X16,
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, //8  TX_16X8,
-            {3, 1, 3, 1, 1, 3, 1, 1, 1, 3, 3, 3, 1, 3, 1, 3}, //9  TX_16X32,
-            {3, 3, 1, 1, 3, 1, 1, 1, 1, 3, 3, 3, 3, 1, 3, 1}, //10 TX_32X16,
-            {3, 0, 1, 0, 0, 1, 0, 0, 0, 3, 3, 3, 0, 1, 0, 1}, //11 TX_32X64,
-            {3, 1, 0, 0, 1, 0, 0, 0, 0, 3, 3, 3, 1, 0, 1, 0}, //12 TX_64X32,
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, //13 TX_4X16,
-            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}, //14 TX_16X4,
-            {3, 1, 3, 1, 1, 3, 1, 1, 1, 3, 3, 3, 1, 3, 1, 3}, //15 TX_8X32,
-            {3, 3, 1, 1, 3, 1, 1, 1, 1, 3, 3, 3, 3, 1, 3, 1}, //16 TX_32X8,
-            {3, 0, 3, 0, 0, 3, 0, 0, 0, 3, 3, 3, 0, 3, 0, 3}, //17 TX_16X64,
-            {3, 3, 0, 0, 3, 0, 0, 0, 0, 3, 3, 3, 3, 0, 3, 0}  //18 TX_64X16,
-           /*0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15*/
+            /*0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15*/
+            {3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},  // 0  TX_4X4,
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},  // 1  TX_8X8,
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},  // 2  TX_16X16,
+            {3, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0},  // 3  TX_32X32,
+            {3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},  // 4  TX_64X64,
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},  // 5  TX_4X8,
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},  // 6  TX_8X4,
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},  // 7  TX_8X16,
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},  // 8  TX_16X8,
+            {3, 1, 3, 1, 1, 3, 1, 1, 1, 3, 3, 3, 1, 3, 1, 3},  // 9  TX_16X32,
+            {3, 3, 1, 1, 3, 1, 1, 1, 1, 3, 3, 3, 3, 1, 3, 1},  // 10 TX_32X16,
+            {3, 0, 1, 0, 0, 1, 0, 0, 0, 3, 3, 3, 0, 1, 0, 1},  // 11 TX_32X64,
+            {3, 1, 0, 0, 1, 0, 0, 0, 0, 3, 3, 3, 1, 0, 1, 0},  // 12 TX_64X32,
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},  // 13 TX_4X16,
+            {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3},  // 14 TX_16X4,
+            {3, 1, 3, 1, 1, 3, 1, 1, 1, 3, 3, 3, 1, 3, 1, 3},  // 15 TX_8X32,
+            {3, 3, 1, 1, 3, 1, 1, 1, 1, 3, 3, 3, 3, 1, 3, 1},  // 16 TX_32X8,
+            {3, 0, 3, 0, 0, 3, 0, 0, 0, 3, 3, 3, 0, 3, 0, 3},  // 17 TX_16X64,
+            {3, 3, 0, 0, 3, 0, 0, 0, 0, 3, 3, 3, 3, 0, 3, 0}   // 18 TX_64X16,
+            /*0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15*/
         };
 
         const int width = tx_size_wide[tx_size];
@@ -1067,7 +1067,7 @@ class InvTxfm2dAddTest : public ::testing::TestWithParam<InvTxfm2AddParam> {
 };
 
 TEST_P(InvTxfm2dAddTest, svt_av1_inv_txfm_add) {
-    //Reset all pointers to C
+    // Reset all pointers to C
     setup_common_rtcd_internal(0);
 
     for (int i = TX_4X4; i < TX_SIZES_ALL; i++) {

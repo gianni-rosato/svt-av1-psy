@@ -51,8 +51,7 @@ void        svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_
 /*
 * return by-pass encdec
 */
-uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision,
-                          uint8_t encoder_bit_depth) {
+uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth) {
     UNUSED(hbd_mode_decision);
     uint8_t bypass_encdec = 1;
     if (encoder_bit_depth == EB_8BIT) {
@@ -162,17 +161,17 @@ EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
 
     // Mode Decision Context
     EB_NEW(context_ptr->md_context,
-        mode_decision_context_ctor,
-        color_format,
-        enc_handle_ptr->scs_instance_array[0]->scs_ptr->super_block_size,
-        static_config->enc_mode,
-        enc_handle_ptr->scs_instance_array[0]->scs_ptr->max_block_cnt,
-        static_config->encoder_bit_depth,
-        0,
-        0,
-        enable_hbd_mode_decision == DEFAULT ? 2 : enable_hbd_mode_decision,
-        static_config->screen_content_mode,
-        static_config->hierarchical_levels);
+           mode_decision_context_ctor,
+           color_format,
+           enc_handle_ptr->scs_instance_array[0]->scs_ptr->super_block_size,
+           static_config->enc_mode,
+           enc_handle_ptr->scs_instance_array[0]->scs_ptr->max_block_cnt,
+           static_config->encoder_bit_depth,
+           0,
+           0,
+           enable_hbd_mode_decision == DEFAULT ? 2 : enable_hbd_mode_decision,
+           static_config->screen_content_mode,
+           static_config->hierarchical_levels);
     if (enable_hbd_mode_decision)
         context_ptr->md_context->input_sample16bit_buffer = context_ptr->input_sample16bit_buffer;
 
@@ -302,8 +301,8 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
  *   threads from performing an update (A).
  ******************************************************/
 Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutIndex,
-                               EncDecTasks *taskPtr, EbFifo *srmFifoPtr) {
-    Bool   continue_processing_flag = FALSE;
+                             EncDecTasks *taskPtr, EbFifo *srmFifoPtr) {
+    Bool     continue_processing_flag = FALSE;
     uint32_t row_segment_index        = 0;
     uint32_t segment_index;
     uint32_t right_segment_index;
@@ -439,7 +438,7 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     svt_block_on_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 
     if (!pcs_ptr->parent_pcs_ptr->is_alt_ref) {
-        Bool           is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+        Bool             is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
         EbObjectWrapper *output_recon_wrapper_ptr;
         // Get Recon Buffer
         svt_get_empty_object(scs_ptr->encode_context_ptr->recon_output_fifo_ptr,
@@ -3652,47 +3651,47 @@ void set_cand_reduction_ctrls(PictureControlSet *pcs_ptr, ModeDecisionContext *m
 }
 uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
     UvCtrls *uv_ctrls = ctx ? &ctx->uv_ctrls : NULL;
-    uint8_t uv_mode = 0;
+    uint8_t  uv_mode  = 0;
 
     switch (uv_level) {
     case 0:
         uv_mode = CHROMA_MODE_2;
         if (uv_ctrls) {
-            uv_ctrls->enabled = 0;
+            uv_ctrls->enabled           = 0;
             uv_ctrls->nd_uv_serach_mode = 0;
         }
         break;
     case 1:
         uv_mode = CHROMA_MODE_0;
         if (uv_ctrls) {
-            uv_ctrls->enabled = 1;
+            uv_ctrls->enabled           = 1;
             uv_ctrls->nd_uv_serach_mode = 0;
-            uv_ctrls->uv_intra_th = (uint64_t)~0;
-            uv_ctrls->uv_cfl_th = (uint64_t)~0;
+            uv_ctrls->uv_intra_th       = (uint64_t)~0;
+            uv_ctrls->uv_cfl_th         = (uint64_t)~0;
         }
         break;
     case 2:
         uv_mode = CHROMA_MODE_0;
         if (uv_ctrls) {
-            uv_ctrls->enabled = 1;
+            uv_ctrls->enabled           = 1;
             uv_ctrls->nd_uv_serach_mode = 1;
-            uv_ctrls->uv_intra_th = 130;
-            uv_ctrls->uv_cfl_th = 130;
+            uv_ctrls->uv_intra_th       = 130;
+            uv_ctrls->uv_cfl_th         = 130;
         }
         break;
     case 3:
         uv_mode = CHROMA_MODE_0;
         if (uv_ctrls) {
-            uv_ctrls->enabled = 1;
+            uv_ctrls->enabled           = 1;
             uv_ctrls->nd_uv_serach_mode = 1;
-            uv_ctrls->uv_intra_th = 100;
-            uv_ctrls->uv_cfl_th = 100;
+            uv_ctrls->uv_intra_th       = 100;
+            uv_ctrls->uv_cfl_th         = 100;
         }
         break;
     case 4:
         uv_mode = CHROMA_MODE_1;
         if (uv_ctrls) {
-            uv_ctrls->enabled = 1;
+            uv_ctrls->enabled           = 1;
             uv_ctrls->nd_uv_serach_mode = 0;
         }
         break;
@@ -3743,8 +3742,7 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
             nic_level = 11;
         else
             nic_level = 10;
-    }
-    else if (enc_mode <= ENC_M4)
+    } else if (enc_mode <= ENC_M4)
         nic_level = 11;
     else if (enc_mode <= ENC_M5)
         nic_level = 12;
@@ -3755,8 +3753,7 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
             nic_level = 15;
         else
             nic_level = 14;
-    }
-    else if (enc_mode <= ENC_M11)
+    } else if (enc_mode <= ENC_M11)
         nic_level = 15;
     else
         nic_level = 16;
@@ -5318,12 +5315,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *s
 
 void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
                                                    ModeDecisionContext *context_ptr) {
-    Pd1Level lpd1_level = context_ptr->lpd1_ctrls.pd1_level;
-    PictureParentControlSet *ppcs               = pcs_ptr->parent_pcs_ptr;
-    const uint8_t            is_ref             = ppcs->is_used_as_reference_flag;
-    const EbInputResolution  input_resolution   = ppcs->input_resolution;
-    const uint8_t            is_islice          = pcs_ptr->slice_type == I_SLICE;
-    const SliceType           slice_type         = pcs_ptr->slice_type;
+    Pd1Level                 lpd1_level       = context_ptr->lpd1_ctrls.pd1_level;
+    PictureParentControlSet *ppcs             = pcs_ptr->parent_pcs_ptr;
+    const uint8_t            is_ref           = ppcs->is_used_as_reference_flag;
+    const EbInputResolution  input_resolution = ppcs->input_resolution;
+    const uint8_t            is_islice        = pcs_ptr->slice_type == I_SLICE;
+    const SliceType          slice_type       = pcs_ptr->slice_type;
     // Get ref info, used to set some feature levels
     const uint32_t picture_qp           = pcs_ptr->picture_qp;
     uint32_t       me_8x8_cost_variance = (uint32_t)~0;
@@ -5334,7 +5331,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     // REF info only available if frame is not an I_SLICE
     if (!is_islice) {
         me_8x8_cost_variance = ppcs->me_8x8_cost_variance[context_ptr->sb_index];
-        me_64x64_distortion = ppcs->me_64x64_distortion[context_ptr->sb_index];
+        me_64x64_distortion  = ppcs->me_64x64_distortion[context_ptr->sb_index];
         EbReferenceObject *ref_obj_l0 =
             (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
         l0_was_skip = ref_obj_l0->sb_skip[context_ptr->sb_index], l1_was_skip = 1;
@@ -5381,19 +5378,22 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     set_rdoq_controls(context_ptr, context_ptr->rdoq_level);
     if (lpd1_level <= LPD1_LVL_0)
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_1080p_RANGE
-        ? (is_ref ? 9 : 11) : 15;
+            ? (is_ref ? 9 : 11)
+            : 15;
     else if (lpd1_level <= LPD1_LVL_1)
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_1080p_RANGE
-        ? (is_ref ? 12 : 13) : 15;
+            ? (is_ref ? 12 : 13)
+            : 15;
     else if (lpd1_level <= LPD1_LVL_2) {
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_1080p_RANGE
-            ? (is_ref ? 13 : 14) : 15;
-    }
-    else {
+            ? (is_ref ? 13 : 14)
+            : 15;
+    } else {
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_1080p_RANGE
-            ? (is_ref ? 13 : 14) : 15;
+            ? (is_ref ? 13 : 14)
+            : 15;
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 50) ||
-            (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
+             (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
             me_8x8_cost_variance < (200 * picture_qp) && me_64x64_distortion < (200 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
     }
@@ -5418,8 +5418,8 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     else {
         lpd1_tx_level = 4;
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
-            me_8x8_cost_variance < (800 * picture_qp) &&
-            me_64x64_distortion < (800 * picture_qp)) ||
+             me_8x8_cost_variance < (800 * picture_qp) &&
+             me_64x64_distortion < (800 * picture_qp)) ||
             (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
             lpd1_tx_level = 6;
     }
@@ -5516,7 +5516,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
 EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, PictureControlSet *pcs_ptr,
                                                 ModeDecisionContext *context_ptr) {
     EbErrorType              return_error         = EB_ErrorNone;
-    EncMode                enc_mode             = pcs_ptr->enc_mode;
+    EncMode                  enc_mode             = pcs_ptr->enc_mode;
     uint8_t                  pd_pass              = context_ptr->pd_pass;
     PictureParentControlSet *ppcs                 = pcs_ptr->parent_pcs_ptr;
     const uint8_t            is_ref               = ppcs->is_used_as_reference_flag;
@@ -5668,8 +5668,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
         else
             context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
-    }
-    else if (enc_mode <= ENC_M9)
+    } else if (enc_mode <= ENC_M9)
         context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
     else if (enc_mode <= ENC_M11)
         context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
@@ -5690,8 +5689,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             rate_est_level = 1;
         else
             rate_est_level = 2;
-    }
-    else if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+    } else if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M10)
@@ -5700,8 +5698,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             rate_est_level = is_islice ? 3 : 4;
         else
             rate_est_level = is_islice ? 3 : 0;
-    }
-    else {
+    } else {
         if (enc_mode <= ENC_M10)
             rate_est_level = 3;
         else if (enc_mode <= ENC_M12)
@@ -5728,8 +5725,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             intra_level = 5;
         else
             intra_level = is_base ? 5 : 0;
-    }
-    else if (enc_mode <= ENC_M0)
+    } else if (enc_mode <= ENC_M0)
         intra_level = 1;
     else if (enc_mode <= ENC_M2)
         intra_level = is_ref ? 1 : 4;
@@ -6137,11 +6133,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
             while (blk_index < scs_ptr->max_block_cnt) {
                 const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
-                Bool split_flag                      = blk_geom->sq_size > 4 ? TRUE : FALSE;
-                results_ptr->consider_block[blk_index] = 0;
-                results_ptr->split_flag[blk_index]     = blk_geom->sq_size > 4 ? TRUE : FALSE;
-                results_ptr->refined_split_flag[blk_index] = blk_geom->sq_size > 4 ? TRUE
-                                                                                   : FALSE;
+                Bool split_flag                            = blk_geom->sq_size > 4 ? TRUE : FALSE;
+                results_ptr->consider_block[blk_index]     = 0;
+                results_ptr->split_flag[blk_index]         = blk_geom->sq_size > 4 ? TRUE : FALSE;
+                results_ptr->refined_split_flag[blk_index] = blk_geom->sq_size > 4 ? TRUE : FALSE;
                 blk_index += split_flag ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
             }
         }
@@ -6415,8 +6410,7 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr, SequenceContr
                          ppcs_ptr->loop_count);
 
     // Special case for overlay frame.
-    if (loop && ppcs_ptr->is_overlay &&
-        ppcs_ptr->projected_frame_size < rc->max_frame_bandwidth) {
+    if (loop && ppcs_ptr->is_overlay && ppcs_ptr->projected_frame_size < rc->max_frame_bandwidth) {
         loop = 0;
     }
     *do_recode = loop == 1;
@@ -6799,11 +6793,11 @@ void *mode_decision_kernel(void *input_ptr) {
         EncDecTasks       *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
         PictureControlSet *pcs_ptr           = (PictureControlSet *)
                                          enc_dec_tasks_ptr->pcs_wrapper_ptr->object_ptr;
-        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-        ModeDecisionContext *md_ctx  = context_ptr->md_context;
-        struct PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
-        md_ctx->encoder_bit_depth            = (uint8_t)scs_ptr->static_config.encoder_bit_depth;
-        md_ctx->corrupted_mv_check           = (pcs_ptr->parent_pcs_ptr->aligned_width >=
+        SequenceControlSet             *scs_ptr = pcs_ptr->scs_ptr;
+        ModeDecisionContext            *md_ctx  = context_ptr->md_context;
+        struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
+        md_ctx->encoder_bit_depth               = (uint8_t)scs_ptr->static_config.encoder_bit_depth;
+        md_ctx->corrupted_mv_check              = (pcs_ptr->parent_pcs_ptr->aligned_width >=
                                       (1 << (MV_IN_USE_BITS - 3))) ||
             (pcs_ptr->parent_pcs_ptr->aligned_height >= (1 << (MV_IN_USE_BITS - 3)));
         context_ptr->tile_group_index = enc_dec_tasks_ptr->tile_group_index;
@@ -6883,7 +6877,7 @@ void *mode_decision_kernel(void *input_ptr) {
                         &pcs_ptr->md_frame_context);
                 if (!pcs_ptr->cdf_ctrl.update_coef)
                     av1_estimate_coefficients_rate(context_ptr->md_context->rate_est_table,
-                        &pcs_ptr->md_frame_context);
+                                                   &pcs_ptr->md_frame_context);
             }
             // Segment-loop
             while (assign_enc_dec_segments(segments_ptr,
@@ -7234,7 +7228,7 @@ void *mode_decision_kernel(void *input_ptr) {
             if (last_sb_flag) {
                 Bool do_recode = FALSE;
                 if ((scs_ptr->static_config.rate_control_mode == 1 ||
-                    scs_ptr->static_config.max_bit_rate != 0) &&
+                     scs_ptr->static_config.max_bit_rate != 0) &&
                     scs_ptr->encode_context_ptr->recode_loop != DISALLOW_RECODE) {
                     recode_loop_decision_maker(pcs_ptr, scs_ptr, &do_recode);
                 }

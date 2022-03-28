@@ -241,7 +241,7 @@ typedef struct EbDecHandle {
 
     // Thread Handles
     EbHandle             *decode_thread_handle_array;
-    Bool                start_thread_process;
+    Bool                  start_thread_process;
     EbHandle              thread_semaphore;
     struct DecThreadCtxt *thread_ctxt_pa;
 

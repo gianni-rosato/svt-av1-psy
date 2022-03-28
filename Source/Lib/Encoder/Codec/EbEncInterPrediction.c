@@ -307,10 +307,10 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
     const int dequant_shift = 3;
     int32_t   current_q_index =
         picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
-    Dequants *const dequants  = context_ptr->hbd_mode_decision ? &scs_ptr->deq_bd
-                                                               : &scs_ptr->deq_8bit;
-    int16_t         quantizer = dequants->y_dequant_q3[current_q_index][1];
+    SequenceControlSet *scs_ptr   = picture_control_set_ptr->scs_ptr;
+    Dequants *const     dequants  = context_ptr->hbd_mode_decision ? &scs_ptr->deq_bd
+                                                                   : &scs_ptr->deq_8bit;
+    int16_t             quantizer = dequants->y_dequant_q3[current_q_index][1];
 
     const int qstep = AOMMAX(quantizer >> dequant_shift, 1);
 
@@ -485,10 +485,9 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
 
 // Choose the best wedge index the specified sign
 int64_t pick_wedge_fixed_sign(PictureControlSet   *picture_control_set_ptr,
-                              ModeDecisionContext *context_ptr,
-                              const BlockSize bsize, const int16_t *const residual1,
-                              const int16_t *const diff10, const int8_t wedge_sign,
-                              int8_t *const best_wedge_index) {
+                              ModeDecisionContext *context_ptr, const BlockSize bsize,
+                              const int16_t *const residual1, const int16_t *const diff10,
+                              const int8_t wedge_sign, int8_t *const best_wedge_index) {
     //const MACROBLOCKD *const xd = &x->e_mbd;
 
     uint32_t  full_lambda = context_ptr->hbd_mode_decision
@@ -757,7 +756,7 @@ struct build_prediction_ctxt {
     EbPictureBufferDesc  prediction_ptr;
     uint16_t             dst_origin_x;
     uint16_t             dst_origin_y;
-    Bool               perform_chroma;
+    Bool                 perform_chroma;
 };
 // input: log2 of length, 0(4), 1(8), ...
 static const int max_neighbor_obmc[6] = {0, 1, 2, 3, 4, 4};
@@ -1276,7 +1275,7 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
     const int                     above_mi_col = ctxt->mi_col + rel_mi_col;
     int                           mi_x, mi_y;
     MbModeInfo                    backup_mbmi = *above_mbmi;
-    SequenceControlSet *scs_ptr = ctxt->picture_control_set_ptr->scs_ptr;
+    SequenceControlSet           *scs_ptr     = ctxt->picture_control_set_ptr->scs_ptr;
     av1_setup_build_prediction_by_above_pred(
         xd, rel_mi_col, above_mi_width, &backup_mbmi, ctxt, num_planes, is16bit);
 
@@ -1378,7 +1377,7 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
     const int                     left_mi_row = ctxt->mi_row + rel_mi_row;
     int                           mi_x, mi_y;
     MbModeInfo                    backup_mbmi = *left_mbmi;
-    SequenceControlSet *scs_ptr = ctxt->picture_control_set_ptr->scs_ptr;
+    SequenceControlSet           *scs_ptr     = ctxt->picture_control_set_ptr->scs_ptr;
     av1_setup_build_prediction_by_left_pred(
         xd, rel_mi_row, left_mi_height, &backup_mbmi, ctxt, num_planes, is16bit);
 
@@ -1571,7 +1570,7 @@ struct obmc_inter_pred_ctxt {
     uint16_t  final_dst_stride_u;
     uint8_t  *final_dst_ptr_v;
     uint16_t  final_dst_stride_v;
-    Bool    perform_chroma;
+    Bool      perform_chroma;
 };
 
 static INLINE void build_obmc_inter_pred_above(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col,
@@ -2705,7 +2704,7 @@ static void model_rd_for_sb(PictureControlSet   *picture_control_set_ptr,
             dist_sum += dist * 10;
         } else {
             SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
-            const uint8_t current_q_index =
+            const uint8_t       current_q_index =
                 picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
             Dequants *const dequants  = md_context_ptr->hbd_mode_decision ? &scs_ptr->deq_bd
                                                                           : &scs_ptr->deq_8bit;
@@ -2742,11 +2741,10 @@ int32_t is_nontrans_global_motion(BlockSize                    sb_type,
         return 0;
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
-    const uint8_t is_compound = is_inter_compound_mode(candidate_buffer_ptr->candidate_ptr->pred_mode);
+    const uint8_t is_compound = is_inter_compound_mode(
+        candidate_buffer_ptr->candidate_ptr->pred_mode);
     // Now check if all global motion is non translational
-    for (ref = 0;
-        ref < 1 + is_compound /*has_second_ref(mbmi)*/;
-        ++ref) {
+    for (ref = 0; ref < 1 + is_compound /*has_second_ref(mbmi)*/; ++ref) {
         if (picture_control_set_ptr->parent_pcs_ptr->global_motion[ref ? rf[1] : rf[0]].wmtype ==
             TRANSLATION)
             //if (xd->global_motion[mbmi->ref_frame[ref]].wmtype == TRANSLATION)
@@ -2787,7 +2785,7 @@ void interpolation_filter_search(PictureControlSet           *picture_control_se
                                  EbPictureBufferDesc *ref_pic_list1, uint8_t hbd_mode_decision,
                                  uint8_t bit_depth) {
     SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
-    const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm; //&cpi->common;
+    const Av1Common    *cm      = picture_control_set_ptr->parent_pcs_ptr->av1_cm; //&cpi->common;
 
     int32_t tmp_rate;
     int64_t tmp_dist;
@@ -3303,10 +3301,10 @@ EbErrorType warped_motion_prediction(
 
     EbWarpedMotionParams *wm_params_l0, EbWarpedMotionParams *wm_params_l1, uint8_t bit_depth,
     Bool perform_chroma, Bool is_encode_pass) {
-    EbErrorType         return_error = EB_ErrorNone;
-    uint8_t             is_compound  = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
-    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
-    Bool is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
+    EbErrorType         return_error      = EB_ErrorNone;
+    uint8_t             is_compound       = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
+    SequenceControlSet *scs_ptr           = picture_control_set_ptr->scs_ptr;
+    Bool                is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
     Bool is16bit = (Bool)(bit_depth > EB_8BIT) || (is_encode_pass && is_16bit_pipeline);
 
     int32_t  src_stride;
@@ -3717,8 +3715,9 @@ void compute_subpel_params(SequenceControlSet *scs_ptr, int16_t pre_y, int16_t p
         //      Limit top & left offset from AOM_INTERP_EXTEND(4) to INTERPOLATION_OFFSET(8) to avoid memory access underflow,
         //      because pack_block() may access src_mod - INTERPOLATION_OFFSET - (INTERPOLATION_OFFSET * src_stride) later.
         const int border_in_pixels = scs_ptr->sb_size_pix + 32;
-        const int top    = -(((border_in_pixels >> ss_y) - INTERPOLATION_OFFSET) << SCALE_SUBPEL_BITS);
-        const int left   = -(((border_in_pixels >> ss_x) - INTERPOLATION_OFFSET) << SCALE_SUBPEL_BITS);
+        const int top = -(((border_in_pixels >> ss_y) - INTERPOLATION_OFFSET) << SCALE_SUBPEL_BITS);
+        const int left   = -(((border_in_pixels >> ss_x) - INTERPOLATION_OFFSET)
+                           << SCALE_SUBPEL_BITS);
         const int bottom = ((frame_height >> ss_y) + AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS;
         const int right  = ((frame_width >> ss_x) + AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS;
 
@@ -3961,11 +3960,11 @@ EbErrorType warped_motion_prediction_16bit_pipeline(
     EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y,
     EbWarpedMotionParams *wm_params_l0, EbWarpedMotionParams *wm_params_l1, uint8_t bit_depth,
     Bool perform_chroma) {
-    EbErrorType return_error = EB_ErrorNone;
-    uint8_t     is_compound  = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
-    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
-    Bool is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
-    Bool is16bit           = (Bool)(bit_depth > EB_8BIT) || is_16bit_pipeline;
+    EbErrorType         return_error      = EB_ErrorNone;
+    uint8_t             is_compound       = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
+    SequenceControlSet *scs_ptr           = picture_control_set_ptr->scs_ptr;
+    Bool                is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
+    Bool                is16bit           = (Bool)(bit_depth > EB_8BIT) || is_16bit_pipeline;
 
     int32_t  src_stride;
     int32_t  dst_stride;
@@ -5760,8 +5759,8 @@ EbErrorType av1_inter_prediction(
 }
 
 Bool calc_pred_masked_compound(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-                                 ModeDecisionCandidate *candidate_ptr) {
-    SequenceControlSet  *scs_ptr = pcs_ptr->scs_ptr;
+                               ModeDecisionCandidate *candidate_ptr) {
+    SequenceControlSet  *scs_ptr           = pcs_ptr->scs_ptr;
     uint8_t              hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                      ? EB_8_BIT_MD
                      : context_ptr->hbd_mode_decision;
@@ -5922,7 +5921,7 @@ Bool calc_pred_masked_compound(PictureControlSet *pcs_ptr, ModeDecisionContext *
                                bwidth);
     }
 
-    Bool   exit_compound_prep  = FALSE;
+    Bool     exit_compound_prep  = FALSE;
     uint32_t pred0_to_pred1_dist = 0;
 
     if (hbd_mode_decision) {
@@ -5974,7 +5973,7 @@ EbErrorType inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_m
     av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
     const int8_t ref_idx_first  = get_ref_frame_idx(rf[0]);
     const int8_t list_idx_first = get_list_idx(rf[0]);
-    mv_unit.pred_direction = (rf[1] == NONE_FRAME) ? list_idx_first : BI_PRED;
+    mv_unit.pred_direction      = (rf[1] == NONE_FRAME) ? list_idx_first : BI_PRED;
 
     if (rf[1] == NONE_FRAME) {
         if (list_idx_first == 0)
@@ -5992,8 +5991,8 @@ EbErrorType inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_m
         ref_pic_list1 = get_ref_pic_buffer(
             picture_control_set_ptr, hbd_mode_decision, list_idx_sec, ref_idx_sec);
     }
-    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
-    ScaleFactors ref0_scale_factors = scs_ptr->sf_identity;
+    SequenceControlSet *scs_ptr            = picture_control_set_ptr->scs_ptr;
+    ScaleFactors        ref0_scale_factors = scs_ptr->sf_identity;
     if (!picture_control_set_ptr->parent_pcs_ptr->is_superres_none && ref_pic_list0 != NULL) {
         svt_av1_setup_scale_factors_for_frame(
             &ref0_scale_factors,
@@ -6049,7 +6048,7 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
     av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
     const int8_t ref_idx_first  = get_ref_frame_idx(rf[0]);
     const int8_t list_idx_first = get_list_idx(rf[0]);
-    mv_unit.pred_direction = (rf[1] == NONE_FRAME) ? list_idx_first : BI_PRED;
+    mv_unit.pred_direction      = (rf[1] == NONE_FRAME) ? list_idx_first : BI_PRED;
 
     if (rf[1] == NONE_FRAME) {
         if (list_idx_first == 0)
@@ -6069,23 +6068,22 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
 
     // WM disallowed in light-PD1 path so motion mode is always SIMPLE_TRANSLATION
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_warped_motion) {
-        wm_count_samples(
-            md_context_ptr->blk_ptr,
-            picture_control_set_ptr->scs_ptr->seq_header.sb_size,
-            md_context_ptr->blk_geom,
-            md_context_ptr->blk_origin_x,
-            md_context_ptr->blk_origin_y,
-            candidate_ptr->ref_frame_type,
-            picture_control_set_ptr,
-            &candidate_ptr->num_proj_ref);
+        wm_count_samples(md_context_ptr->blk_ptr,
+                         picture_control_set_ptr->scs_ptr->seq_header.sb_size,
+                         md_context_ptr->blk_geom,
+                         md_context_ptr->blk_origin_x,
+                         md_context_ptr->blk_origin_y,
+                         candidate_ptr->ref_frame_type,
+                         picture_control_set_ptr,
+                         &candidate_ptr->num_proj_ref);
     }
     //for light PD1 inter prediction is Luma only for MDS0 and Chroma only for MDS3
     uint32_t component_mask = md_context_ptr->md_stage == MD_STAGE_0 ? PICTURE_BUFFER_DESC_LUMA_MASK
         : md_context_ptr->lpd1_chroma_comp == COMPONENT_CHROMA    ? PICTURE_BUFFER_DESC_CHROMA_MASK
         : md_context_ptr->lpd1_chroma_comp == COMPONENT_CHROMA_CB ? PICTURE_BUFFER_DESC_Cb_FLAG
                                                                   : PICTURE_BUFFER_DESC_Cr_FLAG;
-    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
-    ScaleFactors ref0_scale_factors = scs_ptr->sf_identity;
+    SequenceControlSet *scs_ptr            = picture_control_set_ptr->scs_ptr;
+    ScaleFactors        ref0_scale_factors = scs_ptr->sf_identity;
     if (!picture_control_set_ptr->parent_pcs_ptr->is_superres_none && ref_pic_list0 != NULL) {
         svt_av1_setup_scale_factors_for_frame(
             &ref0_scale_factors,
@@ -6131,13 +6129,13 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     EbPictureBufferDesc         *ref_pic_list0 = (EbPictureBufferDesc *)NULL;
     EbPictureBufferDesc         *ref_pic_list1 = (EbPictureBufferDesc *)NULL;
     ModeDecisionCandidate *const candidate_ptr = candidate_buffer_ptr->candidate_ptr;
-    SequenceControlSet *scs_ptr = picture_control_set_ptr->scs_ptr;
-    MvReferenceFrame rf[2];
+    SequenceControlSet          *scs_ptr       = picture_control_set_ptr->scs_ptr;
+    MvReferenceFrame             rf[2];
     av1_set_ref_frame(rf, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
     int8_t  ref_idx_l0 = get_ref_frame_idx(rf[0]);
     int8_t  ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0]) : get_ref_frame_idx(rf[1]);
-    uint8_t list_idx0 = get_list_idx(rf[0]);
-    uint8_t list_idx1 = rf[1] == NONE_FRAME ? get_list_idx(rf[0]) : get_list_idx(rf[1]);
+    uint8_t list_idx0  = get_list_idx(rf[0]);
+    uint8_t list_idx1  = rf[1] == NONE_FRAME ? get_list_idx(rf[0]) : get_list_idx(rf[1]);
     assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST && list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
 
     const uint8_t is_compound = is_inter_compound_mode(candidate_ptr->pred_mode);
@@ -6148,8 +6146,8 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     mv_1.as_int = candidate_ptr->mv[1].as_int;
     MvUnit mv_unit;
     mv_unit.pred_direction = (rf[1] == NONE_FRAME) ? list_idx0 : BI_PRED;
-    mv_unit.mv[0] = mv_0;
-    mv_unit.mv[1] = mv_1;
+    mv_unit.mv[0]          = mv_0;
+    mv_unit.mv[1]          = mv_1;
 
     if (candidate_buffer_ptr->candidate_ptr->use_intrabc) {
         get_recon_pic(picture_control_set_ptr, &ref_pic_list0, hbd_mode_decision);
@@ -6203,15 +6201,14 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
 
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_warped_motion &&
         candidate_ptr->motion_mode != WARPED_CAUSAL) {
-        wm_count_samples(
-            md_context_ptr->blk_ptr,
-            picture_control_set_ptr->scs_ptr->seq_header.sb_size,
-            md_context_ptr->blk_geom,
-            md_context_ptr->blk_origin_x,
-            md_context_ptr->blk_origin_y,
-            candidate_ptr->ref_frame_type,
-            picture_control_set_ptr,
-            &candidate_ptr->num_proj_ref);
+        wm_count_samples(md_context_ptr->blk_ptr,
+                         picture_control_set_ptr->scs_ptr->seq_header.sb_size,
+                         md_context_ptr->blk_geom,
+                         md_context_ptr->blk_origin_x,
+                         md_context_ptr->blk_origin_y,
+                         candidate_ptr->ref_frame_type,
+                         picture_control_set_ptr,
+                         &candidate_ptr->num_proj_ref);
     }
 
     uint8_t bit_depth = EB_8BIT;

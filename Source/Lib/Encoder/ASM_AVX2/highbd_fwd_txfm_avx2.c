@@ -9395,13 +9395,13 @@ void svt_av1_fwd_txfm2d_32x8_N2_avx2(int16_t *input, int32_t *output, uint32_t s
 void svt_av1_fwd_txfm2d_8x16_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
                                      TxType tx_type, uint8_t bd) {
     __m256i       in[16], out[16];
-    __m256i      *outcoef256 = (__m256i *)output;
-    const int8_t *shift      = fwd_txfm_shift_ls[TX_8X16];
-    const int32_t txw_idx    = get_txw_idx(TX_8X16);
-    const int32_t txh_idx    = get_txh_idx(TX_8X16);
-    int8_t        bitcol     = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t        bitrow     = fwd_cos_bit_row[txw_idx][txh_idx];
-     const int32_t txfm_size_col = tx_size_wide[TX_8X16];
+    __m256i      *outcoef256    = (__m256i *)output;
+    const int8_t *shift         = fwd_txfm_shift_ls[TX_8X16];
+    const int32_t txw_idx       = get_txw_idx(TX_8X16);
+    const int32_t txh_idx       = get_txh_idx(TX_8X16);
+    int8_t        bitcol        = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow        = fwd_cos_bit_row[txw_idx][txh_idx];
+    const int32_t txfm_size_col = tx_size_wide[TX_8X16];
     const int32_t txfm_size_row = tx_size_high[TX_8X16];
     const int32_t num_col       = txfm_size_col >> 3;
 
@@ -9576,12 +9576,12 @@ void svt_av1_fwd_txfm2d_8x16_N2_avx2(int16_t *input, int32_t *output, uint32_t s
 void svt_av1_fwd_txfm2d_16x8_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
                                      TxType tx_type, uint8_t bd) {
     __m256i       in[16], out[16] = {_mm256_setzero_si256()};
-    __m256i      *outcoef256 = (__m256i *)output;
-    const int8_t *shift      = fwd_txfm_shift_ls[TX_16X8];
-    const int32_t txw_idx    = get_txw_idx(TX_16X8);
-    const int32_t txh_idx    = get_txh_idx(TX_16X8);
-    int8_t        bitcol     = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t        bitrow     = fwd_cos_bit_row[txw_idx][txh_idx];
+    __m256i      *outcoef256    = (__m256i *)output;
+    const int8_t *shift         = fwd_txfm_shift_ls[TX_16X8];
+    const int32_t txw_idx       = get_txw_idx(TX_16X8);
+    const int32_t txh_idx       = get_txh_idx(TX_16X8);
+    int8_t        bitcol        = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow        = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_16X8];
     const int32_t txfm_size_row = tx_size_high[TX_16X8];
     const int32_t num_row       = txfm_size_row >> 3;
@@ -13767,12 +13767,12 @@ void svt_av1_fwd_txfm2d_32x8_N4_avx2(int16_t *input, int32_t *output, uint32_t s
 void svt_av1_fwd_txfm2d_8x16_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
                                      TxType tx_type, uint8_t bd) {
     __m256i       in[16], out[16];
-    __m256i      *outcoef256 = (__m256i *)output;
-    const int8_t *shift      = fwd_txfm_shift_ls[TX_8X16];
-    const int32_t txw_idx    = get_txw_idx(TX_8X16);
-    const int32_t txh_idx    = get_txh_idx(TX_8X16);
-    int8_t        bitcol     = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t        bitrow     = fwd_cos_bit_row[txw_idx][txh_idx];
+    __m256i      *outcoef256    = (__m256i *)output;
+    const int8_t *shift         = fwd_txfm_shift_ls[TX_8X16];
+    const int32_t txw_idx       = get_txw_idx(TX_8X16);
+    const int32_t txh_idx       = get_txh_idx(TX_8X16);
+    int8_t        bitcol        = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow        = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_8X16];
     const int32_t txfm_size_row = tx_size_high[TX_8X16];
     const int32_t num_col       = txfm_size_col >> 3;
@@ -13939,12 +13939,12 @@ void svt_av1_fwd_txfm2d_8x16_N4_avx2(int16_t *input, int32_t *output, uint32_t s
 void svt_av1_fwd_txfm2d_16x8_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
                                      TxType tx_type, uint8_t bd) {
     __m256i       in[16], out[16] = {_mm256_setzero_si256()};
-    __m256i      *outcoef256 = (__m256i *)output;
-    const int8_t *shift      = fwd_txfm_shift_ls[TX_16X8];
-    const int32_t txw_idx    = get_txw_idx(TX_16X8);
-    const int32_t txh_idx    = get_txh_idx(TX_16X8);
-    int8_t        bitcol     = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t        bitrow     = fwd_cos_bit_row[txw_idx][txh_idx];
+    __m256i      *outcoef256    = (__m256i *)output;
+    const int8_t *shift         = fwd_txfm_shift_ls[TX_16X8];
+    const int32_t txw_idx       = get_txw_idx(TX_16X8);
+    const int32_t txh_idx       = get_txh_idx(TX_16X8);
+    int8_t        bitcol        = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow        = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_16X8];
     const int32_t txfm_size_row = tx_size_high[TX_16X8];
     const int32_t num_row       = txfm_size_row >> 3;

@@ -211,11 +211,11 @@ void copy_dep_cnt_cleaning_list(EncodeContext *ctx, PictureParentControlSet *pcs
 }
 
 void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_ptr) {
-    SequenceControlSet *scs_ptr = parentpicture_control_set_ptr->scs_ptr;
-    uint8_t pic_width_in_sb      = (uint8_t)((parentpicture_control_set_ptr->aligned_width +
+    SequenceControlSet *scs_ptr         = parentpicture_control_set_ptr->scs_ptr;
+    uint8_t             pic_width_in_sb = (uint8_t)((parentpicture_control_set_ptr->aligned_width +
                                          scs_ptr->sb_size_pix - 1) /
                                         scs_ptr->sb_size_pix);
-    uint8_t picture_height_in_sb = (uint8_t)((parentpicture_control_set_ptr->aligned_height +
+    uint8_t picture_height_in_sb        = (uint8_t)((parentpicture_control_set_ptr->aligned_height +
                                               scs_ptr->sb_size_pix - 1) /
                                              scs_ptr->sb_size_pix);
     set_tile_info(parentpicture_control_set_ptr);
@@ -487,7 +487,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
             pcs_ptr = (PictureParentControlSet *)
                           input_picture_demux_ptr->pcs_wrapper_ptr->object_ptr;
-            scs_ptr = pcs_ptr->scs_ptr;
+            scs_ptr            = pcs_ptr->scs_ptr;
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
             //SVT_LOG("\nPicture Manager Process @ %d \n ", pcs_ptr->picture_number);
@@ -591,7 +591,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
         case EB_PIC_REFERENCE:
 
-            scs_ptr = input_picture_demux_ptr->scs_ptr;
+            scs_ptr            = input_picture_demux_ptr->scs_ptr;
             encode_context_ptr = scs_ptr->encode_context_ptr;
             clean_pictures_in_ref_queue(scs_ptr->encode_context_ptr);
             ((EbReferenceObject *)
@@ -633,7 +633,7 @@ void *picture_manager_kernel(void *input_ptr) {
                 EB_ENC_PM_ERROR8);
             break;
         case EB_PIC_FEEDBACK:
-            scs_ptr = input_picture_demux_ptr->scs_ptr;
+            scs_ptr            = input_picture_demux_ptr->scs_ptr;
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
             clean_pictures_in_ref_queue(scs_ptr->encode_context_ptr);
@@ -661,7 +661,7 @@ void *picture_manager_kernel(void *input_ptr) {
                 decode_order++;
             break;
         default:
-            scs_ptr = input_picture_demux_ptr->scs_ptr;
+            scs_ptr            = input_picture_demux_ptr->scs_ptr;
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
             CHECK_REPORT_ERROR_NC(encode_context_ptr->app_callback_ptr, EB_ENC_PM_ERROR9);
@@ -685,7 +685,7 @@ void *picture_manager_kernel(void *input_ptr) {
                 if (input_entry_ptr->input_object_ptr != NULL) {
                     entry_pcs_ptr = (PictureParentControlSet *)
                                         input_entry_ptr->input_object_ptr->object_ptr;
-                    entry_scs_ptr = entry_pcs_ptr->scs_ptr;
+                    entry_scs_ptr     = entry_pcs_ptr->scs_ptr;
                     availability_flag = TRUE;
                     if (entry_pcs_ptr->decode_order != decode_order && (scs_ptr->enable_dec_order))
                         availability_flag = FALSE;
@@ -1039,11 +1039,16 @@ void *picture_manager_kernel(void *input_ptr) {
                                     --reference_entry_ptr->dependent_count;
 
 #if DEBUG_SFRAME
-                                    if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
-                                    {
-                                        fprintf(stderr, "\nframe %d, layer %d, ref-list-0 count %u, ref frame %d, ref frame remain dep count %d\n",
-                                            (int)child_pcs_ptr->picture_number, entry_pcs_ptr->temporal_layer_index,
-                                            entry_pcs_ptr->ref_list0_count, (int)child_pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][ref_idx], reference_entry_ptr->dependent_count);
+                                    if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+                                        fprintf(stderr,
+                                                "\nframe %d, layer %d, ref-list-0 count %u, ref "
+                                                "frame %d, ref frame remain dep count %d\n",
+                                                (int)child_pcs_ptr->picture_number,
+                                                entry_pcs_ptr->temporal_layer_index,
+                                                entry_pcs_ptr->ref_list0_count,
+                                                (int)child_pcs_ptr->parent_pcs_ptr
+                                                    ->ref_pic_poc_array[REF_LIST_0][ref_idx],
+                                                reference_entry_ptr->dependent_count);
                                     }
 #endif
 
@@ -1136,11 +1141,16 @@ void *picture_manager_kernel(void *input_ptr) {
                                     --reference_entry_ptr->dependent_count;
 
 #if DEBUG_SFRAME
-                                    if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
-                                    {
-                                        fprintf(stderr, "\nframe %d, layer %d, ref-list-1 count %u, ref frame %d, ref frame remain dep count %d\n",
-                                            (int)child_pcs_ptr->picture_number, entry_pcs_ptr->temporal_layer_index,
-                                            entry_pcs_ptr->ref_list1_count, (int)child_pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][ref_idx], reference_entry_ptr->dependent_count);
+                                    if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+                                        fprintf(stderr,
+                                                "\nframe %d, layer %d, ref-list-1 count %u, ref "
+                                                "frame %d, ref frame remain dep count %d\n",
+                                                (int)child_pcs_ptr->picture_number,
+                                                entry_pcs_ptr->temporal_layer_index,
+                                                entry_pcs_ptr->ref_list1_count,
+                                                (int)child_pcs_ptr->parent_pcs_ptr
+                                                    ->ref_pic_poc_array[REF_LIST_1][ref_idx],
+                                                reference_entry_ptr->dependent_count);
                                     }
 #endif
 
@@ -1160,7 +1170,8 @@ void *picture_manager_kernel(void *input_ptr) {
                         }
 
                         if (entry_pcs_ptr->frame_end_cdf_update_mode) {
-                            if (entry_pcs_ptr->slice_type != I_SLICE && entry_pcs_ptr->frm_hdr.frame_type != S_FRAME)
+                            if (entry_pcs_ptr->slice_type != I_SLICE &&
+                                entry_pcs_ptr->frm_hdr.frame_type != S_FRAME)
                                 child_pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame =
                                     ref_index;
                             else

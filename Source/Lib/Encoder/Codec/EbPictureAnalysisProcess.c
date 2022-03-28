@@ -1971,36 +1971,42 @@ void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
 }
 
 static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
-    SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr,
-    EbPictureBufferDesc* input_picture_ptr, uint64_t* sum_avg_intensity_ttl_regions_luma) {
-
-    uint32_t region_width = input_picture_ptr->width / scs_ptr->picture_analysis_number_of_regions_per_width;
-    uint32_t region_height = input_picture_ptr->height / scs_ptr->picture_analysis_number_of_regions_per_height;
+    SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+    EbPictureBufferDesc *input_picture_ptr, uint64_t *sum_avg_intensity_ttl_regions_luma) {
+    uint32_t region_width = input_picture_ptr->width /
+        scs_ptr->picture_analysis_number_of_regions_per_width;
+    uint32_t region_height = input_picture_ptr->height /
+        scs_ptr->picture_analysis_number_of_regions_per_height;
 
     // Loop over regions inside the picture
-    for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < scs_ptr->picture_analysis_number_of_regions_per_width; region_in_picture_width_index++) { // loop over horizontal regions
-        for (uint32_t region_in_picture_height_index = 0; region_in_picture_height_index < scs_ptr->picture_analysis_number_of_regions_per_height; region_in_picture_height_index++) { // loop over vertical regions
+    for (uint32_t region_in_picture_width_index = 0;
+         region_in_picture_width_index < scs_ptr->picture_analysis_number_of_regions_per_width;
+         region_in_picture_width_index++) { // loop over horizontal regions
+        for (uint32_t region_in_picture_height_index = 0; region_in_picture_height_index <
+             scs_ptr->picture_analysis_number_of_regions_per_height;
+             region_in_picture_height_index++) { // loop over vertical regions
 
             uint64_t sum = 0;
 
-           // Initialize bins to 1
-            svt_initialize_buffer_32bits(
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                [region_in_picture_height_index],
-                64,
-                0,
-                1);
+            // Initialize bins to 1
+            svt_initialize_buffer_32bits(pcs_ptr->picture_histogram[region_in_picture_width_index]
+                                                                   [region_in_picture_height_index],
+                                         64,
+                                         0,
+                                         1);
 
             uint32_t region_width_offset = (region_in_picture_width_index ==
-                scs_ptr->picture_analysis_number_of_regions_per_width - 1)
+                                            scs_ptr->picture_analysis_number_of_regions_per_width -
+                                                1)
                 ? input_picture_ptr->width -
-                (scs_ptr->picture_analysis_number_of_regions_per_width * region_width)
+                    (scs_ptr->picture_analysis_number_of_regions_per_width * region_width)
                 : 0;
 
-            uint32_t region_height_offset = (region_in_picture_height_index ==
-                scs_ptr->picture_analysis_number_of_regions_per_height - 1)
+            uint32_t region_height_offset =
+                (region_in_picture_height_index ==
+                 scs_ptr->picture_analysis_number_of_regions_per_height - 1)
                 ? input_picture_ptr->height -
-                (scs_ptr->picture_analysis_number_of_regions_per_height * region_height)
+                    (scs_ptr->picture_analysis_number_of_regions_per_height * region_height)
                 : 0;
 
             uint8_t decim_step = scs_ptr->static_config.scene_change_detection
@@ -2010,26 +2016,36 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
             // Y Histogram
             calculate_histogram(
                 &input_picture_ptr->buffer_y[(input_picture_ptr->origin_x +
-                    region_in_picture_width_index * region_width) +
-                ((input_picture_ptr->origin_y +
-                    region_in_picture_height_index * region_height) *
-                    input_picture_ptr->stride_y)],
+                                              region_in_picture_width_index * region_width) +
+                                             ((input_picture_ptr->origin_y +
+                                               region_in_picture_height_index * region_height) *
+                                              input_picture_ptr->stride_y)],
                 region_width + region_width_offset,
                 region_height + region_height_offset,
                 input_picture_ptr->stride_y,
                 decim_step,
                 pcs_ptr->picture_histogram[region_in_picture_width_index]
-                [region_in_picture_height_index],
+                                          [region_in_picture_height_index],
                 &sum);
             sum = (sum * decim_step * decim_step);
 
-            pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index] =
-                (uint8_t)((sum + (((region_width + region_width_offset) * (region_height + region_height_offset)) >>  1)) / ((region_width + region_width_offset) * (region_height + region_height_offset)));
+            pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
+                                                 [region_in_picture_height_index] =
+                (uint8_t)((sum +
+                           (((region_width + region_width_offset) *
+                             (region_height + region_height_offset)) >>
+                            1)) /
+                          ((region_width + region_width_offset) *
+                           (region_height + region_height_offset)));
 
             (*sum_avg_intensity_ttl_regions_luma) += (sum << 4);
-            for (uint32_t histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS; histogram_bin++) { // Loop over the histogram bins
-                pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][histogram_bin] =
-                    pcs_ptr->picture_histogram[region_in_picture_width_index] [region_in_picture_height_index][histogram_bin] * 4 * 4 * decim_step * decim_step;
+            for (uint32_t histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
+                 histogram_bin++) { // Loop over the histogram bins
+                pcs_ptr->picture_histogram[region_in_picture_width_index]
+                                          [region_in_picture_height_index][histogram_bin] =
+                    pcs_ptr->picture_histogram[region_in_picture_width_index]
+                                              [region_in_picture_height_index][histogram_bin] *
+                    4 * 4 * decim_step * decim_step;
             }
         }
     }
@@ -2427,11 +2443,9 @@ const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
 
-unsigned int svt_av1_get_sby_perpixel_variance(
-    const AomVarianceFnPtr *fn_ptr,
-    const uint8_t          *src,
-    int                     stride, //const struct Buf2D *ref,
-    BlockSize               bs) {
+unsigned int svt_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, const uint8_t *src,
+                                               int       stride, //const struct Buf2D *ref,
+                                               BlockSize bs) {
     unsigned int       sse;
     const unsigned int var =
         //cpi->fn_ptr[bs].vf(ref->buf, ref->stride, eb_av1_var_offs, 0, &sse);
@@ -2442,7 +2456,7 @@ unsigned int svt_av1_get_sby_perpixel_variance(
 // Check if the number of color of a block is superior to 1 and inferior
 // to a given threshold.
 Bool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int cols,
-                                  int nb_colors_threshold) {
+                                int nb_colors_threshold) {
     Bool has_color[1 << 8]; // Maximum (1 << 8) color levels.
     memset(has_color, 0, (1 << 8) * sizeof(*has_color));
     int nb_colors = 0;
@@ -2689,7 +2703,7 @@ void *picture_analysis_kernel(void *input_ptr) {
 
         in_results_ptr = (ResourceCoordinationResults *)in_results_wrapper_ptr->object_ptr;
         pcs_ptr        = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr = pcs_ptr->scs_ptr;
+        scs_ptr        = pcs_ptr->scs_ptr;
 
         // Mariana : save enhanced picture ptr, move this from here
         pcs_ptr->enhanced_unscaled_picture_ptr                    = pcs_ptr->enhanced_picture_ptr;

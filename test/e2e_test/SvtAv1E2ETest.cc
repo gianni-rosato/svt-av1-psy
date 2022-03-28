@@ -381,8 +381,8 @@ TEST_P(SwitchFrameConformanceTest, DISABLED_SwitchFrameTest) {
 }
 
 INSTANTIATE_TEST_CASE_P(SvtAv1, SwitchFrameConformanceTest,
-    ::testing::ValuesIn(sframe_settings),
-    EncTestSetting::GetSettingName);
+                        ::testing::ValuesIn(sframe_settings),
+                        EncTestSetting::GetSettingName);
 
 class LongtimeConformanceTest : public ConformanceDeathTest {};
 

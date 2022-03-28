@@ -795,7 +795,7 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
     void *pv_top_neighbor_array, *pv_left_neighbor_array;
 
     EbDecHandle         *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    Bool               is16b      = dec_handle->is_16bit_pipeline;
+    Bool                 is16b      = dec_handle->is_16bit_pipeline;
     const PredictionMode mode       = (plane == AOM_PLANE_Y) ? part_info->mi->mode
                                                              : get_uv_mode(part_info->mi->uv_mode);
 

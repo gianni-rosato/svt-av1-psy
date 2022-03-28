@@ -441,7 +441,7 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
         }
     }
     assert(ref_flag_list[0 /*LAST_FRAME - LAST_FRAME*/] == 1 &&
-        ref_flag_list[GOLDEN_FRAME - LAST_FRAME] == 1);
+           ref_flag_list[GOLDEN_FRAME - LAST_FRAME] == 1);
     // == LAST2_FRAME ==
     // == LAST3_FRAME ==
     // == BWDREF_FRAME ==

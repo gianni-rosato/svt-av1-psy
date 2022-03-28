@@ -49,18 +49,18 @@ typedef struct IntraReferenceSamples {
     // Scratch buffers used in the interpolaiton process
     uint8_t reference_above_line_y[(MAX_PU_SIZE << 2) + 1];
     uint8_t reference_left_line_y[(MAX_PU_SIZE << 2) + 1];
-    Bool  above_ready_flag_y;
-    Bool  left_ready_flag_y;
+    Bool    above_ready_flag_y;
+    Bool    left_ready_flag_y;
 
     uint8_t reference_above_line_cb[(MAX_PU_SIZE << 2) + 2];
     uint8_t reference_left_line_cb[(MAX_PU_SIZE << 2) + 2];
-    Bool  above_ready_flag_cb;
-    Bool  left_ready_flag_cb;
+    Bool    above_ready_flag_cb;
+    Bool    left_ready_flag_cb;
 
     uint8_t reference_above_line_cr[(MAX_PU_SIZE << 2) + 2];
     uint8_t reference_left_line_cr[(MAX_PU_SIZE << 2) + 2];
-    Bool  above_ready_flag_cr;
-    Bool  left_ready_flag_cr;
+    Bool    above_ready_flag_cr;
+    Bool    left_ready_flag_cr;
 } IntraReferenceSamples;
 
 typedef struct IntraReference16bitSamples {
@@ -77,18 +77,18 @@ typedef struct IntraReference16bitSamples {
     // Scratch buffers used in the interpolaiton process
     uint16_t reference_above_line_y[(MAX_PU_SIZE << 2) + 1];
     uint16_t reference_left_line_y[(MAX_PU_SIZE << 2) + 1];
-    Bool   above_ready_flag_y;
-    Bool   left_ready_flag_y;
+    Bool     above_ready_flag_y;
+    Bool     left_ready_flag_y;
 
     uint16_t reference_above_line_cb[(MAX_PU_SIZE << 2) + 2];
     uint16_t reference_left_line_cb[(MAX_PU_SIZE << 2) + 2];
-    Bool   above_ready_flag_cb;
-    Bool   left_ready_flag_cb;
+    Bool     above_ready_flag_cb;
+    Bool     left_ready_flag_cb;
 
     uint16_t reference_above_line_cr[(MAX_PU_SIZE << 2) + 2];
     uint16_t reference_left_line_cr[(MAX_PU_SIZE << 2) + 2];
-    Bool   above_ready_flag_cr;
-    Bool   left_ready_flag_cr;
+    Bool     above_ready_flag_cr;
+    Bool     left_ready_flag_cr;
 } IntraReference16bitSamples;
 
 #define TOTAL_LUMA_MODES 35
@@ -188,8 +188,7 @@ typedef void (*EB_INTRA_DC_AV1_TYPE)(
     const Bool skip); //skip half rows
 typedef void (*EB_INTRA_NOANG_16bit_TYPE)(const uint32_t size, uint16_t *ref_samples,
                                           uint16_t      *prediction_ptr,
-                                          const uint32_t prediction_buffer_stride,
-                                          const Bool   skip);
+                                          const uint32_t prediction_buffer_stride, const Bool skip);
 typedef void (*EB_INTRA_ANG_Z1_Z2_Z3_16bit_TYPE)(const uint32_t size, uint16_t *ref_samples,
                                                  uint16_t      *dst,
                                                  const uint32_t prediction_buffer_stride,

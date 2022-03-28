@@ -1445,14 +1445,14 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
                                       ss_x,
                                       ss_y);
             lbd_fn_ptr(context_ptr,
-                   &input_picture_central,
-                   src,
-                   ref_accum,
-                   ref_count,
-                   blk_width_ch,
-                   blk_height_ch,
-                   ss_x,
-                   ss_y);
+                       &input_picture_central,
+                       src,
+                       ref_accum,
+                       ref_count,
+                       blk_width_ch,
+                       blk_height_ch,
+                       ss_x,
+                       ss_y);
         } else {
             assert(hbd_fn_ptr);
             apply_filtering_central_highbd_c(context_ptr,

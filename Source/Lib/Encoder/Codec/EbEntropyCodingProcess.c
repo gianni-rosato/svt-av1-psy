@@ -42,7 +42,7 @@ EbErrorType entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
 
     context_ptr->is_16bit =
         (Bool)(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.encoder_bit_depth >
-                 EB_8BIT);
+               EB_8BIT);
     ;
 
     // Input/Output System Resource Manager FIFOs

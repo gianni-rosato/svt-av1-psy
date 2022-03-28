@@ -1348,11 +1348,11 @@ static EbErrorType downscaled_source_buffer_desc_ctor(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
-    initData.left_padding  = picture_ptr_for_reference->origin_x;
-    initData.right_padding = picture_ptr_for_reference->origin_x;
-    initData.top_padding   = picture_ptr_for_reference->origin_y;
-    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
+    initData.left_padding       = picture_ptr_for_reference->origin_x;
+    initData.right_padding      = picture_ptr_for_reference->origin_x;
+    initData.top_padding        = picture_ptr_for_reference->origin_y;
+    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y;
 
     EB_NEW(*picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1492,11 +1492,11 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
-    initData.left_padding  = picture_ptr_for_reference->origin_x;
-    initData.right_padding = picture_ptr_for_reference->origin_x;
-    initData.top_padding   = picture_ptr_for_reference->origin_y;
-    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
+    initData.left_padding       = picture_ptr_for_reference->origin_x;
+    initData.right_padding      = picture_ptr_for_reference->origin_x;
+    initData.top_padding        = picture_ptr_for_reference->origin_y;
+    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y;
 
     EB_NEW(*input_padded_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1505,11 +1505,11 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height >> 1;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
-    initData.left_padding  = picture_ptr_for_reference->origin_x >> 1;
-    initData.right_padding = picture_ptr_for_reference->origin_x >> 1;
-    initData.top_padding   = picture_ptr_for_reference->origin_y >> 1;
-    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y >> 1;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
+    initData.left_padding       = picture_ptr_for_reference->origin_x >> 1;
+    initData.right_padding      = picture_ptr_for_reference->origin_x >> 1;
+    initData.top_padding        = picture_ptr_for_reference->origin_y >> 1;
+    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y >> 1;
 
     EB_NEW(*quarter_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1518,11 +1518,11 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height >> 2;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
-    initData.left_padding  = picture_ptr_for_reference->origin_x >> 2;
-    initData.right_padding = picture_ptr_for_reference->origin_x >> 2;
-    initData.top_padding   = picture_ptr_for_reference->origin_y >> 2;
-    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y >> 2;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
+    initData.left_padding       = picture_ptr_for_reference->origin_x >> 2;
+    initData.right_padding      = picture_ptr_for_reference->origin_x >> 2;
+    initData.top_padding        = picture_ptr_for_reference->origin_y >> 2;
+    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y >> 2;
 
     EB_NEW(*sixteenth_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
     return EB_ErrorNone;
@@ -1637,7 +1637,7 @@ static void scale_input_references(PictureParentControlSet *pcs_ptr,
     EbPaReferenceObject *src_object = (EbPaReferenceObject *)
                                           pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
-    Bool               do_resize      = FALSE;
+    Bool                 do_resize      = FALSE;
 
     svt_block_on_mutex(src_object->resize_mutex[denom_idx]);
 
@@ -1846,7 +1846,7 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
                                        scs_ptr->static_config.superres_denom};
 
     Bool first_loop = !(scs_ptr->static_config.superres_mode == SUPERRES_AUTO &&
-                          pcs_ptr->superres_recode_loop > 0);
+                        pcs_ptr->superres_recode_loop > 0);
     if (first_loop) { // first loop of multiple coding loop (auto-dual or auto-all mode) or the only loop (all the other modes)
         // determine super-res denom
         calc_superres_params(&spr_params, scs_ptr, pcs_ptr);

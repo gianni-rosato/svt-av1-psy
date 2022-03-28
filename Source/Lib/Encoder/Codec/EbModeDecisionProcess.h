@@ -132,7 +132,7 @@ typedef struct InterIntraCompCtrls {
 } InterIntraCompCtrls;
 typedef struct ObmcControls {
     uint8_t enabled;
-    Bool  max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
+    Bool    max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
 } ObmcControls;
 typedef struct TxtControls {
     uint8_t enabled;
@@ -447,7 +447,7 @@ typedef struct BlockLocation {
 } BlockLocation;
 typedef struct Lpd1Ctrls {
     int8_t
-        pd1_level; // Whether light-PD1 is set to be used for an SB (the detector may change this)
+         pd1_level; // Whether light-PD1 is set to be used for an SB (the detector may change this)
     Bool use_lpd1_detector
         [LPD1_LEVELS]; // Whether to use a detector; if use_light_pd1 is set to 1, the detector will protect tough SBs
     Bool use_ref_info
@@ -479,12 +479,12 @@ typedef struct Lpd1TxCtrls {
         use_uv_shortcuts_on_y_coeffs; // Apply shortcuts to the chroma TX path if luma has few coeffs
 } Lpd1TxCtrls;
 typedef struct CflCtrls {
-    Bool  enabled;
+    Bool    enabled;
     uint8_t itr_th; // Early exit to reduce the number of iterations to compute CFL parameters
 } CflCtrls;
 typedef struct MdRateEstCtrls {
     Bool
-           update_skip_ctx_dc_sign_ctx; // If true, update skip context and dc_sign context (updates are done in the same func, so control together)
+         update_skip_ctx_dc_sign_ctx; // If true, update skip context and dc_sign context (updates are done in the same func, so control together)
     Bool update_skip_coeff_ctx; // If true, update skip coeff context
     uint8_t
            coeff_rate_est_lvl; // 0: OFF (always use approx for coeff rate), 1: full; always compute coeff rate, 2: when num_coeff is low, use approximation for coeff rate
@@ -527,22 +527,22 @@ typedef struct CandReductionCtrls {
 
 } CandReductionCtrls;
 typedef struct ModeDecisionContext {
-    EbDctor  dctor;
+    EbDctor dctor;
 
-    EbFifo  *mode_decision_configuration_input_fifo_ptr;
-    EbFifo  *mode_decision_output_fifo_ptr;
-    ModeDecisionCandidate        **fast_candidate_ptr_array;
-    ModeDecisionCandidate         *fast_candidate_array;
-    ModeDecisionCandidateBuffer  **candidate_buffer_ptr_array;
-    ModeDecisionCandidateBuffer   *candidate_buffer_tx_depth_1;
-    ModeDecisionCandidateBuffer   *candidate_buffer_tx_depth_2;
-    MdRateEstimationContext       *md_rate_estimation_ptr;
-    MdRateEstimationContext *      rate_est_table;
-    MdBlkStruct                   *md_local_blk_unit;
-    BlkStruct                     *md_blk_arr_nsq;
-    uint8_t                       *avail_blk_flag;
-    uint8_t                       *tested_blk_flag; //tells whether this CU is tested in MD.
-    MdcSbData                     *mdc_sb_array;
+    EbFifo                       *mode_decision_configuration_input_fifo_ptr;
+    EbFifo                       *mode_decision_output_fifo_ptr;
+    ModeDecisionCandidate       **fast_candidate_ptr_array;
+    ModeDecisionCandidate        *fast_candidate_array;
+    ModeDecisionCandidateBuffer **candidate_buffer_ptr_array;
+    ModeDecisionCandidateBuffer  *candidate_buffer_tx_depth_1;
+    ModeDecisionCandidateBuffer  *candidate_buffer_tx_depth_2;
+    MdRateEstimationContext      *md_rate_estimation_ptr;
+    MdRateEstimationContext      *rate_est_table;
+    MdBlkStruct                  *md_local_blk_unit;
+    BlkStruct                    *md_blk_arr_nsq;
+    uint8_t                      *avail_blk_flag;
+    uint8_t                      *tested_blk_flag; //tells whether this CU is tested in MD.
+    MdcSbData                    *mdc_sb_array;
 
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
     NeighborArrayUnit *mode_type_neighbor_array;
@@ -589,8 +589,8 @@ typedef struct ModeDecisionContext {
     PALETTE_BUFFER   palette_buffer;
     PaletteInfo      palette_cand_array[MAX_PAL_CAND];
     // MD palette search
-    uint8_t *palette_size_array_0;
-    uint8_t *palette_size_array_1;
+    uint8_t         *palette_size_array_0;
+    uint8_t         *palette_size_array_1;
     uint8_t          sb64_sq_no4xn_geom; //simple geometry 64x64SB, Sq only, no 4xN
     uint8_t          pu_itr;
     uint32_t        *best_candidate_index_array;
@@ -605,7 +605,7 @@ typedef struct ModeDecisionContext {
     uint8_t          qp_index;
     uint64_t         three_quad_energy;
     uint32_t         txb_1d_offset;
-    Bool           uv_intra_comp_only;
+    Bool             uv_intra_comp_only;
     UvPredictionMode best_uv_mode[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     int32_t          best_uv_angle[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     uint64_t         best_uv_cost[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
@@ -619,11 +619,12 @@ typedef struct ModeDecisionContext {
     EB_ALIGN(64)
     int16_t pred_buf_q3
         [CFL_BUF_SQUARE]; // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
-    Mv** injected_mvs; // Track all MVs that are prepared for candidates prior to MDS0. Used to avoid MV duplication.
-    MvReferenceFrame* injected_ref_types; // Track the reference types for each MV
-    uint16_t injected_mv_count;
-    uint32_t me_block_offset;
-    uint32_t me_cand_offset;
+    Mv               **
+        injected_mvs; // Track all MVs that are prepared for candidates prior to MDS0. Used to avoid MV duplication.
+    MvReferenceFrame *injected_ref_types; // Track the reference types for each MV
+    uint16_t          injected_mv_count;
+    uint32_t          me_block_offset;
+    uint32_t          me_cand_offset;
     // Pointer to a scratch buffer used by CFL & IFS
     EbPictureBufferDesc *scratch_prediction_ptr;
     uint8_t              tx_depth;
@@ -652,8 +653,8 @@ typedef struct ModeDecisionContext {
     uint8_t              inject_inter_candidates;
     uint8_t             *cfl_temp_luma_recon;
     uint16_t            *cfl_temp_luma_recon16bit;
-    Bool               spatial_sse_full_loop_level;
-    Bool               blk_skip_decision;
+    Bool                 spatial_sse_full_loop_level;
+    Bool                 blk_skip_decision;
     int8_t               rdoq_level;
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
     MV                   fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -668,30 +669,30 @@ typedef struct ModeDecisionContext {
     DECLARE_ALIGNED(16, uint8_t, pred1[2 * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]);
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
-    MdStage      md_stage;
-    uint32_t    *cand_buff_indices[CAND_CLASS_TOTAL];
-    uint8_t      bypass_md_stage_1;
-    uint8_t      bypass_md_stage_2;
-    uint32_t     md_stage_0_count[CAND_CLASS_TOTAL];
-    uint32_t     md_stage_1_count[CAND_CLASS_TOTAL];
-    uint32_t     md_stage_2_count[CAND_CLASS_TOTAL];
-    uint32_t     md_stage_3_count[CAND_CLASS_TOTAL];
-    uint32_t     md_stage_1_total_count;
-    uint32_t     md_stage_2_total_count;
-    uint32_t     md_stage_3_total_count;
-    uint32_t     md_stage_3_total_intra_count;
-    uint64_t     best_intra_cost;
-    uint64_t     best_inter_cost;
-    CandClass    target_class;
-    uint8_t      perform_mds1;
-    uint8_t      use_tx_shortcuts_mds3;
-    uint8_t      lpd1_allow_skipping_tx;
+    MdStage   md_stage;
+    uint32_t *cand_buff_indices[CAND_CLASS_TOTAL];
+    uint8_t   bypass_md_stage_1;
+    uint8_t   bypass_md_stage_2;
+    uint32_t  md_stage_0_count[CAND_CLASS_TOTAL];
+    uint32_t  md_stage_1_count[CAND_CLASS_TOTAL];
+    uint32_t  md_stage_2_count[CAND_CLASS_TOTAL];
+    uint32_t  md_stage_3_count[CAND_CLASS_TOTAL];
+    uint32_t  md_stage_1_total_count;
+    uint32_t  md_stage_2_total_count;
+    uint32_t  md_stage_3_total_count;
+    uint32_t  md_stage_3_total_intra_count;
+    uint64_t  best_intra_cost;
+    uint64_t  best_inter_cost;
+    CandClass target_class;
+    uint8_t   perform_mds1;
+    uint8_t   use_tx_shortcuts_mds3;
+    uint8_t   lpd1_allow_skipping_tx;
     // fast_loop_core signals
     Bool md_staging_skip_interpolation_search;
     Bool md_staging_skip_chroma_pred;
     // full_loop_core signals
     Bool
-           md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
+         md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
     Bool md_staging_tx_size_mode; // 0: Tx Size recon only, 1:Tx Size search and recon
     Bool md_staging_txt_level;
     Bool md_staging_skip_full_chroma;

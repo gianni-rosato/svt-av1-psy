@@ -309,7 +309,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
                                                    init_data_ptr->sb_sz - 1) /
                                                   init_data_ptr->sb_sz);
     uint16_t       sb_index;
-    Bool         is_16bit = init_data_ptr->bit_depth > 8 ? TRUE : FALSE;
+    Bool           is_16bit = init_data_ptr->bit_depth > 8 ? TRUE : FALSE;
 
     //object_ptr->tile_row_count  = init_data_ptr->tile_row_count;
     //object_ptr->tile_column_count = init_data_ptr->tile_column_count;
@@ -412,7 +412,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     uint16_t       sb_origin_y;
     EbErrorType    return_error;
 
-    Bool         is_16bit      = init_data_ptr->bit_depth > 8 ? TRUE : FALSE;
+    Bool           is_16bit      = init_data_ptr->bit_depth > 8 ? TRUE : FALSE;
     const uint16_t subsampling_x = (init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t subsampling_y = (init_data_ptr->color_format >= EB_YUV422 ? 1 : 2) - 1;
 
@@ -441,9 +441,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     coeff_buffer_desc_init_data.bot_padding       = padding;
     coeff_buffer_desc_init_data.split_mode        = FALSE;
     coeff_buffer_desc_init_data.is_16bit_pipeline = init_data_ptr->is_16bit_pipeline;
-    object_ptr->color_format = init_data_ptr->color_format;
-    object_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
-    object_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
+    object_ptr->color_format                      = init_data_ptr->color_format;
+    object_ptr->temp_lf_recon_picture16bit_ptr    = (EbPictureBufferDesc *)NULL;
+    object_ptr->temp_lf_recon_picture_ptr         = (EbPictureBufferDesc *)NULL;
     if (get_enable_restoration(init_data_ptr->enc_mode,
                                init_data_ptr->static_config.enable_restoration_filtering,
                                init_data_ptr->input_resolution,
@@ -1253,10 +1253,10 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
              region_in_picture_width_index++) {
             if (obj->picture_histogram[region_in_picture_width_index]) {
                 for (int region_in_picture_height_index = 0;
-                    region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
-                    region_in_picture_height_index++) {
+                     region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
+                     region_in_picture_height_index++) {
                     EB_FREE_ARRAY(obj->picture_histogram[region_in_picture_width_index]
-                        [region_in_picture_height_index]);
+                                                        [region_in_picture_height_index]);
                 }
             }
             EB_FREE_PTR_ARRAY(obj->picture_histogram[region_in_picture_width_index],
@@ -1372,17 +1372,20 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, block_count);
     }
 
-
     if (init_data_ptr->scene_change_detection) {
         EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
 
-        for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH; region_in_picture_width_index++) { // loop over horizontal regions
-            EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram[region_in_picture_width_index], MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
+        for (uint32_t region_in_picture_width_index = 0;
+             region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
+             region_in_picture_width_index++) { // loop over horizontal regions
+            EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram[region_in_picture_width_index],
+                               MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
             for (uint32_t region_in_picture_height_index = 0;
-                region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
-                region_in_picture_height_index++) {
-                EB_MALLOC_ARRAY(object_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index],
-                    HISTOGRAM_NUMBER_OF_BINS);
+                 region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
+                 region_in_picture_height_index++) {
+                EB_MALLOC_ARRAY(object_ptr->picture_histogram[region_in_picture_width_index]
+                                                             [region_in_picture_height_index],
+                                HISTOGRAM_NUMBER_OF_BINS);
             }
         }
     }

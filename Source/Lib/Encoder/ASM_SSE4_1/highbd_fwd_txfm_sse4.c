@@ -9480,12 +9480,12 @@ void svt_av1_fwd_txfm2d_32x8_N2_sse4_1(int16_t *input, int32_t *output, uint32_t
 void svt_av1_fwd_txfm2d_8x16_N2_sse4_1(int16_t *input, int32_t *output, uint32_t stride,
                                        TxType tx_type, uint8_t bd) {
     __m128i       in[32], out[32];
-    __m128i      *outcoef128 = (__m128i *)output;
-    const int8_t *shift      = fwd_txfm_shift_ls[TX_8X16];
-    const int32_t txw_idx    = get_txw_idx(TX_8X16);
-    const int32_t txh_idx    = get_txh_idx(TX_8X16);
-    int8_t        bitcol     = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t        bitrow     = fwd_cos_bit_row[txw_idx][txh_idx];
+    __m128i      *outcoef128    = (__m128i *)output;
+    const int8_t *shift         = fwd_txfm_shift_ls[TX_8X16];
+    const int32_t txw_idx       = get_txw_idx(TX_8X16);
+    const int32_t txh_idx       = get_txh_idx(TX_8X16);
+    int8_t        bitcol        = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow        = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_8X16];
     const int32_t txfm_size_row = tx_size_high[TX_8X16];
     const int32_t num_col       = txfm_size_col >> 3;
@@ -9661,12 +9661,12 @@ void svt_av1_fwd_txfm2d_8x16_N2_sse4_1(int16_t *input, int32_t *output, uint32_t
 void svt_av1_fwd_txfm2d_16x8_N2_sse4_1(int16_t *input, int32_t *output, uint32_t stride,
                                        TxType tx_type, uint8_t bd) {
     __m128i       in[32], out[32] = {_mm_setzero_si128()};
-    __m128i      *outcoef128 = (__m128i *)output;
-    const int8_t *shift      = fwd_txfm_shift_ls[TX_16X8];
-    const int32_t txw_idx    = get_txw_idx(TX_16X8);
-    const int32_t txh_idx    = get_txh_idx(TX_16X8);
-    int8_t        bitcol     = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t        bitrow     = fwd_cos_bit_row[txw_idx][txh_idx];
+    __m128i      *outcoef128    = (__m128i *)output;
+    const int8_t *shift         = fwd_txfm_shift_ls[TX_16X8];
+    const int32_t txw_idx       = get_txw_idx(TX_16X8);
+    const int32_t txh_idx       = get_txh_idx(TX_16X8);
+    int8_t        bitcol        = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow        = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_16X8];
     const int32_t txfm_size_row = tx_size_high[TX_16X8];
     const int32_t num_row       = txfm_size_row >> 3;
@@ -9747,8 +9747,8 @@ void svt_av1_fwd_txfm2d_16x8_N2_sse4_1(int16_t *input, int32_t *output, uint32_t
             transpose_8x8_half_sse4_1(in, out + i * 16);
         }
         for (int32_t i = 0; i < 16; i++) {
-            in[32 - 2*i - 2] = out[2*i];
-            in[32 - 2*i - 1] = out[2*i + 1];
+            in[32 - 2 * i - 2] = out[2 * i];
+            in[32 - 2 * i - 1] = out[2 * i + 1];
         }
         fadst16x16_N2_sse4_1(in, out, bitrow, num_row, 1);
         transpose_8x8_sse4_1(out, in);
@@ -9764,8 +9764,8 @@ void svt_av1_fwd_txfm2d_16x8_N2_sse4_1(int16_t *input, int32_t *output, uint32_t
             transpose_8x8_half_sse4_1(in, out + i * 16);
         }
         for (int32_t i = 0; i < 16; i++) {
-            in[32 - 2*i - 2] = out[2*i];
-            in[32 - 2*i - 1] = out[2*i + 1];
+            in[32 - 2 * i - 2] = out[2 * i];
+            in[32 - 2 * i - 1] = out[2 * i + 1];
         }
         fadst16x16_N2_sse4_1(in, out, bitrow, num_row, 1);
         transpose_8x8_sse4_1(out, in);
@@ -9781,8 +9781,8 @@ void svt_av1_fwd_txfm2d_16x8_N2_sse4_1(int16_t *input, int32_t *output, uint32_t
             transpose_8x8_half_sse4_1(in, out + i * 16);
         }
         for (int32_t i = 0; i < 16; i++) {
-            in[32 - 2*i - 2] = out[2*i];
-            in[32 - 2*i - 1] = out[2*i + 1];
+            in[32 - 2 * i - 2] = out[2 * i];
+            in[32 - 2 * i - 1] = out[2 * i + 1];
         }
         fadst16x16_N2_sse4_1(in, out, bitrow, num_row, 1);
         transpose_8x8_sse4_1(out, in);
@@ -9873,8 +9873,8 @@ void svt_av1_fwd_txfm2d_16x8_N2_sse4_1(int16_t *input, int32_t *output, uint32_t
             transpose_8x8_half_sse4_1(in, out + i * 16);
         }
         for (int32_t i = 0; i < 16; i++) {
-            in[32 - 2*i - 2] = out[2*i];
-            in[32 - 2*i - 1] = out[2*i + 1];
+            in[32 - 2 * i - 2] = out[2 * i];
+            in[32 - 2 * i - 1] = out[2 * i + 1];
         }
         fadst16x16_N2_sse4_1(in, out, bitrow, num_row, 1);
         transpose_8x8_sse4_1(out, in);
@@ -14028,12 +14028,12 @@ void svt_av1_fwd_txfm2d_32x8_N4_sse4_1(int16_t *input, int32_t *output, uint32_t
 void svt_av1_fwd_txfm2d_8x16_N4_sse4_1(int16_t *input, int32_t *output, uint32_t stride,
                                        TxType tx_type, uint8_t bd) {
     __m128i       in[32], out[32];
-    __m128i *     outcoef = (__m128i *)output;
-    const int8_t *shift      = fwd_txfm_shift_ls[TX_8X16];
-    const int32_t txw_idx    = get_txw_idx(TX_8X16);
-    const int32_t txh_idx    = get_txh_idx(TX_8X16);
-    int8_t        bitcol     = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t        bitrow     = fwd_cos_bit_row[txw_idx][txh_idx];
+    __m128i      *outcoef       = (__m128i *)output;
+    const int8_t *shift         = fwd_txfm_shift_ls[TX_8X16];
+    const int32_t txw_idx       = get_txw_idx(TX_8X16);
+    const int32_t txh_idx       = get_txh_idx(TX_8X16);
+    int8_t        bitcol        = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow        = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_8X16];
     const int32_t txfm_size_row = tx_size_high[TX_8X16];
     const int32_t num_col       = txfm_size_col >> 3;
@@ -14200,12 +14200,12 @@ void svt_av1_fwd_txfm2d_8x16_N4_sse4_1(int16_t *input, int32_t *output, uint32_t
 void svt_av1_fwd_txfm2d_16x8_N4_sse4_1(int16_t *input, int32_t *output, uint32_t stride,
                                        TxType tx_type, uint8_t bd) {
     __m128i       in[32], out[32] = {_mm_setzero_si128()};
-    __m128i *     outcoef = (__m128i *)output;
-    const int8_t *shift      = fwd_txfm_shift_ls[TX_16X8];
-    const int32_t txw_idx    = get_txw_idx(TX_16X8);
-    const int32_t txh_idx    = get_txh_idx(TX_16X8);
-    int8_t        bitcol     = fwd_cos_bit_col[txw_idx][txh_idx];
-    int8_t        bitrow     = fwd_cos_bit_row[txw_idx][txh_idx];
+    __m128i      *outcoef       = (__m128i *)output;
+    const int8_t *shift         = fwd_txfm_shift_ls[TX_16X8];
+    const int32_t txw_idx       = get_txw_idx(TX_16X8);
+    const int32_t txh_idx       = get_txh_idx(TX_16X8);
+    int8_t        bitcol        = fwd_cos_bit_col[txw_idx][txh_idx];
+    int8_t        bitrow        = fwd_cos_bit_row[txw_idx][txh_idx];
     const int32_t txfm_size_col = tx_size_wide[TX_16X8];
     const int32_t txfm_size_row = tx_size_high[TX_16X8];
     const int32_t num_row       = txfm_size_row >> 3;
@@ -14412,8 +14412,8 @@ void svt_av1_fwd_txfm2d_16x8_N4_sse4_1(int16_t *input, int32_t *output, uint32_t
             transpose_8x8_half_sse4_1(in, out + i * 16);
         }
         for (int32_t i = 0; i < 16; i++) {
-            in[30 - 2* i] = out[2*i];
-            in[31 - 2 *i] = out[2*i +1 ];
+            in[30 - 2 * i] = out[2 * i];
+            in[31 - 2 * i] = out[2 * i + 1];
         }
         fadst16x16_N2_sse4_1(in, out, bitrow, num_row, 1);
         transpose_8x8_N2_sse4_1(out, in);

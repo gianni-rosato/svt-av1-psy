@@ -503,7 +503,6 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
     svt_aom_free(tmpbuf);
 }
 
-
 // test svt_get_proj_subspace
 TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTestHbd) {
     const int32_t pu_width = RESTORATION_PROC_UNIT_SIZE;

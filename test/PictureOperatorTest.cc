@@ -206,10 +206,10 @@ INSTANTIATE_TEST_CASE_P(PictureOperator, PictureOperatorTest,
                                            ::testing::ValuesIn(TEST_PATTERNS)));
 
 typedef void (*downsample_2d_fn)(uint8_t *input_samples, uint32_t input_stride,
-                              uint32_t input_area_width,
-                              uint32_t input_area_height,
-                              uint8_t *decim_samples, uint32_t decim_stride,
-                              uint32_t decim_step);
+                                 uint32_t input_area_width,
+                                 uint32_t input_area_height,
+                                 uint8_t *decim_samples, uint32_t decim_stride,
+                                 uint32_t decim_step);
 uint32_t DECIM_STEPS[] = {2, 4, 8};
 PUSize DOWNSAMPLE_SIZES[] = {
     PUSize(1920, 1080), PUSize(960, 540), PUSize(176, 144), PUSize(88, 72)};

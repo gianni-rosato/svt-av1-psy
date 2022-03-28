@@ -81,22 +81,22 @@ typedef struct coded_frames_stats_entry {
     EbDctor  dctor;
     uint64_t picture_number;
     int64_t  frame_total_bit_actual;
-    Bool   end_of_sequence_flag;
+    Bool     end_of_sequence_flag;
 } coded_frames_stats_entry;
 
 extern EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
                                                                 uint64_t picture_number);
 typedef struct {
-    int    last_boosted_qindex; // Last boosted GF/KF/ARF q
-    int    gfu_boost;
-    int    kf_boost;
-    double rate_correction_factors[MAX_TEMPORAL_LAYERS + 1];
-    int    onepass_cbr_mode; // 0: not 1pass cbr, 1: 1pass cbr for low delay
-    int    baseline_gf_interval;
-    int    constrained_gf_group;
-    int    frames_to_key;
-    int    frames_since_key;
-    int    this_key_frame_forced;
+    int     last_boosted_qindex; // Last boosted GF/KF/ARF q
+    int     gfu_boost;
+    int     kf_boost;
+    double  rate_correction_factors[MAX_TEMPORAL_LAYERS + 1];
+    int     onepass_cbr_mode; // 0: not 1pass cbr, 1: 1pass cbr for low delay
+    int     baseline_gf_interval;
+    int     constrained_gf_group;
+    int     frames_to_key;
+    int     frames_since_key;
+    int     this_key_frame_forced;
     int     avg_frame_bandwidth; // Average frame size target for clip
     int     max_frame_bandwidth; // Maximum burst rate allowed for a frame.
     int     avg_frame_qindex[FRAME_TYPES];

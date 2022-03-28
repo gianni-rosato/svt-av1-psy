@@ -474,12 +474,12 @@ INSTANTIATE_TEST_CASE_P(
 // Also there are special snippet to handle width of {4, 8, 16, 32, 64}, so use
 // TEST_COMMON_SIZES to cover all the width;
 AreaSize TEST_COMMON_SIZES[] = {
-    AreaSize(4, 4),    AreaSize(4, 8),   AreaSize(8, 4),   AreaSize(8, 8),
-    AreaSize(16, 16),  AreaSize(4, 16),  AreaSize(16, 4),  AreaSize(16, 8),
-    AreaSize(8, 16),   AreaSize(32, 32), AreaSize(32, 8),  AreaSize(16, 32),
-    AreaSize(8, 32),   AreaSize(32, 16), AreaSize(16, 64), AreaSize(64, 16),
-    AreaSize(64, 64),  AreaSize(64, 32), AreaSize(32, 64), AreaSize(128, 128),
-    AreaSize(68, 64),  AreaSize(72, 64), AreaSize(80, 64), AreaSize(96, 64),
+    AreaSize(4, 4),    AreaSize(4, 8),    AreaSize(8, 4),   AreaSize(8, 8),
+    AreaSize(16, 16),  AreaSize(4, 16),   AreaSize(16, 4),  AreaSize(16, 8),
+    AreaSize(8, 16),   AreaSize(32, 32),  AreaSize(32, 8),  AreaSize(16, 32),
+    AreaSize(8, 32),   AreaSize(32, 16),  AreaSize(16, 64), AreaSize(64, 16),
+    AreaSize(64, 64),  AreaSize(64, 32),  AreaSize(32, 64), AreaSize(128, 128),
+    AreaSize(68, 64),  AreaSize(72, 64),  AreaSize(80, 64), AreaSize(96, 64),
     AreaSize(64, 128), AreaSize(128, 64), AreaSize(48, 64), AreaSize(24, 64)};
 
 class Pack2dTest : public ::testing::TestWithParam<AreaSize> {

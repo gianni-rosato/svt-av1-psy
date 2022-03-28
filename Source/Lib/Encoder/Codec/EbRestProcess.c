@@ -329,8 +329,7 @@ void set_unscaled_input_16bit(PictureControlSet *pcs_ptr) {
 
 void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
                              int32_t blk_col_px, int32_t blk_row_px, void **pp_blk_recon_buf,
-                             int32_t *recon_stride, int32_t sub_x, int32_t sub_y,
-                             Bool use_highbd) {
+                             int32_t *recon_stride, int32_t sub_x, int32_t sub_y, Bool use_highbd) {
     int32_t block_offset;
 
     if (plane == 0) {
@@ -548,9 +547,9 @@ void *rest_kernel(void *input_ptr) {
 
         cdef_results_ptr      = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
         pcs_ptr               = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr = pcs_ptr->scs_ptr;
+        scs_ptr               = pcs_ptr->scs_ptr;
         FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-        Bool       is_16bit = scs_ptr->is_16bit_pipeline;
+        Bool         is_16bit = scs_ptr->is_16bit_pipeline;
         Av1Common   *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
 
         if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
@@ -733,9 +732,9 @@ void *rest_kernel(void *input_ptr) {
                                                     picture_demux_results_wrapper_ptr->object_ptr;
                     picture_demux_results_rtr->reference_picture_wrapper_ptr =
                         pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr;
-                    picture_demux_results_rtr->scs_ptr = pcs_ptr->scs_ptr;
-                    picture_demux_results_rtr->picture_number  = pcs_ptr->picture_number;
-                    picture_demux_results_rtr->picture_type    = EB_PIC_REFERENCE;
+                    picture_demux_results_rtr->scs_ptr        = pcs_ptr->scs_ptr;
+                    picture_demux_results_rtr->picture_number = pcs_ptr->picture_number;
+                    picture_demux_results_rtr->picture_type   = EB_PIC_REFERENCE;
 
                     // Post Reference Picture
                     svt_post_full_object(picture_demux_results_wrapper_ptr);

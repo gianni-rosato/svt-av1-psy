@@ -246,7 +246,7 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
 
 #if TILES_PARALLEL
     Bool has_tiles = (Bool)(av1enc_ctx_.enc_params.tile_columns ||
-                                av1enc_ctx_.enc_params.tile_rows);
+                            av1enc_ctx_.enc_params.tile_rows);
 #else
     Bool has_tiles = (Bool)FALSE;
 #endif

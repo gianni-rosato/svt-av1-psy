@@ -60,7 +60,7 @@ typedef struct ResourceCoordinationContext {
 
     uint64_t first_in_pic_arrived_time_seconds;
     uint64_t first_in_pic_arrived_timeu_seconds;
-    Bool   start_flag;
+    Bool     start_flag;
 } ResourceCoordinationContext;
 
 static void resource_coordination_context_dctor(EbPtr p) {
@@ -95,7 +95,7 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
     context_ptr->resource_coordination_results_output_fifo_ptr =
         svt_system_resource_get_producer_fifo(
             enc_handle_ptr->resource_coordination_results_resource_ptr, 0);
-    context_ptr->scs_instance_array                  = enc_handle_ptr->scs_instance_array;
+    context_ptr->scs_instance_array     = enc_handle_ptr->scs_instance_array;
     context_ptr->app_callback_ptr_array = enc_handle_ptr->app_callback_ptr_array;
     context_ptr->compute_segments_total_count_array =
         enc_handle_ptr->compute_segments_total_count_array;
@@ -150,7 +150,7 @@ When tpl_opt_flag is set to 0, none of the actions mentioned above could be cons
 ***************************************************************************************/
 void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_level) {
     TplControls        *tpl_ctrls = &pcs_ptr->tpl_ctrls;
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+    SequenceControlSet *scs_ptr   = pcs_ptr->scs_ptr;
     switch (tpl_level) {
     case 0:
         tpl_ctrls->enable                       = 0;
@@ -389,13 +389,11 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
 
     // Set the SCD Mode
     scs_ptr->scd_mode = scs_ptr->static_config.scene_change_detection == 0 ? SCD_MODE_0
-        : SCD_MODE_1;
+                                                                           : SCD_MODE_1;
 
     // initialize sequence level enable_superres
-    scs_ptr->seq_header.enable_superres = scs_ptr->static_config.superres_mode >
-        SUPERRES_NONE
-        ? 1
-        : 0;
+    scs_ptr->seq_header.enable_superres = scs_ptr->static_config.superres_mode > SUPERRES_NONE ? 1
+                                                                                               : 0;
     if (scs_ptr->inter_intra_compound == DEFAULT)
         scs_ptr->seq_header.enable_interintra_compound = 1;
     else
@@ -417,11 +415,10 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
         scs_ptr->compound_mode = scs_ptr->compound_level;
     if (scs_ptr->compound_mode) {
         scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 1; //DISTANCE
-        scs_ptr->seq_header.enable_masked_compound = 1; //DIFF+WEDGE
-    }
-    else {
+        scs_ptr->seq_header.enable_masked_compound          = 1; //DIFF+WEDGE
+    } else {
         scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
-        scs_ptr->seq_header.enable_masked_compound = 0;
+        scs_ptr->seq_header.enable_masked_compound          = 0;
     }
 
     if (scs_ptr->enable_intra_edge_filter == DEFAULT)
@@ -454,11 +451,11 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
     } else
         scs_ptr->seq_header.enable_warped_motion = (uint8_t)scs_ptr->enable_warped_motion;
 
-    scs_ptr->seq_header.frame_width_bits = 16;
-    scs_ptr->seq_header.frame_height_bits = 16;
+    scs_ptr->seq_header.frame_width_bits              = 16;
+    scs_ptr->seq_header.frame_height_bits             = 16;
     scs_ptr->seq_header.frame_id_numbers_present_flag = 0;
-    scs_ptr->seq_header.frame_id_length = FRAME_ID_LENGTH;
-    scs_ptr->seq_header.delta_frame_id_length = DELTA_FRAME_ID_LENGTH;
+    scs_ptr->seq_header.frame_id_length               = FRAME_ID_LENGTH;
+    scs_ptr->seq_header.delta_frame_id_length         = DELTA_FRAME_ID_LENGTH;
 
     // 0 - disable dual interpolation filter
     // 1 - enable vertical and horiz filter selection
@@ -475,8 +472,8 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
     scs_ptr->seq_header.seq_force_integer_mv = 2;
 
     scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs = 1;
-    scs_ptr->seq_header.order_hint_info.enable_order_hint = 1;
-    scs_ptr->seq_header.order_hint_info.order_hint_bits = 7;
+    scs_ptr->seq_header.order_hint_info.enable_order_hint    = 1;
+    scs_ptr->seq_header.order_hint_info.order_hint_bits      = 7;
 
     return return_error;
 }
@@ -688,15 +685,15 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     frm_hdr->quantization_params.base_q_idx              = 31;
     frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_Y] = 0;
     frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y] =
-      pcs_ptr->scs_ptr->static_config.luma_y_dc_qindex_offset;
+        pcs_ptr->scs_ptr->static_config.luma_y_dc_qindex_offset;
     frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] =
-      pcs_ptr->scs_ptr->static_config.chroma_u_ac_qindex_offset;
+        pcs_ptr->scs_ptr->static_config.chroma_u_ac_qindex_offset;
     frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] =
-      pcs_ptr->scs_ptr->static_config.chroma_u_dc_qindex_offset;
+        pcs_ptr->scs_ptr->static_config.chroma_u_dc_qindex_offset;
     frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V] =
-      pcs_ptr->scs_ptr->static_config.chroma_v_ac_qindex_offset;
+        pcs_ptr->scs_ptr->static_config.chroma_v_ac_qindex_offset;
     frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] =
-      pcs_ptr->scs_ptr->static_config.chroma_v_dc_qindex_offset;
+        pcs_ptr->scs_ptr->static_config.chroma_v_dc_qindex_offset;
 
     // Encoder
     frm_hdr->quantization_params.using_qmatrix   = 0;
@@ -804,7 +801,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
     EbPictureBufferDesc *dst_picture_ptr = (EbPictureBufferDesc *)dst;
     EbPictureBufferDesc *src_picture_ptr = (EbPictureBufferDesc *)src;
-    Bool               is_16bit_input  = (Bool)(config->encoder_bit_depth > EB_8BIT);
+    Bool                 is_16bit_input  = (Bool)(config->encoder_bit_depth > EB_8BIT);
 
     // Need to include for Interlacing on the fly with pictureScanType = 1
 
@@ -1004,7 +1001,7 @@ void *resource_coordination_kernel(void *input_ptr) {
     EbObjectWrapper *pcs_wrapper_ptr;
 
     PictureParentControlSet *pcs_ptr;
-    SequenceControlSet *scs_ptr;
+    SequenceControlSet      *scs_ptr;
 
     EbObjectWrapper             *eb_input_wrapper_ptr;
     EbBufferHeaderType          *eb_input_ptr;
@@ -1015,12 +1012,12 @@ void *resource_coordination_kernel(void *input_ptr) {
     EbObjectWrapper             *input_picture_wrapper_ptr;
     EbObjectWrapper             *reference_picture_wrapper_ptr;
 
-    Bool end_of_sequence_flag = FALSE;
+    Bool             end_of_sequence_flag = FALSE;
     EbObjectWrapper *prev_pcs_wrapper_ptr = 0;
 
     for (;;) {
         // Tie instance_index to zero for now...
-        uint32_t            instance_index = 0;
+        uint32_t instance_index = 0;
         // Get the input command containing 2 input buffers: y8b & rest(uv8b+yuvbitInc)
         EB_GET_FULL_OBJECT(context_ptr->input_cmd_fifo_ptr, &eb_input_cmd_wrapper);
 
@@ -1037,10 +1034,10 @@ void *resource_coordination_kernel(void *input_ptr) {
 
         if (context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture) {
             // Update picture width, picture height, cropping right offset, cropping bottom offset, and conformance windows
-            scs_ptr->chroma_width = (scs_ptr->max_input_luma_width >> 1);
+            scs_ptr->chroma_width  = (scs_ptr->max_input_luma_width >> 1);
             scs_ptr->chroma_height = (scs_ptr->max_input_luma_height >> 1);
 
-            scs_ptr->pad_right = scs_ptr->max_input_pad_right;
+            scs_ptr->pad_right  = scs_ptr->max_input_pad_right;
             scs_ptr->pad_bottom = scs_ptr->max_input_pad_bottom;
 
             // Pre-Analysis Signal(s) derivation
@@ -1050,7 +1047,8 @@ void *resource_coordination_kernel(void *input_ptr) {
                 signal_derivation_pre_analysis_oq_scs(scs_ptr);
 
             // Init SB Params
-            const uint32_t input_size = scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height;
+            const uint32_t input_size = scs_ptr->max_input_luma_width *
+                scs_ptr->max_input_luma_height;
             derive_input_resolution(&scs_ptr->input_resolution, input_size);
 
             sb_params_init(scs_ptr);
@@ -1058,10 +1056,10 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             // sf_identity
             svt_av1_setup_scale_factors_for_frame(&scs_ptr->sf_identity,
-                                                    scs_ptr->max_input_luma_width,
-                                                    scs_ptr->max_input_luma_height,
-                                                    scs_ptr->max_input_luma_width,
-                                                    scs_ptr->max_input_luma_height);
+                                                  scs_ptr->max_input_luma_width,
+                                                  scs_ptr->max_input_luma_height,
+                                                  scs_ptr->max_input_luma_width,
+                                                  scs_ptr->max_input_luma_height);
         }
         // Since at this stage we do not know the prediction structure and the location of ALT_REF pictures,
         // for every picture (except first picture), we allocate two: 1. original picture, 2. potential Overlay picture.
@@ -1144,8 +1142,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             //make pcs input buffer access the luma8bit part from the Luma8bit Pool
             pcs_ptr->enhanced_picture_ptr->buffer_y = buff_y8b;
             pcs_ptr->input_ptr                      = eb_input_ptr;
-            end_of_sequence_flag = (pcs_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? TRUE
-                                                                                   : FALSE;
+            end_of_sequence_flag = (pcs_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? TRUE : FALSE;
             // Check whether super-res is previously enabled in this recycled parent pcs and restore to non-scale-down default if so.
             if (pcs_ptr->frame_superres_enabled)
                 reset_resized_picture(scs_ptr, pcs_ptr, pcs_ptr->enhanced_picture_ptr);
@@ -1180,14 +1177,13 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->input_picture_wrapper_ptr = input_pic_wrapper_ptr;
 
                 // overlay does NOT use y8b buffer, set to NULL to avoid eb_y8b_wrapper_ptr->live_count disorder
-                pcs_ptr->eb_y8b_wrapper_ptr        = NULL;
+                pcs_ptr->eb_y8b_wrapper_ptr = NULL;
             }
             // Set Picture Control Flags
             pcs_ptr->idr_flag = scs_ptr->encode_context_ptr->initial_picture ||
                 (pcs_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE);
-            pcs_ptr->cra_flag          = (pcs_ptr->input_ptr->pic_type == EB_AV1_INTRA_ONLY_PICTURE)
-                         ? TRUE
-                         : FALSE;
+            pcs_ptr->cra_flag = (pcs_ptr->input_ptr->pic_type == EB_AV1_INTRA_ONLY_PICTURE) ? TRUE
+                                                                                            : FALSE;
             pcs_ptr->scene_change_flag = FALSE;
             pcs_ptr->qp_on_the_fly     = FALSE;
             pcs_ptr->sb_total_count    = scs_ptr->sb_total_count;

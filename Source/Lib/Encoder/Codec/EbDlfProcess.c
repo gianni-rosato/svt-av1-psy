@@ -77,7 +77,7 @@ void *dlf_kernel(void *input_ptr) {
 
         enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
         pcs_ptr             = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr = pcs_ptr->scs_ptr;
+        scs_ptr             = pcs_ptr->scs_ptr;
 
         Bool is_16bit = scs_ptr->is_16bit_pipeline;
         if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
@@ -97,7 +97,7 @@ void *dlf_kernel(void *input_ptr) {
                                               pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
             }
         }
-        Bool         dlf_enable_flag = (Bool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
+        Bool           dlf_enable_flag = (Bool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
         const uint16_t tg_count        = pcs_ptr->parent_pcs_ptr->tile_group_cols *
             pcs_ptr->parent_pcs_ptr->tile_group_rows;
         // Move sb level lf to here if tile_parallel

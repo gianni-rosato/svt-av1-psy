@@ -478,7 +478,7 @@ static int find_affine_int(int np, const int *pts1, const int *pts2, BlockSize b
 }
 
 Bool svt_find_projection(int np, int *pts1, int *pts2, BlockSize bsize, int mvy, int mvx,
-                           EbWarpedMotionParams *wm_params, int mi_row, int mi_col) {
+                         EbWarpedMotionParams *wm_params, int mi_row, int mi_col) {
     if (find_affine_int(np, pts1, pts2, bsize, mvy, mvx, wm_params, mi_row, mi_col)) {
         return 1;
     }

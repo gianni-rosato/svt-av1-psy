@@ -1009,7 +1009,7 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
     }
 
     Bool no_proj_flag = (dec_handle->frame_header.show_existing_frame ||
-                           (0 == dec_handle->frame_header.use_ref_frame_mvs));
+                         (0 == dec_handle->frame_header.use_ref_frame_mvs));
 
     OrderHintInfo *order_hint_info = &dec_handle->seq_header.order_hint_info;
 

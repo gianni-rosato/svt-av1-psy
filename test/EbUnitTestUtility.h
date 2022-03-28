@@ -54,17 +54,17 @@ extern uint32_t svt_create_random_aligned_stride(const uint32_t width,
                                                  const uint32_t align);
 
 extern Bool svt_buf_compare_u16(const uint16_t *const buf1,
-                                  const uint16_t *const buf2,
-                                  const size_t bufSize);
+                                const uint16_t *const buf2,
+                                const size_t bufSize);
 extern Bool svt_buf_compare_s16(const int16_t *const buf1,
-                                  const int16_t *const buf2,
-                                  const size_t bufSize);
+                                const int16_t *const buf2,
+                                const size_t bufSize);
 extern Bool svt_buf_compare_u32(const uint32_t *const buf1,
-                                  const uint32_t *const buf2,
-                                  const size_t bufSize);
+                                const uint32_t *const buf2,
+                                const size_t bufSize);
 extern Bool svt_buf_compare_s32(const int32_t *const buf1,
-                                  const int32_t *const buf2,
-                                  const size_t bufSize);
+                                const int32_t *const buf2,
+                                const size_t bufSize);
 
 #ifdef __cplusplus
 }

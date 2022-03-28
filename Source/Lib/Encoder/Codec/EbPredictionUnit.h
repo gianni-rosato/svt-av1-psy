@@ -25,15 +25,15 @@ typedef struct PredictionUnit {
     uint8_t inter_pred_direction_index;
 
     // Intra Mode
-    int8_t angle_delta[PLANE_TYPES];
+    int8_t           angle_delta[PLANE_TYPES];
     UvPredictionMode intra_chroma_mode;
     // Inter Mode
     uint8_t    ref_frame_type;
     MotionMode motion_mode;
     uint16_t   num_proj_ref;
     uint32_t   overlappable_neighbors[2];
-    uint8_t cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
-    uint8_t cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
+    uint8_t    cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
+    uint8_t    cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
 } PredictionUnit;
 #pragma pack(pop)
 

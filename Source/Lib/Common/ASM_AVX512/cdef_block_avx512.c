@@ -43,11 +43,11 @@ static INLINE void cdef_filter_block_8xn_16_pri_avx512(const uint16_t *const in,
                                                        __m512i *const min, __m512i *const sum,
                                                        uint8_t subsampling_factor) {
     const __m512i large = _mm512_set1_epi16(CDEF_VERY_LARGE);
-    const __m512i p0   = loadu_u16_8x4_avx512(in + po, subsampling_factor * CDEF_BSTRIDE);
-    const __m512i p1   = loadu_u16_8x4_avx512(in - po, subsampling_factor * CDEF_BSTRIDE);
+    const __m512i p0    = loadu_u16_8x4_avx512(in + po, subsampling_factor * CDEF_BSTRIDE);
+    const __m512i p1    = loadu_u16_8x4_avx512(in - po, subsampling_factor * CDEF_BSTRIDE);
 
-    *max = _mm512_mask_max_epi16 (*max, _mm512_cmpneq_epi16_mask(p0, large), p0, *max);
-    *max = _mm512_mask_max_epi16 (*max, _mm512_cmpneq_epi16_mask(p1, large), p1, *max);
+    *max = _mm512_mask_max_epi16(*max, _mm512_cmpneq_epi16_mask(p0, large), p0, *max);
+    *max = _mm512_mask_max_epi16(*max, _mm512_cmpneq_epi16_mask(p1, large), p1, *max);
     *min = _mm512_min_epi16(*min, p0);
     *min = _mm512_min_epi16(*min, p1);
 
@@ -63,15 +63,15 @@ static INLINE void cdef_filter_block_8xn_16_sec_avx512(
     const __m512i row, const __m512i strength, const __m512i sec_taps, __m512i *const max,
     __m512i *const min, __m512i *const sum, uint8_t subsampling_factor) {
     const __m512i large = _mm512_set1_epi16(CDEF_VERY_LARGE);
-    const __m512i p0   = loadu_u16_8x4_avx512(in + so1, subsampling_factor * CDEF_BSTRIDE);
-    const __m512i p1   = loadu_u16_8x4_avx512(in - so1, subsampling_factor * CDEF_BSTRIDE);
-    const __m512i p2   = loadu_u16_8x4_avx512(in + so2, subsampling_factor * CDEF_BSTRIDE);
-    const __m512i p3   = loadu_u16_8x4_avx512(in - so2, subsampling_factor * CDEF_BSTRIDE);
+    const __m512i p0    = loadu_u16_8x4_avx512(in + so1, subsampling_factor * CDEF_BSTRIDE);
+    const __m512i p1    = loadu_u16_8x4_avx512(in - so1, subsampling_factor * CDEF_BSTRIDE);
+    const __m512i p2    = loadu_u16_8x4_avx512(in + so2, subsampling_factor * CDEF_BSTRIDE);
+    const __m512i p3    = loadu_u16_8x4_avx512(in - so2, subsampling_factor * CDEF_BSTRIDE);
 
-    *max = _mm512_mask_max_epi16 (*max, _mm512_cmpneq_epi16_mask(p0, large), p0, *max);
-    *max = _mm512_mask_max_epi16 (*max, _mm512_cmpneq_epi16_mask(p1, large), p1, *max);
-    *max = _mm512_mask_max_epi16 (*max, _mm512_cmpneq_epi16_mask(p2, large), p2, *max);
-    *max = _mm512_mask_max_epi16 (*max, _mm512_cmpneq_epi16_mask(p3, large), p3, *max);
+    *max = _mm512_mask_max_epi16(*max, _mm512_cmpneq_epi16_mask(p0, large), p0, *max);
+    *max = _mm512_mask_max_epi16(*max, _mm512_cmpneq_epi16_mask(p1, large), p1, *max);
+    *max = _mm512_mask_max_epi16(*max, _mm512_cmpneq_epi16_mask(p2, large), p2, *max);
+    *max = _mm512_mask_max_epi16(*max, _mm512_cmpneq_epi16_mask(p3, large), p3, *max);
     *min = _mm512_min_epi16(*min, p0);
     *min = _mm512_min_epi16(*min, p1);
     *min = _mm512_min_epi16(*min, p2);

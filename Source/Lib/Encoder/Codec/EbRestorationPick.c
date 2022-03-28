@@ -1377,7 +1377,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
     // Check whether you can use the filter coeffs from previous frames; if not, must generate new coeffs
     if (cm->wn_filter_ctrls.use_prev_frame_coeffs &&
         (cm->child_pcs->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME &&
-        cm->child_pcs->parent_pcs_ptr->frm_hdr.frame_type != INTRA_ONLY_FRAME) &&
+         cm->child_pcs->parent_pcs_ptr->frm_hdr.frame_type != INTRA_ONLY_FRAME) &&
         cm->child_pcs->rst_info[rsc->plane].unit_info[rest_unit_idx].restoration_type ==
             RESTORE_WIENER) {
         // Copy filter info, stored from previous frame(s)

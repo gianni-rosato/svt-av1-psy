@@ -25,7 +25,7 @@ typedef struct {
     uint32_t column_count;
     uint32_t row_count;
 
-    Bool   in_progress;
+    Bool     in_progress;
     uint32_t current_row_idx;
 } MdSegments_t;
 #endif // EbModeDecisionSegments_h

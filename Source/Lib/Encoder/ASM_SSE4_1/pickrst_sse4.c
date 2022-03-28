@@ -1906,7 +1906,7 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
         __m128i        se0[2], se1[2], xx[2], yy[2];
         __m128i        delta[2];
         se0[0] = se0[1] = _mm_setzero_si128(); // Initialize to avoid warning.
-        y = 0;
+        y               = 0;
         while (y < h8) {
             // 00s 01s 10s 11s 20s 21s 30s 31s  00e 01e 10e 11e 20e 21e 30e 31e
             se0[0] = _mm_insert_epi32(se0[0], *(int32_t *)(d_t + 0 * d_stride), 0);

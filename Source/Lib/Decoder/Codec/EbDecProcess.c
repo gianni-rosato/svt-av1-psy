@@ -44,7 +44,7 @@
 #include <windows.h>
 extern uint8_t        num_groups;
 extern GROUP_AFFINITY group_affinity;
-extern Bool         alternate_groups;
+extern Bool           alternate_groups;
 #elif defined(__linux__)
 extern cpu_set_t group_affinity;
 #endif
@@ -631,7 +631,7 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle   *dec_handle,
                                                      int32_t num_planes) {
     Av1Common *cm         = &dec_handle->cm;
     FrameSize *frame_size = &dec_handle->frame_header.frame_size;
-    Bool     sb_128     = dec_handle->seq_header.sb_size == BLOCK_128X128;
+    Bool       sb_128     = dec_handle->seq_header.sb_size == BLOCK_128X128;
     int32_t    num64s     = sb_128 ? 1 : 0;
     const int  use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
                             dec_handle->is_16bit_pipeline);
@@ -934,10 +934,10 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
     Av1PixelRect  tile_rect[MAX_MB_PLANE];
     Av1PixelRect *tile_rect_p[MAX_MB_PLANE];
 
-    Bool no_ibc      = !dec_handle_ptr->frame_header.allow_intrabc;
-    Bool do_upscale  = no_ibc && !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
+    Bool no_ibc        = !dec_handle_ptr->frame_header.allow_intrabc;
+    Bool do_upscale    = no_ibc && !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
     LrParams *lr_param = dec_handle_ptr->frame_header.lr_params;
-    Bool    do_lr    = no_ibc &&
+    Bool      do_lr    = no_ibc &&
         (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);
@@ -1208,14 +1208,14 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
 
     FrameHeader *frame_header = &dec_handle->frame_header;
 
-    Bool    no_ibc   = !frame_header->allow_intrabc;
+    Bool      no_ibc   = !frame_header->allow_intrabc;
     LrParams *lr_param = frame_header->lr_params;
-    Bool    do_lr    = no_ibc &&
+    Bool      do_lr    = no_ibc &&
         (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);
     Bool do_upscale = no_ibc && !av1_superres_unscaled(&dec_handle->frame_header.frame_size);
-    int    th_cnt     = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
+    int  th_cnt     = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     while (1) {
         int32_t sb_row = get_sb_row_to_process(&dec_mt_frame_data->lr_sb_row_info);
         if (-1 != sb_row) {

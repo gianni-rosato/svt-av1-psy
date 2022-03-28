@@ -312,10 +312,10 @@ static void set_cfg_source_width(const char *value, EbConfig *cfg) {
 static void set_cfg_source_height(const char *value, EbConfig *cfg) {
     cfg->config.source_height = strtoul(value, NULL, 0);
 };
-static void set_cfg_forced_max_frame_width(const char* value, EbConfig* cfg) {
+static void set_cfg_forced_max_frame_width(const char *value, EbConfig *cfg) {
     cfg->config.forced_max_frame_width = strtoul(value, NULL, 0);
 }
-static void set_cfg_forced_max_frame_height(const char* value, EbConfig* cfg) {
+static void set_cfg_forced_max_frame_height(const char *value, EbConfig *cfg) {
     cfg->config.forced_max_frame_height = strtoul(value, NULL, 0);
 }
 static void set_cfg_frames_to_be_encoded(const char *value, EbConfig *cfg) {
@@ -455,8 +455,8 @@ static void set_cfg_qp(const char *value, EbConfig *cfg) {
     cfg->config.qp = strtoul(value, NULL, 0);
 };
 static void set_cfg_crf(const char *value, EbConfig *cfg) {
-    cfg->config.qp                = strtoul(value, NULL, 0);
-    cfg->config.rate_control_mode = 0;
+    cfg->config.qp                           = strtoul(value, NULL, 0);
+    cfg->config.rate_control_mode            = 0;
     cfg->config.enable_adaptive_quantization = 2;
 }
 static void set_cfg_use_qp_file(const char *value, EbConfig *cfg) {
@@ -476,23 +476,23 @@ static void set_cfg_key_frame_chroma_qindex_offset(const char *value, EbConfig *
 }
 
 static void set_cfg_luma_y_dc_qindex_offset(const char *value, EbConfig *cfg) {
-  cfg->config.luma_y_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
+    cfg->config.luma_y_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
 }
 
 static void set_cfg_chroma_u_dc_qindex_offset(const char *value, EbConfig *cfg) {
-  cfg->config.chroma_u_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
+    cfg->config.chroma_u_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
 }
 
 static void set_cfg_chroma_u_ac_qindex_offset(const char *value, EbConfig *cfg) {
-  cfg->config.chroma_u_ac_qindex_offset = (int32_t)strtol(value, NULL, 0);
+    cfg->config.chroma_u_ac_qindex_offset = (int32_t)strtol(value, NULL, 0);
 }
 
 static void set_cfg_chroma_v_dc_qindex_offset(const char *value, EbConfig *cfg) {
-  cfg->config.chroma_v_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
+    cfg->config.chroma_v_dc_qindex_offset = (int32_t)strtol(value, NULL, 0);
 }
 
 static void set_cfg_chroma_v_ac_qindex_offset(const char *value, EbConfig *cfg) {
-  cfg->config.chroma_v_ac_qindex_offset = (int32_t)strtol(value, NULL, 0);
+    cfg->config.chroma_v_ac_qindex_offset = (int32_t)strtol(value, NULL, 0);
 }
 
 //assume the input list of values are in the format of "[v1,v2,v3,...]"
@@ -750,10 +750,10 @@ static void set_cfg_content_light(const char *value, EbConfig *cfg) {
     if (!svt_aom_parse_content_light_level(&cfg->config.content_light_level, value))
         fprintf(stderr, "Failed to parse content light level info properly\n");
 }
-static void set_cfg_sframe_dist(const char* value, EbConfig* cfg) {
+static void set_cfg_sframe_dist(const char *value, EbConfig *cfg) {
     cfg->config.sframe_dist = (int32_t)strtol(value, NULL, 0);
 }
-static void set_cfg_sframe_mode(const char* value, EbConfig* cfg) {
+static void set_cfg_sframe_mode(const char *value, EbConfig *cfg) {
     cfg->config.sframe_mode = (EbSFrameMode)strtoul(value, NULL, 0);
 }
 
@@ -869,9 +869,9 @@ ConfigEntry config_entry_global_options[] = {
      set_cfg_forced_max_frame_width},
 
     {SINGLE_INPUT,
-    FORCED_MAX_FRAME_HEIGHT_TOKEN,
-    "Maximum frame height value to force, default is 0 [64-8704]",
-    set_cfg_forced_max_frame_height},
+     FORCED_MAX_FRAME_HEIGHT_TOKEN,
+     "Maximum frame height value to force, default is 0 [64-8704]",
+     set_cfg_forced_max_frame_height},
 
     {SINGLE_INPUT,
      NUMBER_OF_PICTURES_TOKEN,
@@ -1257,7 +1257,8 @@ ConfigEntry config_entry_specific[] = {
      set_cfg_sframe_dist},
     {SINGLE_INPUT,
      SFRAME_MODE_TOKEN,
-     "S-Frame insertion mode ([1-2], 1: the considered frame will be made into an S-Frame only if it is an altref frame,"
+     "S-Frame insertion mode ([1-2], 1: the considered frame will be made into an S-Frame only if "
+     "it is an altref frame,"
      " 2: the next altref frame will be made into an S-Frame[default])",
      set_cfg_sframe_mode},
     // --- end: SWITCH_FRAME SUPPORT
@@ -1320,8 +1321,14 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, WIDTH_LONG_TOKEN, "SourceWidth", set_cfg_source_width},
     {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_source_height},
     {SINGLE_INPUT, HEIGHT_LONG_TOKEN, "SourceHeight", set_cfg_source_height},
-    {SINGLE_INPUT, FORCED_MAX_FRAME_WIDTH_TOKEN, "ForcedMaximumFrameWidth", set_cfg_forced_max_frame_width},
-    {SINGLE_INPUT, FORCED_MAX_FRAME_HEIGHT_TOKEN, "ForcedMaximumFrameHeight", set_cfg_forced_max_frame_height},
+    {SINGLE_INPUT,
+     FORCED_MAX_FRAME_WIDTH_TOKEN,
+     "ForcedMaximumFrameWidth",
+     set_cfg_forced_max_frame_width},
+    {SINGLE_INPUT,
+     FORCED_MAX_FRAME_HEIGHT_TOKEN,
+     "ForcedMaximumFrameHeight",
+     set_cfg_forced_max_frame_height},
     // Prediction Structure
     {SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, NUMBER_OF_PICTURES_LONG_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
@@ -2399,10 +2406,10 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
                 *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
             }
         }
-    }
-    else {
+    } else {
         if (passes > 1) {
-            fprintf(stderr,
+            fprintf(
+                stderr,
                 "[SVT-Warning]: Multipass CBR is not supported. Switching to 1-pass encoding\n\n");
             passes = 1;
         }
@@ -2679,14 +2686,14 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     char       *arg_copy[MAX_NUM_TOKENS]; // keep track of extra arguments
     uint32_t    index         = 0;
     int32_t     cmd_token_cnt = 0; // total number of tokens
-    int32_t     cmd_arg_cnt = 0; // total number of arguments
+    int32_t     cmd_arg_cnt   = 0; // total number of arguments
     int32_t     ret_y4m;
 
     for (index = 0; index < MAX_CHANNEL_NUMBER; ++index)
         config_strings[index] = (char *)malloc(sizeof(char) * COMMAND_LINE_MAX_SIZE);
     // Copy tokens (except for CHANNEL_NUMBER_TOKEN and PASSES_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
-    size_t len = COMMAND_LINE_MAX_SIZE;
-    Bool process_prev_token = 1;
+    size_t len                = COMMAND_LINE_MAX_SIZE;
+    Bool   process_prev_token = 1;
     for (int32_t token_index = 0; token_index < argc; ++token_index) {
         if (strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
             strncmp(argv[token_index], PASSES_TOKEN, len)) {
@@ -2695,12 +2702,10 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
                     cmd_copy[cmd_token_cnt++] = argv[token_index];
                 else if (token_index)
                     arg_copy[cmd_arg_cnt++] = argv[token_index];
-            }
-            else {
+            } else {
                 process_prev_token = 1;
             }
-        }
-        else{
+        } else {
             process_prev_token = 0;
         }
     }
@@ -2714,7 +2719,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         mark_token_as_read(CONFIG_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
-            EncChannel *c   = channels + index;
+            EncChannel *c = channels + index;
             mark_token_as_read(config_strings[index], arg_copy, &cmd_arg_cnt);
             c->return_error = (EbErrorType)read_config_file(
                 c->config, config_strings[index], index);
@@ -2725,7 +2730,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         mark_token_as_read(CONFIG_FILE_LONG_TOKEN, cmd_copy, &cmd_token_cnt);
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
-            EncChannel *c   = channels + index;
+            EncChannel *c = channels + index;
             mark_token_as_read(config_strings[index], arg_copy, &cmd_arg_cnt);
             c->return_error = (EbErrorType)read_config_file(
                 c->config, config_strings[index], index);

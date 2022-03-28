@@ -203,12 +203,12 @@ void downsample_2d_sse4_1(uint8_t *input_samples, // input parameter, input samp
             }
             //complement when input_area_width is not multiple of 16
             if (width_align16 < input_area_width) {
-                prev_in   = _mm_loadu_si128((__m128i *)(prev_in_line + width_align16 + 1));
-                in        = _mm_loadu_si128((__m128i *)(in_ptr + width_align16 + 1));
-                sum_epu8  = compute_sum(&in, &prev_in);
-                sum_epu8  = _mm_shuffle_epi8(sum_epu8, mask);
-                int count = (input_area_width - width_align16) >> 2;
-                uint32_t tmp = _mm_cvtsi128_si32(sum_epu8);
+                prev_in        = _mm_loadu_si128((__m128i *)(prev_in_line + width_align16 + 1));
+                in             = _mm_loadu_si128((__m128i *)(in_ptr + width_align16 + 1));
+                sum_epu8       = compute_sum(&in, &prev_in);
+                sum_epu8       = _mm_shuffle_epi8(sum_epu8, mask);
+                int      count = (input_area_width - width_align16) >> 2;
+                uint32_t tmp   = _mm_cvtsi128_si32(sum_epu8);
                 //_mm_storel_epi64((__m128i *)(tmp_buf), sum_epu8);
                 memcpy(out_ptr + decim_horizontal_index, &tmp, count * sizeof(uint8_t));
             }

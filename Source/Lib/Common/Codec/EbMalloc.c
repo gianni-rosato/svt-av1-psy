@@ -119,8 +119,7 @@ typedef Bool (*Predicate)(MemoryEntry* e, void* param);
 *
 *
 ********************************************************************************/
-static Bool for_each_hash_entry(MemoryEntry* bucket, uint32_t start, Predicate pred,
-                                  void* param) {
+static Bool for_each_hash_entry(MemoryEntry* bucket, uint32_t start, Predicate pred, void* param) {
     const uint32_t s = TO_INDEX(start);
     uint32_t       i = s;
 
@@ -135,7 +134,7 @@ static Bool for_each_hash_entry(MemoryEntry* bucket, uint32_t start, Predicate p
 }
 
 static Bool for_each_mem_entry(uint32_t start, Predicate pred, void* param) {
-    Bool   ret;
+    Bool     ret;
     EbHandle m = get_malloc_mutex();
     svt_block_on_mutex(m);
     ret = for_each_hash_entry(g_mem_entry, start, pred, param);
@@ -260,7 +259,7 @@ static int g_component_count;
 static Bool print_leak(MemoryEntry* e, void* param) {
     if (e->ptr) {
         Bool* leaked = param;
-        *leaked        = TRUE;
+        *leaked      = TRUE;
         SVT_ERROR("%s leaked at %s:L%d\n", mem_type_name(e->type), e->file, e->line);
     }
     //loop through all items

@@ -62,9 +62,8 @@ void av1_inter_prediction_light_pd0(SequenceControlSet *scs_ptr, MvUnit *mv_unit
 
 void search_compound_diff_wedge(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                                 ModeDecisionCandidate *candidate_ptr);
-Bool calc_pred_masked_compound(PictureControlSet          *pcs_ptr,
-                                 struct ModeDecisionContext *context_ptr,
-                                 ModeDecisionCandidate      *candidate_ptr);
+Bool calc_pred_masked_compound(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
+                               ModeDecisionCandidate *candidate_ptr);
 
 EbErrorType inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_mode_decision,
                                               struct ModeDecisionContext  *md_context_ptr,

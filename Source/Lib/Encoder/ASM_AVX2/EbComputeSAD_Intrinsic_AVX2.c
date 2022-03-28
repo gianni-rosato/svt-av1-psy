@@ -3173,10 +3173,10 @@ compute4x_m_sad_avx2(const uint8_t *src, // input parameter, source samples Ptr
                      uint32_t       height) // input parameter, block height (M)
 {
     int32_t y = height;
-    __m128i  xmm0;
-    __m256i  ymm = _mm256_setzero_si256();
+    __m128i xmm0;
+    __m256i ymm = _mm256_setzero_si256();
 
-    while (y >= 4){
+    while (y >= 4) {
         const __m256i src0123 = load_u8_4x4_avx2(src, src_stride);
         const __m256i ref0123 = load_u8_4x4_avx2(ref, ref_stride);
         ymm                   = _mm256_add_epi32(ymm, _mm256_sad_epu8(src0123, ref0123));
@@ -3185,7 +3185,7 @@ compute4x_m_sad_avx2(const uint8_t *src, // input parameter, source samples Ptr
         y -= 4;
     };
 
-    while (y >= 2){
+    while (y >= 2) {
         const __m256i src0123 = load_u8_4x2_avx2(src, src_stride);
         const __m256i ref0123 = load_u8_4x2_avx2(ref, ref_stride);
         ymm                   = _mm256_add_epi32(ymm, _mm256_sad_epu8(src0123, ref0123));
@@ -3240,7 +3240,7 @@ compute8x_m_sad_avx2(const uint8_t *src, // input parameter, source samples Ptr
                      uint32_t       height) // input parameter, block height (M)
 {
     int32_t y   = height;
-    __m256i  sad = _mm256_setzero_si256();
+    __m256i sad = _mm256_setzero_si256();
 
     while (y >= 4) {
         const __m256i src0123 = load_u8_8x4_avx2(src, src_stride);
@@ -3251,7 +3251,7 @@ compute8x_m_sad_avx2(const uint8_t *src, // input parameter, source samples Ptr
         y -= 4;
     };
 
-     while (y >= 2) {
+    while (y >= 2) {
         const __m256i src0123 = load_u8_8x2_avx2(src, src_stride);
         const __m256i ref0123 = load_u8_8x2_avx2(ref, ref_stride);
         sad                   = _mm256_add_epi32(sad, _mm256_sad_epu8(src0123, ref0123));

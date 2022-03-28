@@ -351,7 +351,8 @@ typedef struct BlkStruct {
 
     unsigned skip_flag_context : 2; // to do
     unsigned prediction_mode_flag : 2; // ec
-    unsigned block_has_coeff : 1; // ec; skip coeff only. as defined in section 6.10.11 of the av1 text
+    unsigned
+        block_has_coeff : 1; // ec; skip coeff only. as defined in section 6.10.11 of the av1 text
     unsigned split_flag_context : 2; // to do
 
     uint8_t qindex; // ec

@@ -1216,9 +1216,7 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
                         intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
                         TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
                         const QuantParam *qparam, TxSize tx_size, TxType tx_type, Bool is_inter,
-                        uint8_t use_sharpness,
-                        uint8_t delta_q_present,
-                        uint8_t picture_qp,
+                        uint8_t use_sharpness, uint8_t delta_q_present, uint8_t picture_qp,
                         uint32_t lambda, int plane)
 
 {
@@ -1265,17 +1263,17 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
         if (*eob == 0)
             return;
     }
-    int rweight = 100;
-    const int rshift = 2;
+    int       rweight = 100;
+    const int rshift  = 2;
     if (use_sharpness && delta_q_present && plane == 0) {
         int diff = md_context->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
-        if (diff < 0)
-        {
+        if (diff < 0) {
             sharpness = 1;
-            rweight = 0;
+            rweight   = 0;
         }
     }
-    const int64_t  rdmult = (((((int64_t)lambda * plane_rd_mult[is_inter][plane_type]) * rweight) / 100) + 2) >> rshift;
+    const int64_t rdmult =
+        (((((int64_t)lambda * plane_rd_mult[is_inter][plane_type]) * rweight) / 100) + 2) >> rshift;
     uint8_t        levels_buf[TX_PAD_2D];
     uint8_t *const levels = set_levels(levels_buf, width);
 
@@ -1440,7 +1438,7 @@ int32_t av1_quantize_inv_quantize_light(PictureControlSet *pcs_ptr, int32_t *coe
                                         TxSize txsize, uint16_t *eob,
                                         uint32_t *count_non_zero_coeffs, uint32_t bit_depth,
                                         TxType tx_type) {
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+    SequenceControlSet    *scs_ptr    = pcs_ptr->scs_ptr;
     uint32_t               q_index    = qindex;
     const ScanOrder *const scan_order = &av1_scan_orders[txsize][tx_type];
     const int32_t          n_coeffs   = av1_get_max_eob(txsize);
@@ -1500,12 +1498,12 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     (void)is_intra_bc;
 
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    MacroblockPlane candidate_plane;
-    const QmVal    *q_matrix  = pcs_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
-    const QmVal    *iq_matrix = pcs_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];
-    uint32_t        q_index   = pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present
-                 ? qindex
-                 : (uint32_t)CLIP3(0,
+    MacroblockPlane     candidate_plane;
+    const QmVal        *q_matrix = pcs_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
+    const QmVal *iq_matrix       = pcs_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];
+    uint32_t     q_index         = pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present
+                    ? qindex
+                    : (uint32_t)CLIP3(0,
                           255,
                           (int32_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                               segmentation_qp_offset);
@@ -1811,10 +1809,10 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
              context_ptr->chroma_complexity == COMPONENT_CHROMA_CR)) {
             const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[0][0] >> 4) *
                                  (context_ptr->blk_geom->tx_height_uv[0][0] >> 4));
-            use_pfn4_cond = (candidate_buffer->count_non_zero_coeffs < th) ||
-                !candidate_buffer->block_has_coeff
-                ? 1
-                : 0;
+            use_pfn4_cond     = (candidate_buffer->count_non_zero_coeffs < th) ||
+                    !candidate_buffer->block_has_coeff
+                    ? 1
+                    : 0;
         }
         if (use_pfn4_cond)
             pf_shape = N4_SHAPE;
@@ -1909,10 +1907,10 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
              context_ptr->chroma_complexity == COMPONENT_CHROMA_CB)) {
             const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[0][0] >> 4) *
                                  (context_ptr->blk_geom->tx_height_uv[0][0] >> 4));
-            use_pfn4_cond = (candidate_buffer->count_non_zero_coeffs < th) ||
-                !candidate_buffer->block_has_coeff
-                ? 1
-                : 0;
+            use_pfn4_cond     = (candidate_buffer->count_non_zero_coeffs < th) ||
+                    !candidate_buffer->block_has_coeff
+                    ? 1
+                    : 0;
         }
         if (use_pfn4_cond)
             pf_shape = N4_SHAPE;
@@ -2040,16 +2038,16 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 
     context_ptr->three_quad_energy = 0;
 
-    const uint8_t tx_depth = candidate_buffer->candidate_ptr->tx_depth;
-    const Bool is_inter = (is_inter_mode(candidate_buffer->candidate_ptr->pred_mode) ||
-        candidate_buffer->candidate_ptr->use_intrabc)
-        ? TRUE
-        : FALSE;
-    const int tu_count      = tx_depth
-             ? 1
-             : context_ptr->blk_geom
+    const uint8_t tx_depth      = candidate_buffer->candidate_ptr->tx_depth;
+    const Bool    is_inter      = (is_inter_mode(candidate_buffer->candidate_ptr->pred_mode) ||
+                           candidate_buffer->candidate_ptr->use_intrabc)
+                ? TRUE
+                : FALSE;
+    const int     tu_count      = tx_depth
+                 ? 1
+                 : context_ptr->blk_geom
               ->txb_count[candidate_buffer->candidate_ptr->tx_depth]; //NM: 128x128 exeption
-    uint32_t  txb_1d_offset = 0;
+    uint32_t      txb_1d_offset = 0;
 
     int txb_itr = 0;
     do {
@@ -2085,10 +2083,10 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 
             const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr] >> 4) *
                                  (context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr] >> 4));
-            use_pfn4_cond = (candidate_buffer->count_non_zero_coeffs < th) ||
-                !candidate_buffer->block_has_coeff
-                ? 1
-                : 0;
+            use_pfn4_cond     = (candidate_buffer->count_non_zero_coeffs < th) ||
+                    !candidate_buffer->block_has_coeff
+                    ? 1
+                    : 0;
 
             if (use_pfn4_cond)
                 pf_shape = N4_SHAPE;
@@ -2615,9 +2613,9 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
 uint32_t d2_inter_depth_block_decision(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                        ModeDecisionContext *context_ptr, uint32_t blk_mds,
                                        uint32_t sb_addr) {
-    uint64_t parent_depth_cost = 0, current_depth_cost = 0;
-    Bool   last_depth_flag = (context_ptr->md_blk_arr_nsq[blk_mds].split_flag == FALSE);
-    uint32_t last_blk_index = blk_mds, current_depth_idx_mds = blk_mds;
+    uint64_t         parent_depth_cost = 0, current_depth_cost = 0;
+    Bool             last_depth_flag = (context_ptr->md_blk_arr_nsq[blk_mds].split_flag == FALSE);
+    uint32_t         last_blk_index = blk_mds, current_depth_idx_mds = blk_mds;
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_mds);
     if (last_depth_flag) {
         while (blk_geom->is_last_quadrant) {

@@ -65,9 +65,9 @@ typedef struct EbPictureBufferDesc {
     // Buffer Parameters
     uint32_t luma_size; // Size of the luma buffer
     uint32_t chroma_size; // Size of the chroma buffers
-    Bool   packed_flag; // Indicates if sample buffers are packed or not
+    Bool     packed_flag; // Indicates if sample buffers are packed or not
 
-    Bool   film_grain_flag; // Indicates if film grain parameters are present for the frame
+    Bool     film_grain_flag; // Indicates if film grain parameters are present for the frame
     uint32_t buffer_enable_mask;
 
     Bool
@@ -289,12 +289,12 @@ typedef struct EbPictureBufferDescInitData {
     uint16_t       right_padding;
     uint16_t       top_padding;
     uint16_t       bot_padding;
-    Bool         split_mode; //ON: allocate 8bit data seperately from nbit data
+    Bool           split_mode; //ON: allocate 8bit data seperately from nbit data
 
     Bool down_sampled_filtered;
 
     uint8_t mfmv;
-    Bool  is_16bit_pipeline;
+    Bool    is_16bit_pipeline;
     int8_t  enc_mode;
     int32_t sb_total_count;
 } EbPictureBufferDescInitData;

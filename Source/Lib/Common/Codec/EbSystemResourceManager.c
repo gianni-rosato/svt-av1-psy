@@ -769,7 +769,7 @@ static Bool svt_fifo_peak_front(EbFifo *fifoPtr) {
 EbErrorType svt_get_full_object_non_blocking(EbFifo           *full_fifo_ptr,
                                              EbObjectWrapper **wrapper_dbl_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-    Bool      fifo_empty;
+    Bool        fifo_empty;
     // Queue the Fifo requesting the full fifo
     svt_release_process(full_fifo_ptr);
 

@@ -33,25 +33,25 @@ extern "C" {
 #define ATTRIBUTE_PACKED
 #endif
 #endif /* ATTRIBUTE_PACKED */
-    typedef enum ATTRIBUTE_PACKED {
-        ENC_MRS = -2, // Highest quality research mode (slowest)
-        ENC_MR = -1, //Research mode with higher quality than M0
-        ENC_M0 = 0,
-        ENC_M1 = 1,
-        ENC_M2 = 2,
-        ENC_M3 = 3,
-        ENC_M4 = 4,
-        ENC_M5 = 5,
-        ENC_M6 = 6,
-        ENC_M7 = 7,
-        ENC_M8 = 8,
-        ENC_M9 = 9,
-        ENC_M10 = 10,
-        ENC_M11 = 11,
-        ENC_M12 = 12,
-        ENC_M13 = 13,
-        MAX_ENC_PRESET = ENC_M13
-    } EncMode;
+typedef enum ATTRIBUTE_PACKED {
+    ENC_MRS        = -2, // Highest quality research mode (slowest)
+    ENC_MR         = -1, //Research mode with higher quality than M0
+    ENC_M0         = 0,
+    ENC_M1         = 1,
+    ENC_M2         = 2,
+    ENC_M3         = 3,
+    ENC_M4         = 4,
+    ENC_M5         = 5,
+    ENC_M6         = 6,
+    ENC_M7         = 7,
+    ENC_M8         = 8,
+    ENC_M9         = 9,
+    ENC_M10        = 10,
+    ENC_M11        = 11,
+    ENC_M12        = 12,
+    ENC_M13        = 13,
+    MAX_ENC_PRESET = ENC_M13
+} EncMode;
 #define NUM_MV_COMPONENTS 2
 #define NUM_MV_HIST 2
 #define MAX_MV_HIST_SIZE 2 * REF_LIST_MAX_DEPTH *NUM_MV_COMPONENTS *NUM_MV_HIST
@@ -154,8 +154,10 @@ typedef struct SvtAv1FixedBuf {
 /** Indicates how an S-Frame should be inserted.
 */
 typedef enum EbSFrameMode {
-    SFRAME_STRICT_BASE  = 1,  /**< The considered frame will be made into an S-Frame only if it is a base layer inter frame */
-    SFRAME_NEAREST_BASE = 2,  /**< If the considered frame is not an altref frame, the next base layer inter frame will be made into an S-Frame */
+    SFRAME_STRICT_BASE =
+        1, /**< The considered frame will be made into an S-Frame only if it is a base layer inter frame */
+    SFRAME_NEAREST_BASE =
+        2, /**< If the considered frame is not an altref frame, the next base layer inter frame will be made into an S-Frame */
 } EbSFrameMode;
 
 // Will contain the EbEncApi which will live in the EncHandle class
@@ -307,7 +309,7 @@ typedef struct EbSvtAv1EncConfiguration {
     /* use fixed qp offset for every picture based on temporal layer index
     *
     * Default is 0.*/
-    Bool  use_fixed_qindex_offsets;
+    Bool    use_fixed_qindex_offsets;
     int32_t qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
     int32_t key_frame_chroma_qindex_offset;
     int32_t key_frame_qindex_offset;

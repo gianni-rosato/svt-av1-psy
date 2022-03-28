@@ -88,7 +88,7 @@ typedef struct PredictionStructureEntry {
     DependentList dep_list1;
     uint32_t      temporal_layer_index;
     uint32_t      decode_order;
-    Bool        is_referenced;
+    Bool          is_referenced;
 } PredictionStructureEntry;
 
 /************************************************
@@ -100,7 +100,7 @@ typedef struct PredictionStructure {
     EbDctor                    dctor;
     uint32_t                   pred_struct_entry_count;
     PredictionStructureEntry **pred_struct_entry_ptr_array;
-    PredStructure                     pred_type;
+    PredStructure              pred_type;
     uint32_t                   temporal_layer_count;
     uint32_t                   pred_struct_period;
     uint32_t                   maximum_extent;

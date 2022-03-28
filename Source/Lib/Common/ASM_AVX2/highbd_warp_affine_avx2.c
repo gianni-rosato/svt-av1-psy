@@ -169,10 +169,8 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
                         __m256i v_ref = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
-                        v_refl         = _mm256_inserti128_si256(
-                            v_refl, _mm256_castsi256_si128(v_refu), 1);
-                        v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_castsi256_si128(v_ref), 0);
+                        v_refl = _mm256_inserti128_si256(v_refl, _mm256_castsi256_si128(v_refu), 1);
+                        v_refu = _mm256_inserti128_si256(v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(
@@ -235,10 +233,8 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
-                        v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_castsi256_si128(v_refu), 1);
-                        v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_castsi256_si128(v_ref), 0);
+                        v_refl = _mm256_inserti128_si256(v_refl, _mm256_castsi256_si128(v_refu), 1);
+                        v_refu = _mm256_inserti128_si256(v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(v_c01,
@@ -338,10 +334,8 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
-                        v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_castsi256_si128(v_refu), 1);
-                        v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_castsi256_si128(v_ref), 0);
+                        v_refl = _mm256_inserti128_si256(v_refl, _mm256_castsi256_si128(v_refu), 1);
+                        v_refu = _mm256_inserti128_si256(v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(
@@ -461,10 +455,8 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
-                        v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_castsi256_si128(v_refu), 1);
-                        v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_castsi256_si128(v_ref), 0);
+                        v_refl = _mm256_inserti128_si256(v_refl, _mm256_castsi256_si128(v_refu), 1);
+                        v_refu = _mm256_inserti128_si256(v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(v_c01,
@@ -773,10 +765,8 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                         __m256i v_ref  = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
-                        v_refl         = _mm256_inserti128_si256(
-                            v_refl, _mm256_castsi256_si128(v_refu), 1);
-                        v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_castsi256_si128(v_ref), 0);
+                        v_refl = _mm256_inserti128_si256(v_refl, _mm256_castsi256_si128(v_refu), 1);
+                        v_refu = _mm256_inserti128_si256(v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(
@@ -833,10 +823,8 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
-                        v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_castsi256_si128(v_refu), 1);
-                        v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_castsi256_si128(v_ref), 0);
+                        v_refl = _mm256_inserti128_si256(v_refl, _mm256_castsi256_si128(v_refu), 1);
+                        v_refu = _mm256_inserti128_si256(v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(v_c01,
@@ -930,10 +918,8 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
-                        v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_castsi256_si128(v_refu), 1);
-                        v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_castsi256_si128(v_ref), 0);
+                        v_refl = _mm256_inserti128_si256(v_refl, _mm256_castsi256_si128(v_refu), 1);
+                        v_refu = _mm256_inserti128_si256(v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(
@@ -1046,10 +1032,8 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
-                        v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_castsi256_si128(v_refu), 1);
-                        v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_castsi256_si128(v_ref), 0);
+                        v_refl = _mm256_inserti128_si256(v_refl, _mm256_castsi256_si128(v_refu), 1);
+                        v_refu = _mm256_inserti128_si256(v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(v_c01,

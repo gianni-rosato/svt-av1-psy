@@ -1067,11 +1067,11 @@ class AomSseHighbdTest : public ::testing::TestWithParam<AomSseParam> {
             run_times = 10;
             // unusual sizes
             if (block_size > BlockSizeS_ALL) {
-                //block_size == BlockSizeS_ALL +1
+                // block_size == BlockSizeS_ALL +1
                 width = 36;
                 height = 36;
             } else {
-                //block_size == BlockSizeS_ALL
+                // block_size == BlockSizeS_ALL
                 width = 40;
                 height = 40;
             }
@@ -1111,7 +1111,8 @@ INSTANTIATE_TEST_CASE_P(
 
 INSTANTIATE_TEST_CASE_P(
     SSETEST_unusula_sizes, AomSseHighbdTest,
-    ::testing::Combine(::testing::Range(BlockSizeS_ALL, (BlockSize)(BlockSizeS_ALL +2)),
+    ::testing::Combine(::testing::Range(BlockSizeS_ALL,
+                                        (BlockSize)(BlockSizeS_ALL + 2)),
                        ::testing::Values(svt_aom_highbd_sse_avx2)));
 
 typedef void (*AomSubstractBlockFunc)(int, int, int16_t *, ptrdiff_t,

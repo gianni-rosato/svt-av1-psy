@@ -67,12 +67,13 @@ static INLINE void mse_4xn_16bit_sse4_1(const uint16_t **src, const uint16_t *ds
                                         const int32_t dstride, __m128i *sum, uint8_t height,
                                         uint8_t subsampling_factor) {
     for (int32_t r = 0; r < height; r += 4 * subsampling_factor) {
-        const __m128i s0 = _mm_set_epi64x(
-            *(uint64_t *)(*src + 0 * 4),
-            *(uint64_t *)(*src + (1 * subsampling_factor) * 4));
+        const __m128i s0 = _mm_set_epi64x(*(uint64_t *)(*src + 0 * 4),
+                                          *(uint64_t *)(*src + (1 * subsampling_factor) * 4));
         const __m128i s1 = _mm_set_epi64x(
             *(uint64_t *)(*src + (2 * subsampling_factor) * 4),
-            *(uint64_t *)(*src + (3 * subsampling_factor) * 4)); // don't add r * dstride b/c add it at end of loop iterations
+            *(uint64_t *)(*src +
+                          (3 * subsampling_factor) *
+                              4)); // don't add r * dstride b/c add it at end of loop iterations
         const __m128i d0 = _mm_set_epi64x(
             *(uint64_t *)(dst + r * dstride),
             *(uint64_t *)(dst + (r + (1 * subsampling_factor)) * dstride));
@@ -84,8 +85,8 @@ static INLINE void mse_4xn_16bit_sse4_1(const uint16_t **src, const uint16_t *ds
         const __m128i diff_1 = _mm_sub_epi16(d1, s1);
         const __m128i mse_0  = _mm_madd_epi16(diff_0, diff_0);
         const __m128i mse_1  = _mm_madd_epi16(diff_1, diff_1);
-        *sum               = _mm_add_epi32(*sum, mse_0);
-        *sum               = _mm_add_epi32(*sum, mse_1);
+        *sum                 = _mm_add_epi32(*sum, mse_0);
+        *sum                 = _mm_add_epi32(*sum, mse_1);
 
         *src += 4 * 4 * subsampling_factor; // with * 4 rows per iter * subsampling
     }
@@ -99,7 +100,9 @@ static INLINE void mse_4xn_8bit_sse4_1(const uint8_t **src, const uint8_t *dst,
             *(uint32_t *)(*src + 0 * 4),
             *(uint32_t *)(*src + (1 * subsampling_factor) * 4),
             *(uint32_t *)(*src + (2 * subsampling_factor) * 4),
-            *(uint32_t *)(*src + (3 * subsampling_factor) * 4)); // don't add r * dstride b/c add it at end of loop iterations
+            *(uint32_t *)(*src +
+                          (3 * subsampling_factor) *
+                              4)); // don't add r * dstride b/c add it at end of loop iterations
         const __m128i d = _mm_setr_epi32(
             *(uint32_t *)(dst + r * dstride),
             *(uint32_t *)(dst + (r + (1 * subsampling_factor)) * dstride),
@@ -115,8 +118,8 @@ static INLINE void mse_4xn_8bit_sse4_1(const uint8_t **src, const uint8_t *dst,
         const __m128i diff_1 = _mm_sub_epi16(d_16_1, s_16_1);
         const __m128i mse_0  = _mm_madd_epi16(diff_0, diff_0);
         const __m128i mse_1  = _mm_madd_epi16(diff_1, diff_1);
-        *sum               = _mm_add_epi32(*sum, mse_0);
-        *sum               = _mm_add_epi32(*sum, mse_1);
+        *sum                 = _mm_add_epi32(*sum, mse_0);
+        *sum                 = _mm_add_epi32(*sum, mse_1);
 
         *src += 4 * 4 * subsampling_factor; // with * 4 rows per iter * subsampling
     }
@@ -127,17 +130,19 @@ static INLINE void mse_8xn_16bit_sse4_1(const uint16_t **src, const uint16_t *ds
                                         uint8_t subsampling_factor) {
     for (int32_t r = 0; r < height; r += 2 * subsampling_factor) {
         const __m128i s0 = _mm_loadu_si128(
-            (const __m128i *)(*src + 0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
+            (const __m128i *)(*src +
+                              0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
         const __m128i s1 = _mm_loadu_si128((const __m128i *)(*src + subsampling_factor * 8));
         const __m128i d0 = _mm_loadu_si128((const __m128i *)(dst + r * dstride));
-        const __m128i d1 = _mm_loadu_si128((const __m128i *)(dst + (r + subsampling_factor) * dstride));
+        const __m128i d1 = _mm_loadu_si128(
+            (const __m128i *)(dst + (r + subsampling_factor) * dstride));
 
         const __m128i diff_0 = _mm_sub_epi16(d0, s0);
         const __m128i diff_1 = _mm_sub_epi16(d1, s1);
         const __m128i mse_0  = _mm_madd_epi16(diff_0, diff_0);
         const __m128i mse_1  = _mm_madd_epi16(diff_1, diff_1);
-        *sum               = _mm_add_epi32(*sum, mse_0);
-        *sum               = _mm_add_epi32(*sum, mse_1);
+        *sum                 = _mm_add_epi32(*sum, mse_0);
+        *sum                 = _mm_add_epi32(*sum, mse_1);
 
         *src += 8 * 2 * subsampling_factor;
     }
@@ -147,24 +152,26 @@ static INLINE void mse_8xn_8bit_sse4_1(const uint8_t **src, const uint8_t *dst,
                                        const int32_t dstride, __m128i *sum, uint8_t height,
                                        uint8_t subsampling_factor) {
     for (int32_t r = 0; r < height; r += 2 * subsampling_factor) {
-        const __m128i s_16_0 = _mm_cvtepu8_epi16(_mm_loadl_epi64((__m128i *)(*src + subsampling_factor * 8)));
+        const __m128i s_16_0 = _mm_cvtepu8_epi16(
+            _mm_loadl_epi64((__m128i *)(*src + subsampling_factor * 8)));
         const __m128i s_16_1 = _mm_cvtepu8_epi16(_mm_loadl_epi64((__m128i *)(*src + 0 * 8)));
-        const __m128i d_16_0 = _mm_cvtepu8_epi16(_mm_loadl_epi64((__m128i *)(dst + (r + subsampling_factor) * dstride)));
+        const __m128i d_16_0 = _mm_cvtepu8_epi16(
+            _mm_loadl_epi64((__m128i *)(dst + (r + subsampling_factor) * dstride)));
         const __m128i d_16_1 = _mm_cvtepu8_epi16(_mm_loadl_epi64((__m128i *)(dst + r * dstride)));
 
         const __m128i diff_0 = _mm_sub_epi16(d_16_0, s_16_0);
         const __m128i diff_1 = _mm_sub_epi16(d_16_1, s_16_1);
         const __m128i mse_0  = _mm_madd_epi16(diff_0, diff_0);
         const __m128i mse_1  = _mm_madd_epi16(diff_1, diff_1);
-        *sum               = _mm_add_epi32(*sum, mse_0);
-        *sum               = _mm_add_epi32(*sum, mse_1);
+        *sum                 = _mm_add_epi32(*sum, mse_0);
+        *sum                 = _mm_add_epi32(*sum, mse_1);
 
         *src += 8 * 2 * subsampling_factor;
     }
 }
 
 static INLINE uint32_t sum32(const __m128i src) {
-    __m128i       dst;
+    __m128i dst;
 
     dst = _mm_hadd_epi32(src, src);
     dst = _mm_hadd_epi32(dst, dst);
@@ -185,23 +192,27 @@ static INLINE uint64_t dist_8xn_16bit_sse4_1(const uint16_t **src, const uint16_
 
     for (int32_t r = 0; r < height; r += 2 * subsampling_factor) {
         const __m128i s0 = _mm_loadu_si128(
-            (const __m128i *)(*src + 0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
+            (const __m128i *)(*src +
+                              0 * 8)); // don't add r * dstride b/c add it at end of loop iterations
         const __m128i s1 = _mm_loadu_si128(
-            (const __m128i *)(*src + subsampling_factor * 8)); // don't add r * dstride b/c add it at end of loop iterations
+            (const __m128i *)(*src +
+                              subsampling_factor *
+                                  8)); // don't add r * dstride b/c add it at end of loop iterations
 
         const __m128i d0 = _mm_loadu_si128((const __m128i *)(dst + r * dstride));
-        const __m128i d1 = _mm_loadu_si128((const __m128i *)(dst + (r + subsampling_factor) * dstride));
+        const __m128i d1 = _mm_loadu_si128(
+            (const __m128i *)(dst + (r + subsampling_factor) * dstride));
 
-        ss              = _mm_add_epi16(ss, s0);
-        ss              = _mm_add_epi16(ss, s1);
-        dd              = _mm_add_epi16(dd, d0);
-        dd              = _mm_add_epi16(dd, d1);
-        s2              = _mm_add_epi32(s2, _mm_madd_epi16(s0, s0));
-        s2              = _mm_add_epi32(s2, _mm_madd_epi16(s1, s1));
-        sd              = _mm_add_epi32(sd, _mm_madd_epi16(s0, d0));
-        sd              = _mm_add_epi32(sd, _mm_madd_epi16(s1, d1));
-        d2              = _mm_add_epi32(d2, _mm_madd_epi16(d0, d0));
-        d2              = _mm_add_epi32(d2, _mm_madd_epi16(d1, d1));
+        ss = _mm_add_epi16(ss, s0);
+        ss = _mm_add_epi16(ss, s1);
+        dd = _mm_add_epi16(dd, d0);
+        dd = _mm_add_epi16(dd, d1);
+        s2 = _mm_add_epi32(s2, _mm_madd_epi16(s0, s0));
+        s2 = _mm_add_epi32(s2, _mm_madd_epi16(s1, s1));
+        sd = _mm_add_epi32(sd, _mm_madd_epi16(s0, d0));
+        sd = _mm_add_epi32(sd, _mm_madd_epi16(s1, d1));
+        d2 = _mm_add_epi32(d2, _mm_madd_epi16(d0, d0));
+        d2 = _mm_add_epi32(d2, _mm_madd_epi16(d1, d1));
 
         *src += 8 * 2 * subsampling_factor;
     }
@@ -239,9 +250,11 @@ static INLINE uint64_t dist_8xn_8bit_sse4_1(const uint8_t **src, const uint8_t *
     __m128i sum;
 
     for (int32_t r = 0; r < height; r += 2 * subsampling_factor) {
-        const __m128i s_16_0 = _mm_cvtepu8_epi16(_mm_loadl_epi64((__m128i *)(*src + subsampling_factor * 8)));
+        const __m128i s_16_0 = _mm_cvtepu8_epi16(
+            _mm_loadl_epi64((__m128i *)(*src + subsampling_factor * 8)));
         const __m128i s_16_1 = _mm_cvtepu8_epi16(_mm_loadl_epi64((__m128i *)(*src + 0 * 8)));
-        const __m128i d_16_0 = _mm_cvtepu8_epi16(_mm_loadl_epi64((__m128i *)(dst + (r + subsampling_factor) * dstride)));
+        const __m128i d_16_0 = _mm_cvtepu8_epi16(
+            _mm_loadl_epi64((__m128i *)(dst + (r + subsampling_factor) * dstride)));
         const __m128i d_16_1 = _mm_cvtepu8_epi16(_mm_loadl_epi64((__m128i *)(dst + r * dstride)));
 
         ss = _mm_add_epi16(ss, s_16_0);
@@ -258,10 +271,10 @@ static INLINE uint64_t dist_8xn_8bit_sse4_1(const uint8_t **src, const uint8_t *
         *src += 8 * 2 * subsampling_factor; // width * 2 lines per iter. * subsampling
     }
 
-    ssdd = _mm_hadd_epi16(ss, dd);
-    ssdd = _mm_hadd_epi16(ssdd, ssdd);
-    ssdd = _mm_unpacklo_epi16(ssdd, _mm_setzero_si128());
-    sum = _mm_hadd_epi32(ssdd, ssdd);
+    ssdd            = _mm_hadd_epi16(ss, dd);
+    ssdd            = _mm_hadd_epi16(ssdd, ssdd);
+    ssdd            = _mm_unpacklo_epi16(ssdd, _mm_setzero_si128());
+    sum             = _mm_hadd_epi32(ssdd, ssdd);
     uint64_t sum_s  = _mm_cvtsi128_si32(sum);
     uint64_t sum_d  = _mm_extract_epi32(sum, 1);
     uint64_t sum_s2 = sum32(s2);
@@ -285,7 +298,7 @@ static INLINE void sum_32_to_64(const __m128i src, __m128i *dst) {
 }
 
 static INLINE uint64_t sum64(const __m128i src) {
-    const __m128i dst   = _mm_add_epi64(src, _mm_srli_si128(src, 8));
+    const __m128i dst = _mm_add_epi64(src, _mm_srli_si128(src, 8));
 
     return (uint64_t)_mm_cvtsi128_si64(dst);
 }
@@ -315,11 +328,11 @@ uint64_t compute_cdef_dist_16bit_sse4_1(const uint16_t *dst, int32_t dstride, co
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
                 mse_8xn_16bit_sse4_1(&src,
-                                   dst + (8 * by + 0) * dstride + 8 * bx,
-                                   dstride,
-                                   &mse32,
-                                   8,
-                                   subsampling_factor);
+                                     dst + (8 * by + 0) * dstride + 8 * bx,
+                                     dstride,
+                                     &mse32,
+                                     8,
+                                     subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else if (bsize == BLOCK_4X8) {
@@ -328,11 +341,11 @@ uint64_t compute_cdef_dist_16bit_sse4_1(const uint16_t *dst, int32_t dstride, co
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
                 mse_4xn_16bit_sse4_1(&src,
-                                   dst + (8 * by + 0) * dstride + 4 * bx,
-                                   dstride,
-                                   &mse32,
-                                   8,
-                                   subsampling_factor);
+                                     dst + (8 * by + 0) * dstride + 4 * bx,
+                                     dstride,
+                                     &mse32,
+                                     8,
+                                     subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else if (bsize == BLOCK_8X4) {
@@ -358,11 +371,11 @@ uint64_t compute_cdef_dist_16bit_sse4_1(const uint16_t *dst, int32_t dstride, co
                         &src, dst + 4 * by * dstride + 4 * bx, dstride, &mse32);
                 else
                     mse_4xn_16bit_sse4_1(&src,
-                                       dst + 4 * by * dstride + 4 * bx,
-                                       dstride,
-                                       &mse32,
-                                       4,
-                                       1); // no subsampling
+                                         dst + 4 * by * dstride + 4 * bx,
+                                         dstride,
+                                         &mse32,
+                                         4,
+                                         1); // no subsampling
                 sum_32_to_64(mse32, &mse64);
             }
         }
@@ -386,11 +399,11 @@ uint64_t compute_cdef_dist_8bit_sse4_1(const uint8_t *dst8, int32_t dstride, con
             by = dlist[bi].by;
             bx = dlist[bi].bx;
             sum += dist_8xn_8bit_sse4_1(&src8,
-                                      dst8 + 8 * by * dstride + 8 * bx,
-                                      dstride,
-                                      coeff_shift,
-                                      8,
-                                      subsampling_factor);
+                                        dst8 + 8 * by * dstride + 8 * bx,
+                                        dstride,
+                                        coeff_shift,
+                                        8,
+                                        subsampling_factor);
         }
     } else {
         __m128i mse64 = _mm_setzero_si128();
@@ -401,11 +414,11 @@ uint64_t compute_cdef_dist_8bit_sse4_1(const uint8_t *dst8, int32_t dstride, con
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
                 mse_8xn_8bit_sse4_1(&src8,
-                                  dst8 + (8 * by + 0) * dstride + 8 * bx,
-                                  dstride,
-                                  &mse32,
-                                  8,
-                                  subsampling_factor);
+                                    dst8 + (8 * by + 0) * dstride + 8 * bx,
+                                    dstride,
+                                    &mse32,
+                                    8,
+                                    subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else if (bsize == BLOCK_4X8) {
@@ -414,11 +427,11 @@ uint64_t compute_cdef_dist_8bit_sse4_1(const uint8_t *dst8, int32_t dstride, con
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
                 mse_4xn_8bit_sse4_1(&src8,
-                                  dst8 + (8 * by + 0) * dstride + 4 * bx,
-                                  dstride,
-                                  &mse32,
-                                  8,
-                                  subsampling_factor);
+                                    dst8 + (8 * by + 0) * dstride + 4 * bx,
+                                    dstride,
+                                    &mse32,
+                                    8,
+                                    subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else if (bsize == BLOCK_8X4) {
@@ -427,11 +440,11 @@ uint64_t compute_cdef_dist_8bit_sse4_1(const uint8_t *dst8, int32_t dstride, con
                 by            = dlist[bi].by;
                 bx            = dlist[bi].bx;
                 mse_8xn_8bit_sse4_1(&src8,
-                                  dst8 + 4 * by * dstride + 8 * bx,
-                                  dstride,
-                                  &mse32,
-                                  4,
-                                  subsampling_factor);
+                                    dst8 + 4 * by * dstride + 8 * bx,
+                                    dstride,
+                                    &mse32,
+                                    4,
+                                    subsampling_factor);
                 sum_32_to_64(mse32, &mse64);
             }
         } else {
@@ -448,11 +461,11 @@ uint64_t compute_cdef_dist_8bit_sse4_1(const uint8_t *dst8, int32_t dstride, con
                         &src8, dst8 + 4 * by * dstride + 4 * bx, dstride, &mse32);
                 else
                     mse_4xn_8bit_sse4_1(&src8,
-                                      dst8 + 4 * by * dstride + 4 * bx,
-                                      dstride,
-                                      &mse32,
-                                      4,
-                                      1); // no subsampling
+                                        dst8 + 4 * by * dstride + 4 * bx,
+                                        dstride,
+                                        &mse32,
+                                        4,
+                                        1); // no subsampling
                 sum_32_to_64(mse32, &mse64);
             }
         }

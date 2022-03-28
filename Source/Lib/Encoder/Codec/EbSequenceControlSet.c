@@ -50,16 +50,15 @@ static void svt_sequence_control_set_dctor(EbPtr p) {
     is saved in the PCS, that is not managed by an SRM.
  ***************************************************************************************************/
 EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs, EbPtr object_init_data_ptr) {
-
     UNUSED(object_init_data_ptr);
     scs->dctor = svt_sequence_control_set_dctor;
 
     // Allocation will happen in resource-coordination
     scs->sb_params_array = NULL;
 
-    scs->mvrate_set = 0;
+    scs->mvrate_set                   = 0;
     scs->bits_for_picture_order_count = 16;
-    scs->film_grain_random_seed = 7391;
+    scs->film_grain_random_seed       = 7391;
 
     return EB_ErrorNone;
 }
@@ -200,19 +199,17 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
         scs_ptr->sb_geom[sb_index].origin_y = scs_ptr->sb_geom[sb_index].vertical_index *
             scs_ptr->sb_size_pix;
 
-        scs_ptr->sb_geom[sb_index].width = (uint8_t)(((scs_ptr->max_input_luma_width -
-                                                       scs_ptr->sb_geom[sb_index].origin_x) <
-                                                      scs_ptr->sb_size_pix)
-                                                         ? scs_ptr->max_input_luma_width -
-                                                             scs_ptr->sb_geom[sb_index].origin_x
-                                                         : scs_ptr->sb_size_pix);
+        scs_ptr->sb_geom[sb_index].width =
+            (uint8_t)(((scs_ptr->max_input_luma_width - scs_ptr->sb_geom[sb_index].origin_x) <
+                       scs_ptr->sb_size_pix)
+                          ? scs_ptr->max_input_luma_width - scs_ptr->sb_geom[sb_index].origin_x
+                          : scs_ptr->sb_size_pix);
 
-        scs_ptr->sb_geom[sb_index].height = (uint8_t)(((scs_ptr->max_input_luma_height -
-                                                        scs_ptr->sb_geom[sb_index].origin_y) <
-                                                       scs_ptr->sb_size_pix)
-                                                          ? scs_ptr->max_input_luma_height -
-                                                              scs_ptr->sb_geom[sb_index].origin_y
-                                                          : scs_ptr->sb_size_pix);
+        scs_ptr->sb_geom[sb_index].height =
+            (uint8_t)(((scs_ptr->max_input_luma_height - scs_ptr->sb_geom[sb_index].origin_y) <
+                       scs_ptr->sb_size_pix)
+                          ? scs_ptr->max_input_luma_height - scs_ptr->sb_geom[sb_index].origin_y
+                          : scs_ptr->sb_size_pix);
 
         scs_ptr->sb_geom[sb_index].is_complete_sb =
             (uint8_t)(((scs_ptr->sb_geom[sb_index].width == scs_ptr->sb_size_pix) &&

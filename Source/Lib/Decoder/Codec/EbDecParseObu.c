@@ -2289,7 +2289,7 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
     /* LR */
     //Bool opt_lr = !do_cdef && !do_upscale;
     LrParams *lr_param = dec_handle_ptr->frame_header.lr_params;
-    Bool    do_lr    = no_ibc &&
+    Bool      do_lr    = no_ibc &&
         (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);

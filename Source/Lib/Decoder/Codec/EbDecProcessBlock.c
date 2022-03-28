@@ -76,7 +76,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
 
     int num_planes = av1_num_planes(color_config);
 
-    bool   inter_block = is_inter_block_dec(mode_info);
+    bool inter_block = is_inter_block_dec(mode_info);
     Bool is16b       = dec_handle->is_16bit_pipeline;
 #if MODE_INFO_DBG
     assert(mode_info->mi_row == mi_row);

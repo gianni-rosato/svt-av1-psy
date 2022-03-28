@@ -127,11 +127,13 @@ typedef struct BlockModeInfoEnc {
     /*!< 0 indicates that a distance based weighted scheme should be used for blending.
          *   1 indicates that the averaging scheme should be used for blending.*/
     uint8_t compound_idx : 1; // possible values: 0,1
-    uint8_t skip : 1; // possible values: 0,1; skip coeff only. as defined in section 6.10.11 of the av1 text
+    uint8_t
+        skip : 1; // possible values: 0,1; skip coeff only. as defined in section 6.10.11 of the av1 text
 
     /*!< 1 indicates that this block will use some default settings and skip mode info.
             * 0 indicates that the mode info is not skipped. */
-    uint8_t skip_mode : 1; // possible values: 0,1; skip mode_info + coeff. as defined in section 6.10.10 of the av1 text
+    uint8_t
+            skip_mode : 1; // possible values: 0,1; skip mode_info + coeff. as defined in section 6.10.10 of the av1 text
     uint8_t use_intrabc : 1; // possible values: 0,1
 
 #if MODE_INFO_DBG

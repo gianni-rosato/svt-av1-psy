@@ -642,7 +642,7 @@ void *cdef_kernel(void *input_ptr) {
         pcs_ptr         = (PictureControlSet *)dlf_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr         = pcs_ptr->scs_ptr;
 
-        Bool     is_16bit      = scs_ptr->is_16bit_pipeline;
+        Bool       is_16bit      = scs_ptr->is_16bit_pipeline;
         Av1Common *cm            = pcs_ptr->parent_pcs_ptr->av1_cm;
         frm_hdr                  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         CdefControls *cdef_ctrls = &pcs_ptr->parent_pcs_ptr->cdef_ctrls;

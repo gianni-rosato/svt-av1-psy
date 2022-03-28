@@ -171,7 +171,8 @@ class SADTestBase : public ::testing::Test {
         test_sad_pattern_ = test_sad_pattern;
     }
 
-    SADTestBase(TestPattern test_pattern, const int search_area_width, const int search_area_height) {
+    SADTestBase(TestPattern test_pattern, const int search_area_width,
+                const int search_area_height) {
         src_stride_ = MAX_SB_SIZE;
         ref1_stride_ = ref2_stride_ = MAX_SB_SIZE;
         test_pattern_ = test_pattern;
@@ -253,7 +254,8 @@ class SADTestBase : public ::testing::Test {
             for (int j = 0; j < height; ++j) {
                 for (int i = 0; i < width; ++i) {
                     src_aligned_[j * src_stride_ + i] = 0;
-                    ref1_aligned_[j * ref1_stride_ + i] = ref2_aligned_[j * ref2_stride_ + i] = mask;
+                    ref1_aligned_[j * ref1_stride_ + i] =
+                        ref2_aligned_[j * ref2_stride_ + i] = mask;
                 }
             }
             break;
@@ -262,7 +264,8 @@ class SADTestBase : public ::testing::Test {
             for (int j = 0; j < height; ++j) {
                 for (int i = 0; i < width; ++i) {
                     src_aligned_[j * src_stride_ + i] = mask;
-                    ref1_aligned_[j * ref1_stride_ + i] = ref2_aligned_[j * ref2_stride_ + i] = mask;
+                    ref1_aligned_[j * ref1_stride_ + i] =
+                        ref2_aligned_[j * ref2_stride_ + i] = mask;
                 }
             }
             break;
@@ -344,31 +347,29 @@ class SADTestBase : public ::testing::Test {
         ASSERT_TRUE(0);
     }
 
-    void test_sad_size(BlkSize size)
-    {
+    void test_sad_size(BlkSize size) {
         check_sad(std::get<0>(size), std::get<1>(size));
     }
 
-    void test_sad_sizes(BlkSize *test_block_sizes, size_t test_block_sizes_count)
-    {
+    void test_sad_sizes(BlkSize *test_block_sizes,
+                        size_t test_block_sizes_count) {
         for (uint32_t i = 0; i < test_block_sizes_count; ++i) {
             test_sad_size(test_block_sizes[i]);
         }
     }
 
-    void speed_sad_size(BlkSize size)
-    {
+    void speed_sad_size(BlkSize size) {
         speed_sad(std::get<0>(size), std::get<1>(size));
     }
 
-    void speed_sad_sizes(BlkSize *test_block_sizes, size_t test_block_sizes_count)
-    {
+    void speed_sad_sizes(BlkSize *test_block_sizes,
+                         size_t test_block_sizes_count) {
         for (uint32_t i = 0; i < test_block_sizes_count; ++i) {
             speed_sad_size(test_block_sizes[i]);
         }
     }
 
-   protected:
+  protected:
     int src_stride_;
     int ref1_stride_;
     int ref2_stride_;
@@ -415,8 +416,7 @@ class SADTestSubSample
     nxm_sad_kernel_fn_ptr fn_ptr;
 
   public:
-    SADTestSubSample()
-        : SADTestBase(TEST_GET_PARAM(0)) {
+    SADTestSubSample() : SADTestBase(TEST_GET_PARAM(0)) {
         fn_ptr = TEST_GET_PARAM(1);
     }
 
@@ -444,14 +444,15 @@ class SADTestSubSample
                           width);
 
         EXPECT_EQ(non_avx2_sad, avx2_sad)
-            << "Size: " << width << "x"<< height << " " << std::endl
+            << "Size: " << width << "x" << height << " " << std::endl
             << "compare non_avx2_sad(" << non_avx2_sad << ") and avx2_sad("
             << avx2_sad << ") error, ref: " << ref_sad;
     }
 };
 
 TEST_P(SADTestSubSample, SADTestSubSample) {
-    test_sad_sizes(TEST_BLOCK_SIZES, sizeof(TEST_BLOCK_SIZES)/sizeof(TEST_BLOCK_SIZES[0]));
+    test_sad_sizes(TEST_BLOCK_SIZES,
+                   sizeof(TEST_BLOCK_SIZES) / sizeof(TEST_BLOCK_SIZES[0]));
     test_sad_size(BlkSize(128, 128));
 }
 
@@ -493,8 +494,7 @@ class SADTest : public ::testing::WithParamInterface<Testsad_Param_nxm_kernel>,
     nxm_sad_kernel_fn_ptr fn_ptr;
 
   public:
-    SADTest()
-        : SADTestBase(TEST_GET_PARAM(0)) {
+    SADTest() : SADTestBase(TEST_GET_PARAM(0)) {
         fn_ptr = TEST_GET_PARAM(1);
     }
 
@@ -520,14 +520,15 @@ class SADTest : public ::testing::WithParamInterface<Testsad_Param_nxm_kernel>,
                           height,
                           width);
         EXPECT_EQ(non_avx2_sad, avx2_sad)
-            << "Size: " << width << "x"<< height << " " << std::endl
+            << "Size: " << width << "x" << height << " " << std::endl
             << "compare non_avx2_sad(" << non_avx2_sad << ") and avx2_sad("
             << avx2_sad << ") error, ref: " << ref_sad;
     }
 };
 
 TEST_P(SADTest, SADTest) {
-    test_sad_sizes(TEST_BLOCK_SIZES, sizeof(TEST_BLOCK_SIZES)/sizeof(TEST_BLOCK_SIZES[0]));
+    test_sad_sizes(TEST_BLOCK_SIZES,
+                   sizeof(TEST_BLOCK_SIZES) / sizeof(TEST_BLOCK_SIZES[0]));
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -563,8 +564,7 @@ typedef void (*Ebsad_LoopKernelNxMType)(
     uint8_t skip_search_line, int16_t search_area_width,
     int16_t search_area_height);
 
-typedef std::tuple<TestPattern, SearchArea, uint8_t>
-    sad_LoopTestParam;
+typedef std::tuple<TestPattern, SearchArea, uint8_t> sad_LoopTestParam;
 
 /**
  * @brief Unit test for SAD loop (sparse, hme) functions include:
@@ -592,14 +592,12 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                      public SADTestBase {
   public:
     sad_LoopTest()
-        : SADTestBase(TEST_GET_PARAM(0),
-                      std::get<0>(TEST_GET_PARAM(1)),
+        : SADTestBase(TEST_GET_PARAM(0), std::get<0>(TEST_GET_PARAM(1)),
                       std::get<1>(TEST_GET_PARAM(1))),
           skip_search_line(TEST_GET_PARAM(2)) {
     }
 
   protected:
-
     uint8_t skip_search_line;
 
     void check_sad(int width, int height) {
@@ -630,7 +628,9 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                 skip_search_line,
                 search_area_width_,
                 search_area_height_);
-        for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+        for (unsigned int f = 0;
+             f < sizeof(func_o_list) / sizeof(func_o_list[0]);
+             ++f) {
             Ebsad_LoopKernelNxMType func_o_ = func_o_list[f];
             uint64_t best_sad1 = UINT64_MAX;
             int16_t x_search_center1 = 0;
@@ -712,10 +712,12 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
         }
         svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
         time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
-                                                start_time_useconds,
-                                                finish_time_seconds,
-                                                finish_time_useconds);
-        for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+                                                         start_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
+        for (unsigned int f = 0;
+             f < sizeof(func_o_list) / sizeof(func_o_list[0]);
+             ++f) {
             Ebsad_LoopKernelNxMType func_o_ = func_o_list[f];
 
             svt_av1_get_time(&start_time_seconds, &start_time_useconds);
@@ -752,37 +754,45 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                 << "search area [" << search_area_width_ << " x "
                 << search_area_height_ << "]";
 
-            time_o = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
-                                                             start_time_useconds,
-                                                             finish_time_seconds,
-                                                             finish_time_useconds);
+            time_o =
+                svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                        start_time_useconds,
+                                                        finish_time_seconds,
+                                                        finish_time_useconds);
 
-            printf("    svt_sad_loop_kernel(%dx%d) kernel ID %i search area[%dx%d]: %5.2fx)\n",
-                   width,
-                   height,
-                   f,
-                   search_area_width_,
-                   search_area_height_,
-                   time_c / time_o);
+            printf(
+                "    svt_sad_loop_kernel(%dx%d) kernel ID %i search "
+                "area[%dx%d]: %5.2fx)\n",
+                width,
+                height,
+                f,
+                search_area_width_,
+                search_area_height_,
+                time_c / time_o);
         }
     }
 };
 
 TEST_P(sad_LoopTest, sad_LoopTest) {
-    test_sad_sizes(TEST_BLOCK_SIZES, sizeof(TEST_BLOCK_SIZES)/sizeof(TEST_BLOCK_SIZES[0]));
-    test_sad_sizes(TEST_BLOCK_SIZES_SMALL, sizeof(TEST_BLOCK_SIZES_SMALL)/sizeof(TEST_BLOCK_SIZES_SMALL[0]));
+    test_sad_sizes(TEST_BLOCK_SIZES,
+                   sizeof(TEST_BLOCK_SIZES) / sizeof(TEST_BLOCK_SIZES[0]));
+    test_sad_sizes(
+        TEST_BLOCK_SIZES_SMALL,
+        sizeof(TEST_BLOCK_SIZES_SMALL) / sizeof(TEST_BLOCK_SIZES_SMALL[0]));
 }
 
 TEST_P(sad_LoopTest, DISABLED_sad_LoopSpeedTest) {
-    speed_sad_sizes(TEST_BLOCK_SIZES, sizeof(TEST_BLOCK_SIZES)/sizeof(TEST_BLOCK_SIZES[0]));
-    speed_sad_sizes(TEST_BLOCK_SIZES_SMALL, sizeof(TEST_BLOCK_SIZES_SMALL)/sizeof(TEST_BLOCK_SIZES_SMALL[0]));
+    speed_sad_sizes(TEST_BLOCK_SIZES,
+                    sizeof(TEST_BLOCK_SIZES) / sizeof(TEST_BLOCK_SIZES[0]));
+    speed_sad_sizes(
+        TEST_BLOCK_SIZES_SMALL,
+        sizeof(TEST_BLOCK_SIZES_SMALL) / sizeof(TEST_BLOCK_SIZES_SMALL[0]));
 }
 
-INSTANTIATE_TEST_CASE_P(
-    LOOPSAD, sad_LoopTest,
-    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::ValuesIn(TEST_LOOP_AREAS),
-                       ::testing::Values(0, 1)));
+INSTANTIATE_TEST_CASE_P(LOOPSAD, sad_LoopTest,
+                        ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                                           ::testing::ValuesIn(TEST_LOOP_AREAS),
+                                           ::testing::Values(0, 1)));
 
 /**
  * best_sadmxn in GetEightsad_Test,Allsad_CalculationTest and
@@ -992,7 +1002,8 @@ class Allsad_CalculationTest
         ASSERT_TRUE(0);
     }
 
-    void check_get_32x32_sad(svt_ext_eight_sad_calculation_32x32_64x64_fn test_fn) {
+    void check_get_32x32_sad(
+        svt_ext_eight_sad_calculation_32x32_64x64_fn test_fn) {
         uint32_t best_sad32x32[2][4];
         uint32_t best_sad64x64[2];
         uint32_t best_mv32x32[2][4] = {{0}};
@@ -1391,25 +1402,23 @@ class SADTestBase16bit : public ::testing::Test {
         ASSERT_TRUE(0);
     }
 
-    void test_sad_size(BlkSize size)
-    {
+    void test_sad_size(BlkSize size) {
         check_sad(std::get<0>(size), std::get<1>(size));
     }
 
-    void test_sad_sizes(BlkSize *test_block_sizes, size_t test_block_sizes_count)
-    {
+    void test_sad_sizes(BlkSize *test_block_sizes,
+                        size_t test_block_sizes_count) {
         for (uint32_t i = 0; i < test_block_sizes_count; ++i) {
             test_sad_size(test_block_sizes[i]);
         }
     }
 
-    void speed_sad_size(BlkSize size)
-    {
+    void speed_sad_size(BlkSize size) {
         speed_sad(std::get<0>(size), std::get<1>(size));
     }
 
-    void speed_sad_sizes(BlkSize *test_block_sizes, size_t test_block_sizes_count)
-    {
+    void speed_sad_sizes(BlkSize *test_block_sizes,
+                         size_t test_block_sizes_count) {
         for (uint32_t i = 0; i < test_block_sizes_count; ++i) {
             speed_sad_size(test_block_sizes[i]);
         }
@@ -1448,12 +1457,10 @@ class SADTestBase16bit : public ::testing::Test {
  * 128) Test vector pattern {REF_MAX, SRC_MAX, RANDOM, UNALIGN}
  *
  */
-class SADTestSubSample16bit
-    : public ::testing::WithParamInterface<TestPattern>,
-      public SADTestBase16bit {
+class SADTestSubSample16bit : public ::testing::WithParamInterface<TestPattern>,
+                              public SADTestBase16bit {
   public:
-    SADTestSubSample16bit()
-        : SADTestBase16bit(GetParam()) {
+    SADTestSubSample16bit() : SADTestBase16bit(GetParam()) {
     }
 
   protected:
@@ -1476,7 +1483,7 @@ class SADTestSubSample16bit
                 src_, src_stride_, ref_, ref_stride_, height, width);
 
             EXPECT_EQ(sad_c, sad_avx2)
-                << "Size: " << width << "x"<< height << " " << std::endl
+                << "Size: " << width << "x" << height << " " << std::endl
                 << "compare sad_16b_kernel_c and sad_16bit_kernel_avx2 error, "
                    "repeat: "
                 << i;
@@ -1555,15 +1562,18 @@ BlkSize TEST_BLOCK_SAD_SIZES[] = {
     BlkSize(64, 128),  BlkSize(128, 128)};
 
 TEST_P(SADTestSubSample16bit, SADTestSubSample16bit) {
-    test_sad_sizes(TEST_BLOCK_SAD_SIZES, sizeof(TEST_BLOCK_SAD_SIZES)/sizeof(TEST_BLOCK_SAD_SIZES[0]));
+    test_sad_sizes(
+        TEST_BLOCK_SAD_SIZES,
+        sizeof(TEST_BLOCK_SAD_SIZES) / sizeof(TEST_BLOCK_SAD_SIZES[0]));
 }
 
-INSTANTIATE_TEST_CASE_P(
-    SAD, SADTestSubSample16bit,
-    ::testing::ValuesIn(TEST_PATTERNS));
+INSTANTIATE_TEST_CASE_P(SAD, SADTestSubSample16bit,
+                        ::testing::ValuesIn(TEST_PATTERNS));
 
 TEST_P(SADTestSubSample16bit, DISABLED_Speed) {
-    speed_sad_sizes(TEST_BLOCK_SAD_SIZES, sizeof(TEST_BLOCK_SAD_SIZES)/sizeof(TEST_BLOCK_SAD_SIZES[0]));
+    speed_sad_sizes(
+        TEST_BLOCK_SAD_SIZES,
+        sizeof(TEST_BLOCK_SAD_SIZES) / sizeof(TEST_BLOCK_SAD_SIZES[0]));
 }
 
 typedef void (*PmeSadLoopKernel)(
@@ -1577,16 +1587,14 @@ typedef void (*PmeSadLoopKernel)(
 BlkSize TEST_BLOCK_SIZES_LARGE[] = {
     BlkSize(64, 128), BlkSize(128, 128), BlkSize(128, 64)};
 
-typedef std::tuple<TestPattern, SearchArea>
-    PmeSadLoopTestParam;
+typedef std::tuple<TestPattern, SearchArea> PmeSadLoopTestParam;
 
 class PmeSadLoopTest
     : public ::testing::WithParamInterface<PmeSadLoopTestParam>,
       public SADTestBase {
   public:
     PmeSadLoopTest()
-        : SADTestBase(TEST_GET_PARAM(0),
-                      std::get<0>(TEST_GET_PARAM(1)),
+        : SADTestBase(TEST_GET_PARAM(0), std::get<0>(TEST_GET_PARAM(1)),
                       std::get<1>(TEST_GET_PARAM(1))) {
         SVTRandom rnd(INT16_MIN, INT16_MAX);
 
@@ -1621,10 +1629,8 @@ class PmeSadLoopTest
         prepare_data();
 
         PmeSadLoopKernel func_c_ = svt_pme_sad_loop_kernel_c;
-        PmeSadLoopKernel func_o_list[] = {
-            svt_pme_sad_loop_kernel_sse4_1,
-            svt_pme_sad_loop_kernel_avx2
-        };
+        PmeSadLoopKernel func_o_list[] = {svt_pme_sad_loop_kernel_sse4_1,
+                                          svt_pme_sad_loop_kernel_avx2};
 
         mv_cost_params.ref_mv = &ref_mv;
         mv_cost_params.full_ref_mv = {(int16_t)GET_MV_RAWPEL(23),
@@ -1657,7 +1663,9 @@ class PmeSadLoopTest
                 search_step,
                 mvx,
                 mvy);
-        for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
+        for (unsigned int f = 0;
+             f < sizeof(func_o_list) / sizeof(func_o_list[0]);
+             ++f) {
             PmeSadLoopKernel func_o_ = func_o_list[f];
             uint32_t best_sad1 = UINT32_MAX;
             int16_t best_mvx1 = 0;
@@ -1813,13 +1821,19 @@ class PmeSadLoopTest
 };
 
 TEST_P(PmeSadLoopTest, PmeSadLoopTest) {
-    test_sad_sizes(TEST_BLOCK_SIZES, sizeof(TEST_BLOCK_SIZES)/sizeof(TEST_BLOCK_SIZES[0]));
-    test_sad_sizes(TEST_BLOCK_SIZES_LARGE, sizeof(TEST_BLOCK_SIZES_LARGE)/sizeof(TEST_BLOCK_SIZES_LARGE[0]));
+    test_sad_sizes(TEST_BLOCK_SIZES,
+                   sizeof(TEST_BLOCK_SIZES) / sizeof(TEST_BLOCK_SIZES[0]));
+    test_sad_sizes(
+        TEST_BLOCK_SIZES_LARGE,
+        sizeof(TEST_BLOCK_SIZES_LARGE) / sizeof(TEST_BLOCK_SIZES_LARGE[0]));
 }
 
 TEST_P(PmeSadLoopTest, DISABLED_PmeSadLoopSpeedTest) {
-    speed_sad_sizes(TEST_BLOCK_SIZES, sizeof(TEST_BLOCK_SIZES)/sizeof(TEST_BLOCK_SIZES[0]));
-    speed_sad_sizes(TEST_BLOCK_SIZES_LARGE, sizeof(TEST_BLOCK_SIZES_LARGE)/sizeof(TEST_BLOCK_SIZES_LARGE[0]));
+    speed_sad_sizes(TEST_BLOCK_SIZES,
+                    sizeof(TEST_BLOCK_SIZES) / sizeof(TEST_BLOCK_SIZES[0]));
+    speed_sad_sizes(
+        TEST_BLOCK_SIZES_LARGE,
+        sizeof(TEST_BLOCK_SIZES_LARGE) / sizeof(TEST_BLOCK_SIZES_LARGE[0]));
 }
 
 INSTANTIATE_TEST_CASE_P(

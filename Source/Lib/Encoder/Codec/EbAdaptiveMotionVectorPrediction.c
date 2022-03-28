@@ -717,11 +717,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
                        int16_t *mode_context) {
     const int32_t bs     = AOMMAX(xd->n8_w, xd->n8_h);
     const int32_t has_tr = has_top_right(
-        pcs_ptr->scs_ptr->seq_header.sb_size,
-        xd,
-        mi_row,
-        mi_col,
-        bs);
+        pcs_ptr->scs_ptr->seq_header.sb_size, xd, mi_row, mi_col, bs);
     const TileInfo *const tile           = &xd->tile;
     int32_t               max_row_offset = 0, max_col_offset = 0;
     const int32_t         row_adj        = (xd->n8_h < mi_size_high[BLOCK_8X8]) && (mi_row & 0x01);
@@ -1772,23 +1768,16 @@ uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t
     xd->n4_h = blk_geom->bheight >> MI_SIZE_LOG2;
 
     return (uint16_t)av1_find_samples(
-        cm,
-        pcs_ptr->scs_ptr->seq_header.sb_size,
-        xd,
-        mi_row,
-        mi_col,
-        rf0,
-        pts,
-        pts_inref);
+        cm, pcs_ptr->scs_ptr->seq_header.sb_size, xd, mi_row, mi_col, rf0, pts, pts_inref);
 }
 
 Bool warped_motion_parameters(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, MvUnit *mv_unit,
-                                const BlockGeom *blk_geom, uint16_t blk_origin_x,
-                                uint16_t blk_origin_y, uint8_t ref_frame_type,
-                                EbWarpedMotionParams *wm_params, uint16_t *num_samples) {
+                              const BlockGeom *blk_geom, uint16_t blk_origin_x,
+                              uint16_t blk_origin_y, uint8_t ref_frame_type,
+                              EbWarpedMotionParams *wm_params, uint16_t *num_samples) {
     MacroBlockD *xd       = blk_ptr->av1xd;
     BlockSize    bsize    = blk_geom->bsize;
-    Bool       apply_wm = FALSE;
+    Bool         apply_wm = FALSE;
 
     int     pts[SAMPLES_ARRAY_SIZE], pts_inref[SAMPLES_ARRAY_SIZE];
     int32_t mi_row = blk_origin_y >> MI_SIZE_LOG2;

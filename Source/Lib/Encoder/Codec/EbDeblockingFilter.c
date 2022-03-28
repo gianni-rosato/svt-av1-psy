@@ -144,7 +144,7 @@ void svt_av1_setup_dst_planes(PictureControlSet *pcs_ptr, struct MacroblockdPlan
 static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const EdgeDir edge_dir,
                                         const int32_t                  plane,
                                         const struct MacroblockdPlane *plane_ptr,
-                                        const Bool                   is_skip) {
+                                        const Bool                     is_skip) {
     assert(mbmi != NULL);
 
     TxSize tx_size = (plane == COMPONENT_LUMA)
@@ -308,7 +308,7 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, con
     // TODO
     // when loop_filter_mode = 1, dblk is processed in encdec
     // 16 bit dblk for loop_filter_mode = 1 needs to enabled after 16bit encdec is done
-    Bool         is_16bit   = scs_ptr->is_16bit_pipeline;
+    Bool           is_16bit   = scs_ptr->is_16bit_pipeline;
     const int32_t  row_step   = MI_SIZE >> MI_SIZE_LOG2;
     const uint32_t scale_horz = plane_ptr->subsampling_x;
     const uint32_t scale_vert = plane_ptr->subsampling_y;
@@ -434,7 +434,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, con
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     // when loop_filter_mode = 1, dblk is processed in encdec
     // 16 bit dblk for loop_filter_mode = 1 needs to enabled after 16bit encdec is done
-    Bool         is_16bit   = scs_ptr->is_16bit_pipeline;
+    Bool           is_16bit   = scs_ptr->is_16bit_pipeline;
     const int32_t  col_step   = MI_SIZE >> MI_SIZE_LOG2;
     const uint32_t scale_horz = plane_ptr->subsampling_x;
     const uint32_t scale_vert = plane_ptr->subsampling_y;
@@ -677,7 +677,7 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
     uint32_t y_sb_index;
     uint32_t sb_origin_x;
     uint32_t sb_origin_y;
-    Bool   end_of_row_flag;
+    Bool     end_of_row_flag;
 
     uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) /
         scs_ptr->sb_size_pix;
@@ -712,7 +712,7 @@ extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bi
 
 void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuffer,
                      PictureControlSet *pcs_ptr, uint8_t plane) {
-    Bool is_16bit        = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
+    Bool is_16bit          = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     dstBuffer->origin_x    = srcBuffer->origin_x;
     dstBuffer->origin_y    = srcBuffer->origin_y;
     dstBuffer->width       = srcBuffer->width;
@@ -775,7 +775,7 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
 
 {
     SequenceControlSet *scs_ptr  = pcs_ptr->parent_pcs_ptr->scs_ptr;
-    Bool              is_16bit = scs_ptr->is_16bit_pipeline;
+    Bool                is_16bit = scs_ptr->is_16bit_pipeline;
 
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
@@ -927,7 +927,7 @@ static int64_t try_filter_frame(
     if (plane == 0 && dir == 1)
         filter_level[0] = frm_hdr->loop_filter_params.filter_level[0];
 
-    Bool               is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
+    Bool                 is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     EbPictureBufferDesc *recon_buffer;
     get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
 
@@ -982,7 +982,7 @@ static int32_t search_filter_level(
     int32_t filt_mid    = clamp(lvl, min_filter_level, max_filter_level);
     int32_t filter_step = filt_mid < 16 ? 4 : filt_mid / 4;
 
-    Bool               is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
+    Bool                 is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     EbPictureBufferDesc *recon_buffer;
     get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
     // Sum squared error at each filter level
@@ -1064,7 +1064,7 @@ static int32_t search_filter_level(
 EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source input
                                       PictureControlSet *pcs_ptr, LpfPickMethod method) {
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    FrameHeader        *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     (void)srcBuffer;
     struct LoopFilter *const lf = &frm_hdr->loop_filter_params;

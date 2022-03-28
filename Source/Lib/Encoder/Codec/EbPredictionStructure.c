@@ -628,8 +628,9 @@ static EbErrorType prediction_structure_config_array_ctor(
  * Get Prediction Structure
  ************************************************/
 PredictionStructure *get_prediction_structure(PredictionStructureGroup *pred_struct_group_ptr,
-                                              PredStructure pred_struct, uint32_t number_of_references,
-                                              uint32_t levels_of_hierarchy) {
+                                              PredStructure             pred_struct,
+                                              uint32_t                  number_of_references,
+                                              uint32_t                  levels_of_hierarchy) {
     PredictionStructure *pred_struct_ptr;
     uint32_t             pred_struct_index;
 
