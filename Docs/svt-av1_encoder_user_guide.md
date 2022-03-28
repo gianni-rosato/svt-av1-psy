@@ -365,6 +365,7 @@ please look at [section 2.2 of the super-resolution doc](./Appendix-Super-Resolu
 | **TransferCharacteristics**      | --transfer-characteristics | [0-22]     | 2           | Transfer characteristics, refer to the user guide Appendix A.2 for full details                                                          |
 | **MatrixCoefficients**           | --matrix-coefficients      | [0-14]     | 2           | Matrix coefficients, refer to the user guide Appendix A.2 for full details                                                               |
 | **ColorRange**                   | --color-range              | [0-1]      | 0           | Color range [0: Studio, 1: Full]                                                                                                         |
+| **ChromaSamplePosition**         | --chroma-sample-position   | any string | unknown     | Chroma sample position ['unknown', 'vertical'/'left', 'colocated'/'topleft']                                                             |
 | **MasteringDisplay**             | --mastering-display        | any string | none        | Mastering display metadata in the format of "G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)", refer to the user guide Appendix A.2 for full details |
 | **ContentLightLevel**            | --content-light            | any string | none        | Set content light level in the format of "max_cll,max_fall", refer to the user guide Appendix A.2 for full details                       |
 
@@ -436,7 +437,8 @@ SvtAv1EncApp -i int.y4m -b out.ivf \
     --content-light 100,50 \
     --color-primaries 9 \
     --transfer-characteristics 16 \
-    --matrix-coefficients 9
+    --matrix-coefficients 9 \
+    --chroma-sample-position topleft
     # Color primary 9 is BT.2020, BT.2100
     # Transfer characteristic 16 is SMPTE ST 2084, ITU BT.2100 PQ
     # matrix coefficients 9 is BT.2020 non-constant luminance, BT.2100 YCbCr
@@ -449,6 +451,7 @@ ffmpeg -i in.mp4 -strict -1 -f yuv4mpegpipe - |
     --content-light 100,50 \
     --color-primaries 9 \
     --transfer-characteristics 16 \
-    --matrix-coefficients 9 |
+    --matrix-coefficients 9 \
+    --chroma-sample-position topleft |
   ffmpeg -y -i - -i audio.ogg -c copy out.mp4
 ```

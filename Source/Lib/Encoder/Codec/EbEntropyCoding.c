@@ -3102,7 +3102,7 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
         }
         if (scs_ptr->subsampling_x == 1 && scs_ptr->subsampling_y == 1) {
             svt_aom_wb_write_literal(
-                wb, scs_ptr->seq_header.color_config.chroma_sample_position, 2);
+                wb, scs_ptr->static_config.chroma_sample_position, 2);
         }
     }
     Bool separate_uv_delta_q = (scs_ptr->static_config.chroma_u_ac_qindex_offset !=

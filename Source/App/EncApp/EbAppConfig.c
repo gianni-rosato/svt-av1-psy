@@ -169,6 +169,7 @@
 #define TRANSFER_CHARACTERISTICS_NEW_TOKEN "--transfer-characteristics"
 #define MATRIX_COEFFICIENTS_NEW_TOKEN "--matrix-coefficients"
 #define COLOR_RANGE_NEW_TOKEN "--color-range"
+#define CHROMA_SAMPLE_POSITION_TOKEN "--chroma-sample-position"
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
 
@@ -742,6 +743,10 @@ static void set_cfg_matrix_coefficients(const char *value, EbConfig *cfg) {
 static void set_cfg_color_range(const char *value, EbConfig *cfg) {
     cfg->config.color_range = (uint8_t)strtoul(value, NULL, 0);
 }
+static void set_cfg_chroma_sample_position(const char *value, EbConfig *cfg) {
+    svt_av1_enc_parse_parameter(&cfg->config, "chroma-sample-position",
+                                value);
+}
 static void set_cfg_mastering_display(const char *value, EbConfig *cfg) {
     if (!svt_aom_parse_mastering_display(&cfg->config.mastering_display, value))
         fprintf(stderr, "Failed to parse mastering-display info properly\n");
@@ -1284,6 +1289,10 @@ ConfigEntry config_entry_color_description[] = {
      COLOR_RANGE_NEW_TOKEN,
      "Color range, default is 0 [0: Studio, 1: Full]",
      set_cfg_color_range},
+    {SINGLE_INPUT,
+     CHROMA_SAMPLE_POSITION_TOKEN,
+     "Chroma sample position, default is 'unknown' ['unknown', 'vertical'/'left', 'colocated'/'topleft']",
+     set_cfg_chroma_sample_position},
 
     {SINGLE_INPUT,
      MASTERING_DISPLAY_TOKEN,
@@ -1495,6 +1504,10 @@ ConfigEntry config_entry[] = {
      "MatrixCoefficients",
      set_cfg_matrix_coefficients},
     {SINGLE_INPUT, COLOR_RANGE_NEW_TOKEN, "ColorRange", set_cfg_color_range},
+    {SINGLE_INPUT,
+     CHROMA_SAMPLE_POSITION_TOKEN,
+     "ChromaSamplePosition",
+     set_cfg_chroma_sample_position},
     {SINGLE_INPUT, MASTERING_DISPLAY_TOKEN, "MasteringDisplay", set_cfg_mastering_display},
     {SINGLE_INPUT, CONTENT_LIGHT_LEVEL_TOKEN, "ContentLightLevel", set_cfg_content_light},
     // Termination

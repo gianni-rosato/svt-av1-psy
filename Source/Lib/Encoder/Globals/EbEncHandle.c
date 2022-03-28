@@ -4001,6 +4001,7 @@ void copy_api_from_app(
     scs_ptr->static_config.transfer_characteristics = config_struct->transfer_characteristics;
     scs_ptr->static_config.matrix_coefficients = config_struct->matrix_coefficients;
     scs_ptr->static_config.color_range = config_struct->color_range;
+    scs_ptr->static_config.chroma_sample_position = config_struct->chroma_sample_position;
     scs_ptr->static_config.mastering_display = config_struct->mastering_display;
     scs_ptr->static_config.content_light_level = config_struct->content_light_level;
 

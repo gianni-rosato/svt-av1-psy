@@ -683,6 +683,20 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             config->matrix_coefficients);
     }
 
+    if (config->chroma_sample_position < EB_CSP_UNKNOWN ||
+        config->chroma_sample_position > EB_CSP_COLOCATED) {
+        if (config->chroma_sample_position != EB_CSP_RESERVED) {
+            SVT_ERROR("Instance %u: chroma sample position %d is unknown.\n",
+                      channel_number + 1, config->chroma_sample_position);
+            return_error = EB_ErrorBadParameter;
+        } else {
+            SVT_WARN("Instance %u: value %d for chroma_sample_position is reserved "
+                     "and not recommended for usage.\n",
+                     channel_number + 1,
+                     config->chroma_sample_position);
+        }
+    }
+
     if (config->rate_control_mode == 1 || config->rate_control_mode == 2) {
         SVT_WARN(
             "Instance %u: The VBR and CBR rate control modes are a work-in-progress projects, and "
@@ -889,6 +903,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->transfer_characteristics       = 2;
     config_ptr->matrix_coefficients            = 2;
     config_ptr->color_range                    = 0;
+    config_ptr->chroma_sample_position         = EB_CSP_UNKNOWN;
     config_ptr->pass                           = 0;
     memset(&config_ptr->mastering_display, 0, sizeof(config_ptr->mastering_display));
     memset(&config_ptr->content_light_level, 0, sizeof(config_ptr->content_light_level));
@@ -1390,6 +1405,30 @@ static EbErrorType str_to_color_range(const char *nptr, uint8_t *out) {
     return EB_ErrorBadParameter;
 }
 
+static EbErrorType str_to_chroma_sample_position(const char *nptr, EbChromaSamplePosition *out) {
+    const struct {
+        const char            *name;
+        EbChromaSamplePosition pos;
+    } chroma_sample_positions[] = {
+        {"unknown",   EB_CSP_UNKNOWN},
+        {"vertical",  EB_CSP_VERTICAL},
+        {"left",      EB_CSP_VERTICAL},
+        {"colocated", EB_CSP_COLOCATED},
+        {"topleft",   EB_CSP_COLOCATED},
+    };
+    const size_t chroma_sample_positions_size =
+        sizeof(chroma_sample_positions) / sizeof(chroma_sample_positions[0]);
+
+    for (size_t i = 0; i < chroma_sample_positions_size; i++) {
+        if (!strcmp(nptr, chroma_sample_positions[i].name)) {
+            *out = chroma_sample_positions[i].pos;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
 static EbErrorType str_to_sframe_mode(const char *nptr, EbSFrameMode *out) {
     const struct {
         const char  *name;
@@ -1473,6 +1512,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     COLOR_OPT("transfer-characteristics", transfer_characteristics);
     COLOR_OPT("matrix-coefficients", matrix_coefficients);
     COLOR_OPT("color-range", color_range);
+    COLOR_OPT("chroma-sample-position", chroma_sample_position);
 
     // custom struct fields
     COLOR_METADATA_OPT("mastering-display", mastering_display);

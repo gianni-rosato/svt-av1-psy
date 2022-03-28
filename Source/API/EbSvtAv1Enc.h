@@ -674,6 +674,14 @@ typedef struct EbSvtAv1EncConfiguration {
     * SFRAME_NEAREST_ARF: if the considered frame is not an altref frame, the next altref frame will be made into an S-Frame
     */
     EbSFrameMode sframe_mode;
+
+    /* Chroma sample position
+     * Values as per 6.4.2 of the specification:
+     * EB_CSP_UNKNOWN:   default
+     * EB_CSP_VERTICAL:  value 0 from H.273 AKA "left"
+     * EB_CSP_COLOCATED: value 2 from H.273 AKA "top left"
+     */
+    EbChromaSamplePosition chroma_sample_position;
 } EbSvtAv1EncConfiguration;
 
 /**
