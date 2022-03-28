@@ -465,7 +465,6 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
     scs_ptr->seq_header.cdef_level /*enable_cdef*/ = 0;
     scs_ptr->seq_header.enable_warped_motion       = 0;
 
-#if CLN_SCS_SIG_DERIV
     scs_ptr->seq_header.enable_superres                 = 0;
     scs_ptr->compound_mode                              = 0;
     scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
@@ -474,8 +473,6 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
     scs_ptr->seq_header.enable_interintra_compound      = 0;
     // Set the SCD Mode
     scs_ptr->scd_mode = scs_ptr->static_config.scene_change_detection == 0 ? SCD_MODE_0 : SCD_MODE_1;
-#endif
-#if CLN_SCS_CTOR
     scs_ptr->seq_header.frame_width_bits = 16;
     scs_ptr->seq_header.frame_height_bits = 16;
     scs_ptr->seq_header.frame_id_numbers_present_flag = 0;
@@ -499,7 +496,6 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
     scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs = 1;
     scs_ptr->seq_header.order_hint_info.enable_order_hint = 1;
     scs_ptr->seq_header.order_hint_info.order_hint_bits = 7;
-#endif
 
     return return_error;
 }

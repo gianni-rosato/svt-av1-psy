@@ -231,20 +231,13 @@ void calculate_histogram(uint8_t  *input_samples, // input parameter, input samp
                          uint64_t *sum) {
     uint32_t horizontal_index;
     uint32_t vertical_index;
-#if !FIX_SCD
-    *sum = 0;
-#endif
     for (vertical_index = 0; vertical_index < input_area_height; vertical_index += decim_step) {
         for (horizontal_index = 0; horizontal_index < input_area_width;
              horizontal_index += decim_step) {
             ++(histogram[input_samples[horizontal_index]]);
             *sum += input_samples[horizontal_index];
         }
-#if FIX_SCD
         input_samples += (stride * decim_step);
-#else
-        input_samples += (stride << (decim_step >> 1));
-#endif
     }
 
     return;
@@ -1977,7 +1970,6 @@ void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
     return;
 }
 
-#if FIX_SCD
 static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
     SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr,
     EbPictureBufferDesc* input_picture_ptr, uint64_t* sum_avg_intensity_ttl_regions_luma) {
@@ -2044,231 +2036,6 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
 
     return;
 }
-#else
-/**************************************************************
-* Generate picture histogram bins for YUV pixel intensity *
-* Calculation is done on a region based (Set previously, resolution dependent)
-**************************************************************/
-void sub_sample_luma_generate_pixel_intensity_histogram_bins(
-    SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-    EbPictureBufferDesc *input_picture_ptr, uint64_t *sum_avg_intensity_ttl_regions_luma) {
-    uint32_t region_width;
-    uint32_t region_height;
-    uint32_t region_width_offset;
-    uint32_t region_height_offset;
-    uint32_t region_in_picture_width_index;
-    uint32_t region_in_picture_height_index;
-    uint32_t histogram_bin;
-    uint64_t sum;
-
-    region_width = input_picture_ptr->width / scs_ptr->picture_analysis_number_of_regions_per_width;
-    region_height = input_picture_ptr->height /
-        scs_ptr->picture_analysis_number_of_regions_per_height;
-
-    // Loop over regions inside the picture
-    for (region_in_picture_width_index = 0;
-         region_in_picture_width_index < scs_ptr->picture_analysis_number_of_regions_per_width;
-         region_in_picture_width_index++) { // loop over horizontal regions
-        for (region_in_picture_height_index = 0; region_in_picture_height_index <
-             scs_ptr->picture_analysis_number_of_regions_per_height;
-             region_in_picture_height_index++) { // loop over vertical regions
-
-            // Initialize bins to 1
-            svt_initialize_buffer_32bits(
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index][0],
-                64,
-                0,
-                1);
-
-            region_width_offset = (region_in_picture_width_index ==
-                                   scs_ptr->picture_analysis_number_of_regions_per_width - 1)
-                ? input_picture_ptr->width -
-                    (scs_ptr->picture_analysis_number_of_regions_per_width * region_width)
-                : 0;
-
-            region_height_offset = (region_in_picture_height_index ==
-                                    scs_ptr->picture_analysis_number_of_regions_per_height - 1)
-                ? input_picture_ptr->height -
-                    (scs_ptr->picture_analysis_number_of_regions_per_height * region_height)
-                : 0;
-
-            // Y Histogram
-            calculate_histogram(
-                &input_picture_ptr->buffer_y[(input_picture_ptr->origin_x +
-                                              region_in_picture_width_index * region_width) +
-                                             ((input_picture_ptr->origin_y +
-                                               region_in_picture_height_index * region_height) *
-                                              input_picture_ptr->stride_y)],
-                region_width + region_width_offset,
-                region_height + region_height_offset,
-                input_picture_ptr->stride_y,
-                1,
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index][0],
-                &sum);
-
-            pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
-                                                 [region_in_picture_height_index][0] =
-                (uint8_t)((sum +
-                           (((region_width + region_width_offset) *
-                             (region_height + region_height_offset)) >>
-                            1)) /
-                          ((region_width + region_width_offset) *
-                           (region_height + region_height_offset)));
-            (*sum_avg_intensity_ttl_regions_luma) += (sum << 4);
-            for (histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
-                 histogram_bin++) { // Loop over the histogram bins
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index][0][histogram_bin] =
-                    pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                              [region_in_picture_height_index][0][histogram_bin]
-                    << 4;
-            }
-        }
-    }
-
-    return;
-}
-
-void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
-    SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-    EbPictureBufferDesc *input_picture_ptr, uint64_t *sum_avg_intensity_ttl_regions_cb,
-    uint64_t *sum_avg_intensity_ttl_regions_cr, uint8_t decim_step) {
-    uint64_t sum;
-    uint32_t region_width;
-    uint32_t region_height;
-    uint32_t region_width_offset;
-    uint32_t region_height_offset;
-    uint32_t region_in_picture_width_index;
-    uint32_t region_in_picture_height_index;
-
-    uint16_t histogram_bin;
-
-    region_width = input_picture_ptr->width / scs_ptr->picture_analysis_number_of_regions_per_width;
-    region_height = input_picture_ptr->height /
-        scs_ptr->picture_analysis_number_of_regions_per_height;
-
-    // Loop over regions inside the picture
-    for (region_in_picture_width_index = 0;
-         region_in_picture_width_index < scs_ptr->picture_analysis_number_of_regions_per_width;
-         region_in_picture_width_index++) { // loop over horizontal regions
-        for (region_in_picture_height_index = 0; region_in_picture_height_index <
-             scs_ptr->picture_analysis_number_of_regions_per_height;
-             region_in_picture_height_index++) { // loop over vertical regions
-            if (scs_ptr->static_config.scene_change_detection ||
-                scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
-                // Initialize bins to 1
-                svt_initialize_buffer_32bits(
-                    pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                              [region_in_picture_height_index][1],
-                    64,
-                    0,
-                    1);
-                svt_initialize_buffer_32bits(
-                    pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                              [region_in_picture_height_index][2],
-                    64,
-                    0,
-                    1);
-            }
-
-            region_width_offset = (region_in_picture_width_index ==
-                                   scs_ptr->picture_analysis_number_of_regions_per_width - 1)
-                ? input_picture_ptr->width -
-                    (scs_ptr->picture_analysis_number_of_regions_per_width * region_width)
-                : 0;
-
-            region_height_offset = (region_in_picture_height_index ==
-                                    scs_ptr->picture_analysis_number_of_regions_per_height - 1)
-                ? input_picture_ptr->height -
-                    (scs_ptr->picture_analysis_number_of_regions_per_height * region_height)
-                : 0;
-
-            // U Histogram
-            calculate_histogram(
-                &input_picture_ptr->buffer_cb[((input_picture_ptr->origin_x +
-                                                region_in_picture_width_index * region_width) >>
-                                               1) +
-                                              (((input_picture_ptr->origin_y +
-                                                 region_in_picture_height_index * region_height) >>
-                                                1) *
-                                               input_picture_ptr->stride_cb)],
-                (region_width + region_width_offset) >> 1,
-                (region_height + region_height_offset) >> 1,
-                input_picture_ptr->stride_cb,
-                decim_step,
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index][1],
-                &sum);
-
-            sum = (sum << decim_step);
-
-            *sum_avg_intensity_ttl_regions_cb += sum;
-            pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
-                                                 [region_in_picture_height_index][1] =
-                (uint8_t)((sum +
-                           (((region_width + region_width_offset) *
-                             (region_height + region_height_offset)) >>
-                            3)) /
-                          (((region_width + region_width_offset) *
-                            (region_height + region_height_offset)) >>
-                           2));
-
-            for (histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
-                 histogram_bin++) { // Loop over the histogram bins
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index][1][histogram_bin] =
-                    pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                              [region_in_picture_height_index][1][histogram_bin]
-
-                    << decim_step;
-
-            }
-
-            // V Histogram
-            calculate_histogram(
-                &input_picture_ptr->buffer_cr[((input_picture_ptr->origin_x +
-                                                region_in_picture_width_index * region_width) >>
-                                               1) +
-                                              (((input_picture_ptr->origin_y +
-                                                 region_in_picture_height_index * region_height) >>
-                                                1) *
-                                               input_picture_ptr->stride_cr)],
-                (region_width + region_width_offset) >> 1,
-                (region_height + region_height_offset) >> 1,
-                input_picture_ptr->stride_cr,
-                decim_step,
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index][2],
-                &sum);
-
-            sum = (sum << decim_step);
-
-            *sum_avg_intensity_ttl_regions_cr += sum;
-            pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
-                                                 [region_in_picture_height_index][2] =
-                (uint8_t)((sum +
-                           (((region_width + region_width_offset) *
-                             (region_height + region_height_offset)) >>
-                            3)) /
-                          (((region_width + region_width_offset) *
-                            (region_height + region_height_offset)) >>
-                           2));
-
-            for (histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
-                 histogram_bin++) { // Loop over the histogram bins
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index][2][histogram_bin] =
-                    pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                              [region_in_picture_height_index][2][histogram_bin]
-                    << decim_step;
-            }
-        }
-    }
-    return;
-}
-#endif
 /************************************************
  * compute_picture_spatial_statistics
  ** Compute Block Variance
@@ -2307,17 +2074,10 @@ void compute_picture_spatial_statistics(SequenceControlSet      *scs_ptr,
  ** Computing Picture Variance
  ************************************************/
 void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-#if !FIX_SCD
-                                  EbPictureBufferDesc *input_picture_ptr,
-#endif
                                   EbPictureBufferDesc *input_padded_picture_ptr,
                                   EbPictureBufferDesc *sixteenth_decimated_picture_ptr,
                                   uint32_t             sb_total_count) {
     uint64_t sum_avg_intensity_ttl_regions_luma = 0;
-#if !FIX_SCD
-    uint64_t sum_avg_intensity_ttl_regions_cb   = 0;
-    uint64_t sum_avg_intensity_ttl_regions_cr   = 0;
-#endif
     // Histogram bins
     if (scs_ptr->static_config.scene_change_detection ||
         scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
@@ -2325,16 +2085,6 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
         // 1/16 input ready
         sub_sample_luma_generate_pixel_intensity_histogram_bins(
             scs_ptr, pcs_ptr, sixteenth_decimated_picture_ptr, &sum_avg_intensity_ttl_regions_luma);
-#if !FIX_SCD
-        // Use 1/4 Chroma for Histogram generation
-        // 1/4 input not ready => perform operation on the fly
-        sub_sample_chroma_generate_pixel_intensity_histogram_bins(scs_ptr,
-                                                                  pcs_ptr,
-                                                                  input_picture_ptr,
-                                                                  &sum_avg_intensity_ttl_regions_cb,
-                                                                  &sum_avg_intensity_ttl_regions_cr,
-                                                                  4);
-#endif
     }
 
     if (scs_ptr->calculate_variance)
@@ -2939,11 +2689,7 @@ void *picture_analysis_kernel(void *input_ptr) {
 
         in_results_ptr = (ResourceCoordinationResults *)in_results_wrapper_ptr->object_ptr;
         pcs_ptr        = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
-#if FIX_REMOVE_SCS_WRAPPER
         scs_ptr = pcs_ptr->scs_ptr;
-#else
-        scs_ptr        = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
 
         // Mariana : save enhanced picture ptr, move this from here
         pcs_ptr->enhanced_unscaled_picture_ptr                    = pcs_ptr->enhanced_picture_ptr;
@@ -3017,9 +2763,6 @@ void *picture_analysis_kernel(void *input_ptr) {
                 gathering_picture_statistics(
                     scs_ptr,
                     pcs_ptr,
-#if !FIX_SCD
-                    pcs_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
-#endif
                     input_padded_picture_ptr,
                     (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr,
                     pcs_ptr->sb_total_count);

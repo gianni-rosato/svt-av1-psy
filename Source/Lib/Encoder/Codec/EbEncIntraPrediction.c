@@ -890,11 +890,7 @@ EbErrorType svt_av1_intra_prediction_cl(
                     md_context_ptr->blk_origin_y,                  //uint32_t cuOrgY
                     plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr
                     plane ? ((md_context_ptr->blk_geom->origin_y >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_y,   //uint32_t cuOrgY used only for prediction Ptr
-#if FIX_REMOVE_SCS_WRAPPER
                     &pcs_ptr->scs_ptr->seq_header
-#else
-                    &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
-#endif
             );
         }
     } else {
@@ -1030,11 +1026,7 @@ EbErrorType svt_av1_intra_prediction_cl(
                     md_context_ptr->blk_origin_y,                  //uint32_t cuOrgY
                     plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr
                     plane ? ((md_context_ptr->blk_geom->origin_y >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_y,   //uint32_t cuOrgY used only for prediction Ptr
-#if FIX_REMOVE_SCS_WRAPPER
                     &pcs_ptr->scs_ptr->seq_header
-#else
-                    &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
-#endif
             );
         }
     }
@@ -1104,11 +1096,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
                 md_context_ptr->blk_origin_y,                            //uint32_t cuOrgY
                 0,                                                      //cuOrgX used only for prediction Ptr
                 0,                                                       //cuOrgY used only for prediction Ptr
-#if FIX_REMOVE_SCS_WRAPPER
                 &pcs_ptr->scs_ptr->seq_header
-#else
-                &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
-#endif
         );
     } else {
         uint16_t top_neigh_array[64 * 2 + 1];
@@ -1151,11 +1139,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
                 md_context_ptr->blk_origin_y,                            //uint32_t cuOrgY
                 0,                                                      //cuOrgX used only for prediction Ptr
                 0,                                                      //cuOrgY used only for prediction Ptr
-#if FIX_REMOVE_SCS_WRAPPER
                 &pcs_ptr->scs_ptr->seq_header
-#else
-                &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
-#endif
         );
     }
 

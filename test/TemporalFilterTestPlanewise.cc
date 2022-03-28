@@ -1359,11 +1359,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
     uint32_t width;
     uint32_t height;
     EbByte src[3];
-#if CLN_DEFINITIONS
     int src_size;
-#else
-    size_t src_size;
-#endif
     uint16_t *src_highbd[3];
     size_t src_highbd_size;
 
@@ -1431,10 +1427,6 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
 
     void RunTest(Bool is_highbd, apply_filtering_central_fn lbd_fn_ptr,
                  apply_filtering_central_highbd_fn hbd_fn_ptr) {
-#if !CLN_DEFINITIONS
-        int blk_y_src_offset = 1;
-        int blk_ch_src_offset = 2;
-#endif
         uint16_t blk_width_ch = 48;
         uint16_t blk_height_ch = 61;
         uint32_t ss_x = rand() % 2;

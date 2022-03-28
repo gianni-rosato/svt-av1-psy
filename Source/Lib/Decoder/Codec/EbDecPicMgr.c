@@ -430,13 +430,8 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
     for (int32_t i = fwd_start_idx; i <= fwd_end_idx; ++i) {
         // == LAST_FRAME ==
         if (ref_frame_info[i].map_idx == lst_map_idx) {
-#if CLN_DEFINITIONS
             set_ref_frame_info(dec_handle_ptr, 0 /*LAST_FRAME - LAST_FRAME*/, &ref_frame_info[i]);
             ref_flag_list[0 /*LAST_FRAME - LAST_FRAME*/] = 1;
-#else
-            set_ref_frame_info(dec_handle_ptr, LAST_FRAME - LAST_FRAME, &ref_frame_info[i]);
-            ref_flag_list[LAST_FRAME - LAST_FRAME] = 1;
-#endif
         }
 
         // == GOLDEN_FRAME ==
@@ -445,13 +440,8 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
             ref_flag_list[GOLDEN_FRAME - LAST_FRAME] = 1;
         }
     }
-#if CLN_DEFINITIONS
     assert(ref_flag_list[0 /*LAST_FRAME - LAST_FRAME*/] == 1 &&
         ref_flag_list[GOLDEN_FRAME - LAST_FRAME] == 1);
-#else
-    assert(ref_flag_list[LAST_FRAME - LAST_FRAME] == 1 &&
-           ref_flag_list[GOLDEN_FRAME - LAST_FRAME] == 1);
-#endif
     // == LAST2_FRAME ==
     // == LAST3_FRAME ==
     // == BWDREF_FRAME ==

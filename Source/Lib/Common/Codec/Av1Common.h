@@ -78,9 +78,6 @@ typedef struct Av1Common {
 
     FrameSize    frm_size;
     TilesInfo    tiles_info;
-#if !FRFCTR_RC_P8
-    CurrentFrame current_frame;
-#endif
 
 } Av1Common;
 

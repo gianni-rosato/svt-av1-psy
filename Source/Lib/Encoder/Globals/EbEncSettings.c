@@ -194,11 +194,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         SVT_ERROR("Instance %u: The intra period must be [-2, 2^31-2]  \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if FTR_CBR
     if ((config->intra_period_length < 0) && config->rate_control_mode == 1) {
-#else
-    if ((config->intra_period_length < 0) && config->rate_control_mode >= 1) {
-#endif
         SVT_ERROR("Instance %u: The intra period must be > 0 for RateControlMode %d \n",
                   channel_number + 1,
                   config->rate_control_mode);
@@ -425,7 +421,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             config->enable_mfmv);
         return_error = EB_ErrorBadParameter;
     }
-#if TUNE_FAST_DECODE
     if (config->fast_decode > 4) {
         SVT_ERROR(
             "Instance %u: Invalid fast decode flag [0 - 4, 0 for no decoder optimization], your "
@@ -434,16 +429,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
-#else
-    if (config->fast_decode > 3) {
-        SVT_ERROR(
-            "Instance %u: Invalid fast decode flag [0 - 3, 0 for no decoder optimization], your "
-            "input: %d\n",
-            channel_number + 1,
-            config->fast_decode);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif
     if (config->tune > 1) {
         SVT_ERROR(
             "Instance %u: Invalid tune flag [0 - 1, 0 for VQ and 1 for PSNR], your input: %d\n",
@@ -585,11 +570,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if FTR_CBR
     if (config->rate_control_mode == 1 && config->intra_period_length == -1) {
-#else
-    if (config->rate_control_mode != 0 && config->intra_period_length == -1) {
-#endif
         SVT_ERROR(
             "Instance %u: keyint = -1 is not supported for modes other than CRF rate control "
             "encoding modes.\n",
@@ -641,12 +622,10 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-#if FIX_AQ_MODE
     if (config->enable_adaptive_quantization == 0 && config->rate_control_mode) {
         SVT_ERROR("Instance %u: Adaptive quantization can not be turned OFF when RC ON\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#endif
     /* Warnings about the use of features that are incomplete */
     if (config->enable_adaptive_quantization == 1) {
         config->enable_adaptive_quantization = 2;
@@ -732,12 +711,10 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             return_error = EB_ErrorBadParameter;
         }
     }
-#if FIX_SCD
     if (scs_ptr->static_config.scene_change_detection) {
         scs_ptr->static_config.scene_change_detection = 0;
         SVT_WARN("SVT-AV1 has an integrated mode decision mechanism to handle scene changes and will not insert a key frame at scene changes\n");
     }
-#endif
 
     if (config->sframe_dist < 0) {
         SVT_ERROR("Error instance %u: switch frame interval must be >= 0\n", channel_number + 1);
@@ -956,7 +933,6 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                     scs->static_config.qp,
                     (int)config->max_bit_rate / 1000,
                     config->scene_change_detection);
-#if FIX_AQ_MODE
             else if (scs->tpl_level)
                 SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n",
                     "Rate Factor",
@@ -969,14 +945,6 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                     "CQP",
                     scs->static_config.qp,
                     config->scene_change_detection);
-#else
-            else
-                SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n",
-                         scs->tpl_level ? "Rate Factor" : "CQP Assignment",
-                         scs->tpl_level ? "CRF" : "CQP",
-                         scs->static_config.qp,
-                         config->scene_change_detection);
-#endif
             break;
         case 1:
             SVT_INFO(
@@ -985,19 +953,11 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                 config->scene_change_detection);
             break;
         case 2:
-#if FTR_CBR
             SVT_INFO(
                 "SVT [config]: BRC Mode / TargetBitrate (kbps)/ SceneChange\t\t\t: CBR "
                 "/ %d / %d\n",
                 (int)config->target_bit_rate / 1000,
                 config->scene_change_detection);
-#else
-            SVT_INFO(
-                "SVT [config]: BRC Mode / TargetBitrate (kbps)/ SceneChange\t\t\t: Constraint VBR "
-                "/ %d / %d\n",
-                (int)config->target_bit_rate / 1000,
-                config->scene_change_detection);
-#endif
             break;
         }
     }
@@ -1510,9 +1470,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"lookahead", &config_struct->look_ahead_distance},
         {"tbr", &config_struct->target_bit_rate},
         {"mbr", &config_struct->max_bit_rate},
-#if !FTR_CBR
-        {"vbv-bufsize", &config_struct->vbv_bufsize},
-#endif
         {"scd", &config_struct->scene_change_detection},
         {"max-qp", &config_struct->max_qp_allowed},
         {"min-qp", &config_struct->min_qp_allowed},

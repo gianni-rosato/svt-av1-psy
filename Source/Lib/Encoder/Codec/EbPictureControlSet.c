@@ -329,9 +329,6 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     input_pic_buf_desc_init_data.bot_padding        = padding;
     input_pic_buf_desc_init_data.split_mode         = FALSE;
 
-#if !FIX_REMOVE_SCS_WRAPPER
-    //object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
-#endif
     object_ptr->recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->recon_picture_ptr      = (EbPictureBufferDesc *)NULL; //OMK
     //object_ptr->color_format           = init_data_ptr->color_format;
@@ -383,15 +380,6 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 
     return EB_ErrorNone;
 }
-#if !CLN_DLF_MEM_ALLOC
-#if TUNE_4L_M8
-uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
-    uint8_t fast_decode, uint32_t hierarchical_levels);
-#else
-uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit,
-    uint8_t fast_decode);
-#endif
-#endif
 uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
                                uint8_t input_resolution, uint8_t fast_decode);
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
@@ -453,49 +441,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     coeff_buffer_desc_init_data.bot_padding       = padding;
     coeff_buffer_desc_init_data.split_mode        = FALSE;
     coeff_buffer_desc_init_data.is_16bit_pipeline = init_data_ptr->is_16bit_pipeline;
-#if !FIX_REMOVE_SCS_WRAPPER
-    object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
-#endif
     object_ptr->color_format = init_data_ptr->color_format;
-#if !CLN_DLF_MEM_ALLOC
-    uint8_t lf_recon_needed  = 0;
-    // recon output will also use temp_lf_recon_picture_ptr for adding film grain noise
-    if (init_data_ptr->tile_row_count > 0 || init_data_ptr->tile_column_count > 0 ||
-        (init_data_ptr->static_config.film_grain_denoise_strength > 0 &&
-         init_data_ptr->static_config.recon_enabled))
-        lf_recon_needed = 1;
-    else
-        for (uint8_t is_used_as_reference_flag = 0; is_used_as_reference_flag < 2;
-             is_used_as_reference_flag++) {
-            for (uint8_t is_hbd = 0; is_hbd < 2; is_hbd++) {
-#if TUNE_4L_M8
-                lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode,
-                                                is_used_as_reference_flag,
-                                                is_hbd,
-                                                init_data_ptr->static_config.fast_decode,
-                                                init_data_ptr->static_config.hierarchical_levels) == 1
-                    ? 1
-                    : 0;
-                if (lf_recon_needed)
-                    break;
-#else
-                lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode,
-                                                is_used_as_reference_flag,
-                                                is_hbd,
-                                                init_data_ptr->static_config.fast_decode) == 1
-                    ? 1
-                    : 0;
-                if (lf_recon_needed)
-                    break;
-#endif
-            }
-        }
-#endif
     object_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
-#if !CLN_DLF_MEM_ALLOC
-    if (lf_recon_needed) {}
-#endif
     if (get_enable_restoration(init_data_ptr->enc_mode,
                                init_data_ptr->static_config.enable_restoration_filtering,
                                init_data_ptr->input_resolution,
@@ -1304,19 +1252,11 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
              region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
              region_in_picture_width_index++) {
             if (obj->picture_histogram[region_in_picture_width_index]) {
-#if FIX_SCD
                 for (int region_in_picture_height_index = 0;
                     region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
                     region_in_picture_height_index++) {
                     EB_FREE_ARRAY(obj->picture_histogram[region_in_picture_width_index]
                         [region_in_picture_height_index]);
-#else
-                for (int region_in_picture_height_index = 0;
-                     region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
-                     region_in_picture_height_index++) {
-                    EB_FREE_2D(obj->picture_histogram[region_in_picture_width_index]
-                                                     [region_in_picture_height_index]);
-#endif
                 }
             }
             EB_FREE_PTR_ARRAY(obj->picture_histogram[region_in_picture_width_index],
@@ -1340,10 +1280,6 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->me_8x8_distortion);
 
     EB_FREE_ARRAY(obj->me_8x8_cost_variance);
-#if !CLN_MD_CTX
-    // SB noise variance array
-    EB_FREE_ARRAY(obj->sb_depth_mode_array);
-#endif
     if (obj->av1_cm) {
         EB_FREE_ARRAY(obj->av1_cm->frame_to_show);
         if (obj->av1_cm->rst_frame.buffer_alloc_sz) {
@@ -1387,9 +1323,6 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 
     object_ptr->dctor = picture_parent_control_set_dctor;
 
-#if !FIX_REMOVE_SCS_WRAPPER
-    object_ptr->scs_wrapper_ptr                 = (EbObjectWrapper *)NULL;
-#endif
     object_ptr->input_picture_wrapper_ptr       = (EbObjectWrapper *)NULL;
     object_ptr->reference_picture_wrapper_ptr   = (EbObjectWrapper *)NULL;
     object_ptr->enhanced_picture_ptr            = (EbPictureBufferDesc *)NULL;
@@ -1440,7 +1373,6 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     }
 
 
-#if FIX_SCD
     if (init_data_ptr->scene_change_detection) {
         EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
 
@@ -1454,27 +1386,6 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
             }
         }
     }
-#else
-    uint8_t plane = init_data_ptr->scene_change_detection ? 3 : 0;
-    if (plane) {
-        EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
-
-        for (uint32_t region_in_picture_width_index = 0;
-            region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
-            region_in_picture_width_index++) { // loop over horizontal regions
-            EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram[region_in_picture_width_index],
-                MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
-            for (uint32_t region_in_picture_height_index = 0;
-                 region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
-                 region_in_picture_height_index++) {
-                EB_MALLOC_2D(object_ptr->picture_histogram[region_in_picture_width_index]
-                                                          [region_in_picture_height_index],
-                             plane,
-                             HISTOGRAM_NUMBER_OF_BINS);
-            }
-        }
-    }
-#endif
 
     if (init_data_ptr->pass == ENC_FIRST_PASS ||
         (init_data_ptr->rate_control_mode && init_data_ptr->pass == ENC_SINGLE_PASS)) {
@@ -1498,9 +1409,6 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(object_ptr->me_8x8_cost_variance, object_ptr->sb_total_count);
     // SB noise variance array
     EB_CREATE_MUTEX(object_ptr->me_processed_b64_mutex);
-#if !CLN_MD_CTX
-    EB_MALLOC_ARRAY(object_ptr->sb_depth_mode_array, object_ptr->sb_total_count);
-#endif
     EB_CREATE_SEMAPHORE(object_ptr->temp_filt_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->temp_filt_mutex);
     EB_CREATE_MUTEX(object_ptr->debug_mutex);

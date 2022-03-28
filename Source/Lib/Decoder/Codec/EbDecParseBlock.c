@@ -943,15 +943,9 @@ void motion_field_projections_row(EbDecHandle *dec_handle, int sb_row, const EbD
     }
 
     int ref_stamp = MFMV_STACK_SIZE - 1;
-#if CLN_DEFINITIONS
     if (ref_buf[0 /*LAST_FRAME - LAST_FRAME*/] != NULL) {
         const int alt_of_lst_order_hint =
             ref_buf[0 /*LAST_FRAME - LAST_FRAME*/]->ref_order_hints[ALTREF_FRAME - LAST_FRAME];
-#else
-    if (ref_buf[LAST_FRAME - LAST_FRAME] != NULL) {
-        const int alt_of_lst_order_hint =
-            ref_buf[LAST_FRAME - LAST_FRAME]->ref_order_hints[ALTREF_FRAME - LAST_FRAME];
-#endif
 
         const int is_lst_overlay = (alt_of_lst_order_hint ==
                                     ref_order_hint[GOLDEN_FRAME - LAST_FRAME]);

@@ -32,10 +32,6 @@ struct _EbEncHandle {
     // Encode Instances & Compute Segments
     uint32_t encode_instance_total_count;
     uint32_t compute_segments_total_count_array;
-#if !FIX_USE_ONE_SCS
-    // Config Set Counts
-    uint32_t scs_pool_total_count;
-#endif
     // Full Results Count
     uint32_t pcs_pool_total_count;
 
@@ -43,9 +39,6 @@ struct _EbEncHandle {
     uint32_t ref_pic_pool_total_count;
 
     // Config Set Pool & Active Array
-#if !FIX_USE_ONE_SCS
-    EbSystemResource              *scs_pool_ptr; // sequence_control_set_pool
-#endif
     EbSequenceControlSetInstance **scs_instance_array;
 
     // Full Results

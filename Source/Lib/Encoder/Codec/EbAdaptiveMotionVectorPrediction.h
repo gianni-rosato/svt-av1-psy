@@ -25,9 +25,6 @@ extern "C" {
 #endif
 
 struct ModeDecisionContext;
-#if !CLN_MD_CTX
-struct InterPredictionContext;
-#endif
 extern EbErrorType clip_mv(uint32_t blk_origin_x, uint32_t blk_origin_y, int16_t *mv_x,
                            int16_t *mv_y, uint32_t picture_width, uint32_t picture_height,
                            uint32_t tb_size);

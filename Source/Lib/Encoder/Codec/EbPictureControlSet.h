@@ -248,11 +248,7 @@ typedef struct CdefDirData {
 typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor              dctor;
-#if FIX_REMOVE_SCS_WRAPPER
     struct SequenceControlSet *scs_ptr;
-#else
-    EbObjectWrapper     *scs_wrapper_ptr;
-#endif
     EbPictureBufferDesc *input_frame16bit;
 
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
@@ -556,10 +552,8 @@ typedef struct TplControls {
         synth_blk_size; //syntheszier block size, support 8x8 and 16x16 for now. NOTE: this field must be
     //modified inside the get_ function, as it is linked to memory allocation at init time
     uint8_t vq_adjust_lambda_sb;
-#if OPT_TPL
     // Calculated qindex based on r0 using qstep calculation
     bool              qstep_based_q_calc; // 0: OFF; 1: ON
-#endif
 } TplControls;
 /*!
  * \brief Refresh frame flags for different type of frames.
@@ -633,10 +627,6 @@ typedef struct CdefControls {
         search_best_ref_fs; // Only search best filter strengths of the nearest ref frames (skips the search if the filters of list0/list1 are the same).
     uint16_t
         zero_fs_cost_bias; // 0: OFF, higher is safer. Scaling factor to decrease the zero filter strength cost: : <x>/64
-#if !TUNE_FAST_DECODE
-    uint8_t
-        scale_cost_bias_on_nz_coeffs; // When enabled, use non-zero coeff info to make the cost-biasing factor more aggressive (when cost biasing is enabled)
-#endif
     uint8_t
         use_skip_detector; // Shut CDEF at the picture level based on the skip area of the nearest reference frames.
 } CdefControls;
@@ -675,9 +665,6 @@ typedef struct PaletteCtrls {
 // Parent is created before the Child, and continue to live more. Child PCS only lives the exact time needed to encode the picture: from ME to EC/ALF.
 typedef struct PictureParentControlSet {
     EbDctor              dctor;
-#if !FIX_REMOVE_SCS_WRAPPER
-    EbObjectWrapper     *scs_wrapper_ptr;
-#endif
     EbObjectWrapper     *input_picture_wrapper_ptr;
     EbObjectWrapper     *eb_y8b_wrapper_ptr; // when overlay: y8b buffer is not used, should set to NULL.
     EbObjectWrapper     *reference_picture_wrapper_ptr;
@@ -763,15 +750,8 @@ typedef struct PictureParentControlSet {
     uint16_t         pic_avg_variance;
     Bool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
 
-#if FIX_SCD
     uint32_t*** picture_histogram;
     uint64_t    average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
-#else
-    // Histograms
-    uint32_t ****picture_histogram;
-    uint64_t     average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
-                                         [MAX_NUMBER_OF_REGIONS_IN_HEIGHT][3];
-#endif
     // Segments
     uint16_t me_segments_total_count;
     uint8_t  me_segments_column_count;
@@ -832,9 +812,6 @@ typedef struct PictureParentControlSet {
 
     // MD
     EncMode         enc_mode;
-#if !CLN_MD_CTX
-    EB_SB_DEPTH_MODE *sb_depth_mode_array;
-#endif
     // Multi-modes signal(s)
     MultiPassPdLevel multi_pass_pd_level;
     Bool           disallow_nsq;
@@ -1060,9 +1037,6 @@ typedef struct PictureParentControlSet {
     //GF_GROUP parameters store in PCS
     int update_type;
     int layer_depth;
-#if !FRFCTR_RC_P1
-    int arf_boost;
-#endif
     int gf_group_size;
     //RATE_CONTROL parameters store in PCS
     int base_frame_target; // A baseline frame target before adjustment.
@@ -1071,13 +1045,6 @@ typedef struct PictureParentControlSet {
     int max_frame_size;
     int frames_to_key;
     int frames_since_key;
-#if !FRFCTR_RC_P2
-    int is_src_frame_alt_ref;
-    // Total number of stats used only for gfu_boost calculation.
-    int num_stats_used_for_gfu_boost;
-    // Total number of stats required by gfu_boost calculation.
-    int num_stats_required_for_gfu_boost;
-#endif
     int top_index;
     int bottom_index;
     // stores gf group (minigop) length
@@ -1142,9 +1109,6 @@ typedef struct PictureControlSetInitData {
     uint8_t                  speed_control;
     int8_t                   hbd_mode_decision;
     uint16_t                 film_grain_noise_level;
-#if !CLN_SCS_CTOR
-    Bool                   ext_block_flag;
-#endif
     uint8_t                  cdf_mode;
     uint8_t                  over_boundary_block_mode;
     uint8_t                  mfmv;

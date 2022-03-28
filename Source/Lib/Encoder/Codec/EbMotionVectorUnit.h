@@ -17,7 +17,6 @@
 extern "C" {
 #endif
 #pragma pack(push, 1)
-#if OPT_MV_INJ_CHECK
 typedef union Mv {
     struct {
         int16_t x;
@@ -25,15 +24,6 @@ typedef union Mv {
     };
     uint32_t as_int;
 } Mv;
-#else
-typedef union Mv {
-    struct {
-        signed short x;
-        signed short y;
-    };
-    uint32_t mv_union;
-} Mv;
-#endif
 #pragma pack(pop)
 
 #pragma pack(push, 1)

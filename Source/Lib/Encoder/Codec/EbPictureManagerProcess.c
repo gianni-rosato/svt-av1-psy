@@ -211,12 +211,7 @@ void copy_dep_cnt_cleaning_list(EncodeContext *ctx, PictureParentControlSet *pcs
 }
 
 void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_ptr) {
-#if FIX_REMOVE_SCS_WRAPPER
     SequenceControlSet *scs_ptr = parentpicture_control_set_ptr->scs_ptr;
-#else
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)
-                                      parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-#endif
     uint8_t pic_width_in_sb      = (uint8_t)((parentpicture_control_set_ptr->aligned_width +
                                          scs_ptr->sb_size_pix - 1) /
                                         scs_ptr->sb_size_pix);
@@ -465,11 +460,7 @@ void *picture_manager_kernel(void *input_ptr) {
         case EB_PIC_SUPERRES_INPUT: {
             pcs_ptr = (PictureParentControlSet *)
                           input_picture_demux_ptr->pcs_wrapper_ptr->object_ptr;
-#if FIX_REMOVE_SCS_WRAPPER
             scs_ptr = pcs_ptr->scs_ptr;
-#else
-            scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
 
             assert(scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH ||
                    scs_ptr->static_config.superres_mode == SUPERRES_AUTO);
@@ -496,11 +487,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
             pcs_ptr = (PictureParentControlSet *)
                           input_picture_demux_ptr->pcs_wrapper_ptr->object_ptr;
-#if FIX_REMOVE_SCS_WRAPPER
             scs_ptr = pcs_ptr->scs_ptr;
-#else
-            scs_ptr            = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
             //SVT_LOG("\nPicture Manager Process @ %d \n ", pcs_ptr->picture_number);
@@ -604,11 +591,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
         case EB_PIC_REFERENCE:
 
-#if FIX_REMOVE_SCS_WRAPPER
             scs_ptr = input_picture_demux_ptr->scs_ptr;
-#else
-            scs_ptr = (SequenceControlSet *)input_picture_demux_ptr->scs_wrapper_ptr->object_ptr;
-#endif
             encode_context_ptr = scs_ptr->encode_context_ptr;
             clean_pictures_in_ref_queue(scs_ptr->encode_context_ptr);
             ((EbReferenceObject *)
@@ -648,18 +631,9 @@ void *picture_manager_kernel(void *input_ptr) {
                 (reference_entry_ptr->picture_number == input_picture_demux_ptr->picture_number),
                 encode_context_ptr->app_callback_ptr,
                 EB_ENC_PM_ERROR8);
-#if !FIX_REMOVE_SCS_WRAPPER
-            //keep the relase of SCS here because we still need the encodeContext strucutre here
-            // Release the Reference's SequenceControlSet
-            svt_release_object(input_picture_demux_ptr->scs_wrapper_ptr);
-#endif
             break;
         case EB_PIC_FEEDBACK:
-#if FIX_REMOVE_SCS_WRAPPER
             scs_ptr = input_picture_demux_ptr->scs_ptr;
-#else
-            scs_ptr = (SequenceControlSet *)input_picture_demux_ptr->scs_wrapper_ptr->object_ptr;
-#endif
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
             clean_pictures_in_ref_queue(scs_ptr->encode_context_ptr);
@@ -685,18 +659,9 @@ void *picture_manager_kernel(void *input_ptr) {
             // Update the last decode order
             if (input_picture_demux_ptr->decode_order == decode_order)
                 decode_order++;
-#if !FIX_REMOVE_SCS_WRAPPER
-            //keep the release of SCS here because we still need the encodeContext structure here
-            // Release the Reference's SequenceControlSet
-            svt_release_object(input_picture_demux_ptr->scs_wrapper_ptr);
-#endif
             break;
         default:
-#if FIX_REMOVE_SCS_WRAPPER
             scs_ptr = input_picture_demux_ptr->scs_ptr;
-#else
-            scs_ptr = (SequenceControlSet *)input_picture_demux_ptr->scs_wrapper_ptr->object_ptr;
-#endif
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
             CHECK_REPORT_ERROR_NC(encode_context_ptr->app_callback_ptr, EB_ENC_PM_ERROR9);
@@ -720,12 +685,7 @@ void *picture_manager_kernel(void *input_ptr) {
                 if (input_entry_ptr->input_object_ptr != NULL) {
                     entry_pcs_ptr = (PictureParentControlSet *)
                                         input_entry_ptr->input_object_ptr->object_ptr;
-#if FIX_REMOVE_SCS_WRAPPER
                     entry_scs_ptr = entry_pcs_ptr->scs_ptr;
-#else
-                    entry_scs_ptr = (SequenceControlSet *)
-                                        entry_pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
                     availability_flag = TRUE;
                     if (entry_pcs_ptr->decode_order != decode_order && (scs_ptr->enable_dec_order))
                         availability_flag = FALSE;
@@ -851,11 +811,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->parent_pcs_ptr->av1_cm->child_pcs = child_pcs_ptr;
 
                         //2. Have some common information between  ChildPCS and ParentPCS.
-#if FIX_REMOVE_SCS_WRAPPER
                         child_pcs_ptr->scs_ptr              = entry_pcs_ptr->scs_ptr;
-#else
-                        child_pcs_ptr->scs_wrapper_ptr      = entry_pcs_ptr->scs_wrapper_ptr;
-#endif
                         child_pcs_ptr->picture_qp           = entry_pcs_ptr->picture_qp;
                         child_pcs_ptr->picture_number       = entry_pcs_ptr->picture_number;
                         child_pcs_ptr->slice_type           = entry_pcs_ptr->slice_type;
@@ -1222,13 +1178,6 @@ void *picture_manager_kernel(void *input_ptr) {
                             child_pcs_ptr->parent_pcs_ptr->refresh_frame_context =
                                 REFRESH_FRAME_CONTEXT_BACKWARD;
                         }
-#if !FIX_REMOVE_SCS_WRAPPER
-                        // Increment the sequenceControlSet Wrapper's live count by 1 for only the pictures which are used as reference
-                        if (child_pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-                            svt_object_inc_live_count(
-                                child_pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr, 1);
-                        }
-#endif
                         EbObjectWrapper *out_results_wrapper_ptr;
                         // Get Empty Results Object
                         svt_get_empty_object(context_ptr->picture_manager_output_fifo_ptr,

@@ -487,12 +487,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
         // If the picture is complete, proceed
         if (pcs_ptr->me_segments_completion_count == pcs_ptr->me_segments_total_count) {
-#if FIX_REMOVE_SCS_WRAPPER
             SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-#else
-            SequenceControlSet *scs_ptr = (SequenceControlSet *)
-                                              pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
             if (in_results_ptr->task_type == TASK_SUPERRES_RE_ME) {
                 // do necessary steps as normal routine
                 {

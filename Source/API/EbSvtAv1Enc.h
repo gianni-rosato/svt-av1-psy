@@ -25,7 +25,6 @@ extern "C" {
 
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
-#if CLN_DEFINITIONS
 /*!\brief Decorator indicating that given struct/union/enum is packed */
 #ifndef ATTRIBUTE_PACKED
 #if defined(__GNUC__) && __GNUC__
@@ -53,9 +52,6 @@ extern "C" {
         ENC_M13 = 13,
         MAX_ENC_PRESET = ENC_M13
     } EncMode;
-#else
-#define MAX_ENC_PRESET 13
-#endif
 #define NUM_MV_COMPONENTS 2
 #define NUM_MV_HIST 2
 #define MAX_MV_HIST_SIZE 2 * REF_LIST_MAX_DEPTH *NUM_MV_COMPONENTS *NUM_MV_HIST
@@ -360,21 +356,12 @@ typedef struct EbSvtAv1EncConfiguration {
     int enable_mfmv;
 
     // Rate Control
-#if FTR_CBR
     /* Rate control mode.
      *
      * 0 = Constant QP.
      * 1 = Variable Bit Rate, achieve the target bitrate at entire stream.
      * 2 = Constant Bit Rate, achieve the target bitrate
      * Default is 0. */
-#else
-    /* Rate control mode.
-     *
-     * 0 = Constant QP.
-     * 1 = Variable Bit Rate, achieve the target bitrate at entire stream.
-     * 2 = Constrained Variable Bit Rate, achieve the target bitrate at each gop
-     * Default is 0. */
-#endif
     uint32_t rate_control_mode;
     /* Flag to enable the scene change detection algorithm.
      *
@@ -665,7 +652,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * values are from set using svt_aom_parse_content_light_level()
     */
     struct EbContentLightLevel content_light_level;
-#if TUNE_FAST_DECODE
     /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
     * 0: No decoder speed optimization
     * 1: Low-level decoder speed optimization (fast decode)
@@ -673,14 +659,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * 3: High-level decoder speed optimization (veryfast decode)
     * 4: Very-High-level decoder speed optimization (fastest decode)
     */
-#else
-    /* Decoder speed optimization level
-    * 0: No decoder speed optimization
-    * 1: Low-level decoder speed optimization (fast decode)
-    * 2: Medium-level decoder speed optimization (faster decode)
-    * 3: High-level decoder speed optimization (fastest decode)
-    */
-#endif
     uint8_t fast_decode;
 
     /* S-Frame interval (frames)

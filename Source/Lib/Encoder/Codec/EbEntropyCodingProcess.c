@@ -258,11 +258,7 @@ void *entropy_coding_kernel(void *input_ptr) {
         RestResults       *rest_results_ptr = (RestResults *)rest_results_wrapper_ptr->object_ptr;
         PictureControlSet *pcs_ptr          = (PictureControlSet *)
                                          rest_results_ptr->pcs_wrapper_ptr->object_ptr;
-#if FIX_REMOVE_SCS_WRAPPER
         SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-#else
-        SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
         // SB Constants
 
         uint8_t sb_sz = (uint8_t)scs_ptr->sb_size_pix;

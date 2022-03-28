@@ -101,9 +101,6 @@
 #define TARGET_BIT_RATE_TOKEN "--tbr"
 #define MAX_BIT_RATE_TOKEN "--mbr"
 #define MAX_QP_TOKEN "--max-qp"
-#if !FTR_CBR
-#define VBV_BUFSIZE_TOKEN "--vbv-bufsize"
-#endif
 #define MIN_QP_TOKEN "--min-qp"
 #define VBR_BIAS_PCT_TOKEN "--bias-pct"
 #define VBR_MIN_SECTION_PCT_TOKEN "--minsection-pct"
@@ -177,24 +174,6 @@
 
 #define SFRAME_DIST_TOKEN "--sframe-dist"
 #define SFRAME_MODE_TOKEN "--sframe-mode"
-#if !CLN_DEFINITIONS
-#define ENC_MRS -2 // Highest quality research mode (slowest)
-#define ENC_MR -1 //Research mode with higher quality than M0
-#define ENC_M0 0
-#define ENC_M1 1
-#define ENC_M2 2
-#define ENC_M3 3
-#define ENC_M4 4
-#define ENC_M5 5
-#define ENC_M6 6
-#define ENC_M7 7
-#define ENC_M8 8
-#define ENC_M9 9
-#define ENC_M10 10
-#define ENC_M11 11
-#define ENC_M12 12
-#define ENC_M13 13
-#endif
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE *fp) { return (HANDLE)_get_osfhandle(_fileno(fp)); }
 #endif
@@ -601,11 +580,6 @@ static void set_target_bit_rate(const char *value, EbConfig *cfg) {
 static void set_max_bit_rate(const char *value, EbConfig *cfg) {
     cfg->config.max_bit_rate = 1000 * strtoul(value, NULL, 0);
 };
-#if !FTR_CBR
-static void set_vbv_buf_size(const char *value, EbConfig *cfg) {
-    cfg->config.vbv_bufsize = 1000 * strtoul(value, NULL, 0);
-};
-#endif
 static void set_max_qp_allowed(const char *value, EbConfig *cfg) {
     cfg->config.max_qp_allowed = strtoul(value, NULL, 0);
 };
@@ -1038,12 +1012,6 @@ ConfigEntry config_entry_rc[] = {
      "Set adaptive QP level, default is 2 [0: off, 1: variance base using AV1 segments, 2: deltaq "
      "pred efficiency]",
      set_adaptive_quantization},
-#if !FTR_CBR
-    {SINGLE_INPUT,
-     VBV_BUFSIZE_TOKEN,
-     "VBV buffer size, default is the value of `--tbr` [1-4294967]",
-     set_vbv_buf_size},
-#endif
     {SINGLE_INPUT,
      USE_FIXED_QINDEX_OFFSETS_TOKEN,
      "Overwrite the encoder default hierarchical layer based QP assignment and use fixed Q index "
@@ -1217,17 +1185,10 @@ ConfigEntry config_entry_specific[] = {
      MFMV_ENABLE_NEW_TOKEN,
      "Motion Field Motion Vector control, default is -1 [-1: auto, 0-1]",
      set_enable_mfmv_flag},
-#if TUNE_FAST_DECODE
     {SINGLE_INPUT,
      FAST_DECODE_TOKEN,
      "Fast Decoder levels, default is 0 [0-4]",
      set_fast_decode_flag},
-#else
-    {SINGLE_INPUT,
-     FAST_DECODE_TOKEN,
-     "Fast Decoder levels, default is 0 [0-3]",
-     set_fast_decode_flag},
-#endif
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      ENABLE_TF_TOKEN,
@@ -1418,9 +1379,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", set_min_qp_allowed},
 
     {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_NEW_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
-#if !FTR_CBR
-    {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBVBufSize", set_vbv_buf_size},
-#endif
 
     //   qindex offsets
     {SINGLE_INPUT,
@@ -2325,13 +2283,6 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             fprintf(stderr, "Error: The rate control mode must be [0 - 2] \n");
             return 0;
         }
-#if !FTR_CBR
-        if (rc_mode == 2) {
-            // this is covered in the library
-            //fprintf(stderr, "[SVT-Warning]: CBR Rate control is currently not supported, switching to VBR \n");
-            rc_mode = 1;
-        }
-#endif
     }
 
     int32_t passes     = -1;
@@ -2388,11 +2339,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2]  \n");
             return 0;
         }
-#if FTR_CBR
         if ((ip < 0) && rc_mode == 1) {
-#else
-        if ((ip < 0) && rc_mode >= 1) {
-#endif
             fprintf(stderr,
                     "[SVT-Error]: The intra period must be > 0 for RateControlMode %d \n",
                     rc_mode);
@@ -2453,7 +2400,6 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             }
         }
     }
-#if FTR_CBR
     else {
         if (passes > 1) {
             fprintf(stderr,
@@ -2462,7 +2408,6 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         }
         *multi_pass_mode = SINGLE_PASS;
     }
-#endif
 
     // Set the settings for each pass based on multi_pass_mode
     switch (*multi_pass_mode) {
@@ -2741,11 +2686,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         config_strings[index] = (char *)malloc(sizeof(char) * COMMAND_LINE_MAX_SIZE);
     // Copy tokens (except for CHANNEL_NUMBER_TOKEN and PASSES_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
     size_t len = COMMAND_LINE_MAX_SIZE;
-#if FIX_NCH
     Bool process_prev_token = 1;
-#endif
     for (int32_t token_index = 0; token_index < argc; ++token_index) {
-#if FIX_NCH
         if (strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
             strncmp(argv[token_index], PASSES_TOKEN, len)) {
             if (!is_negative_number(argv[token_index]) && process_prev_token) {
@@ -2761,15 +2703,6 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         else{
             process_prev_token = 0;
         }
-#else
-        if (strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
-            strncmp(argv[token_index], PASSES_TOKEN, len) && !is_negative_number(argv[token_index])) {
-            if (argv[token_index][0] == '-')
-                cmd_copy[cmd_token_cnt++] = argv[token_index];
-            else if (token_index)
-                arg_copy[cmd_arg_cnt++] = argv[token_index];
-        }
-#endif
     }
 
     /***************************************************************************************************/

@@ -39,39 +39,6 @@ extern void coding_loop_context_generation(PictureControlSet   *pcs_ptr,
                                            uint32_t blk_origin_x, uint32_t blk_origin_y,
                                            NeighborArrayUnit *skip_coeff_neighbor_array,
                                            NeighborArrayUnit *leaf_partition_neighbor_array);
-#if !CLN_MOVE_COSTS_2
-extern EbErrorType av1_txb_calc_cost(
-    ModeDecisionCandidate *candidate_ptr, // input parameter, prediction result Ptr
-    int16_t                txb_skip_ctx,
-    uint32_t               txb_index, // input parameter, TU index inside the CU
-    uint32_t
-        y_count_non_zero_coeffs, // input parameter, number of non zero Y quantized coefficients
-    uint32_t
-        cb_count_non_zero_coeffs, // input parameter, number of non zero cb quantized coefficients
-    uint32_t
-        cr_count_non_zero_coeffs, // input parameter, number of non zero cr quantized coefficients
-    uint64_t y_txb_distortion
-        [DIST_CALC_TOTAL], // input parameter, Y distortion for both Normal and Cbf zero modes
-    uint64_t cb_txb_distortion
-        [DIST_CALC_TOTAL], // input parameter, Cb distortion for both Normal and Cbf zero modes
-    uint64_t cr_txb_distortion
-        [DIST_CALC_TOTAL], // input parameter, Cr distortion for both Normal and Cbf zero modes
-    COMPONENT_TYPE component_type,
-    uint64_t      *y_txb_coeff_bits, // input parameter, Y quantized coefficients rate
-    uint64_t      *cb_txb_coeff_bits, // input parameter, Cb quantized coefficients rate
-    uint64_t      *cr_txb_coeff_bits, // input parameter, Cr quantized coefficients rate
-    TxSize         txsize,
-    uint64_t       lambda); // input parameter, lambda for Luma
-
-extern EbErrorType txb_calc_cost(
-    uint32_t cu_size, ModeDecisionCandidate *candidate_ptr, uint32_t txb_index,
-    uint32_t transform_size, uint32_t transform_chroma_size, uint32_t y_count_non_zero_coeffs,
-    uint32_t cb_count_non_zero_coeffs, uint32_t cr_count_non_zero_coeffs,
-    uint64_t y_txb_distortion[DIST_CALC_TOTAL], uint64_t cb_txb_distortion[DIST_CALC_TOTAL],
-    uint64_t cr_txb_distortion[DIST_CALC_TOTAL], uint32_t component_mask,
-    uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
-    uint32_t qp, uint64_t lambda, uint64_t lambda_chroma);
-#endif
 extern EbErrorType intra_luma_mode_context(BlkStruct *blk_ptr, uint32_t luma_mode,
                                            int32_t *prediction_index);
 extern EbErrorType intra2_nx2_n_fast_cost_islice(
@@ -102,11 +69,7 @@ extern EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr,
                                        MdRateEstimationContext *md_rate_estimation_ptr,
                                        uint32_t                 tb_max_depth);
 extern uint64_t    av1_intra_fast_cost(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-#if CLN_MOVE_COSTS
                                        ModeDecisionCandidateBuffer *candidate_buffer, uint32_t qp,
-#else
-                                       ModeDecisionCandidate *candidate_ptr, uint32_t qp,
-#endif
                                        uint64_t luma_distortion, uint64_t chroma_distortion,
                                        uint64_t lambda, PictureControlSet *pcs_ptr,
                                        CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
@@ -114,11 +77,7 @@ extern uint64_t    av1_intra_fast_cost(struct ModeDecisionContext *context_ptr, 
                                        uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
 extern uint64_t av1_inter_fast_cost(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-#if CLN_MOVE_COSTS
                                     ModeDecisionCandidateBuffer *candidate_buffer, uint32_t qp,
-#else
-                                    ModeDecisionCandidate *candidate_ptr, uint32_t qp,
-#endif
                                     uint64_t luma_distortion, uint64_t chroma_distortion,
                                     uint64_t lambda, PictureControlSet *pcs_ptr,
                                     CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,

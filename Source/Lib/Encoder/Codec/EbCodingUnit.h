@@ -339,11 +339,7 @@ typedef struct BlkStruct {
     MacroBlockD           *av1xd;
     InterInterCompoundData interinter_comp; // ec
     uint32_t               interp_filters; // ec
-#if CLN_CAND_TYPES
     uint8_t                interintra_wedge_index; // ec
-#else
-    int32_t                interintra_wedge_index; // ec
-#endif
     // uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
     int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES]; // ec
     uint16_t
@@ -355,20 +351,12 @@ typedef struct BlkStruct {
 
     unsigned skip_flag_context : 2; // to do
     unsigned prediction_mode_flag : 2; // ec
-#if CLN_SKIP_NAMING
     unsigned block_has_coeff : 1; // ec; skip coeff only. as defined in section 6.10.11 of the av1 text
-#else
-    unsigned block_has_coeff : 1; // ec
-#endif
     unsigned split_flag_context : 2; // to do
 
     uint8_t qindex; // ec
     uint8_t split_flag;
-#if CLN_SKIP_NAMING
     uint8_t skip_mode; // ec; skips mode_info + coeff. as defined in section 6.10.10 of the av1 text
-#else
-    uint8_t skip_flag; // ec
-#endif
     uint8_t mdc_split_flag; // ?
     EbPictureBufferDesc
         *coeff_tmp; // buffer to store quantized coeffs from MD for the final mode of each block

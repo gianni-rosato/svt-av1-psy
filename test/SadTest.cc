@@ -630,11 +630,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                 skip_search_line,
                 search_area_width_,
                 search_area_height_);
-#if CLN_DEFINITIONS
         for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
-#else
-        for (int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
-#endif
             Ebsad_LoopKernelNxMType func_o_ = func_o_list[f];
             uint64_t best_sad1 = UINT64_MAX;
             int16_t x_search_center1 = 0;
@@ -719,11 +715,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                                                 start_time_useconds,
                                                 finish_time_seconds,
                                                 finish_time_useconds);
-#if CLN_DEFINITIONS
         for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
-#else
-        for (int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
-#endif
             Ebsad_LoopKernelNxMType func_o_ = func_o_list[f];
 
             svt_av1_get_time(&start_time_seconds, &start_time_useconds);
@@ -1665,11 +1657,7 @@ class PmeSadLoopTest
                 search_step,
                 mvx,
                 mvy);
-#if CLN_DEFINITIONS
         for (unsigned int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
-#else
-        for (int f = 0; f < sizeof(func_o_list) / sizeof(func_o_list[0]); ++f) {
-#endif
             PmeSadLoopKernel func_o_ = func_o_list[f];
             uint32_t best_sad1 = UINT32_MAX;
             int16_t best_mvx1 = 0;

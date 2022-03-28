@@ -20,15 +20,10 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
-#if FIX_SCD
 EbErrorType picture_decision_context_ctor(
     EbThreadContext* thread_context_ptr,
     const EbEncHandle* enc_handle_ptr,
     uint8_t scene_change_detection);
-#else
-EbErrorType picture_decision_context_ctor(EbThreadContext   *thread_context_ptr,
-                                          const EbEncHandle *enc_handle_ptr);
-#endif
 extern void *picture_decision_kernel(void *input_ptr);
 
 void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
@@ -45,9 +40,6 @@ void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
 void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_picture_ptr);
 
 void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-#if !FIX_SCD
-                                  EbPictureBufferDesc *input_picture_ptr,
-#endif
                                   EbPictureBufferDesc *input_padded_picture_ptr,
                                   EbPictureBufferDesc *sixteenth_decimated_picture_ptr,
                                   uint32_t             sb_total_count);
@@ -69,19 +61,13 @@ typedef struct PictureDecisionContext {
 
     Bool     reset_running_avg;
     int8_t     tf_motion_direction; // -1: invalid   0: horz  1: vert
-#if FIX_SCD
     uint32_t*** prev_picture_histogram;
     uint64_t    prev_average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
-#endif
     uint32_t **ahd_running_avg_cb;
     uint32_t **ahd_running_avg_cr;
     uint32_t **ahd_running_avg;
     Bool     is_scene_change_detected;
-#if FIX_SCD
     uint8_t    is_next_base_sc;
-#else
-    uint8_t    transition_present;
-#endif
     // Dynamic GOP
     uint32_t ttl_region_activity_cost[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
                                      [MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
