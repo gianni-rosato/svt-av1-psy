@@ -37,9 +37,13 @@
 
 #include "EbPictureDecisionResults.h"
 #include "EbResize.h"
-
+#if OPT_TPL_4L
+static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 1, 1.5, 1, 0.7};
+static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 2, 1, 0.9};
+#else
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 1, 2, 1, 0.7};
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 3, 1, 0.9};
+#endif
 #define KB 400
 
 typedef struct RateControlContext {

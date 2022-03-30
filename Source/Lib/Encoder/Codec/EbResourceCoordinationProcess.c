@@ -323,13 +323,22 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->r0_adjust_factor *= 3;
     if (pcs_ptr->scs_ptr->enable_adaptive_mini_gop == 0) {
         if (scs_ptr->static_config.hierarchical_levels < 4)
+#if OPT_TPL_4L
+            if (tpl_ctrls->r0_adjust_factor != 0.1)
+                tpl_ctrls->r0_adjust_factor /= 3;
+#else
             tpl_ctrls->r0_adjust_factor = 0.1;
+#endif
     } else {
         if (pcs_ptr->scs_ptr->max_heirachical_level < 4)
             tpl_ctrls->r0_adjust_factor = 0.1;
     }
     // Calculated qindex based on r0 using qstep calculation
+#if OPT_TPL_4L
+    if (scs_ptr->static_config.hierarchical_levels == 4 || scs_ptr->static_config.hierarchical_levels == 3)
+#else
     if (scs_ptr->static_config.hierarchical_levels == 4)
+#endif
         tpl_ctrls->qstep_based_q_calc = 1;
     else
         tpl_ctrls->qstep_based_q_calc = 0;

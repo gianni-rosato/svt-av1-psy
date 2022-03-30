@@ -3115,7 +3115,11 @@ void set_mid_pass_ctrls(
         break;
     }
 }
+#if OPT_TPL_4L
+uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t aq_mode) {
+#else
 uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels, uint8_t aq_mode) {
+#endif
     uint8_t tpl_level;
 
     if (aq_mode == 0) {
@@ -3139,15 +3143,19 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
     else if (enc_mode <= ENC_M7)
         tpl_level = 3;
     else if (enc_mode <= ENC_M9) {
+#if !OPT_TPL_4L
         if (hierarchical_levels <= 3)
             tpl_level = 5;
         else
+#endif
             tpl_level = 4;
     }
     else if (enc_mode <= ENC_M10) {
+#if !OPT_TPL_4L
         if (hierarchical_levels <= 3)
             tpl_level = 7;
         else
+#endif
             tpl_level = 5;
     }
     else
@@ -3282,7 +3290,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 {
     set_multi_pass_params(
         scs_ptr);
+    #if OPT_TPL_4L
+    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.enable_adaptive_quantization);
+    #else
     scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels, scs_ptr->static_config.enable_adaptive_quantization);
+    #endif
     uint16_t subsampling_x = scs_ptr->subsampling_x;
     uint16_t subsampling_y = scs_ptr->subsampling_y;
     // Update picture width, and picture height
