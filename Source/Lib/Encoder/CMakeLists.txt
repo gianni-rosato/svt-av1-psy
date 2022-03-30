@@ -12,9 +12,9 @@
 # Encoder Library directory CMakeLists.txt
 
 # Shared Encoder Version
-set(ENC_VERSION_MAJOR 0)
-set(ENC_VERSION_MINOR 9)
-set(ENC_VERSION_PATCH 1)
+set(ENC_VERSION_MAJOR 1)
+set(ENC_VERSION_MINOR 0)
+set(ENC_VERSION_PATCH 0-rc1)
 set(ENC_VERSION ${ENC_VERSION_MAJOR}.${ENC_VERSION_MINOR}.${ENC_VERSION_PATCH})
 
 if(UNIX)

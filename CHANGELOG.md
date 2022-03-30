@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.0.0-rc1] - 2022-03-29
+
+Encoder
+- CBR Rate control mode for low delay
+- Added S-frames support
+- Visual quality fixes and improvements for both tune 0 and 1
+- Extend fast-decode support to cover presets M0-M10
+- More robust rate control parameter verification
+- Quality vs density tradeoffs tuning across all presets in CRF mode with TPL improvements
+- Update default settings to use a longer gop / higher quality preset and lower CRF value.
+- Various code cleanups and memory optimizations
+- Additional AVX2 optimizations
+- Fixed all known reported deadlocks
+
+Build and Testing
+- Improve CI coverage
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
+
 ## [0.9.1] - 2022-02-23
 
 Encoder

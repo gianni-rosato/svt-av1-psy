@@ -5,7 +5,7 @@ The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an AV1-co
 ## License
 
 Up to v0.8.7, SVT-AV1 is licensed under the BSD-2-clause license and the Alliance for Open Media Patent License 1.0. See [LICENSE](LICENSE-BSD2.md) and [PATENTS](PATENTS.md) for details.
-Starting from v0.8.8, SVT-AV1 is licensed under the BSD-3-clause clear license and the Alliance for Open Media Patent License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
+Starting from v0.9, SVT-AV1 is licensed under the BSD-3-clause clear license and the Alliance for Open Media Patent License 1.0. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 
 ## Documentation
 
@@ -39,14 +39,7 @@ The SVT-AV1 Encoder library supports the x86 architecture
 
 - __RAM Requirements__
 
-    The SVT-AV1 Encoder adapts to the system on which it is being run. The memory requirements depend on the number of cores the system contains, the input frame rate of the input sequence (`-fps`) and the look ahead distance passed to the encoder (`-lad`). The SVT-AV1 Encoder application will display an error if the system does not have enough RAM to support the encode prior to the start of the encode. The following table shows the minimum amount of RAM required for some standard resolutions of 10bit video per stream:
-
-|       Resolution      | 8-vCPU Commit Size (GB)| 40-vCPU Commit Size (GB)|
-|-----------------------|------------------------|-------------------------|
-|       4k              |           14           |           24            |
-|       1080p           |            6           |           10            |
-|       720p            |            4           |            7            |
-|       480p            |            3           |            5            |
+    The SVT-AV1 Encoder adapts to the system on which it is being run. The memory requirements depend on the number of cores the system contains, the input frame rate of the input sequence (`--fps`) and the look ahead distance passed to the encoder (`--lad`). The SVT-AV1 Encoder application will display an error if the system does not have enough RAM to support the encode prior to the start of the encode.
 
 ## Build and Install
 
@@ -175,7 +168,7 @@ You will be required to execute the appropriate [contributor agreement](http://a
 
 ### How to Report Bugs and Provide Feedback
 
-Use the [Issues](https://gitlab.com/AOMediaCodec/SVT-AV1/issues) tab on GitLab. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
+Use the [Issues](https://gitlab.com/AOMediaCodec/SVT-AV1/issues) tab on GitLab. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one. You can find previously asked questions [here](https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues?sort=created_date&state=all&label_name[]=question).
 
 ## IRC
 
