@@ -458,6 +458,31 @@ Linux FFmpeg (Static):
     paths:
       - ffmpeg
 
+Linux FFmpeg (n5.0, Static):
+  extends: .linux-test-base
+  stage: compile
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    CFLAGS: -pipe
+    CXXFLAGS: -pipe
+    LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
+    GIT_DEPTH: 0
+  before_script:
+    - !reference [.ffmpeg-before-script-clone]
+    - git -C ffmpeg-src checkout n5.0
+    - git -C ffmpeg-src am -3 "$PWD/ffmpeg_plugin/n5.0/FFmpeg-5.0.patch"
+    - !reference [.ffmpeg-before-script-export]
+  script:
+    - !reference [.ffmpeg-svtav1-script]
+    - !reference [.ffmpeg-ffmpeg-script]
+    - ccache -s
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - ffmpeg
+
 Decoder Test:
   extends: .linux-test-base
   stage: .post
