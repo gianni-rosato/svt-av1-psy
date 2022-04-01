@@ -273,7 +273,7 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
     }
 
     // Scale up the MIN ME area if low frame rate
-    uint8_t low_frame_rate_flag = (scs_ptr->static_config.frame_rate >> 16) < 50 ? 1 : 0;
+    bool low_frame_rate_flag = (scs_ptr->frame_rate >> 16);
     if (low_frame_rate_flag) {
         me_context_ptr->me_sa.sa_min.width  = (me_context_ptr->me_sa.sa_min.width * 3) >> 1;
         me_context_ptr->me_sa.sa_min.height = (me_context_ptr->me_sa.sa_min.height * 3) >> 1;

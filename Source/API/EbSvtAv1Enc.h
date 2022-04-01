@@ -247,16 +247,6 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint32_t forced_max_frame_width;
     uint32_t forced_max_frame_height;
-
-    /* The frequecy of images being displayed. If the number is less than 1000,
-     * the input frame rate is an integer number between 1 and 60, else the input
-     * number is in Q16 format, shifted by 16 bits, where max allowed is 240 fps.
-     * If FrameRateNumerator and FrameRateDenominator are both not equal to zero,
-     * the encoder will ignore this parameter.
-     *
-     * Default is 25. */
-    uint32_t frame_rate;
-
     /* Frame rate numerator. When zero, the encoder will use -fps if
      * FrameRateDenominator is also zero, otherwise an error is returned.
      *

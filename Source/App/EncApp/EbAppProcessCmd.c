@@ -646,20 +646,10 @@ static void write_ivf_stream_header(EbConfig *config) {
     mem_put_le32(header + 8, AV1_FOURCC); // fourcc
     mem_put_le16(header + 12, config->input_padded_width); // width
     mem_put_le16(header + 14, config->input_padded_height); // height
-    if (config->config.frame_rate_denominator != 0 && config->config.frame_rate_numerator != 0) {
-        mem_put_le32(header + 16, config->config.frame_rate_numerator); // rate
-        mem_put_le32(header + 20, config->config.frame_rate_denominator); // scale
-            //mem_put_le32(header + 16, config->frame_rate_denominator);  // rate
-            //mem_put_le32(header + 20, config->frame_rate_numerator);  // scale
-    } else {
-        mem_put_le32(header + 16, (config->config.frame_rate >> 16) * 1000); // rate
-        mem_put_le32(header + 20, 1000); // scale
-            //mem_put_le32(header + 16, config->frame_rate_denominator);  // rate
-            //mem_put_le32(header + 20, config->frame_rate_numerator);  // scale
-    }
+    mem_put_le32(header + 16, config->config.frame_rate_numerator); // rate
+    mem_put_le32(header + 20, config->config.frame_rate_denominator); // scale
     mem_put_le32(header + 24, 0); // length
     mem_put_le32(header + 28, 0); // unused
-    //config->performance_context.byte_count += 32;
     if (config->bitstream_file)
         fwrite(header, 1, IVF_STREAM_HEADER_SIZE, config->bitstream_file);
 
@@ -881,14 +871,8 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
             }
             ++*frame_count;
             const double fps = (double)*frame_count / config->performance_context.total_encode_time;
-            const double frame_rate = config->config.frame_rate_numerator &&
-                    config->config.frame_rate_denominator
-                ? (double)config->config.frame_rate_numerator /
-                    (double)config->config.frame_rate_denominator
-                : config->config.frame_rate > 1000
-                // Correct for 16-bit fixed-point fractional precision
-                ? (double)config->config.frame_rate / (1 << 16)
-                : (double)config->config.frame_rate;
+            const double frame_rate = (double)config->config.frame_rate_numerator /
+                (double)config->config.frame_rate_denominator;
             switch (config->progress) {
             case 0: break;
             case 1:

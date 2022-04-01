@@ -195,10 +195,9 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
 
         // verify the bitrate
         if (config->rate_control_mode == 3) {
-            uint32_t avg_bit_rate =
-                (config->frame_rate > 1000 ? config->frame_rate >> 16
-                                           : config->frame_rate) *
-                stream_info->frame_bit_rate;
+            uint32_t avg_bit_rate = (config->frame_rate_numerator /
+                                      config->frame_rate_denominator) *
+                                     stream_info->frame_bit_rate;
             printf("%d--%d\n", config->target_bit_rate, avg_bit_rate);
             EXPECT_GE(config->target_bit_rate, avg_bit_rate)
                 << "target bit-rate is less than actual: "

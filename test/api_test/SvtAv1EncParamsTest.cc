@@ -238,10 +238,6 @@ PARAM_TEST(EncParamSrcWidthTest);
 DEFINE_PARAM_TEST_CLASS(EncParamSrcHeightTest, source_height);
 PARAM_TEST(EncParamSrcHeightTest);
 
-/** Test case for frame_rate*/
-DEFINE_PARAM_TEST_CLASS(EncParamFrameRateTest, frame_rate);
-PARAM_TEST(EncParamFrameRateTest);
-
 /** Test case for encoder_bit_depth*/
 DEFINE_PARAM_TEST_CLASS(EncParamEncBitDepthTest, encoder_bit_depth);
 PARAM_TEST(EncParamEncBitDepthTest);

@@ -548,17 +548,10 @@ void SvtAv1E2ETestFramework::write_output_header() {
     mem_put_le32(header + 8, AV1_FOURCC);  // fourcc
     mem_put_le16(header + 12, av1enc_ctx_.enc_params.source_width);   // width
     mem_put_le16(header + 14, av1enc_ctx_.enc_params.source_height);  // height
-    if (av1enc_ctx_.enc_params.frame_rate_denominator != 0 &&
-        av1enc_ctx_.enc_params.frame_rate_numerator != 0) {
-        mem_put_le32(header + 16,
-                     av1enc_ctx_.enc_params.frame_rate_numerator);  // rate
-        mem_put_le32(header + 20,
-                     av1enc_ctx_.enc_params.frame_rate_denominator);  // scale
-    } else {
-        mem_put_le32(header + 16,
-                     (av1enc_ctx_.enc_params.frame_rate >> 16) * 1000);  // rate
-        mem_put_le32(header + 20, 1000);  // scale
-    }
+    mem_put_le32(header + 16,
+                 av1enc_ctx_.enc_params.frame_rate_numerator);  // rate
+    mem_put_le32(header + 20,
+                 av1enc_ctx_.enc_params.frame_rate_denominator);  // scale
     mem_put_le32(header + 24, 0);  // length
     mem_put_le32(header + 28, 0);  // unused
     if (output_file_ && output_file_->file)

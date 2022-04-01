@@ -152,7 +152,7 @@ typedef struct SequenceControlSet {
     uint16_t top_padding;
     uint16_t right_padding;
     uint16_t bot_padding;
-    uint32_t frame_rate;
+    uint32_t frame_rate; //stored in Q16
     uint32_t encoder_bit_depth;
     EbInputResolution input_resolution;
 

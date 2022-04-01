@@ -225,103 +225,90 @@ static void print_summary(const EncContext* const enc_context) {
             double max_chroma_sse = (double)max_luma_value * max_luma_value *
                 (config->config.source_width / 2 * config->config.source_height / 2);
 
-            if ((config->config.frame_rate_numerator != 0 &&
-                 config->config.frame_rate_denominator != 0) ||
-                config->config.frame_rate != 0) {
-                double frame_rate = config->config.frame_rate_numerator &&
-                        config->config.frame_rate_denominator
-                    ? (double)config->config.frame_rate_numerator /
-                        (double)config->config.frame_rate_denominator
-                    : config->config.frame_rate > 1000
-                    // Correct for 16-bit fixed-point fractional precision
-                    ? (double)config->config.frame_rate / (1 << 16)
-                    : (double)config->config.frame_rate;
+            const double frame_rate = (double)config->config.frame_rate_numerator /
+                (double)config->config.frame_rate_denominator;
 
-                if (config->config.stat_report) {
-                    if (config->stat_file) {
-                        fprintf(config->stat_file,
-                                "\nSUMMARY "
-                                "------------------------------------------------------"
-                                "---------------\n");
-                        fprintf(config->stat_file,
-                                "\n\t\t\t\tAverage PSNR (using per-frame "
-                                "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|"
-                                "\tAverage SSIM\n");
-                        fprintf(config->stat_file,
-                                "Total Frames\tAverage QP  \tY-PSNR   \tU-PSNR   "
-                                "\tV-PSNR\t\t| \tY-PSNR   \tU-PSNR   \tV-PSNR   \t|"
-                                "\tY-SSIM   \tU-SSIM   \tV-SSIM   "
-                                "\t|\tBitrate\n");
-                        fprintf(
-                            config->stat_file,
-                            "%10ld  \t   %2.2f    \t%3.2f dB\t%3.2f dB\t%3.2f dB  "
-                            "\t|\t%3.2f dB\t%3.2f dB\t%3.2f dB \t|\t%1.5f \t%1.5f "
-                            "\t%1.5f\t\t|\t%.2f kbps\n",
-                            (long int)frame_count,
-                            (float)config->performance_context.sum_qp / frame_count,
-                            (float)config->performance_context.sum_luma_psnr / frame_count,
-                            (float)config->performance_context.sum_cb_psnr / frame_count,
-                            (float)config->performance_context.sum_cr_psnr / frame_count,
-                            (float)(get_psnr(
-                                (config->performance_context.sum_luma_sse / frame_count),
-                                max_luma_sse)),
-                            (float)(get_psnr((config->performance_context.sum_cb_sse / frame_count),
-                                             max_chroma_sse)),
-                            (float)(get_psnr((config->performance_context.sum_cr_sse / frame_count),
-                                             max_chroma_sse)),
-                            (float)config->performance_context.sum_luma_ssim / frame_count,
-                            (float)config->performance_context.sum_cb_ssim / frame_count,
-                            (float)config->performance_context.sum_cr_ssim / frame_count,
-                            ((double)(config->performance_context.byte_count << 3) * frame_rate /
-                             (config->frames_encoded * 1000)));
-                    }
-                }
+            if (config->config.stat_report && config->stat_file) {
 
-                fprintf(stderr,
-                        "\nSUMMARY --------------------------------- Channel %u  "
-                        "--------------------------------\n",
-                        inst_cnt + 1);
-                {
-                    fprintf(stderr, "Total Frames\t\tFrame Rate\t\tByte Count\t\tBitrate\n");
-                    fprintf(stderr,
-                            "%12d\t\t%4.2f fps\t\t%10.0f\t\t%5.2f kbps\n",
-                            (int32_t)frame_count,
-                            (double)frame_rate,
-                            (double)config->performance_context.byte_count,
-                            ((double)(config->performance_context.byte_count << 3) * frame_rate /
-                             (config->frames_encoded * 1000)));
-                }
-
-                if (config->config.stat_report) {
-                    fprintf(stderr,
-                            "\n\t\tAverage PSNR (using per-frame "
-                            "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|\t"
-                            "Average SSIM\n");
-                    fprintf(stderr,
-                            "Average "
-                            "QP\tY-PSNR\t\tU-PSNR\t\tV-PSNR\t\t|\tY-PSNR\t\tU-"
-                            "PSNR\t\tV-PSNR\t\t|\tY-SSIM\tU-SSIM\tV-SSIM\n");
-                    fprintf(
-                        stderr,
-                        "%11.2f\t%4.2f dB\t%4.2f dB\t%4.2f dB\t|\t%4.2f "
-                        "dB\t%4.2f dB\t%4.2f dB\t|\t%1.5f\t%1.5f\t%1.5f\n",
-                        (float)config->performance_context.sum_qp / frame_count,
-                        (float)config->performance_context.sum_luma_psnr / frame_count,
-                        (float)config->performance_context.sum_cb_psnr / frame_count,
-                        (float)config->performance_context.sum_cr_psnr / frame_count,
-                        (float)(get_psnr((config->performance_context.sum_luma_sse / frame_count),
-                                         max_luma_sse)),
-                        (float)(get_psnr((config->performance_context.sum_cb_sse / frame_count),
-                                         max_chroma_sse)),
-                        (float)(get_psnr((config->performance_context.sum_cr_sse / frame_count),
-                                         max_chroma_sse)),
-                        (float)config->performance_context.sum_luma_ssim / frame_count,
-                        (float)config->performance_context.sum_cb_ssim / frame_count,
-                        (float)config->performance_context.sum_cr_ssim / frame_count);
-                }
-
-                fflush(stdout);
+                fprintf(config->stat_file,
+                        "\nSUMMARY "
+                        "------------------------------------------------------"
+                        "---------------\n");
+                fprintf(config->stat_file,
+                        "\n\t\t\t\tAverage PSNR (using per-frame "
+                        "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|"
+                        "\tAverage SSIM\n");
+                fprintf(config->stat_file,
+                        "Total Frames\tAverage QP  \tY-PSNR   \tU-PSNR   "
+                        "\tV-PSNR\t\t| \tY-PSNR   \tU-PSNR   \tV-PSNR   \t|"
+                        "\tY-SSIM   \tU-SSIM   \tV-SSIM   "
+                        "\t|\tBitrate\n");
+                fprintf(
+                    config->stat_file,
+                    "%10ld  \t   %2.2f    \t%3.2f dB\t%3.2f dB\t%3.2f dB  "
+                    "\t|\t%3.2f dB\t%3.2f dB\t%3.2f dB \t|\t%1.5f \t%1.5f "
+                    "\t%1.5f\t\t|\t%.2f kbps\n",
+                    (long int)frame_count,
+                    (float)config->performance_context.sum_qp / frame_count,
+                    (float)config->performance_context.sum_luma_psnr / frame_count,
+                    (float)config->performance_context.sum_cb_psnr / frame_count,
+                    (float)config->performance_context.sum_cr_psnr / frame_count,
+                    (float)(get_psnr(
+                        (config->performance_context.sum_luma_sse / frame_count),
+                        max_luma_sse)),
+                    (float)(get_psnr((config->performance_context.sum_cb_sse / frame_count),
+                                        max_chroma_sse)),
+                    (float)(get_psnr((config->performance_context.sum_cr_sse / frame_count),
+                                        max_chroma_sse)),
+                    (float)config->performance_context.sum_luma_ssim / frame_count,
+                    (float)config->performance_context.sum_cb_ssim / frame_count,
+                    (float)config->performance_context.sum_cr_ssim / frame_count,
+                    ((double)(config->performance_context.byte_count << 3) * frame_rate /
+                        (config->frames_encoded * 1000)));
             }
+
+            fprintf(stderr,
+                    "\nSUMMARY --------------------------------- Channel %u  "
+                    "--------------------------------\n",
+                    inst_cnt + 1);
+            fprintf(stderr, "Total Frames\t\tFrame Rate\t\tByte Count\t\tBitrate\n");
+            fprintf(stderr,
+                    "%12d\t\t%4.2f fps\t\t%10.0f\t\t%5.2f kbps\n",
+                    (int32_t)frame_count,
+                    frame_rate,
+                    (double)config->performance_context.byte_count,
+                    ((double)(config->performance_context.byte_count << 3) * frame_rate /
+                        (config->frames_encoded * 1000)));
+
+            if (config->config.stat_report) {
+                fprintf(stderr,
+                        "\n\t\tAverage PSNR (using per-frame "
+                        "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|\t"
+                        "Average SSIM\n");
+                fprintf(stderr,
+                        "Average "
+                        "QP\tY-PSNR\t\tU-PSNR\t\tV-PSNR\t\t|\tY-PSNR\t\tU-"
+                        "PSNR\t\tV-PSNR\t\t|\tY-SSIM\tU-SSIM\tV-SSIM\n");
+                fprintf(
+                    stderr,
+                    "%11.2f\t%4.2f dB\t%4.2f dB\t%4.2f dB\t|\t%4.2f "
+                    "dB\t%4.2f dB\t%4.2f dB\t|\t%1.5f\t%1.5f\t%1.5f\n",
+                    (float)config->performance_context.sum_qp / frame_count,
+                    (float)config->performance_context.sum_luma_psnr / frame_count,
+                    (float)config->performance_context.sum_cb_psnr / frame_count,
+                    (float)config->performance_context.sum_cr_psnr / frame_count,
+                    (float)(get_psnr((config->performance_context.sum_luma_sse / frame_count),
+                                        max_luma_sse)),
+                    (float)(get_psnr((config->performance_context.sum_cb_sse / frame_count),
+                                        max_chroma_sse)),
+                    (float)(get_psnr((config->performance_context.sum_cr_sse / frame_count),
+                                        max_chroma_sse)),
+                    (float)config->performance_context.sum_luma_ssim / frame_count,
+                    (float)config->performance_context.sum_cb_ssim / frame_count,
+                    (float)config->performance_context.sum_cr_ssim / frame_count);
+            }
+
+            fflush(stdout);
         }
     }
     fprintf(stderr, "\n");

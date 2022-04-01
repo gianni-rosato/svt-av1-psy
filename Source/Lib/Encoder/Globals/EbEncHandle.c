@@ -324,9 +324,7 @@ static void enc_switch_to_real_time(){
 
 int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, EbInputResolution res_class) {
     if (config){
-        uint32_t fps            = (uint32_t)((config->frame_rate > 1000) ?
-                        config->frame_rate >> 16 :
-                        config->frame_rate);
+        uint32_t fps = config->frame_rate_numerator / config->frame_rate_denominator;
         uint32_t min_ppcs_count = (2 << config->hierarchical_levels) + 1; // min picture count to start encoding
         fps        = fps > 120 ? 120   : fps;
         fps        = fps < 24  ? 24    : fps;
@@ -2412,9 +2410,7 @@ static int32_t compute_default_intra_period(
     SequenceControlSet       *scs_ptr){
     int32_t intra_period               = 0;
     EbSvtAv1EncConfiguration   *config = &scs_ptr->static_config;
-    int32_t fps                        = config->frame_rate < 1000 ?
-                                            config->frame_rate :
-                                            config->frame_rate >> 16;
+    int32_t fps                        = scs_ptr->frame_rate >> 16;
     int32_t mini_gop_size              = (1 << (config->hierarchical_levels));
 
     intra_period                       = ((int)((fps + mini_gop_size) / mini_gop_size)*(mini_gop_size));
@@ -3639,9 +3635,7 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
                 &input_resolution,
                 scs_ptr->max_input_luma_width*scs_ptr->max_input_luma_height);
         double lm_th = (0.6 + resolution_offset[scs_ptr->ipp_was_ds][input_resolution]);
-        uint32_t fps = (uint32_t)((scs_ptr->static_config.frame_rate > 1000) ?
-            scs_ptr->static_config.frame_rate >> 16 :
-            scs_ptr->static_config.frame_rate);
+        uint32_t fps = scs_ptr->frame_rate >> 16;
         double short_shot = (stat->count < (mgs_ctls->short_shot_th * 32)) ? 1 : 0;
         double unid_motion = ((stat->mv_in_out_count / (stat->count - 1)) > mgs_ctls->lmv_di_th) && ((stat->mv_in_out_count / (stat->count - 1)) < mgs_ctls->hmv_di_th) ? 1 : 0;
         double low_frame_rate = (fps < mgs_ctls->lfr_th) ? 1 : 0;
@@ -3689,7 +3683,6 @@ void copy_api_from_app(
 
     scs_ptr->max_input_luma_width = config_struct->source_width;
     scs_ptr->max_input_luma_height = config_struct->source_height;
-    scs_ptr->frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
     // SB Definitions
     scs_ptr->static_config.pred_structure = ((EbSvtAv1EncConfiguration*)config_struct)->pred_structure;
     // Tpl is disabled in low delay applications
@@ -3833,8 +3826,11 @@ void copy_api_from_app(
 
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
-
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
+    if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS) {
+        SVT_WARN("CBR Rate control is currently not supported for PRED_RANDOM_ACCESS, switching to VBR\n");
+        scs_ptr->static_config.rate_control_mode = 1;
+    }
     if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
         if (scs_ptr->static_config.rate_control_mode == 1) {
             scs_ptr->static_config.rate_control_mode = 2;
@@ -3849,16 +3845,10 @@ void copy_api_from_app(
             SVT_WARN("Low delay mode only support encodermode [8-%d]. Forcing encoder mode to 8\n", ENC_M13);
         }
     }
-    if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass == ENC_SINGLE_PASS &&
-        scs_ptr->static_config.pred_structure != PRED_LOW_DELAY_B) {
-        scs_ptr->static_config.pred_structure = PRED_LOW_DELAY_B;
-        SVT_WARN("Forced 1pass CBR to be always low delay mode.\n");
-    }
     scs_ptr->static_config.tune = config_struct->tune;
 
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
-    scs_ptr->static_config.frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
     scs_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_denominator;
     scs_ptr->static_config.frame_rate_numerator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_numerator;
 
@@ -3945,7 +3935,7 @@ void copy_api_from_app(
     }
     // Extract frame rate from Numerator and Denominator if not 0
     if (scs_ptr->static_config.frame_rate_numerator != 0 && scs_ptr->static_config.frame_rate_denominator != 0)
-        scs_ptr->frame_rate = scs_ptr->static_config.frame_rate = (((scs_ptr->static_config.frame_rate_numerator << 8) / (scs_ptr->static_config.frame_rate_denominator)) << 8);
+        scs_ptr->frame_rate = ((scs_ptr->static_config.frame_rate_numerator << 8) / (scs_ptr->static_config.frame_rate_denominator)) << 8;
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);

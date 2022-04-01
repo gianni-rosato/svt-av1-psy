@@ -192,36 +192,6 @@ static const vector<uint32_t> invalid_source_height = {
     0, 1, 2, 4, 8, 16, 32, 63, 65, 2161,  // ...
 };
 
-/* The frequecy of images being displayed. If the number is less than 1000,
- * the input frame rate is an integer number between 1 and 60, else the input
- * number is in Q16 format, shifted by 16 bits, where max allowed is 240 fps.
- * If FrameRateNumerator and FrameRateDenominator are both not equal to zero,
- * the encoder will ignore this parameter.
- *
- * Default is 25. */
-static const vector<uint32_t> default_frame_rate = {
-    30 << 16,
-};
-static const vector<uint32_t> valid_frame_rate = {
-    1,
-    24,
-    25,
-    30,
-    50,
-    60,
-    1 << 16,
-    24 << 16,
-    25 << 16,
-    30 << 16,
-    50 << 16,
-    60 << 16,
-    120 << 16,
-    240 << 16,
-};
-static const vector<uint32_t> invalid_frame_rate = {
-    0, 241 << 16, 0xFFFFFFFF  // ...
-};
-
 // TODO: follwoing two parameters should be a combination test
 /* Frame rate numerator. When zero, the encoder will use -fps if
  * FrameRateDenominator is also zero, otherwise an error is returned.

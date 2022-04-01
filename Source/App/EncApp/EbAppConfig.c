@@ -340,15 +340,8 @@ static void set_progress(const char *value, EbConfig *cfg) {
     }
 }
 static void set_frame_rate(const char *value, EbConfig *cfg) {
-    cfg->config.frame_rate = strtoul(value, NULL, 0);
-    if (cfg->config.frame_rate <= 1000) {
-        cfg->config.frame_rate_numerator   = cfg->config.frame_rate * 1000;
-        cfg->config.frame_rate_denominator = 1000;
-        cfg->config.frame_rate <<= 16;
-    } else {
-        cfg->config.frame_rate_numerator   = (cfg->config.frame_rate >> 16) * 1000;
-        cfg->config.frame_rate_denominator = 1000;
-    }
+    cfg->config.frame_rate_numerator = strtoul(value, NULL, 0);
+    cfg->config.frame_rate_denominator = 1;
 }
 
 static void set_frame_rate_numerator(const char *value, EbConfig *cfg) {
@@ -580,10 +573,12 @@ static void set_rate_control_mode(const char *value, EbConfig *cfg) {
     cfg->config.rate_control_mode = strtoul(value, NULL, 0);
 };
 static void set_target_bit_rate(const char *value, EbConfig *cfg) {
-    cfg->config.target_bit_rate = 1000 * strtoul(value, NULL, 0);
+    const uint32_t readValue = strtoul(value, NULL, 0);
+    cfg->config.target_bit_rate = 1000 * ((readValue > 100000) ? 100000 : readValue);
 };
 static void set_max_bit_rate(const char *value, EbConfig *cfg) {
-    cfg->config.max_bit_rate = 1000 * strtoul(value, NULL, 0);
+    const uint32_t readValue = strtoul(value, NULL, 0);
+    cfg->config.max_bit_rate = 1000 * ((readValue > 100000) ? 100000 : readValue);
 };
 static void set_max_qp_allowed(const char *value, EbConfig *cfg) {
     cfg->config.max_qp_allowed = strtoul(value, NULL, 0);
@@ -992,11 +987,11 @@ ConfigEntry config_entry_rc[] = {
 
     {SINGLE_INPUT,
      TARGET_BIT_RATE_TOKEN,
-     "Target Bitrate (kbps), only applicable for VBR and CBR encoding, default is 7000 [1-4294967]",
+     "Target Bitrate (kbps), only applicable for VBR and CBR encoding, default is 7000 [1-100000]",
      set_target_bit_rate},
     {SINGLE_INPUT,
      MAX_BIT_RATE_TOKEN,
-     "Maximum Bitrate (kbps) only applicable for CRF and VBR encoding, default is 0 [1-4294967]",
+     "Maximum Bitrate (kbps) only applicable for CRF encoding, default is 0 [1-100000]",
      set_max_bit_rate},
     {SINGLE_INPUT,
      USE_QP_FILE_TOKEN,
@@ -2051,6 +2046,18 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
         fprintf(config->error_log_file,
                 "Error Instance %u: The injector frame rate should be greater than 0 fps \n",
                 channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->config.frame_rate_numerator == 0 || config->config.frame_rate_denominator == 0) {
+        fprintf(config->error_log_file,
+            "Error Instance %u: The frame_rate_numerator and frame_rate_denominator should be greater than 0\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    else if (config->config.frame_rate_numerator / config->config.frame_rate_denominator > 240 ) {
+        fprintf(config->error_log_file,
+            "Error Instance %u: The maximum allowed frame_rate is 240 fps\n",
+            channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 

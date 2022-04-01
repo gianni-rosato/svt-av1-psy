@@ -686,7 +686,7 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, SequenceControl
     me_context_ptr->hme_l1_sa = (SearchArea){8, 8};
     me_context_ptr->hme_l2_sa = (SearchArea){8, 8};
     // Scale up the MIN ME area if low frame rate
-    uint8_t low_frame_rate_flag = (scs_ptr->static_config.frame_rate >> 16) < 50 ? 1 : 0;
+    bool low_frame_rate_flag = (scs_ptr->frame_rate >> 16);
     if (low_frame_rate_flag) {
         me_context_ptr->me_sa.sa_min.width  = (me_context_ptr->me_sa.sa_min.width * 3) >> 1;
         me_context_ptr->me_sa.sa_min.height = (me_context_ptr->me_sa.sa_min.height * 3) >> 1;

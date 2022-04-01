@@ -2967,6 +2967,9 @@ void *rate_control_kernel(void *input_ptr) {
                     (uint64_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count;
             else
                 rc->rate_average_periodin_frames = 60;
+            // limit the average period to MAX_RATE_AVG_PERIOD
+            rc->rate_average_periodin_frames =
+                MIN(rc->rate_average_periodin_frames, MAX_RATE_AVG_PERIOD);
             if (!is_superres_recode_task) {
                 pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = FALSE;
             }

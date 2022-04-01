@@ -127,7 +127,16 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+    if (config->target_bit_rate > 100000000) {
+        SVT_ERROR("Instance %u: The target bit rate must be between [0, 100000] kbps \n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->max_bit_rate > 100000000) {
+        SVT_ERROR("Instance %u: The maximum bit rate must be between [0, 100000] kbps \n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
     if (config->vbr_max_section_pct > 100) {
         SVT_ERROR("Instance %u: The max section percentage must be between [0, 100] \n",
                   channel_number + 1);
@@ -245,14 +254,19 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 
     // Check if the current input video is conformant with the Level constraint
-    if (config->frame_rate > (240 << 16)) {
+    if (scs_ptr->frame_rate > (240 << 16)) {
         SVT_ERROR("Instance %u: The maximum allowed frame rate is 240 fps\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
     // Check that the frame_rate is non-zero
-    if (!config->frame_rate) {
+    if (!scs_ptr->frame_rate) {
         SVT_ERROR("Instance %u: The frame rate should be greater than 0 fps \n",
-                  channel_number + 1);
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (scs_ptr->static_config.frame_rate_numerator == 0 || scs_ptr->static_config.frame_rate_denominator == 0) {
+        SVT_ERROR("Instance %u: The frame_rate_numerator and frame_rate_denominator must be greater than 0\n",
+            channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -804,8 +818,6 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
         SVT_ERROR("The EbSvtAv1EncConfiguration structure is empty!\n");
         return EB_ErrorBadParameter;
     }
-
-    config_ptr->frame_rate                = 60 << 16;
     config_ptr->frame_rate_numerator      = 60000;
     config_ptr->frame_rate_denominator    = 1000;
     config_ptr->encoder_bit_depth         = 8;
@@ -968,18 +980,13 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
         SVT_INFO("SVT [config]: SourceWidth / SourceHeight\t\t\t\t\t: %d / %d\n",
                  config->source_width,
                  config->source_height);
-        if (config->frame_rate_denominator != 0 && config->frame_rate_numerator != 0)
-            SVT_INFO(
-                "SVT [config]: Fps_Numerator / Fps_Denominator / Gop Size / IntraRefreshType \t: "
-                "%d / %d / %d / %d\n",
-                config->frame_rate_numerator,
-                config->frame_rate_denominator,
-                config->intra_period_length + 1,
-                config->intra_refresh_type);
-        else
-            SVT_INFO("SVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d\n",
-                     config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate,
-                     config->intra_period_length + 1);
+        SVT_INFO(
+            "SVT [config]: Fps_Numerator / Fps_Denominator / Gop Size / IntraRefreshType \t: "
+            "%d / %d / %d / %d\n",
+            config->frame_rate_numerator,
+            config->frame_rate_denominator,
+            config->intra_period_length + 1,
+            config->intra_refresh_type);
         SVT_INFO("SVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d\n",
                  config->hierarchical_levels,
                  config->pred_structure);
