@@ -82,6 +82,7 @@
 #define TIER_TOKEN "--tier"
 #define LEVEL_TOKEN "--level"
 #define FILM_GRAIN_TOKEN "--film-grain"
+#define FILM_GRAIN_DENOISE_APPLY_TOKEN "--enable-dnl-denoising"
 #define INTRA_REFRESH_TYPE_TOKEN "--irefresh-type" // no Eval
 #define CDEF_ENABLE_TOKEN "--enable-cdef"
 #define SCREEN_CONTENT_TOKEN "--scm"
@@ -544,6 +545,9 @@ static void set_cfg_chroma_qindex_offsets(const char *value, EbConfig *cfg) {
 static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
     cfg->config.film_grain_denoise_strength = strtol(value, NULL, 0);
 }; //not bool to enable possible algorithm extension in the future
+static void set_cfg_film_grain_denoise_apply(const char *value, EbConfig *cfg) {
+    cfg->config.film_grain_denoise_apply = (Bool)strtol(value, NULL, 0);
+};
 static void set_enable_dlf_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_dlf_flag = !!strtoul(value, NULL, 0);
 }
@@ -1228,6 +1232,12 @@ ConfigEntry config_entry_specific[] = {
      "Enable film grain, default is 0 [0: off, 1-50: level of denoising for film grain]",
      set_cfg_film_grain},
 
+    {SINGLE_INPUT,
+     FILM_GRAIN_DENOISE_APPLY_TOKEN,
+     "Apply denoising when film grain is ON, default is 1 [0: no denoising, film grain data is still in frame header, "
+     "1: level of denoising is set by the film-grain parameter]",
+     set_cfg_film_grain_denoise_apply},
+
     // --- start: SUPER-RESOLUTION SUPPORT
     {SINGLE_INPUT,
      SUPERRES_MODE_INPUT,
@@ -1481,6 +1491,7 @@ ConfigEntry config_entry[] = {
      "RestrictedMotionVector",
      set_restricted_motion_vector},
     {SINGLE_INPUT, FILM_GRAIN_TOKEN, "FilmGrain", set_cfg_film_grain},
+    {SINGLE_INPUT, FILM_GRAIN_DENOISE_APPLY_TOKEN, "EnableDnlDenoising", set_cfg_film_grain_denoise_apply},
 
     //   Super-resolution support
     {SINGLE_INPUT, SUPERRES_MODE_INPUT, "SuperresMode", set_superres_mode},

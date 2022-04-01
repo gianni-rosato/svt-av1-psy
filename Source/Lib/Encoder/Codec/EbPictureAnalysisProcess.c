@@ -1924,6 +1924,7 @@ static int32_t apply_denoise_2d(SequenceControlSet *scs_ptr, PictureParentContro
     fg_init_data.stride_y             = pcs_ptr->enhanced_picture_ptr->stride_y;
     fg_init_data.stride_cb            = pcs_ptr->enhanced_picture_ptr->stride_cb;
     fg_init_data.stride_cr            = pcs_ptr->enhanced_picture_ptr->stride_cr;
+    fg_init_data.denoise_apply        = scs_ptr->static_config.film_grain_denoise_apply;
     EB_NEW(denoise_and_model, denoise_and_model_ctor, (EbPtr)&fg_init_data);
 
     if (svt_aom_denoise_and_model_run(denoise_and_model,

@@ -713,6 +713,16 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             channel_number + 1);
     }
 
+    if (config->film_grain_denoise_strength > 50) {
+        SVT_ERROR("Instance %u: Film grain denoise strength is only supported for values between [0,50]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->film_grain_denoise_apply != 0 && config->film_grain_denoise_apply != 1) {
+        SVT_ERROR("Instance %u: The film grain denoise apply signal can only have a value of 0 or 1\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     // Limit 8K & 16K support
     if ((uint64_t)(scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height) >
         INPUT_SIZE_4K_TH) {
@@ -872,6 +882,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
 
     // Latency
     config_ptr->film_grain_denoise_strength = 0;
+    config_ptr->film_grain_denoise_apply = 1;
 
     // CPU Flags
     config_ptr->use_cpu_flags = CPU_FLAGS_ALL;
@@ -1584,6 +1595,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"superres-kf-denom", &config_struct->superres_kf_denom},
         {"fast-decode", &config_struct->fast_decode},
         {"tune", &config_struct->tune},
+        {"enable-dnl-denoising", &config_struct->film_grain_denoise_apply},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

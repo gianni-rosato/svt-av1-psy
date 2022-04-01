@@ -213,6 +213,7 @@ typedef struct DenoiseAndModelInitData {
     uint16_t stride_y;
     uint16_t stride_cb;
     uint16_t stride_cr;
+    uint8_t denoise_apply;
 } DenoiseAndModelInitData;
 
 typedef struct AomDenoiseAndModel {
@@ -239,6 +240,7 @@ typedef struct AomDenoiseAndModel {
 
     AomFlatBlockFinder flat_block_finder;
     AomNoiseModel      noise_model;
+    uint8_t denoise_apply;
 } AomDenoiseAndModel;
 
 /************************************
