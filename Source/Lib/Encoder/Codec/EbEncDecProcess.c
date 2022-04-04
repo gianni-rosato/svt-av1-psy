@@ -4305,7 +4305,7 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
         // Set LPD1 level 0 controls
         ctrls->use_lpd1_detector[LPD1_LVL_0]       = 1;
         ctrls->use_ref_info[LPD1_LVL_0]            = 0;
-        ctrls->cost_th_dist[LPD1_LVL_0]            = 128;
+        ctrls->cost_th_dist[LPD1_LVL_0]            = 35;
         ctrls->coeff_th[LPD1_LVL_0]                = 50;
         ctrls->max_mv_length[LPD1_LVL_0]           = 300;
         ctrls->me_8x8_cost_variance_th[LPD1_LVL_0] = 250000;
@@ -4318,12 +4318,12 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
         // Set LPD1 level 0 controls
         ctrls->use_lpd1_detector[LPD1_LVL_0]       = 1;
         ctrls->use_ref_info[LPD1_LVL_0]            = 0;
-        ctrls->cost_th_dist[LPD1_LVL_0]            = 128;
+        ctrls->cost_th_dist[LPD1_LVL_0]            = 35;
         ctrls->coeff_th[LPD1_LVL_0]                = 100;
-        ctrls->max_mv_length[LPD1_LVL_0]           = 500;
+        ctrls->max_mv_length[LPD1_LVL_0]           = 900;
         ctrls->me_8x8_cost_variance_th[LPD1_LVL_0] = (uint32_t)~0;
-        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_0]   = 1024;
-        ctrls->skip_pd0_me_shift[LPD1_LVL_0]       = 1;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_0]   = 16384;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_0]       = 3;
         break;
     case 3:
         ctrls->pd1_level = LPD1_LVL_1;
