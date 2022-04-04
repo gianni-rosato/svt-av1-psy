@@ -280,10 +280,12 @@ static void write_golomb(AomWriter *w, int32_t level) {
     int32_t i      = x;
     int32_t length = 0;
 
-    while (i) {
-        i >>= 1;
-        ++length;
-    }
+    //while (i) {
+    //    i >>= 1;
+    //    ++length;
+    //}
+    length = svt_log2f(x) + 1;
+
     assert(length > 0);
 
     for (i = 0; i < length - 1; ++i) aom_write_bit(w, 0);
