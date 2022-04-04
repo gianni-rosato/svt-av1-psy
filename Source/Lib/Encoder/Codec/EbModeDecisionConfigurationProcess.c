@@ -404,7 +404,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const EbInputResolution  input_resolution    = ppcs->input_resolution;
     const uint8_t            is_islice           = pcs_ptr->slice_type == I_SLICE;
     const SliceType          slice_type          = pcs_ptr->slice_type;
-    const uint8_t            fast_decode         = scs_ptr->static_config.fast_decode;
+    const Bool               fast_decode         = scs_ptr->static_config.fast_decode;
     const uint32_t           hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
 
     //MFMV
@@ -412,9 +412,23 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_pcs_ptr->frm_hdr.error_resilient_mode) {
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     } else {
-        if (fast_decode == 0)
-            ppcs->frm_hdr.use_ref_frame_mvs = 1;
-        else {
+        if (fast_decode == 0) {
+            if (enc_mode <= ENC_M4)
+                ppcs->frm_hdr.use_ref_frame_mvs = 1;
+            else {
+                uint64_t avg_me_dist = 0;
+                for (uint16_t b64_idx = 0; b64_idx < ppcs->sb_total_count; b64_idx++) {
+                    avg_me_dist += ppcs->me_64x64_distortion[b64_idx];
+                }
+                avg_me_dist /= ppcs->sb_total_count;
+                avg_me_dist /= pcs_ptr->picture_qp;
+
+                ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 200 ||
+                    input_resolution <= INPUT_SIZE_480p_RANGE
+                    ? 1
+                    : 0;
+            }
+        } else {
             uint64_t avg_me_dist = 0;
             for (uint16_t b64_idx = 0; b64_idx < ppcs->sb_total_count; b64_idx++) {
                 avg_me_dist += ppcs->me_64x64_distortion[b64_idx];
@@ -422,16 +436,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             avg_me_dist /= ppcs->sb_total_count;
             avg_me_dist /= pcs_ptr->picture_qp;
 
-            if (fast_decode <= 1)
-                ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 200 ||
-                        input_resolution <= INPUT_SIZE_480p_RANGE
-                    ? 1
-                    : 0;
-            else
-                ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 50 ||
-                        input_resolution <= INPUT_SIZE_480p_RANGE
-                    ? 1
-                    : 0;
+            ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 50 ||
+                input_resolution <= INPUT_SIZE_480p_RANGE
+                ? 1
+                : 0;
         }
     }
 
@@ -500,10 +508,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         } else {
             pcs_ptr->wm_level = is_base ? 2 : 0;
         }
-
-        // For fast-decode level 4+, disable WM in non-BASE frames in high resolutions
-        if (fast_decode >= 4 && input_resolution >= INPUT_SIZE_720p_RANGE && !is_base)
-            pcs_ptr->wm_level = 0;
     }
 
     Bool enable_wm = pcs_ptr->wm_level ? 1 : 0;
@@ -524,16 +528,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //         0        | OFF subject to possible constraints
     //       > 1        | Faster level subject to possible constraints
     if (scs_ptr->obmc_level == DEFAULT) {
-        if (fast_decode <= 2 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+        if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
             if (ppcs->enc_mode <= ENC_M3)
                 ppcs->pic_obmc_level = 1;
             else if (enc_mode <= ENC_M6)
                 ppcs->pic_obmc_level = 2;
             else
                 ppcs->pic_obmc_level = 0;
-        } else {
+        }
+        else {
             if (ppcs->enc_mode <= ENC_M3)
-                ppcs->pic_obmc_level = input_resolution <= INPUT_SIZE_720p_RANGE ? 2 : 0;
+                ppcs->pic_obmc_level = 1;
+            else if (ppcs->enc_mode <= ENC_M5)
+                ppcs->pic_obmc_level = 2;
             else
                 ppcs->pic_obmc_level = 0;
         }
@@ -702,18 +709,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // Set the level for the distance-based red pruning
     if (pcs_ptr->parent_pcs_ptr->ref_list0_count_try > 1 ||
         pcs_ptr->parent_pcs_ptr->ref_list1_count_try > 1) {
-        if (fast_decode <= 3 || input_resolution <= INPUT_SIZE_480p_RANGE) {
-            if (enc_mode <= ENC_MR)
-                pcs_ptr->dist_based_ref_pruning = 1;
-            else if (enc_mode <= ENC_M0)
-                pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 2;
-            else if (enc_mode <= ENC_M6)
-                pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
-            else
-                pcs_ptr->dist_based_ref_pruning = 4;
-        } else {
-            pcs_ptr->dist_based_ref_pruning = 5;
-        }
+        if (enc_mode <= ENC_MR)
+            pcs_ptr->dist_based_ref_pruning = 1;
+        else if (enc_mode <= ENC_M0)
+            pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 2;
+        else if (enc_mode <= ENC_M6)
+            pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
+        else
+            pcs_ptr->dist_based_ref_pruning = 4;
     } else {
         pcs_ptr->dist_based_ref_pruning = 0;
     }
@@ -893,62 +896,117 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ppcs->sc_class1,
         pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag,
         pcs_ptr->temporal_layer_index);
+
     if (scs_ptr->super_block_size == 64) {
         if (is_islice || pcs_ptr->parent_pcs_ptr->transition_present) {
             pcs_ptr->pic_depth_removal_level = 0;
-        } else {
+        }
+        else {
             // Set depth_removal_level_controls
             if (pcs_ptr->parent_pcs_ptr->sc_class1) {
                 if (enc_mode <= ENC_M8)
                     pcs_ptr->pic_depth_removal_level = 0;
                 else if (enc_mode <= ENC_M10) {
                     pcs_ptr->pic_depth_removal_level = is_base ? 0 : 6;
-
-                } else if (enc_mode <= ENC_M12) {
+                }
+                else if (enc_mode <= ENC_M12) {
                     pcs_ptr->pic_depth_removal_level = is_base ? 4 : 6;
-                } else {
+                }
+                else {
                     pcs_ptr->pic_depth_removal_level = is_base ? 5 : 14;
                 }
-            } else if (enc_mode <= ENC_M2)
-                pcs_ptr->pic_depth_removal_level = 0;
-            else if (enc_mode <= ENC_M5) {
-                if (input_resolution <= INPUT_SIZE_480p_RANGE)
+            }
+            else if (fast_decode == 0) {
+                if (enc_mode <= ENC_M2)
                     pcs_ptr->pic_depth_removal_level = 0;
-                else
-                    pcs_ptr->pic_depth_removal_level = 2;
-            } else if (enc_mode <= ENC_M7) {
-                if (input_resolution <= INPUT_SIZE_1080p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = 1;
-                else
-                    pcs_ptr->pic_depth_removal_level = 2;
-            } else if (enc_mode <= ENC_M9) {
-                if (input_resolution <= INPUT_SIZE_360p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
-                else if (input_resolution <= INPUT_SIZE_480p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
-                else
-                    pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
-            } else if (enc_mode <= ENC_M11) {
-                if (input_resolution <= INPUT_SIZE_360p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 2 : 4;
-                else if (input_resolution <= INPUT_SIZE_480p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
-                else if (input_resolution <= INPUT_SIZE_720p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
-                else if (input_resolution <= INPUT_SIZE_1080p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 3 : 8;
-                else
-                    pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
-            } else {
-                if (input_resolution <= INPUT_SIZE_360p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = 7;
-                else if (input_resolution <= INPUT_SIZE_480p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 9 : 11;
-                else
-                    pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
+                else if (enc_mode <= ENC_M5) {
+                    if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = 0;
+                    else
+                        pcs_ptr->pic_depth_removal_level = 2;
+                }
+                else if (enc_mode <= ENC_M7) {
+                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = 1;
+                    else
+                        pcs_ptr->pic_depth_removal_level = 2;
+                }
+                else if (enc_mode <= ENC_M9) {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
+                }
+                else if (enc_mode <= ENC_M11) {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 4;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
+                    else if (input_resolution <= INPUT_SIZE_720p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
+                    else if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 3 : 8;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
+                }
+                else {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = 7;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 9 : 11;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
+                }
+            }
+            else {
+                if (enc_mode <= ENC_M2)
+                    pcs_ptr->pic_depth_removal_level = 0;
+                else if (enc_mode <= ENC_M5) {
+                    if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = 0;
+                    else
+                        pcs_ptr->pic_depth_removal_level = 2;
+                }
+                else if (enc_mode <= ENC_M7) {
+                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = 1;
+                    else
+                        pcs_ptr->pic_depth_removal_level = 2;
+                }
+                else if (enc_mode <= ENC_M8) {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
+                }
+                else if (enc_mode <= ENC_M11) {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 4;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
+                    else if (input_resolution <= INPUT_SIZE_720p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
+                    else if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 3 : 8;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
+                }
+                else {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = 7;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 9 : 11;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
+                }
             }
         }
     }
+
     if (pcs_ptr->parent_pcs_ptr->sc_class1) {
         if (enc_mode <= ENC_M6)
             pcs_ptr->pic_block_based_depth_refinement_level = 0;
@@ -971,6 +1029,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
     } else
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
+
     if (scs_ptr->max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1))
         pcs_ptr->pic_block_based_depth_refinement_level = MAX(
             0, pcs_ptr->pic_block_based_depth_refinement_level - 1);

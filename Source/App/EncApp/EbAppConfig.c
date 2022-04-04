@@ -555,7 +555,7 @@ static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_mfmv = strtol(value, NULL, 0);
 };
 static void set_fast_decode_flag(const char *value, EbConfig *cfg) {
-    cfg->config.fast_decode = (uint8_t)strtol(value, NULL, 0);
+    cfg->config.fast_decode = (Bool)strtol(value, NULL, 0);
 };
 static void set_tile_row(const char *value, EbConfig *cfg) {
     cfg->config.tile_rows = strtoul(value, NULL, 0);
@@ -1191,7 +1191,7 @@ ConfigEntry config_entry_specific[] = {
      set_enable_mfmv_flag},
     {SINGLE_INPUT,
      FAST_DECODE_TOKEN,
-     "Fast Decoder levels, default is 0 [0-4]",
+     "Fast Decoder levels, default is 0 [0-1]",
      set_fast_decode_flag},
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,

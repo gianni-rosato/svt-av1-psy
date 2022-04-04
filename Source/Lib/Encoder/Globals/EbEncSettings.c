@@ -456,14 +456,16 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             config->enable_mfmv);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->fast_decode > 4) {
+
+    if (config->fast_decode > 1) {
         SVT_ERROR(
-            "Instance %u: Invalid fast decode flag [0 - 4, 0 for no decoder optimization], your "
+            "Instance %u: Invalid fast decode flag [0 - 1, 0 for no decoder optimization], your "
             "input: %d\n",
             channel_number + 1,
             config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
+
     if (config->tune > 1) {
         SVT_ERROR(
             "Instance %u: Invalid tune flag [0 - 1, 0 for VQ and 1 for PSNR], your input: %d\n",

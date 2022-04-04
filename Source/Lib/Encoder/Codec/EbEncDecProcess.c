@@ -5524,7 +5524,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     const EbInputResolution  input_resolution     = ppcs->input_resolution;
     const uint8_t            is_islice            = pcs_ptr->slice_type == I_SLICE;
     const uint32_t           hierarchical_levels  = scs->static_config.hierarchical_levels;
-    const uint8_t            fast_decode          = scs->static_config.fast_decode;
+    const Bool               fast_decode          = scs->static_config.fast_decode;
     const uint32_t           picture_qp           = pcs_ptr->picture_qp;
     uint32_t                 me_8x8_cost_variance = (uint32_t)~0;
     uint32_t                 me_64x64_distortion  = (uint32_t)~0;
@@ -5692,14 +5692,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     } else if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
-        else if (enc_mode <= ENC_M10)
+        else if (enc_mode <= ENC_M6)
             rate_est_level = 2;
+        else if (enc_mode <= ENC_M10)
+            rate_est_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 3;
         else if (enc_mode <= ENC_M12)
             rate_est_level = is_islice ? 3 : 4;
         else
             rate_est_level = is_islice ? 3 : 0;
-    } else {
-        if (enc_mode <= ENC_M10)
+    }
+    else {
+        if (enc_mode <= ENC_M4)
+            rate_est_level = 3;
+        else if (enc_mode <= ENC_M6)
+            rate_est_level = 2;
+        else if (enc_mode <= ENC_M10)
             rate_est_level = 3;
         else if (enc_mode <= ENC_M12)
             rate_est_level = is_islice ? 3 : 4;
