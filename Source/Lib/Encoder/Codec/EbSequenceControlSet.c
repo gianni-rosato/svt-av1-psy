@@ -60,6 +60,33 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs, EbPtr object_
     scs->bits_for_picture_order_count = 16;
     scs->film_grain_random_seed       = 7391;
 
+    // Initialize certain sequence header variables here for write_sequence_header(),
+    // which may be called before the first picture has been encoded when ffmpeg is used
+    // (e.g. may be needed to construct mkv/mp4 container headers)
+    scs->seq_header.frame_width_bits = 16;
+    scs->seq_header.frame_height_bits = 16;
+    scs->seq_header.frame_id_numbers_present_flag = 0;
+    scs->seq_header.frame_id_length = FRAME_ID_LENGTH;
+    scs->seq_header.delta_frame_id_length = DELTA_FRAME_ID_LENGTH;
+
+    // 0 - disable dual interpolation filter
+    // 1 - enable vertical and horiz filter selection
+    scs->seq_header.enable_dual_filter = 0;
+
+    // 0 - force off
+    // 1 - force on
+    // 2 - adaptive
+    scs->seq_header.seq_force_screen_content_tools = 2;
+
+    // 0 - Not to force. MV can be in 1/4 or 1/8
+    // 1 - force to integer
+    // 2 - adaptive
+    scs->seq_header.seq_force_integer_mv = 2;
+
+    scs->seq_header.order_hint_info.enable_ref_frame_mvs = 1;
+    scs->seq_header.order_hint_info.enable_order_hint = 1;
+    scs->seq_header.order_hint_info.order_hint_bits = 7;
+
     return EB_ErrorNone;
 }
 extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
