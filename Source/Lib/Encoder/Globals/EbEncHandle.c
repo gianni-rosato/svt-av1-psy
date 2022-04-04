@@ -3816,6 +3816,7 @@ void copy_api_from_app(
     if (scs_ptr->static_config.film_grain_denoise_strength == 0 && scs_ptr->static_config.film_grain_denoise_apply == 0) {
         SVT_WARN("Film grain denoise apply signal is going to be ignored when film grain is off.\n");
     }
+    scs_ptr->seq_header.film_grain_params_present = (uint8_t)(scs_ptr->static_config.film_grain_denoise_strength>0);
 
     // MD Parameters
     scs_ptr->enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth > 8 ? DEFAULT : 0;

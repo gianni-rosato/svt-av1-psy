@@ -1951,8 +1951,6 @@ EbErrorType denoise_estimate_film_grain(SequenceControlSet      *scs_ptr,
             return 1;
     }
 
-    scs_ptr->seq_header.film_grain_params_present |= frm_hdr->film_grain_params.apply_grain;
-
     return return_error; //todo: add proper error handling
 }
 
