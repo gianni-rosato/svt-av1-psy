@@ -61,8 +61,10 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs, EbPtr object_
     scs->film_grain_random_seed       = 7391;
 
     // Initialize certain sequence header variables here for write_sequence_header(),
-    // which may be called before the first picture has been encoded when ffmpeg is used
-    // (e.g. may be needed to construct mkv/mp4 container headers)
+    // which may be called before the first picture hits resource coordination thread
+    // (e.g. when ffmpeg is used it may be called first to construct mkv/mp4 container headers).
+    // Whenever possible, it is recommended to initialize all sequence header info here
+    // instead of in resource coordination.
     scs->seq_header.frame_width_bits = 16;
     scs->seq_header.frame_height_bits = 16;
     scs->seq_header.frame_id_numbers_present_flag = 0;
