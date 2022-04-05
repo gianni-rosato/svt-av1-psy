@@ -149,13 +149,6 @@ void svt_av1_apply_temporal_filter_planewise_medium_hbd_c(
 
 int32_t noise_log1p_fp16(int32_t noise_level_fp16);
 
-int32_t estimate_noise_fp16(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
-
-int32_t estimate_noise_highbd_fp16(const uint16_t *src, int width, int height, int stride, int bd);
-
-double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
-
-double estimate_noise_highbd(const uint16_t *src, int width, int height, int stride, int bd);
 typedef struct {
     uint8_t      subpel_pel_mode;
     signed short xd;

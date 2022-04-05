@@ -2029,3 +2029,376 @@ void apply_filtering_central_highbd_avx2(MeContext           *context_ptr,
             blk_width_ch, blk_height_ch, src_16bit[C_V], src_stride_ch, accum[C_V], count[C_V]);
     }
 }
+
+int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y) {
+    int64_t sum = 0;
+    int64_t num = 0;
+
+    //  A | B | C
+    //  D | E | F
+    //  G | H | I
+    // g_x = (A - I) + (G - C) + 2*(D - F)
+    // g_y = (A - I) - (G - C) + 2*(B - H)
+    // v   = 4*E - 2*(D+F+B+H) + (A+C+G+I)
+
+    const __m256i zero            = _mm256_setzero_si256();
+    const __m256i edge_treshold   = _mm256_set1_epi16(EDGE_THRESHOLD);
+    __m256i       num_accumulator = _mm256_setzero_si256();
+    __m256i       sum_accumulator = _mm256_setzero_si256();
+
+    for (int i = 1; i < height - 1; ++i) {
+        int j = 1;
+        for (; j + 16 < width - 1; j += 16) {
+            const int k = i * stride_y + j;
+
+            __m256i A = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k - stride_y - 1])));
+            __m256i B = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k - stride_y])));
+            __m256i C = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k - stride_y + 1])));
+            __m256i D = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k - 1])));
+            __m256i E = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k])));
+            __m256i F = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + 1])));
+            __m256i G = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + stride_y - 1])));
+            __m256i H = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + stride_y])));
+            __m256i I = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + stride_y + 1])));
+
+            __m256i A_m_I = _mm256_sub_epi16(A, I);
+            __m256i G_m_C = _mm256_sub_epi16(G, C);
+            __m256i D_m_Fx2 = _mm256_slli_epi16(_mm256_sub_epi16(D, F), 1);
+            __m256i B_m_Hx2 = _mm256_slli_epi16(_mm256_sub_epi16(B, H), 1);
+
+            __m256i gx_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
+            __m256i gy_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
+            __m256i ga_avx = _mm256_add_epi16(gx_avx, gy_avx);
+
+            __m256i D_F_B_Hx2 = _mm256_slli_epi16(_mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
+            __m256i A_C_G_I = _mm256_add_epi16(_mm256_add_epi16(A, C), _mm256_add_epi16(G, I));
+            __m256i v_avx2  = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
+
+            //if (ga < EDGE_THRESHOLD)
+            __m256i cmp = _mm256_srli_epi16(_mm256_cmpgt_epi16(edge_treshold, ga_avx), 15);
+            v_avx2      = _mm256_mullo_epi16(v_avx2, cmp);
+
+            //num_accumulator and sum_accumulator have 32bit values
+            num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpacklo_epi16(cmp, zero));
+            num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpackhi_epi16(cmp, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpacklo_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpackhi_epi16(v_avx2, zero));
+        }
+        for (; j < width - 1; ++j) {
+            const int k = i * stride_y + j;
+
+            // Sobel gradients
+            const int g_x = (src[k - stride_y - 1] - src[k - stride_y + 1]) +
+                (src[k + stride_y - 1] - src[k + stride_y + 1]) + 2 * (src[k - 1] - src[k + 1]);
+            const int g_y = (src[k - stride_y - 1] - src[k + stride_y - 1]) +
+                (src[k - stride_y + 1] - src[k + stride_y + 1]) +
+                2 * (src[k - stride_y] - src[k + stride_y]);
+            const int ga = abs(g_x) + abs(g_y);
+
+            if (ga < EDGE_THRESHOLD) { // Do not consider edge pixels to estimate the noise
+                // Find Laplacian
+                const int v = 4 * src[k] -
+                    2 * (src[k - 1] + src[k + 1] + src[k - stride_y] + src[k + stride_y]) +
+                    (src[k - stride_y - 1] + src[k - stride_y + 1] + src[k + stride_y - 1] +
+                     src[k + stride_y + 1]);
+                sum += abs(v);
+                ++num;
+            }
+        }
+    }
+
+    __m256i sum_avx = _mm256_hadd_epi32(sum_accumulator, num_accumulator);
+    sum_avx         = _mm256_hadd_epi32(sum_avx, sum_avx);
+    __m128i sum_sse = _mm256_castsi256_si128(sum_avx);
+    sum_sse         = _mm_add_epi32(sum_sse, _mm256_extractf128_si256(sum_avx, 1));
+    sum += _mm_cvtsi128_si32(sum_sse);
+    num += _mm_cvtsi128_si32(_mm_srli_si128(sum_sse, 4));
+
+    // If very few smooth pels, return -1 since the estimate is unreliable
+    if (num < SMOOTH_THRESHOLD) {
+        return -65536 /*-1:fp16*/;
+    }
+
+    FP_ASSERT((((int64_t)sum * SQRT_PI_BY_2_FP16) / (6 * num)) < ((int64_t)1 << 31));
+    return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
+}
+
+
+int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int height, int stride, int bd) {
+    int64_t sum = 0;
+    int64_t num = 0;
+
+    //  A | B | C
+    //  D | E | F
+    //  G | H | I
+    // g_x = (A - I) + (G - C) + 2*(D - F)
+    // g_y = (A - I) - (G - C) + 2*(B - H)
+    // v   = 4*E - 2*(D+F+B+H) + (A+C+G+I)
+
+    const __m256i zero            = _mm256_setzero_si256();
+    const __m256i edge_treshold   = _mm256_set1_epi16(EDGE_THRESHOLD);
+    __m256i       num_accumulator = _mm256_setzero_si256();
+    __m256i       sum_accumulator = _mm256_setzero_si256();
+    const __m256i rounding        = _mm256_set1_epi16(1 << ((bd - 8) - 1));
+
+    for (int i = 1; i < height - 1; ++i) {
+        int j = 1;
+        for (; j + 16 < width - 1; j += 16) {
+            const int k = i * stride + j;
+
+            __m256i A = _mm256_loadu_si256((__m256i *)(&src[k - stride - 1]));
+            __m256i B = _mm256_loadu_si256((__m256i *)(&src[k - stride]));
+            __m256i C = _mm256_loadu_si256((__m256i *)(&src[k - stride + 1]));
+            __m256i D = _mm256_loadu_si256((__m256i *)(&src[k - 1]));
+            __m256i E = _mm256_loadu_si256((__m256i *)(&src[k]));
+            __m256i F = _mm256_loadu_si256((__m256i *)(&src[k + 1]));
+            __m256i G = _mm256_loadu_si256((__m256i *)(&src[k + stride - 1]));
+            __m256i H = _mm256_loadu_si256((__m256i *)(&src[k + stride]));
+            __m256i I = _mm256_loadu_si256((__m256i *)(&src[k + stride + 1]));
+
+            __m256i A_m_I = _mm256_sub_epi16(A, I);
+            __m256i G_m_C = _mm256_sub_epi16(G, C);
+            __m256i D_m_Fx2 = _mm256_slli_epi16(_mm256_sub_epi16(D, F), 1);
+            __m256i B_m_Hx2 = _mm256_slli_epi16(_mm256_sub_epi16(B, H), 1);
+
+            __m256i gx_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
+            __m256i gy_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
+            __m256i ga_avx = _mm256_srai_epi16(_mm256_add_epi16(_mm256_add_epi16(gx_avx, gy_avx),rounding), (bd - 8));
+
+            __m256i D_F_B_Hx2 = _mm256_slli_epi16(_mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
+            __m256i A_C_G_I = _mm256_add_epi16(_mm256_add_epi16(A, C), _mm256_add_epi16(G, I));
+            __m256i v_avx2  = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
+
+            //if (ga < EDGE_THRESHOLD)
+            __m256i cmp = _mm256_srli_epi16(_mm256_cmpgt_epi16(edge_treshold, ga_avx), 15);
+            v_avx2      = _mm256_srai_epi16(_mm256_add_epi16(_mm256_mullo_epi16(v_avx2, cmp),rounding), (bd - 8));
+
+            //num_accumulator and sum_accumulator have 32bit values
+            num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpacklo_epi16(cmp, zero));
+            num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpackhi_epi16(cmp, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpacklo_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpackhi_epi16(v_avx2, zero));
+        }
+        for (; j < width - 1; ++j) {
+            const int k = i * stride + j;
+
+            // Sobel gradients
+            const int g_x = (src[k - stride - 1] - src[k - stride + 1]) +
+                (src[k + stride - 1] - src[k + stride + 1]) + 2 * (src[k - 1] - src[k + 1]);
+            const int g_y = (src[k - stride - 1] - src[k + stride - 1]) +
+                (src[k - stride + 1] - src[k + stride + 1]) +
+                2 * (src[k - stride] - src[k + stride]);
+            const int ga = ROUND_POWER_OF_TWO(abs(g_x) + abs(g_y),
+                                              bd - 8); // divide by 2^2 and round up
+            if (ga < EDGE_THRESHOLD) { // Do not consider edge pixels to estimate the noise
+                // Find Laplacian
+                const int v = 4 * src[k] -
+                    2 * (src[k - 1] + src[k + 1] + src[k - stride] + src[k + stride]) +
+                    (src[k - stride - 1] + src[k - stride + 1] + src[k + stride - 1] +
+                     src[k + stride + 1]);
+                sum += ROUND_POWER_OF_TWO(abs(v), bd - 8);
+                ++num;
+            }
+        }
+    }
+
+    __m256i sum_avx = _mm256_hadd_epi32(sum_accumulator, num_accumulator);
+    sum_avx         = _mm256_hadd_epi32(sum_avx, sum_avx);
+    __m128i sum_sse = _mm256_castsi256_si128(sum_avx);
+    sum_sse         = _mm_add_epi32(sum_sse, _mm256_extractf128_si256(sum_avx, 1));
+    sum += _mm_cvtsi128_si32(sum_sse);
+    num += _mm_cvtsi128_si32(_mm_srli_si128(sum_sse, 4));
+
+    // If very few smooth pels, return -1 since the estimate is unreliable
+    if (num < SMOOTH_THRESHOLD) {
+        return -65536 /*-1:fp16*/;
+    }
+
+    FP_ASSERT((((int64_t)sum * SQRT_PI_BY_2_FP16) / (6 * num)) < ((int64_t)1 << 31));
+    return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
+}
+
+double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y) {
+    int64_t sum = 0;
+    int64_t num = 0;
+
+    //  A | B | C
+    //  D | E | F
+    //  G | H | I
+    // g_x = (A - I) + (G - C) + 2*(D - F)
+    // g_y = (A - I) - (G - C) + 2*(B - H)
+    // v   = 4*E - 2*(D+F+B+H) + (A+C+G+I)
+
+    const __m256i zero            = _mm256_setzero_si256();
+    const __m256i edge_treshold   = _mm256_set1_epi16(EDGE_THRESHOLD);
+    __m256i       num_accumulator = _mm256_setzero_si256();
+    __m256i       sum_accumulator = _mm256_setzero_si256();
+
+    for (int i = 1; i < height - 1; ++i) {
+        int j = 1;
+        for (; j + 16 < width - 1; j += 16) {
+            const int k = i * stride_y + j;
+
+            __m256i A = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k - stride_y - 1])));
+            __m256i B = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k - stride_y])));
+            __m256i C = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k - stride_y + 1])));
+            __m256i D = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k - 1])));
+            __m256i E = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k])));
+            __m256i F = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + 1])));
+            __m256i G = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + stride_y - 1])));
+            __m256i H = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + stride_y])));
+            __m256i I = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + stride_y + 1])));
+
+            __m256i A_m_I   = _mm256_sub_epi16(A, I);
+            __m256i G_m_C   = _mm256_sub_epi16(G, C);
+            __m256i D_m_Fx2 = _mm256_slli_epi16(_mm256_sub_epi16(D, F), 1);
+            __m256i B_m_Hx2 = _mm256_slli_epi16(_mm256_sub_epi16(B, H), 1);
+
+            __m256i gx_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
+            __m256i gy_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
+            __m256i ga_avx = _mm256_add_epi16(gx_avx, gy_avx);
+
+            __m256i D_F_B_Hx2 = _mm256_slli_epi16(_mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
+            __m256i A_C_G_I = _mm256_add_epi16(_mm256_add_epi16(A, C), _mm256_add_epi16(G, I));
+            __m256i v_avx2  = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
+
+            //if (ga < EDGE_THRESHOLD)
+            __m256i cmp = _mm256_srli_epi16(_mm256_cmpgt_epi16(edge_treshold, ga_avx), 15);
+            v_avx2      = _mm256_mullo_epi16(v_avx2, cmp);
+
+            //num_accumulator and sum_accumulator have 32bit values
+            num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpacklo_epi16(cmp, zero));
+            num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpackhi_epi16(cmp, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpacklo_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpackhi_epi16(v_avx2, zero));
+        }
+        for (; j < width - 1; ++j) {
+            const int k = i * stride_y + j;
+
+            // Sobel gradients
+            const int g_x = (src[k - stride_y - 1] - src[k - stride_y + 1]) +
+                (src[k + stride_y - 1] - src[k + stride_y + 1]) + 2 * (src[k - 1] - src[k + 1]);
+            const int g_y = (src[k - stride_y - 1] - src[k + stride_y - 1]) +
+                (src[k - stride_y + 1] - src[k + stride_y + 1]) +
+                2 * (src[k - stride_y] - src[k + stride_y]);
+            const int ga = abs(g_x) + abs(g_y);
+
+            if (ga < EDGE_THRESHOLD) { // Do not consider edge pixels to estimate the noise
+                // Find Laplacian
+                const int v = 4 * src[k] -
+                    2 * (src[k - 1] + src[k + 1] + src[k - stride_y] + src[k + stride_y]) +
+                    (src[k - stride_y - 1] + src[k - stride_y + 1] + src[k + stride_y - 1] +
+                     src[k + stride_y + 1]);
+                sum += abs(v);
+                ++num;
+            }
+        }
+    }
+
+    __m256i sum_avx = _mm256_hadd_epi32(sum_accumulator, num_accumulator);
+    sum_avx         = _mm256_hadd_epi32(sum_avx, sum_avx);
+    __m128i sum_sse = _mm256_castsi256_si128(sum_avx);
+    sum_sse         = _mm_add_epi32(sum_sse, _mm256_extractf128_si256(sum_avx, 1));
+    sum += _mm_cvtsi128_si32(sum_sse);
+    num += _mm_cvtsi128_si32(_mm_srli_si128(sum_sse, 4));
+
+    // If very few smooth pels, return -1 since the estimate is unreliable
+    if (num < SMOOTH_THRESHOLD)
+        return -1.0;
+
+    const double sigma = (double)sum / (6 * num) * SQRT_PI_BY_2;
+    return sigma;
+}
+
+double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height, int stride, int bd) {
+    int64_t sum = 0;
+    int64_t num = 0;
+
+    //  A | B | C
+    //  D | E | F
+    //  G | H | I
+    // g_x = (A - I) + (G - C) + 2*(D - F)
+    // g_y = (A - I) - (G - C) + 2*(B - H)
+    // v   = 4*E - 2*(D+F+B+H) + (A+C+G+I)
+
+    const __m256i zero            = _mm256_setzero_si256();
+    const __m256i edge_treshold   = _mm256_set1_epi16(EDGE_THRESHOLD);
+    __m256i       num_accumulator = _mm256_setzero_si256();
+    __m256i       sum_accumulator = _mm256_setzero_si256();
+    const __m256i rounding        = _mm256_set1_epi16(1 << ((bd - 8) - 1));
+
+    for (int i = 1; i < height - 1; ++i) {
+        int j = 1;
+        for (; j + 16 < width - 1; j += 16) {
+            const int k = i * stride + j;
+
+            __m256i A = _mm256_loadu_si256((__m256i *)(&src[k - stride - 1]));
+            __m256i B = _mm256_loadu_si256((__m256i *)(&src[k - stride]));
+            __m256i C = _mm256_loadu_si256((__m256i *)(&src[k - stride + 1]));
+            __m256i D = _mm256_loadu_si256((__m256i *)(&src[k - 1]));
+            __m256i E = _mm256_loadu_si256((__m256i *)(&src[k]));
+            __m256i F = _mm256_loadu_si256((__m256i *)(&src[k + 1]));
+            __m256i G = _mm256_loadu_si256((__m256i *)(&src[k + stride - 1]));
+            __m256i H = _mm256_loadu_si256((__m256i *)(&src[k + stride]));
+            __m256i I = _mm256_loadu_si256((__m256i *)(&src[k + stride + 1]));
+
+            __m256i A_m_I   = _mm256_sub_epi16(A, I);
+            __m256i G_m_C   = _mm256_sub_epi16(G, C);
+            __m256i D_m_Fx2 = _mm256_slli_epi16(_mm256_sub_epi16(D, F), 1);
+            __m256i B_m_Hx2 = _mm256_slli_epi16(_mm256_sub_epi16(B, H), 1);
+
+            __m256i gx_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
+            __m256i gy_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
+            __m256i ga_avx = _mm256_srai_epi16(_mm256_add_epi16(_mm256_add_epi16(gx_avx, gy_avx), rounding), (bd - 8));
+
+            __m256i D_F_B_Hx2 = _mm256_slli_epi16(_mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
+            __m256i A_C_G_I = _mm256_add_epi16(_mm256_add_epi16(A, C), _mm256_add_epi16(G, I));
+            __m256i v_avx2  = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
+
+            //if (ga < EDGE_THRESHOLD)
+            __m256i cmp = _mm256_srli_epi16(_mm256_cmpgt_epi16(edge_treshold, ga_avx), 15);
+            v_avx2 = _mm256_srai_epi16(_mm256_add_epi16(_mm256_mullo_epi16(v_avx2, cmp), rounding),(bd - 8));
+
+            //num_accumulator and sum_accumulator have 32bit values
+            num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpacklo_epi16(cmp, zero));
+            num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpackhi_epi16(cmp, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpacklo_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpackhi_epi16(v_avx2, zero));
+        }
+        for (; j < width - 1; ++j) {
+            const int k = i * stride + j;
+
+            // Sobel gradients
+            const int g_x = (src[k - stride - 1] - src[k - stride + 1]) +
+                (src[k + stride - 1] - src[k + stride + 1]) + 2 * (src[k - 1] - src[k + 1]);
+            const int g_y = (src[k - stride - 1] - src[k + stride - 1]) +
+                (src[k - stride + 1] - src[k + stride + 1]) +
+                2 * (src[k - stride] - src[k + stride]);
+            const int ga = ROUND_POWER_OF_TWO(abs(g_x) + abs(g_y),
+                                              bd - 8); // divide by 2^2 and round up
+            if (ga < EDGE_THRESHOLD) { // Do not consider edge pixels to estimate the noise
+                // Find Laplacian
+                const int v = 4 * src[k] -
+                    2 * (src[k - 1] + src[k + 1] + src[k - stride] + src[k + stride]) +
+                    (src[k - stride - 1] + src[k - stride + 1] + src[k + stride - 1] +
+                     src[k + stride + 1]);
+                sum += ROUND_POWER_OF_TWO(abs(v), bd - 8);
+                ++num;
+            }
+        }
+    }
+
+    __m256i sum_avx = _mm256_hadd_epi32(sum_accumulator, num_accumulator);
+    sum_avx         = _mm256_hadd_epi32(sum_avx, sum_avx);
+    __m128i sum_sse = _mm256_castsi256_si128(sum_avx);
+    sum_sse         = _mm_add_epi32(sum_sse, _mm256_extractf128_si256(sum_avx, 1));
+    sum += _mm_cvtsi128_si32(sum_sse);
+    num += _mm_cvtsi128_si32(_mm_srli_si128(sum_sse, 4));
+
+    // If very few smooth pels, return -1 since the estimate is unreliable
+    if (num < SMOOTH_THRESHOLD)
+        return -1.0;
+
+    const double sigma = (double)sum / (6 * num) * SQRT_PI_BY_2;
+    return sigma;
+}

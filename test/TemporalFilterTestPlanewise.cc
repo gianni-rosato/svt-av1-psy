@@ -1512,3 +1512,172 @@ TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_avx2) {
         RunTest(true, NULL, apply_filtering_central_highbd_avx2);
     }
 }
+
+int32_t estimate_noise_fp16_c_wrapper(const uint16_t* src, int width, int height, int stride, int bd) {
+    UNUSED(bd);
+    return svt_estimate_noise_fp16_c((const uint8_t *)src, width, height, stride);
+}
+int32_t estimate_noise_fp16_avx2_wrapper(const uint16_t* src, int width, int height, int stride, int bd) {
+    UNUSED(bd);
+    return svt_estimate_noise_fp16_avx2((const uint8_t *)src, width, height, stride);
+}
+
+typedef int32_t (*EstimateNoiseFuncFP)(const uint16_t *src, int width,
+                                       int height, int stride, int bd);
+
+typedef std::tuple<EstimateNoiseFuncFP, EstimateNoiseFuncFP, int, int, int> EstimateNoiseParamFP;
+class EstimateNoiseTestFP
+    : public ::testing::TestWithParam<EstimateNoiseParamFP> {
+  public:
+    EstimateNoiseTestFP() : rnd_(0, (1 << TEST_GET_PARAM(4)) - 1){};
+    ~EstimateNoiseTestFP() {
+    }
+
+    void SetUp() {
+        ref_func = TEST_GET_PARAM(0);
+        tst_func = TEST_GET_PARAM(1);
+        width = TEST_GET_PARAM(2);
+        height= TEST_GET_PARAM(3);
+        encoder_bit_depth = TEST_GET_PARAM(4);
+        src_ptr = reinterpret_cast<uint16_t *>(svt_aom_memalign(8, 4000 * 2500 * sizeof(uint16_t)));
+        GenRandomData(4000 * 2500);
+    }
+
+    void TearDown() {
+            svt_aom_free(src_ptr);
+    }
+    void RunTest() {
+
+        for (int i = 0; i < 10; i++) {
+            stride = width + rnd_.random() % 100;
+            int32_t ref_out = ref_func(src_ptr, width, height, stride, encoder_bit_depth);
+            int32_t tst_out = tst_func(src_ptr, width, height, stride, encoder_bit_depth);
+
+            EXPECT_EQ(ref_out, tst_out);
+        }
+    }
+
+    void GenRandomData(int size) {
+        if (encoder_bit_depth == 8) {
+            for (int ii = 0; ii < size; ii++)
+                src_ptr[ii] = rnd_.Rand16();
+        }else
+            for (int ii = 0; ii < size; ii++)
+                src_ptr[ii] = rnd_.random();
+    }
+
+  private:
+    EstimateNoiseFuncFP ref_func;
+    EstimateNoiseFuncFP tst_func;
+    SVTRandom rnd_;
+    uint16_t *src_ptr;
+    int width;
+    int height;
+    uint32_t encoder_bit_depth;
+    int stride;
+};
+
+TEST_P(EstimateNoiseTestFP, fixed_point) {
+        RunTest();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2_lbd, EstimateNoiseTestFP,
+    ::testing::Combine(::testing::Values(estimate_noise_fp16_c_wrapper),
+                       ::testing::Values(estimate_noise_fp16_avx2_wrapper),
+                       ::testing::Values(3840, 1920, 1280, 800, 640, 360),
+                       ::testing::Values(2160, 1080, 720, 600, 480, 240),
+                       ::testing::Values(8)));
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2_hbd, EstimateNoiseTestFP,
+    ::testing::Combine(::testing::Values(svt_estimate_noise_highbd_fp16_c),
+                       ::testing::Values(svt_estimate_noise_highbd_fp16_avx2),
+                       ::testing::Values(3840, 1920, 1280, 800, 640, 360),
+                       ::testing::Values(2160, 1080, 720, 600, 480, 240),
+                       ::testing::Values(10,12)));
+
+double estimate_noise_c_wrapper(const uint16_t *src, int width, int height, int stride, int bd) {
+    UNUSED(bd);
+    return svt_estimate_noise_c((const uint8_t *)src, width, height, stride);
+}
+double estimate_noise_avx2_wrapper(const uint16_t *src, int width, int height, int stride, int bd) {
+    UNUSED(bd);
+    return svt_estimate_noise_avx2((const uint8_t *)src, width, height, stride);
+}
+
+typedef double (*EstimateNoiseFuncDbl)(const uint16_t *src, int width,
+                                       int height, int stride, int bd);
+
+typedef std::tuple<EstimateNoiseFuncDbl, EstimateNoiseFuncDbl, int, int, int>
+    EstimateNoiseParamDbl;
+class EstimateNoiseTestDbl
+    : public ::testing::TestWithParam<EstimateNoiseParamDbl> {
+  public:
+    EstimateNoiseTestDbl() : rnd_(0, (1 << TEST_GET_PARAM(4)) - 1){};
+    ~EstimateNoiseTestDbl() {
+    }
+
+    void SetUp() {
+        ref_func = TEST_GET_PARAM(0);
+        tst_func = TEST_GET_PARAM(1);
+        width = TEST_GET_PARAM(2);
+        height = TEST_GET_PARAM(3);
+        encoder_bit_depth = TEST_GET_PARAM(4);
+        src_ptr = reinterpret_cast<uint16_t *>(
+            svt_aom_memalign(8, 4000 * 2500 * sizeof(uint16_t)));
+        GenRandomData(4000 * 2500);
+    }
+
+    void TearDown() {
+        svt_aom_free(src_ptr);
+    }
+    void RunTest() {
+        for (int i = 0; i < 10; i++) {
+            stride = width + rnd_.random() % 100;
+            double ref_out = ref_func(src_ptr, width, height, stride, encoder_bit_depth);
+            double tst_out = tst_func(src_ptr, width, height, stride, encoder_bit_depth);
+
+            EXPECT_EQ(ref_out, tst_out);
+        }
+    }
+
+    void GenRandomData(int size) {
+        if (encoder_bit_depth == 8) {
+            for (int ii = 0; ii < size; ii++)
+                src_ptr[ii] = rnd_.Rand16();
+        } else
+            for (int ii = 0; ii < size; ii++)
+                src_ptr[ii] = rnd_.random();
+    }
+
+  private:
+    EstimateNoiseFuncDbl ref_func;
+    EstimateNoiseFuncDbl tst_func;
+    SVTRandom rnd_;
+    uint16_t *src_ptr;
+    int width;
+    int height;
+    uint32_t encoder_bit_depth;
+    int stride;
+};
+
+TEST_P(EstimateNoiseTestDbl, double) {
+    RunTest();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2_lbd, EstimateNoiseTestDbl,
+    ::testing::Combine(::testing::Values(estimate_noise_c_wrapper),
+                       ::testing::Values(estimate_noise_avx2_wrapper),
+                       ::testing::Values(3840, 1920, 1280, 800, 640, 360),
+                       ::testing::Values(2160, 1080, 720, 600, 480, 240),
+                       ::testing::Values(8)));
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2_hbd, EstimateNoiseTestDbl,
+    ::testing::Combine(::testing::Values(svt_estimate_noise_highbd_c),
+                       ::testing::Values(svt_estimate_noise_highbd_avx2),
+                       ::testing::Values(3840, 1920, 1280, 800, 640, 360),
+                       ::testing::Values(2160, 1080, 720, 600, 480, 240),
+                       ::testing::Values(10, 12)));

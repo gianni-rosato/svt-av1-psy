@@ -33,6 +33,7 @@
 #include "EbResize.h"
 #include "EbMalloc.h"
 #include "EbInterPrediction.h"
+#include "aom_dsp_rtcd.h"
 
 #include "EbPictureOperators.h"
 /************************************************
@@ -5599,16 +5600,16 @@ EbErrorType derive_tf_window_params(
     if (pcs_ptr->tf_ctrls.use_fixed_point || pcs_ptr->tf_ctrls.use_medium_filter) {
     if (do_noise_est)
     {
-            noise_level_fp16 = estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_Y], // Y only
-                                                          central_picture_ptr->width,
-                                                          central_picture_ptr->height,
-                                                          central_picture_ptr->stride_y,
-                                                          encoder_bit_depth);
+            noise_level_fp16 = svt_estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_Y], // Y only
+                                                              central_picture_ptr->width,
+                                                              central_picture_ptr->height,
+                                                              central_picture_ptr->stride_y,
+                                                              encoder_bit_depth);
             noise_levels_log1p_fp16[C_Y] = noise_log1p_fp16(noise_level_fp16);
     }
     } else
             if (do_noise_est)
-            noise_levels[0] = estimate_noise_highbd(altref_buffer_highbd_start[C_Y], // Y only
+            noise_levels[0] = svt_estimate_noise_highbd(altref_buffer_highbd_start[C_Y], // Y only
             central_picture_ptr->width,
             central_picture_ptr->height,
             central_picture_ptr->stride_y,
@@ -5616,27 +5617,27 @@ EbErrorType derive_tf_window_params(
 
         if (pcs_ptr->tf_ctrls.do_chroma) {
         if (pcs_ptr->tf_ctrls.use_fixed_point || pcs_ptr->tf_ctrls.use_medium_filter) {
-            noise_level_fp16 = estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_U], // U only
-                                                          (central_picture_ptr->width >> 1),
-                                                          (central_picture_ptr->height >> 1),
-                                                          central_picture_ptr->stride_cb,
-                                                          encoder_bit_depth);
+            noise_level_fp16 = svt_estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_U], // U only
+                                                             (central_picture_ptr->width >> 1),
+                                                             (central_picture_ptr->height >> 1),
+                                                             central_picture_ptr->stride_cb,
+                                                             encoder_bit_depth);
             noise_levels_log1p_fp16[C_U] = noise_log1p_fp16(noise_level_fp16);
 
-            noise_level_fp16 = estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_V], // V only
-                                                          (central_picture_ptr->width >> 1),
-                                                          (central_picture_ptr->height >> 1),
-                                                          central_picture_ptr->stride_cb,
-                                                          encoder_bit_depth);
+            noise_level_fp16 = svt_estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_V], // V only
+                                                             (central_picture_ptr->width >> 1),
+                                                             (central_picture_ptr->height >> 1),
+                                                             central_picture_ptr->stride_cb,
+                                                             encoder_bit_depth);
             noise_levels_log1p_fp16[C_V] = noise_log1p_fp16(noise_level_fp16);
         } else {
-        noise_levels[1] = estimate_noise_highbd(altref_buffer_highbd_start[C_U], // U only
+        noise_levels[1] = svt_estimate_noise_highbd(altref_buffer_highbd_start[C_U], // U only
             (central_picture_ptr->width >> 1),
             (central_picture_ptr->height >> 1),
             central_picture_ptr->stride_cb,
             encoder_bit_depth);
 
-        noise_levels[2] = estimate_noise_highbd(altref_buffer_highbd_start[C_V], // V only
+        noise_levels[2] = svt_estimate_noise_highbd(altref_buffer_highbd_start[C_V], // V only
             (central_picture_ptr->width >> 1),
             (central_picture_ptr->height >> 1),
             central_picture_ptr->stride_cb,
@@ -5660,38 +5661,38 @@ EbErrorType derive_tf_window_params(
         if (pcs_ptr->tf_ctrls.use_fixed_point || pcs_ptr->tf_ctrls.use_medium_filter) {
         if (do_noise_est)
         {
-            noise_level_fp16 = estimate_noise_fp16(buffer_y, // Y
-                                                   central_picture_ptr->width,
-                                                   central_picture_ptr->height,
-                                                   central_picture_ptr->stride_y);
+            noise_level_fp16 = svt_estimate_noise_fp16(buffer_y, // Y
+                                                       central_picture_ptr->width,
+                                                       central_picture_ptr->height,
+                                                       central_picture_ptr->stride_y);
             noise_levels_log1p_fp16[C_Y] = noise_log1p_fp16(noise_level_fp16);
         }
         } else
             if (do_noise_est)
-            noise_levels[0] = estimate_noise(buffer_y, // Y
+            noise_levels[0] = svt_estimate_noise(buffer_y, // Y
             central_picture_ptr->width,
             central_picture_ptr->height,
             central_picture_ptr->stride_y);
         if (pcs_ptr->tf_ctrls.do_chroma) {
         if (pcs_ptr->tf_ctrls.use_fixed_point || pcs_ptr->tf_ctrls.use_medium_filter) {
-            noise_level_fp16 = estimate_noise_fp16(buffer_u, // U
-                                                   (central_picture_ptr->width >> ss_x),
-                                                   (central_picture_ptr->height >> ss_y),
-                                                   central_picture_ptr->stride_cb);
+            noise_level_fp16 = svt_estimate_noise_fp16(buffer_u, // U
+                                                      (central_picture_ptr->width >> ss_x),
+                                                      (central_picture_ptr->height >> ss_y),
+                                                      central_picture_ptr->stride_cb);
             noise_levels_log1p_fp16[C_U] = noise_log1p_fp16(noise_level_fp16);
 
-            noise_level_fp16 = estimate_noise_fp16(buffer_v, // V
-                                                   (central_picture_ptr->width >> ss_x),
-                                                   (central_picture_ptr->height >> ss_y),
-                                                   central_picture_ptr->stride_cr);
+            noise_level_fp16 = svt_estimate_noise_fp16(buffer_v, // V
+                                                      (central_picture_ptr->width >> ss_x),
+                                                      (central_picture_ptr->height >> ss_y),
+                                                      central_picture_ptr->stride_cr);
             noise_levels_log1p_fp16[C_V] = noise_log1p_fp16(noise_level_fp16);
         } else {
-        noise_levels[1] = estimate_noise(buffer_u, // U
+        noise_levels[1] = svt_estimate_noise(buffer_u, // U
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
             central_picture_ptr->stride_cb);
 
-        noise_levels[2] = estimate_noise(buffer_v, // V
+        noise_levels[2] = svt_estimate_noise(buffer_v, // V
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
             central_picture_ptr->stride_cr);

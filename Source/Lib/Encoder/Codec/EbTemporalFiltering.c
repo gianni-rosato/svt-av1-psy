@@ -5027,8 +5027,7 @@ static EbErrorType produce_temporally_filtered_pic(
 // function from libaom
 // Standard bit depht input (=8 bits) to estimate the noise, I don't think there needs to be two methods for this
 // Operates on the Y component only
-int32_t estimate_noise_fp16(const uint8_t *src, uint16_t width, uint16_t height,
-                            uint16_t stride_y) {
+int32_t svt_estimate_noise_fp16_c(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y) {
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -5063,7 +5062,7 @@ int32_t estimate_noise_fp16(const uint8_t *src, uint16_t width, uint16_t height,
 }
 
 // Noise estimation for highbd
-int32_t estimate_noise_highbd_fp16(const uint16_t *src, int width, int height, int stride, int bd) {
+int32_t svt_estimate_noise_highbd_fp16_c(const uint16_t *src, int width, int height, int stride, int bd) {
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -5098,7 +5097,7 @@ int32_t estimate_noise_highbd_fp16(const uint16_t *src, int width, int height, i
     return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
 }
 
-double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y) {
+double svt_estimate_noise_c(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y) {
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -5133,7 +5132,7 @@ double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height, uint1
 }
 
 // Noise estimation for highbd
-double estimate_noise_highbd(const uint16_t *src, int width, int height, int stride, int bd) {
+double svt_estimate_noise_highbd_c(const uint16_t *src, int width, int height, int stride, int bd) {
     int64_t sum = 0;
     int64_t num = 0;
 

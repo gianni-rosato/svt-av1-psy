@@ -878,6 +878,14 @@ extern "C" {
     void svt_unpack_and_2bcompress_sse4_1(uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer, uint32_t out8b_stride, uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width, uint32_t height);
     void svt_unpack_and_2bcompress_avx2(uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer, uint32_t out8b_stride, uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width, uint32_t height);
     RTCD_EXTERN void (*svt_unpack_and_2bcompress)(uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer, uint32_t out8b_stride,uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width, uint32_t height);
+    RTCD_EXTERN int32_t(*svt_estimate_noise_fp16)(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
+    int32_t svt_estimate_noise_fp16_c(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
+    RTCD_EXTERN int32_t (*svt_estimate_noise_highbd_fp16)(const uint16_t *src, int width, int height, int stride, int bd);
+    int32_t svt_estimate_noise_highbd_fp16_c(const uint16_t *src, int width, int height, int stride, int bd);
+    RTCD_EXTERN double(*svt_estimate_noise)(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
+    double svt_estimate_noise_c(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
+    RTCD_EXTERN double (*svt_estimate_noise_highbd)(const uint16_t *src, int width, int height, int stride, int bd);
+    double svt_estimate_noise_highbd_c(const uint16_t *src, int width, int height, int stride, int bd);
 #ifdef ARCH_X86_64
     int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     int64_t svt_aom_highbd_sse_avx2(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
@@ -1711,6 +1719,10 @@ extern "C" {
                               int w, int h, uint32_t *sse);
     int svt_av1_haar_ac_sad_8x8_uint8_input_avx2(uint8_t *input, int stride, int hbd);
 
+    int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
+    int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int height, int stride, int bd);
+    double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
+    double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height, int stride, int bd);
 #endif
 
     /* Moved to aom_dsp_rtcd.c file:
