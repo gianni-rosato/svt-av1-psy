@@ -468,6 +468,7 @@ Linux FFmpeg (n5.0, Static):
     CXXFLAGS: -pipe
     LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
     GIT_DEPTH: 0
+    CMAKE_BUILD_TYPE: Debug
   before_script:
     - !reference [.ffmpeg-before-script-clone]
     - git -C ffmpeg-src checkout n5.0
@@ -477,6 +478,13 @@ Linux FFmpeg (n5.0, Static):
     - !reference [.ffmpeg-svtav1-script]
     - !reference [.ffmpeg-ffmpeg-script]
     - ccache -s
+  after_script:
+    - ./ffmpeg -y -s:v 64x64 -f rawvideo -i /dev/zero
+      -vframes 10 -c:v libsvtav1 test.mkv
+      -vframes 10 -c:v libsvtav1 test.mp4
+      -vframes 10 -c:v libsvtav1 test.webm
+      -vframes 10 -c:v libsvtav1 test.ivf
+      -vframes 10 -c:v libsvtav1 test.obu
   artifacts:
     untracked: false
     expire_in: 30 days
