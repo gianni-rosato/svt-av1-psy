@@ -149,7 +149,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if ((config->target_bit_rate >= config->max_bit_rate) && (config->max_bit_rate != 0)) {
+    if (config->rate_control_mode != 0 && (config->target_bit_rate >= config->max_bit_rate)
+         && (config->max_bit_rate != 0)) {
         SVT_ERROR("Instance %u: Max Bitrate must be greater than Target Bitrate\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -961,74 +962,87 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
     SVT_INFO("-------------------------------------------\n");
 
     if (config->pass == ENC_FIRST_PASS)
-        SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: Pass 1\n");
+        SVT_INFO("SVT [config]: preset \t\t\t\t\t\t\t: Pass 1\n");
     else if (config->pass == ENC_MIDDLE_PASS)
-        SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: Pass 2\n");
+        SVT_INFO("SVT [config]: preset \t\t\t\t\t\t\t: Pass 2\n");
     else {
-        SVT_INFO("SVT [config]: %s\tTier %s\tLevel %s\n",
-                 config->profile == MAIN_PROFILE               ? "Main Profile"
-                     : config->profile == HIGH_PROFILE         ? "High Profile"
-                     : config->profile == PROFESSIONAL_PROFILE ? "Professional Profile"
-                                                               : "Unknown Profile",
+        SVT_INFO("SVT [config]: %s\ttier %s\tlevel %s\n",
+                 config->profile == MAIN_PROFILE               ? "main profile"
+                     : config->profile == HIGH_PROFILE         ? "high profile"
+                     : config->profile == PROFESSIONAL_PROFILE ? "professional profile"
+                                                               : "Unknown profile",
                  tier_to_str(config->tier),
                  level_to_str(config->level));
-        SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: %d\n", config->enc_mode);
-        SVT_INFO(
-            "SVT [config]: EncoderBitDepth / EncoderColorFormat / CompressedTenBitFormat\t: %d / "
-            "%d / %d\n",
-            config->encoder_bit_depth,
-            config->encoder_color_format,
-            config->compressed_ten_bit_format);
-        SVT_INFO("SVT [config]: SourceWidth / SourceHeight\t\t\t\t\t: %d / %d\n",
-                 config->source_width,
-                 config->source_height);
-        SVT_INFO(
-            "SVT [config]: Fps_Numerator / Fps_Denominator / Gop Size / IntraRefreshType \t: "
-            "%d / %d / %d / %d\n",
+        SVT_INFO("SVT [config]: width / height / fps numerator / fps denominator \t\t: %d / %d / %d / %d\n",
+            config->source_width,
+            config->source_height,
             config->frame_rate_numerator,
-            config->frame_rate_denominator,
+            config->frame_rate_denominator);
+        SVT_INFO(
+            "SVT [config]: bit-depth / color format / compressed 10-bit format\t\t: %d / "
+            "%s / %d\n",
+            config->encoder_bit_depth,
+            config->encoder_color_format == EB_YUV400 ? "YUV400"
+            : config->encoder_color_format == EB_YUV420 ? "YUV420"
+            : config->encoder_color_format == EB_YUV422 ? "YUV422"
+            : config->encoder_color_format == EB_YUV444 ? "YUV444"
+            : "Unknown color format",
+            config->compressed_ten_bit_format);
+
+        SVT_INFO("SVT [config]: preset / tune / pred struct \t\t\t\t\t: %d / %s / %s\n",
+            config->enc_mode,
+            config->tune == 0 ? "VQ" : "PSNR",
+            config->pred_structure == 1 ? "low delay"
+             : config->pred_structure == 2 ? "random access"
+             : "Unknown pred structure");
+        SVT_INFO(
+            "SVT [config]: gop size / mini-gop size / key-frame type \t\t\t: "
+            "%d / %d / %s\n",
             config->intra_period_length + 1,
-            config->intra_refresh_type);
-        SVT_INFO("SVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d\n",
-                 config->hierarchical_levels,
-                 config->pred_structure);
+            (1 << config->hierarchical_levels),
+            config->intra_refresh_type == SVT_AV1_FWDKF_REFRESH ? "FWD key frame"
+            : config->intra_refresh_type == SVT_AV1_KF_REFRESH ? "key frame"
+            : "Unknown key frame type");
+
         switch (config->rate_control_mode) {
         case 0:
             if (config->max_bit_rate)
                 SVT_INFO(
-                    "SVT [config]: BRC Mode / %s / MaxBitrate (kbps)/ SceneChange\t\t: %s / %d / "
-                    "%d / %d\n",
-                    scs->tpl_level ? "Rate Factor" : "CQP Assignment",
-                    scs->tpl_level ? "Capped CRF" : "CQP",
+                    "SVT [config]: BRC mode / %s / max bitrate (kbps)\t\t\t: %s / %d / "
+                    "%d\n",
+                    scs->tpl_level ? "rate factor" : "CQP Assignment",
+                    scs->tpl_level ? "capped CRF" : "CQP",
                     scs->static_config.qp,
-                    (int)config->max_bit_rate / 1000,
-                    config->scene_change_detection);
+                    (int)config->max_bit_rate / 1000);
             else if (scs->tpl_level)
-                SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n",
-                         "Rate Factor",
+                SVT_INFO("SVT [config]: BRC mode / %s \t\t\t\t\t: %s / %d\n",
+                         "rate factor",
                          "CRF",
-                         scs->static_config.qp,
-                         config->scene_change_detection);
+                         scs->static_config.qp);
             else
-                SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t: %s / %d / %d\n",
-                         "CQP Assignment",
+                SVT_INFO("SVT [config]: BRC mode / %s \t\t\t: %s / %d\n",
+                         "CQP assignment",
                          "CQP",
-                         scs->static_config.qp,
-                         config->scene_change_detection);
+                         scs->static_config.qp);
             break;
         case 1:
             SVT_INFO(
-                "SVT [config]: BRC Mode / TargetBitrate (kbps)/ SceneChange\t\t\t: VBR / %d / %d\n",
-                (int)config->target_bit_rate / 1000,
-                config->scene_change_detection);
+                "SVT [config]: BRC mode / target bitrate (kbps)\t\t\t\t: VBR / %d \n",
+                (int)config->target_bit_rate / 1000);
             break;
         case 2:
             SVT_INFO(
-                "SVT [config]: BRC Mode / TargetBitrate (kbps)/ SceneChange\t\t\t: CBR "
-                "/ %d / %d\n",
-                (int)config->target_bit_rate / 1000,
-                config->scene_change_detection);
+                "SVT [config]: BRC mode / target bitrate (kbps)\t\t\t\t: CBR "
+                "/ %d\n",
+                (int)config->target_bit_rate / 1000);
             break;
+        }
+
+        if (config->film_grain_denoise_strength != 0){
+            SVT_INFO("SVT [config]: film grain synth / denoising / level \t\t\t\t: %d / %d / %d\n",
+                1,
+                config->film_grain_denoise_apply,
+                config->film_grain_denoise_strength);
         }
     }
 #ifdef DEBUG_BUFFERS
