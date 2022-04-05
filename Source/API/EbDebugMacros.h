@@ -52,7 +52,6 @@ extern "C" {
 #else
 #define REMOVE_LP1_LPN_DIFF     0 // Disallow single-thread/multi-thread differences
 #endif
-#define FIX_1PVBR               1 // Derive initial qp based on target bitrate
 // Super-resolution debugging code
 #define DEBUG_SCALING           0
 #define DEBUG_TF                0

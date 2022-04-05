@@ -3329,7 +3329,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 "This mode retains a significant amount of memory, much more than other modes!\n");
         }
     }
-#if FIX_1PVBR
     // Set initial qp for single pass vbr
     if ((scs_ptr->static_config.rate_control_mode) && (scs_ptr->static_config.pass == ENC_SINGLE_PASS)){
         if (scs_ptr->static_config.qp != DEFAULT_QP) {
@@ -3353,7 +3352,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         else
             scs_ptr->static_config.qp = 20;
     }
-#endif
     derive_input_resolution(
         &scs_ptr->input_resolution,
         scs_ptr->max_input_luma_width *scs_ptr->max_input_luma_height);

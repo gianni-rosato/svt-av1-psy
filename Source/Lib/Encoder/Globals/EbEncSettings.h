@@ -19,9 +19,7 @@
 /**************************************
  * Defines
  **************************************/
-#if FIX_1PVBR
 #define DEFAULT_QP 35
-#endif
 
 void svt_av1_print_lib_params(SequenceControlSet* scs);
 

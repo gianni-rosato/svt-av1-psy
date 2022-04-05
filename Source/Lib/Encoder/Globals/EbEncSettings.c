@@ -824,11 +824,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->stat_report               = 0;
     config_ptr->tile_rows                 = 0;
     config_ptr->tile_columns              = 0;
-#if FIX_1PVBR
     config_ptr->qp = DEFAULT_QP;
-#else
-    config_ptr->qp = 50;
-#endif
     config_ptr->use_qp_file = FALSE;
 
     config_ptr->use_fixed_qindex_offsets = FALSE;
