@@ -1006,15 +1006,11 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                     scs->tpl_level ? "capped CRF" : "CQP",
                     scs->static_config.qp,
                     (int)config->max_bit_rate / 1000);
-            else if (scs->tpl_level)
-                SVT_INFO("SVT [config]: BRC mode / %s \t\t\t\t\t: %s / %d\n",
-                         "rate factor",
-                         "CRF",
-                         scs->static_config.qp);
             else
-                SVT_INFO("SVT [config]: BRC mode / %s \t\t\t: %s / %d\n",
-                         "CQP assignment",
-                         "CQP",
+                SVT_INFO(
+                    "SVT [config]: BRC mode / %s \t\t\t\t\t: %s / %d \n",
+                    scs->tpl_level ? "rate factor" : "CQP Assignment",
+                    scs->tpl_level ? "CRF" : "CQP",
                          scs->static_config.qp);
             break;
         case 1:

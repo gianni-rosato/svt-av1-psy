@@ -3937,7 +3937,7 @@ void copy_api_from_app(
             scs_ptr->static_config.logical_processors = 3;
         }else if (scs_ptr->static_config.logical_processors > 3){
             scs_ptr->static_config.logical_processors = 3;
-            SVT_WARN("-lp is capped at 3 for low delay\n");
+            SVT_WARN("lp is capped at 3 for low delay\n");
         }
     }
     scs_ptr->static_config.pin_threads = ((EbSvtAv1EncConfiguration*)config_struct)->pin_threads;
