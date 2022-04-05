@@ -1618,7 +1618,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"superres-kf-denom", &config_struct->superres_kf_denom},
         {"fast-decode", &config_struct->fast_decode},
         {"tune", &config_struct->tune},
-        {"enable-dnl-denoising", &config_struct->film_grain_denoise_apply},
+        {"film-grain-denoise", &config_struct->film_grain_denoise_apply},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

@@ -82,7 +82,7 @@
 #define TIER_TOKEN "--tier"
 #define LEVEL_TOKEN "--level"
 #define FILM_GRAIN_TOKEN "--film-grain"
-#define FILM_GRAIN_DENOISE_APPLY_TOKEN "--enable-dnl-denoising"
+#define FILM_GRAIN_DENOISE_APPLY_TOKEN "--film-grain-denoise"
 #define INTRA_REFRESH_TYPE_TOKEN "--irefresh-type" // no Eval
 #define CDEF_ENABLE_TOKEN "--enable-cdef"
 #define SCREEN_CONTENT_TOKEN "--scm"
@@ -1486,7 +1486,7 @@ ConfigEntry config_entry[] = {
      "RestrictedMotionVector",
      set_restricted_motion_vector},
     {SINGLE_INPUT, FILM_GRAIN_TOKEN, "FilmGrain", set_cfg_film_grain},
-    {SINGLE_INPUT, FILM_GRAIN_DENOISE_APPLY_TOKEN, "EnableDnlDenoising", set_cfg_film_grain_denoise_apply},
+    {SINGLE_INPUT, FILM_GRAIN_DENOISE_APPLY_TOKEN, "FilmGrainDenoise", set_cfg_film_grain_denoise_apply},
 
     //   Super-resolution support
     {SINGLE_INPUT, SUPERRES_MODE_INPUT, "SuperresMode", set_superres_mode},
