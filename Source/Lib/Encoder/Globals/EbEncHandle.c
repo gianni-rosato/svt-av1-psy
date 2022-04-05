@@ -3754,7 +3754,6 @@ void copy_api_from_app(
     scs_ptr->max_sb_depth = (uint8_t)EB_MAX_SB_DEPTH;
     scs_ptr->static_config.intra_period_length = ((EbSvtAv1EncConfiguration*)config_struct)->intra_period_length;
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
-    scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
     EbInputResolution input_resolution;
     derive_input_resolution(
@@ -3842,17 +3841,27 @@ void copy_api_from_app(
             scs_ptr->static_config.rate_control_mode = 2;
             SVT_WARN("Low delay mode does not support VBR. Forcing RC mode to CBR\n");
         }
-        if (scs_ptr->static_config.hierarchical_levels != 3) {
-            scs_ptr->static_config.hierarchical_levels = 3;
-            SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 3\n");
-        }
+
         if (scs_ptr->static_config.enc_mode < ENC_M8) {
             scs_ptr->static_config.enc_mode = ENC_M8;
             SVT_WARN("Low delay mode only support encodermode [8-%d]. Forcing encoder mode to 8\n", ENC_M13);
         }
     }
     scs_ptr->static_config.tune = config_struct->tune;
+    scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
 
+    // set the default hierarchical levels depending on the pred structure
+    if (scs_ptr->static_config.hierarchical_levels == 0){
+        scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B ?
+            3 : 4;
+    }
+
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
+        if (scs_ptr->static_config.hierarchical_levels != 3) {
+            scs_ptr->static_config.hierarchical_levels = 3;
+            SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 3\n");
+        }
+    }
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
     scs_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_denominator;
@@ -3923,9 +3932,13 @@ void copy_api_from_app(
     scs_ptr->static_config.channel_id = ((EbSvtAv1EncConfiguration*)config_struct)->channel_id;
     scs_ptr->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)config_struct)->active_channel_count;
     scs_ptr->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
-    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B && scs_ptr->static_config.logical_processors > 3) {
-        scs_ptr->static_config.logical_processors = 3;
-        SVT_WARN("-lp is capped at 3 for low delay\n");
+    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
+        if (scs_ptr->static_config.logical_processors == 0){
+            scs_ptr->static_config.logical_processors = 3;
+        }else if (scs_ptr->static_config.logical_processors > 3){
+            scs_ptr->static_config.logical_processors = 3;
+            SVT_WARN("-lp is capped at 3 for low delay\n");
+        }
     }
     scs_ptr->static_config.pin_threads = ((EbSvtAv1EncConfiguration*)config_struct)->pin_threads;
     scs_ptr->static_config.target_socket = ((EbSvtAv1EncConfiguration*)config_struct)->target_socket;

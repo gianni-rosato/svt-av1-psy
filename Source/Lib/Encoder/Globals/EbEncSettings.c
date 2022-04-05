@@ -714,14 +714,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         }
     }
 
-    if (config->rate_control_mode == 1 || config->rate_control_mode == 2) {
-        SVT_WARN(
-            "Instance %u: The VBR and CBR rate control modes are a work-in-progress projects, and "
-            "are only available for demos, experimentation, and further development uses and "
-            "should not be used for benchmarking until fully implemented.\n",
-            channel_number + 1);
-    }
-
     if (config->film_grain_denoise_strength > 0 && config->enc_mode > 6) {
         SVT_WARN(
             "Instance %u: It is recommended to not use Film Grain for presets greater than 6 as it "
@@ -863,7 +855,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enc_mode                     = 10;
     config_ptr->intra_period_length          = -2;
     config_ptr->intra_refresh_type           = 2;
-    config_ptr->hierarchical_levels          = 4;
+    config_ptr->hierarchical_levels          = 0;
     config_ptr->pred_structure               = PRED_RANDOM_ACCESS;
     config_ptr->enable_dlf_flag              = TRUE;
     config_ptr->cdef_level                   = DEFAULT;
