@@ -497,26 +497,32 @@ Invalid values will be clipped accordingly.
 Examples:
 
 ```bash
-SvtAv1EncApp -i int.y4m -b out.ivf \
+SvtAv1EncApp -i in.y4m -b out.ivf \
     --mastering-display "G(0.2649,0.6900)B(0.1500,0.0600)R(0.6800,0.3200)WP(0.3127,0.3290)L(1000.0,1)" \
     --content-light 100,50 \
-    --color-primaries 9 \
-    --transfer-characteristics 16 \
-    --matrix-coefficients 9 \
+    --color-primaries bt2020 \
+    --transfer-characteristics smpte2084 \
+    --matrix-coefficients bt2020-ncl \
     --chroma-sample-position topleft
-    # Color primary 9 is BT.2020, BT.2100
-    # Transfer characteristic 16 is SMPTE ST 2084, ITU BT.2100 PQ
-    # matrix coefficients 9 is BT.2020 non-constant luminance, BT.2100 YCbCr
+    # Color primary is BT.2020, BT.2100
+    # Transfer characteristic is SMPTE ST 2084, ITU BT.2100 PQ
+    # matrix coefficients is BT.2020 non-constant luminance, BT.2100 YCbCr
 
 # or
 
-ffmpeg -i in.mp4 -strict -1 -f yuv4mpegpipe - |
-  SvtAv1EncApp -i stdin -b stdout \
-    --mastering-display "G(0.2649,0.6900)B(0.1500,0.0600)R(0.6800,0.3200)WP(0.3127,0.3290)L(1000.0,1)" \
-    --content-light 100,50 \
-    --color-primaries 9 \
-    --transfer-characteristics 16 \
-    --matrix-coefficients 9 \
-    --chroma-sample-position topleft |
-  ffmpeg -y -i - -i audio.ogg -c copy out.mp4
+ffmpeg -y -i in.mp4 \
+  -strict -2 \
+  -c:a opus \
+  -c:v libsvtav1 \
+  -color_primaries:v bt2020 \
+  -color_trc:v smpte2084 \
+  -color_range:v pc \
+  -chroma_sample_location:v topleft \
+  -svtav1-params \
+    "mastering-display=G(0.2649,0.6900)B(0.1500,0.0600)R(0.6800,0.3200)WP(0.3127,0.3290)L(1000.0,1):\
+    content-light=100,50:\
+    matrix-coefficients=bt2020-ncl:\
+    chroma-sample-position=topleft" \
+  out.mp4
+# chroma-sample-position needs to be repeated because it currently isn't set ffmpeg's side
 ```
