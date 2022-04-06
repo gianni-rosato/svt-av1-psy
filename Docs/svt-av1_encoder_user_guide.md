@@ -429,6 +429,26 @@ The available options for `ColorPrimaries` (`--color-primaries`) are:
 - 12: `smpte432`, SMPTE EG 432-1
 - 22: `ebu3213`, EBU Tech. 3213-E
 
+The available options for `TransferCharacteristics` (`--transfer-characteristics`) are:
+
+- 1: `bt709`, BT.709
+- 2: unspecified, default
+- 4: `bt470m`, BT.470 System M (historical)
+- 5: `bt470bg`, BT.470 System B, G (historical)
+- 6: `bt601`, BT.601
+- 7: `smpte240`, SMPTE 240 M
+- 8: `linear`, Linear
+- 9: `log100`, Logarithmic (100 : 1 range)
+- 10: `log100-sqrt10`, Logarithmic (100 * Sqrt(10) : 1 range)
+- 11: `iec61966`, IEC 61966-2-4
+- 12: `bt1361`, BT.1361
+- 13: `srgb`, sRGB or sYCC
+- 14: `bt2020-10`, BT.2020 10-bit systems
+- 15: `bt2020-12`, BT.2020 12-bit systems
+- 16: `smpte2084`, SMPTE ST 2084, ITU BT.2100 PQ
+- 17: `smpte428`, SMPTE ST 428
+- 18: `hlg`, BT.2100 HLG, ARIB STD-B67
+
 `MasteringDisplay` (`--mastering-display`) and `ContentLightLevel` (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
 
 `MasteringDisplay` takes the format of `G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)` where
