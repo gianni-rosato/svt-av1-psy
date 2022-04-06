@@ -2356,8 +2356,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         }
     }
 
-    if ((!find_token(argc, argv, INTRA_PERIOD_TOKEN, NULL) ||
-         !find_token(argc, argv, "-" INTRA_PERIOD_TOKEN, NULL)) &&
+    if (!find_token(argc, argv, INTRA_PERIOD_TOKEN, NULL) &&
         !find_token(argc, argv, KEYINT_TOKEN, NULL)) {
         fprintf(stderr,
                 "[SVT-Warning]: --keyint and --intra-period specified, --keyint will take "
@@ -2365,7 +2364,6 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     }
 
     if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "-" INTRA_PERIOD_TOKEN, config_string) == 0 ||
         find_token(argc, argv, KEYINT_TOKEN, config_string) == 0) {
         ip = strtol(config_string, NULL, 0);
         if (find_token(argc, argv, KEYINT_TOKEN, NULL) == 0) {
