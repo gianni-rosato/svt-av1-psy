@@ -449,6 +449,23 @@ The available options for `TransferCharacteristics` (`--transfer-characteristics
 - 17: `smpte428`, SMPTE ST 428
 - 18: `hlg`, BT.2100 HLG, ARIB STD-B67
 
+The available options for `MatrixCoefficients` (`--matrix-coefficients`) are:
+
+- 0: `identity`, Identity matrix
+- 1: `bt709`, BT.709
+- 2: unspecified, default
+- 4: `fcc`, US FCC 73.628
+- 5: `bt470bg`, BT.470 System B, G (historical)
+- 6: `bt601`, BT.601
+- 7: `smpte240`, SMPTE 240 M
+- 8: `ycgco`, YCgCo
+- 9: `bt2020-ncl`, BT.2020 non-constant luminance, BT.2100 YCbCr
+- 10: `bt2020-cl`, BT.2020 constant luminance
+- 11: `smpte2085`, SMPTE ST 2085 YDzDx
+- 12: `chroma-ncl`, Chromaticity-derived non-constant luminance
+- 13: `chroma-cl`, Chromaticity-derived constant luminance
+- 14: `ictcp`, BT.2100 ICtCp
+
 `MasteringDisplay` (`--mastering-display`) and `ContentLightLevel` (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
 
 `MasteringDisplay` takes the format of `G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)` where
