@@ -731,16 +731,16 @@ static void set_restricted_motion_vector(const char *value, EbConfig *cfg) {
     cfg->config.restricted_motion_vector = !!strtol(value, NULL, 0);
 };
 static void set_cfg_color_primaries(const char *value, EbConfig *cfg) {
-    cfg->config.color_primaries = (uint8_t)strtoul(value, NULL, 0);
+    svt_av1_enc_parse_parameter(&cfg->config, "color-primaries", value);
 }
 static void set_cfg_transfer_characteristics(const char *value, EbConfig *cfg) {
-    cfg->config.transfer_characteristics = (uint8_t)strtoul(value, NULL, 0);
+    svt_av1_enc_parse_parameter(&cfg->config, "transfer-characteristics", value);
 }
 static void set_cfg_matrix_coefficients(const char *value, EbConfig *cfg) {
-    cfg->config.matrix_coefficients = (uint8_t)strtoul(value, NULL, 0);
+    svt_av1_enc_parse_parameter(&cfg->config, "matrix-coefficients", value);
 }
 static void set_cfg_color_range(const char *value, EbConfig *cfg) {
-    cfg->config.color_range = (uint8_t)strtoul(value, NULL, 0);
+    svt_av1_enc_parse_parameter(&cfg->config, "color-range", value);
 }
 static void set_cfg_chroma_sample_position(const char *value, EbConfig *cfg) {
     svt_av1_enc_parse_parameter(&cfg->config, "chroma-sample-position",
