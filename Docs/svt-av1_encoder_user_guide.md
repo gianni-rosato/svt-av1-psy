@@ -471,6 +471,13 @@ The available options for `ColorRange` (`--color-range`) are:
 - 0: `studio`, default
 - 1: `full`
 
+The available options for `ChromaSamplePosition` (`--chroma-sample-position`) are:
+
+- 0: `unknown`, default
+- 1: `vertical`/`left`, horizontally co-located with luma samples, vertical position in
+the middle between two luma samples
+- 2: `colocated`/`topleft`, co-located with luma samples
+
 `MasteringDisplay` (`--mastering-display`) and `ContentLightLevel` (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
 
 `MasteringDisplay` takes the format of `G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)` where
