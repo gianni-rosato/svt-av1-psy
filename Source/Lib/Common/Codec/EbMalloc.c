@@ -17,7 +17,7 @@
 #include "EbLog.h"
 
 void svt_print_alloc_fail(const char* file, int line) {
-    SVT_FATAL("allocate memory failed, at %s, L%d\n", file, line);
+    SVT_FATAL("allocate memory failed, at %s:%d\n", file, line);
 }
 
 #ifdef DEBUG_MEMORY_USAGE
@@ -260,7 +260,7 @@ static Bool print_leak(MemoryEntry* e, void* param) {
     if (e->ptr) {
         Bool* leaked = param;
         *leaked      = TRUE;
-        SVT_ERROR("%s leaked at %s:L%d\n", mem_type_name(e->type), e->file, e->line);
+        SVT_ERROR("%s leaked at %s:%d\n", mem_type_name(e->type), e->file, e->line);
     }
     //loop through all items
     return FALSE;
