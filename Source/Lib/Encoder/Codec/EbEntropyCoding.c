@@ -3053,9 +3053,9 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
         svt_aom_wb_write_bit(wb, is_monochrome);
     else
         assert(!is_monochrome);
-    if (scs_ptr->static_config.color_primaries == AOM_CICP_CP_UNSPECIFIED &&
-        scs_ptr->static_config.transfer_characteristics == AOM_CICP_TC_UNSPECIFIED &&
-        scs_ptr->static_config.matrix_coefficients == AOM_CICP_MC_UNSPECIFIED) {
+    if (scs_ptr->static_config.color_primaries == EB_CICP_CP_UNSPECIFIED &&
+        scs_ptr->static_config.transfer_characteristics == EB_CICP_TC_UNSPECIFIED &&
+        scs_ptr->static_config.matrix_coefficients == EB_CICP_MC_UNSPECIFIED) {
         svt_aom_wb_write_bit(wb, 0); // No color description present
     } else {
         svt_aom_wb_write_bit(wb, 1); // Color description present
@@ -3068,9 +3068,9 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
         svt_aom_wb_write_bit(wb, scs_ptr->static_config.color_range);
         return;
     } */
-    if (scs_ptr->static_config.color_primaries == AOM_CICP_CP_BT_709 &&
-        scs_ptr->static_config.transfer_characteristics == AOM_CICP_TC_SRGB &&
-        scs_ptr->static_config.matrix_coefficients == AOM_CICP_MC_IDENTITY) {
+    if (scs_ptr->static_config.color_primaries == EB_CICP_CP_BT_709 &&
+        scs_ptr->static_config.transfer_characteristics == EB_CICP_TC_SRGB &&
+        scs_ptr->static_config.matrix_coefficients == EB_CICP_MC_IDENTITY) {
         /* assert(scs_ptr->subsampling_x == 0 && scs_ptr->subsampling_y == 0);
         assert(scs_ptr->static_config.profile == HIGH_PROFILE ||
                (scs_ptr->static_config.profile == PROFESSIONAL_PROFILE && scs_ptr->encoder_bit_depth == AOM_BITS_12)); */
@@ -3097,7 +3097,7 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
                 assert(scs_ptr->subsampling_x == 1 && scs_ptr->subsampling_y == 0);
             }
         }
-        if (scs_ptr->static_config.matrix_coefficients == AOM_CICP_MC_IDENTITY) {
+        if (scs_ptr->static_config.matrix_coefficients == EB_CICP_MC_IDENTITY) {
             assert(scs_ptr->subsampling_x == 0 && scs_ptr->subsampling_y == 0);
         }
         if (scs_ptr->subsampling_x == 1 && scs_ptr->subsampling_y == 1) {

@@ -916,7 +916,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->color_primaries                = 2;
     config_ptr->transfer_characteristics       = 2;
     config_ptr->matrix_coefficients            = 2;
-    config_ptr->color_range                    = 0;
+    config_ptr->color_range                    = EB_CR_STUDIO_RANGE;
     config_ptr->chroma_sample_position         = EB_CSP_UNKNOWN;
     config_ptr->pass                           = 0;
     memset(&config_ptr->mastering_display, 0, sizeof(config_ptr->mastering_display));
@@ -1307,7 +1307,7 @@ static EbErrorType str_to_asm(const char *nptr, CPU_FLAGS *out) {
     return EB_ErrorBadParameter;
 }
 
-static EbErrorType str_to_color_primaries(const char *nptr, uint8_t *out) {
+static EbErrorType str_to_color_primaries(const char *nptr, EbColorPrimaries *out) {
     const struct {
         const char      *name;
         EbColorPrimaries primaries;
@@ -1336,7 +1336,8 @@ static EbErrorType str_to_color_primaries(const char *nptr, uint8_t *out) {
     return EB_ErrorBadParameter;
 }
 
-static EbErrorType str_to_transfer_characteristics(const char *nptr, uint8_t *out) {
+static EbErrorType str_to_transfer_characteristics(const char                *nptr,
+                                                   EbTransferCharacteristics *out) {
     const struct {
         const char               *name;
         EbTransferCharacteristics tfc;
@@ -1371,7 +1372,7 @@ static EbErrorType str_to_transfer_characteristics(const char *nptr, uint8_t *ou
     return EB_ErrorBadParameter;
 }
 
-static EbErrorType str_to_matrix_coefficients(const char *nptr, uint8_t *out) {
+static EbErrorType str_to_matrix_coefficients(const char *nptr, EbMatrixCoefficients *out) {
     const struct {
         const char          *name;
         EbMatrixCoefficients coeff;
@@ -1403,7 +1404,7 @@ static EbErrorType str_to_matrix_coefficients(const char *nptr, uint8_t *out) {
     return EB_ErrorBadParameter;
 }
 
-static EbErrorType str_to_color_range(const char *nptr, uint8_t *out) {
+static EbErrorType str_to_color_range(const char *nptr, EbColorRange *out) {
     const struct {
         const char  *name;
         EbColorRange range;
