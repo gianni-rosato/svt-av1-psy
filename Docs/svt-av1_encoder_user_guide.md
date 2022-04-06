@@ -466,6 +466,11 @@ The available options for `MatrixCoefficients` (`--matrix-coefficients`) are:
 - 13: `chroma-cl`, Chromaticity-derived constant luminance
 - 14: `ictcp`, BT.2100 ICtCp
 
+The available options for `ColorRange` (`--color-range`) are:
+
+- 0: `studio`, default
+- 1: `full`
+
 `MasteringDisplay` (`--mastering-display`) and `ContentLightLevel` (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
 
 `MasteringDisplay` takes the format of `G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)` where
