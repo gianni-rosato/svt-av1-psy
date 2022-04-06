@@ -428,8 +428,19 @@ static void set_cfg_intra_period(const char *value, EbConfig *cfg) {
 };
 // --keyint 0 == --keyint -1
 static void set_keyint(const char *value, EbConfig *cfg) {
-    const long keyint               = strtol(value, NULL, 0);
-    cfg->config.intra_period_length = keyint < 0 ? keyint : keyint - 1;
+    char      *suff;
+    const long keyint = strtol(value, &suff, 0);
+    switch (*suff) {
+    case 's':
+        // signal we need to multiply keyint * frame_rate
+        cfg->multiply_keyint          = TRUE;
+        cfg->config.intra_period_length = keyint;
+        return;
+    case '\0': cfg->config.intra_period_length = keyint < 0 ? keyint : keyint - 1; return;
+    default:
+        // else leave as default, we have an invalid keyint
+        fprintf(stderr, "Invalid keyint value or suffix, '%s', leaving as is.\n", value);
+    }
 }
 static void set_cfg_intra_refresh_type(const char *value, EbConfig *cfg) {
     switch (strtol(value, NULL, 0)) {
@@ -2368,11 +2379,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         ip = strtol(config_string, NULL, 0);
         if (find_token(argc, argv, KEYINT_TOKEN, NULL) == 0) {
             fprintf(stderr, "[SVT-Warning]: --keyint is now intra-period + 1!\n");
-            --ip;
+            ip = ip < 0 ? ip : ip - 1;
         } else
             fprintf(stderr, "[SVT-Warning]: --intra-period is deprecated for --keyint\n");
         if ((ip < -2 || ip > 2 * ((1 << 30) - 1)) && rc_mode == 0) {
-            fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2]  \n");
+            fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2], input %d\n", ip);
             return 0;
         }
         if ((ip < 0) && rc_mode == 1) {
@@ -2903,5 +2914,15 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     }
 
     for (index = 0; index < MAX_CHANNEL_NUMBER; ++index) free(config_strings[index]);
+
+    // Special handling for keyint as seconds, done after everything is parsed to ensure frame_rate is set
+    for (uint32_t chan = 0; chan < num_channels; ++chan) {
+        EbConfig *c = channels[chan].config;
+        if (!c->multiply_keyint || !c->config.frame_rate_denominator)
+            continue;
+        const double frame_rate = c->config.frame_rate_numerator / c->config.frame_rate_denominator;
+        c->config.intra_period_length = (int32_t)(frame_rate * c->config.intra_period_length) - 1;
+    }
+
     return return_error;
 }

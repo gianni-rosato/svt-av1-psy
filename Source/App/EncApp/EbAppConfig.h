@@ -232,6 +232,7 @@ typedef struct EbConfig {
      ****************************************/
     Bool eos_flag;
 
+    Bool multiply_keyint;
     EbSvtAv1EncConfiguration config;
 } EbConfig;
 
