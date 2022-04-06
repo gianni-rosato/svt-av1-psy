@@ -414,6 +414,21 @@ Example: 72 core machine:
 
 Please see the subsection 6.4.2, 6.7.3, and 6.7.4 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for more details on some expected values.
 
+The available options for `ColorPrimaries` (`--color-primaries`) are:
+
+- 1: `bt709`, BT.709
+- 2: unspecified, default
+- 4: `bt470m`, BT.470 System M (historical)
+- 5: `bt470bg`, BT.470 System B, G (historical)
+- 6: `bt601`, BT.601
+- 7: `smpte240`, SMPTE 240
+- 8: `film`, Generic film (color filters using illuminant C)
+- 9: `bt2020`, BT.2020, BT.2100
+- 10: `xyz`, SMPTE 428 (CIE 1921 XYZ)
+- 11: `smpte431`, SMPTE RP 431-2
+- 12: `smpte432`, SMPTE EG 432-1
+- 22: `ebu3213`, EBU Tech. 3213-E
+
 `MasteringDisplay` (`--mastering-display`) and `ContentLightLevel` (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
 
 `MasteringDisplay` takes the format of `G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)` where
