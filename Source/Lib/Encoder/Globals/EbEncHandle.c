@@ -2897,6 +2897,7 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
 
         // Sharpness
         vq_ctrl->sharpness_ctrls.scene_transition = 1;
+        vq_ctrl->sharpness_ctrls.tf               = 0;
         vq_ctrl->sharpness_ctrls.unipred_bias     = 0;
         vq_ctrl->sharpness_ctrls.ifs              = 0;
         vq_ctrl->sharpness_ctrls.cdef             = 0;
@@ -3599,9 +3600,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     set_mrp_ctrl(scs_ptr, mrp_level);
     scs_ptr->is_short_clip = 0; // set to 1 if multipass and less than 200 frames in resourcecordination
 
-    // Varaince is required for scene change detection and segmentation-based quantization
+    // Variance is required for scene change detection and segmentation-based quantization and subjective mode tf control
     if (scs_ptr->static_config.enable_adaptive_quantization == 1 ||
-        scs_ptr->static_config.scene_change_detection == 1)
+        scs_ptr->static_config.scene_change_detection == 1       ||
+        scs_ptr->vq_ctrls.sharpness_ctrls.tf == 1)
         scs_ptr->calculate_variance = 1;
     else if (scs_ptr->static_config.enc_mode <= ENC_M10)
         scs_ptr->calculate_variance = 1;
