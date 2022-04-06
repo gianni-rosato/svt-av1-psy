@@ -566,7 +566,7 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     Bool recon_enabled;
 
-    /* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the dimension
+    /* Log 2 Tile Rows and columns . 0 means no tiling,1 means that we split the dimension
         * into 2
         * Default is 0. */
     int32_t tile_columns;

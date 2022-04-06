@@ -853,7 +853,7 @@ static const vector<uint32_t> valid_recon_enabled = {FALSE, TRUE};
 static const vector<uint32_t> invalid_recon_enabled = {/** none */};
 
 #if TILES
-/* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the
+/* Log 2 Tile Rows and columns . 0 means no tiling,1 means that we split the
  * dimension into 2 Default is 0. */
 static const vector<int32_t> default_tile_columns = {
     0,
