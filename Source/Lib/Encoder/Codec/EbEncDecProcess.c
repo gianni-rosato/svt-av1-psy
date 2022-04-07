@@ -5703,10 +5703,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     }
     else {
 #if NEW_FD
-        if (enc_mode <= ENC_M3)
+        if (enc_mode <= ENC_M4)
             rate_est_level = 1;
-        else if (enc_mode <= ENC_M4)
-            rate_est_level = input_resolution <= INPUT_SIZE_480p_RANGE? 2 : 1;
         else if (enc_mode <= ENC_M7)
             rate_est_level = 2;
 #else

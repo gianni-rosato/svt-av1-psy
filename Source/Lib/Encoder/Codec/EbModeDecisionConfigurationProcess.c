@@ -508,6 +508,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         } else {
             pcs_ptr->wm_level = is_base ? 2 : 0;
         }
+
+#if NEW_FD
+        // For fast-decode level 1+, disable WM in non-BASE frames in high resolutions
+        if (fast_decode >= 1 && input_resolution >= INPUT_SIZE_720p_RANGE && !is_base && enc_mode <= ENC_M4)
+            pcs_ptr->wm_level = 0;
+#endif
     }
 
     Bool enable_wm = pcs_ptr->wm_level ? 1 : 0;
@@ -538,10 +544,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
         else {
 #if NEW_FD
-            if (ppcs->enc_mode <= ENC_M3)
+            if (ppcs->enc_mode <= ENC_M4)
                 ppcs->pic_obmc_level = 1;
-            else if (ppcs->enc_mode <= ENC_M4)
-                ppcs->pic_obmc_level = input_resolution <= INPUT_SIZE_480p_RANGE? 2 : 1;
             else if (ppcs->enc_mode <= ENC_M5)
                 ppcs->pic_obmc_level = 2;
             else

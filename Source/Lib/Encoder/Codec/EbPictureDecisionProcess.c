@@ -1834,6 +1834,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                 else
                     pcs_ptr->cdef_level = is_islice ? 15 : 0;
             }
+#if NEW_FD
+            // For fast-decode level 1+, disable CDEF in non-BASE frames in high resolutions
+            if (fast_decode >= 1 && input_resolution >= INPUT_SIZE_720p_RANGE && !is_base && enc_mode <= ENC_M4)
+                pcs_ptr->cdef_level = 0;
+#endif
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);
