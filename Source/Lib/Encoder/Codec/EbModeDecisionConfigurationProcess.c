@@ -546,8 +546,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if NEW_FD
             if (ppcs->enc_mode <= ENC_M4)
                 ppcs->pic_obmc_level = 1;
-            else if (ppcs->enc_mode <= ENC_M5)
-                ppcs->pic_obmc_level = 2;
             else
                 ppcs->pic_obmc_level = 0;
 #else
