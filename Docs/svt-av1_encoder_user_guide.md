@@ -89,6 +89,9 @@ The number of frames of the sequence to encode. e.g. 100. If the input frame cou
 `--keyint integer` **[Optional]**
 
 The keyint defines the display order location at which the encoder would insert a keyframe. It is recommended to use a value that is (a multiple of the mini GOP size (default 16)) + 1 so that the keyframe does not break a mini GOP formation. When using forward frame, it's recommended that the keyint value is placed at a multiple of mini-gop size. The mini-gop size is measured by 1 << hierarchical-levels.
+
+SvtAv1EncApp only: optionally accepts a `s` suffix to indicate to use `keyint * frame-rate` as the keyint value. e.g. `--keyint 5s` for 5 seconds
+
 `--rc integer` **[Optional]**
 
 The rc token sets the bitrate control encoding mode [0: Constant QP OR Constant Rate Factor, 1: Variable Bitrate, 2: Constant Bitrate].
@@ -303,14 +306,14 @@ For this command line, corresponding qindex values are:
 
 #### GOP size and type Options
 
-| **Configuration file parameter** | **Command line**      | **Range**       | **Default** | **Description**                                                                                                 |
-|----------------------------------|-----------------------|-----------------|-------------|-----------------------------------------------------------------------------------------------------------------|
-| **Keyint**                       | --keyint              | [-2-`(2^31)-1`] | -2          | GOP size (frames) [-2: ~5 seconds, -1: "infinite" and only applicable for CRF, 0: same as -1]                   |
-| **IntraRefreshType**             | --irefresh-type       | [1-2]           | 2           | Intra refresh type [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]                                         |
-| **SceneChangeDetection**         | --scd                 | [0-1]           | 0           | Scene change detection control                                                                                  |
-| **Lookahead**                    | --lookahead           | [-1,0-120]      | -1          | Number of frames in the future to look ahead, beyond minigop, temporal filtering, and rate control [-1: auto]   |
-| **HierarchicalLevels**           | --hierarchical-levels | [3-5]           | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                      |
-| **PredStructure**                | --pred-struct         | [1-2]           | 2           | Set prediction structure [1: low delay, 2: random access]                                                       |
+| **Configuration file parameter** | **Command line**      | **Range**       | **Default** | **Description**                                                                                                           |
+|----------------------------------|-----------------------|-----------------|-------------|---------------------------------------------------------------------------------------------------------------------------|
+| **Keyint**                       | --keyint              | [-2-`(2^31)-1`] | -2          | GOP size (frames), use `s` suffix for seconds (SvtAv1EncApp only) [-2: ~5 seconds, -1: "infinite" only for CRF, 0: == -1] |
+| **IntraRefreshType**             | --irefresh-type       | [1-2]           | 2           | Intra refresh type [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]                                                   |
+| **SceneChangeDetection**         | --scd                 | [0-1]           | 0           | Scene change detection control                                                                                            |
+| **Lookahead**                    | --lookahead           | [-1,0-120]      | -1          | Number of frames in the future to look ahead, beyond minigop, temporal filtering, and rate control [-1: auto]             |
+| **HierarchicalLevels**           | --hierarchical-levels | [3-5]           | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                                |
+| **PredStructure**                | --pred-struct         | [1-2]           | 2           | Set prediction structure [1: low delay, 2: random access]                                                                 |
 
 #### AV1 Specific Options
 
