@@ -506,6 +506,7 @@ int arg_parse_list(const char *value, int *list, int n) {
     const char *ptr = value;
     char       *endptr;
     int         i = 0;
+    memset(list,0, EB_MAX_TEMPORAL_LAYERS);
     while (ptr[0] != '\0') {
         if (ptr[0] == '[' || ptr[0] == ']') {
             ptr++;
@@ -529,21 +530,11 @@ int arg_parse_list(const char *value, int *list, int n) {
 }
 
 static void set_cfg_qindex_offsets(const char *value, EbConfig *cfg) {
-    if (cfg->config.hierarchical_levels == 0) {
-        fprintf(stderr,
-                "qindex offsets parameter should be specificied after hierachical_levels\n");
-        exit(1);
-    }
-    arg_parse_list(value, cfg->config.qindex_offsets, cfg->config.hierarchical_levels + 1);
+    arg_parse_list(value, cfg->config.qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
 }
 
 static void set_cfg_chroma_qindex_offsets(const char *value, EbConfig *cfg) {
-    if (cfg->config.hierarchical_levels == 0) {
-        fprintf(stderr,
-                "chroma qindex offsets parameter should be specificied after hierachical_levels\n");
-        exit(1);
-    }
-    arg_parse_list(value, cfg->config.chroma_qindex_offsets, cfg->config.hierarchical_levels + 1);
+    arg_parse_list(value, cfg->config.chroma_qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
 }
 
 static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
