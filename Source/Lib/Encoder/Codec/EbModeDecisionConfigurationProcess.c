@@ -537,12 +537,23 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 ppcs->pic_obmc_level = 0;
         }
         else {
+#if NEW_FD
+            if (ppcs->enc_mode <= ENC_M3)
+                ppcs->pic_obmc_level = 1;
+            else if (ppcs->enc_mode <= ENC_M4)
+                ppcs->pic_obmc_level = input_resolution <= INPUT_SIZE_480p_RANGE? 2 : 1;
+            else if (ppcs->enc_mode <= ENC_M5)
+                ppcs->pic_obmc_level = 2;
+            else
+                ppcs->pic_obmc_level = 0;
+#else
             if (ppcs->enc_mode <= ENC_M3)
                 ppcs->pic_obmc_level = 1;
             else if (ppcs->enc_mode <= ENC_M5)
                 ppcs->pic_obmc_level = 2;
             else
                 ppcs->pic_obmc_level = 0;
+#endif
         }
     } else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->obmc_level;

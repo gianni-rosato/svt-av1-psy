@@ -338,10 +338,27 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
 * return the restoration level
   Used by signal_derivation_pre_analysis_oq and memory allocation
 */
+#if NEW_FD
 uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-                               uint8_t input_resolution) {
+    uint8_t input_resolution, uint8_t fast_decode) {
+
+    uint8_t enable_restoration;
+
+    if (fast_decode == 0)
+        enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
+    else {
+        if (enc_mode <= ENC_M7)
+            enable_restoration = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
+        else
+            enable_restoration = 0;
+    }
+#else
+uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
+    uint8_t input_resolution) {
 
     Bool enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
+#endif
+
 
     // higher resolutions will shut restoration to save memory
     if (input_resolution >= INPUT_SIZE_8K_RANGE)
@@ -428,12 +445,23 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
     else
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->pic_based_rate_est;
 
+#if NEW_FD
+    if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
+        scs_ptr->seq_header.enable_restoration = get_enable_restoration(
+            scs_ptr->static_config.enc_mode,
+            scs_ptr->static_config.enable_restoration_filtering,
+            scs_ptr->input_resolution,
+            scs_ptr->static_config.fast_decode);
+    }
+#else
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
         scs_ptr->seq_header.enable_restoration = get_enable_restoration(
             scs_ptr->static_config.enc_mode,
             scs_ptr->static_config.enable_restoration_filtering,
             scs_ptr->input_resolution);
-    } else
+}
+#endif
+    else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
 

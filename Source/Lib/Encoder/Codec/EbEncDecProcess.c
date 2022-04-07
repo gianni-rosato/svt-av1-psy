@@ -5702,10 +5702,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             rate_est_level = is_islice ? 3 : 0;
     }
     else {
+#if NEW_FD
+        if (enc_mode <= ENC_M3)
+            rate_est_level = 1;
+        else if (enc_mode <= ENC_M4)
+            rate_est_level = input_resolution <= INPUT_SIZE_480p_RANGE? 2 : 1;
+        else if (enc_mode <= ENC_M7)
+            rate_est_level = 2;
+#else
         if (enc_mode <= ENC_M4)
             rate_est_level = 3;
         else if (enc_mode <= ENC_M6)
             rate_est_level = 2;
+#endif
         else if (enc_mode <= ENC_M10)
             rate_est_level = 3;
         else if (enc_mode <= ENC_M12)

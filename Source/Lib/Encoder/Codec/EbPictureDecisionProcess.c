@@ -1405,12 +1405,16 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
             dlf_level = (is_16bit && is_used_as_reference_flag) ? 4 : 0;
     }
     else {
+#if NEW_FD
+        dlf_level = is_used_as_reference_flag ? 4 : 0;
+#else
         if (enc_mode <= ENC_M4)
             dlf_level = is_used_as_reference_flag ? 3 : 0;
         else if (enc_mode <= ENC_M7)
             dlf_level = is_used_as_reference_flag ? 4 : 0;
         else
             dlf_level = is_used_as_reference_flag ? 3 : 0;
+#endif
     }
 
     return dlf_level;
@@ -1872,10 +1876,14 @@ EbErrorType signal_derivation_multi_processes_oq(
                 wn_filter_lvl = 4;
         }
         else {
+#if NEW_FD
+            wn_filter_lvl = 4;
+#else
             if (enc_mode <= ENC_M4)
                 wn_filter_lvl = 1;
             else
                 wn_filter_lvl = 4;
+#endif
         }
     }
     else
@@ -1908,6 +1916,45 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->tune_tpl_for_chroma = 0;
 #endif
     uint8_t list0_only_base = 0;
+
+#if NEW_FD
+    if (fast_decode == 0) {
+        if (enc_mode <= ENC_M6)
+            list0_only_base = 0;
+        else if (enc_mode <= ENC_M7) {
+            if (hierarchical_levels <= 3)
+                list0_only_base = 1;
+            else
+                list0_only_base = 0;
+        }
+        else  if (enc_mode <= ENC_M9) {
+            if (hierarchical_levels <= 3)
+                list0_only_base = 2;
+            else
+                list0_only_base = 1;
+        }
+        else
+            list0_only_base = 2;
+    }
+    else {
+        if (enc_mode <= ENC_M6)
+            list0_only_base = 0;
+        else if (enc_mode <= ENC_M7) {
+            if (hierarchical_levels <= 3)
+                list0_only_base = 1;
+            else
+                list0_only_base = 0;
+        }
+        else if (enc_mode <= ENC_M10) {
+            if (hierarchical_levels <= 3)
+                list0_only_base = 2;
+            else
+                list0_only_base = 1;
+        }
+        else
+            list0_only_base = 2;
+    }
+#else
     if (enc_mode <= ENC_M6)
         list0_only_base = 0;
     else if (enc_mode <= ENC_M7) {
@@ -1924,6 +1971,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         list0_only_base = 2;
+#endif
+
+
     set_list0_only_base(pcs_ptr, list0_only_base);
     if (scs_ptr->enable_hbd_mode_decision == DEFAULT)
         if (enc_mode <= ENC_MR)

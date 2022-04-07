@@ -380,9 +380,13 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 
     return EB_ErrorNone;
 }
-
+#if NEW_FD
 uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-                               uint8_t input_resolution);
+    uint8_t input_resolution, uint8_t fast_decode);
+#else
+uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
+    uint8_t input_resolution);
+#endif
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 uint8_t get_disallow_nsq(EncMode enc_mode);
 
@@ -446,14 +450,22 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->temp_lf_recon_picture16bit_ptr    = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_picture_ptr         = (EbPictureBufferDesc *)NULL;
 
+#if NEW_FD
     if (get_enable_restoration(init_data_ptr->enc_mode,
-                               init_data_ptr->static_config.enable_restoration_filtering,
-                               init_data_ptr->input_resolution)) {
+        init_data_ptr->static_config.enable_restoration_filtering,
+        init_data_ptr->input_resolution,
+        init_data_ptr->static_config.fast_decode)) {
+
+#else
+    if (get_enable_restoration(init_data_ptr->enc_mode,
+        init_data_ptr->static_config.enable_restoration_filtering,
+        init_data_ptr->input_resolution)) {
+#endif
         set_restoration_unit_size(init_data_ptr->picture_width,
-                                  init_data_ptr->picture_height,
-                                  1,
-                                  1,
-                                  object_ptr->rst_info);
+            init_data_ptr->picture_height,
+            1,
+            1,
+            object_ptr->rst_info);
 
         return_error = svt_av1_alloc_restoration_buffers(object_ptr, init_data_ptr->av1_cm);
 
@@ -1212,9 +1224,16 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         EB_CALLOC_ALIGNED_ARRAY(object_ptr->tpl_mvs, mem_size);
     }
 
+#if NEW_FD
     if (get_enable_restoration(init_data_ptr->enc_mode,
-                               init_data_ptr->static_config.enable_restoration_filtering,
-                               init_data_ptr->input_resolution))
+        init_data_ptr->static_config.enable_restoration_filtering,
+        init_data_ptr->input_resolution,
+        init_data_ptr->static_config.fast_decode))
+#else
+    if (get_enable_restoration(init_data_ptr->enc_mode,
+        init_data_ptr->static_config.enable_restoration_filtering,
+        init_data_ptr->input_resolution))
+#endif
         EB_MALLOC_ALIGNED(object_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
 
     return EB_ErrorNone;
