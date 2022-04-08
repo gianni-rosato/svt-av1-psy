@@ -28,11 +28,11 @@
 #include "common_dsp_rtcd.h"
 #include "EbResize.h"
 typedef struct ResourceCoordinationContext {
-    EbFifo                        *input_cmd_fifo_ptr;
-    EbFifo                        *resource_coordination_results_output_fifo_ptr;
-    EbFifo                       **picture_control_set_fifo_ptr_array;
+    EbFifo *                       input_cmd_fifo_ptr;
+    EbFifo *                       resource_coordination_results_output_fifo_ptr;
+    EbFifo **                      picture_control_set_fifo_ptr_array;
     EbSequenceControlSetInstance **scs_instance_array;
-    EbCallback                   **app_callback_ptr_array;
+    EbCallback **                  app_callback_ptr_array;
 
     // Compute Segments
     uint32_t compute_segments_total_count_array;
@@ -77,7 +77,7 @@ static void resource_coordination_context_dctor(EbPtr p) {
  * Resource Coordination Context Constructor
  ************************************************/
 EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_ptr,
-                                               EbEncHandle     *enc_handle_ptr) {
+                                               EbEncHandle *    enc_handle_ptr) {
     ResourceCoordinationContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_contxt_ptr->priv  = context_ptr;
@@ -149,7 +149,7 @@ When tpl_opt_flag is set to 0, none of the actions mentioned above could be cons
 0:OFF; 1:ON.
 ***************************************************************************************/
 void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_level) {
-    TplControls        *tpl_ctrls = &pcs_ptr->tpl_ctrls;
+    TplControls *       tpl_ctrls = &pcs_ptr->tpl_ctrls;
     SequenceControlSet *scs_ptr   = pcs_ptr->scs_ptr;
     switch (tpl_level) {
     case 0:
@@ -255,10 +255,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->disable_intra_pred_nbase = 0;
         tpl_ctrls->disable_intra_pred_nref  = 1;
         tpl_ctrls->reduced_tpl_group        = pcs_ptr->hierarchical_levels == 5
-                   ? (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 2)
-                   : (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1);
-        tpl_ctrls->get_best_ref             = 0;
-        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE
+            ? (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 2)
+            : (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1);
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape     = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE
                                                                                  : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
@@ -267,7 +267,7 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->subsample_tx                 = 1;
         tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.30
                                                                                          : 0.70;
-        tpl_ctrls->synth_blk_size   = get_tpl_synthesizer_block_size(
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 1;
         break;
@@ -278,10 +278,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->disable_intra_pred_nbase = 0;
         tpl_ctrls->disable_intra_pred_nref  = 1;
         tpl_ctrls->reduced_tpl_group        = pcs_ptr->hierarchical_levels == 5
-                   ? (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1)
-                   : (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
-        tpl_ctrls->get_best_ref             = 0;
-        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE
+            ? (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1)
+            : (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape     = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE
                                                                                  : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
@@ -290,7 +290,7 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->subsample_tx                 = 1;
         tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.3
                                                                                          : 2.0;
-        tpl_ctrls->synth_blk_size   = get_tpl_synthesizer_block_size(
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 1;
         break;
@@ -304,9 +304,9 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->reduced_tpl_group = pcs_ptr->hierarchical_levels == 5
             ? (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1)
             : (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
-        tpl_ctrls->get_best_ref      = 0;
-        tpl_ctrls->pf_shape          = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE
-                                                                                          : N4_SHAPE;
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape     = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE
+                                                                                 : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th     = 4;
@@ -314,7 +314,7 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->subsample_tx                 = 2;
         tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.3
                                                                                          : 2.0;
-        tpl_ctrls->synth_blk_size   = get_tpl_synthesizer_block_size(
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 2;
         break;
@@ -338,10 +338,8 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
 * return the restoration level
   Used by signal_derivation_pre_analysis_oq and memory allocation
 */
-#if NEW_FD
 uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-    uint8_t input_resolution, bool fast_decode) {
-
+                               uint8_t input_resolution, Bool fast_decode) {
     uint8_t enable_restoration;
 
     if (fast_decode == 0)
@@ -352,13 +350,6 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
         else
             enable_restoration = 0;
     }
-#else
-uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-    uint8_t input_resolution) {
-
-    Bool enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
-#endif
-
 
     // higher resolutions will shut restoration to save memory
     if (input_resolution >= INPUT_SIZE_8K_RANGE)
@@ -445,23 +436,13 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
     else
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->pic_based_rate_est;
 
-#if NEW_FD
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
         scs_ptr->seq_header.enable_restoration = get_enable_restoration(
             scs_ptr->static_config.enc_mode,
             scs_ptr->static_config.enable_restoration_filtering,
             scs_ptr->input_resolution,
             scs_ptr->static_config.fast_decode);
-    }
-#else
-    if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
-        scs_ptr->seq_header.enable_restoration = get_enable_restoration(
-            scs_ptr->static_config.enc_mode,
-            scs_ptr->static_config.enable_restoration_filtering,
-            scs_ptr->input_resolution);
-}
-#endif
-    else
+    } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
 
@@ -656,7 +637,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
 }
 static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
-    Av1Common   *cm      = pcs_ptr->av1_cm;
+    Av1Common *  cm      = pcs_ptr->av1_cm;
 
     pcs_ptr->gf_interval = 0;
 
@@ -878,7 +859,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 static EbErrorType copy_metadata_buffer(EbBufferHeaderType *dst, EbBufferHeaderType *src) {
     EbErrorType return_error = EB_ErrorNone;
     for (size_t i = 0; i < src->metadata->sz; ++i) {
-        SvtMetadataT  *current_metadata = src->metadata->metadata_array[i];
+        SvtMetadataT * current_metadata = src->metadata->metadata_array[i];
         const uint32_t type             = current_metadata->type;
         const uint8_t *payload          = current_metadata->payload;
         const size_t   sz               = current_metadata->sz;
@@ -995,22 +976,22 @@ static EbErrorType realloc_sb_param(SequenceControlSet *scs_ptr, PictureParentCo
 *
 ********************************************************************************/
 void *resource_coordination_kernel(void *input_ptr) {
-    EbThreadContext             *enc_contxt_ptr = (EbThreadContext *)input_ptr;
+    EbThreadContext *            enc_contxt_ptr = (EbThreadContext *)input_ptr;
     ResourceCoordinationContext *context_ptr = (ResourceCoordinationContext *)enc_contxt_ptr->priv;
 
     EbObjectWrapper *pcs_wrapper_ptr;
 
     PictureParentControlSet *pcs_ptr;
-    SequenceControlSet      *scs_ptr;
+    SequenceControlSet *     scs_ptr;
 
-    EbObjectWrapper             *eb_input_wrapper_ptr;
-    EbBufferHeaderType          *eb_input_ptr;
-    EbObjectWrapper             *output_wrapper_ptr;
+    EbObjectWrapper *            eb_input_wrapper_ptr;
+    EbBufferHeaderType *         eb_input_ptr;
+    EbObjectWrapper *            output_wrapper_ptr;
     ResourceCoordinationResults *out_results_ptr;
-    EbObjectWrapper             *eb_input_cmd_wrapper;
-    InputCommand                *input_cmd_obj;
-    EbObjectWrapper             *input_picture_wrapper_ptr;
-    EbObjectWrapper             *reference_picture_wrapper_ptr;
+    EbObjectWrapper *            eb_input_cmd_wrapper;
+    InputCommand *               input_cmd_obj;
+    EbObjectWrapper *            input_picture_wrapper_ptr;
+    EbObjectWrapper *            reference_picture_wrapper_ptr;
 
     Bool             end_of_sequence_flag = FALSE;
     EbObjectWrapper *prev_pcs_wrapper_ptr = 0;
@@ -1023,9 +1004,9 @@ void *resource_coordination_kernel(void *input_ptr) {
 
         input_cmd_obj = (InputCommand *)eb_input_cmd_wrapper->object_ptr;
 
-        EbObjectWrapper    *eb_y8b_wrapper_ptr = input_cmd_obj->eb_y8b_wrapper_ptr;
+        EbObjectWrapper *   eb_y8b_wrapper_ptr = input_cmd_obj->eb_y8b_wrapper_ptr;
         EbBufferHeaderType *y8b_header = (EbBufferHeaderType *)eb_y8b_wrapper_ptr->object_ptr;
-        uint8_t            *buff_y8b   = ((EbPictureBufferDesc *)y8b_header->p_buffer)->buffer_y;
+        uint8_t *           buff_y8b   = ((EbPictureBufferDesc *)y8b_header->p_buffer)->buffer_y;
         eb_input_wrapper_ptr           = input_cmd_obj->eb_input_wrapper_ptr;
         eb_input_ptr                   = (EbBufferHeaderType *)eb_input_wrapper_ptr->object_ptr;
 
@@ -1262,12 +1243,11 @@ void *resource_coordination_kernel(void *input_ptr) {
                 svt_object_inc_live_count(pcs_ptr->eb_y8b_wrapper_ptr, 2);
             }
             if (scs_ptr->static_config.restricted_motion_vector) {
-                struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
-                Av1Common *const                cm       = ppcs_ptr->av1_cm;
-                uint8_t pic_width_in_sb = (uint8_t)((pcs_ptr->aligned_width + scs_ptr->sb_size_pix -
-                                                     1) /
-                                                    scs_ptr->sb_size_pix);
-                int     tile_row, tile_col;
+                struct PictureParentControlSet *ppcs_ptr        = pcs_ptr;
+                Av1Common *const                cm              = ppcs_ptr->av1_cm;
+                uint8_t                         pic_width_in_sb = (uint8_t)(
+                    (pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
+                int       tile_row, tile_col;
                 uint32_t  x_sb_index, y_sb_index;
                 const int tile_cols = cm->tiles_info.tile_cols;
                 const int tile_rows = cm->tiles_info.tile_rows;

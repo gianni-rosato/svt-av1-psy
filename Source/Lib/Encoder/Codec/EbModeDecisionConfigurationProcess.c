@@ -232,7 +232,7 @@ void svt_av1_qm_init(PictureParentControlSet *pcs_ptr) {
 * Set the reference sg ep for a given picture
 ******************************************************/
 void set_reference_sg_ep(PictureControlSet *pcs_ptr) {
-    Av1Common         *cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+    Av1Common *        cm = pcs_ptr->parent_pcs_ptr->av1_cm;
     EbReferenceObject *ref_obj_l0, *ref_obj_l1;
     memset(cm->sg_frame_ep_cnt, 0, SGRPROJ_PARAMS * sizeof(int32_t));
     cm->sg_frame_ep = 0;
@@ -301,7 +301,7 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
 ******************************************************/
 
 static void mode_decision_configuration_context_dctor(EbPtr p) {
-    EbThreadContext                  *thread_context_ptr = (EbThreadContext *)p;
+    EbThreadContext *                 thread_context_ptr = (EbThreadContext *)p;
     ModeDecisionConfigurationContext *obj                = (ModeDecisionConfigurationContext *)
                                                 thread_context_ptr->priv;
 
@@ -310,7 +310,7 @@ static void mode_decision_configuration_context_dctor(EbPtr p) {
 /******************************************************
  * Mode Decision Configuration Context Constructor
  ******************************************************/
-EbErrorType mode_decision_configuration_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_context_ptr,
                                                      const EbEncHandle *enc_handle_ptr,
                                                      int input_index, int output_index) {
     ModeDecisionConfigurationContext *context_ptr;
@@ -395,7 +395,7 @@ uint8_t get_chroma_level(EncMode enc_mode) {
 }
 
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet *scs_ptr,
-                                                             PictureControlSet  *pcs_ptr) {
+                                                             PictureControlSet * pcs_ptr) {
     EbErrorType              return_error        = EB_ErrorNone;
     PictureParentControlSet *ppcs                = pcs_ptr->parent_pcs_ptr;
     const EncMode            enc_mode            = pcs_ptr->enc_mode;
@@ -424,7 +424,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 avg_me_dist /= pcs_ptr->picture_qp;
 
                 ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 200 ||
-                    input_resolution <= INPUT_SIZE_480p_RANGE
+                        input_resolution <= INPUT_SIZE_480p_RANGE
                     ? 1
                     : 0;
             }
@@ -437,7 +437,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             avg_me_dist /= pcs_ptr->picture_qp;
 
             ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 50 ||
-                input_resolution <= INPUT_SIZE_480p_RANGE
+                    input_resolution <= INPUT_SIZE_480p_RANGE
                 ? 1
                 : 0;
         }
@@ -491,36 +491,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         frm_hdr->error_resilient_mode || pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
         pcs_ptr->wm_level = 0;
     }
-#if NEW_FD
     else {
         if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE || is_base) {
-            if (enc_mode <= ENC_M3) {
-                pcs_ptr->wm_level = 1;
-            }
-            else if (enc_mode <= ENC_M4) {
-                if (hierarchical_levels <= 3)
-                    pcs_ptr->wm_level = is_base ? 1 : 0;
-                else
-                    pcs_ptr->wm_level = is_ref ? 1 : 0;
-            }
-            else if (enc_mode <= ENC_M7) {
-                pcs_ptr->wm_level = is_base ? 1 : 0;
-            }
-            else if (enc_mode <= ENC_M10) {
-                if (input_resolution <= INPUT_SIZE_720p_RANGE)
-                    pcs_ptr->wm_level = is_base ? 1 : 0;
-                else
-                    pcs_ptr->wm_level = is_base ? 2 : 0;
-            }
-            else {
-                pcs_ptr->wm_level = is_base ? 2 : 0;
-            }
-        }
-        else {
-            pcs_ptr->wm_level = 0;
-        }
-#else
-    else {
             if (enc_mode <= ENC_M3) {
                 pcs_ptr->wm_level = 1;
             } else if (enc_mode <= ENC_M4) {
@@ -538,7 +510,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             } else {
                 pcs_ptr->wm_level = is_base ? 2 : 0;
             }
-#endif
+        } else {
+            pcs_ptr->wm_level = 0;
+        }
     }
 
     Bool enable_wm = pcs_ptr->wm_level ? 1 : 0;
@@ -566,21 +540,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 ppcs->pic_obmc_level = 2;
             else
                 ppcs->pic_obmc_level = 0;
-        }
-        else {
-#if NEW_FD
+        } else {
             if (ppcs->enc_mode <= ENC_M4)
                 ppcs->pic_obmc_level = 1;
             else
                 ppcs->pic_obmc_level = 0;
-#else
-            if (ppcs->enc_mode <= ENC_M3)
-                ppcs->pic_obmc_level = 1;
-            else if (ppcs->enc_mode <= ENC_M5)
-                ppcs->pic_obmc_level = 2;
-            else
-                ppcs->pic_obmc_level = 0;
-#endif
         }
     } else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->obmc_level;
@@ -780,10 +744,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M1)
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 2;
     else if (enc_mode <= ENC_M2)
-        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0
-            : is_base                                                          ? 2
-            : is_ref                                                           ? 4
-                                                                               : 7;
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice
+            ? 0
+            : is_base ? 2 : is_ref ? 4 : 7;
     else
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 5 : is_ref ? 6 : 7;
     // Weighting (expressed as a percentage) applied to
@@ -938,23 +901,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (scs_ptr->super_block_size == 64) {
         if (is_islice || pcs_ptr->parent_pcs_ptr->transition_present) {
             pcs_ptr->pic_depth_removal_level = 0;
-        }
-        else {
+        } else {
             // Set depth_removal_level_controls
             if (pcs_ptr->parent_pcs_ptr->sc_class1) {
                 if (enc_mode <= ENC_M8)
                     pcs_ptr->pic_depth_removal_level = 0;
                 else if (enc_mode <= ENC_M10) {
                     pcs_ptr->pic_depth_removal_level = is_base ? 0 : 6;
-                }
-                else if (enc_mode <= ENC_M12) {
+                } else if (enc_mode <= ENC_M12) {
                     pcs_ptr->pic_depth_removal_level = is_base ? 4 : 6;
-                }
-                else {
+                } else {
                     pcs_ptr->pic_depth_removal_level = is_base ? 5 : 14;
                 }
-            }
-            else if (fast_decode == 0) {
+            } else if (fast_decode == 0) {
                 if (enc_mode <= ENC_M2)
                     pcs_ptr->pic_depth_removal_level = 0;
                 else if (enc_mode <= ENC_M5) {
@@ -962,22 +921,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                         pcs_ptr->pic_depth_removal_level = 0;
                     else
                         pcs_ptr->pic_depth_removal_level = 2;
-                }
-                else if (enc_mode <= ENC_M7) {
+                } else if (enc_mode <= ENC_M7) {
                     if (input_resolution <= INPUT_SIZE_1080p_RANGE)
                         pcs_ptr->pic_depth_removal_level = 1;
                     else
                         pcs_ptr->pic_depth_removal_level = 2;
-                }
-                else if (enc_mode <= ENC_M9) {
+                } else if (enc_mode <= ENC_M9) {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
                     else
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
-                }
-                else if (enc_mode <= ENC_M11) {
+                } else if (enc_mode <= ENC_M11) {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 4;
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -988,8 +944,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                         pcs_ptr->pic_depth_removal_level = is_base ? 3 : 8;
                     else
                         pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
-                }
-                else {
+                } else {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
                         pcs_ptr->pic_depth_removal_level = 7;
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -997,8 +952,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     else
                         pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
                 }
-            }
-            else {
+            } else {
                 if (enc_mode <= ENC_M2)
                     pcs_ptr->pic_depth_removal_level = 0;
                 else if (enc_mode <= ENC_M5) {
@@ -1006,22 +960,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                         pcs_ptr->pic_depth_removal_level = 0;
                     else
                         pcs_ptr->pic_depth_removal_level = 2;
-                }
-                else if (enc_mode <= ENC_M7) {
+                } else if (enc_mode <= ENC_M7) {
                     if (input_resolution <= INPUT_SIZE_1080p_RANGE)
                         pcs_ptr->pic_depth_removal_level = 1;
                     else
                         pcs_ptr->pic_depth_removal_level = 2;
-                }
-                else if (enc_mode <= ENC_M8) {
+                } else if (enc_mode <= ENC_M8) {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
                     else
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
-                }
-                else if (enc_mode <= ENC_M11) {
+                } else if (enc_mode <= ENC_M11) {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 4;
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -1032,8 +983,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                         pcs_ptr->pic_depth_removal_level = is_base ? 3 : 8;
                     else
                         pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
-                }
-                else {
+                } else {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
                         pcs_ptr->pic_depth_removal_level = 7;
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -1404,7 +1354,7 @@ void *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 ********************************************************************************/
 void *mode_decision_configuration_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext                  *thread_context_ptr = (EbThreadContext *)input_ptr;
+    EbThreadContext *                 thread_context_ptr = (EbThreadContext *)input_ptr;
     ModeDecisionConfigurationContext *context_ptr        = (ModeDecisionConfigurationContext *)
                                                         thread_context_ptr->priv;
     // Input
@@ -1530,7 +1480,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 const int pic_height = pcs_ptr->parent_pcs_ptr->aligned_height;
 
                 uint32_t *block_hash_values[2][2];
-                int8_t   *is_block_same[2][3];
+                int8_t *  is_block_same[2][3];
                 int       k, j;
 
                 for (k = 0; k < 2; k++) {
@@ -1690,7 +1640,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             }
         }
 
-        Av1Common     *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
+        Av1Common *    cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
         WnFilterCtrls *wn_ctrls = &cm->wn_filter_ctrls;
 
         if (scs_ptr->vq_ctrls.sharpness_ctrls.restoration &&
@@ -1708,10 +1658,10 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                  &enc_dec_tasks_wrapper_ptr);
 
             EncDecTasks *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
-            enc_dec_tasks_ptr->pcs_wrapper_ptr  = rate_control_results_ptr->pcs_wrapper_ptr;
-            enc_dec_tasks_ptr->input_type       = rate_control_results_ptr->superres_recode
-                      ? ENCDEC_TASKS_SUPERRES_INPUT
-                      : ENCDEC_TASKS_MDC_INPUT;
+            enc_dec_tasks_ptr->pcs_wrapper_ptr = rate_control_results_ptr->pcs_wrapper_ptr;
+            enc_dec_tasks_ptr->input_type      = rate_control_results_ptr->superres_recode
+                ? ENCDEC_TASKS_SUPERRES_INPUT
+                : ENCDEC_TASKS_MDC_INPUT;
             enc_dec_tasks_ptr->tile_group_index = tile_group_idx;
 
             // Post the Full Results Object

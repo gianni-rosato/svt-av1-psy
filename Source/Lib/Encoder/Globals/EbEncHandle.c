@@ -2950,11 +2950,7 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
         if (enc_mode <= ENC_M1) {
             tf_level = 1;
         }
-#if NEW_FD
         else if (enc_mode <= ENC_M6) {
-#else
-        else if (enc_mode <= ENC_M5) {
-#endif
             tf_level = 2;
         }
         else if (enc_mode <= ENC_M7) {
@@ -3551,11 +3547,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
         if (scs_ptr->static_config.enc_mode <= ENC_M5)
             scs_ptr->mfmv_enabled = 1;
-#if NEW_FD
         else if(scs_ptr->static_config.enc_mode <= ENC_M9)
-#else
-        else if(scs_ptr->static_config.enc_mode <= ENC_M10)
-#endif
             if (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
                 scs_ptr->mfmv_enabled = 1;
             else

@@ -35,7 +35,6 @@
 extern "C" {
 #endif // __cplusplus
 
-#define NEW_FD                  1 // New very fast decode-opt mode
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -19,6 +19,7 @@
 #include "EbPictureDemuxResults.h"
 #include "EbReferenceObject.h"
 #include "EbPictureControlSet.h"
+#include "EbResourceCoordinationProcess.h"
 
 /**************************************
  * Rest Context
@@ -80,13 +81,6 @@ static void rest_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj);
 }
 
-#if NEW_FD
-uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-    uint8_t input_resolution, bool fast_decode);
-#else
-uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-    uint8_t input_resolution);
-#endif
 
 
 /******************************************************
@@ -115,16 +109,10 @@ EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
 
     Bool is_16bit = scs_ptr->is_16bit_pipeline;
 
-#if NEW_FD
     if (get_enable_restoration(init_data_ptr->enc_mode,
         config->enable_restoration_filtering,
         scs_ptr->input_resolution,
         scs_ptr->static_config.fast_decode)) {
-#else
-    if (get_enable_restoration(init_data_ptr->enc_mode,
-        config->enable_restoration_filtering,
-        scs_ptr->input_resolution)) {
-#endif
         EbPictureBufferDescInitData init_data;
 
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
