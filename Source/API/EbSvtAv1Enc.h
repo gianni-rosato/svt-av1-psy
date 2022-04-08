@@ -52,9 +52,7 @@ typedef enum ATTRIBUTE_PACKED {
     ENC_M13        = 13,
     MAX_ENC_PRESET = ENC_M13
 } EncMode;
-#define NUM_MV_COMPONENTS 2
-#define NUM_MV_HIST 2
-#define MAX_MV_HIST_SIZE 2 * REF_LIST_MAX_DEPTH *NUM_MV_COMPONENTS *NUM_MV_HIST
+
 #define DEFAULT -1
 
 #define EB_BUFFERFLAG_EOS 0x00000001 // signals the last packet of the stream
