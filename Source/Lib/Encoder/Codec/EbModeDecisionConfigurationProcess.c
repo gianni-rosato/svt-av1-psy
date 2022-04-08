@@ -490,29 +490,54 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME ||
         frm_hdr->error_resilient_mode || pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
         pcs_ptr->wm_level = 0;
-    } else {
-        if (enc_mode <= ENC_M3) {
-            pcs_ptr->wm_level = 1;
-        } else if (enc_mode <= ENC_M4) {
-            if (hierarchical_levels <= 3)
-                pcs_ptr->wm_level = is_base ? 1 : 0;
-            else
-                pcs_ptr->wm_level = is_ref ? 1 : 0;
-        } else if (enc_mode <= ENC_M7) {
-            pcs_ptr->wm_level = is_base ? 1 : 0;
-        } else if (enc_mode <= ENC_M10) {
-            if (input_resolution <= INPUT_SIZE_720p_RANGE)
-                pcs_ptr->wm_level = is_base ? 1 : 0;
-            else
-                pcs_ptr->wm_level = is_base ? 2 : 0;
-        } else {
-            pcs_ptr->wm_level = is_base ? 2 : 0;
-        }
-
+    }
 #if NEW_FD
-        // For fast-decode level 1+, disable WM in non-BASE frames in high resolutions
-        if (fast_decode >= 1 && input_resolution >= INPUT_SIZE_720p_RANGE && !is_base && enc_mode <= ENC_M4)
+    else {
+        if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE || is_base) {
+            if (enc_mode <= ENC_M3) {
+                pcs_ptr->wm_level = 1;
+            }
+            else if (enc_mode <= ENC_M4) {
+                if (hierarchical_levels <= 3)
+                    pcs_ptr->wm_level = is_base ? 1 : 0;
+                else
+                    pcs_ptr->wm_level = is_ref ? 1 : 0;
+            }
+            else if (enc_mode <= ENC_M7) {
+                pcs_ptr->wm_level = is_base ? 1 : 0;
+            }
+            else if (enc_mode <= ENC_M10) {
+                if (input_resolution <= INPUT_SIZE_720p_RANGE)
+                    pcs_ptr->wm_level = is_base ? 1 : 0;
+                else
+                    pcs_ptr->wm_level = is_base ? 2 : 0;
+            }
+            else {
+                pcs_ptr->wm_level = is_base ? 2 : 0;
+            }
+        }
+        else {
             pcs_ptr->wm_level = 0;
+        }
+#else
+    else {
+            if (enc_mode <= ENC_M3) {
+                pcs_ptr->wm_level = 1;
+            } else if (enc_mode <= ENC_M4) {
+                if (hierarchical_levels <= 3)
+                    pcs_ptr->wm_level = is_base ? 1 : 0;
+                else
+                    pcs_ptr->wm_level = is_ref ? 1 : 0;
+            } else if (enc_mode <= ENC_M7) {
+                pcs_ptr->wm_level = is_base ? 1 : 0;
+            } else if (enc_mode <= ENC_M10) {
+                if (input_resolution <= INPUT_SIZE_720p_RANGE)
+                    pcs_ptr->wm_level = is_base ? 1 : 0;
+                else
+                    pcs_ptr->wm_level = is_base ? 2 : 0;
+            } else {
+                pcs_ptr->wm_level = is_base ? 2 : 0;
+            }
 #endif
     }
 

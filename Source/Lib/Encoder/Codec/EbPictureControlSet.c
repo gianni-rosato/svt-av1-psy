@@ -382,7 +382,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 }
 #if NEW_FD
 uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-    uint8_t input_resolution, uint8_t fast_decode);
+    uint8_t input_resolution, bool fast_decode);
 #else
 uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
     uint8_t input_resolution);

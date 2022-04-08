@@ -340,7 +340,7 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
 */
 #if NEW_FD
 uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-    uint8_t input_resolution, uint8_t fast_decode) {
+    uint8_t input_resolution, bool fast_decode) {
 
     uint8_t enable_restoration;
 

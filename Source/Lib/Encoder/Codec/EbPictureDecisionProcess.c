@@ -1812,6 +1812,54 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
+#if NEW_FD
+            if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE || is_base) {
+                if (enc_mode <= ENC_M0)
+                    pcs_ptr->cdef_level = 1;
+                else if (enc_mode <= ENC_M3)
+                    pcs_ptr->cdef_level = 2;
+                else if (enc_mode <= ENC_M5)
+                    pcs_ptr->cdef_level = 4;
+                else if (enc_mode <= ENC_M9)
+                    pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
+                else if (enc_mode <= ENC_M11)
+                    pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+                else if (enc_mode <= ENC_M12) {
+                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+                    else
+                        pcs_ptr->cdef_level = is_islice ? 15 : is_ref ? 16 : 17;
+                }
+                else {
+                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->cdef_level = is_base ? 15 : 0;
+                    else
+                        pcs_ptr->cdef_level = is_islice ? 15 : 0;
+                }
+            }
+            else {
+                if (enc_mode <= ENC_M4)
+                    pcs_ptr->cdef_level = 0;
+                else if (enc_mode <= ENC_M5)
+                    pcs_ptr->cdef_level = 4;
+                else if (enc_mode <= ENC_M9)
+                    pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
+                else if (enc_mode <= ENC_M11)
+                    pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+                else if (enc_mode <= ENC_M12) {
+                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+                    else
+                        pcs_ptr->cdef_level = is_islice ? 15 : is_ref ? 16 : 17;
+                }
+                else {
+                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->cdef_level = is_base ? 15 : 0;
+                    else
+                        pcs_ptr->cdef_level = is_islice ? 15 : 0;
+                }
+            }
+#else
             if (enc_mode <= ENC_M0)
                 pcs_ptr->cdef_level = 1;
             else if (enc_mode <= ENC_M3)
@@ -1834,10 +1882,6 @@ EbErrorType signal_derivation_multi_processes_oq(
                 else
                     pcs_ptr->cdef_level = is_islice ? 15 : 0;
             }
-#if NEW_FD
-            // For fast-decode level 1+, disable CDEF in non-BASE frames in high resolutions
-            if (fast_decode >= 1 && input_resolution >= INPUT_SIZE_720p_RANGE && !is_base && enc_mode <= ENC_M4)
-                pcs_ptr->cdef_level = 0;
 #endif
         }
         else
