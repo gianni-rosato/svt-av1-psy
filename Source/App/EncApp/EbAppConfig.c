@@ -506,7 +506,7 @@ int arg_parse_list(const char *value, int *list, int n) {
     const char *ptr = value;
     char       *endptr;
     int         i = 0;
-    memset(list,0, EB_MAX_TEMPORAL_LAYERS);
+    memset(list,0, n);
     while (ptr[0] != '\0') {
         if (ptr[0] == '[' || ptr[0] == ']') {
             ptr++;

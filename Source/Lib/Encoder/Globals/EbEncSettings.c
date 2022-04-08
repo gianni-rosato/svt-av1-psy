@@ -1089,6 +1089,7 @@ static EbErrorType parse_list(const char *nptr, int32_t *list, size_t n) {
     const char *ptr = nptr;
     char       *endptr;
     size_t      i = 0;
+    memset(list, 0, n);
     while (*ptr) {
         if (*ptr == '[' || *ptr == ']') {
             ptr++;
