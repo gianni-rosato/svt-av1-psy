@@ -1803,7 +1803,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
-            if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE || is_base) {
+            if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
                 if (enc_mode <= ENC_M0)
                     pcs_ptr->cdef_level = 1;
                 else if (enc_mode <= ENC_M3)
@@ -1828,8 +1828,12 @@ EbErrorType signal_derivation_multi_processes_oq(
                 }
             }
             else {
-                if (enc_mode <= ENC_M4)
-                    pcs_ptr->cdef_level = 0;
+                if (enc_mode <= ENC_M0)
+                    pcs_ptr->cdef_level = is_base? 1 : 0;
+                else if (enc_mode <= ENC_M3)
+                    pcs_ptr->cdef_level = is_base? 2 : 0;
+                else if (enc_mode <= ENC_M4)
+                    pcs_ptr->cdef_level = is_base? 4 : 0;
                 else if (enc_mode <= ENC_M5)
                     pcs_ptr->cdef_level = 4;
                 else if (enc_mode <= ENC_M9)
