@@ -346,7 +346,7 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
         enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
     else {
         if (enc_mode <= ENC_M7)
-            enable_restoration = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
+            enable_restoration = input_resolution <= INPUT_SIZE_360p_RANGE ? 1 : 0;
         else
             enable_restoration = 0;
     }

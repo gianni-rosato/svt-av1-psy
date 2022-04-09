@@ -810,7 +810,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 2: // N
         // pf_set {0,1,2,4,5,6,8,9,10,12,13,14}
@@ -849,7 +849,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 3:
         // pf_set {0,2,4,6,8,10,12,14}
@@ -884,7 +884,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 4:
         // pf_set {0,4,8,12,15}
@@ -916,7 +916,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 5:
         // pf_set {0,5,10,15}
@@ -947,7 +947,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 6:
         // pf_set {0,7,15}
@@ -977,7 +977,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 7:
         // pf_set {0,7,15}
@@ -1006,7 +1006,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 8:
         // pf_set {0,7,15}
@@ -1032,7 +1032,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
         case 9:
         // pf_set {0,15}
@@ -1057,7 +1057,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 10:
         // pf_set {0,15}
@@ -1084,7 +1084,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 11:
         // pf_set {0,15}
@@ -1110,7 +1110,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
         case 12:
         // pf_set {0,15}
@@ -1136,7 +1136,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 13:
         // pf_set {0,15}
@@ -1164,7 +1164,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 14:
         // pf_set {0,15}
@@ -1191,7 +1191,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         if (fast_decode == 0)
             cdef_ctrls->zero_fs_cost_bias = 0;
         else
-            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0 : 62;
+            cdef_ctrls->zero_fs_cost_bias = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : 62;
         break;
     case 15:
         // pf_set {0,15}
@@ -1384,11 +1384,11 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
 
     uint8_t dlf_level;
     // Don't disable DLF for low resolutions when fast-decode is used
-    if (fast_decode == 0 || resolution <= INPUT_SIZE_480p_RANGE) {
+    if (fast_decode == 0 || resolution <= INPUT_SIZE_360p_RANGE) {
         if (enc_mode <= ENC_M5)
             dlf_level = 1;
         else if (enc_mode <= ENC_M6)
-            dlf_level = resolution <= INPUT_SIZE_480p_RANGE ? 2 : 3;
+            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
         else if (enc_mode <= ENC_M7)
             dlf_level = 2;
         else if (enc_mode <= ENC_M8) {
@@ -1803,7 +1803,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
-            if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+            if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
                 if (enc_mode <= ENC_M0)
                     pcs_ptr->cdef_level = 1;
                 else if (enc_mode <= ENC_M3)

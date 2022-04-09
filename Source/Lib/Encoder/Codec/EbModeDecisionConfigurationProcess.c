@@ -424,7 +424,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 avg_me_dist /= pcs_ptr->picture_qp;
 
                 ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 200 ||
-                        input_resolution <= INPUT_SIZE_480p_RANGE
+                        input_resolution <= INPUT_SIZE_360p_RANGE
                     ? 1
                     : 0;
             }
@@ -437,7 +437,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             avg_me_dist /= pcs_ptr->picture_qp;
 
             ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 50 ||
-                    input_resolution <= INPUT_SIZE_480p_RANGE
+                    input_resolution <= INPUT_SIZE_360p_RANGE
                 ? 1
                 : 0;
         }
@@ -491,7 +491,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         frm_hdr->error_resilient_mode || pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
         pcs_ptr->wm_level = 0;
     } else {
-        if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+        if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
             if (enc_mode <= ENC_M3) {
                 pcs_ptr->wm_level = 1;
             } else if (enc_mode <= ENC_M4) {
@@ -541,7 +541,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //         0        | OFF subject to possible constraints
     //       > 1        | Faster level subject to possible constraints
     if (scs_ptr->obmc_level == DEFAULT) {
-        if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+        if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
             if (ppcs->enc_mode <= ENC_M3)
                 ppcs->pic_obmc_level = 1;
             else if (enc_mode <= ENC_M6)

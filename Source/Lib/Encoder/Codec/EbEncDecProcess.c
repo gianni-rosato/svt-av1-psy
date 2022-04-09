@@ -5689,13 +5689,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             rate_est_level = 1;
         else
             rate_est_level = 2;
-    } else if (fast_decode == 0 || input_resolution <= INPUT_SIZE_480p_RANGE) {
+    } else if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M6)
             rate_est_level = 2;
         else if (enc_mode <= ENC_M10)
-            rate_est_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 3;
+            rate_est_level = input_resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
         else if (enc_mode <= ENC_M12)
             rate_est_level = is_islice ? 3 : 4;
         else
