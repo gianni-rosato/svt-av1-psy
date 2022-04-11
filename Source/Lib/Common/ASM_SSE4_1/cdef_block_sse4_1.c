@@ -138,12 +138,21 @@ void svt_av1_cdef_filter_block_8xn_8_sse4_1(uint8_t *dst, int dstride, const uin
     __m128i p0, p1, p2, p3;
     v256    sum, row, res, tap;
     v256    max, min, large = v256_dup_16(CDEF_VERY_LARGE);
+#if OPT_CDEF_DIR_PAD
+    const int32_t po1 = eb_cdef_directions[dir][0];
+    const int32_t po2 = eb_cdef_directions[dir][1];
+    const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
+    const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
+    const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
+    const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
+#else
     int     po1  = eb_cdef_directions[dir][0];
     int     po2  = eb_cdef_directions[dir][1];
     int     s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
     int     s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
     int     s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
     int     s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
+#endif
 
     const int *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
     const int *sec_taps = eb_cdef_sec_taps[0];
@@ -288,12 +297,21 @@ void svt_av1_cdef_filter_block_4xn_8_sse4_1(uint8_t *dst, int dstride, const uin
     __m128i p0, p1, p2, p3;
     v256    sum, row, tap, res;
     v256    max, min, large = v256_dup_16(CDEF_VERY_LARGE);
+#if OPT_CDEF_DIR_PAD
+    const int32_t po1 = eb_cdef_directions[dir][0];
+    const int32_t po2 = eb_cdef_directions[dir][1];
+    const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
+    const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
+    const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
+    const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
+#else
     int     po1  = eb_cdef_directions[dir][0];
     int     po2  = eb_cdef_directions[dir][1];
     int     s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
     int     s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
     int     s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
     int     s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
+#endif
 
     const int *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
     const int *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
@@ -510,12 +528,21 @@ void svt_av1_cdef_filter_block_8xn_16_sse4_1(uint16_t *dst, int dstride, const u
     int  i;
     v256 sum, p0, p1, p2, p3, row, res;
     v256 max, min, large = v256_dup_16(CDEF_VERY_LARGE);
+#if OPT_CDEF_DIR_PAD
+    const int32_t po1 = eb_cdef_directions[dir][0];
+    const int32_t po2 = eb_cdef_directions[dir][1];
+    const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
+    const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
+    const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
+    const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
+#else
     int  po1  = eb_cdef_directions[dir][0];
     int  po2  = eb_cdef_directions[dir][1];
     int  s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
     int  s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
     int  s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
     int  s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
+#endif
 
     const int *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
     const int *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
@@ -639,12 +666,21 @@ void svt_av1_cdef_filter_block_4xn_16_sse4_1(uint16_t *dst, int dstride, const u
     int  i;
     v256 p0, p1, p2, p3, sum, row, res;
     v256 max, min, large = v256_dup_16(CDEF_VERY_LARGE);
+#if OPT_CDEF_DIR_PAD
+    const int32_t po1 = eb_cdef_directions[dir][0];
+    const int32_t po2 = eb_cdef_directions[dir][1];
+    const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
+    const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
+    const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
+    const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
+#else
     int  po1  = eb_cdef_directions[dir][0];
     int  po2  = eb_cdef_directions[dir][1];
     int  s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
     int  s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
     int  s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
     int  s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
+#endif
 
     const int *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
     const int *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
@@ -1032,6 +1068,7 @@ static INLINE void array_reverse_transpose_8x8(__m128i *in, __m128i *res) {
     res[1] = _mm_unpacklo_epi64(tr1_6, tr1_7);
     res[0] = _mm_unpackhi_epi64(tr1_6, tr1_7);
 }
+
 uint8_t svt_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *var,
                                  int32_t coeff_shift) {
     int     i;
@@ -1069,7 +1106,18 @@ uint8_t svt_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *v
     *var >>= 10;
     return best_dir;
 }
+#if UPDATE_CDEF_INTRINSICS
+void svt_cdef_find_dir_dual_sse4_1(const uint16_t *img1, const uint16_t *img2,
+    int stride, int32_t *var_out_1st,
+    int32_t *var_out_2nd, int32_t coeff_shift,
+    uint8_t *out_dir_1st_8x8, uint8_t *out_dir_2nd_8x8) {
+    // Process first 8x8.
+    *out_dir_1st_8x8 = svt_cdef_find_dir_sse4_1(img1, stride, var_out_1st, coeff_shift);
 
+    // Process second 8x8.
+    *out_dir_2nd_8x8 = svt_cdef_find_dir_sse4_1(img2, stride, var_out_2nd, coeff_shift);
+}
+#endif
 void svt_copy_rect8_8bit_to_16bit_sse4_1(uint16_t *dst, int32_t dstride, const uint8_t *src,
                                          int32_t sstride, int32_t v, int32_t h) {
     int32_t i, j;

@@ -186,7 +186,9 @@ typedef struct MvLimits {
 typedef struct {
     uint8_t by;
     uint8_t bx;
+#if !CLN_CDEF_BUFFS
     uint8_t skip;
+#endif
 } CdefList;
 #define FB_NUM 3 // number of freqiency bands
 #define SSEG_NUM 2 // number of sse_gradient bands

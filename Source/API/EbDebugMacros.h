@@ -36,6 +36,14 @@ extern "C" {
 #endif // __cplusplus
 
 #define OPT_TPL_4L              1 // optimize TPL for 4L
+#define UPDATE_CDEF_INTRINSICS  1
+#define UPDATE_CDEF_COPY        1
+#define CLN_CDEF_FRAME          1 // Merge 8bit/16bit CDEF application functions
+#define CLN_CDEF_SEARCH         1 // Merge 8bit/16bit CDEF search functions
+#define CLN_RENAME_CDEF_BUFFS   1 // Rename picture buffers storing CDEF input frames
+#define CLN_CDEF_BUFFS          1
+#define OPT_CDEF_DIR_PAD        1
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

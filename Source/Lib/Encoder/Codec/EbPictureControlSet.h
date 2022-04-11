@@ -291,10 +291,13 @@ typedef struct PictureControlSet {
     uint64_t (*mse_seg[2])[TOTAL_STRENGTHS];
     uint8_t     *skip_cdef_seg;
     CdefDirData *cdef_dir_data;
-
+#if CLN_RENAME_CDEF_BUFFS
+    EbByte cdef_input_recon[3]; // DLF'd recon
+    EbByte cdef_input_source[3]; // Input video
+#else
     uint16_t *src[3]; //dlfed recon in 16bit form
     uint16_t *ref_coeff[3]; //input video in 16bit form
-
+#endif
     uint32_t tot_seg_searched_rest;
     EbHandle rest_search_mutex;
     uint16_t rest_segments_total_count;

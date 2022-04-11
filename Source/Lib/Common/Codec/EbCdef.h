@@ -40,7 +40,11 @@ extern "C" {
 
 extern const int32_t eb_cdef_pri_taps[2][2];
 extern const int32_t eb_cdef_sec_taps[2][2];
+#if OPT_CDEF_DIR_PAD
+extern const int(*const eb_cdef_directions)[2];
+#else
 DECLARE_ALIGNED(16, extern const int32_t, eb_cdef_directions[8][2]);
+#endif
 
 #define REDUCED_PRI_STRENGTHS 8
 #define REDUCED_TOTAL_STRENGTHS (REDUCED_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
@@ -48,11 +52,16 @@ DECLARE_ALIGNED(16, extern const int32_t, eb_cdef_directions[8][2]);
 
 void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h, uint16_t x);
 
+#if CLN_CDEF_FRAME
+void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
+                 int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize, Bool is_16bit);
+#else
 void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t src_voffset,
                   int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize);
 
 void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
                  int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize);
+#endif
 
 void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstride, int32_t v,
                int32_t h);
