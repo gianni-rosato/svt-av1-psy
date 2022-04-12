@@ -8,6 +8,8 @@ workflow:
 stages:
   - compile
   - test
+  - test-2
+  - test-3
 
 variables:
   CMAKE_GENERATOR: Ninja
@@ -24,7 +26,7 @@ default:
 
 include:
   - local: /.gitlab/workflows/common/.gitlab-ci.yml
-  - local: /.gitlab/workflows/nightly/.gitlab-ci.yml
+  - remote: 'https://gitlab.com/AOMediaCodec/aom-testing/-/raw/ci-build-testing/.gitlab/workflows/nightly/.gitlab-ci.yml'
     rules:
       - if: $NIGHTLY != null
   - local: /.gitlab/workflows/standard/.gitlab-ci.yml
