@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.0-rc2] - 2022-04-12
+
+Encoder
+- Added support for chroma position signalling
+- Added support for skipping denoising pictures after film grain synthesis
+- Simplified --fast-decode to have only one level
+- Optimized --fast-decode level 1 for better tradeoffs
+- Visual quality improvements addressing issues #1819 / #1297
+- Fixed all known functional bugs
+
+Build and Documentation
+- Improve CI coverage
+- Reduced unnecessary warnings
+- Improved the documentation of the configuration parameters
+
+
 ## [1.0.0-rc1] - 2022-03-29
 
 Encoder
