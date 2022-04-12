@@ -445,17 +445,18 @@ void svt_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_
         for (bi = 0; bi < cdef_count; bi++) {
             by = dlist[bi].by << bsizey;
             bx = dlist[bi].bx << bsizex;
-            int32_t iy, ix;
+            int32_t iy;
+            uint16_t *src_16 = in + (by * CDEF_BSTRIDE + bx);
             if (dst8) {
+                uint8_t * dst_8  = dst8 + (bi << (bsizex + bsizey));
+                //size 2x2 and 3x3, no gain to use SIMD
                 for (iy = 0; iy < 1 << bsizey; iy += subsampling_factor)
-                    for (ix = 0; ix < 1 << bsizex; ix++)
-                        dst8[(bi << (bsizex + bsizey)) + (iy << bsizex) + ix] = (uint8_t)
-                            in[(by + iy) * CDEF_BSTRIDE + bx + ix];
+                    for (int32_t ix = 0; ix < 1 << bsizex; ix++)
+                        dst_8[(iy << bsizex) + ix] = (uint8_t)src_16[iy * CDEF_BSTRIDE + ix];
             } else {
+                uint16_t *dst_16 = dst16 + (bi << (bsizex + bsizey));
                 for (iy = 0; iy < 1 << bsizey; iy += subsampling_factor)
-                    for (ix = 0; ix < 1 << bsizex; ix++)
-                        dst16[(bi << (bsizex + bsizey)) + (iy << bsizex) + ix] =
-                            in[(by + iy) * CDEF_BSTRIDE + bx + ix];
+                    memcpy(dst_16 + (iy << bsizex), src_16 + iy * CDEF_BSTRIDE, (uint32_t)(1 << bsizex) * sizeof(uint16_t));
             }
         }
         return;
