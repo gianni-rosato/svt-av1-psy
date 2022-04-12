@@ -665,6 +665,35 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+
+    if (config->sframe_dist < 0) {
+        SVT_ERROR("Error instance %u: switch frame interval must be >= 0\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->sframe_dist > 0 && config->pred_structure != PRED_LOW_DELAY_P &&
+        config->pred_structure != PRED_LOW_DELAY_B) {
+        SVT_ERROR(
+            "Error instance %u: switch frame feature only supports low delay prediction "
+            "structure\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->sframe_dist > 0 && config->hierarchical_levels == 0) {
+        SVT_ERROR("Error instance %u: switch frame feature does not support flat IPPP\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->sframe_dist > 0 && config->sframe_mode != SFRAME_STRICT_BASE &&
+        config->sframe_mode != SFRAME_NEAREST_BASE) {
+        SVT_ERROR(
+            "Error instance %u: invalid switch frame mode %d, should be in the range [%d - %d]\n",
+            channel_number + 1,
+            config->sframe_mode,
+            SFRAME_STRICT_BASE,
+            SFRAME_NEAREST_BASE);
+        return_error = EB_ErrorBadParameter;
+    }
+
     /* Warnings about the use of features that are incomplete */
     if (config->enable_adaptive_quantization == 1) {
         config->enable_adaptive_quantization = 2;
@@ -772,34 +801,17 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             "SVT-AV1 has an integrated mode decision mechanism to handle scene changes and will "
             "not insert a key frame at scene changes\n");
     }
+    if ((config->tile_columns > 0 || config->tile_rows > 0)) {
+        SVT_WARN(
+            "The use of tiles does not help the SVT-AV1 encoder increase parallelism as it already "
+            "employs subpicture parallelism methods for multi-threaded encoding, while maintaining "
+            "no additional loss in video quality. On the other hand, the use of Tiles will "
+            "necessarily cause some additional loss in video quality. If you are using tiles with "
+            "the intent of increasing the decoder speed, please consider using --fast-decode 1. "
+            "Should you still require the use of tiles, it is strongly recommended that you use no "
+            "more than 2 tiles e.g. --tiles-columns 1.\n");
+    }
 
-    if (config->sframe_dist < 0) {
-        SVT_ERROR("Error instance %u: switch frame interval must be >= 0\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-    if (config->sframe_dist > 0 && config->pred_structure != PRED_LOW_DELAY_P &&
-        config->pred_structure != PRED_LOW_DELAY_B) {
-        SVT_ERROR(
-            "Error instance %u: switch frame feature only supports low delay prediction "
-            "structure\n",
-            channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-    if (config->sframe_dist > 0 && config->hierarchical_levels == 0) {
-        SVT_ERROR("Error instance %u: switch frame feature does not support flat IPPP\n",
-                  channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-    if (config->sframe_dist > 0 && config->sframe_mode != SFRAME_STRICT_BASE &&
-        config->sframe_mode != SFRAME_NEAREST_BASE) {
-        SVT_ERROR(
-            "Error instance %u: invalid switch frame mode %d, should be in the range [%d - %d]\n",
-            channel_number + 1,
-            config->sframe_mode,
-            SFRAME_STRICT_BASE,
-            SFRAME_NEAREST_BASE);
-        return_error = EB_ErrorBadParameter;
-    }
     return return_error;
 }
 
