@@ -176,7 +176,6 @@ typedef struct EbConfig {
     /****************************************
      * File I/O
      ****************************************/
-    FILE      *config_file;
     FILE      *input_file;
     MemMapFile mmap; //memory mapped file handler
     Bool       input_file_is_fifo;
@@ -189,7 +188,6 @@ typedef struct EbConfig {
     const char   *stats;
     FILE         *input_stat_file;
     FILE         *output_stat_file;
-    FILE         *input_pred_struct_file;
     char         *input_pred_struct_filename;
     Bool          y4m_input;
     unsigned char y4m_buf[9];

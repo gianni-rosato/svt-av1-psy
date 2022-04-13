@@ -1543,11 +1543,6 @@ void svt_config_dtor(EbConfig *config_ptr) {
     if (!config_ptr)
         return;
     // Close any files that are open
-    if (config_ptr->config_file) {
-        fclose(config_ptr->config_file);
-        config_ptr->config_file = (FILE *)NULL;
-    }
-
     if (config_ptr->input_file) {
         if (!config_ptr->input_file_is_fifo)
             fclose(config_ptr->input_file);
@@ -1562,11 +1557,6 @@ void svt_config_dtor(EbConfig *config_ptr) {
     if (config_ptr->recon_file) {
         fclose(config_ptr->recon_file);
         config_ptr->recon_file = (FILE *)NULL;
-    }
-
-    if (config_ptr->input_pred_struct_file) {
-        fclose(config_ptr->input_pred_struct_file);
-        config_ptr->input_pred_struct_file = (FILE *)NULL;
     }
 
     if (config_ptr->input_pred_struct_filename) {
@@ -1796,16 +1786,18 @@ static int32_t find_token(int32_t argc, char *const argv[], char const *token, c
 static int32_t read_config_file(EbConfig *config, char *config_path, uint32_t instance_idx) {
     int32_t return_error = 0;
 
-    // Open the config file
-    FOPEN(config->config_file, config_path, "rb");
+    FILE *config_file;
 
-    if (config->config_file != (FILE *)NULL) {
-        int32_t config_file_size   = find_file_size(config->config_file);
+    // Open the config file
+    FOPEN(config_file, config_path, "rb");
+
+    if (config_file) {
+        int32_t config_file_size   = find_file_size(config_file);
         char   *config_file_buffer = (char *)malloc(config_file_size);
 
-        if (config_file_buffer != (char *)NULL) {
+        if (config_file_buffer) {
             int32_t result_size = (int32_t)fread(
-                config_file_buffer, 1, config_file_size, config->config_file);
+                config_file_buffer, 1, config_file_size, config_file);
 
             if (result_size == config_file_size) {
                 parse_config_file(config, config_file_buffer, config_file_size);
@@ -1819,8 +1811,7 @@ static int32_t read_config_file(EbConfig *config, char *config_path, uint32_t in
         }
 
         free(config_file_buffer);
-        fclose(config->config_file);
-        config->config_file = (FILE *)NULL;
+        fclose(config_file);
     } else {
         fprintf(stderr,
                 "Error channel %u: Couldn't open Config File: %s\n",
@@ -2642,15 +2633,17 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
                                      uint32_t instance_idx) {
     int32_t return_error = 0;
 
-    FOPEN(config->input_pred_struct_file, PredStructPath, "rb");
+    FILE *input_pred_struct_file;
 
-    if (config->input_pred_struct_file != (FILE *)NULL) {
-        int32_t config_file_size   = find_file_size(config->input_pred_struct_file);
+    FOPEN(input_pred_struct_file, PredStructPath, "rb");
+
+    if (input_pred_struct_file) {
+        int32_t config_file_size   = find_file_size(input_pred_struct_file);
         char   *config_file_buffer = (char *)malloc(config_file_size);
 
-        if (config_file_buffer != (char *)NULL) {
+        if (config_file_buffer) {
             int32_t result_size = (int32_t)fread(
-                config_file_buffer, 1, config_file_size, config->input_pred_struct_file);
+                config_file_buffer, 1, config_file_size, input_pred_struct_file);
 
             if (result_size == config_file_size) {
                 parse_pred_struct_file(config, config_file_buffer, config_file_size);
@@ -2664,8 +2657,7 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
         }
 
         free(config_file_buffer);
-        fclose(config->input_pred_struct_file);
-        config->input_pred_struct_file = (FILE *)NULL;
+        fclose(input_pred_struct_file);
     } else {
         fprintf(stderr,
                 "Error channel %u: Couldn't open Manual Prediction Structure File: %s\n",
