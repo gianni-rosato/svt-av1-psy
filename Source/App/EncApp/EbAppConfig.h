@@ -184,7 +184,6 @@ typedef struct EbConfig {
     FILE      *recon_file;
     FILE      *error_log_file;
     FILE      *stat_file;
-    FILE      *buffer_file;
     FILE      *qp_file;
     /* two pass */
     const char   *stats;
@@ -214,12 +213,6 @@ typedef struct EbConfig {
     uint32_t injector;
     uint32_t speed_control_flag;
 
-    uint32_t hme_level0_column_index;
-    uint32_t hme_level0_row_index;
-    uint32_t hme_level1_column_index;
-    uint32_t hme_level1_row_index;
-    uint32_t hme_level2_column_index;
-    uint32_t hme_level2_row_index;
     Bool     stop_encoder; // to signal CTRL+C Event, need to stop encoding.
 
     uint64_t processed_frame_count;
