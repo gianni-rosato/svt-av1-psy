@@ -1260,7 +1260,11 @@ void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *candidate_buffer,
         candidate_buffer->luma_fast_distortion = luma_fast_distortion =
             fn_ptr->vf(
                 pred_y, prediction_ptr->stride_y, src_y, input_picture_ptr->stride_y, &sse) >>
+#if TUNE_MDS0_DIST
+            3;
+#else
             2;
+#endif
     } else {
         assert(context_ptr->mds0_ctrls.mds0_dist_type == MDS0_SAD);
         assert((context_ptr->blk_geom->bwidth >> 3) < 17);

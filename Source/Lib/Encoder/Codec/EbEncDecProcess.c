@@ -5169,7 +5169,11 @@ void set_tx_shortcut_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx,
                "Chroma detector should be used for ref frames in low presets to prevent blurring "
                "artifacts.");
 }
+#if TUNE_MDS0_DIST
+void set_mds0_controls(ModeDecisionContext *ctx, uint8_t mds0_level) {
+#else
 void set_mds0_controls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t mds0_level) {
+#endif
     Mds0Ctrls *ctrls = &ctx->mds0_ctrls;
 
     switch (mds0_level) {
@@ -5183,6 +5187,23 @@ void set_mds0_controls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
         ctrls->enable_cost_based_early_exit = 0;
         ctrls->mds0_distortion_th           = 0;
         break;
+#if TUNE_MDS0_DIST
+    case 2:
+        ctrls->mds0_dist_type = MDS0_VAR;
+        ctrls->enable_cost_based_early_exit = 0;
+        ctrls->mds0_distortion_th = 0;
+        break;
+    case 3:
+        ctrls->mds0_dist_type = MDS0_VAR;
+        ctrls->enable_cost_based_early_exit = 1;
+        ctrls->mds0_distortion_th = 50;
+        break;
+    case 4:
+        ctrls->mds0_dist_type = MDS0_VAR;
+        ctrls->enable_cost_based_early_exit = 1;
+        ctrls->mds0_distortion_th = 0;
+        break;
+#else
     case 2:
         ctrls->mds0_dist_type = pcs->parent_pcs_ptr->is_used_as_reference_flag ? MDS0_VAR
                                                                                : MDS0_SAD;
@@ -5201,6 +5222,7 @@ void set_mds0_controls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
         ctrls->enable_cost_based_early_exit = 1;
         ctrls->mds0_distortion_th           = 0;
         break;
+#endif
     default: assert(0); break;
     }
 }
@@ -5246,7 +5268,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *s
         return return_error;
 
     uint8_t mds0_level = 4;
+#if TUNE_MDS0_DIST
+    set_mds0_controls(ctx, mds0_level);
+#else
     set_mds0_controls(pcs, ctx, mds0_level);
+#endif
     set_chroma_controls(ctx, 0 /*chroma off*/);
 
     // Using PF in LPD0 may cause some VQ issues
@@ -5400,6 +5426,18 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
 
     uint8_t mds0_level = 0;
+#if TUNE_MDS0_DIST
+    if (lpd1_level <= LPD1_LVL_4)
+        mds0_level = 4;
+    else {
+        mds0_level = is_ref ? 4 : 0;
+        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 40) ||
+            (me_8x8_cost_variance < (250 * picture_qp) &&
+                me_64x64_distortion < (250 * picture_qp))))
+            mds0_level = 0;
+    }
+    set_mds0_controls(context_ptr, mds0_level);
+#else
     if (lpd1_level <= LPD1_LVL_2)
         mds0_level = 4;
     else {
@@ -5409,8 +5447,8 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
               me_64x64_distortion < (250 * picture_qp))))
             mds0_level = 0;
     }
-
     set_mds0_controls(pcs_ptr, context_ptr, mds0_level);
+#endif
 
     uint8_t lpd1_tx_level = 0;
     if (lpd1_level <= LPD1_LVL_2)
@@ -5449,6 +5487,31 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
         context_ptr->lpd1_skip_inter_tx_level = 0;
     else {
         assert(pcs_ptr->enc_mode >= ENC_M13 && "Only enable this feature for M13+");
+#if TUNE_MDS0_DIST
+        if (lpd1_level <= LPD1_LVL_2) {
+            context_ptr->lpd1_skip_inter_tx_level = 0;
+        }
+        else if (lpd1_level <= LPD1_LVL_4) {
+            context_ptr->lpd1_skip_inter_tx_level = 1;
+            if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
+                me_8x8_cost_variance < (800 * picture_qp) &&
+                me_64x64_distortion < (800 * picture_qp)) ||
+                (me_8x8_cost_variance < (100 * picture_qp) &&
+                    me_64x64_distortion < (100 * picture_qp))) {
+                context_ptr->lpd1_skip_inter_tx_level = 2;
+            }
+        }
+        else {
+            context_ptr->lpd1_skip_inter_tx_level = is_ref ? 1 : 2;
+            if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
+                me_8x8_cost_variance < (800 * picture_qp) &&
+                me_64x64_distortion < (800 * picture_qp)) ||
+                (me_8x8_cost_variance < (100 * picture_qp) &&
+                    me_64x64_distortion < (100 * picture_qp))) {
+                context_ptr->lpd1_skip_inter_tx_level = 2;
+            }
+        }
+#else
         if (lpd1_level <= LPD1_LVL_4) {
             context_ptr->lpd1_skip_inter_tx_level = 1;
             if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
@@ -5470,6 +5533,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
                 context_ptr->lpd1_skip_inter_tx_level = 2;
             }
         }
+#endif
     }
     uint8_t rate_est_level = 0;
     if (lpd1_level <= LPD1_LVL_0)
@@ -5746,7 +5810,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         intra_level = (is_islice || ppcs->transition_present) ? 3 : 4;
 
     set_intra_ctrls(pcs_ptr, context_ptr, intra_level);
+#if TUNE_MDS0_DIST
+    set_mds0_controls(context_ptr, pd_pass == PD_PASS_0 ? 2 : pcs_ptr->mds0_level);
+#else
     set_mds0_controls(pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 2 : pcs_ptr->mds0_level);
+#endif
     set_subres_controls(context_ptr, 0);
     context_ptr->inter_depth_bias = 0;
     return return_error;

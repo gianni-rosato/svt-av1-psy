@@ -36,13 +36,14 @@ extern "C" {
 #endif // __cplusplus
 
 #define OPT_TPL_4L              1 // optimize TPL for 4L
-#define UPDATE_CDEF_INTRINSICS  1
-#define UPDATE_CDEF_COPY        1
+#define UPDATE_CDEF_INTRINSICS  1 // Compute CDEF direction for two 8x8 block at a time
+#define UPDATE_CDEF_COPY        1 // Add AVX2 intrinsics for copy function in CDEF; combine 8bit/10bit copy funcs
 #define CLN_CDEF_FRAME          1 // Merge 8bit/16bit CDEF application functions
 #define CLN_CDEF_SEARCH         1 // Merge 8bit/16bit CDEF search functions
 #define CLN_RENAME_CDEF_BUFFS   1 // Rename picture buffers storing CDEF input frames
-#define CLN_CDEF_BUFFS          1
-#define OPT_CDEF_DIR_PAD        1
+#define CLN_CDEF_BUFFS          1 // Remove unused var from CdefList struct
+#define OPT_CDEF_DIR_PAD        1 // Pad cdef directions array for faster accesses
+#define TUNE_MDS0_DIST          1 // Use variance as MDS0 distortion metric in M12 and below
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
