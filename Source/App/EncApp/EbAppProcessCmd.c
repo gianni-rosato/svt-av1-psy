@@ -636,11 +636,7 @@ static __inline void mem_put_le16(void *vmem, int32_t val) {
 }
 
 static void write_ivf_stream_header(EbConfig *config) {
-    char header[IVF_STREAM_HEADER_SIZE];
-    header[0] = 'D';
-    header[1] = 'K';
-    header[2] = 'I';
-    header[3] = 'F';
+    char header[IVF_STREAM_HEADER_SIZE] = {'D', 'K', 'I', 'F'};
     mem_put_le16(header + 4, 0); // version
     mem_put_le16(header + 6, 32); // header size
     mem_put_le32(header + 8, AV1_FOURCC); // fourcc
@@ -650,30 +646,20 @@ static void write_ivf_stream_header(EbConfig *config) {
     mem_put_le32(header + 20, config->config.frame_rate_denominator); // scale
     mem_put_le32(header + 24, 0); // length
     mem_put_le32(header + 28, 0); // unused
-    if (config->bitstream_file)
-        fwrite(header, 1, IVF_STREAM_HEADER_SIZE, config->bitstream_file);
-
-    return;
+    fwrite(header, 1, IVF_STREAM_HEADER_SIZE, config->bitstream_file);
 }
 
 static void write_ivf_frame_header(EbConfig *config, uint32_t byte_count) {
-    char    header[IVF_FRAME_HEADER_SIZE];
-    int32_t write_location = 0;
+    char header[IVF_FRAME_HEADER_SIZE];
 
-    mem_put_le32(&header[write_location], (int32_t)byte_count);
-    write_location = write_location + 4;
-    mem_put_le32(&header[write_location], (int32_t)((config->ivf_count) & 0xFFFFFFFF));
-    write_location = write_location + 4;
-    mem_put_le32(&header[write_location], (int32_t)((config->ivf_count) >> 32));
-
-    config->byte_count_since_ivf = (byte_count);
+    mem_put_le32(&header[0], (int32_t)byte_count);
+    mem_put_le32(&header[4], (int32_t)(config->ivf_count & 0xFFFFFFFF));
+    mem_put_le32(&header[8], (int32_t)(config->ivf_count >> 32));
 
     config->ivf_count++;
-    fflush(stdout);
-
-    if (config->bitstream_file)
-        fwrite(header, 1, IVF_FRAME_HEADER_SIZE, config->bitstream_file);
+    fwrite(header, 1, IVF_FRAME_HEADER_SIZE, config->bitstream_file);
 }
+
 double get_psnr(double sse, double max) {
     double psnr;
     if (sse == 0)

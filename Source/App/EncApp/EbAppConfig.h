@@ -216,7 +216,6 @@ typedef struct EbConfig {
     uint64_t processed_frame_count;
     uint64_t processed_byte_count;
 
-    uint64_t byte_count_since_ivf;
     uint64_t ivf_count;
     /****************************************
      * On-the-fly Testing
