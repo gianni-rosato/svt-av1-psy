@@ -24,6 +24,26 @@
   before_script:
     - !reference [.linux-extract-videos]
 
+.linux-enc-test-base:
+  extends: .linux-test-base
+  script:
+    - !reference [.enc-test-script]
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
+  needs:
+    - Linux (GCC 10, Static)
+
+.linux-default-test-base:
+  extends: .linux-test-base
+  variables:
+    BRANCH: default
+  script:
+    - !reference [.enc-test-script]
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
+  needs:
+    - Linux (GCC 10, Default, Static)
+
 .linux-unit-test-base:
   extends: .linux-test-base
   variables:
@@ -131,6 +151,26 @@ Linux (GCC 10, Tests, Static):
       - Bin/Release/SvtAv1UnitTests
       - Bin/Release/SvtAv1ApiTests
       - Bin/Release/SvtAv1E2ETests
+
+Linux (GCC 10, Default, Static):
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
+    GIT_DEPTH: 0
+  parallel:
+    matrix:
+      - CMAKE_BUILD_TYPE: [Release, Debug]
+  before_script:
+    - git fetch ${CI_MERGE_REQUEST_PROJECT_URL:-https://gitlab.com/AOMediaCodec/SVT-AV1.git} "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-HEAD}"
+    - git checkout FETCH_HEAD
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - Bin/*/SvtAv1EncApp
+      - Bin/*/SvtAv1DecApp
 
 Linux Sanitizer Compile:
   extends: .linux-compiler-base
@@ -261,99 +301,53 @@ Linux RC Test:
     - Linux (GCC 10, Static)
 
 Linux Enc Test:
-  extends: .linux-test-base
-  stage: test
-  script:
-    - !reference [.enc-test-script]
-  parallel: !reference [.enc-test-parallel]
-  artifacts: !reference [.enc-test-artifacts]
-  needs:
-    - Linux (GCC 10, Static)
+  extends: .linux-enc-test-base
+
+Linux Defaut Test:
+  extends: .linux-default-test-base
 
 Linux Intra Enc Test:
-  extends: .linux-test-base
-  stage: test
+  extends: .linux-enc-test-base
   script:
     - |
       for INTRA_PERIOD in -1 200; do
         ./Bin/Release/SvtAv1EncApp --preset 2 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
         ./Bin/Release/SvtAv1EncApp --preset 8 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
       done
-  parallel: !reference [.enc-test-parallel]
-  artifacts: !reference [.enc-test-artifacts]
-  needs:
-    - Linux (GCC 10, Static)
 
 Linux Integer Overflow Test:
-  extends:
-    - .linux-test-base
-  stage: test
-  allow_failure: false
+  extends: .linux-enc-test-base
   script:
+    - ret=true
+    - ./Bin/Debug/SvtAv1EncApp --preset 2 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.log"
+    - ./Bin/Debug/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.log"
+    - num_errors=$(sort -u test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m*.log | awk 'BEGIN{count=0}/error/ {print $0 > "/dev/stderr"; count=count+1} END{print count}')
     - |
-      ret=true
-      ./Bin/Debug/SvtAv1EncApp --preset 2 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.log"
-      ./Bin/Debug/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.log"
-      num_errors=$(sort -u test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m*.log | awk 'BEGIN{count=0}/error/ {print $0 > "/dev/stderr"; count=count+1} END{print count}')
-
       if [[ $num_errors > 0 ]]; then
         ret=false
         echo "Found $num_errors integer overflows"
       fi
-      $ret
-  parallel: !reference [.enc-test-parallel]
+    - $ret
   needs:
     - Linux Integer Overflow Compile
 
 Linux Passes vs Passes Test:
-  extends: .linux-test-base
-  stage: test
+  extends: .linux-enc-test-base
   script:
-      - |
-         ./Bin/Release/SvtAv1EncApp --preset 2 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
-         ./Bin/Release/SvtAv1EncApp --preset 8 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-         ./Bin/Release/SvtAv1EncApp --preset 2 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat"
-         ./Bin/Release/SvtAv1EncApp --preset 2 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
-         ./Bin/Release/SvtAv1EncApp --preset 8 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat"
-         ./Bin/Release/SvtAv1EncApp --preset 8 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-
-  parallel: !reference [.enc-test-parallel]
-  artifacts: !reference [.enc-test-artifacts]
-  needs:
-    - Linux (GCC 10, Static)
+    - ./Bin/Release/SvtAv1EncApp --preset 2 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+    - ./Bin/Release/SvtAv1EncApp --preset 8 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+    - ./Bin/Release/SvtAv1EncApp --preset 2 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat"
+    - ./Bin/Release/SvtAv1EncApp --preset 2 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+    - ./Bin/Release/SvtAv1EncApp --preset 8 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat"
+    - ./Bin/Release/SvtAv1EncApp --preset 8 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
 
 Linux Multiple Channels Test:
-  extends: .linux-test-base
-  stage: test
+  extends: .linux-enc-test-base
   script:
-      - |
-         ./Bin/Release/SvtAv1EncApp --preset 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-nch=1-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
-         ./Bin/Release/SvtAv1EncApp --preset 8 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-nch=1-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-         ./Bin/Release/SvtAv1EncApp --nch 2 --preset 2 2 --keyint -1 -1 -i "$SVT_ENCTEST_FILENAME" "$SVT_ENCTEST_FILENAME" -n 17 17 -b "test-${BRANCH:-pr}-$(uname)-nch=2-1-${SVT_ENCTEST_BITNESS}bit-m2.ivf" "test-${BRANCH:-pr}-$(uname)-nch=2-2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
-         ./Bin/Release/SvtAv1EncApp --nch 2 --preset 8 8 --keyint -1 -1 -i "$SVT_ENCTEST_FILENAME" "$SVT_ENCTEST_FILENAME" -n 120 120 -b "test-${BRANCH:-pr}-$(uname)-nch=2-1-${SVT_ENCTEST_BITNESS}bit-m8.ivf" "test-${BRANCH:-pr}-$(uname)-nch=2-2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-
-
-  parallel: !reference [.enc-test-parallel]
-  artifacts: !reference [.enc-test-artifacts]
-  needs:
-    - Linux (GCC 10, Static)
-
-Linux Default Branch:
-  extends:
-    - .linux-compiler-base
-    - .linux-test-base
-  stage: compile
-  variables:
-    BRANCH: default
-  before_script:
-    - git fetch ${CI_MERGE_REQUEST_PROJECT_URL:-https://gitlab.com/AOMediaCodec/SVT-AV1.git} "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-master}"
-    - git checkout FETCH_HEAD
-    - !reference [.linux-extract-videos]
-  script:
-    - !reference [.compiler-script]
-    - !reference [.enc-test-script]
-  parallel: !reference [.enc-test-parallel]
-  artifacts: !reference [.enc-test-artifacts]
+    - ./Bin/Release/SvtAv1EncApp --preset 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-nch=1-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+    - ./Bin/Release/SvtAv1EncApp --preset 8 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-nch=1-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+    - ./Bin/Release/SvtAv1EncApp --nch 2 --preset 2 2 --keyint -1 -1 -i "$SVT_ENCTEST_FILENAME" "$SVT_ENCTEST_FILENAME" -n 17 17 -b "test-${BRANCH:-pr}-$(uname)-nch=2-1-${SVT_ENCTEST_BITNESS}bit-m2.ivf" "test-${BRANCH:-pr}-$(uname)-nch=2-2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+    - ./Bin/Release/SvtAv1EncApp --nch 2 --preset 8 8 --keyint -1 -1 -i "$SVT_ENCTEST_FILENAME" "$SVT_ENCTEST_FILENAME" -n 120 120 -b "test-${BRANCH:-pr}-$(uname)-nch=2-1-${SVT_ENCTEST_BITNESS}bit-m8.ivf" "test-${BRANCH:-pr}-$(uname)-nch=2-2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
 
 Enc Default Diff test:
   extends: .common-ci-base
@@ -363,19 +357,20 @@ Enc Default Diff test:
   script:
     - |
       success=true
-      for dist in *.ivf; do
-          case $dist in
-          test-pr-Linux-Release-*bit-*.ivf) continue ;;
-          *-8bit-m2.ivf) diff -q test-pr-Linux-Release-8bit-m2.ivf "$dist" || success=false ;;
-          *-8bit-m8.ivf) diff -q test-pr-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
-          *-10bit-m2.ivf) diff -q test-pr-Linux-Release-10bit-m2.ivf "$dist" || success=false ;;
-          *-10bit-m8.ivf) diff -q test-pr-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
-          esac
+      for dist in test-*-*-*-*bit-*.ivf; do
+        case $dist in test-default-Linux-Release-*bit-*.ivf) continue;; esac
+        printf 'Testing %s\n' "$dist"
+        case $dist in
+        *-8bit-m2.ivf) diff -q test-default-Linux-Release-8bit-m2.ivf "$dist" || success=false ;;
+        *-8bit-m8.ivf) diff -q test-default-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
+        *-10bit-m2.ivf) diff -q test-default-Linux-Release-10bit-m2.ivf "$dist" || success=false ;;
+        *-10bit-m8.ivf) diff -q test-default-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
+        esac
       done
       $success
   needs:
     - Linux Enc Test
-    - Linux Default Branch
+    - Linux Defaut Test
 
 Enc Intra Diff Test:
   extends: .common-ci-base

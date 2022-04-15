@@ -48,7 +48,7 @@
   untracked: false
   expire_in: 1 days
   paths:
-    - "test-*-*-*bit-m*.ivf"
+    - "*.ivf"
 
 .enc-test-script: |
   for CMAKE_BUILD_TYPE in Debug Release; do
