@@ -57,6 +57,23 @@
     ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
   done
 
+.enc-ext-test-script: |
+  for CMAKE_BUILD_TYPE in Debug Release; do
+    test -e "./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp" || continue
+
+    # 1-pass VBR
+    ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp -i "$SVT_ENCTEST_FILENAME" --rc 1 --tbr 100 --lp 1 -b "vbr1pass-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf" --preset 8
+    ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp -i "$SVT_ENCTEST_FILENAME" --rc 1 --tbr 100 --lp 1 -b "vbr1pass-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m12.ivf" --preset 12
+
+    # 2-pass VBR
+    ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp -i "$SVT_ENCTEST_FILENAME" --rc 1 --tbr 100 --lp 1 -b "vbr2pass-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf" --passes 2 --preset 8
+    ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp -i "$SVT_ENCTEST_FILENAME" --rc 1 --tbr 100 --lp 1 -b "vbr2pass-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m12.ivf" --passes 2 --preset 12
+
+    # 1-pass CBR
+    ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp -i "$SVT_ENCTEST_FILENAME" --rc 2 --tbr 100 --lp 1 -b "cbr-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf" --pred-struct 1 --preset 8
+    ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp -i "$SVT_ENCTEST_FILENAME" --rc 2 --tbr 100 --lp 1 -b "cbr-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m12.ivf" --pred-struct 1 --preset 12
+  done
+
 .ffmpeg-before-script-clone:
   - git config --global user.email "ci@gitlab.com"
   - git config --global user.name "GitLab CI"
