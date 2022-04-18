@@ -1135,7 +1135,11 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             pcs_ptr->overlay_ppcs_ptr   = NULL;
             pcs_ptr->is_alt_ref         = 0;
+#if FIX_ISSUE_1857
+            pcs_ptr->transition_present = -1;
+#else
             pcs_ptr->transition_present = 0;
+#endif
             pcs_ptr->is_noise_level     = 0;
             if (loop_index) {
                 pcs_ptr->is_overlay = 1;

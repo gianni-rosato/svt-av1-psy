@@ -46,7 +46,9 @@ void copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr
 void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
                                            int32_t optimized_lr);
+#if !FIX_ISSUE_1896
 void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
+#endif
 EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                               Bool free_memory);
 EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
@@ -525,7 +527,69 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
     EB_FREE_ALIGNED_ARRAY(ps_recon_pic_temp->buffer_cb);
     EB_FREE_ALIGNED_ARRAY(ps_recon_pic_temp->buffer_cr);
 }
+#if FIX_ISSUE_1896
+static void copy_statistics_to_ref_obj_ect(PictureControlSet* pcs, SequenceControlSet* scs) {
 
+    EbReferenceObject* obj = (EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
+
+    pcs->intra_coded_area = (100 * pcs->intra_coded_area) / (pcs->parent_pcs_ptr->aligned_width * pcs->parent_pcs_ptr->aligned_height);
+    pcs->skip_coded_area = (100 * pcs->skip_coded_area) / (pcs->parent_pcs_ptr->aligned_width * pcs->parent_pcs_ptr->aligned_height);
+
+    if (pcs->slice_type == I_SLICE)
+        pcs->intra_coded_area = 0;
+    obj->intra_coded_area = (uint8_t)(pcs->intra_coded_area);
+    obj->skip_coded_area = (uint8_t)(pcs->skip_coded_area);
+    struct PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
+    FrameHeader* frm_hdr = &ppcs->frm_hdr;
+
+    struct LoopFilter* const lf = &frm_hdr->loop_filter_params;
+
+    obj->filter_level[0] = lf->filter_level[0];
+    obj->filter_level[1] = lf->filter_level[1];
+    obj->filter_level_u = lf->filter_level_u;
+    obj->filter_level_v = lf->filter_level_v;
+
+    obj->ref_cdef_strengths_num = ppcs->nb_cdef_strengths;
+    for (int i = 0; i < ppcs->nb_cdef_strengths; i++) {
+        obj->ref_cdef_strengths[0][i] = frm_hdr->cdef_params.cdef_y_strength[i];
+        obj->ref_cdef_strengths[1][i] = frm_hdr->cdef_params.cdef_uv_strength[i];
+    }
+    uint32_t sb_index;
+    for (sb_index = 0; sb_index < pcs->sb_total_count; ++sb_index) {
+        obj->sb_intra[sb_index] = pcs->sb_intra[sb_index];
+        obj->sb_skip[sb_index] = pcs->sb_skip[sb_index];
+        obj->sb_64x64_mvp[sb_index] = pcs->sb_64x64_mvp[sb_index];
+        obj->sb_me_64x64_dist[sb_index] = pcs->parent_pcs_ptr->me_64x64_distortion[sb_index];
+        obj->sb_me_8x8_cost_var[sb_index] = pcs->parent_pcs_ptr->me_8x8_cost_variance[sb_index];
+    }
+    obj->tmp_layer_idx = (uint8_t)pcs->temporal_layer_index;
+    obj->is_scene_change = pcs->parent_pcs_ptr->scene_change_flag;
+
+    Av1Common* cm = pcs->parent_pcs_ptr->av1_cm;
+    obj->sg_frame_ep = cm->sg_frame_ep;
+    if (scs->mfmv_enabled) {
+        obj->frame_type = pcs->parent_pcs_ptr->frm_hdr.frame_type;
+        obj->order_hint = pcs->parent_pcs_ptr->cur_order_hint;
+        svt_memcpy(obj->ref_order_hint, pcs->parent_pcs_ptr->ref_order_hint, 7 * sizeof(uint32_t));
+    }
+    // Copy the prev frame wn filter coeffs
+#if CLN_REST && !CLN_REST_2
+    if (cm->rest_filter_ctrls.wn_ctrls.enabled && cm->rest_filter_ctrls.wn_ctrls.use_prev_frame_coeffs) {
+#else
+    if (cm->wn_filter_ctrls.enabled && cm->wn_filter_ctrls.use_prev_frame_coeffs) {
+#endif
+        for (int32_t plane = 0; plane < MAX_MB_PLANE; ++plane) {
+            int32_t ntiles = pcs->rst_info[plane].units_per_tile;
+            for (int32_t u = 0; u < ntiles; ++u) {
+                obj->unit_info[plane][u].restoration_type =
+                    pcs->rst_info[plane].unit_info[u].restoration_type;
+                if (pcs->rst_info[plane].unit_info[u].restoration_type == RESTORE_WIENER)
+                    obj->unit_info[plane][u].wiener_info = pcs->rst_info[plane].unit_info[u].wiener_info;
+            }
+        }
+    }
+}
+#endif
 /******************************************************
  * Rest Kernel
  ******************************************************/

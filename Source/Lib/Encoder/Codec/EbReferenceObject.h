@@ -48,6 +48,11 @@ typedef struct EbReferenceObject {
     uint32_t             order_hint;
     uint32_t             ref_order_hint[7];
     double               r0;
+#if FIX_ISSUE_1896
+    int32_t              filter_level[2];
+    int32_t              filter_level_u;
+    int32_t              filter_level_v;
+#endif
     uint32_t             ref_cdef_strengths_num;
     uint8_t              ref_cdef_strengths[2][TOTAL_STRENGTHS];
     uint8_t             *sb_intra;

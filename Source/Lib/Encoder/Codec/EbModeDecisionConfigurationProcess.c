@@ -414,10 +414,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const SliceType          slice_type          = pcs_ptr->slice_type;
     const Bool               fast_decode         = scs_ptr->static_config.fast_decode;
     const uint32_t           hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#if !FIX_ISSUE_1857
 #if OPT_LPD0
     const Bool               transition_present  = ppcs->transition_present;
 #endif
-
+#endif
     //MFMV
     if (is_islice || scs_ptr->mfmv_enabled == 0 ||
         pcs_ptr->parent_pcs_ptr->frm_hdr.error_resilient_mode) {
@@ -614,8 +615,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->approx_inter_rate = 0;
     else
         pcs_ptr->approx_inter_rate = 1;
-
+#if FIX_ISSUE_1857
+    if (is_islice || ppcs->transition_present == 1)
+#else
     if (is_islice || ppcs->transition_present)
+#endif
         pcs_ptr->skip_intra = 0;
     else if (enc_mode <= ENC_M7)
         pcs_ptr->skip_intra = 0;
@@ -955,12 +959,21 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
     else if (enc_mode <= ENC_M9)
         pcs_ptr->pic_lpd0_lvl = 2;
+#if FIX_ISSUE_1857
+    else if (enc_mode <= ENC_M10)
+        pcs_ptr->pic_lpd0_lvl = (is_base || pcs_ptr->parent_pcs_ptr->transition_present == 1) ? 2 : 4;
+    else if (enc_mode <= ENC_M11)
+        pcs_ptr->pic_lpd0_lvl = (is_base || pcs_ptr->parent_pcs_ptr->transition_present == 1) ? 5 : 6;
+    else
+        pcs_ptr->pic_lpd0_lvl = (is_base || pcs_ptr->parent_pcs_ptr->transition_present == 1) ? 5 : 7;
+#else
     else if (enc_mode <= ENC_M10)
         pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 2 : 4;
     else if (enc_mode <= ENC_M11)
         pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 6;
     else
         pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 7;
+#endif
 #else
     /*
         set pd0_level
@@ -997,7 +1010,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->temporal_layer_index);
 
     if (scs_ptr->super_block_size == 64) {
+#if FIX_ISSUE_1857
+        if (is_islice || pcs_ptr->parent_pcs_ptr->transition_present == 1) {
+#else
         if (is_islice || pcs_ptr->parent_pcs_ptr->transition_present) {
+#endif
             pcs_ptr->pic_depth_removal_level = 0;
         } else {
             // Set depth_removal_level_controls
@@ -1163,7 +1180,25 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
           pcs_ptr->pic_disallow_4x4 == TRUE && scs_ptr->super_block_size == 64)) {
         pcs_ptr->pic_lpd1_lvl = 0;
     }
-
+#if FIX_ISSUE_1819
+    // Use the me-SAD-to-SATD deviation (of the 32x32 blocks) to detect the presence of isolated edges.
+    // An SB is tagged as problematic when the deviation is higher than the normal (i.e. when me-sad and satd are not correlated)
+    // For the detected SB(s), apply a better level for Depth-removal, LPD0, LPD1, and TXT of regular PD1.
+    // Not applicable for I_SLICE and for SB 128x128
+    if (pcs_ptr->slice_type == I_SLICE || scs_ptr->super_block_size == 128) {
+        pcs_ptr->vq_ctrls.detect_high_freq_lvl = 0;
+    } else {
+        if (pcs_ptr->parent_pcs_ptr->sc_class1) {
+            pcs_ptr->vq_ctrls.detect_high_freq_lvl = 1;
+        }
+        else {
+            if (enc_mode <= ENC_M12)
+                pcs_ptr->vq_ctrls.detect_high_freq_lvl = 2;
+            else
+                pcs_ptr->vq_ctrls.detect_high_freq_lvl = 0;
+        }
+    }
+#endif
     return return_error;
 }
 

@@ -471,6 +471,18 @@ typedef struct Lpd1Ctrls {
     uint16_t skip_pd0_me_shift
         [LPD1_LEVELS]; // Shift applied to ME dist and var of top and left SBs when PD0 is skipped
 } Lpd1Ctrls;
+#if FIX_ISSUE_1819
+typedef struct DetectHighFreqCtrls {
+    int8_t   enabled;
+    uint16_t me_8x8_sad_var_th;   // me-8x8 SADs deviation threshold beyond which the SB is not considered
+    uint16_t high_satd_th;        // 32x32 satd threshold beyond which the SB is tagged
+    uint16_t satd_to_sad_dev_th;  // me-SAD-to-SATD deviation of the 32x32 blocks threshold beyond which the SB is tagged (~2x is the fundamental deviation)
+    uint8_t  depth_removal_shift; // depth-removal level left-shift for the detected SB(s)
+    uint8_t  max_pic_lpd0_lvl;    // maximum lpd0 level for the detected SB(s)
+    uint8_t  max_pic_lpd1_lvl;    // maximum lpd1 level for the detected SB(s)
+    uint8_t  max_pd1_txt_lvl;     // maximum pd1-txt level for the detected SB(s)
+} DetectHighFreqCtrls;
+#endif
 typedef struct Lpd1TxCtrls {
     uint8_t
         zero_y_coeff_exit; // skip cost calc and chroma TX/compensation if there are zero luma coeffs
@@ -819,6 +831,9 @@ typedef struct ModeDecisionContext {
 #else
     uint8_t  pd0_level;
 #endif
+#if FIX_ISSUE_1819
+    DetectHighFreqCtrls detect_high_freq_ctrls;
+#endif
     // 0 : Use regular PD0
     // 1 : Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
     // 2 : Use very light PD0 path: only mds0 (no transform path), no compensation(s) @ mds0
@@ -852,7 +867,10 @@ typedef struct ModeDecisionContext {
     uint8_t        skip_pd0;
     uint8_t
         scale_palette; //   when MD is done on 8bit, scale  palette colors to 10bit (valid when bypass is 1)
-
+#if FIX_ISSUE_1819
+    uint32_t b32_satd[4];
+    uint8_t high_freq_present;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,

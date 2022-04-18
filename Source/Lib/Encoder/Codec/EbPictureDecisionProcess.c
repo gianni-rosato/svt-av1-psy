@@ -295,7 +295,11 @@ EbErrorType picture_decision_context_ctor(
 
     context_ptr->mg_progress_id = 0;
     context_ptr->last_i_noise_levels_log1p_fp16[0] = 0;
+#if FIX_ISSUE_1857
+    context_ptr->transition_detected = -1;
+#else
     context_ptr->is_next_base_sc = 0;
+#endif
     context_ptr->sframe_poc = 0;
     context_ptr->sframe_due = 0;
     return EB_ErrorNone;
@@ -6373,12 +6377,21 @@ void* picture_decision_kernel(void *input_ptr)
                         (PictureParentControlSet**)pcs_ptr->pd_window);
 
                 }
+#if FIX_ISSUE_1857
+                else if (scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition && (context_ptr->transition_detected == -1 || context_ptr->transition_detected == 0)) {
+                    context_ptr->transition_detected = scene_transition_detector(
+                        context_ptr,
+                        scs_ptr,
+                        (PictureParentControlSet**)pcs_ptr->pd_window);
+                }
+#else
                 else if (scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition && context_ptr->is_next_base_sc == 0) {
                     context_ptr->is_next_base_sc = scene_transition_detector(
                         context_ptr,
                         scs_ptr,
                         (PictureParentControlSet**)pcs_ptr->pd_window);
                 }
+#endif
                 else
                     pcs_ptr->scene_change_flag = FALSE;
 
@@ -7061,10 +7074,22 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
                                 update_count_try(scs_ptr, pcs_ptr);
+#if FIX_ISSUE_1857
+                                if (context_ptr->transition_detected == 1) {
+                                    if (pcs_ptr->slice_type == P_SLICE) {
+                                        pcs_ptr->transition_present = 1;
+                                    }
+                                    else if (pcs_ptr->temporal_layer_index == 0) {
+                                        pcs_ptr->transition_present = 1;
+                                        context_ptr->transition_detected = 0;
+                                    }
+                                }
+#else
                                 if (context_ptr->is_next_base_sc && pcs_ptr->temporal_layer_index == 0) {
                                     pcs_ptr->transition_present = 1;
                                     context_ptr->is_next_base_sc = 0;
                                 }
+#endif
                                 if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0 && pcs_ptr->list0_only_base_ctrls.enabled) {
                                     update_list0_only_base(scs_ptr, pcs_ptr);
                                 }

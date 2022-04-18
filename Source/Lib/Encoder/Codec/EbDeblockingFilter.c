@@ -1073,6 +1073,30 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
     if (method == LPF_PICK_MINIMAL_LPF)
         lf->filter_level[0] = lf->filter_level[1] = 0;
     else if (method >= LPF_PICK_FROM_Q) {
+
+#if FIX_ISSUE_1896
+        int32_t min_ref_filter_level[2] = { MAX_LOOP_FILTER, MAX_LOOP_FILTER };
+        int32_t min_ref_filter_level_u  =   MAX_LOOP_FILTER;
+        int32_t min_ref_filter_level_v  =   MAX_LOOP_FILTER;
+
+        for (uint32_t ref_it = 0; ref_it < pcs_ptr->parent_pcs_ptr->tot_ref_frame_types; ++ref_it) {
+            MvReferenceFrame ref_pair = pcs_ptr->parent_pcs_ptr->ref_frame_type_arr[ref_it];
+            MvReferenceFrame rf[2];
+            av1_set_ref_frame(rf, ref_pair);
+
+            if (rf[1] == NONE_FRAME) {
+                uint8_t list_idx = get_list_idx(rf[0]);
+                uint8_t ref_idx = get_ref_frame_idx(rf[0]);
+                EbReferenceObject* ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+
+                min_ref_filter_level[0] = MIN(min_ref_filter_level[0], ref_obj->filter_level[0]);
+                min_ref_filter_level[1] = MIN(min_ref_filter_level[1], ref_obj->filter_level[1]);
+                min_ref_filter_level_u = MIN(min_ref_filter_level_u, ref_obj->filter_level_u);
+                min_ref_filter_level_v = MIN(min_ref_filter_level_v, ref_obj->filter_level_v);
+            }
+        }
+#endif
+
         const int32_t min_filter_level = 0;
         const int32_t max_filter_level = MAX_LOOP_FILTER; // av1_get_max_filter_level(cpi);
         const int32_t q                = svt_av1_ac_quant_q3(
@@ -1109,10 +1133,29 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
                                                                                       : 0;
         int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 
+#if FIX_ISSUE_1896
+        // Force filter_level to 0 if loop-filter is shut for 1 (or many) of the sub-layer reference frame(s)
+        lf->filter_level[0] = min_ref_filter_level[0] || !pcs_ptr->parent_pcs_ptr->temporal_layer_index
+            ? clamp(filt_guess, min_filter_level, max_filter_level)
+            : 0 ;
+
+        lf->filter_level[1] = min_ref_filter_level[1] || !pcs_ptr->parent_pcs_ptr->temporal_layer_index
+            ? clamp(filt_guess, min_filter_level, max_filter_level)
+            : 0 ;
+
+        lf->filter_level_u = min_ref_filter_level_u || !pcs_ptr->parent_pcs_ptr->temporal_layer_index
+            ? clamp(filt_guess_chroma, min_filter_level, max_filter_level)
+            : 0 ;
+
+        lf->filter_level_v = min_ref_filter_level_v || !pcs_ptr->parent_pcs_ptr->temporal_layer_index
+            ? clamp(filt_guess_chroma, min_filter_level, max_filter_level)
+            : 0 ;
+#else
         lf->filter_level[0] = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level[1] = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level_u  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
         lf->filter_level_v  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
+#endif
     } else {
         uint16_t                    padding = scs_ptr->super_block_size + 32;
         EbPictureBufferDescInitData temp_lf_recon_desc_init_data;

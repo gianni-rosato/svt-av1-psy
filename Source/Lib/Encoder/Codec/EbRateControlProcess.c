@@ -1219,7 +1219,11 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
                                                    ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
                                                    beta,
                                                    pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE ||
+#if FIX_ISSUE_1857
+                                                   pcs_ptr->parent_pcs_ptr->transition_present == 1);
+#else
                                                        pcs_ptr->parent_pcs_ptr->transition_present);
+#endif
             offset        = AOMMIN(
                 offset, pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
             offset = AOMMAX(
@@ -3373,7 +3377,11 @@ void *rate_control_kernel(void *input_ptr) {
 #else
                     rate_control_param_ptr->last_i_qp = pcs_ptr->picture_qp;
 #endif
+#if FIX_ISSUE_1857
+                } else if (pcs_ptr->parent_pcs_ptr->transition_present == 1 && pcs_ptr->parent_pcs_ptr->slice_type != P_SLICE) {
+#else
                 } else if (pcs_ptr->parent_pcs_ptr->transition_present) {
+#endif
 #if FTR_FORCE_KF
                     pcs_ptr->picture_qp = (uint8_t)CLIP3(
                         scs_ptr->static_config.min_qp_allowed,

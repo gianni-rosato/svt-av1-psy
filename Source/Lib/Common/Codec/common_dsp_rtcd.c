@@ -729,6 +729,10 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2_AVX512(svt_aom_highbd_h_predictor_64x64, svt_aom_highbd_h_predictor_64x64_c, svt_aom_highbd_h_predictor_64x64_avx2, aom_highbd_h_predictor_64x64_avx512);
     SET_SSE2(svt_log2f, log2f_32, Log2f_ASM);
     SET_SSE2(svt_memcpy, svt_memcpy_c, svt_memcpy_intrin_sse);
-
+#if FIX_ISSUE_1819 //
+    SET_AVX2(svt_aom_hadamard_32x32, svt_aom_hadamard_32x32_c, svt_aom_hadamard_32x32_avx2);
+    SET_AVX2(svt_aom_hadamard_16x16, svt_aom_hadamard_16x16_c, svt_aom_hadamard_16x16_avx2);
+    SET_SSE2(svt_aom_hadamard_8x8, svt_aom_hadamard_8x8_c, svt_aom_hadamard_8x8_sse2);
+#endif
 }
 // clang-format on

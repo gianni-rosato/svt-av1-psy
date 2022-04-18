@@ -68,6 +68,21 @@ extern "C" {
 #define RC_REFACTOR_9           1 // Add mutex for rc variables
 #endif
 #define FIX_RC_END_OF_CLIP      1 // Fix the gf interval for the case the last frame is an I
+
+
+#define FIX_ISSUE_1819          1 // use the me-SAD-to-SATD deviation (of the 32x32 blocks) to detect the presence of isolated edges.
+                                  // An SB is tagged as problematic when the deviation is higher than the normal (i.e. when me-sad and satd are not correlated).
+                                  // For the detected SB(s), apply a better level for Depth-removal, LPD0, LPD1, and TXT of regular PD1.
+
+#define FIX_ISSUE_1857          1 // If a scene change happens during an incomplete mini-GOP
+                                  // then transition_present is set to 1 for all P(s) until the next BASE as they would not take advantage of
+                                  // the next BASE boost since they only use past reference frame(s)
+                                  // When transition_present is set to 1, different action(s) will be taken to mimic an I_SLICE (decrease the QP, better INTRA search level,
+                                  // shut depth - removal, ..).The QP action is not applied if a P.
+
+#define FIX_ISSUE_1896          1 // Force filter_level to 0 if loop-filter is shut for 1 (or many) of the sub-layer reference frame(s)
+
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

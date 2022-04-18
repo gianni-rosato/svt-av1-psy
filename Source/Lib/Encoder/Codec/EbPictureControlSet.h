@@ -245,6 +245,11 @@ typedef struct CdefDirData {
     uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS];
     int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS];
 } CdefDirData;
+#if FIX_ISSUE_1819
+typedef struct PicVqCtrls {
+    uint8_t detect_high_freq_lvl;
+} PicVqCtrls;
+#endif
 typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor                    dctor;
@@ -474,6 +479,9 @@ typedef struct PictureControlSet {
     uint8_t
             approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
     uint8_t skip_intra;
+#if FIX_ISSUE_1819
+    PicVqCtrls vq_ctrls;
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -711,7 +719,11 @@ typedef struct PictureParentControlSet {
     Bool      idr_flag;
     Bool      cra_flag;
     Bool      scene_change_flag;
+#if FIX_ISSUE_1857
+    int8_t    transition_present; // -1: not computed
+#else
     Bool      transition_present;
+#endif
     Bool      end_of_sequence_flag;
     uint8_t   picture_qp;
     uint64_t  picture_number;

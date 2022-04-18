@@ -47,7 +47,6 @@ extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **reco
 void        svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
                                           uint8_t *in_compn_bit_buffer, uint32_t out_stride,
                                           uint32_t height);
-
 /*
 * return by-pass encdec
 */
@@ -1831,7 +1830,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
     reference_object->slice_type = pcs_ptr->parent_pcs_ptr->slice_type;
     reference_object->r0         = pcs_ptr->parent_pcs_ptr->r0;
 }
-
+#if !FIX_ISSUE_1896
 void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     pcs_ptr->intra_coded_area = (100 * pcs_ptr->intra_coded_area) /
         (pcs_ptr->parent_pcs_ptr->aligned_width * pcs_ptr->parent_pcs_ptr->aligned_height);
@@ -1845,6 +1844,7 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
         ->skip_coded_area                   = (uint8_t)(pcs_ptr->skip_coded_area);
     struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
     FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
+
     ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->ref_cdef_strengths_num = ppcs->nb_cdef_strengths;
     for (int i = 0; i < ppcs->nb_cdef_strengths; i++) {
@@ -1906,7 +1906,7 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
         }
     }
 }
-
+#endif
 void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
     ObmcControls *obmc_ctrls = &mdctxt->obmc_ctrls;
     switch (obmc_mode) {
@@ -4588,6 +4588,41 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
     default: assert(0); break;
     }
 }
+
+
+#if FIX_ISSUE_1819
+static void set_detect_high_freq_ctrls(ModeDecisionContext* ctx, uint8_t detect_high_freq_lvl) {
+    DetectHighFreqCtrls* ctrls = &ctx->detect_high_freq_ctrls;
+    switch (detect_high_freq_lvl) {
+    case 0:
+        ctrls->enabled             = 0;
+        break;
+    case 1:
+        ctrls->enabled             = 1;
+        ctrls->high_satd_th        = 10000;
+        ctrls->satd_to_sad_dev_th  = 500;
+        ctrls->me_8x8_sad_var_th   = 2500;
+        ctrls->depth_removal_shift = 4;
+        ctrls->max_pic_lpd0_lvl    = 2;
+        ctrls->max_pic_lpd1_lvl    = 2;
+        ctrls->max_pd1_txt_lvl     = 6;
+        break;
+    case 2:
+        ctrls->enabled              = 1;
+        ctrls->high_satd_th        = 15000;
+        ctrls->satd_to_sad_dev_th  = 600;
+        ctrls->me_8x8_sad_var_th   = 7500;
+        ctrls->depth_removal_shift = 4;
+        ctrls->max_pic_lpd0_lvl    = 2;
+        ctrls->max_pic_lpd1_lvl    = 2;
+        ctrls->max_pd1_txt_lvl     = 6;
+        break;
+    default: assert(0); break;
+    }
+}
+#endif
+
+
 // use this function to set the disallow_below_16x16 level and to set the accompanying enable_me_8x8 level
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                SliceType slice_type, uint8_t sc_class1,
@@ -4624,7 +4659,17 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
     EbErrorType return_error = EB_ErrorNone;
 
     EncMode enc_mode = pcs_ptr->enc_mode;
-
+#if FIX_ISSUE_1819
+    SuperBlock* sb_ptr = pcs_ptr->sb_ptr_array[ctx->sb_index];
+    set_detect_high_freq_ctrls(ctx, pcs_ptr->vq_ctrls.detect_high_freq_lvl);
+    ctx->high_freq_present = 0;
+    if (ctx->detect_high_freq_ctrls.enabled) {
+        svt_aom_check_high_freq(
+            pcs_ptr,
+            sb_ptr,
+            ctx);
+    }
+#endif
     // Level 0: pred depth only
     // Level 1: [-2, +2] depth refinement
     // Level 2: [-1, +1] depth refinement
@@ -4652,7 +4697,14 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
     ctx->pred_depth_only = (depth_level == 0);
 #endif
 #if OPT_LPD0
+#if FIX_ISSUE_1819
+    set_lpd0_ctrls(ctx,
+        ctx->high_freq_present
+            ? MIN(pcs_ptr->pic_lpd0_lvl, ctx->detect_high_freq_ctrls.max_pic_lpd0_lvl)
+            : pcs_ptr->pic_lpd0_lvl);
+#else
     set_lpd0_ctrls(ctx, pcs_ptr->pic_lpd0_lvl);
+#endif
 #else
     ctx->pd0_level       = pcs_ptr->pic_pd0_level;
 #endif
@@ -4677,7 +4729,14 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
 
     // me_distortion/variance generated for 64x64 blocks only
     if (scs_ptr->super_block_size == 64) {
+#if FIX_ISSUE_1819
+        set_depth_removal_level_controls(pcs_ptr, ctx,
+            ctx->high_freq_present
+                ? MAX(0, (int)((int)pcs_ptr->pic_depth_removal_level - (int)ctx->detect_high_freq_ctrls.depth_removal_shift))
+                : pcs_ptr->pic_depth_removal_level);
+#else
         set_depth_removal_level_controls(pcs_ptr, ctx, pcs_ptr->pic_depth_removal_level);
+#endif
     }
     if (/*scs_ptr->rc_stat_gen_pass_mode || */ ctx->skip_pd0) {
         // ctx->depth_removal_ctrls.disallow_below_64x64 = 1;
@@ -4694,8 +4753,14 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
         if (sb_params->width % 8 != 0 || sb_params->height % 8 != 0)
             ctx->depth_removal_ctrls.disallow_below_16x16 = FALSE;
     }
-
+#if FIX_ISSUE_1819
+    set_lpd1_ctrls(ctx,
+        ctx->high_freq_present
+            ? MIN(pcs_ptr->pic_lpd1_lvl, ctx->detect_high_freq_ctrls.max_pic_lpd1_lvl)
+            : pcs_ptr->pic_lpd1_lvl);
+#else
     set_lpd1_ctrls(ctx, pcs_ptr->pic_lpd1_lvl);
+#endif
     return return_error;
 }
 /*
@@ -5331,7 +5396,11 @@ void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *scs,
     ctx->shut_fast_rate = TRUE;
 
     uint8_t intra_level = 0;
+#if FIX_ISSUE_1857
+    if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present == 1)
+#else
     if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+#endif
         intra_level = 1;
     else if (pd0_level <= LPD0_LVL_0)
         intra_level = (pcs->temporal_layer_index == 0) ? 1 : 0;
@@ -5387,12 +5456,20 @@ void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *scs,
                 fast_lambda, 0, pcs->parent_pcs_ptr->me_64x64_distortion[ctx->sb_index]);
 
             if (pd0_level <= LPD0_LVL_1) {
+#if FIX_ISSUE_1857
+                if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present == 1)
+#else
                 if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+#endif
                     subres_level = 1;
                 else
                     subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
             } else if (pd0_level <= LPD0_LVL_2) {
+#if FIX_ISSUE_1857
+                if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present == 1)
+#else
                 if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+#endif
                     subres_level = 1;
                 else if (pcs->parent_pcs_ptr->is_used_as_reference_flag)
                     subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
@@ -5808,11 +5885,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
                              l0_was_skip,
                              l1_was_skip,
                              ref_skip_perc);
+
+#if FIX_ISSUE_1819
+    uint8_t  txt_level = pcs_ptr->txt_level;
+    if(context_ptr->high_freq_present)
+        txt_level = txt_level == 0
+            ? context_ptr->detect_high_freq_ctrls.max_pd1_txt_lvl
+            : MIN(txt_level, context_ptr->detect_high_freq_ctrls.max_pd1_txt_lvl);
+    set_txt_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : txt_level);
+    set_tx_shortcut_ctrls( pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 0 : context_ptr->high_freq_present ? 0 : pcs_ptr->tx_shortcut_level);
+#else
     set_txt_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txt_level);
 
     set_tx_shortcut_ctrls(
         pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->tx_shortcut_level);
-
+#endif
     set_interpolation_search_level_ctrls(
         context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->interpolation_search_level);
 
@@ -6011,7 +6098,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     // intra_level must be greater than 0 for I_SLICE
     uint8_t intra_level = 0;
     if (pd_pass == PD_PASS_0) {
+#if FIX_ISSUE_1857
+        if (is_islice || ppcs->transition_present == 1)
+#else
         if (is_islice || ppcs->transition_present)
+#endif
             intra_level = 5;
         else if (enc_mode <= ENC_M1)
             intra_level = 5;
@@ -6024,12 +6115,23 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     else if (enc_mode <= ENC_M5)
         intra_level = is_base ? 1 : 4;
     else if (enc_mode <= ENC_M7)
+#if FIX_ISSUE_1857
+        intra_level = (is_islice || ppcs->transition_present == 1) ? 1 : is_base ? 2 : 4;
+#else
         intra_level = (is_islice || ppcs->transition_present) ? 1 : is_base ? 2 : 4;
+#endif
     else if (enc_mode <= ENC_M9)
+#if FIX_ISSUE_1857
+        intra_level = (is_islice || ppcs->transition_present == 1) ? 1 : 4;
+#else
         intra_level = is_islice ? 1 : 4;
+#endif
     else
+#if FIX_ISSUE_1857
+        intra_level = (is_islice || ppcs->transition_present == 1) ? 3 : 4;
+#else
         intra_level = (is_islice || ppcs->transition_present) ? 3 : 4;
-
+#endif
     set_intra_ctrls(pcs_ptr, context_ptr, intra_level);
 #if TUNE_MDS0_DIST
     set_mds0_controls(context_ptr, pd_pass == PD_PASS_0 ? 2 : pcs_ptr->mds0_level);
@@ -7004,7 +7106,11 @@ void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
 
             // VERY_LIGHT_PD0 is not supported for I_SLICE or when transition_present because VERY_LIGHT_PD0
             // only supports INTER compensation
+#if FIX_ISSUE_1857
+            if ((pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present == 1) && pd0_lvl == VERY_LIGHT_PD0) {
+#else
             if ((pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present) && pd0_lvl == VERY_LIGHT_PD0){
+#endif
                 lpd0_ctrls->pd0_level = pd0_lvl - 1;
                 continue;
             }
@@ -7401,6 +7507,7 @@ void *mode_decision_kernel(void *input_ptr) {
                         // Configure the SB
                         mode_decision_configure_sb(
                             context_ptr->md_context, pcs_ptr, (uint8_t)sb_ptr->qindex);
+
                         // signals set once per SB (i.e. not per PD)
                         signal_derivation_enc_dec_kernel_common(
                             scs_ptr, pcs_ptr, context_ptr->md_context);
