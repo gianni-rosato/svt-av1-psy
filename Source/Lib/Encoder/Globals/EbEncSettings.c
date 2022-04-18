@@ -137,8 +137,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->vbr_max_section_pct > 100) {
-        SVT_ERROR("Instance %u: The max section percentage must be between [0, 100] \n",
+    if (config->vbr_max_section_pct > 10000) {
+        SVT_ERROR("Instance %u: The max section percentage must be between [0, 10000] \n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -877,7 +877,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     // Two pass data rate control options
     config_ptr->vbr_bias_pct             = 50;
     config_ptr->vbr_min_section_pct      = 0;
-    config_ptr->vbr_max_section_pct      = 100;
+    config_ptr->vbr_max_section_pct      = 2000;
     config_ptr->under_shoot_pct          = 25;
     config_ptr->over_shoot_pct           = 25;
     config_ptr->mbr_over_shoot_pct       = 50;
