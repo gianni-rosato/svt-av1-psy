@@ -1,6 +1,8 @@
+[Top level](../README.md)
+
 # Constrained Directional Enhancement Filter (CDEF) Appendix
 
-## 1.  Description of the algorithm
+## 1. Description of the algorithm
 
 The constrained directional enhancement filter (CDEF) is applied after
 the deblocking filter and aims at improving the reconstructed picture by
@@ -112,7 +114,7 @@ shown in blue.
 ##### Figure 5. Filter weights for secondary filtering.
 
 
-## 2.  Implementation
+## 2. Implementation
 
 **Inputs to cdef\_kernel**: Output frame from the deblocking filter.
 
@@ -126,7 +128,7 @@ Control flags associated with CDEF are listed in Table 1 below.
 
 | **Flag**                        | **Level**      | **Description**                                                                                                            |
 | ------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| --enable-cdef                     | Configuration  | CDEF filter control (0:OFF , 1: ON (Default))                           |
+| --enable-cdef                   | Configuration  | CDEF filter control (0:OFF, 1: ON (Default))                                                                               |
 | cdef\_level                     | Sequence       | Indicates whether to use CDEF for the whole sequence.                                                                      |
 | cdef\_level                     | Picture        | Indicates the level of complexity of the CDEF strength search as a function of the encoder mode (enc\_mode).               |
 
@@ -234,16 +236,20 @@ The primary and secondary filter coefficients are given in Section 1.
 
 **More details on finish\_cdef\_search in step 3**
 
-For each 64x64 filter block, the output from Step 2 is an array of distortion values
-corresponding to different filter strength pairs (Primary strength, Secondary strength).
-To reduce the overhead associated with the signaling of the individual filter strength index for each
-64x64 filter block, only a subset of the identified filter strength pairs is selected. Final filtering of the
-64x64 filter blocks in the frame is then redone using the best among the selected subset of filter strengths.
-The encoder needs to signal to the decoder only the selected subset of filter strengths for the decoder to use
-in the filtering operation. The encoder could signal a set that consists of only 1, 2, 4, or 8 different
-(Primary strength, Secondary strength) pairs to be used for the frame. The specific pair to use for each 64x64
-filter block is signaled separately. The search performed in ```finish_cdef_search``` is to find the best RDO option
-(i.e. 1, 2, 4, or 8 filter strength pairs for the frame) to work with.
+For each 64x64 filter block, the output from Step 2 is an array of distortion
+values corresponding to different filter strength pairs (Primary strength,
+Secondary strength). To reduce the overhead associated with the signaling of
+the individual filter strength index for each 64x64 filter block, only a subset
+of the identified filter strength pairs is selected. Final filtering of the
+64x64 filter blocks in the frame is then redone using the best among the
+selected subset of filter strengths. The encoder needs to signal to the decoder
+only the selected subset of filter strengths for the decoder to use in the
+filtering operation. The encoder could signal a set that consists of only 1, 2,
+4, or 8 different (Primary strength, Secondary strength) pairs to be used for
+the frame. The specific pair to use for each 64x64 filter block is signaled
+separately. The search performed in ```finish_cdef_search``` is to find the
+best RDO option (i.e. 1, 2, 4, or 8 filter strength pairs for the frame) to
+work with.
 
   - Loop over the cardinality of the set of the strength pair options (1
     then 2 then 4 then 8)
@@ -254,7 +260,7 @@ filter block is signaled separately. The search performed in ```finish_cdef_sear
     based on filtering distortion (```joint_strength_search_dual``` function makes use of a greedy search
     algorithm). Compute the RDO cost of each of the options and keep track of the best option (i.e. the best
     number of bits and the corresponding set of best (Primary strength, Secondary strength) pairs. The latter are
-    stored in the ```cdef_strengths```  and ```cdef_uv_strengths```  arrays.
+    stored in the ```cdef_strengths``` and ```cdef_uv_strengths``` arrays.
 
   - Loop over the filter blocks in the frame and select for each filter block the best (Primary strength,
     Secondary strength) pair. The selected pair is signaled in ```mbmi.cdef_strength``` whereas damping values
@@ -273,49 +279,56 @@ Loop over the 64x64 filter blocks
 (selected in ```finish_cdef_search```).
 
 
-## 3.  Optimization of the algorithm
+## 3. Optimization of the algorithm
 
-The search for the best filter strength pair for each 64x64 block can be algorithmically optimized using the
-features described below.  The aggressiveness of the CDEF algorithm depends on the CDEF filter mode
-(```picture_control_set_ptr->cdef_level```), which is specified based on the encoder preset
-(```picture_control_set_ptr->enc_mode```).
+The search for the best filter strength pair for each 64x64 block can be
+algorithmically optimized using the features described below. The
+aggressiveness of the CDEF algorithm depends on the CDEF filter mode
+(```picture_control_set_ptr->cdef_level```), which is specified based on the
+encoder preset (```picture_control_set_ptr->enc_mode```).
 
 ### Reducing Number of Filter Strengths Tested
 
-The search in ```cdef_seg_search``` for the filter strength is performed by considering a subset of the allowable
-filter strength indices [0,63].  For each ```cdef_level```, a set of primary and secondary filter strengths are
-specified to be tested.  The search is performed in two stages:
+The search in ```cdef_seg_search``` for the filter strength is performed by
+considering a subset of the allowable filter strength indices [0,63]. For each
+```cdef_level```, a set of primary and secondary filter strengths are specified
+to be tested. The search is performed in two stages:
 
-1st stage: Test the specified primary filter strengths.
-The number of primary filter strengths to test is specified by ```cdef_ctrls->first_pass_fs_num```, and
-the values of the primary strengths are set in the array ```cdef_ctrls->default_first_pass_fs```.
+1st stage: Test the specified primary filter strengths. The number of primary
+filter strengths to test is specified by ```cdef_ctrls->first_pass_fs_num```,
+and the values of the primary strengths are set in the array
+```cdef_ctrls->default_first_pass_fs```.
 
-2nd stage: Test the specified secondary filter strengths.
-The number of secondary filter strengths to test is specified by ```cdef_ctrls->default_second_pass_fs_num```, and
-the values of the primary strengths are set in the array ```cdef_ctrls->default_second_pass_fs```.
+2nd stage: Test the specified secondary filter strengths. The number of
+secondary filter strengths to test is specified by
+```cdef_ctrls->default_second_pass_fs_num```, and the values of the primary
+strengths are set in the array ```cdef_ctrls->default_second_pass_fs```.
 
 ### Reducing Number of Rows Used in CDEF search
 
-The CDEF search can be performed on subsampled blocks to reduce the number of required computations.  A subsampling factor is specified using
-```cdef_ctrls->subsampling_factor```, according to the allowable values in Table 3.
+The CDEF search can be performed on subsampled blocks to reduce the number of
+required computations. A subsampling factor is specified using
+```cdef_ctrls->subsampling_factor```, according to the allowable values in
+Table 3.
 
 
 ##### Table 3. Allowable subsampling factors in CDEF search.
 
-|**Subsampling_Factor** | **Action** |
-| --------------------- | ---------- |
-| 1                     | No subsampling|
-| 2                     | Subsample each block by 2 (i.e. perform CDEF filtering on every 2nd row)|
-| 3                     | Subsample each block by 4 (i.e. perform CDEF filtering on every 4th row)|
+| **Subsampling_Factor** | **Action**                                                               |
+| ---------------------  | ----------                                                               |
+| 1                      | No subsampling                                                           |
+| 2                      | Subsample each block by 2 (i.e. perform CDEF filtering on every 2nd row) |
+| 3                      | Subsample each block by 4 (i.e. perform CDEF filtering on every 4th row) |
 
 ### Using Reference Frame Info to Reduce CDEF Search
 
-Information from the nearest reference frames can be used to reduce the number of filter
-strengths tested for each frame.  The selected CDEF filter strengths for each frame are saved in the
-```EbReferenceObject``` to be used by subsequent frames.
+Information from the nearest reference frames can be used to reduce the number
+of filter strengths tested for each frame. The selected CDEF filter strengths
+for each frame are saved in the ```EbReferenceObject``` to be used by
+subsequent frames.
 
-When ```cdef_ctrls->search_best_ref_fs``` is enabled, only the best filter strengths from the reference frames are tested,
-as follows:
+When ```cdef_ctrls->search_best_ref_fs``` is enabled, only the best filter
+strengths from the reference frames are tested, as follows:
 
 ```
 If (list0_best_filter == list1_best_filter)
@@ -331,8 +344,9 @@ Else {
 }
 ```
 
-When ```cdef_ctrls->use_reference_cdef_fs``` is enabled, CDEF search is skipped and the filter strengths are
-set to the average of the lowest and highest filter strengths of the reference frames, as follows:
+When ```cdef_ctrls->use_reference_cdef_fs``` is enabled, CDEF search is skipped
+and the filter strengths are set to the average of the lowest and highest
+filter strengths of the reference frames, as follows:
 
 ```
 Lowest_fs = MIN(lowest_selected_fs_from_list0, lowest_selected_fs_from_list1)
@@ -341,29 +355,33 @@ Luma_cdef_fs = MIN( 63, (lowest_fs + highest_fs) / 2)
 Chroma_cdef_fs = 0
 ```
 
-When ```cdef_ctrls->use_skip_detector``` is enabled, CDEF will be disabled if the skip area percentage of the
-nearest reference frames (i.e. the percentage of zero coefficients in the nearest ref frames) is above 75%.
+When ```cdef_ctrls->use_skip_detector``` is enabled, CDEF will be disabled if
+the skip area percentage of the nearest reference frames (i.e. the percentage
+of zero coefficients in the nearest ref frames) is above 75%.
 
 ### Cost Biasing to Reduce CDEF Application
 
-After the CDEF search, the best selected filters must be applied to each SB; however,
-if the best selected filter for an SB is (0,0), then no filtering is required.
-By enabling ```cdef_ctrls->zero_fs_cost_bias```, the cost of the (0,0) filter can be scaled down to make it more
-favourable, resulting in fewer SBs requiring filtering in ```svt_av1_cdef_frame```.
+After the CDEF search, the best selected filters must be applied to each SB;
+however, if the best selected filter for an SB is (0,0), then no filtering is
+required. By enabling ```cdef_ctrls->zero_fs_cost_bias```, the cost of the
+(0,0) filter can be scaled down to make it more favourable, resulting in fewer
+SBs requiring filtering in ```svt_av1_cdef_frame```.
 
 When ```cdef_ctrls->zero_fs_cost_bias``` is non-zero, the cost of the (0,0) filter for each SB will be
 scaled by (```cdef_ctrls->zero_fs_cost_bias /64```).
 
-4.  **Signaling**
+4. **Signaling**
 
-At the frame level, the algorithm signals the luma damping value and up to 8 different filter strength presets to
-choose from. Each preset includes luma primary preset, chroma primary preset, luma secondary preset, a chroma
+At the frame level, the algorithm signals the luma damping value and up to 8
+different filter strength presets to choose from. Each preset includes luma
+primary preset, chroma primary preset, luma secondary preset, a chroma
 secondary preset and the number of bits used to signal the 64x64 level preset.
 Table 4 summarizes the parameters signaled at the frame level.
 
-At the 64x64 filter block level, the algorithm signals the index for the specific preset to work with for the
-64x64 filter block from among the set of presets specified at the frame level.
-Table 5 summarizes the parameters signaled at the filter block level.
+At the 64x64 filter block level, the algorithm signals the index for the
+specific preset to work with for the 64x64 filter block from among the set of
+presets specified at the frame level. Table 5 summarizes the parameters
+signaled at the filter block level.
 
 ##### Table 4. CDEF parameters signaled at the frame level.
 
@@ -385,7 +403,11 @@ Table 5 summarizes the parameters signaled at the filter block level.
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
 
 
 ## References

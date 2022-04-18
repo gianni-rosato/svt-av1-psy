@@ -1,10 +1,22 @@
-# SVT-AV1 Documentation
+[Top level](../README.md)
 
-**User Guides**:
-  * [SVT-AV1 Encoder User Guide](svt-av1_encoder_user_guide.md)
-  * [SVT-AV1 Decoder User Guide](svt-av1_decoder_user_guide.md)
+# Documentation
 
-**Detailed Encoder Documentation**:
+## Guides
+- [System Requirements](System-Requirements.md)
+- [How to run SVT-AV1 within ffmpeg](Ffmpeg.md)
+- [Standalone Encoder Usage](svt-av1_encoder_user_guide.md)
+- [Decoder Usage](svt-av1_decoder_user_guide.md)
+- [List of All Parameters](Parameters.md)
+- [Build Guide](Build-Guide.md)
+- [SVT-AV1 Contribution Guide](Contribute.md)
+- [Common Questions/Issues](CommonQuestions.md)
+
+## Design Documents
+- [Encoder Design](svt-av1-encoder-design.md)
+- [Decoder Design](svt-av1-decoder-design.md)
+
+## Technical Appendices
 - [Adaptive Prediction Structure Appendix](Appendix-Adaptive-Prediction-Structure.md)
 - [Altref and Overlay Pictures Appendix](Appendix-Alt-Refs.md)
 - [CDEF Appendix](Appendix-CDEF.md)

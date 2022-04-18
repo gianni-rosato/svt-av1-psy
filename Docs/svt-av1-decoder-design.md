@@ -1,3 +1,5 @@
+[Top level](../README.md)
+
 # Decoder Design for SVT-AV1 (Scalable Video Technology for AV1)
 
 ## Table of Contents
@@ -45,11 +47,20 @@
 
 ## Introduction
 
-This document describes the Intel SVT-AV1 decoder design. In particular, the decoder block diagram and multi-threading aspects are described. Besides, the document contains brief descriptions of the SVT-AV1 decoder modules such as parse, reconstruction, etc. This document is meant to be an accompanying document to the &quot;C Model&quot; source code, which contains the more specific details of the inner working of the decoder.
+This document describes the Intel SVT-AV1 decoder design. In particular, the
+decoder block diagram and multi-threading aspects are described. Besides, the
+document contains brief descriptions of the SVT-AV1 decoder modules such as
+parse, reconstruction, etc. This document is meant to be an accompanying
+document to the &quot;C Model&quot; source code, which contains the more
+specific details of the inner working of the decoder.
 
 ## High-level decoder architecture
 
-The high-level decoder pipeline is shown in Figure 1. Further details on individual stages are given in subsequent sections. The multi-threading aspect of the decoder is also explained in detail in a separate section. The details of high-level data structures and frame buffers used in the decoder are also covered briefly later.
+The high-level decoder pipeline is shown in Figure 1. Further details on
+individual stages are given in subsequent sections. The multi-threading aspect
+of the decoder is also explained in detail in a separate section. The details
+of high-level data structures and frame buffers used in the decoder are also
+covered briefly later.
 
 The major modules of the SVT-AV1 decoder are:
 
@@ -65,9 +76,14 @@ The major modules of the SVT-AV1 decoder are:
 
 ### Bit-Stream Parse
 
-The Parse stage does all tasks related to OBU reading, arithmetic decoding and related mv prediction (such as find\_warp\_samples, etc.) that produce the necessary mode info and residual data info.
+The Parse stage does all tasks related to OBU reading, arithmetic decoding and
+related mv prediction (such as find\_warp\_samples, etc.) that produce the
+necessary mode info and residual data info.
 
-The header level parsing of sequence parameters and frame parameters happens separately via read\_sequence\_header\_obu andread\_frame\_header\_obufunctions. Parse Tile module does the parsing of tile group obu data. Figure 2 shows a typical flow of the parse stage.
+The header level parsing of sequence parameters and frame parameters happens
+separately via read\_sequence\_header\_obu
+andread\_frame\_header\_obufunctions. Parse Tile module does the parsing of
+tile group obu data. Figure 2 shows a typical flow of the parse stage.
 
 **Input** : Bitstream buffer
 
@@ -79,13 +95,19 @@ The header level parsing of sequence parameters and frame parameters happens sep
 <a name = "figure-2"></a>
 ##### Figure 2: Parse stage Flow
 
-parse\_frame\_tiles() is the function that will trigger the parsing module in SVT-AV1 decoder. Parsing for each tile will be called by start\_parse\_tile(). Then parsing happen for each superblock in a tile by calling the function parse\_super\_block().
+parse\_frame\_tiles() is the function that will trigger the parsing module in
+SVT-AV1 decoder. Parsing for each tile will be called by start\_parse\_tile().
+Then parsing happen for each superblock in a tile by calling the function
+parse\_super\_block().
 
 Note: The prediction for palette mode happens during the Parse stage itself.
 
 ### Reconstruction
 
-This stage performs prediction, coefficient inverse scan, residual inverse quantization, inverse transform and finally generated the reconstructed data without applying post-processing filters. Figure 3 shows a typical flow of the reconstruction stage.
+This stage performs prediction, coefficient inverse scan, residual inverse
+quantization, inverse transform and finally generated the reconstructed data
+without applying post-processing filters. Figure 3 shows a typical flow of the
+reconstruction stage.
 
 **Input** : ModeInfo buffer, TransformInfo buffer, Coeff buffer
 
@@ -93,19 +115,27 @@ This stage performs prediction, coefficient inverse scan, residual inverse quant
 
 ![image3](./img/decoder_reconstruction_stage.png)
 <a name = "figure-3"></a>
-##### Figure 3: Reconstruction stage Flowdecode\_frame\_tiles() function starts reconstruction at frame level. Then decode\_tile\_job()  is called for each tile.
+##### Figure 3: Reconstruction stage Flowdecode\_frame\_tiles() function starts reconstruction at frame level. Then decode\_tile\_job() is called for each tile.
 
 For each Superblock in a tile, decode\_super\_block() function will be called.
 
-The total number of blocks inside a superblock and their corresponding **mode\_info** structure are stored while parsing. This helps to avoid calling of decode\_block() function recursively.
+The total number of blocks inside a superblock and their corresponding
+**mode\_info** structure are stored while parsing. This helps to avoid calling
+of decode\_block() function recursively.
 
 Note: The prediction for palette mode happens during the Parse stage itself.
 
-Note: In single thread mode, decode\_super\_block() will be called immediately after every parse\_super\_block() for better cache efficiency. In this mode decode\_frame\_tiles() will be completely avoided.
+Note: In single thread mode, decode\_super\_block() will be called immediately
+after every parse\_super\_block() for better cache efficiency. In this mode
+decode\_frame\_tiles() will be completely avoided.
 
 ### Loop Filter
 
-The loop filter function is to eliminate (or at least reduce) visually objectionable artifacts associated with the semi-independence of the coding of super blocks and their constituent sub-blocks as per section 7.14 of AV1 spec. This stage applies the loop filter for the entire frame. Flow diagram for Loop Filter is below in Figure 4.
+The loop filter function is to eliminate (or at least reduce) visually
+objectionable artifacts associated with the semi-independence of the coding of
+super blocks and their constituent sub-blocks as per section 7.14 of AV1 spec.
+This stage applies the loop filter for the entire frame. Flow diagram for Loop
+Filter is below in Figure 4.
 
 ![image4](./img/decoder_loop_filter_stage.png)
 <a name = "figure-4"></a>
@@ -115,7 +145,7 @@ The loop filter function is to eliminate (or at least reduce) visually objection
 
 **Output** : Loop Filtered frame.
 
-1. eb\_av1\_loop\_filter\_frame\_init() Initialization of loop filter parameters is performed  here.
+1. eb\_av1\_loop\_filter\_frame\_init() Initialization of loop filter parameters is performed here.
 2. Dec\_loop\_filter\_sb()
   1. Apply dec\_av1\_filter\_block\_plane\_vert()
     * Loop through each block in SB.
@@ -139,7 +169,9 @@ The loop filter function is to eliminate (or at least reduce) visually objection
 
 ### CDEF
 
-The CDEF performs deringing based on the detected direction of blocks as per section 7.15 of AV1 spec. This stage applies the CDEF for the entire frame. The flow diagram for the CDEF is shown in Figure 7.
+The CDEF performs deringing based on the detected direction of blocks as per
+section 7.15 of AV1 spec. This stage applies the CDEF for the entire frame. The
+flow diagram for the CDEF is shown in Figure 7.
 
 ![image7](./img/decoder_cdef_stage.png)
 <a name = "figure-7"></a>
@@ -152,10 +184,10 @@ The CDEF performs deringing based on the detected direction of blocks as per sec
 Steps involved in CDEF:
 
 1. svt\_cdef\_frame()function will be called to start CDEF for a frame.
-2.  For each 64x64 superblock function svt\_cdef\_block()will be called.
+2. For each 64x64 superblock function svt\_cdef\_block()will be called.
   1. The number of non-skip 8x8 blocks calculated.
   2. Store the 3-pixel rows of next SB&#39;s in line and column buffer to do CDEF in original pixels.
-  3. Call eb\_cdef\_filter\_fb()  for each 8x8 non-skip block
+  3. Call eb\_cdef\_filter\_fb() for each 8x8 non-skip block
     * Find the direction of each 8x8 block.
     * Filter the 8x8 block according to the identified direction- eb\_cdef\_filter\_block\_c().
     * Store the results in the destination buffer
@@ -167,7 +199,9 @@ Steps involved in CDEF:
 
 ### Loop Restoration
 
-This stage applies the Loop Restoration for the entire frame and the process is defined as per section 7.17 of AV1 spec. The flow diagram for the LR is shown in Figure 9.
+This stage applies the Loop Restoration for the entire frame and the process is
+defined as per section 7.17 of AV1 spec. The flow diagram for the LR is shown
+in Figure 9.
 
 ![image9](./img/decoder_loop_restoration_stage.png)
 <a name = "figure-9"></a>
@@ -182,16 +216,23 @@ Loop Restoration for a frame starts from the function dec\_av1\_loop\_restoratio
 The steps involved are:
 
 1. Call dec\_av1\_loop\_restoration\_filter\_row() for each row of height sb\_size.
-  * call eb\_dec\_av1\_loop\_restoration\_filter\_unit()  for each LR unit of size 64x64
-    1. Use the  stored CDEF/ LF above/below boundaries form neighbor block based on processing row is outer or inner row respectively by calling the function setup\_processing\_stripe\_boundary() .
+  * call eb\_dec\_av1\_loop\_restoration\_filter\_unit() for each LR unit of size 64x64
+    1. Use the stored CDEF/ LF above/below boundaries form neighbor block based on processing row is outer or inner row respectively by calling the function setup\_processing\_stripe\_boundary() .
     2. Apply the LR filter (stripe\_filter) based on the type of unit\_lrtype.
     3. Restore the LR filtered data back to stripe\_buffer by function restore\_processing\_stripe\_boundary().
 
 ## Multi-Threaded Architecture
 
-Parallelism in the decoder could be achieved at multiple levels. Each thread could, for example, be performing a different task in the decoding pipeline. The decoder will use tile level parallelism for tile parsing jobs. Decoder reconstruction jobs will use tile row-level parallelism, whereas all the post-processing filter jobs will use frame row-level parallelism.
+Parallelism in the decoder could be achieved at multiple levels. Each thread
+could, for example, be performing a different task in the decoding pipeline.
+The decoder will use tile level parallelism for tile parsing jobs. Decoder
+reconstruction jobs will use tile row-level parallelism, whereas all the
+post-processing filter jobs will use frame row-level parallelism.
 
-Let **N** be the number of threads configured for the decoder. The decoder library created **(N-1)** threads, which are called **worker threads**. The application thread which calls the decode process is called in the **main thread**. Together the decoder will have **N** working threads.
+Let **N** be the number of threads configured for the decoder. The decoder
+library created **(N-1)** threads, which are called **worker threads**. The
+application thread which calls the decode process is called in the **main
+thread**. Together the decoder will have **N** working threads.
 
 The main thread will perform the following inside the decoder:
 
@@ -236,9 +277,14 @@ Figure 11 shows the flow chart of the worker thread.
 
 ### Tile level Parallelism
 
-The decoder will use tile level parallelism for tile parsing jobs. Let **T** be the number of tiles present in Frame\_i and let **L** be the number of threads working on this frame. Each thread will try to pick up a tile parsing job and execute it as shown in Figure 12 and Figure 13 below.
+The decoder will use tile level parallelism for tile parsing jobs. Let **T** be
+the number of tiles present in Frame\_i and let **L** be the number of threads
+working on this frame. Each thread will try to pick up a tile parsing job and
+execute it as shown in Figure 12 and Figure 13 below.
 
-Please note that the thread number and tile number need not match. Each thread can pick any tile based on job availability. The pictures are just for understanding purpose only.
+Please note that the thread number and tile number need not match. Each thread
+can pick any tile based on job availability. The pictures are just for
+understanding purpose only.
 
 ![image12](./img/decoder_tile_parallel_l_gt_t.png)
 <a name = "figure-12"></a>
@@ -250,9 +296,17 @@ Please note that the thread number and tile number need not match. Each thread c
 
 ### Tile Row-level Parallelism
 
-Decoder reconstruction uses tile row-level parallelism. Wavefront Processing (WPP) will be used to handle data dependencies. Figure 14 shows 9 threads reconstructing 4 Tiles in Frame\_i with Tile Row-level parallelism. Each thread picks a Tile row MT job and works in a WPP manner.
+Decoder reconstruction uses tile row-level parallelism. Wavefront Processing
+(WPP) will be used to handle data dependencies. Figure 14 shows 9 threads
+reconstructing 4 Tiles in Frame\_i with Tile Row-level parallelism. Each thread
+picks a Tile row MT job and works in a WPP manner.
 
-Each thread will try to pick a unique tile that has not yet processed any row and continues to pick the tile-row jobs from the same tile until no more jobs are present in the same tile. If all the jobs in current tile are picked, it switches to the new tile with maximum number of jobs to be processed. If a unique tile that has not yet processed any row is not found, it picks the tile with maximum number of jobs to be processed.
+Each thread will try to pick a unique tile that has not yet processed any row
+and continues to pick the tile-row jobs from the same tile until no more jobs
+are present in the same tile. If all the jobs in current tile are picked, it
+switches to the new tile with maximum number of jobs to be processed. If a
+unique tile that has not yet processed any row is not found, it picks the tile
+with maximum number of jobs to be processed.
 
 ![image14](./img/decoder_TileRowMT.png)
 <a name = "figure-14"></a>
@@ -260,53 +314,101 @@ Each thread will try to pick a unique tile that has not yet processed any row an
 
 ### Frame Row-level Parallelism
 
-All the post-processing filter jobs will use frame row-level parallelism. Wavefront Processing (WPP) will be used to handle data dependencies if required. LF, CDEF, and LR may work with different unit sizes depending on the available parallelism unit instead of SB.
+All the post-processing filter jobs will use frame row-level parallelism.
+Wavefront Processing (WPP) will be used to handle data dependencies if
+required. LF, CDEF, and LR may work with different unit sizes depending on the
+available parallelism unit instead of SB.
 
 ![image15](./img/decoder_5_threads.png)
 <a name = "figure-15"></a>
 ##### Figure 15: Frame\_i with 5 Threads
 
-Figure 15 shows 5 threads applying post-processing filters on Frame\_i. Each thread picks a Frame row MT job and works in a WPP manner.
+Figure 15 shows 5 threads applying post-processing filters on Frame\_i. Each
+thread picks a Frame row MT job and works in a WPP manner.
 
 ### Job Selection and Sync Points in MT
 
-The job selection is controlled using shared memory and mutex. DecMtRowInfo (for Parse Tile, Recon Tile, CDEF Frame, LR Frame), DecMtMotionProjInfo (for Motion Projection), DecMtParseReconTileInfo (for Frame Recon) and DecMtlfFrameInfo (for LF Frame) data structures hold these memory for job selection.
+The job selection is controlled using shared memory and mutex. DecMtRowInfo
+(for Parse Tile, Recon Tile, CDEF Frame, LR Frame), DecMtMotionProjInfo (for
+Motion Projection), DecMtParseReconTileInfo (for Frame Recon) and
+DecMtlfFrameInfo (for LF Frame) data structures hold these memory for job
+selection.
 
-The sync points are controlled using shared memory and mutex. The following are the shared memory used for various syncs inside the decoder stages, like top-right sync.
+The sync points are controlled using shared memory and mutex. The following are
+the shared memory used for various syncs inside the decoder stages, like
+top-right sync.
 
-1. sb\_recon\_row\_parsed: Array to store SB Recon rows in the Tile that have completed the parsing. This will be used for sb decode row start processing. It will be updated after the parsing of each SB row in a tile finished. If the value of this variable is set, the recon of an SB row starts. This check is done before decoding of an SB row in a tile starts inside decode\_tile().
-2. sb\_recon\_completed\_in\_row: Array to store SBs completed in every SB row of Recon stage. Used for top-right sync. It will be updated with number of SBs being reconstructed after a recon of SB finished. If recon of &#39;Top SB&#39; and &#39;top right SB&#39; is done in the previous row, then only decoding of current SB starts. This check is done before the decoding of SB starts inside the function decode\_tile\_row().
-3. sb\_recon\_row\_map: This map is used to store whether the recon of SB row of a tile is finished. Its value is updated after recon of a tile row is done inside decode\_tile() function.  If the recon of &#39;top, top right, current and bottom  SB row&#39; is done, then only LF  of current row starts. This check is done before starting LF inside the function dec\_av1\_loop\_filter\_frame\_mt().
-4. lf\_row\_map: This is an array variable of  SB rows to store whether the LF of the current row is done or not. It will be set after the LF of the current row is done. If the LF of the current and next row is done, then only we start CDEF of the current row. This check is done before CDEF of current row starts inside the function svt\_cdef\_frame\_mt().
-5. cdef\_completed\_for\_row\_map: Array to store whether CDEF of the current row is done or not. It will be set after the CDEF of the current row is done. If the CDEF of current is done, then only we start LR of the current row. This check is done before LR of current row starts inside the function dec\_av1\_loop\_restoration\_filter\_frame\_mt().
-6. Hard-Syncs: The Following are the points where hard syncs, where all threads wait for the completion of the particular stage before going to the next stage, are happening in the decoder.
-  1. Hard Sync after **MV Projection**. svt\_setup\_motion\_field() is the function where this hard-sync happens.
-  2. Hard Sync after **CDEF** only when the upscaling flag is present. svt\_cdef\_frame\_mt() is the function where this hard-sync happens.
-  3. Hard Sync after **LR**. Function where this hard-sync happens is dec\_av1\_loop\_restoration\_filter\_frame\_mt().
+1. sb\_recon\_row\_parsed: Array to store SB Recon rows in the Tile that have
+   completed the parsing. This will be used for sb decode row start processing.
+   It will be updated after the parsing of each SB row in a tile finished. If
+   the value of this variable is set, the recon of an SB row starts. This check
+   is done before decoding of an SB row in a tile starts inside decode\_tile().
+2. sb\_recon\_completed\_in\_row: Array to store SBs completed in every SB row
+   of Recon stage. Used for top-right sync. It will be updated with number of
+   SBs being reconstructed after a recon of SB finished. If recon of &#39;Top
+   SB&#39; and &#39;top right SB&#39; is done in the previous row, then only
+   decoding of current SB starts. This check is done before the decoding of SB
+   starts inside the function decode\_tile\_row().
+3. sb\_recon\_row\_map: This map is used to store whether the recon of SB row
+   of a tile is finished. Its value is updated after recon of a tile row is
+   done inside decode\_tile() function. If the recon of &#39;top, top right,
+   current and bottom SB row&#39; is done, then only LF of current row starts.
+   This check is done before starting LF inside the function
+   dec\_av1\_loop\_filter\_frame\_mt().
+4. lf\_row\_map: This is an array variable of SB rows to store whether the LF
+   of the current row is done or not. It will be set after the LF of the
+   current row is done. If the LF of the current and next row is done, then
+   only we start CDEF of the current row. This check is done before CDEF of
+   current row starts inside the function svt\_cdef\_frame\_mt().
+5. cdef\_completed\_for\_row\_map: Array to store whether CDEF of the current
+   row is done or not. It will be set after the CDEF of the current row is
+   done. If the CDEF of current is done, then only we start LR of the current
+   row. This check is done before LR of current row starts inside the function
+   dec\_av1\_loop\_restoration\_filter\_frame\_mt().
+6. Hard-Syncs: The Following are the points where hard syncs, where all threads
+   wait for the completion of the particular stage before going to the next
+   stage, are happening in the decoder.
+  1. Hard Sync after **MV Projection**. svt\_setup\_motion\_field() is the
+     function where this hard-sync happens.
+  2. Hard Sync after **CDEF** only when the upscaling flag is present.
+     svt\_cdef\_frame\_mt() is the function where this hard-sync happens.
+  3. Hard Sync after **LR**. Function where this hard-sync happens is
+     dec\_av1\_loop\_restoration\_filter\_frame\_mt().
 
 ## Frame Level Buffers
 
 The following are some important buffers used in the decoder.
 
-| **Structure Description** | **Granularity** |
-| --- | --- |
-| BlockModeInfo | 4x4 |
-| SB info | SB |
-| TransformInfo | 4x4 |
-| Coeff | 4x4 |
-| Delta Q &amp; Delta LF Params | SB |
-| cdef\_strength | 64x64 |
-| p\_mi\_offset | 4x4 |
+| **Structure Description**     | **Granularity** |
+| ---                           | ---             |
+| BlockModeInfo                 | 4x4             |
+| SB info                       | SB              |
+| TransformInfo                 | 4x4             |
+| Coeff                         | 4x4             |
+| Delta Q &amp; Delta LF Params | SB              |
+| cdef\_strength                | 64x64           |
+| p\_mi\_offset                 | 4x4             |
 
 Table 1 Important Frame level buffers
 
 ### BlockModeInfo
 
-This buffer contains block info required for **Recon**. It is allocated for worst-case every 4x4 block for the entire frame.
+This buffer contains block info required for **Recon**. It is allocated for
+worst-case every 4x4 block for the entire frame.
 
-Even though the buffer is allocated for every 4x4 in the frame, the structure is not replicated for every 4x4 block. Instead, each block has associated with only one structure even if the block size is more than 4x4. A map with an offset from the start is used for neighbor access purposes. This reduced the need for replication of data structure and better cache efficient usage.
+Even though the buffer is allocated for every 4x4 in the frame, the structure
+is not replicated for every 4x4 block. Instead, each block has associated with
+only one structure even if the block size is more than 4x4. A map with an
+offset from the start is used for neighbor access purposes. This reduced the
+need for replication of data structure and better cache efficient usage.
 
-Figure 15 shows a sample superblock split to multiple blocks, numbered from 0 to 18. So 19 BlockModeInfo structures are **continuously populated** from SB start location, corresponding to each block (Instead of replicating the structures for all the 1024 4x4 blocks).  Assume this is the first SB in the picture, then Figure 16 shows the map with offset for each location in the SB and stored in p\_mi\_offset buffer. This map will be used for deriving neighbor BlockModeInfo structure at any location if needed.
+Figure 15 shows a sample superblock split to multiple blocks, numbered from 0
+to 18. So 19 BlockModeInfo structures are **continuously populated** from SB
+start location, corresponding to each block (Instead of replicating the
+structures for all the 1024 4x4 blocks). Assume this is the first SB in the
+picture, then Figure 16 shows the map with offset for each location in the SB
+and stored in p\_mi\_offset buffer. This map will be used for deriving neighbor
+BlockModeInfo structure at any location if needed.
 
 ![image16](./img/decoder_Nbr.png)
 <a name = "figure-16"></a>
@@ -318,19 +420,24 @@ Figure 15 shows a sample superblock split to multiple blocks, numbered from 0 to
 
 ### SB info
 
-This buffer stores SB related data. It is allocated for each SB for the entire frame.
+This buffer stores SB related data. It is allocated for each SB for the entire
+frame.
 
 ### TransformInfo
 
-Transform info of a TU unit is stored in this buffer. It is allocated for each TU unit, the worst case for each 4x4 in a frame.
+Transform info of a TU unit is stored in this buffer. It is allocated for each
+TU unit, the worst case for each 4x4 in a frame.
 
 ### Coeff
 
-This buffer contains coeff of each mi\_unit (4x4). Each mi\_unit contains 16 coeffs. For ST, it is allocated for each 4x4 unit for an SB, whereas for MT it is at each 4x4 for the entire frame.
+This buffer contains coeff of each mi\_unit (4x4). Each mi\_unit contains 16
+coeffs. For ST, it is allocated for each 4x4 unit for an SB, whereas for MT it
+is at each 4x4 for the entire frame.
 
 ### delta\_q
 
- This buffer is used to store delat\_q params and is allocated at the SB level for the entire frame.
+ This buffer is used to store delat\_q params and is allocated at the SB level
+ for the entire frame.
 
 ### Delta\_lf
 
@@ -394,7 +501,7 @@ The following are the high-level data structures in the decoder. Major elements 
     + 1: Indicates that the allow\_warped\_motion syntax element may be present
     + 0: Indicates that the allow\_warped\_motion syntax element will not be present
   * **uint8\_t film\_grain\_params\_present** Specifies whether film grain parameters are present in the coded video sequence
-  * **uint8\_t frame\_height\_bits**  Specifies the number of bits minus 1 used for transmitting the frame height syntax elements
+  * **uint8\_t frame\_height\_bits** Specifies the number of bits minus 1 used for transmitting the frame height syntax elements
   * **uint8\_t frame\_id\_length** Used to calculate the number of bits used to encode the frame\_id syntax element.
   * **uint8\_t frame\_id\_numbers\_present\_flag** Specifies whether frame id numbers are present in the coded video sequence
   * **uint8\_t frame\_width\_bits** Specifies the number of bits minus 1 used for transmitting the frame width syntax elements

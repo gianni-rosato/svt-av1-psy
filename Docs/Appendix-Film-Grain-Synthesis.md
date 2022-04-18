@@ -1,6 +1,8 @@
+[Top level](../README.md)
+
 # Film Grain Synthesis Appendix
 
-## 1.  Description of the algorithm
+## 1. Description of the algorithm
 
 The film grain synthesis algorithm involves two key steps. In the first
 step, the input pictures are denoised and the resulting denoised version
@@ -109,7 +111,7 @@ An optional block overlap can be applied to the film grain as well. The
 block overlap attenuates potential artifacts at the film grain block
 boundaries.
 
-## 2.  Implementation of the algorithm
+## 2. Implementation of the algorithm
 
 **Inputs**:
 
@@ -131,7 +133,7 @@ The control flags for the film grain feature are summarized in Table 1.
 | ------------------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | film\_grain\_denoise\_strength | Sequence                     | Takes values from 0 to 50 and determines strength of film grain used in grain filtering and estimation. 0 – film grain is turned off, 50 – maximum strength. |
 | film\_grain\_params            | Picture                      | Film grain parameters for a reference frame                                                                                                                  |
-| apply\_grain               | Picture                      | Apply grain for to the current frame.                                                                                                                        |
+| apply\_grain                   | Picture                      | Apply grain for to the current frame.                                                                                                                        |
 
 **Details of the film grain parameters estimation**
 
@@ -191,7 +193,7 @@ intermediateBuffer, which follows by the output process.
 The film grain application is performed by the
 ```svt_av1_add_film_grain_run``` in grainSynthesis.c.
 
-## 3.  Optimization of the algorithm
+## 3. Optimization of the algorithm
 
 The algorithm is implemented in a parallel manner. This means that
 estimation of the film grain parameters is performed independently
@@ -208,7 +210,7 @@ worse denoising and consequently less accurate film grain parameter
 estimation, but makes parallelization easier since only the current
 frame is used to obtain the film grain parameters.
 
-## 4.  Signaling
+## 4. Signaling
 
 The signaling part of the film grain parameters algorithm is
 implemented as follows. The film grain is called from
@@ -269,7 +271,11 @@ to the bitstream.
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
 
 ## References
 

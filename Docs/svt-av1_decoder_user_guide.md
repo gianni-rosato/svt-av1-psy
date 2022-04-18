@@ -1,3 +1,5 @@
+[Top level](../README.md)
+
 # Scalable Video Technology for AV1 Decoder (SVT-AV1 Decoder) User Guide
 
 ## Table of Contents
@@ -8,15 +10,22 @@
 
 ## Introduction
 
-This document describes how to use the Scalable Video Technology for AV1 Decoder (SVT-AV1). In particular, this user guide describes how to run the sample application with the respective dynamically linked library.
+This document describes how to use the Scalable Video Technology for AV1
+Decoder (SVT-AV1). In particular, this user guide describes how to run the
+sample application with the respective dynamically linked library.
 
 ## Sample Application Guide
 
-This section describes how to run the sample decoder application that uses the SVT-AV1 Decoder library. It describes the command line input parameters and the resulting outputs.
+This section describes how to run the sample decoder application that uses the
+SVT-AV1 Decoder library. It describes the command line input parameters and the
+resulting outputs.
 
 ### Running the decoder
 
-This section describes how to run the sample decoder application `SvtAv1DecApp.exe` (on Windows\*) or `SvtAv1DecApp` (on Linux\*) from the command line, including descriptions of the most commonly used input parameters and outputs.
+This section describes how to run the sample decoder application
+`SvtAv1DecApp.exe` (on Windows\*) or `SvtAv1DecApp` (on Linux\*) from the
+command line, including descriptions of the most commonly used input parameters
+and outputs.
 
 The sample application typically takes the following command line parameters:
 

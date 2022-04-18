@@ -1,6 +1,8 @@
+[Top level](../README.md)
+
 # Compound Mode Prediction Appendix
 
-## 1.  Description of the algorithm
+## 1. Description of the algorithm
 
 The general idea behind compound prediction is to generate a weighted
 average of two different predictions of the same block to develop a
@@ -138,7 +140,7 @@ Table 1 below provides the weights as a function of d1/d0.
 
 ![comp_mode_pred_table1](./img/comp_mode_pred_table1.png)
 
-## 2.  Implementation of the algorithm
+## 2. Implementation of the algorithm
 
 **Control tokens/flags**:
 
@@ -196,13 +198,13 @@ the candidate injection stage are
 of inter-intra compound candidates. The third is related to the
 injection of inter-inter compound candidates.
 
-1.  ```Precompute_intra_pred_for_inter_intra```
+1. ```Precompute_intra_pred_for_inter_intra```
 
 The function generates for a given block DC, Vertical, Horizontal and
 Smooth intra predictions that would be used in subsequent stages in the
 compound mode candidate injection process.
 
-2.  ```Inter_intra_search```
+2. ```Inter_intra_search```
 
 For a given block, the generation of inter-intra wedge prediction and
 the smooth inter-intra prediction is performed using the function
@@ -221,7 +223,7 @@ inter-intra search are outlined below.
  - Loop over the intra prediction modes: II\_DC\_PRED, II\_V\_PRED,
  II\_H\_PRED, II\_SMOOTH\_PRED
 
-     - Perform smooth filtering of the inter prediction and the intra
+    - Perform smooth filtering of the inter prediction and the intra
  prediction through the function call combine\_interintra\_highbd or
  combine\_interintra based on the already computed inter predictions
  and intra predictions. The intra predictions are already generated in
@@ -309,17 +311,17 @@ mask. Block size should be at least 8x8 for bipred to be allowed.
 As an example, consider the flow below for the function
 ```inject_mvp_candidates_II```
 
-1.  Check if compound reference mode is allowed, i.e. The candidate
+1. Check if compound reference mode is allowed, i.e. The candidate
     should not be a single-reference candidate and the block size
     should be at least 8x8 for bipred to be allowed.
 
-2.  Determine the number of compound modes to try:
+2. Determine the number of compound modes to try:
 
      - If compound is enabled for this inter type (`inter_comp_ctrls.do_nearest_nearest` is true) `tot_comp_types` equal to `inter_comp_ctrls.tot_comp_types`
        which is based on `inter_compound_mode` level
      - else `tot_comp_types` equal to `MD_COMP_DIST`
 
-3.  Single reference case
+3. Single reference case
 
     - Check if inter-intra is allowed: ```svt_is_interintra_allowed```
 
@@ -348,7 +350,7 @@ mode).
     prediction option based on the best intra prediction mode from the
     smooth inter-intra prediction search. (```inter_intra_search```)
 
-4.  Compound reference case
+4. Compound reference case
 
     For all ```NEARESTMV_NEARESTMV``` and ```NEAR_NEARMV``` candidates, loop over
 all selected compound prediction modes
@@ -411,7 +413,7 @@ av1\_inter\_prediction.
     convolveHbd\[\]\[\]\[\] is then called to generate the prediction
     using the forward offset and the backward offset weights.
 
-- Step 2.1:  **av1\_inter\_prediction**
+- Step 2.1: **av1\_inter\_prediction**
 
 ![comp_mode_pred_fig8](./img/comp_mode_pred_fig8.png)
 
@@ -429,7 +431,7 @@ pass. The two main relevant functions are ```warped_motion_prediction``` and
 ```av1_inter_prediction```. The two functions are described above.
 
 
-## 3.  Optimization of the algorithm
+## 3. Optimization of the algorithm
 
 **Inter-intra prediction**
 
@@ -459,7 +461,11 @@ signals are given in Table 6.
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
 
 ## References
 
@@ -475,5 +481,5 @@ Peter de Rivaz, “An Overview of Core Coding Tools in the AV1 Video
 Codec,” Picture Coding Symposium, pp. 41-45, 2018.
 
 \[3\] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen,
-Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, James  Bankoski,
+Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, James Bankoski,
 “A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021.

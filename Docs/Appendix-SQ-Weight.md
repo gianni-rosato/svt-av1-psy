@@ -1,10 +1,14 @@
+[Top level](../README.md)
+
 # SQ\_Weight
 
 ## Description
 
-SQ\_WEIGHT is a cost scaling factor used to determine if the evaluation of the non-square (NSQ) shapes HA, HB, VA, VB, H4 and V4
-could be skipped based on the relative cost of the square (SQ), H and V shapes.
-The various shapes supported in the AV1 Bitstream & Decoding Process Specification are shown in Figure 1 below.
+SQ\_WEIGHT is a cost scaling factor used to determine if the evaluation of the
+non-square (NSQ) shapes HA, HB, VA, VB, H4 and V4 could be skipped based on the
+relative cost of the square (SQ), H and V shapes. The various shapes supported
+in the AV1 Bitstream & Decoding Process Specification are shown in Figure 1
+below.
 
 ![sq_weight_fig2](./img/sq_weight_fig2.png)
 
@@ -22,7 +26,7 @@ to determine if the HA, HB, VA, VB, H4 and V4 shapes could be skipped as follows
 
 where X_COST refers to the cost of the block with shape X. The lower the SQ_WEIGHT, the higher the chance to skip NSQ shapes.
 
-The SQ_WEIGHT is a scaling factor of the square shape cost,  and can be made more or less aggressive based on the preset and block characteristics.
+The SQ_WEIGHT is a scaling factor of the square shape cost, and can be made more or less aggressive based on the preset and block characteristics.
 The SQ_WEIGHT is derived as follows:
 
 where Base is a function of the encoder preset.
@@ -41,12 +45,17 @@ Final offset is between -10 and +5.
 
 ### H vs. V comparison
 
-The second part of the algorithm compares the cost of H block to the cost of the V block to determine if the HA, HB, VA, VB, H4 and V4 shapes could be skipped.
-The NSQ shapes are skipped as follows:
+The second part of the algorithm compares the cost of H block to the cost of
+the V block to determine if the HA, HB, VA, VB, H4 and V4 shapes could be
+skipped. The NSQ shapes are skipped as follows:
 
   - skip HA, HB and H4 if (H and V are valid shapes) and (H_COST > (110 * V_COST) / 100)
   - skip VA, VB and V4 if (H and V are valid shapes) and (V_COST > (110 * H_COST) / 100)
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.

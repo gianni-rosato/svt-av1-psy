@@ -1,6 +1,8 @@
+[Top level](../README.md)
+
 # Deblocking Loop Filter Appendix
 
-## 1.  Description of the algorithm
+## 1. Description of the algorithm
 
 The deblocking loop filter is used to address blocking artifacts in
 reconstructed pictures. The filter was developed based on VP9 deblocking
@@ -24,7 +26,7 @@ edges. The main idea behind the filter can be summarized as follows:
 |--- |--- |--- |--- |--- |--- |
 |>TX_8x8|Yes|Filter14 (13-tap)|14|Filter6 (5-tap)|6|
 ||No|Filter8 (7-tap)/ Filter4|4|Filter4|4|
-|TX_8x8|Yes|Filter8 (7-tap)|8|Filter6 (5-tap)|6|
+| TX_8x8 | Yes | Filter8 (7-tap) | 8 | Filter6 (5-tap) | 6 |
 ||No|Filter4|4|Filter4|4|
 |TX_4x4|-|Filter4|4|Filter4|4|
 
@@ -298,7 +300,7 @@ filter14)
 
 
 
-## 2.  Implementation
+## 2. Implementation
 
 **Inputs**: Block mode, transform size and reconstructed picture.
 
@@ -308,11 +310,11 @@ filter14)
 
 ##### Table 4. List of loop filter control flags.
 
-| **Flag**                | **Level** | **Description**                                                                                                                                                                                                                                                                                         |
-| ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| --enable-dlf                    | Configuration | Deblocking loop filter control (0:ON (Default), 1: OFF)   |
-| DlfCtrls      | Picture   | Describes the Dlf control signal.                                                                                                                                                                                                           |
-| combine\_vert\_horz\_lf | Picture   | When set, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the preceding SB in the same SB row. When OFF, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the same SB. |
+| **Flag**                | **Level**     | **Description**                                                                                                                                                                                                                                                                                         |
+| ----------------------- | ---------     | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --enable-dlf            | Configuration | Deblocking loop filter control (0:ON (Default), 1: OFF)                                                                                                                                                                                                                                                 |
+| DlfCtrls                | Picture       | Describes the Dlf control signal.                                                                                                                                                                                                                                                                       |
+| combine\_vert\_horz\_lf | Picture       | When set, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the preceding SB in the same SB row. When OFF, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the same SB. |
 
 ![dlf_new_fig4](./img/dlf_new_fig4.png)
 
@@ -475,12 +477,12 @@ indicated in the Table above.
 
       - Apply the selected filter to the four samples along the vertical edge.
 
-3.  Return the frame filtering sse for the loop filter level and the
-    picture data plane being considered.
+3. Return the frame filtering sse for the loop filter level and the
+   picture data plane being considered.
 
 <!-- end list -->
 
-## 3.  Optimization of the algorithm
+## 3. Optimization of the algorithm
 
 The algorithmic optimization of the loop filter is performed by considering different loop filter search methods. If LPF_PICK_FROM_Q is chosen as the search
 method, the filter levels are determined using the picture qindex, however is LPF_PICK_FROM_FULL_IMAGE is selected, a binary search is performed to find the
@@ -494,7 +496,7 @@ determine the search method.
 | enabled | 0/1: Enable/Disable DLF |
 | sb_based_dlf | 0: perform picture-based DLF with LPF_PICK_FROM_FULL_IMAGE search method 1: perform DLF per SB using LPF_PICK_FROM_Q method |
 
-## 4.  Signaling
+## 4. Signaling
 
 The loop filter parameters are signaled at the frame level and include
 the following parameters: ```filter_level[0]```, ```filter_level[1]```,
@@ -513,7 +515,11 @@ seen in Table 6.
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
 
 ## References
 
@@ -523,4 +529,4 @@ for AV1 CODEC,” International Conference on Image Processing, pp.
 925-929, 2017.
 
 \[2\] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen, Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen,
-Yunqing Wang, Paul Wilkins, Yaowu Xu, James  Bankoski, “A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021.
+Yunqing Wang, Paul Wilkins, Yaowu Xu, James Bankoski, “A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021.

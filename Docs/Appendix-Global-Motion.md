@@ -1,3 +1,5 @@
+[Top level](../README.md)
+
 # Global Motion Compensation
 
 ## 1. Description of the algorithm
@@ -95,7 +97,7 @@ algorithm are as follows:
     threshold.
 
 
-## 2.  Implementation of the algorithm
+## 2. Implementation of the algorithm
 
 ### 2.1. Global Motion inputs/outputs
 
@@ -106,17 +108,19 @@ algorithm are as follows:
 
 ### 2.2 Global Motion API
 
-Table 1 below summarises the invoked functions when global motion is enabled. The process where each function is invoked is also indicated as well as a brief description of each function.
+Table 1 below summarises the invoked functions when global motion is enabled.
+The process where each function is invoked is also indicated as well as a brief
+description of each function.
 
 ##### Table 1. Global motion estimation API.
 
-|**Process**|**Function**|**Purpose**|
-|--- |--- |--- |
-|Picture Decision Process|set_gm_controls|Set global motion controls|
-|Motion Estimation Process|perform_gm_detection|Detect whether a global motion may be identified based on the uniformity of the motion vectors produced by the  normal motion estimation search|
-|Motion Estimation Process|global_motion_estimation|Perform global motion estimation search|
-|Mode Decision Configuration process|set_global_motion_field|Map the global motion information generated in EbMotionEstimationProcess to EbEncDecProcess|
-|Mode Decision Process|inject_global_candidates|Inject global motion as a mode candidate to the mode decision|
+| **Process**                         | **Function**             | **Purpose**                                                                                                                                    |
+| ---                                 | ---                      | ---                                                                                                                                            |
+| Picture Decision Process            | set_gm_controls          | Set global motion controls                                                                                                                     |
+| Motion Estimation Process           | perform_gm_detection     | Detect whether a global motion may be identified based on the uniformity of the motion vectors produced by the normal motion estimation search |
+| Motion Estimation Process           | global_motion_estimation | Perform global motion estimation search                                                                                                        |
+| Mode Decision Configuration process | set_global_motion_field  | Map the global motion information generated in EbMotionEstimationProcess to EbEncDecProcess                                                    |
+| Mode Decision Process               | inject_global_candidates | Inject global motion as a mode candidate to the mode decision                                                                                  |
 
 ### Details of the implementation
 
@@ -126,8 +130,10 @@ The global motion data flow is summarized in the Figure 2 below.
 
 ##### Figure 2. Global motion data flow in the encoder pipeline.
 
-The main algorithmic components of the global motion feature are the estimation component which takes place in the motion estimation process,
-and the injection and processing component which takes place in the Mode Decision process(injection and processing).
+The main algorithmic components of the global motion feature are the estimation
+component which takes place in the motion estimation process, and the injection
+and processing component which takes place in the Mode Decision
+process(injection and processing).
 
 ### Global motion estimation
 
@@ -212,8 +218,8 @@ enabled and for the case where it is not.
 
 The two main steps involved in MD are the injection of GLOBAL and GLOBAL_GLOBAL candidates, and the processing of those candidates through MD stages.
 The conditions for the injection of GLOBAL candidates are as follows: For the case where downsample_level <= GM_DOWN:
-1.  The global motion vector points inside the current tile AND
-2.  (((Transformation Type > TRANSLATION AND block width >= 8 AND  block height >= 8) OR Transformation type <= TRANSLATION))
+1. The global motion vector points inside the current tile AND
+2. (((Transformation Type > TRANSLATION AND block width >= 8 AND block height >= 8) OR Transformation type <= TRANSLATION))
 
 Otherwise, only condition 1 above applies.
 
@@ -221,9 +227,9 @@ The conditions for the injection of GLOBAL_GLOBAL candidates are as follows:
 
 For the case where downsample_level <= GM_DOWN:
 
-1.  Is_compound_enabled (i.e. compound reference mode) AND
-2.  2.  allow_bipred (i.e. block height > 4 or block width > 4) AND
-3.  (List_0 Transformation type > TRANSLATION AND List_1 Transformation type > TRANSLATION))
+1. Is_compound_enabled (i.e. compound reference mode) AND
+2. allow_bipred (i.e. block height > 4 or block width > 4) AND
+3. (List_0 Transformation type > TRANSLATION AND List_1 Transformation type > TRANSLATION))
 
 Otherwise, only conditions 1 and 2 above apply.
 
@@ -242,12 +248,14 @@ of the mode decision process.
 
 
 
-## 3.  Optimization of the algorithm
+## 3. Optimization of the algorithm
 
-Different quality-complexity tradeoffs of the global motion algorithm can be achieved by manipulating a set of control parameters that are
-set in the gm_controls() function. These control parameters are set according to the flag gm_level which is set in the picture decision
-process according to the encoder preset.
-The different parameters that are controlled by the flag gm_level are described in Table 2 below.
+Different quality-complexity tradeoffs of the global motion algorithm can be
+achieved by manipulating a set of control parameters that are set in the
+gm_controls() function. These control parameters are set according to the flag
+gm_level which is set in the picture decision process according to the encoder
+preset. The different parameters that are controlled by the flag gm_level are
+described in Table 2 below.
 
 ##### Table 2. Optimization flags associated with global motion compensation.
 
@@ -266,7 +274,7 @@ The different parameters that are controlled by the flag gm_level are described 
 The generated global motion information may be used in all or some of the mode decision Partitioning Decision (PD) passes.
 The injection of global motion candidates in MD is controlled by the flag global_mv_injection.
 
-## 4.  Signaling
+## 4. Signaling
 
 The global motion parameters are written in the bitstream for each
 encoded frame with their corresponding references.
@@ -275,13 +283,15 @@ Boolean parameters encode the type of global motion models among the four availa
 
 ##### Table 3. Global motion types signaled in the bitstream.
 
-| **Frame level** | **Values** | **Number of bits** |
+| **Frame level** | **Values**                     | **Number of bits** |
 | --------------- | ------------------------------ | ------------------ |
 | is\_global      | {0, 1}                         | 1                  |
 | is\_rot\_zoom   | {0, 1}                         | 1                  |
 | is\_translation | {0, 1}                         | 1                  |
 
-Depending on the model complexity, several parameters are also encoded (See Table 4). Each of those parameters corresponds to an entry in the affine transformation matrix.
+Depending on the model complexity, several parameters are also encoded (See
+Table 4). Each of those parameters corresponds to an entry in the affine
+transformation matrix.
 
 ##### Table 4. Global motion parameters signaled in the bitstream.
 
@@ -295,7 +305,11 @@ Depending on the model complexity, several parameters are also encoded (See Tabl
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
 
 ## References
 

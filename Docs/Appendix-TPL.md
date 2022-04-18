@@ -1,40 +1,64 @@
+[Top level](../README.md)
+
 # Temporal Dependency Model
 
-## 1.  Description of the algorithm
+## 1. Description of the algorithm
 
 ### 1.1 Introduction
 
-The Temporal Dependency Model (TPL) algorithm represents an extension of the mb_tree algorithm from the x264 encoder. The main purpose of the algorithm is
-optimize the encoder settings to reduce the impact reference pictures have on the degradation in quality/rate in the pictures that reference them directly
-or indirectly. In the case of the algorithm presented in this document, the focus is on reducing the impact of base layer pictures on such degradations.
-The algorithm involves two main steps. In the first step, encoding is performed using an elementary encoder to collect prediction information.
-The second step involves using the collected prediction information to optimize the encoder settings that would be used in the final encoding of the input
-pictures. The affected encoder settings include QPS, QPM and the lambda parameter considered in the RD cost calculations.
+The Temporal Dependency Model (TPL) algorithm represents an extension of the
+mb_tree algorithm from the x264 encoder. The main purpose of the algorithm is
+optimize the encoder settings to reduce the impact reference pictures have on
+the degradation in quality/rate in the pictures that reference them directly or
+indirectly. In the case of the algorithm presented in this document, the focus
+is on reducing the impact of base layer pictures on such degradations. The
+algorithm involves two main steps. In the first step, encoding is performed
+using an elementary encoder to collect prediction information. The second step
+involves using the collected prediction information to optimize the encoder
+settings that would be used in the final encoding of the input pictures. The
+affected encoder settings include QPS, QPM and the lambda parameter considered
+in the RD cost calculations.
 
 ### 1.2 High Level Idea
 
 The following concepts are introduced to define the high level operation of the TPL algorithm:
 
-- Degradation measure: This measure would concern both the distortion and the rate variables. The degradations is based on the difference between the distortion and rate that result from considering source samples as reference samples  and similar quantities when considering reconstructed samples as reference samples. There is an underlying assumption in the development of the algorithm that the recon distortion and rate are worse than those based on source samples.
+- Degradation measure: This measure would concern both the distortion and the rate variables.
+  The degradations is based on the difference between the distortion and rate
+  that result from considering source samples as reference samples and similar
+  quantities when considering reconstructed samples as reference samples. There
+  is an underlying assumption in the development of the algorithm that the
+  recon distortion and rate are worse than those based on source samples.
 
-- TPL group of pictures: This represents the largest set of pictures that would be considered in collecting prediction data in the first step of the algorithm. The actual set of pictures used in the TPL algorithm could, for optimization purposes, be a subset of TPL group of pictures.
+- TPL group of pictures: This represents the largest set of pictures that would be considered
+  in collecting prediction data in the first step of the algorithm. The actual
+  set of pictures used in the TPL algorithm could, for optimization purposes,
+  be a subset of TPL group of pictures.
 
-The main idea of the TPL algorithm is to backpropagate the prediction degradation information back to the base layer pictures.
-Therefore, the accumulation of the backpropagated degradation information is performed by considering the pictures in the TPL group in reverse of the decode
-order, i.e. the last decoded picture is processed first, then the next to last picture… It should be noted that the prediction for a given block typically
-involves samples from multiple contiguous blocks in the reference picture. Therefore, the degradation measure is backpropagated from a given block to the
-blocks in the reference picture that contribute corresponding prediction samples in proportion to the following:
+The main idea of the TPL algorithm is to backpropagate the prediction
+degradation information back to the base layer pictures. Therefore, the
+accumulation of the backpropagated degradation information is performed by
+considering the pictures in the TPL group in reverse of the decode order, i.e.
+the last decoded picture is processed first, then the next to last picture… It
+should be noted that the prediction for a given block typically involves
+samples from multiple contiguous blocks in the reference picture. Therefore,
+the degradation measure is backpropagated from a given block to the blocks in
+the reference picture that contribute corresponding prediction samples in
+proportion to the following:
 
 - The ratio of the (recon-based distortion – source-based distortion)/(recon-based distortion)
 
 - The overlap area of the prediction block with each of the blocks contributing prediction samples in the reference picture.
 
-A given reference picture would collect such backpropagated information from all pictures that use it as a reference picture.
-The cycle is then repeated again when the same operations are considered for all pictures that act as references to the reference picture that was just
-considered above. The process continues until all the degradation information is accumulated in the base layer pictures.
-The accumulated degradation information is then used to adjust encoder parameters for the final encoding of the pictures.
+A given reference picture would collect such backpropagated information from
+all pictures that use it as a reference picture. The cycle is then repeated
+again when the same operations are considered for all pictures that act as
+references to the reference picture that was just considered above. The process
+continues until all the degradation information is accumulated in the base
+layer pictures. The accumulated degradation information is then used to adjust
+encoder parameters for the final encoding of the pictures.
 
-## 2.  Implementation of the algorithm
+## 2. Implementation of the algorithm
 
 ### 2.1 TPL inputs/outputs
 
@@ -69,9 +93,13 @@ The TPL feature data flow is summarized in the diagram shown in Figure 1.
 
 ### TPL Flow/Operations
 
-The TPL algorithm consists of three main components: A dispenser, a synthesizer and an optimizer. A high-level diagram of the algorithm is shown in the figure below. The functions of the three components are briefly summarized in the following.
+The TPL algorithm consists of three main components: A dispenser, a synthesizer
+and an optimizer. A high-level diagram of the algorithm is shown in the figure
+below. The functions of the three components are briefly summarized in the
+following.
 
-As illustrated in Figure 2 below, the TPL algorithm consists, for each base picture, of two picture-based loops:
+As illustrated in Figure 2 below, the TPL algorithm consists, for each base
+picture, of two picture-based loops:
 
 ![tpl_fig2](./img/tpl_fig2.png)
 
@@ -80,10 +108,14 @@ As illustrated in Figure 2 below, the TPL algorithm consists, for each base pict
 
 ### TPL dispenser
 
-For a given TPL group of pictures, the function of the dispenser is to encode the pictures in the TPL group using a very simple encoder and collect
-prediction data. Pictures in the TPL group are divided into 16x16 blocks. The encoding of the blocks is performed using both source-based references and
-reconstructed references. The details of the operation of the dispenser are outlined in Appendix B. For each 16x16 block, the output of the dispenser
-consists of the following variables associated with the best prediction mode for the block, which could be either an intra or an inter mode:
+For a given TPL group of pictures, the function of the dispenser is to encode
+the pictures in the TPL group using a very simple encoder and collect
+prediction data. Pictures in the TPL group are divided into 16x16 blocks. The
+encoding of the blocks is performed using both source-based references and
+reconstructed references. The details of the operation of the dispenser are
+outlined in Appendix B. For each 16x16 block, the output of the dispenser
+consists of the following variables associated with the best prediction mode
+for the block, which could be either an intra or an inter mode:
 
 - srcrf_dist: Distortion based on the source samples.
 - recrf_dist: Distortion based on the reconstructed samples.
@@ -92,13 +124,14 @@ consists of the following variables associated with the best prediction mode for
 - mv: Best motion vector.
 - ref_frame_poc: Picture number of the best reference picture
 
-The TPL Dispenser performs the processing on a 16x16 block or 32x32 block or 64x64 block basis.
-The resulting distortion and rate data listed above is then normalized (on a 4x4 block basis) and stored on the used block size basis.
+The TPL Dispenser performs the processing on a 16x16 block or 32x32 block or
+64x64 block basis. The resulting distortion and rate data listed above is then
+normalized (on a 4x4 block basis) and stored on the used block size basis.
 
 Implementation notes:
 
 - When the best prediction mode is an intra mode, then srcrf_dist ← recrf_dist. This would imply that (recrf_dist - srcrf_dist) = 0.
-  It follows that the intra coded blocks would not have any impact on the computation of mc_dep_dist  in the synthesizer. Similarly,
+  It follows that the intra coded blocks would not have any impact on the computation of mc_dep_dist in the synthesizer. Similarly,
   srcrf_rate ← recrf_rate, i.e. recrf_rate - srcrf_rate = 0, and the intra coded blocks would not to have any impact on the computation of mc_dep_rate
   in the synthesizer.
 
@@ -114,32 +147,49 @@ Implementation notes:
 
 ### TPL Synthesizer
 
-The main function of the synthesizer is to compute for each block in the TPL group of pictures two quantities:
+The main function of the synthesizer is to compute for each block in the TPL
+group of pictures two quantities:
 
-mc_dep_dist: For a given block, this quantity represents the total contribution of the block to the degradation in quality (i.e. distortion) in the blocks whose predictions are either directly or indirectly (through a chain or references) affected by the quality of the current block.
+mc_dep_dist: For a given block, this quantity represents the total contribution
+of the block to the degradation in quality (i.e. distortion) in the blocks
+whose predictions are either directly or indirectly (through a chain or
+references) affected by the quality of the current block.
 
-mc_dep_rate: For a given block, this quantity represents the total contribution of the block to the increase in rate in the blocks that use the current block as a direct reference or indirect reference (through a chain or references).
+mc_dep_rate: For a given block, this quantity represents the total contribution
+of the block to the increase in rate in the blocks that use the current block
+as a direct reference or indirect reference (through a chain or references).
 
-The computations are performed using the  prediction information provided by the dispenser. The main output of the synthesizer are the mc_dep_dist and mc_dep_rate quantities for the blocks in the base layer picture of interest in the TPL group.  . The processing in the Synthesizer is performed on a 16x16 block or 8x8 block basis.
+The computations are performed using the prediction information provided by the
+dispenser. The main output of the synthesizer are the mc_dep_dist and
+mc_dep_rate quantities for the blocks in the base layer picture of interest in
+the TPL group. The processing in the Synthesizer is performed on a 16x16 block
+or 8x8 block basis.
 
 ### TPL Optimizer
 
-The main function of the optimizer is to adjust if necessary the quality of the base layer picture of interest in the TPL group to minimize the impact that
-picture has on other pictures in the TPL group that use it either directly or indirectly as a reference. The TPL optimizer makes use of the mc_dep_dist,
-mc_dep_rate and dispenser prediction data for blocks in the base layer picture of interest in the TPL group to derive adjustment factors in a number of
-encoder setting for the base layer pictures. The adjustment factors are referred to as r0,
-beta and lambda factor and are associated mainly with QPS, QP modulation and Lambda adjustments, respectively.
+The main function of the optimizer is to adjust if necessary the quality of the
+base layer picture of interest in the TPL group to minimize the impact that
+picture has on other pictures in the TPL group that use it either directly or
+indirectly as a reference. The TPL optimizer makes use of the mc_dep_dist,
+mc_dep_rate and dispenser prediction data for blocks in the base layer picture
+of interest in the TPL group to derive adjustment factors in a number of
+encoder setting for the base layer pictures. The adjustment factors are
+referred to as r0, beta and lambda factor and are associated mainly with QPS,
+QP modulation and Lambda adjustments, respectively.
 
 ### Generation of r0, beta and tpl_rdmult_scaling_factors
 
-The TPL synthesizer generates for each block in each TPL group of pictures values for the distortion propagation variable (mc_dep_dist) and the rate
-propagation variable (mc_dep_rate). These two variables are then used to generate adjustment parameters for a number of encoder settings for base layer
-pictures, including QP scaling, QP modulation for the individual blocks and lambda parameter used in cost calculation.
+The TPL synthesizer generates for each block in each TPL group of pictures
+values for the distortion propagation variable (mc_dep_dist) and the rate
+propagation variable (mc_dep_rate). These two variables are then used to
+generate adjustment parameters for a number of encoder settings for base layer
+pictures, including QP scaling, QP modulation for the individual blocks and
+lambda parameter used in cost calculation.
 
 - r0: A frame-based parameter used to introduce adjustments in QPS. Define the following variables :
     - mc_dep_delta: Represents the RD cost associated with a given 16x16 or 8x8 block based on the corresponding distortion mc_dep_dist and corresponding rate mc_dep_rate.
     - intra_cost_base: Represents an accumulation over the whole frame of recrf_dist for all (16x16 or 8x8) blocks in the frame.
-    - mc_dep_cost_base:  Represents an accumulation over the whole frame of (recrf_dist + mc_dep_delta) for all (16x16 or 8x8)  blocks in the frame.
+    - mc_dep_cost_base: Represents an accumulation over the whole frame of (recrf_dist + mc_dep_delta) for all (16x16 or 8x8) blocks in the frame.
 
 The r0 value for the base layer picture is given by:
 ```
@@ -149,11 +199,15 @@ or
 
 ![tpl_math1](./img/tpl_math1.png)
 
-Based on the definitions above, r0 takes value between 0 and 1. A large r0 value implies ![tpl_math_sum](./img/tpl_math_sum.png) is small and that the base
-layer picture is of good quality and is not contributing much to the degradation in quality in the pictures they use it as a reference. Consequently,
-such picture may not need any adjustment in QP. On the other hand, small r0 values imply ![tpl_math_sum](./img/tpl_math_sum.png) is large and that the base
-layer picture is contributing significantly to the degradation in quality in the pictures that use it directly or indirectly as a reference.
-Consequently, such picture may need to have its QP reduced.
+Based on the definitions above, r0 takes value between 0 and 1. A large r0
+value implies ![tpl_math_sum](./img/tpl_math_sum.png) is small and that the
+base layer picture is of good quality and is not contributing much to the
+degradation in quality in the pictures they use it as a reference.
+Consequently, such picture may not need any adjustment in QP. On the other
+hand, small r0 values imply ![tpl_math_sum](./img/tpl_math_sum.png) is large
+and that the base layer picture is contributing significantly to the
+degradation in quality in the pictures that use it directly or indirectly as a
+reference. Consequently, such picture may need to have its QP reduced.
 
 - beta: The beta parameter is used to adjust the QP per superblock. For the SB of interest in the base layer picture, beta is determined by performing the
   same computations performed above for r0 but restricted only to the SB of interest. An SB-based parameter rk is then computed as follows:
@@ -164,10 +218,13 @@ Consequently, such picture may need to have its QP reduced.
   ```
   beta = r0/rk
   ```
-  Beta is a measure of how much better or worse rk is as compared to r0. For beta >> 1, rk is much smaller as compared to r0, implying that the corresponding
-  SB is of low quality as compared to the average quality of the frame, and would need a significant QP adjustment. For beta <<1, rk is much larger than r0,
-  implying that the corresponding SB is of good quality as compared to the average quality of the picture and may not need much in terms of QP adjustment
-  or could have its QP increased.
+  Beta is a measure of how much better or worse rk is as compared to r0. For
+  beta >> 1, rk is much smaller as compared to r0, implying that the
+  corresponding SB is of low quality as compared to the average quality of the
+  frame, and would need a significant QP adjustment. For beta <<1, rk is much
+  larger than r0, implying that the corresponding SB is of good quality as
+  compared to the average quality of the picture and may not need much in terms
+  of QP adjustment or could have its QP increased.
 
 - tpl_rdmult_scaling_factors: The tpl_rdmult_scaling_factors is computed on a 16x16 block basis, regardless of the picture resolution. For each 16x16 block,
   calculations similar to those performed for beta are performed for the 16x16 block. The corresponding tpl_rdmult_scaling_factors is given by:
@@ -181,13 +238,19 @@ Consequently, such picture may need to have its QP reduced.
 
 ### QP-Scaling Algorithm
 
-Ordinary QP scaling is used to improve the performance of a hierarchical prediction structure where lower quantization parameters (QP) are assigned to frames
-in the lower temporal layers, which serve as reference pictures for the higher temporal layer pictures. In the TPL algorithm, the propagation factor r0 is
-used to improve the base layer picture QP assignment.  The main idea is that the lower r0 is the more improvements the picture would need.
+Ordinary QP scaling is used to improve the performance of a hierarchical
+prediction structure where lower quantization parameters (QP) are assigned to
+frames in the lower temporal layers, which serve as reference pictures for the
+higher temporal layer pictures. In the TPL algorithm, the propagation factor r0
+is used to improve the base layer picture QP assignment. The main idea is that
+the lower r0 is the more improvements the picture would need.
 
-The picture qindex in CRF mode is computed (in the cqp_qindex_calc_tpl_la() function) following different methods depending on the picture type, namely Intra,
-BASE, REF-NON-BASE and NON-REF. A summary of the QPS adjustment ideas is presented below.. In the following, qindex is 4xQP for most of the QP values and
-represents the quantization parameter the encoder works with internally instead of QP. The later is just an input parameter.
+The picture qindex in CRF mode is computed (in the cqp_qindex_calc_tpl_la()
+function) following different methods depending on the picture type, namely
+Intra, BASE, REF-NON-BASE and NON-REF. A summary of the QPS adjustment ideas is
+presented below.. In the following, qindex is 4xQP for most of the QP values
+and represents the quantization parameter the encoder works with internally
+instead of QP. The later is just an input parameter.
 
 - Intra pictures: The qindex for both Intra Key Frames (IDR) and non-Key frames (CRA) is generated using similar approaches with slightly different tuning.
   A lower qindex is assigned to the pictures with small r0 values. The main idea behind the adjustment of the qindex for a given picture is as follows:
@@ -219,12 +282,15 @@ represents the quantization parameter the encoder works with internally instead 
 
 ### SB-based QP-Modulation Algorithm
 
-In TPL, the parameter beta plays the same role at the SB level as that of r0 at the picture level. Therefore, a large beta for a given SB implies that quality of that SB should be improved.
-For each SB, the main idea in QP modulation is that a new QP value is determined based on the corresponding beta value using the following equation:
+In TPL, the parameter beta plays the same role at the SB level as that of r0 at
+the picture level. Therefore, a large beta for a given SB implies that quality
+of that SB should be improved. For each SB, the main idea in QP modulation is
+that a new QP value is determined based on the corresponding beta value using
+the following equation:
 
 ![tpl_math2](./img/tpl_math2.png)
 
-where f = sqrt(.) for intra_picture or when beta < 1, and  f=sqrt(sqrt(.)) otherwise. The idea then behind the TPL QP modulation is as follows:
+where f = sqrt(.) for intra_picture or when beta < 1, and f=sqrt(sqrt(.)) otherwise. The idea then behind the TPL QP modulation is as follows:
 
 - If beta > 1 → rk<r0 → SB does not have a good quality as compared to average picture quality → Reduce QP for the SB, e.g. QP’=QP/sqrt(beta) or QP’=QP/sqrt(sqrt(beta)). Since beta > 1, QP’<QP.
 
@@ -259,11 +325,12 @@ i.e. better quality for the intra picture SB. When beta < 1, QP’=QP/sqrt(beta)
     ```
     where pic_full_lambda is the original lambda value based on the picture qindex.
 
-## 3.  Optimization of the algorithm
+## 3. Optimization of the algorithm
 
-Different quality-complexity trade offs of the TPL algorithm can be achieved by considering different settings for the flag tpl_level.
-The latter controls a set of parameters that are grouped under set_tpl_extended_controls () function.
-Table 2 describes the functionality of each of the  TPL control parameters.
+Different quality-complexity trade offs of the TPL algorithm can be achieved by
+considering different settings for the flag tpl_level. The latter controls a
+set of parameters that are grouped under set_tpl_extended_controls () function.
+Table 2 describes the functionality of each of the TPL control parameters.
 
 #### Table 2: Control and optimization flags associated with TPL.
 
@@ -291,15 +358,21 @@ Table 2 describes the functionality of each of the  TPL control parameters.
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
 
 
 ## Appendix A: TPL Group
 
-The TPL group is a collection of N pictures (stored in decode order) that limits the domain of analysis and application of the TPL algorithm.
+The TPL group is a collection of N pictures (stored in decode order) that
+limits the domain of analysis and application of the TPL algorithm.
 
-The composition of the TPL group depends on the base layer picture of interest. To illustrate the construction of the TPL group,
-the case of a three-layer prediction structure shown below is considered.
+The composition of the TPL group depends on the base layer picture of interest.
+To illustrate the construction of the TPL group, the case of a three-layer
+prediction structure shown below is considered.
 
 ![tpl_fig3](./img/tpl_fig3.png)
 
@@ -309,10 +382,10 @@ the case of a three-layer prediction structure shown below is considered.
     - Example: IDR picture 0 → TPL group: 0,4,2,1,3.
   - B picture:
     - TPL group: B picture plus preceding pictures in the mini-GoP.
-    - Example: B picture 8 → TPL group:  8,6,5,7.
+    - Example: B picture 8 → TPL group: 8,6,5,7.
   - CRA picture aligned on the mini-GoP:
     - TPL group: Same as in the case of B picture.
-    - Example: CRA picture 24 → TPL group:  24,22,21,23
+    - Example: CRA picture 24 → TPL group: 24,22,21,23
   - CRA not aligned with mini-GoP:
     - TPL group: Same as in the case of an IDR (delayed intra) picture.
 
@@ -322,10 +395,10 @@ the case of a three-layer prediction structure shown below is considered.
     - Example: mg-lad = 1, IDR picture 0 → TPL group: 0,4,2,1,3,8,6,5,7.
   - B picture:
     - TPL group: B picture plus n min-GoPs, including the next n base-layer pictures.
-    - Example: mg-lad = 1, B picture 8 → TPL group:  8,6,5,7,12,10,9,11.
+    - Example: mg-lad = 1, B picture 8 → TPL group: 8,6,5,7,12,10,9,11.
   - CRA picture aligned on the mini-GoP:
     - TPL group: Same as in the case of B picture.
-    - Example: mg-lad = 1, CRA picture 24 → TPL group:  24,22,21,23,28,26, 25,27
+    - Example: mg-lad = 1, CRA picture 24 → TPL group: 24,22,21,23,28,26, 25,27
   - CRA not aligned with mini-GoP:
     - TPL group: Same as in the case of an IDR (delayed intra) picture.
 
@@ -334,7 +407,7 @@ the case of a three-layer prediction structure shown below is considered.
 
 For a given TPL group of pictures, the dispenser operates as follows:
 
-- For  each picture in the TPL group (from picture 0 to picture N-1 considered in decode order):
+- For each picture in the TPL group (from picture 0 to picture N-1 considered in decode order):
   - For each 64x64 super-block in the picture
     - For each 16x16 block in the super-block
       1. Source based operations
@@ -396,17 +469,23 @@ For a given TPL group of pictures, the dispenser operates as follows:
 
 ## Appendix C: Example of Synthesizer Operations
 
-To illustrate the operations of the Synthesizer, consider the case of a three layer prediction structure and assume lad_mg = 0 and the TPL group size is 4.
-As an example, assume picture 8 is being processed by the TPL algorithm and that the Dispenser has completed its operations for the pictures prior to and
-including picture 8. The corresponding TPL group consists of pictures 8, 6, 5 and 7, listed in decode order.  At the Synthesizer, the pictures are processed
+To illustrate the operations of the Synthesizer, consider the case of a three
+layer prediction structure and assume lad_mg = 0 and the TPL group size is 4.
+As an example, assume picture 8 is being processed by the TPL algorithm and
+that the Dispenser has completed its operations for the pictures prior to and
+including picture 8. The corresponding TPL group consists of pictures 8, 6, 5
+and 7, listed in decode order. At the Synthesizer, the pictures are processed
 in reverse decode order: 7,5,6,8.
 
 ![tpl_fig4](./img/tpl_fig4.png)
 
-To illustrate the Synthesizer operations, it is assumed the picture size is 64x64. The TPL group associated with picture 8 is show below, where each picture is
-split into 16x16 blocks (in the code the block size would be set to 8x8 since the considered resolution <720p. the 16x16 block size is used here for
-illustration purposes). The blocks are indexed in raster scan order from 0 to 15 in each picture. A block is identified using the pair (i,j),
-where i is the picture number and j is the block index in picture i.
+To illustrate the Synthesizer operations, it is assumed the picture size is
+64x64. The TPL group associated with picture 8 is show below, where each
+picture is split into 16x16 blocks (in the code the block size would be set to
+8x8 since the considered resolution <720p. the 16x16 block size is used here
+for illustration purposes). The blocks are indexed in raster scan order from 0
+to 15 in each picture. A block is identified using the pair (i,j), where i is
+the picture number and j is the block index in picture i.
 
 ![tpl_fig5](./img/tpl_fig5.png)
 
@@ -418,31 +497,47 @@ The list of references to be considered for each picture is given in the table b
 | 5 | 6 |
 | 6 | 8 |
 
-The operations of the synthesizer relies on distortion and rate related quantities. Let Bc denote the index for the current block in the current picture Pc for which
-predictions samples are obtained from block Br in reference picture Pr. The three distortion related quantities needed in the Synthesizer are:
+The operations of the synthesizer relies on distortion and rate related
+quantities. Let Bc denote the index for the current block in the current
+picture Pc for which predictions samples are obtained from block Br in
+reference picture Pr. The three distortion related quantities needed in the
+Synthesizer are:
 
-- Distortion ratio DistRatio: For a given 16x16/8x8 block to be encoded, let  recrf_dist and srcrf_dist denote the recon-based and source-based prediction distortions, respectively. Then
+- Distortion ratio DistRatio: For a given 16x16/8x8 block to be encoded,
+  let recrf_dist and srcrf_dist denote the recon-based and source-based
+  prediction distortions, respectively. Then
   ```
   DistRatio(Pc,Bc) = (recrf_dist(Pc,Bc) - srcrf_dist(Pc,Bc)) / recrf_dist(Pc,Bc)
   ```
-  srcrf_dist could be assumed to be the smallest distortion we could have. Therefore (recrf_dist - srcrf_dist) is a measure how much worse the recon-based prediction is as compared to
-  the source based prediction. When DistRatio is close to zero (i.e. recrf_dist is very close to srcrf_dist), the recon based prediction is considered to be very accurate and would not
-  need to be improved. On the other hand, when DistRatio is close to 1, it implies the recon based prediction is very inaccurate and should be improved.
+  srcrf_dist could be assumed to be the smallest distortion we could have.
+  Therefore (recrf_dist - srcrf_dist) is a measure how much worse the
+  recon-based prediction is as compared to the source based prediction. When
+  DistRatio is close to zero (i.e. recrf_dist is very close to srcrf_dist), the
+  recon based prediction is considered to be very accurate and would not need
+  to be improved. On the other hand, when DistRatio is close to 1, it implies
+  the recon based prediction is very inaccurate and should be improved.
 
-  Note: For intra coded blocks, srcrf_dist was set at the Dispenser to be equal to recrf_dist. It follows that recrf_dist - srcrf_dist = 0 and DistRatio
-  for intra coded blocks is zero.  Similarly, for inter coded blocks where recrf_dist < srcrf_dist in the dispenser, srcrf_dist was set in the Dispenser to
-  be equal to recrf_dist resulting in DistRatio = 0.
+  Note: For intra coded blocks, srcrf_dist was set at the Dispenser to be equal
+  to recrf_dist. It follows that recrf_dist - srcrf_dist = 0 and DistRatio for
+  intra coded blocks is zero. Similarly, for inter coded blocks where
+  recrf_dist < srcrf_dist in the dispenser, srcrf_dist was set in the Dispenser
+  to be equal to recrf_dist resulting in DistRatio = 0.
 
-- Area ratio AreaRatio: For a given 16x16/8x8 block to be encoded, the corresponding prediction in the reference picture could involve samples from up to
-  four contiguous blocks, as in the case of the blue block in the picture above. Each of the up to four blocks in the reference picture contributing
+- Area ratio AreaRatio: For a given 16x16/8x8 block to be encoded, the
+  corresponding prediction in the reference picture could involve samples from
+  up to four contiguous blocks, as in the case of the blue block in the picture
+  above. Each of the up to four blocks in the reference picture contributing
   prediction samples has associated with it an area ratio defined as
   ```
   AreaRatio = overlap_area / number_of_samples_in_block
   ```
-  where the overlap_area is the overlap between the block in the reference picture and the prediction block.
+  where the overlap_area is the overlap between the block in the reference
+  picture and the prediction block.
 
-- Motion-compensation-dependent Distortion mc_dep_dist: For each 16x16/8x8 block in any given reference picture, mc_dep_dist is a measure of the quality of
-  the predictions generated based on that block. The mc_dep_dist variable for a given block Br in a reference picture Pr is computed based on:
+- Motion-compensation-dependent Distortion mc_dep_dist: For each 16x16/8x8
+  block in any given reference picture, mc_dep_dist is a measure of the quality of
+  the predictions generated based on that block. The mc_dep_dist variable for a
+  given block Br in a reference picture Pr is computed based on:
   - mc_dep_dist(Pc,Bc) for the block Bc that uses prediction samples from the block Br in the reference picture Pr. mc_dep_dist(Pc,Bc) is set to zero for all blocks in non-reference pictures.
   - The difference (recrf_dist(Pc,Bc) - srcrf_dist(Pc,Bc)) for the block Bc that uses prediction samples from the block Br in the reference picture Pr.
 
@@ -454,9 +549,12 @@ predictions samples are obtained from block Br in reference picture Pr. The thre
                                                mc_dep_dist(Pc,Bc) x DistRatio(Pc,Bc)) x AreaRatio(Pr,Br)
                                           += (recrf_dist(Pc,Bc) + mc_dep_dist(Pc,Bc)) x DistRatio(Pc,Bc) x AreaRatio(Pr,Br)
   ```
-  In a given TPL group, we are ultimately interested in the impact each of the 16x16/8x8 blocks in the base layer picture has on the quality of predictions
-  for the other pictures in the TPL group, whether the base layer picture is used as a direct reference or as indirect reference. Therefore,
-  the backpropagation of mc_dep_dist is performed for all pictures in the TPL group, starting from the first picture in reverse decode order, to the base
+  In a given TPL group, we are ultimately interested in the impact each of the
+  16x16/8x8 blocks in the base layer picture has on the quality of predictions
+  for the other pictures in the TPL group, whether the base layer picture is
+  used as a direct reference or as indirect reference. Therefore, the
+  backpropagation of mc_dep_dist is performed for all pictures in the TPL
+  group, starting from the first picture in reverse decode order, to the base
   layer picture.
 
   The rate-related quantities are:
@@ -483,9 +581,13 @@ predictions samples are obtained from block Br in reference picture Pr. The thre
 
     The backpropagation of mc_dep_rate is performed for all pictures in the TPL group, starting with the first picture in reverse decode order, to the base layer picture.
 
-The Synthesizer processes the pictures in the TPL group in reverse of the decode order, so that the impact of the base layer picture on the other pictures
-in the TPL group is evaluated through the chain of references starting with the last picture to be decoded, the next to last picture to be decoded and so on.
-To illustrate this process for the example presented above, consider the reverse of the decode order of the pictures in the TPL group, which is 7, 5, 6 and 8.
+The Synthesizer processes the pictures in the TPL group in reverse of the
+decode order, so that the impact of the base layer picture on the other
+pictures in the TPL group is evaluated through the chain of references starting
+with the last picture to be decoded, the next to last picture to be decoded and
+so on. To illustrate this process for the example presented above, consider the
+reverse of the decode order of the pictures in the TPL group, which is 7, 5, 6
+and 8.
 
 - Start with picture 7.
   - For block (7,0), assume picture 8 instead of picture 6 is the reference picture, since only unipred candidates are considered:
@@ -493,27 +595,32 @@ To illustrate this process for the example presented above, consider the reverse
     - mc_dep_dist(8,i) += (recrf_dist(7,0) + mc_dep_dist(7,0))* DistRatio(7,0)* AreaRatio(8,i), i=0, 1, 4, 5. In this case the blue block in the Figure above is assumed to represent the prediction block for block (7,0). The prediction block overlaps with blocks (8,0), (8,1), (8,4) and (8,5). It should be noted that mc_dep_dist(7,0) is set to zero since picture 7 is a non-reference picture.
     - delta_rate(7,0) = recrf_rate(7,0) - srcrf_rate(7,0)
     - mc_dep_rate(7,0) = delta_rate_cost(mc_dep_rate(7,0), recrf_dist(7,0), srcrf_dist(7,0), number_of_samples_in_16x16_block)
-    - mc_dep_rate(8,i) += (delta_rate(7,0) + mc_dep_rate(7,0)) * AreaRatio(8,i) , i=0, 1, 4, 5.
+    - mc_dep_rate(8,i) += (delta_rate(7,0) + mc_dep_rate(7,0)) * AreaRatio(8,i), i=0, 1, 4, 5.
   - Repeat similar operations for blocks (7,i), i=1,…, 15. Depending on the block, the reference picture could be either picture 8 or picture 6.
 - Repeat the above with picture 5 and consider reference picture 6
 - Repeat the above with picture 6 and consider reference picture 8
 
-At the end of the process, each of the sixteen 16x16 blocks in base layer picture 8 will have associated with it an mc_dep_dist value and an mc_dep_rate
-value. A high value of mc_dep_dist indicates the block is not contributing high quality predictions for the pictures that reference it directly or indirectly
-and that the quality of the block should be improved. The opposite is true when mc_dep_dist is small. The same applies to mc_dep_rate.
+At the end of the process, each of the sixteen 16x16 blocks in base layer
+picture 8 will have associated with it an mc_dep_dist value and an mc_dep_rate
+value. A high value of mc_dep_dist indicates the block is not contributing high
+quality predictions for the pictures that reference it directly or indirectly
+and that the quality of the block should be improved. The opposite is true when
+mc_dep_dist is small. The same applies to mc_dep_rate.
 
 ## Appendix D: QP scaling based on r0
 
 ### 1. Case of Intra Pictures
 
-Main idea: The smaller the r0 value, the more improvements the picture would need. The kf_boost variable is inversely proportional to r0 and is used to
-indicate the level of the required improvement in the picture. The larger the kf_boost parameter is, the smaller the resulting qindex for the picture
-would be.
+Main idea: The smaller the r0 value, the more improvements the picture would
+need. The kf_boost variable is inversely proportional to r0 and is used to
+indicate the level of the required improvement in the picture. The larger the
+kf_boost parameter is, the smaller the resulting qindex for the picture would
+be.
 
 - factor:
 
   For KEY_FRAME AND (intra_period_length = -1 OR intra_period_length > 64)
-  If r0 < 0.2 set factor  = 255/qindex, else factor = 1.
+  If r0 < 0.2 set factor = 255/qindex, else factor = 1.
 
 - r0:
   ```
@@ -522,7 +629,7 @@ would be.
   When factor is set to 255/qindex, r0 becomes smaller, implying a larger kf_boost as indicated below.
 
   Further adjustments in r0 are introduced to account for the prediction structure by dividing r0 by tpl_hl_islice_div_factor in the case of an I_SLICE,
-  or by tpl_hl_base_frame_div_factor in the case of a base layer picture, where tpl_hl_islice_div_factor  and tpl_hl_base_frame_div_factor are given in the
+  or by tpl_hl_base_frame_div_factor in the case of a base layer picture, where tpl_hl_islice_div_factor and tpl_hl_base_frame_div_factor are given in the
   table below.
 
   |**Hierarchical level**|**0**|**1**|**2**|**3**|**4**|**5**|
@@ -559,7 +666,7 @@ would be.
     ```
     adjustment_ratio = ((kf_boost_high – kf_boost)/ (kf_boost_high – kf_boost_low))
     ```
-    where kf_boost_high = 5000;  kf_boost_low = 400.
+    where kf_boost_high = 5000; kf_boost_low = 400.
 
   - Adjusted qindex:
     ```
@@ -577,7 +684,7 @@ would be.
 
 *r0, gfu_boost and arf_boost_factor*
 
-- Adjust r0: If base layer picture  AND (lad_mg > 0)  AND (r0_adjust_factor > 0) ( r0_adjust_factor depends on tpl_level, and if hierarchical_level < 4,
+- Adjust r0: If base layer picture AND (lad_mg > 0) AND (r0_adjust_factor > 0) ( r0_adjust_factor depends on tpl_level, and if hierarchical_level < 4,
   it is set to 0.1), then
 
   ```
@@ -611,7 +718,7 @@ arfgf_high_motion_minq and arfgf_low_motion_minq are shown in the graph below.
   adjustment_ratio = ((gf_high_tpl_la – gfu_boost)/ (gf_high_tpl_la – gf_low_tpl_la))
   ```
 
-  where gf_high_tpl_la = 2400;  gf_low_tpl_la = 300.
+  where gf_high_tpl_la = 2400; gf_low_tpl_la = 300.
 
 - Initial adjusted qindex:
 
@@ -627,10 +734,14 @@ arfgf_high_motion_minq and arfgf_low_motion_minq are shown in the graph below.
 
 *Case of non-base-layer reference pictures*
 
-- Main idea: Assign a reference qindex to the current picture, then adjust the assigned qindex value closer to the original qindex of the picture depending
-  on the temporal layer difference between the current picture and it references. The farther the references are from the current picture in terms of temporal
-  layer distance, the smaller the difference between the adjusted qindex value and the input qindex value for the picture,
-  i.e. the adjusted value is moved farther away from the reference qindex value and closer to the input qindex value.
+- Main idea: Assign a reference qindex to the current picture, then adjust the
+- assigned qindex value closer to the original qindex of the picture depending
+  on the temporal layer difference between the current picture and it
+  references. The farther the references are from the current picture in terms
+  of temporal layer distance, the smaller the difference between the adjusted
+  qindex value and the input qindex value for the picture, i.e. the adjusted
+  value is moved farther away from the reference qindex value and closer to the
+  input qindex value.
 
 - Define:
   ```
@@ -655,9 +766,12 @@ arfgf_high_motion_minq and arfgf_low_motion_minq are shown in the graph below.
 
 *Adjust active_worst_quality*
 
-- Main idea: Applies only to base layer pictures and reference non-base-layer pictures. From the code “For alt_ref and GF frames (including internal arf
-  frames) adjust the worst allowed quality as well. This ensures that even on hard sections we do not clamp the Q at the same value for arf frames and leaf
-  (non arf) frames. This is important to the TPL model which assumes Q drops with each arf level.”
+- Main idea: Applies only to base layer pictures and reference non-base-layer
+  pictures. From the code “For alt_ref and GF frames (including internal arf
+  frames) adjust the worst allowed quality as well. This ensures that even on
+  hard sections we do not clamp the Q at the same value for arf frames and leaf
+  (non arf) frames. This is important to the TPL model which assumes Q drops
+  with each arf level.”
 
   ```
   active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4
@@ -668,7 +782,7 @@ arfgf_high_motion_minq and arfgf_low_motion_minq are shown in the graph below.
 - The qindex for the picture remains unchanged.
 
 
-### 3.  Final active_best_quality and active_worst_quality, qindex
+### 3. Final active_best_quality and active_worst_quality, qindex
 
 - Clamp active_best_quality to between 0 and 255.
 - Clamp active_worst_quality to between active_best_quality and 255.
@@ -680,5 +794,9 @@ qindex = active_best_quality
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
 

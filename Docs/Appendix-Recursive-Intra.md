@@ -1,11 +1,15 @@
+[Top level](../README.md)
+
 # Recursive Intra Prediction
 
-## 1.  Description of the algorithm
+## 1. Description of the algorithm
 
-The recursive intra prediction mode involves generating predictions for intra samples in a raster scan order based on filtering a set of neighboring predicted samples.
-As an illustration of the basic idea consider the sample P shown in Figure 1 below.
-The intra prediction for sample P in this case is the weighted sum of samples A, B and C.
-The latter could be reference samples for the current block and/or already predicted samples within the same block.
+The recursive intra prediction mode involves generating predictions for intra
+samples in a raster scan order based on filtering a set of neighboring
+predicted samples. As an illustration of the basic idea consider the sample P
+shown in Figure 1 below. The intra prediction for sample P in this case is the
+weighted sum of samples A, B and C. The latter could be reference samples for
+the current block and/or already predicted samples within the same block.
 
 ![recursive_intra_fig0](./img/recursive_intra_fig0.png)
 
@@ -58,7 +62,8 @@ where mode refers to one of the five supported recursive intra modes listed in t
 | 3                             | FILTER\_D157\_PRED    |
 | 4                             | FILTER\_PAETH\_PRED   |
 
-The filter coefficients are listed in Table 2 as a function of the intra prediction mode and predicted sample.
+The filter coefficients are listed in Table 2 as a function of the intra
+prediction mode and predicted sample.
 
 ##### Table 2. Filter coefficients as a function of the intra prediction mode and the predicted sample.
 
@@ -72,9 +77,10 @@ example shown in Figure 2, the order of processing the 4x2 blocks could
 be: Block\_0 → (Block\_1 and Block\_2) → (Block\_3 and Block\_4) →
 (Block\_5 and Block\_6) → Block\_7.
 
-The recursive intra prediction feature is applicable only to luma intra prediction and to blocks that have width and height less than or equal to 32.
+The recursive intra prediction feature is applicable only to luma intra
+prediction and to blocks that have width and height less than or equal to 32.
 
-## 2.  Implementation of the algorithm
+## 2. Implementation of the algorithm
 
 ##### Control macros/flags
 
@@ -89,7 +95,8 @@ the control flags associated with the filter intra flag are listed in Table 3 be
 
 ### Recursive intra prediction API
 
-The interface to the recursive intra prediction feature is described in Table 4 below.
+The interface to the recursive intra prediction feature is described in Table 4
+below.
 
 ##### Table 4. Interface to the recursive filter intra feature.
 
@@ -97,33 +104,39 @@ The interface to the recursive intra prediction feature is described in Table 4 
 
 ### Candidate Injection
 
-The function ```inject_filter_intra_candidates``` is responsible of injecting all recursive intra candidates in MD.
-Candidates are injected for a given block if the flag ```md_filter_intra_level``` is not zero and
-both the block width and block height are smaller than or equal to 32.
+The function ```inject_filter_intra_candidates``` is responsible of injecting
+all recursive intra candidates in MD. Candidates are injected for a given block
+if the flag ```md_filter_intra_level``` is not zero and both the block width
+and block height are smaller than or equal to 32.
 
-A total of five intra based candidates are injected where the candidate field ```filter_intra_mode``` is assigned
-a value from the following list:
-```FILTER_DC_PRED``` / ```FILTER_V_PRED``` / ```FILTER_H_PRED``` / ```FILTER_D157_PRED``` / ```FILTER_PAETH_PRED```.
-For other regular intra candidates ```filter_intra_mode``` is assigned a special value (```FILTER_INTRA_MODES```) to
-make sure it is not a filter intra candidate.
+A total of five intra based candidates are injected where the candidate field
+```filter_intra_mode``` is assigned a value from the following list:
+```FILTER_DC_PRED``` / ```FILTER_V_PRED``` / ```FILTER_H_PRED``` /
+```FILTER_D157_PRED``` / ```FILTER_PAETH_PRED```. For other regular intra
+candidates ```filter_intra_mode``` is assigned a special value
+(```FILTER_INTRA_MODES```) to make sure it is not a filter intra candidate.
 
-Note that when inter-intra compound is used, no filter intra modes are allowed in the intra part of the prediction.
+Note that when inter-intra compound is used, no filter intra modes are allowed
+in the intra part of the prediction.
 
 ### Generation of the filter intra prediction
 
-The generation of the recursive intra prediction is performed in the function ```svt_av1_filter_intra_predictor```.
-The generation of the prediction is performed as described above.
-The block is split into 4x2 blocks and the predictions for the 4x2 blocks are generated in a raster scan order.
+The generation of the recursive intra prediction is performed in the function
+```svt_av1_filter_intra_predictor```. The generation of the prediction is
+performed as described above. The block is split into 4x2 blocks and the
+predictions for the 4x2 blocks are generated in a raster scan order.
 
 ## 3. Optimization of the algorithm
 
-To reduce the complexity associated with the recursive intra prediction feature,
-the latter follows the regular intra optimization levels. (e.g., number of injected candidates, chroma level, etc..)
+To reduce the complexity associated with the recursive intra prediction
+feature, the latter follows the regular intra optimization levels. (e.g.,
+number of injected candidates, chroma level, etc..)
 
-## 4.  Signaling
+## 4. Signaling
 
-At the sequence header the flag enable_filter_intra will enable the recursive  intra prediction in the bit-stream.
-When the recursive intra prediction mode is selected:
+At the sequence header the flag enable_filter_intra will enable the recursive
+intra prediction in the bit-stream. When the recursive intra prediction mode is
+selected:
 
   - The intra mode that is sent to the decoder is ```DC_PRED```.
 
@@ -133,4 +146,8 @@ When the recursive intra prediction mode is selected:
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.

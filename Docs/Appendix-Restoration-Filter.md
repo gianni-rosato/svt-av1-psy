@@ -1,3 +1,5 @@
+[Top level](../README.md)
+
 # Restoration Filter
 
 The restoration filter is applied after the constrained directional
@@ -19,7 +21,7 @@ or switching between those three modes at the restoration unit level.
 
 ## I. Wiener Filter
 
-### 1.  Description of the algorithm [To be completed]
+### 1. Description of the algorithm [To be completed]
 
 The Wiener filter is a separable symmetric filter (7/5/3-tap
 filters), where only three, two or one coefficient(s) for the horizontal
@@ -43,7 +45,7 @@ The filter is designed over windows of size 64x64.
 The filter taps are either 7, 5, or 3 for luma and 5 or 3 for
 chroma.
 
-### 2.  Implementation
+### 2. Implementation
 
 **Inputs to rest\_kernel**: Output frame of the CDEF filter.
 
@@ -82,8 +84,8 @@ Each restoration unit is split into restoration processing units of size 64x64 f
 Loop over all restoration units in each tile segment (```foreach_rest_unit_in_tile_seg```)
 
 - Determine the best filtering parameters for the restoration unit (```search_wiener_seg```)
-   - The initial Wiener filter coeff are computed.  See functions ```svt_av1_compute_stats```, ```wiener_decompose_sep_sym```, ```finalize_sym_filter```.  (This step may be skipped, see optimization section).
-     Check that the new filter params are an improvement over the identity filter (i.e. no filtering).  If not, exit Wiener filter search and do not use Wiener filter.  See function ```compute_score```.
+   - The initial Wiener filter coeff are computed. See functions ```svt_av1_compute_stats```, ```wiener_decompose_sep_sym```, ```finalize_sym_filter```. (This step may be skipped, see optimization section).
+     Check that the new filter params are an improvement over the identity filter (i.e. no filtering). If not, exit Wiener filter search and do not use Wiener filter. See function ```compute_score```.
    - Refine the initially computed Wiener filter coeffs (see function ```finer_tile_search_wiener_seg```).
      Up to three refinement steps are performed (with step sizes 4,2,1).
      In each step, the filter coeffs are shifted according to the step size.
@@ -110,7 +112,7 @@ More details on ```try_restoration_unit_seg```
 
 ## II. Self-Guided Restoration Filter with Subspace Projection (SGRPROJ)
 
-### 1.  Description of the algorithm
+### 1. Description of the algorithm
 
 The main objective behind using the SGRPROJ filter is to smooth the
 reconstructed image while preserving edges. The filter consists of two
@@ -152,7 +154,7 @@ The figure below illustrates the main idea behind the filter.
 The derivation of the filter parameters is outlined below.
 
   - Compute the mean ![math](http://latex.codecogs.com/gif.latex?\mu) and the square of the variance ![math](http://latex.codecogs.com/gif.latex?\sigma^2) of a (2r+1)x(2r+1) window ***w*** around the sample ![math](http://latex.codecogs.com/gif.latex?\mathbf{p_r}) in the reconstructed image.
-  - Define ![math](./img/restoration_filter_math8.png) , ![math](http://latex.codecogs.com/gif.latex?\mathbf{g=(1-f)\mu}). The parameter ![math](http://latex.codecogs.com/gif.latex?\varepsilon) is used to tune the filter.
+  - Define ![math](./img/restoration_filter_math8.png), ![math](http://latex.codecogs.com/gif.latex?\mathbf{g=(1-f)\mu}). The parameter ![math](http://latex.codecogs.com/gif.latex?\varepsilon) is used to tune the filter.
   - Repeat the same computations above for every sample in the window
     ***w*** (or for a subset of those samples). Define **F** and **G** to be the averages of ![math](http://latex.codecogs.com/gif.latex?\mathbf{f}) and ![math](http://latex.codecogs.com/gif.latex?\mathbf{g}) computed for all samples in the window ***w*** (or for a subset of those samples), respectively.
   - Filtering: ![math](http://latex.codecogs.com/gif.latex?\mathbf{p_f=Fp_r+G\mu})
@@ -162,7 +164,7 @@ produce good quality reconstructed images. As a result, a further
 restoration step is considered and involves the use of subspace
 projection.
 
-### 1.2.  Subspace Projection
+### 1.2. Subspace Projection
 
 The main idea behind subspace projection is as follows:
 
@@ -193,7 +195,7 @@ To illustrate the idea of subspace projection, consider the following column vec
   - ![math26](./img/restoration_filter_math26.png)
 
 
-### 2.  Implementation
+### 2. Implementation
 
 **Inputs to rest\_kernel**: Output frame of the CDEF filter.
 
@@ -320,7 +322,7 @@ the filter algorithm. See ```av1_selfguided_restoration_c,
 selfguided_restoration_fast_internal and
 selfguided_restoration_internal``` for the C implementation, av1_selfguided_restoration_avx2, integral_images, calc_ab_fast, final_filter_fast, calc_ab, final_filter for the avx2 implementation.
 
-### 3.  Optimization of the algorithm
+### 3. Optimization of the algorithm
 
 Both the Wiener filter and the SGRPROJ filters involve, at the
 restoration unit level, a search procedure for the best Wiener filter
@@ -352,35 +354,42 @@ and chroma, as given in the table below.
 
 ### Filter Coeff Selection
 
-Generally, the Wiener filter coeffs for each restoration unit are computed; however,
-if the Wiener filter coeff values of ref frames are available, they can be used instead
-(and the computation can be skipped).  When enabled, ```cm->wn_filter_ctrls.use_prev_frame_coeffs```
-will set the initial coeff values to those chosen by the nearest list 0 reference frame for each
-corresponding restoration unit.  Refinement (if enabled – see next section) will then be performed.
+Generally, the Wiener filter coeffs for each restoration unit are computed;
+however, if the Wiener filter coeff values of ref frames are available, they
+can be used instead (and the computation can be skipped). When enabled,
+```cm->wn_filter_ctrls.use_prev_frame_coeffs``` will set the initial coeff
+values to those chosen by the nearest list 0 reference frame for each
+corresponding restoration unit. Refinement (if enabled – see next section) will
+then be performed.
 
 ### Filter Coeff Refinement
 
-After the initial filter coeff values are selected, a refinement search can be performed to
-improve the coeff values.  The refinement is performed iteratively, with 3 step sizes: 4, 2, 1.
-By enabling ```cm->wn_filter_ctrls.max_one_refinement_step``` only a step size of 4 is used in the refinement
-(smaller step sizes, which improve granularity of the coeff, and therefore accuracy, will be skipped).
-To disable the refinement and automatically use the computed coeffs without refinement, set ```cm->wn_filter_ctrls.use_refinement``` to 0.
+After the initial filter coeff values are selected, a refinement search can be
+performed to improve the coeff values. The refinement is performed iteratively,
+with 3 step sizes: 4, 2, 1. By enabling
+```cm->wn_filter_ctrls.max_one_refinement_step``` only a step size of 4 is used
+in the refinement (smaller step sizes, which improve granularity of the coeff,
+and therefore accuracy, will be skipped). To disable the refinement and
+automatically use the computed coeffs without refinement, set
+```cm->wn_filter_ctrls.use_refinement``` to 0.
 
 
 **3.2 SGRPROJ filter search**
 
-The search for the best SGRPROJ filter is normally performed by
-evaluating the filter performance for each of the sixteen different
-![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values in the interval \[0,15\], where
-![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) is used in the outline of SGRPROJ algorithm
-presented above. The algorithmic optimization of the filter search
-involves restricting the range of ![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values in the
+The search for the best SGRPROJ filter is normally performed by evaluating the
+filter performance for each of the sixteen different
+![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values in the
+interval \[0,15\], where
+![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) is used in the
+outline of SGRPROJ algorithm presented above. The algorithmic optimization of
+the filter search involves restricting the range of
+![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values in the
 search operation. The parameter ```cm->sg_filter_mode``` is used to specify
 different level of search complexity, where a higher value of
 ```cm->sg_filter_mode``` would correspond to a wider interval of
-![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values and a more costly search. The parameter
-step is used to control the width of the search interval, and is given
-in the following table.
+![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values and a more
+costly search. The parameter step is used to control the width of the search
+interval, and is given in the following table.
 
 ##### Table 5. Step parameter as a function of the sg\_filter\_mode.
 
@@ -413,15 +422,15 @@ The optimization proceeds as follows:
   - The interval limits are given by:
     ```c
     start_ep = 0 if (sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0), else start_ep = max(0, mid_ep - step)
-    end_ep = 8  if (sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0), else end_ep = min(8, mid_ep + step)
+    end_ep = 8 if (sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0), else end_ep = min(8, mid_ep + step)
     ```
-### 4.  Signaling
+### 4. Signaling
 
 ##### Table 7. Restoration filter signals.
 
 | **Signal**                        | **Description**                                                       |
 | --------------------------------- | --------------------------------------------------------------------- |
-| **At the frame level**            |                                                                |
+| **At the frame level**            |                                                                       |
 | frame\_restoration\_type          | RESTORE\_NONE, RESTORE\_WIENER, RESTORE\_SGRPROJ, RESTORE\_SWITCHABLE |
 | restoration\_unit\_size           | Size of restoration unit. For luma: 128x128 or 256x256
 | **At the restoration unit level** |                                                                       |
@@ -431,7 +440,11 @@ The optimization proceeds as follows:
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at
+v0.9.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.
 
 ## References
 
