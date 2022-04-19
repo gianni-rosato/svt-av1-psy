@@ -3,31 +3,31 @@
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [High Level Idea](#high-level-idea)
-  * 1-PASS VBR + Look Ahead
-  * 1-PASS VBR + Look Ahead
-3. [Rate Control Flow](#rate-control-flow)
+  * One-Pass VBR + Look Ahead
+  * Multi-Pass VBR
+3. [Rate Control Flow](#vbr-rate-control-flow)
   * CRF IPP Pass
   * Middle-Pass: CRF Encoding based on the Final Prediction Strucutre
   * Final Pass
 4. [Final Pass RC Algorithm in Detail](#final-pass-rc-algorithm-in-detail)
   * GoP-Level Bit Assignment (get_kf_group_bits())
-    * 1-Pass VBR + LAD with look ahead shorter than GoP size
-    * 1-Pass VBR + LAD with look ahead longer than GoP size
-    * 3-Pass VBR
+    * One-Pass VBR + LAD with look ahead shorter than GoP size
+    * One-Pass VBR + LAD with look ahead longer than GoP size
+    * Multi-Pass VBR
   * Mini-GoP Level Bit Assignment (calculate_total_GF_group_bits())
-    * 1-Pass VBR + LAD
-    * 3-Pass
+    * One-Pass VBR + LAD
+    * Multi-Pass
   * Frame Level Bit Assignment
-    * 1-Pass VBR + LAD
-    * 3-Pass
+    * One-Pass VBR + LAD
+    * Multi-Pass
   * SB-based QP_Modulation Algorithm
   * Block-basd Lambda Modulation Algorithm
   * Re-encoding
   * Post Encode RC Update
+5. [Constant Bitrate Rate Control](#constant-bitrate-rate-control)
 - Appendix A: Final-Pass Rate Control Functions
-- Appendix B: Speed Optimization of the IPP Pass
-- Appendix C: Speed Optimization of the Middle Pass
-- Appendix D: Capped CRF
+- Appendix B: Speed Optimization of the Middle Pass
+- Appendix C: Capped CRF
 
 ## Introduction
 
@@ -41,41 +41,41 @@ In SVT-AV1, the rate control process sits after the Picture Manager and before M
 
 ###### Figure 1. High-level encoder process dataflow.
 
-The inputs to the rate control algorithm vary based on the application and rate control mode. The input could be analysis statistics from an IPP processing of frames in the look ahead window, or statistics coming from previous passes. However, in all cases, the Temporal Dependency Model (TPL) data is used to calculate the boosts for frame-level QP assignment, SB QP modulation and lambda modulation per block.
+The inputs to the rate control algorithm vary based on the application and rate control mode. In the case of VBR mode, the input could be analysis statistics from an IPP processing of frames in the look ahead window, or statistics coming from previous passes. However, in all cases, the Temporal Dependency Model (TPL) data is used to calculate the boosts for frame-level QP assignment, SB QP modulation and lambda modulation per block.
 
-In SVT-AV1, there are different options for VBR encoding. Based on the application requirements. These option range from an adjustable latency algorithm (1 PASS + adjustable look ahead) for low to medium latency applications to a multi-pass algorithm for VOD applications. Having access to more pictures in future, which translates to higher latency, generally helps the rate control algorithm, however the performance benefits saturate after a long enough lookahead window. The available options are listed below.
+In SVT-AV1, there are different options for VBR encoding. Based on the application requirements. These options range from an adjustable latency algorithm (One-pass + adjustable look ahead) for low to medium latency applications to a multi-pass algorithm for VOD applications. Having access to more pictures in future, which translates to higher latency, generally helps the rate control algorithm, however the performance benefits saturate after a long enough lookahead window. The available options are listed below. In addition to the VBR mode, for low delay applications,  the SVT-AV1 encoder supports a constant bitrate (CBR) rate control mode where the objective is to maintain a constant bitrate in the generated bitstream.
 
-### 1-PASS VBR + Look Ahead
+### One-Pass VBR + Look Ahead
 
-In this mode, the latency is controlled by the size of the look ahead. The CRF IPP processing is performed for the frames in the look ahead window and the collected analysis data is used in the rate control algorithm. The default size of the look ahead is around 60 frames, but it can be increased to 120 frames.
+In this mode, the latency is controlled by the size of the look ahead. The CRF IPP processing is performed for the frames in the look ahead window and the collected analysis data is used in the rate control algorithm. The default size of the look ahead is around 2 mini-GoPs (e.g. 32 frames for the case of a five-layer prediction structure), but it can be increased to 120 frames.
 
-### 3-PASS VBR (CRF IPP first pass + CRF middle pass with same Prediction structure as final pass + final VBR pass)
+### Multi-Pass VBR (CRF IPP first pass + CRF middle pass with same Prediction structure as final pass + final VBR pass)
 
-The multi-pass mode can only be used in applications where latency is not a concern. This mode provides the best BD-rate and rate matching performance. In the first pass, the encoder runs in IPP CRF mode with simple prediction modes. The collected statistics are stored in memory or file and are passed to the encoder in the next pass. The middle pass has the same prediction structure as the final pass. Using similar prediction structure helps significantly in rate assignment. The data from the first pass is used to estimate the sequence QP for the middle pass. Having a middle pass with closer rate to the target rate helps in matching the target rate considerably. Finally, the last pass uses the data from the previous passes to achieve the best performance. A block diagram of the encoder with three passes is shown in Figure 2.
+The multi-pass mode can only be used in applications where latency is not a concern. This mode is available only using the SVT-AV1 sample application. This mode provides the best BD-rate and rate matching performance. In the first pass, the encoder runs in IPP CRF mode with simple prediction modes. The collected statistics are stored in memory or file and are passed to the encoder in the next pass. The middle pass has the same prediction structure as the final pass. Using similar prediction structure helps significantly in rate assignment. The data from the first pass is used to estimate the sequence QP for the middle pass. Having a middle pass with closer rate to the target rate helps in matching the target rate considerably. Finally, the last pass uses the data from the previous passes to achieve the best performance. A block diagram of the encoder with three passes is shown in Figure 2.
 
 ![rc_figure2](./img/rc_figure2.PNG)
 
 ###### Figure 2. Block diagram of multi-pass encoder.
 
-## Rate Control Flow
+## VBR Rate Control Flow
 
 ### CRF IPP Pass
 
-The IPP pass is used to generate statistics to be used in the final pass in a one-pass + LAD encoder or in subsequent passes in a multi-pass encoder. It is a simple and fast processing of the source input pictures that is based only on the source pictures (i.e. the reference pictures are also source input pictures) and makes use of a flat prediction structure where any given picture would reference at most the two preceding pictures in display order. Pictures are divided into 16x16 blocks and simple ME and Intra DC predictions are performed. The inter and intra prediction residuals are used in the calculations of the prediction distortion but not processed through transform/quantization steps. The collected data includes:  Intra error (distortion), Inter error (distortion), coded error (distortion) of the best mode, percentage of Inter blocks, percentage of zero motion blocks, and information about motion vectors. The coded error of each mini-GoP or GoP is used in the final pass to allocate the rate for each section of the clip. Note that the results from the IPP pass can be used in other decision-making steps, such as the dynamic GoP decisions, in the subsequent encode pass. The calculated data is stored in *FRAME_STATS* per block and then converted to *FIRSTPASS_STATS* per frame in *update_firstpass_stats()*. To keep the cost of running the IPP pass low, a number of optimization ideas are introduced and are summarized in Appendix B.
+The IPP pass is used to generate statistics to be used in the final pass in a one-pass + LAD encoder or in subsequent passes in a multi-pass encoder. It is a simple and fast processing of the source input pictures that is based only on the source pictures (i.e. the reference pictures are also source input pictures) and makes use of a flat prediction structure where any given picture would reference at most the two preceding pictures in display order. Pictures are divided into 16x16 blocks and simple ME and Intra DC predictions are performed. The inter and intra prediction residuals are used in the calculations of the prediction distortion but not processed through transform/quantization steps. The collected data includes:  Intra error (distortion), Inter error (distortion), coded error (distortion) of the best mode, percentage of Inter blocks, percentage of zero motion blocks, and information about motion vectors. The coded error of each mini-GoP or GoP is used in the final pass to allocate the rate for each section of the clip. Note that the results from the IPP pass can be used in other decision-making steps, such as the dynamic GoP decisions, in the subsequent encode pass. The calculated data is stored in *FRAME_STATS* per block and then converted to *FIRSTPASS_STATS* per frame in *update_firstpass_stats()*.
 
 ### Middle-Pass: CRF Encoding based on the Final Prediction Structure
 
 A robust rate control would require accurate statistical information to properly distribute the rate budget and meet the constraints imposed by the application. Even though the IPP pass provides useful information for the subsequent encode passes, the corresponding statistics are not accurate enough to make good rate distribution decisions in the final encode pass. Using a CRF pass with the same prediction structure as the final pass provides accurate enough estimates upon which to base the final encoding pass rate control decisions. This newly added middle pass is a fast version of the final pass with similar prediction structure as the final pass. In order to improve the accuracy of information, we use the statistics from the IPP pass to estimate the input QP of the Middle-Pass to get closer to the target rate. This process results in substantially better rate matching in the multi pass rate control. The middle pass stores the following data per frame (See StatStruct structure): Picture number, total number of bits, qindex for the frame, qindex for the sequence.
 
-In order to reduce the speed overhead of the middle pass, a faster preset of the encoder is considered in the middle pass. For example, if the final pass preset is set to M5, the preset of the middle pass is chosen to be M11. To make the middle pass even faster, some additional speed optimizations are considered and are briefly described in Appendix C.
+In order to reduce the speed overhead of the middle pass, a faster preset of the encoder is considered in the middle pass. For example, if the final pass preset is set to M5, the preset of the middle pass is chosen to be M11. To make the middle pass even faster, some additional speed optimizations are considered and are briefly described in Appendix B.
 
 ### Final Pass
 
 The following presents a very high-level description of the steps involved in the rate control algorithm in the final encode pass. The flowchart is shown in Figure 3. A more detailed presentation of these steps is provided in the next section.
 
 The rate control algorithm in the final pass includes the following main steps:
-1) For each GoP/KF_group assign the target number of bits (*find_next_key_frame()*).
-2) For each mini-GoP or GF_group assign the target number of bits per frame (*define_gf_group()*).
+1) For each GoP/KF_group assign the target number of bits (*kf_group_rate_assingment()*).
+2) For each mini-GoP or GF_group assign the target number of bits per frame (*gf_group_rate_assingment()*).
 3) Update the target number of bits per frame based on the feedback and internal buffers (*av1_set_target_rate()*).
 4) Assign qindex per frame based on tpl boost and the target number of bits (*rc_pick_q_and_bounds()*)
 5) SB-level QP modification and block-level lambda generation based on TPL (*sb_qp_derivation_tpl_la()*).
@@ -94,7 +94,7 @@ This section provides a more detailed description of the main steps involved in 
 
 Based on the mode of the VBR algorithm, different GoP bit assignments are used.
 
-#### 1-Pass VBR + LAD with Look Ahead Shorter than GoP size
+#### One-Pass VBR + LAD with Look Ahead Shorter than GoP size
 
 In this case, the look ahead is not long enough to cover the GOP. So, a uniform rate distribution is used.
 
@@ -102,7 +102,7 @@ ___kf_group_bits = number of frames in GoP * avg_bits_per_frame___
 
 where *avg_bits_per_frame* represents the average number of bits per frame.
 
-#### 1-Pass VBR + LAD with Look Ahead Longer than GoP size
+#### One-Pass VBR + LAD with Look Ahead Longer than GoP size
 
 When first pass statistics are available for one GoP or more, the frame errors are used to allocate bit for the GoP as follows:
 
@@ -113,9 +113,9 @@ where:
 - *kf_group_err* is the calculated error for the GoP as the sum of frame errors in the GoP.
 - *modified_error_left* is the calculated error over the remaining frames in the clip.
 
-In the above definitions, error is defined as function of the best Inter vsIntra error from the first pass.
+In the above definitions, error is defined as function of the best Inter vs. Intra error from the first pass.
 
-#### 3-Pass VBR:
+#### Multi-Pass VBR:
 
 In this case, the error is replaced by the actual number of bits in the previous pass.
 
@@ -127,13 +127,13 @@ where *kf_group_rate_in_ref* is the sum over the corresponding frames in the GoP
 
 The concept of rate allocation for the mini-GoP is similar to the rate allocation of the GoP. Based on the VBR mode, we have the following scenarios.
 
-#### 1-Pass VBR + LAD
+#### One-Pass VBR + LAD
 
 ___GF_group_bits = kf_bits_left * (GF_group_err / kf_error_left)___
 
-*kf_bits_left* refers to the remaining bit budget in the GoP. *GF_group_err* is the calculated error for the gf group as the sum of frame errors in the gf group and *kf_error_left* is the calculated error for the remaining frames in the GoP. Error is defined as best inter vsintra error from the first pass for the mini-GoP.
+*kf_bits_left* refers to the remaining bit budget in the GoP. *GF_group_err* is the calculated error for the gf group as the sum of frame errors in the gf group and *kf_error_left* is the calculated error for the remaining frames in the GoP. Error is defined as a function of the best inter vs. intra error from the first pass for the mini-GoP.
 
-#### 3-Pass
+#### Multi-Pass
 
 In this case, the error is replaced by the actual number of bits in the previous pass.
 
@@ -145,11 +145,11 @@ ___GF_group_bits = kf_bits left * (GF_group_rate_in ref / rate_in_ref_kf_left)__
 
 After calculating the rate per GoP and mini-GoP, the rate control algorithm computes the base target bits for each frame.  The data is stored in *GF_group->bit_allocation[]* for all pictures in the mini-GoP and then copied to *base_frame_target* under *PCS* structure.
 
-#### 1-Pass VBR + LAD
+#### One-Pass VBR + LAD
 
 The total number of bits in each mini-GoP are distributed among all frames based on the number of frames in each layer and a *layer_fraction* table in *allocate_GF_group_bits()* function. The main idea behind the distribution is to allocate more budget to frames in lower temporal layers. For Key and base layer frames, the boost factor is used as a factor to adjust the number of bits, where frames with higher boost factor are assigned higher bits (*calculate_boost_bits()*).
 
-#### 3-Pass
+#### Multi-Pass
 
 In this case, the actual rate data of each picture from the preceding pass is used to calculate the bit budget per frame as follows:
 
@@ -273,6 +273,90 @@ ___rate_error_estimate  = (vbr_bits_off_target * 100) / total_actual_bits___
 
 The main idea is to update the range of qindex values which is between the active_best_quality and active_worst_quality  using the feedback information from the packetization. If *rate_error_estimate* > *undershoot_pct*, the encoder is undershooting, so the lower value of the range is reduced by extend_minq, hence allowing the encoder to reduce the qindex and increase the rate. If *rate_error_estimate* < *-overshoot_pct*, the higher value of the qindex range is increased by extend_maxq to reduce the overall bit rate (see svt_av1_twopass_postencode_update).
 
+## Constant Bitrate Rate Control
+
+In several rate constrained video coding applications, it is desired to use the constant bitrate (CBR) mode to maintain a constant bitrate during the encoding process while allowing the resulting video quality to vary. In SVT-AV1, the CBR mode is implemented through a qindex adjustment mechanism based on the fullness status of a virtual buffer. A virtual buffer is used to account for the size of the encoded frames. Knowing the desired constant bit rate, the size of previously encoded pictures and the fullness status of the virtual buffer, the algorithm adjusts the qindex of the frame being encoded to maintain the virtual buffer fullness at the desired level.  Once a frame is completely processed in the packetization process, feedback information representing the size of the processed frame is sent to the rate control algorithm to update the buffer fullness level.
+
+### CBR Date Flow
+
+A high-level description of the steps involved in the CBR mode in SVT-AV1 is as follows:
+1) Set the CBR rate control virtual buffer parameters.
+2) Determine the target bitrate for the frame being processed based on the buffer status and the packetization process feedback.
+3) Determine the range of candidate qindex values and generate the final qindex.
+4) Encode the current picture and update the virtual buffer level.
+
+### Setting the virtual buffer parameters (set_rc_buffer_sizes())
+
+The CBR rate control makes use of a virtual buffer and tries to maintain the buffer fullness close to a desired optimal fullness level. This goal is achieved by adjusting the encoded frame size through the quantization parameter qindex. A diagram of a virtual buffer is shown in the Figure 7. The input to the frame buffer is the desired frame size corresponding to the target bitrate. The buffer content is incremented by the target frame size every time a new frame is to be processed. The output is the actual encoded frame size, and is removed from the buffer content at the same frequency the contents of the virtual buffer are updated by the target frame size.
+
+![rc_figure7](./img/rc_figure7.PNG)
+###### Figure 7. CBR virtual buffer diagram.
+
+The virtual buffer parameters are initialized once before invoking the CBR rate control for the first frame as follows:
+
+starting_buffer_level = starting_buffer_level_ms* target_bit_rate/ 1000 <br /> optimal_buffer_level = optimal_buffer_level_ms* bandwidth / 1000 <br /> maximum_buffer_size = maximum_buffer_size_ms* target_bit_rate/ 1000
+
+where the following are user-specified input parameters to the encoder:
+
+- starting_buffer_level_ms: Initial delay in milliseconds before the decoder starts removing bits from its buffer.
+- optimal_buffer_level_ms: Optimal delay in milliseconds the decoder should maintain.
+- maximum_buffer_size_ms: Maximum buffer delay in milliseconds.
+- target_bit_rate: Target bitrate.
+
+### Determining the target frame size for the frame being processed (one_pass_rt_rate_alloc())
+
+The target frame size is computed differently for key frames and for other frames.
+
+#### A. Key frame target frame size calculation (calc_iframe_target_size_one_pass_cbr())
+
+First Key Frame
+
+The target frame size for the first key frame is set based on the starting buffer level multiplied by a weight that depends on the GoP length.
+
+___Target_frame_size = (starting_buffer_level * w)___
+
+where weight = 3/4 if intra period = -1 (only one I) or intra period >128, 1/4 if 0 <intra period < 64, 1/2 if intra 64 <= intra period <=128
+
+Remaining key frames
+
+For the remaining key frames, the target frame size is set based on the average frame size (avg_frame_size = target_bit_rate/number_of_frames_per_second)  multiplied by a boost factor.
+
+___Target_frame_size = ((16 + kf_boost) \* avg_frame_size)/16___
+where
+___kf_boost = 2 \* framerate – 16___
+
+#### B.Non-Key frame target frame size calculation (av1_calc_pframe_target_size_one_pass_cbr())
+
+Setting the target frame size for non-key frames involves a first step where an initial value of the target frame size is set followed by a second step where an adjustment of the generated target frame size occurs. In the first step, the initial target frame size is normally set to avg_frame_size.  In the second step, the target frame size is adjusted based on the difference between the optimal buffer level and the current buffer level. The algorithm tends to lower the target frame size for the current frame when the computed difference is positive or increase the target frame size for the current frame if the difference is negative. Finally, the adjusted target frame size is clipped.
+
+### Determining the final qindex for the frame (rc_pick_q_and_bounds_no_stats_cbr())
+
+After estimating the target frame size for the current frame, the algorithm proceeds with the selection of the qindex that provides the closest frame size to the target frame size.  This process starts by identifying an interval of candidate qindex values [best quality qindex , worst quality qindex].  A suitable qindex that belongs to the set qindex interval is generated based on the frame type and the estimated frame size corresponding to each qindex in the set qindex interval.
+
+#### A. Determining the worst quality qindex (calc_active_worst_quality_no_stats_cbr())
+
+The worst quality qindex is the highest allowed qindex value and is initialized to 255. The worst quality qindex is generated based on the current buffer level. Initially, the worst quality qindex is first obtained by applying a factor of 5/4 to the average qindex of the previously coded frames of the same type (i.e. key frames or non-key frames). The worst quality qindex is further adjusted based on the fullness of the buffer as follows:
+
+- If the buffer fullness level is greater than the optimal level, then the value of the worst quality qindex is reduced (to increase the actual size of the encoded frame) in such a way that the expected reduction in buffer level does not go beyond 30% of its current level.
+- If the buffer fullness level is greater than the critical level and less than the optimal level, then the worst quality qindex is increased by a factor that is a linear function of the current buffer level and the difference between worst_quality and the average qindex mentioned in the initialization step above.
+- If the buffer level is less than the critical level, the qindex is set to the highest possible qindex value worst_qindex. The latter is set to by default to 255 or to any value entered by the user.
+
+#### B. Determining the best quality q index (calc_active_best_quality_no_stats_cbr())
+
+In the case of a key frame, the best quality qindex is initially set to a fixed value (default 4).  For reference non-key pictures, the best quality q index is inherited from the qindex of the previously coded reference pictures. For the remaining frames (non-referenced) the best qindex is obtained by taking the smallest of the worst quality qindex and the average of the qindex of the previously coded non-reference pictures.
+
+#### C. Computing the qindex for the frame
+
+The final qindex for the frame is obtained by looping over all the qindex values in the interval [worst quality qindex, best quality qindex] and using the following model to determine an estimate for the frame size:
+
+![rc_math3](./img/rc_math3.PNG)
+
+where α is 1500000 for key frames and 1300000 otherwise. The correction_factor is as in the VBR case. The qindex that provides the closest rate to the target frame size is considered.
+
+### Updating the buffer fullness level
+
+The buffer fullness level is initialized at starting_buffer_level. Following the encoding of the current frame, the buffer fullness level is updated by adding the average frame size (avg_frame_size) and removing the encoded frame size.
+
 ## Appendix A: Final-Pass Rate Control Functions
 
 A description of the main relevant functions is shown in following tables:
@@ -286,7 +370,7 @@ Picture arriving from Motions Estimation kernel:
 | av1_rc_init()                          | RC initialization at the beginning|
 | }                                      |  |
 | restore_param()                        | Populate the required parameters in RATE_CONTROL,  TWO_PASS and GF_GROUP structures from other structures|
-|  svt_av1_get_second_pass_params()      | Read the stats, assign bits per KF (GoP), mini-GoP and frames|
+| svt_av1_get_second_pass_params()       | Read the stats, assign bits per KF (GoP), mini-GoP and frames|
 | av1_set_target_rate()                  | Update the target rate per frame based on the provided feedback |
 | store_param()                          | Store the required parameters from RATE_CONTROL,  TWO_PASS and GF_GROUP  structures to other structures|
 | process_tpl_stats_frame_kf_gfu_boost() | Update the KF and GFU boosts based on tpl|
@@ -321,15 +405,13 @@ More details for some of the main functions:
 
 There are some functions (*restore_param()*, *store_param()*, *restore_GF_group_param()*) in the rate control kernel that store and restore data from PCS to/from internal data structures like RATE_CONTROL,  TWO_PASS and GF_GROUP. These functions were added to handle the frame-level parallelism and out-of-order encoding characteristics of the SVT encoder.
 
-## Appendix B: Speed Optimization of the IPP Pass
-
-## Appendix C: Speed Optimization of the Middle Pass
+## Appendix B: Speed Optimization of the Middle Pass
 
 To make the middle pass even faster, the following speed optimizations are done:
 - The input video is down-sampled by two in each direction and the middle pass is performed on a smaller resolution of the input video. Down-sampling results in a significant encoder speed up.
 - Since the middle pass does not output a conformant stream, the encoding of non-reference frames is by-passed to speed up the middle pass encoding.
 
-## Appendix D: Capped CRF
+## Appendix C: Capped CRF
 
 In some video coding applications, it is desired to use the CRF mode with an upper limit for the bit rate. This rate control mode is referred as capped CRF. In this mode, the algorithm tries to achieve the best quality while maintaining the overall bit rate below the maximum bit rate specified as an input to the encoder. If the maximum bit rate is set to a high value, the CRF and capped CRF might produce the same results.
 
