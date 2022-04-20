@@ -239,7 +239,7 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **RecodeLoop**                   | --recode-loop                    | [0-4]          | 4               | Recode loop level, look at the "Recode loop level table" in the user's guide for more info [0: off, 4: preset based] |
 | **VBRBiasPct**                   | --bias-pct                       | [0-100]        | 50              | CBR/VBR bias [0: CBR-like, 100: VBR-like]                                                                            |
 | **MinSectionPct**                | --minsection-pct                 | [0-100]        | 0               | GOP min bitrate (expressed as a percentage of the target rate)                                                       |
-| **MaxSectionPct**                | --maxsection-pct                 | [0-100]        | 100             | GOP max bitrate (expressed as a percentage of the target rate)                                                       |
+| **MaxSectionPct**                | --maxsection-pct                 | [0-10000]      | 2000            | GOP max bitrate (expressed as a percentage of the target rate)                                                       |
 
 ##### **UseFixedQIndexOffsets** and more information
 

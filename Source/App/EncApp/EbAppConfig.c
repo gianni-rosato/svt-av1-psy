@@ -1098,7 +1098,7 @@ ConfigEntry config_entry_rc[] = {
      set_vbr_min_section_pct},
     {SINGLE_INPUT,
      VBR_MAX_SECTION_PCT_TOKEN,
-     "GOP max bitrate (expressed as a percentage of the target rate), default is 100 [0-100]",
+     "GOP max bitrate (expressed as a percentage of the target rate), default is 2000 [0-10000]",
      set_vbr_max_section_pct},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
