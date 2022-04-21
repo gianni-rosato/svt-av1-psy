@@ -1,37 +1,30 @@
 # Changelog
 
-## [1.0.0-rc2] - 2022-04-12
+## [1.0.0] - 2022-05-21
 
 Encoder
+- Added S-frames support
+- CBR Rate control mode for low delay
 - Added support for chroma position signalling
 - Added support for skipping denoising pictures after film grain synthesis
+- Extend fast-decode support to cover presets M0-M10
 - Simplified --fast-decode to have only one level
 - Optimized --fast-decode level 1 for better tradeoffs
 - Visual quality improvements addressing issues #1819 / #1297
+- Visual quality fixes and improvements for both tune 0 and 1
+- Quality vs density tradeoffs tuning across all presets in CRF mode with TPL improvements
+- Update default settings to use a longer gop / higher quality preset and lower CRF value
+- Various code cleanups and memory optimizations
+- Additional AVX2 optimizations
 - Fixed all known functional bugs
+- More robust rate control parameter verification
 
 Build and Documentation
+- Major documentation update and re-structure
+- Added more user guides, preset guides and common questions section
 - Improve CI coverage
 - Reduced unnecessary warnings
 - Improved the documentation of the configuration parameters
-
-
-## [1.0.0-rc1] - 2022-03-29
-
-Encoder
-- CBR Rate control mode for low delay
-- Added S-frames support
-- Visual quality fixes and improvements for both tune 0 and 1
-- Extend fast-decode support to cover presets M0-M10
-- More robust rate control parameter verification
-- Quality vs density tradeoffs tuning across all presets in CRF mode with TPL improvements
-- Update default settings to use a longer gop / higher quality preset and lower CRF value.
-- Various code cleanups and memory optimizations
-- Additional AVX2 optimizations
-- Fixed all known reported deadlocks
-
-Build and Testing
-- Improve CI coverage
 - Improve Unit Test Coverage
 - Address C vs asm mismatches
 
