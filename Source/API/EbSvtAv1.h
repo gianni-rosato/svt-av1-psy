@@ -110,11 +110,11 @@ typedef struct EbBufferHeaderType {
     int64_t  pts;
 
     // pic info
-    uint32_t qp;
-    uint32_t pic_type;
-    uint64_t luma_sse;
-    uint64_t cr_sse;
-    uint64_t cb_sse;
+    uint32_t         qp;
+    EbAv1PictureType pic_type;
+    uint64_t         luma_sse;
+    uint64_t         cr_sse;
+    uint64_t         cb_sse;
     // pic flags
     uint32_t flags;
 

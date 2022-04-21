@@ -703,7 +703,8 @@ void *packetization_kernel(void *input_ptr) {
         //we output one temporal unit a time, so dts alwasy equals to pts.
         output_stream_ptr->dts           = output_stream_ptr->pts;
         output_stream_ptr->pic_type      = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag
-                 ? pcs_ptr->parent_pcs_ptr->idr_flag ? EB_AV1_KEY_PICTURE : pcs_ptr->slice_type
+                 ? pcs_ptr->parent_pcs_ptr->idr_flag ? EB_AV1_KEY_PICTURE
+                                                     : (EbAv1PictureType)pcs_ptr->slice_type
                  : EB_AV1_NON_REF_PICTURE;
         output_stream_ptr->p_app_private = pcs_ptr->parent_pcs_ptr->input_ptr->p_app_private;
         output_stream_ptr->qp            = pcs_ptr->parent_pcs_ptr->picture_qp;
