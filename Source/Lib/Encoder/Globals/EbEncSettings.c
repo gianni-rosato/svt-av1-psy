@@ -1634,7 +1634,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"superres-kf-qthres", &config_struct->superres_kf_qthres},
         {"superres-denom", &config_struct->superres_denom},
         {"superres-kf-denom", &config_struct->superres_kf_denom},
-        {"fast-decode", &config_struct->fast_decode},
         {"tune", &config_struct->tune},
         {"film-grain-denoise", &config_struct->film_grain_denoise_apply},
     };
@@ -1728,6 +1727,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"enable-tf", &config_struct->enable_tf},
         {"enable-overlays", &config_struct->enable_overlays},
         {"enable-hdr", &config_struct->high_dynamic_range_input},
+        {"fast-decode", &config_struct->fast_decode},
 #if FTR_FORCE_KF
         {"enable-force-key-frames", &config_struct->force_key_frames},
 #endif
