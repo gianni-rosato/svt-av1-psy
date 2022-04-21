@@ -54,6 +54,11 @@ typedef struct MidPassControls {
     uint8_t ds; // use downsampled input
 } MidPassControls;
 
+typedef struct BitstreamLevel {
+    uint8_t major;
+    uint8_t minor;
+} BitstreamLevel;
+
 /************************************
      * Sequence Control Set
      ************************************/

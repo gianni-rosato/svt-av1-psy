@@ -195,11 +195,6 @@ typedef struct EbSvtIOFormat //former EbSvtEncInput
     EbBitDepth    bit_depth;
 } EbSvtIOFormat;
 
-typedef struct BitstreamLevel {
-    uint8_t major;
-    uint8_t minor;
-} BitstreamLevel;
-
 typedef struct EbOperatingParametersInfo {
     /*!<Specifies the time interval between the arrival of the first bit in the
      * smoothing buffer and the subsequent removal of the data that belongs to
