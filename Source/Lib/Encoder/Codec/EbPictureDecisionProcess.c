@@ -1677,12 +1677,12 @@ void set_dlf_controls(PictureParentControlSet* pcs_ptr, uint8_t dlf_level, uint8
     case 3:
         ctrls->enabled = 1;
         ctrls->sb_based_dlf = 1;
-        ctrls->min_filter_level = (bit_depth == EB_8BIT) ? 4 : 16;
+        ctrls->min_filter_level = (bit_depth == EB_EIGHT_BIT) ? 4 : 16;
         break;
     case 4:
         ctrls->enabled = 1;
         ctrls->sb_based_dlf = 1;
-        ctrls->min_filter_level = (bit_depth == EB_8BIT) ? 16 : 32;
+        ctrls->min_filter_level = (bit_depth == EB_EIGHT_BIT) ? 16 : 32;
         break;
     default:
         assert(0);
@@ -2061,7 +2061,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     set_palette_level(pcs_ptr, pcs_ptr->palette_level);
     uint8_t dlf_level = 0;
     if (pcs_ptr->scs_ptr->static_config.enable_dlf_flag && frm_hdr->allow_intrabc == 0) {
-        dlf_level = get_dlf_level(enc_mode, is_ref, bit_depth > EB_8BIT, fast_decode, hierarchical_levels, input_resolution);
+        dlf_level = get_dlf_level(enc_mode, is_ref, bit_depth > EB_EIGHT_BIT, fast_decode, hierarchical_levels, input_resolution);
     }
     set_dlf_controls(pcs_ptr, dlf_level, bit_depth);
 

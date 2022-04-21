@@ -48,7 +48,7 @@ void svt_av1_predict_intra_block(
     uint32_t bl_org_x_pict, uint32_t bl_org_y_pict, uint32_t bl_org_x_mb, uint32_t bl_org_y_mb,
     SeqHeader *seq_header_ptr);
 void svt_av1_predict_intra_block_16bit(
-    EbBitDepthEnum bit_depth, STAGE stage, const BlockGeom *blk_geom, MacroBlockD *xd, int32_t wpx,
+    EbBitDepth bit_depth, STAGE stage, const BlockGeom *blk_geom, MacroBlockD *xd, int32_t wpx,
     int32_t hpx, TxSize tx_size, PredictionMode mode, int32_t angle_delta, int32_t use_palette,
     PaletteInfo *palette_info, FilterIntraMode filter_intra_mode, uint16_t *top_neigh_array,
     uint16_t *left_neigh_array, EbPictureBufferDesc *recon_buffer, int32_t col_off, int32_t row_off,

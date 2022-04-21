@@ -427,7 +427,7 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
     const int32_t        ss_x       = plane ? part_info->subsampling_x : 0;
     const int32_t        ss_y       = plane ? part_info->subsampling_y : 0;
     int32_t              bit_depth  = ref_buf->ps_pic_buf->bit_depth;
-    int32_t              highbd     = bit_depth > EB_8BIT || is_16bit;
+    int32_t              highbd     = bit_depth > EB_EIGHT_BIT || is_16bit;
 
     /*ScaleFactor*/
     const struct ScaleFactors *const sf = is_intrabc ? part_info->sf_identity
@@ -671,13 +671,13 @@ void svt_make_masked_inter_predictor(PartitionInfo *part_info, int32_t ref, void
 
 static void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, int plane,
                                    uint8_t *inter_pred, int inter_stride, uint8_t *intra_pred,
-                                   int intra_stride, EbBitDepthEnum bit_depth, Bool is_16bit) {
+                                   int intra_stride, EbBitDepth bit_depth, Bool is_16bit) {
     BlockModeInfo  *mi          = part_info->mi;
     int32_t         sub_x       = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t         sub_y       = (plane > 0) ? part_info->subsampling_y : 0;
     const BlockSize plane_bsize = get_plane_block_size(bsize, sub_x, sub_y);
 
-    if (bit_depth > EB_8BIT || is_16bit) {
+    if (bit_depth > EB_EIGHT_BIT || is_16bit) {
         /*As per spec we r considering interitra_wedge_sign is always "zero"*/
         /*Check buffers, Aom  2nd time inter_pred buffer plane is plane independent */
         combine_interintra_highbd(mi->interintra_mode_params.interintra_mode,
@@ -715,7 +715,7 @@ static void av1_build_intra_predictors_for_interintra(DecModCtxt    *dec_mod_ctx
                                                       PartitionInfo *part_info,
                                                       void *pv_blk_recon_buf, int32_t recon_stride,
                                                       BlockSize bsize, int32_t plane, uint8_t *dst,
-                                                      int dst_stride, EbBitDepthEnum bit_depth) {
+                                                      int dst_stride, EbBitDepth bit_depth) {
     EbDecHandle   *dec_handle  = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
     Bool           is16b       = dec_handle->is_16bit_pipeline;
     BlockModeInfo *mi          = part_info->mi;
@@ -731,7 +731,7 @@ static void av1_build_intra_predictors_for_interintra(DecModCtxt    *dec_mod_ctx
 
     void *pv_top_neighbor_array, *pv_left_neighbor_array;
 
-    if (bit_depth == EB_8BIT && !is16b) {
+    if (bit_depth == EB_EIGHT_BIT && !is16b) {
         EbByte buf = (EbByte)pv_blk_recon_buf;
 
         pv_top_neighbor_array  = (void *)(buf - recon_stride);
@@ -763,8 +763,8 @@ static void av1_build_intra_predictors_for_interintra(DecModCtxt    *dec_mod_ctx
 /* Build interintra_predictors */
 static void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info,
                                             void *pred, int32_t stride, int plane, BlockSize bsize,
-                                            EbBitDepthEnum bit_depth, Bool is_16bit) {
-    if (bit_depth > EB_8BIT || is_16bit) {
+                                            EbBitDepth bit_depth, Bool is_16bit) {
+    if (bit_depth > EB_EIGHT_BIT || is_16bit) {
         DECLARE_ALIGNED(16, uint16_t, intrapredictor[MAX_SB_SQUARE]);
         av1_build_intra_predictors_for_interintra(dec_mod_ctxt,
                                                   part_info,
@@ -820,7 +820,7 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     //temporary buffer for joint compound, move this to context if stack does not hold.
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[128 * 128]);
 
-    Bool is16b = (bit_depth > EB_8BIT) || dec_hdl->is_16bit_pipeline;
+    Bool is16b = (bit_depth > EB_EIGHT_BIT) || dec_hdl->is_16bit_pipeline;
 
     const BlockSize bsize = mi->sb_type;
     assert(bsize < BlockSizeS_ALL);

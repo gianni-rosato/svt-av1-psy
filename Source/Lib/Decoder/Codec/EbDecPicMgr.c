@@ -142,7 +142,7 @@ EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
         // Init Picture Init data
         input_pic_buf_desc_init_data.max_width  = seq_header->max_frame_width;
         input_pic_buf_desc_init_data.max_height = seq_header->max_frame_height;
-        input_pic_buf_desc_init_data.bit_depth  = (EbBitDepthEnum)cc->bit_depth;
+        input_pic_buf_desc_init_data.bit_depth  = (EbBitDepth)cc->bit_depth;
         assert(IMPLIES(cc->mono_chrome, color_format == EB_YUV400));
         input_pic_buf_desc_init_data.color_format = cc->mono_chrome ? EB_YUV400 : color_format;
         input_pic_buf_desc_init_data.buffer_enable_mask = cc->mono_chrome

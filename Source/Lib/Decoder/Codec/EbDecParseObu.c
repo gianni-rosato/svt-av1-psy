@@ -157,9 +157,9 @@ void read_bit_depth(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_heade
     if (seq_header->seq_profile == PROFESSIONAL_PROFILE && high_bitdepth) {
         uint8_t twelve_bit = dec_get_bits(bs, 1);
         PRINT("twelve_bit", twelve_bit);
-        color_info->bit_depth = twelve_bit ? AOM_BITS_12 : AOM_BITS_10;
+        color_info->bit_depth = twelve_bit ? EB_TWELVE_BIT : EB_TEN_BIT;
     } else if (seq_header->seq_profile <= PROFESSIONAL_PROFILE)
-        color_info->bit_depth = high_bitdepth ? AOM_BITS_10 : AOM_BITS_8;
+        color_info->bit_depth = high_bitdepth ? EB_TEN_BIT : EB_EIGHT_BIT;
     else
         return; // EB_DecUnsupportedBitstream;
 }
@@ -197,7 +197,7 @@ void read_color_config(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_he
         color_info->color_range                               = 1; // assume full color-range
         if (!(seq_header->seq_profile == HIGH_PROFILE ||
               (seq_header->seq_profile == PROFESSIONAL_PROFILE &&
-               color_info->bit_depth == AOM_BITS_12)))
+               color_info->bit_depth == EB_TWELVE_BIT)))
             return; // EB_DecUnsupportedBitstream;
     } else {
         color_info->color_range = dec_get_bits(bs, 1);
@@ -207,7 +207,7 @@ void read_color_config(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_he
         else if (seq_header->seq_profile == HIGH_PROFILE)
             color_info->subsampling_x = color_info->subsampling_y = 0; // 444 only
         else {
-            if (color_info->bit_depth == AOM_BITS_12) {
+            if (color_info->bit_depth == EB_TWELVE_BIT) {
                 color_info->subsampling_x = dec_get_bits(bs, 1);
                 PRINT("subsampling_x", color_info->subsampling_x);
                 if (color_info->subsampling_x) {

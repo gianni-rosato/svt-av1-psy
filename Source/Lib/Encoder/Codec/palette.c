@@ -295,7 +295,7 @@ void palette_rd_y(PaletteInfo *palette_info, uint8_t *palette_size_array,
         return;
     }
 
-    if (bit_depth > EB_8BIT) {
+    if (bit_depth > EB_EIGHT_BIT) {
         for (int i = 0; i < k; ++i)
             palette_info->pmi.palette_colors[i] = clip_pixel_highbd((int)centroids[i], bit_depth);
     } else {
@@ -326,7 +326,7 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                                               : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     const int            src_stride = src_pic->stride_y;
     // bit depth for palette search
-    unsigned             bit_depth_pal = is16bit ? EB_10BIT : EB_8BIT;
+    unsigned             bit_depth_pal = is16bit ? EB_TEN_BIT : EB_EIGHT_BIT;
     const uint8_t *const src           = src_pic->buffer_y +
         (((context_ptr->blk_origin_x + src_pic->origin_x) +
           (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y)

@@ -3515,41 +3515,47 @@ static const int16_t ac_qlookup_12_q3[QINDEX_RANGE] = {
     19502, 19886, 20270, 20670, 21070, 21486, 21902, 22334, 22766, 23214, 23662, 24126, 24590,
     25070, 25551, 26047, 26559, 27071, 27599, 28143, 28687, 29247,
 };
-int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth) {
+int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
     switch (bit_depth) {
-    case AOM_BITS_8: return dc_qlookup_q3[clamp(qindex + delta, 0, MAXQ)];
-    case AOM_BITS_10: return dc_qlookup_10_q3[clamp(qindex + delta, 0, MAXQ)];
-    case AOM_BITS_12: return dc_qlookup_12_q3[clamp(qindex + delta, 0, MAXQ)];
-    default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1;
+    case EB_EIGHT_BIT: return dc_qlookup_q3[clamp(qindex + delta, 0, MAXQ)];
+    case EB_TEN_BIT: return dc_qlookup_10_q3[clamp(qindex + delta, 0, MAXQ)];
+    case EB_TWELVE_BIT: return dc_qlookup_12_q3[clamp(qindex + delta, 0, MAXQ)];
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
     }
 }
-int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth) {
+int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
     switch (bit_depth) {
-    case AOM_BITS_8: return ac_qlookup_q3[clamp(qindex + delta, 0, MAXQ)];
-    case AOM_BITS_10: return ac_qlookup_10_q3[clamp(qindex + delta, 0, MAXQ)];
-    case AOM_BITS_12: return ac_qlookup_12_q3[clamp(qindex + delta, 0, MAXQ)];
-    default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1;
+    case EB_EIGHT_BIT: return ac_qlookup_q3[clamp(qindex + delta, 0, MAXQ)];
+    case EB_TEN_BIT: return ac_qlookup_10_q3[clamp(qindex + delta, 0, MAXQ)];
+    case EB_TWELVE_BIT: return ac_qlookup_12_q3[clamp(qindex + delta, 0, MAXQ)];
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
     }
 }
 
-int32_t get_qzbin_factor(int32_t q, AomBitDepth bit_depth) {
+int32_t get_qzbin_factor(int32_t q, EbBitDepth bit_depth) {
     const int32_t quant = svt_av1_dc_quant_q3(q, 0, bit_depth);
     switch (bit_depth) {
-    case AOM_BITS_8: return q == 0 ? 64 : (quant < 148 ? 84 : 80);
-    case AOM_BITS_10: return q == 0 ? 64 : (quant < 592 ? 84 : 80);
-    case AOM_BITS_12: return q == 0 ? 64 : (quant < 2368 ? 84 : 80);
-    default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1;
+    case EB_EIGHT_BIT: return q == 0 ? 64 : (quant < 148 ? 84 : 80);
+    case EB_TEN_BIT: return q == 0 ? 64 : (quant < 592 ? 84 : 80);
+    case EB_TWELVE_BIT: return q == 0 ? 64 : (quant < 2368 ? 84 : 80);
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
     }
 }
 
 // In AV1 TX, the coefficients are always scaled up a factor of 8 (3
 // bits), so qtx == Q3.
 
-int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth) {
+int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
     return svt_av1_dc_quant_q3(qindex, delta, bit_depth);
 }
 
-int16_t svt_av1_ac_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth) {
+int16_t svt_av1_ac_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
     return svt_av1_ac_quant_q3(qindex, delta, bit_depth);
 }
 

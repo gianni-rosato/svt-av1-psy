@@ -1302,7 +1302,7 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         // Currently, only Luma samples are needed in the PA
         ref_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width;
         ref_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height;
-        ref_pic_buf_desc_init_data.bit_depth = EB_8BIT;
+        ref_pic_buf_desc_init_data.bit_depth = EB_EIGHT_BIT;
         ref_pic_buf_desc_init_data.color_format = EB_YUV420; //use 420 for picture analysis
         //No full-resolution pixel data is allocated for PA REF,
         // it points directly to the Luma input samples of the app data
@@ -1321,7 +1321,7 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
 
         quart_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width >> 1;
         quart_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height >> 1;
-        quart_pic_buf_desc_init_data.bit_depth = EB_8BIT;
+        quart_pic_buf_desc_init_data.bit_depth = EB_EIGHT_BIT;
         quart_pic_buf_desc_init_data.color_format = EB_YUV420;
         quart_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         quart_pic_buf_desc_init_data.left_padding = scs_ptr->sb_sz >> 1;
@@ -1337,7 +1337,7 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
 
         sixteenth_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width >> 2;
         sixteenth_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height >> 2;
-        sixteenth_pic_buf_desc_init_data.bit_depth = EB_8BIT;
+        sixteenth_pic_buf_desc_init_data.bit_depth = EB_EIGHT_BIT;
         sixteenth_pic_buf_desc_init_data.color_format = EB_YUV420;
         sixteenth_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         sixteenth_pic_buf_desc_init_data.left_padding = scs_ptr->sb_sz >> 2;
@@ -1377,7 +1377,7 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     EbReferenceObjectDescInitData     eb_ref_obj_ect_desc_init_data_structure;
     EbPictureBufferDescInitData       ref_pic_buf_desc_init_data;
     SequenceControlSet* scs_ptr = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr;
-    Bool is_16bit = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    Bool is_16bit = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
     // Initialize the various Picture types
     ref_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width;
     ref_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height;
@@ -1400,7 +1400,7 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     ref_pic_buf_desc_init_data.down_sampled_filtered = FALSE;
     ref_pic_buf_desc_init_data.enc_mode = scs_ptr->static_config.enc_mode;
     if (is_16bit)
-        ref_pic_buf_desc_init_data.bit_depth = EB_10BIT;
+        ref_pic_buf_desc_init_data.bit_depth = EB_TEN_BIT;
 
     eb_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
     eb_ref_obj_ect_desc_init_data_structure.hbd_mode_decision =
@@ -3528,7 +3528,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     //for 10bit,  increase the pad of source from 68 to 72 (mutliple of 8) to accomodate 2bit-compression flow
     //we actually need to change the horizontal dimension only, but for simplicity/uniformity we do all directions
-   // if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT)
+   // if (scs_ptr->static_config.encoder_bit_depth != EB_EIGHT_BIT)
     {
         scs_ptr->left_padding  += 4;
         scs_ptr->top_padding   += 4;
@@ -4006,7 +4006,7 @@ void copy_api_from_app(
     scs_ptr->chroma_format_idc = (uint32_t)(scs_ptr->static_config.encoder_color_format);
     scs_ptr->encoder_bit_depth = (uint32_t)(scs_ptr->static_config.encoder_bit_depth);
     //16bit pipeline
-    scs_ptr->is_16bit_pipeline = ((((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth) > EB_8BIT) ? TRUE: FALSE;
+    scs_ptr->is_16bit_pipeline = ((((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth) > EB_EIGHT_BIT) ? TRUE: FALSE;
     scs_ptr->subsampling_x = (scs_ptr->chroma_format_idc == EB_YUV444 ? 1 : 2) - 1;
     scs_ptr->subsampling_y = (scs_ptr->chroma_format_idc >= EB_YUV422 ? 1 : 2) - 1;
     scs_ptr->static_config.compressed_ten_bit_format = ((EbSvtAv1EncConfiguration*)config_struct)->compressed_ten_bit_format;
@@ -4378,7 +4378,7 @@ static EbErrorType downsample_copy_frame_buffer(
     EbPictureBufferDesc           *input_picture_ptr = (EbPictureBufferDesc*)destination;
     EbPictureBufferDesc           *y8b_input_picture_ptr = (EbPictureBufferDesc*)destination_y8b;
     EbSvtIOFormat                   *input_ptr = (EbSvtIOFormat*)source;
-    Bool                           is_16bit_input = (Bool)(config->encoder_bit_depth > EB_8BIT);
+    Bool                           is_16bit_input = (Bool)(config->encoder_bit_depth > EB_EIGHT_BIT);
 
     uint8_t                         *src, *dst;
 
@@ -4581,7 +4581,7 @@ static EbErrorType copy_frame_buffer(
     EbPictureBufferDesc           *input_picture_ptr = (EbPictureBufferDesc*)destination;
     EbPictureBufferDesc           *y8b_input_picture_ptr = (EbPictureBufferDesc*)destination_y8b;
     EbSvtIOFormat                   *input_ptr = (EbSvtIOFormat*)source;
-    Bool                           is_16bit_input = (Bool)(config->encoder_bit_depth > EB_8BIT);
+    Bool                           is_16bit_input = (Bool)(config->encoder_bit_depth > EB_EIGHT_BIT);
 
     uint8_t                         *src, *dst;
 
@@ -5085,7 +5085,7 @@ static EbErrorType allocate_frame_buffer(
         scs_ptr->max_input_luma_height :
         scs_ptr->max_input_luma_height + (scs_ptr->max_input_luma_height % 8);
 
-    input_pic_buf_desc_init_data.bit_depth = (EbBitDepthEnum)config->encoder_bit_depth;
+    input_pic_buf_desc_init_data.bit_depth = (EbBitDepth)config->encoder_bit_depth;
     input_pic_buf_desc_init_data.color_format = (EbColorFormat)config->encoder_color_format;
 
     input_pic_buf_desc_init_data.left_padding = scs_ptr->left_padding;
@@ -5141,7 +5141,7 @@ static EbErrorType allocate_y8b_frame_buffer(
         !(scs_ptr->max_input_luma_height % 8) ?
         scs_ptr->max_input_luma_height :
         scs_ptr->max_input_luma_height + (scs_ptr->max_input_luma_height % 8);
-    input_pic_buf_desc_init_data.bit_depth = EB_8BIT;
+    input_pic_buf_desc_init_data.bit_depth = EB_EIGHT_BIT;
     input_pic_buf_desc_init_data.color_format = (EbColorFormat)config->encoder_color_format;
 
     input_pic_buf_desc_init_data.left_padding = scs_ptr->left_padding;

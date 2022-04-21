@@ -59,7 +59,7 @@ typedef struct EbPictureBufferDesc {
     uint16_t       height; // Luma picture height which excludes the padding
     uint16_t       max_width; // input Luma picture width
     uint16_t       max_height; // input Luma picture height
-    EbBitDepthEnum bit_depth; // Pixel Bit Depth
+    EbBitDepth     bit_depth; // Pixel Bit Depth
     EbColorFormat  color_format; // Chroma Subsumpling
 
     // Buffer Parameters
@@ -202,7 +202,7 @@ typedef int32_t (*AomGetFrameBufferCbFn)(void *priv, size_t min_size, AomCodecFr
 typedef struct EbPictureBufferDescInitData {
     uint16_t       max_width;
     uint16_t       max_height;
-    EbBitDepthEnum bit_depth;
+    EbBitDepth     bit_depth;
     EbColorFormat  color_format;
     uint32_t       buffer_enable_mask;
     int32_t        rest_units_per_tile;

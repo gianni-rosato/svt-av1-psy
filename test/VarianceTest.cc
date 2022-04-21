@@ -532,7 +532,7 @@ class AvxSubpelVarianceTest : public ::testing::TestWithParam<TestParams> {
         if (use_high_bit_depth) {
             mask = (1u << static_cast<unsigned>(use_high_bit_depth)) - 1;
         } else {
-            mask = (1u << AOM_BITS_8) - 1;
+            mask = (1u << EB_EIGHT_BIT) - 1;
         }
 
         if (!use_high_bit_depth) {

@@ -62,7 +62,8 @@ void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane, 
         *recon_stride = recon_picture_buf->stride_cr;
     }
 
-    if (recon_picture_buf->bit_depth != EB_8BIT || recon_picture_buf->is_16bit_pipeline) { //16bit
+    if (recon_picture_buf->bit_depth != EB_EIGHT_BIT ||
+        recon_picture_buf->is_16bit_pipeline) { //16bit
         if (plane == 0)
             *pp_blk_recon_buf = (void *)((uint16_t *)recon_picture_buf->buffer_y + block_offset);
         else if (plane == 1)
@@ -88,7 +89,7 @@ void pad_row(EbPictureBufferDesc *recon_picture_buf, EbByte buf_y, EbByte buf_cb
     int32_t  shift     = 0;
     assert(!(pad_width & 1));
     assert(!(pad_height & 1));
-    if ((recon_picture_buf->bit_depth == EB_8BIT) && (!recon_picture_buf->is_16bit_pipeline)) {
+    if ((recon_picture_buf->bit_depth == EB_EIGHT_BIT) && (!recon_picture_buf->is_16bit_pipeline)) {
         if (flags & LEFT) {
             generate_padding_l(buf_y, stride_y, row_height, pad_width);
             if (recon_picture_buf->color_format != EB_YUV400) {
@@ -270,7 +271,7 @@ void pad_pic(EbDecHandle *dec_handle_ptr) {
 
     assert(recon_picture_buf->color_format <= EB_YUV444);
     int32_t shift = 0;
-    if (recon_picture_buf->bit_depth != EB_8BIT || recon_picture_buf->is_16bit_pipeline)
+    if (recon_picture_buf->bit_depth != EB_EIGHT_BIT || recon_picture_buf->is_16bit_pipeline)
         shift = 1;
 
     uint16_t stride_y  = recon_picture_buf->stride_y << shift;

@@ -53,7 +53,7 @@ void        svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_
 uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth) {
     UNUSED(hbd_mode_decision);
     uint8_t bypass_encdec = 1;
-    if (encoder_bit_depth == EB_8BIT) {
+    if (encoder_bit_depth == EB_EIGHT_BIT) {
         // 8bit settings
         if (enc_mode <= ENC_M5)
             bypass_encdec = 0;
@@ -118,7 +118,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
                    .buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK,
                    .max_width          = SB_STRIDE_Y,
                    .max_height         = SB_STRIDE_Y,
-                   .bit_depth          = EB_16BIT,
+                   .bit_depth          = EB_SIXTEEN_BIT,
                    .left_padding       = 0,
                    .right_padding      = 0,
                    .top_padding        = 0,
@@ -132,7 +132,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
         .buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK,
         .max_width          = SB_STRIDE_Y,
         .max_height         = SB_STRIDE_Y,
-        .bit_depth          = EB_32BIT,
+        .bit_depth          = EB_THIRTYTWO_BIT,
         .color_format       = color_format,
         .left_padding       = 0,
         .right_padding      = 0,
@@ -149,7 +149,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
                .buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK,
                .max_width          = SB_STRIDE_Y,
                .max_height         = SB_STRIDE_Y,
-               .bit_depth          = EB_16BIT,
+               .bit_depth          = EB_SIXTEEN_BIT,
                .color_format       = color_format,
                .left_padding       = 0,
                .right_padding      = 0,
@@ -437,7 +437,7 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     svt_block_on_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 
     if (!pcs_ptr->parent_pcs_ptr->is_alt_ref) {
-        Bool             is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+        Bool             is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
         EbObjectWrapper *output_recon_wrapper_ptr;
         // Get Recon Buffer
         svt_get_empty_object(scs_ptr->encode_context_ptr->recon_output_fifo_ptr,
@@ -487,9 +487,9 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
                     scs_ptr->static_config.encoder_color_format;
 
                 if (is_16bit) {
-                    temp_recon_desc_init_data.bit_depth = EB_16BIT;
+                    temp_recon_desc_init_data.bit_depth = EB_SIXTEEN_BIT;
                 } else {
-                    temp_recon_desc_init_data.bit_depth = EB_8BIT;
+                    temp_recon_desc_init_data.bit_depth = EB_EIGHT_BIT;
                 }
 
                 EB_NO_THROW_NEW(intermediate_buffer_ptr,
@@ -755,7 +755,7 @@ void free_temporal_filtering_buffer(PictureControlSet *pcs_ptr, SequenceControlS
     EB_FREE_ARRAY(pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[1]);
     EB_FREE_ARRAY(pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[2]);
 
-    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
     if (is_16bit) {
         EB_FREE_ARRAY(pcs_ptr->parent_pcs_ptr->save_source_picture_bit_inc_ptr[0]);
         EB_FREE_ARRAY(pcs_ptr->parent_pcs_ptr->save_source_picture_bit_inc_ptr[1]);
@@ -765,7 +765,7 @@ void free_temporal_filtering_buffer(PictureControlSet *pcs_ptr, SequenceControlS
 
 EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                               Bool free_memory) {
-    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
 
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
@@ -1140,7 +1140,7 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
 
 EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                               Bool free_memory) {
-    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
 
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
@@ -1678,7 +1678,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         get_recon_pic(pcs_ptr, &ref_pic_ptr, 0);
         get_recon_pic(pcs_ptr, &ref_pic_16bit_ptr, 1);
     }
-    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
 
     if (!is_16bit) {
         pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, ref_pic_ptr);
@@ -7945,7 +7945,7 @@ void *mode_decision_kernel(void *input_ptr) {
                                              sb_origin_y,
                                              sb_index,
                                              context_ptr->md_context);
-                        //if (/*ppcs->is_used_as_reference_flag &&*/ md_ctx->hbd_mode_decision == 0 && scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
+                        //if (/*ppcs->is_used_as_reference_flag &&*/ md_ctx->hbd_mode_decision == 0 && scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT)
                         //    md_ctx->bypass_encdec = 0;
                         // Encode Pass
                         if (!context_ptr->md_context->bypass_encdec) {
@@ -8044,8 +8044,8 @@ void *mode_decision_kernel(void *input_ptr) {
                                2 * sizeof(int32_t));
                     pcs_ptr->parent_pcs_ptr->av1x->rdmult =
                         context_ptr
-                            ->pic_full_lambda[(context_ptr->bit_depth == EB_10BIT) ? EB_10_BIT_MD
-                                                                                   : EB_8_BIT_MD];
+                            ->pic_full_lambda[(context_ptr->bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD
+                                                                                     : EB_8_BIT_MD];
                     if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop == 0) {
                         svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
                         pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
@@ -8079,13 +8079,13 @@ void svt_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
     AomFilmGrain params = *film_grain_ptr;
 
     switch (src->bit_depth) {
-    case EB_8BIT:
+    case EB_EIGHT_BIT:
         params.bit_depth   = 8;
         use_high_bit_depth = 0;
         chroma_subsamp_x   = 1;
         chroma_subsamp_y   = 1;
         break;
-    case EB_10BIT:
+    case EB_TEN_BIT:
         params.bit_depth   = 10;
         use_high_bit_depth = 1;
         chroma_subsamp_x   = 1;

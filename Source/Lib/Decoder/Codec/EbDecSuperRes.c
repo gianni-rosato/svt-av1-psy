@@ -76,7 +76,7 @@ EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_picture_sr
         : PICTURE_BUFFER_DESC_FULL_MASK;
 
     recon_picture_dst->is_16bit_pipeline = recon_picture_src->is_16bit_pipeline;
-    uint32_t bytes_per_pixel             = (recon_picture_dst->bit_depth > EB_8BIT ||
+    uint32_t bytes_per_pixel             = (recon_picture_dst->bit_depth > EB_EIGHT_BIT ||
                                 recon_picture_dst->is_16bit_pipeline)
                     ? 2
                     : 1;
@@ -107,7 +107,7 @@ EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_picture_sr
     } else
         recon_picture_dst->buffer_cr = 0;
 
-    int use_highbd = (seq_hdr->color_config.bit_depth > EB_8BIT ||
+    int use_highbd = (seq_hdr->color_config.bit_depth > EB_EIGHT_BIT ||
                       recon_picture_src->is_16bit_pipeline);
 
     for (int plane = 0; plane < num_planes; ++plane) {
@@ -155,7 +155,7 @@ void svt_av1_superres_upscale(Av1Common *cm, FrameHeader *frm_hdr, SeqHeader *se
         assert(0);
     }
 
-    uint32_t bytes_per_pixel = (recon_picture_src->bit_depth > EB_8BIT ||
+    uint32_t bytes_per_pixel = (recon_picture_src->bit_depth > EB_EIGHT_BIT ||
                                 recon_picture_src->is_16bit_pipeline)
         ? 2
         : 1;

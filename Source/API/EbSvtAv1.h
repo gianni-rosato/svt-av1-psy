@@ -159,12 +159,6 @@ typedef enum EbAv1SeqProfile {
     PROFESSIONAL_PROFILE = 2
 } EbAv1SeqProfile;
 
-typedef enum AomBitDepth {
-    AOM_BITS_8  = 8, /**<  8 bits */
-    AOM_BITS_10 = 10, /**< 10 bits */
-    AOM_BITS_12 = 12, /**< 12 bits */
-} AomBitDepth;
-
 // For 8-bit and 10-bit packed inputs and outputs, the luma, cb, and cr fields should be used
 //   for the three input picture planes.  However, for 10-bit unpacked planes the
 //   lumaExt, cbExt, and crExt fields should be used hold the extra 2-bits of
@@ -233,7 +227,7 @@ typedef struct EbAV1OperatingPoint {
 
 typedef struct EbColorConfig {
     /*!< bit depth */
-    uint32_t bit_depth;
+    EbBitDepth bit_depth;
 
     /*!< 1: Indicates that the video does not contain U and V color planes.
      *   0: Indicates that the video contains Y, U, and V color planes. */

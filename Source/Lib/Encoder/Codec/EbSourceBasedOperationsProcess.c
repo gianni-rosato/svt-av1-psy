@@ -348,33 +348,37 @@ static const int16_t dc_qlookup_12_QTX[QINDEX_RANGE] = {
     15812, 16356, 16943, 17575, 18237, 18949, 19718, 20521, 21387,
 };
 
-int16_t av1_dc_quant_qtx(int qindex, int delta, AomBitDepth bit_depth) {
+int16_t av1_dc_quant_qtx(int qindex, int delta, EbBitDepth bit_depth) {
     const int q_clamped = clamp(qindex + delta, 0, MAXQ);
     switch (bit_depth) {
-    case AOM_BITS_8: return dc_qlookup_QTX[q_clamped];
-    case AOM_BITS_10: return dc_qlookup_10_QTX[q_clamped];
-    case AOM_BITS_12: return dc_qlookup_12_QTX[q_clamped];
-    default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1;
+    case EB_EIGHT_BIT: return dc_qlookup_QTX[q_clamped];
+    case EB_TEN_BIT: return dc_qlookup_10_QTX[q_clamped];
+    case EB_TWELVE_BIT: return dc_qlookup_12_QTX[q_clamped];
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
     }
 }
 
-int svt_av1_compute_rd_mult_based_on_qindex(AomBitDepth bit_depth, int qindex) {
+int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, int qindex) {
     const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
     //const int q = svt_av1_dc_quant_Q3(qindex, 0, bit_depth);
     int rdmult = q * q;
     rdmult     = rdmult * 3 + (rdmult * 2 / 3);
     switch (bit_depth) {
-    case AOM_BITS_8: break;
-    case AOM_BITS_10: rdmult = ROUND_POWER_OF_TWO(rdmult, 4); break;
-    case AOM_BITS_12: rdmult = ROUND_POWER_OF_TWO(rdmult, 8); break;
-    default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1;
+    case EB_EIGHT_BIT: break;
+    case EB_TEN_BIT: rdmult = ROUND_POWER_OF_TWO(rdmult, 4); break;
+    case EB_TWELVE_BIT: rdmult = ROUND_POWER_OF_TWO(rdmult, 8); break;
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
     }
     return rdmult > 0 ? rdmult : 1;
 }
 
-double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
+double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
 
-int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
+int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_depth);
 
 extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode,
                               uint16_t max_frame_width, uint16_t max_frame_height, int32_t p_angle,
@@ -1373,7 +1377,7 @@ void tpl_mc_flow_dispenser(EncodeContext *encode_context_ptr, SequenceControlSet
         qIndex = (qIndex + delta_qindex);
     }
     *base_rdmult = svt_av1_compute_rd_mult_based_on_qindex(
-                       (AomBitDepth)8 /*scs_ptr->static_config.encoder_bit_depth*/, qIndex) /
+                       (EbBitDepth)8 /*scs_ptr->static_config.encoder_bit_depth*/, qIndex) /
         6;
 
     {
@@ -1725,7 +1729,7 @@ EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr, PictureParentCon
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
     picture_buffer_desc_init_data.max_width          = pcs_ptr->enhanced_picture_ptr->max_width;
     picture_buffer_desc_init_data.max_height         = pcs_ptr->enhanced_picture_ptr->max_height;
-    picture_buffer_desc_init_data.bit_depth          = EB_8BIT;
+    picture_buffer_desc_init_data.bit_depth          = EB_EIGHT_BIT;
     picture_buffer_desc_init_data.color_format       = pcs_ptr->enhanced_picture_ptr->color_format;
     picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
     picture_buffer_desc_init_data.left_padding       = TPL_PADX;

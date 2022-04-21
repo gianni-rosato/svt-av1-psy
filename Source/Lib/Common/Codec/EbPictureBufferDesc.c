@@ -128,16 +128,16 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
     const EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
         (EbPictureBufferDescInitData *)object_init_data_ptr;
 
-    uint32_t       bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth == EB_8BIT) ? 1
-              : (picture_buffer_desc_init_data_ptr->bit_depth <= EB_16BIT)                     ? 2
-                                                                                               : 4;
+    uint32_t bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth == EB_EIGHT_BIT) ? 1
+        : (picture_buffer_desc_init_data_ptr->bit_depth <= EB_SIXTEEN_BIT)                    ? 2
+                                                                                              : 4;
     const uint16_t subsampling_x =
         (picture_buffer_desc_init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
 
     pictureBufferDescPtr->dctor = svt_picture_buffer_desc_dctor;
 
-    if (picture_buffer_desc_init_data_ptr->bit_depth > EB_8BIT &&
-        picture_buffer_desc_init_data_ptr->bit_depth <= EB_16BIT &&
+    if (picture_buffer_desc_init_data_ptr->bit_depth > EB_EIGHT_BIT &&
+        picture_buffer_desc_init_data_ptr->bit_depth <= EB_SIXTEEN_BIT &&
         picture_buffer_desc_init_data_ptr->split_mode == TRUE)
         bytes_per_pixel = 1;
 
@@ -232,7 +232,8 @@ EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBuffe
     const uint16_t subsampling_x =
         (picture_buffer_desc_init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
 
-    uint32_t bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth == EB_8BIT) ? 1 : 2;
+    uint32_t bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth == EB_EIGHT_BIT) ? 1
+                                                                                              : 2;
 
     pictureBufferDescPtr->dctor = svt_recon_picture_buffer_desc_dctor;
     // Set the Picture Buffer Static variables
@@ -318,7 +319,7 @@ void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfi
     (void)is_16bit;
 
     //NOTe:  Not all fileds are connected. add more connections as needed.
-    if ((picBuffDsc->bit_depth == EB_8BIT) && (picBuffDsc->is_16bit_pipeline != 1)) {
+    if ((picBuffDsc->bit_depth == EB_EIGHT_BIT) && (picBuffDsc->is_16bit_pipeline != 1)) {
         aomBuffDsc->y_buffer = picBuffDsc->buffer_y + picBuffDsc->origin_x +
             (picBuffDsc->origin_y * picBuffDsc->stride_y);
         aomBuffDsc->u_buffer = picBuffDsc->buffer_cb + picBuffDsc->origin_x / 2 +

@@ -2049,17 +2049,6 @@ buffers to and from the eBrisk API.  The EbByte type is a 32 bit pointer.
 The pointer is word aligned and the buffer is byte aligned.
 */
 
-/** The EbBitDepthEnum type is used to describe the bitdepth of video data.
-*/
-typedef enum EbBitDepthEnum
-{
-    EB_8BIT = 8,
-    EB_10BIT = 10,
-    EB_12BIT = 12,
-    EB_14BIT = 14,
-    EB_16BIT = 16,
-    EB_32BIT = 32
-} EbBitDepthEnum;
 /** The MD_BIT_DEPTH_MODE type is used to describe the bitdepth of MD path.
 */
 

@@ -109,22 +109,24 @@ EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
 
-extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 // These functions use formulaic calculations to make playing with the
 // quantizer tables easier. If necessary they can be replaced by lookup
 // tables if and when things settle down in the experimental Bitstream
 
-int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, AomBitDepth bit_depth) {
+int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, EbBitDepth bit_depth) {
     // Convert the index to a real Q value (scaled down to match old Q values)
     switch (bit_depth) {
-    case AOM_BITS_8: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 6; // / 4.0;
-    case AOM_BITS_10: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 4; // / 16.0;
-    case AOM_BITS_12: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 3; // / 64.0;
-    default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1;
+    case EB_EIGHT_BIT: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 6; // / 4.0;
+    case EB_TEN_BIT: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 4; // / 16.0;
+    case EB_TWELVE_BIT: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 3; // / 64.0;
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
     }
 }
 
-int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, AomBitDepth bit_depth) {
+int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, EbBitDepth bit_depth) {
     int32_t start_index  = MAX_Q_INDEX;
     int32_t target_index = MAX_Q_INDEX;
     int32_t i;
@@ -145,16 +147,18 @@ int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, AomBi
 
     return target_index - start_index;
 }
-double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth) {
+double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth) {
     // Convert the index to a real Q value (scaled down to match old Q values)
     switch (bit_depth) {
-    case AOM_BITS_8: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 4.0;
-    case AOM_BITS_10: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 16.0;
-    case AOM_BITS_12: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 64.0;
-    default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1.0;
+    case EB_EIGHT_BIT: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 4.0;
+    case EB_TEN_BIT: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 16.0;
+    case EB_TWELVE_BIT: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 64.0;
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1.0;
     }
 }
-int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth) {
+int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_depth) {
     int32_t start_index  = MAX_Q_INDEX;
     int32_t target_index = MAX_Q_INDEX;
     int32_t i;
@@ -201,19 +205,17 @@ int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_de
 #define SUPERRES_QADJ_PER_DENOM_KEYFRAME 2
 #define SUPERRES_QADJ_PER_DENOM_ARFFRAME 0
 
-#define ASSIGN_MINQ_TABLE(bit_depth, name)                   \
-    do {                                                     \
-        name = NULL;                                         \
-        switch (bit_depth) {                                 \
-        case AOM_BITS_10: name = name##_10; break;           \
-        case AOM_BITS_12: name = name##_12; break;           \
-        case AOM_BITS_8: name = name##_8; break;             \
-        }                                                    \
-        assert(name &&                                       \
-               "bit_depth should be AOM_BITS_8, AOM_BITS_10" \
-               " or AOM_BITS_12");                           \
-        if (!name)                                           \
-            name = name##_8;                                 \
+#define ASSIGN_MINQ_TABLE(bit_depth, name)                                                     \
+    do {                                                                                       \
+        name = NULL;                                                                           \
+        switch (bit_depth) {                                                                   \
+        case EB_TEN_BIT: name = name##_10; break;                                              \
+        case EB_TWELVE_BIT: name = name##_12; break;                                           \
+        case EB_EIGHT_BIT: name = name##_8; break;                                             \
+        default: assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT"); \
+        }                                                                                      \
+        if (!name)                                                                             \
+            name = name##_8;                                                                   \
     } while (0)
 static int kf_low_motion_minq_cqp_8[QINDEX_RANGE] = {
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -513,7 +515,7 @@ static int get_active_quality(int q, int gfu_boost, int low, int high, int *low_
         return low_motion_minq[q] + adjustment;
     }
 }
-static int get_kf_active_quality_tpl(const RATE_CONTROL *const rc, int q, AomBitDepth bit_depth) {
+static int get_kf_active_quality_tpl(const RATE_CONTROL *const rc, int q, EbBitDepth bit_depth) {
     int *kf_low_motion_minq_cqp;
     int *kf_high_motion_minq;
     ASSIGN_MINQ_TABLE(bit_depth, kf_low_motion_minq_cqp);
@@ -521,8 +523,7 @@ static int get_kf_active_quality_tpl(const RATE_CONTROL *const rc, int q, AomBit
     return get_active_quality(
         q, rc->kf_boost, kf_low, kf_high, kf_low_motion_minq_cqp, kf_high_motion_minq);
 }
-static int get_gf_active_quality_tpl_la(const RATE_CONTROL *const rc, int q,
-                                        AomBitDepth bit_depth) {
+static int get_gf_active_quality_tpl_la(const RATE_CONTROL *const rc, int q, EbBitDepth bit_depth) {
     int *arfgf_low_motion_minq;
     int *arfgf_high_motion_minq;
     ASSIGN_MINQ_TABLE(bit_depth, arfgf_low_motion_minq);
@@ -534,12 +535,12 @@ static int get_gf_active_quality_tpl_la(const RATE_CONTROL *const rc, int q,
                               arfgf_low_motion_minq,
                               arfgf_high_motion_minq);
 }
-static int get_gf_high_motion_quality(int q, AomBitDepth bit_depth) {
+static int get_gf_high_motion_quality(int q, EbBitDepth bit_depth) {
     int *arfgf_high_motion_minq;
     ASSIGN_MINQ_TABLE(bit_depth, arfgf_high_motion_minq);
     return arfgf_high_motion_minq[q];
 }
-int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 
 static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key,
                                     EbInputResolution input_resolution) {
@@ -575,7 +576,7 @@ static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor, doubl
     const int boost = (int)rint(factor / r0);
     return boost;
 }
-int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta, uint8_t is_intra) {
+int svt_av1_get_deltaq_offset(EbBitDepth bit_depth, int qindex, double beta, uint8_t is_intra) {
     assert(beta > 0.0);
     int q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
     int newq;
@@ -2087,7 +2088,7 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
 }
 
 static int av1_estimate_bits_at_q(FrameType frame_type, int q, int mbs, double correction_factor,
-                                  AomBitDepth bit_depth, uint8_t sc_content_detected,
+                                  EbBitDepth bit_depth, uint8_t sc_content_detected,
                                   int onepass_cbr_mode, int iperiod_fctr) {
     const int bpm = (int)(svt_av1_rc_bits_per_mb(frame_type,
                                                  q,
@@ -2411,7 +2412,7 @@ static double av1_get_compression_ratio(PictureParentControlSet *ppcs_ptr,
 * reverse of get_kf_active_quality_tpl()
 **************************************************************************************************************/
 static int get_kf_q_tpl(const RATE_CONTROL *const rc, int target_active_quality,
-                        AomBitDepth bit_depth) {
+                        EbBitDepth bit_depth) {
     int *kf_low_motion_minq_cqp;
     int *kf_high_motion_minq;
     ASSIGN_MINQ_TABLE(bit_depth, kf_low_motion_minq_cqp);
@@ -2435,7 +2436,7 @@ static int get_kf_q_tpl(const RATE_CONTROL *const rc, int target_active_quality,
 *This function finds the q for a selected active quality for base layer frames. The functionality is the reverse of get_kf_active_quality_tpl()
 **************************************************************************************************************/
 static int get_gfu_q_tpl(const RATE_CONTROL *const rc, int target_active_quality,
-                         AomBitDepth bit_depth) {
+                         EbBitDepth bit_depth) {
     int *arfgf_low_motion_minq;
     int *arfgf_high_motion_minq;
     ASSIGN_MINQ_TABLE(bit_depth, arfgf_low_motion_minq);
@@ -3295,7 +3296,7 @@ void *rate_control_kernel(void *input_ptr) {
                                 new_qindex = cqp_qindex_calc(pcs_ptr, qindex);
                         } else {
                             new_qindex = find_fp_qindex(
-                                (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
+                                (EbBitDepth)scs_ptr->static_config.encoder_bit_depth);
                         }
                         frm_hdr->quantization_params.base_q_idx = (uint8_t)CLIP3(
                             (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],

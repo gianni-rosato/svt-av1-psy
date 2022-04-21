@@ -1132,7 +1132,7 @@ typedef struct PictureControlSetInitData {
     uint16_t       right_padding;
     uint16_t       top_padding;
     uint16_t       bot_padding;
-    EbBitDepthEnum bit_depth;
+    EbBitDepth     bit_depth;
     EbColorFormat  color_format;
     uint32_t       sb_sz;
     uint8_t        cfg_palette;

@@ -229,7 +229,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
     default: assert(0);
     }
 
-    int32_t use_high_bit_depth = recon_picture_buf->bit_depth == EB_8BIT ? 0 : 1;
+    int32_t use_high_bit_depth = recon_picture_buf->bit_depth == EB_EIGHT_BIT ? 0 : 1;
 
     luma = out_img->luma +
         ((out_img->origin_y * out_img->y_stride + out_img->origin_x) << use_high_bit_depth);
@@ -246,7 +246,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
 
     /* Memcpy to dst buffer */
     {
-        if (recon_picture_buf->bit_depth == EB_8BIT) {
+        if (recon_picture_buf->bit_depth == EB_EIGHT_BIT) {
             if (dec_handle_ptr->is_16bit_pipeline) {
                 uint8_t  *dst;
                 uint16_t *pu2_src;
@@ -374,8 +374,8 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
         AomFilmGrain *film_grain_ptr = &dec_handle_ptr->cur_pic_buf[0]->film_grain_params;
         if (film_grain_ptr->apply_grain) {
             switch (recon_picture_buf->bit_depth) {
-            case EB_8BIT: film_grain_ptr->bit_depth = 8; break;
-            case EB_10BIT: film_grain_ptr->bit_depth = 10; break;
+            case EB_EIGHT_BIT: film_grain_ptr->bit_depth = 8; break;
+            case EB_TEN_BIT: film_grain_ptr->bit_depth = 10; break;
             default: assert(0);
             }
             copy_even(luma, wd, ht, out_img->y_stride, use_high_bit_depth);

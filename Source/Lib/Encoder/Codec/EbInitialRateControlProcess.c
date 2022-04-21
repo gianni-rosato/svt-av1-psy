@@ -90,7 +90,7 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext   *thread_context_
     return EB_ErrorNone;
 }
 
-void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
+void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
                              Quants *const quants, Dequants *const deq);
 
@@ -544,7 +544,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 Quants *const   quants_8bit = &scs_ptr->quants_8bit;
                 Dequants *const deq_8bit    = &scs_ptr->deq_8bit;
                 svt_av1_build_quantizer(
-                    AOM_BITS_8,
+                    EB_EIGHT_BIT,
                     pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
                     pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
                     pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
@@ -553,11 +553,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     quants_8bit,
                     deq_8bit);
 
-                if (scs_ptr->static_config.encoder_bit_depth == AOM_BITS_10) {
+                if (scs_ptr->static_config.encoder_bit_depth == EB_TEN_BIT) {
                     Quants *const   quants_bd = &scs_ptr->quants_bd;
                     Dequants *const deq_bd    = &scs_ptr->deq_bd;
                     svt_av1_build_quantizer(
-                        AOM_BITS_10,
+                        EB_TEN_BIT,
                         pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
                         pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
                         pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],

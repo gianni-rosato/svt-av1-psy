@@ -18,7 +18,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
 
-extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 
 #include "EbRateDistortionCost.h"
 

@@ -120,7 +120,7 @@ EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
         init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
         init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
-        init_data.bit_depth          = is_16bit ? EB_16BIT : EB_8BIT;
+        init_data.bit_depth          = is_16bit ? EB_SIXTEEN_BIT : EB_EIGHT_BIT;
         init_data.color_format       = color_format;
 #if CLN_REST
         init_data.left_padding       = AOM_RESTORATION_FRAME_BORDER;
@@ -142,9 +142,9 @@ EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
         else
             context_ptr->org_rec_frame = NULL;
         if (!is_16bit) {
-            context_ptr->trial_frame_rst->bit_depth = EB_8BIT;
+            context_ptr->trial_frame_rst->bit_depth = EB_EIGHT_BIT;
             if (scs_ptr->use_boundaries_in_rest_search)
-                context_ptr->org_rec_frame->bit_depth = EB_8BIT;
+                context_ptr->org_rec_frame->bit_depth = EB_EIGHT_BIT;
         }
 
         EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
@@ -323,7 +323,7 @@ void set_unscaled_input_16bit(PictureControlSet *pcs_ptr) {
     uint16_t             ss_x       = pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x;
     uint16_t             ss_y       = pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y;
     copy_buffer_info(input_pic, pcs_ptr->input_frame16bit);
-    if (input_pic->bit_depth == EB_8BIT)
+    if (input_pic->bit_depth == EB_EIGHT_BIT)
         svt_convert_pic_8bit_to_16bit(input_pic, output_pic, ss_x, ss_y);
     else {
         uint16_t *planes[3] = {(uint16_t *)output_pic->buffer_y +
@@ -771,7 +771,7 @@ void *rest_kernel(void *input_ptr) {
                     pad_ref_and_set_flags(pcs_ptr, scs_ptr);
                 else {
                     // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
-                    if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
+                    if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT) {
                         EbPictureBufferDesc *ref_pic_ptr =
                             pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
                         EbPictureBufferDesc *ref_pic_16bit_ptr =

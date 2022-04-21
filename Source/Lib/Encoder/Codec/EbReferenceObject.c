@@ -78,7 +78,7 @@ void initialize_samples_neighboring_reference_picture_8bit(EbByte   recon_sample
 
 void initialize_samples_neighboring_reference_picture(
     EbReferenceObject           *reference_object,
-    EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr, EbBitDepthEnum bit_depth) {
+    EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr, EbBitDepth bit_depth) {
     UNUSED(bit_depth);
     {
         initialize_samples_neighboring_reference_picture_8bit(
@@ -148,11 +148,11 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
 
     reference_object->dctor = svt_reference_object_dctor;
     //TODO:12bit
-    if (picture_buffer_desc_init_data_16bit_ptr.bit_depth == EB_10BIT) {
+    if (picture_buffer_desc_init_data_16bit_ptr.bit_depth == EB_TEN_BIT) {
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
         // Use 10bit here to use in MD
         picture_buffer_desc_init_data_16bit_ptr.split_mode = TRUE;
-        picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_10BIT;
+        picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_TEN_BIT;
         EB_NEW(reference_object->reference_picture,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);

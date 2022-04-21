@@ -33,7 +33,7 @@ typedef void (*av1_compute_stats_highbd_func)(
     int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8,
     int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end,
     int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H,
-    AomBitDepth bit_depth);
+    EbBitDepth bit_depth);
 
 typedef ::testing::tuple<BlockSize, av1_compute_stats_func, int, int>
     av1_compute_stats_params;
@@ -275,7 +275,7 @@ INSTANTIATE_TEST_CASE_P(
 #endif
 
 typedef ::testing::tuple<BlockSize, av1_compute_stats_highbd_func, int, int,
-                         AomBitDepth>
+                         EbBitDepth>
     av1_compute_stats_hbd_params;
 
 class av1_compute_stats_test_hbd
@@ -285,7 +285,7 @@ class av1_compute_stats_test_hbd
     int64_t M_org[WIENER_WIN2], M_opt[WIENER_WIN2];
     int64_t H_org[WIENER_WIN2 * WIENER_WIN2], H_opt[WIENER_WIN2 * WIENER_WIN2];
 
-    void init_data_highbd(AomBitDepth bd, const int idx) {
+    void init_data_highbd(EbBitDepth bd, const int idx) {
         if (!idx) {
             memset(
                 dgd,
@@ -320,7 +320,7 @@ class av1_compute_stats_test_hbd
             svt_buf_random_u16_to_0_or_bd(
                 src, 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride, bd);
         } else if (5 == idx) {
-            // Trigger the 32-bit overflow in Step 3 and 4 for AOM_BITS_12.
+            // Trigger the 32-bit overflow in Step 3 and 4 for EB_TWELVE_BIT.
             svt_buf_random_u16_to_bd(
                 dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride, bd);
             for (int i = 0; i < 2 * RESTORATION_UNITPELS_HORZ_MAX; i++) {
@@ -331,7 +331,7 @@ class av1_compute_stats_test_hbd
                 0,
                 sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else if (6 == idx) {
-            // Trigger the 32-bit overflow in Step 5 and 6 for AOM_BITS_12.
+            // Trigger the 32-bit overflow in Step 5 and 6 for EB_TWELVE_BIT.
             svt_buf_random_u16_to_bd(
                 dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride, bd);
             memset(
@@ -375,7 +375,7 @@ class av1_compute_stats_test_hbd
         av1_compute_stats_highbd_func func = TEST_GET_PARAM(1);
         int test_idx = TEST_GET_PARAM(2);
         int wiener_win = TEST_GET_PARAM(3);
-        const AomBitDepth bit_depth = TEST_GET_PARAM(4);
+        const EbBitDepth bit_depth = TEST_GET_PARAM(4);
         init_output();
 
         dgd_stride =
@@ -441,7 +441,7 @@ class av1_compute_stats_test_hbd
 
         av1_compute_stats_highbd_func func = TEST_GET_PARAM(1);
         int wiener_win = TEST_GET_PARAM(3);
-        const AomBitDepth bit_depth = TEST_GET_PARAM(4);
+        const EbBitDepth bit_depth = TEST_GET_PARAM(4);
         init_output();
 
         dgd_stride =
@@ -542,7 +542,7 @@ INSTANTIATE_TEST_CASE_P(
                           svt_av1_compute_stats_highbd_avx2),
         ::testing::Range(0, 8),
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),
-        ::testing::Values(AOM_BITS_8, AOM_BITS_10, AOM_BITS_12)));
+        ::testing::Values(EB_EIGHT_BIT, EB_TEN_BIT, EB_TWELVE_BIT)));
 
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
@@ -552,5 +552,5 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(svt_av1_compute_stats_highbd_avx512),
         ::testing::Range(0, 8),
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),
-        ::testing::Values(AOM_BITS_8, AOM_BITS_10, AOM_BITS_12)));
+        ::testing::Values(EB_EIGHT_BIT, EB_TEN_BIT, EB_TWELVE_BIT)));
 #endif

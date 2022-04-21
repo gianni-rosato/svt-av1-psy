@@ -55,7 +55,7 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
 
     EB_MALLOC_DEC(EbPictureBufferDesc*, picture_buffer_desc_ptr, sizeof(EbPictureBufferDesc), EB_N_PTR);
 
-    uint32_t bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth > EB_8BIT ||
+    uint32_t bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth > EB_EIGHT_BIT ||
         is_16bit_pipeline) ? 2 : 1;
     picture_buffer_desc_ptr->is_16bit_pipeline = is_16bit_pipeline;
 
@@ -370,7 +370,7 @@ EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
     av1_inverse_qm_init(p_dec_mod_ctxt, seq_header);
 
     EbColorConfig *cc = &dec_handle_ptr->seq_header.color_config;
-    uint32_t use_highbd = (cc->bit_depth > EB_8BIT ||
+    uint32_t use_highbd = (cc->bit_depth > EB_EIGHT_BIT ||
         dec_handle_ptr->is_16bit_pipeline);
     int32_t sb_size = 1 << sb_size_log2;
     uint16_t *hbd_mc_buf[2];
@@ -474,7 +474,7 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     // Allocate memory for Deblocked line buffer around stripe(64) boundary for a frame
     const int ext_h = RESTORATION_UNIT_OFFSET + frame_height;
     const int num_stripes = (ext_h + 63) / 64;
-    int use_highbd = (dec_handle_ptr->seq_header.color_config.bit_depth > EB_8BIT ||
+    int use_highbd = (dec_handle_ptr->seq_header.color_config.bit_depth > EB_EIGHT_BIT ||
         dec_handle_ptr->is_16bit_pipeline);
 
     for (int plane = 0; plane < num_planes; plane++)

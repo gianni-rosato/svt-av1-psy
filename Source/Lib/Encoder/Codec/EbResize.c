@@ -1119,7 +1119,7 @@ static void analyze_hor_freq(PictureParentControlSet *pcs_ptr, double *energy) {
             for (int ii = 0; ii < 4; ++ii)
                 for (int jj = 0; jj < 16; ++jj)
                     src16[ii * 16 + jj] = in[(i + ii) * input_picture_ptr->stride_y + (j + jj)];
-            svt_av1_fwd_txfm2d_16x4(src16, coeff, 16, H_DCT, EB_8BIT);
+            svt_av1_fwd_txfm2d_16x4(src16, coeff, 16, H_DCT, EB_EIGHT_BIT);
             for (int k = 1; k < 16; ++k) {
                 const uint64_t this_energy = ((int64_t)coeff[k] * coeff[k]) +
                     ((int64_t)coeff[k + 16] * coeff[k + 16]) +
@@ -1172,7 +1172,7 @@ static int av1_superres_in_recode_allowed(SequenceControlSet *scs_ptr) {
 
 static uint8_t get_superres_denom_from_qindex_energy(int qindex, double *energy, double threshq,
                                                      double threshp) {
-    const double q      = svt_av1_convert_qindex_to_q(qindex, AOM_BITS_8);
+    const double q      = svt_av1_convert_qindex_to_q(qindex, EB_EIGHT_BIT);
     const double tq     = threshq * q * q;
     const double tp     = threshp * energy[1];
     const double thresh = AOMMIN(tq, tp);
@@ -1348,7 +1348,7 @@ static EbErrorType downscaled_source_buffer_desc_ctor(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
+    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
     initData.left_padding       = picture_ptr_for_reference->origin_x;
     initData.right_padding      = picture_ptr_for_reference->origin_x;
     initData.top_padding        = picture_ptr_for_reference->origin_y;
@@ -1456,13 +1456,13 @@ static EbErrorType allocate_downscaled_reference_pics(
     ref_pic_buf_desc_init_data.mfmv          = pcs_ptr->scs_ptr->mfmv_enabled;
 
     //TODO:12bit
-    if (ref_pic_buf_desc_init_data.bit_depth == EB_10BIT) {
+    if (ref_pic_buf_desc_init_data.bit_depth == EB_TEN_BIT) {
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
 
         // align with svt_reference_object_ctor()
         // Use 10bit here to use in MD
         ref_pic_buf_desc_init_data.split_mode = TRUE;
-        ref_pic_buf_desc_init_data.bit_depth  = EB_10BIT;
+        ref_pic_buf_desc_init_data.bit_depth  = EB_TEN_BIT;
         EB_NEW(*downscaled_reference_picture_ptr,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&ref_pic_buf_desc_init_data);
@@ -1492,7 +1492,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
+    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
     initData.left_padding       = picture_ptr_for_reference->origin_x;
     initData.right_padding      = picture_ptr_for_reference->origin_x;
     initData.top_padding        = picture_ptr_for_reference->origin_y;
@@ -1505,7 +1505,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height >> 1;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
+    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
     initData.left_padding       = picture_ptr_for_reference->origin_x >> 1;
     initData.right_padding      = picture_ptr_for_reference->origin_x >> 1;
     initData.top_padding        = picture_ptr_for_reference->origin_y >> 1;
@@ -1518,7 +1518,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height >> 2;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? TRUE : FALSE;
+    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
     initData.left_padding       = picture_ptr_for_reference->origin_x >> 2;
     initData.right_padding      = picture_ptr_for_reference->origin_x >> 2;
     initData.top_padding        = picture_ptr_for_reference->origin_y >> 2;

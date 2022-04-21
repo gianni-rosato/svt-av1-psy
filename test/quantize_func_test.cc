@@ -34,7 +34,7 @@ namespace {
 using svt_av1_test_tool::SVTRandom;
 
 extern "C" void svt_av1_build_quantizer(
-    AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
+    EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
     int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
     Quants *const quants, Dequants *const deq);
 
@@ -52,9 +52,9 @@ typedef void (*QuantizeHbdFunc)(QUAN_PARAM_LIST, QUAN_HBD_PARAM);
 enum QuantType { TYPE_B, TYPE_DC, TYPE_FP };
 
 using std::tuple;
-typedef tuple<QuantizeFunc, QuantizeFunc, TxSize, QuantType, AomBitDepth>
+typedef tuple<QuantizeFunc, QuantizeFunc, TxSize, QuantType, EbBitDepth>
     QuantizeParam;
-typedef tuple<QuantizeHbdFunc, QuantizeHbdFunc, TxSize, QuantType, AomBitDepth>
+typedef tuple<QuantizeHbdFunc, QuantizeHbdFunc, TxSize, QuantType, EbBitDepth>
     QuantizeHbdParam;
 
 typedef struct {
@@ -73,7 +73,7 @@ class QuantizeTest : public ::testing::TestWithParam<ParamType> {
           quant_(nullptr),
           tx_size_(TX_4X4),
           type_(TYPE_FP),
-          bd_(AOM_BITS_8) {
+          bd_(EB_EIGHT_BIT) {
     }
 
     virtual ~QuantizeTest() {
@@ -148,7 +148,7 @@ class QuantizeTest : public ::testing::TestWithParam<ParamType> {
 
     TranLow GetRandomCoeff() {
         TranLow coeff;
-        if (bd_ == AOM_BITS_8) {
+        if (bd_ == EB_EIGHT_BIT) {
             coeff = clamp(
                 static_cast<int16_t>(rnd_.random()), INT16_MIN + 1, INT16_MAX);
         } else {
@@ -166,7 +166,7 @@ class QuantizeTest : public ::testing::TestWithParam<ParamType> {
     FuncType quant_;
     TxSize tx_size_;
     QuantType type_;
-    AomBitDepth bd_;
+    EbBitDepth bd_;
 };
 
 class QuantizeLbdTest : public QuantizeTest<QuantizeParam, QuantizeFunc> {
@@ -586,135 +586,135 @@ using std::make_tuple;
 #if HAS_AVX2
 const QuantizeParam kQParamArrayAvx2[] = {
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_4X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_4X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_16X4), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X4), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_32X8), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_32X8), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_8X32), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_8X32), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,
-               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,
-               static_cast<TxSize>(TX_4X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_4X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,
-               static_cast<TxSize>(TX_16X4), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X4), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,
-               static_cast<TxSize>(TX_32X8), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_32X8), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,
-               static_cast<TxSize>(TX_8X32), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_8X32), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_avx2,
-               static_cast<TxSize>(TX_32X32), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_32X32), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_avx2,
-               static_cast<TxSize>(TX_16X64), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X64), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_avx2,
-               static_cast<TxSize>(TX_64X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_64X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_sse4_1,
-               static_cast<TxSize>(TX_32X32), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_32X32), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_sse4_1,
-               static_cast<TxSize>(TX_16X64), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X64), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_sse4_1,
-               static_cast<TxSize>(TX_64X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_64X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_64x64_c, &svt_av1_quantize_fp_64x64_avx2,
-               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_64x64_c, &svt_av1_quantize_fp_64x64_sse4_1,
-               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_8)};
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_EIGHT_BIT)};
 
 const QuantizeHbdParam kQHbdParamArraySse41[] = {
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_4X16),
-               TYPE_FP, AOM_BITS_8),
+               TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_16X4),
-               TYPE_FP, AOM_BITS_8),
+               TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_32X8),
-               TYPE_FP, AOM_BITS_8),
+               TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_8X32),
-               TYPE_FP, AOM_BITS_8),
+               TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_10),
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_4X16),
-               TYPE_FP, AOM_BITS_10),
+               TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_16X4),
-               TYPE_FP, AOM_BITS_10),
+               TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_32X8),
-               TYPE_FP, AOM_BITS_10),
+               TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_8X32),
-               TYPE_FP, AOM_BITS_10),
+               TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_10),
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_12),
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_4X16),
-               TYPE_FP, AOM_BITS_12),
+               TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_16X4),
-               TYPE_FP, AOM_BITS_12),
+               TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_32X8),
-               TYPE_FP, AOM_BITS_12),
+               TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1, static_cast<TxSize>(TX_8X32),
-               TYPE_FP, AOM_BITS_12),
+               TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c,
                &svt_av1_highbd_quantize_fp_sse4_1,
-               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_12)};
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_TWELVE_BIT)};
 
 const QuantizeHbdParam kQHbdParamArrayAvx2[] = {
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_4X16), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_4X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_16X4), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_16X4), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_32X8), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_32X8), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_8X32), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_8X32), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_10),
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_4X16), TYPE_FP, AOM_BITS_10),
+               static_cast<TxSize>(TX_4X16), TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_16X4), TYPE_FP, AOM_BITS_10),
+               static_cast<TxSize>(TX_16X4), TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_32X8), TYPE_FP, AOM_BITS_10),
+               static_cast<TxSize>(TX_32X8), TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_8X32), TYPE_FP, AOM_BITS_10),
+               static_cast<TxSize>(TX_8X32), TYPE_FP, EB_TEN_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_8),
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_12),
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_4X16), TYPE_FP, AOM_BITS_12),
+               static_cast<TxSize>(TX_4X16), TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_16X4), TYPE_FP, AOM_BITS_12),
+               static_cast<TxSize>(TX_16X4), TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_32X8), TYPE_FP, AOM_BITS_12),
+               static_cast<TxSize>(TX_32X8), TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_8X32), TYPE_FP, AOM_BITS_12),
+               static_cast<TxSize>(TX_8X32), TYPE_FP, EB_TWELVE_BIT),
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
-               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_12)};
+               static_cast<TxSize>(TX_64X64), TYPE_FP, EB_TWELVE_BIT)};
 
 INSTANTIATE_TEST_CASE_P(AVX2, QuantizeLbdTest,
                         ::testing::ValuesIn(kQParamArrayAvx2));

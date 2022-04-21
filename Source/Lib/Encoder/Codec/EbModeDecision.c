@@ -204,8 +204,9 @@ static int64_t pick_interintra_wedge(PictureControlSet *pcs_ptr, ModeDecisionCon
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]); // src - pred1
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]); // pred1 - pred0
     if (context_ptr->hbd_mode_decision) {
-        svt_aom_highbd_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw, EB_10BIT);
-        svt_aom_highbd_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw, EB_10BIT);
+        svt_aom_highbd_subtract_block(
+            bh, bw, residual1, bw, src_buf, src_stride, p1, bw, EB_TEN_BIT);
+        svt_aom_highbd_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw, EB_TEN_BIT);
 
     } else {
         svt_aom_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw);
@@ -253,7 +254,7 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     uint8_t *src_buf = src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
         (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
 
-    uint8_t  bit_depth   = context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT;
+    uint8_t  bit_depth   = context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT;
     uint32_t full_lambda = context_ptr->hbd_mode_decision
         ? context_ptr->full_lambda_md[EB_10_BIT_MD]
         : context_ptr->full_lambda_md[EB_8_BIT_MD];
@@ -346,7 +347,7 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                          0, //output origin_x,
                          0, //output origin_y,
                          PICTURE_BUFFER_DESC_LUMA_MASK,
-                         context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+                         context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                          0); // is_16bit_pipeline
 
     assert(is_interintra_wedge_used(
@@ -583,7 +584,7 @@ static void mode_decision_scratch_candidate_buffer_dctor(EbPtr p) {
 * Mode Decision Candidate Ctor
 ***************************************/
 EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
-                                                EbBitDepthEnum max_bitdepth, uint8_t sb_size,
+                                                EbBitDepth max_bitdepth, uint8_t sb_size,
                                                 uint32_t             buffer_desc_mask,
                                                 EbPictureBufferDesc *temp_residual_ptr,
                                                 EbPictureBufferDesc *temp_recon_ptr,
@@ -608,7 +609,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
 
     thirty_two_width_picture_buffer_desc_init_data.max_width          = sb_size;
     thirty_two_width_picture_buffer_desc_init_data.max_height         = sb_size;
-    thirty_two_width_picture_buffer_desc_init_data.bit_depth          = EB_32BIT;
+    thirty_two_width_picture_buffer_desc_init_data.bit_depth          = EB_THIRTYTWO_BIT;
     thirty_two_width_picture_buffer_desc_init_data.color_format       = EB_YUV420;
     thirty_two_width_picture_buffer_desc_init_data.buffer_enable_mask = buffer_desc_mask;
     thirty_two_width_picture_buffer_desc_init_data.left_padding       = 0;
@@ -641,8 +642,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     return EB_ErrorNone;
 }
 EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
-                                                        uint8_t                      sb_size,
-                                                        EbBitDepthEnum               max_bitdepth) {
+                                                        uint8_t sb_size, EbBitDepth max_bitdepth) {
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
@@ -662,7 +662,7 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
     picture_buffer_desc_init_data.split_mode                      = FALSE;
     double_width_picture_buffer_desc_init_data.max_width          = sb_size;
     double_width_picture_buffer_desc_init_data.max_height         = sb_size;
-    double_width_picture_buffer_desc_init_data.bit_depth          = EB_16BIT;
+    double_width_picture_buffer_desc_init_data.bit_depth          = EB_SIXTEEN_BIT;
     double_width_picture_buffer_desc_init_data.color_format       = EB_YUV420;
     double_width_picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     double_width_picture_buffer_desc_init_data.left_padding       = 0;
@@ -672,7 +672,7 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
     double_width_picture_buffer_desc_init_data.split_mode         = FALSE;
     thirty_two_width_picture_buffer_desc_init_data.max_width      = sb_size;
     thirty_two_width_picture_buffer_desc_init_data.max_height     = sb_size;
-    thirty_two_width_picture_buffer_desc_init_data.bit_depth      = EB_32BIT;
+    thirty_two_width_picture_buffer_desc_init_data.bit_depth      = EB_THIRTYTWO_BIT;
     thirty_two_width_picture_buffer_desc_init_data.color_format   = EB_YUV420;
     thirty_two_width_picture_buffer_desc_init_data.buffer_enable_mask =
         PICTURE_BUFFER_DESC_FULL_MASK;
@@ -4374,12 +4374,12 @@ static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
     const TxSetType tx_set_type = get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
     return !av1_ext_tx_used[tx_set_type][tx_type] ? DCT_DCT : tx_type;
 }
-double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
+double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
 
 // Values are now correlated to quantizer.
 static int  sad_per_bit16lut_8[QINDEX_RANGE];
 static int  sad_per_bit_lut_10[QINDEX_RANGE];
-static void init_me_luts_bd(int *bit16lut, int range, AomBitDepth bit_depth) {
+static void init_me_luts_bd(int *bit16lut, int range, EbBitDepth bit_depth) {
     int i;
     // Initialize the sad lut tables using a formulaic calculation for now.
     // This is to make it easier to resolve the impact of experimental changes
@@ -4390,8 +4390,8 @@ static void init_me_luts_bd(int *bit16lut, int range, AomBitDepth bit_depth) {
     }
 }
 void svt_av1_init_me_luts(void) {
-    init_me_luts_bd(sad_per_bit16lut_8, QINDEX_RANGE, AOM_BITS_8);
-    init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, AOM_BITS_10);
+    init_me_luts_bd(sad_per_bit16lut_8, QINDEX_RANGE, EB_EIGHT_BIT);
+    init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, EB_TEN_BIT);
 }
 static INLINE int mv_check_bounds(const MvLimits *mv_limits, const MV *mv) {
     return (mv->row >> 3) < mv_limits->row_min || (mv->row >> 3) > mv_limits->row_max ||

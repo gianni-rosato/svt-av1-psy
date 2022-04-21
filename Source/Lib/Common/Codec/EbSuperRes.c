@@ -220,7 +220,7 @@ void highbd_upscale_normative_rect(const uint8_t *const input, int height, int w
 void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
                                     uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
                                     Bool is_16bit_pipeline) {
-    int       high_bd                = bd > EB_8BIT || is_16bit_pipeline;
+    int       high_bd                = bd > EB_EIGHT_BIT || is_16bit_pipeline;
     const int downscaled_plane_width = ROUND_POWER_OF_TWO(cm->frm_size.frame_width, sub_x);
     const int upscaled_plane_width   = ROUND_POWER_OF_TWO(cm->frm_size.superres_upscaled_width,
                                                         sub_x);

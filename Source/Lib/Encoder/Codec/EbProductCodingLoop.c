@@ -52,7 +52,7 @@ void        generate_md_stage_0_cand_light_pd1(SuperBlock *sb_ptr, ModeDecisionC
 EbErrorType generate_md_stage_0_cand_light_pd0(ModeDecisionContext *context_ptr,
                                                uint32_t            *fast_candidate_total_count,
                                                PictureControlSet   *pcs_ptr);
-int16_t     svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t     svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 
 static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
@@ -260,7 +260,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet   *pcs_ptr,
                                        NEIGHBOR_ARRAY_UNIT_LEFT_MASK);
     }
     if (!context_ptr->skip_intra) {
-        if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec &&
+        if (context_ptr->encoder_bit_depth > EB_EIGHT_BIT && context_ptr->bypass_encdec &&
             !context_ptr->hbd_mode_decision && context_ptr->pd_pass == PD_PASS_1) {
             // copy HBD
             update_recon_neighbor_array16bit(
@@ -4486,7 +4486,7 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext         *md_context_pt
                  txb_origin_x - txb_origin_y)[0];
 
         svt_av1_predict_intra_block_16bit(
-            EB_10BIT,
+            EB_TEN_BIT,
             !ED_STAGE,
             md_context_ptr->blk_geom,
             md_context_ptr->blk_ptr->av1xd,
@@ -4983,7 +4983,7 @@ void perform_tx_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         NOT_USED_VALUE,
         tx_size,
         &context_ptr->three_quad_energy,
-        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+        context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
         tx_type,
         PLANE_TYPE_Y,
         pf_shape);
@@ -4996,7 +4996,7 @@ void perform_tx_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                                     tx_size,
                                     &candidate_buffer->eob[0][0],
                                     y_count_non_zero_coeffs,
-                                    context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+                                    context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                                     DCT_DCT);
 
     // LUMA DISTORTION
@@ -5256,7 +5256,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                     NOT_USED_VALUE,
                     tx_size,
                     &context_ptr->three_quad_energy,
-                    context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+                    context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                     tx_type,
                     PLANE_TYPE_Y,
                     pf_shape);
@@ -5278,7 +5278,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                     &eob_txt[tx_type],
                     &(y_count_non_zero_coeffs_txt[tx_type]),
                     COMPONENT_LUMA,
-                    context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+                    context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                     tx_type,
                     candidate_buffer,
                     context_ptr->luma_txb_skip_context,
@@ -6226,7 +6226,7 @@ void perform_dct_dct_tx_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
         NOT_USED_VALUE,
         tx_size,
         &context_ptr->three_quad_energy,
-        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+        context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
         DCT_DCT,
         PLANE_TYPE_Y,
         pf_shape);
@@ -6246,7 +6246,7 @@ void perform_dct_dct_tx_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
         &(candidate_buffer->eob[0][0]),
         &(y_count_non_zero_coeffs_txt),
         COMPONENT_LUMA,
-        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+        context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
         DCT_DCT,
         candidate_buffer,
         0,
@@ -6449,7 +6449,7 @@ void perform_dct_dct_tx(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             NOT_USED_VALUE,
             tx_size,
             &context_ptr->three_quad_energy,
-            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+            context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
             tx_type,
             PLANE_TYPE_Y,
             pf_shape);
@@ -6470,7 +6470,7 @@ void perform_dct_dct_tx(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             &(candidate_buffer->eob[0][txb_itr]),
             &(y_count_non_zero_coeffs_txt),
             COMPONENT_LUMA,
-            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+            context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
             tx_type,
             candidate_buffer,
             context_ptr->luma_txb_skip_context,
@@ -9358,8 +9358,8 @@ void copy_recon_md(PictureControlSet *pcs, ModeDecisionContext *ctx,
             }
         }
         // if using 8bit MD and bypassing encdec, need to save 8bit and 10bit recon
-        if (ctx->encoder_bit_depth > EB_8BIT && ctx->bypass_encdec && !ctx->hbd_mode_decision &&
-            ctx->pd_pass == PD_PASS_1) {
+        if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec &&
+            !ctx->hbd_mode_decision && ctx->pd_pass == PD_PASS_1) {
             // copy 10bit
             if (ctx->pred_depth_only && ctx->md_disallow_nsq)
                 get_recon_pic(pcs, &recon_ptr, 1);
@@ -9436,7 +9436,7 @@ void copy_recon_md(PictureControlSet *pcs, ModeDecisionContext *ctx,
         }
     }
     // if using 8bit MD and bypassing encdec, need to save 8bit and 10bit recon
-    if (ctx->encoder_bit_depth > EB_8BIT && ctx->bypass_encdec && !ctx->hbd_mode_decision &&
+    if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec && !ctx->hbd_mode_decision &&
         ctx->pd_pass == PD_PASS_1) {
         // copy 16bit recon
         if (ctx->pred_depth_only && ctx->md_disallow_nsq)
@@ -9727,7 +9727,7 @@ void copy_recon_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx,
     }
 
     // If bypassing EncDec for 10bit, need to save 8bit and 10bit recon
-    if (ctx->encoder_bit_depth > EB_8BIT && ctx->bypass_encdec) {
+    if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec) {
         get_recon_pic(pcs, &recon_ptr, 1);
         // Y
         // Copy top and bottom rows
@@ -10147,7 +10147,7 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
     // Using the 8bit residual for the TX will cause different streams compared to using the 10bit residual.
     // To generate the same streams, compute the 10bit prediction before computing the recon
 
-    if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec &&
+    if (context_ptr->encoder_bit_depth > EB_EIGHT_BIT && context_ptr->bypass_encdec &&
         perform_md_recon) {
         context_ptr->hbd_mode_decision = 2;
 
@@ -10175,7 +10175,7 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
             pcs_ptr, context_ptr, candidate_buffer, context_ptr->blk_geom);
 
     // Convert 10bit recon (used as final EncDec recon) to 8bit recon (used for MD intra pred)
-    if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec &&
+    if (context_ptr->encoder_bit_depth > EB_EIGHT_BIT && context_ptr->bypass_encdec &&
         context_ptr->hbd_mode_decision) {
         if (!context_ptr->skip_intra)
             convert_recon_16bit_to_8bit(pcs_ptr, context_ptr);
@@ -10594,7 +10594,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     // Using the 8bit residual for the TX will cause different streams compared to using the 10bit residual.
     // To generate the same streams, compute the 10bit prediction before computing the recon
 
-    if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec &&
+    if (context_ptr->encoder_bit_depth > EB_EIGHT_BIT && context_ptr->bypass_encdec &&
         !context_ptr->hbd_mode_decision && context_ptr->pd_pass == PD_PASS_1 && perform_md_recon) {
         context_ptr->hbd_mode_decision  = 2;
         context_ptr->need_hbd_comp_mds3 = 1;
@@ -10645,7 +10645,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                                             candidate_buffer,
                                             blk_origin_index,
                                             blk_chroma_origin_index);
-    if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec && !org_hbd &&
+    if (context_ptr->encoder_bit_depth > EB_EIGHT_BIT && context_ptr->bypass_encdec && !org_hbd &&
         context_ptr->pd_pass == PD_PASS_1 && context_ptr->hbd_mode_decision) {
         if (!context_ptr->skip_intra)
             convert_recon_16bit_to_8bit(pcs_ptr, context_ptr);
@@ -11125,7 +11125,7 @@ void update_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     const uint16_t tile_idx = ctx->tile_index;
     ctx->leaf_partition_neighbor_array =
         pcs->mdleaf_partition_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
-    if (ctx->encoder_bit_depth > EB_8BIT && ctx->bypass_encdec && !ctx->hbd_mode_decision &&
+    if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec && !ctx->hbd_mode_decision &&
         ctx->pd_pass == PD_PASS_1) {
         ctx->luma_recon_neighbor_array =
             pcs->md_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
@@ -11801,7 +11801,7 @@ EB_EXTERN void mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureContro
     // get the input picture; if high bit-depth, pad the input pic
     EbPictureBufferDesc *input_pic = pcs->parent_pcs_ptr->enhanced_picture_ptr;
     // If will need the 16bit picture, pad the input pic.  Done once for SB.
-    if (ctx->encoder_bit_depth > EB_8BIT && ctx->bypass_encdec) {
+    if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec) {
         // If using 8bit MD but bypassing EncDec, will need th 16bit pic later, but don't change input_pic
         pad_hbd_pictures(scs, pcs, ctx, input_pic, sb_org_x, sb_org_y);
     }
@@ -11891,7 +11891,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs, PictureControlSe
     // If will need the 16bit picture, pad the input pic.  Done once for SB.
     if (ctx->hbd_mode_decision) {
         input_pic = pad_hbd_pictures(scs, pcs, ctx, input_pic, sb_org_x, sb_org_y);
-    } else if (ctx->encoder_bit_depth > EB_8BIT && ctx->bypass_encdec &&
+    } else if (ctx->encoder_bit_depth > EB_EIGHT_BIT && ctx->bypass_encdec &&
                ctx->pd_pass == PD_PASS_1) {
         // If using 8bit MD but bypassing EncDec, will need th 16bit pic later, but don't change input_pic
         pad_hbd_pictures(scs, pcs, ctx, input_pic, sb_org_x, sb_org_y);

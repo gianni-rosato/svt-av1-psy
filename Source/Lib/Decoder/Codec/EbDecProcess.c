@@ -385,7 +385,8 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
                 thread_ctxt_pa[i].dec_handle_ptr = dec_handle_ptr;
                 thread_ctxt_pa[i].dec_mod_ctxt   = dec_mod_ctxt_arr[i];
                 EB_CREATE_SEMAPHORE(thread_ctxt_pa[i].thread_semaphore, 0, 100000);
-                int use_highbd = (dec_handle_ptr->seq_header.color_config.bit_depth > EB_8BIT ||
+                int use_highbd = (dec_handle_ptr->seq_header.color_config.bit_depth >
+                                      EB_EIGHT_BIT ||
                                   dec_handle_ptr->is_16bit_pipeline);
                 EB_MALLOC_DEC(uint8_t *,
                               thread_ctxt_pa[i].dst,
@@ -633,7 +634,7 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle   *dec_handle,
     FrameSize *frame_size = &dec_handle->frame_header.frame_size;
     Bool       sb_128     = dec_handle->seq_header.sb_size == BLOCK_128X128;
     int32_t    num64s     = sb_128 ? 1 : 0;
-    const int  use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+    const int  use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_EIGHT_BIT ||
                             dec_handle->is_16bit_pipeline);
     LrCtxt    *lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     for (int32_t p = 0; p < num_planes; ++p) {
@@ -703,7 +704,7 @@ static INLINE void dec_save_CDEF_boundary_lines_SB_row(EbDecHandle   *dec_handle
                                                        int32_t num_planes) {
     Av1Common      *cm         = &dec_handle->cm;
     FrameSize      *frame_size = &dec_handle->frame_header.frame_size;
-    const int       use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+    const int       use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_EIGHT_BIT ||
                             dec_handle->is_16bit_pipeline);
     LrCtxt         *lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     DecMtFrameData *dec_mt_frame_data =
@@ -1198,7 +1199,7 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
     uint32_t pad_height = recon_picture_buf->origin_y;
 
     int32_t shift = 0;
-    if ((recon_picture_buf->bit_depth != EB_8BIT) || recon_picture_buf->is_16bit_pipeline)
+    if ((recon_picture_buf->bit_depth != EB_EIGHT_BIT) || recon_picture_buf->is_16bit_pipeline)
         shift = 1;
 
     int32_t recon_stride[MAX_MB_PLANE];

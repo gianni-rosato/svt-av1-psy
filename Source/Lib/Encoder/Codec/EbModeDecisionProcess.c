@@ -249,13 +249,13 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EB_NEW(context_ptr->candidate_buffer_tx_depth_1,
            mode_decision_scratch_candidate_buffer_ctor,
            sb_size,
-           context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+           context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT);
 
     EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_tx_depth_1->candidate_ptr, 1);
     EB_NEW(context_ptr->candidate_buffer_tx_depth_2,
            mode_decision_scratch_candidate_buffer_ctor,
            sb_size,
-           context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+           context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT);
 
     EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_tx_depth_2->candidate_ptr, 1);
     for (int i = 0; i < 3; i++) {
@@ -342,7 +342,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
             init_data.max_width          = blk_geom->bwidth;
             init_data.max_height         = blk_geom->bheight;
-            init_data.bit_depth          = EB_32BIT;
+            init_data.bit_depth          = EB_THIRTYTWO_BIT;
             init_data.color_format       = (blk_geom->bwidth > 4 && blk_geom->bheight > 4)
                       ? EB_YUV420
                       : EB_YUV444; // PW - must have at least 4x4 for chroma coeffs
@@ -359,7 +359,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
             init_data.max_width          = blk_geom->bwidth;
             init_data.max_height         = blk_geom->bheight;
-            init_data.bit_depth          = context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT;
+            init_data.bit_depth = context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT;
             ;
             init_data.color_format  = (blk_geom->bwidth > 4 && blk_geom->bheight > 4) ? EB_YUV420
                                                                                       : EB_YUV444;
@@ -388,7 +388,8 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 
     picture_buffer_desc_init_data.max_width  = sb_size;
     picture_buffer_desc_init_data.max_height = sb_size;
-    picture_buffer_desc_init_data.bit_depth  = context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT;
+    picture_buffer_desc_init_data.bit_depth          = context_ptr->hbd_mode_decision ? EB_TEN_BIT
+                                                                                      : EB_EIGHT_BIT;
     picture_buffer_desc_init_data.color_format       = EB_YUV420;
     picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     picture_buffer_desc_init_data.left_padding       = 0;
@@ -399,7 +400,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 
     thirty_two_width_picture_buffer_desc_init_data.max_width    = sb_size;
     thirty_two_width_picture_buffer_desc_init_data.max_height   = sb_size;
-    thirty_two_width_picture_buffer_desc_init_data.bit_depth    = EB_32BIT;
+    thirty_two_width_picture_buffer_desc_init_data.bit_depth    = EB_THIRTYTWO_BIT;
     thirty_two_width_picture_buffer_desc_init_data.color_format = EB_YUV420;
     thirty_two_width_picture_buffer_desc_init_data.buffer_enable_mask =
         PICTURE_BUFFER_DESC_FULL_MASK;
@@ -426,7 +427,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
     double_width_picture_buffer_desc_init_data.max_width          = sb_size;
     double_width_picture_buffer_desc_init_data.max_height         = sb_size;
-    double_width_picture_buffer_desc_init_data.bit_depth          = EB_16BIT;
+    double_width_picture_buffer_desc_init_data.bit_depth          = EB_SIXTEEN_BIT;
     double_width_picture_buffer_desc_init_data.color_format       = EB_YUV420;
     double_width_picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     double_width_picture_buffer_desc_init_data.left_padding       = 0;
@@ -450,7 +451,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     for (buffer_index = 0; buffer_index < context_ptr->max_nics; ++buffer_index) {
         EB_NEW(context_ptr->candidate_buffer_ptr_array[buffer_index],
                mode_decision_candidate_buffer_ctor,
-               context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+               context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                sb_size,
                PICTURE_BUFFER_DESC_FULL_MASK,
                context_ptr->temp_residual_ptr,
@@ -462,7 +463,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     for (buffer_index = max_nics; buffer_index < context_ptr->max_nics_uv; ++buffer_index) {
         EB_NEW(context_ptr->candidate_buffer_ptr_array[buffer_index],
                mode_decision_candidate_buffer_ctor,
-               context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+               context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                sb_size,
                PICTURE_BUFFER_DESC_CHROMA_MASK,
                context_ptr->temp_residual_ptr,

@@ -1371,7 +1371,7 @@ void update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *md_ctx) {
 
     // update palette_colors mi map when input bit depth is 10bit and hbd mode decision is 0 (8bit MD)
     // palette_colors were scaled to 10bit in av1_encode_decode so here we need to update mi map for entropy coding
-    if (md_ctx->encoder_bit_depth > EB_8BIT && md_ctx->hbd_mode_decision == 0)
+    if (md_ctx->encoder_bit_depth > EB_EIGHT_BIT && md_ctx->hbd_mode_decision == 0)
         if (blk_ptr->av1xd->mi[0]->mbmi.palette_mode_info.palette_size)
             svt_memcpy(blk_ptr->av1xd->mi[0]->mbmi.palette_mode_info.palette_colors,
                        blk_ptr->palette_info->pmi.palette_colors,

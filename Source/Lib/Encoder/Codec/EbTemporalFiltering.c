@@ -62,8 +62,8 @@ static const uint32_t idx_32x32_to_idx_16x16[4][4]         = {
 
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 int32_t get_frame_update_type(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
-int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, AomBitDepth bit_depth);
-int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
+int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, EbBitDepth bit_depth);
+int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_depth);
 void generate_padding_compressed_10bit(EbByte src_pic, uint32_t src_stride,
                                        uint32_t original_src_width, uint32_t original_src_height,
                                        uint32_t padding_width, uint32_t padding_height);
@@ -4890,7 +4890,7 @@ static EbErrorType produce_temporally_filtered_pic(
                             (uint32_t)blk_col * BW,
                             (uint32_t)blk_row * BH,
                             ss_x,
-                            (context_ptr->tf_ctrls.use_8bit_subpel) ? EB_8BIT : encoder_bit_depth);
+                            (context_ptr->tf_ctrls.use_8bit_subpel) ? EB_EIGHT_BIT : encoder_bit_depth);
 
                         // Perform MC using the information acquired using the ME step
                         tf_64x64_inter_prediction(picture_control_set_ptr_central,
@@ -4926,7 +4926,7 @@ static EbErrorType produce_temporally_filtered_pic(
                                                         (uint32_t)blk_row * BH,
                                                         ss_x,
                                                         (context_ptr->tf_ctrls.use_8bit_subpel)
-                                                            ? EB_8BIT
+                                                            ? EB_EIGHT_BIT
                                                             : encoder_bit_depth);
 
                                 // Perform TF sub-pel search for 16x16 blocks
@@ -4944,7 +4944,7 @@ static EbErrorType produce_temporally_filtered_pic(
                                                         (uint32_t)blk_row * BH,
                                                         ss_x,
                                                         (context_ptr->tf_ctrls.use_8bit_subpel)
-                                                            ? EB_8BIT
+                                                            ? EB_EIGHT_BIT
                                                             : encoder_bit_depth);
 
                                 // Derive tf_32x32_block_split_flag

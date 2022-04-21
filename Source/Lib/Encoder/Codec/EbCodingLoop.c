@@ -396,7 +396,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                EB_8BIT,
+                EB_EIGHT_BIT,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 PLANE_TYPE_Y,
                 DEFAULT_SHAPE);
@@ -423,7 +423,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 &eob[0],
                 &(count_non_zero_coeffs[0]),
                 COMPONENT_LUMA,
-                EB_8BIT,
+                EB_EIGHT_BIT,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
                 context_ptr->md_context->luma_txb_skip_context,
@@ -558,7 +558,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                EB_8BIT,
+                EB_EIGHT_BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
@@ -578,7 +578,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 &eob[1],
                 &(count_non_zero_coeffs[1]),
                 COMPONENT_CHROMA_CB,
-                EB_8BIT,
+                EB_EIGHT_BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
                 context_ptr->md_context->cb_txb_skip_context,
@@ -607,7 +607,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                EB_8BIT,
+                EB_EIGHT_BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
@@ -627,7 +627,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 &eob[2],
                 &(count_non_zero_coeffs[2]),
                 COMPONENT_CHROMA_CR,
-                EB_8BIT,
+                EB_EIGHT_BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
                 context_ptr->md_context->cr_txb_skip_context,
@@ -721,7 +721,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
 
     uint32_t scratch_luma_offset, scratch_cb_offset, scratch_cr_offset;
 
-    if (bit_depth != EB_8BIT) {
+    if (bit_depth != EB_EIGHT_BIT) {
         scratch_luma_offset = context_ptr->blk_geom->origin_x +
             context_ptr->blk_geom->origin_y * SB_STRIDE_Y;
         scratch_cb_offset = ROUND_UV(context_ptr->blk_geom->origin_x) / 2 +
@@ -820,7 +820,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                     blk_ptr->pred_mode,
                     blk_ptr->use_intrabc,
                     context_ptr->md_context
-                        ->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
+                        ->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
                     TRUE);
             }
             context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
@@ -976,7 +976,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                     blk_ptr->pred_mode,
                     blk_ptr->use_intrabc,
                     context_ptr->md_context
-                        ->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
+                        ->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
                     TRUE);
 
                 //**********************************
@@ -1026,7 +1026,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                     blk_ptr->pred_mode,
                     blk_ptr->use_intrabc,
                     context_ptr->md_context
-                        ->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
+                        ->full_lambda_md[(bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
                     TRUE);
             }
             context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
@@ -2317,7 +2317,7 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs, EncD
     uint32_t sb_width  = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_width - sb_org_x);
     uint32_t sb_height = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_height - sb_org_y);
 
-    if (is_16bit && scs->static_config.encoder_bit_depth > EB_8BIT) {
+    if (is_16bit && scs->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
         //SB128_TODO change 10bit SB creation
 
         const uint32_t input_luma_offset = ((sb_org_y + input_pic->origin_y) *
@@ -2397,7 +2397,7 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs, EncD
                                  scs->sb_size_pix);
     }
 
-    if (is_16bit && scs->static_config.encoder_bit_depth == EB_8BIT) {
+    if (is_16bit && scs->static_config.encoder_bit_depth == EB_EIGHT_BIT) {
         const uint32_t input_luma_offset = ((sb_org_y + input_pic->origin_y) *
                                             input_pic->stride_y) +
             (sb_org_x + input_pic->origin_x);
@@ -2554,8 +2554,8 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
             if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
                 ctx->is_inter = blk_ptr->use_intrabc;
 
-                if (scs->static_config.encoder_bit_depth > EB_8BIT && pcs->hbd_mode_decision == 0 &&
-                    blk_ptr->palette_size[0] > 0) {
+                if (scs->static_config.encoder_bit_depth > EB_EIGHT_BIT &&
+                    pcs->hbd_mode_decision == 0 && blk_ptr->palette_size[0] > 0) {
                     //MD was done on 8bit, scale  palette colors to 10bit
                     for (uint8_t col = 0; col < blk_ptr->palette_size[0]; col++)
                         blk_ptr->palette_info->pmi.palette_colors[col] *= 4;
@@ -2636,7 +2636,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
             }
 
             if (pcs->parent_pcs_ptr->frm_hdr.allow_intrabc && is_16bit &&
-                (ctx->bit_depth == EB_8BIT)) {
+                (ctx->bit_depth == EB_EIGHT_BIT)) {
                 convert_recon_16bit_to_8bit(pcs, ctx);
             }
         }
@@ -2739,7 +2739,7 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
             svt_release_mutex(pcs->parent_pcs_ptr->pcs_total_rate_mutex);
             // Copy recon to EncDec buffers if EncDec was bypassed;  if used pred depth only and NSQ is OFF data was copied directly to EncDec buffers in MD
             if (md_ctx->bypass_encdec && !(md_ctx->pred_depth_only && md_ctx->md_disallow_nsq)) {
-                if (md_ctx->encoder_bit_depth > EB_8BIT) {
+                if (md_ctx->encoder_bit_depth > EB_EIGHT_BIT) {
                     uint32_t recon_luma_offset = (recon_buffer->origin_y + ctx->blk_origin_y) *
                             recon_buffer->stride_y +
                         (recon_buffer->origin_x + ctx->blk_origin_x);

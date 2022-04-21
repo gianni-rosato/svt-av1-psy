@@ -42,7 +42,7 @@ EbErrorType entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
 
     context_ptr->is_16bit =
         (Bool)(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.encoder_bit_depth >
-               EB_8BIT);
+               EB_EIGHT_BIT);
     ;
 
     // Input/Output System Resource Manager FIFOs
@@ -170,7 +170,7 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
     uint16_t tile_idx = 0;
     uint32_t entropy_coding_qp;
 
-    context_ptr->is_16bit = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    context_ptr->is_16bit = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
     FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     entropy_coding_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;

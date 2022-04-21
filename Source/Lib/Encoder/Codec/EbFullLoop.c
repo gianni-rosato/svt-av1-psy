@@ -1443,7 +1443,7 @@ int32_t av1_quantize_inv_quantize_light(PictureControlSet *pcs_ptr, int32_t *coe
     const ScanOrder *const scan_order = &av1_scan_orders[txsize][tx_type];
     const int32_t          n_coeffs   = av1_get_max_eob(txsize);
 
-    if (bit_depth > EB_8BIT) {
+    if (bit_depth > EB_EIGHT_BIT) {
         svt_aom_highbd_quantize_b((TranLow *)coeff,
                                   n_coeffs,
                                   scs_ptr->quants_bd.y_zbin[q_index],
@@ -1507,7 +1507,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                           255,
                           (int32_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                               segmentation_qp_offset);
-    if (bit_depth == EB_8BIT) {
+    if (bit_depth == EB_EIGHT_BIT) {
         if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_qtx       = scs_ptr->quants_8bit.y_quant[q_index];
             candidate_plane.quant_fp_qtx    = scs_ptr->quants_8bit.y_quant_fp[q_index];
@@ -1621,7 +1621,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     if (perform_rdoq &&
         ((!component_type && md_context->rdoq_ctrls.fp_q_y) ||
          (component_type && md_context->rdoq_ctrls.fp_q_uv))) {
-        if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
+        if ((bit_depth > EB_EIGHT_BIT) || (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
             svt_av1_highbd_quantize_fp_facade((TranLow *)coeff,
                                               n_coeffs,
                                               &candidate_plane,
@@ -1641,7 +1641,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                                        &qparam);
         }
     } else {
-        if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
+        if ((bit_depth > EB_EIGHT_BIT) || (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
             svt_av1_highbd_quantize_b_facade((TranLow *)coeff,
                                              n_coeffs,
                                              &candidate_plane,
@@ -1679,7 +1679,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                                 tx_type);
         }
         if (perform_rdoq == 0) {
-            if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
+            if ((bit_depth > EB_EIGHT_BIT) || (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
                 svt_av1_highbd_quantize_b_facade((TranLow *)coeff,
                                                  n_coeffs,
                                                  &candidate_plane,
@@ -1761,7 +1761,7 @@ void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uin
                                 CONVERT_TO_BYTEPTR(((uint16_t *)rec_buffer) + rec_offset),
                                 rec_stride,
                                 txsize,
-                                EB_10BIT,
+                                EB_TEN_BIT,
                                 transform_type,
                                 component_type,
                                 eob,
@@ -1848,7 +1848,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             NOT_USED_VALUE,
             tx_size_uv,
             &context_ptr->three_quad_energy,
-            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+            context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
             candidate_buffer->candidate_ptr->transform_type_uv,
             PLANE_TYPE_UV,
             pf_shape);
@@ -1868,7 +1868,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             &candidate_buffer->eob[1][0],
             &nz_count_dummy,
             COMPONENT_CHROMA_CB,
-            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+            context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
             candidate_buffer->candidate_ptr->transform_type_uv,
             candidate_buffer,
             0,
@@ -1945,7 +1945,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             NOT_USED_VALUE,
             tx_size_uv,
             &context_ptr->three_quad_energy,
-            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+            context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
             candidate_buffer->candidate_ptr->transform_type_uv,
             PLANE_TYPE_UV,
             pf_shape);
@@ -1965,7 +1965,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             &candidate_buffer->eob[2][0],
             &nz_count_dummy,
             COMPONENT_CHROMA_CR,
-            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+            context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
             candidate_buffer->candidate_ptr->transform_type_uv,
             candidate_buffer,
             0,
@@ -2122,7 +2122,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                                    NOT_USED_VALUE,
                                    context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                                    &context_ptr->three_quad_energy,
-                                   context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+                                   context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                                    candidate_buffer->candidate_ptr->transform_type_uv,
                                    PLANE_TYPE_UV,
                                    pf_shape);
@@ -2148,7 +2148,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 &candidate_buffer->eob[1][txb_itr],
                 &(cb_count_non_zero_coeffs[txb_itr]),
                 COMPONENT_CHROMA_CB,
-                context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+                context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
                 context_ptr->cb_txb_skip_context,
@@ -2288,7 +2288,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                                    NOT_USED_VALUE,
                                    context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                                    &context_ptr->three_quad_energy,
-                                   context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+                                   context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                                    candidate_buffer->candidate_ptr->transform_type_uv,
                                    PLANE_TYPE_UV,
                                    pf_shape);
@@ -2313,7 +2313,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 &candidate_buffer->eob[2][txb_itr],
                 &(cr_count_non_zero_coeffs[txb_itr]),
                 COMPONENT_CHROMA_CR,
-                context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+                context_ptr->hbd_mode_decision ? EB_TEN_BIT : EB_EIGHT_BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
                 context_ptr->cr_txb_skip_context,

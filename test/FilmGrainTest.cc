@@ -364,7 +364,7 @@ class DenoiseModelRunTest : public ::testing::Test {
         EbPictureBufferDescInitData pbd_init_data;
         pbd_init_data.max_width = width_;
         pbd_init_data.max_height = height_;
-        pbd_init_data.bit_depth = EB_8BIT;
+        pbd_init_data.bit_depth = EB_EIGHT_BIT;
         // allocate all the components
         pbd_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
         pbd_init_data.left_padding = 0;
@@ -383,7 +383,7 @@ class DenoiseModelRunTest : public ::testing::Test {
 
         // create the denoise and noise model
         DenoiseAndModelInitData fg_init_data;
-        fg_init_data.encoder_bit_depth = EB_8BIT;
+        fg_init_data.encoder_bit_depth = EB_EIGHT_BIT;
         fg_init_data.encoder_color_format = EB_YUV420;
         fg_init_data.noise_level = 4;  // TODO: check the range;
         fg_init_data.width = width_;
@@ -419,7 +419,7 @@ class DenoiseModelRunTest : public ::testing::Test {
     }
 
     void init_data() {
-        const int shift = EB_8BIT - 8;
+        const int shift = EB_EIGHT_BIT - 8;
         for (int y = 0; y < height_; ++y) {
             for (int x = 0; x < width_; ++x) {
                 data_ptr_[0][y * width_ + x] =

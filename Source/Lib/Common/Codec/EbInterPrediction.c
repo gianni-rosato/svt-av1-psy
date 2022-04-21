@@ -1460,7 +1460,7 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
                                    int32_t bd) {
     const int32_t is_scaled = has_scale(subpel_params->xs, subpel_params->ys);
 
-    if (bd > EB_8BIT) {
+    if (bd > EB_EIGHT_BIT) {
         // for super-res, the reference frame block might be 2x than predictor in maximum
         // should pack enough buffer for scaled reference
         DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE * 2]);

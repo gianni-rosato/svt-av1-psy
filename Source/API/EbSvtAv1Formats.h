@@ -98,7 +98,14 @@ typedef enum EbColorRange {
 } EbColorRange; /**< alias for enum aom_color_range */
 
 /* AV1 bit depth */
-typedef enum EbBitDepth { EB_EIGHT_BIT = 8, EB_TEN_BIT = 10, EB_TWELVE_BIT = 12 } EbBitDepth;
+typedef enum EbBitDepth {
+    EB_EIGHT_BIT     = 8,
+    EB_TEN_BIT       = 10,
+    EB_TWELVE_BIT    = 12,
+    EB_FOURTEEN_BIT  = 14, // Not supported
+    EB_SIXTEEN_BIT   = 16, // Not supported
+    EB_THIRTYTWO_BIT = 32, // Not supported
+} EbBitDepth;
 
 /* AV1 Chroma Format */
 typedef enum EbColorFormat { EB_YUV400, EB_YUV420, EB_YUV422, EB_YUV444 } EbColorFormat;

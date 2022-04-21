@@ -708,7 +708,7 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
         }
     }
 }
-extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 
 void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuffer,
                      PictureControlSet *pcs_ptr, uint8_t plane) {
@@ -1099,10 +1099,9 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
 
         const int32_t min_filter_level = 0;
         const int32_t max_filter_level = MAX_LOOP_FILTER; // av1_get_max_filter_level(cpi);
-        const int32_t q                = svt_av1_ac_quant_q3(
-            frm_hdr->quantization_params.base_q_idx,
-            0,
-            (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
+        const int32_t q = svt_av1_ac_quant_q3(frm_hdr->quantization_params.base_q_idx,
+                                              0,
+                                              (EbBitDepth)scs_ptr->static_config.encoder_bit_depth);
         // These values were determined by linear fitting the result of the
         // searched level for 8 bit depth:
         // Keyframes: filt_guess = q * 0.06699 - 1.60817
@@ -1112,20 +1111,21 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
         // filt_guess = q * 0.316206 + 3.87252
         int32_t filt_guess;
         switch (scs_ptr->static_config.encoder_bit_depth) {
-        case EB_8BIT:
+        case EB_EIGHT_BIT:
             filt_guess = (frm_hdr->frame_type == KEY_FRAME)
                 ? ROUND_POWER_OF_TWO(q * 17563 - 421574, 18)
                 : ROUND_POWER_OF_TWO(q * 6017 + 650707, 18);
             break;
-        case EB_10BIT: filt_guess = ROUND_POWER_OF_TWO(q * 20723 + 4060632, 20); break;
-        case EB_12BIT: filt_guess = ROUND_POWER_OF_TWO(q * 20723 + 16242526, 22); break;
+        case EB_TEN_BIT: filt_guess = ROUND_POWER_OF_TWO(q * 20723 + 4060632, 20); break;
+        case EB_TWELVE_BIT: filt_guess = ROUND_POWER_OF_TWO(q * 20723 + 16242526, 22); break;
         default:
             assert(0 &&
-                   "bit_depth should be AOM_BITS_8, AOM_BITS_10 "
-                   "or AOM_BITS_12");
+                   "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT "
+                   "or EB_TWELVE_BIT");
             return EB_ErrorNone;
         }
-        if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT && frm_hdr->frame_type == KEY_FRAME)
+        if (scs_ptr->static_config.encoder_bit_depth != EB_EIGHT_BIT &&
+            frm_hdr->frame_type == KEY_FRAME)
             filt_guess -= 4;
 
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
@@ -1171,14 +1171,14 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
         temp_lf_recon_desc_init_data.color_format  = scs_ptr->static_config.encoder_color_format;
         Bool is_16bit = scs_ptr->static_config.encoder_bit_depth > 8 ? TRUE : FALSE;
         if (scs_ptr->is_16bit_pipeline || is_16bit) {
-            temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
+            temp_lf_recon_desc_init_data.bit_depth = EB_SIXTEEN_BIT;
             EB_NEW(pcs_ptr->temp_lf_recon_picture16bit_ptr,
                    svt_recon_picture_buffer_desc_ctor,
                    (EbPtr)&temp_lf_recon_desc_init_data);
             if (!is_16bit)
-                pcs_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_8BIT;
+                pcs_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_EIGHT_BIT;
         } else {
-            temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
+            temp_lf_recon_desc_init_data.bit_depth = EB_EIGHT_BIT;
             EB_NEW(pcs_ptr->temp_lf_recon_picture_ptr,
                    svt_recon_picture_buffer_desc_ctor,
                    (EbPtr)&temp_lf_recon_desc_init_data);

@@ -887,8 +887,8 @@ INSTANTIATE_TEST_CASE_P(
     TX_ASM, InvTxfm2dAsmTest,
     ::testing::Combine(::testing::Values(svt_av1_lowbd_inv_txfm2d_add_ssse3,
                                          svt_av1_lowbd_inv_txfm2d_add_avx2),
-                       ::testing::Values(static_cast<int>(AOM_BITS_8),
-                                         static_cast<int>(AOM_BITS_10))));
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT))));
 
 using InvTxfm2AddParam = std::tuple<LowbdInvTxfm2dAddFunc, int>;
 
@@ -1081,7 +1081,7 @@ INSTANTIATE_TEST_CASE_P(
     TX_ASM, InvTxfm2dAddTest,
     ::testing::Combine(::testing::Values(svt_av1_inv_txfm_add_ssse3,
                                          svt_av1_inv_txfm_add_avx2),
-                       ::testing::Values(static_cast<int>(AOM_BITS_8),
-                                         static_cast<int>(AOM_BITS_10))));
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT))));
 
 }  // namespace

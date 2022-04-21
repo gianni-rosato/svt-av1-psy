@@ -23,11 +23,11 @@
 #include "EbInvTransforms.h"
 
 // Same wrapper(av1_ac/dc_quant_qtx) available in .c file of encoder
-static INLINE int16_t get_dc_quant(int32_t qindex, int32_t delta, AomBitDepth bit_depth) {
+static INLINE int16_t get_dc_quant(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
     return svt_av1_dc_quant_q3(qindex, delta, bit_depth);
 }
 
-static INLINE int16_t get_ac_quant(int32_t qindex, int32_t delta, AomBitDepth bit_depth) {
+static INLINE int16_t get_ac_quant(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
     return svt_av1_ac_quant_q3(qindex, delta, bit_depth);
 }
 

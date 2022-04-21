@@ -84,7 +84,7 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
     CurFrameBuf         *frame_buf         = &main_frame_buf->cur_frame_bufs[0];
     EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
-    int8_t        use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+    int8_t        use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_EIGHT_BIT ||
                          dec_handle->is_16bit_pipeline);
     const int32_t cdef_mask  = 1;
     uint32_t      cdef_count;

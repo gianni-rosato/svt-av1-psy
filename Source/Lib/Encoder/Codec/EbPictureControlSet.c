@@ -348,7 +348,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&input_pic_buf_desc_init_data);
         if (init_data_ptr->is_16bit_pipeline) {
-            input_pic_buf_desc_init_data.bit_depth = EB_16BIT;
+            input_pic_buf_desc_init_data.bit_depth = EB_SIXTEEN_BIT;
             EB_NEW(object_ptr->recon_picture16bit_ptr,
                    svt_recon_picture_buffer_desc_ctor,
                    (EbPtr)&input_pic_buf_desc_init_data);
@@ -366,7 +366,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     coeff_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     coeff_init_data.max_width          = init_data_ptr->sb_size_pix;
     coeff_init_data.max_height         = init_data_ptr->sb_size_pix;
-    coeff_init_data.bit_depth          = EB_32BIT;
+    coeff_init_data.bit_depth          = EB_THIRTYTWO_BIT;
     coeff_init_data.color_format       = init_data_ptr->color_format;
     coeff_init_data.left_padding       = 0;
     coeff_init_data.right_padding      = 0;
@@ -431,7 +431,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     coeff_buffer_desc_init_data.max_width          = init_data_ptr->picture_width;
     coeff_buffer_desc_init_data.max_height         = init_data_ptr->picture_height;
-    coeff_buffer_desc_init_data.bit_depth          = EB_16BIT;
+    coeff_buffer_desc_init_data.bit_depth          = EB_SIXTEEN_BIT;
     coeff_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     coeff_buffer_desc_init_data.color_format       = init_data_ptr->color_format;
 

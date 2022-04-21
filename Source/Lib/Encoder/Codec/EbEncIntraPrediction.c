@@ -597,7 +597,7 @@ void svt_av1_predict_intra_block(
 }
 
 void svt_av1_predict_intra_block_16bit(
-        EbBitDepthEnum bit_depth,
+        EbBitDepth bit_depth,
         STAGE       stage,
         const BlockGeom * blk_geom,
         MacroBlockD* xd,
@@ -661,7 +661,7 @@ void svt_av1_predict_intra_block_16bit(
         const uint8_t *const map = palette_info->color_idx_map;
         const uint16_t *const palette =
             palette_info->pmi.palette_colors + plane * PALETTE_MAX_SIZE;
-        uint16_t              max_val = (bit_depth == EB_8BIT) ? 0xFF : 0xFFFF;
+        uint16_t              max_val = (bit_depth == EB_EIGHT_BIT) ? 0xFF : 0xFFFF;
         for (int32_t r = 0; r < txhpx; ++r)
             for (int32_t c = 0; c < txwpx; ++c)
                 dst[r * dst_stride + c] = palette[map[(r + y) * wpx + c + x]] > max_val ? max_val : palette[map[(r + y) * wpx + c + x]];
@@ -1000,7 +1000,7 @@ EbErrorType svt_av1_intra_prediction_cl(
             }
 
             svt_av1_predict_intra_block_16bit(
-                    EB_10BIT,
+                    EB_TEN_BIT,
                     !ED_STAGE,
                     md_context_ptr->blk_geom,
                     md_context_ptr->blk_ptr->av1xd,
@@ -1114,7 +1114,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
             ((uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_left_array) + md_context_ptr->luma_recon_neighbor_array16bit->max_pic_h + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y)[0];
 
         svt_av1_predict_intra_block_16bit(
-                EB_10BIT,
+                EB_TEN_BIT,
                 !ED_STAGE,
                 md_context_ptr->blk_geom,
                 md_context_ptr->blk_ptr->av1xd,

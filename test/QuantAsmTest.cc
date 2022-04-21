@@ -46,7 +46,7 @@
 
 namespace QuantizeAsmTest {
 extern "C" void svt_av1_build_quantizer(
-    AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
+    EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
     int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
     Quants *const quants, Dequants *const deq);
 
@@ -89,7 +89,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
   protected:
     QuantizeBTest()
         : tx_size_(static_cast<TxSize>(TEST_GET_PARAM(0))),
-          bd_(static_cast<AomBitDepth>(TEST_GET_PARAM(1))),
+          bd_(static_cast<EbBitDepth>(TEST_GET_PARAM(1))),
           log_scale(0) {
         n_coeffs_ = av1_get_max_eob(tx_size_);
         coeff_min_ = -(1 << (7 + bd_));
@@ -132,7 +132,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
      * @see setup_rtcd_internal() in aom_dsp_rtcd.h
      */
     void setup_func_ptrs() {
-        if (bd_ == AOM_BITS_8) {
+        if (bd_ == EB_EIGHT_BIT) {
             quant_ref_ = svt_aom_quantize_b_c_ii;
             quant_test_ = TEST_GET_PARAM(2);
         } else {
@@ -232,7 +232,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     QuantizeFunc quant_ref_;  /**< reference quantize function */
     QuantizeFunc quant_test_; /**< test target quantize function */
     const TxSize tx_size_;    /**< input param tx_size */
-    const AomBitDepth bd_;    /**< input param 8bit or 10bit */
+    const EbBitDepth bd_;     /**< input param 8bit or 10bit */
     int n_coeffs_;            /**< coeff number */
     int32_t log_scale;
     uint16_t eob_ref_;  /**< output ref eob */
@@ -318,7 +318,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
                                          static_cast<int>(TX_64X64)),
-                       ::testing::Values(static_cast<int>(AOM_BITS_8)),
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT)),
                        ::testing::Values(svt_aom_quantize_b_sse4_1,
                                          svt_aom_quantize_b_avx2)));
 INSTANTIATE_TEST_CASE_P(
@@ -326,7 +326,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
                                          static_cast<int>(TX_64X64)),
-                       ::testing::Values(static_cast<int>(AOM_BITS_10)),
+                       ::testing::Values(static_cast<int>(EB_TEN_BIT)),
                        ::testing::Values(svt_aom_highbd_quantize_b_sse4_1,
                                          svt_aom_highbd_quantize_b_avx2)));
 #else
@@ -334,8 +334,8 @@ INSTANTIATE_TEST_CASE_P(
     Quant, QuantizeBTest,
     ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
                                         static_cast<int>(TX_SIZES_ALL), 1),
-                       ::testing::Values(static_cast<int>(AOM_BITS_8),
-                                         static_cast<int>(AOM_BITS_10))));
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT))));
 #endif  // FULL_UNIT_TEST
 
 }  // namespace QuantizeAsmTest

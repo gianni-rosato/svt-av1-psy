@@ -606,6 +606,6 @@ INSTANTIATE_TEST_CASE_P(
     TX, FwdTxfm2dAsmTest,
     ::testing::Combine(::testing::Range(static_cast<int>(TX_4X4),
                                         static_cast<int>(TX_SIZES_ALL), 1),
-                       ::testing::Values(static_cast<int>(AOM_BITS_8),
-                                         static_cast<int>(AOM_BITS_10))));
+                       ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
+                                         static_cast<int>(EB_TEN_BIT))));
 }  // namespace

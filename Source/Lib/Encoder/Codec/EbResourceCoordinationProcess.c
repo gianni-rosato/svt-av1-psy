@@ -832,7 +832,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
     EbPictureBufferDesc *dst_picture_ptr = (EbPictureBufferDesc *)dst;
     EbPictureBufferDesc *src_picture_ptr = (EbPictureBufferDesc *)src;
-    Bool                 is_16bit_input  = (Bool)(config->encoder_bit_depth > EB_8BIT);
+    Bool                 is_16bit_input  = (Bool)(config->encoder_bit_depth > EB_EIGHT_BIT);
 
     // Need to include for Interlacing on the fly with pictureScanType = 1
 

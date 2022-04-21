@@ -214,7 +214,7 @@ static uint8_t find_average_sse4_1(const uint8_t *src, int32_t h_start, int32_t 
 
 static uint16_t find_average_highbd_sse4_1(const uint16_t *src, int32_t h_start, int32_t h_end,
                                            int32_t v_start, int32_t v_end, int32_t stride,
-                                           AomBitDepth bit_depth) {
+                                           EbBitDepth bit_depth) {
     UNUSED(bit_depth);
     const int32_t   width    = h_end - h_start;
     const int32_t   height   = v_end - v_start;
@@ -1591,7 +1591,7 @@ static INLINE void shift_right_4b_2x128(__m128i vec[2]) {
 static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_stride,
                                       const int16_t *const s, const int32_t s_stride,
                                       const int32_t width, const int32_t height, int64_t *const M,
-                                      int64_t *const H, AomBitDepth bit_depth) {
+                                      int64_t *const H, EbBitDepth bit_depth) {
     const int32_t wiener_win  = WIENER_WIN_3TAP;
     const int32_t wiener_win2 = wiener_win * wiener_win;
     const int32_t w16         = width & ~15;
@@ -1601,7 +1601,7 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
                              _mm_loadu_si128((__m128i *)(mask_16bit[width - w16] + 8))};
     int32_t       i, j, x, y;
 
-    if (bit_depth == AOM_BITS_8) {
+    if (bit_depth == EB_EIGHT_BIT) {
         // Step 1: Calculate the top edge of the whole matrix, i.e., the top
         // edge of each triangle and square on the top row.
         j = 0;
@@ -2124,7 +2124,7 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
 static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_stride,
                                       const int16_t *const s, const int32_t s_stride,
                                       const int32_t width, const int32_t height, int64_t *const M,
-                                      int64_t *const H, AomBitDepth bit_depth) {
+                                      int64_t *const H, EbBitDepth bit_depth) {
     const int32_t wiener_win  = WIENER_WIN_CHROMA;
     const int32_t wiener_win2 = wiener_win * wiener_win;
     const int32_t w16         = width & ~15;
@@ -2133,7 +2133,7 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
                              _mm_loadu_si128((__m128i *)(mask_16bit[width - w16] + 8))};
     int32_t       i, j, x, y;
 
-    if (bit_depth == AOM_BITS_8) {
+    if (bit_depth == EB_EIGHT_BIT) {
         // Step 1: Calculate the top edge of the whole matrix, i.e., the top
         // edge of each triangle and square on the top row.
         j = 0;
@@ -2791,7 +2791,7 @@ static void compute_stats_win5_sse4_1(const int16_t *const d, const int32_t d_st
 static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_stride,
                                       const int16_t *const s, const int32_t s_stride,
                                       const int32_t width, const int32_t height, int64_t *const M,
-                                      int64_t *const H, AomBitDepth bit_depth) {
+                                      int64_t *const H, EbBitDepth bit_depth) {
     const int32_t wiener_win  = WIENER_WIN;
     const int32_t wiener_win2 = wiener_win * wiener_win;
     const int32_t w16         = width & ~15;
@@ -2800,7 +2800,7 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
                              _mm_loadu_si128((__m128i *)(mask_16bit[width - w16] + 8))};
     int32_t       i, j, x, y;
 
-    if (bit_depth == AOM_BITS_8) {
+    if (bit_depth == EB_EIGHT_BIT) {
         // Step 1: Calculate the top edge of the whole matrix, i.e., the top
         // edge of each triangle and square on the top row.
         j = 0;
@@ -3562,8 +3562,8 @@ void svt_av1_compute_stats_highbd_sse4_1(int32_t wiener_win, const uint8_t *dgd8
                                          const uint8_t *src8, int32_t h_start, int32_t h_end,
                                          int32_t v_start, int32_t v_end, int32_t dgd_stride,
                                          int32_t src_stride, int64_t *M, int64_t *H,
-                                         AomBitDepth bit_depth) {
-    if (bit_depth == AOM_BITS_12) {
+                                         EbBitDepth bit_depth) {
+    if (bit_depth == EB_TWELVE_BIT) {
         svt_av1_compute_stats_highbd_c(wiener_win,
                                        dgd8,
                                        src8,
@@ -3620,9 +3620,9 @@ void svt_av1_compute_stats_highbd_sse4_1(int32_t wiener_win, const uint8_t *dgd8
 
     // H is a symmetric matrix, so we only need to fill out the upper triangle.
     // We can copy it down to the lower triangle outside the (i, j) loops.
-    if (bit_depth == AOM_BITS_8) {
+    if (bit_depth == EB_EIGHT_BIT) {
         diagonal_copy_stats_sse4_1(wiener_win2, H);
-    } else { //bit_depth == AOM_BITS_10
+    } else { //bit_depth == EB_TEN_BIT
         const int32_t k4 = wiener_win2 & ~3;
 
         int32_t k = 0;

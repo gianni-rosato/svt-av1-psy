@@ -23,7 +23,7 @@ EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffer
     EbPictureBufferDescInitData trans_coeff_32bit_init_array;
     trans_coeff_32bit_init_array.max_width          = sb_size;
     trans_coeff_32bit_init_array.max_height         = sb_size;
-    trans_coeff_32bit_init_array.bit_depth          = EB_32BIT;
+    trans_coeff_32bit_init_array.bit_depth          = EB_THIRTYTWO_BIT;
     trans_coeff_32bit_init_array.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     trans_coeff_32bit_init_array.color_format       = EB_YUV420;
     trans_coeff_32bit_init_array.left_padding       = 0;

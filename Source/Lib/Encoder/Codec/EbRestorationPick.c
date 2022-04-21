@@ -745,7 +745,7 @@ void svt_av1_compute_stats_c(int32_t wiener_win, const uint8_t *dgd, const uint8
 void svt_av1_compute_stats_highbd_c(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8,
                                     int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end,
                                     int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H,
-                                    AomBitDepth bit_depth) {
+                                    EbBitDepth bit_depth) {
     int32_t         i, j, k, l;
     int32_t         y[WIENER_WIN2] = {0};
     const int32_t   wiener_win2    = wiener_win * wiener_win;
@@ -755,9 +755,9 @@ void svt_av1_compute_stats_highbd_c(int32_t wiener_win, const uint8_t *dgd8, con
     uint16_t        avg = find_average_highbd(dgd, h_start, h_end, v_start, v_end, dgd_stride);
 
     uint8_t bit_depth_divider = 1;
-    if (bit_depth == AOM_BITS_12)
+    if (bit_depth == EB_TWELVE_BIT)
         bit_depth_divider = 16;
-    else if (bit_depth == AOM_BITS_10)
+    else if (bit_depth == EB_TEN_BIT)
         bit_depth_divider = 4;
 
     memset(M, 0, sizeof(*M) * wiener_win2);
@@ -1446,7 +1446,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
                                          rsc->src_stride,
                                          M,
                                          H,
-                                         (AomBitDepth)cm->bit_depth);
+                                         (EbBitDepth)cm->bit_depth);
         else
             svt_av1_compute_stats(wiener_win,
                                   rsc->dgd_buffer,

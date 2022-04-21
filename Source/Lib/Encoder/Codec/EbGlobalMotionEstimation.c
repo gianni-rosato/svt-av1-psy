@@ -216,7 +216,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                                           num_frm_corners,
                                           ref_buffer,
                                           ref_pic->stride_y,
-                                          EB_8BIT,
+                                          EB_EIGHT_BIT,
                                           gm_estimation_type,
                                           inliers_by_motion,
                                           params_by_motion,
@@ -232,7 +232,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                         &tmp_wm_params,
                         tmp_wm_params.wmtype,
                         FALSE,
-                        EB_8BIT,
+                        EB_EIGHT_BIT,
                         ref_buffer,
                         ref_buffer_2b,
                         ref_pic->width,
@@ -270,7 +270,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                 continue;
 
             const int64_t ref_frame_error = svt_av1_frame_error(FALSE,
-                                                                EB_8BIT,
+                                                                EB_EIGHT_BIT,
                                                                 ref_buffer,
                                                                 ref_pic->stride_y,
                                                                 frm_buffer,

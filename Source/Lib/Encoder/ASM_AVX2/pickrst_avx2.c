@@ -93,7 +93,7 @@ static INLINE void add_32_to_64_avx2(const __m256i src, __m256i *const sum) {
 
 static INLINE uint16_t find_average_highbd_avx2(const uint16_t *src, int32_t h_start, int32_t h_end,
                                                 int32_t v_start, int32_t v_end, int32_t stride,
-                                                AomBitDepth bit_depth) {
+                                                EbBitDepth bit_depth) {
     const int32_t   width    = h_end - h_start;
     const int32_t   height   = v_end - v_start;
     const uint16_t *src_t    = src + v_start * stride + h_start;
@@ -867,7 +867,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
                                            const int16_t *const s, const int32_t s_stride,
                                            const int32_t width, const int32_t height,
                                            int64_t *const M, int64_t *const H,
-                                           AomBitDepth bit_depth) {
+                                           EbBitDepth bit_depth) {
     const int32_t wiener_win  = WIENER_WIN_3TAP;
     const int32_t wiener_win2 = wiener_win * wiener_win;
     const int32_t w16         = width & ~15;
@@ -876,7 +876,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
     const __m256i mask        = _mm256_loadu_si256((__m256i *)(mask_16bit[width - w16]));
     int32_t       i, j, x, y;
 
-    if (bit_depth == AOM_BITS_8) {
+    if (bit_depth == EB_EIGHT_BIT) {
         // Step 1: Calculate the top edge of the whole matrix, i.e., the top
         // edge of each triangle and square on the top row.
         j = 0;
@@ -1064,7 +1064,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
         dd = _mm256_insert_epi32(dd, *(int32_t *)(d_t + 1 * d_stride), 1);
         dd = _mm256_insert_epi32(dd, *(int32_t *)(d_t + 1 * d_stride + width), 5);
 
-        if (bit_depth < AOM_BITS_12) {
+        if (bit_depth < EB_TWELVE_BIT) {
             step3_win3_avx2(&d_t, d_stride, width, h4, &dd, deltas);
 
             // 00 00 10 10  00 00 10 10
@@ -1171,7 +1171,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
         // Writing one more H on the top edge of a triangle along the diagonal
         // falls to the next triangle in the same row, which would be calculated
         // later, so it won't overflow.
-        if (bit_depth < AOM_BITS_12) {
+        if (bit_depth < EB_TWELVE_BIT) {
             // 00 01 02 02  10 11 12 12
             delta = _mm256_permutevar8x32_epi32(delta, _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7));
 
@@ -1260,7 +1260,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
             y += 8;
         };
 
-        if (bit_depth < AOM_BITS_12) {
+        if (bit_depth < EB_TWELVE_BIT) {
             deltas[0] = _mm256_hadd_epi32(deltas[0], deltas[1]); // T0 T0 t1 t1  T0 T0 t1 t1
             deltas[2] = _mm256_hadd_epi32(deltas[2], deltas[2]); // t2 t2 t2 t2  t2 t2 t2 t2
             deltas[3] = _mm256_hadd_epi32(deltas[3], deltas[4]); // L0 L0 L1 L1  L0 L0 L1 L1
@@ -1322,7 +1322,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
         // Writing one more H on the top edge of a square falls to the next
         // square in the same row or the first H in the next row, which would be
         // calculated later, so it won't overflow.
-        if (bit_depth < AOM_BITS_12) {
+        if (bit_depth < EB_TWELVE_BIT) {
             update_4_stats_avx2(H + 0 * wiener_win * wiener_win2 + 1 * wiener_win,
                                 _mm256_castsi256_si128(delta),
                                 H + 1 * wiener_win * wiener_win2 + 2 * wiener_win);
@@ -1383,7 +1383,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
             }
 
             __m256i delta64;
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 const __m128i delta32 = hadd_four_32_avx2(
                     deltas[0][0], deltas[0][1], deltas[1][0], deltas[1][1]);
                 delta64 = _mm256_cvtepi32_epi64(delta32);
@@ -1429,7 +1429,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
         __m128i delta01;
         int64_t delta2;
 
-        if (bit_depth < AOM_BITS_12) {
+        if (bit_depth < EB_TWELVE_BIT) {
             const __m128i delta32 = hadd_four_32_avx2(deltas[0], deltas[1], deltas[2], deltas[2]);
             delta01               = _mm_cvtepi32_epi64(delta32);
             delta2                = _mm_extract_epi32(delta32, 2);
@@ -1452,7 +1452,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
                                            const int16_t *const s, const int32_t s_stride,
                                            const int32_t width, const int32_t height,
                                            int64_t *const M, int64_t *const H,
-                                           AomBitDepth bit_depth) {
+                                           EbBitDepth bit_depth) {
     const int32_t wiener_win  = WIENER_WIN_CHROMA;
     const int32_t wiener_win2 = wiener_win * wiener_win;
     const int32_t w16         = width & ~15;
@@ -1460,7 +1460,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
     const __m256i mask        = _mm256_loadu_si256((__m256i *)(mask_16bit[width - w16]));
     int32_t       i, j, x, y;
 
-    if (bit_depth == AOM_BITS_8) {
+    if (bit_depth == EB_EIGHT_BIT) {
         // Step 1: Calculate the top edge of the whole matrix, i.e., the top
         // edge of each triangle and square on the top row.
         j = 0;
@@ -1668,7 +1668,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
             ds[3] = load_win7_avx2(d_t + 3 * d_stride, width);
             d_t += 4 * d_stride;
 
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 step3_win5_oneline_avx2(&d_t, d_stride, width, height, ds, deltas);
                 transpose_32bit_8x8_avx2(deltas, deltas);
 
@@ -1790,7 +1790,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
             // 20s 30s 21s 31s 22s 32s 23s 33s  20e 30e 21e 31e 22e 32e 23e 33e
             ds[2] = _mm256_shuffle_epi8(dd, shf);
 
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 __m128i dlts[WIENER_WIN_CHROMA];
 
                 step3_win5_avx2(&d_t, d_stride, width, height, &dd, ds, deltas);
@@ -1955,7 +1955,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
                 y += 8;
             };
 
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 deltas[0]            = _mm256_hadd_epi32(deltas[0], deltas[1]);
                 deltas[2]            = _mm256_hadd_epi32(deltas[2], deltas[3]);
                 deltas[4]            = _mm256_hadd_epi32(deltas[4], deltas[4]);
@@ -2043,7 +2043,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
                 } while (++y < height);
             }
 
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 update_4_stats_avx2(H + (i - 1) * wiener_win * wiener_win2 + (j - 1) * wiener_win,
                                     _mm256_castsi256_si128(delta),
                                     H + i * wiener_win * wiener_win2 + j * wiener_win);
@@ -2131,7 +2131,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
                 derive_square_win5_avx2(d_is, d_ie, d_js, d_je, deltas);
             }
 
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 hadd_update_4_stats_avx2(
                     H + (i * wiener_win + 0) * wiener_win2 + j * wiener_win,
                     deltas[0],
@@ -2199,7 +2199,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
             derive_triangle_win5_avx2(d_is, d_ie, deltas);
         }
 
-        if (bit_depth < AOM_BITS_12) {
+        if (bit_depth < EB_TWELVE_BIT) {
             hadd_update_4_stats_avx2(H + (i * wiener_win + 0) * wiener_win2 + i * wiener_win,
                                      deltas,
                                      H + (i * wiener_win + 1) * wiener_win2 + i * wiener_win + 1);
@@ -2255,7 +2255,7 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
                                            const int16_t *const s, const int32_t s_stride,
                                            const int32_t width, const int32_t height,
                                            int64_t *const M, int64_t *const H,
-                                           AomBitDepth bit_depth) {
+                                           EbBitDepth bit_depth) {
     const int32_t wiener_win  = WIENER_WIN;
     const int32_t wiener_win2 = wiener_win * wiener_win;
     const int32_t w16         = width & ~15;
@@ -2263,7 +2263,7 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
     const __m256i mask        = _mm256_loadu_si256((__m256i *)(mask_16bit[width - w16]));
     int32_t       i, j, x, y;
 
-    if (bit_depth == AOM_BITS_8) {
+    if (bit_depth == EB_EIGHT_BIT) {
         // Step 1: Calculate the top edge of the whole matrix, i.e., the top
         // edge of each triangle and square on the top row.
         j = 0;
@@ -2500,7 +2500,7 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
         ds[5] = load_win7_avx2(d_t + 5 * d_stride, width);
         d_t += 6 * d_stride;
 
-        if (bit_depth < AOM_BITS_12) {
+        if (bit_depth < EB_TWELVE_BIT) {
             step3_win7_avx2(&d_t, d_stride, width, height, ds, deltas);
 
             transpose_32bit_8x8_avx2(deltas, deltas);
@@ -2689,7 +2689,7 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
                 y += 8;
             };
 
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 deltas[0]            = _mm256_hadd_epi32(deltas[0], deltas[1]);
                 deltas[2]            = _mm256_hadd_epi32(deltas[2], deltas[3]);
                 deltas[4]            = _mm256_hadd_epi32(deltas[4], deltas[5]);
@@ -2801,7 +2801,7 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
             // Writing one more H on the top edge of a square falls to the next
             // square in the same row or the first H in the next row, which
             // would be calculated later, so it won't overflow.
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 update_8_stats_avx2(H + (i - 1) * wiener_win * wiener_win2 + (j - 1) * wiener_win,
                                     deltas[0],
                                     H + i * wiener_win * wiener_win2 + j * wiener_win);
@@ -2906,7 +2906,7 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
                 derive_square_win7_avx2(d_is, d_ie, d_js, d_je, deltas);
             }
 
-            if (bit_depth < AOM_BITS_12) {
+            if (bit_depth < EB_TWELVE_BIT) {
                 hadd_update_6_stats_avx2(
                     H + (i * wiener_win + 0) * wiener_win2 + j * wiener_win,
                     deltas[0],
@@ -2994,7 +2994,7 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
             derive_triangle_win7_avx2(d_is, d_ie, deltas);
         }
 
-        if (bit_depth < AOM_BITS_12) {
+        if (bit_depth < EB_TWELVE_BIT) {
             // Row 1: 6 points
             hadd_update_6_stats_avx2(H + (i * wiener_win + 0) * wiener_win2 + i * wiener_win,
                                      deltas,
@@ -3133,7 +3133,7 @@ void svt_av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd, const ui
 void svt_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8,
                                        int32_t h_start, int32_t h_end, int32_t v_start,
                                        int32_t v_end, int32_t dgd_stride, int32_t src_stride,
-                                       int64_t *M, int64_t *H, AomBitDepth bit_depth) {
+                                       int64_t *M, int64_t *H, EbBitDepth bit_depth) {
     const int32_t   wiener_win2    = wiener_win * wiener_win;
     const int32_t   wiener_halfwin = (wiener_win >> 1);
     const uint16_t *src            = CONVERT_TO_SHORTPTR(src8);
@@ -3176,9 +3176,9 @@ void svt_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, 
 
     // H is a symmetric matrix, so we only need to fill out the upper triangle.
     // We can copy it down to the lower triangle outside the (i, j) loops.
-    if (bit_depth == AOM_BITS_8) {
+    if (bit_depth == EB_EIGHT_BIT) {
         diagonal_copy_stats_avx2(wiener_win2, H);
-    } else if (bit_depth == AOM_BITS_10) {
+    } else if (bit_depth == EB_TEN_BIT) {
         const int32_t k4 = wiener_win2 & ~3;
 
         k = 0;

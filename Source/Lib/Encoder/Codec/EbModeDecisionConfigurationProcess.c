@@ -27,11 +27,11 @@
 #include "EbCommonUtils.h"
 #include "EbResize.h"
 
-int32_t get_qzbin_factor(int32_t q, AomBitDepth bit_depth);
+int32_t get_qzbin_factor(int32_t q, EbBitDepth bit_depth);
 void    invert_quant(int16_t *quant, int16_t *shift, int32_t d);
-int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
-int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
-int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
+int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
+int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
@@ -117,7 +117,7 @@ void           set_global_motion_field(PictureControlSet *pcs_ptr) {
     }
 }
 
-void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
+void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
                              Quants *const quants, Dequants *const deq) {
     int32_t i, q, quant_q3, quant_qtx;
@@ -993,7 +993,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #else
     if (ppcs->disallow_HVA_HVB_HV4 &&
 #endif
-        (scs_ptr->static_config.encoder_bit_depth == EB_8BIT || ppcs->disallow_nsq) &&
+        (scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT || ppcs->disallow_nsq) &&
         (!pcs_ptr->cdf_ctrl.update_coef || is_islice) &&
         !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
         pcs_ptr->pic_bypass_encdec = get_bypass_encdec(
@@ -1230,7 +1230,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
     else {
         if (input_resolution <= INPUT_SIZE_1080p_RANGE &&
-            scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
+            scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT)
             pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 6;
         else
             pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;

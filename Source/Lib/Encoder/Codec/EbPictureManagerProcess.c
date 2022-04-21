@@ -883,7 +883,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
                         // copy buffer info from the downsampled picture to the input frame 16 bit buffer
                         if (entry_pcs_ptr->frame_superres_enabled &&
-                            scs_ptr->static_config.encoder_bit_depth > EB_8BIT) {
+                            scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
                             copy_buffer_info(entry_pcs_ptr->enhanced_downscaled_picture_ptr,
                                              child_pcs_ptr->input_frame16bit);
                         }
