@@ -13,6 +13,7 @@
     - "**/*.h"
     - "**/*.in"
     - "**/.gitlab-ci.yml"
+    - "**/*.patch"
 
 .compiler-variables:
   CFLAGS: -Werror -Wshadow -pipe $EXTRA_CFLAGS
