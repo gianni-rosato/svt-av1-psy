@@ -803,13 +803,9 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
     if ((config->tile_columns > 0 || config->tile_rows > 0)) {
         SVT_WARN(
-            "The use of tiles does not help the SVT-AV1 encoder increase parallelism as it already "
-            "employs subpicture parallelism methods for multi-threaded encoding, while maintaining "
-            "no additional loss in video quality. On the other hand, the use of Tiles will "
-            "necessarily cause some additional loss in video quality. If you are using tiles with "
-            "the intent of increasing the decoder speed, please consider using --fast-decode 1. "
-            "Should you still require the use of tiles, it is strongly recommended that you use no "
-            "more than 2 tiles e.g. --tiles-columns 1.\n");
+            "If you are using tiles with the intent of increasing the decoder speed, please also "
+            "consider using --fast-decode 1, especially if the intended decoder is running with "
+            "limited multi-threading capabilities.\n");
     }
 
     return return_error;
