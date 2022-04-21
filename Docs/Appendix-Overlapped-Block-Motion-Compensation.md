@@ -159,7 +159,7 @@ the block could be either SIMPLE_TRANSLATION, OBMC, or WARPED.
 ## Notes
 
 The feature settings that are described in this document were compiled at
-v0.9.0 of the code and may not reflect the current status of the code. The
+v1.0.0 of the code and may not reflect the current status of the code. The
 description in this document represents an example showing how features would
 interact with the SVT architecture. For the most up-to-date settings, it's
 recommended to review the section of the code implementing this feature.
@@ -169,11 +169,3 @@ recommended to review the section of the code implementing this feature.
 \[1\] Yue Chen and Debargha Mukherjee, “Variable block-size overlapped block motion compensation in the next generation open-source video codec,” International Conference on Image Processing, pp. 938-942, 2017
 
 \[2\] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen, Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, James Bankoski, “A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021.
-
-## Notes
-
-The feature settings that are described in this document were compiled at
-v0.9.0 of the code and may not reflect the current status of the code. The
-description in this document represents an example showing how features would
-interact with the SVT architecture. For the most up-to-date settings, it's
-recommended to review the section of the code implementing this feature.
