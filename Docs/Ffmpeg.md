@@ -7,7 +7,7 @@
 Although ffmpeg has an SVT-AV1 wrapper, its functionality was severely limited
 prior to and including ffmpeg version 5.0.X. Any version starting with 5.1.0 will
 permit full SVT-AV1 functionality, including passing SVT-AV1 parameters directly
-via the `svt-av1-params` keyword.
+via the `svtav1-params` keyword.
 
 If your ffmpeg version is 5.0.X or lower, we suggest you upgrade to a more recent version or
 use the [ffmpeg patch](../ffmpeg_plugin/README.md) included in the [SVT-AV1 repository](https://gitlab.com/AOMediaCodec/SVT-AV1/-/tree/master/ffmpeg_plugin).
