@@ -142,18 +142,7 @@ enabled using `--aq-mode 0`, else CRF mode (default) will be used. If `--crf`
 is set, then aq-mode will be forced to 2, however, if `-q`/`--qp` is set, then
 the encoder will use whatever is set for aq-mode.
 
-If a qp/crf value is not specified, a default value is assigned (50).
-
-For example, the following command encodes 100 frames of the YUV video sequence
-into the bin bit stream file. The picture is 1920 luma pixels wide and 1080
-pixels high using the `Sample.cfg` configuration. The QP equals 30 and the md5
-checksum is not included in the bit stream.
-
-`SvtAv1EncApp.exe -c Sample.cfg -i CrowdRun_1920x1080.yuv -w 1920 -h 1080 -n
-100 -q 30 --keyint 240 -b CrowdRun_1920x1080_qp30.bin`
-
-It should be noted that not all the encoder parameters present in the
-`Sample.cfg` can be changed using the command line.
+If a qp/crf value is not specified, a default value is assigned (35).
 
 ### Sample command lines
 
@@ -162,20 +151,31 @@ Here are some sample encode command lines
 #### 1 pass CRF at maximum speed from 24fps yuv 1920x1080 input
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 12 -b output.ivf`
 
-#### 1 pass VBR 1000 Kbps at medium speed from 24fps yuv 1920x1080 input
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 5 -b output.ivf`
-
-#### 2 pass VBR 1000 Kbps at maximum quality from 24fps yuv 1920x1080 input
-1 command line :
-
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --irefresh-type 2 --passes 2 --stats stat_file.stat -b output.ivf`
+#### Mutli-pass CRF at maximum quality from 24fps yuv 1920x1080 input
+Single command line :
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 0 --passes 2 -b output.ivf`
 
 or
 
-2 command lines :
+Multiple command lines :
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 0 --pass 1 --stats stat_file.stat`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 0 --pass 2 --stats stat_file.stat -b output.ivf `
 
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 12 --irefresh-type 2 --pass 1 --stats stat_file.stat`
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --irefresh-type 2 --pass 2 --stats stat_file.stat -b output.ivf`
+#### 1 pass VBR 1000 Kbps at medium speed from 24fps yuv 1920x1080 input
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 5 -b output.ivf`
+
+#### Multi-pass VBR 1000 Kbps at maximum quality from 24fps yuv 1920x1080 input
+Single command line :
+
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --passes 2 --stats stat_file.stat -b output.ivf`
+
+or
+
+Multiple command lines :
+
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --pass 1 --stats stat_file.stat`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --pass 2 --stats stat_file.stat`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --pass 3 --stats stat_file.stat -b output.ivf`
 
 #### 1 pass CRF at maximum speed from 24fps yuv 1920x1080 input with full range video signal
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 12 --color-range full -b output.ivf`

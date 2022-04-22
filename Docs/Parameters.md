@@ -5,9 +5,11 @@
 
 ## Configuration File Parameters
 
-The encoder parameters present in the `Sample.cfg` file are listed in this
-table below along with their status of support, command line parameter and the
-range of values that the parameters can take.
+The encoder parameters are listed in this table below along with their
+ status of support, command line parameter and the range of values that
+ the parameters can take. Any of the parameters below that have a non-empty
+ `Configuration file parameter` field, can be set by adding them to the
+ `Sample.cfg` file.
 
 ### Options
 
