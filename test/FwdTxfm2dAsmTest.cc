@@ -585,19 +585,19 @@ TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_sse4_1) {
 
 #if EN_AVX512_SUPPORT
 TEST_P(FwdTxfm2dAsmTest, match_test_N2_512) {
-    if (CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
+    if (EB_CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
         run_match_test_N2_512();
     }
 }
 
 TEST_P(FwdTxfm2dAsmTest, match_test_N4_512) {
-    if (CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
+    if (EB_CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
         run_match_test_N4_512();
     }
 }
 
 TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_512) {
-    if (CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
+    if (EB_CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
         speed_test_512();
     }
 }

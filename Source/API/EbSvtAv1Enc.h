@@ -499,8 +499,8 @@ typedef struct EbSvtAv1EncConfiguration {
     uint32_t level;
 
     /* CPU FLAGS to limit assembly instruction set used by encoder.
-    * Default is CPU_FLAGS_ALL. */
-    CPU_FLAGS use_cpu_flags;
+    * Default is EB_CPU_FLAGS_ALL. */
+    EbCpuFlags use_cpu_flags;
 
     // Application Specific parameters
 

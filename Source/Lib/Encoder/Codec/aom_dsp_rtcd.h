@@ -48,9 +48,9 @@ extern "C" {
 #endif
 
 //    // Helper Functions
-//    CPU_FLAGS get_cpu_flags();
-//    CPU_FLAGS get_cpu_flags_to_use();
-    void setup_rtcd_internal(CPU_FLAGS flags);
+//    EbCpuFlags get_cpu_flags();
+//    EbCpuFlags get_cpu_flags_to_use();
+    void setup_rtcd_internal(EbCpuFlags flags);
 
     //to not include convolve.h, just forward declare what's needed.
     struct ConvolveParams;

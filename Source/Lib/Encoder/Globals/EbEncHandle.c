@@ -125,23 +125,23 @@ uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 extern uint32_t tot_past_refs[];
 uint32_t  get_num_refs_in_one_mg(PredictionStructure *pred_struct_ptr);
 
-static const char *get_asm_level_name_str(CPU_FLAGS cpu_flags) {
+static const char *get_asm_level_name_str(EbCpuFlags cpu_flags) {
 
     const struct {
         const char *name;
-        CPU_FLAGS flags;
+        EbCpuFlags flags;
     } param_maps[] = {
         {"c",       0},
-        {"mmx",     CPU_FLAGS_MMX},
-        {"sse",     CPU_FLAGS_SSE},
-        {"sse2",    CPU_FLAGS_SSE2},
-        {"sse3",    CPU_FLAGS_SSE3},
-        {"ssse3",   CPU_FLAGS_SSSE3},
-        {"sse4_1",  CPU_FLAGS_SSE4_1},
-        {"sse4_2",  CPU_FLAGS_SSE4_2},
-        {"avx",     CPU_FLAGS_AVX},
-        {"avx2",    CPU_FLAGS_AVX2},
-        {"avx512",  CPU_FLAGS_AVX512F}
+        {"mmx",     EB_CPU_FLAGS_MMX},
+        {"sse",     EB_CPU_FLAGS_SSE},
+        {"sse2",    EB_CPU_FLAGS_SSE2},
+        {"sse3",    EB_CPU_FLAGS_SSE3},
+        {"ssse3",   EB_CPU_FLAGS_SSSE3},
+        {"sse4_1",  EB_CPU_FLAGS_SSE4_1},
+        {"sse4_2",  EB_CPU_FLAGS_SSE4_2},
+        {"avx",     EB_CPU_FLAGS_AVX},
+        {"avx2",    EB_CPU_FLAGS_AVX2},
+        {"avx512",  EB_CPU_FLAGS_AVX512F}
     };
     const uint32_t para_map_size = sizeof(param_maps) / sizeof(param_maps[0]);
     int32_t i;
@@ -864,8 +864,8 @@ EbErrorType load_default_buffer_configuration_settings(
         * Platform detection, limit cpu flags to hardware available CPU
         ******************************************************************/
 #ifdef ARCH_X86_64
-        const CPU_FLAGS cpu_flags = get_cpu_flags();
-        const CPU_FLAGS cpu_flags_to_use = get_cpu_flags_to_use();
+        const EbCpuFlags cpu_flags = get_cpu_flags();
+        const EbCpuFlags cpu_flags_to_use = get_cpu_flags_to_use();
         scs_ptr->static_config.use_cpu_flags &= cpu_flags_to_use;
         SVT_INFO("[asm level on system : up to %s]\n", get_asm_level_name_str(cpu_flags));
         SVT_INFO("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));

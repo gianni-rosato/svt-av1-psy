@@ -25,22 +25,22 @@
 /*
  * DSP deprecated flags
  */
-#define HAS_MMX CPU_FLAGS_MMX
-#define HAS_SSE CPU_FLAGS_SSE
-#define HAS_SSE2 CPU_FLAGS_SSE2
-#define HAS_SSE3 CPU_FLAGS_SSE3
-#define HAS_SSSE3 CPU_FLAGS_SSSE3
-#define HAS_SSE4_1 CPU_FLAGS_SSE4_1
-#define HAS_SSE4_2 CPU_FLAGS_SSE4_2
-#define HAS_AVX CPU_FLAGS_AVX
-#define HAS_AVX2 CPU_FLAGS_AVX2
-#define HAS_AVX512F CPU_FLAGS_AVX512F
-#define HAS_AVX512CD CPU_FLAGS_AVX512CD
-#define HAS_AVX512DQ CPU_FLAGS_AVX512DQ
-#define HAS_AVX512ER CPU_FLAGS_AVX512ER
-#define HAS_AVX512PF CPU_FLAGS_AVX512PF
-#define HAS_AVX512BW CPU_FLAGS_AVX512BW
-#define HAS_AVX512VL CPU_FLAGS_AVX512VL
+#define HAS_MMX EB_CPU_FLAGS_MMX
+#define HAS_SSE EB_CPU_FLAGS_SSE
+#define HAS_SSE2 EB_CPU_FLAGS_SSE2
+#define HAS_SSE3 EB_CPU_FLAGS_SSE3
+#define HAS_SSSE3 EB_CPU_FLAGS_SSSE3
+#define HAS_SSE4_1 EB_CPU_FLAGS_SSE4_1
+#define HAS_SSE4_2 EB_CPU_FLAGS_SSE4_2
+#define HAS_AVX EB_CPU_FLAGS_AVX
+#define HAS_AVX2 EB_CPU_FLAGS_AVX2
+#define HAS_AVX512F EB_CPU_FLAGS_AVX512F
+#define HAS_AVX512CD EB_CPU_FLAGS_AVX512CD
+#define HAS_AVX512DQ EB_CPU_FLAGS_AVX512DQ
+#define HAS_AVX512ER EB_CPU_FLAGS_AVX512ER
+#define HAS_AVX512PF EB_CPU_FLAGS_AVX512PF
+#define HAS_AVX512BW EB_CPU_FLAGS_AVX512BW
+#define HAS_AVX512VL EB_CPU_FLAGS_AVX512VL
 
 // coeff: 16 bits, dynamic range [-32640, 32640].
 // length: value range {16, 64, 256, 1024}.
@@ -72,38 +72,38 @@ int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
  * Instruction Set Support
  **************************************/
 #ifdef ARCH_X86_64
-CPU_FLAGS get_cpu_flags() {
-    CPU_FLAGS flags = 0;
+EbCpuFlags get_cpu_flags() {
+    EbCpuFlags flags = 0;
 
     // safe to call multiple times, and threadsafe
     // also correctly checks whether the OS saves AVX(2|512) registers
     cpuinfo_initialize();
 
-    flags |= cpuinfo_has_x86_mmx() ? CPU_FLAGS_MMX : 0;
-    flags |= cpuinfo_has_x86_sse() ? CPU_FLAGS_SSE : 0;
-    flags |= cpuinfo_has_x86_sse2() ? CPU_FLAGS_SSE2 : 0;
-    flags |= cpuinfo_has_x86_sse3() ? CPU_FLAGS_SSE3 : 0;
-    flags |= cpuinfo_has_x86_ssse3() ? CPU_FLAGS_SSSE3 : 0;
-    flags |= cpuinfo_has_x86_sse4_1() ? CPU_FLAGS_SSE4_1 : 0;
-    flags |= cpuinfo_has_x86_sse4_2() ? CPU_FLAGS_SSE4_2 : 0;
+    flags |= cpuinfo_has_x86_mmx() ? EB_CPU_FLAGS_MMX : 0;
+    flags |= cpuinfo_has_x86_sse() ? EB_CPU_FLAGS_SSE : 0;
+    flags |= cpuinfo_has_x86_sse2() ? EB_CPU_FLAGS_SSE2 : 0;
+    flags |= cpuinfo_has_x86_sse3() ? EB_CPU_FLAGS_SSE3 : 0;
+    flags |= cpuinfo_has_x86_ssse3() ? EB_CPU_FLAGS_SSSE3 : 0;
+    flags |= cpuinfo_has_x86_sse4_1() ? EB_CPU_FLAGS_SSE4_1 : 0;
+    flags |= cpuinfo_has_x86_sse4_2() ? EB_CPU_FLAGS_SSE4_2 : 0;
 
-    flags |= cpuinfo_has_x86_avx() ? CPU_FLAGS_AVX : 0;
-    flags |= cpuinfo_has_x86_avx2() ? CPU_FLAGS_AVX2 : 0;
+    flags |= cpuinfo_has_x86_avx() ? EB_CPU_FLAGS_AVX : 0;
+    flags |= cpuinfo_has_x86_avx2() ? EB_CPU_FLAGS_AVX2 : 0;
 
-    flags |= cpuinfo_has_x86_avx512f() ? CPU_FLAGS_AVX512F : 0;
-    flags |= cpuinfo_has_x86_avx512dq() ? CPU_FLAGS_AVX512DQ : 0;
-    flags |= cpuinfo_has_x86_avx512cd() ? CPU_FLAGS_AVX512CD : 0;
-    flags |= cpuinfo_has_x86_avx512bw() ? CPU_FLAGS_AVX512BW : 0;
-    flags |= cpuinfo_has_x86_avx512vl() ? CPU_FLAGS_AVX512VL : 0;
+    flags |= cpuinfo_has_x86_avx512f() ? EB_CPU_FLAGS_AVX512F : 0;
+    flags |= cpuinfo_has_x86_avx512dq() ? EB_CPU_FLAGS_AVX512DQ : 0;
+    flags |= cpuinfo_has_x86_avx512cd() ? EB_CPU_FLAGS_AVX512CD : 0;
+    flags |= cpuinfo_has_x86_avx512bw() ? EB_CPU_FLAGS_AVX512BW : 0;
+    flags |= cpuinfo_has_x86_avx512vl() ? EB_CPU_FLAGS_AVX512VL : 0;
 
     return flags;
 }
 
-CPU_FLAGS get_cpu_flags_to_use() {
-    CPU_FLAGS flags = get_cpu_flags();
+EbCpuFlags get_cpu_flags_to_use() {
+    EbCpuFlags flags = get_cpu_flags();
 #if !EN_AVX512_SUPPORT
     /* Remove AVX512 flags. */
-    flags &= (CPU_FLAGS_AVX512F - 1);
+    flags &= (EB_CPU_FLAGS_AVX512F - 1);
 #endif
     return flags;
 }
@@ -162,7 +162,7 @@ CPU_FLAGS get_cpu_flags_to_use() {
     } while (0)
 #endif
 
-/* Macros SET_* use local variable CPU_FLAGS flags and Bool check_pointer_was_set */
+/* Macros SET_* use local variable EbCpuFlags flags and Bool check_pointer_was_set */
 #define SET_ONLY_C(ptr, c)                                  SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 #define SET_SSE2(ptr, c, sse2)                              SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, 0, 0)
 #define SET_SSE2_AVX2(ptr, c, sse2, avx2)                   SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, avx2, 0)
@@ -179,7 +179,7 @@ CPU_FLAGS get_cpu_flags_to_use() {
 #define SET_SSSE3_AVX2(ptr, c,ssse3, avx2)                  SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, ssse3, 0, 0, 0, avx2, 0)
 
 
-void setup_common_rtcd_internal(CPU_FLAGS flags) {
+void setup_common_rtcd_internal(EbCpuFlags flags) {
     /* Avoid check that pointer is set double, after first  setup. */
     static Bool first_call_setup      = TRUE;
     Bool        check_pointer_was_set = first_call_setup;

@@ -709,28 +709,28 @@ static const vector<uint32_t> invalid_level = {
  * 1 = up to AVX512, auto-select highest assembly instruction set supported.
  *
  * Default is 1. */
-static const vector<CPU_FLAGS> default_use_cpu_flags = {
-    CPU_FLAGS_ALL,
+static const vector<EbCpuFlags> default_use_cpu_flags = {
+    EB_CPU_FLAGS_ALL,
 };
-static const vector<CPU_FLAGS> valid_use_cpu_flags = {
-    CPU_FLAGS_MMX,
-    CPU_FLAGS_SSE,
-    CPU_FLAGS_SSE2,
-    CPU_FLAGS_SSE3,
-    CPU_FLAGS_SSSE3,
-    CPU_FLAGS_SSE4_1,
-    CPU_FLAGS_SSE4_2,
-    CPU_FLAGS_AVX,
-    CPU_FLAGS_AVX2,
-    CPU_FLAGS_AVX512F,
-    CPU_FLAGS_AVX512CD,
-    CPU_FLAGS_AVX512DQ,
-    CPU_FLAGS_AVX512ER,
-    CPU_FLAGS_AVX512PF,
-    CPU_FLAGS_AVX512BW,
-    CPU_FLAGS_AVX512VL,
+static const vector<EbCpuFlags> valid_use_cpu_flags = {
+    EB_CPU_FLAGS_MMX,
+    EB_CPU_FLAGS_SSE,
+    EB_CPU_FLAGS_SSE2,
+    EB_CPU_FLAGS_SSE3,
+    EB_CPU_FLAGS_SSSE3,
+    EB_CPU_FLAGS_SSE4_1,
+    EB_CPU_FLAGS_SSE4_2,
+    EB_CPU_FLAGS_AVX,
+    EB_CPU_FLAGS_AVX2,
+    EB_CPU_FLAGS_AVX512F,
+    EB_CPU_FLAGS_AVX512CD,
+    EB_CPU_FLAGS_AVX512DQ,
+    EB_CPU_FLAGS_AVX512ER,
+    EB_CPU_FLAGS_AVX512PF,
+    EB_CPU_FLAGS_AVX512BW,
+    EB_CPU_FLAGS_AVX512VL,
 };
-static const vector<CPU_FLAGS> invalid_use_cpu_flags = {CPU_FLAGS_INVALID};
+static const vector<EbCpuFlags> invalid_use_cpu_flags = {EB_CPU_FLAGS_INVALID};
 
 // Application Specific parameters
 /**

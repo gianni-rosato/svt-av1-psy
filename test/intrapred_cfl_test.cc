@@ -220,8 +220,8 @@ class AomUpsampledPredTest
         // which have to be set properly
         // by setup_common_rtcd_internal(), we want to test intrinsic version of
         // it, so AVX2 flag is necessary
-        uint64_t CPU_FLAGS = TEST_GET_PARAM(5);
-        setup_common_rtcd_internal(CPU_FLAGS);
+        uint64_t EbCpuFlags = TEST_GET_PARAM(5);
+        setup_common_rtcd_internal(EbCpuFlags);
 
         const int run_times = 100;
         for (int i = 0; i < run_times; ++i) {
@@ -277,7 +277,8 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(svt_aom_upsampled_pred_sse2),
                        ::testing::Values(USE_2_TAPS, USE_4_TAPS, USE_8_TAPS),
                        ::testing::Values(0, 1, 2), ::testing::Values(0, 1, 2),
-                       ::testing::Values(CPU_FLAGS_SSSE3, CPU_FLAGS_AVX2)));
+                       ::testing::Values(EB_CPU_FLAGS_SSSE3,
+                                         EB_CPU_FLAGS_AVX2)));
 
 typedef void (*CflLumaSubsamplingLbdFunc)(const uint8_t *, int32_t, int16_t *,
                                           int32_t, int32_t);

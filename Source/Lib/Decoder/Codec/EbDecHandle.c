@@ -523,9 +523,9 @@ EB_API EbErrorType svt_av1_dec_init(EbComponentType *svt_dec_component) {
 
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
 #ifdef ARCH_X86_64
-    CPU_FLAGS cpu_flags = get_cpu_flags_to_use();
+    EbCpuFlags cpu_flags = get_cpu_flags_to_use();
 #else
-    CPU_FLAGS cpu_flags = 0;
+    EbCpuFlags cpu_flags = 0;
 #endif
     dec_handle_ptr->dec_cnt       = -1;
     dec_handle_ptr->num_frms_prll = 1;

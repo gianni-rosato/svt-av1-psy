@@ -681,32 +681,32 @@ static void set_injector_frame_rate(const char *value, EbConfig *cfg) {
 static void set_asm_type(const char *value, EbConfig *cfg) {
     const struct {
         const char *name;
-        CPU_FLAGS   flags;
+        EbCpuFlags  flags;
     } param_maps[] = {
         {"c", 0},
         {"0", 0},
-        {"mmx", (CPU_FLAGS_MMX << 1) - 1},
-        {"1", (CPU_FLAGS_MMX << 1) - 1},
-        {"sse", (CPU_FLAGS_SSE << 1) - 1},
-        {"2", (CPU_FLAGS_SSE << 1) - 1},
-        {"sse2", (CPU_FLAGS_SSE2 << 1) - 1},
-        {"3", (CPU_FLAGS_SSE2 << 1) - 1},
-        {"sse3", (CPU_FLAGS_SSE3 << 1) - 1},
-        {"4", (CPU_FLAGS_SSE3 << 1) - 1},
-        {"ssse3", (CPU_FLAGS_SSSE3 << 1) - 1},
-        {"5", (CPU_FLAGS_SSSE3 << 1) - 1},
-        {"sse4_1", (CPU_FLAGS_SSE4_1 << 1) - 1},
-        {"6", (CPU_FLAGS_SSE4_1 << 1) - 1},
-        {"sse4_2", (CPU_FLAGS_SSE4_2 << 1) - 1},
-        {"7", (CPU_FLAGS_SSE4_2 << 1) - 1},
-        {"avx", (CPU_FLAGS_AVX << 1) - 1},
-        {"8", (CPU_FLAGS_AVX << 1) - 1},
-        {"avx2", (CPU_FLAGS_AVX2 << 1) - 1},
-        {"9", (CPU_FLAGS_AVX2 << 1) - 1},
-        {"avx512", (CPU_FLAGS_AVX512VL << 1) - 1},
-        {"10", (CPU_FLAGS_AVX512VL << 1) - 1},
-        {"max", CPU_FLAGS_ALL},
-        {"11", CPU_FLAGS_ALL},
+        {"mmx", (EB_CPU_FLAGS_MMX << 1) - 1},
+        {"1", (EB_CPU_FLAGS_MMX << 1) - 1},
+        {"sse", (EB_CPU_FLAGS_SSE << 1) - 1},
+        {"2", (EB_CPU_FLAGS_SSE << 1) - 1},
+        {"sse2", (EB_CPU_FLAGS_SSE2 << 1) - 1},
+        {"3", (EB_CPU_FLAGS_SSE2 << 1) - 1},
+        {"sse3", (EB_CPU_FLAGS_SSE3 << 1) - 1},
+        {"4", (EB_CPU_FLAGS_SSE3 << 1) - 1},
+        {"ssse3", (EB_CPU_FLAGS_SSSE3 << 1) - 1},
+        {"5", (EB_CPU_FLAGS_SSSE3 << 1) - 1},
+        {"sse4_1", (EB_CPU_FLAGS_SSE4_1 << 1) - 1},
+        {"6", (EB_CPU_FLAGS_SSE4_1 << 1) - 1},
+        {"sse4_2", (EB_CPU_FLAGS_SSE4_2 << 1) - 1},
+        {"7", (EB_CPU_FLAGS_SSE4_2 << 1) - 1},
+        {"avx", (EB_CPU_FLAGS_AVX << 1) - 1},
+        {"8", (EB_CPU_FLAGS_AVX << 1) - 1},
+        {"avx2", (EB_CPU_FLAGS_AVX2 << 1) - 1},
+        {"9", (EB_CPU_FLAGS_AVX2 << 1) - 1},
+        {"avx512", (EB_CPU_FLAGS_AVX512VL << 1) - 1},
+        {"10", (EB_CPU_FLAGS_AVX512VL << 1) - 1},
+        {"max", EB_CPU_FLAGS_ALL},
+        {"11", EB_CPU_FLAGS_ALL},
     };
     const uint32_t para_map_size = sizeof(param_maps) / sizeof(param_maps[0]);
     uint32_t       i;
@@ -718,7 +718,7 @@ static void set_asm_type(const char *value, EbConfig *cfg) {
         }
     }
 
-    cfg->config.use_cpu_flags = CPU_FLAGS_INVALID;
+    cfg->config.use_cpu_flags = EB_CPU_FLAGS_INVALID;
 };
 static void set_logical_processors(const char *value, EbConfig *cfg) {
     cfg->config.logical_processors = (uint32_t)strtoul(value, NULL, 0);

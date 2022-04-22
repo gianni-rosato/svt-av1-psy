@@ -828,7 +828,7 @@ TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
         run_sqr_txfm_match_test(tx_size, 0);
         run_sqr_txfm_match_test(tx_size, 1);
 #if EN_AVX512_SUPPORT
-        if (get_cpu_flags_to_use() & CPU_FLAGS_AVX512F)
+        if (get_cpu_flags_to_use() & EB_CPU_FLAGS_AVX512F)
             run_sqr_txfm_match_test(tx_size, 2);
 #endif
     }
@@ -846,7 +846,7 @@ TEST_P(InvTxfm2dAsmTest, rect_type1_txfm_match_test) {
     }
 
 #if EN_AVX512_SUPPORT
-    if (get_cpu_flags_to_use() & CPU_FLAGS_AVX512F) {
+    if (get_cpu_flags_to_use() & EB_CPU_FLAGS_AVX512F) {
         for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
             const TxSize tx_size = static_cast<TxSize>(i);
             run_rect_type1_txfm_match_test(tx_size,

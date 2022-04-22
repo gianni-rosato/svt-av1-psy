@@ -411,9 +411,9 @@ class DenoiseModelRunTest : public ::testing::Test {
         memset(&output_film_grain, 0, sizeof(output_film_grain));
 
 #ifdef ARCH_X86_64
-        CPU_FLAGS cpu_flags = get_cpu_flags_to_use();
+        EbCpuFlags cpu_flags = get_cpu_flags_to_use();
 #else
-        CPU_FLAGS cpu_flags = 0;
+        EbCpuFlags cpu_flags = 0;
 #endif
         setup_rtcd_internal(cpu_flags);
     }
