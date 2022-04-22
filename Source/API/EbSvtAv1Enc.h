@@ -680,7 +680,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is false.
      */
     Bool recon_enabled;
-
+    // 1.0.0: Any additional fields shall go after here
 #if FTR_FORCE_KF
     /**
      * @brief Signal that force-key-frames is enabled.
