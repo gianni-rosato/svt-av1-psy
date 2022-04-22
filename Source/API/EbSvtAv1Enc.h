@@ -161,8 +161,6 @@ typedef enum EbSFrameMode {
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
-    // Encoding preset
-
     /**
      * @brief Encoder preset used.
      * -2 and -1 are for debug purposes and should not be used.
@@ -277,10 +275,96 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0. */
     uint32_t compressed_ten_bit_format;
 
-    /* Instruct the library to calculate the recon to source for PSNR calculation
+    /**
+     * @brief Enable writing of HDR metadata in the bitstream
+     *
+     * Default is false.
+     */
+    Bool high_dynamic_range_input;
+
+    /**
+     * @brief Bitstream profile to use.
+     * 0: main, 1: high, 2: professional.
+     *
+     * Min is MAIN_PROFILE.
+     * Max is PROFESSIONAL_PROFILE.
+     * Default is MAIN_PROFILE.
+     */
+    EbAv1SeqProfile profile;
+    /* Constraints for bitstream in terms of max bitrate and max buffer size.
+     *
+     * 0 = Main, for most applications.
+     * 1 = High, for demanding applications.
+     *
+     * Default is 0. */
+    uint32_t tier;
+
+    /**
+     * @brief Bitstream level.
+     * 0: autodetect from bitstream, 20: level 2.0, 63: level 6.3, only levels 2.0-6.3 are properly defined.
+     * The levels are defined at https://aomediacodec.github.io/av1-spec/av1-spec.pdf
+     * under "A.3. Levels".
+     *
+     * Min is 0.
+     * Max is 73.
+     * Default is 0.
+     */
+    uint32_t level;
+
+    /* Color description present flag
     *
-    * Default is 0.*/
-    uint32_t stat_report;
+    * It is not necessary to set this parameter manually.
+    * It is set internally to true once one of the color_primaries, transfer_characteristics or
+    * matrix coefficients is set to non-default value.
+    *
+    Default is false. */
+    Bool color_description_present_flag;
+    /* Color primaries
+    * values are from EbColorPrimaries
+    Default is 2 (CP_UNSPECIFIED). */
+    EbColorPrimaries color_primaries;
+    /* Transfer characteristics
+    * values are from EbTransferCharacteristics
+    Default is 2 (TC_UNSPECIFIED). */
+    EbTransferCharacteristics transfer_characteristics;
+    /* Matrix coefficients
+    * values are from EbMatrixCoefficients
+    Default is 2 (MC_UNSPECIFIED). */
+    EbMatrixCoefficients matrix_coefficients;
+    /* Color range
+    * values are from EbColorRange
+    * 0: studio swing.
+    * 1: full swing.
+    Default is 0. */
+    EbColorRange color_range;
+    /* Mastering display metadata
+    * values are from set using svt_aom_parse_mastering_display()
+    */
+    struct EbSvtAv1MasteringDisplayInfo mastering_display;
+    /* Content light level
+    * values are from set using svt_aom_parse_content_light_level()
+    */
+    struct EbContentLightLevel content_light_level;
+
+    /* Chroma sample position
+     * Values as per 6.4.2 of the specification:
+     * EB_CSP_UNKNOWN:   default
+     * EB_CSP_VERTICAL:  value 0 from H.273 AKA "left"
+     * EB_CSP_COLOCATED: value 2 from H.273 AKA "top left"
+     */
+    EbChromaSamplePosition chroma_sample_position;
+
+    // End input info
+
+    /* Rate control mode.
+     *
+     * 0 = Constant QP.
+     * 1 = Variable Bit Rate, achieve the target bitrate at entire stream.
+     * 2 = Constant Bit Rate, achieve the target bitrate
+     * Default is 0. */
+    uint32_t rate_control_mode;
+
+    // Rate control tuning
 
     // Quantization
     /* Initial quantization parameter for the Intra pictures used under constant
@@ -293,92 +377,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 0.*/
     Bool use_qp_file;
-
-    /* use fixed qp offset for every picture based on temporal layer index
-    *
-    * Default is 0.*/
-    Bool    use_fixed_qindex_offsets;
-    int32_t qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
-    int32_t key_frame_chroma_qindex_offset;
-    int32_t key_frame_qindex_offset;
-    int32_t chroma_qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
-
-    int32_t luma_y_dc_qindex_offset;
-    int32_t chroma_u_dc_qindex_offset;
-    int32_t chroma_u_ac_qindex_offset;
-    int32_t chroma_v_dc_qindex_offset;
-    int32_t chroma_v_ac_qindex_offset;
-
-    // input / output buffer to be used for multi-pass encoding
-    SvtAv1FixedBuf rc_stats_buffer;
-    int            pass;
-
-    // Deblock Filter
-
-    /**
-     * @brief Deblocking loop filter control
-     *
-     * Default is true.
-     */
-    Bool enable_dlf_flag;
-
-    /* Film grain denoising the input picture
-    * Flag to enable the denoising
-    *
-    * Default is 0. */
-    uint32_t film_grain_denoise_strength;
-
-    /**
-    * @brief Determines how much denoising is used.
-    * Only applicable when film grain is ON.
-    *
-    * 0 is no denoising
-    * 1 is full denoising
-    */
-    uint8_t film_grain_denoise_apply;
-
-    /* CDEF Level
-    *
-    * Default is -1. */
-    int cdef_level;
-
-    /* Restoration filtering
-    *  enable/disable
-    *  set Self-Guided (sg) mode
-    *  set Wiener (wn) mode
-    *
-    * Default is -1. */
-    int enable_restoration_filtering;
-    /* motion field motion vector
-    *
-    *  Default is -1. */
-    int enable_mfmv;
-
-    // Rate Control
-    /* Rate control mode.
-     *
-     * 0 = Constant QP.
-     * 1 = Variable Bit Rate, achieve the target bitrate at entire stream.
-     * 2 = Constant Bit Rate, achieve the target bitrate
-     * Default is 0. */
-    uint32_t rate_control_mode;
-    /* Flag to enable the scene change detection algorithm.
-     *
-     * Default is 1. */
-    uint32_t scene_change_detection;
-
-    /* When RateControlMode is set to 1 it's best to set this parameter to be
-     * equal to the Intra period value (such is the default set by the encoder).
-     * When CQP is chosen, then a (2 * minigopsize +1) look ahead is recommended.
-     *
-     * Default depends on rate control mode.*/
-    uint32_t look_ahead_distance;
-
-    /* Enable TPL in look ahead
-     * 0 = disable TPL in look ahead
-     * 1 = enable TPL in look ahead
-     * Default is 0  */
-    uint8_t enable_tpl_la;
 
     /* Target bitrate in bits/second, only apllicable when rate control mode is
      * set to 2 or 3.
@@ -438,6 +436,99 @@ typedef struct EbSvtAv1EncConfiguration {
      * application, and is expressed in units of time(milliseconds).*/
     int64_t maximum_buffer_size_ms;
 
+    // input / output buffer to be used for multi-pass encoding
+    SvtAv1FixedBuf rc_stats_buffer;
+    int            pass;
+
+    // End rate control tuning
+
+    // Individual tuning flags
+
+    /* use fixed qp offset for every picture based on temporal layer index
+    *
+    * Default is 0.*/
+    Bool    use_fixed_qindex_offsets;
+    int32_t qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
+    int32_t key_frame_chroma_qindex_offset;
+    int32_t key_frame_qindex_offset;
+    int32_t chroma_qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
+
+    int32_t luma_y_dc_qindex_offset;
+    int32_t chroma_u_dc_qindex_offset;
+    int32_t chroma_u_ac_qindex_offset;
+    int32_t chroma_v_dc_qindex_offset;
+    int32_t chroma_v_ac_qindex_offset;
+
+    /**
+     * @brief Deblocking loop filter control
+     *
+     * Default is true.
+     */
+    Bool enable_dlf_flag;
+
+    /* Film grain denoising the input picture
+    * Flag to enable the denoising
+    *
+    * Default is 0. */
+    uint32_t film_grain_denoise_strength;
+
+    /**
+    * @brief Determines how much denoising is used.
+    * Only applicable when film grain is ON.
+    *
+    * 0 is no denoising
+    * 1 is full denoising
+    */
+    uint8_t film_grain_denoise_apply;
+
+    /* CDEF Level
+    *
+    * Default is -1. */
+    int cdef_level;
+
+    /* Restoration filtering
+    *  enable/disable
+    *  set Self-Guided (sg) mode
+    *  set Wiener (wn) mode
+    *
+    * Default is -1. */
+    int enable_restoration_filtering;
+    /* motion field motion vector
+    *
+    *  Default is -1. */
+    int enable_mfmv;
+
+    /* Flag to enable the scene change detection algorithm.
+     *
+     * Default is 1. */
+    uint32_t scene_change_detection;
+
+    /**
+     * @brief API signal to constrain motion vectors.
+     *
+     * Default is false.
+     */
+    Bool restricted_motion_vector;
+
+    /* Log 2 Tile Rows and columns . 0 means no tiling,1 means that we split the dimension
+        * into 2
+        * Default is 0. */
+    int32_t tile_columns;
+    int32_t tile_rows;
+
+    /* When RateControlMode is set to 1 it's best to set this parameter to be
+     * equal to the Intra period value (such is the default set by the encoder).
+     * When CQP is chosen, then a (2 * minigopsize +1) look ahead is recommended.
+     *
+     * Default depends on rate control mode.*/
+    uint32_t look_ahead_distance;
+
+    /* Enable TPL in look ahead
+     * 0 = disable TPL in look ahead
+     * 1 = enable TPL in look ahead
+     * Default is 0  */
+    uint8_t enable_tpl_la;
+
     /* recode_loop indicates the recode levels,
      * DISALLOW_RECODE = 0, No recode.
      * ALLOW_RECODE_KFMAXBW = 1, Allow recode for KF and exceeding maximum frame bandwidth.
@@ -460,116 +551,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 2. */
     uint8_t enable_adaptive_quantization;
 
-    // Tresholds
-
-    /**
-     * @brief Enable writing of HDR metadata in the bitstream
-     *
-     * Default is false.
-     */
-    Bool high_dynamic_range_input;
-
-    /**
-     * @brief Bitstream profile to use.
-     * 0: main, 1: high, 2: professional.
-     *
-     * Min is MAIN_PROFILE.
-     * Max is PROFESSIONAL_PROFILE.
-     * Default is MAIN_PROFILE.
-     */
-    EbAv1SeqProfile profile;
-    /* Constraints for bitstream in terms of max bitrate and max buffer size.
-     *
-     * 0 = Main, for most applications.
-     * 1 = High, for demanding applications.
-     *
-     * Default is 0. */
-    uint32_t tier;
-
-    /**
-     * @brief Bitstream level.
-     * 0: autodetect from bitstream, 20: level 2.0, 63: level 6.3, only levels 2.0-6.3 are properly defined.
-     * The levels are defined at https://aomediacodec.github.io/av1-spec/av1-spec.pdf
-     * under "A.3. Levels".
-     *
-     * Min is 0.
-     * Max is 73.
-     * Default is 0.
-     */
-    uint32_t level;
-
-    /* CPU FLAGS to limit assembly instruction set used by encoder.
-    * Default is EB_CPU_FLAGS_ALL. */
-    EbCpuFlags use_cpu_flags;
-
-    // Application Specific parameters
-
-    /**
-     * @brief API signal for the library to know the channel ID (used for pinning to cores).
-     *
-     * Min value is 0.
-     * Max value is 0xFFFFFFFF.
-     * Default is 0.
-     */
-    uint32_t channel_id;
-
-    /**
-     * @brief API signal for the library to know the active number of channels being encoded simultaneously.
-     *
-     * Min value is 1.
-     * Max value is 0xFFFFFFFF.
-     * Default is 1.
-     */
-    uint32_t active_channel_count;
-
-    /**
-     * @brief API signal to constrain motion vectors.
-     *
-     * Default is false.
-     */
-    Bool restricted_motion_vector;
-
-    // Threads management
-
-    /* The number of logical processor which encoder threads run on. If
-     * LogicalProcessors and TargetSocket are not set, threads are managed by
-     * OS thread scheduler. */
-    uint32_t logical_processors;
-
-    /* Unpin the execution .This option does not
-    * set the execution to be pinned to a specific number of cores when set to 1. this allows the execution
-    * of multiple encodes on the CPU without having to pin them to a specific mask
-    * 1: pinned threads
-    * 0: unpinned
-    * default 0 */
-    uint32_t pin_threads;
-
-    /* Target socket to run on. For dual socket systems, this can specify which
-     * socket the encoder runs on.
-     *
-     * -1 = Both Sockets.
-     *  0 = Socket 0.
-     *  1 = Socket 1.
-     *
-     * Default is -1. */
-    int32_t target_socket;
-
-    // Debug tools
-
-    /**
-     * @brief API Signal to output reconstructed yuv used for debug purposes.
-     * Using this will affect the speed of encoder.
-     *
-     * Default is false.
-     */
-    Bool recon_enabled;
-
-    /* Log 2 Tile Rows and columns . 0 means no tiling,1 means that we split the dimension
-        * into 2
-        * Default is 0. */
-    int32_t tile_columns;
-    int32_t tile_rows;
-
     /**
      * @brief Enable use of ALT-REF (temporally filtered) frames.
      *
@@ -584,6 +565,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 1.
      */
     uint8_t tune;
+
     // super-resolution parameters
     uint8_t superres_mode;
     uint8_t superres_denom;
@@ -616,42 +598,6 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     int32_t manual_pred_struct_entry_num;
 
-    // Color description
-    /* Color description present flag
-    *
-    * It is not necessary to set this parameter manually.
-    * It is set internally to true once one of the color_primaries, transfer_characteristics or
-    * matrix coefficients is set to non-default value.
-    *
-    Default is false. */
-    Bool color_description_present_flag;
-    /* Color primaries
-    * values are from EbColorPrimaries
-    Default is 2 (CP_UNSPECIFIED). */
-    EbColorPrimaries color_primaries;
-    /* Transfer characteristics
-    * values are from EbTransferCharacteristics
-    Default is 2 (TC_UNSPECIFIED). */
-    EbTransferCharacteristics transfer_characteristics;
-    /* Matrix coefficients
-    * values are from EbMatrixCoefficients
-    Default is 2 (MC_UNSPECIFIED). */
-    EbMatrixCoefficients matrix_coefficients;
-    /* Color range
-    * values are from EbColorRange
-    * 0: studio swing.
-    * 1: full swing.
-    Default is 0. */
-    EbColorRange color_range;
-    /* Mastering display metadata
-    * values are from set using svt_aom_parse_mastering_display()
-    */
-    struct EbSvtAv1MasteringDisplayInfo mastering_display;
-    /* Content light level
-    * values are from set using svt_aom_parse_content_light_level()
-    */
-    struct EbContentLightLevel content_light_level;
-
     /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
     * 0: No decoder speed optimization
     * 1: Decoder speed optimization enabled (fast decode)
@@ -670,13 +616,71 @@ typedef struct EbSvtAv1EncConfiguration {
     */
     EbSFrameMode sframe_mode;
 
-    /* Chroma sample position
-     * Values as per 6.4.2 of the specification:
-     * EB_CSP_UNKNOWN:   default
-     * EB_CSP_VERTICAL:  value 0 from H.273 AKA "left"
-     * EB_CSP_COLOCATED: value 2 from H.273 AKA "top left"
+    // End of individual tuning flags
+
+    // Application Specific parameters
+
+    /**
+     * @brief API signal for the library to know the channel ID (used for pinning to cores).
+     *
+     * Min value is 0.
+     * Max value is 0xFFFFFFFF.
+     * Default is 0.
      */
-    EbChromaSamplePosition chroma_sample_position;
+    uint32_t channel_id;
+
+    /**
+     * @brief API signal for the library to know the active number of channels being encoded simultaneously.
+     *
+     * Min value is 1.
+     * Max value is 0xFFFFFFFF.
+     * Default is 1.
+     */
+    uint32_t active_channel_count;
+
+    // Threads management
+
+    /* The number of logical processor which encoder threads run on. If
+     * LogicalProcessors and TargetSocket are not set, threads are managed by
+     * OS thread scheduler. */
+    uint32_t logical_processors;
+
+    /* Unpin the execution .This option does not
+    * set the execution to be pinned to a specific number of cores when set to 1. this allows the execution
+    * of multiple encodes on the CPU without having to pin them to a specific mask
+    * 1: pinned threads
+    * 0: unpinned
+    * default 0 */
+    uint32_t pin_threads;
+
+    /* Target socket to run on. For dual socket systems, this can specify which
+     * socket the encoder runs on.
+     *
+     * -1 = Both Sockets.
+     *  0 = Socket 0.
+     *  1 = Socket 1.
+     *
+     * Default is -1. */
+    int32_t target_socket;
+
+    /* CPU FLAGS to limit assembly instruction set used by encoder.
+    * Default is EB_CPU_FLAGS_ALL. */
+    EbCpuFlags use_cpu_flags;
+
+    // Debug tools
+    /* Instruct the library to calculate the recon to source for PSNR calculation
+    *
+    * Default is 0.*/
+    uint32_t stat_report;
+
+    /**
+     * @brief API Signal to output reconstructed yuv used for debug purposes.
+     * Using this will affect the speed of encoder.
+     *
+     * Default is false.
+     */
+    Bool recon_enabled;
+
 #if FTR_FORCE_KF
     /**
      * @brief Signal that force-key-frames is enabled.
