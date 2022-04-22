@@ -807,6 +807,13 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             "consider using --fast-decode 1, especially if the intended decoder is running with "
             "limited multi-threading capabilities.\n");
     }
+    if (config->tune == 0 && config->fast_decode > 0) {
+        SVT_WARN(
+            "--fast - decode has been developed and optimized with --tune 1. "
+            "Please use it with caution when encoding with --tune 0. You can also consider using "
+            "--tile-columns 1 if you are targeting a high quality encode and a multi-core "
+            "high-performance decoder HW\n");
+    }
 
     return return_error;
 }
