@@ -27,12 +27,6 @@ struct SvtMetadataArray;
 #define SVT_AV1_VERSION_MINOR 0
 #define SVT_AV1_VERSION_PATCHLEVEL 0
 
-#ifndef SVT_VERSION_MAJOR
-#define SVT_VERSION_MAJOR SVT_AV1_VERSION_MAJOR
-#define SVT_VERSION_MINOR SVT_AV1_VERSION_MINOR
-#define SVT_VERSION_PATCHLEVEL SVT_AV1_VERSION_PATCHLEVEL
-#endif
-
 #define SVT_AV1_CHECK_VERSION(major, minor, patch)                            \
     (SVT_AV1_VERSION_MAJOR > (major) ||                                       \
      (SVT_AV1_VERSION_MAJOR == (major) && SVT_AV1_VERSION_MINOR > (minor)) || \
