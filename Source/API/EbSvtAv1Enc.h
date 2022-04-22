@@ -21,6 +21,15 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
+/**
+ * @brief SVT-AV1 encoder ABI version
+ *
+ * Should be increased by 1 everytime a public struct in the encoder
+ * has been modified, and reset anytime the major API version has
+ * been changed. Used to keep track if a field has been added or not.
+ */
+#define SVT_AV1_ENC_ABI_VERSION 1
+
 //***HME***
 
 #define MAX_HIERARCHICAL_LEVEL 6
