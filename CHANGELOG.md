@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0] - 2022-05-21
+## [1.0.0] - 2022-04-22
 
 Encoder
 - Added S-frames support
