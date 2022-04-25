@@ -6,6 +6,7 @@ include:
   - local: /.gitlab/workflows/windows/.gitlab-ci.yml
   - local: /.gitlab/workflows/macos/.gitlab-ci.yml
   - local: /.gitlab/workflows/linux/.gitlab-ci.yml
+  - local: /.gitlab/workflows/bsd/.gitlab-ci.yml
 
 Enc OS Diff Test:
   extends: .common-ci-base
