@@ -1381,21 +1381,33 @@ void set_rest_filter_ctrls(SequenceControlSet *scs_ptr, Av1Common* cm, uint8_t r
         break;
     case 1:
         ctrls->enabled = 1;
+#if FTR_REST_LUMA_ONLY
+        ctrls->luma_only = 0;
+#endif
         set_wn_filter_ctrls(cm, 1);
         set_sg_filter_ctrls(cm, 1);
         break;
     case 2:
         ctrls->enabled = 1;
+#if FTR_REST_LUMA_ONLY
+        ctrls->luma_only = 0;
+#endif
         set_wn_filter_ctrls(cm, 1);
         set_sg_filter_ctrls(cm, 4);
         break;
     case 3:
         ctrls->enabled = 1;
+#if FTR_REST_LUMA_ONLY
+        ctrls->luma_only = 0;
+#endif
         set_wn_filter_ctrls(cm, 1);
         set_sg_filter_ctrls(cm, 0);
         break;
     case 4:
         ctrls->enabled = 1;
+#if FTR_REST_LUMA_ONLY
+        ctrls->luma_only = 0;
+#endif
         set_wn_filter_ctrls(cm, 4);
         set_sg_filter_ctrls(cm, 0);
         break;

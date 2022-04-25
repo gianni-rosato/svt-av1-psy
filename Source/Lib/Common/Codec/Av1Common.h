@@ -48,6 +48,9 @@ typedef struct SgFilterCtrls {
 } SgFilterCtrls;
 typedef struct RestFilterCtrls {
     Bool enabled;
+#if FTR_REST_LUMA_ONLY
+    Bool luma_only; // Perform restoration filtering for luma plane only
+#endif
     WnFilterCtrls wn_ctrls;
     SgFilterCtrls sg_ctrls;
 } RestFilterCtrls;

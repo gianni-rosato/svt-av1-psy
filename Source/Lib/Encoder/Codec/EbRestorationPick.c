@@ -1106,7 +1106,7 @@ static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt        *rsc,
 #if USE_WIENER_REFINEMENT_SEARCH
     WienerInfo *plane_wiener = &rui->wiener_info;
 #if CLN_REST
-    WnFilterCtrls* wn_ctrls = &cm->rest_filter_ctrls.wn_ctrls;
+    const WnFilterCtrls* const wn_ctrls = &cm->rest_filter_ctrls.wn_ctrls;
     if (cm->rest_filter_ctrls.wn_ctrls.use_refinement) {
 #else
     // SVT_LOG("err  pre = %"PRId64"\n", err);
@@ -1394,7 +1394,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
     RestUnitSearchInfo    *rusi    = &rsc->rusi[rest_unit_idx];
     const Av1Common *const cm      = rsc->cm;
 #if CLN_REST
-    WnFilterCtrls* wn_ctrls = &cm->rest_filter_ctrls.wn_ctrls;
+    const WnFilterCtrls* const wn_ctrls = &cm->rest_filter_ctrls.wn_ctrls;
     int32_t wn_luma = wn_ctrls->filter_tap_lvl == 1 ? WIENER_WIN
                     : wn_ctrls->filter_tap_lvl == 2 ? WIENER_WIN_CHROMA
                     : WIENER_WIN_3TAP;
@@ -1493,7 +1493,7 @@ static void search_wiener_finish(const RestorationTileLimits *limits, const Av1P
     RestUnitSearchInfo     *rusi       = &rsc->rusi[rest_unit_idx];
     const Av1Common *const  cm         = rsc->cm;
 #if CLN_REST
-    WnFilterCtrls* wn_ctrls = &cm->rest_filter_ctrls.wn_ctrls;
+    const WnFilterCtrls* const wn_ctrls = &cm->rest_filter_ctrls.wn_ctrls;
     int32_t wn_luma = wn_ctrls->filter_tap_lvl == 1 ? WIENER_WIN
                     : wn_ctrls->filter_tap_lvl == 2 ? WIENER_WIN_CHROMA
                     : WIENER_WIN_3TAP;
@@ -1601,7 +1601,11 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
     RestSearchCtxt *rsc_p = &rsc;
 
     const int32_t plane_start = AOM_PLANE_Y;
+#if FTR_REST_LUMA_ONLY
+    const int32_t plane_end   = cm->rest_filter_ctrls.luma_only ? AOM_PLANE_Y : AOM_PLANE_V;
+#else
     const int32_t plane_end   = AOM_PLANE_V;
+#endif
     for (int32_t plane = plane_start; plane <= plane_end; ++plane) {
         RestUnitSearchInfo *rusi = pcs_ptr->rusi_picture[plane];
 
@@ -1691,7 +1695,11 @@ void rest_finish_search(PictureControlSet *pcs_ptr) {
 
     RestSearchCtxt rsc;
     const int32_t  plane_start = AOM_PLANE_Y;
+#if FTR_REST_LUMA_ONLY
+    const int32_t  plane_end   = cm->rest_filter_ctrls.luma_only ? AOM_PLANE_Y : AOM_PLANE_V;
+#else
     const int32_t  plane_end   = AOM_PLANE_V;
+#endif
     for (int32_t plane = plane_start; plane <= plane_end; ++plane) {
         //init rsc context for this plane
         rsc.cm       = cm;
@@ -1731,6 +1739,13 @@ void rest_finish_search(PictureControlSet *pcs_ptr) {
                 copy_unit_info(best_rtype, &rusi[u], &cm->child_pcs->rst_info[plane].unit_info[u]);
         }
     }
+#if FTR_REST_LUMA_ONLY
+    // if restoration performed for luma only, set chroma to RESTORE_NONE
+    if (cm->rest_filter_ctrls.luma_only) {
+        pcs_ptr->rst_info[1].frame_restoration_type = RESTORE_NONE;
+        pcs_ptr->rst_info[2].frame_restoration_type = RESTORE_NONE;
+    }
+#endif
 
     svt_aom_free(rusi);
 }
