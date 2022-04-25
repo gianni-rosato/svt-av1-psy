@@ -7,3 +7,4 @@ Description: SVT (Scalable Video Technology) for AV1 encoder library
 Version: @ENC_VERSION_MAJOR@.@ENC_VERSION_MINOR@.@ENC_VERSION_PATCH@
 Libs: -L${libdir} -lSvtAv1Enc @LIBS_PRIVATE@
 Cflags: -I${includedir}@ENC_PKG_CONFIG_EXTRA_CFLAGS@
+Cflags.private: -UEB_DLL
