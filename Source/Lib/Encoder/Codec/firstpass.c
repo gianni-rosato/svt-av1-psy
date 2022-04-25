@@ -481,7 +481,11 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
 #define LOW_MOTION_ERROR_THRESH 25
 #define MOTION_ERROR_THRESH 500
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
+#if CLN_REST
+void set_rest_filter_ctrls(SequenceControlSet* scs_ptr, Av1Common *cm, uint8_t wn_filter_lvl);
+#else
 void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
+#endif
 void set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level);
 /******************************************************
 * Derive Multi-Processes Settings for first pass
@@ -554,7 +558,9 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // 4                                            16 step refinement
     // 5                                            64 step refinement
     pcs_ptr->cdef_level = 0;
-
+#if CLN_REST
+    set_rest_filter_ctrls(scs_ptr, pcs_ptr->av1_cm, 0);
+#else
     // SG Level                                    Settings
     // 0                                            OFF
     // 1                                            0 step refinement
@@ -565,7 +571,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     cm->sg_filter_mode = 0;
 
     set_wn_filter_ctrls(cm, 0);
-
+#endif
     pcs_ptr->intra_pred_mode = 3;
 
     // Set Tx Search     Settings

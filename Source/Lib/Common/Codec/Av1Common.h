@@ -41,6 +41,17 @@ typedef struct WnFilterCtrls {
         use_prev_frame_coeffs; // Skip coeff generation and use the filter params from the colocated rest. unit on the previous frame, if available, else generate new
     // Requires that previous frames saved their params (only true if this flag is on for all frames)
 } WnFilterCtrls;
+#if CLN_REST
+typedef struct SgFilterCtrls {
+    Bool enabled;
+    int8_t step_range; // [0,16] - the range of epsilon to test for the self-guided filter selection; lower is more aggressive
+} SgFilterCtrls;
+typedef struct RestFilterCtrls {
+    Bool enabled;
+    WnFilterCtrls wn_ctrls;
+    SgFilterCtrls sg_ctrls;
+} RestFilterCtrls;
+#endif
 typedef struct Av1Common {
     int32_t      mi_rows;
     int32_t      mi_cols;
@@ -68,11 +79,18 @@ typedef struct Av1Common {
     int32_t           tile_width, tile_height; // In MI units
 
     //    SeqHeader                       *seq_header_ptr;
+#if CLN_REST
+    RestFilterCtrls rest_filter_ctrls;
+    int32_t       sg_frame_ep_cnt[SGRPROJ_PARAMS];
+    int32_t       sg_frame_ep;
+    int8_t        sg_ref_frame_ep[2];
+#else
     int8_t        sg_filter_mode;
     int32_t       sg_frame_ep_cnt[SGRPROJ_PARAMS];
     int32_t       sg_frame_ep;
     int8_t        sg_ref_frame_ep[2];
     WnFilterCtrls wn_filter_ctrls;
+#endif
     uint8_t use_boundaries_in_rest_search; // Use boundary pixels in restoration filtering search
 
     FrameSize frm_size;

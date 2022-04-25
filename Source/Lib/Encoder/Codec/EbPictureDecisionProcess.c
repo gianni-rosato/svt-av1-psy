@@ -1286,7 +1286,11 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
     }
 }
 void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
+#if CLN_REST
+    WnFilterCtrls* ctrls = &cm->rest_filter_ctrls.wn_ctrls;
+#else
     WnFilterCtrls* ctrls = &cm->wn_filter_ctrls;
+#endif
 
     switch (wn_filter_lvl) {
     case 0:
@@ -1332,6 +1336,84 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     }
 }
+#if CLN_REST
+void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
+    SgFilterCtrls* ctrls = &cm->rest_filter_ctrls.sg_ctrls;
+
+    switch (sg_filter_lvl) {
+    case 0:
+        ctrls->enabled = 0;
+        break;
+    case 1:
+        ctrls->enabled = 1;
+        ctrls->step_range = 16;
+        break;
+    case 2:
+        ctrls->enabled = 1;
+        ctrls->step_range = 4;
+        break;
+    case 3:
+        ctrls->enabled = 1;
+        ctrls->step_range = 1;
+        break;
+    case 4:
+        ctrls->enabled = 1;
+        ctrls->step_range = 0;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+/*
+ * Set loop restoration filtering levels; restoration filtering comprises
+ * self-guided filter w/ projection and wiener filter.
+*/
+void set_rest_filter_ctrls(SequenceControlSet *scs_ptr, Av1Common* cm, uint8_t rest_filter_lvl) {
+    RestFilterCtrls* ctrls = &cm->rest_filter_ctrls;
+
+    switch (rest_filter_lvl) {
+    case 0:
+        ctrls->enabled = 0;
+        set_wn_filter_ctrls(cm, 0);
+        set_sg_filter_ctrls(cm, 0);
+        break;
+    case 1:
+        ctrls->enabled = 1;
+        set_wn_filter_ctrls(cm, 1);
+        set_sg_filter_ctrls(cm, 1);
+        break;
+    case 2:
+        ctrls->enabled = 1;
+        set_wn_filter_ctrls(cm, 1);
+        set_sg_filter_ctrls(cm, 4);
+        break;
+    case 3:
+        ctrls->enabled = 1;
+        set_wn_filter_ctrls(cm, 1);
+        set_sg_filter_ctrls(cm, 0);
+        break;
+    case 4:
+        ctrls->enabled = 1;
+        set_wn_filter_ctrls(cm, 4);
+        set_sg_filter_ctrls(cm, 0);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+
+    if (ctrls->enabled) {
+        if (scs_ptr->wn_filter_mode != DEFAULT)
+            set_wn_filter_ctrls(cm, scs_ptr->wn_filter_mode);
+        if (scs_ptr->sg_filter_mode != DEFAULT)
+            set_sg_filter_ctrls(cm, scs_ptr->sg_filter_mode);
+    }
+
+    assert(IMPLIES(!cm->rest_filter_ctrls.enabled, (!cm->rest_filter_ctrls.wn_ctrls.enabled && !cm->rest_filter_ctrls.sg_ctrls.enabled)));
+}
+#endif
 void set_list0_only_base(PictureParentControlSet* pcs_ptr, uint8_t list0_only_base) {
     List0OnlyBase* ctrls = &pcs_ptr->list0_only_base_ctrls;
 
@@ -1860,7 +1942,24 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->cdef_level = 0;
     set_cdef_controls(pcs_ptr, pcs_ptr->cdef_level, fast_decode);
+#if CLN_REST
+    uint8_t restoration_filter_lvl = 0;
+    if (scs_ptr->seq_header.enable_restoration) {
+        if (enc_mode <= ENC_M2)
+            restoration_filter_lvl = 1;
+        else if (enc_mode <= ENC_M4)
+            restoration_filter_lvl = is_base ? 1 : 2;
+        else if (enc_mode <= ENC_M5)
+            restoration_filter_lvl = 3;
+        else
+            restoration_filter_lvl = 4;
+    }
+    else {
+        restoration_filter_lvl = 0;
+    }
 
+    set_rest_filter_ctrls(scs_ptr, pcs_ptr->av1_cm, restoration_filter_lvl);
+#else
     // SG Level     Settings
     // 0             OFF
     // 1             16 step refinement
@@ -1902,6 +2001,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         wn_filter_lvl = scs_ptr->wn_filter_mode;
 
     set_wn_filter_ctrls(cm, wn_filter_lvl);
+#endif
     // Set tx size search mode
     if (enc_mode <= ENC_M1)
         pcs_ptr->tx_size_search_mode = 1;

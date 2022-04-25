@@ -1889,7 +1889,11 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
     // Copy the prev frame wn filter coeffs
     EbReferenceObject *obj = (EbReferenceObject *)
                                  pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
+#if CLN_REST
+    if (cm->rest_filter_ctrls.wn_ctrls.enabled && cm->rest_filter_ctrls.wn_ctrls.use_prev_frame_coeffs) {
+#else
     if (cm->wn_filter_ctrls.enabled && cm->wn_filter_ctrls.use_prev_frame_coeffs) {
+#endif
         for (int32_t plane = 0; plane < MAX_MB_PLANE; ++plane) {
             int32_t ntiles = pcs_ptr->rst_info[plane].units_per_tile;
             for (int32_t u = 0; u < ntiles; ++u) {
@@ -6935,7 +6939,9 @@ void *mode_decision_kernel(void *input_ptr) {
                 svt_release_object(enc_dec_tasks_wrapper_ptr);
                 continue;
             }
-
+#if CLN_REST
+            Av1Common *cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+#endif
             if (pcs_ptr->cdf_ctrl.enabled) {
                 if (!pcs_ptr->cdf_ctrl.update_mv)
                     copy_mv_rate(pcs_ptr, context_ptr->md_context->rate_est_table);
@@ -6946,7 +6952,11 @@ void *mode_decision_kernel(void *input_ptr) {
                         pcs_ptr->slice_type == I_SLICE ? TRUE : FALSE,
                         pcs_ptr->pic_filter_intra_level,
                         pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
+#if CLN_REST
+                        cm->rest_filter_ctrls.enabled,
+#else
                         scs_ptr->seq_header.enable_restoration,
+#endif
                         pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc,
                         pcs_ptr->parent_pcs_ptr->partition_contexts,
                         &pcs_ptr->md_frame_context);
@@ -7062,7 +7072,11 @@ void *mode_decision_kernel(void *input_ptr) {
                                     pcs_ptr->slice_type == I_SLICE,
                                     pcs_ptr->pic_filter_intra_level,
                                     pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
+#if CLN_REST
+                                    cm->rest_filter_ctrls.enabled,
+#else
                                     scs_ptr->seq_header.enable_restoration,
+#endif
                                     pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc,
                                     pcs_ptr->parent_pcs_ptr->partition_contexts,
                                     &pcs_ptr->ec_ctx_array[sb_index]);

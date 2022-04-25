@@ -44,6 +44,7 @@ extern "C" {
 #define CLN_CDEF_BUFFS          1 // Remove unused var from CdefList struct
 #define OPT_CDEF_DIR_PAD        1 // Pad cdef directions array for faster accesses
 #define TUNE_MDS0_DIST          1 // Use variance as MDS0 distortion metric in M12 and below
+#define CLN_REST                1 // Cleanup signaling for loop restoration filtering and remove unnecessary operations
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

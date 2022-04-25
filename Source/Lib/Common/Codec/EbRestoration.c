@@ -1298,7 +1298,11 @@ void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *c
                                      cm->subsampling_x,
                                      cm->subsampling_y,
                                      cm->use_highbitdepth,
+#if CLN_REST
+                                     AOM_RESTORATION_FRAME_BORDER,
+#else
                                      AOM_BORDER_IN_PIXELS,
+#endif
                                      cm->byte_alignment,
                                      NULL,
                                      NULL,

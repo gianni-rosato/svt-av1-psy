@@ -121,6 +121,15 @@ void *dlf_kernel(void *input_ptr) {
             get_recon_pic(pcs_ptr, &recon_pic, is_16bit);
 
             Av1Common *cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+#if CLN_REST
+            if (cm->rest_filter_ctrls.enabled) {
+
+                link_eb_to_aom_buffer_desc(recon_pic,
+                    cm->frame_to_show,
+                    scs_ptr->max_input_pad_right,
+                    scs_ptr->max_input_pad_bottom,
+                    is_16bit);
+#else
             link_eb_to_aom_buffer_desc(recon_pic,
                 cm->frame_to_show,
                 scs_ptr->max_input_pad_right,
@@ -128,6 +137,7 @@ void *dlf_kernel(void *input_ptr) {
                 is_16bit);
 
             if (scs_ptr->seq_header.enable_restoration) {
+#endif
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
             }
 

@@ -998,8 +998,11 @@ void *cdef_kernel(void *input_ptr) {
             // SVT_LOG("    CDEF all seg here  %i\n", pcs_ptr->picture_number);
             if (scs_ptr->seq_header.cdef_level && pcs_ptr->parent_pcs_ptr->cdef_level) {
                 finish_cdef_search(pcs_ptr);
-
+#if CLN_REST
+                if (cm->rest_filter_ctrls.enabled ||
+#else
                 if (scs_ptr->seq_header.enable_restoration != 0 ||
+#endif
                     pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
                     scs_ptr->static_config.recon_enabled) {
                     // Do application iff there are non-zero filters
@@ -1024,7 +1027,11 @@ void *cdef_kernel(void *input_ptr) {
             }
 
             //restoration prep
+#if CLN_REST
+            if (cm->rest_filter_ctrls.enabled) {
+#else
             if (scs_ptr->seq_header.enable_restoration) {
+#endif
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 1);
             }
 

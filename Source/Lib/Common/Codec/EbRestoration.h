@@ -26,6 +26,10 @@ void svt_apply_selfguided_restoration_c(const uint8_t *dat8, int32_t width, int3
                                         uint8_t *dst8, int32_t dst_stride, int32_t *tmpbuf,
                                         int32_t bit_depth, int32_t highbd);
 
+#if CLN_REST
+// Border for Loop restoration buffer
+#define AOM_RESTORATION_FRAME_BORDER 32
+#endif
 #define CLIP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 #define RINT(x) ((x) < 0 ? (int32_t)((x)-0.5) : (int32_t)((x) + 0.5))
 

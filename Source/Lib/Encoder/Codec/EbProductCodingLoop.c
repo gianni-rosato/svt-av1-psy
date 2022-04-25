@@ -6635,8 +6635,13 @@ uint8_t do_md_recon(PictureParentControlSet *pcs, ModeDecisionContext *ctxt) {
     uint8_t need_md_rec_for_dlf_search  = pcs->dlf_ctrls.enabled; //for DLF levels
     uint8_t need_md_rec_for_cdef_search = pcs->cdef_ctrls.enabled &&
         !pcs->cdef_ctrls.use_reference_cdef_fs; // CDEF search levels needing the recon samples
+#if CLN_REST
+    uint8_t need_md_rec_for_restoration_search =
+        pcs->av1_cm->rest_filter_ctrls.enabled; // any resoration search level
+#else
     uint8_t need_md_rec_for_restoration_search =
         pcs->scs_ptr->seq_header.enable_restoration; // any resoration search level
+#endif
 
     uint8_t do_recon;
     if (need_md_rec_for_intra_pred || need_md_rec_for_ref || need_md_rec_for_dlf_search ||
