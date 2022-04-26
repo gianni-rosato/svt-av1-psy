@@ -610,7 +610,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->txt_level = 5;
         else
             pcs_ptr->txt_level = is_base ? 1 : 3;
+#if EN_REST_M8_M9
+    }
+    else if (enc_mode <= ENC_M9)
+#else
     } else if (enc_mode <= ENC_M7)
+#endif
         pcs_ptr->txt_level = 5;
     else if (enc_mode <= ENC_M10)
         pcs_ptr->txt_level = is_base ? 6 : 8;
@@ -1045,8 +1050,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
         else
             pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
+#if EN_REST_M8_M9
+    }
+    else if (enc_mode <= ENC_M7)
+        pcs_ptr->pic_lpd1_lvl = 0;
+    else if (enc_mode <= ENC_M9)
+        pcs_ptr->pic_lpd1_lvl = is_ref ? 0 : 1;
+#else
     } else if (enc_mode <= ENC_M9)
         pcs_ptr->pic_lpd1_lvl = 0;
+#endif
     else if (enc_mode <= ENC_M10)
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
     else if (enc_mode <= ENC_M11)

@@ -473,12 +473,11 @@ int32_t svt_aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32
                 return -1;
 
             ybf->buffer_alloc_sz = (size_t)frame_size;
-#if !CLN_REST // not needed for restoration loop filtering; this func is only called for restoration
+
             // This memset is needed for fixing valgrind error from C loop filter
             // due to access uninitialized memory in frame border. It could be
             // removed if border is totally removed.
             memset(ybf->buffer_alloc, 0, ybf->buffer_alloc_sz);
-#endif
         }
 
         /* Only support allocating buffers that have a border that's a multiple

@@ -1411,6 +1411,14 @@ void set_rest_filter_ctrls(SequenceControlSet *scs_ptr, Av1Common* cm, uint8_t r
         set_wn_filter_ctrls(cm, 4);
         set_sg_filter_ctrls(cm, 0);
         break;
+#if EN_REST_M8_M9
+    case 5:
+        ctrls->enabled = 1;
+        ctrls->luma_only = 1;
+        set_wn_filter_ctrls(cm, 4);
+        set_sg_filter_ctrls(cm, 0);
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -1963,8 +1971,15 @@ EbErrorType signal_derivation_multi_processes_oq(
             restoration_filter_lvl = is_base ? 1 : 2;
         else if (enc_mode <= ENC_M5)
             restoration_filter_lvl = 3;
+#if EN_REST_M8_M9
+        else if (enc_mode <= ENC_M7)
+            restoration_filter_lvl = 4;
+        else
+            restoration_filter_lvl = is_ref ? 5 : 0;
+#else
         else
             restoration_filter_lvl = 4;
+#endif
     }
     else {
         restoration_filter_lvl = 0;

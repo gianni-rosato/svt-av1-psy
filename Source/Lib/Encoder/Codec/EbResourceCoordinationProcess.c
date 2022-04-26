@@ -352,7 +352,11 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
     Bool enable_restoration;
 
     if (fast_decode == 0)
+#if EN_REST_M8_M9
+        enable_restoration = (enc_mode <= ENC_M9) ? 1 : 0;
+#else
         enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
+#endif
     else {
         if (enc_mode <= ENC_M7)
             enable_restoration = input_resolution <= INPUT_SIZE_360p_RANGE ? 1 : 0;
