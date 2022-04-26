@@ -144,7 +144,11 @@ void mode_decision_update_neighbor_arrays(PictureControlSet   *pcs_ptr,
     uint16_t tile_idx = context_ptr->tile_index;
 
     {
+#if OPT_PRED_ONLY
+        if (!(context_ptr->pd_pass == PD_PASS_1 && context_ptr->pic_pred_depth_only)) {
+#else
         if (!(context_ptr->pd_pass == PD_PASS_1 && context_ptr->pred_depth_only)) {
+#endif
             struct PartitionContext partition;
             partition.above = partition_context_lookup[context_ptr->blk_geom->bsize].above;
             partition.left  = partition_context_lookup[context_ptr->blk_geom->bsize].left;

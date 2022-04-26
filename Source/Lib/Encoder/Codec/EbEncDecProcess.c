@@ -4571,7 +4571,12 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
     else
         depth_level = 0;
     set_depth_ctrls(ctx, depth_level);
+#if OPT_PRED_ONLY
+    // pic_pred_depth_only shouldn't be changed after this point
+    ctx->pred_depth_only = ctx->pic_pred_depth_only = (depth_level == 0);
+#else
     ctx->pred_depth_only = (depth_level == 0);
+#endif
     ctx->pd0_level       = pcs_ptr->pic_pd0_level;
     SbParams *sb_params  = &pcs_ptr->parent_pcs_ptr->sb_params_array[ctx->sb_index];
     ctx->depth_removal_ctrls.disallow_below_64x64 = 0;
@@ -6231,6 +6236,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
     }
     results_ptr->leaf_count = 0;
     blk_index               = 0;
+#if OPT_PRED_ONLY
+    Bool pred_depth_only = 1;
+#endif
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
         const unsigned   tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
@@ -6348,7 +6356,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 }
                             }
                         }
-
+#if OPT_PRED_ONLY
+                        if (e_depth || s_depth)
+                            pred_depth_only = 0;
+#endif
                         if (s_depth != 0 && add_parent_depth)
                             set_parent_to_be_considered(results_ptr,
                                                         blk_index,
@@ -6374,6 +6385,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
         }
         blk_index += split_flag ? blk_geom->d1_depth_offset : blk_geom->ns_depth_offset;
     }
+#if OPT_PRED_ONLY
+    if (pred_depth_only)
+        context_ptr->pred_depth_only = 1;
+#endif
 }
 // Initialize structures used to indicate which blocks will be tested at MD.
 // MD data structures should be updated in init_block_data(), not here.

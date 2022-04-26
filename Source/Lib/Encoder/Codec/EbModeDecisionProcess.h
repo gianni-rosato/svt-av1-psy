@@ -792,10 +792,18 @@ typedef struct ModeDecisionContext {
     uint32_t        max_nics; // Maximum number of candidates MD can support
     uint32_t        max_nics_uv; // Maximum number of candidates MD can support
     InterpolationSearchCtrls ifs_ctrls;
+#if OPT_PRED_ONLY
+    Bool bypass_encdec; // If enabled, will bypass EncDec and copy recon/quant coeffs from MD
+    Bool pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 (set per SB)
+    Bool pic_pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 (set per frame)
+                              // Per frame is necessary because some shortcuts can only be taken if the whole frame
+                              // uses pred depth only
+#else
     Bool
         bypass_encdec; // If enabled, will bypass EncDec and copy recon/quant coeffs from MD; only supported for 8bit
     Bool
         pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 - not yet supported
+#endif
     uint16_t coded_area_sb;
     uint16_t coded_area_sb_uv;
     uint8_t  pd0_level;
