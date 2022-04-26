@@ -12,7 +12,6 @@
   tags:
     - gitlab-org
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
-  variables: !reference [.compiler-variables]
   script: !reference [.compiler-script]
 
 .linux-test-base:

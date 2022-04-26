@@ -15,23 +15,61 @@
     - "**/.gitlab-ci.yml"
     - "**/*.patch"
 
-.compiler-variables:
-  CFLAGS: -Werror -Wshadow -pipe $EXTRA_CFLAGS
-  CXXFLAGS: -Werror -Wshadow -pipe $EXTRA_CXXFLAGS
-  LDFLAGS: -Werror -Wshadow -pipe $EXTRA_LDFLAGS
+.compiler-variables: &compiler-variables
+  CFLAGS: -Werror -Wshadow -pipe
+  CXXFLAGS: -Werror -Wshadow -pipe
+  LDFLAGS: -Werror -Wshadow -pipe
   CMAKE_BUILD_TYPE: Release
   BUILD_SHARED_LIBS: "OFF"
   PREFIX_DIR: /usr/local
   FFMPEG_CONFIG_FLAGS: ""
 
 .compiler-script:
+  - export CFLAGS="$CFLAGS${EXTRA_CFLAGS:+ $EXTRA_CFLAGS}"
+  - export CXXFLAGS="$CXXFLAGS${EXTRA_CXXFLAGS:+ $EXTRA_CXXFLAGS}"
+  - export LDFLAGS="$LDFLAGS${EXTRA_LDFLAGS:+ $EXTRA_LDFLAGS}"
+
+  - |
+    cat << EOF
+    Configuration
+    ============
+    CFLAGS="$CFLAGS"
+    CXXFLAGS="$CXXFLAGS"
+    LDFLAGS="$LDFLAGS"
+    CMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
+    BUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
+    PREFIX_DIR="$PREFIX_DIR"
+    ============
+    Running
+    ============
+    cmake -B Build \\
+      -DREPRODUCIBLE_BUILDS=ON \\
+      -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \\
+      -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \\
+      -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \\
+      -DCMAKE_C_FLAGS="$CFLAGS" \\
+      -DCMAKE_CXX_FLAGS="$CXXFLAGS" \\
+      -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS" \\
+      -DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS" \\
+      -DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS" \\
+      $EXTRA_CMAKE_FLAGS
+    EOF
+
   - eval cmake
     -B Build
     -DREPRODUCIBLE_BUILDS=ON
-    -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
-    -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
-    -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR"
-    $EXTRA_CMAKE_FLAGS
+    -DCMAKE_BUILD_TYPE=\""$CMAKE_BUILD_TYPE"\"
+    -DBUILD_SHARED_LIBS=\""$BUILD_SHARED_LIBS"\"
+    -DCMAKE_INSTALL_PREFIX=\""$PREFIX_DIR"\"
+    -DCMAKE_C_FLAGS=\""$CFLAGS"\"
+    -DCMAKE_CXX_FLAGS=\""$CXXFLAGS"\"
+    -DCMAKE_EXE_LINKER_FLAGS=\""$LDFLAGS"\"
+    -DCMAKE_SHARED_LINKER_FLAGS=\""$LDFLAGS"\"
+    -DCMAKE_MODULE_LINKER_FLAGS=\""$LDFLAGS"\"
+    $EXTRA_CMAKE_FLAGS || {
+      cat Build/CMakeFiles/CMakeError.log;
+      exit 1;
+    }
   - cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
 
 .linux-extract-videos:
@@ -197,3 +235,4 @@
 .common-ci-base:
   rules:
     - !reference [.source_code_rules]
+  variables: *compiler-variables
