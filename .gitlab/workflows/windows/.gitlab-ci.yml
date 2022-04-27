@@ -49,8 +49,8 @@
 Win64 (MSVC, Tests):
   extends: .windows-compiler-base
   variables:
-    CFLAGS: /WX
-    CXXFLAGS: /WX
+    CFLAGS: /WX /D_CRT_SECURE_NO_WARNINGS=1
+    CXXFLAGS: /WX /D_CRT_SECURE_NO_WARNINGS=1
     CMAKE_GENERATOR: Visual Studio 16 2019
   parallel:
     matrix:
