@@ -19,7 +19,7 @@ default:
   interruptible: true
   retry: 2
   cache:
-    key: ${CI_JOB_NAME}
+    key: "$CI_COMMIT_REF_SLUG"
     paths:
       - .ccache
     policy: pull-push
