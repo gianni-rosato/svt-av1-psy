@@ -426,21 +426,8 @@ static void parse_svtav1_params(const char *value, EbConfig *cfg) {
 static void set_cfg_intra_period(const char *value, EbConfig *cfg) {
     cfg->config.intra_period_length = strtol(value, NULL, 0);
 };
-// --keyint 0 == --keyint -1
 static void set_keyint(const char *value, EbConfig *cfg) {
-    char      *suff;
-    const long keyint = strtol(value, &suff, 0);
-    switch (*suff) {
-    case 's':
-        // signal we need to multiply keyint * frame_rate
-        cfg->multiply_keyint          = TRUE;
-        cfg->config.intra_period_length = keyint;
-        return;
-    case '\0': cfg->config.intra_period_length = keyint < 0 ? keyint : keyint - 1; return;
-    default:
-        // else leave as default, we have an invalid keyint
-        fprintf(stderr, "Invalid keyint value or suffix, '%s', leaving as is.\n", value);
-    }
+    svt_av1_enc_parse_parameter(&cfg->config, "keyint", value);
 }
 static void set_cfg_intra_refresh_type(const char *value, EbConfig *cfg) {
     switch (strtol(value, NULL, 0)) {
@@ -2897,15 +2884,6 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     }
 
     for (index = 0; index < MAX_CHANNEL_NUMBER; ++index) free(config_strings[index]);
-
-    // Special handling for keyint as seconds, done after everything is parsed to ensure frame_rate is set
-    for (uint32_t chan = 0; chan < num_channels; ++chan) {
-        EbConfig *c = channels[chan].config;
-        if (!c->multiply_keyint || !c->config.frame_rate_denominator)
-            continue;
-        const double frame_rate = c->config.frame_rate_numerator / c->config.frame_rate_denominator;
-        c->config.intra_period_length = (int32_t)(frame_rate * c->config.intra_period_length) - 1;
-    }
 
     return return_error;
 }

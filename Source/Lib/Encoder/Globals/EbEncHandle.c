@@ -3805,6 +3805,7 @@ void copy_api_from_app(
     scs_ptr->sb_sz = 64;
     scs_ptr->max_sb_depth = (uint8_t)EB_MAX_SB_DEPTH;
     scs_ptr->static_config.intra_period_length = ((EbSvtAv1EncConfiguration*)config_struct)->intra_period_length;
+    scs_ptr->static_config.multiply_keyint = config_struct->multiply_keyint;
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
     EbInputResolution input_resolution;
@@ -4057,6 +4058,12 @@ void copy_api_from_app(
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
+    else if (scs_ptr->static_config.multiply_keyint) {
+        const double fps = (double)scs_ptr->static_config.frame_rate_numerator /
+            scs_ptr->static_config.frame_rate_denominator;
+        scs_ptr->static_config.intra_period_length =
+            (int32_t)(fps * scs_ptr->static_config.intra_period_length);
+    }
     if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     scs_ptr->static_config.enable_tf = config_struct->enable_tf;

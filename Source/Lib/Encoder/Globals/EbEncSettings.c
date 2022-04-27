@@ -878,6 +878,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_adaptive_quantization = 2;
     config_ptr->enc_mode                     = 10;
     config_ptr->intra_period_length          = -2;
+    config_ptr->multiply_keyint              = FALSE;
     config_ptr->intra_refresh_type           = 2;
     config_ptr->hierarchical_levels          = 0;
     config_ptr->pred_structure               = PRED_RANDOM_ACCESS;
@@ -1214,15 +1215,24 @@ static EbErrorType str_to_crf(const char *nptr, EbSvtAv1EncConfiguration *config
     return EB_ErrorNone;
 }
 
-static EbErrorType str_to_keyint(const char *nptr, int32_t *out) {
-    int32_t     keyint;
-    EbErrorType return_error;
+static EbErrorType str_to_keyint(const char *nptr, int32_t *out, Bool *multi) {
+    char      *suff;
+    const long keyint = strtol(nptr, &suff, 0);
 
-    return_error = str_to_int(nptr, &keyint);
-    if (return_error == EB_ErrorBadParameter)
-        return return_error;
+    if (keyint > INT32_MAX || keyint < -2)
+        return EB_ErrorBadParameter;
 
-    *out = keyint < 0 ? keyint : keyint - 1;
+    switch (*suff) {
+    case 's':
+        // signal we need to multiply keyint * frame_rate
+        *multi = TRUE;
+        *out   = keyint;
+        break;
+    case '\0': *out = keyint < 0 ? keyint : keyint - 1; break;
+    default:
+        // else leave as default, we have an invalid keyint
+        SVT_WARN("Invalid keyint value: %s\n", nptr);
+    }
 
     return EB_ErrorNone;
 }
@@ -1530,7 +1540,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     EbErrorType return_error = EB_ErrorBadParameter;
 
     if (!strcmp(name, "keyint"))
-        return str_to_keyint(value, &config_struct->intra_period_length);
+        return str_to_keyint(value, &config_struct->intra_period_length, &config_struct->multiply_keyint);
 
     // options updating more than one field
     if (!strcmp(name, "crf"))

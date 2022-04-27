@@ -194,6 +194,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is -2. */
     int32_t intra_period_length;
+
     /* Random access.
      *
      * 1 = CRA, open GOP.
@@ -697,6 +698,11 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     Bool force_key_frames;
 #endif
+    /**
+     * @brief Signal to the library to treat intra_period_length as seconds and
+     * multiply by fps_num/fps_den.
+     */
+    Bool multiply_keyint;
 } EbSvtAv1EncConfiguration;
 
 /**
