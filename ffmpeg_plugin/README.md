@@ -13,11 +13,9 @@ For the original commits the patch was generated from, see <https://gitlab.com/1
 - [1dddb930aa](https://gitlab.com/1480c1/FFmpeg/-/commit/1dddb930aa): Backport `-crf:v`, remove `-rc:v` and instead use `-b:v`, `-maxrate:v`, `-crf:v`, and `-qp:v` to set rc mode
 - [50bc872635](https://gitlab.com/1480c1/FFmpeg/-/commit/50bc872635): Backport patch for using aq-mode to determine crf or qp
 - [51c0b9e829](https://gitlab.com/1480c1/FFmpeg/-/commit/51c0b9e829): Backport patch for passing color description info
-- [e3c4442b24](https://gitlab.com/1480c1/FFmpeg/-/commit/f579c1aca1): Backport patch for parsing svtav1-params last
-
-Additionally, the following patch is included, but is not in upstream:
-
-- b7da10c27b: avcodec/libsvtav1: pass pict_type to library
+- [e3c4442b24](https://gitlab.com/1480c1/FFmpeg/-/commit/e3c4442b24): Backport patch for parsing svtav1-params last
+- [6fd1533057](https://gitlab.com/1480c1/FFmpeg/-/commit/6fd1533057): Backport patch for passing pict_type to libsvtav1
+- [ded0334d21](https://gitlab.com/1480c1/FFmpeg/-/commit/ded0334d21): Backport patch for choma-sample-location
 
 ## How to build
 

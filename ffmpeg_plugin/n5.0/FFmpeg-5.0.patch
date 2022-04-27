@@ -1,7 +1,7 @@
 From 069b42f6dbdd65ee1409d0a0315d39d83759e16f Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Wed, 16 Feb 2022 10:37:02 -0300
-Subject: [PATCH 1/5] avcodec/libsvtav1: add a svtav1-params option to pass a
+Subject: [PATCH 1/7] avcodec/libsvtav1: add a svtav1-params option to pass a
  list of key=value parameters
 
 Signed-off-by: James Almer <jamrial@gmail.com>
@@ -122,7 +122,7 @@ index 6196da25e6..ce3b0ba7ac 100644
 From 3c99da58276c6d947caf27dc3427290a42d18ceb Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Thu, 24 Feb 2022 20:36:46 -0300
-Subject: [PATCH 2/5] avcodec/libsvtav1: update some options and defaults
+Subject: [PATCH 2/7] avcodec/libsvtav1: update some options and defaults
 
 And bump the minimum required version to 0.9.0
 
@@ -311,7 +311,7 @@ index ce3b0ba7ac..fecb9f4aaa 100644
 From 50e1556c45f6e2f8347d66157d8e729b50b6e190 Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Sun, 13 Mar 2022 15:17:40 -0300
-Subject: [PATCH 3/5] avcodec/libsvtav1: fine tune qp mode settings
+Subject: [PATCH 3/7] avcodec/libsvtav1: fine tune qp mode settings
 
 As requested in https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/1829
 
@@ -343,7 +343,7 @@ index fecb9f4aaa..826a3c084b 100644
 From c9fdbcfa78118a868ac51301fc34e2b1ce371fd2 Mon Sep 17 00:00:00 2001
 From: Christopher Degawa <ccom@randomderp.com>
 Date: Thu, 22 Jul 2021 21:02:10 -0500
-Subject: [PATCH 4/5] avcodec/libsvtav1: pass color description info
+Subject: [PATCH 4/7] avcodec/libsvtav1: pass color description info
 
 Signed-off-by: Christopher Degawa <ccom@randomderp.com>
 ---
@@ -377,7 +377,7 @@ index 826a3c084b..49d3178fab 100644
 From f579c1aca11da1664c4cebc9e2baa84722725681 Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Sun, 27 Mar 2022 20:06:51 -0300
-Subject: [PATCH 5/5] avcodec/libsvtav1: give svtav1-params priority over avctx
+Subject: [PATCH 5/7] avcodec/libsvtav1: give svtav1-params priority over avctx
  values
 
 If the svt equivalent option to an avctx AVOption is passed by the user
@@ -500,6 +500,99 @@ index 49d3178fab..dc2da06e80 100644
  
      return 0;
  }
+-- 
+2.35.1
+
+From e10d57e825aabde0a1c4e708589359ba1ee5bee4 Mon Sep 17 00:00:00 2001
+From: Christopher Degawa <ccom@randomderp.com>
+Date: Mon, 25 Apr 2022 17:54:38 -0500
+Subject: [PATCH 6/7] avcodec/libsvtav1: pass pict_type to library
+
+match the behavior of SvtAv1EncApp to ensure pic_type is always set
+before passing it to the library.
+
+The other options for pic_type aren't currently used inside the library,
+so they aren't introduced in this patch.
+
+Signed-off-by: Christopher Degawa <ccom@randomderp.com>
+Signed-off-by: James Almer <jamrial@gmail.com>
+---
+ libavcodec/libsvtav1.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/libavcodec/libsvtav1.c b/libavcodec/libsvtav1.c
+index dc2da06e80..ccb05cddfe 100644
+--- a/libavcodec/libsvtav1.c
++++ b/libavcodec/libsvtav1.c
+@@ -401,6 +401,16 @@ static int eb_send_frame(AVCodecContext *avctx, const AVFrame *frame)
+     headerPtr->p_app_private = NULL;
+     headerPtr->pts           = frame->pts;
+ 
++    switch (frame->pict_type) {
++    case AV_PICTURE_TYPE_I:
++        headerPtr->pic_type = EB_AV1_KEY_PICTURE;
++        break;
++    default:
++        // Actually means auto, or default.
++        headerPtr->pic_type = EB_AV1_INVALID_PICTURE;
++        break;
++    }
++
+     svt_av1_enc_send_picture(svt_enc->svt_handle, headerPtr);
+ 
+     return 0;
+-- 
+2.35.1
+
+From d585bfeba9ba746f7ead27dc761a1b2a0967d55d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jan=20Ekstr=C3=B6m?= <jeebjp@gmail.com>
+Date: Mon, 25 Apr 2022 23:35:17 +0300
+Subject: [PATCH 7/7] avcodec/libsvtav1: add support for setting chroma sample
+ location
+
+Support for configuring this was added with version 1.0.0.
+---
+ libavcodec/libsvtav1.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/libavcodec/libsvtav1.c b/libavcodec/libsvtav1.c
+index ccb05cddfe..8eb3d07843 100644
+--- a/libavcodec/libsvtav1.c
++++ b/libavcodec/libsvtav1.c
+@@ -202,6 +202,33 @@ static int config_enc_params(EbSvtAv1EncConfiguration *param,
+     else
+         param->color_range = !!(desc->flags & AV_PIX_FMT_FLAG_RGB);
+ 
++#if SVT_AV1_CHECK_VERSION(1, 0, 0)
++    if (avctx->chroma_sample_location != AVCHROMA_LOC_UNSPECIFIED) {
++        const char *name =
++            av_chroma_location_name(avctx->chroma_sample_location);
++
++        switch (avctx->chroma_sample_location) {
++        case AVCHROMA_LOC_LEFT:
++            param->chroma_sample_position = EB_CSP_VERTICAL;
++            break;
++        case AVCHROMA_LOC_TOPLEFT:
++            param->chroma_sample_position = EB_CSP_COLOCATED;
++            break;
++        default:
++            if (!name)
++                break;
++
++            av_log(avctx, AV_LOG_WARNING,
++                   "Specified chroma sample location %s is unsupported "
++                   "on the AV1 bit stream level. Usage of a container that "
++                   "allows passing this information - such as Matroska - "
++                   "is recommended.\n",
++                   name);
++            break;
++        }
++    }
++#endif
++
+     if (avctx->profile != FF_PROFILE_UNKNOWN)
+         param->profile = avctx->profile;
+ 
 -- 
 2.35.1
 
