@@ -418,12 +418,17 @@ typedef struct PictureControlSet {
     uint8_t  md_pme_level;
     uint8_t  mds0_level;
     uint8_t  pic_disallow_4x4; //disallow 4x4 at pic level
+#if !OPT_LPD0
     uint8_t  pic_pd0_level; // pd0_level at pic level
+#endif
     uint8_t  pic_skip_pd0; // skip_pd0 at pic level
     uint8_t  pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
     uint8_t  pic_depth_removal_level; // depth_removal_level signal at the picture level
     uint8_t
                      pic_block_based_depth_refinement_level; // block_based_depth_refinement_level signal set at the picture level
+#if OPT_LPD0
+    uint8_t          pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
+#endif
     uint8_t          pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
     Bool             pic_bypass_encdec;
     RefList          colocated_pu_ref_list;

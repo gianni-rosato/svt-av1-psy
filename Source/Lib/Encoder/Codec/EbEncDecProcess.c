@@ -4297,6 +4297,76 @@ uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type) {
 
     return disallow_4x4;
 }
+#if OPT_LPD0
+void set_lpd0_ctrls(ModeDecisionContext *ctx, uint8_t lpd0_lvl) {
+    Lpd0Ctrls *ctrls = &ctx->lpd0_ctrls;
+    switch (lpd0_lvl) {
+    case 0:
+        ctrls->pd0_level = REGULAR_PD0; // Light-PD0 path not used
+        break;
+    case 1:
+        ctrls->pd0_level = LPD0_LVL_0;
+        ctrls->use_lpd0_detector[LPD0_LVL_0] = 0;
+        break;
+    case 2:
+        ctrls->pd0_level = LPD0_LVL_1;
+        ctrls->use_lpd0_detector[LPD0_LVL_0] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_1] = 0;
+        break;
+    case 3:
+        ctrls->pd0_level = LPD0_LVL_2;
+        ctrls->use_lpd0_detector[LPD0_LVL_0] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_1] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_2] = 0;
+        break;
+    case 4:
+        ctrls->pd0_level = LPD0_LVL_3;
+        ctrls->use_lpd0_detector[LPD0_LVL_0] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_1] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_2] = 0;
+
+        // Set LPD0_LVL_3 controls
+        ctrls->use_lpd0_detector[LPD0_LVL_3] = 1;
+        ctrls->use_ref_info[LPD0_LVL_3] = 2;
+        ctrls->me_8x8_cost_variance_th[LPD0_LVL_3] = 250000 << 1;
+        break;
+    case 5:
+        ctrls->pd0_level = LPD0_LVL_3;
+        ctrls->use_lpd0_detector[LPD0_LVL_0] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_1] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_2] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_3] = 0;
+        break;
+    case 6:
+        ctrls->pd0_level = VERY_LIGHT_PD0;
+
+        ctrls->use_lpd0_detector[LPD0_LVL_0] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_1] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_2] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_3] = 0;
+
+        // Set VERY_LIGHT_PD0 controls
+        ctrls->use_lpd0_detector[VERY_LIGHT_PD0] = 1;
+        ctrls->use_ref_info[VERY_LIGHT_PD0] = 1;
+        ctrls->me_8x8_cost_variance_th[VERY_LIGHT_PD0] = 250000;
+        break;
+    case 7:
+        ctrls->pd0_level = VERY_LIGHT_PD0;
+
+        ctrls->use_lpd0_detector[LPD0_LVL_0] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_1] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_2] = 0;
+        ctrls->use_lpd0_detector[LPD0_LVL_3] = 0;
+
+        // Set VERY_LIGHT_PD0 controls
+        ctrls->use_lpd0_detector[VERY_LIGHT_PD0] = 1;
+        ctrls->use_ref_info[VERY_LIGHT_PD0] = 2;
+        ctrls->me_8x8_cost_variance_th[VERY_LIGHT_PD0] = 250000;
+        break;
+    default: assert(0); break;
+    }
+}
+#endif
 void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
     Lpd1Ctrls *ctrls = &ctx->lpd1_ctrls;
     switch (lpd1_lvl) {
@@ -4581,7 +4651,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
 #else
     ctx->pred_depth_only = (depth_level == 0);
 #endif
+#if OPT_LPD0
+    set_lpd0_ctrls(ctx, pcs_ptr->pic_lpd0_lvl);
+#else
     ctx->pd0_level       = pcs_ptr->pic_pd0_level;
+#endif
     SbParams *sb_params  = &pcs_ptr->parent_pcs_ptr->sb_params_array[ctx->sb_index];
     ctx->depth_removal_ctrls.disallow_below_64x64 = 0;
     ctx->depth_removal_ctrls.disallow_below_32x32 = 0;
@@ -5122,6 +5196,9 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
             ctrls->angular_pred_level = 0;
     } else {
         ctx->skip_intra = !(ctrls->enable_intra) || pcs->skip_intra;
+#if OPT_LPD0
+        assert(IMPLIES(ctx->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0, ctx->skip_intra == 1));
+#endif
     }
 }
 
@@ -5239,7 +5316,119 @@ void set_mds0_controls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
     default: assert(0); break;
     }
 }
+#if OPT_LPD0
+// Set signals used for light-pd0 path; only PD0 should call this function
+// assumes NSQ OFF, no 4x4, no chroma, no TXT/TXS/RDOQ/SSSE, SB_64x64
+void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *scs,
+                                                   PictureControlSet   *pcs,
+                                                   ModeDecisionContext *ctx) {
+    Pd0Level pd0_level = ctx->lpd0_ctrls.pd0_level;
 
+    ctx->md_disallow_nsq         = 1;
+    ctx->inject_inter_candidates = 1;
+
+    // Use coeff rate and slit flag rate only (i.e. no fast rate)
+    ctx->shut_fast_rate = TRUE;
+
+    uint8_t intra_level = 0;
+    if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+        intra_level = 1;
+    else if (pd0_level <= LPD0_LVL_0)
+        intra_level = (pcs->temporal_layer_index == 0) ? 1 : 0;
+    else
+        intra_level = 0;
+    set_intra_ctrls(pcs, ctx, intra_level);
+    if (pd0_level == VERY_LIGHT_PD0) {
+        // Modulate the inter-depth bias based on the QP and the temporal complexity of the SB
+        // towards more split for low QPs or/and complex SBs,
+        // and less split for high QPs or/and easy SBs (to compensate for the absence of the coeff rate)
+        ctx->inter_depth_bias = 950 + pcs->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+        if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 1000)
+            ctx->inter_depth_bias = ctx->inter_depth_bias - 150;
+        else if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 500)
+            ctx->inter_depth_bias = ctx->inter_depth_bias - 50;
+        else if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 250)
+            ctx->inter_depth_bias = ctx->inter_depth_bias + 50;
+        else
+            ctx->inter_depth_bias = ctx->inter_depth_bias + 150;
+    } else {
+        ctx->inter_depth_bias = 0;
+    }
+    if (pd0_level == VERY_LIGHT_PD0)
+        return;
+
+    uint8_t mds0_level = 4;
+#if TUNE_MDS0_DIST
+    set_mds0_controls(ctx, mds0_level);
+#else
+    set_mds0_controls(pcs, ctx, mds0_level);
+#endif
+    set_chroma_controls(ctx, 0 /*chroma off*/);
+
+    // Using PF in LPD0 may cause some VQ issues
+    set_pf_controls(ctx, 1);
+
+    uint8_t subres_level;
+    if (pd0_level <= LPD0_LVL_0) {
+        subres_level = 0;
+    } else {
+        subres_level = 0;
+
+        SbParams *sb_params_ptr = &pcs->parent_pcs_ptr->sb_params_array[ctx->sb_index];
+
+        // The controls checks the deviation between: (1) the pred-to-src SAD of even rows and (2) the pred-to-src SAD of odd rows for each 64x64 to decide whether to use subres or not
+        // then applies the result to the 64x64 block and to all children, therefore if incomplete 64x64 then shut subres
+        if (sb_params_ptr->is_complete_sb) {
+            // Use ME distortion and variance detector to enable subres
+            uint64_t use_subres_th = compute_subres_th(scs, pcs, ctx);
+            uint32_t fast_lambda   = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
+                                                            : ctx->fast_lambda_md[EB_8_BIT_MD];
+            uint64_t cost_64x64    = RDCOST(
+                fast_lambda, 0, pcs->parent_pcs_ptr->me_64x64_distortion[ctx->sb_index]);
+
+            if (pd0_level <= LPD0_LVL_1) {
+                if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+                    subres_level = 1;
+                else
+                    subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
+            } else if (pd0_level <= LPD0_LVL_2) {
+                if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+                    subres_level = 1;
+                else if (pcs->parent_pcs_ptr->is_used_as_reference_flag)
+                    subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
+                else
+                    subres_level = 2;
+            } else {
+                if (pcs->parent_pcs_ptr->is_used_as_reference_flag)
+                    subres_level = (ctx->depth_removal_ctrls.enabled &&
+                                    (ctx->depth_removal_ctrls.disallow_below_16x16 ||
+                                     ctx->depth_removal_ctrls.disallow_below_32x32 ||
+                                     ctx->depth_removal_ctrls.disallow_below_64x64))
+                        ? 2
+                        : 1;
+                else
+                    subres_level = 2;
+            }
+        } else {
+            if (pd0_level <= LPD0_LVL_1)
+                subres_level = 0;
+            else
+                subres_level = pcs->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 2;
+        }
+    }
+    set_subres_controls(ctx, subres_level);
+
+    if (pd0_level <= LPD0_LVL_1)
+        set_rate_est_ctrls(ctx, 2);
+    else if (pd0_level <= LPD0_LVL_2)
+        set_rate_est_ctrls(ctx, 4);
+    else
+        set_rate_est_ctrls(ctx, 0);
+
+    // set at pic-level b/c feature depends on some pic-level initializations
+    ctx->approx_inter_rate = 1;
+}
+#else
 // Set signals used for light-pd0 path; only PD0 should call this function
 // assumes NSQ OFF, no 4x4, no chroma, no TXT/TXS/RDOQ/SSSE, SB_64x64
 EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *scs,
@@ -5351,6 +5540,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *s
 
     return return_error;
 }
+#endif
 
 void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
                                                    ModeDecisionContext *context_ptr) {
@@ -5668,7 +5858,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             context_ptr->rdoq_level = 1;
         else
             context_ptr->rdoq_level = 0;
+#if OPT_LPD0
+    else if (enc_mode <= ENC_M12)
+#else
     else if (enc_mode <= ENC_M11)
+#endif
         context_ptr->rdoq_level = 1;
     else
         context_ptr->rdoq_level = 5;
@@ -6786,7 +6980,76 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
         }
     }
 }
+#if OPT_LPD0
+/* Light-PD0 classifier. */
+void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
+    Lpd0Ctrls* lpd0_ctrls = &md_ctx->lpd0_ctrls;
 
+    for (int pd0_lvl = LPD0_LEVELS - 1; pd0_lvl > REGULAR_PD0; pd0_lvl--) {
+        if (lpd0_ctrls->pd0_level == pd0_lvl) {
+
+            // VERY_LIGHT_PD0 is not supported for I_SLICE or when transition_present because VERY_LIGHT_PD0
+            // only supports INTER compensation
+            if ((pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present) && pd0_lvl == VERY_LIGHT_PD0){
+                lpd0_ctrls->pd0_level = pd0_lvl - 1;
+                continue;
+            }
+
+            if (lpd0_ctrls->use_lpd0_detector[pd0_lvl]) {
+
+                // Use info from ref. frames (if available)
+                if (lpd0_ctrls->use_ref_info[pd0_lvl] && pcs->slice_type != I_SLICE) {
+                    EbReferenceObject *ref_obj_l0 =
+                        (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+                    uint8_t l0_was_intra = ref_obj_l0->sb_intra[md_ctx->sb_index], l1_was_intra = 0;
+                    if (pcs->slice_type == B_SLICE) {
+                        EbReferenceObject *ref_obj_l1 =
+                            (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+                        l1_was_intra       = ref_obj_l1->sb_intra[md_ctx->sb_index];
+                    }
+
+                    // use_ref_info level 1 (safest)
+                    if (lpd0_ctrls->use_ref_info[pd0_lvl] == 1) {
+                        if ((l0_was_intra || l1_was_intra)) {
+                            lpd0_ctrls->pd0_level = pd0_lvl - 1;
+                            continue;
+                        }
+                    }
+                    // use_ref_info level 2
+                    else if (lpd0_ctrls->use_ref_info[pd0_lvl] == 2) {
+                        if (l0_was_intra && l1_was_intra) {
+                            lpd0_ctrls->pd0_level = pd0_lvl - 1;
+                            continue;
+                        }
+                    }
+                    // use_ref_info level 3 (most aggressive)
+                    else {
+                        if (l0_was_intra && l1_was_intra && pcs->ref_intra_percentage > MAX(1, 50 - (pcs->picture_qp >> 1))) {
+                            lpd0_ctrls->pd0_level = pd0_lvl - 1;
+                            continue;
+                        }
+                    }
+                }
+
+                // I_SLICE doesn't have ME info
+                if (pcs->slice_type != I_SLICE) {
+
+                    /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
+                       (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
+                    if (lpd0_ctrls->me_8x8_cost_variance_th[pd0_lvl] < (((uint32_t)~0) >> 1) &&
+                        pcs->parent_pcs_ptr->me_8x8_cost_variance[md_ctx->sb_index] >
+                        (lpd0_ctrls->me_8x8_cost_variance_th[pd0_lvl] >> 5) *
+                        pcs->picture_qp) {
+                        lpd0_ctrls->pd0_level = pd0_lvl - 1;
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+    assert(IMPLIES(pcs->slice_type == I_SLICE, lpd0_ctrls->pd0_level != VERY_LIGHT_PD0));
+}
+#else
 /*
 * Check whether vlpd0 is safe or not
 */
@@ -6812,6 +7075,7 @@ uint8_t is_vlpd0_safe(PictureControlSet *pcs_ptr, ModeDecisionContext *md_ctx) {
 
     return is_vlpd0_safe;
 }
+#endif
 /* EncDec (Encode Decode) Kernel */
 /*********************************************************************************
 *
@@ -7136,11 +7400,18 @@ void *mode_decision_kernel(void *input_ptr) {
                         if (context_ptr->md_context->skip_pd0)
                             if (context_ptr->md_context->depth_removal_ctrls.disallow_below_32x32)
                                 skip_pd_pass_0 = 1;
+#if OPT_LPD0
+                        // If LPD0 is used, a more conservative level can be set for complex SBs
+                        if (md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
+                            lpd0_detector(pcs_ptr, md_ctx);
+                        }
+#else
                         if (context_ptr->md_context->pd0_level == VERY_LIGHT_PD0) {
                             // Use the next conservative level if not safe to use VLPD0
                             if (!is_vlpd0_safe(pcs_ptr, md_ctx))
                                 context_ptr->md_context->pd0_level = VERY_LIGHT_PD0 - 1;
                         }
+#endif
                         // PD0 is only skipped if there is a single depth to test
                         if (skip_pd_pass_0)
                             md_ctx->pred_depth_only = 1;
@@ -7152,7 +7423,11 @@ void *mode_decision_kernel(void *input_ptr) {
                             // Output: md_blk_arr_nsq reduced set of block(s)
                             context_ptr->md_context->pd_pass = PD_PASS_0;
                             // skip_intra much be TRUE for non-I_SLICE pictures to use light_pd0 path
+#if OPT_LPD0
+                            if (md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
+#else
                             if (context_ptr->md_context->pd0_level != REGULAR_PD0) {
+#endif
                                 // [PD_PASS_0] Signal(s) derivation
                                 signal_derivation_enc_dec_kernel_oq_light_pd0(
                                     scs_ptr, pcs_ptr, context_ptr->md_context);
@@ -7229,7 +7504,11 @@ void *mode_decision_kernel(void *input_ptr) {
                             }
                             // This classifier is used for only pd0_level 0 and pd0_level 1
                             // where the count_non_zero_coeffs is derived @ PD0
+#if OPT_LPD0
+                            if (md_ctx->lpd0_ctrls.pd0_level < VERY_LIGHT_PD0)
+#else
                             if (context_ptr->md_context->pd0_level != VERY_LIGHT_PD0)
+#endif
                                 lpd1_detector_post_pd0(pcs_ptr, md_ctx);
                             // Force pred depth only for modes where that is not the default
                             if (md_ctx->lpd1_ctrls.pd1_level > REGULAR_PD1) {
@@ -7245,7 +7524,11 @@ void *mode_decision_kernel(void *input_ptr) {
                         // This classifier is used for the case PD0 is bypassed and for pd0_level 2
                         // where the count_non_zero_coeffs is not derived @ PD0
                         if (skip_pd_pass_0 ||
+#if OPT_LPD0
+                            md_ctx->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0) {
+#else
                             context_ptr->md_context->pd0_level == VERY_LIGHT_PD0) {
+#endif
                             lpd1_detector_skip_pd0(pcs_ptr, md_ctx, pic_width_in_sb);
                         }
 

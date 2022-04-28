@@ -410,6 +410,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const SliceType          slice_type          = pcs_ptr->slice_type;
     const Bool               fast_decode         = scs_ptr->static_config.fast_decode;
     const uint32_t           hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#if OPT_LPD0
+    const Bool               transition_present  = ppcs->transition_present;
+#endif
 
     //MFMV
     if (is_islice || scs_ptr->mfmv_enabled == 0 ||
@@ -433,6 +436,24 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     : 0;
             }
         } else {
+#if OPT_LPD0
+            if (enc_mode <= ENC_M9) {
+                uint64_t avg_me_dist = 0;
+                for (uint16_t b64_idx = 0; b64_idx < ppcs->sb_total_count; b64_idx++) {
+                    avg_me_dist += ppcs->me_64x64_distortion[b64_idx];
+                }
+                avg_me_dist /= ppcs->sb_total_count;
+                avg_me_dist /= pcs_ptr->picture_qp;
+
+                ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 50 ||
+                    input_resolution <= INPUT_SIZE_360p_RANGE
+                    ? 1
+                    : 0;
+            }
+            else {
+                ppcs->frm_hdr.use_ref_frame_mvs = input_resolution <= INPUT_SIZE_360p_RANGE ? 1 : 0;
+            }
+#else
             uint64_t avg_me_dist = 0;
             for (uint16_t b64_idx = 0; b64_idx < ppcs->sb_total_count; b64_idx++) {
                 avg_me_dist += ppcs->me_64x64_distortion[b64_idx];
@@ -444,6 +465,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     input_resolution <= INPUT_SIZE_360p_RANGE
                 ? 1
                 : 0;
+#endif
         }
     }
 
@@ -593,7 +615,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cand_reduction_level = 1;
         else
             pcs_ptr->cand_reduction_level = 0;
+#if OPT_LPD0
+    } else if (enc_mode <= ENC_M10)
+#else
     } else if (enc_mode <= ENC_M9)
+#endif
         pcs_ptr->cand_reduction_level = 1;
     else
         pcs_ptr->cand_reduction_level = 2;
@@ -845,7 +871,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->md_pme_level = 6;
         else
             pcs_ptr->md_pme_level = 3;
+#if OPT_LPD0
+    } else if (enc_mode <= ENC_M12)
+#else
     } else if (enc_mode <= ENC_M11)
+#endif
         pcs_ptr->md_pme_level = 6;
     else
         pcs_ptr->md_pme_level = 0;
@@ -854,7 +884,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     pcs_ptr->mds0_level = 0;
     if (enc_mode <= ENC_M9)
         pcs_ptr->mds0_level = 2;
+#if OPT_LPD0
+    else if (enc_mode <= ENC_M10) {
+#else
     else if (enc_mode <= ENC_M11) {
+#endif
         if (hierarchical_levels <= 3)
             pcs_ptr->mds0_level = is_islice ? 2 : 4;
         else
@@ -882,6 +916,29 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             enc_mode, ppcs->hbd_mode_decision, scs_ptr->static_config.encoder_bit_depth);
     } else
         pcs_ptr->pic_bypass_encdec = 0;
+#if OPT_LPD0
+    /*
+        set pd0_level
+    */
+    if (enc_mode <= ENC_M4)
+        pcs_ptr->pic_lpd0_lvl = 0;
+    else if (enc_mode <= ENC_M6)
+        pcs_ptr->pic_lpd0_lvl = 1;
+    else if (enc_mode <= ENC_M7) {
+        if (hierarchical_levels <= 3)
+            pcs_ptr->pic_lpd0_lvl = 2;
+        else
+            pcs_ptr->pic_lpd0_lvl = 1;
+    }
+    else if (enc_mode <= ENC_M9)
+        pcs_ptr->pic_lpd0_lvl = 2;
+    else if (enc_mode <= ENC_M10)
+        pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 2 : 4;
+    else if (enc_mode <= ENC_M11)
+        pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 6;
+    else
+        pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 7;
+#else
     /*
         set pd0_level
     */
@@ -900,6 +957,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_pd0_level = (is_base || pcs_ptr->parent_pcs_ptr->transition_present)
             ? LIGHT_PD0_LVL4
             : VERY_LIGHT_PD0;
+#endif
     if (pcs_ptr->parent_pcs_ptr->sc_class1 || scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
         pcs_ptr->pic_skip_pd0 = 0;
     else if (enc_mode <= ENC_M12)

@@ -1141,8 +1141,11 @@ void fast_loop_core_light_pd0(ModeDecisionCandidateBuffer *candidate_buffer,
                               uint32_t cu_origin_index) {
     ModeDecisionCandidate *candidate_ptr  = candidate_buffer->candidate_ptr;
     EbPictureBufferDesc   *prediction_ptr = candidate_buffer->prediction_ptr;
-
+#if OPT_LPD0
+    if (context_ptr->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0) {
+#else
     if (context_ptr->pd0_level == VERY_LIGHT_PD0) {
+#endif
         MvReferenceFrame rf[2];
         av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
 
@@ -7722,6 +7725,9 @@ static void md_stage_3_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext
 
     assert(IMPLIES(context_ptr->md_staging_subres_step == 2, context_ptr->blk_geom->sq_size >= 16));
     assert(IMPLIES(context_ptr->md_staging_subres_step == 1, context_ptr->blk_geom->sq_size >= 8));
+#if OPT_LPD0
+    assert_err(IMPLIES(!context_ptr->disallow_4x4, context_ptr->md_staging_subres_step == 0), "residual subsampling cannot be used with 4x4 blocks");
+#endif
     context_ptr->md_staging_perform_intra_chroma_pred = TRUE;
 
     full_loop_core_light_pd0(pcs_ptr,
@@ -8743,7 +8749,11 @@ void md_encode_block_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *
     assert(fast_candidate_total_count <= context_ptr->max_nics && "not enough cand buffers");
     // If only one candidate, only need to perform compensation, not distortion calc
     // unless if VLPD0 where mds0 will become the last stage and SSD is needed
+#if OPT_LPD0
+    if (fast_candidate_total_count == 1 && context_ptr->lpd0_ctrls.pd0_level != VERY_LIGHT_PD0) {
+#else
     if (fast_candidate_total_count == 1 && context_ptr->pd0_level != VERY_LIGHT_PD0) {
+#endif
         ModeDecisionCandidateBuffer *candidate_buffer = context_ptr->candidate_buffer_ptr_array[0];
         candidate_buffer->candidate_ptr               = &context_ptr->fast_candidate_array[0];
         candidate_buffer->candidate_ptr->tx_depth     = 0;
@@ -8757,8 +8767,11 @@ void md_encode_block_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *
                              input_picture_ptr,
                              input_origin_index,
                              blk_origin_index);
-
+#if OPT_LPD0
+    if (context_ptr->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0) {
+#else
     if (context_ptr->pd0_level == VERY_LIGHT_PD0) {
+#endif
         uint32_t rate = 0;
         uint64_t dist = context_ptr->mds0_best_cost;
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost =
@@ -8776,7 +8789,11 @@ void md_encode_block_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *
     assert(context_ptr->lpd1_ctrls.pd1_level < LPD1_LEVELS);
     // Save info used by the light-PD1 detector (detector uses 64x64 block info only)
     if (context_ptr->lpd1_ctrls.pd1_level > REGULAR_PD1 &&
+#if OPT_LPD0
+        context_ptr->lpd0_ctrls.pd0_level != VERY_LIGHT_PD0 &&
+#else
         context_ptr->pd0_level != VERY_LIGHT_PD0 &&
+#endif
         context_ptr->lpd1_ctrls.use_lpd1_detector[context_ptr->lpd1_ctrls.pd1_level] &&
         blk_geom->sq_size == 64) {
         ModeDecisionCandidate *candidate_ptr =

@@ -3556,18 +3556,23 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
         scs_ptr->over_boundary_block_mode = 0;
 
-    if (scs_ptr->static_config.enable_mfmv == DEFAULT)
+    if (scs_ptr->static_config.enable_mfmv == DEFAULT) {
         if (scs_ptr->static_config.enc_mode <= ENC_M5)
             scs_ptr->mfmv_enabled = 1;
-        else if(scs_ptr->static_config.enc_mode <= ENC_M9)
+#if OPT_LPD0
+        else if (scs_ptr->static_config.enc_mode <= ENC_M11) {
+#else
+        else if (scs_ptr->static_config.enc_mode <= ENC_M9) {
+#endif
             if (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
                 scs_ptr->mfmv_enabled = 1;
             else
                 scs_ptr->mfmv_enabled = 0;
-        else
+        } else
             scs_ptr->mfmv_enabled = 0;
-    else
+    } else
         scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
+
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->enable_hbd_mode_decision = 0;

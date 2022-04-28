@@ -445,6 +445,14 @@ typedef struct BlockLocation {
     uint32_t blk_origin_index; //luma   block location in SB
     uint32_t blk_chroma_origin_index; //chroma block location in SB
 } BlockLocation;
+#if OPT_LPD0
+typedef struct Lpd0Ctrls {
+    Pd0Level pd0_level; // Whether light-PD0 is set to be used for an SB (the detector may change this)
+    Bool use_lpd0_detector[LPD0_LEVELS]; // Whether to use a detector; if use_light_pd0 is set to 1, the detector will protect tough SBs
+    Bool use_ref_info[LPD0_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector
+    uint32_t me_8x8_cost_variance_th[LPD0_LEVELS]; // me_8x8_cost_variance_th beyond which the PD0 is used (instead of light-PD0)
+} Lpd0Ctrls;
+#endif
 typedef struct Lpd1Ctrls {
     int8_t
          pd1_level; // Whether light-PD1 is set to be used for an SB (the detector may change this)
@@ -806,7 +814,11 @@ typedef struct ModeDecisionContext {
 #endif
     uint16_t coded_area_sb;
     uint16_t coded_area_sb_uv;
+#if OPT_LPD0
+    Lpd0Ctrls lpd0_ctrls;
+#else
     uint8_t  pd0_level;
+#endif
     // 0 : Use regular PD0
     // 1 : Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
     // 2 : Use very light PD0 path: only mds0 (no transform path), no compensation(s) @ mds0

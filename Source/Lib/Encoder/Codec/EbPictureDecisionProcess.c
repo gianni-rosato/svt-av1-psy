@@ -1912,7 +1912,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->cdef_level = 2;
                 else if (enc_mode <= ENC_M5)
                     pcs_ptr->cdef_level = 4;
+#if OPT_LPD0
+                else if (enc_mode <= ENC_M10)
+#else
                 else if (enc_mode <= ENC_M9)
+#endif
                     pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
                 else if (enc_mode <= ENC_M11)
                     pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
@@ -1938,7 +1942,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->cdef_level = is_base? 4 : 0;
                 else if (enc_mode <= ENC_M5)
                     pcs_ptr->cdef_level = 4;
+#if OPT_LPD0
+                else if (enc_mode <= ENC_M10)
+#else
                 else if (enc_mode <= ENC_M9)
+#endif
                     pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
                 else if (enc_mode <= ENC_M11)
                     pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;

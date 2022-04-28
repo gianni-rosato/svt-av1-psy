@@ -48,6 +48,7 @@ extern "C" {
 #define FTR_REST_LUMA_ONLY      1 // Allow restoration filtering to be performed for luma only
 #define OPT_PRED_ONLY           1 // Use pred depth only shortcuts when depth refinement selects pred depth only (not only when it's forced at the pic level)
 #define EN_REST_M8_M9           1 // Enable restoration in M8/M9; enable LPD1 in M9 to compensate for speed loss
+#define OPT_LPD0                1 // Add detector to LPD0 for all levels
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
