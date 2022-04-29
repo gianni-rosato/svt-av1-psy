@@ -33,6 +33,7 @@
 #include "TxfmCommon.h"
 #include "EbCabacContextModel.h"  // use tx_type_to_class
 #include "util.h"
+#include "random.h"
 
 static bool valid_scan(const int16_t *scan, const int16_t *iscan, int si,
                        int expected_pos) {
@@ -145,4 +146,44 @@ TEST(AdaptiveScanTest, scan_tables_test) {
             }
         }
     }
+}
+
+using svt_av1_test_tool::SVTRandom;
+TEST(CopyMiMapGrid, avx2) {
+    SVTRandom rnd(0, (1 << 10) - 1);
+    const int max_size = 100;
+    ModeInfo *mi_grid_ref[max_size * max_size];
+    ModeInfo *mi_grid_tst[max_size * max_size];
+
+    for (int tx_size = TX_4X4; tx_size < TX_SIZES_ALL; ++tx_size) {
+        const int txb_height = get_txb_high((TxSize)tx_size);
+        const int txb_width = get_txb_wide((TxSize)tx_size);
+        const uint32_t stride = txb_width + rnd.random() % 10;
+
+        memset(mi_grid_ref, 0xcd, sizeof(mi_grid_ref));
+        memset(mi_grid_tst, 0xcd, sizeof(mi_grid_ref));
+
+        mi_grid_ref[0] = mi_grid_tst[0] = (ModeInfo *)((uint64_t)rnd.random());
+
+        svt_copy_mi_map_grid_c(mi_grid_ref, stride, txb_height, txb_width);
+        svt_copy_mi_map_grid_avx2(mi_grid_tst, stride, txb_height, txb_width);
+
+        EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) == 0);
+    }
+
+    //special case non power of 2 cols
+    for (int cols = 0; cols < 15; ++cols) {
+        const uint32_t stride = cols + rnd.random() % 10;
+
+        memset(mi_grid_ref, 0xcd, sizeof(mi_grid_ref));
+        memset(mi_grid_tst, 0xcd, sizeof(mi_grid_ref));
+
+        mi_grid_ref[0] = mi_grid_tst[0] = (ModeInfo *)((uint64_t)rnd.random());
+
+        svt_copy_mi_map_grid_c(mi_grid_ref, stride, cols, cols);
+        svt_copy_mi_map_grid_avx2(mi_grid_tst, stride, cols, cols);
+
+        EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) == 0);
+    }
+
 }

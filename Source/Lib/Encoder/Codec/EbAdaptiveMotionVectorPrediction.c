@@ -19,6 +19,7 @@
 #include "EbCommonUtils.h"
 #include "EbEntropyCoding.h"
 #include "EbInterPrediction.h"
+#include "aom_dsp_rtcd.h"
 
 int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 #define UNUSED_FUNC
@@ -1377,8 +1378,8 @@ void update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *md_ctx) {
                        sizeof(blk_ptr->av1xd->mi[0]->mbmi.palette_mode_info.palette_colors[0]) *
                            PALETTE_MAX_SIZE);
 }
-void copy_mi_map_grid(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows,
-                      uint8_t num_cols) {
+void svt_copy_mi_map_grid_c(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows,
+                            uint8_t num_cols) {
     ModeInfo *target = mi_grid_ptr[0];
     if (num_cols == 1) {
         for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
@@ -1475,10 +1476,10 @@ void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origi
     // The data copied into each mi block is the same; therefore, copy the data from the blk_ptr only for the first block_mi
     // then use change the mi block pointers of the remaining blocks ot point to the first block_mi. All data that
     // is used from block_mi should be updated above.
-    copy_mi_map_grid((pcs_ptr->mi_grid_base + offset),
-                     mi_stride,
-                     (blk_geom->bheight >> MI_SIZE_LOG2),
-                     (blk_geom->bwidth >> MI_SIZE_LOG2));
+    svt_copy_mi_map_grid((pcs_ptr->mi_grid_base + offset),
+                         mi_stride,
+                         (blk_geom->bheight >> MI_SIZE_LOG2),
+                         (blk_geom->bwidth >> MI_SIZE_LOG2));
 }
 static INLINE void record_samples(MbModeInfo *mbmi, int *pts, int *pts_inref, int row_offset,
                                   int sign_r, int col_offset, int sign_c) {

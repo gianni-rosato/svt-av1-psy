@@ -823,3 +823,32 @@ void svt_av1_get_nz_map_contexts_avx2(const uint8_t *const levels, const int16_t
     else
         coeff_contexts[pos] = 3;
 }
+
+void svt_copy_mi_map_grid_avx2(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows,
+                               uint8_t num_cols) {
+    ModeInfo *target = mi_grid_ptr[0];
+    if (num_cols == 1) {
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            const int32_t mi_idx = 0 + mi_y * mi_stride;
+            // width is 1 block (corresponds to block width 4)
+            mi_grid_ptr[mi_idx] = target;
+        }
+    } else if (num_cols == 2) {
+        __m128i target_sse = _mm_set1_epi64x((uint64_t)target);
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            const int32_t mi_idx = 0 + mi_y * mi_stride;
+            // width is 2 blocks, so can copy 2 at once (corresponds to block width 8)
+            _mm_storeu_si128((__m128i *)(mi_grid_ptr + mi_idx), target_sse);
+        }
+    } else {
+        __m256i target_avx = _mm256_set1_epi64x((uint64_t)target);
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            for (uint8_t mi_x = 0; mi_x < num_cols; mi_x += 4) {
+                const int32_t mi_idx = mi_x + mi_y * mi_stride;
+                // width is >=4 blocks, so can copy 4 at once; (corresponds to block width >=16).
+                // All blocks >= 16 have widths that are divisible by 16, so it is ok to copy 4 blocks at once
+                _mm256_storeu_si256((__m256i *)(mi_grid_ptr + mi_idx), target_avx);
+            }
+        }
+    }
+}

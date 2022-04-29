@@ -439,5 +439,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_estimate_noise_highbd_fp16, svt_estimate_noise_highbd_fp16_c, svt_estimate_noise_highbd_fp16_avx2);
     SET_AVX2(svt_estimate_noise, svt_estimate_noise_c, svt_estimate_noise_avx2);
     SET_AVX2(svt_estimate_noise_highbd, svt_estimate_noise_highbd_c, svt_estimate_noise_highbd_avx2);
+    SET_AVX2(svt_copy_mi_map_grid, svt_copy_mi_map_grid_c, svt_copy_mi_map_grid_avx2);
 }
 // clang-format on
