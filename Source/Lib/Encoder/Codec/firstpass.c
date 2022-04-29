@@ -481,10 +481,15 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
 #define LOW_MOTION_ERROR_THRESH 25
 #define MOTION_ERROR_THRESH 500
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
+#if CLN_REST_2
+void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
+void set_sg_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
+#else
 #if CLN_REST
 void set_rest_filter_ctrls(SequenceControlSet* scs_ptr, Av1Common *cm, uint8_t wn_filter_lvl);
 #else
 void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
+#endif
 #endif
 void set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level);
 /******************************************************
@@ -539,7 +544,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
 
     frm_hdr->allow_screen_content_tools = 0;
     frm_hdr->allow_intrabc              = 0;
-
+#if !CLN_REST_2
     // Palette Modes:
     //    0:OFF
     //    1:Slow    NIC=7/4/4
@@ -548,8 +553,10 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     //    4:        NIC=4/2/1
     //    5:        NIC=4/2/1 + No K means for Inter frame
     //    6:        Fastest NIC=4/2/1 + No K means for non base + step for non base for most dominent
+#endif
     pcs_ptr->palette_level = 0;
     set_dlf_controls(pcs_ptr, 0);
+#if !CLN_REST_2
     // CDEF Level                                   Settings
     // 0                                            OFF
     // 1                                            1 step refinement
@@ -557,7 +564,14 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // 3                                            8 step refinement
     // 4                                            16 step refinement
     // 5                                            64 step refinement
+#endif
     pcs_ptr->cdef_level = 0;
+#if CLN_REST_2
+    Av1Common *cm = pcs_ptr->av1_cm;
+    set_wn_filter_ctrls(cm, 0);
+    set_sg_filter_ctrls(cm, 0);
+    pcs_ptr->enable_restoration = 0;
+#else
 #if CLN_REST
     set_rest_filter_ctrls(scs_ptr, pcs_ptr->av1_cm, 0);
 #else
@@ -571,6 +585,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     cm->sg_filter_mode = 0;
 
     set_wn_filter_ctrls(cm, 0);
+#endif
 #endif
     pcs_ptr->intra_pred_mode = 3;
 

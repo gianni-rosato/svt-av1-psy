@@ -1889,7 +1889,7 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
     // Copy the prev frame wn filter coeffs
     EbReferenceObject *obj = (EbReferenceObject *)
                                  pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
-#if CLN_REST
+#if CLN_REST && !CLN_REST_2
     if (cm->rest_filter_ctrls.wn_ctrls.enabled && cm->rest_filter_ctrls.wn_ctrls.use_prev_frame_coeffs) {
 #else
     if (cm->wn_filter_ctrls.enabled && cm->wn_filter_ctrls.use_prev_frame_coeffs) {
@@ -7222,7 +7222,7 @@ void *mode_decision_kernel(void *input_ptr) {
                 svt_release_object(enc_dec_tasks_wrapper_ptr);
                 continue;
             }
-#if CLN_REST
+#if CLN_REST && !CLN_REST_2
             Av1Common *cm = pcs_ptr->parent_pcs_ptr->av1_cm;
 #endif
             if (pcs_ptr->cdf_ctrl.enabled) {
@@ -7235,10 +7235,14 @@ void *mode_decision_kernel(void *input_ptr) {
                         pcs_ptr->slice_type == I_SLICE ? TRUE : FALSE,
                         pcs_ptr->pic_filter_intra_level,
                         pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
+#if CLN_REST_2
+                        pcs_ptr->parent_pcs_ptr->enable_restoration,
+#else
 #if CLN_REST
                         cm->rest_filter_ctrls.enabled,
 #else
                         scs_ptr->seq_header.enable_restoration,
+#endif
 #endif
                         pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc,
                         pcs_ptr->parent_pcs_ptr->partition_contexts,
@@ -7355,10 +7359,14 @@ void *mode_decision_kernel(void *input_ptr) {
                                     pcs_ptr->slice_type == I_SLICE,
                                     pcs_ptr->pic_filter_intra_level,
                                     pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
+#if CLN_REST_2
+                                    pcs_ptr->parent_pcs_ptr->enable_restoration,
+#else
 #if CLN_REST
                                     cm->rest_filter_ctrls.enabled,
 #else
                                     scs_ptr->seq_header.enable_restoration,
+#endif
 #endif
                                     pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc,
                                     pcs_ptr->parent_pcs_ptr->partition_contexts,

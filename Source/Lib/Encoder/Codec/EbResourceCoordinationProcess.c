@@ -343,6 +343,34 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
     else
         tpl_ctrls->qstep_based_q_calc = 0;
 }
+#if CLN_REST_2
+uint8_t get_wn_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_ref);
+uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_base);
+/*
+* return true if restoration filtering is enabled; false otherwise
+  Used by signal_derivation_pre_analysis_oq and memory allocation
+*/
+uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
+    uint8_t input_resolution, Bool fast_decode) {
+
+    if (config_enable_restoration != DEFAULT)
+        return config_enable_restoration;
+
+    uint8_t wn = 0;
+    for (int is_ref = 0; is_ref < 2; is_ref++) {
+        wn = get_wn_filter_level(enc_mode, fast_decode, input_resolution, is_ref);
+        if (wn) break;
+    }
+
+    uint8_t sg = 0;
+    for (int is_base = 0; is_base < 2; is_base++) {
+        sg = get_sg_filter_level(enc_mode, fast_decode, input_resolution, is_base);
+        if (sg) break;
+    }
+
+    return (sg > 0 || wn > 0);
+}
+#else
 /*
 * return the restoration level
   Used by signal_derivation_pre_analysis_oq and memory allocation
@@ -370,6 +398,7 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
 
     return config_enable_restoration > 0 ? config_enable_restoration : enable_restoration;
 }
+#endif
 /******************************************************
 * Derive Pre-Analysis settings for OQ for pcs
 Input   : encoder mode and tune

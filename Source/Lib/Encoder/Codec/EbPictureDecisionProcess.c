@@ -1286,7 +1286,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
     }
 }
 void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
-#if CLN_REST
+#if CLN_REST && !CLN_REST_2
     WnFilterCtrls* ctrls = &cm->rest_filter_ctrls.wn_ctrls;
 #else
     WnFilterCtrls* ctrls = &cm->wn_filter_ctrls;
@@ -1298,6 +1298,9 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     case 1:
         ctrls->enabled = 1;
+#if CLN_REST_2
+        ctrls->use_chroma = 1;
+#endif
         ctrls->filter_tap_lvl = 1;
         ctrls->use_refinement = 1;
         ctrls->max_one_refinement_step = 0;
@@ -1305,6 +1308,9 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     case 2:
         ctrls->enabled = 1;
+#if CLN_REST_2
+        ctrls->use_chroma = 1;
+#endif
         ctrls->filter_tap_lvl = 2;
         ctrls->use_refinement = 1;
         ctrls->max_one_refinement_step = 0;
@@ -1312,6 +1318,9 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     case 3:
         ctrls->enabled = 1;
+#if CLN_REST_2
+        ctrls->use_chroma = 1;
+#endif
         ctrls->filter_tap_lvl = 2;
         ctrls->use_refinement = 1;
         ctrls->max_one_refinement_step = 1;
@@ -1319,11 +1328,32 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     case 4:
         ctrls->enabled = 1;
+#if CLN_REST_2
+        ctrls->use_chroma = 1;
+#endif
         ctrls->filter_tap_lvl = 2;
         ctrls->use_refinement = 0;
         ctrls->max_one_refinement_step = 1;
         ctrls->use_prev_frame_coeffs = 0;
         break;
+#if CLN_REST_2
+    case 5:
+        ctrls->enabled = 1;
+        ctrls->use_chroma = 0;
+        ctrls->filter_tap_lvl = 2;
+        ctrls->use_refinement = 0;
+        ctrls->max_one_refinement_step = 1;
+        ctrls->use_prev_frame_coeffs = 0;
+        break;
+    case 6:
+        ctrls->enabled = 1;
+        ctrls->use_chroma = 0;
+        ctrls->filter_tap_lvl = 2;
+        ctrls->use_refinement = 0;
+        ctrls->max_one_refinement_step = 1;
+        ctrls->use_prev_frame_coeffs = 1;
+        break;
+#else
     case 5:
         ctrls->enabled = 1;
         ctrls->filter_tap_lvl = 2;
@@ -1331,6 +1361,7 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         ctrls->max_one_refinement_step = 1;
         ctrls->use_prev_frame_coeffs = 1;
         break;
+#endif
     default:
         assert(0);
         break;
@@ -1338,7 +1369,11 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
 }
 #if CLN_REST
 void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
+#if CLN_REST_2
+    SgFilterCtrls* ctrls = &cm->sg_filter_ctrls;
+#else
     SgFilterCtrls* ctrls = &cm->rest_filter_ctrls.sg_ctrls;
+#endif
 
     switch (sg_filter_lvl) {
     case 0:
@@ -1346,18 +1381,30 @@ void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
         break;
     case 1:
         ctrls->enabled = 1;
+#if CLN_REST_2
+        ctrls->use_chroma = 1;
+#endif
         ctrls->step_range = 16;
         break;
     case 2:
         ctrls->enabled = 1;
+#if CLN_REST_2
+        ctrls->use_chroma = 1;
+#endif
         ctrls->step_range = 4;
         break;
     case 3:
         ctrls->enabled = 1;
+#if CLN_REST_2
+        ctrls->use_chroma = 1;
+#endif
         ctrls->step_range = 1;
         break;
     case 4:
         ctrls->enabled = 1;
+#if CLN_REST_2
+        ctrls->use_chroma = 1;
+#endif
         ctrls->step_range = 0;
         break;
     default:
@@ -1365,7 +1412,62 @@ void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
         break;
     }
 }
+#if CLN_REST_2
+// Returns the level for Wiener restoration filter
+uint8_t get_wn_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_ref) {
+    uint8_t wn_filter_lvl = 0;
+    if (fast_decode == 0) {
+        if (enc_mode <= ENC_M5)
+            wn_filter_lvl = 1;
+        else if (enc_mode <= ENC_M7)
+            wn_filter_lvl = 4;
+        else if (enc_mode <= ENC_M9)
+            wn_filter_lvl = is_ref ? 5 : 0;
+        else
+            wn_filter_lvl = 0;
+    }
+    else {
+        if (enc_mode <= ENC_M7)
+            wn_filter_lvl = input_resolution <= INPUT_SIZE_360p_RANGE ? 4 : 0;
+        else
+            wn_filter_lvl = 0;
+    }
 
+    // higher resolutions will shut restoration to save memory
+    if (input_resolution >= INPUT_SIZE_8K_RANGE)
+        wn_filter_lvl = 0;
+
+    return wn_filter_lvl;
+}
+
+// Returns the level for self-guided restoration filter
+uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_base) {
+    uint8_t sg_filter_lvl = 0;
+    if (fast_decode == 0) {
+        if (enc_mode <= ENC_M2)
+            sg_filter_lvl = 1;
+        else if (enc_mode <= ENC_M4)
+            sg_filter_lvl = is_base ? 1 : 4;
+        else
+            sg_filter_lvl = 0;
+    }
+    else {
+        if (enc_mode <= ENC_M2)
+            sg_filter_lvl = input_resolution <= INPUT_SIZE_360p_RANGE ? 1 : 0;
+        else if (enc_mode <= ENC_M4)
+            sg_filter_lvl = input_resolution <= INPUT_SIZE_360p_RANGE ? (is_base ? 1 : 4)
+                                                                       : 0;
+        else
+            sg_filter_lvl = 0;
+    }
+
+    // higher resolutions will shut restoration to save memory
+    if (input_resolution >= INPUT_SIZE_8K_RANGE)
+        sg_filter_lvl = 0;
+
+    return sg_filter_lvl;
+}
+#else
 /*
  * Set loop restoration filtering levels; restoration filtering comprises
  * self-guided filter w/ projection and wiener filter.
@@ -1433,6 +1535,7 @@ void set_rest_filter_ctrls(SequenceControlSet *scs_ptr, Av1Common* cm, uint8_t r
 
     assert(IMPLIES(!cm->rest_filter_ctrls.enabled, (!cm->rest_filter_ctrls.wn_ctrls.enabled && !cm->rest_filter_ctrls.sg_ctrls.enabled)));
 }
+#endif
 #endif
 void set_list0_only_base(PictureParentControlSet* pcs_ptr, uint8_t list0_only_base) {
     List0OnlyBase* ctrls = &pcs_ptr->list0_only_base_ctrls;
@@ -1971,6 +2074,21 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->cdef_level = 0;
     set_cdef_controls(pcs_ptr, pcs_ptr->cdef_level, fast_decode);
 #if CLN_REST
+#if CLN_REST_2
+    uint8_t wn = 0, sg = 0;
+    // If restoration filtering is enabled at the sequence level, derive the settings used for this frame
+    if (scs_ptr->seq_header.enable_restoration) {
+        wn = get_wn_filter_level(enc_mode, fast_decode, input_resolution, is_ref);
+        sg = get_sg_filter_level(enc_mode, fast_decode, input_resolution, is_base);
+    }
+
+    Av1Common* cm = pcs_ptr->av1_cm;
+    set_wn_filter_ctrls(cm, wn);
+    set_sg_filter_ctrls(cm, sg);
+
+    // Set whether restoration filtering is enabled for this frame
+    pcs_ptr->enable_restoration = (wn > 0 || sg > 0);
+#else
     uint8_t restoration_filter_lvl = 0;
     if (scs_ptr->seq_header.enable_restoration) {
         if (enc_mode <= ENC_M2)
@@ -1994,6 +2112,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
 
     set_rest_filter_ctrls(scs_ptr, pcs_ptr->av1_cm, restoration_filter_lvl);
+#endif
 #else
     // SG Level     Settings
     // 0             OFF

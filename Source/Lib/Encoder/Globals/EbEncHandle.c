@@ -3741,8 +3741,10 @@ void copy_api_from_app(
 
     scs_ptr->enable_warped_motion        = DEFAULT;
     scs_ptr->enable_global_motion        = TRUE;
+#if !CLN_REST_2
     scs_ptr->sg_filter_mode              = DEFAULT;
     scs_ptr->wn_filter_mode              = DEFAULT;
+#endif
     scs_ptr->inter_intra_compound        = DEFAULT;
     scs_ptr->enable_paeth                = DEFAULT;
     scs_ptr->enable_smooth               = DEFAULT;

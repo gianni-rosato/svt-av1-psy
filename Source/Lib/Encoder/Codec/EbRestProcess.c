@@ -557,14 +557,21 @@ void *rest_kernel(void *input_ptr) {
 
         cdef_results_ptr      = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
         pcs_ptr               = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
+#if CLN_REST_2
+        PictureParentControlSet* ppcs = pcs_ptr->parent_pcs_ptr;
+#endif
         scs_ptr               = pcs_ptr->scs_ptr;
         FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         Bool         is_16bit = scs_ptr->is_16bit_pipeline;
         Av1Common   *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
+#if CLN_REST_2
+        if (ppcs->enable_restoration && frm_hdr->allow_intrabc == 0) {
+#else
 #if CLN_REST
         if (cm->rest_filter_ctrls.enabled && frm_hdr->allow_intrabc == 0) {
 #else
         if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
+#endif
 #endif
             Yv12BufferConfig cpi_source;
             link_eb_to_aom_buffer_desc(is_16bit
@@ -596,7 +603,7 @@ void *rest_kernel(void *input_ptr) {
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        is_16bit);
-#if CLN_REST
+#if CLN_REST && !CLN_REST_2
             if (pcs_ptr->parent_pcs_ptr->slice_type != I_SLICE && cm->rest_filter_ctrls.wn_ctrls.enabled &&
                 cm->rest_filter_ctrls.wn_ctrls.use_prev_frame_coeffs) {
 #else
@@ -629,10 +636,14 @@ void *rest_kernel(void *input_ptr) {
 
         pcs_ptr->tot_seg_searched_rest++;
         if (pcs_ptr->tot_seg_searched_rest == pcs_ptr->rest_segments_total_count) {
+#if CLN_REST_2
+            if (ppcs->enable_restoration && frm_hdr->allow_intrabc == 0) {
+#else
 #if CLN_REST
             if (cm->rest_filter_ctrls.enabled && frm_hdr->allow_intrabc == 0) {
 #else
             if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
+#endif
 #endif
                 rest_finish_search(pcs_ptr);
 #if CLN_REST
@@ -650,7 +661,11 @@ void *rest_kernel(void *input_ptr) {
                 }
 
 #if CLN_REST
+#if CLN_REST_2
+                if (cm->sg_filter_ctrls.enabled) {
+#else
                 if (cm->rest_filter_ctrls.sg_ctrls.enabled) {
+#endif
                     uint8_t best_ep_cnt = 0;
                     uint8_t best_ep = 0;
                     for (uint8_t i = 0; i < SGRPROJ_PARAMS; i++) {

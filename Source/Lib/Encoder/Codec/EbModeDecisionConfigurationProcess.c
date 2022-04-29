@@ -286,10 +286,14 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
                              pcs_ptr->slice_type == I_SLICE ? TRUE : FALSE,
                              pcs_ptr->pic_filter_intra_level,
                              pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
+#if CLN_REST_2
+                             pcs_ptr->parent_pcs_ptr->enable_restoration,
+#else
 #if CLN_REST
                              pcs_ptr->parent_pcs_ptr->av1_cm->rest_filter_ctrls.enabled,
 #else
                              pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_restoration,
+#endif
 #endif
                              pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc,
                              pcs_ptr->parent_pcs_ptr->partition_contexts,
@@ -918,7 +922,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_bypass_encdec = 0;
 #if OPT_LPD0
     /*
-        set pd0_level
+        set lpd0_level
     */
     if (enc_mode <= ENC_M4)
         pcs_ptr->pic_lpd0_lvl = 0;
@@ -1521,10 +1525,14 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                  pcs_ptr->slice_type == I_SLICE ? TRUE : FALSE,
                                  pcs_ptr->pic_filter_intra_level,
                                  pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
+#if CLN_REST_2
+                                 pcs_ptr->parent_pcs_ptr->enable_restoration,
+#else
 #if CLN_REST
                                  pcs_ptr->parent_pcs_ptr->av1_cm->rest_filter_ctrls.enabled,
 #else
                                  scs_ptr->seq_header.enable_restoration,
+#endif
 #endif
                                  pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc,
                                  pcs_ptr->parent_pcs_ptr->partition_contexts,
@@ -1726,12 +1734,17 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 }
             }
         }
-
+#if !CLN_REST_2
         Av1Common *    cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
+#endif
 #if CLN_REST
         if (scs_ptr->vq_ctrls.sharpness_ctrls.restoration &&
             pcs_ptr->parent_pcs_ptr->is_noise_level) {
+#if CLN_REST_2
+            pcs_ptr->parent_pcs_ptr->enable_restoration = 0;
+#else
             cm->rest_filter_ctrls.enabled = 0;
+#endif
         }
 #else
         WnFilterCtrls *wn_ctrls = &cm->wn_filter_ctrls;

@@ -1264,6 +1264,10 @@ void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *candidate_buffer,
         unsigned int            sse;
         uint8_t                *pred_y = prediction_ptr->buffer_y + loc->blk_origin_index;
         uint8_t                *src_y  = input_picture_ptr->buffer_y + loc->input_origin_index;
+#if TUNE_MDS0_DIST
+        // The variance is shifted because fast_lambda is used, and variance is much larger than SAD (for which
+        // fast_lambda was designed), so a scaling is needed to make the values closer.  3 was chosen empirically.
+#endif
         candidate_buffer->luma_fast_distortion = luma_fast_distortion =
             fn_ptr->vf(
                 pred_y, prediction_ptr->stride_y, src_y, input_picture_ptr->stride_y, &sse) >>
@@ -6642,12 +6646,16 @@ uint8_t do_md_recon(PictureParentControlSet *pcs, ModeDecisionContext *ctxt) {
     uint8_t need_md_rec_for_dlf_search  = pcs->dlf_ctrls.enabled; //for DLF levels
     uint8_t need_md_rec_for_cdef_search = pcs->cdef_ctrls.enabled &&
         !pcs->cdef_ctrls.use_reference_cdef_fs; // CDEF search levels needing the recon samples
+#if CLN_REST_2
+    uint8_t need_md_rec_for_restoration_search = pcs->enable_restoration; // any resoration search level
+#else
 #if CLN_REST
     uint8_t need_md_rec_for_restoration_search =
         pcs->av1_cm->rest_filter_ctrls.enabled; // any resoration search level
 #else
     uint8_t need_md_rec_for_restoration_search =
         pcs->scs_ptr->seq_header.enable_restoration; // any resoration search level
+#endif
 #endif
 
     uint8_t do_recon;

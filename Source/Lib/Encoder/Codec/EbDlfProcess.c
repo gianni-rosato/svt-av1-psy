@@ -77,6 +77,9 @@ void *dlf_kernel(void *input_ptr) {
 
         enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
         pcs_ptr             = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
+#if CLN_REST_2
+        PictureParentControlSet* ppcs = pcs_ptr->parent_pcs_ptr;
+#endif
         scs_ptr             = pcs_ptr->scs_ptr;
 
         Bool is_16bit = scs_ptr->is_16bit_pipeline;
@@ -122,7 +125,11 @@ void *dlf_kernel(void *input_ptr) {
 
             Av1Common *cm = pcs_ptr->parent_pcs_ptr->av1_cm;
 #if CLN_REST
+#if CLN_REST_2
+            if (ppcs->enable_restoration) {
+#else
             if (cm->rest_filter_ctrls.enabled) {
+#endif
 
                 link_eb_to_aom_buffer_desc(recon_pic,
                     cm->frame_to_show,

@@ -915,6 +915,9 @@ typedef struct PictureParentControlSet {
     Macroblock          *av1x;
     int32_t      film_grain_params_present; //todo (AN): Do we need this flag at picture level?
     int8_t       cdef_level;
+#if CLN_REST_2
+    Bool enable_restoration; // TRUE if restoration filtering is enabled for the current frame
+#endif
     uint8_t      palette_level;
     uint8_t      sc_class0;
     uint8_t      sc_class1;
