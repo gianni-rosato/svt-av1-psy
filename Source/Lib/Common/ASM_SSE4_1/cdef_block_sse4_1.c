@@ -1069,7 +1069,7 @@ static INLINE void array_reverse_transpose_8x8(__m128i *in, __m128i *res) {
     res[0] = _mm_unpackhi_epi64(tr1_6, tr1_7);
 }
 
-uint8_t svt_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *var,
+uint8_t svt_aom_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *var,
                                  int32_t coeff_shift) {
     int     i;
     int32_t cost[8];
@@ -1107,18 +1107,22 @@ uint8_t svt_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *v
     return best_dir;
 }
 #if UPDATE_CDEF_INTRINSICS
-void svt_cdef_find_dir_dual_sse4_1(const uint16_t *img1, const uint16_t *img2,
+void svt_aom_cdef_find_dir_dual_sse4_1(const uint16_t *img1, const uint16_t *img2,
     int stride, int32_t *var_out_1st,
     int32_t *var_out_2nd, int32_t coeff_shift,
     uint8_t *out_dir_1st_8x8, uint8_t *out_dir_2nd_8x8) {
     // Process first 8x8.
-    *out_dir_1st_8x8 = svt_cdef_find_dir_sse4_1(img1, stride, var_out_1st, coeff_shift);
+    *out_dir_1st_8x8 = svt_aom_cdef_find_dir_sse4_1(img1, stride, var_out_1st, coeff_shift);
 
     // Process second 8x8.
-    *out_dir_2nd_8x8 = svt_cdef_find_dir_sse4_1(img2, stride, var_out_2nd, coeff_shift);
+    *out_dir_2nd_8x8 = svt_aom_cdef_find_dir_sse4_1(img2, stride, var_out_2nd, coeff_shift);
 }
 #endif
+#if UPDATE_CDEF_COPY
+void svt_aom_copy_rect8_8bit_to_16bit_sse4_1(uint16_t *dst, int32_t dstride, const uint8_t *src,
+#else
 void svt_copy_rect8_8bit_to_16bit_sse4_1(uint16_t *dst, int32_t dstride, const uint8_t *src,
+#endif
                                          int32_t sstride, int32_t v, int32_t h) {
     int32_t i, j;
     for (i = 0; i < v; i++) {

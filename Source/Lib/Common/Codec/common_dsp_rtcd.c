@@ -522,8 +522,8 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE2(svt_aom_h_predictor_64x32, svt_aom_h_predictor_64x32_c, svt_aom_h_predictor_64x32_sse2);
     SET_SSE2(svt_aom_h_predictor_64x64, svt_aom_h_predictor_64x64_c, svt_aom_h_predictor_64x64_sse2);
 #if UPDATE_CDEF_INTRINSICS
-    SET_SSE41_AVX2(svt_cdef_find_dir, svt_cdef_find_dir_c, svt_cdef_find_dir_sse4_1, svt_cdef_find_dir_avx2);
-    SET_SSE41_AVX2(svt_cdef_find_dir_dual, svt_cdef_find_dir_dual_c, svt_cdef_find_dir_dual_sse4_1, svt_cdef_find_dir_dual_avx2);
+    SET_SSE41_AVX2(svt_aom_cdef_find_dir, svt_aom_cdef_find_dir_c, svt_aom_cdef_find_dir_sse4_1, svt_aom_cdef_find_dir_avx2);
+    SET_SSE41_AVX2(svt_aom_cdef_find_dir_dual, svt_aom_cdef_find_dir_dual_c, svt_aom_cdef_find_dir_dual_sse4_1, svt_aom_cdef_find_dir_dual_avx2);
 #else
     SET_SSE41_AVX2(svt_cdef_find_dir, svt_cdef_find_dir_c, svt_cdef_find_dir_sse4_1, svt_cdef_find_dir_avx2);
 #endif
@@ -536,7 +536,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 #endif
 #endif
 #if UPDATE_CDEF_COPY
-    SET_SSE41_AVX2(svt_copy_rect8_8bit_to_16bit, svt_copy_rect8_8bit_to_16bit_c, svt_copy_rect8_8bit_to_16bit_sse4_1, svt_copy_rect8_8bit_to_16bit_avx2);
+    SET_SSE41_AVX2(svt_aom_copy_rect8_8bit_to_16bit, svt_aom_copy_rect8_8bit_to_16bit_c, svt_aom_copy_rect8_8bit_to_16bit_sse4_1, svt_aom_copy_rect8_8bit_to_16bit_avx2);
 #else
     SET_SSE41(svt_copy_rect8_8bit_to_16bit, svt_copy_rect8_8bit_to_16bit_c, svt_copy_rect8_8bit_to_16bit_sse4_1);
 #endif

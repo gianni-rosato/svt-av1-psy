@@ -92,7 +92,7 @@ EbErrorType cdef_context_ctor(EbThreadContext   *thread_context_ptr,
 
 #define default_mse_uv 1040400
 #if CLN_CDEF_SEARCH
-uint64_t compute_cdef_dist(const EbByte dst, int32_t doffset, int32_t dstride, const uint8_t *src, const CdefList *dlist,
+static uint64_t compute_cdef_dist(const EbByte dst, int32_t doffset, int32_t dstride, const uint8_t *src, const CdefList *dlist,
     int32_t cdef_count, BlockSize bsize, int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor, Bool is_16bit) {
     uint64_t curr_mse = 0;
     if (is_16bit) {
@@ -122,12 +122,13 @@ uint64_t compute_cdef_dist(const EbByte dst, int32_t doffset, int32_t dstride, c
     }
     return curr_mse;
 }
+
 /* Search for the best filter strength pair for each 64x64 filter block.
  *
  * For each 64x64 filter block and each plane, search the allowable filter strength pairs.
  * Call cdef_filter_fb() to perform filtering, then compute the MSE for each pair.
 */
-void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
+static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                      uint32_t segment_index) {
 
     struct PictureParentControlSet *ppcs    = pcs->parent_pcs_ptr;
@@ -184,12 +185,12 @@ void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
     get_recon_pic(pcs, &recon_pic, is_16bit);
 
     for (int pli = 0; pli < num_planes; pli++) {
-        int32_t subsampling_x = (pli == 0) ? 0 : 1;
-        int32_t subsampling_y = (pli == 0) ? 0 : 1;
+        const int subsampling_x = (pli == 0) ? 0 : 1;
+        const int subsampling_y = (pli == 0) ? 0 : 1;
         xdec[pli]             = subsampling_x;
         ydec[pli]             = subsampling_y;
-        bsize[pli]            = ydec[pli] ? (xdec[pli] ? BLOCK_4X4 : BLOCK_8X4)
-                                          : (xdec[pli] ? BLOCK_4X8 : BLOCK_8X8);
+        bsize[pli]            = subsampling_y ? (subsampling_x ? BLOCK_4X4 : BLOCK_8X4)
+                                              : (subsampling_x ? BLOCK_4X8 : BLOCK_8X8);
         mi_wide_l2[pli]       = MI_SIZE_LOG2 - subsampling_x;
         mi_high_l2[pli]       = MI_SIZE_LOG2 - subsampling_y;
 #if CLN_RENAME_CDEF_BUFFS
@@ -241,9 +242,9 @@ void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
             if (cdef_count == 0) {
                 pcs->skip_cdef_seg[fb_idx] = 1;
                 continue;
-            } else {
-                pcs->skip_cdef_seg[fb_idx] = 0;
             }
+            pcs->skip_cdef_seg[fb_idx] = 0;
+
             uint8_t(*dir)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pcs->cdef_dir_data[fb_idx].dir;
             int32_t(*var)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pcs->cdef_dir_data[fb_idx].var;
             for (int pli = 0; pli < num_planes; pli++) {
@@ -278,62 +279,70 @@ void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                 a finite amount before there is no more speed gain.  If the space between processed lines
                 is too large, the intrinsics will begin accessing memory outside the block.
                 */
-                if (bsize[pli] == BLOCK_8X8)
-#if EN_AVX512_SUPPORT
-                    subsampling_factor = MIN(subsampling_factor, 2);
-#else
+                switch (bsize[pli]) {
+                case BLOCK_8X8:
+#if !EN_AVX512_SUPPORT
                     subsampling_factor = MIN(subsampling_factor, 4);
+                    break;
 #endif
-                else if (bsize[pli] == BLOCK_8X4 || bsize[pli] == BLOCK_4X8)
+                case BLOCK_8X4:
+                case BLOCK_4X8:
                     subsampling_factor = MIN(subsampling_factor, 2);
-                else if (bsize[pli] == BLOCK_4X4)
+                    break;
+                case BLOCK_4X4:
                     subsampling_factor = MIN(subsampling_factor, 1);
+                    break;
+                }
 
                 /* first cdef stage
                  * Perform the pri_filter strength search for the current sub_block
                  */
                 for (int gi = 0; gi < first_pass_fs_num; gi++) {
-                    if (!pli || (cdef_ctrls->default_first_pass_fs_uv[gi] != -1)) {
-                        int32_t pri_strength = cdef_ctrls->default_first_pass_fs[gi] / CDEF_SEC_STRENGTHS;
-                        int32_t sec_strength = cdef_ctrls->default_first_pass_fs[gi] % CDEF_SEC_STRENGTHS;
 
-                        svt_cdef_filter_fb(is_16bit ? NULL : (uint8_t*)tmp_dst,
-                                           is_16bit ? tmp_dst : NULL,
-                                           0,
-                                           in,
-                                           xdec[pli],
-                                           ydec[pli],
-                                           *dir,
-                                           &dirinit,
-                                           *var,
-                                           pli,
-                                           dlist,
-                                           cdef_count,
-                                           pri_strength,
-                                           sec_strength + (sec_strength == 3),
-                                           pri_damping,
-                                           sec_damping,
-                                           coeff_shift,
-                                           subsampling_factor);
-                        uint64_t curr_mse = compute_cdef_dist(
-                            ref[pli],
-                            (lr << mi_high_l2[pli]) * stride_ref[pli] + (lc << mi_wide_l2[pli]),
-                            stride_ref[pli],
-                            (uint8_t*)tmp_dst,
-                            dlist,
-                            cdef_count,
-                            (BlockSize)bsize[pli],
-                            coeff_shift,
-                            pli,
-                            subsampling_factor,
-                            is_16bit);
-
-                        if (pli < 2)
-                            pcs->mse_seg[pli][fb_idx][gi] = curr_mse * subsampling_factor;
-                        else
-                            pcs->mse_seg[1][fb_idx][gi] += (curr_mse * subsampling_factor);
-                    } else
+                    // Check if chroma filter is set to be tested
+                    if (pli && (cdef_ctrls->default_first_pass_fs_uv[gi] == -1)) {
                         pcs->mse_seg[1][fb_idx][gi] = default_mse_uv * 64;
+                        continue;
+                    }
+
+                    int32_t pri_strength = cdef_ctrls->default_first_pass_fs[gi] / CDEF_SEC_STRENGTHS;
+                    int32_t sec_strength = cdef_ctrls->default_first_pass_fs[gi] % CDEF_SEC_STRENGTHS;
+
+                    svt_cdef_filter_fb(is_16bit ? NULL : (uint8_t*)tmp_dst,
+                                        is_16bit ? tmp_dst : NULL,
+                                        0,
+                                        in,
+                                        xdec[pli],
+                                        ydec[pli],
+                                        *dir,
+                                        &dirinit,
+                                        *var,
+                                        pli,
+                                        dlist,
+                                        cdef_count,
+                                        pri_strength,
+                                        sec_strength + (sec_strength == 3),
+                                        pri_damping,
+                                        sec_damping,
+                                        coeff_shift,
+                                        subsampling_factor);
+                    uint64_t curr_mse = compute_cdef_dist(
+                        ref[pli],
+                        (lr << mi_high_l2[pli]) * stride_ref[pli] + (lc << mi_wide_l2[pli]),
+                        stride_ref[pli],
+                        (uint8_t*)tmp_dst,
+                        dlist,
+                        cdef_count,
+                        (BlockSize)bsize[pli],
+                        coeff_shift,
+                        pli,
+                        subsampling_factor,
+                        is_16bit);
+
+                    if (pli < 2)
+                        pcs->mse_seg[pli][fb_idx][gi] = curr_mse * subsampling_factor;
+                    else
+                        pcs->mse_seg[1][fb_idx][gi] += (curr_mse * subsampling_factor);
                 }
 
                 /* second cdef stage
@@ -341,50 +350,53 @@ void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                  */
                 for (int gi = first_pass_fs_num; gi < first_pass_fs_num + default_second_pass_fs_num;
                      gi++) {
-                    if (!pli ||
-                        (cdef_ctrls->default_second_pass_fs_uv[gi - first_pass_fs_num] != -1)) {
-                        int32_t pri_strength = cdef_ctrls->default_second_pass_fs[gi - first_pass_fs_num] /
-                            CDEF_SEC_STRENGTHS;
-                        int32_t sec_strength = cdef_ctrls->default_second_pass_fs[gi - first_pass_fs_num] %
-                            CDEF_SEC_STRENGTHS;
 
-                        svt_cdef_filter_fb(is_16bit ? NULL : (uint8_t*)tmp_dst,
-                                           is_16bit ? tmp_dst : NULL,
-                                           0,
-                                           in,
-                                           xdec[pli],
-                                           ydec[pli],
-                                           *dir,
-                                           &dirinit,
-                                           *var,
-                                           pli,
-                                           dlist,
-                                           cdef_count,
-                                           pri_strength,
-                                           sec_strength + (sec_strength == 3),
-                                           pri_damping,
-                                           sec_damping,
-                                           coeff_shift,
-                                           subsampling_factor);
-                        uint64_t curr_mse = compute_cdef_dist(
-                            ref[pli],
-                            (lr << mi_high_l2[pli]) * stride_ref[pli] + (lc << mi_wide_l2[pli]),
-                            stride_ref[pli],
-                            (uint8_t*)tmp_dst,
-                            dlist,
-                            cdef_count,
-                            (BlockSize)bsize[pli],
-                            coeff_shift,
-                            pli,
-                            subsampling_factor,
-                            is_16bit);
-
-                        if (pli < 2)
-                            pcs->mse_seg[pli][fb_idx][gi] = curr_mse * subsampling_factor;
-                        else
-                            pcs->mse_seg[1][fb_idx][gi] += (curr_mse * subsampling_factor);
-                    } else
+                    // Check if chroma filter is set to be tested
+                    if (pli && (cdef_ctrls->default_second_pass_fs_uv[gi - first_pass_fs_num] == -1)) {
                         pcs->mse_seg[1][fb_idx][gi] = default_mse_uv * 64;
+                        continue;
+                    }
+
+                    int32_t pri_strength = cdef_ctrls->default_second_pass_fs[gi - first_pass_fs_num] /
+                        CDEF_SEC_STRENGTHS;
+                    int32_t sec_strength = cdef_ctrls->default_second_pass_fs[gi - first_pass_fs_num] %
+                        CDEF_SEC_STRENGTHS;
+
+                    svt_cdef_filter_fb(is_16bit ? NULL : (uint8_t*)tmp_dst,
+                                        is_16bit ? tmp_dst : NULL,
+                                        0,
+                                        in,
+                                        xdec[pli],
+                                        ydec[pli],
+                                        *dir,
+                                        &dirinit,
+                                        *var,
+                                        pli,
+                                        dlist,
+                                        cdef_count,
+                                        pri_strength,
+                                        sec_strength + (sec_strength == 3),
+                                        pri_damping,
+                                        sec_damping,
+                                        coeff_shift,
+                                        subsampling_factor);
+                    uint64_t curr_mse = compute_cdef_dist(
+                        ref[pli],
+                        (lr << mi_high_l2[pli]) * stride_ref[pli] + (lc << mi_wide_l2[pli]),
+                        stride_ref[pli],
+                        (uint8_t*)tmp_dst,
+                        dlist,
+                        cdef_count,
+                        (BlockSize)bsize[pli],
+                        coeff_shift,
+                        pli,
+                        subsampling_factor,
+                        is_16bit);
+
+                    if (pli < 2)
+                        pcs->mse_seg[pli][fb_idx][gi] = curr_mse * subsampling_factor;
+                    else
+                        pcs->mse_seg[1][fb_idx][gi] += (curr_mse * subsampling_factor);
                 }
             }
         }
@@ -1003,12 +1015,10 @@ void *cdef_kernel(void *input_ptr) {
                 finish_cdef_search(pcs_ptr);
 #if CLN_REST_2
                 if (ppcs->enable_restoration ||
-#else
-#if CLN_REST
+#elif CLN_REST
                 if (cm->rest_filter_ctrls.enabled ||
 #else
                 if (scs_ptr->seq_header.enable_restoration != 0 ||
-#endif
 #endif
                     pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
                     scs_ptr->static_config.recon_enabled) {
@@ -1036,12 +1046,10 @@ void *cdef_kernel(void *input_ptr) {
             //restoration prep
 #if CLN_REST_2
             if (ppcs->enable_restoration) {
-#else
-#if CLN_REST
+#elif CLN_REST
             if (cm->rest_filter_ctrls.enabled) {
 #else
             if (scs_ptr->seq_header.enable_restoration) {
-#endif
 #endif
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 1);
             }
