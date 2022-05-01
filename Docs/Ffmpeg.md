@@ -66,7 +66,7 @@ best performed on machines with a sufficient number of threads.
 When encoding for personal use, such as a media server or HTPC, higher efficiency
 and *reasonable* encoding times are desirable.
 
-    ffmpeg -i infile.mkv -c:v libsvtav1 -preset 5 -crf 32 -g 240 -pix_fmt yuv420p10le -svtav1-params tune=0:film-grain=8 -c:v copy outfile.mkv
+    ffmpeg -i infile.mkv -c:v libsvtav1 -preset 5 -crf 32 -g 240 -pix_fmt yuv420p10le -svtav1-params tune=0:film-grain=8 -c:a copy outfile.mkv
 
 Presets between 4 and 6 offer what many people consider a reasonable trade-off
 between quality and encoding time. Encoding with 10-bit depth results in more
