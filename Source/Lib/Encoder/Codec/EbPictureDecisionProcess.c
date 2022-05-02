@@ -1592,6 +1592,18 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
     if (fast_decode == 0 || resolution <= INPUT_SIZE_360p_RANGE) {
         if (enc_mode <= ENC_M5)
             dlf_level = 1;
+#if OPT_DECODE
+        else if (enc_mode <= ENC_M7)
+            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
+        else if (enc_mode <= ENC_M8) {
+            if (hierarchical_levels <= 3)
+                dlf_level = is_used_as_reference_flag ? 2 : 0;
+            else
+                dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
+        }
+        else if (enc_mode <= ENC_M10)
+            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 2 : 0);
+#else
         else if (enc_mode <= ENC_M6)
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
         else if (enc_mode <= ENC_M7)
@@ -1604,6 +1616,7 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
         }
         else if (enc_mode <= ENC_M10)
             dlf_level = is_used_as_reference_flag ? 2 : 0;
+#endif
         else if (enc_mode <= ENC_M12)
             dlf_level = is_used_as_reference_flag ? 4 : 0;
         else
@@ -2008,6 +2021,30 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
+#if OPT_DECODE
+            if (enc_mode <= ENC_M0)
+                pcs_ptr->cdef_level = 1;
+            else if (enc_mode <= ENC_M3)
+                pcs_ptr->cdef_level = 2;
+            else if (enc_mode <= ENC_M5)
+                pcs_ptr->cdef_level = 4;
+            else if (enc_mode <= ENC_M10)
+                pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
+            else if (enc_mode <= ENC_M11)
+                pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+            else if (enc_mode <= ENC_M12) {
+                if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                    pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+                else
+                    pcs_ptr->cdef_level = is_islice ? 15 : is_ref ? 16 : 17;
+            }
+            else {
+                if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                    pcs_ptr->cdef_level = is_base ? 15 : 0;
+                else
+                    pcs_ptr->cdef_level = is_islice ? 15 : 0;
+            }
+#else
             if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
                 if (enc_mode <= ENC_M0)
                     pcs_ptr->cdef_level = 1;
@@ -2066,6 +2103,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                         pcs_ptr->cdef_level = is_islice ? 15 : 0;
                 }
             }
+#endif
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);
@@ -2183,6 +2221,24 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     uint8_t list0_only_base = 0;
 
+#if OPT_DECODE
+    if (enc_mode <= ENC_M6)
+        list0_only_base = 0;
+    else if (enc_mode <= ENC_M7) {
+        if (hierarchical_levels <= 3)
+            list0_only_base = 1;
+        else
+            list0_only_base = 0;
+    }
+    else  if (enc_mode <= ENC_M9) {
+        if (hierarchical_levels <= 3)
+            list0_only_base = 2;
+        else
+            list0_only_base = 1;
+    }
+    else
+        list0_only_base = 2;
+#else
     if (fast_decode == 0) {
         if (enc_mode <= ENC_M6)
             list0_only_base = 0;
@@ -2219,7 +2275,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             list0_only_base = 2;
     }
-
+#endif
 
     set_list0_only_base(pcs_ptr, list0_only_base);
     if (scs_ptr->enable_hbd_mode_decision == DEFAULT)

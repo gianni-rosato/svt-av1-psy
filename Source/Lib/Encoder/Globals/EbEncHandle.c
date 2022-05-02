@@ -2918,12 +2918,36 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     // Do not perform TF if LD or 1 Layer or 1st pass
     Bool do_tf = scs_ptr->static_config.enable_tf && scs_ptr->static_config.hierarchical_levels >= 1 && scs_ptr->static_config.pass != ENC_FIRST_PASS;
     const EncMode enc_mode = scs_ptr->static_config.enc_mode;
+#if !OPT_DECODE
     const Bool fast_decode = scs_ptr->static_config.fast_decode;
+#endif
     const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
     uint8_t tf_level = 0;
     if (do_tf == 0) {
         tf_level = 0;
     }
+#if OPT_DECODE
+    else if (enc_mode <= ENC_M1) {
+        tf_level = 1;
+    }
+    else if (enc_mode <= ENC_M6) {
+        tf_level = 2;
+    }
+    else if (enc_mode <= ENC_M7) {
+        tf_level = 3;
+    }
+    else if (enc_mode <= ENC_M8) {
+        if (hierarchical_levels <= 3)
+            tf_level = 4;
+        else
+            tf_level = 3;
+    }
+    else if (enc_mode <= ENC_M9) {
+        tf_level = 4;
+    }
+    else
+        tf_level = 5;
+#else
     else if (fast_decode == 0) {
         if (enc_mode <= ENC_M1) {
             tf_level = 1;
@@ -2965,6 +2989,7 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
         else
             tf_level = 5;
     }
+#endif
 
     tf_controls(scs_ptr, tf_level);
 }

@@ -501,11 +501,22 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
 
+#if OPT_DECODE
+    if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
+#else
     if (fast_decode == 0) {
+#endif
+#if OPT_DECODE
+        if (pcs_ptr->enc_mode <= ENC_M2)
+            pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
+        else
+            pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
+#endif
     } else {
         pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
     }
@@ -579,10 +590,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             else
                 ppcs->pic_obmc_level = 0;
         } else {
+#if OPT_DECODE
+            if (ppcs->enc_mode <= ENC_M3)
+                ppcs->pic_obmc_level = 1;
+            else if (ppcs->enc_mode <= ENC_M6)
+                ppcs->pic_obmc_level = is_ref ? 2 : 0;
+            else
+                ppcs->pic_obmc_level = 0;
+#else
             if (ppcs->enc_mode <= ENC_M4)
                 ppcs->pic_obmc_level = 1;
             else
                 ppcs->pic_obmc_level = 0;
+#endif
         }
     } else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->obmc_level;
