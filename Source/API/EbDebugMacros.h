@@ -51,6 +51,8 @@ extern "C" {
 #define OPT_LPD0                1 // Add detector to LPD0 for all levels
 #define CLN_REST_2              1 // Cleanup restoration signalling
 #define OPT_DECODE              1 // Newest fast-decode level 0 and 1
+#define TUNE_M4_M5              1 // Tune M4 and M5
+#define TUNE_INTERINTRA_TRANS   1 // Enable inter-intra compound for transition frames up to M11
 
 
 #define FTR_FORCE_KF            1 // Add the ability to force key frames from ffpmeg cli

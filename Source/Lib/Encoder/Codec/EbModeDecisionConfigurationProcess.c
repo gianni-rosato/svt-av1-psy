@@ -419,13 +419,20 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const Bool               transition_present  = ppcs->transition_present;
 #endif
 #endif
+#if TUNE_INTERINTRA_TRANS
+    const Bool               transition_present = (ppcs->transition_present == 1);
+#endif
     //MFMV
     if (is_islice || scs_ptr->mfmv_enabled == 0 ||
         pcs_ptr->parent_pcs_ptr->frm_hdr.error_resilient_mode) {
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     } else {
         if (fast_decode == 0) {
+#if TUNE_M4_M5
+            if (enc_mode <= ENC_M5)
+#else
             if (enc_mode <= ENC_M4)
+#endif
                 ppcs->frm_hdr.use_ref_frame_mvs = 1;
             else {
                 uint64_t avg_me_dist = 0;
@@ -510,7 +517,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
 #else
     if (fast_decode == 0) {
+#if TUNE_M4_M5
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
@@ -658,6 +669,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = 1;
     else if (enc_mode <= ENC_M3)
         pcs_ptr->txt_level = is_base ? 1 : 3;
+#if TUNE_M4_M5
+    else if (enc_mode <= ENC_M9)
+#else
     else if (enc_mode <= ENC_M4) {
         if (hierarchical_levels <= 3)
             pcs_ptr->txt_level = 5;
@@ -668,6 +682,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M9)
 #else
     } else if (enc_mode <= ENC_M7)
+#endif
 #endif
         pcs_ptr->txt_level = 5;
     else if (enc_mode <= ENC_M10)
@@ -837,7 +852,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (enc_mode <= ENC_M3)
         pcs_ptr->max_part0_to_part1_dev = 0;
     else
+#if TUNE_M4_M5
+        pcs_ptr->max_part0_to_part1_dev = 80;
+#else
         pcs_ptr->max_part0_to_part1_dev = 100;
+#endif
 
     // Set the level for enable_inter_intra
     // Block level switch, has to follow the picture level
@@ -850,6 +869,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         scs_ptr->seq_header.enable_interintra_compound) {
         if (enc_mode <= ENC_M2)
             pcs_ptr->md_inter_intra_level = 1;
+#if TUNE_INTERINTRA_TRANS
+        else if (enc_mode <= ENC_M11)
+            pcs_ptr->md_inter_intra_level = transition_present ? 1 : 0;
+#endif
         else
             pcs_ptr->md_inter_intra_level = 0;
     } else

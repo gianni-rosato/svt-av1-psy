@@ -3617,7 +3617,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
         mrp_level = 2;
     }
+#if TUNE_M4_M5
+    else if (scs_ptr->static_config.enc_mode <= ENC_M4) {
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M3) {
+#endif
 
         mrp_level = 3;
     }

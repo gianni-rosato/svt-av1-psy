@@ -3746,8 +3746,11 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
             nic_level = 11;
         else
             nic_level = 10;
-    } else if (enc_mode <= ENC_M4)
+    }
+#if !TUNE_M4_M5
+    else if (enc_mode <= ENC_M4)
         nic_level = 11;
+#endif
     else if (enc_mode <= ENC_M5)
         nic_level = 12;
     else if (enc_mode <= ENC_M6)
