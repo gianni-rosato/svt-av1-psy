@@ -158,6 +158,7 @@ typedef struct {
     uint64_t avg_bit_actual_per_gop;
     uint64_t rate_average_periodin_frames;
 } RATE_CONTROL;
+#if !FTR_FORCE_KF
 typedef struct RateControlIntervalParamContext {
     EbDctor  dctor;
     uint64_t first_poc;
@@ -171,6 +172,7 @@ typedef struct RateControlIntervalParamContext {
     int32_t processed_frame_number;
     uint8_t last_i_qp;
 } RateControlIntervalParamContext;
+#endif
 /**************************************
  * Input Port Types
  **************************************/

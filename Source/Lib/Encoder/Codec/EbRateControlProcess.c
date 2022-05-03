@@ -50,8 +50,9 @@ typedef struct RateControlContext {
     EbFifo *rate_control_input_tasks_fifo_ptr;
     EbFifo *rate_control_output_results_fifo_ptr;
     EbFifo *picture_decision_results_output_fifo_ptr;
-
+#if !FTR_FORCE_KF
     RateControlIntervalParamContext **rate_control_param_queue;
+#endif
 } RateControlContext;
 EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
                                                          uint64_t                  picture_number) {
@@ -63,18 +64,21 @@ EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entr
 static void rate_control_context_dctor(EbPtr p) {
     EbThreadContext    *thread_context_ptr = (EbThreadContext *)p;
     RateControlContext *obj                = (RateControlContext *)thread_context_ptr->priv;
+#if !FTR_FORCE_KF
     if (obj->rate_control_param_queue)
         EB_FREE_2D(obj->rate_control_param_queue);
+#endif
     EB_FREE_ARRAY(obj);
 }
 
 EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr, int me_port_index) {
+#if !FTR_FORCE_KF
     uint32_t interval_index;
 
     int32_t intra_period =
         enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.intra_period_length;
-
+#endif
     RateControlContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -86,7 +90,7 @@ EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
         enc_handle_ptr->rate_control_results_resource_ptr, 0);
     context_ptr->picture_decision_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_decision_results_resource_ptr, me_port_index);
-
+#if !FTR_FORCE_KF
     EB_MALLOC_2D(context_ptr->rate_control_param_queue, (int32_t)PARALLEL_GOP_MAX_NUMBER, 1);
 
     for (interval_index = 0; interval_index < PARALLEL_GOP_MAX_NUMBER; interval_index++) {
@@ -98,7 +102,7 @@ EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
         context_ptr->rate_control_param_queue[interval_index]->end_of_seq_seen        = 0;
         context_ptr->rate_control_param_queue[interval_index]->last_i_qp              = 0;
     }
-
+#endif
     return EB_ErrorNone;
 }
 
@@ -2925,9 +2929,9 @@ void *rate_control_kernel(void *input_ptr) {
     // Context
     EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
     RateControlContext *context_ptr        = (RateControlContext *)thread_context_ptr->priv;
-
+#if !FTR_FORCE_KF
     RateControlIntervalParamContext *rate_control_param_ptr;
-
+#endif
     PictureControlSet       *pcs_ptr;
     PictureParentControlSet *parentpicture_control_set_ptr;
 
@@ -2983,6 +2987,7 @@ void *rate_control_kernel(void *input_ptr) {
                 // overlay: ppcs->picture_qp has been updated by altref RC_INPUT
                 pcs_ptr->picture_qp = pcs_ptr->parent_pcs_ptr->picture_qp;
             } else {
+#if !FTR_FORCE_KF
                 // Frame level RC. Find the ParamPtr for the current GOP
                 {
                     uint32_t interval_index_temp = 0;
@@ -3006,13 +3011,18 @@ void *rate_control_kernel(void *input_ptr) {
                         context_ptr->rate_control_param_queue[interval_index_temp];
                 }
                 pcs_ptr->parent_pcs_ptr->rate_control_param_ptr = rate_control_param_ptr;
+#endif
                 if (!is_superres_recode_task) {
                     if (scs_ptr->static_config.rate_control_mode) {
                         if (pcs_ptr->picture_number == 0) {
                             set_rc_buffer_sizes(scs_ptr);
                             av1_rc_init(scs_ptr);
                         }
+#if FTR_FORCE_KF
+                        restore_param(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->rate_control_param_ptr);
+#else
                         restore_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
+#endif
                         if (scs_ptr->static_config.rate_control_mode == 2)
                             one_pass_rt_rate_alloc(pcs_ptr->parent_pcs_ptr);
                         else
@@ -3020,7 +3030,11 @@ void *rate_control_kernel(void *input_ptr) {
                         av1_configure_buffer_updates(
                             pcs_ptr, &(pcs_ptr->parent_pcs_ptr->refresh_frame), 0);
                         av1_set_target_rate(pcs_ptr);
+#if FTR_FORCE_KF
+                        store_param(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->rate_control_param_ptr);
+#else
                         store_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
+#endif
                     }
                 }
 
@@ -3169,12 +3183,23 @@ void *rate_control_kernel(void *input_ptr) {
                         quantizer_to_qindex[pcs_ptr->picture_qp];
                 }
                 if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) {
+#if FTR_FORCE_KF
+                    pcs_ptr->parent_pcs_ptr->rate_control_param_ptr->last_i_qp = pcs_ptr->picture_qp;
+#else
                     rate_control_param_ptr->last_i_qp = pcs_ptr->picture_qp;
+#endif
                 } else if (pcs_ptr->parent_pcs_ptr->transition_present) {
+#if FTR_FORCE_KF
+                    pcs_ptr->picture_qp = (uint8_t)CLIP3(
+                        scs_ptr->static_config.min_qp_allowed,
+                        scs_ptr->static_config.max_qp_allowed,
+                        (uint32_t)((pcs_ptr->picture_qp + pcs_ptr->parent_pcs_ptr->rate_control_param_ptr->last_i_qp) / 2));
+#else
                     pcs_ptr->picture_qp = (uint8_t)CLIP3(
                         scs_ptr->static_config.min_qp_allowed,
                         scs_ptr->static_config.max_qp_allowed,
                         (uint32_t)((pcs_ptr->picture_qp + rate_control_param_ptr->last_i_qp) / 2));
+#endif
                     frm_hdr->quantization_params.base_q_idx =
                         quantizer_to_qindex[pcs_ptr->picture_qp];
                 }
@@ -3302,6 +3327,18 @@ void *rate_control_kernel(void *input_ptr) {
             // Prevent double counting fames with overlay to so we don't
             // increase processed_frame_number twice per frame
             if (!parentpicture_control_set_ptr->is_overlay) {
+#if FTR_FORCE_KF
+                svt_block_on_mutex(scs_ptr->encode_context_ptr->rc_param_queue_mutex);
+                parentpicture_control_set_ptr->rate_control_param_ptr->processed_frame_number++;
+
+                // check if all the frames in the interval have arrived
+                if (parentpicture_control_set_ptr->rate_control_param_ptr->size ==
+                    parentpicture_control_set_ptr->rate_control_param_ptr->processed_frame_number) {
+                    parentpicture_control_set_ptr->rate_control_param_ptr->size = -1;
+                    parentpicture_control_set_ptr->rate_control_param_ptr->processed_frame_number = 0;
+                }
+                svt_release_mutex(scs_ptr->encode_context_ptr->rc_param_queue_mutex);
+#else
                 uint32_t interval_index_temp = 0;
                 for (RateControlIntervalParamContext **rc_param_queue =
                          context_ptr->rate_control_param_queue;
@@ -3327,6 +3364,7 @@ void *rate_control_kernel(void *input_ptr) {
                     rate_control_param_ptr->last_poc += shift_count;
                     rate_control_param_ptr->processed_frame_number = 0;
                 }
+#endif
             }
             if (scs_ptr->static_config.rate_control_mode) {
                 restore_gf_group_param(parentpicture_control_set_ptr);

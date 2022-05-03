@@ -994,7 +994,9 @@ typedef struct PictureParentControlSet {
     uint32_t tpl_group_size; //size of above buffer
     void    *pd_window
         [PD_WINDOW_SIZE]; //stores previous, current, future pictures from pd-reord-queue. empty for first I.
+#if !FTR_FORCE_KF
     uint8_t pd_window_count;
+#endif
 
     struct PictureParentControlSet
         *ext_group[MAX_TPL_EXT_GROUP_SIZE]; //stores pcs pictures needed for lad mg based algorithms
@@ -1007,7 +1009,9 @@ typedef struct PictureParentControlSet {
 
     // Tune TPL for better chroma.Only for 240P
     uint8_t      tune_tpl_for_chroma;
+#if !FTR_FORCE_KF
     uint8_t      is_next_frame_intra;
+#endif
     uint8_t      is_superres_none;
     TfControls   tf_ctrls;
     GmControls   gm_ctrls;

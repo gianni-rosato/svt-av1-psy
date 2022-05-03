@@ -71,6 +71,12 @@ static void encode_context_dctor(EbPtr p) {
     EB_FREE(obj->stats_out.stat);
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
     EB_DELETE_PTR_ARRAY(obj->rc.coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
+
+#if FTR_FORCE_KF
+    if (obj->rc_param_queue)
+        EB_FREE_2D(obj->rc_param_queue);
+    EB_DESTROY_MUTEX(obj->rc_param_queue_mutex);
+#endif
 }
 
 EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_init_data_ptr) {
@@ -171,5 +177,19 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
                picture_index);
     }
     encode_context_ptr->rc.min_bit_actual_per_gop = 0xfffffffffffff;
+#if FTR_FORCE_KF
+    EB_MALLOC_2D(encode_context_ptr->rc_param_queue, (int32_t)PARALLEL_GOP_MAX_NUMBER, 1);
+
+    for (int interval_index = 0; interval_index < PARALLEL_GOP_MAX_NUMBER; interval_index++) {
+        encode_context_ptr->rc_param_queue[interval_index]->first_poc = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->processed_frame_number = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->size = -1;
+        encode_context_ptr->rc_param_queue[interval_index]->end_of_seq_seen = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->last_i_qp = 0;
+    }
+    encode_context_ptr->rc_param_queue_head_index = 0;
+    EB_CREATE_MUTEX(encode_context_ptr->rc_param_queue_mutex);
+#endif
+
     return EB_ErrorNone;
 }

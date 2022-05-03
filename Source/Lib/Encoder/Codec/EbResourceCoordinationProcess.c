@@ -1203,10 +1203,14 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->eb_y8b_wrapper_ptr = NULL;
             }
             // Set Picture Control Flags
+#if FTR_FORCE_KF
+            pcs_ptr->idr_flag = scs_ptr->encode_context_ptr->initial_picture;
+#else
             pcs_ptr->idr_flag = scs_ptr->encode_context_ptr->initial_picture ||
                 (pcs_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE);
             pcs_ptr->cra_flag = (pcs_ptr->input_ptr->pic_type == EB_AV1_INTRA_ONLY_PICTURE) ? TRUE
                                                                                             : FALSE;
+#endif
             pcs_ptr->scene_change_flag = FALSE;
             pcs_ptr->qp_on_the_fly     = FALSE;
             pcs_ptr->sb_total_count    = scs_ptr->sb_total_count;

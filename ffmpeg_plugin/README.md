@@ -15,6 +15,10 @@ For the original commits the patch was generated from, see <https://gitlab.com/1
 - [51c0b9e829](https://gitlab.com/1480c1/FFmpeg/-/commit/51c0b9e829): Backport patch for passing color description info
 - [e3c4442b24](https://gitlab.com/1480c1/FFmpeg/-/commit/f579c1aca1): Backport patch for parsing svtav1-params last
 
+Additionally, the following patch is included, but is not in upstream:
+
+- b7da10c27b: avcodec/libsvtav1: pass pict_type to library
+
 ## How to build
 
 Assuming `$PWD` == the root of your SVT-AV1 clone and you have already built

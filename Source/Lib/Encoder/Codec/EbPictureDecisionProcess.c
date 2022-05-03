@@ -5927,6 +5927,38 @@ static void update_sframe_ref_order_hint(PictureParentControlSet *ppcs, PictureD
         }
     }
 }
+#if FTR_FORCE_KF
+/*****************************************************************
+* Update the RC param queue
+* Set the size of the previous Gop/param, Check if all the frames in gop are processed, if yes reset
+* Increament the head index to assign a new spot in the queue for the new gop
+*****************************************************************/
+static void update_rc_param_queue(
+    PictureParentControlSet *ppcs,
+    EncodeContext           *enc_cxt) {
+    if (ppcs->idr_flag == TRUE && ppcs->picture_number > 0) {
+        svt_block_on_mutex(enc_cxt->rc_param_queue_mutex);
+        // Set the size of the previous Gop/param
+        enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->size =
+            (int32_t)(ppcs->picture_number - enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->first_poc);
+        // Check if all the frames in gop are processed, if yes reset
+        if (enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->size ==
+            enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->processed_frame_number) {
+            enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->size = -1;
+            enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->processed_frame_number = 0;
+        }
+        // Increament the head index to assign a new spot in the queue for the new gop
+        enc_cxt->rc_param_queue_head_index = (enc_cxt->rc_param_queue_head_index == PARALLEL_GOP_MAX_NUMBER - 1) ?
+            0 : enc_cxt->rc_param_queue_head_index + 1;
+        assert_err(enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->size == -1, "The head in rc paramqueue is not empty");
+        enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->first_poc = ppcs->picture_number;
+        svt_release_mutex(enc_cxt->rc_param_queue_mutex);
+
+    }
+    // Store the pointer to the right spot in the RC param queue under PCS
+    ppcs->rate_control_param_ptr = enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index];
+}
+#endif
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -6146,7 +6178,9 @@ void* picture_decision_kernel(void *input_ptr)
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
             memset(pcs_ptr->pd_window, 0, PD_WINDOW_SIZE * sizeof(PictureParentControlSet*));
+#if !FTR_FORCE_KF
             pcs_ptr->pd_window_count = 0;
+#endif
             //for poc 0, ignore previous frame check
             if (queue_entry_ptr->picture_number > 0 && encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr == NULL)
                 window_avail = FALSE;
@@ -6173,6 +6207,7 @@ void* picture_decision_kernel(void *input_ptr)
                             (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr->object_ptr;
                     }
                 }
+#if !FTR_FORCE_KF
                 for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++)
                     if (pcs_ptr->pd_window[2 + window_index])
                     {
@@ -6182,6 +6217,7 @@ void* picture_decision_kernel(void *input_ptr)
                         else if (scs_ptr->static_config.intra_period_length == -1)
                             is_frame_intra = 0;
                         else
+                            // to clean up add a signal to keep track of the next Intra
                             is_frame_intra =
                             (((PictureParentControlSet *)pcs_ptr->pd_window[2 + window_index])->picture_number %
                             (scs_ptr->static_config.intra_period_length + 1)) ? 0 : 1;
@@ -6192,6 +6228,7 @@ void* picture_decision_kernel(void *input_ptr)
                     }
                     else
                         break;
+#endif
             }
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
@@ -6255,6 +6292,7 @@ void* picture_decision_kernel(void *input_ptr)
                     pcs_ptr->cra_flag = TRUE;
                 // If an #IntraPeriodLength has passed since the last Intra, then introduce a CRA or IDR based on Intra Refresh type
                 else if (scs_ptr->static_config.intra_period_length != -1) {
+
                     pcs_ptr->cra_flag =
                         (scs_ptr->static_config.intra_refresh_type != SVT_AV1_FWDKF_REFRESH) ?
                         pcs_ptr->cra_flag :
@@ -6265,11 +6303,18 @@ void* picture_decision_kernel(void *input_ptr)
                     pcs_ptr->idr_flag =
                         (scs_ptr->static_config.intra_refresh_type != SVT_AV1_KF_REFRESH) ?
                         pcs_ptr->idr_flag :
+#if FTR_FORCE_KF
+                        ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ||
+                         (pcs_ptr->scene_change_flag == TRUE) ||
+                         (scs_ptr->static_config.force_key_frames && pcs_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE)) ?
+#else
                         ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == TRUE)) ?
+#endif
                         TRUE :
                         pcs_ptr->idr_flag;
                 }
 
+#if !FTR_FORCE_KF
                 //TODO: scene change update
                 if (scs_ptr->static_config.intra_period_length == 0)
                     pcs_ptr->is_next_frame_intra = 1;
@@ -6277,6 +6322,8 @@ void* picture_decision_kernel(void *input_ptr)
                     pcs_ptr->is_next_frame_intra = 0;
                 else
                     pcs_ptr->is_next_frame_intra = (int32_t)(encode_context_ptr->intra_period_position + 1) == scs_ptr->static_config.intra_period_length;
+                //to be removed as not used
+#endif
                 encode_context_ptr->pre_assignment_buffer_eos_flag = (pcs_ptr->end_of_sequence_flag) ? (uint32_t)TRUE : encode_context_ptr->pre_assignment_buffer_eos_flag;
 
                 // Histogram data to be used at the next input (N + 1)
@@ -6308,7 +6355,15 @@ void* picture_decision_kernel(void *input_ptr)
                 else
                 {
                     // Increment the Intra Period Position
+#if FTR_FORCE_KF
+                    encode_context_ptr->intra_period_position =
+                        ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ||
+                         (pcs_ptr->scene_change_flag == TRUE) ||
+                         (scs_ptr->static_config.force_key_frames && pcs_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE)) ?
+                        0 : encode_context_ptr->intra_period_position + 1;
+#else
                     encode_context_ptr->intra_period_position = ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == TRUE)) ? 0 : encode_context_ptr->intra_period_position + 1;
+#endif
                 }
 
 #if LAD_MG_PRINT
@@ -6919,6 +6974,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 EB_MEMSET(pcs_ptr->ref_y8b_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
+
+#if FTR_FORCE_KF
+                                // Update the RC param queue
+                                update_rc_param_queue(pcs_ptr, encode_context_ptr);
+#endif
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
                         }

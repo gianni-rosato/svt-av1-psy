@@ -4041,6 +4041,9 @@ void copy_api_from_app(
         : scs_ptr->static_config.sframe_dist > 0 ? 16384 : scs_ptr->max_input_luma_width;
     scs_ptr->seq_header.max_frame_height = config_struct->forced_max_frame_height > 0 ? config_struct->forced_max_frame_height
         : scs_ptr->static_config.sframe_dist > 0 ? 8704 : scs_ptr->max_input_luma_height;
+#if FTR_FORCE_KF
+    scs_ptr->static_config.force_key_frames = config_struct->force_key_frames;
+#endif
     return;
 }
 

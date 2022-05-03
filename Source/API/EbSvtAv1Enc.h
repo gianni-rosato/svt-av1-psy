@@ -677,6 +677,13 @@ typedef struct EbSvtAv1EncConfiguration {
      * EB_CSP_COLOCATED: value 2 from H.273 AKA "top left"
      */
     EbChromaSamplePosition chroma_sample_position;
+#if FTR_FORCE_KF
+    /**
+     * @brief Signal that force-key-frames is enabled.
+     *
+     */
+    Bool force_key_frames;
+#endif
 } EbSvtAv1EncConfiguration;
 
 /**

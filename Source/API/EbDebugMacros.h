@@ -51,6 +51,8 @@ extern "C" {
 #define OPT_LPD0                1 // Add detector to LPD0 for all levels
 #define CLN_REST_2              1 // Cleanup restoration signalling
 
+
+#define FTR_FORCE_KF            1 // Add the ability to force key frames from ffpmeg cli
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
