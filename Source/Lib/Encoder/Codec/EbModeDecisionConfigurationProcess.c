@@ -503,15 +503,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
 #if OPT_DECODE
     if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
-#else
-    if (fast_decode == 0) {
-#endif
-#if OPT_DECODE
         if (pcs_ptr->enc_mode <= ENC_M2)
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
 #else
+    if (fast_decode == 0) {
         if (pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
