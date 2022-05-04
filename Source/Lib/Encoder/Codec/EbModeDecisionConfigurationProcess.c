@@ -593,6 +593,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if OPT_DECODE
             if (ppcs->enc_mode <= ENC_M3)
                 ppcs->pic_obmc_level = 1;
+            if (ppcs->enc_mode <= ENC_M4)
+                ppcs->pic_obmc_level = 2;
             else if (ppcs->enc_mode <= ENC_M6)
                 ppcs->pic_obmc_level = is_ref ? 2 : 0;
             else

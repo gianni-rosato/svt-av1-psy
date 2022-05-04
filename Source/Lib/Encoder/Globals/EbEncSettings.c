@@ -845,8 +845,13 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->forced_max_frame_width    = 0;
     config_ptr->forced_max_frame_height   = 0;
     config_ptr->stat_report               = 0;
+#if OPT_DECODE
+    config_ptr->tile_rows                 = DEFAULT;
+    config_ptr->tile_columns              = DEFAULT;
+#else
     config_ptr->tile_rows                 = 0;
     config_ptr->tile_columns              = 0;
+#endif
     config_ptr->qp = DEFAULT_QP;
     config_ptr->use_qp_file = FALSE;
 

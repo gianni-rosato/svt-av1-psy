@@ -1414,6 +1414,18 @@ void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
 }
 #if CLN_REST_2
 // Returns the level for Wiener restoration filter
+#if OPT_DECODE
+uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_ref) {
+    uint8_t wn_filter_lvl = 0;
+    if (enc_mode <= ENC_M5)
+        wn_filter_lvl = 1;
+    else if (enc_mode <= ENC_M7)
+        wn_filter_lvl = 4;
+    else if (enc_mode <= ENC_M9)
+        wn_filter_lvl = is_ref ? 5 : 0;
+    else
+        wn_filter_lvl = 0;
+#else
 uint8_t get_wn_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_ref) {
     uint8_t wn_filter_lvl = 0;
     if (fast_decode == 0) {
@@ -1432,6 +1444,7 @@ uint8_t get_wn_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_re
         else
             wn_filter_lvl = 0;
     }
+#endif
 
     // higher resolutions will shut restoration to save memory
     if (input_resolution >= INPUT_SIZE_8K_RANGE)
@@ -2116,7 +2129,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     uint8_t wn = 0, sg = 0;
     // If restoration filtering is enabled at the sequence level, derive the settings used for this frame
     if (scs_ptr->seq_header.enable_restoration) {
+#if OPT_DECODE
+        wn = get_wn_filter_level(enc_mode, input_resolution, is_ref);
+#else
         wn = get_wn_filter_level(enc_mode, fast_decode, input_resolution, is_ref);
+#endif
         sg = get_sg_filter_level(enc_mode, fast_decode, input_resolution, is_base);
     }
 

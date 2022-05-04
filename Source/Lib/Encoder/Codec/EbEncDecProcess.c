@@ -5965,7 +5965,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     }
 #if OPT_DECODE
     else {
-        rate_est_level = 1;
+        if (enc_mode <= ENC_M10)
+            rate_est_level = 1;
+        else if (enc_mode <= ENC_M12)
+            rate_est_level = is_islice ? 3 : 4;
+        else
+            rate_est_level = is_islice ? 3 : 0;
     }
 #else
     else if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {

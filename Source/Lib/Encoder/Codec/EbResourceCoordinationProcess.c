@@ -344,7 +344,11 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->qstep_based_q_calc = 0;
 }
 #if CLN_REST_2
+#if OPT_DECODE
+uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_ref);
+#else
 uint8_t get_wn_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_ref);
+#endif
 uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_base);
 /*
 * return true if restoration filtering is enabled; false otherwise
@@ -358,7 +362,11 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
 
     uint8_t wn = 0;
     for (int is_ref = 0; is_ref < 2; is_ref++) {
+#if OPT_DECODE
+        wn = get_wn_filter_level(enc_mode, input_resolution, is_ref);
+#else
         wn = get_wn_filter_level(enc_mode, fast_decode, input_resolution, is_ref);
+#endif
         if (wn) break;
     }
 

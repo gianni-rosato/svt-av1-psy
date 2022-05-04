@@ -3868,9 +3868,34 @@ void copy_api_from_app(
 
     // MD Parameters
     scs_ptr->enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth > 8 ? DEFAULT : 0;
+#if OPT_DECODE
+    scs_ptr->static_config.tile_rows = (scs_ptr->static_config.pass == ENC_FIRST_PASS || ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows == DEFAULT) ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
+    scs_ptr->static_config.tile_columns = (scs_ptr->static_config.pass == ENC_FIRST_PASS || ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns == DEFAULT) ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
+    if (scs_ptr->static_config.pass != ENC_FIRST_PASS &&
+        ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows == DEFAULT &&
+        ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns == DEFAULT &&
+        scs_ptr->static_config.fast_decode == 1) {
+        if (input_resolution <= INPUT_SIZE_360p_RANGE) {
+            scs_ptr->static_config.tile_rows = 0;
+            scs_ptr->static_config.tile_columns = 0;
+        }
+        else if (input_resolution <= INPUT_SIZE_480p_RANGE) {
+            scs_ptr->static_config.tile_rows = 0;
+            scs_ptr->static_config.tile_columns = 1;
+            SVT_WARN("Tiles are enabled when using fast decode mode for 480p+ content.\n");
+        }
+        else {
+            scs_ptr->static_config.tile_rows = 1;
+            scs_ptr->static_config.tile_columns = 1;
+            SVT_WARN("Tiles are enabled when using fast decode mode for 480p+ content.\n");
+        }
+    }
+#else
     // Adaptive Loop Filter
     scs_ptr->static_config.tile_rows = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
     scs_ptr->static_config.tile_columns = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
+#endif
+
     scs_ptr->static_config.restricted_motion_vector = ((EbSvtAv1EncConfiguration*)config_struct)->restricted_motion_vector;
 
     // Rate Control
