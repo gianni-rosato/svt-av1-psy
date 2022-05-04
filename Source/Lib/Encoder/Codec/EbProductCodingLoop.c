@@ -4215,8 +4215,6 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
                                     [CFL_IDX_V(candidate_buffer->candidate_ptr->cfl_alpha_idx)];
         chroma_rate += (uint64_t)context_ptr->md_rate_estimation_ptr->intra_uv_mode_fac_bits
                            [CFL_ALLOWED][candidate_buffer->candidate_ptr->pred_mode][UV_CFL_PRED];
-        chroma_rate -= (uint64_t)context_ptr->md_rate_estimation_ptr->intra_uv_mode_fac_bits
-                           [CFL_ALLOWED][candidate_buffer->candidate_ptr->pred_mode][UV_DC_PRED];
     } else
         chroma_rate = (uint64_t)context_ptr->md_rate_estimation_ptr->intra_uv_mode_fac_bits
                           [CFL_ALLOWED][candidate_buffer->candidate_ptr->pred_mode][UV_DC_PRED];
