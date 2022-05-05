@@ -3898,8 +3898,18 @@ void copy_api_from_app(
 
         }
         else {
-            scs_ptr->static_config.tile_rows = ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
-            scs_ptr->static_config.tile_columns = ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
+            if (((EbSvtAv1EncConfiguration*)config_struct)->tile_rows == DEFAULT) {
+                scs_ptr->static_config.tile_rows = 0;
+                scs_ptr->static_config.tile_columns = ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
+            }
+            else if (((EbSvtAv1EncConfiguration*)config_struct)->tile_columns == DEFAULT) {
+                scs_ptr->static_config.tile_rows = ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
+                scs_ptr->static_config.tile_columns = 0;
+            }
+            else {
+                scs_ptr->static_config.tile_rows = ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
+                scs_ptr->static_config.tile_columns = ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
+            }
         }
     }
 #else
