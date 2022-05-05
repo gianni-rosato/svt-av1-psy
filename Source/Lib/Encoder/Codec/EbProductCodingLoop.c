@@ -8174,6 +8174,372 @@ void init_chroma_mode(ModeDecisionContext *context_ptr) {
         }
     }
 }
+#if OPT_IND_CHROMA
+/*
+Perform search for the best chroma mode (intra modes only).  The search involves
+the following main parts:
+
+1. Prepare all the chroma candidates to be tested
+2. Perform compensation and compute the distortion for each candidate
+3. Sort the candidates, and for the best n candidates, perform the full loop (TX, quant, inv. quant)
+4. Compute the full cost for the remaining candidates and select the best chroma mode (to be combined
+   with luma modes in future MD stages).
+
+*/
+static void search_best_independent_uv_mode(PictureControlSet   *pcs,
+                                            EbPictureBufferDesc *input_picture_ptr,
+                                            uint32_t             input_cb_origin_in_index,
+                                            uint32_t             input_cr_origin_in_index,
+                                            uint32_t             cu_chroma_origin_index,
+                                            ModeDecisionContext *ctx) {
+    PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
+    FrameHeader *frm_hdr = &ppcs->frm_hdr;
+    uint32_t full_lambda =
+        ctx->full_lambda_md[ctx->hbd_mode_decision ? EB_10_BIT_MD : EB_8_BIT_MD];
+
+    uint64_t coeff_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
+    uint64_t distortion[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
+
+    ModeDecisionCandidate *candidate_array                   = ctx->fast_candidate_array;
+    uint32_t               start_fast_buffer_index           = ppcs->max_can_count;
+    uint32_t               start_full_buffer_index           = ctx->max_nics;
+    unsigned int               uv_mode_total_count               = start_fast_buffer_index;
+    UvPredictionMode uv_mode_end                             = (UvPredictionMode)ctx->intra_ctrls.intra_mode_end;
+    uint8_t          uv_mode_start                           = UV_DC_PRED;
+    Bool             use_angle_delta                         = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
+    uint8_t          disable_angle_prediction                = (ctx->intra_ctrls.angular_pred_level == 0);
+    const int        uv_angle_delta_shift                    = 1;
+    uint8_t          directional_mode_skip_mask[INTRA_MODES] = {0};
+    // For aggressive angular levels, don't test angular candidate for certain modes
+    if (ctx->intra_ctrls.angular_pred_level >= 4) {
+        for (uint8_t i = D45_PRED; i < INTRA_MODE_END; i++)
+            directional_mode_skip_mask[i] = 1;
+    }
+
+    // Prepare chroma candidates to be tested
+    for (UvPredictionMode uv_mode = uv_mode_start; uv_mode <= uv_mode_end; ++uv_mode) {
+        // If mode is not directional, or is enabled directional mode, proceed with injection
+        if (!av1_is_directional_mode((PredictionMode)uv_mode) ||
+            (!disable_angle_prediction && directional_mode_skip_mask[(PredictionMode)uv_mode] == 0)) {
+
+            int uv_angle_delta_candidate_count = (use_angle_delta &&
+                av1_is_directional_mode((PredictionMode)uv_mode) &&
+                ctx->intra_ctrls.angular_pred_level <= 2)
+                ? 7
+                : 1;
+
+            for (int uv_angle_delta_counter = 0;
+                 uv_angle_delta_counter < uv_angle_delta_candidate_count;
+                 ++uv_angle_delta_counter) {
+                int32_t uv_angle_delta = CLIP(
+                    uv_angle_delta_shift *
+                        (uv_angle_delta_candidate_count == 1
+                                         ? 0
+                                         : uv_angle_delta_counter - (uv_angle_delta_candidate_count >> 1)),
+                    -MAX_ANGLE_DELTA,
+                    MAX_ANGLE_DELTA);
+                if (ctx->intra_ctrls.angular_pred_level >= 2 && (uv_angle_delta == -1 || uv_angle_delta == 1 || uv_angle_delta == -2 || uv_angle_delta == 2))
+                    continue;
+                candidate_array[uv_mode_total_count].use_intrabc                = 0;
+                candidate_array[uv_mode_total_count].angle_delta[PLANE_TYPE_UV] = 0;
+                candidate_array[uv_mode_total_count].pred_mode                  = DC_PRED;
+                candidate_array[uv_mode_total_count].intra_chroma_mode          = uv_mode;
+                candidate_array[uv_mode_total_count].angle_delta[PLANE_TYPE_UV] = uv_angle_delta;
+                candidate_array[uv_mode_total_count].tx_depth                   = 0;
+                candidate_array[uv_mode_total_count].palette_info               = NULL;
+                candidate_array[uv_mode_total_count].filter_intra_mode          = FILTER_INTRA_MODES;
+                candidate_array[uv_mode_total_count].cfl_alpha_signs            = 0;
+                candidate_array[uv_mode_total_count].cfl_alpha_idx              = 0;
+                candidate_array[uv_mode_total_count].transform_type[0]          = DCT_DCT;
+                candidate_array[uv_mode_total_count].ref_frame_type             = INTRA_FRAME;
+                candidate_array[uv_mode_total_count].motion_mode                = SIMPLE_TRANSLATION;
+                candidate_array[uv_mode_total_count].transform_type_uv          = av1_get_tx_type(
+                    0, // is_inter
+                    (PredictionMode)0,
+                    (UvPredictionMode)uv_mode,
+                    PLANE_TYPE_UV,
+                    ctx->blk_geom->txsize_uv[0][0],
+                    frm_hdr->reduced_tx_set);
+                uv_mode_total_count++;
+            }
+        }
+    }
+    uv_mode_total_count = uv_mode_total_count - start_fast_buffer_index;
+
+    // Prepare fast-loop search settings
+    ctx->md_staging_skip_rdoq = 0;
+    ctx->uv_intra_comp_only = TRUE;
+    ctx->md_staging_skip_chroma_pred = FALSE;
+    ctx->end_plane = (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1)
+                          ? (int)MAX_MB_PLANE
+                          : 1;
+    assert(ctx->md_staging_skip_chroma_pred == FALSE);
+
+    // Perform fast-loop search for all candidates
+    for (unsigned int uv_mode_count = 0; uv_mode_count < uv_mode_total_count; uv_mode_count++) {
+        ModeDecisionCandidateBuffer *candidate_buffer =
+            ctx->candidate_buffer_ptr_array[uv_mode_count + start_full_buffer_index];
+        candidate_buffer->candidate_ptr =
+            &ctx->fast_candidate_array[uv_mode_count + start_fast_buffer_index];
+        svt_product_prediction_fun_table[is_inter_mode(candidate_buffer->candidate_ptr->pred_mode)](
+            ctx->hbd_mode_decision, ctx, pcs, candidate_buffer);
+        uint32_t chroma_fast_distortion;
+        if (ctx->mds0_ctrls.mds0_dist_type == MDS0_VAR) {
+            if (!ctx->hbd_mode_decision) {
+                const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize_uv];
+                unsigned int            sse;
+                uint8_t                *pred_cb = candidate_buffer->prediction_ptr->buffer_cb + cu_chroma_origin_index;
+                uint8_t                *src_cb = input_picture_ptr->buffer_cb + input_cb_origin_in_index;
+                chroma_fast_distortion =
+                    fn_ptr->vf(
+                        pred_cb, candidate_buffer->prediction_ptr->stride_cb, src_cb, input_picture_ptr->stride_cb, &sse) >>
+                    2;
+                uint8_t* pred_cr = candidate_buffer->prediction_ptr->buffer_cr + cu_chroma_origin_index;
+                uint8_t *src_cr = input_picture_ptr->buffer_cr + input_cr_origin_in_index;
+                chroma_fast_distortion +=
+                    (fn_ptr->vf(
+                        pred_cr, candidate_buffer->prediction_ptr->stride_cr, src_cr, input_picture_ptr->stride_cr, &sse) >>
+                    2);
+            }
+            else {
+                const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize_uv];
+                unsigned int            sse;
+                uint16_t *pred_cb = ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cb) + cu_chroma_origin_index;
+                uint16_t *src_cb = ((uint16_t *)input_picture_ptr->buffer_cb) + input_cb_origin_in_index;
+                chroma_fast_distortion =
+                    fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(pred_cb),
+                        candidate_buffer->prediction_ptr->stride_cb,
+                        CONVERT_TO_BYTEPTR(src_cb),
+                        input_picture_ptr->stride_cb,
+                        &sse) >>
+                    1;
+                uint16_t *pred_cr = ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cr) + cu_chroma_origin_index;
+                uint16_t *src_cr = ((uint16_t *)input_picture_ptr->buffer_cr) + input_cr_origin_in_index;
+                chroma_fast_distortion +=
+                    (fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(pred_cr),
+                        candidate_buffer->prediction_ptr->stride_cr,
+                        CONVERT_TO_BYTEPTR(src_cr),
+                        input_picture_ptr->stride_cr,
+                        &sse) >>
+                    1);
+            }
+        }
+        else if (!ctx->hbd_mode_decision) {
+            chroma_fast_distortion = svt_nxm_sad_kernel_sub_sampled(
+                input_picture_ptr->buffer_cb + input_cb_origin_in_index,
+                input_picture_ptr->stride_cb,
+                candidate_buffer->prediction_ptr->buffer_cb + cu_chroma_origin_index,
+                candidate_buffer->prediction_ptr->stride_cb,
+                ctx->blk_geom->bheight_uv,
+                ctx->blk_geom->bwidth_uv);
+
+            chroma_fast_distortion += svt_nxm_sad_kernel_sub_sampled(
+                input_picture_ptr->buffer_cr + input_cr_origin_in_index,
+                input_picture_ptr->stride_cr,
+                candidate_buffer->prediction_ptr->buffer_cr + cu_chroma_origin_index,
+                candidate_buffer->prediction_ptr->stride_cr,
+                ctx->blk_geom->bheight_uv,
+                ctx->blk_geom->bwidth_uv);
+        } else {
+            chroma_fast_distortion = sad_16b_kernel(
+                ((uint16_t *)input_picture_ptr->buffer_cb) + input_cb_origin_in_index,
+                input_picture_ptr->stride_cb,
+                ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cb) + cu_chroma_origin_index,
+                candidate_buffer->prediction_ptr->stride_cb,
+                ctx->blk_geom->bheight_uv,
+                ctx->blk_geom->bwidth_uv);
+
+            chroma_fast_distortion += sad_16b_kernel(
+                ((uint16_t *)input_picture_ptr->buffer_cr) + input_cr_origin_in_index,
+                input_picture_ptr->stride_cr,
+                ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cr) + cu_chroma_origin_index,
+                candidate_buffer->prediction_ptr->stride_cr,
+                ctx->blk_geom->bheight_uv,
+                ctx->blk_geom->bwidth_uv);
+        }
+        // Do not consider rate @ this stage
+        *(candidate_buffer->fast_cost_ptr) = chroma_fast_distortion;
+    }
+
+    // Sort uv_mode candidates (in terms of distortion only)
+    uint32_t *uv_cand_buff_indices = (uint32_t *)malloc(ctx->max_nics_uv *
+                                                        sizeof(*uv_cand_buff_indices));
+    memset(uv_cand_buff_indices, 0xFF, ctx->max_nics_uv * sizeof(*uv_cand_buff_indices));
+
+    sort_fast_cost_based_candidates(
+        ctx,
+        start_full_buffer_index,
+        uv_mode_total_count, //how many cand buffers to sort. one of the buffers can have max cost.
+        uv_cand_buff_indices);
+
+    // Reset *(candidate_buffer->fast_cost_ptr)
+    for (unsigned int uv_mode_count = 0; uv_mode_count < uv_mode_total_count; uv_mode_count++) {
+        ModeDecisionCandidateBuffer *candidate_buffer =
+            ctx->candidate_buffer_ptr_array[uv_mode_count + start_full_buffer_index];
+        *(candidate_buffer->fast_cost_ptr) = MAX_CU_COST;
+    }
+
+    // Set number of UV candidates to be tested in the full loop
+    unsigned int uv_mode_nfl_count = pcs->slice_type == I_SLICE ? 64 : ppcs->is_used_as_reference_flag ? 32 : 16;
+    uv_mode_nfl_count = MAX(1, DIVIDE_AND_ROUND(uv_mode_nfl_count * ctx->uv_ctrls.uv_nic_scaling_num, 16));
+    uv_mode_nfl_count = MIN(uv_mode_nfl_count, uv_mode_total_count);
+    uv_mode_nfl_count = MAX(uv_mode_nfl_count, 1);
+
+    // Full-loop search uv_mode
+    for (unsigned int uv_mode_count = 0; uv_mode_count < MIN(uv_mode_total_count, uv_mode_nfl_count);
+         uv_mode_count++) {
+        ModeDecisionCandidateBuffer *candidate_buffer =
+            ctx->candidate_buffer_ptr_array[uv_cand_buff_indices[uv_mode_count]];
+        candidate_buffer->candidate_ptr =
+            &ctx->fast_candidate_array[uv_cand_buff_indices[uv_mode_count] -
+                                               start_full_buffer_index + start_fast_buffer_index];
+        uint16_t cb_qindex                           = ctx->qp_index;
+        uint64_t cb_coeff_bits                       = 0;
+        uint64_t cr_coeff_bits                       = 0;
+        uint64_t cb_full_distortion[DIST_CALC_TOTAL] = {0, 0};
+        uint64_t cr_full_distortion[DIST_CALC_TOTAL] = {0, 0};
+
+        uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
+
+        //Cb Residual
+        residual_kernel(input_picture_ptr->buffer_cb,
+                        input_cb_origin_in_index,
+                        input_picture_ptr->stride_cb,
+                        candidate_buffer->prediction_ptr->buffer_cb,
+                        cu_chroma_origin_index,
+                        candidate_buffer->prediction_ptr->stride_cb,
+                        (int16_t *)candidate_buffer->residual_ptr->buffer_cb,
+                        cu_chroma_origin_index,
+                        candidate_buffer->residual_ptr->stride_cb,
+                        ctx->hbd_mode_decision,
+                        ctx->blk_geom->bwidth_uv,
+                        ctx->blk_geom->bheight_uv);
+
+        //Cr Residual
+        residual_kernel(input_picture_ptr->buffer_cr,
+                        input_cr_origin_in_index,
+                        input_picture_ptr->stride_cr,
+                        candidate_buffer->prediction_ptr->buffer_cr,
+                        cu_chroma_origin_index,
+                        candidate_buffer->prediction_ptr->stride_cr,
+                        (int16_t *)candidate_buffer->residual_ptr->buffer_cr,
+                        cu_chroma_origin_index,
+                        candidate_buffer->residual_ptr->stride_cr,
+                        ctx->hbd_mode_decision,
+                        ctx->blk_geom->bwidth_uv,
+                        ctx->blk_geom->bheight_uv);
+        full_loop_r(pcs,
+                    ctx,
+                    candidate_buffer,
+                    input_picture_ptr,
+                    COMPONENT_CHROMA,
+                    cb_qindex,
+                    count_non_zero_coeffs,
+                    cb_full_distortion,
+                    cr_full_distortion,
+                    &cb_coeff_bits,
+                    &cr_coeff_bits,
+                    1);
+
+        coeff_rate[candidate_buffer->candidate_ptr->intra_chroma_mode]
+                  [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
+                      cb_coeff_bits + cr_coeff_bits;
+        distortion[candidate_buffer->candidate_ptr->intra_chroma_mode]
+                  [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
+                      cb_full_distortion[DIST_CALC_RESIDUAL] +
+            cr_full_distortion[DIST_CALC_RESIDUAL];
+    }
+
+    // Loop over all intra modes, then loop over all uv_modes to derive the best uv_mode for a given intra mode (in term of rate)
+    uint8_t intra_mode_end = ctx->intra_ctrls.intra_mode_end;
+    const int angle_delta_shift = 1;
+    // intra_mode loop (luma mode loop)
+    for (PredictionMode intra_mode = DC_PRED; intra_mode <= intra_mode_end; ++intra_mode) {
+
+        // If mode is not directional, or is enabled directional mode, proceed with injection
+        if (!av1_is_directional_mode(intra_mode) ||
+            (!disable_angle_prediction && directional_mode_skip_mask[intra_mode] == 0)) {
+
+            int angle_delta_candidate_count = (use_angle_delta &&
+                av1_is_directional_mode(intra_mode) &&
+                ctx->intra_ctrls.angular_pred_level <= 2)
+                ? 7
+                : 1;
+
+            for (int angle_delta_counter = 0; angle_delta_counter < angle_delta_candidate_count;
+                ++angle_delta_counter) {
+                int32_t angle_delta = CLIP(angle_delta_shift *
+                    (angle_delta_candidate_count == 1 ? 0
+                        : angle_delta_counter -
+                        (angle_delta_candidate_count >> 1)),
+                    -MAX_ANGLE_DELTA,
+                    MAX_ANGLE_DELTA);
+
+                if (ctx->intra_ctrls.angular_pred_level >= 2 && (angle_delta == -1 || angle_delta == 1 || angle_delta == -2 || angle_delta == 2))
+                    continue;
+
+                // uv mode loop
+                ctx->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta] = (uint64_t)~0;
+                for (unsigned int uv_mode_count = 0;
+                    uv_mode_count < MIN(uv_mode_total_count, uv_mode_nfl_count);
+                    uv_mode_count++) {
+                    ModeDecisionCandidateBuffer *candidate_buffer =
+                        ctx->candidate_buffer_ptr_array[uv_cand_buff_indices[uv_mode_count]];
+                    ModeDecisionCandidate *candidate_ptr = &(
+                        ctx->fast_candidate_array[uv_cand_buff_indices[uv_mode_count] -
+                        start_full_buffer_index + start_fast_buffer_index]);
+                    candidate_ptr->angle_delta[PLANE_TYPE_Y] = angle_delta;
+                    candidate_ptr->pred_mode = intra_mode;
+
+                    // Fast Cost
+                    av1_product_fast_cost_func_table[is_inter_mode(candidate_ptr->pred_mode)](
+                        ctx,
+                        ctx->blk_ptr,
+                        candidate_buffer,
+                        NOT_USED_VALUE,
+                        0,
+                        0,
+                        0,
+                        pcs,
+                        &(ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
+                            .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+                        ctx->blk_geom,
+                        ctx->blk_origin_y >> MI_SIZE_LOG2,
+                        ctx->blk_origin_x >> MI_SIZE_LOG2,
+                        ctx->inter_intra_comp_ctrls.enabled,
+                        ctx->intra_luma_left_mode,
+                        ctx->intra_luma_top_mode);
+                    uint64_t rate =
+                        coeff_rate[candidate_ptr->intra_chroma_mode]
+                        [MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]] +
+                        candidate_buffer->fast_luma_rate + candidate_buffer->fast_chroma_rate;
+                    uint64_t uv_cost = RDCOST(
+                        full_lambda,
+                        rate,
+                        distortion[candidate_ptr->intra_chroma_mode]
+                        [MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]]);
+
+                    if (uv_cost <
+                        ctx->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta]) {
+                        ctx->best_uv_mode[intra_mode][MAX_ANGLE_DELTA + angle_delta] =
+                            candidate_ptr->intra_chroma_mode;
+                        ctx->best_uv_angle[intra_mode][MAX_ANGLE_DELTA + angle_delta] =
+                            candidate_ptr->angle_delta[PLANE_TYPE_UV];
+
+                        ctx->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta] = uv_cost;
+                        ctx->fast_luma_rate[intra_mode][MAX_ANGLE_DELTA + angle_delta] =
+                            candidate_buffer->fast_luma_rate;
+                        ctx->fast_chroma_rate[intra_mode][MAX_ANGLE_DELTA + angle_delta] =
+                            candidate_buffer->fast_chroma_rate;
+                    }
+                }
+            }
+        }
+    }
+
+    free(uv_cand_buff_indices);
+}
+#else
 static void search_best_independent_uv_mode(PictureControlSet   *pcs_ptr,
                                             EbPictureBufferDesc *input_picture_ptr,
                                             uint32_t             input_cb_origin_in_index,
@@ -8471,6 +8837,7 @@ static void search_best_independent_uv_mode(PictureControlSet   *pcs_ptr,
 
     free(uv_cand_buff_indices);
 }
+#endif
 // Perform the NIC class pruning and candidate pruning after MSD0
 void post_mds0_nic_pruning(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                            uint64_t best_md_stage_cost, uint64_t best_md_stage_dist) {

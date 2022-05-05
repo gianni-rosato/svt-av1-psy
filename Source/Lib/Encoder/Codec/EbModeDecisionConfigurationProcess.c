@@ -388,6 +388,28 @@ uint8_t get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_b
 
     return update_cdf_level;
 }
+#if OPT_IND_CHROMA
+uint8_t get_chroma_level(EncMode enc_mode) {
+    uint8_t chroma_level = 0;
+    if (enc_mode <= ENC_MRS)
+        chroma_level = 1;
+    else if (enc_mode <= ENC_M2)
+        chroma_level = 2;
+#if TUNE_M6_M7
+    else if (enc_mode <= ENC_M6)
+        chroma_level = 3;
+    else if (enc_mode <= ENC_M7)
+        chroma_level = 4;
+#else
+    else if (enc_mode <= ENC_M5)
+        chroma_level = 3;
+#endif
+    else
+        chroma_level = 5;
+
+    return chroma_level;
+}
+#else
 uint8_t get_chroma_level(EncMode enc_mode) {
     uint8_t chroma_level = 0;
     if (enc_mode <= ENC_MRS)
@@ -401,7 +423,7 @@ uint8_t get_chroma_level(EncMode enc_mode) {
 
     return chroma_level;
 }
-
+#endif
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet *scs_ptr,
                                                              PictureControlSet * pcs_ptr) {
     EbErrorType              return_error        = EB_ErrorNone;
@@ -517,11 +539,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
 #else
     if (fast_decode == 0) {
-#if TUNE_M4_M5
-        if (pcs_ptr->enc_mode <= ENC_M4)
-#else
         if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
@@ -1148,12 +1166,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
     else if (enc_mode <= ENC_M6)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+#if !TUNE_M6_M7
     else if (enc_mode <= ENC_M7) {
         if (hierarchical_levels <= 3)
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
         else
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
-    } else
+    }
+#endif
+    else
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
 
     if (scs_ptr->max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1))

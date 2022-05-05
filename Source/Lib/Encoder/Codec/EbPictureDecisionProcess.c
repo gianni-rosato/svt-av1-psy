@@ -1424,8 +1424,10 @@ uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_
     uint8_t wn_filter_lvl = 0;
     if (enc_mode <= ENC_M5)
         wn_filter_lvl = 1;
+#if !TUNE_M6_M7
     else if (enc_mode <= ENC_M7)
         wn_filter_lvl = 4;
+#endif
     else if (enc_mode <= ENC_M9)
         wn_filter_lvl = is_ref ? 5 : 0;
     else
@@ -1608,11 +1610,19 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
     uint8_t dlf_level;
     // Don't disable DLF for low resolutions when fast-decode is used
     if (fast_decode == 0 || resolution <= INPUT_SIZE_360p_RANGE) {
+#if TUNE_M6_M7
+        if (enc_mode <= ENC_M6)
+#else
         if (enc_mode <= ENC_M5)
+#endif
             dlf_level = 1;
 #if OPT_DECODE
         else if (enc_mode <= ENC_M7)
+#if TUNE_M6_M7
+            dlf_level = 2;
+#else
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
+#endif
         else if (enc_mode <= ENC_M8) {
             if (hierarchical_levels <= 3)
                 dlf_level = is_used_as_reference_flag ? 2 : 0;
@@ -1877,7 +1887,11 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
             else
                 gm_level = is_ref ? 4 : 0;
         }
+#if TUNE_M6_M7
+        else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
             gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
         else
             gm_level = 0;

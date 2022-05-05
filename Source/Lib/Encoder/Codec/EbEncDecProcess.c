@@ -3653,6 +3653,7 @@ void set_cand_reduction_ctrls(PictureControlSet *pcs_ptr, ModeDecisionContext *m
           pcs_ptr->parent_pcs_ptr->use_best_me_unipred_cand_only))
         cand_reduction_ctrls->lpd1_mvp_best_me_list = 0;
 }
+#if OPT_IND_CHROMA
 uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
     UvCtrls *uv_ctrls = ctx ? &ctx->uv_ctrls : NULL;
     uint8_t  uv_mode  = 0;
@@ -3670,8 +3671,78 @@ uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
         if (uv_ctrls) {
             uv_ctrls->enabled           = 1;
             uv_ctrls->nd_uv_serach_mode = 0;
-            uv_ctrls->uv_intra_th       = (uint64_t)~0;
-            uv_ctrls->uv_cfl_th         = (uint64_t)~0;
+            uv_ctrls->uv_intra_th       = (uint32_t)~0;
+            uv_ctrls->uv_cfl_th         = (uint32_t)~0;
+            uv_ctrls->uv_nic_scaling_num = 16;
+        }
+        break;
+    case 2:
+        uv_mode = CHROMA_MODE_0;
+        if (uv_ctrls) {
+            uv_ctrls->enabled           = 1;
+            uv_ctrls->nd_uv_serach_mode = 1;
+            uv_ctrls->uv_intra_th       = 130;
+            uv_ctrls->uv_cfl_th         = 130;
+            uv_ctrls->uv_nic_scaling_num = 8;
+        }
+        break;
+    case 3:
+        uv_mode = CHROMA_MODE_0;
+        if (uv_ctrls) {
+            uv_ctrls->enabled           = 1;
+            uv_ctrls->nd_uv_serach_mode = 1;
+            uv_ctrls->uv_intra_th       = 100;
+            uv_ctrls->uv_cfl_th         = 100;
+            uv_ctrls->uv_nic_scaling_num = 1;
+        }
+        break;
+    case 4:
+        uv_mode = CHROMA_MODE_0;
+        if (uv_ctrls) {
+            uv_ctrls->enabled           = 1;
+            uv_ctrls->nd_uv_serach_mode = 1;
+            uv_ctrls->uv_intra_th       = 50;
+            uv_ctrls->uv_cfl_th         = 50;
+            uv_ctrls->uv_nic_scaling_num = 1;
+        }
+        break;
+    case 5:
+        uv_mode = CHROMA_MODE_1;
+        if (uv_ctrls) {
+            uv_ctrls->enabled           = 1;
+            uv_ctrls->nd_uv_serach_mode = 0;
+            uv_ctrls->uv_nic_scaling_num = 1;
+        }
+        break;
+    default: assert(0); break;
+    }
+
+    if (ctx) {
+        uv_ctrls->uv_mode = uv_mode;
+    }
+
+    return uv_mode;
+}
+#else
+uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
+    UvCtrls *uv_ctrls = ctx ? &ctx->uv_ctrls : NULL;
+    uint8_t  uv_mode  = 0;
+
+    switch (uv_level) {
+    case 0:
+        uv_mode = CHROMA_MODE_2;
+        if (uv_ctrls) {
+            uv_ctrls->enabled           = 0;
+            uv_ctrls->nd_uv_serach_mode = 0;
+        }
+        break;
+    case 1:
+        uv_mode = CHROMA_MODE_0;
+        if (uv_ctrls) {
+            uv_ctrls->enabled           = 1;
+            uv_ctrls->nd_uv_serach_mode = 0;
+            uv_ctrls->uv_intra_th = (uint64_t)~0;
+            uv_ctrls->uv_cfl_th = (uint64_t)~0;
         }
         break;
     case 2:
@@ -3688,8 +3759,8 @@ uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
         if (uv_ctrls) {
             uv_ctrls->enabled           = 1;
             uv_ctrls->nd_uv_serach_mode = 1;
-            uv_ctrls->uv_intra_th       = 100;
-            uv_ctrls->uv_cfl_th         = 100;
+            uv_ctrls->uv_intra_th       = 50;
+            uv_ctrls->uv_cfl_th         = 50;
         }
         break;
     case 4:
@@ -3708,6 +3779,7 @@ uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
 
     return uv_mode;
 }
+#endif
 void set_wm_controls(ModeDecisionContext *mdctxt, uint8_t wm_level) {
     WmCtrls *wm_ctrls = &mdctxt->wm_ctrls;
 

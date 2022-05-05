@@ -53,6 +53,8 @@ extern "C" {
 #define OPT_DECODE              1 // Newest fast-decode level 0 and 1
 #define TUNE_M4_M5              1 // Tune M4 and M5
 #define TUNE_INTERINTRA_TRANS   1 // Enable inter-intra compound for transition frames up to M11
+#define OPT_IND_CHROMA          1 // Optimize independent chroma search
+#define TUNE_M6_M7              1 // Tune M6/M7 to take advantage of chroma optimization
 
 
 #define FTR_FORCE_KF            1 // Add the ability to force key frames from ffpmeg cli

@@ -414,8 +414,14 @@ typedef struct UvCtrls {
         // CHROMA_MODE_2: Chroma blind @ MD
     uint8_t
              nd_uv_serach_mode; // Non-direct chroma search 0: pre chroma search is used, 1: chroma search at last md_stage is used
+#if OPT_IND_CHROMA
+    uint8_t uv_nic_scaling_num; // Scaling numerator for independent chroma NICS: <x>/16
+    uint32_t uv_intra_th; // Threshold to skip  Non-direct chroma search.
+    uint32_t uv_cfl_th; // Threshold to skip clf.
+#else
     uint64_t uv_intra_th; // Threshold to skip  Non-direct chroma search.
     uint64_t uv_cfl_th; // Threshold to skip clf.
+#endif
 } UvCtrls;
 typedef struct InterpolationSearchCtrls {
     IfsLevel

@@ -2930,7 +2930,11 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (enc_mode <= ENC_M1) {
         tf_level = 1;
     }
+#if TUNE_M6_M7
+    else if (enc_mode <= ENC_M5) {
+#else
     else if (enc_mode <= ENC_M6) {
+#endif
         tf_level = 2;
     }
     else if (enc_mode <= ENC_M7) {
