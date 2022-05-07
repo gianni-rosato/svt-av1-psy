@@ -177,8 +177,14 @@ void svt_av1_end_first_pass(PictureParentControlSet *pcs_ptr) {
 
     if (twopass->stats_buf_ctx->total_stats) {
         // add the total to the end of the file
+#if RC_REFACTOR_9
+        svt_block_on_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
+#endif
         FIRSTPASS_STATS total_stats = *twopass->stats_buf_ctx->total_stats;
         output_stats(scs_ptr, &total_stats, pcs_ptr->picture_number + 1);
+#if RC_REFACTOR_9
+        svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
+#endif
     }
 }
 #define UL_INTRA_THRESH 50
@@ -247,6 +253,9 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
 
     const uint32_t   mb_cols          = (scs_ptr->max_input_luma_width + 16 - 1) / 16;
     const uint32_t   mb_rows          = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
+#if RC_REFACTOR_9
+    svt_block_on_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
+#endif
     FIRSTPASS_STATS *this_frame_stats = twopass->stats_buf_ctx->stats_in_end_write;
     FIRSTPASS_STATS  fps;
     // The minimum error here insures some bit allocation to frames even
@@ -310,6 +319,9 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
         (twopass->stats_buf_ctx->stats_in_end_write >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end_write = twopass->stats_buf_ctx->stats_in_start;
     }
+#if RC_REFACTOR_9
+    svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
+#endif
 }
 
 static FRAME_STATS accumulate_frame_stats(FRAME_STATS *mb_stats, int mb_rows, int mb_cols,

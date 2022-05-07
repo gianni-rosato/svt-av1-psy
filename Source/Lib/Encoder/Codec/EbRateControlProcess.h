@@ -138,7 +138,9 @@ typedef struct {
     int prev_avg_frame_bandwidth; //only for CBR?
     int active_worst_quality;
     int active_best_quality[MAX_ARF_LAYERS + 1];
+#if !RC_REFACTOR_6
     int gf_interval;
+#endif
 
     // gop bit budget
     int64_t gf_group_bits;
@@ -157,6 +159,10 @@ typedef struct {
     uint64_t min_bit_actual_per_gop;
     uint64_t avg_bit_actual_per_gop;
     uint64_t rate_average_periodin_frames;
+
+#if RC_REFACTOR_9
+    EbHandle rc_mutex;
+#endif
 } RATE_CONTROL;
 #if !FTR_FORCE_KF
 typedef struct RateControlIntervalParamContext {

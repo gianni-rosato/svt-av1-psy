@@ -5481,13 +5481,23 @@ void store_gf_group(
             EB_MEMCPY(&pcs->gf_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
             pcs->gf_interval = mg_size;
         }
+#if FIX_RC_END_OF_CLIP
+        if (pcs->slice_type == I_SLICE && pcs->end_of_sequence_flag) {
+            pcs->gf_interval = 1;
+            pcs->gf_group[0] = (void*)pcs;
+        }
+#endif
         for (int pic_i = 0; pic_i < pcs->gf_interval; ++pic_i) {
             if (pcs->gf_group[pic_i]->slice_type == I_SLICE || (!is_delayed_intra(pcs) && pcs->gf_group[pic_i]->temporal_layer_index == 0) || pcs->gf_group[pic_i]->slice_type == P_SLICE)
                 pcs->gf_group[pic_i]->gf_update_due = 1;
             else
                 pcs->gf_group[pic_i]->gf_update_due = 0;
             // For P picture that come after I, we need to set the gf_group pictures. It is used later in RC
+#if FIX_RC_END_OF_CLIP
+            if (pcs->slice_type == I_SLICE && pcs->gf_group[pic_i]->slice_type == P_SLICE && pcs->picture_number < pcs->gf_group[pic_i]->picture_number) {
+#else
             if (pcs->slice_type == I_SLICE && pcs->gf_group[pic_i]->slice_type == P_SLICE) {
+#endif
                 pcs->gf_group[pic_i]->gf_interval = pcs->gf_interval - 1;
                 EB_MEMCPY(&pcs->gf_group[pic_i]->gf_group[0], &ctx->mg_pictures_array[1], pcs->gf_group[pic_i]->gf_interval * sizeof(PictureParentControlSet*));
                 pcs->gf_group[pic_i]->gf_update_due = 0;
@@ -6030,6 +6040,52 @@ static void update_rc_param_queue(
     }
     // Store the pointer to the right spot in the RC param queue under PCS
     ppcs->rate_control_param_ptr = enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index];
+}
+#endif
+#if RC_REFACTOR_1
+/****************************************************************************************
+* set_layer_depth()
+* Set the layer depth per frame based on frame type, temporal layer
+****************************************************************************************/
+static void set_layer_depth(PictureParentControlSet *ppcs) {
+   // SequenceControlSet *scs = ppcs->scs_ptr;
+    if (ppcs->frm_hdr.frame_type == KEY_FRAME)
+        ppcs->layer_depth = 0;
+    else
+        ppcs->layer_depth = ppcs->temporal_layer_index + 1;
+}
+/****************************************************************************************
+* set_frame_update_type()
+* Set the update type per frame based on frame type, temporal layer and prediction structure
+* For Low delay, there is a special case where all non key frames are treated as LF_UPDATE.
+* Every MAX_GF_INTERVAL frames, update type is set to GF_UPDATE
+****************************************************************************************/
+static void set_frame_update_type(PictureParentControlSet *ppcs) {
+    SequenceControlSet *scs = ppcs->scs_ptr;
+    if (ppcs->frm_hdr.frame_type == KEY_FRAME) {
+        ppcs->update_type = KF_UPDATE;
+    }
+    else if (scs->max_temporal_layers > 0 && ppcs->pred_structure != PRED_LOW_DELAY_B) {
+        if (ppcs->temporal_layer_index == 0) {
+            ppcs->update_type = ARF_UPDATE;
+        }
+        else if (ppcs->temporal_layer_index == ppcs->hierarchical_levels) {
+            ppcs->update_type = LF_UPDATE;
+        }
+        else {
+            ppcs->update_type = INTNL_ARF_UPDATE;
+        }
+    }
+    else if (ppcs->pred_structure == PRED_LOW_DELAY_B && (ppcs->frame_offset % MAX_GF_INTERVAL) == 0) {
+        ppcs->update_type = GF_UPDATE;
+    }
+    else {
+        ppcs->update_type = LF_UPDATE;
+    }
+}
+static void set_gf_group_param(PictureParentControlSet *ppcs) {
+    set_frame_update_type(ppcs);
+    set_layer_depth(ppcs);
 }
 #endif
 /* Picture Decision Kernel */
@@ -7249,6 +7305,13 @@ void* picture_decision_kernel(void *input_ptr)
                                 context_ptr->mg_pictures_array_disp_order[pic_i]->first_frame_in_minigop = 0;
                         }
 
+#if RC_REFACTOR_1
+                        for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
+                            pcs_ptr = context_ptr->mg_pictures_array_disp_order[pic_i];
+                            set_gf_group_param(pcs_ptr);
+                        }
+
+#endif
                         //Process previous delayed Intra if we have one
                         pcs_ptr->is_new_gf_group = 0;
                         if (context_ptr->prev_delayed_intra) {

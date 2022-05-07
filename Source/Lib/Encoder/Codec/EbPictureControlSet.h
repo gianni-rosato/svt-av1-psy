@@ -563,6 +563,7 @@ typedef struct TplControls {
     // Calculated qindex based on r0 using qstep calculation
     bool qstep_based_q_calc; // 0: OFF; 1: ON
 } TplControls;
+#if !RC_REFACTOR_2
 /*!
  * \brief Refresh frame flags for different type of frames.
  *
@@ -576,6 +577,7 @@ typedef struct {
     bool bwd_ref_frame; /*!< Refresh flag for bwd-ref frame */
     bool alt_ref_frame; /*!< Refresh flag for alt-ref frame */
 } RefreshFrameFlagsInfo;
+#endif
 typedef struct {
     uint8_t   tpl_temporal_layer_index;
     SliceType tpl_slice_type;
@@ -787,7 +789,9 @@ typedef struct PictureParentControlSet {
     uint16_t              me_processed_b64_count;
     EbHandle              me_processed_b64_mutex;
     FirstPassData         firstpass_data;
+#if !RC_REFACTOR_2
     RefreshFrameFlagsInfo refresh_frame;
+#endif
     double                ts_duration;
     double                r0;
     uint8_t tpl_src_data_ready; //track pictures that are processd in two different TPL groups
@@ -988,7 +992,9 @@ typedef struct PictureParentControlSet {
 
     EbObjectWrapper      *me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
+#if !RC_REFACTOR_3
     unsigned char         gf_group_index;
+#endif
     struct PictureParentControlSet
             *tpl_group[MAX_TPL_GROUP_SIZE]; //stores pcs pictures needed for tpl algorithm
     uint32_t tpl_group_size; //size of above buffer
@@ -1054,7 +1060,9 @@ typedef struct PictureParentControlSet {
     //GF_GROUP parameters store in PCS
     int update_type;
     int layer_depth;
+#if !RC_REFACTOR_3
     int gf_group_size;
+#endif
     //RATE_CONTROL parameters store in PCS
     int base_frame_target; // A baseline frame target before adjustment.
     int this_frame_target; // Actual frame target after rc adjustment.

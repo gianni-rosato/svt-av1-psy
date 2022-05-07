@@ -54,6 +54,20 @@ extern "C" {
 
 
 #define FTR_FORCE_KF            1 // Add the ability to force key frames from ffpmeg cli
+
+#define RC_REFACTOR             1 // Rate control code refactor
+#if RC_REFACTOR
+#define RC_REFACTOR_1           1 // gf group refactoring
+#define RC_REFACTOR_2           1 // remove refresh_frame_flags
+#define RC_REFACTOR_3           1 // Change the rate allocation functions
+#define RC_REFACTOR_4           1 // Fix the index to rate_correction_factors
+#define RC_REFACTOR_5           1 // Fix stat index
+#define RC_REFACTOR_6           1 // Clean up unused variables in rc struct and functions
+#define RC_REFACTOR_7           1 // Clean up the extra copies of this_frame
+#define RC_REFACTOR_8           1 // Clean up the variables in RC functions
+#define RC_REFACTOR_9           1 // Add mutex for rc variables
+#endif
+#define FIX_RC_END_OF_CLIP      1 // Fix the gf interval for the case the last frame is an I
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

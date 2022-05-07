@@ -399,14 +399,27 @@ void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
                 head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS ||
                 head_pcs->scs_ptr->lap_rc) {
                 head_pcs->stats_in_offset     = head_pcs->decode_order;
+#if RC_REFACTOR_9
+                svt_block_on_mutex(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_write_mutex);
+#endif
+#if RC_REFACTOR_5
+                head_pcs->stats_in_end_offset = head_pcs->ext_group_size && head_pcs->scs_ptr->lap_rc
+                    ? MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
+                        head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
+                        head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size)
+#else
                 head_pcs->stats_in_end_offset = head_pcs->ext_group_size &&
-                        !(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
-                          head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS)
+                    !(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
+                        head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS)
                     ? MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
                                      head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
-                          head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1)
+                        head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1)
+#endif
                     : (uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
                                  head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);
+#if RC_REFACTOR_9
+                svt_release_mutex(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_write_mutex);
+#endif
                 head_pcs->frames_in_sw        = (int)(head_pcs->stats_in_end_offset -
                                                head_pcs->stats_in_offset);
                 if (head_pcs->scs_ptr->enable_dec_order == 0 && head_pcs->scs_ptr->lap_rc &&

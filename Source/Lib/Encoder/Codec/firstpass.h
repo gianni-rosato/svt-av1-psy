@@ -140,7 +140,7 @@ enum {
     FC_GRAPHICS_ANIMATION = 1,
     FRAME_CONTENT_TYPES   = 2
 } UENUM1BYTE(FRAME_CONTENT_TYPE);
-
+#if !RC_REFACTOR_3
 typedef struct {
     unsigned char             index;
     /*frame_update_type*/ int update_type[MAX_STATIC_GF_GROUP_LENGTH];
@@ -150,10 +150,12 @@ typedef struct {
     int layer_depth[MAX_STATIC_GF_GROUP_LENGTH];
     int max_layer_depth;
     int max_layer_depth_allowed;
+#if !RC_REFACTOR_3
     int bit_allocation[MAX_STATIC_GF_GROUP_LENGTH];
+#endif
     int size;
 } GF_GROUP;
-
+#endif
 typedef struct {
     FIRSTPASS_STATS *stats_in_start;
     // used when writing the stat.i.e in the first pass
@@ -163,6 +165,9 @@ typedef struct {
     FIRSTPASS_STATS *total_stats;
     FIRSTPASS_STATS *total_left_stats;
     int64_t          last_frame_accumulated;
+#if RC_REFACTOR_9
+    EbHandle stats_in_write_mutex; // mutex for write point protection
+#endif
 } STATS_BUFFER_CTX;
 
 /*!\endcond */

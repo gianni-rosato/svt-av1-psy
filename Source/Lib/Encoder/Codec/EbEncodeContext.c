@@ -40,6 +40,10 @@ static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
         return EB_ErrorInsufficientResources;
     svt_av1_twopass_zero_stats(stats_buf_context->total_stats);
     stats_buf_context->last_frame_accumulated = -1;
+
+#if RC_REFACTOR_9
+    EB_CREATE_MUTEX(stats_buf_context->stats_in_write_mutex);
+#endif
     return res;
 }
 
@@ -48,6 +52,9 @@ static void destroy_stats_buffer(STATS_BUFFER_CTX *stats_buf_context,
     EB_FREE_ARRAY(stats_buf_context->total_left_stats);
     EB_FREE_ARRAY(stats_buf_context->total_stats);
     EB_FREE_ARRAY(frame_stats_buffer);
+#if RC_REFACTOR_9
+    EB_DESTROY_MUTEX(stats_buf_context->stats_in_write_mutex);
+#endif
 }
 static void encode_context_dctor(EbPtr p) {
     EncodeContext *obj = (EncodeContext *)p;
@@ -76,6 +83,9 @@ static void encode_context_dctor(EbPtr p) {
     if (obj->rc_param_queue)
         EB_FREE_2D(obj->rc_param_queue);
     EB_DESTROY_MUTEX(obj->rc_param_queue_mutex);
+#endif
+#if RC_REFACTOR_9
+    EB_DESTROY_MUTEX(obj->rc.rc_mutex);
 #endif
 }
 
@@ -171,6 +181,9 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->rc.coded_frames_stat_queue,
                        CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
 
+#if RC_REFACTOR_9
+    EB_CREATE_MUTEX(encode_context_ptr->rc.rc_mutex);
+#endif
     for (picture_index = 0; picture_index < CODED_FRAMES_STAT_QUEUE_MAX_DEPTH; ++picture_index) {
         EB_NEW(encode_context_ptr->rc.coded_frames_stat_queue[picture_index],
                rate_control_coded_frames_stats_context_ctor,

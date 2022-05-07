@@ -635,7 +635,7 @@ Picture arriving from Motions Estimation kernel:
 | av1_rc_init()                          | RC initialization at the beginning                                                                        |
 | }                                      |                                                                                                           |
 | restore_param()                        | Populate the required parameters in RATE_CONTROL, TWO_PASS and GF_GROUP structures from other structures |
-| svt_av1_get_second_pass_params()       | Read the stats, assign bits per KF (GoP), mini-GoP and frames                                             |
+| process_rc_stat()       | Read the stats, assign bits per KF (GoP), mini-GoP and frames                                             |
 | av1_set_target_rate()                  | Update the target rate per frame based on the provided feedback                                           |
 | store_param()                          | Store the required parameters from RATE_CONTROL, TWO_PASS and GF_GROUP  structures to other structures   |
 | process_tpl_stats_frame_kf_gfu_boost() | Update the KF and GFU boosts based on tpl                                                                 |
@@ -646,18 +646,17 @@ Picture arriving from Packetization kernel:
 
 | Main Functions                                                 | Descriptions                                                                     |
 | ------------------------------------------------------------   | ------------------------------                                                   |
-| restore_GF_group_param()                                       | Populate the required parameters in and GF_GROUP structure from other structures |
 | av1_rc_postencode_update() svt_av1_twopass_postencode_update() | Update the internal RC and TWO_PASS struct stats based on the received feedback  |
 
 More details for some of the main functions:
 
-| svt_av1_get_second_pass_params() {    | Descriptions                                                                                   |
+| process_rc_stat() {    | Descriptions                                                                                   |
 | ------------------------------------- | ------------------------------                                                                 |
 | process_first_pass_stats()            | Performed on a frame basis. Parts of it are for initialization at POC0, the rest is per frame. |
 | if (key_frame)                        |                                                                                                |
-| find_next_key_frame();                | Define the next KF group (GoP) and assign bits to it                                           |
+| kf_group_rate_assingment();                | Rate assignment for the next kf group                                           |
 | if (pcs_ptr->is_new_GF_group)         |                                                                                                |
-| GF_group_rate_assingment () }         | Define the GF_group (mini-GoP) bits and assign bits per frame based on the target rate         |
+| gf_group_rate_assingment () }         | Define the GF_group (mini-GoP) bits and assign bits per frame based on the target rate         |
 
 | rc_pick_q_and_bounds() { {                 | Descriptions                                                                                                  |
 | ----------------------------------------   | ------------------------------                                                                                |
