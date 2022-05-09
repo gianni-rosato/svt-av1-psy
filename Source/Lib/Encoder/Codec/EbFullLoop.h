@@ -30,7 +30,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
                                 uint64_t  cb_full_distortion[DIST_CALC_TOTAL],
                                 uint64_t  cr_full_distortion[DIST_CALC_TOTAL],
                                 uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits);
-void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                  ModeDecisionCandidateBuffer *candidate_buffer,
                  EbPictureBufferDesc *input_picture_ptr, COMPONENT_TYPE component_type,
                  uint32_t chroma_qindex, uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU],

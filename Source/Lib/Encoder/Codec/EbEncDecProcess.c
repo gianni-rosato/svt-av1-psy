@@ -3654,7 +3654,7 @@ void set_cand_reduction_ctrls(PictureControlSet *pcs_ptr, ModeDecisionContext *m
         cand_reduction_ctrls->lpd1_mvp_best_me_list = 0;
 }
 #if OPT_IND_CHROMA
-uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
+uint8_t svt_aom_set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
     UvCtrls *uv_ctrls = ctx ? &ctx->uv_ctrls : NULL;
     uint8_t  uv_mode  = 0;
 
@@ -3724,7 +3724,7 @@ uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
     return uv_mode;
 }
 #else
-uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
+uint8_t svt_aom_set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level) {
     UvCtrls *uv_ctrls = ctx ? &ctx->uv_ctrls : NULL;
     uint8_t  uv_mode  = 0;
 
@@ -4346,6 +4346,23 @@ void set_depth_ctrls(ModeDecisionContext *ctx, uint8_t depth_level) {
         depth_ctrls->s_depth = 0;
         depth_ctrls->e_depth = 0;
         break;
+#if FTR_DISALLOW_CHILD_NSQ
+    case 1:
+        depth_ctrls->s_depth = -2;
+        depth_ctrls->e_depth = 2;
+        depth_ctrls->allow_nsq_in_child_depths = 1;
+        break;
+    case 2:
+        depth_ctrls->s_depth = -1;
+        depth_ctrls->e_depth = 1;
+        depth_ctrls->allow_nsq_in_child_depths = 1;
+        break;
+    case 3:
+        depth_ctrls->s_depth = -1;
+        depth_ctrls->e_depth = 1;
+        depth_ctrls->allow_nsq_in_child_depths = 0;
+        break;
+#else
     case 1:
         depth_ctrls->s_depth = -2;
         depth_ctrls->e_depth = 2;
@@ -4354,6 +4371,7 @@ void set_depth_ctrls(ModeDecisionContext *ctx, uint8_t depth_level) {
         depth_ctrls->s_depth = -1;
         depth_ctrls->e_depth = 1;
         break;
+#endif
     default: assert(0); break;
     }
 }
@@ -4749,6 +4767,28 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
     // Level 1: [-2, +2] depth refinement
     // Level 2: [-1, +1] depth refinement
     uint8_t depth_level = 0;
+#if FTR_DISALLOW_CHILD_NSQ
+    if (enc_mode <= ENC_MRS)
+        depth_level = 1;
+    else if (pcs_ptr->parent_pcs_ptr->sc_class1) {
+        if (enc_mode <= ENC_M1)
+            depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
+        else if (enc_mode <= ENC_M3)
+            depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
+        else if (enc_mode <= ENC_M8)
+            depth_level = 3;
+        else
+            depth_level = pcs_ptr->slice_type == I_SLICE ? 3 : 0;
+    }
+    else if (enc_mode <= ENC_M1)
+        depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
+    else if (enc_mode <= ENC_M2)
+        depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
+    else if (enc_mode <= ENC_M8)
+        depth_level = 3;
+    else
+        depth_level = 0;
+#else
     if (enc_mode <= ENC_MRS)
         depth_level = 1;
     else if (pcs_ptr->parent_pcs_ptr->sc_class1) {
@@ -4764,6 +4804,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
         depth_level = 2;
     else
         depth_level = 0;
+#endif
     set_depth_ctrls(ctx, depth_level);
 #if OPT_PRED_ONLY
     // pic_pred_depth_only shouldn't be changed after this point
@@ -5507,7 +5548,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *scs,
 #else
     set_mds0_controls(pcs, ctx, mds0_level);
 #endif
-    set_chroma_controls(ctx, 0 /*chroma off*/);
+    svt_aom_set_chroma_controls(ctx, 0 /*chroma off*/);
 
     // Using PF in LPD0 may cause some VQ issues
     set_pf_controls(ctx, 1);
@@ -5627,7 +5668,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *s
 #else
     set_mds0_controls(pcs, ctx, mds0_level);
 #endif
-    set_chroma_controls(ctx, 0 /*chroma off*/);
+    svt_aom_set_chroma_controls(ctx, 0 /*chroma off*/);
 
     // Using PF in LPD0 may cause some VQ issues
     set_pf_controls(ctx, 1);
@@ -5978,7 +6019,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     set_interpolation_search_level_ctrls(
         context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->interpolation_search_level);
 
-    set_chroma_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->chroma_level);
+    svt_aom_set_chroma_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->chroma_level);
 
     set_cfl_ctrls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->cfl_level);
     if (pd_pass == PD_PASS_0)
@@ -6017,11 +6058,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         context_ptr->blk_skip_decision = TRUE;
     else
         context_ptr->blk_skip_decision = FALSE;
-    if (pd_pass == PD_PASS_0)
+    if (pd_pass == PD_PASS_0) {
+#if TUNE_NSQ
+        if (enc_mode <= ENC_M2)
+#else
         if (enc_mode <= ENC_M1)
+#endif
             context_ptr->rdoq_level = 1;
         else
             context_ptr->rdoq_level = 0;
+    }
 #if OPT_LPD0
     else if (enc_mode <= ENC_M12)
 #else
@@ -6179,7 +6225,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         if (is_islice || ppcs->transition_present)
 #endif
             intra_level = 5;
+#if TUNE_NSQ
+        else if (enc_mode <= ENC_M2)
+#else
         else if (enc_mode <= ENC_M1)
+#endif
             intra_level = 5;
         else
             intra_level = is_base ? 5 : 0;
@@ -6223,7 +6273,14 @@ void copy_neighbour_arrays_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionCon
 void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                            uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds, uint32_t sb_org_x,
                            uint32_t sb_org_y);
-
+#if FTR_DISALLOW_CHILD_NSQ
+static INLINE unsigned int get_default_tot_d1_blocks(int32_t sq_size) {
+    return sq_size == 128   ? 17
+         : sq_size > 8      ? 25
+         : sq_size == 8     ? 5
+                            : 1;
+}
+#endif
 static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_index, int32_t sb_size,
                                         int8_t pred_depth, uint8_t pred_sq_idx,
                                         const uint8_t disallow_nsq, int8_t depth_step) {
@@ -6232,11 +6289,15 @@ static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_ind
         //Set parent to be considered
         uint32_t         parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
         const BlockGeom *parent_blk_geom      = get_blk_geom_mds(parent_depth_idx_mds);
+#if FTR_DISALLOW_CHILD_NSQ
+        const unsigned int parent_tot_d1_blocks = disallow_nsq ? 1 : get_default_tot_d1_blocks(parent_blk_geom->sq_size);
+#else
         const uint32_t   parent_tot_d1_blocks = disallow_nsq ? 1
               : parent_blk_geom->sq_size == 128              ? 17
               : parent_blk_geom->sq_size > 8                 ? 25
               : parent_blk_geom->sq_size == 8                ? 5
                                                              : 1;
+#endif
         for (uint32_t block_1d_idx = 0; block_1d_idx < parent_tot_d1_blocks; block_1d_idx++) {
             results_ptr->consider_block[parent_depth_idx_mds + block_1d_idx] = 1;
         }
@@ -6256,23 +6317,41 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
                                        uint32_t sb_index, int32_t sb_size, int8_t pred_depth,
                                        uint8_t pred_sq_idx, int8_t depth_step) {
     const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
+#if FTR_DISALLOW_CHILD_NSQ
+    unsigned int tot_d1_blocks = get_default_tot_d1_blocks(blk_geom->sq_size);
+#else
     unsigned         tot_d1_blocks = blk_geom->sq_size == 128 ? 17
                 : blk_geom->sq_size > 8                       ? 25
                 : blk_geom->sq_size == 8                      ? 5
                                                               : 1;
+#endif
     if (blk_geom->geom_idx == GEOM_0)
         tot_d1_blocks = 1;
 
     if (blk_geom->sq_size == 8 && context_ptr->disallow_4x4)
         return;
     if (blk_geom->sq_size > 4) {
+#if FTR_DISALLOW_CHILD_NSQ
+        DepthCtrls* depth_ctrls = &context_ptr->depth_ctrls;
+        PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
+#endif
+        // Set parent depth's split flag to be true
         for (uint32_t block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
+#if !FTR_DISALLOW_CHILD_NSQ
             results_ptr->consider_block[blk_index + block_1d_idx]     = 1;
+#endif
             results_ptr->refined_split_flag[blk_index + block_1d_idx] = TRUE;
         }
         //Set first child to be considered
         uint32_t         child_block_idx_1    = blk_index + blk_geom->d1_depth_offset;
         const BlockGeom *child1_blk_geom      = get_blk_geom_mds(child_block_idx_1);
+#if FTR_DISALLOW_CHILD_NSQ
+        // All child blocks are same sq_size, so will share the same tot_d1_blocks
+        const unsigned int child_default_tot_d1_blocks = get_default_tot_d1_blocks(child1_blk_geom->sq_size);
+        const unsigned int child_tot_d1_blocks = (ppcs->disallow_nsq || !depth_ctrls->allow_nsq_in_child_depths) ? 1 : child_default_tot_d1_blocks;
+
+        for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
+#else
         const uint32_t   child1_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
               : child1_blk_geom->sq_size == 128                                       ? 17
               : child1_blk_geom->sq_size > 8                                          ? 25
@@ -6280,6 +6359,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
                                                                                       : 1;
 
         for (uint32_t block_1d_idx = 0; block_1d_idx < child1_tot_d1_blocks; block_1d_idx++) {
+#endif
             results_ptr->consider_block[child_block_idx_1 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_1 + block_1d_idx] = FALSE;
         }
@@ -6298,13 +6378,18 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         //Set second child to be considered
         uint32_t child_block_idx_2 = child_block_idx_1 +
             ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
-        const BlockGeom *child2_blk_geom      = get_blk_geom_mds(child_block_idx_2);
+#if FTR_DISALLOW_CHILD_NSQ
+        for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
+#else
+        const BlockGeom *child2_blk_geom = get_blk_geom_mds(child_block_idx_2);
         const uint32_t   child2_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
               : child2_blk_geom->sq_size == 128                                       ? 17
               : child2_blk_geom->sq_size > 8                                          ? 25
               : child2_blk_geom->sq_size == 8                                         ? 5
                                                                                       : 1;
+
         for (uint32_t block_1d_idx = 0; block_1d_idx < child2_tot_d1_blocks; block_1d_idx++) {
+#endif
             results_ptr->consider_block[child_block_idx_2 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_2 + block_1d_idx] = FALSE;
         }
@@ -6323,7 +6408,10 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         //Set third child to be considered
         uint32_t child_block_idx_3 = child_block_idx_2 +
             ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
-        const BlockGeom *child3_blk_geom      = get_blk_geom_mds(child_block_idx_3);
+#if FTR_DISALLOW_CHILD_NSQ
+        for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
+#else
+        const BlockGeom *child3_blk_geom = get_blk_geom_mds(child_block_idx_3);
         const uint32_t   child3_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
               : child3_blk_geom->sq_size == 128                                       ? 17
               : child3_blk_geom->sq_size > 8                                          ? 25
@@ -6331,6 +6419,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
                                                                                       : 1;
 
         for (uint32_t block_1d_idx = 0; block_1d_idx < child3_tot_d1_blocks; block_1d_idx++) {
+#endif
             results_ptr->consider_block[child_block_idx_3 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_3 + block_1d_idx] = FALSE;
         }
@@ -6350,13 +6439,18 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         //Set forth child to be considered
         uint32_t child_block_idx_4 = child_block_idx_3 +
             ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
-        const BlockGeom *child4_blk_geom      = get_blk_geom_mds(child_block_idx_4);
+#if FTR_DISALLOW_CHILD_NSQ
+        for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
+#else
+        const BlockGeom *child4_blk_geom = get_blk_geom_mds(child_block_idx_4);
         const uint32_t   child4_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
               : child4_blk_geom->sq_size == 128                                       ? 17
               : child4_blk_geom->sq_size > 8                                          ? 25
               : child4_blk_geom->sq_size == 8                                         ? 5
                                                                                       : 1;
+
         for (uint32_t block_1d_idx = 0; block_1d_idx < child4_tot_d1_blocks; block_1d_idx++) {
+#endif
             results_ptr->consider_block[child_block_idx_4 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_4 + block_1d_idx] = FALSE;
         }
@@ -6393,12 +6487,18 @@ uint32_t get_tot_1d_blks(struct PictureParentControlSet *ppcs, const int32_t sq_
         : sq_size > 8                                                         ? 25
         : sq_size == 8                                                        ? 5
                                                                               : 1;
-
+#if FTR_DISALLOW_HVAB
+    if (ppcs->disallow_HVA_HVB && ppcs->disallow_HV4)
+        tot_d1_blocks = MIN(5, tot_d1_blocks);
+    else if (ppcs->disallow_HV4)
+        tot_d1_blocks = MIN(17, tot_d1_blocks);
+#else
     if (ppcs->disallow_HVA_HVB_HV4)
         tot_d1_blocks = MIN(5, tot_d1_blocks);
 
     if (ppcs->disallow_HV4)
         tot_d1_blocks = MIN(17, tot_d1_blocks);
+#endif
 
     return tot_d1_blocks;
 }
@@ -6459,12 +6559,41 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_block_tagged) {
+#if FTR_DISALLOW_CHILD_NSQ
+            uint32_t tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq
+                ? 1
+                : get_tot_1d_blks(
+                    pcs_ptr->parent_pcs_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
+
+            // If have NSQ shapes but tagged as not considered, set tot_d1_blocks to 1
+            if (tot_d1_blocks > 1 && !results_ptr->consider_block[blk_index + 1])
+                tot_d1_blocks = 1;
+#if FTR_DISALLOW_HVAB
+            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
+            // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
+            // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
+            const uint32_t to_test_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB
+                ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
+                : tot_d1_blocks;
+#endif
+#else
             const uint32_t tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq
                 ? 1
                 : get_tot_1d_blks(
                       pcs_ptr->parent_pcs_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
-
+#endif
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
+#if FTR_DISALLOW_HVAB
+                if (pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB) {
+                    // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
+                    // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
+                    // by 1 (as part of the for loop).
+                    if ((idx - blk_index) == 5) {
+                        idx += 11;
+                        continue;
+                    }
+                }
+#endif
                 //  MD palette info buffer
                 if (pcs_ptr->parent_pcs_ptr->palette_level) {
                     if (context_ptr->md_blk_arr_nsq[idx].palette_mem == 0) {
@@ -6478,8 +6607,13 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
 
                 if (results_ptr->consider_block[idx]) {
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = idx;
+#if FTR_DISALLOW_HVAB
+                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
+                        to_test_d1_blocks;
+#else
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
                         tot_d1_blocks;
+#endif
                     results_ptr->split_flag[results_ptr->leaf_count++] =
                         results_ptr->refined_split_flag[idx];
                 }
@@ -6824,8 +6958,28 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                 : get_tot_1d_blks(
                       pcs_ptr->parent_pcs_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
 
+#if FTR_DISALLOW_HVAB
+            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
+            // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
+            // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
+            const uint32_t to_test_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB
+                ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
+                : tot_d1_blocks;
+#endif
+
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
                 if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[idx]) {
+#if FTR_DISALLOW_HVAB
+                    if (pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB) {
+                        // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
+                        // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
+                        // by 1 (as part of the for loop).
+                        if ((idx - blk_index) == 5) {
+                            idx += 11;
+                            continue;
+                        }
+                    }
+#endif
                     //  MD palette info buffer
                     if (pcs_ptr->parent_pcs_ptr->palette_level) {
                         if (context_ptr->md_blk_arr_nsq[idx].palette_mem == 0) {
@@ -6837,8 +6991,13 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     context_ptr->md_blk_arr_nsq[idx].palette_size[0]              = 0;
                     context_ptr->md_blk_arr_nsq[idx].palette_size[1]              = 0;
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = idx;
+#if FTR_DISALLOW_HVAB
+                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
+                        to_test_d1_blocks;
+#else
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
                         tot_d1_blocks;
+#endif
                     results_ptr->split_flag[results_ptr->leaf_count++] = (blk_geom->sq_size >
                                                                           min_sq_size)
                         ? TRUE

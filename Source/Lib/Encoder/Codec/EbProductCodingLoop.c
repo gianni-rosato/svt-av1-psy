@@ -3777,7 +3777,7 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                         context_ptr->hbd_mode_decision,
                         chroma_width,
                         chroma_height);
-        full_loop_r(pcs_ptr,
+        svt_aom_full_loop_uv(pcs_ptr,
                     context_ptr,
                     candidate_buffer,
                     input_picture_ptr,
@@ -3847,7 +3847,7 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                         context_ptr->hbd_mode_decision,
                         chroma_width,
                         chroma_height);
-        full_loop_r(pcs_ptr,
+        svt_aom_full_loop_uv(pcs_ptr,
                     context_ptr,
                     candidate_buffer,
                     input_picture_ptr,
@@ -4297,7 +4297,7 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
                         context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->bwidth_uv,
                         context_ptr->blk_geom->bheight_uv);
-        full_loop_r(pcs_ptr,
+        svt_aom_full_loop_uv(pcs_ptr,
                     context_ptr,
                     candidate_buffer,
                     input_picture_ptr,
@@ -7559,7 +7559,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                blk_chroma_origin_index);
             }
         if (context_ptr->blk_geom->has_uv && context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1) {
-            full_loop_r(pcs_ptr,
+            svt_aom_full_loop_uv(pcs_ptr,
                         context_ptr,
                         candidate_buffer,
                         input_picture_ptr,
@@ -8175,6 +8175,9 @@ void init_chroma_mode(ModeDecisionContext *context_ptr) {
     }
 }
 #if OPT_IND_CHROMA
+static INLINE void rtime_alloc_uv_cand_buff_indices(uint32_t** uv_cand_buff_indices, uint32_t max_nics_uv) {
+    (*uv_cand_buff_indices) = (uint32_t *)malloc(max_nics_uv * sizeof(*uv_cand_buff_indices));
+}
 /*
 Perform search for the best chroma mode (intra modes only).  The search involves
 the following main parts:
@@ -8362,8 +8365,8 @@ static void search_best_independent_uv_mode(PictureControlSet   *pcs,
     }
 
     // Sort uv_mode candidates (in terms of distortion only)
-    uint32_t *uv_cand_buff_indices = (uint32_t *)malloc(ctx->max_nics_uv *
-                                                        sizeof(*uv_cand_buff_indices));
+    uint32_t* uv_cand_buff_indices;
+    rtime_alloc_uv_cand_buff_indices(&uv_cand_buff_indices, ctx->max_nics_uv);
     memset(uv_cand_buff_indices, 0xFF, ctx->max_nics_uv * sizeof(*uv_cand_buff_indices));
 
     sort_fast_cost_based_candidates(
@@ -8390,7 +8393,7 @@ static void search_best_independent_uv_mode(PictureControlSet   *pcs,
          uv_mode_count++) {
         ModeDecisionCandidateBuffer *candidate_buffer =
             ctx->candidate_buffer_ptr_array[uv_cand_buff_indices[uv_mode_count]];
-        candidate_buffer->candidate_ptr =
+        ModeDecisionCandidate* cand = candidate_buffer->candidate_ptr =
             &ctx->fast_candidate_array[uv_cand_buff_indices[uv_mode_count] -
                                                start_full_buffer_index + start_fast_buffer_index];
         uint16_t cb_qindex                           = ctx->qp_index;
@@ -8428,7 +8431,7 @@ static void search_best_independent_uv_mode(PictureControlSet   *pcs,
                         ctx->hbd_mode_decision,
                         ctx->blk_geom->bwidth_uv,
                         ctx->blk_geom->bheight_uv);
-        full_loop_r(pcs,
+        svt_aom_full_loop_uv(pcs,
                     ctx,
                     candidate_buffer,
                     input_picture_ptr,
@@ -8441,13 +8444,10 @@ static void search_best_independent_uv_mode(PictureControlSet   *pcs,
                     &cr_coeff_bits,
                     1);
 
-        coeff_rate[candidate_buffer->candidate_ptr->intra_chroma_mode]
-                  [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
+        coeff_rate[cand->intra_chroma_mode][MAX_ANGLE_DELTA + cand->angle_delta[PLANE_TYPE_UV]] =
                       cb_coeff_bits + cr_coeff_bits;
-        distortion[candidate_buffer->candidate_ptr->intra_chroma_mode]
-                  [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
-                      cb_full_distortion[DIST_CALC_RESIDUAL] +
-            cr_full_distortion[DIST_CALC_RESIDUAL];
+        distortion[cand->intra_chroma_mode][MAX_ANGLE_DELTA + cand->angle_delta[PLANE_TYPE_UV]] =
+                      cb_full_distortion[DIST_CALC_RESIDUAL] + cr_full_distortion[DIST_CALC_RESIDUAL];
     }
 
     // Loop over all intra modes, then loop over all uv_modes to derive the best uv_mode for a given intra mode (in term of rate)
@@ -8733,7 +8733,7 @@ static void search_best_independent_uv_mode(PictureControlSet   *pcs_ptr,
                         context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->bwidth_uv,
                         context_ptr->blk_geom->bheight_uv);
-        full_loop_r(pcs_ptr,
+        svt_aom_full_loop_uv(pcs_ptr,
                     context_ptr,
                     candidate_buffer,
                     input_picture_ptr,

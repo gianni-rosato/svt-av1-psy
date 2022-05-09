@@ -852,7 +852,11 @@ typedef struct PictureParentControlSet {
     Bool     disallow_all_nsq_blocks_above_32x32; //disallow nsq in 32x32 and above
     Bool     disallow_all_nsq_blocks_above_16x16; //disallow nsq in 16x16 and above
     Bool     disallow_HV4; //disallow             H4/V4
+#if FTR_DISALLOW_HVAB
+    Bool     disallow_HVA_HVB; // Disallow HA/HB/VA/VB NSQ blocks
+#else
     Bool     disallow_HVA_HVB_HV4; //disallow HA/HB/VA/VB H4/V4
+#endif
     DlfCtrls dlf_ctrls;
     uint8_t  intra_pred_mode;
     uint8_t  tx_size_search_mode;

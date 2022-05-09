@@ -1980,6 +1980,20 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->disallow_all_nsq_blocks_above_32x32 = FALSE;
     // disallow_all_nsq_blocks_above_16x16
     pcs_ptr->disallow_all_nsq_blocks_above_16x16 = FALSE;
+#if FTR_DISALLOW_HVAB
+
+    // Set if HA/HB/VA/VB blocks should considered
+    if (enc_mode <= ENC_M1)
+        pcs_ptr->disallow_HVA_HVB = FALSE;
+    else
+        pcs_ptr->disallow_HVA_HVB = TRUE;
+
+    // Set if H4/V4 blocks should considered
+    if (enc_mode <= ENC_M2)
+        pcs_ptr->disallow_HV4 = FALSE;
+    else
+        pcs_ptr->disallow_HV4 = TRUE;
+#else
     if (enc_mode <= ENC_M1)
         pcs_ptr->disallow_HVA_HVB_HV4 = FALSE;
     else if (enc_mode <= ENC_M2)
@@ -1987,6 +2001,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->disallow_HVA_HVB_HV4 = TRUE;
     pcs_ptr->disallow_HV4 = FALSE;
+#endif
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
     pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16 = FALSE;

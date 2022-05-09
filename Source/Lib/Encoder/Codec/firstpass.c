@@ -544,8 +544,11 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs_ptr->disallow_all_nsq_blocks_above_32x32 = TRUE;
     // disallow_all_nsq_blocks_above_16x16
     pcs_ptr->disallow_all_nsq_blocks_above_16x16 = TRUE;
-
+#if FTR_DISALLOW_HVAB
+    pcs_ptr->disallow_HVA_HVB = TRUE;
+#else
     pcs_ptr->disallow_HVA_HVB_HV4 = TRUE;
+#endif
     pcs_ptr->disallow_HV4         = TRUE;
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16

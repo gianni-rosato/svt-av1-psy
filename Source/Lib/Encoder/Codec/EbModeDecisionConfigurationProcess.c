@@ -389,7 +389,7 @@ uint8_t get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_b
     return update_cdf_level;
 }
 #if OPT_IND_CHROMA
-uint8_t get_chroma_level(EncMode enc_mode) {
+uint8_t svt_aom_get_chroma_level(EncMode enc_mode) {
     uint8_t chroma_level = 0;
     if (enc_mode <= ENC_MRS)
         chroma_level = 1;
@@ -410,7 +410,7 @@ uint8_t get_chroma_level(EncMode enc_mode) {
     return chroma_level;
 }
 #else
-uint8_t get_chroma_level(EncMode enc_mode) {
+uint8_t svt_aom_get_chroma_level(EncMode enc_mode) {
     uint8_t chroma_level = 0;
     if (enc_mode <= ENC_MRS)
         chroma_level = 1;
@@ -644,10 +644,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->approx_inter_rate = 0;
     else
         pcs_ptr->approx_inter_rate = 1;
+#if TUNE_INTERINTRA_TRANS
+    if (is_islice || transition_present)
+#else
 #if FIX_ISSUE_1857
     if (is_islice || ppcs->transition_present == 1)
 #else
     if (is_islice || ppcs->transition_present)
+#endif
 #endif
         pcs_ptr->skip_intra = 0;
     else if (enc_mode <= ENC_M7)
@@ -742,7 +746,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
     }
 
-    pcs_ptr->chroma_level = get_chroma_level(enc_mode);
+    pcs_ptr->chroma_level = svt_aom_get_chroma_level(enc_mode);
     // Set the level for cfl
     pcs_ptr->cfl_level = 0;
     if (pcs_ptr->parent_pcs_ptr->sc_class1) {
@@ -846,7 +850,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 1;
     else if (enc_mode <= ENC_M1)
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 2;
+#if TUNE_NSQ
+    else if (enc_mode <= ENC_M3)
+#else
     else if (enc_mode <= ENC_M2)
+#endif
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice
             ? 0
             : is_base ? 2 : is_ref ? 4 : 7;
@@ -870,10 +878,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (enc_mode <= ENC_M3)
         pcs_ptr->max_part0_to_part1_dev = 0;
     else
+#if TUNE_NSQ
+        pcs_ptr->max_part0_to_part1_dev = 40;
+#else
 #if TUNE_M4_M5
         pcs_ptr->max_part0_to_part1_dev = 80;
 #else
         pcs_ptr->max_part0_to_part1_dev = 100;
+#endif
 #endif
 
     // Set the level for enable_inter_intra
@@ -976,7 +988,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // TODO: This signal can only be modified per picture right now, not per SB.  Per SB requires
     // neighbour array updates at EncDec for all SBs, that are currently skipped if EncDec is bypassed.
     // TODO: Bypassing EncDec doesn't work if pcs_ptr->cdf_ctrl.update_coef is enabled for non-ISLICE frames (causes r2r)
+#if FTR_DISALLOW_HVAB
+    if ((ppcs->disallow_HVA_HVB && ppcs->disallow_HV4) &&
+#else
     if (ppcs->disallow_HVA_HVB_HV4 &&
+#endif
         (scs_ptr->static_config.encoder_bit_depth == EB_8BIT || ppcs->disallow_nsq) &&
         (!pcs_ptr->cdf_ctrl.update_coef || is_islice) &&
         !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
@@ -1000,7 +1016,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
     else if (enc_mode <= ENC_M9)
         pcs_ptr->pic_lpd0_lvl = 2;
-#if FIX_ISSUE_1857
+#if FIX_ISSUE_1857 && !TUNE_INTERINTRA_TRANS
     else if (enc_mode <= ENC_M10)
         pcs_ptr->pic_lpd0_lvl = (is_base || pcs_ptr->parent_pcs_ptr->transition_present == 1) ? 2 : 4;
     else if (enc_mode <= ENC_M11)
@@ -1051,10 +1067,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->temporal_layer_index);
 
     if (scs_ptr->super_block_size == 64) {
+#if TUNE_INTERINTRA_TRANS
+        if (is_islice || transition_present) {
+#else
 #if FIX_ISSUE_1857
         if (is_islice || pcs_ptr->parent_pcs_ptr->transition_present == 1) {
 #else
         if (is_islice || pcs_ptr->parent_pcs_ptr->transition_present) {
+#endif
 #endif
             pcs_ptr->pic_depth_removal_level = 0;
         } else {

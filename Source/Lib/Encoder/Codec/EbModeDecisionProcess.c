@@ -92,8 +92,8 @@ void    set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_
                  uint8_t pic_type);
 
 uint8_t get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base);
-uint8_t get_chroma_level(EncMode enc_mode);
-uint8_t set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
+uint8_t svt_aom_get_chroma_level(EncMode enc_mode);
+uint8_t svt_aom_set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
 
 /*
 * return the max canidate count for MDS0
@@ -187,7 +187,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     }
 
     // If independent chroma search is used, need to allocate additional 84 candidate buffers
-    const uint8_t ind_uv_cands = set_chroma_controls(NULL, get_chroma_level(enc_mode)) ==
+    const uint8_t ind_uv_cands = svt_aom_set_chroma_controls(NULL, svt_aom_get_chroma_level(enc_mode)) ==
             CHROMA_MODE_0
         ? 84
         : 0;

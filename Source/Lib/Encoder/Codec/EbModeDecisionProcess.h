@@ -183,6 +183,9 @@ typedef struct DepthCtrls {
         s_depth; // start depth; 0: consider no parent blocks; else number of parent blocks to consider, specified as a negative number (e.g. -2 means consider 2 parents)
     int8_t
         e_depth; // end depth; 0: consider no child blocks; else number of child blocks to consider, specified as a positive number (e.g. 2 means consider 2 children)
+#if FTR_DISALLOW_CHILD_NSQ
+    Bool allow_nsq_in_child_depths; // Allow NSQ in depths below the PD0-selected depths.
+#endif
 } DepthCtrls;
 #define MAX_RANGE_CNT 8
 #define MAX_RANGE_CNT 8
@@ -416,8 +419,8 @@ typedef struct UvCtrls {
              nd_uv_serach_mode; // Non-direct chroma search 0: pre chroma search is used, 1: chroma search at last md_stage is used
 #if OPT_IND_CHROMA
     uint8_t uv_nic_scaling_num; // Scaling numerator for independent chroma NICS: <x>/16
-    uint32_t uv_intra_th; // Threshold to skip  Non-direct chroma search.
-    uint32_t uv_cfl_th; // Threshold to skip clf.
+    uint32_t uv_intra_th; // Threshold to skip non-directional chroma search.
+    uint32_t uv_cfl_th; // Threshold to skip cfl.
 #else
     uint64_t uv_intra_th; // Threshold to skip  Non-direct chroma search.
     uint64_t uv_cfl_th; // Threshold to skip clf.

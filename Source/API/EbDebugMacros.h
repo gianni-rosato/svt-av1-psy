@@ -51,11 +51,6 @@ extern "C" {
 #define OPT_LPD0                1 // Add detector to LPD0 for all levels
 #define CLN_REST_2              1 // Cleanup restoration signalling
 #define OPT_DECODE              1 // Newest fast-decode level 0 and 1
-#define TUNE_M4_M5              1 // Tune M4 and M5
-#define TUNE_INTERINTRA_TRANS   1 // Enable inter-intra compound for transition frames up to M11
-#define OPT_IND_CHROMA          1 // Optimize independent chroma search
-#define TUNE_M6_M7              1 // Tune M6/M7 to take advantage of chroma optimization
-
 
 #define FTR_FORCE_KF            1 // Add the ability to force key frames from ffpmeg cli
 
@@ -86,6 +81,13 @@ extern "C" {
 
 #define FIX_ISSUE_1896          1 // Force filter_level to 0 if loop-filter is shut for 1 (or many) of the sub-layer reference frame(s)
 
+#define TUNE_M4_M5              1 // Tune M4 and M5
+#define TUNE_INTERINTRA_TRANS   1 // Enable inter-intra compound for transition frames up to M11
+#define OPT_IND_CHROMA          1 // Optimize independent chroma search
+#define TUNE_M6_M7              1 // Tune M6/M7 to take advantage of chroma optimization
+#define FTR_DISALLOW_CHILD_NSQ  1 // Disallow NSQ blocks in child depths
+#define FTR_DISALLOW_HVAB       1 // Add ability to disallow HA/HB/VA/VB blocks only
+#define TUNE_NSQ                1 // Tune M2-M4 based on new NSQ controls
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
