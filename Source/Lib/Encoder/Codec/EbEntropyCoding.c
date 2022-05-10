@@ -278,13 +278,8 @@ static void set_bitstream_level_tier(SequenceControlSet *scs_ptr) {
 static void write_golomb(AomWriter *w, int32_t level) {
     int32_t x      = level + 1;
     int32_t i      = x;
-    int32_t length = 0;
-
-    //while (i) {
-    //    i >>= 1;
-    //    ++length;
-    //}
-    length = svt_log2f(x) + 1;
+    // while (i) { i >>= 1; ++length; }
+    const int32_t length = svt_log2f(x) + 1;
 
     assert(length > 0);
 
