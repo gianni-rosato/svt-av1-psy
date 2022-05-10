@@ -210,6 +210,10 @@ typedef struct EncodeContext {
     RateControlIntervalParamContext **rc_param_queue;
     int32_t                           rc_param_queue_head_index;
     EbHandle                          rc_param_queue_mutex;
+#if FTR_RSZ_RANDOM_ACCESS
+    // reference scaling random access event
+    EbRefFrameScale resize_evt;
+#endif // FTR_RSZ_RANDOM_ACCESS
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

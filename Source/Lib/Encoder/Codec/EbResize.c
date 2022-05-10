@@ -1872,6 +1872,22 @@ static uint8_t calculate_next_resize_scale(const SequenceControlSet *scs_ptr, co
     case RESIZE_DYNAMIC:
         new_denom = scs_ptr->resize_pending_params.resize_denom; break;
 #endif // FTR_RESIZE_DYNAMIC
+#if FTR_RSZ_RANDOM_ACCESS
+    case RESIZE_RANDOM_ACCESS: {
+        switch (pcs_ptr->resize_evt.scale_mode) {
+        case RESIZE_NONE: new_denom = SCALE_NUMERATOR; break;
+        case RESIZE_FIXED:
+            if (pcs_ptr->frm_hdr.frame_type == KEY_FRAME)
+                new_denom = pcs_ptr->resize_evt.scale_kf_denom;
+            else
+                new_denom = pcs_ptr->resize_evt.scale_denom;
+            break;
+        case RESIZE_RANDOM: new_denom = lcg_rand16(&seed) % 9 + 8; break;
+        default: assert_err(0, "unknown resize random access mode");
+        }
+        break;
+    }
+#endif // FTR_RSZ_RANDOM_ACCESS
     default: assert_err(0, "unknown resize mode");
     }
     return new_denom;

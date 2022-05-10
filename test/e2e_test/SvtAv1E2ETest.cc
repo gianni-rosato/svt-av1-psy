@@ -655,6 +655,55 @@ INSTANTIATE_TEST_CASE_P(SUPERRESREFSCALINGTEST, SuperResTest,
     ::testing::ValuesIn(generate_superres_ref_scaling_settings()),
     EncTestSetting::GetSettingName);
 
+// Test cases of reference scaling random access mode
+static const std::vector<EncTestSetting> generate_ref_scaling_random_access_settings() {
+    static const std::string test_prefix = "RefScalingRandomAccess";
+    std::vector<EncTestSetting> settings;
+
+    int count = 0;
+    static const std::string event_prefix = "ScalingEvent @ Frame ";
+    static const std::vector<std::string> param_event_vecs[] = {
+        { std::to_string(RESIZE_FIXED), "16", "15" },
+        { std::to_string(RESIZE_NONE), "0", "0" },
+        { std::to_string(RESIZE_RANDOM), "0", "0" },
+        { std::to_string(RESIZE_FIXED), "12", "10" },
+        { std::to_string(RESIZE_FIXED), "9", "13" },
+    };
+    static const EncSetting param_vecs[] = {
+        // CQP
+        { {"ResizeMode", "4"}, {"RateControlMode", "0"} },
+        // VBR
+        { {"ResizeMode", "4"}, {"RateControlMode", "1"}, {"TargetBitRate", "1000"} },
+        // CBR
+        { {"ResizeMode", "4"}, {"RateControlMode", "2"}, {"TargetBitRate", "1000"} }
+    };
+    std::vector<TestFrameEvent> event_vec;
+    uint32_t frame_count = 10;
+    for (std::vector<std::string> param_event: param_event_vecs) {
+        event_vec.push_back(std::make_tuple(
+            event_prefix + std::to_string(frame_count),
+            frame_count,
+            REF_FRAME_SCALING_EVENT,
+            param_event));
+        frame_count += 10;
+    }
+    for (EncSetting param : param_vecs) {
+        string idx = std::to_string(count);
+        string name = test_prefix + idx;
+        EncTestSetting setting{name,
+                               param,
+                               default_test_vectors,
+                               event_vec };
+        settings.push_back(setting);
+        count++;
+    }
+    return settings;
+}
+
+INSTANTIATE_TEST_CASE_P(REFSCALINGRANDOMACCESSTEST, SuperResTest,
+    ::testing::ValuesIn(generate_ref_scaling_random_access_settings()),
+    EncTestSetting::GetSettingName);
+
 /**
  * @brief SVT-AV1 encoder E2E test with comparing the reconstructed frame with
  * output frame from decoder buffer list
@@ -685,7 +734,7 @@ static const std::vector<EncTestSetting> generate_testcase_with_preset_settings(
     std::vector<EncTestSetting> settings;
 
     int count = 0;
-    for (size_t hierarchicallvl = 3; hierarchicallvl < 5; hierarchicallvl++) {
+    for (size_t hierarchicallvl = 3; hierarchicallvl <= 5; hierarchicallvl++) {
         for (size_t preset = 0; preset <= 12; preset++) {
             for (std::string value : values) {
                 EncTestSetting new_setting;

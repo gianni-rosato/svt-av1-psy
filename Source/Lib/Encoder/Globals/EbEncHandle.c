@@ -4721,6 +4721,50 @@ static EbErrorType copy_frame_buffer(
     }
     return return_error;
 }
+
+#if FTR_RSZ_RANDOM_ACCESS
+static EbErrorType copy_private_data_list(EbBufferHeaderType* dst, EbBufferHeaderType* src) {
+    EbErrorType return_error = EB_ErrorNone;
+    EbPrivDataNode* p_src_node = (EbPrivDataNode*)src->p_app_private;
+    EbPrivDataNode* p_first_node = NULL;
+    EbPrivDataNode* p_new_node = NULL;
+    while (p_src_node) {
+        if (p_first_node == NULL) {
+            EB_MALLOC(p_new_node, sizeof(*p_src_node));
+            p_first_node = p_new_node;
+        }
+        else {
+            EB_MALLOC(p_new_node->next, sizeof(*p_src_node));
+            p_new_node = p_new_node->next;
+        }
+        p_new_node->node_type = p_src_node->node_type;
+        p_new_node->size = p_src_node->size;
+        // not copy data from the private data pass through the encoder
+        if (p_src_node->node_type == PRIVATE_DATA) {
+            p_new_node->data = p_src_node->data;
+        } else {
+            EB_MALLOC(p_new_node->data, p_src_node->size);
+            memcpy(p_new_node->data, p_src_node->data, p_src_node->size);
+        }
+        p_new_node->next = NULL;
+        p_src_node = p_src_node->next;
+    }
+    dst->p_app_private = p_first_node;
+    return return_error;
+}
+static void free_private_data_list(EbBufferHeaderType* p) {
+    EbPrivDataNode* p_node = (EbPrivDataNode*)p->p_app_private;
+    while (p_node) {
+        if (p_node->node_type != PRIVATE_DATA)
+          EB_FREE(p_node->data);
+        EbPrivDataNode* p_tmp = p_node;
+        p_node = p_node->next;
+        EB_FREE(p_tmp);
+    }
+    p->p_app_private = NULL;
+}
+#endif // FTR_RSZ_RANDOM_ACCESS
+
 /*
  Copy the input buffer header content
 from the sample application to the library buffers
@@ -4761,6 +4805,14 @@ static void copy_input_buffer(
         if (src->p_buffer != NULL)
             copy_frame_buffer(sequenceControlSet, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
     }
+
+#if FTR_RSZ_RANDOM_ACCESS
+    // Copy the private data list
+    if (src->p_app_private)
+        copy_private_data_list(dst, src);
+    else
+        dst->p_app_private = NULL;
+#endif // FTR_RSZ_RANDOM_ACCESS
 
 }
 /***********************************************
@@ -4809,6 +4861,9 @@ EB_API EbErrorType svt_av1_enc_send_picture(
      //this would also allow low delay TF to retain pictures
      svt_object_inc_live_count(eb_wrapper_ptr, 1);
 
+#if FTR_RSZ_RANDOM_ACCESS
+    free_private_data_list((EbBufferHeaderType*)eb_wrapper_ptr->object_ptr);
+#endif // FTR_RSZ_RANDOM_ACCESS
     if (p_buffer != NULL) {
 
 
@@ -5220,6 +5275,10 @@ void svt_input_buffer_header_destroyer(    EbPtr p)
     }
 
     EB_DELETE(buf);
+#if FTR_RSZ_RANDOM_ACCESS
+    if (obj->p_app_private)
+        free_private_data_list(obj);
+#endif // FTR_RSZ_RANDOM_ACCESS
     EB_FREE(obj);
 }
 

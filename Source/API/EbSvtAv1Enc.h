@@ -141,6 +141,9 @@ typedef enum {
     RESIZE_FIXED,   // All frames are coded at the specified scale.
     RESIZE_RANDOM,  // All frames are coded at a random scale.
     RESIZE_DYNAMIC, // Resize scale for a frame in dynamic.
+#if FTR_RSZ_RANDOM_ACCESS
+    RESIZE_RANDOM_ACCESS, // Resize scale frame by event in random access
+#endif // FTR_RSZ_RANDOM_ACCESS
     RESIZE_MODES
 } RESIZE_MODE;
 

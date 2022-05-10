@@ -969,6 +969,11 @@ typedef struct PictureParentControlSet {
 
     Bool    frame_resize_enabled;
     uint8_t resize_denom;
+#if FTR_RSZ_RANDOM_ACCESS
+    // reference scaling random access event
+    EbRefFrameScale resize_evt;
+    Bool    rc_reset_flag;
+#endif // FTR_RSZ_RANDOM_ACCESS
 
     Bool    frame_superres_enabled;
     uint8_t superres_denom;

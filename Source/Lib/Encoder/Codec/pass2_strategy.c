@@ -1667,6 +1667,15 @@ void one_pass_rt_rate_alloc(PictureParentControlSet *pcs_ptr) {
             scs_ptr->resize_pending_params.resize_state = rc->resize_state;
         }
     }
+#if FTR_RSZ_RANDOM_ACCESS
+    else if (pcs_ptr->rc_reset_flag) {
+        svt_av1_resize_reset_rc(pcs_ptr,
+            pcs_ptr->render_width,
+            pcs_ptr->render_height,
+            scs_ptr->max_input_luma_width,
+            scs_ptr->max_input_luma_height);
+    }
+#endif // FTR_RSZ_RANDOM_ACCESS
 #endif // FTR_RESIZE_DYNAMIC
 
     // Set the GF interval and update flag.

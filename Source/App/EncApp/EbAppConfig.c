@@ -1282,7 +1282,7 @@ ConfigEntry config_entry_specific[] = {
     // --- start: REFERENCE SCALING SUPPORT
     {SINGLE_INPUT,
      RESIZE_MODE_INPUT,
-     "Enable resize mode [0: none, 1: fixed scale, 2: random scale, 3: dynamic scale]",
+     "Enable resize mode [0: none, 1: fixed scale, 2: random scale, 3: dynamic scale, 4: random access]",
      set_resize_mode},
     {SINGLE_INPUT,
      RESIZE_DENOM,

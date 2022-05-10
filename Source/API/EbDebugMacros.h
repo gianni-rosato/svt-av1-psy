@@ -46,6 +46,7 @@ extern "C" {
 
 #define OPT_RESIZE_INPUT_LR     1 // Optimize resize input from multiple times in lr to once in cdef
 #define FTR_RESIZE_DYNAMIC      1 // Add resize dynamic mode
+#define FTR_RSZ_RANDOM_ACCESS   1 // Add resize random access configuration for fixed mode and random mode
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

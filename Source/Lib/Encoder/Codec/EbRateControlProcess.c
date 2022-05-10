@@ -1434,7 +1434,11 @@ static int get_active_best_quality(PictureControlSet *pcs_ptr, const int active_
     return active_best_quality;
 }
 
+#if FTR_RSZ_RANDOM_ACCESS
+static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr, int width, int height) {
+#else
 static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr) {
+#endif // FTR_RSZ_RANDOM_ACCESS
     SequenceControlSet                *scs_ptr             = ppcs_ptr->scs_ptr;
     EncodeContext                     *encode_context_ptr  = scs_ptr->encode_context_ptr;
     RATE_CONTROL                      *rc                  = &encode_context_ptr->rc;
@@ -1456,15 +1460,34 @@ static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr) {
         else
             rcf = rc->rate_correction_factors[INTER_NORMAL];
     }
+#if FTR_RSZ_RANDOM_ACCESS
+    rcf *= (double)(ppcs_ptr->av1_cm->frm_size.frame_width *
+        ppcs_ptr->av1_cm->frm_size.frame_height) / (width * height);
+#else
+    //rcf *= resize_rate_factor(&cpi->oxcf.frm_dim_cfg, width, height);
+#endif // FTR_RSZ_RANDOM_ACCESS
     svt_release_mutex(rc->rc_mutex);
     return fclamp(rcf, MIN_BPB_FACTOR, MAX_BPB_FACTOR);
 }
 
+#if FTR_RSZ_RANDOM_ACCESS
+static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double factor, int width, int height) {
+#else
 static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double factor) {
+#endif // FTR_RSZ_RANDOM_ACCESS
     SequenceControlSet                *scs_ptr             = ppcs_ptr->scs_ptr;
     EncodeContext                     *encode_context_ptr  = scs_ptr->encode_context_ptr;
     RATE_CONTROL                      *rc                  = &encode_context_ptr->rc;
     svt_block_on_mutex(rc->rc_mutex);
+
+    // Normalize RCF to account for the size-dependent scaling factor.
+#if FTR_RSZ_RANDOM_ACCESS
+    factor /= (double)(ppcs_ptr->av1_cm->frm_size.frame_width *
+        ppcs_ptr->av1_cm->frm_size.frame_height) / (width * height);
+#else
+    //factor /= resize_rate_factor(&cpi->oxcf.frm_dim_cfg, width, height);
+#endif // FTR_RSZ_RANDOM_ACCESS
+
     factor = fclamp(factor, MIN_BPB_FACTOR, MAX_BPB_FACTOR);
 
     if (scs_ptr->static_config.rate_control_mode == 1) {
@@ -1582,7 +1605,11 @@ static int av1_rc_regulate_q(PictureParentControlSet *ppcs_ptr, int target_bits_
                              int active_best_quality, int active_worst_quality, int width,
                              int height) {
     const int    MBs = ((width + 15) / 16) * ((height + 15) / 16); //av1_get_MBs(width, height);
+#if FTR_RSZ_RANDOM_ACCESS
+    const double correction_factor  = get_rate_correction_factor(ppcs_ptr, width, height);
+#else
     const double correction_factor  = get_rate_correction_factor(ppcs_ptr /*, width, height*/);
+#endif // FTR_RSZ_RANDOM_ACCESS
     const int    target_bits_per_mb = (int)(((uint64_t)target_bits_per_frame << BPER_MB_NORMBITS) /
                                          MBs);
 
@@ -1957,7 +1984,11 @@ static void av1_rc_update_rate_correction_factors(PictureParentControlSet *ppcs_
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
     int                 correction_factor  = 100;
+#if FTR_RSZ_RANDOM_ACCESS
+    double rate_correction_factor = get_rate_correction_factor(ppcs_ptr, width, height);
+#else
     double rate_correction_factor = get_rate_correction_factor(ppcs_ptr /*, width, height*/);
+#endif // FTR_RSZ_RANDOM_ACCESS
     double adjustment_limit;
     //const int MBs = av1_get_MBs(width, height);
     const int MBs = ((width + 15) / 16) * ((height + 15) / 16); //av1_get_MBs(width, height);
@@ -2028,7 +2059,11 @@ static void av1_rc_update_rate_correction_factors(PictureParentControlSet *ppcs_
             rate_correction_factor = MIN_BPB_FACTOR;
     }
 
+#if FTR_RSZ_RANDOM_ACCESS
+    set_rate_correction_factor(ppcs_ptr, rate_correction_factor, width, height);
+#else
     set_rate_correction_factor(ppcs_ptr, rate_correction_factor /*, width, height*/);
+#endif // FTR_RSZ_RANDOM_ACCESS
 }
 
 // Update the buffer level: leaky bucket model.

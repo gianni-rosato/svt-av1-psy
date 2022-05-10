@@ -115,11 +115,37 @@ const std::vector<TestVideoVector> dummy_444_test_vectors = {
                     8, 0, 0, 100),
 };
 
+typedef std::tuple<std::string, /**< event name */
+    uint32_t,                   /**< frame number */
+    PrivDataType,               /**< event type */
+    std::vector<std::string>>   /**< parameters vector */
+    TestFrameEvent;
+
 using EncSetting = std::map<std::string, std::string>;
 typedef struct EncTestSetting {
     std::string name;    // description of the test cases
     EncSetting setting;  // pairs of encoder setting, {name, value};
     std::vector<TestVideoVector> test_vectors;
+    std::vector<TestFrameEvent> event_vector;
+
+    EncTestSetting(std::string name_str,
+        EncSetting settings,
+        std::vector<TestVideoVector> videos) {
+        name = name_str;
+        setting = settings;
+        test_vectors = videos;
+    }
+
+    EncTestSetting(std::string name_str,
+        EncSetting settings,
+        std::vector<TestVideoVector> videos,
+        std::vector<TestFrameEvent> events) {
+        name = name_str;
+        setting = settings;
+        test_vectors = videos;
+        event_vector = events;
+    }
+
     std::string to_string(std::string& fn) const {
         std::string str = get_setting_str();
         str += "test vector: ";

@@ -138,6 +138,14 @@ void SvtAv1E2ETestFramework::config_test() {
             printf("EncSetting: %s = %s\n", x.first.c_str(), x.second.c_str());
         }
     }
+    // sort frame event vector
+    if (enc_setting.event_vector.size() > 0) {
+        std::sort(enc_setting.event_vector.begin(),
+            enc_setting.event_vector.end(),
+            [](TestFrameEvent evt1, TestFrameEvent evt2) {
+                return std::get<1>(evt1) < std::get<1>(evt2);
+            });
+    }
 }
 
 void SvtAv1E2ETestFramework::update_enc_setting() {
@@ -360,6 +368,54 @@ void SvtAv1E2ETestFramework::output_stat() {
     }
 }
 
+void SvtAv1E2ETestFramework::gen_frame_event(EncTestSetting &setting,
+                                             uint32_t frame_count,
+                                             void **head) {
+    EbPrivDataNode *node = nullptr;
+    for (TestFrameEvent event : setting.event_vector) {
+        if (std::get<1>(event) == frame_count) {
+            printf("%s param list:\t", std::get<0>(event).c_str());
+            for (std::string str : std::get<3>(event))
+                printf("%s\t", str.c_str());
+            printf("\n");
+            EbPrivDataNode *new_node =
+                (EbPrivDataNode *)malloc(sizeof(EbPrivDataNode));
+            ASSERT_NE(new_node, nullptr);
+            switch (std::get<2>(event)) {
+            case REF_FRAME_SCALING_EVENT:
+                {
+                    EbRefFrameScale *data =
+                        (EbRefFrameScale *)malloc(sizeof(EbRefFrameScale));
+                    ASSERT_NE(data, nullptr);
+                    data->scale_mode = std::stoi(std::get<3>(event)[0]);
+                    data->scale_denom = std::stoi(std::get<3>(event)[1]);
+                    data->scale_kf_denom = std::stoi(std::get<3>(event)[2]);
+                    new_node->size = sizeof(EbRefFrameScale);
+                    new_node->node_type = REF_FRAME_SCALING_EVENT;
+                    new_node->data = data;
+                }
+                break;
+            default: GTEST_FAIL() << "unhandled frame event"; break;
+            }
+            new_node->next = node;
+            node = new_node;
+        }
+    }
+    *head = node;
+}
+
+static void free_private_data_list(void *node_head) {
+    while (node_head) {
+        EbPrivDataNode* node = (EbPrivDataNode*)node_head;
+        node_head = node->next;
+        if (node->data) {
+            free(node->data);
+            node->data = nullptr;
+        }
+        free(node);
+    };
+}
+
 void SvtAv1E2ETestFramework::run_encode_process() {
     static const char READ_SRC[] = "read_src";
     static const char ENCODING[] = "encoding";
@@ -400,7 +456,11 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                     av1enc_ctx_.input_picture_buffer->n_filled_len =
                         video_src_->get_frame_size();
                     av1enc_ctx_.input_picture_buffer->flags = 0;
-                    av1enc_ctx_.input_picture_buffer->p_app_private = nullptr;
+                    free_private_data_list(
+                        av1enc_ctx_.input_picture_buffer->p_app_private);
+                    gen_frame_event(enc_setting,
+                        video_src_->get_frame_index(),
+                        &av1enc_ctx_.input_picture_buffer->p_app_private);
                     av1enc_ctx_.input_picture_buffer->pts =
                         video_src_->get_frame_index();
                     av1enc_ctx_.input_picture_buffer->pic_type =

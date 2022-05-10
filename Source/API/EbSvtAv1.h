@@ -288,6 +288,29 @@ typedef struct EbTimingInfo {
 
 } EbTimingInfo;
 
+#if FTR_RSZ_RANDOM_ACCESS
+// structure to be allocated at the sample application and passed to the library
+// on a per picture basis through the p_app_private field in the EbBufferHeaderType structure
+// this structure and the data inside would be casted, validated, then copied at the
+// svt_av1_enc_send_picture API call
+typedef enum {
+    PRIVATE_DATA,            // data to be passed through and written to the bitstream
+    //FILM_GRAIN_PARAM,        // passing film grain parameters per picture
+    REF_FRAME_SCALING_EVENT, // reference frame scaling data per picture
+} PrivDataType;
+typedef struct EbPrivDataNode {
+    PrivDataType    node_type;
+    void           *data;       // pointer to data structure e.g. EbRefFrameScale or AomFilmGrain
+    uint32_t        size;       // size of data being sent for the library to know how much to copy
+    struct EbPrivDataNode *next;// pointer to the next node, NULL if done.
+} EbPrivDataNode;
+typedef struct EbRefFrameScale {
+    uint8_t      scale_mode;     // scaling mode, support for RESIZE_NONE, RESIZE_FIXED and RESIZE_RANDOM
+    uint32_t     scale_denom;    // scaling denominator for non-key frame, from 8~16
+    uint32_t     scale_kf_denom; // scaling denominator for key frame, from 8~16
+} EbRefFrameScale;
+#endif // FTR_RSZ_RANDOM_ACCESS
+
 /**
 CPU FLAGS
 */

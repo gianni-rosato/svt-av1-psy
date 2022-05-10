@@ -121,6 +121,13 @@ class SvtAv1E2ETestFramework : public ::testing::TestWithParam<EncTestSetting> {
     */
     void run_death_test();
 
+    /* generate event list by frame settings,
+       e.g. reference scaling
+    */
+    void gen_frame_event(EncTestSetting &setting,
+                         uint32_t frame_count,
+                         void **head);
+
   public:
     static VideoSource *prepare_video_src(const TestVideoVector &vector);
     static EbColorFormat setup_video_format(VideoColorFormat fmt);
