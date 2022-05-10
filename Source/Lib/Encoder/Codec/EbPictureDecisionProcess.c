@@ -1724,7 +1724,8 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
     const uint8_t is_ref = pcs_ptr->is_used_as_reference_flag;
 
     if (scs_ptr->enable_global_motion == TRUE &&
-        pcs_ptr->frame_superres_enabled == FALSE) {
+        pcs_ptr->frame_superres_enabled == FALSE &&
+        pcs_ptr->frame_resize_enabled == FALSE) {
         if (pcs_ptr->enc_mode <= ENC_MRS)
             gm_level = 2;
         else if (pcs_ptr->enc_mode <= ENC_M2)
@@ -5152,7 +5153,9 @@ void send_picture_out(
     // Handle SUPERRES_FIXED and SUPERRES_RANDOM modes here.
     // SUPERRES_QTHRESH and SUPERRES_AUTO modes are handled in rate control process because these modes depend on qindex
     if (scs->static_config.pass == ENC_SINGLE_PASS) {
-        if (scs->static_config.superres_mode == SUPERRES_FIXED ||
+        if (scs->static_config.resize_mode == RESIZE_FIXED ||
+            scs->static_config.resize_mode == RESIZE_RANDOM ||
+            scs->static_config.superres_mode == SUPERRES_FIXED ||
             scs->static_config.superres_mode == SUPERRES_RANDOM) {
             init_resize_picture(scs, pcs);
         }

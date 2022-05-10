@@ -319,7 +319,7 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, con
     int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
                                                                    : (SB64_MIB_SIZE >> scale_horz);
 
-    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
+    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled || pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
         // the boundary of last column should use the actual width for frame might be downscaled in super resolution
         const uint32_t       sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
         EbPictureBufferDesc *pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -328,6 +328,14 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, con
             if (plane) {
                 x_range = ((((pic_ptr->width) % sb_size + scale_horz) >> scale_horz) + MI_SIZE -
                            1) >>
+                    MI_SIZE_LOG2;
+            }
+        }
+        if (mi_row == (pic_ptr->height / sb_size * sb_size) >> MI_SIZE_LOG2) {
+            y_range = (((pic_ptr->height) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+            if (plane) {
+                y_range = ((((pic_ptr->height) % sb_size + scale_vert) >> scale_vert) + MI_SIZE -
+                    1) >>
                     MI_SIZE_LOG2;
             }
         }
@@ -446,7 +454,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, con
                                                                       : (SB64_MIB_SIZE >> scale_horz);
     uint32_t mi_stride = pcs_ptr->mi_stride;
 
-    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
+    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled || pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
         // the boundary of last column should use the actual width for frames might be downscaled in super resolution
         const uint32_t       sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
         EbPictureBufferDesc *pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -455,6 +463,14 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, con
             if (plane) {
                 x_range = ((((pic_ptr->width) % sb_size + scale_horz) >> scale_horz) + MI_SIZE -
                            1) >>
+                    MI_SIZE_LOG2;
+            }
+        }
+        if (mi_row == (pic_ptr->height / sb_size * sb_size) >> MI_SIZE_LOG2) {
+            y_range = (((pic_ptr->height) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+            if (plane) {
+                y_range = ((((pic_ptr->height) % sb_size + scale_vert) >> scale_vert) + MI_SIZE -
+                    1) >>
                     MI_SIZE_LOG2;
             }
         }

@@ -2968,17 +2968,16 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
     }
 }
 
-static void write_render_size(struct AomWriteBitBuffer *wb, SequenceControlSet *scs) {
-    (void)scs;
+static AOM_INLINE void write_render_size(struct AomWriteBitBuffer *wb, PictureParentControlSet* pcs_ptr) {
     int render_and_frame_size_different = 0;
+    if (pcs_ptr->frame_resize_enabled)
+        render_and_frame_size_different = 1;
     svt_aom_wb_write_bit(wb, render_and_frame_size_different);
-    /*
     if (!render_and_frame_size_different) return;
-    uint32_t render_width_minus_1  = render_width - 1;
-    uint32_t render_height_minus_1 = render_height - 1;
+    uint32_t render_width_minus_1  = pcs_ptr->render_width - 1;
+    uint32_t render_height_minus_1 = pcs_ptr->render_height - 1;
     svt_aom_wb_write_literal(wb, render_width_minus_1, 16);
     svt_aom_wb_write_literal(wb, render_height_minus_1, 16);
-    */
 }
 
 static AOM_INLINE void write_superres_scale(struct AomWriteBitBuffer *wb,
@@ -3021,7 +3020,7 @@ static void write_frame_size(PictureParentControlSet *pcs_ptr, int32_t frame_siz
     }
 
     write_superres_scale(wb, pcs_ptr);
-    write_render_size(wb, scs_ptr);
+    write_render_size(wb, pcs_ptr);
 }
 
 static void write_profile(BitstreamProfile profile, struct AomWriteBitBuffer *wb) {
@@ -3717,7 +3716,7 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
     } else
         assert(frm_hdr->force_integer_mv == 0);
 
-    const int32_t frame_size_override_flag = frame_is_sframe(pcs_ptr)
+    const int32_t frame_size_override_flag = frame_is_sframe(pcs_ptr) || pcs_ptr->frame_resize_enabled
         ? 1
         : ((pcs_ptr->av1_cm->frm_size.superres_upscaled_width !=
             scs_ptr->seq_header.max_frame_width) ||
@@ -3750,7 +3749,6 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
     } else { // reduced_still_picture_header
         assert(frame_size_override_flag == 0);
     }
-
     if (frm_hdr->frame_type == KEY_FRAME) {
         if (!frm_hdr->show_frame)
             svt_aom_wb_write_literal(wb, pcs_ptr->av1_ref_signal.refresh_frame_mask, REF_FRAMES);

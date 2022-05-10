@@ -1140,7 +1140,7 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
     // super res pictures scaled with different sb count, should use sb_total_count for each picture
     uint16_t sb_cnt = scs_ptr->sb_tot_cnt;
-    if (scs_ptr->static_config.superres_mode > SUPERRES_NONE)
+    if (ppcs_ptr->frame_superres_enabled || ppcs_ptr->frame_resize_enabled)
         sb_cnt = ppcs_ptr->sb_total_count;
     if ((pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) &&
         (pcs_ptr->parent_pcs_ptr->tpl_is_valid == 1)) {
@@ -3028,7 +3028,7 @@ void *rate_control_kernel(void *input_ptr) {
                     if (scs_ptr->static_config.superres_mode > SUPERRES_RANDOM) {
                         // determine denom and scale down picture by selected denom
                         init_resize_picture(scs_ptr, pcs_ptr->parent_pcs_ptr);
-                        if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
+                        if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled || pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
                             // reset gm based on super-res on/off
                             set_gm_controls(pcs_ptr->parent_pcs_ptr,
                                             derive_gm_level(pcs_ptr->parent_pcs_ptr));

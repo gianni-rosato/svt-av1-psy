@@ -2174,7 +2174,9 @@ void *source_based_operations_kernel(void *input_ptr) {
 
         // Get TPL ME
         if (pcs_ptr->tpl_ctrls.enable) {
-            if (!pcs_ptr->frame_superres_enabled && pcs_ptr->temporal_layer_index == 0) {
+            if (!pcs_ptr->frame_superres_enabled &&
+                !scs_ptr->static_config.resize_mode &&
+                pcs_ptr->temporal_layer_index == 0) {
                 tpl_prep_info(pcs_ptr);
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr, context_ptr);
             }
@@ -2189,7 +2191,7 @@ void *source_based_operations_kernel(void *input_ptr) {
 
         /***********************************************SB-based operations************************************************************/
         uint16_t sb_cnt = scs_ptr->sb_tot_cnt;
-        if (scs_ptr->static_config.superres_mode > SUPERRES_NONE)
+        if (pcs_ptr->frame_superres_enabled || pcs_ptr->frame_resize_enabled)
             sb_cnt = pcs_ptr->sb_total_count;
         uint32_t sb_index;
         for (sb_index = 0; sb_index < sb_cnt; ++sb_index) {

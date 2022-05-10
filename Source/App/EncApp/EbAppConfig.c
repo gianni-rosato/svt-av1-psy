@@ -99,6 +99,11 @@
 #define SUPERRES_QTHRES "--superres-qthres"
 #define SUPERRES_KF_QTHRES "--superres-kf-qthres"
 // --- end: SUPER-RESOLUTION SUPPORT
+// --- start: REFERENCE SCALING SUPPORT
+#define RESIZE_MODE_INPUT "--resize-mode"
+#define RESIZE_DENOM "--resize-denom"
+#define RESIZE_KF_DENOM "--resize-kf-denom"
+// --- end: REFERENCE SCALING SUPPORT
 #define RATE_CONTROL_ENABLE_TOKEN "--rc"
 #define TARGET_BIT_RATE_TOKEN "--tbr"
 #define MAX_BIT_RATE_TOKEN "--mbr"
@@ -640,6 +645,17 @@ static void set_superres_kf_qthres(const char *value, EbConfig *cfg) {
     cfg->config.superres_kf_qthres = (uint8_t)strtoul(value, NULL, 0);
 };
 // --- end: SUPER-RESOLUTION SUPPORT
+// --- start: REFERENCE SCALING SUPPORT
+static void set_resize_mode(const char* value, EbConfig* cfg) {
+    cfg->config.resize_mode = (SUPERRES_MODE)strtoul(value, NULL, 0);
+};
+static void set_resize_denom(const char* value, EbConfig* cfg) {
+    cfg->config.resize_denom = (uint8_t)strtoul(value, NULL, 0);
+};
+static void set_resize_kf_denom(const char* value, EbConfig* cfg) {
+    cfg->config.resize_kf_denom = (uint8_t)strtoul(value, NULL, 0);
+};
+// --- end: REFERENCE SCALING SUPPORT
 static void set_high_dynamic_range_input(const char *value, EbConfig *cfg) {
     cfg->config.high_dynamic_range_input = !!strtol(value, NULL, 0);
 };
@@ -1262,6 +1278,20 @@ ConfigEntry config_entry_specific[] = {
      " 2: the next altref frame will be made into an S-Frame[default])",
      set_cfg_sframe_mode},
     // --- end: SWITCH_FRAME SUPPORT
+    // --- start: REFERENCE SCALING SUPPORT
+    {SINGLE_INPUT,
+     RESIZE_MODE_INPUT,
+     "Enable resize mode [0: none, 1: fixed scale, 2: random scale, 3: dynamic scale]",
+     set_resize_mode},
+    {SINGLE_INPUT,
+     RESIZE_DENOM,
+     "Resize denominator, only applicable for mode == 1 [8-16]",
+     set_resize_denom},
+    {SINGLE_INPUT,
+     RESIZE_KF_DENOM,
+     "Resize denominator for key frames, only applicable for mode == 1 [8-16]",
+     set_resize_kf_denom},
+    // --- end: REFERENCE SCALING SUPPORT
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1488,6 +1518,10 @@ ConfigEntry config_entry[] = {
     // Switch frame support
     {SINGLE_INPUT, SFRAME_DIST_TOKEN, "SframeInterval", set_cfg_sframe_dist},
     {SINGLE_INPUT, SFRAME_MODE_TOKEN, "SframeMode", set_cfg_sframe_mode},
+    // Reference Scaling support
+    {SINGLE_INPUT, RESIZE_MODE_INPUT, "ResizeMode", set_resize_mode},
+    {SINGLE_INPUT, RESIZE_DENOM, "ResizeDenom", set_resize_denom},
+    {SINGLE_INPUT, RESIZE_KF_DENOM, "ResizeKfDenom", set_resize_kf_denom},
 
     // Color Description Options
     {SINGLE_INPUT, COLOR_PRIMARIES_NEW_TOKEN, "ColorPrimaries", set_cfg_color_primaries},

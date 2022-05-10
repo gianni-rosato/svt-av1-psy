@@ -957,6 +957,14 @@ typedef struct PictureParentControlSet {
     uint16_t frame_width;
     uint16_t frame_height;
 
+    // Picture dimensions (resized)
+    // --not-- aligned to be a multiple of 8 pixels
+    uint16_t render_width;
+    uint16_t render_height;
+
+    Bool    frame_resize_enabled;
+    uint8_t resize_denom;
+
     Bool    frame_superres_enabled;
     uint8_t superres_denom;
     // recode for auto superres
@@ -964,8 +972,8 @@ typedef struct PictureParentControlSet {
         superres_recode_loop; // which loop is now running, range from 0 to superres_total_recode_loop - 1
     int32_t superres_total_recode_loop; // how many loops to run, set to 2 in dual search mode
     uint8_t
-           superres_denom_array[SCALE_NUMERATOR + 1]; // denom candidate array used in auto supreres
-    double superres_rdcost[SCALE_NUMERATOR + 1]; // 9 slots, for denom 8 ~ 16
+           superres_denom_array[NUM_SCALES + 1]; // denom candidate array used in auto supreres
+    double superres_rdcost[NUM_SCALES + 1]; // 9 slots, for denom 8 ~ 16
 
     EbObjectWrapper      *me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
@@ -986,7 +994,7 @@ typedef struct PictureParentControlSet {
 
     // Tune TPL for better chroma.Only for 240P
     uint8_t      tune_tpl_for_chroma;
-    uint8_t      is_superres_none;
+    uint8_t      is_resize_none;
     TfControls   tf_ctrls;
     GmControls   gm_ctrls;
     CdefControls cdef_ctrls;

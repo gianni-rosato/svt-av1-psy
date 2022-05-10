@@ -2215,8 +2215,8 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs
                                           ((input_picture_ptr->origin_y >> subsampling_y) *
                                            input_picture_ptr->stride_cb)],
             input_picture_ptr->stride_cb,
-            (input_picture_ptr->width - scs_ptr->pad_right) >> subsampling_x,
-            (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
+            (input_picture_ptr->width + subsampling_x - scs_ptr->pad_right) >> subsampling_x,
+            (input_picture_ptr->height + subsampling_y - scs_ptr->pad_bottom) >> subsampling_y,
             scs_ptr->pad_right >> subsampling_x,
             scs_ptr->pad_bottom >> subsampling_y);
 
@@ -2226,8 +2226,8 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs
                                           ((input_picture_ptr->origin_y >> subsampling_y) *
                                            input_picture_ptr->stride_cb)],
             input_picture_ptr->stride_cr,
-            (input_picture_ptr->width - scs_ptr->pad_right) >> subsampling_x,
-            (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
+            (input_picture_ptr->width + subsampling_x - scs_ptr->pad_right) >> subsampling_x,
+            (input_picture_ptr->height + subsampling_y - scs_ptr->pad_bottom) >> subsampling_y,
             scs_ptr->pad_right >> subsampling_x,
             scs_ptr->pad_bottom >> subsampling_y);
 
@@ -2253,8 +2253,8 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs
             pad_2b_compressed_input_picture(
                 &input_picture_ptr->buffer_bit_inc_cb[comp_chroma_buffer_offset],
                 comp_stride_uv,
-                (input_picture_ptr->width - scs_ptr->pad_right) >> subsampling_x,
-                (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
+                (input_picture_ptr->width + subsampling_x - scs_ptr->pad_right) >> subsampling_x,
+                (input_picture_ptr->height + subsampling_y - scs_ptr->pad_bottom) >> subsampling_y,
                 scs_ptr->pad_right >> subsampling_x,
                 scs_ptr->pad_bottom >> subsampling_y);
 
@@ -2262,8 +2262,8 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs
             pad_2b_compressed_input_picture(
                 &input_picture_ptr->buffer_bit_inc_cr[comp_chroma_buffer_offset],
                 comp_stride_uv,
-                (input_picture_ptr->width - scs_ptr->pad_right) >> subsampling_x,
-                (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
+                (input_picture_ptr->width + subsampling_x - scs_ptr->pad_right) >> subsampling_x,
+                (input_picture_ptr->height + subsampling_y - scs_ptr->pad_bottom) >> subsampling_y,
                 scs_ptr->pad_right >> subsampling_x,
                 scs_ptr->pad_bottom >> subsampling_y);
     }

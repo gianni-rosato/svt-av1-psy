@@ -483,7 +483,6 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
             string name = test_prefix + idx;
             EncTestSetting setting{name,
                                    {{"SuperresMode", "1"},
-                                    {"Restoration Filter", "1"},
                                     {"SuperresDenom", std::to_string(i)},
                                     {"SuperresKfDenom", std::to_string(j)}},
                                    default_test_vectors};
@@ -500,7 +499,6 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
             string name = test_prefix + idx;
             EncTestSetting setting{name,
                                    {{"SuperresMode", "1"},
-                                    {"Restoration Filter", "1"},
                                     {"SuperresDenom", std::to_string(i)},
                                     {"SuperresKfDenom", std::to_string(j)},
                                     {"Encoder16BitPipeline", "1"}},
@@ -556,4 +554,49 @@ generate_super_res_q_threshold_settings() {
 INSTANTIATE_TEST_CASE_P(
     SUPERRESQTHRESTEST, SuperResTest,
     ::testing::ValuesIn(generate_super_res_q_threshold_settings()),
+    EncTestSetting::GetSettingName);
+
+static const std::vector<EncTestSetting> generate_ref_scaling_settings() {
+    static const std::string test_prefix = "RefScaling";
+    std::vector<EncTestSetting> settings;
+
+    int count = 0;
+    // 8-bit test cases
+    for (size_t i = 8; i <= 16; i++) {
+        for (size_t j = 8; j <= 16; j++) {
+            EncTestSetting new_setting;
+            string idx = std::to_string(count);
+            string name = test_prefix + idx;
+            EncTestSetting setting{ name,
+                                   {{"ResizeMode", "1"},
+                                    {"ResizeDenom", std::to_string(i)},
+                                    {"ResizeKfDenom", std::to_string(j)}},
+                                   default_test_vectors };
+            settings.push_back(setting);
+            count++;
+        }
+    }
+#ifdef ENBALE_16BIT_PIPELINE_TEST
+    // 16-bit test cases
+    for (size_t i = 8; i <= 16; i++) {
+        for (size_t j = 8; j <= 16; j++) {
+            EncTestSetting new_setting;
+            string idx = std::to_string(count);
+            string name = test_prefix + idx;
+            EncTestSetting setting{ name,
+                                   {{"SuperresMode", "1"},
+                                    {"ResizeDenom", std::to_string(i)},
+                                    {"ResizeKfDenom", std::to_string(j)}},
+                                    {"Encoder16BitPipeline", "1"}},
+                                   default_test_vectors };
+            settings.push_back(setting);
+            count++;
+        }
+    }
+#endif  // ENBALE_16BIT_PIPELINE_TEST
+    return settings;
+}
+
+INSTANTIATE_TEST_CASE_P(REFSCALINGTEST, SuperResTest,
+    ::testing::ValuesIn(generate_ref_scaling_settings()),
     EncTestSetting::GetSettingName);

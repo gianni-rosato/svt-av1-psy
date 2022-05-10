@@ -929,10 +929,15 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->tune            = 1;
     // Super-resolution default values
     config_ptr->superres_mode      = SUPERRES_NONE;
-    config_ptr->superres_denom     = 8;
-    config_ptr->superres_kf_denom  = 8;
+    config_ptr->superres_denom     = SCALE_NUMERATOR;
+    config_ptr->superres_kf_denom  = SCALE_NUMERATOR;
     config_ptr->superres_qthres    = 43; // random threshold, change
     config_ptr->superres_kf_qthres = 43; // random threshold, change
+
+    // Reference Scaling default values
+    config_ptr->resize_mode        = RESIZE_NONE;
+    config_ptr->resize_denom       = SCALE_NUMERATOR;
+    config_ptr->resize_kf_denom    = SCALE_NUMERATOR;
 
     // Color description default values
     config_ptr->color_description_present_flag = FALSE;
@@ -1666,6 +1671,9 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"superres-kf-denom", &config_struct->superres_kf_denom},
         {"tune", &config_struct->tune},
         {"film-grain-denoise", &config_struct->film_grain_denoise_apply},
+        {"resize-mode", &config_struct->resize_mode},
+        {"resize-denom", &config_struct->resize_denom},
+        {"resize-kf-denom", &config_struct->resize_kf_denom},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

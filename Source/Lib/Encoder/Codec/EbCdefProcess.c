@@ -454,12 +454,19 @@ void *cdef_kernel(void *input_ptr) {
             }
 
             // ------- start: Normative upscaling - super-resolution tool
-            if (frm_hdr->allow_intrabc == 0 && !av1_superres_unscaled(&cm->frm_size)) {
+            if (frm_hdr->allow_intrabc == 0 && pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
                 svt_av1_superres_upscale_frame(cm, pcs_ptr, scs_ptr);
 
                 if (is_16bit) {
                     set_unscaled_input_16bit(pcs_ptr);
                 }
+            }
+            if (scs_ptr->static_config.resize_mode) {
+                EbPictureBufferDesc* recon = NULL;
+                get_recon_pic(pcs_ptr, &recon, is_16bit);
+                recon->width = pcs_ptr->parent_pcs_ptr->render_width;
+                recon->height = pcs_ptr->parent_pcs_ptr->render_height;;
+                //TODO: 16-bit
             }
             // ------- end: Normative upscaling - super-resolution tool
 

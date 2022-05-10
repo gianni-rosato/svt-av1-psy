@@ -555,7 +555,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 }
             }
             // perform tpl_la on unscaled frames only
-            if (pcs_ptr->tpl_ctrls.enable && !pcs_ptr->frame_superres_enabled) {
+            if (pcs_ptr->tpl_ctrls.enable && !pcs_ptr->frame_superres_enabled && !pcs_ptr->frame_resize_enabled) {
                 svt_set_cond_var(&pcs_ptr->me_ready, 1);
             }
 
@@ -578,7 +578,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
             print_lad_queue(context_ptr, 0);
 #endif
             uint8_t lad_queue_pass_thru = !(pcs_ptr->tpl_ctrls.enable &&
-                                            !pcs_ptr->frame_superres_enabled);
+                                            !pcs_ptr->frame_superres_enabled &&
+                                            !pcs_ptr->frame_resize_enabled);
             process_lad_queue(context_ptr, lad_queue_pass_thru);
         }
         // Release the Input Results

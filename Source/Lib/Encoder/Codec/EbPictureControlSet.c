@@ -1302,7 +1302,7 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DESTROY_MUTEX(obj->first_pass_mutex);
     if (obj->is_pcs_sb_params)
         svt_pcs_sb_structs_dctor(obj);
-    if (obj->frame_superres_enabled) {
+    if (obj->frame_superres_enabled || obj->frame_resize_enabled) {
         EB_DELETE(obj->enhanced_downscaled_picture_ptr);
     }
     EB_DESTROY_SEMAPHORE(obj->tpl_disp_done_semaphore);
@@ -1482,12 +1482,18 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->aligned_height         = init_data_ptr->picture_height;
     object_ptr->frame_width            = init_data_ptr->picture_width;
     object_ptr->frame_height           = init_data_ptr->picture_height;
+    object_ptr->render_width           = init_data_ptr->picture_width;
+    object_ptr->render_height          = init_data_ptr->picture_height;
 
     object_ptr->superres_denom             = SCALE_NUMERATOR;
     object_ptr->superres_total_recode_loop = 0;
     object_ptr->superres_recode_loop       = 0;
     memset(&object_ptr->superres_rdcost, 0, sizeof(object_ptr->superres_rdcost));
     memset(&object_ptr->superres_denom_array, 0, sizeof(object_ptr->superres_denom_array));
+
+    object_ptr->frame_resize_enabled = FALSE;
+    object_ptr->resize_denom = SCALE_NUMERATOR;
+
     // Loop variables
     object_ptr->loop_count      = 0;
     object_ptr->overshoot_seen  = 0;

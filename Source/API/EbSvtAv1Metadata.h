@@ -30,6 +30,7 @@ typedef enum EbAv1MetadataType {
     EB_AV1_METADATA_TYPE_SCALABILITY    = 3,
     EB_AV1_METADATA_TYPE_ITUT_T35       = 4,
     EB_AV1_METADATA_TYPE_TIMECODE       = 5,
+    EB_AV1_METADATA_TYPE_FRAME_SIZE     = 6,
 } EbAv1MetadataType;
 
 /*!\brief Metadata payload. */
@@ -44,6 +45,17 @@ typedef struct SvtMetadataArray {
     size_t         sz; /* Number of metadata structs in the list */
     SvtMetadataT **metadata_array; /* Array of metadata structs */
 } SvtMetadataArrayT;
+
+/*!\brief Frame size struct in metadata. */
+typedef struct SvtMetadataFrameSize {
+    uint16_t width;        /**< pixel width of frame */
+    uint16_t height;       /**< pixel height of frame */
+    uint16_t disp_width;   /**< display pixel width of frame */
+    uint16_t disp_height;  /**< display pixel height of frame */
+    uint16_t stride;       /**< pixel stride of frame */
+    uint16_t subsampling_x;/**< subsampling of Cb/Cr in width */
+    uint16_t subsampling_y;/**< subsampling of Cb/Cr in height */
+} SvtMetadataFrameSizeT;
 
 /*!\brief Allocate memory for SvtMetadataT struct.
  *

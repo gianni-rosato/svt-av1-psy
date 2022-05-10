@@ -3310,6 +3310,32 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 "This mode retains a significant amount of memory, much more than other modes!\n");
         }
     }
+    if (scs_ptr->static_config.resize_mode == RESIZE_FIXED &&
+        scs_ptr->static_config.resize_denom == SCALE_NUMERATOR &&
+        scs_ptr->static_config.resize_kf_denom == SCALE_NUMERATOR) {
+        scs_ptr->static_config.resize_mode = RESIZE_NONE;
+    }
+    if (scs_ptr->static_config.resize_mode > RESIZE_NONE) {
+        if (scs_ptr->static_config.enable_tpl_la != 0) {
+            SVT_WARN("TPL will be disabled when resize is enabled!\n");
+            scs_ptr->static_config.enable_tpl_la = 0;
+        }
+        if (scs_ptr->static_config.enable_restoration_filtering != 0) {
+            SVT_WARN("Restoration will be disabled when resize is enabled!\n");
+            scs_ptr->static_config.enable_restoration_filtering = 0;
+        }
+        if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
+            // disable tiles if resize is on
+            SVT_WARN("Tiles will be disabled when resize is enabled!\n");
+            scs_ptr->static_config.tile_rows = 0;
+            scs_ptr->static_config.tile_columns = 0;
+        }
+        if (scs_ptr->static_config.resize_mode == RESIZE_RANDOM) {
+            SVT_WARN("Resize random mode is designed for test and debugging purpose,\n"
+                "it creates array of picture buffers for all scaling denominators (up to 8) of each reference frame.\n"
+                "This mode retains a significant amount of memory, much more than other modes!\n");
+        }
+    }
     // Set initial qp for single pass vbr
     if ((scs_ptr->static_config.rate_control_mode) && (scs_ptr->static_config.pass == ENC_SINGLE_PASS)){
         if (scs_ptr->static_config.qp != DEFAULT_QP) {
@@ -3997,6 +4023,10 @@ void copy_api_from_app(
         scs_ptr->static_config.superres_auto_search_type = SUPERRES_AUTO_DUAL;
         //scs_ptr->static_config.superres_auto_search_type = SUPERRES_AUTO_ALL;
     }
+
+    scs_ptr->static_config.resize_mode = config_struct->resize_mode;
+    scs_ptr->static_config.resize_denom = config_struct->resize_denom;
+    scs_ptr->static_config.resize_kf_denom = config_struct->resize_kf_denom;
 
     // Prediction Structure
     scs_ptr->static_config.enable_manual_pred_struct    = config_struct->enable_manual_pred_struct;
@@ -4894,6 +4924,8 @@ EB_API EbErrorType svt_av1_get_recon(
 
             if (p_buffer->flags != EB_BUFFERFLAG_EOS && p_buffer->flags != 0)
                 return_error = EB_ErrorMax;
+            if (obj_ptr->metadata)
+                svt_metadata_array_free(&obj_ptr->metadata);
             svt_release_object((EbObjectWrapper  *)eb_wrapper_ptr);
         }
         else

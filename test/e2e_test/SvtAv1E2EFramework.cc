@@ -29,6 +29,7 @@
 #include "SvtAv1E2EFramework.h"
 #include "CompareTools.h"
 #include "ConfigEncoder.h"
+#include "EbSvtAv1Metadata.h"
 
 #ifdef _WIN32
 #define fseeko _fseeki64
@@ -467,7 +468,6 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                     if (enc_out->flags & EB_BUFFERFLAG_EOS) {
                         enc_file_eos = true;
                         printf("Encoder EOS\n");
-                        break;
                     }
                     // check if the process has encounter error, break out if
                     // true, like the recon frame does not match with decoded
@@ -485,7 +485,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                 // Release the output buffer
                 if (enc_out != nullptr)
                     svt_av1_enc_release_out_buffer(&enc_out);
-            } while (src_file_eos);
+            } while (src_file_eos && !enc_file_eos);
         }  // if (!enc_file_eos)
     } while (!rec_file_eos || !src_file_eos || !enc_file_eos);
 
@@ -646,26 +646,26 @@ void SvtAv1E2ETestFramework::check_psnr(const VideoFrame &frame) {
 }
 
 static bool transfer_frame_planes(VideoFrame *frame) {
-    if (frame->buf_size != VideoFrame::calculate_max_frame_size(*frame)) {
+    if (frame->buf_size > VideoFrame::calculate_max_frame_size(*frame)) {
         printf("buffer size doesn't match!\n");
         return false;
     }
 
-    uint32_t height_scale = 1;
+    uint32_t ss_y = 0;
     if (frame->format == IMG_FMT_420 ||
         frame->format == IMG_FMT_420P10_PACKED ||
         frame->format == IMG_FMT_I420) {
-        height_scale = 2;
+        ss_y = 1;
     }
     if (frame->stride[3]) {
         uint32_t offset = frame->stride[0] * frame->height +
                           ((frame->stride[1] + frame->stride[2]) *
-                           frame->height / height_scale);
+                           ((frame->height + ss_y) >> ss_y));
         memcpy(frame->planes[3], frame->buffer + offset, frame->buf_size >> 2);
     }
     if (frame->stride[2]) {
         uint32_t offset = frame->stride[0] * frame->height +
-                          (frame->stride[1] * frame->height / height_scale);
+                          (frame->stride[1] * ((frame->height + ss_y) >> ss_y));
         memcpy(frame->planes[2], frame->buffer + offset, frame->buf_size >> 2);
     }
     if (frame->stride[1]) {
@@ -700,6 +700,30 @@ void SvtAv1E2ETestFramework::get_recon_frame(const SvtAv1Context &ctxt,
             recon->delete_frame(new_frame);
             break;
         } else {
+            // adjust recon frame size if resize feature enabled in encoder
+            if (recon_frame.n_filled_len != new_frame->buf_size
+             && recon_frame.metadata) {
+                for (size_t i = 0; i < recon_frame.metadata->sz; i++) {
+                    SvtMetadataT* metadata =
+                        recon_frame.metadata->metadata_array[i];
+                    ASSERT_NE(metadata, nullptr);
+                    if (metadata->type == EB_AV1_METADATA_TYPE_FRAME_SIZE) {
+                        ASSERT_EQ(metadata->sz, sizeof(SvtMetadataFrameSizeT));
+                        SvtMetadataFrameSizeT* frame_size =
+                            (SvtMetadataFrameSizeT*)metadata->payload;
+                        new_frame->width = frame_size->width;
+                        new_frame->height = frame_size->height;
+                        new_frame->disp_width = frame_size->disp_width;
+                        new_frame->disp_height = frame_size->disp_height;
+                        new_frame->stride[0] = frame_size->stride;
+                        new_frame->stride[2] = new_frame->stride[1] =
+                            (frame_size->stride + frame_size->subsampling_x)
+                            >> frame_size->subsampling_x;
+                        new_frame->buf_size = recon_frame.n_filled_len;
+                        break;
+                    }
+                }
+            }
             ASSERT_LE(recon_frame.n_filled_len, new_frame->buf_size)
                 << "recon frame size incorrect@" << recon_frame.pts;
             // mark the recon eos flag

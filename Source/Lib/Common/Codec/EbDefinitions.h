@@ -2287,6 +2287,10 @@ void(*error_handler)(
 #define MIN_SUPERRES_DENOM                          8
 #define MAX_SUPERRES_DENOM                          16
 
+// reference scaling definitions
+#define MIN_RESIZE_DENOM                            8
+#define MAX_RESIZE_DENOM                            16
+
 //***Prediction Structure***
 #define MAX_TEMPORAL_LAYERS                         6
 #define MAX_REF_IDX                                 4

@@ -784,7 +784,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                         pa_ref_obj_->sixteenth_downsampled_picture_ptr;
             input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
 
-            if (pcs_ptr->frame_superres_enabled)
+            if (pcs_ptr->frame_superres_enabled || pcs_ptr->frame_resize_enabled)
                 input_picture_ptr = pcs_ptr->enhanced_downscaled_picture_ptr;
             else
                 input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
@@ -877,15 +877,16 @@ void *motion_estimation_kernel(void *input_ptr) {
                                     for (int i = 0;  i < context_ptr->me_context_ptr->num_of_list_to_search; i++) {
                                         for (int j = 0; j < context_ptr->me_context_ptr->num_of_ref_pic_to_search[i]; j++) {
                                             //assert((int)pcs_ptr->ref_pa_pic_ptr_array[i][j]->live_count > 0);
-                                            uint8_t denom_idx = (uint8_t)(pcs_ptr->superres_denom - SCALE_NUMERATOR - 1);
+                                            uint8_t sr_denom_idx = get_denom_idx(pcs_ptr->superres_denom);
+                                            uint8_t resize_denom_idx = get_denom_idx(pcs_ptr->resize_denom);
                                             EbPaReferenceObject *reference_object =
                                                 (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
                                             context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
-                                                reference_object->downscaled_input_padded_picture_ptr[denom_idx];
+                                                reference_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
                                             context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
-                                                reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx];
+                                                reference_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
                                             context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
-                                                reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx];
+                                                reference_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
                                             context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number =
                                                 reference_object->picture_number;
                                         }

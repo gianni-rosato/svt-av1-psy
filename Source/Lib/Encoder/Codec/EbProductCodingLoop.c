@@ -11386,9 +11386,12 @@ EB_EXTERN EbErrorType svt_aom_check_high_freq(
 
         uint32_t blk_idx_mds = blk32_idx_tab[scs_ptr->geom_idx][blk_idx];
 
+        // block position should be calculated from the values in MD context,
+        // because sb params are different since frames might be downscaled
+        // if super-res or resize is enabled
         const BlockGeom* blk_geom = ctx->blk_geom = get_blk_geom_mds(blk_idx_mds);
-        ctx->blk_origin_x = (uint16_t)(sb_ptr->origin_x + blk_geom->origin_x);
-        ctx->blk_origin_y = (uint16_t)(sb_ptr->origin_y + blk_geom->origin_y);
+        ctx->blk_origin_x = (uint16_t)(ctx->sb_origin_x + blk_geom->origin_x);
+        ctx->blk_origin_y = (uint16_t)(ctx->sb_origin_y + blk_geom->origin_y);
         const uint32_t input_origin_index = (ctx->blk_origin_y + input_pic->origin_y) * input_pic->stride_y + (ctx->blk_origin_x + input_pic->origin_x);
 
         ctx->me_sb_addr = ctx->sb_ptr->index;

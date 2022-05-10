@@ -2941,11 +2941,11 @@ EbErrorType motion_estimation_b64(
 
     uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
 
-    context_ptr->block_width  = (input_ptr->width - b64_origin_x) < BLOCK_SIZE_64
-        ? input_ptr->width - b64_origin_x
+    context_ptr->block_width  = (pcs_ptr->aligned_width - b64_origin_x) < BLOCK_SIZE_64
+        ? pcs_ptr->aligned_width - b64_origin_x
         : BLOCK_SIZE_64;
-    context_ptr->block_height = (input_ptr->height - b64_origin_y) < BLOCK_SIZE_64
-        ? input_ptr->height - b64_origin_y
+    context_ptr->block_height = (pcs_ptr->aligned_height - b64_origin_y) < BLOCK_SIZE_64
+        ? pcs_ptr->aligned_height - b64_origin_y
         : BLOCK_SIZE_64;
 
     //pruning of the references is not done for alt-ref / when HMeLevel2 not done

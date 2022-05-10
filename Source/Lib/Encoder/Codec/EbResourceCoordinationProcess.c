@@ -1077,8 +1077,9 @@ void *resource_coordination_kernel(void *input_ptr) {
             //     to avoid recycling overlay candidate's ppcs to empty fifo too early.
             pcs_ptr->p_pcs_wrapper_ptr = pcs_wrapper_ptr;
 
-            // reallocate sb_param_array and sb_geom for super-res mode on
-            if (scs_ptr->static_config.superres_mode > SUPERRES_NONE)
+            // reallocate sb_param_array and sb_geom for super-res or reference scaling mode on
+            if (scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
+                scs_ptr->static_config.resize_mode > RESIZE_NONE)
                 realloc_sb_param(scs_ptr, pcs_ptr);
             else {
                 pcs_ptr->sb_params_array  = scs_ptr->sb_params_array;
@@ -1141,7 +1142,8 @@ void *resource_coordination_kernel(void *input_ptr) {
             //store the y8b warapper to be used for release later
             pcs_ptr->eb_y8b_wrapper_ptr   = eb_y8b_wrapper_ptr;
             pcs_ptr->end_of_sequence_flag = end_of_sequence_flag;
-            pcs_ptr->is_superres_none     = (scs_ptr->static_config.superres_mode == SUPERRES_NONE);
+            pcs_ptr->is_resize_none       = (scs_ptr->static_config.superres_mode == SUPERRES_NONE)
+                && scs_ptr->static_config.resize_mode == RESIZE_NONE;
             if (loop_index == 1) {
                 // Get a new input picture for overlay.
                 EbObjectWrapper *input_pic_wrapper_ptr;

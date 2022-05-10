@@ -25,6 +25,7 @@
 #include "EbPictureDecisionProcess.h"
 #include "firstpass.h"
 #include "EbPictureAnalysisProcess.h"
+#include "EbResize.h"
 void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 int  svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 #define FC_SKIP_TX_SR_TH025 125 // Fast cost skip tx search threshold.
@@ -464,8 +465,11 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 
             EbPictureBufferDesc *recon_ptr;
             EbPictureBufferDesc *intermediate_buffer_ptr = NULL;
-            { get_recon_pic(pcs_ptr, &recon_ptr, is_16bit); }
+            get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
 
+            const uint32_t color_format = recon_ptr->color_format;
+            const uint16_t ss_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+            const uint16_t ss_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
             // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
             if ((scs_ptr->static_config.pass != ENC_FIRST_PASS) &&
                 scs_ptr->seq_header.film_grain_params_present &&
@@ -508,11 +512,20 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
                     recon_ptr = intermediate_buffer_ptr;
                 }
             }
-
             // End running the film grain
+
+            // set output recon frame size to original size when enable resize feature
+            // easy to display in tool and analysis
+            uint16_t recon_w = recon_ptr->width;
+            uint16_t recon_h = recon_ptr->height;
+            if (scs_ptr->static_config.resize_mode) {
+                recon_w = recon_ptr->max_width;  //ALIGN_POWER_OF_TWO(recon_ptr->width, 3);
+                recon_h = recon_ptr->max_height; //ALIGN_POWER_OF_TWO(recon_ptr->height, 3);
+            }
+
             // Y Recon Samples
-            sample_total_count = ((recon_ptr->max_width - scs_ptr->max_input_pad_right) *
-                                  (recon_ptr->max_height - scs_ptr->max_input_pad_bottom))
+            sample_total_count = ((recon_w - scs_ptr->pad_right) *
+                                  (recon_h - scs_ptr->pad_bottom))
                 << is_16bit;
             recon_read_ptr = recon_ptr->buffer_y +
                 (recon_ptr->origin_y << is_16bit) * recon_ptr->stride_y +
@@ -528,21 +541,20 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
             picture_copy_kernel(recon_read_ptr,
                                 recon_ptr->stride_y,
                                 recon_write_ptr,
-                                recon_ptr->max_width - scs_ptr->max_input_pad_right,
-                                recon_ptr->width - scs_ptr->pad_right,
-                                recon_ptr->height - scs_ptr->pad_bottom,
+                                recon_w - scs_ptr->pad_right,
+                                recon_w - scs_ptr->pad_right,
+                                recon_h - scs_ptr->pad_bottom,
                                 1 << is_16bit);
 
             output_recon_ptr->n_filled_len += sample_total_count;
 
             // U Recon Samples
-            sample_total_count = ((recon_ptr->max_width - scs_ptr->max_input_pad_right) *
-                                      (recon_ptr->max_height - scs_ptr->max_input_pad_bottom) >>
-                                  2)
+            sample_total_count = (((recon_w + ss_x - scs_ptr->pad_right) >> ss_x) *
+                                  ((recon_h + ss_y - scs_ptr->pad_bottom) >> ss_y))
                 << is_16bit;
             recon_read_ptr = recon_ptr->buffer_cb +
-                ((recon_ptr->origin_y << is_16bit) >> 1) * recon_ptr->stride_cb +
-                ((recon_ptr->origin_x << is_16bit) >> 1);
+                ((recon_ptr->origin_y << is_16bit) >> ss_y) * recon_ptr->stride_cb +
+                ((recon_ptr->origin_x << is_16bit) >> ss_x);
             recon_write_ptr = &(output_recon_ptr->p_buffer[output_recon_ptr->n_filled_len]);
 
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <=
@@ -554,20 +566,19 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
             picture_copy_kernel(recon_read_ptr,
                                 recon_ptr->stride_cb,
                                 recon_write_ptr,
-                                (recon_ptr->max_width - scs_ptr->max_input_pad_right) >> 1,
-                                (recon_ptr->width - scs_ptr->pad_right) >> 1,
-                                (recon_ptr->height - scs_ptr->pad_bottom) >> 1,
+                                (recon_w + ss_x - scs_ptr->pad_right) >> ss_x,
+                                (recon_w + ss_x - scs_ptr->pad_right) >> ss_x,
+                                (recon_h + ss_y - scs_ptr->pad_bottom) >> ss_y,
                                 1 << is_16bit);
             output_recon_ptr->n_filled_len += sample_total_count;
 
             // V Recon Samples
-            sample_total_count = ((recon_ptr->max_width - scs_ptr->max_input_pad_right) *
-                                      (recon_ptr->max_height - scs_ptr->max_input_pad_bottom) >>
-                                  2)
+            sample_total_count = (((recon_w + ss_x - scs_ptr->pad_right) >> ss_x) *
+                                  ((recon_h + ss_y - scs_ptr->pad_bottom) >> ss_y))
                 << is_16bit;
             recon_read_ptr = recon_ptr->buffer_cr +
-                ((recon_ptr->origin_y << is_16bit) >> 1) * recon_ptr->stride_cr +
-                ((recon_ptr->origin_x << is_16bit) >> 1);
+                ((recon_ptr->origin_y << is_16bit) >> ss_y) * recon_ptr->stride_cr +
+                ((recon_ptr->origin_x << is_16bit) >> ss_x);
             recon_write_ptr = &(output_recon_ptr->p_buffer[output_recon_ptr->n_filled_len]);
 
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <=
@@ -580,12 +591,28 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
             picture_copy_kernel(recon_read_ptr,
                                 recon_ptr->stride_cr,
                                 recon_write_ptr,
-                                (recon_ptr->max_width - scs_ptr->max_input_pad_right) >> 1,
-                                (recon_ptr->width - scs_ptr->pad_right) >> 1,
-                                (recon_ptr->height - scs_ptr->pad_bottom) >> 1,
+                                (recon_w + ss_x - scs_ptr->pad_right) >> ss_x,
+                                (recon_w + ss_x - scs_ptr->pad_right) >> ss_x,
+                                (recon_h + ss_y - scs_ptr->pad_bottom) >> ss_y,
                                 1 << is_16bit);
             output_recon_ptr->n_filled_len += sample_total_count;
             output_recon_ptr->pts = pcs_ptr->picture_number;
+
+            // add metadata of resized frame size to app for rendering
+            if (pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
+                SvtMetadataFrameSizeT frame_size = { 0 };
+                frame_size.width = recon_w;
+                frame_size.height = recon_h;
+                frame_size.disp_width = recon_ptr->width;
+                frame_size.disp_height = recon_ptr->height;
+                frame_size.stride = recon_w;
+                frame_size.subsampling_x = ss_x;
+                frame_size.subsampling_y = ss_y;
+                svt_add_metadata(output_recon_ptr,
+                    EB_AV1_METADATA_TYPE_FRAME_SIZE,
+                    (uint8_t*)&frame_size,
+                    sizeof(frame_size));
+            }
 
             if (intermediate_buffer_ptr) {
                 EB_DELETE(intermediate_buffer_ptr);
@@ -771,11 +798,28 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
     EbPictureBufferDesc *recon_ptr;
+    EbPictureBufferDesc* input_picture_ptr =
+        (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
     get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
-    if (!is_16bit) {
-        EbPictureBufferDesc *input_picture_ptr =
-            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
+    // upscale recon if resized
+    EbPictureBufferDesc* upscaled_recon = NULL;
+    Bool is_resized = recon_ptr->width != input_picture_ptr->width
+        || recon_ptr->height != input_picture_ptr->height;
+    if (is_resized) {
+        superres_params_type spr_params = { input_picture_ptr->width, input_picture_ptr->height, 0 };
+        downscaled_source_buffer_desc_ctor(&upscaled_recon, input_picture_ptr, spr_params);
+        av1_resize_frame(recon_ptr,
+            upscaled_recon,
+            scs_ptr->static_config.encoder_bit_depth,
+            av1_num_planes(&scs_ptr->seq_header.color_config),
+            ss_x,
+            ss_y,
+            recon_ptr->packed_flag,
+            PICTURE_BUFFER_DESC_FULL_MASK);
+        recon_ptr = upscaled_recon;
+    }
 
+    if (!is_16bit) {
         EbByte input_buffer;
         EbByte recon_coeff_buffer;
 
@@ -847,10 +891,6 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
             EB_FREE_ARRAY(buffer_cr);
         }
     } else {
-        get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
-        EbPictureBufferDesc *input_picture_ptr =
-            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
-
         EbByte    input_buffer;
         uint16_t *recon_coeff_buffer;
 
@@ -1135,6 +1175,7 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
             }
         }
     }
+    EB_DELETE(upscaled_recon);
     return EB_ErrorNone;
 }
 
@@ -1145,19 +1186,30 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
+    EbPictureBufferDesc* recon_ptr;
+    EbPictureBufferDesc* input_picture_ptr =
+        (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
+    get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
+
+    // upscale recon if resized
+    EbPictureBufferDesc *upscaled_recon = NULL;
+    Bool is_resized = recon_ptr->width != input_picture_ptr->width
+        || recon_ptr->height != input_picture_ptr->height;
+    if (is_resized) {
+        superres_params_type spr_params = {input_picture_ptr->width, input_picture_ptr->height, 0};
+        downscaled_source_buffer_desc_ctor(&upscaled_recon, input_picture_ptr, spr_params);
+        av1_resize_frame(recon_ptr,
+            upscaled_recon,
+            scs_ptr->static_config.encoder_bit_depth,
+            av1_num_planes(&scs_ptr->seq_header.color_config),
+            ss_x,
+            ss_y,
+            recon_ptr->packed_flag,
+            PICTURE_BUFFER_DESC_FULL_MASK);
+        recon_ptr = upscaled_recon;
+    }
+
     if (!is_16bit) {
-        EbPictureBufferDesc *recon_ptr;
-
-        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE)
-            recon_ptr = ((EbReferenceObject *)
-                             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                            ->reference_picture;
-        else
-            recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-
-        EbPictureBufferDesc *input_picture_ptr =
-            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
-
         uint64_t sse_total[3]        = {0};
         uint64_t residual_distortion = 0;
         EbByte   input_buffer;
@@ -1260,12 +1312,6 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
             EB_FREE_ARRAY(buffer_cr);
         }
     } else {
-        EbPictureBufferDesc *recon_ptr;
-
-        get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
-        EbPictureBufferDesc *input_picture_ptr =
-            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
-
         uint64_t  sse_total[3]        = {0};
         uint64_t  residual_distortion = 0;
         EbByte    input_buffer;
@@ -1662,6 +1708,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
         pcs_ptr->parent_pcs_ptr->cb_sse   = sse_total[1];
         pcs_ptr->parent_pcs_ptr->cr_sse   = sse_total[2];
     }
+    EB_DELETE(upscaled_recon);
     return EB_ErrorNone;
 }
 
@@ -1678,7 +1725,10 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         get_recon_pic(pcs_ptr, &ref_pic_ptr, 0);
         get_recon_pic(pcs_ptr, &ref_pic_16bit_ptr, 1);
     }
-    Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
+    const Bool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
+    const uint32_t color_format  = ref_pic_ptr->color_format;
+    const uint16_t ss_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+    const uint16_t ss_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     if (!is_16bit) {
         pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, ref_pic_ptr);
@@ -1693,18 +1743,18 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         // Cb samples
         generate_padding(ref_pic_ptr->buffer_cb,
                          ref_pic_ptr->stride_cb,
-                         ref_pic_ptr->width >> 1,
-                         ref_pic_ptr->height >> 1,
-                         ref_pic_ptr->origin_x >> 1,
-                         ref_pic_ptr->origin_y >> 1);
+                         (ref_pic_ptr->width + ss_x) >> ss_x,
+                         (ref_pic_ptr->height + ss_y) >> ss_y,
+                         (ref_pic_ptr->origin_x + ss_x) >> ss_x,
+                         (ref_pic_ptr->origin_y + ss_y) >> ss_y);
 
         // Cr samples
         generate_padding(ref_pic_ptr->buffer_cr,
                          ref_pic_ptr->stride_cr,
-                         ref_pic_ptr->width >> 1,
-                         ref_pic_ptr->height >> 1,
-                         ref_pic_ptr->origin_x >> 1,
-                         ref_pic_ptr->origin_y >> 1);
+                         (ref_pic_ptr->width + ss_x) >> ss_x,
+                         (ref_pic_ptr->height + ss_y) >> ss_y,
+                         (ref_pic_ptr->origin_x + ss_x) >> ss_x,
+                         (ref_pic_ptr->origin_y + ss_y) >> ss_y);
     }
 
     //We need this for MCP
@@ -1723,18 +1773,18 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         // Cb samples
         generate_padding16_bit((uint16_t *)ref_pic_16bit_ptr->buffer_cb,
                                ref_pic_16bit_ptr->stride_cb,
-                               ref_pic_16bit_ptr->width >> 1,
-                               ref_pic_16bit_ptr->height >> 1,
-                               ref_pic_16bit_ptr->origin_x >> 1,
-                               ref_pic_16bit_ptr->origin_y >> 1);
+                               (ref_pic_16bit_ptr->width + ss_x) >> ss_x,
+                               (ref_pic_16bit_ptr->height + ss_y) >> ss_y,
+                               (ref_pic_16bit_ptr->origin_x + ss_x) >> ss_x,
+                               (ref_pic_16bit_ptr->origin_y + ss_y) >> ss_y);
 
         // Cr samples
         generate_padding16_bit((uint16_t *)ref_pic_16bit_ptr->buffer_cr,
                                ref_pic_16bit_ptr->stride_cr,
-                               ref_pic_16bit_ptr->width >> 1,
-                               ref_pic_16bit_ptr->height >> 1,
-                               ref_pic_16bit_ptr->origin_x >> 1,
-                               ref_pic_16bit_ptr->origin_y >> 1);
+                               (ref_pic_16bit_ptr->width + ss_x) >> ss_x,
+                               (ref_pic_16bit_ptr->height + ss_y) >> ss_y,
+                               (ref_pic_16bit_ptr->origin_x + ss_x) >> ss_x,
+                               (ref_pic_16bit_ptr->origin_y + ss_y) >> ss_y);
 
         // Hsan: unpack ref samples (to be used @ MD)
         un_pack2d((uint16_t *)ref_pic_16bit_ptr->buffer_y,
@@ -1751,17 +1801,16 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                   ref_pic_ptr->stride_cb,
                   ref_pic_ptr->buffer_bit_inc_cb,
                   ref_pic_ptr->stride_bit_inc_cb,
-                  (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
-                  (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
-
+                  (ref_pic_16bit_ptr->width + ss_x + (ref_pic_ptr->origin_x << 1)) >> ss_x,
+                  (ref_pic_16bit_ptr->height + ss_y + (ref_pic_ptr->origin_y << 1)) >> ss_y);
         un_pack2d((uint16_t *)ref_pic_16bit_ptr->buffer_cr,
                   ref_pic_16bit_ptr->stride_cr,
                   ref_pic_ptr->buffer_cr,
                   ref_pic_ptr->stride_cr,
                   ref_pic_ptr->buffer_bit_inc_cr,
                   ref_pic_ptr->stride_bit_inc_cr,
-                  (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
-                  (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
+                  (ref_pic_16bit_ptr->width + ss_x + (ref_pic_ptr->origin_x << 1)) >> ss_x,
+                  (ref_pic_16bit_ptr->height + ss_y + (ref_pic_ptr->origin_y << 1)) >> ss_y);
     }
     if ((scs_ptr->is_16bit_pipeline) && (!is_16bit)) {
         // Y samples
@@ -1775,18 +1824,18 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         // Cb samples
         generate_padding16_bit((uint16_t *)ref_pic_16bit_ptr->buffer_cb,
                                ref_pic_16bit_ptr->stride_cb,
-                               (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right) >> 1,
-                               (ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
-                               ref_pic_16bit_ptr->origin_x >> 1,
-                               ref_pic_16bit_ptr->origin_y >> 1);
+                               (ref_pic_16bit_ptr->width + ss_x - scs_ptr->max_input_pad_right) >> ss_x,
+                               (ref_pic_16bit_ptr->height + ss_y - scs_ptr->max_input_pad_bottom) >> ss_y,
+                               (ref_pic_16bit_ptr->origin_x + ss_x) >> ss_x,
+                               (ref_pic_16bit_ptr->origin_y + ss_y) >> ss_y);
 
         // Cr samples
         generate_padding16_bit((uint16_t *)ref_pic_16bit_ptr->buffer_cr,
                                ref_pic_16bit_ptr->stride_cr,
-                               (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right) >> 1,
-                               (ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
-                               ref_pic_16bit_ptr->origin_x >> 1,
-                               ref_pic_16bit_ptr->origin_y >> 1);
+                               (ref_pic_16bit_ptr->width + ss_x - scs_ptr->max_input_pad_right) >> ss_x,
+                               (ref_pic_16bit_ptr->height + ss_y - scs_ptr->max_input_pad_bottom) >> ss_y,
+                               (ref_pic_16bit_ptr->origin_x + ss_x) >> ss_x,
+                               (ref_pic_16bit_ptr->origin_y + ss_y) >> ss_y);
 
         // Hsan: unpack ref samples (to be used @ MD)
 
@@ -1807,8 +1856,8 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                   ref_pic_16bit_ptr->stride_cb,
                                   buf_8bit,
                                   ref_pic_ptr->stride_cb,
-                                  (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
-                                  (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
+                                  (ref_pic_16bit_ptr->width + ss_x + (ref_pic_ptr->origin_x << 1)) >> ss_x,
+                                  (ref_pic_16bit_ptr->height + ss_y + (ref_pic_ptr->origin_y << 1)) >> ss_y);
 
         //CR
         buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_cr);
@@ -1817,8 +1866,8 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                   ref_pic_16bit_ptr->stride_cr,
                                   buf_8bit,
                                   ref_pic_ptr->stride_cr,
-                                  (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
-                                  (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
+                                  (ref_pic_16bit_ptr->width + ss_x + (ref_pic_ptr->origin_x << 1)) >> ss_x,
+                                  (ref_pic_16bit_ptr->height + ss_y + (ref_pic_ptr->origin_y << 1)) >> ss_y);
     }
     // set up the ref POC
     reference_object->ref_poc = pcs_ptr->parent_pcs_ptr->picture_number;

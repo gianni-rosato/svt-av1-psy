@@ -135,6 +135,15 @@ typedef enum {
     SUPERRES_AUTO_SEARCH_TYPES
 } SUPERRES_AUTO_SEARCH_TYPE;
 
+// reference scaling modes
+typedef enum {
+    RESIZE_NONE,    // No frame resize allowed.
+    RESIZE_FIXED,   // All frames are coded at the specified scale.
+    RESIZE_RANDOM,  // All frames are coded at a random scale.
+    RESIZE_DYNAMIC, // Resize scale for a frame in dynamic.
+    RESIZE_MODES
+} RESIZE_MODE;
+
 /** The SvtAv1IntraRefreshType is used to describe the intra refresh type.
 */
 typedef enum SvtAv1IntraRefreshType {
@@ -703,6 +712,10 @@ typedef struct EbSvtAv1EncConfiguration {
      * multiply by fps_num/fps_den.
      */
     Bool multiply_keyint;
+    // reference scaling parameters
+    uint8_t resize_mode;
+    uint8_t resize_denom;
+    uint8_t resize_kf_denom;
 } EbSvtAv1EncConfiguration;
 
 /**

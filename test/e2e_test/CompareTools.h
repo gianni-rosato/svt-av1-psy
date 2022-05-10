@@ -31,13 +31,13 @@
 namespace svt_av1_e2e_tools {
 static inline bool compare_image(const VideoFrame *recon,
                                  const VideoFrame *ref_frame) {
-    if (recon->width != ref_frame->width ||
-        recon->height != ref_frame->height) {
+    if (recon->disp_width != ref_frame->disp_width ||
+        recon->disp_height != ref_frame->disp_height) {
         printf("compare failed for width(%u--%u) or height(%u--%u) different\n",
-               recon->width,
-               ref_frame->width,
-               recon->height,
-               ref_frame->height);
+               recon->disp_width,
+               ref_frame->disp_width,
+               recon->disp_height,
+               ref_frame->disp_height);
         return false;
     }
 
@@ -48,23 +48,23 @@ static inline bool compare_image(const VideoFrame *recon,
         return false;
     }
 
-    uint32_t width_scale = 1;
-    uint32_t height_scale = 1;
+    uint32_t subsample_x = 0;
+    uint32_t subsample_y = 0;
     switch (recon->format) {
     case IMG_FMT_420P10_PACKED:
     case IMG_FMT_420:
-        width_scale = 2;
-        height_scale = 2;
+        subsample_x = 1;
+        subsample_y = 1;
         break;
     case IMG_FMT_422P10_PACKED:
-    case IMG_FMT_422: width_scale = 2; break;
+    case IMG_FMT_422: subsample_x = 1; break;
     case IMG_FMT_444P10_PACKED:
     case IMG_FMT_444: break;
     default: assert(0); break;
     }
 
-    uint32_t width = recon->width;
-    uint32_t height = recon->height;
+    uint32_t width = recon->disp_width;
+    uint32_t height = recon->disp_height;
 
     // luma
     uint32_t index = 0;
@@ -88,10 +88,10 @@ static inline bool compare_image(const VideoFrame *recon,
 
     // cb
     index = 0;
-    for (uint32_t l = 0; l < height / height_scale; l++) {
+    for (uint32_t l = 0; l < (height + subsample_y) >> subsample_y; l++) {
         const uint8_t *s = recon->planes[1] + l * recon->stride[1];
         const uint8_t *d = ref_frame->planes[1] + l * ref_frame->stride[1];
-        for (uint32_t r = 0; r < width / width_scale; r++) {
+        for (uint32_t r = 0; r < (width + subsample_x) >> subsample_x; r++) {
             const uint16_t s_pixel = recon->bits_per_sample == 8
                                          ? s[r]
                                          : (((uint16_t *)s)[r] & 0x3FF);
@@ -108,10 +108,10 @@ static inline bool compare_image(const VideoFrame *recon,
 
     // cr
     index = 0;
-    for (uint32_t l = 0; l < height / height_scale; l++) {
+    for (uint32_t l = 0; l < (height + subsample_y) >> subsample_y; l++) {
         const uint8_t *s = recon->planes[2] + l * recon->stride[2];
         const uint8_t *d = ref_frame->planes[2] + l * ref_frame->stride[2];
-        for (uint32_t r = 0; r < width / width_scale; r++) {
+        for (uint32_t r = 0; r < (width + subsample_x) >> subsample_x; r++) {
             const uint16_t s_pixel = recon->bits_per_sample == 8
                                          ? s[r]
                                          : (((uint16_t *)s)[r] & 0x3FF);

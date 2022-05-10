@@ -505,7 +505,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // Set Warped Motion level and enabled flag
     pcs_ptr->wm_level = 0;
     if (frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME ||
-        frm_hdr->error_resilient_mode || pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
+        frm_hdr->error_resilient_mode || pcs_ptr->parent_pcs_ptr->frame_superres_enabled ||
+        pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
         pcs_ptr->wm_level = 0;
     } else {
         if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
@@ -543,11 +544,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     Bool enable_wm = pcs_ptr->wm_level ? 1 : 0;
     if (scs_ptr->enable_warped_motion != DEFAULT)
         enable_wm = (Bool)scs_ptr->enable_warped_motion;
-    // Note: local warp should be disabled when super-res is ON
+    // Note: local warp should be disabled when super-res or resize is ON
     // according to the AV1 spec 5.11.27
     frm_hdr->allow_warped_motion = enable_wm &&
         !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME) &&
-        !frm_hdr->error_resilient_mode && !pcs_ptr->parent_pcs_ptr->frame_superres_enabled;
+        !frm_hdr->error_resilient_mode && !pcs_ptr->parent_pcs_ptr->frame_superres_enabled &&
+        !scs_ptr->static_config.resize_mode;
+
     frm_hdr->is_motion_mode_switchable = frm_hdr->allow_warped_motion;
 
     // pic_obmc_level - pic_obmc_level is used to define md_pic_obmc_level.
@@ -1445,8 +1448,10 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         // -------
         // Scale references if resolution of the reference is different than the input
+        // super-res reference frame size is same as original input size, only check current frame scaled flag;
+        // reference scaling resizes reference frame to different size, need check each reference frame for scaling
         // -------
-        if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled == 1 &&
+        if ((pcs_ptr->parent_pcs_ptr->frame_superres_enabled == 1 || scs_ptr->static_config.resize_mode != RESIZE_NONE) &&
             pcs_ptr->slice_type != I_SLICE) {
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE &&
                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
