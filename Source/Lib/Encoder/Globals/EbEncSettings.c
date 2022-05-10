@@ -603,12 +603,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->resize_mode > RESIZE_RANDOM) {
+    if (config->resize_mode > RESIZE_DYNAMIC) {
         SVT_LOG("Error instance %u: invalid resize-mode %d, should be in the range [%d - %d]\n",
                 channel_number + 1,
                 config->resize_mode,
                 RESIZE_NONE,
-                RESIZE_RANDOM);
+                RESIZE_DYNAMIC);
         return_error = EB_ErrorBadParameter;
     }
 

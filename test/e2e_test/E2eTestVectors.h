@@ -62,6 +62,15 @@ const std::vector<TestVideoVector> default_test_vectors = {
                     480, 8, 0, 0, 60),
 };
 
+#if FTR_RESIZE_DYNAMIC
+const std::vector<TestVideoVector> default_long_test_vectors = {
+    std::make_tuple("kirland_640_480_30.yuv", YUV_VIDEO_FILE, IMG_FMT_420, 640,
+                    480, 8, 0, 0, 1000),
+    std::make_tuple("niklas_640_480_30.yuv", YUV_VIDEO_FILE, IMG_FMT_420, 640,
+                    480, 8, 0, 0, 1000),
+};
+#endif // FTR_RESIZE_DYNAMIC
+
 const std::vector<TestVideoVector> incomplete_sb_test_vectors = {
     std::make_tuple("park_joy_90p_8_420.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 160,
                     90, 8, 0, 0, 0),

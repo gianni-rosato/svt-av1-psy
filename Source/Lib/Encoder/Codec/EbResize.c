@@ -1858,6 +1858,7 @@ static uint8_t calculate_next_resize_scale(const SequenceControlSet *scs_ptr, co
     const EbSvtAv1EncConfiguration* cfg = &scs_ptr->static_config;
     uint8_t new_denom = SCALE_NUMERATOR;
 
+    // if (reduced_still_picture_hdr) return SCALE_NUMERATOR; // TODO: reduced_still_picture_hdr not supported
     switch (cfg->resize_mode) {
     case RESIZE_NONE: new_denom = SCALE_NUMERATOR; break;
     case RESIZE_FIXED:
@@ -1867,7 +1868,11 @@ static uint8_t calculate_next_resize_scale(const SequenceControlSet *scs_ptr, co
             new_denom = cfg->resize_denom;
         break;
     case RESIZE_RANDOM: new_denom = lcg_rand16(&seed) % 9 + 8; break;
-    default: ;
+#if FTR_RESIZE_DYNAMIC
+    case RESIZE_DYNAMIC:
+        new_denom = scs_ptr->resize_pending_params.resize_denom; break;
+#endif // FTR_RESIZE_DYNAMIC
+    default: assert_err(0, "unknown resize mode");
     }
     return new_denom;
 }

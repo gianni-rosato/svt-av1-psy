@@ -5153,8 +5153,7 @@ void send_picture_out(
     // Handle SUPERRES_FIXED and SUPERRES_RANDOM modes here.
     // SUPERRES_QTHRESH and SUPERRES_AUTO modes are handled in rate control process because these modes depend on qindex
     if (scs->static_config.pass == ENC_SINGLE_PASS) {
-        if (scs->static_config.resize_mode == RESIZE_FIXED ||
-            scs->static_config.resize_mode == RESIZE_RANDOM ||
+        if (scs->static_config.resize_mode > RESIZE_NONE ||
             scs->static_config.superres_mode == SUPERRES_FIXED ||
             scs->static_config.superres_mode == SUPERRES_RANDOM) {
             init_resize_picture(scs, pcs);

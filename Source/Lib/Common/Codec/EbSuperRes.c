@@ -20,7 +20,7 @@
 // Calculates the scaled dimension given the original dimension and the scale
 // denominator.
 void calculate_scaled_size_helper(uint16_t *dim, uint8_t denom) {
-    if (denom != SCALE_NUMERATOR) {
+    if (denom != SCALE_NUMERATOR && denom <= SCALE_DENOMINATOR_MAX) {
         // We need to ensure the constraint in "Appendix A" of the spec:
         // * FrameWidth is greater than or equal to 16
         // * FrameHeight is greater than or equal to 16
@@ -35,6 +35,12 @@ void calculate_scaled_size_helper(uint16_t *dim, uint8_t denom) {
         *dim = (uint16_t)((*dim * SCALE_NUMERATOR + denom / 2) / (denom));
         *dim = (uint16_t)AOMMAX(*dim, min_dim);
     }
+#if FTR_RESIZE_DYNAMIC
+    else if (denom == SCALE_THREE_QUATER) {
+        // reference scaling resize defines denom 17 as 3/4
+        *dim = (uint16_t)((3 + (*dim * 3)) >> 2);
+    }
+#endif // FTR_RESIZE_DYNAMIC
 }
 
 static int32_t av1_get_upscale_convolve_step(int in_length, int out_length) {

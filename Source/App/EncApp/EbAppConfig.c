@@ -648,7 +648,7 @@ static void set_superres_kf_qthres(const char *value, EbConfig *cfg) {
 // --- end: SUPER-RESOLUTION SUPPORT
 // --- start: REFERENCE SCALING SUPPORT
 static void set_resize_mode(const char* value, EbConfig* cfg) {
-    cfg->config.resize_mode = (SUPERRES_MODE)strtoul(value, NULL, 0);
+    cfg->config.resize_mode = (RESIZE_MODE)strtoul(value, NULL, 0);
 };
 static void set_resize_denom(const char* value, EbConfig* cfg) {
     cfg->config.resize_denom = (uint8_t)strtoul(value, NULL, 0);

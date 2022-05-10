@@ -3335,6 +3335,16 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 "it creates array of picture buffers for all scaling denominators (up to 8) of each reference frame.\n"
                 "This mode retains a significant amount of memory, much more than other modes!\n");
         }
+#if FTR_RESIZE_DYNAMIC
+        if (scs_ptr->static_config.resize_mode == RESIZE_DYNAMIC) {
+            if (scs_ptr->static_config.pred_structure != 1 ||
+                scs_ptr->static_config.pass != ENC_SINGLE_PASS ||
+                scs_ptr->static_config.rate_control_mode != 2) {
+                SVT_WARN("Resize dynamic mode only works at 1-pass CBR low delay mode!\n");
+                scs_ptr->static_config.resize_mode = RESIZE_NONE;
+            }
+        }
+#endif // FTR_RESIZE_DYNAMIC
     }
     // Set initial qp for single pass vbr
     if ((scs_ptr->static_config.rate_control_mode) && (scs_ptr->static_config.pass == ENC_SINGLE_PASS)){
@@ -3611,6 +3621,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->calculate_variance = 1;
     else
         scs_ptr->calculate_variance = 0;
+
+#if FTR_RESIZE_DYNAMIC
+    scs_ptr->resize_pending_params.resize_state = ORIG;
+    scs_ptr->resize_pending_params.resize_denom = SCALE_NUMERATOR;
+#endif // FTR_RESIZE_DYNAMIC
 }
 /******************************************************
  * Read Stat from File

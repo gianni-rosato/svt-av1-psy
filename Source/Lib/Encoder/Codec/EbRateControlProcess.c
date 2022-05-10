@@ -1243,9 +1243,17 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     if (scs_ptr->static_config.rate_control_mode == 2) {
         rc->avg_frame_qindex[KEY_FRAME]   = rc_cfg->worst_allowed_q;
         rc->avg_frame_qindex[INTER_FRAME] = rc_cfg->worst_allowed_q;
+#if FTR_RESIZE_DYNAMIC
+        rc->last_q[KEY_FRAME]             = rc_cfg->worst_allowed_q;
+        rc->last_q[INTER_FRAME]           = rc_cfg->worst_allowed_q;
+#endif // FTR_RESIZE_DYNAMIC
     } else {
         rc->avg_frame_qindex[KEY_FRAME]   = (rc_cfg->worst_allowed_q + rc_cfg->best_allowed_q) / 2;
         rc->avg_frame_qindex[INTER_FRAME] = (rc_cfg->worst_allowed_q + rc_cfg->best_allowed_q) / 2;
+#if FTR_RESIZE_DYNAMIC
+        rc->last_q[KEY_FRAME]             = (rc_cfg->worst_allowed_q + rc_cfg->best_allowed_q) / 2;
+        rc->last_q[INTER_FRAME]           = (rc_cfg->worst_allowed_q + rc_cfg->best_allowed_q) / 2;
+#endif // FTR_RESIZE_DYNAMIC
     }
     rc->buffer_level    = rc->starting_buffer_level;
     rc->bits_off_target = rc->starting_buffer_level;
@@ -1756,6 +1764,49 @@ static int calc_active_best_quality_no_stats_cbr(PictureControlSet *pcs_ptr,
     return active_best_quality;
 }
 
+#if FTR_RESIZE_DYNAMIC
+void svt_av1_resize_reset_rc(PictureParentControlSet* ppcs_ptr,
+                             int32_t resize_width, int32_t resize_height,
+                             int32_t prev_width, int32_t prev_height) {
+    SequenceControlSet* scs_ptr = ppcs_ptr->scs_ptr;
+    EncodeContext* encode_context_ptr = scs_ptr->encode_context_ptr;
+    RATE_CONTROL* rc = &encode_context_ptr->rc;
+    int32_t target_bits_per_frame;
+    int32_t active_worst_quality;
+    int32_t qindex;
+    double tot_scale_change = (double)(resize_width * resize_height) /
+        (double)(prev_width * prev_height);
+    // Reset buffer level to optimal, update target size.
+    reset_update_frame_target(ppcs_ptr);
+    target_bits_per_frame = ppcs_ptr->this_frame_target;
+    if (tot_scale_change > 4.0)
+        rc->avg_frame_qindex[INTER_FRAME] = rc->worst_quality;
+    else if (tot_scale_change > 1.0)
+        rc->avg_frame_qindex[INTER_FRAME] =
+        (rc->avg_frame_qindex[INTER_FRAME] + rc->worst_quality) >> 1;
+    active_worst_quality = calc_active_worst_quality_no_stats_cbr(ppcs_ptr);
+    qindex = av1_rc_regulate_q(ppcs_ptr, target_bits_per_frame, rc->best_quality,
+        active_worst_quality, resize_width, resize_height);
+    // If resize is down, check if projected q index is close to worst_quality,
+    // and if so, reduce the rate correction factor (since likely can afford
+    // lower q for resized frame).
+    if (tot_scale_change < 1.0 && qindex > 90 * rc->worst_quality / 100)
+        rc->rate_correction_factors[INTER_NORMAL] *= 0.85;
+    // If resize is back up: check if projected q index is too much above the
+    // previous index, and if so, reduce the rate correction factor
+    // (since prefer to keep q for resized frame at least closet to previous q).
+    // Also check if projected qindex is close to previous qindex, if so
+    // increase correction factor (to push qindex higher and avoid overshoot).
+    if (tot_scale_change >= 1.0) {
+        if (tot_scale_change < 4.0 &&
+            qindex > 130 * rc->last_q[INTER_FRAME] / 100)
+            rc->rate_correction_factors[INTER_NORMAL] *= 0.8;
+        if (qindex <= 120 * rc->last_q[INTER_FRAME] / 100)
+            rc->rate_correction_factors[INTER_NORMAL] *= 2.0;
+    }
+}
+#endif // FTR_RESIZE_DYNAMIC
+
 static int rc_pick_q_and_bounds_no_stats_cbr(PictureControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr            = pcs_ptr->parent_pcs_ptr->scs_ptr;
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -2017,6 +2068,10 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
     if (frm_hdr->frame_type == KEY_FRAME) {
         rc->avg_frame_qindex[KEY_FRAME] = ROUND_POWER_OF_TWO(
             3 * rc->avg_frame_qindex[KEY_FRAME] + qindex, 2);
+#if FTR_RESIZE_DYNAMIC
+        rc->last_q[KEY_FRAME] =
+            (int32_t)svt_av1_convert_qindex_to_q(qindex, scs_ptr->encoder_bit_depth);
+#endif // FTR_RESIZE_DYNAMIC
         svt_block_on_mutex(encode_context_ptr->frame_updated_mutex);
         encode_context_ptr->frame_updated = 0;
         svt_release_mutex(encode_context_ptr->frame_updated_mutex);
@@ -2028,6 +2083,10 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
             !(ppcs_ptr->update_type == GF_UPDATE || ppcs_ptr->update_type == ARF_UPDATE || is_intrnl_arf))) {
             rc->avg_frame_qindex[INTER_FRAME] = ROUND_POWER_OF_TWO(
                 3 * rc->avg_frame_qindex[INTER_FRAME] + qindex, 2);
+#if FTR_RESIZE_DYNAMIC
+            rc->last_q[INTER_FRAME] =
+                (int32_t)svt_av1_convert_qindex_to_q(qindex, scs_ptr->encoder_bit_depth);
+#endif // FTR_RESIZE_DYNAMIC
         }
     }
 

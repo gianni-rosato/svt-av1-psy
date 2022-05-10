@@ -48,7 +48,9 @@ void find_init_qp_middle_pass(struct SequenceControlSet      *scs_ptr,
                               struct PictureParentControlSet *pcs_ptr);
 void one_pass_rt_rate_alloc(struct PictureParentControlSet *pcs_ptr);
 void process_rc_stat(struct PictureParentControlSet *pcs_ptr);
-
+#if FTR_RESIZE_DYNAMIC
+void reset_update_frame_target(struct PictureParentControlSet *ppcs_ptr);
+#endif // FTR_RESIZE_DYNAMIC
 void        svt_av1_twopass_postencode_update(struct PictureParentControlSet *ppcs_ptr);
 extern void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr);
 extern void set_rc_param(struct SequenceControlSet *scs_ptr);

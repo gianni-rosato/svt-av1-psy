@@ -1516,6 +1516,126 @@ static int set_gf_interval_update_onepass_rt(PictureParentControlSet *pcs_ptr) {
     }
     return gf_update;
 }
+
+#if FTR_RESIZE_DYNAMIC
+void reset_update_frame_target(PictureParentControlSet *ppcs_ptr) {
+    SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+    RATE_CONTROL *rc = &encode_context_ptr->rc;
+    rc->buffer_level = rc->optimal_buffer_level;
+    rc->bits_off_target = rc->optimal_buffer_level;
+    ppcs_ptr->this_frame_target =
+        av1_calc_pframe_target_size_one_pass_cbr(ppcs_ptr, INTER_FRAME);
+}
+
+extern void svt_av1_resize_reset_rc(PictureParentControlSet *ppcs_ptr,
+                                    int32_t resize_width, int32_t resize_height,
+                                    int32_t prev_width, int32_t prev_height);
+static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs_ptr) {
+    SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+    RATE_CONTROL *rc = &encode_context_ptr->rc;
+    RESIZE_ACTION resize_action = NO_RESIZE;
+    const int32_t avg_qp_thr1 = 70;
+    const int32_t avg_qp_thr2 = 50;
+    // Don't allow for resized frame to go below 160x90, resize in steps of 3/4.
+    const int32_t min_width = (160 * 4) / 3;
+    const int32_t min_height = (90 * 4) / 3;
+    Bool down_size_on = TRUE;
+
+    // Step 1: check frame type
+    // Don't resize on key frame; reset the counters on key frame.
+    if (ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+        rc->resize_avg_qp = 0;
+        rc->resize_count = 0;
+        rc->resize_buffer_underflow = 0;
+        return;
+    }
+
+    // Step 2: check frame size
+    // No resizing down if frame size is below some limit.
+    if ((ppcs_ptr->frame_width * ppcs_ptr->frame_height) < min_width * min_height)
+        down_size_on = FALSE;
+
+    // Step 3: calculate dynamic resize state
+    // Resize based on average buffer underflow and QP over some window.
+    // Ignore samples close to key frame, since QP is usually high after key.
+    if (rc->frames_since_key > scs_ptr->double_frame_rate) {
+        const int32_t window = AOMMIN(30, (int32_t)(2 * scs_ptr->double_frame_rate));
+        rc->resize_avg_qp += rc->last_q[INTER_FRAME];
+        if (rc->buffer_level < (int32_t)(30 * rc->optimal_buffer_level / 100))
+            ++rc->resize_buffer_underflow;
+        ++rc->resize_count;
+        // Check for resize action every "window" frames.
+        if (rc->resize_count >= window) {
+            int32_t avg_qp = rc->resize_avg_qp / rc->resize_count;
+            // Resize down if buffer level has underflowed sufficient amount in past
+            // window, and we are at original or 3/4 of original resolution.
+            // Resize back up if average QP is low, and we are currently in a resized
+            // down state, i.e. 1/2 or 3/4 of original resolution.
+            // Currently, use a flag to turn 3/4 resizing feature on/off.
+            if (rc->resize_buffer_underflow > (rc->resize_count >> 2) &&
+                down_size_on) {
+                if (rc->resize_state == THREE_QUARTER) {
+                    resize_action = DOWN_ONEHALF;
+                    printf("Dynamic resize: %d --> %d\n", rc->resize_state, ONE_HALF);
+                    rc->resize_state = ONE_HALF;
+                }
+                else if (rc->resize_state == ORIG) {
+                    resize_action = DOWN_THREEFOUR;
+                    printf("Dynamic resize: %d --> %d\n", rc->resize_state, THREE_QUARTER);
+                    rc->resize_state = THREE_QUARTER;
+                }
+            }
+            else if (rc->resize_state != ORIG &&
+                avg_qp < avg_qp_thr1 * rc->worst_quality / 100) {
+                if (rc->resize_state == THREE_QUARTER ||
+                    avg_qp < avg_qp_thr2 * rc->worst_quality / 100) {
+                    resize_action = UP_ORIG;
+                    printf("Dynamic resize: %d --> %d\n", rc->resize_state, ORIG);
+                    rc->resize_state = ORIG;
+                }
+                else if (rc->resize_state == ONE_HALF) {
+                    resize_action = UP_THREEFOUR;
+                    printf("Dynamic resize: %d --> %d\n", rc->resize_state, THREE_QUARTER);
+                    rc->resize_state = THREE_QUARTER;
+                }
+            }
+            // Reset for next window measurement.
+            rc->resize_avg_qp = 0;
+            rc->resize_count = 0;
+            rc->resize_buffer_underflow = 0;
+        }
+    }
+
+    // Step 4: reset rate control configuration
+    // If decision is to resize, reset some quantities, and check is we should
+    // reduce rate correction factor,
+    if (resize_action != NO_RESIZE) {
+        int32_t resize_width = ppcs_ptr->frame_width;// cpi->oxcf.frm_dim_cfg.width;
+        int32_t resize_height = ppcs_ptr->frame_height;// cpi->oxcf.frm_dim_cfg.height;
+        int32_t resize_scale_num = 1;
+        int32_t resize_scale_den = 1;
+        if (resize_action == DOWN_THREEFOUR || resize_action == UP_THREEFOUR) {
+            resize_scale_num = 3;
+            resize_scale_den = 4;
+        }
+        else if (resize_action == DOWN_ONEHALF) {
+            resize_scale_num = 1;
+            resize_scale_den = 2;
+        }
+        resize_width = resize_width * resize_scale_num / resize_scale_den;
+        resize_height = resize_height * resize_scale_num / resize_scale_den;
+        svt_av1_resize_reset_rc(ppcs_ptr,
+                                resize_width,
+                                resize_height,
+                                ppcs_ptr->frame_width,
+                                ppcs_ptr->frame_height);
+    }
+    return;
+}
+#endif // FTR_RESIZE_DYNAMIC
+
 void one_pass_rt_rate_alloc(PictureParentControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr            = pcs_ptr->scs_ptr;
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -1529,6 +1649,26 @@ void one_pass_rt_rate_alloc(PictureParentControlSet *pcs_ptr) {
         rc->this_key_frame_forced = pcs_ptr->picture_number != 0 && rc->frames_to_key == 0;
         rc->frames_to_key         = scs_ptr->static_config.intra_period_length + 1;
     }
+#if FTR_RESIZE_DYNAMIC
+    // resize dynamic mode only works with 1-pass CBR low delay mode
+    if (scs_ptr->static_config.resize_mode == RESIZE_DYNAMIC &&
+        scs_ptr->static_config.pass == ENC_SINGLE_PASS &&
+        scs_ptr->static_config.pred_structure == 1) {
+        dynamic_resize_one_pass_cbr(pcs_ptr);
+        if (rc->resize_state != scs_ptr->resize_pending_params.resize_state) {
+            if (rc->resize_state == ORIG)
+                scs_ptr->resize_pending_params.resize_denom = SCALE_NUMERATOR;
+            else if (rc->resize_state == THREE_QUARTER)
+                scs_ptr->resize_pending_params.resize_denom = SCALE_THREE_QUATER;
+            else if (rc->resize_state == ONE_HALF)
+                scs_ptr->resize_pending_params.resize_denom = SCALE_DENOMINATOR_MAX;
+            else
+                assert_err(0, "unknown resize denom");
+            scs_ptr->resize_pending_params.resize_state = rc->resize_state;
+        }
+    }
+#endif // FTR_RESIZE_DYNAMIC
+
     // Set the GF interval and update flag.
     set_gf_interval_update_onepass_rt(pcs_ptr);
     // Set target size.

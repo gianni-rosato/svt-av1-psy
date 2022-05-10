@@ -234,6 +234,13 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     { "RefScalingTest6", {{"ResizeMode", "2"}, {"ScreenContentMode", "2"}, {"EncoderMode", "8"}}, screen_test_vectors },
     // reference scaling tests with loop restoration
     { "RefScalingTest7", {{"ResizeMode", "2"}, {"EnableRestoration", "1"}, {"EncoderMode", "8"}}, default_test_vectors },
+#if FTR_RESIZE_DYNAMIC
+    // reference scaling tests for dynamic mode
+    { "RefScalingTest8", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "100"}, {"EncoderMode", "8"}}, default_long_test_vectors },
+    { "RefScalingTest9", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "50"}, {"EncoderMode", "8"}}, default_long_test_vectors },
+    { "RefScalingTest10", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "20"}, {"EncoderMode", "8"}}, default_long_test_vectors },
+    { "RefScalingTest11", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "15"}, {"EncoderMode", "8"}}, default_long_test_vectors },
+#endif // FTR_RESIZE_DYNAMIC
 
     // reference scaling tests with super resolution
     { "SuperResRefScalingTest0", {{"SuperresMode", "2"}, {"ResizeMode", "2"}, {"EncoderMode", "8"}}, default_test_vectors },
@@ -666,7 +673,7 @@ INSTANTIATE_TEST_CASE_P(SUPERRESREFSCALINGTEST, SuperResTest,
  */
 class FeaturePresetConformanceTest : public ConformanceDeathTest {};
 
-TEST_P(FeaturePresetConformanceTest, /*DISABLED_*/FeaturePresetConformanceTest) {
+TEST_P(FeaturePresetConformanceTest, DISABLED_FeaturePresetConformanceTest) {
     run_death_test();
 }
 
