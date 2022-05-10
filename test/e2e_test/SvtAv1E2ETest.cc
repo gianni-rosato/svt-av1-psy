@@ -224,11 +224,19 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 
     // test Reference Scaling mode
     { "RefScalingTest1", {{"ResizeMode", "2"}}, default_test_vectors },
+    // reference scaling tests with OBMC
     { "RefScalingTest2", {{"ResizeMode", "2"}, {"Obmc", "0"}, {"EncoderMode", "8"}}, default_test_vectors },
     { "RefScalingTest3", {{"ResizeMode", "2"}, {"Obmc", "1"}, {"EncoderMode", "8"}}, default_test_vectors },
 #ifdef ENBALE_16BIT_PIPELINE_TEST
     { "RefScalingTest4", {{"ResizeMode", "2"}, {"Obmc", "1"}, {"Encoder16BitPipeline", "1"}}, default_test_vectors },
 #endif // ENBALE_16BIT_PIPELINE_TEST
+    { "RefScalingTest5", {{"ResizeMode", "2"}, {"ScreenContentMode", "1"}, {"EncoderMode", "8"}}, screen_test_vectors },
+    { "RefScalingTest6", {{"ResizeMode", "2"}, {"ScreenContentMode", "2"}, {"EncoderMode", "8"}}, screen_test_vectors },
+    // reference scaling tests with loop restoration
+    { "RefScalingTest7", {{"ResizeMode", "2"}, {"EnableRestoration", "1"}, {"EncoderMode", "8"}}, default_test_vectors },
+
+    // reference scaling tests with super resolution
+    { "SuperResRefScalingTest0", {{"SuperresMode", "2"}, {"ResizeMode", "2"}, {"EncoderMode", "8"}}, default_test_vectors },
 
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},
@@ -609,6 +617,53 @@ INSTANTIATE_TEST_CASE_P(REFSCALINGTEST, SuperResTest,
     ::testing::ValuesIn(generate_ref_scaling_settings()),
     EncTestSetting::GetSettingName);
 
+// Test cases of super resolution combine with reference scaling in fixed mode
+static const std::vector<EncTestSetting> generate_superres_ref_scaling_settings() {
+    static const std::string test_prefix = "SuperResRefScaling";
+    std::vector<EncTestSetting> settings;
+
+    int count = 0;
+    // 8-bit test cases
+    for (size_t i = 9; i <= 16; i++) {
+        for (size_t j = 9; j <= 16; j++) {
+            EncTestSetting new_setting;
+            string idx = std::to_string(count);
+            string name = test_prefix + idx;
+            EncTestSetting setting{ name,
+                                   {{"ResizeMode", "1"},
+                                    {"ResizeDenom", std::to_string(i)},
+                                    {"ResizeKfDenom", std::to_string(i)},
+                                    {"SuperresMode", "1"},
+                                    {"SuperresDenom", std::to_string(j)},
+                                    {"SuperresKfDenom", std::to_string(j)}},
+                                   default_test_vectors };
+            settings.push_back(setting);
+            count++;
+        }
+    }
+    return settings;
+}
+
+INSTANTIATE_TEST_CASE_P(SUPERRESREFSCALINGTEST, SuperResTest,
+    ::testing::ValuesIn(generate_superres_ref_scaling_settings()),
+    EncTestSetting::GetSettingName);
+
+/**
+ * @brief SVT-AV1 encoder E2E test with comparing the reconstructed frame with
+ * output frame from decoder buffer list
+ *
+ * Test strategy:
+ * Setup SVT-AV1 encoder with user input parameter combined with different presets
+ * and hierarchical levels, and encode the input YUV data frames. Collect the
+ * reconstructed frames and compared them with reference decoder output.
+ *
+ * Expected result:
+ * No error is reported in encoding progress. The reconstructed frame
+ * data is same as the output frame from reference decoder.
+ *
+ * Test coverage:
+ * User defined test vectors
+ */
 class FeaturePresetConformanceTest : public ConformanceDeathTest {};
 
 TEST_P(FeaturePresetConformanceTest, /*DISABLED_*/FeaturePresetConformanceTest) {
@@ -623,24 +678,45 @@ static const std::vector<EncTestSetting> generate_testcase_with_preset_settings(
     std::vector<EncTestSetting> settings;
 
     int count = 0;
-    for (size_t preset = 0; preset <= 12; preset++) {
-        for (std::string value : values) {
-            EncTestSetting new_setting;
-            string idx = std::to_string(count);
-            string name = test_prefix + idx;
-            EncTestSetting setting{ name,
-                                   {{"EncoderMode", std::to_string(preset)},
-                                    {feature_name, value}},
-                                   default_test_vectors };
-            settings.push_back(setting);
-            count++;
+    for (size_t hierarchicallvl = 3; hierarchicallvl < 5; hierarchicallvl++) {
+        for (size_t preset = 0; preset <= 12; preset++) {
+            for (std::string value : values) {
+                EncTestSetting new_setting;
+                string idx = std::to_string(count);
+                string name = test_prefix + idx;
+                EncTestSetting setting{ name,
+                                       {{"HierarchicalLevels", std::to_string(hierarchicallvl)},
+                                        {"EncoderMode", std::to_string(preset)},
+                                        {feature_name, value}},
+                                       default_test_vectors };
+                settings.push_back(setting);
+                count++;
+            }
         }
     }
     return settings;
 }
 
+/**
+ * @brief SVT-AV1 encoder E2E test with comparing the reconstructed frame with
+ * output frame from decoder buffer list when enabled scalng reference random
+ * mode both with different presets and hierarchical levels parameters
+ *
+ * Test strategy:
+ * Setup SVT-AV1 encoder with different preset parameter, and encode the input
+ * YUV data frames. Do the decode and collect the reconstructed frames and
+ * compared them with reference decoder output.
+ *
+ * Expected result:
+ * No error is reported in encoding progress. The reconstructed frame data is
+ * same as the output frame from reference decoder,which proved tiles are
+ * considered independent and the test passes.
+ *
+ * Test coverage:
+ * All test vectors of 640*480, default disabled */
 static const std::vector<std::string> resize_mode = { "2" };
 INSTANTIATE_TEST_CASE_P(
     REFSCALINGTEST, FeaturePresetConformanceTest,
-    ::testing::ValuesIn(generate_testcase_with_preset_settings("RefScalingPreset", "ResizeMode", resize_mode)),
+    ::testing::ValuesIn(generate_testcase_with_preset_settings(
+        "RefScaling", "ResizeMode", resize_mode)),
     EncTestSetting::GetSettingName);

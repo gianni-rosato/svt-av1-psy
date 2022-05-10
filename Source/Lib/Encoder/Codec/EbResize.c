@@ -762,10 +762,10 @@ static EbErrorType av1_highbd_resize_plane(const uint16_t *const input, int heig
     uint16_t *arrbuf;
     uint16_t *arrbuf2;
 
-    EB_MALLOC_ARRAY(intbuf, sizeof(uint16_t) * width2 * height);
-    EB_MALLOC_ARRAY(tmpbuf, sizeof(uint16_t) * AOMMAX(width, height));
-    EB_MALLOC_ARRAY(arrbuf, sizeof(uint16_t) * height);
-    EB_MALLOC_ARRAY(arrbuf2, sizeof(uint16_t) * height2);
+    EB_MALLOC_ARRAY(intbuf, width2 * height);
+    EB_MALLOC_ARRAY(tmpbuf, AOMMAX(width, height));
+    EB_MALLOC_ARRAY(arrbuf, height);
+    EB_MALLOC_ARRAY(arrbuf2, height2);
     if (intbuf == NULL || tmpbuf == NULL || arrbuf == NULL || arrbuf2 == NULL) {
         EB_FREE(intbuf);
         EB_FREE(tmpbuf);
@@ -1333,9 +1333,6 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
     }
     default: break;
     }
-
-    // only encoding width is adjusted
-    calculate_scaled_size_helper(&spr_params->encoding_width, spr_params->superres_denom);
 }
 
 EbErrorType downscaled_source_buffer_desc_ctor(
@@ -1348,7 +1345,10 @@ EbErrorType downscaled_source_buffer_desc_ctor(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
+    initData.split_mode         =
+        (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT && picture_ptr_for_reference->packed_flag == FALSE)
+        ? TRUE
+        : FALSE;
     initData.left_padding       = picture_ptr_for_reference->origin_x;
     initData.right_padding      = picture_ptr_for_reference->origin_x;
     initData.top_padding        = picture_ptr_for_reference->origin_y;
@@ -1872,6 +1872,78 @@ static uint8_t calculate_next_resize_scale(const SequenceControlSet *scs_ptr, co
     return new_denom;
 }
 
+static int dimension_is_ok(int orig_dim, int resized_dim, int denom) {
+    return (resized_dim * SCALE_NUMERATOR >= orig_dim * denom / 2);
+}
+
+static int dimensions_are_ok(int owidth, int oheight, superres_params_type* rsz) {
+    // Only need to check the width, as scaling is horizontal only.
+    (void)oheight;
+    return dimension_is_ok(owidth, rsz->encoding_width, rsz->superres_denom);
+}
+
+static int validate_size_scales(RESIZE_MODE resize_mode,
+    SUPERRES_MODE superres_mode, int owidth,
+    int oheight, superres_params_type* rsz, uint8_t *resize_denom) {
+    if (dimensions_are_ok(owidth, oheight, rsz)) {  // Nothing to do.
+        return 1;
+    }
+
+    // Calculate current resize scale.
+    *resize_denom =
+        AOMMAX(DIVIDE_AND_ROUND(owidth * SCALE_NUMERATOR, rsz->encoding_width),
+            DIVIDE_AND_ROUND(oheight * SCALE_NUMERATOR, rsz->encoding_height));
+
+    if (resize_mode != RESIZE_RANDOM && superres_mode == SUPERRES_RANDOM) {
+        // Alter superres scale as needed to enforce conformity.
+        rsz->superres_denom =
+            (2 * SCALE_NUMERATOR * SCALE_NUMERATOR) / *resize_denom;
+        if (!dimensions_are_ok(owidth, oheight, rsz)) {
+            if (rsz->superres_denom > SCALE_NUMERATOR) --rsz->superres_denom;
+        }
+    }
+    else if (resize_mode == RESIZE_RANDOM &&
+        superres_mode != SUPERRES_RANDOM) {
+        // Alter resize scale as needed to enforce conformity.
+        *resize_denom =
+            (2 * SCALE_NUMERATOR * SCALE_NUMERATOR) / rsz->superres_denom;
+        rsz->encoding_width = owidth;
+        rsz->encoding_height = oheight;
+        calculate_scaled_size_helper(&rsz->encoding_width, *resize_denom);
+        calculate_scaled_size_helper(&rsz->encoding_height, *resize_denom);
+        if (!dimensions_are_ok(owidth, oheight, rsz)) {
+            if (*resize_denom > SCALE_NUMERATOR) {
+                --(*resize_denom);
+                rsz->encoding_width = owidth;
+                rsz->encoding_height = oheight;
+                calculate_scaled_size_helper(&rsz->encoding_width, *resize_denom);
+                calculate_scaled_size_helper(&rsz->encoding_height, *resize_denom);
+            }
+        }
+    }
+    else if (resize_mode == RESIZE_RANDOM &&
+        superres_mode == SUPERRES_RANDOM) {
+        // Alter both resize and superres scales as needed to enforce conformity.
+        do {
+            if (*resize_denom > rsz->superres_denom)
+                --(*resize_denom);
+            else
+                --rsz->superres_denom;
+            rsz->encoding_width = owidth;
+            rsz->encoding_height = oheight;
+            calculate_scaled_size_helper(&rsz->encoding_width, *resize_denom);
+            calculate_scaled_size_helper(&rsz->encoding_height, *resize_denom);
+        } while (!dimensions_are_ok(owidth, oheight, rsz) &&
+            (*resize_denom > SCALE_NUMERATOR ||
+                rsz->superres_denom > SCALE_NUMERATOR));
+    }
+    else {  // We are allowed to alter neither resize scale nor superres
+           // scale.
+        return 0;
+    }
+    return dimensions_are_ok(owidth, oheight, rsz);
+}
+
 /*
  * If super-res is ON, determine super-res denominator for current picture,
  * perform resizing of source picture and
@@ -1886,22 +1958,16 @@ void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* p
     Bool do_resize = FALSE;
 
     // step 1: calculate resized resolution
-    if (scs_ptr->static_config.resize_mode > RESIZE_NONE) {
-        uint8_t resize_denom = calculate_next_resize_scale(scs_ptr, pcs_ptr);
-        calculate_scaled_size_helper(&spr_params.encoding_width, resize_denom);
-        calculate_scaled_size_helper(&spr_params.encoding_height, resize_denom);
-        pcs_ptr->resize_denom = resize_denom;
-        pcs_ptr->frame_resize_enabled = TRUE;
-        pcs_ptr->render_width = spr_params.encoding_width;
-        pcs_ptr->render_height = spr_params.encoding_height;
+    pcs_ptr->resize_denom = SCALE_NUMERATOR;
+    if (scs_ptr->static_config.resize_mode > RESIZE_NONE)
+        pcs_ptr->resize_denom = calculate_next_resize_scale(scs_ptr, pcs_ptr);
+    pcs_ptr->frame_resize_enabled = (pcs_ptr->resize_denom == SCALE_NUMERATOR ? FALSE : TRUE);
+    if (pcs_ptr->frame_resize_enabled == TRUE) {
+        calculate_scaled_size_helper(&spr_params.encoding_width, pcs_ptr->resize_denom);
+        calculate_scaled_size_helper(&spr_params.encoding_height, pcs_ptr->resize_denom);
     }
-    else {
-        // reset the render size for this pcs might be recycled
-        pcs_ptr->resize_denom = SCALE_NUMERATOR;
-        pcs_ptr->frame_resize_enabled = EB_FALSE;
-        pcs_ptr->render_width = spr_params.encoding_width;
-        pcs_ptr->render_height = spr_params.encoding_height;
-    }
+    pcs_ptr->render_width = spr_params.encoding_width;
+    pcs_ptr->render_height = spr_params.encoding_height;
 
     // step 2: calculate super-res resolution
     if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
@@ -1919,6 +1985,20 @@ void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* p
                 // denom is set by downstream packetization process
                 spr_params.superres_denom = pcs_ptr->superres_denom;
             }
+        }
+        if (spr_params.superres_denom != SCALE_NUMERATOR) {
+            uint8_t resize_denom = pcs_ptr->resize_denom;
+            if (!validate_size_scales(scs_ptr->static_config.resize_mode, scs_ptr->static_config.superres_mode,
+                input_picture_ptr->width, input_picture_ptr->height, &spr_params, &resize_denom))
+                assert(0 && "Invalid scale parameters");
+            if (resize_denom != pcs_ptr->resize_denom) {
+                // refresh resize info if resize denom is adjusted
+                pcs_ptr->resize_denom = resize_denom;
+                pcs_ptr->frame_resize_enabled = (pcs_ptr->resize_denom == SCALE_NUMERATOR ? FALSE : TRUE);
+                pcs_ptr->render_width = spr_params.encoding_width;
+                pcs_ptr->render_height = spr_params.encoding_height;
+            }
+            // only encoding width is adjusted
             calculate_scaled_size_helper(&spr_params.encoding_width, spr_params.superres_denom);
         }
     }

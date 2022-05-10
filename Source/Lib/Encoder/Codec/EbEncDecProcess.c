@@ -807,7 +807,7 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
         || recon_ptr->height != input_picture_ptr->height;
     if (is_resized) {
         superres_params_type spr_params = { input_picture_ptr->width, input_picture_ptr->height, 0 };
-        downscaled_source_buffer_desc_ctor(&upscaled_recon, input_picture_ptr, spr_params);
+        downscaled_source_buffer_desc_ctor(&upscaled_recon, recon_ptr, spr_params);
         av1_resize_frame(recon_ptr,
             upscaled_recon,
             scs_ptr->static_config.encoder_bit_depth,
@@ -1197,7 +1197,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
         || recon_ptr->height != input_picture_ptr->height;
     if (is_resized) {
         superres_params_type spr_params = {input_picture_ptr->width, input_picture_ptr->height, 0};
-        downscaled_source_buffer_desc_ctor(&upscaled_recon, input_picture_ptr, spr_params);
+        downscaled_source_buffer_desc_ctor(&upscaled_recon, recon_ptr, spr_params);
         av1_resize_frame(recon_ptr,
             upscaled_recon,
             scs_ptr->static_config.encoder_bit_depth,

@@ -3115,7 +3115,7 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
         tpl_level = 0;
     }
     else if (resize_mode > RESIZE_NONE) {
-        SVT_WARN("TPL will be disabled when scaling reference (resize) is enabled!\n");
+        SVT_WARN("TPL will be disabled when reference scalings (resize) is enabled!\n");
         tpl_level = 0;
     }
 #if TUNE_DEFAULT_M5
@@ -3323,10 +3323,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         if (scs_ptr->static_config.enable_tpl_la != 0) {
             SVT_WARN("TPL will be disabled when resize is enabled!\n");
             scs_ptr->static_config.enable_tpl_la = 0;
-        }
-        if (scs_ptr->static_config.enable_restoration_filtering != 0) {
-            SVT_WARN("Restoration will be disabled when resize is enabled!\n");
-            scs_ptr->static_config.enable_restoration_filtering = 0;
         }
         if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
             // disable tiles if resize is on

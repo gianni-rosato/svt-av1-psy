@@ -544,7 +544,8 @@ static void set_cdef_enable(const char *value, EbConfig *cfg) {
     cfg->config.cdef_level = -!!strtoul(value, NULL, 0);
 };
 static void set_enable_restoration_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_restoration_filtering = -!!strtoul(value, NULL, 0);
+    // Set loop restoration to either DEFAULT(1) or 0
+    cfg->config.enable_restoration_filtering = !!strtoul(value, NULL, 0);
 };
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_mfmv = strtol(value, NULL, 0);

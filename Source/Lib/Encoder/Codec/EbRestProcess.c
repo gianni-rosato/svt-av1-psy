@@ -20,6 +20,7 @@
 #include "EbReferenceObject.h"
 #include "EbPictureControlSet.h"
 #include "EbResourceCoordinationProcess.h"
+#include "EbResize.h"
 
 /**************************************
  * Rest Context
@@ -181,13 +182,13 @@ EbPictureBufferDesc *get_own_recon(SequenceControlSet *scs_ptr, PictureControlSe
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
     EbPictureBufferDesc *recon_picture_ptr;
+    get_recon_pic(pcs_ptr, &recon_picture_ptr, is_16bit);
+    // if boundaries are not used, don't need to copy pic to new buffer, as the
+    // search will not modify the pic
+    if (!scs_ptr->use_boundaries_in_rest_search) {
+        return recon_picture_ptr;
+    }
     if (is_16bit) {
-        get_recon_pic(pcs_ptr, &recon_picture_ptr, is_16bit);
-        // if boundaries are not used, don't need to copy pic to new buffer, as the
-        // search will not modify the pic
-        if (!scs_ptr->use_boundaries_in_rest_search) {
-            return recon_picture_ptr;
-        }
         uint16_t *rec_ptr = (uint16_t *)recon_picture_ptr->buffer_y + recon_picture_ptr->origin_x +
             recon_picture_ptr->origin_y * recon_picture_ptr->stride_y;
         uint16_t *rec_ptr_cb = (uint16_t *)recon_picture_ptr->buffer_cb +
@@ -457,11 +458,11 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
                                     sub_y,
                                     use_highbd);
 
-            int height = (recon_picture_src->height >> sub_y);
+            int height = ((recon_picture_src->height + sub_y) >> sub_y);
             for (int row = 0; row < height; ++row) {
                 svt_memcpy(dst_buf,
                            src_buf,
-                           (recon_picture_src->width >> sub_x) * sizeof(*src_buf) << use_highbd);
+                           ((recon_picture_src->width + sub_x) >> sub_x) * sizeof(*src_buf) << use_highbd);
                 src_buf += src_stride << use_highbd;
                 dst_buf += dst_stride << use_highbd;
             }
@@ -517,7 +518,7 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
                                        src_stride,
                                        dst_buf,
                                        dst_stride,
-                                       src->height >> sub_y,
+                                       (src->height + sub_y) >> sub_y,
                                        sub_x,
                                        bit_depth,
                                        is_16bit);
@@ -624,10 +625,40 @@ void *rest_kernel(void *input_ptr) {
         Bool         is_16bit = scs_ptr->is_16bit_pipeline;
         Av1Common   *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
         if (ppcs->enable_restoration && frm_hdr->allow_intrabc == 0) {
+            // If using boundaries during the filter search, copy the recon pic to a new buffer (to
+            // avoid race condition from many threads modifying the same recon pic).
+            //
+            // If not using boundaries during the filter search, copy the input recon picture location
+            // to be used in restoration search (save cycles/memory of copying pic to a new buffer).
+            // The recon pic should not be modified during the search, otherwise there will be a race
+            // condition between threads.
+            EbPictureBufferDesc* recon_picture_ptr = get_own_recon(
+                scs_ptr, pcs_ptr, context_ptr, is_16bit);
+            EbPictureBufferDesc* input_picture_ptr = is_16bit
+                ? pcs_ptr->input_frame16bit
+                : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
+
+            // TODO: move input picture down scaling to end of cdef kernal
+            EbPictureBufferDesc* scaled_input_picture_ptr = NULL;
+            // downscale input picture if recon is resized
+            Bool is_resized = recon_picture_ptr->width != input_picture_ptr->width
+                || recon_picture_ptr->height != input_picture_ptr->height;
+            if (is_resized) {
+                superres_params_type spr_params = { recon_picture_ptr->width, recon_picture_ptr->height, 0 };
+                downscaled_source_buffer_desc_ctor(&scaled_input_picture_ptr, input_picture_ptr, spr_params);
+                av1_resize_frame(input_picture_ptr,
+                    scaled_input_picture_ptr,
+                    scs_ptr->static_config.encoder_bit_depth,
+                    av1_num_planes(&scs_ptr->seq_header.color_config),
+                    scs_ptr->subsampling_x,
+                    scs_ptr->subsampling_y,
+                    input_picture_ptr->packed_flag,
+                    PICTURE_BUFFER_DESC_FULL_MASK);
+                input_picture_ptr = scaled_input_picture_ptr;
+            }
+
             Yv12BufferConfig cpi_source;
-            link_eb_to_aom_buffer_desc(is_16bit
-                                           ? pcs_ptr->input_frame16bit
-                                           : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
+            link_eb_to_aom_buffer_desc(input_picture_ptr,
                                        &cpi_source,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
@@ -639,15 +670,7 @@ void *rest_kernel(void *input_ptr) {
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        is_16bit);
-            // If using boundaries during the filter search, copy the recon pic to a new buffer (to
-            // avoid race conidition from many threads modifying the same recon pic).
-            //
-            // If not using boundaries during the filter search, copy the input recon picture location
-            // to be used in restoration search (save cycles/memory of copying pic to a new buffer).
-            // The recon pic should not be modified during the search, otherwise there will be a race
-            // condition between threads.
-            EbPictureBufferDesc *recon_picture_ptr = get_own_recon(
-                scs_ptr, pcs_ptr, context_ptr, is_16bit);
+
             Yv12BufferConfig org_fts;
             link_eb_to_aom_buffer_desc(recon_picture_ptr,
                                        &org_fts,
@@ -676,6 +699,7 @@ void *rest_kernel(void *input_ptr) {
                                    &trial_frame_rst,
                                    pcs_ptr,
                                    cdef_results_ptr->segment_index);
+            EB_DELETE(scaled_input_picture_ptr);
         }
 
         //all seg based search is done. update total processed segments. if all done, finish the search and perfrom application.
