@@ -24,6 +24,9 @@
 #include "EbSequenceControlSet.h"
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
+#if OPT_RESIZE_INPUT_LR
+#include "EbResize.h"
+#endif // OPT_RESIZE_INPUT_LR
 
 void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
                  int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize, Bool is_16bit);
@@ -449,7 +452,8 @@ void *cdef_kernel(void *input_ptr) {
             }
 
             //restoration prep
-            if (ppcs->enable_restoration && frm_hdr->allow_intrabc == 0) {
+            Bool is_lr = ppcs->enable_restoration && frm_hdr->allow_intrabc == 0;
+            if (is_lr) {
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 1);
                 if (is_16bit) {
                     set_unscaled_input_16bit(pcs_ptr);
@@ -465,7 +469,34 @@ void *cdef_kernel(void *input_ptr) {
                 get_recon_pic(pcs_ptr, &recon, is_16bit);
                 recon->width = pcs_ptr->parent_pcs_ptr->render_width;
                 recon->height = pcs_ptr->parent_pcs_ptr->render_height;
-                // TODO: move input piture down scaling from rest kernal
+#if OPT_RESIZE_INPUT_LR
+                if (is_lr) {
+                    EbPictureBufferDesc* input_picture_ptr =
+                        is_16bit
+                        ? pcs_ptr->input_frame16bit
+                        : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
+
+                    assert_err(pcs_ptr->scaled_input_picture_ptr == NULL,
+                        "pcs_ptr->scaled_input_picture_ptr is not desctoried!");
+                    EbPictureBufferDesc* scaled_input_picture_ptr = NULL;
+                    // downscale input picture if recon is resized
+                    Bool is_resized = recon->width != input_picture_ptr->width
+                        || recon->height != input_picture_ptr->height;
+                    if (is_resized) {
+                        superres_params_type spr_params = { recon->width, recon->height, 0 };
+                        downscaled_source_buffer_desc_ctor(&scaled_input_picture_ptr, input_picture_ptr, spr_params);
+                        av1_resize_frame(input_picture_ptr,
+                            scaled_input_picture_ptr,
+                            scs_ptr->static_config.encoder_bit_depth,
+                            av1_num_planes(&scs_ptr->seq_header.color_config),
+                            scs_ptr->subsampling_x,
+                            scs_ptr->subsampling_y,
+                            input_picture_ptr->packed_flag,
+                            PICTURE_BUFFER_DESC_FULL_MASK);
+                        pcs_ptr->scaled_input_picture_ptr = scaled_input_picture_ptr;
+                    }
+                }
+#endif // OPT_RESIZE_INPUT_LR
             }
             // ------- end: Normative upscaling - super-resolution tool
 

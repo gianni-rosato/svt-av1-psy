@@ -44,6 +44,7 @@ extern "C" {
 #define TUNE_DEFAULT_M5         1 // Tune default M5 with consideration to decode speed
 #define TUNE_DEFAULT_M3         1 // Tune default M3 with consideration to decode speed
 
+#define OPT_RESIZE_INPUT_LR     1 // Optimize resize input from multiple times in lr to once in cdef
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

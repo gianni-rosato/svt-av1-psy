@@ -638,12 +638,14 @@ void *rest_kernel(void *input_ptr) {
                 ? pcs_ptr->input_frame16bit
                 : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
-            // TODO: move input picture down scaling to end of cdef kernal
             EbPictureBufferDesc* scaled_input_picture_ptr = NULL;
             // downscale input picture if recon is resized
             Bool is_resized = recon_picture_ptr->width != input_picture_ptr->width
                 || recon_picture_ptr->height != input_picture_ptr->height;
             if (is_resized) {
+#if OPT_RESIZE_INPUT_LR
+                scaled_input_picture_ptr = pcs_ptr->scaled_input_picture_ptr;
+#else // OPT_RESIZE_INPUT_LR
                 superres_params_type spr_params = { recon_picture_ptr->width, recon_picture_ptr->height, 0 };
                 downscaled_source_buffer_desc_ctor(&scaled_input_picture_ptr, input_picture_ptr, spr_params);
                 av1_resize_frame(input_picture_ptr,
@@ -654,6 +656,7 @@ void *rest_kernel(void *input_ptr) {
                     scs_ptr->subsampling_y,
                     input_picture_ptr->packed_flag,
                     PICTURE_BUFFER_DESC_FULL_MASK);
+#endif // OPT_RESIZE_INPUT_LR
                 input_picture_ptr = scaled_input_picture_ptr;
             }
 
@@ -699,7 +702,9 @@ void *rest_kernel(void *input_ptr) {
                                    &trial_frame_rst,
                                    pcs_ptr,
                                    cdef_results_ptr->segment_index);
+#if !OPT_RESIZE_INPUT_LR
             EB_DELETE(scaled_input_picture_ptr);
+#endif // OPT_RESIZE_INPUT_LR
         }
 
         //all seg based search is done. update total processed segments. if all done, finish the search and perfrom application.
@@ -737,6 +742,10 @@ void *rest_kernel(void *input_ptr) {
                 pcs_ptr->rst_info[2].frame_restoration_type = RESTORE_NONE;
             }
 
+#if OPT_RESIZE_INPUT_LR
+            // delete scaled_input_picture_ptr after lr finished
+            EB_DELETE(pcs_ptr->scaled_input_picture_ptr);
+#endif // OPT_RESIZE_INPUT_LR
             if (pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // copy stat to ref object (intra_coded_area, Luminance, Scene change detection flags)
                 copy_statistics_to_ref_obj_ect(pcs_ptr, scs_ptr);

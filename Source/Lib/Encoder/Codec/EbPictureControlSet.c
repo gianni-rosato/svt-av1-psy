@@ -444,7 +444,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->color_format                      = init_data_ptr->color_format;
     object_ptr->temp_lf_recon_picture16bit_ptr    = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_picture_ptr         = (EbPictureBufferDesc *)NULL;
-
+#if OPT_RESIZE_INPUT_LR
+    object_ptr->scaled_input_picture_ptr          = (EbPictureBufferDesc *)NULL;
+#endif // OPT_RESIZE_INPUT_LR
     if (get_enable_restoration(init_data_ptr->enc_mode,
         init_data_ptr->static_config.enable_restoration_filtering,
         init_data_ptr->input_resolution,
