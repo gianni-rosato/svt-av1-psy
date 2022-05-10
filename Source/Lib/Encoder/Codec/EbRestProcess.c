@@ -557,7 +557,7 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet* pcs, SequenceContr
 
     Av1Common* cm = pcs->parent_pcs_ptr->av1_cm;
     obj->sg_frame_ep = cm->sg_frame_ep;
-    if (scs->mfmv_enabled) {
+    if (scs->mfmv_enabled || !pcs->parent_pcs_ptr->is_not_scaled) {
         obj->frame_type = pcs->parent_pcs_ptr->frm_hdr.frame_type;
         obj->order_hint = pcs->parent_pcs_ptr->cur_order_hint;
         svt_memcpy(obj->ref_order_hint, pcs->parent_pcs_ptr->ref_order_hint, 7 * sizeof(uint32_t));

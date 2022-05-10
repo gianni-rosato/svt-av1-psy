@@ -6805,7 +6805,7 @@ void* picture_decision_kernel(void *input_ptr)
                             else {
                                 pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[out_stride_diff64]->object_ptr;
 
-                                if (scs_ptr->static_config.sframe_dist != 0) {
+                                if (scs_ptr->static_config.sframe_dist != 0 || !pcs_ptr->is_not_scaled) {
                                     update_sframe_ref_order_hint(pcs_ptr, context_ptr);
                                 }
                             }

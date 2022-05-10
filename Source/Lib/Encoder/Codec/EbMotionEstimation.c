@@ -1289,8 +1289,8 @@ void integer_search_b64(PictureParentControlSet *pcs_ptr, uint32_t b64_index, ui
     SequenceControlSet *scs_ptr        = pcs_ptr->scs_ptr;
     int16_t             picture_width  = pcs_ptr->aligned_width;
     int16_t             picture_height = pcs_ptr->aligned_height;
-    uint32_t            b64_width       = (input_ptr->width - b64_origin_x) < BLOCK_SIZE_64 ? input_ptr->width - b64_origin_x : BLOCK_SIZE_64;
-    uint32_t            b64_height      = (input_ptr->height - b64_origin_y) < BLOCK_SIZE_64 ? input_ptr->height - b64_origin_y : BLOCK_SIZE_64;
+    uint32_t            b64_width       = (picture_width - b64_origin_x) < BLOCK_SIZE_64 ? picture_width - b64_origin_x : BLOCK_SIZE_64;
+    uint32_t            b64_height      = (picture_height - b64_origin_y) < BLOCK_SIZE_64 ? picture_height - b64_origin_y : BLOCK_SIZE_64;
     int16_t             pad_width      = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t             pad_height     = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t             origin_x       = (int16_t)b64_origin_x;

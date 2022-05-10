@@ -1318,7 +1318,8 @@ typedef enum ATTRIBUTE_PACKED {
 #define SCALE_NUMERATOR 8
 #define SUPERRES_SCALE_BITS 3
 #define SUPERRES_SCALE_DENOMINATOR_MIN (SCALE_NUMERATOR + 1)
-#define NUM_SCALES 8
+#define NUM_SR_SCALES 8         // number of super-res scales
+#define NUM_RESIZE_SCALES 8     // number of resize scales
 
 //**********************************************************************************************************************//
 // onyxc_int.h

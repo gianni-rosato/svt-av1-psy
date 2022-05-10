@@ -835,8 +835,8 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                                       recon_coeff_buffer,
                                                       0,
                                                       recon_ptr->stride_cb,
-                                                      input_picture_ptr->width >> ss_x,
-                                                      input_picture_ptr->height >> ss_y);
+                                                      (input_picture_ptr->width + ss_x) >> ss_x,
+                                                      (input_picture_ptr->height + ss_y) >> ss_y);
         } else if (plane == 2) {
             recon_coeff_buffer = (uint8_t *)&(
                 (recon_ptr->buffer_cr)[recon_ptr->origin_x / 2 +
@@ -852,8 +852,8 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                                       recon_coeff_buffer,
                                                       0,
                                                       recon_ptr->stride_cr,
-                                                      input_picture_ptr->width >> ss_x,
-                                                      input_picture_ptr->height >> ss_y);
+                                                      (input_picture_ptr->width + ss_x) >> ss_x,
+                                                      (input_picture_ptr->height + ss_y) >> ss_y);
         }
         return 0;
     } else {
@@ -895,8 +895,8 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                                      recon_coeff_buffer,
                                                      0,
                                                      recon_ptr->stride_cb,
-                                                     input_picture_ptr->width >> ss_x,
-                                                     input_picture_ptr->height >> ss_y);
+                                                     (input_picture_ptr->width + ss_x) >> ss_x,
+                                                     (input_picture_ptr->height + ss_y) >> ss_y);
         } else if (plane == 2) {
             recon_coeff_buffer = (uint8_t *)&(
                 (recon_ptr->buffer_cr)[(recon_ptr->origin_x / 2 +
@@ -914,8 +914,8 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                                      recon_coeff_buffer,
                                                      0,
                                                      recon_ptr->stride_cr,
-                                                     input_picture_ptr->width >> ss_x,
-                                                     input_picture_ptr->height >> ss_y);
+                                                     (input_picture_ptr->width + ss_x) >> ss_x,
+                                                     (input_picture_ptr->height + ss_y) >> ss_y);
         }
         return 0;
     }

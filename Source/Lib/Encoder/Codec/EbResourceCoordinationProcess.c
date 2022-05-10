@@ -1132,7 +1132,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->input_ptr                      = eb_input_ptr;
             end_of_sequence_flag = (pcs_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? TRUE : FALSE;
             // Check whether super-res is previously enabled in this recycled parent pcs and restore to non-scale-down default if so.
-            if (pcs_ptr->frame_superres_enabled)
+            if (pcs_ptr->frame_superres_enabled || pcs_ptr->frame_resize_enabled)
                 reset_resized_picture(scs_ptr, pcs_ptr, pcs_ptr->enhanced_picture_ptr);
             pcs_ptr->superres_total_recode_loop = 0;
             pcs_ptr->superres_recode_loop       = 0;
@@ -1142,7 +1142,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             //store the y8b warapper to be used for release later
             pcs_ptr->eb_y8b_wrapper_ptr   = eb_y8b_wrapper_ptr;
             pcs_ptr->end_of_sequence_flag = end_of_sequence_flag;
-            pcs_ptr->is_resize_none       = (scs_ptr->static_config.superres_mode == SUPERRES_NONE)
+            pcs_ptr->is_not_scaled        = (scs_ptr->static_config.superres_mode == SUPERRES_NONE)
                 && scs_ptr->static_config.resize_mode == RESIZE_NONE;
             if (loop_index == 1) {
                 // Get a new input picture for overlay.

@@ -4845,7 +4845,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD *xd,
         const int32_t b8_h = block_size_high[plane_bsize] >> ss_y;
 
         ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-        if (!use_intrabc && !pcs->parent_pcs_ptr->is_resize_none) {
+        if (!use_intrabc && !pcs->parent_pcs_ptr->is_not_scaled) {
             uint32_t num_of_list_to_search = (pcs->parent_pcs_ptr->slice_type == P_SLICE)
                 ? (uint32_t)REF_LIST_0
                 : (uint32_t)REF_LIST_1;
@@ -4890,7 +4890,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD *xd,
                 EbPictureBufferDesc *ref_pic = get_ref_pic_buffer(pcs, is16bit, list_idx, ref_idx);
 
                 const struct ScaleFactors *const sf = (use_intrabc ||
-                                                       pcs->parent_pcs_ptr->is_resize_none)
+                                                       pcs->parent_pcs_ptr->is_not_scaled)
                     ? sf_identity
                     : &(scale_factors[list_idx][ref_idx]);
 
@@ -5036,7 +5036,7 @@ EbErrorType av1_inter_prediction(
     ScaleFactors sf_identity = scs_ptr->sf_identity;
 
     ScaleFactors ref0_scale_factors;
-    if (pcs != NULL && !pcs->parent_pcs_ptr->is_resize_none && ref_pic_list0 != NULL) {
+    if (pcs != NULL && !pcs->parent_pcs_ptr->is_not_scaled && ref_pic_list0 != NULL) {
         svt_av1_setup_scale_factors_for_frame(&ref0_scale_factors,
                                               ref_pic_list0->width,
                                               ref_pic_list0->height,
@@ -5045,7 +5045,7 @@ EbErrorType av1_inter_prediction(
     }
 
     ScaleFactors ref1_scale_factors;
-    if (pcs != NULL && !pcs->parent_pcs_ptr->is_resize_none && ref_pic_list1 != NULL) {
+    if (pcs != NULL && !pcs->parent_pcs_ptr->is_not_scaled && ref_pic_list1 != NULL) {
         svt_av1_setup_scale_factors_for_frame(&ref1_scale_factors,
                                               ref_pic_list1->width,
                                               ref_pic_list1->height,
@@ -5101,7 +5101,7 @@ EbErrorType av1_inter_prediction(
             }
             // ScaleFactor
             const struct ScaleFactors *const sf = (use_intrabc || pcs == NULL ||
-                                                   pcs->parent_pcs_ptr->is_resize_none)
+                                                   pcs->parent_pcs_ptr->is_not_scaled)
                 ? &sf_identity
                 : &ref0_scale_factors;
 
@@ -5155,7 +5155,7 @@ EbErrorType av1_inter_prediction(
                   (ref_pic_list1->origin_y) * ref_pic_list1->stride_bit_inc_y));
             // ScaleFactor
             const struct ScaleFactors *const sf = (use_intrabc ||
-                                                   pcs->parent_pcs_ptr->is_resize_none)
+                                                   pcs->parent_pcs_ptr->is_not_scaled)
                 ? &sf_identity
                 : &ref1_scale_factors;
 
@@ -5248,7 +5248,7 @@ EbErrorType av1_inter_prediction(
 
             // ScaleFactor
             const struct ScaleFactors *const sf = (use_intrabc || pcs == NULL ||
-                                                   pcs->parent_pcs_ptr->is_resize_none)
+                                                   pcs->parent_pcs_ptr->is_not_scaled)
                 ? &sf_identity
                 : &ref0_scale_factors;
 
@@ -5350,7 +5350,7 @@ EbErrorType av1_inter_prediction(
 
             // ScaleFactor
             const struct ScaleFactors *const sf = (use_intrabc ||
-                                                   pcs->parent_pcs_ptr->is_resize_none)
+                                                   pcs->parent_pcs_ptr->is_not_scaled)
                 ? &sf_identity
                 : &ref1_scale_factors;
 
@@ -5993,7 +5993,7 @@ EbErrorType inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_m
     }
     SequenceControlSet *scs_ptr            = picture_control_set_ptr->scs_ptr;
     ScaleFactors        ref0_scale_factors = scs_ptr->sf_identity;
-    if (!picture_control_set_ptr->parent_pcs_ptr->is_resize_none && ref_pic_list0 != NULL) {
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_not_scaled && ref_pic_list0 != NULL) {
         svt_av1_setup_scale_factors_for_frame(
             &ref0_scale_factors,
             ref_pic_list0->width,
@@ -6003,7 +6003,7 @@ EbErrorType inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_m
     }
 
     ScaleFactors ref1_scale_factors = scs_ptr->sf_identity;
-    if (!picture_control_set_ptr->parent_pcs_ptr->is_resize_none && ref_pic_list1 != NULL) {
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_not_scaled && ref_pic_list1 != NULL) {
         svt_av1_setup_scale_factors_for_frame(
             &ref1_scale_factors,
             ref_pic_list1->width,
@@ -6084,7 +6084,7 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
                                                                   : PICTURE_BUFFER_DESC_Cr_FLAG;
     SequenceControlSet *scs_ptr            = picture_control_set_ptr->scs_ptr;
     ScaleFactors        ref0_scale_factors = scs_ptr->sf_identity;
-    if (!picture_control_set_ptr->parent_pcs_ptr->is_resize_none && ref_pic_list0 != NULL) {
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_not_scaled && ref_pic_list0 != NULL) {
         svt_av1_setup_scale_factors_for_frame(
             &ref0_scale_factors,
             ref_pic_list0->width,
@@ -6094,7 +6094,7 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
     }
 
     ScaleFactors ref1_scale_factors = scs_ptr->sf_identity;
-    if (!picture_control_set_ptr->parent_pcs_ptr->is_resize_none && ref_pic_list1 != NULL) {
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_not_scaled && ref_pic_list1 != NULL) {
         svt_av1_setup_scale_factors_for_frame(
             &ref1_scale_factors,
             ref_pic_list1->width,

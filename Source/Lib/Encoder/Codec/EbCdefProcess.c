@@ -461,7 +461,7 @@ void *cdef_kernel(void *input_ptr) {
                     set_unscaled_input_16bit(pcs_ptr);
                 }
             }
-            if (scs_ptr->static_config.resize_mode) {
+            if (scs_ptr->static_config.resize_mode != RESIZE_NONE) {
                 EbPictureBufferDesc* recon = NULL;
                 get_recon_pic(pcs_ptr, &recon, is_16bit);
                 recon->width = pcs_ptr->parent_pcs_ptr->render_width;

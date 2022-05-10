@@ -3094,7 +3094,7 @@ void set_mid_pass_ctrls(
     }
 }
 
-uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t aq_mode) {
+uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode, uint8_t aq_mode) {
 
     uint8_t tpl_level;
 
@@ -3112,6 +3112,10 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
     // allow TPL with auto-dual and auto-all
     else if (superres_mode > SUPERRES_NONE && superres_mode != SUPERRES_AUTO && superres_mode != SUPERRES_QTHRESH) {
         SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
+        tpl_level = 0;
+    }
+    else if (resize_mode > RESIZE_NONE) {
+        SVT_WARN("TPL will be disabled when scaling reference (resize) is enabled!\n");
         tpl_level = 0;
     }
 #if TUNE_DEFAULT_M5
@@ -3261,7 +3265,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     set_multi_pass_params(
         scs_ptr);
 
-    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.enable_adaptive_quantization);
+    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.resize_mode, scs_ptr->static_config.enable_adaptive_quantization);
 
     uint16_t subsampling_x = scs_ptr->subsampling_x;
     uint16_t subsampling_y = scs_ptr->subsampling_y;

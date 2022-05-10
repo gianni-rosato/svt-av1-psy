@@ -873,7 +873,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 context_ptr->me_context_ptr->temporal_layer_index = pcs_ptr->temporal_layer_index;
                                 context_ptr->me_context_ptr->is_used_as_reference_flag = pcs_ptr->is_used_as_reference_flag;
 
-                                if (pcs_ptr->frame_superres_enabled) {
+                                if (pcs_ptr->frame_superres_enabled || pcs_ptr->frame_resize_enabled) {
                                     for (int i = 0;  i < context_ptr->me_context_ptr->num_of_list_to_search; i++) {
                                         for (int j = 0; j < context_ptr->me_context_ptr->num_of_ref_pic_to_search[i]; j++) {
                                             //assert((int)pcs_ptr->ref_pa_pic_ptr_array[i][j]->live_count > 0);

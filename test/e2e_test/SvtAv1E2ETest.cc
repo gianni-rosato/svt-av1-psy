@@ -222,6 +222,14 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 #endif // ENBALE_16BIT_PIPELINE_TEST
     {"SuperResTest5", {{"SuperresMode", "4"}}, default_test_vectors},
 
+    // test Reference Scaling mode
+    { "RefScalingTest1", {{"ResizeMode", "2"}}, default_test_vectors },
+    { "RefScalingTest2", {{"ResizeMode", "2"}, {"Obmc", "0"}, {"EncoderMode", "8"}}, default_test_vectors },
+    { "RefScalingTest3", {{"ResizeMode", "2"}, {"Obmc", "1"}, {"EncoderMode", "8"}}, default_test_vectors },
+#ifdef ENBALE_16BIT_PIPELINE_TEST
+    { "RefScalingTest4", {{"ResizeMode", "2"}, {"Obmc", "1"}, {"Encoder16BitPipeline", "1"}}, default_test_vectors },
+#endif // ENBALE_16BIT_PIPELINE_TEST
+
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},
 
@@ -584,7 +592,7 @@ static const std::vector<EncTestSetting> generate_ref_scaling_settings() {
             string idx = std::to_string(count);
             string name = test_prefix + idx;
             EncTestSetting setting{ name,
-                                   {{"SuperresMode", "1"},
+                                   {{"ResizeMode", "1"},
                                     {"ResizeDenom", std::to_string(i)},
                                     {"ResizeKfDenom", std::to_string(j)}},
                                     {"Encoder16BitPipeline", "1"}},
@@ -599,4 +607,40 @@ static const std::vector<EncTestSetting> generate_ref_scaling_settings() {
 
 INSTANTIATE_TEST_CASE_P(REFSCALINGTEST, SuperResTest,
     ::testing::ValuesIn(generate_ref_scaling_settings()),
+    EncTestSetting::GetSettingName);
+
+class FeaturePresetConformanceTest : public ConformanceDeathTest {};
+
+TEST_P(FeaturePresetConformanceTest, /*DISABLED_*/FeaturePresetConformanceTest) {
+    run_death_test();
+}
+
+static const std::vector<EncTestSetting> generate_testcase_with_preset_settings(
+    const std::string test_case_name,
+    const std::string feature_name,
+    const std::vector<std::string> values) {
+    static const std::string test_prefix = test_case_name;
+    std::vector<EncTestSetting> settings;
+
+    int count = 0;
+    for (size_t preset = 0; preset <= 12; preset++) {
+        for (std::string value : values) {
+            EncTestSetting new_setting;
+            string idx = std::to_string(count);
+            string name = test_prefix + idx;
+            EncTestSetting setting{ name,
+                                   {{"EncoderMode", std::to_string(preset)},
+                                    {feature_name, value}},
+                                   default_test_vectors };
+            settings.push_back(setting);
+            count++;
+        }
+    }
+    return settings;
+}
+
+static const std::vector<std::string> resize_mode = { "2" };
+INSTANTIATE_TEST_CASE_P(
+    REFSCALINGTEST, FeaturePresetConformanceTest,
+    ::testing::ValuesIn(generate_testcase_with_preset_settings("RefScalingPreset", "ResizeMode", resize_mode)),
     EncTestSetting::GetSettingName);

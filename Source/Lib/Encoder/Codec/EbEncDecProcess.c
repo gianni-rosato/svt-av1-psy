@@ -518,7 +518,7 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
             // easy to display in tool and analysis
             uint16_t recon_w = recon_ptr->width;
             uint16_t recon_h = recon_ptr->height;
-            if (scs_ptr->static_config.resize_mode) {
+            if (scs_ptr->static_config.resize_mode != RESIZE_NONE) {
                 recon_w = recon_ptr->max_width;  //ALIGN_POWER_OF_TWO(recon_ptr->width, 3);
                 recon_h = recon_ptr->max_height; //ALIGN_POWER_OF_TWO(recon_ptr->height, 3);
             }
@@ -1879,7 +1879,6 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
     reference_object->slice_type = pcs_ptr->parent_pcs_ptr->slice_type;
     reference_object->r0         = pcs_ptr->parent_pcs_ptr->r0;
 }
-
 void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
     ObmcControls *obmc_ctrls = &mdctxt->obmc_ctrls;
     switch (obmc_mode) {

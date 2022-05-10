@@ -602,6 +602,34 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   MAX_SUPERRES_DENOM);
         return_error = EB_ErrorBadParameter;
     }
+
+    if (config->resize_mode > RESIZE_RANDOM) {
+        SVT_LOG("Error instance %u: invalid resize-mode %d, should be in the range [%d - %d]\n",
+                channel_number + 1,
+                config->resize_mode,
+                RESIZE_NONE,
+                RESIZE_RANDOM);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->resize_kf_denom < MIN_RESIZE_DENOM || config->resize_kf_denom > MAX_RESIZE_DENOM) {
+        SVT_LOG("Error instance %u: invalid resize-kf-denom %d, should be in the range [%d - %d] \n",
+                channel_number + 1,
+                config->resize_kf_denom,
+                MIN_RESIZE_DENOM,
+                MAX_RESIZE_DENOM);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->resize_denom < MIN_RESIZE_DENOM || config->resize_denom > MAX_RESIZE_DENOM) {
+        SVT_LOG("Error instance %u: invalid resize-denom %d, should be in the range [%d - %d] \n",
+                channel_number + 1,
+                config->resize_denom,
+                MIN_RESIZE_DENOM,
+                MAX_RESIZE_DENOM);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->matrix_coefficients == 0 && config->encoder_color_format != EB_YUV444) {
         SVT_ERROR(
             "Instance %u: Identity matrix (matrix_coefficient = 0) may be used only with 4:4:4 "

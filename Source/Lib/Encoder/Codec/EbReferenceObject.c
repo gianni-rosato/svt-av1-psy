@@ -118,8 +118,8 @@ static void svt_reference_object_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->sb_64x64_mvp);
     EB_FREE_ARRAY(obj->sb_me_64x64_dist);
     EB_FREE_ARRAY(obj->sb_me_8x8_cost_var);
-    for (uint8_t sr_denom_idx = 0; sr_denom_idx < NUM_SCALES + 1; sr_denom_idx++) {
-        for (uint8_t resize_denom_idx = 0; resize_denom_idx < NUM_SCALES + 1; resize_denom_idx++) {
+    for (uint8_t sr_denom_idx = 0; sr_denom_idx < NUM_SR_SCALES + 1; sr_denom_idx++) {
+        for (uint8_t resize_denom_idx = 0; resize_denom_idx < NUM_RESIZE_SCALES + 1; resize_denom_idx++) {
             if (obj->downscaled_reference_picture[sr_denom_idx][resize_denom_idx] != NULL) {
                 EB_DELETE(obj->downscaled_reference_picture[sr_denom_idx][resize_denom_idx]);
             }
@@ -192,8 +192,8 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     reference_object->ds_pics.sixteenth_picture_ptr = reference_object->sixteenth_reference_picture;
     memset(&reference_object->film_grain_params, 0, sizeof(reference_object->film_grain_params));
     // set all supplemental downscaled reference picture pointers to NULL
-    for (uint8_t sr_denom_idx = 0; sr_denom_idx < NUM_SCALES + 1; sr_denom_idx++) {
-        for (uint8_t resize_denom_idx = 0; resize_denom_idx < NUM_SCALES + 1; resize_denom_idx++) {
+    for (uint8_t sr_denom_idx = 0; sr_denom_idx < NUM_SR_SCALES + 1; sr_denom_idx++) {
+        for (uint8_t resize_denom_idx = 0; resize_denom_idx < NUM_RESIZE_SCALES + 1; resize_denom_idx++) {
             reference_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx] = NULL;
             reference_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx]    = (uint64_t)~0;
             EB_CREATE_MUTEX(reference_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
@@ -238,8 +238,8 @@ static void svt_pa_reference_object_dctor(EbPtr p) {
     EB_DELETE(obj->input_padded_picture_ptr);
     EB_DELETE(obj->quarter_downsampled_picture_ptr);
     EB_DELETE(obj->sixteenth_downsampled_picture_ptr);
-    for (uint8_t sr_denom_idx = 0; sr_denom_idx < NUM_SCALES + 1; sr_denom_idx++) {
-        for (uint8_t resize_denom_idx = 0; resize_denom_idx < NUM_SCALES + 1; resize_denom_idx++) {
+    for (uint8_t sr_denom_idx = 0; sr_denom_idx < NUM_SR_SCALES + 1; sr_denom_idx++) {
+        for (uint8_t resize_denom_idx = 0; resize_denom_idx < NUM_RESIZE_SCALES + 1; resize_denom_idx++) {
             if (obj->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx] != NULL) {
                 EB_DELETE(obj->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx]);
                 EB_DELETE(obj->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx]);
@@ -275,8 +275,8 @@ EbErrorType svt_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
            svt_picture_buffer_desc_ctor,
            (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
     // set all supplemental downscaled reference picture pointers to NULL
-    for (uint8_t sr_down_idx = 0; sr_down_idx < NUM_SCALES + 1; sr_down_idx++) {
-        for (uint8_t resize_down_idx = 0; resize_down_idx < NUM_SCALES + 1; resize_down_idx++) {
+    for (uint8_t sr_down_idx = 0; sr_down_idx < NUM_SR_SCALES + 1; sr_down_idx++) {
+        for (uint8_t resize_down_idx = 0; resize_down_idx < NUM_RESIZE_SCALES + 1; resize_down_idx++) {
             pa_ref_obj_->downscaled_input_padded_picture_ptr[sr_down_idx][resize_down_idx] = NULL;
             pa_ref_obj_->downscaled_quarter_downsampled_picture_ptr[sr_down_idx][resize_down_idx] = NULL;
             pa_ref_obj_->downscaled_sixteenth_downsampled_picture_ptr[sr_down_idx][resize_down_idx] = NULL;

@@ -1317,7 +1317,7 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
                 assert(sr_search_type == SUPERRES_AUTO_ALL);
                 int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
                 if (update_type == KF_UPDATE || update_type == ARF_UPDATE) {
-                    for (int i = 0; i < NUM_SCALES + 1; i++) {
+                    for (int i = 0; i < NUM_SR_SCALES + 1; i++) {
                         if (i < SCALE_NUMERATOR) {
                             pcs_ptr->superres_denom_array[i] = SCALE_NUMERATOR + 1 + i;
                         } else {
@@ -1841,6 +1841,8 @@ void reset_resized_picture(SequenceControlSet *scs_ptr, PictureParentControlSet 
     pcs_ptr->frame_superres_enabled = FALSE;
     pcs_ptr->resize_denom           = SCALE_NUMERATOR;
     pcs_ptr->frame_resize_enabled   = FALSE;
+    pcs_ptr->render_width           = input_picture_ptr->width;
+    pcs_ptr->render_height          = input_picture_ptr->height;
     // restore frame size (width) which was changed by super-res tool
     scale_pcs_params(
         scs_ptr, pcs_ptr, spr_params, input_picture_ptr->width, input_picture_ptr->height);
