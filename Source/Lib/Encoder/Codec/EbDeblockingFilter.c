@@ -731,19 +731,21 @@ void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuf
     Bool is_16bit          = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     dstBuffer->origin_x    = srcBuffer->origin_x;
     dstBuffer->origin_y    = srcBuffer->origin_y;
+    dstBuffer->origin_bot_y= srcBuffer->origin_bot_y;
     dstBuffer->width       = srcBuffer->width;
     dstBuffer->height      = srcBuffer->height;
     dstBuffer->max_width   = srcBuffer->max_width;
     dstBuffer->max_height  = srcBuffer->max_height;
     dstBuffer->bit_depth   = srcBuffer->bit_depth;
+    dstBuffer->color_format= srcBuffer->color_format;
     dstBuffer->luma_size   = srcBuffer->luma_size;
     dstBuffer->chroma_size = srcBuffer->chroma_size;
     dstBuffer->packed_flag = srcBuffer->packed_flag;
 
     uint32_t luma_buffer_offset = (srcBuffer->origin_x + srcBuffer->origin_y * srcBuffer->stride_y)
         << is_16bit;
-    uint16_t luma_width  = (uint16_t)(srcBuffer->width) << is_16bit;
-    uint16_t luma_height = (uint16_t)(srcBuffer->height);
+    uint16_t luma_width  = ALIGN_POWER_OF_TWO(srcBuffer->width, 3) << is_16bit;
+    uint16_t luma_height = ALIGN_POWER_OF_TWO(srcBuffer->height, 3);
 
     uint16_t chroma_width = (luma_width >> 1);
     if (plane == 0) {

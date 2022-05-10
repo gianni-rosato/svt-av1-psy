@@ -154,7 +154,18 @@ extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **reco
     } else {
         *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
     }
+
+    // recon buffer is created in full resolution, it is resized to difference size
+    // when reference scaling enabled. recon width and height should be adjusted to
+    // upscaled render size
+    if (*recon_ptr &&
+        (pcs_ptr->parent_pcs_ptr->render_width != (*recon_ptr)->width ||
+         pcs_ptr->parent_pcs_ptr->render_height != (*recon_ptr)->height)) {
+        (*recon_ptr)->width = pcs_ptr->parent_pcs_ptr->render_width;
+        (*recon_ptr)->height = pcs_ptr->parent_pcs_ptr->render_height;
+    }
 }
+
 // If using boundaries during the filter search, copy the recon pic to a new buffer (to
 // avoid race conidition from many threads modifying the same recon pic).
 //

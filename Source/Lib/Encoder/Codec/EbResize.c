@@ -1895,6 +1895,13 @@ void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* p
         pcs_ptr->render_width = spr_params.encoding_width;
         pcs_ptr->render_height = spr_params.encoding_height;
     }
+    else {
+        // reset the render size for this pcs might be recycled
+        pcs_ptr->resize_denom = SCALE_NUMERATOR;
+        pcs_ptr->frame_resize_enabled = EB_FALSE;
+        pcs_ptr->render_width = spr_params.encoding_width;
+        pcs_ptr->render_height = spr_params.encoding_height;
+    }
 
     // step 2: calculate super-res resolution
     if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
