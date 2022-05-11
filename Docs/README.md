@@ -40,3 +40,4 @@
 - [Super-resolution Appendix](Appendix-Super-Resolution.md)
 - [Temporal Dependency Model](Appendix-TPL.md)
 - [Transform Search Appendix](Appendix-TX-Search.md)
+- [Reference Scaling Appendix](Appendix-Reference-Scaling.md)
