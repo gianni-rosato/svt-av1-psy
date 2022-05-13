@@ -1167,6 +1167,9 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
             : 0 ;
     } else {
         uint16_t                    padding = scs_ptr->super_block_size + 32;
+        if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
+            padding += scs_ptr->super_block_size;
+        }
         EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
         temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
         temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
