@@ -1210,17 +1210,31 @@ void svt_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
         }
     } else {
         if (bsize == BLOCK_8X8) {
-            svt_cdef_filter_block_8xn_16(in,
-                                         pri_strength,
-                                         sec_strength,
-                                         dir,
-                                         pri_damping,
-                                         sec_damping,
-                                         coeff_shift,
-                                         dst16,
-                                         dstride,
-                                         8,
-                                         subsampling_factor);
+            //When subsampling_factor is 4 then we cannot use AVX512 kernel because it load 4 lines(block height 16 in this case)
+            if (subsampling_factor == 4)
+                svt_cdef_filter_block_8xn_16_avx2(in,
+                                             pri_strength,
+                                             sec_strength,
+                                             dir,
+                                             pri_damping,
+                                             sec_damping,
+                                             coeff_shift,
+                                             dst16,
+                                             dstride,
+                                             8,
+                                             subsampling_factor);
+            else
+                svt_cdef_filter_block_8xn_16(in,
+                                             pri_strength,
+                                             sec_strength,
+                                             dir,
+                                             pri_damping,
+                                             sec_damping,
+                                             coeff_shift,
+                                             dst16,
+                                             dstride,
+                                             8,
+                                             subsampling_factor);
         } else if (bsize == BLOCK_4X8) {
             svt_cdef_filter_block_4xn_16_avx2(dst16,
                                               dstride,

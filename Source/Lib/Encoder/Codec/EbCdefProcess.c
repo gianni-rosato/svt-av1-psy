@@ -281,10 +281,8 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                 */
                 switch (bsize[pli]) {
                 case BLOCK_8X8:
-#if !EN_AVX512_SUPPORT
                     subsampling_factor = MIN(subsampling_factor, 4);
                     break;
-#endif
                 case BLOCK_8X4:
                 case BLOCK_4X8:
                     subsampling_factor = MIN(subsampling_factor, 2);
