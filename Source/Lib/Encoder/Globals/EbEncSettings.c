@@ -148,14 +148,13 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if FTR_FORCE_KF
+
     if (config->force_key_frames &&
         (config->rate_control_mode != 0 || config->pred_structure != PRED_RANDOM_ACCESS)) {
         SVT_ERROR("Instance %u: Force key frame is only supported with RA CRF/CQP mode\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#endif
 
     if (config->rate_control_mode != 0 && (config->target_bit_rate >= config->max_bit_rate)
          && (config->max_bit_rate != 0)) {
@@ -845,13 +844,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->forced_max_frame_width    = 0;
     config_ptr->forced_max_frame_height   = 0;
     config_ptr->stat_report               = 0;
-#if OPT_DECODE
     config_ptr->tile_rows                 = DEFAULT;
     config_ptr->tile_columns              = DEFAULT;
-#else
-    config_ptr->tile_rows                 = 0;
-    config_ptr->tile_columns              = 0;
-#endif
     config_ptr->qp = DEFAULT_QP;
     config_ptr->use_qp_file = FALSE;
 
@@ -954,10 +948,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     // Switch frame default values
     config_ptr->sframe_dist = 0;
     config_ptr->sframe_mode = SFRAME_NEAREST_BASE;
-
-#if FTR_FORCE_KF
     config_ptr->force_key_frames = 0;
-#endif
+
     return return_error;
 }
 
@@ -1738,9 +1730,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"enable-overlays", &config_struct->enable_overlays},
         {"enable-hdr", &config_struct->high_dynamic_range_input},
         {"fast-decode", &config_struct->fast_decode},
-#if FTR_FORCE_KF
         {"enable-force-key-frames", &config_struct->force_key_frames},
-#endif
     };
     const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
 

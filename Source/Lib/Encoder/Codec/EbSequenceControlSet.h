@@ -290,10 +290,6 @@ typedef struct SequenceControlSet {
     *
     * Default is 1. */
     Bool enable_global_motion;
-#if !CLN_REST_2 // These are always set to default
-    int  sg_filter_mode;
-    int  wn_filter_mode;
-#endif
 
     /* inter intra compound
     *

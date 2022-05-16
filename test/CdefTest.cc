@@ -476,21 +476,13 @@ TEST_P(CDEFFindDirTest, MatchTest) {
 // structs as arguments, which makes the v256 type of the intrinsics
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
-#if UPDATE_CDEF_INTRINSICS
 INSTANTIATE_TEST_CASE_P(Cdef, CDEFFindDirTest,
                         ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_sse4_1,
                                                      &svt_aom_cdef_find_dir_c),
                                           make_tuple(&svt_aom_cdef_find_dir_avx2,
                                                      &svt_aom_cdef_find_dir_c)));
-#else
-INSTANTIATE_TEST_CASE_P(Cdef, CDEFFindDirTest,
-                        ::testing::Values(make_tuple(&svt_cdef_find_dir_sse4_1,
-                                                     &svt_cdef_find_dir_c),
-                                          make_tuple(&svt_cdef_find_dir_avx2,
-                                                     &svt_cdef_find_dir_c)));
-#endif
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
-#if UPDATE_CDEF_INTRINSICS
+
 using FindDirDualFunc = void(*)(const uint16_t *img1, const uint16_t *img2,
     int stride, int32_t *var1, int32_t *var2, int32_t coeff_shift,
     uint8_t *out1, uint8_t *out2);
@@ -600,7 +592,6 @@ INSTANTIATE_TEST_CASE_P(Cdef, CDEFFindDirDualTest,
                                  &svt_aom_cdef_find_dir_dual_c)));
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
-#endif
 }  // namespace
 
 /**
@@ -642,33 +633,20 @@ TEST(CdefToolTest, CopyRectMatchTest) {
                 dst_data_tst_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
             uint16_t *dst_ref_ =
                 dst_data_ref_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
-#if UPDATE_CDEF_COPY
+
             svt_aom_copy_rect8_8bit_to_16bit_c(
                 dst_ref_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
             svt_aom_copy_rect8_8bit_to_16bit_sse4_1(
                 dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
-#else
-            svt_copy_rect8_8bit_to_16bit_c(
-                dst_ref_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
-            svt_copy_rect8_8bit_to_16bit_sse4_1(
-                dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
-#endif
 
             for (int i = 0; i < vsize; ++i) {
                 for (int j = 0; j < hsize; ++j)
-#if UPDATE_CDEF_COPY
                     ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
                               dst_tst_[i * CDEF_BSTRIDE + j])
                         << "copy_rect8_8bit_to_16bit failed with pos(" << i
                         << " " << j << ")";
-#else
-                    ASSERT_EQ(dst_ref_[i * CDEF_BSTRIDE + j],
-                              dst_ref_[i * CDEF_BSTRIDE + j])
-                        << "copy_rect8_8bit_to_16bit failed with pos(" << i
-                        << " " << j << ")";
-#endif
             }
-#if UPDATE_CDEF_COPY
+
             // Test the AVX2 copy function
             memset(dst_data_tst_, 0, sizeof(dst_data_tst_));
             svt_aom_copy_rect8_8bit_to_16bit_avx2(
@@ -680,7 +658,6 @@ TEST(CdefToolTest, CopyRectMatchTest) {
                         << "copy_rect8_8bit_to_16bit failed with pos(" << i
                         << " " << j << ")";
             }
-#endif
         }
 }
 

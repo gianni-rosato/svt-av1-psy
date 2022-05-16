@@ -323,32 +323,20 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
         tpl_ctrls->r0_adjust_factor *= 3;
     if (pcs_ptr->scs_ptr->enable_adaptive_mini_gop == 0) {
         if (scs_ptr->static_config.hierarchical_levels < 4)
-#if OPT_TPL_4L
             if (tpl_ctrls->r0_adjust_factor != 0.1)
                 tpl_ctrls->r0_adjust_factor /= 3;
-#else
-            tpl_ctrls->r0_adjust_factor = 0.1;
-#endif
     } else {
         if (pcs_ptr->scs_ptr->max_heirachical_level < 4)
             tpl_ctrls->r0_adjust_factor = 0.1;
     }
     // Calculated qindex based on r0 using qstep calculation
-#if OPT_TPL_4L
     if (scs_ptr->static_config.hierarchical_levels == 4 || scs_ptr->static_config.hierarchical_levels == 3)
-#else
-    if (scs_ptr->static_config.hierarchical_levels == 4)
-#endif
         tpl_ctrls->qstep_based_q_calc = 1;
     else
         tpl_ctrls->qstep_based_q_calc = 0;
 }
-#if CLN_REST_2
-#if OPT_DECODE
+
 uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_ref);
-#else
-uint8_t get_wn_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_ref);
-#endif
 uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_base);
 /*
 * return true if restoration filtering is enabled; false otherwise
@@ -362,11 +350,7 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
 
     uint8_t wn = 0;
     for (int is_ref = 0; is_ref < 2; is_ref++) {
-#if OPT_DECODE
         wn = get_wn_filter_level(enc_mode, input_resolution, is_ref);
-#else
-        wn = get_wn_filter_level(enc_mode, fast_decode, input_resolution, is_ref);
-#endif
         if (wn) break;
     }
 
@@ -378,35 +362,7 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
 
     return (sg > 0 || wn > 0);
 }
-#else
-/*
-* return the restoration level
-  Used by signal_derivation_pre_analysis_oq and memory allocation
-*/
-uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-                               uint8_t input_resolution, Bool fast_decode) {
-    Bool enable_restoration;
 
-    if (fast_decode == 0)
-#if EN_REST_M8_M9
-        enable_restoration = (enc_mode <= ENC_M9) ? 1 : 0;
-#else
-        enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
-#endif
-    else {
-        if (enc_mode <= ENC_M7)
-            enable_restoration = input_resolution <= INPUT_SIZE_360p_RANGE ? 1 : 0;
-        else
-            enable_restoration = 0;
-    }
-
-    // higher resolutions will shut restoration to save memory
-    if (input_resolution >= INPUT_SIZE_8K_RANGE)
-        enable_restoration = 0;
-
-    return config_enable_restoration > 0 ? config_enable_restoration : enable_restoration;
-}
-#endif
 /******************************************************
 * Derive Pre-Analysis settings for OQ for pcs
 Input   : encoder mode and tune
@@ -1135,11 +1091,7 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             pcs_ptr->overlay_ppcs_ptr   = NULL;
             pcs_ptr->is_alt_ref         = 0;
-#if FIX_ISSUE_1857
             pcs_ptr->transition_present = -1;
-#else
-            pcs_ptr->transition_present = 0;
-#endif
             pcs_ptr->is_noise_level     = 0;
             if (loop_index) {
                 pcs_ptr->is_overlay = 1;
@@ -1215,14 +1167,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->eb_y8b_wrapper_ptr = NULL;
             }
             // Set Picture Control Flags
-#if FTR_FORCE_KF
             pcs_ptr->idr_flag = scs_ptr->encode_context_ptr->initial_picture;
-#else
-            pcs_ptr->idr_flag = scs_ptr->encode_context_ptr->initial_picture ||
-                (pcs_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE);
-            pcs_ptr->cra_flag = (pcs_ptr->input_ptr->pic_type == EB_AV1_INTRA_ONLY_PICTURE) ? TRUE
-                                                                                            : FALSE;
-#endif
             pcs_ptr->scene_change_flag = FALSE;
             pcs_ptr->qp_on_the_fly     = FALSE;
             pcs_ptr->sb_total_count    = scs_ptr->sb_total_count;

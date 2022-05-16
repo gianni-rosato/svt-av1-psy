@@ -45,10 +45,7 @@
 // RC Groups: They should be a power of 2, so we can replace % by &.
 // Instead of using x % y, we use x && (y-1)
 #define PARALLEL_GOP_MAX_NUMBER 256
-#if !FTR_FORCE_KF
-#define RC_GROUP_IN_GOP_MAX_NUMBER 512
-#define PICTURE_IN_RC_GROUP_MAX_NUMBER 64
-#endif
+
 typedef struct DpbDependentList {
     int32_t  list[1 << MAX_TEMPORAL_LAYERS];
     uint32_t list_count;
@@ -73,7 +70,6 @@ typedef struct FirstPassStatsOut {
     size_t           capability;
 } FirstPassStatsOut;
 
-#if FTR_FORCE_KF
 typedef struct RateControlIntervalParamContext {
     EbDctor  dctor;
     uint64_t first_poc;
@@ -86,7 +82,7 @@ typedef struct RateControlIntervalParamContext {
     int32_t size;
     uint8_t last_i_qp;
 } RateControlIntervalParamContext;
-#endif
+
 typedef struct EncodeContext {
     EbDctor dctor;
     // Callback Functions
@@ -198,9 +194,6 @@ typedef struct EncodeContext {
     TwoPassCfg           two_pass_cfg; // two pass datarate control
     RATE_CONTROL         rc;
     RateControlCfg       rc_cfg;
-#if !RC_REFACTOR_3
-    GF_GROUP             gf_group;
-#endif
     SwitchFrameCfg       sf_cfg;
     FIRSTPASS_STATS     *frame_stats_buffer;
     // Number of stats buffers required for look ahead
@@ -214,11 +207,9 @@ typedef struct EncodeContext {
     int      recode_tolerance;
     int32_t  frame_updated;
     EbHandle frame_updated_mutex;
-#if FTR_FORCE_KF
     RateControlIntervalParamContext **rc_param_queue;
     int32_t                           rc_param_queue_head_index;
     EbHandle                          rc_param_queue_mutex;
-#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

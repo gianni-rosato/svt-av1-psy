@@ -65,9 +65,6 @@ static INLINE int32_t dec_sb_compute_cdef_list(EbDecHandle *dec_handle, SBInfo *
             if (!dec_is_8x8_block_skip(mbmi)) {
                 dlist[count].by   = (uint8_t)(r >> r_shift);
                 dlist[count].bx   = (uint8_t)(c >> c_shift);
-#if !CLN_CDEF_BUFFS
-                dlist[count].skip = 0;
-#endif
                 count++;
             }
         }
@@ -235,7 +232,6 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
         }
         /* Copy in the pixels we need from the current superblock for
            deringing.*/
-#if CLN_CDEF_FRAME
         copy_sb8_16(&src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER + cstart],
             CDEF_BSTRIDE,
             rec_buff /*xd->plane[pli].dst.buf*/,
@@ -245,29 +241,8 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
             rend,
             cend - cstart,
             use_highbd);
-#else
-        if (use_highbd)
-            copy_sb16_16(&src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER + cstart],
-                         CDEF_BSTRIDE,
-                         (uint16_t *)rec_buff /*xd->plane[pli].dst.buf*/,
-                         (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr,
-                         coffset + cstart,
-                         rec_stride /*xd->plane[pli].dst.stride*/,
-                         rend,
-                         cend - cstart);
-        else
-            copy_sb8_16(&src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER + cstart],
-                        CDEF_BSTRIDE,
-                        rec_buff /*xd->plane[pli].dst.buf*/,
-                        (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr,
-                        coffset + cstart,
-                        rec_stride /*xd->plane[pli].dst.stride*/,
-                        rend,
-                        cend - cstart);
-#endif
 
         if (!prev_row_cdef[fbc]) {
-#if CLN_CDEF_FRAME
             copy_sb8_16( //cm,
                 &src[CDEF_HBORDER],
                 CDEF_BSTRIDE,
@@ -278,28 +253,6 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                 CDEF_VBORDER,
                 hsize,
                 use_highbd);
-#else
-            if (use_highbd)
-                copy_sb16_16( //cm,
-                    &src[CDEF_HBORDER],
-                    CDEF_BSTRIDE,
-                    (uint16_t *)rec_buff /*xd->plane[pli].dst.buf*/,
-                    (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                    coffset,
-                    rec_stride /*xd->plane[pli].dst.stride*/,
-                    CDEF_VBORDER,
-                    hsize);
-            else
-                copy_sb8_16( //cm,
-                    &src[CDEF_HBORDER],
-                    CDEF_BSTRIDE,
-                    rec_buff /*xd->plane[pli].dst.buf*/,
-                    (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                    coffset,
-                    rec_stride /*xd->plane[pli].dst.stride*/,
-                    CDEF_VBORDER,
-                    hsize);
-#endif
         } else if (fbr > 0) {
             copy_rect(&src[CDEF_HBORDER],
                       CDEF_BSTRIDE,
@@ -312,7 +265,6 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
         }
 
         if (!prev_row_cdef[fbc - 1]) {
-#if CLN_CDEF_FRAME
             copy_sb8_16( //cm,
                 src,
                 CDEF_BSTRIDE,
@@ -325,32 +277,6 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                 CDEF_VBORDER,
                 CDEF_HBORDER,
                 use_highbd);
-#else
-            if (use_highbd)
-                copy_sb16_16( //cm,
-                    src,
-                    CDEF_BSTRIDE,
-                    (uint16_t *)rec_buff /*xd->plane[pli].dst.buf*/,
-                    (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                    coffset - CDEF_HBORDER,
-                    rec_stride /*xd->plane[pli].
-                    dst.stride*/
-                    ,
-                    CDEF_VBORDER,
-                    CDEF_HBORDER);
-            else
-                copy_sb8_16( //cm,
-                    src,
-                    CDEF_BSTRIDE,
-                    rec_buff /*xd->plane[pli].dst.buf*/,
-                    (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                    coffset - CDEF_HBORDER,
-                    rec_stride /*xd->plane[pli].
-                    dst.stride*/
-                    ,
-                    CDEF_VBORDER,
-                    CDEF_HBORDER);
-#endif
         } else if (fbr > 0 && fbc > 0) {
             copy_rect(src,
                       CDEF_BSTRIDE,
@@ -363,7 +289,6 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
         }
 
         if (!prev_row_cdef[fbc + 1]) {
-#if CLN_CDEF_FRAME
             copy_sb8_16( //cm,
                 &src[CDEF_HBORDER + (nhb << mi_wide_l2[pli])],
                 CDEF_BSTRIDE,
@@ -374,28 +299,6 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                 CDEF_VBORDER,
                 CDEF_HBORDER,
                 use_highbd);
-#else
-            if (use_highbd)
-                copy_sb16_16( //cm,
-                    &src[CDEF_HBORDER + (nhb << mi_wide_l2[pli])],
-                    CDEF_BSTRIDE,
-                    (uint16_t *)rec_buff /*xd->plane[pli].dst.buf*/,
-                    (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                    coffset + hsize,
-                    rec_stride /*xd->plane[pli].dst.stride*/,
-                    CDEF_VBORDER,
-                    CDEF_HBORDER);
-            else
-                copy_sb8_16( //cm,
-                    &src[CDEF_HBORDER + (nhb << mi_wide_l2[pli])],
-                    CDEF_BSTRIDE,
-                    rec_buff /*xd->plane[pli].dst.buf*/,
-                    (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                    coffset + hsize,
-                    rec_stride /*xd->plane[pli].dst.stride*/,
-                    CDEF_VBORDER,
-                    CDEF_HBORDER);
-#endif
         } else if (fbr > 0 && fbc < nhfb - 1) {
             copy_rect(&src[hsize + CDEF_HBORDER],
                       CDEF_BSTRIDE,
@@ -429,7 +332,6 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                       CDEF_HBORDER);
 
         if (fbr < nvfb - 1) {
-#if CLN_CDEF_FRAME
                 copy_sb8_16(&linebuf_curr[pli][coffset],
                             stride,
                             rec_buff,
@@ -439,26 +341,6 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                             CDEF_VBORDER,
                             hsize,
                             use_highbd);
-#else
-            if (use_highbd)
-                copy_sb16_16(&linebuf_curr[pli][coffset],
-                             stride,
-                             (uint16_t *)rec_buff,
-                             (MI_SIZE_64X64 << mi_high_l2[pli]) * (fbr + 1) - CDEF_VBORDER,
-                             coffset,
-                             rec_stride,
-                             CDEF_VBORDER,
-                             hsize);
-            else
-                copy_sb8_16(&linebuf_curr[pli][coffset],
-                            stride,
-                            rec_buff,
-                            (MI_SIZE_64X64 << mi_high_l2[pli]) * (fbr + 1) - CDEF_VBORDER,
-                            coffset,
-                            rec_stride,
-                            CDEF_VBORDER,
-                            hsize);
-#endif
         }
 
         if (frame_top) {

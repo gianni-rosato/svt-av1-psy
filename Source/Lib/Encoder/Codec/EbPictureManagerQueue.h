@@ -72,36 +72,7 @@ typedef struct PicQueueEntry {
         dep_cnt_diff; //increase(e.g 4L->5L) or decrease of dep cnt . not including the run-time decrease
     uint8_t is_done;
 } PicQueueEntry;
-#if !FTR_FORCE_KF
-/************************************************
-     * Rate Control Input Queue Entry
-     ************************************************/
 
-typedef struct RcInputQueueEntry {
-    uint64_t         picture_number;
-    EbObjectWrapper *input_object_ptr;
-    Bool             is_passed;
-    Bool             release_enabled;
-    uint64_t         group_id;
-    uint64_t         gop_first_poc;
-    uint32_t         gop_index;
-} RcInputQueueEntry;
-
-/************************************************
-     * Rate Control FeedBack  Queue Entry
-     ************************************************/
-typedef struct RcFeedbackQueueEntry {
-    uint64_t         picture_number;
-    EbObjectWrapper *feedback_object_ptr;
-
-    Bool     is_available;
-    Bool     is_updated;
-    Bool     release_enabled;
-    uint64_t group_id;
-    uint64_t gop_first_poc;
-    uint32_t gop_index;
-} RcFeedbackQueueEntry;
-#endif
 extern EbErrorType input_queue_entry_ctor(InputQueueEntry *entry_ptr);
 
 extern EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr);

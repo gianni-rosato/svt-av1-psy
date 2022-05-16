@@ -295,11 +295,7 @@ EbErrorType picture_decision_context_ctor(
 
     context_ptr->mg_progress_id = 0;
     context_ptr->last_i_noise_levels_log1p_fp16[0] = 0;
-#if FIX_ISSUE_1857
     context_ptr->transition_detected = -1;
-#else
-    context_ptr->is_next_base_sc = 0;
-#endif
     context_ptr->sframe_poc = 0;
     context_ptr->sframe_due = 0;
     return EB_ErrorNone;
@@ -1290,12 +1286,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level, Boo
         break;
     }
 }
+
 void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
-#if CLN_REST && !CLN_REST_2
-    WnFilterCtrls* ctrls = &cm->rest_filter_ctrls.wn_ctrls;
-#else
     WnFilterCtrls* ctrls = &cm->wn_filter_ctrls;
-#endif
 
     switch (wn_filter_lvl) {
     case 0:
@@ -1303,9 +1296,7 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     case 1:
         ctrls->enabled = 1;
-#if CLN_REST_2
         ctrls->use_chroma = 1;
-#endif
         ctrls->filter_tap_lvl = 1;
         ctrls->use_refinement = 1;
         ctrls->max_one_refinement_step = 0;
@@ -1313,9 +1304,7 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     case 2:
         ctrls->enabled = 1;
-#if CLN_REST_2
         ctrls->use_chroma = 1;
-#endif
         ctrls->filter_tap_lvl = 2;
         ctrls->use_refinement = 1;
         ctrls->max_one_refinement_step = 0;
@@ -1323,9 +1312,7 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     case 3:
         ctrls->enabled = 1;
-#if CLN_REST_2
         ctrls->use_chroma = 1;
-#endif
         ctrls->filter_tap_lvl = 2;
         ctrls->use_refinement = 1;
         ctrls->max_one_refinement_step = 1;
@@ -1333,15 +1320,12 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         break;
     case 4:
         ctrls->enabled = 1;
-#if CLN_REST_2
         ctrls->use_chroma = 1;
-#endif
         ctrls->filter_tap_lvl = 2;
         ctrls->use_refinement = 0;
         ctrls->max_one_refinement_step = 1;
         ctrls->use_prev_frame_coeffs = 0;
         break;
-#if CLN_REST_2
     case 5:
         ctrls->enabled = 1;
         ctrls->use_chroma = 0;
@@ -1358,27 +1342,14 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
         ctrls->max_one_refinement_step = 1;
         ctrls->use_prev_frame_coeffs = 1;
         break;
-#else
-    case 5:
-        ctrls->enabled = 1;
-        ctrls->filter_tap_lvl = 2;
-        ctrls->use_refinement = 0;
-        ctrls->max_one_refinement_step = 1;
-        ctrls->use_prev_frame_coeffs = 1;
-        break;
-#endif
     default:
         assert(0);
         break;
     }
 }
-#if CLN_REST
+
 void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
-#if CLN_REST_2
     SgFilterCtrls* ctrls = &cm->sg_filter_ctrls;
-#else
-    SgFilterCtrls* ctrls = &cm->rest_filter_ctrls.sg_ctrls;
-#endif
 
     switch (sg_filter_lvl) {
     case 0:
@@ -1386,30 +1357,22 @@ void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
         break;
     case 1:
         ctrls->enabled = 1;
-#if CLN_REST_2
         ctrls->use_chroma = 1;
-#endif
         ctrls->step_range = 16;
         break;
     case 2:
         ctrls->enabled = 1;
-#if CLN_REST_2
         ctrls->use_chroma = 1;
-#endif
         ctrls->step_range = 4;
         break;
     case 3:
         ctrls->enabled = 1;
-#if CLN_REST_2
         ctrls->use_chroma = 1;
-#endif
         ctrls->step_range = 1;
         break;
     case 4:
         ctrls->enabled = 1;
-#if CLN_REST_2
         ctrls->use_chroma = 1;
-#endif
         ctrls->step_range = 0;
         break;
     default:
@@ -1417,41 +1380,16 @@ void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
         break;
     }
 }
-#if CLN_REST_2
+
 // Returns the level for Wiener restoration filter
-#if OPT_DECODE
 uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_ref) {
     uint8_t wn_filter_lvl = 0;
     if (enc_mode <= ENC_M5)
         wn_filter_lvl = 1;
-#if !TUNE_M6_M7
-    else if (enc_mode <= ENC_M7)
-        wn_filter_lvl = 4;
-#endif
     else if (enc_mode <= ENC_M9)
         wn_filter_lvl = is_ref ? 5 : 0;
     else
         wn_filter_lvl = 0;
-#else
-uint8_t get_wn_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_ref) {
-    uint8_t wn_filter_lvl = 0;
-    if (fast_decode == 0) {
-        if (enc_mode <= ENC_M5)
-            wn_filter_lvl = 1;
-        else if (enc_mode <= ENC_M7)
-            wn_filter_lvl = 4;
-        else if (enc_mode <= ENC_M9)
-            wn_filter_lvl = is_ref ? 5 : 0;
-        else
-            wn_filter_lvl = 0;
-    }
-    else {
-        if (enc_mode <= ENC_M7)
-            wn_filter_lvl = input_resolution <= INPUT_SIZE_360p_RANGE ? 4 : 0;
-        else
-            wn_filter_lvl = 0;
-    }
-#endif
 
     // higher resolutions will shut restoration to save memory
     if (input_resolution >= INPUT_SIZE_8K_RANGE)
@@ -1487,76 +1425,7 @@ uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_re
 
     return sg_filter_lvl;
 }
-#else
-/*
- * Set loop restoration filtering levels; restoration filtering comprises
- * self-guided filter w/ projection and wiener filter.
-*/
-void set_rest_filter_ctrls(SequenceControlSet *scs_ptr, Av1Common* cm, uint8_t rest_filter_lvl) {
-    RestFilterCtrls* ctrls = &cm->rest_filter_ctrls;
 
-    switch (rest_filter_lvl) {
-    case 0:
-        ctrls->enabled = 0;
-        set_wn_filter_ctrls(cm, 0);
-        set_sg_filter_ctrls(cm, 0);
-        break;
-    case 1:
-        ctrls->enabled = 1;
-#if FTR_REST_LUMA_ONLY
-        ctrls->luma_only = 0;
-#endif
-        set_wn_filter_ctrls(cm, 1);
-        set_sg_filter_ctrls(cm, 1);
-        break;
-    case 2:
-        ctrls->enabled = 1;
-#if FTR_REST_LUMA_ONLY
-        ctrls->luma_only = 0;
-#endif
-        set_wn_filter_ctrls(cm, 1);
-        set_sg_filter_ctrls(cm, 4);
-        break;
-    case 3:
-        ctrls->enabled = 1;
-#if FTR_REST_LUMA_ONLY
-        ctrls->luma_only = 0;
-#endif
-        set_wn_filter_ctrls(cm, 1);
-        set_sg_filter_ctrls(cm, 0);
-        break;
-    case 4:
-        ctrls->enabled = 1;
-#if FTR_REST_LUMA_ONLY
-        ctrls->luma_only = 0;
-#endif
-        set_wn_filter_ctrls(cm, 4);
-        set_sg_filter_ctrls(cm, 0);
-        break;
-#if EN_REST_M8_M9
-    case 5:
-        ctrls->enabled = 1;
-        ctrls->luma_only = 1;
-        set_wn_filter_ctrls(cm, 4);
-        set_sg_filter_ctrls(cm, 0);
-        break;
-#endif
-    default:
-        assert(0);
-        break;
-    }
-
-    if (ctrls->enabled) {
-        if (scs_ptr->wn_filter_mode != DEFAULT)
-            set_wn_filter_ctrls(cm, scs_ptr->wn_filter_mode);
-        if (scs_ptr->sg_filter_mode != DEFAULT)
-            set_sg_filter_ctrls(cm, scs_ptr->sg_filter_mode);
-    }
-
-    assert(IMPLIES(!cm->rest_filter_ctrls.enabled, (!cm->rest_filter_ctrls.wn_ctrls.enabled && !cm->rest_filter_ctrls.sg_ctrls.enabled)));
-}
-#endif
-#endif
 void set_list0_only_base(PictureParentControlSet* pcs_ptr, uint8_t list0_only_base) {
     List0OnlyBase* ctrls = &pcs_ptr->list0_only_base_ctrls;
 
@@ -1610,19 +1479,10 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
     uint8_t dlf_level;
     // Don't disable DLF for low resolutions when fast-decode is used
     if (fast_decode == 0 || resolution <= INPUT_SIZE_360p_RANGE) {
-#if TUNE_M6_M7
         if (enc_mode <= ENC_M6)
-#else
-        if (enc_mode <= ENC_M5)
-#endif
             dlf_level = 1;
-#if OPT_DECODE
         else if (enc_mode <= ENC_M7)
-#if TUNE_M6_M7
             dlf_level = 2;
-#else
-            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
-#endif
         else if (enc_mode <= ENC_M8) {
             if (hierarchical_levels <= 3)
                 dlf_level = is_used_as_reference_flag ? 2 : 0;
@@ -1631,20 +1491,6 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
         }
         else if (enc_mode <= ENC_M10)
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 2 : 0);
-#else
-        else if (enc_mode <= ENC_M6)
-            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
-        else if (enc_mode <= ENC_M7)
-            dlf_level = 2;
-        else if (enc_mode <= ENC_M8) {
-            if (hierarchical_levels <= 3)
-                dlf_level = is_used_as_reference_flag ? 2 : 0;
-            else
-                dlf_level = 2;
-        }
-        else if (enc_mode <= ENC_M10)
-            dlf_level = is_used_as_reference_flag ? 2 : 0;
-#endif
         else if (enc_mode <= ENC_M12)
             dlf_level = is_used_as_reference_flag ? 4 : 0;
         else
@@ -1887,11 +1733,7 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
             else
                 gm_level = is_ref ? 4 : 0;
         }
-#if TUNE_M6_M7
         else if (pcs_ptr->enc_mode <= ENC_M7)
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
             gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
         else
             gm_level = 0;
@@ -1980,7 +1822,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->disallow_all_nsq_blocks_above_32x32 = FALSE;
     // disallow_all_nsq_blocks_above_16x16
     pcs_ptr->disallow_all_nsq_blocks_above_16x16 = FALSE;
-#if FTR_DISALLOW_HVAB
 
     // Set if HA/HB/VA/VB blocks should considered
     if (enc_mode <= ENC_M1)
@@ -1993,15 +1834,6 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->disallow_HV4 = FALSE;
     else
         pcs_ptr->disallow_HV4 = TRUE;
-#else
-    if (enc_mode <= ENC_M1)
-        pcs_ptr->disallow_HVA_HVB_HV4 = FALSE;
-    else if (enc_mode <= ENC_M2)
-        pcs_ptr->disallow_HVA_HVB_HV4 = is_base ? FALSE : TRUE;
-    else
-        pcs_ptr->disallow_HVA_HVB_HV4 = TRUE;
-    pcs_ptr->disallow_HV4 = FALSE;
-#endif
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
     pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16 = FALSE;
@@ -2068,7 +1900,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
-#if OPT_DECODE
             if (enc_mode <= ENC_M0)
                 pcs_ptr->cdef_level = 1;
             else if (enc_mode <= ENC_M3)
@@ -2091,66 +1922,6 @@ EbErrorType signal_derivation_multi_processes_oq(
                 else
                     pcs_ptr->cdef_level = is_islice ? 15 : 0;
             }
-#else
-            if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
-                if (enc_mode <= ENC_M0)
-                    pcs_ptr->cdef_level = 1;
-                else if (enc_mode <= ENC_M3)
-                    pcs_ptr->cdef_level = 2;
-                else if (enc_mode <= ENC_M5)
-                    pcs_ptr->cdef_level = 4;
-#if OPT_LPD0
-                else if (enc_mode <= ENC_M10)
-#else
-                else if (enc_mode <= ENC_M9)
-#endif
-                    pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
-                else if (enc_mode <= ENC_M11)
-                    pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
-                else if (enc_mode <= ENC_M12) {
-                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
-                        pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
-                    else
-                        pcs_ptr->cdef_level = is_islice ? 15 : is_ref ? 16 : 17;
-                }
-                else {
-                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
-                        pcs_ptr->cdef_level = is_base ? 15 : 0;
-                    else
-                        pcs_ptr->cdef_level = is_islice ? 15 : 0;
-                }
-            }
-            else {
-                if (enc_mode <= ENC_M0)
-                    pcs_ptr->cdef_level = is_base? 1 : 0;
-                else if (enc_mode <= ENC_M3)
-                    pcs_ptr->cdef_level = is_base? 2 : 0;
-                else if (enc_mode <= ENC_M4)
-                    pcs_ptr->cdef_level = is_base? 4 : 0;
-                else if (enc_mode <= ENC_M5)
-                    pcs_ptr->cdef_level = 4;
-#if OPT_LPD0
-                else if (enc_mode <= ENC_M10)
-#else
-                else if (enc_mode <= ENC_M9)
-#endif
-                    pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
-                else if (enc_mode <= ENC_M11)
-                    pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
-                else if (enc_mode <= ENC_M12) {
-                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
-                        pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
-                    else
-                        pcs_ptr->cdef_level = is_islice ? 15 : is_ref ? 16 : 17;
-                }
-                else {
-                    if (input_resolution <= INPUT_SIZE_1080p_RANGE)
-                        pcs_ptr->cdef_level = is_base ? 15 : 0;
-                    else
-                        pcs_ptr->cdef_level = is_islice ? 15 : 0;
-                }
-            }
-#endif
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);
@@ -2158,16 +1929,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->cdef_level = 0;
     set_cdef_controls(pcs_ptr, pcs_ptr->cdef_level, fast_decode);
-#if CLN_REST
-#if CLN_REST_2
+
     uint8_t wn = 0, sg = 0;
     // If restoration filtering is enabled at the sequence level, derive the settings used for this frame
     if (scs_ptr->seq_header.enable_restoration) {
-#if OPT_DECODE
         wn = get_wn_filter_level(enc_mode, input_resolution, is_ref);
-#else
-        wn = get_wn_filter_level(enc_mode, fast_decode, input_resolution, is_ref);
-#endif
         sg = get_sg_filter_level(enc_mode, fast_decode, input_resolution, is_base);
     }
 
@@ -2177,74 +1943,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     // Set whether restoration filtering is enabled for this frame
     pcs_ptr->enable_restoration = (wn > 0 || sg > 0);
-#else
-    uint8_t restoration_filter_lvl = 0;
-    if (scs_ptr->seq_header.enable_restoration) {
-        if (enc_mode <= ENC_M2)
-            restoration_filter_lvl = 1;
-        else if (enc_mode <= ENC_M4)
-            restoration_filter_lvl = is_base ? 1 : 2;
-        else if (enc_mode <= ENC_M5)
-            restoration_filter_lvl = 3;
-#if EN_REST_M8_M9
-        else if (enc_mode <= ENC_M7)
-            restoration_filter_lvl = 4;
-        else
-            restoration_filter_lvl = is_ref ? 5 : 0;
-#else
-        else
-            restoration_filter_lvl = 4;
-#endif
-    }
-    else {
-        restoration_filter_lvl = 0;
-    }
 
-    set_rest_filter_ctrls(scs_ptr, pcs_ptr->av1_cm, restoration_filter_lvl);
-#endif
-#else
-    // SG Level     Settings
-    // 0             OFF
-    // 1             16 step refinement
-    // 2             4 step refinement
-    // 3             1 step refinement
-    // 4             0 step refinement
-    Av1Common* cm = pcs_ptr->av1_cm;
-    if (scs_ptr->sg_filter_mode == DEFAULT) {
-        if (enc_mode <= ENC_M2)
-            cm->sg_filter_mode = 1;
-        else if (enc_mode <= ENC_M4)
-            cm->sg_filter_mode = is_base ? 1 : 4;
-        else
-            cm->sg_filter_mode = 0;
-    }
-    else
-        cm->sg_filter_mode = scs_ptr->sg_filter_mode;
-
-    // WN Level        Settings
-    // 0               OFF
-    // 1               7-Tap luma/ 5-Tap chroma; full refinement
-    // 2               5-Tap luma/ 5-Tap chroma; full refinement
-    // 3               5-Tap luma/ 5-Tap chroma; one step refinement
-    // 4               5-Tap luma/ 5-Tap chroma; refinement OFF
-    // 5               5-Tap luma/ 5-Tap chroma; refinement OFF; use prev. frame coeffs
-    uint8_t wn_filter_lvl = 0;
-    if (scs_ptr->wn_filter_mode == DEFAULT) {
-        if (fast_decode == 0) {
-            if (enc_mode <= ENC_M5)
-                wn_filter_lvl = 1;
-            else
-                wn_filter_lvl = 4;
-        }
-        else {
-            wn_filter_lvl = 4;
-        }
-    }
-    else
-        wn_filter_lvl = scs_ptr->wn_filter_mode;
-
-    set_wn_filter_ctrls(cm, wn_filter_lvl);
-#endif
     // Set tx size search mode
     if (enc_mode <= ENC_M1)
         pcs_ptr->tx_size_search_mode = 1;
@@ -2271,8 +1970,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->tune_tpl_for_chroma = 0;
 #endif
     uint8_t list0_only_base = 0;
-
-#if OPT_DECODE
     if (enc_mode <= ENC_M6)
         list0_only_base = 0;
     else if (enc_mode <= ENC_M7) {
@@ -2289,46 +1986,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         list0_only_base = 2;
-#else
-    if (fast_decode == 0) {
-        if (enc_mode <= ENC_M6)
-            list0_only_base = 0;
-        else if (enc_mode <= ENC_M7) {
-            if (hierarchical_levels <= 3)
-                list0_only_base = 1;
-            else
-                list0_only_base = 0;
-        }
-        else  if (enc_mode <= ENC_M9) {
-            if (hierarchical_levels <= 3)
-                list0_only_base = 2;
-            else
-                list0_only_base = 1;
-        }
-        else
-            list0_only_base = 2;
-    }
-    else {
-        if (enc_mode <= ENC_M6)
-            list0_only_base = 0;
-        else if (enc_mode <= ENC_M7) {
-            if (hierarchical_levels <= 3)
-                list0_only_base = 1;
-            else
-                list0_only_base = 0;
-        }
-        else if (enc_mode <= ENC_M10) {
-            if (hierarchical_levels <= 3)
-                list0_only_base = 2;
-            else
-                list0_only_base = 1;
-        }
-        else
-            list0_only_base = 2;
-    }
-#endif
 
     set_list0_only_base(pcs_ptr, list0_only_base);
+
     if (scs_ptr->enable_hbd_mode_decision == DEFAULT)
         if (enc_mode <= ENC_MR)
             pcs_ptr->hbd_mode_decision = 1;
@@ -5515,23 +5175,20 @@ void store_gf_group(
             EB_MEMCPY(&pcs->gf_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
             pcs->gf_interval = mg_size;
         }
-#if FIX_RC_END_OF_CLIP
+
         if (pcs->slice_type == I_SLICE && pcs->end_of_sequence_flag) {
             pcs->gf_interval = 1;
             pcs->gf_group[0] = (void*)pcs;
         }
-#endif
+
         for (int pic_i = 0; pic_i < pcs->gf_interval; ++pic_i) {
             if (pcs->gf_group[pic_i]->slice_type == I_SLICE || (!is_delayed_intra(pcs) && pcs->gf_group[pic_i]->temporal_layer_index == 0) || pcs->gf_group[pic_i]->slice_type == P_SLICE)
                 pcs->gf_group[pic_i]->gf_update_due = 1;
             else
                 pcs->gf_group[pic_i]->gf_update_due = 0;
+
             // For P picture that come after I, we need to set the gf_group pictures. It is used later in RC
-#if FIX_RC_END_OF_CLIP
             if (pcs->slice_type == I_SLICE && pcs->gf_group[pic_i]->slice_type == P_SLICE && pcs->picture_number < pcs->gf_group[pic_i]->picture_number) {
-#else
-            if (pcs->slice_type == I_SLICE && pcs->gf_group[pic_i]->slice_type == P_SLICE) {
-#endif
                 pcs->gf_group[pic_i]->gf_interval = pcs->gf_interval - 1;
                 EB_MEMCPY(&pcs->gf_group[pic_i]->gf_group[0], &ctx->mg_pictures_array[1], pcs->gf_group[pic_i]->gf_interval * sizeof(PictureParentControlSet*));
                 pcs->gf_group[pic_i]->gf_update_due = 0;
@@ -6044,7 +5701,7 @@ static void update_sframe_ref_order_hint(PictureParentControlSet *ppcs, PictureD
         }
     }
 }
-#if FTR_FORCE_KF
+
 /*****************************************************************
 * Update the RC param queue
 * Set the size of the previous Gop/param, Check if all the frames in gop are processed, if yes reset
@@ -6075,8 +5732,7 @@ static void update_rc_param_queue(
     // Store the pointer to the right spot in the RC param queue under PCS
     ppcs->rate_control_param_ptr = enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index];
 }
-#endif
-#if RC_REFACTOR_1
+
 /****************************************************************************************
 * set_layer_depth()
 * Set the layer depth per frame based on frame type, temporal layer
@@ -6121,7 +5777,7 @@ static void set_gf_group_param(PictureParentControlSet *ppcs) {
     set_frame_update_type(ppcs);
     set_layer_depth(ppcs);
 }
-#endif
+
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -6341,9 +5997,7 @@ void* picture_decision_kernel(void *input_ptr)
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
             memset(pcs_ptr->pd_window, 0, PD_WINDOW_SIZE * sizeof(PictureParentControlSet*));
-#if !FTR_FORCE_KF
-            pcs_ptr->pd_window_count = 0;
-#endif
+
             //for poc 0, ignore previous frame check
             if (queue_entry_ptr->picture_number > 0 && encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr == NULL)
                 window_avail = FALSE;
@@ -6370,28 +6024,6 @@ void* picture_decision_kernel(void *input_ptr)
                             (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr->object_ptr;
                     }
                 }
-#if !FTR_FORCE_KF
-                for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++)
-                    if (pcs_ptr->pd_window[2 + window_index])
-                    {
-                        uint8_t is_frame_intra = 0;
-                        if (scs_ptr->static_config.intra_period_length == 0)
-                            is_frame_intra = 1;
-                        else if (scs_ptr->static_config.intra_period_length == -1)
-                            is_frame_intra = 0;
-                        else
-                            // to clean up add a signal to keep track of the next Intra
-                            is_frame_intra =
-                            (((PictureParentControlSet *)pcs_ptr->pd_window[2 + window_index])->picture_number %
-                            (scs_ptr->static_config.intra_period_length + 1)) ? 0 : 1;
-                        if (is_frame_intra)
-                            break;
-                        else
-                            pcs_ptr->pd_window_count++;
-                    }
-                    else
-                        break;
-#endif
             }
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
@@ -6406,21 +6038,12 @@ void* picture_decision_kernel(void *input_ptr)
                         (PictureParentControlSet**)pcs_ptr->pd_window);
 
                 }
-#if FIX_ISSUE_1857
                 else if (scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition && (context_ptr->transition_detected == -1 || context_ptr->transition_detected == 0)) {
                     context_ptr->transition_detected = scene_transition_detector(
                         context_ptr,
                         scs_ptr,
                         (PictureParentControlSet**)pcs_ptr->pd_window);
                 }
-#else
-                else if (scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition && context_ptr->is_next_base_sc == 0) {
-                    context_ptr->is_next_base_sc = scene_transition_detector(
-                        context_ptr,
-                        scs_ptr,
-                        (PictureParentControlSet**)pcs_ptr->pd_window);
-                }
-#endif
                 else
                     pcs_ptr->scene_change_flag = FALSE;
 
@@ -6475,27 +6098,13 @@ void* picture_decision_kernel(void *input_ptr)
                     pcs_ptr->idr_flag =
                         (scs_ptr->static_config.intra_refresh_type != SVT_AV1_KF_REFRESH) ?
                         pcs_ptr->idr_flag :
-#if FTR_FORCE_KF
                         ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ||
                          (pcs_ptr->scene_change_flag == TRUE) ||
                          (scs_ptr->static_config.force_key_frames && pcs_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE)) ?
-#else
-                        ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == TRUE)) ?
-#endif
                         TRUE :
                         pcs_ptr->idr_flag;
                 }
 
-#if !FTR_FORCE_KF
-                //TODO: scene change update
-                if (scs_ptr->static_config.intra_period_length == 0)
-                    pcs_ptr->is_next_frame_intra = 1;
-                else if (scs_ptr->static_config.intra_period_length == -1)
-                    pcs_ptr->is_next_frame_intra = 0;
-                else
-                    pcs_ptr->is_next_frame_intra = (int32_t)(encode_context_ptr->intra_period_position + 1) == scs_ptr->static_config.intra_period_length;
-                //to be removed as not used
-#endif
                 encode_context_ptr->pre_assignment_buffer_eos_flag = (pcs_ptr->end_of_sequence_flag) ? (uint32_t)TRUE : encode_context_ptr->pre_assignment_buffer_eos_flag;
 
                 // Histogram data to be used at the next input (N + 1)
@@ -6527,15 +6136,11 @@ void* picture_decision_kernel(void *input_ptr)
                 else
                 {
                     // Increment the Intra Period Position
-#if FTR_FORCE_KF
                     encode_context_ptr->intra_period_position =
                         ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ||
                          (pcs_ptr->scene_change_flag == TRUE) ||
                          (scs_ptr->static_config.force_key_frames && pcs_ptr->input_ptr->pic_type == EB_AV1_KEY_PICTURE)) ?
                         0 : encode_context_ptr->intra_period_position + 1;
-#else
-                    encode_context_ptr->intra_period_position = ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == TRUE)) ? 0 : encode_context_ptr->intra_period_position + 1;
-#endif
                 }
 
 #if LAD_MG_PRINT
@@ -7103,7 +6708,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
                                 update_count_try(scs_ptr, pcs_ptr);
-#if FIX_ISSUE_1857
+
                                 if (context_ptr->transition_detected == 1) {
                                     if (pcs_ptr->slice_type == P_SLICE) {
                                         pcs_ptr->transition_present = 1;
@@ -7113,12 +6718,6 @@ void* picture_decision_kernel(void *input_ptr)
                                         context_ptr->transition_detected = 0;
                                     }
                                 }
-#else
-                                if (context_ptr->is_next_base_sc && pcs_ptr->temporal_layer_index == 0) {
-                                    pcs_ptr->transition_present = 1;
-                                    context_ptr->is_next_base_sc = 0;
-                                }
-#endif
                                 if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0 && pcs_ptr->list0_only_base_ctrls.enabled) {
                                     update_list0_only_base(scs_ptr, pcs_ptr);
                                 }
@@ -7159,10 +6758,8 @@ void* picture_decision_kernel(void *input_ptr)
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
 
-#if FTR_FORCE_KF
                                 // Update the RC param queue
                                 update_rc_param_queue(pcs_ptr, encode_context_ptr);
-#endif
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
                         }
@@ -7360,13 +6957,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 context_ptr->mg_pictures_array_disp_order[pic_i]->first_frame_in_minigop = 0;
                         }
 
-#if RC_REFACTOR_1
                         for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
                             pcs_ptr = context_ptr->mg_pictures_array_disp_order[pic_i];
                             set_gf_group_param(pcs_ptr);
                         }
 
-#endif
                         //Process previous delayed Intra if we have one
                         pcs_ptr->is_new_gf_group = 0;
                         if (context_ptr->prev_delayed_intra) {

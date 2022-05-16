@@ -2918,23 +2918,15 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     // Do not perform TF if LD or 1 Layer or 1st pass
     Bool do_tf = scs_ptr->static_config.enable_tf && scs_ptr->static_config.hierarchical_levels >= 1 && scs_ptr->static_config.pass != ENC_FIRST_PASS;
     const EncMode enc_mode = scs_ptr->static_config.enc_mode;
-#if !OPT_DECODE
-    const Bool fast_decode = scs_ptr->static_config.fast_decode;
-#endif
     const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
     uint8_t tf_level = 0;
     if (do_tf == 0) {
         tf_level = 0;
     }
-#if OPT_DECODE
     else if (enc_mode <= ENC_M1) {
         tf_level = 1;
     }
-#if TUNE_M6_M7
     else if (enc_mode <= ENC_M5) {
-#else
-    else if (enc_mode <= ENC_M6) {
-#endif
         tf_level = 2;
     }
     else if (enc_mode <= ENC_M7) {
@@ -2951,49 +2943,6 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     }
     else
         tf_level = 5;
-#else
-    else if (fast_decode == 0) {
-        if (enc_mode <= ENC_M1) {
-            tf_level = 1;
-        }
-        else if (enc_mode <= ENC_M6) {
-            tf_level = 2;
-        }
-        else if (enc_mode <= ENC_M7) {
-            tf_level = 3;
-        }
-        else if (enc_mode <= ENC_M8) {
-            if (hierarchical_levels <= 3)
-                tf_level = 4;
-            else
-                tf_level = 3;
-        }
-        else if (enc_mode <= ENC_M9) {
-            tf_level = 4;
-        }
-        else
-            tf_level = 5;
-    }
-    else {
-        if (enc_mode <= ENC_M1) {
-            tf_level = 1;
-        }
-        else if (enc_mode <= ENC_M6) {
-            tf_level = 2;
-        }
-        else if (enc_mode <= ENC_M7) {
-            tf_level = 3;
-        }
-        else if (enc_mode <= ENC_M9) {
-            if (hierarchical_levels <= 3)
-                tf_level = 4;
-            else
-                tf_level = 3;
-        }
-        else
-            tf_level = 5;
-    }
-#endif
 
     tf_controls(scs_ptr, tf_level);
 }
@@ -3144,11 +3093,9 @@ void set_mid_pass_ctrls(
         break;
     }
 }
-#if OPT_TPL_4L
+
 uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t aq_mode) {
-#else
-uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint32_t hierarchical_levels, uint8_t aq_mode) {
-#endif
+
     uint8_t tpl_level;
 
     if (aq_mode == 0) {
@@ -3172,20 +3119,10 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
     else if (enc_mode <= ENC_M7)
         tpl_level = 3;
     else if (enc_mode <= ENC_M9) {
-#if !OPT_TPL_4L
-        if (hierarchical_levels <= 3)
-            tpl_level = 5;
-        else
-#endif
-            tpl_level = 4;
+        tpl_level = 4;
     }
     else if (enc_mode <= ENC_M10) {
-#if !OPT_TPL_4L
-        if (hierarchical_levels <= 3)
-            tpl_level = 7;
-        else
-#endif
-            tpl_level = 5;
+        tpl_level = 5;
     }
     else
         tpl_level = 7;
@@ -3319,11 +3256,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 {
     set_multi_pass_params(
         scs_ptr);
-    #if OPT_TPL_4L
+
     scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.enable_adaptive_quantization);
-    #else
-    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.hierarchical_levels, scs_ptr->static_config.enable_adaptive_quantization);
-    #endif
+
     uint16_t subsampling_x = scs_ptr->subsampling_x;
     uint16_t subsampling_y = scs_ptr->subsampling_y;
     // Update picture width, and picture height
@@ -3588,11 +3523,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.enable_mfmv == DEFAULT) {
         if (scs_ptr->static_config.enc_mode <= ENC_M5)
             scs_ptr->mfmv_enabled = 1;
-#if OPT_LPD0
         else if (scs_ptr->static_config.enc_mode <= ENC_M11) {
-#else
-        else if (scs_ptr->static_config.enc_mode <= ENC_M9) {
-#endif
             if (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
                 scs_ptr->mfmv_enabled = 1;
             else
@@ -3614,23 +3545,15 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     uint8_t mrp_level;
 
     if (scs_ptr->static_config.enc_mode <= ENC_MRS) {
-
         mrp_level = 1;
     }
     else if (scs_ptr->static_config.enc_mode <= ENC_M1) {
-
         mrp_level = 2;
     }
-#if TUNE_M4_M5
     else if (scs_ptr->static_config.enc_mode <= ENC_M4) {
-#else
-    else if (scs_ptr->static_config.enc_mode <= ENC_M3) {
-#endif
-
         mrp_level = 3;
     }
     else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
-
         mrp_level = 4;
     }
     else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
@@ -3640,7 +3563,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             mrp_level = 5;
     }
     else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
-
         mrp_level = 5;
     }
     else {
@@ -3774,10 +3696,6 @@ void copy_api_from_app(
 
     scs_ptr->enable_warped_motion        = DEFAULT;
     scs_ptr->enable_global_motion        = TRUE;
-#if !CLN_REST_2
-    scs_ptr->sg_filter_mode              = DEFAULT;
-    scs_ptr->wn_filter_mode              = DEFAULT;
-#endif
     scs_ptr->inter_intra_compound        = DEFAULT;
     scs_ptr->enable_paeth                = DEFAULT;
     scs_ptr->enable_smooth               = DEFAULT;
@@ -3877,7 +3795,7 @@ void copy_api_from_app(
 
     // MD Parameters
     scs_ptr->enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth > 8 ? DEFAULT : 0;
-#if OPT_DECODE
+
     if (scs_ptr->static_config.pass == ENC_FIRST_PASS) {
         scs_ptr->static_config.tile_rows = 0;
         scs_ptr->static_config.tile_columns = 0;
@@ -3921,11 +3839,6 @@ void copy_api_from_app(
             }
         }
     }
-#else
-    // Adaptive Loop Filter
-    scs_ptr->static_config.tile_rows = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
-    scs_ptr->static_config.tile_columns = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
-#endif
 
     scs_ptr->static_config.restricted_motion_vector = ((EbSvtAv1EncConfiguration*)config_struct)->restricted_motion_vector;
 
@@ -4128,9 +4041,7 @@ void copy_api_from_app(
         : scs_ptr->static_config.sframe_dist > 0 ? 16384 : scs_ptr->max_input_luma_width;
     scs_ptr->seq_header.max_frame_height = config_struct->forced_max_frame_height > 0 ? config_struct->forced_max_frame_height
         : scs_ptr->static_config.sframe_dist > 0 ? 8704 : scs_ptr->max_input_luma_height;
-#if FTR_FORCE_KF
     scs_ptr->static_config.force_key_frames = config_struct->force_key_frames;
-#endif
     return;
 }
 

@@ -84,7 +84,6 @@ uint64_t svt_spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_off
     return spatial_distortion;
 }
 
-#if FIX_ISSUE_1819
 static void hadamard_col4(const int16_t* src_diff, ptrdiff_t src_stride,
     int16_t* coeff) {
     int16_t b0 = (src_diff[0 * src_stride] + src_diff[1 * src_stride]) >> 1;
@@ -244,4 +243,3 @@ void svt_aom_hadamard_32x32_c(const int16_t* src_diff, ptrdiff_t src_stride,
         ++coeff;
     }
 }
-#endif

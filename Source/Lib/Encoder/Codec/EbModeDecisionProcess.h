@@ -183,9 +183,7 @@ typedef struct DepthCtrls {
         s_depth; // start depth; 0: consider no parent blocks; else number of parent blocks to consider, specified as a negative number (e.g. -2 means consider 2 parents)
     int8_t
         e_depth; // end depth; 0: consider no child blocks; else number of child blocks to consider, specified as a positive number (e.g. 2 means consider 2 children)
-#if FTR_DISALLOW_CHILD_NSQ
     Bool allow_nsq_in_child_depths; // Allow NSQ in depths below the PD0-selected depths.
-#endif
 } DepthCtrls;
 #define MAX_RANGE_CNT 8
 #define MAX_RANGE_CNT 8
@@ -417,14 +415,9 @@ typedef struct UvCtrls {
         // CHROMA_MODE_2: Chroma blind @ MD
     uint8_t
              nd_uv_serach_mode; // Non-direct chroma search 0: pre chroma search is used, 1: chroma search at last md_stage is used
-#if OPT_IND_CHROMA
     uint8_t uv_nic_scaling_num; // Scaling numerator for independent chroma NICS: <x>/16
     uint32_t uv_intra_th; // Threshold to skip non-directional chroma search.
     uint32_t uv_cfl_th; // Threshold to skip cfl.
-#else
-    uint64_t uv_intra_th; // Threshold to skip  Non-direct chroma search.
-    uint64_t uv_cfl_th; // Threshold to skip clf.
-#endif
 } UvCtrls;
 typedef struct InterpolationSearchCtrls {
     IfsLevel
@@ -454,14 +447,14 @@ typedef struct BlockLocation {
     uint32_t blk_origin_index; //luma   block location in SB
     uint32_t blk_chroma_origin_index; //chroma block location in SB
 } BlockLocation;
-#if OPT_LPD0
+
 typedef struct Lpd0Ctrls {
     Pd0Level pd0_level; // Whether light-PD0 is set to be used for an SB (the detector may change this)
     Bool use_lpd0_detector[LPD0_LEVELS]; // Whether to use a detector; if use_light_pd0 is set to 1, the detector will protect tough SBs
     Bool use_ref_info[LPD0_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector
     uint32_t me_8x8_cost_variance_th[LPD0_LEVELS]; // me_8x8_cost_variance_th beyond which the PD0 is used (instead of light-PD0)
 } Lpd0Ctrls;
-#endif
+
 typedef struct Lpd1Ctrls {
     int8_t
          pd1_level; // Whether light-PD1 is set to be used for an SB (the detector may change this)
@@ -480,7 +473,7 @@ typedef struct Lpd1Ctrls {
     uint16_t skip_pd0_me_shift
         [LPD1_LEVELS]; // Shift applied to ME dist and var of top and left SBs when PD0 is skipped
 } Lpd1Ctrls;
-#if FIX_ISSUE_1819
+
 typedef struct DetectHighFreqCtrls {
     int8_t   enabled;
     uint16_t me_8x8_sad_var_th;   // me-8x8 SADs deviation threshold beyond which the SB is not considered
@@ -491,7 +484,7 @@ typedef struct DetectHighFreqCtrls {
     uint8_t  max_pic_lpd1_lvl;    // maximum lpd1 level for the detected SB(s)
     uint8_t  max_pd1_txt_lvl;     // maximum pd1-txt level for the detected SB(s)
 } DetectHighFreqCtrls;
-#endif
+
 typedef struct Lpd1TxCtrls {
     uint8_t
         zero_y_coeff_exit; // skip cost calc and chroma TX/compensation if there are zero luma coeffs
@@ -821,28 +814,15 @@ typedef struct ModeDecisionContext {
     uint32_t        max_nics; // Maximum number of candidates MD can support
     uint32_t        max_nics_uv; // Maximum number of candidates MD can support
     InterpolationSearchCtrls ifs_ctrls;
-#if OPT_PRED_ONLY
     Bool bypass_encdec; // If enabled, will bypass EncDec and copy recon/quant coeffs from MD
     Bool pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 (set per SB)
     Bool pic_pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 (set per frame)
                               // Per frame is necessary because some shortcuts can only be taken if the whole frame
                               // uses pred depth only
-#else
-    Bool
-        bypass_encdec; // If enabled, will bypass EncDec and copy recon/quant coeffs from MD; only supported for 8bit
-    Bool
-        pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 - not yet supported
-#endif
     uint16_t coded_area_sb;
     uint16_t coded_area_sb_uv;
-#if OPT_LPD0
     Lpd0Ctrls lpd0_ctrls;
-#else
-    uint8_t  pd0_level;
-#endif
-#if FIX_ISSUE_1819
     DetectHighFreqCtrls detect_high_freq_ctrls;
-#endif
     // 0 : Use regular PD0
     // 1 : Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
     // 2 : Use very light PD0 path: only mds0 (no transform path), no compensation(s) @ mds0
@@ -876,10 +856,8 @@ typedef struct ModeDecisionContext {
     uint8_t        skip_pd0;
     uint8_t
         scale_palette; //   when MD is done on 8bit, scale  palette colors to 10bit (valid when bypass is 1)
-#if FIX_ISSUE_1819
     uint32_t b32_satd[4];
     uint8_t high_freq_present;
-#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,

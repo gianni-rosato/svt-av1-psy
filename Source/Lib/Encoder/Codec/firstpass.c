@@ -177,14 +177,12 @@ void svt_av1_end_first_pass(PictureParentControlSet *pcs_ptr) {
 
     if (twopass->stats_buf_ctx->total_stats) {
         // add the total to the end of the file
-#if RC_REFACTOR_9
         svt_block_on_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
-#endif
+
         FIRSTPASS_STATS total_stats = *twopass->stats_buf_ctx->total_stats;
         output_stats(scs_ptr, &total_stats, pcs_ptr->picture_number + 1);
-#if RC_REFACTOR_9
+
         svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
-#endif
     }
 }
 #define UL_INTRA_THRESH 50
@@ -253,9 +251,9 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
 
     const uint32_t   mb_cols          = (scs_ptr->max_input_luma_width + 16 - 1) / 16;
     const uint32_t   mb_rows          = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
-#if RC_REFACTOR_9
+
     svt_block_on_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
-#endif
+
     FIRSTPASS_STATS *this_frame_stats = twopass->stats_buf_ctx->stats_in_end_write;
     FIRSTPASS_STATS  fps;
     // The minimum error here insures some bit allocation to frames even
@@ -319,9 +317,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
         (twopass->stats_buf_ctx->stats_in_end_write >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end_write = twopass->stats_buf_ctx->stats_in_start;
     }
-#if RC_REFACTOR_9
     svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
-#endif
 }
 
 static FRAME_STATS accumulate_frame_stats(FRAME_STATS *mb_stats, int mb_rows, int mb_cols,
@@ -493,16 +489,8 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
 #define LOW_MOTION_ERROR_THRESH 25
 #define MOTION_ERROR_THRESH 500
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
-#if CLN_REST_2
 void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
 void set_sg_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
-#else
-#if CLN_REST
-void set_rest_filter_ctrls(SequenceControlSet* scs_ptr, Av1Common *cm, uint8_t wn_filter_lvl);
-#else
-void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
-#endif
-#endif
 void set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level);
 /******************************************************
 * Derive Multi-Processes Settings for first pass
@@ -544,12 +532,8 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs_ptr->disallow_all_nsq_blocks_above_32x32 = TRUE;
     // disallow_all_nsq_blocks_above_16x16
     pcs_ptr->disallow_all_nsq_blocks_above_16x16 = TRUE;
-#if FTR_DISALLOW_HVAB
     pcs_ptr->disallow_HVA_HVB = TRUE;
-#else
-    pcs_ptr->disallow_HVA_HVB_HV4 = TRUE;
-#endif
-    pcs_ptr->disallow_HV4         = TRUE;
+    pcs_ptr->disallow_HV4 = TRUE;
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
     pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16 = TRUE;
@@ -559,49 +543,17 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
 
     frm_hdr->allow_screen_content_tools = 0;
     frm_hdr->allow_intrabc              = 0;
-#if !CLN_REST_2
-    // Palette Modes:
-    //    0:OFF
-    //    1:Slow    NIC=7/4/4
-    //    2:        NIC=7/2/2
-    //    3:        NIC=7/2/2 + No K means for non ref
-    //    4:        NIC=4/2/1
-    //    5:        NIC=4/2/1 + No K means for Inter frame
-    //    6:        Fastest NIC=4/2/1 + No K means for non base + step for non base for most dominent
-#endif
     pcs_ptr->palette_level = 0;
+
     set_dlf_controls(pcs_ptr, 0);
-#if !CLN_REST_2
-    // CDEF Level                                   Settings
-    // 0                                            OFF
-    // 1                                            1 step refinement
-    // 2                                            4 step refinement
-    // 3                                            8 step refinement
-    // 4                                            16 step refinement
-    // 5                                            64 step refinement
-#endif
+
     pcs_ptr->cdef_level = 0;
-#if CLN_REST_2
+
     Av1Common *cm = pcs_ptr->av1_cm;
     set_wn_filter_ctrls(cm, 0);
     set_sg_filter_ctrls(cm, 0);
     pcs_ptr->enable_restoration = 0;
-#else
-#if CLN_REST
-    set_rest_filter_ctrls(scs_ptr, pcs_ptr->av1_cm, 0);
-#else
-    // SG Level                                    Settings
-    // 0                                            OFF
-    // 1                                            0 step refinement
-    // 2                                            1 step refinement
-    // 3                                            4 step refinement
-    // 4                                            16 step refinement
-    Av1Common *cm      = pcs_ptr->av1_cm;
-    cm->sg_filter_mode = 0;
 
-    set_wn_filter_ctrls(cm, 0);
-#endif
-#endif
     pcs_ptr->intra_pred_mode = 3;
 
     // Set Tx Search     Settings

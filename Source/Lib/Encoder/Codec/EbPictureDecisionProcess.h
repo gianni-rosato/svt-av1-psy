@@ -67,7 +67,6 @@ typedef struct PictureDecisionContext {
     uint32_t **ahd_running_avg_cr;
     uint32_t **ahd_running_avg;
     Bool       is_scene_change_detected;
-#if FIX_ISSUE_1857
     int8_t    transition_detected;  // -1: not computed
                                     // The signal transition_detected is set for only the RA case, and used to derive transition_present flag
                                     // If the scene change happens during a complete mini-GOP, then transition_present is set to 1
@@ -76,9 +75,6 @@ typedef struct PictureDecisionContext {
                                     // the next BASE boost since they only use past reference frame(s)
                                     // When transition_present is set to 1, different action(s) will be taken to mimic an I_SLICE (decrease the QP, better INTRA search level,
                                     // shut depth-removal, ..). The QP action is not applied if a P.
-#else
-    uint8_t    is_next_base_sc;
-#endif
     // Dynamic GOP
     uint32_t ttl_region_activity_cost[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
                                      [MAX_NUMBER_OF_REGIONS_IN_HEIGHT];

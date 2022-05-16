@@ -178,11 +178,7 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
     } else if (pcs_ptr->enc_mode <= ENC_M2) {
         me_context_ptr->me_sa.sa_min = (SearchArea){64, 64};
         me_context_ptr->me_sa.sa_max = (SearchArea){128, 128};
-#if TUNE_M4_M5
     } else if (pcs_ptr->enc_mode <= ENC_M3) {
-#else
-    } else if (pcs_ptr->enc_mode <= ENC_M4) {
-#endif
         me_context_ptr->me_sa.sa_min = (SearchArea){16, 16};
         me_context_ptr->me_sa.sa_max = (SearchArea){64, 64};
     }
@@ -563,15 +559,8 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 5);
     else if (enc_mode <= ENC_MRS)
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
-#if TUNE_M4_M5
     else if (enc_mode <= ENC_M5)
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 1);
-#else
-    else if (enc_mode <= ENC_M3)
-        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 1);
-    else if (enc_mode <= ENC_M4)
-        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
-#endif
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
 

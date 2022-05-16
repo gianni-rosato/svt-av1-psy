@@ -46,9 +46,6 @@ void copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr
 void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
                                            int32_t optimized_lr);
-#if !FIX_ISSUE_1896
-void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
-#endif
 EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                               Bool free_memory);
 EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
@@ -122,17 +119,10 @@ EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
         init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
         init_data.bit_depth          = is_16bit ? EB_SIXTEEN_BIT : EB_EIGHT_BIT;
         init_data.color_format       = color_format;
-#if CLN_REST
         init_data.left_padding       = AOM_RESTORATION_FRAME_BORDER;
         init_data.right_padding      = AOM_RESTORATION_FRAME_BORDER;
         init_data.top_padding        = AOM_RESTORATION_FRAME_BORDER;
         init_data.bot_padding        = AOM_RESTORATION_FRAME_BORDER;
-#else
-        init_data.left_padding       = AOM_BORDER_IN_PIXELS;
-        init_data.right_padding      = AOM_BORDER_IN_PIXELS;
-        init_data.top_padding        = AOM_BORDER_IN_PIXELS;
-        init_data.bot_padding        = AOM_BORDER_IN_PIXELS;
-#endif
         init_data.split_mode         = FALSE;
         init_data.is_16bit_pipeline  = is_16bit;
 
@@ -527,7 +517,7 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
     EB_FREE_ALIGNED_ARRAY(ps_recon_pic_temp->buffer_cb);
     EB_FREE_ALIGNED_ARRAY(ps_recon_pic_temp->buffer_cr);
 }
-#if FIX_ISSUE_1896
+
 static void copy_statistics_to_ref_obj_ect(PictureControlSet* pcs, SequenceControlSet* scs) {
 
     EbReferenceObject* obj = (EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
@@ -573,11 +563,7 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet* pcs, SequenceContr
         svt_memcpy(obj->ref_order_hint, pcs->parent_pcs_ptr->ref_order_hint, 7 * sizeof(uint32_t));
     }
     // Copy the prev frame wn filter coeffs
-#if CLN_REST && !CLN_REST_2
-    if (cm->rest_filter_ctrls.wn_ctrls.enabled && cm->rest_filter_ctrls.wn_ctrls.use_prev_frame_coeffs) {
-#else
     if (cm->wn_filter_ctrls.enabled && cm->wn_filter_ctrls.use_prev_frame_coeffs) {
-#endif
         for (int32_t plane = 0; plane < MAX_MB_PLANE; ++plane) {
             int32_t ntiles = pcs->rst_info[plane].units_per_tile;
             for (int32_t u = 0; u < ntiles; ++u) {
@@ -589,7 +575,7 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet* pcs, SequenceContr
         }
     }
 }
-#endif
+
 /******************************************************
  * Rest Kernel
  ******************************************************/
@@ -621,22 +607,12 @@ void *rest_kernel(void *input_ptr) {
 
         cdef_results_ptr      = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
         pcs_ptr               = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
-#if CLN_REST_2
         PictureParentControlSet* ppcs = pcs_ptr->parent_pcs_ptr;
-#endif
         scs_ptr               = pcs_ptr->scs_ptr;
         FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         Bool         is_16bit = scs_ptr->is_16bit_pipeline;
         Av1Common   *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
-#if CLN_REST_2
         if (ppcs->enable_restoration && frm_hdr->allow_intrabc == 0) {
-#else
-#if CLN_REST
-        if (cm->rest_filter_ctrls.enabled && frm_hdr->allow_intrabc == 0) {
-#else
-        if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
-#endif
-#endif
             Yv12BufferConfig cpi_source;
             link_eb_to_aom_buffer_desc(is_16bit
                                            ? pcs_ptr->input_frame16bit
@@ -667,13 +643,9 @@ void *rest_kernel(void *input_ptr) {
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        is_16bit);
-#if CLN_REST && !CLN_REST_2
-            if (pcs_ptr->parent_pcs_ptr->slice_type != I_SLICE && cm->rest_filter_ctrls.wn_ctrls.enabled &&
-                cm->rest_filter_ctrls.wn_ctrls.use_prev_frame_coeffs) {
-#else
+
             if (pcs_ptr->parent_pcs_ptr->slice_type != I_SLICE && cm->wn_filter_ctrls.enabled &&
                 cm->wn_filter_ctrls.use_prev_frame_coeffs) {
-#endif
                 EbReferenceObject *ref_obj_l0 =
                     (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
                 for (int32_t plane = 0; plane < MAX_MB_PLANE; ++plane) {
@@ -700,36 +672,20 @@ void *rest_kernel(void *input_ptr) {
 
         pcs_ptr->tot_seg_searched_rest++;
         if (pcs_ptr->tot_seg_searched_rest == pcs_ptr->rest_segments_total_count) {
-#if CLN_REST_2
             if (ppcs->enable_restoration && frm_hdr->allow_intrabc == 0) {
-#else
-#if CLN_REST
-            if (cm->rest_filter_ctrls.enabled && frm_hdr->allow_intrabc == 0) {
-#else
-            if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
-#endif
-#endif
                 rest_finish_search(pcs_ptr);
-#if CLN_REST
+
                 // Only need recon if REF pic or recon is output
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
                     scs_ptr->static_config.recon_enabled) {
-#endif
                     if (pcs_ptr->rst_info[0].frame_restoration_type != RESTORE_NONE ||
                         pcs_ptr->rst_info[1].frame_restoration_type != RESTORE_NONE ||
                         pcs_ptr->rst_info[2].frame_restoration_type != RESTORE_NONE) {
                         svt_av1_loop_restoration_filter_frame(cm->frame_to_show, cm, 0);
-#if CLN_REST
                     }
-#endif
                 }
 
-#if CLN_REST
-#if CLN_REST_2
                 if (cm->sg_filter_ctrls.enabled) {
-#else
-                if (cm->rest_filter_ctrls.sg_ctrls.enabled) {
-#endif
                     uint8_t best_ep_cnt = 0;
                     uint8_t best_ep = 0;
                     for (uint8_t i = 0; i < SGRPROJ_PARAMS; i++) {
@@ -740,23 +696,12 @@ void *rest_kernel(void *input_ptr) {
                     }
                     cm->sg_frame_ep = best_ep;
                 }
-#endif
             } else {
                 pcs_ptr->rst_info[0].frame_restoration_type = RESTORE_NONE;
                 pcs_ptr->rst_info[1].frame_restoration_type = RESTORE_NONE;
                 pcs_ptr->rst_info[2].frame_restoration_type = RESTORE_NONE;
             }
-#if !CLN_REST
-            uint8_t best_ep_cnt = 0;
-            uint8_t best_ep     = 0;
-            for (uint8_t i = 0; i < SGRPROJ_PARAMS; i++) {
-                if (cm->sg_frame_ep_cnt[i] > best_ep_cnt) {
-                    best_ep     = i;
-                    best_ep_cnt = cm->sg_frame_ep_cnt[i];
-                }
-            }
-            cm->sg_frame_ep = best_ep;
-#endif
+
             if (pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // copy stat to ref object (intra_coded_area, Luminance, Scene change detection flags)
                 copy_statistics_to_ref_obj_ect(pcs_ptr, scs_ptr);

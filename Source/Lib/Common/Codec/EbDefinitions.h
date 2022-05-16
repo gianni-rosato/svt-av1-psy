@@ -186,9 +186,6 @@ typedef struct MvLimits {
 typedef struct {
     uint8_t by;
     uint8_t bx;
-#if !CLN_CDEF_BUFFS
-    uint8_t skip;
-#endif
 } CdefList;
 #define FB_NUM 3 // number of freqiency bands
 #define SSEG_NUM 2 // number of sse_gradient bands
@@ -566,7 +563,7 @@ typedef enum PdPass {
     PD_PASS_1,
     PD_PASS_TOTAL,
 } PdPass;
-#if OPT_LPD0
+
 typedef enum ATTRIBUTE_PACKED {
     REGULAR_PD0    = -1, // The regular PD0 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd0_ctrls)
     LPD0_LVL_0 = 0,
@@ -576,16 +573,7 @@ typedef enum ATTRIBUTE_PACKED {
     VERY_LIGHT_PD0 = 4, // Lightest PD0 path, doesn't perform TX
     LPD0_LEVELS // Number of light-PD0 paths (regular PD0 isn't a light-PD0 path)
 } Pd0Level;
-#else
-typedef enum ATTRIBUTE_PACKED {
-    REGULAR_PD0    = 0, // The regular PD0 path
-    LIGHT_PD0_LVL1 = 1,
-    LIGHT_PD0_LVL2 = 2,
-    LIGHT_PD0_LVL3 = 3,
-    LIGHT_PD0_LVL4 = 4,
-    VERY_LIGHT_PD0 = 5, // Lightest PD0 path, having more shortcuts than Light-PD1
-} Pd0Level;
-#endif
+
 typedef enum ATTRIBUTE_PACKED {
     REGULAR_PD1 =
         -1, // The regular PD1 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd1_ctrls)

@@ -691,13 +691,13 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     Bool recon_enabled;
     // 1.0.0: Any additional fields shall go after here
-#if FTR_FORCE_KF
+
     /**
      * @brief Signal that force-key-frames is enabled.
      *
      */
     Bool force_key_frames;
-#endif
+
     /**
      * @brief Signal to the library to treat intra_period_length as seconds and
      * multiply by fps_num/fps_den.

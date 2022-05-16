@@ -521,12 +521,8 @@ void setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_SSE2(svt_aom_h_predictor_64x16, svt_aom_h_predictor_64x16_c, svt_aom_h_predictor_64x16_sse2);
     SET_SSE2(svt_aom_h_predictor_64x32, svt_aom_h_predictor_64x32_c, svt_aom_h_predictor_64x32_sse2);
     SET_SSE2(svt_aom_h_predictor_64x64, svt_aom_h_predictor_64x64_c, svt_aom_h_predictor_64x64_sse2);
-#if UPDATE_CDEF_INTRINSICS
     SET_SSE41_AVX2(svt_aom_cdef_find_dir, svt_aom_cdef_find_dir_c, svt_aom_cdef_find_dir_sse4_1, svt_aom_cdef_find_dir_avx2);
     SET_SSE41_AVX2(svt_aom_cdef_find_dir_dual, svt_aom_cdef_find_dir_dual_c, svt_aom_cdef_find_dir_dual_sse4_1, svt_aom_cdef_find_dir_dual_avx2);
-#else
-    SET_SSE41_AVX2(svt_cdef_find_dir, svt_cdef_find_dir_c, svt_cdef_find_dir_sse4_1, svt_cdef_find_dir_avx2);
-#endif
     SET_SSE41_AVX2(svt_cdef_filter_block, svt_cdef_filter_block_c, svt_av1_cdef_filter_block_sse4_1, svt_cdef_filter_block_avx2);
     /* No C version, use only internal in kerneal: svt_cdef_filter_block_avx2() */
 #ifdef ARCH_X86_64
@@ -535,11 +531,7 @@ void setup_common_rtcd_internal(EbCpuFlags flags) {
     if (flags & HAS_AVX512F) svt_cdef_filter_block_8xn_16 = svt_cdef_filter_block_8xn_16_avx512;
 #endif
 #endif
-#if UPDATE_CDEF_COPY
     SET_SSE41_AVX2(svt_aom_copy_rect8_8bit_to_16bit, svt_aom_copy_rect8_8bit_to_16bit_c, svt_aom_copy_rect8_8bit_to_16bit_sse4_1, svt_aom_copy_rect8_8bit_to_16bit_avx2);
-#else
-    SET_SSE41(svt_copy_rect8_8bit_to_16bit, svt_copy_rect8_8bit_to_16bit_c, svt_copy_rect8_8bit_to_16bit_sse4_1);
-#endif
     SET_SSE41_AVX2(svt_av1_highbd_warp_affine, svt_av1_highbd_warp_affine_c, svt_av1_highbd_warp_affine_sse4_1, svt_av1_highbd_warp_affine_avx2);
     SET_AVX2(dec_svt_av1_highbd_warp_affine, dec_svt_av1_highbd_warp_affine_c, dec_svt_av1_highbd_warp_affine_avx2);
     SET_SSE41_AVX2(svt_av1_warp_affine, svt_av1_warp_affine_c, svt_av1_warp_affine_sse4_1, svt_av1_warp_affine_avx2);
@@ -729,10 +721,8 @@ void setup_common_rtcd_internal(EbCpuFlags flags) {
     SET_AVX2_AVX512(svt_aom_highbd_h_predictor_64x64, svt_aom_highbd_h_predictor_64x64_c, svt_aom_highbd_h_predictor_64x64_avx2, aom_highbd_h_predictor_64x64_avx512);
     SET_SSE2(svt_log2f, log2f_32, Log2f_ASM);
     SET_SSE2(svt_memcpy, svt_memcpy_c, svt_memcpy_intrin_sse);
-#if FIX_ISSUE_1819 //
     SET_AVX2(svt_aom_hadamard_32x32, svt_aom_hadamard_32x32_c, svt_aom_hadamard_32x32_avx2);
     SET_AVX2(svt_aom_hadamard_16x16, svt_aom_hadamard_16x16_c, svt_aom_hadamard_16x16_avx2);
     SET_SSE2(svt_aom_hadamard_8x8, svt_aom_hadamard_8x8_c, svt_aom_hadamard_8x8_sse2);
-#endif
 }
 // clang-format on

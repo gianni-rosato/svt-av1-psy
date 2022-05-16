@@ -245,11 +245,11 @@ typedef struct CdefDirData {
     uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS];
     int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS];
 } CdefDirData;
-#if FIX_ISSUE_1819
+
 typedef struct PicVqCtrls {
     uint8_t detect_high_freq_lvl;
 } PicVqCtrls;
-#endif
+
 typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor                    dctor;
@@ -296,13 +296,8 @@ typedef struct PictureControlSet {
     uint64_t (*mse_seg[2])[TOTAL_STRENGTHS];
     uint8_t     *skip_cdef_seg;
     CdefDirData *cdef_dir_data;
-#if CLN_RENAME_CDEF_BUFFS
     EbByte cdef_input_recon[3]; // DLF'd recon
     EbByte cdef_input_source[3]; // Input video
-#else
-    uint16_t *src[3]; //dlfed recon in 16bit form
-    uint16_t *ref_coeff[3]; //input video in 16bit form
-#endif
     uint32_t tot_seg_searched_rest;
     EbHandle rest_search_mutex;
     uint16_t rest_segments_total_count;
@@ -423,17 +418,12 @@ typedef struct PictureControlSet {
     uint8_t  md_pme_level;
     uint8_t  mds0_level;
     uint8_t  pic_disallow_4x4; //disallow 4x4 at pic level
-#if !OPT_LPD0
-    uint8_t  pic_pd0_level; // pd0_level at pic level
-#endif
     uint8_t  pic_skip_pd0; // skip_pd0 at pic level
     uint8_t  pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
     uint8_t  pic_depth_removal_level; // depth_removal_level signal at the picture level
     uint8_t
                      pic_block_based_depth_refinement_level; // block_based_depth_refinement_level signal set at the picture level
-#if OPT_LPD0
     uint8_t          pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
-#endif
     uint8_t          pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
     Bool             pic_bypass_encdec;
     RefList          colocated_pu_ref_list;
@@ -479,9 +469,7 @@ typedef struct PictureControlSet {
     uint8_t
             approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
     uint8_t skip_intra;
-#if FIX_ISSUE_1819
     PicVqCtrls vq_ctrls;
-#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -571,21 +559,7 @@ typedef struct TplControls {
     // Calculated qindex based on r0 using qstep calculation
     bool qstep_based_q_calc; // 0: OFF; 1: ON
 } TplControls;
-#if !RC_REFACTOR_2
-/*!
- * \brief Refresh frame flags for different type of frames.
- *
- * If the refresh flag is true for a particular reference frame, after the
- * current frame is encoded, the reference frame gets refreshed (updated) to
- * be the current frame. Note: Usually at most one flag will be set to true at
- * a time. But, for key-frames, all flags are set to true at once.
- */
-typedef struct {
-    bool golden_frame; /*!< Refresh flag for golden frame */
-    bool bwd_ref_frame; /*!< Refresh flag for bwd-ref frame */
-    bool alt_ref_frame; /*!< Refresh flag for alt-ref frame */
-} RefreshFrameFlagsInfo;
-#endif
+
 typedef struct {
     uint8_t   tpl_temporal_layer_index;
     SliceType tpl_slice_type;
@@ -719,11 +693,7 @@ typedef struct PictureParentControlSet {
     Bool      idr_flag;
     Bool      cra_flag;
     Bool      scene_change_flag;
-#if FIX_ISSUE_1857
     int8_t    transition_present; // -1: not computed
-#else
-    Bool      transition_present;
-#endif
     Bool      end_of_sequence_flag;
     uint8_t   picture_qp;
     uint64_t  picture_number;
@@ -801,9 +771,6 @@ typedef struct PictureParentControlSet {
     uint16_t              me_processed_b64_count;
     EbHandle              me_processed_b64_mutex;
     FirstPassData         firstpass_data;
-#if !RC_REFACTOR_2
-    RefreshFrameFlagsInfo refresh_frame;
-#endif
     double                ts_duration;
     double                r0;
     uint8_t tpl_src_data_ready; //track pictures that are processd in two different TPL groups
@@ -851,12 +818,8 @@ typedef struct PictureParentControlSet {
     Bool     disallow_all_nsq_blocks_above_64x64; //disallow nsq in 64x64 and above
     Bool     disallow_all_nsq_blocks_above_32x32; //disallow nsq in 32x32 and above
     Bool     disallow_all_nsq_blocks_above_16x16; //disallow nsq in 16x16 and above
-    Bool     disallow_HV4; //disallow             H4/V4
-#if FTR_DISALLOW_HVAB
+    Bool     disallow_HV4; //disallow H4/V4
     Bool     disallow_HVA_HVB; // Disallow HA/HB/VA/VB NSQ blocks
-#else
-    Bool     disallow_HVA_HVB_HV4; //disallow HA/HB/VA/VB H4/V4
-#endif
     DlfCtrls dlf_ctrls;
     uint8_t  intra_pred_mode;
     uint8_t  tx_size_search_mode;
@@ -935,9 +898,7 @@ typedef struct PictureParentControlSet {
     Macroblock          *av1x;
     int32_t      film_grain_params_present; //todo (AN): Do we need this flag at picture level?
     int8_t       cdef_level;
-#if CLN_REST_2
     Bool enable_restoration; // TRUE if restoration filtering is enabled for the current frame
-#endif
     uint8_t      palette_level;
     uint8_t      sc_class0;
     uint8_t      sc_class1;
@@ -1008,17 +969,11 @@ typedef struct PictureParentControlSet {
 
     EbObjectWrapper      *me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
-#if !RC_REFACTOR_3
-    unsigned char         gf_group_index;
-#endif
     struct PictureParentControlSet
             *tpl_group[MAX_TPL_GROUP_SIZE]; //stores pcs pictures needed for tpl algorithm
     uint32_t tpl_group_size; //size of above buffer
     void    *pd_window
         [PD_WINDOW_SIZE]; //stores previous, current, future pictures from pd-reord-queue. empty for first I.
-#if !FTR_FORCE_KF
-    uint8_t pd_window_count;
-#endif
 
     struct PictureParentControlSet
         *ext_group[MAX_TPL_EXT_GROUP_SIZE]; //stores pcs pictures needed for lad mg based algorithms
@@ -1031,9 +986,6 @@ typedef struct PictureParentControlSet {
 
     // Tune TPL for better chroma.Only for 240P
     uint8_t      tune_tpl_for_chroma;
-#if !FTR_FORCE_KF
-    uint8_t      is_next_frame_intra;
-#endif
     uint8_t      is_superres_none;
     TfControls   tf_ctrls;
     GmControls   gm_ctrls;
@@ -1076,9 +1028,6 @@ typedef struct PictureParentControlSet {
     //GF_GROUP parameters store in PCS
     int update_type;
     int layer_depth;
-#if !RC_REFACTOR_3
-    int gf_group_size;
-#endif
     //RATE_CONTROL parameters store in PCS
     int base_frame_target; // A baseline frame target before adjustment.
     int this_frame_target; // Actual frame target after rc adjustment.

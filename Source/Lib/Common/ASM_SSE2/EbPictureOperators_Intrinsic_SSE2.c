@@ -288,7 +288,6 @@ extern void svt_memcpy_intrin_sse(void *dst_ptr, void const *src_ptr, size_t siz
         svt_memcpy_small(dst_ptr, src_ptr, size);
 }
 
-#if FIX_ISSUE_1819
 // Store 8 16 bit values. If the destination is 32 bits then sign extend the
 // values by multiplying by 1.
 static INLINE void store_tran_low(__m128i a, int32_t* b) {
@@ -435,5 +434,4 @@ void svt_aom_hadamard_8x8_sse2(const int16_t* src_diff, ptrdiff_t src_stride,
     int32_t* coeff) {
     hadamard_8x8_sse2(src_diff, src_stride, coeff, 1);
 }
-#endif
 #endif

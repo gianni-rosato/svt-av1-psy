@@ -46,7 +46,7 @@ static INLINE __m256i fold_mul_and_sum(__m256i partial, __m256i const_var) {
     partial = _mm256_mullo_epi32(partial, const_var);
     return partial;
 }
-#if UPDATE_CDEF_INTRINSICS
+
 // Mask used to shuffle the elements present in 256bit register.
 const int svt_shuffle_reg_256bit[8] = { 0x0b0a0d0c, 0x07060908, 0x03020504,
                                         0x0f0e0100, 0x0b0a0d0c, 0x07060908,
@@ -82,7 +82,6 @@ static INLINE __m256i fold_mul_and_sum_dual(__m256i *partiala,
     *partiala = _mm256_add_epi32(*partiala, *partialb);
     return *partiala;
 }
-#endif
 
 static INLINE __m128i hsum4(__m128i x0, __m128i x1, __m128i x2, __m128i x3) {
     __m128i t0, t1, t2, t3;
@@ -96,7 +95,7 @@ static INLINE __m128i hsum4(__m128i x0, __m128i x1, __m128i x2, __m128i x3) {
     x3 = _mm_unpackhi_epi64(t2, t3);
     return _mm_add_epi32(_mm_add_epi32(x0, x1), _mm_add_epi32(x2, x3));
 }
-#if UPDATE_CDEF_INTRINSICS
+
 static INLINE __m256i hsum4_dual(__m256i *x0, __m256i *x1, __m256i *x2,
                                  __m256i *x3) {
   const __m256i t0 = _mm256_unpacklo_epi32(*x0, *x1);
@@ -111,7 +110,6 @@ static INLINE __m256i hsum4_dual(__m256i *x0, __m256i *x1, __m256i *x2,
   return _mm256_add_epi32(_mm256_add_epi32(*x0, *x1),
                           _mm256_add_epi32(*x2, *x3));
 }
-#endif
 
 /* Computes cost for directions 0, 5, 6 and 7. We can call this function again
 to compute the remaining directions. */
@@ -250,7 +248,7 @@ uint8_t svt_aom_cdef_find_dir_avx2(const uint16_t *img, int32_t stride, int32_t 
     *var >>= 10;
     return best_dir;
 }
-#if UPDATE_CDEF_INTRINSICS
+
 /* Computes cost for directions 0, 5, 6 and 7. We can call this function again
 to compute the remaining directions. */
 static INLINE __m256i compute_directions_dual(__m256i *lines,
@@ -440,7 +438,6 @@ void svt_aom_cdef_find_dir_dual_avx2(const uint16_t *img1, const uint16_t *img2,
     *out_dir_1st_8x8 = best_dir[0];
     *out_dir_2nd_8x8 = best_dir[1];
 }
-#endif
 
 // sign(a-b) * min(abs(a-b), max(0, threshold - (abs(a-b) >> adjdamp)))
 static INLINE __m256i constrain16(const __m256i in0, const __m256i in1, const __m256i threshold,
@@ -515,21 +512,12 @@ void svt_cdef_filter_block_8xn_16_avx2(const uint16_t *const in, const int32_t p
                                        const int32_t coeff_shift, uint16_t *const dst,
                                        const int32_t dstride, uint8_t height,
                                        uint8_t subsampling_factor) {
-#if OPT_CDEF_DIR_PAD
     const int32_t po1 = eb_cdef_directions[dir][0];
     const int32_t po2 = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
     const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
     const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
     const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
-#else
-    const int32_t po1 = eb_cdef_directions[dir][0];
-    const int32_t po2 = eb_cdef_directions[dir][1];
-    const int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
-    const int32_t s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
-    const int32_t s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
-    const int32_t s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
-#endif
     // SSE CHKN
     const int32_t *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
     const int32_t *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
@@ -626,22 +614,12 @@ static void svt_cdef_filter_block_4xn_16_avx2(uint16_t *dst, int32_t dstride, co
                                               uint8_t subsampling_factor) {
     __m256i p0, p1, p2, p3, sum, row, res;
     __m256i max, min, large = _mm256_set1_epi16(CDEF_VERY_LARGE);
-#if OPT_CDEF_DIR_PAD
     const int32_t po1 = eb_cdef_directions[dir][0];
     const int32_t po2 = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
     const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
     const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
     const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
-#else
-    int32_t po1  = eb_cdef_directions[dir][0];
-    int32_t po2  = eb_cdef_directions[dir][1];
-    int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
-    int32_t s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
-    int32_t s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
-    int32_t s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
-#endif
-
     const int32_t *pri_taps         = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
     const int32_t *sec_taps         = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
     __m256i        pri_strength_256 = _mm256_set1_epi16(pri_strength);
@@ -811,21 +789,12 @@ static void svt_cdef_filter_block_4xn_8_avx2(uint8_t *dst, int32_t dstride, cons
                                              uint8_t subsampling_factor) {
     __m256i p0, p1, p2, p3, sum, row, res;
     __m256i max, min, large = _mm256_set1_epi16(CDEF_VERY_LARGE);
-#if OPT_CDEF_DIR_PAD
     const int32_t po1 = eb_cdef_directions[dir][0];
     const int32_t po2 = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
     const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
     const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
     const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
-#else
-    int32_t po1  = eb_cdef_directions[dir][0];
-    int32_t po2  = eb_cdef_directions[dir][1];
-    int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
-    int32_t s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
-    int32_t s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
-    int32_t s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
-#endif
 
     const int32_t *pri_taps         = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
     const int32_t *sec_taps         = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
@@ -999,21 +968,12 @@ static void svt_cdef_filter_block_8xn_8_avx2(uint8_t *dst, int32_t dstride, cons
     int32_t i;
     __m256i sum, p0, p1, p2, p3, row, res;
     __m256i max, min, large = _mm256_set1_epi16(CDEF_VERY_LARGE);
-#if OPT_CDEF_DIR_PAD
     const int32_t po1 = eb_cdef_directions[dir][0];
     const int32_t po2 = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
     const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
     const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
     const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
-#else
-    int32_t po1  = eb_cdef_directions[dir][0];
-    int32_t po2  = eb_cdef_directions[dir][1];
-    int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
-    int32_t s1o2 = eb_cdef_directions[(dir + 2) & 7][1];
-    int32_t s2o1 = eb_cdef_directions[(dir + 6) & 7][0];
-    int32_t s2o2 = eb_cdef_directions[(dir + 6) & 7][1];
-#endif
     // SSE CHKN
     const int32_t *pri_taps         = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
     const int32_t *sec_taps         = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
@@ -1277,7 +1237,6 @@ void svt_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
     }
 }
 
-#if UPDATE_CDEF_COPY
 void svt_aom_copy_rect8_8bit_to_16bit_avx2(uint16_t *dst, int32_t dstride,
     const uint8_t *src, int32_t sstride, int32_t v, int32_t h) {
     int i = 0, j = 0;
@@ -1315,4 +1274,3 @@ void svt_aom_copy_rect8_8bit_to_16bit_avx2(uint16_t *dst, int32_t dstride,
         }
     }
 }
-#endif

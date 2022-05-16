@@ -2539,7 +2539,6 @@ void svt_unpack_and_2bcompress_avx2(uint16_t *in16b_buffer, uint32_t in16b_strid
     }
 }
 
-#if FIX_ISSUE_1819
 static INLINE void store_tran_low(__m256i a, int32_t* b) {
     const __m256i one = _mm256_set1_epi16(1);
     const __m256i a_hi = _mm256_mulhi_epi16(a, one);
@@ -2759,4 +2758,3 @@ void svt_aom_hadamard_32x32_avx2(const int16_t* src_diff, ptrdiff_t src_stride,
         t_coeff += 16;
     }
 }
-#endif

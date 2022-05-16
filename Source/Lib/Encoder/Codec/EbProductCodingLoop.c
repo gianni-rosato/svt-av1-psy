@@ -144,11 +144,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet   *pcs_ptr,
     uint16_t tile_idx = context_ptr->tile_index;
 
     {
-#if OPT_PRED_ONLY
         if (!(context_ptr->pd_pass == PD_PASS_1 && context_ptr->pic_pred_depth_only)) {
-#else
-        if (!(context_ptr->pd_pass == PD_PASS_1 && context_ptr->pred_depth_only)) {
-#endif
             struct PartitionContext partition;
             partition.above = partition_context_lookup[context_ptr->blk_geom->bsize].above;
             partition.left  = partition_context_lookup[context_ptr->blk_geom->bsize].left;
@@ -1133,7 +1129,7 @@ void product_coding_loop_init_fast_loop(PictureControlSet   *pcs_ptr,
 
     return;
 }
-#if FIX_ISSUE_1819
+
 static uint32_t hadamard_path(
     ModeDecisionContext* ctx,
     uint8_t* input,
@@ -1217,7 +1213,6 @@ static uint32_t hadamard_path(
     }
     return(satd_cost);
 }
-#endif
 
 /*
 */
@@ -1227,11 +1222,8 @@ void fast_loop_core_light_pd0(ModeDecisionCandidateBuffer *candidate_buffer,
                               uint32_t cu_origin_index) {
     ModeDecisionCandidate *candidate_ptr  = candidate_buffer->candidate_ptr;
     EbPictureBufferDesc   *prediction_ptr = candidate_buffer->prediction_ptr;
-#if OPT_LPD0
+
     if (context_ptr->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0) {
-#else
-    if (context_ptr->pd0_level == VERY_LIGHT_PD0) {
-#endif
         MvReferenceFrame rf[2];
         av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
 
@@ -1350,18 +1342,11 @@ void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *candidate_buffer,
         unsigned int            sse;
         uint8_t                *pred_y = prediction_ptr->buffer_y + loc->blk_origin_index;
         uint8_t                *src_y  = input_picture_ptr->buffer_y + loc->input_origin_index;
-#if TUNE_MDS0_DIST
+
         // The variance is shifted because fast_lambda is used, and variance is much larger than SAD (for which
         // fast_lambda was designed), so a scaling is needed to make the values closer.  3 was chosen empirically.
-#endif
         candidate_buffer->luma_fast_distortion = luma_fast_distortion =
-            fn_ptr->vf(
-                pred_y, prediction_ptr->stride_y, src_y, input_picture_ptr->stride_y, &sse) >>
-#if TUNE_MDS0_DIST
-            3;
-#else
-            2;
-#endif
+            fn_ptr->vf(pred_y, prediction_ptr->stride_y, src_y, input_picture_ptr->stride_y, &sse) >> 3;
     } else {
         assert(context_ptr->mds0_ctrls.mds0_dist_type == MDS0_SAD);
         assert((context_ptr->blk_geom->bwidth >> 3) < 17);
@@ -6730,17 +6715,7 @@ uint8_t do_md_recon(PictureParentControlSet *pcs, ModeDecisionContext *ctxt) {
     uint8_t need_md_rec_for_dlf_search  = pcs->dlf_ctrls.enabled; //for DLF levels
     uint8_t need_md_rec_for_cdef_search = pcs->cdef_ctrls.enabled &&
         !pcs->cdef_ctrls.use_reference_cdef_fs; // CDEF search levels needing the recon samples
-#if CLN_REST_2
     uint8_t need_md_rec_for_restoration_search = pcs->enable_restoration; // any resoration search level
-#else
-#if CLN_REST
-    uint8_t need_md_rec_for_restoration_search =
-        pcs->av1_cm->rest_filter_ctrls.enabled; // any resoration search level
-#else
-    uint8_t need_md_rec_for_restoration_search =
-        pcs->scs_ptr->seq_header.enable_restoration; // any resoration search level
-#endif
-#endif
 
     uint8_t do_recon;
     if (need_md_rec_for_intra_pred || need_md_rec_for_ref || need_md_rec_for_dlf_search ||
@@ -7817,9 +7792,8 @@ static void md_stage_3_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext
 
     assert(IMPLIES(context_ptr->md_staging_subres_step == 2, context_ptr->blk_geom->sq_size >= 16));
     assert(IMPLIES(context_ptr->md_staging_subres_step == 1, context_ptr->blk_geom->sq_size >= 8));
-#if OPT_LPD0
     assert_err(IMPLIES(!context_ptr->disallow_4x4, context_ptr->md_staging_subres_step == 0), "residual subsampling cannot be used with 4x4 blocks");
-#endif
+
     context_ptr->md_staging_perform_intra_chroma_pred = TRUE;
 
     full_loop_core_light_pd0(pcs_ptr,
@@ -8172,7 +8146,7 @@ void init_chroma_mode(ModeDecisionContext *context_ptr) {
         }
     }
 }
-#if OPT_IND_CHROMA
+
 static INLINE void rtime_alloc_uv_cand_buff_indices(uint32_t** uv_cand_buff_indices, uint32_t max_nics_uv) {
     (*uv_cand_buff_indices) = (uint32_t *)malloc(max_nics_uv * sizeof(*uv_cand_buff_indices));
 }
@@ -8537,305 +8511,7 @@ static void search_best_independent_uv_mode(PictureControlSet   *pcs,
 
     free(uv_cand_buff_indices);
 }
-#else
-static void search_best_independent_uv_mode(PictureControlSet   *pcs_ptr,
-                                            EbPictureBufferDesc *input_picture_ptr,
-                                            uint32_t             input_cb_origin_in_index,
-                                            uint32_t             input_cr_origin_in_index,
-                                            uint32_t             cu_chroma_origin_index,
-                                            ModeDecisionContext *context_ptr) {
-    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-    uint32_t     full_lambda =
-        context_ptr->full_lambda_md[context_ptr->hbd_mode_decision ? EB_10_BIT_MD : EB_8_BIT_MD];
-    context_ptr->uv_intra_comp_only = TRUE;
-    context_ptr->end_plane          = (context_ptr->blk_geom->has_uv &&
-                              context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1 &&
-                              !context_ptr->md_staging_skip_chroma_pred)
-                 ? (int)MAX_MB_PLANE
-                 : 1;
-    Bool use_angle_delta            = av1_use_angle_delta(context_ptr->blk_geom->bsize,
-                                               context_ptr->intra_ctrls.angular_pred_level);
 
-    uint64_t coeff_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
-    uint64_t distortion[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
-
-    ModeDecisionCandidate *candidate_array         = context_ptr->fast_candidate_array;
-    uint32_t               start_fast_buffer_index = pcs_ptr->parent_pcs_ptr->max_can_count;
-    uint32_t               start_full_buffer_index = context_ptr->max_nics;
-    uint32_t               uv_mode_total_count     = start_fast_buffer_index;
-    // Shut RDOQ
-    context_ptr->md_staging_skip_rdoq = 0;
-    UvPredictionMode uv_mode_end      = (UvPredictionMode)context_ptr->intra_ctrls.intra_mode_end;
-    uint8_t          uv_mode_start    = UV_DC_PRED;
-    uint8_t          disable_angle_prediction                = 0;
-    uint8_t          directional_mode_skip_mask[INTRA_MODES] = {0};
-    for (UvPredictionMode uv_mode = uv_mode_start; uv_mode <= uv_mode_end; ++uv_mode) {
-        uint8_t uv_angle_delta_candidate_count = (use_angle_delta &&
-                                                  av1_is_directional_mode((PredictionMode)uv_mode))
-            ? 7
-            : 1;
-        if (!av1_is_directional_mode((PredictionMode)uv_mode) ||
-            (!disable_angle_prediction &&
-             directional_mode_skip_mask[(PredictionMode)uv_mode] == 0)) {
-            for (uint8_t uv_angle_delta_counter = 0;
-                 uv_angle_delta_counter < uv_angle_delta_candidate_count;
-                 ++uv_angle_delta_counter) {
-                const uint8_t uv_angle_delta_shift = 1;
-                int32_t       uv_angle_delta       = CLIP(
-                    uv_angle_delta_shift *
-                        (uv_angle_delta_candidate_count == 1
-                                         ? 0
-                                         : uv_angle_delta_counter - (uv_angle_delta_candidate_count >> 1)),
-                    -MAX_ANGLE_DELTA,
-                    MAX_ANGLE_DELTA);
-                candidate_array[uv_mode_total_count].use_intrabc                = 0;
-                candidate_array[uv_mode_total_count].angle_delta[PLANE_TYPE_UV] = 0;
-                candidate_array[uv_mode_total_count].pred_mode                  = DC_PRED;
-                candidate_array[uv_mode_total_count].intra_chroma_mode          = uv_mode;
-                candidate_array[uv_mode_total_count].angle_delta[PLANE_TYPE_UV] = uv_angle_delta;
-                candidate_array[uv_mode_total_count].tx_depth                   = 0;
-                candidate_array[uv_mode_total_count].palette_info               = NULL;
-                candidate_array[uv_mode_total_count].filter_intra_mode = FILTER_INTRA_MODES;
-                candidate_array[uv_mode_total_count].cfl_alpha_signs   = 0;
-                candidate_array[uv_mode_total_count].cfl_alpha_idx     = 0;
-                candidate_array[uv_mode_total_count].transform_type[0] = DCT_DCT;
-                candidate_array[uv_mode_total_count].ref_frame_type    = INTRA_FRAME;
-                candidate_array[uv_mode_total_count].motion_mode       = SIMPLE_TRANSLATION;
-                candidate_array[uv_mode_total_count].transform_type_uv = av1_get_tx_type(
-                    0, // is_inter
-                    (PredictionMode)0,
-                    (UvPredictionMode)uv_mode,
-                    PLANE_TYPE_UV,
-                    context_ptr->blk_geom->txsize_uv[0][0],
-                    frm_hdr->reduced_tx_set);
-                uv_mode_total_count++;
-            }
-        }
-    }
-    uv_mode_total_count = uv_mode_total_count - start_fast_buffer_index;
-    // Fast-loop search uv_mode
-    context_ptr->md_staging_skip_chroma_pred = FALSE;
-    context_ptr->end_plane                   = (context_ptr->blk_geom->has_uv &&
-                              context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1 &&
-                              !context_ptr->md_staging_skip_chroma_pred)
-                          ? (int)MAX_MB_PLANE
-                          : 1;
-    for (uint8_t uv_mode_count = 0; uv_mode_count < uv_mode_total_count; uv_mode_count++) {
-        ModeDecisionCandidateBuffer *candidate_buffer =
-            context_ptr->candidate_buffer_ptr_array[uv_mode_count + start_full_buffer_index];
-        candidate_buffer->candidate_ptr =
-            &context_ptr->fast_candidate_array[uv_mode_count + start_fast_buffer_index];
-        svt_product_prediction_fun_table[is_inter_mode(candidate_buffer->candidate_ptr->pred_mode)](
-            context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
-        uint32_t chroma_fast_distortion;
-        if (!context_ptr->hbd_mode_decision) {
-            chroma_fast_distortion = svt_nxm_sad_kernel_sub_sampled(
-                input_picture_ptr->buffer_cb + input_cb_origin_in_index,
-                input_picture_ptr->stride_cb,
-                candidate_buffer->prediction_ptr->buffer_cb + cu_chroma_origin_index,
-                candidate_buffer->prediction_ptr->stride_cb,
-                context_ptr->blk_geom->bheight_uv,
-                context_ptr->blk_geom->bwidth_uv);
-
-            chroma_fast_distortion += svt_nxm_sad_kernel_sub_sampled(
-                input_picture_ptr->buffer_cr + input_cr_origin_in_index,
-                input_picture_ptr->stride_cr,
-                candidate_buffer->prediction_ptr->buffer_cr + cu_chroma_origin_index,
-                candidate_buffer->prediction_ptr->stride_cr,
-                context_ptr->blk_geom->bheight_uv,
-                context_ptr->blk_geom->bwidth_uv);
-        } else {
-            chroma_fast_distortion = sad_16b_kernel(
-                ((uint16_t *)input_picture_ptr->buffer_cb) + input_cb_origin_in_index,
-                input_picture_ptr->stride_cb,
-                ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cb) + cu_chroma_origin_index,
-                candidate_buffer->prediction_ptr->stride_cb,
-                context_ptr->blk_geom->bheight_uv,
-                context_ptr->blk_geom->bwidth_uv);
-
-            chroma_fast_distortion += sad_16b_kernel(
-                ((uint16_t *)input_picture_ptr->buffer_cr) + input_cr_origin_in_index,
-                input_picture_ptr->stride_cr,
-                ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cr) + cu_chroma_origin_index,
-                candidate_buffer->prediction_ptr->stride_cr,
-                context_ptr->blk_geom->bheight_uv,
-                context_ptr->blk_geom->bwidth_uv);
-        }
-        // Do not consider rate @ this stage
-        *(candidate_buffer->fast_cost_ptr) = chroma_fast_distortion;
-    }
-
-    // Sort uv_mode (in terms of distortion only)
-    uint32_t *uv_cand_buff_indices = (uint32_t *)malloc(context_ptr->max_nics_uv *
-                                                        sizeof(*uv_cand_buff_indices));
-    memset(uv_cand_buff_indices, 0xFF, context_ptr->max_nics_uv * sizeof(*uv_cand_buff_indices));
-
-    sort_fast_cost_based_candidates(
-        context_ptr,
-        start_full_buffer_index,
-        uv_mode_total_count, //how many cand buffers to sort. one of the buffers can have max cost.
-        uv_cand_buff_indices);
-
-    // Reset *(candidate_buffer->fast_cost_ptr)
-    for (uint8_t uv_mode_count = 0; uv_mode_count < uv_mode_total_count; uv_mode_count++) {
-        ModeDecisionCandidateBuffer *candidate_buffer =
-            context_ptr->candidate_buffer_ptr_array[uv_mode_count + start_full_buffer_index];
-        *(candidate_buffer->fast_cost_ptr) = MAX_CU_COST;
-    }
-
-    // Derive uv_mode_nfl_count
-    uint8_t uv_mode_nfl_count = !pcs_ptr->temporal_layer_index ? uv_mode_total_count
-        : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag   ? 16
-                                                               : 8;
-
-    // Full-loop search uv_mode
-    for (uint8_t uv_mode_count = 0; uv_mode_count < MIN(uv_mode_total_count, uv_mode_nfl_count);
-         uv_mode_count++) {
-        ModeDecisionCandidateBuffer *candidate_buffer =
-            context_ptr->candidate_buffer_ptr_array[uv_cand_buff_indices[uv_mode_count]];
-        candidate_buffer->candidate_ptr =
-            &context_ptr->fast_candidate_array[uv_cand_buff_indices[uv_mode_count] -
-                                               start_full_buffer_index + start_fast_buffer_index];
-        uint16_t cb_qindex                           = context_ptr->qp_index;
-        uint64_t cb_coeff_bits                       = 0;
-        uint64_t cr_coeff_bits                       = 0;
-        uint64_t cb_full_distortion[DIST_CALC_TOTAL] = {0, 0};
-        uint64_t cr_full_distortion[DIST_CALC_TOTAL] = {0, 0};
-
-        uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
-
-        //Cb Residual
-        residual_kernel(input_picture_ptr->buffer_cb,
-                        input_cb_origin_in_index,
-                        input_picture_ptr->stride_cb,
-                        candidate_buffer->prediction_ptr->buffer_cb,
-                        cu_chroma_origin_index,
-                        candidate_buffer->prediction_ptr->stride_cb,
-                        (int16_t *)candidate_buffer->residual_ptr->buffer_cb,
-                        cu_chroma_origin_index,
-                        candidate_buffer->residual_ptr->stride_cb,
-                        context_ptr->hbd_mode_decision,
-                        context_ptr->blk_geom->bwidth_uv,
-                        context_ptr->blk_geom->bheight_uv);
-
-        //Cr Residual
-        residual_kernel(input_picture_ptr->buffer_cr,
-                        input_cr_origin_in_index,
-                        input_picture_ptr->stride_cr,
-                        candidate_buffer->prediction_ptr->buffer_cr,
-                        cu_chroma_origin_index,
-                        candidate_buffer->prediction_ptr->stride_cr,
-                        (int16_t *)candidate_buffer->residual_ptr->buffer_cr,
-                        cu_chroma_origin_index,
-                        candidate_buffer->residual_ptr->stride_cr,
-                        context_ptr->hbd_mode_decision,
-                        context_ptr->blk_geom->bwidth_uv,
-                        context_ptr->blk_geom->bheight_uv);
-        svt_aom_full_loop_uv(pcs_ptr,
-                    context_ptr,
-                    candidate_buffer,
-                    input_picture_ptr,
-                    COMPONENT_CHROMA,
-                    cb_qindex,
-                    count_non_zero_coeffs,
-                    cb_full_distortion,
-                    cr_full_distortion,
-                    &cb_coeff_bits,
-                    &cr_coeff_bits,
-                    1);
-
-        coeff_rate[candidate_buffer->candidate_ptr->intra_chroma_mode]
-                  [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
-                      cb_coeff_bits + cr_coeff_bits;
-        distortion[candidate_buffer->candidate_ptr->intra_chroma_mode]
-                  [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
-                      cb_full_distortion[DIST_CALC_RESIDUAL] +
-            cr_full_distortion[DIST_CALC_RESIDUAL];
-    }
-
-    // Loop over all intra mode, then over all uv move to derive the best uv mode for a given intra mode in term of rate
-
-    uint8_t intra_mode_end = context_ptr->intra_ctrls.intra_mode_end;
-    // intra_mode loop (luma mode loop)
-    for (uint8_t intra_mode = DC_PRED; intra_mode <= intra_mode_end; ++intra_mode) {
-        uint8_t angle_delta_candidate_count = (use_angle_delta &&
-                                               av1_is_directional_mode((PredictionMode)intra_mode))
-            ? 7
-            : 1;
-        uint8_t angle_delta_shift           = 1;
-
-        for (uint8_t angle_delta_counter = 0; angle_delta_counter < angle_delta_candidate_count;
-             ++angle_delta_counter) {
-            int32_t angle_delta = CLIP(angle_delta_shift *
-                                           (angle_delta_candidate_count == 1 ? 0
-                                                                             : angle_delta_counter -
-                                                    (angle_delta_candidate_count >> 1)),
-                                       -MAX_ANGLE_DELTA,
-                                       MAX_ANGLE_DELTA);
-
-            // uv mode loop
-            context_ptr->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta] = (uint64_t)~0;
-
-            for (uint8_t uv_mode_count = 0;
-                 uv_mode_count < MIN(uv_mode_total_count, uv_mode_nfl_count);
-                 uv_mode_count++) {
-                ModeDecisionCandidateBuffer *candidate_buffer =
-                    context_ptr->candidate_buffer_ptr_array[uv_cand_buff_indices[uv_mode_count]];
-                ModeDecisionCandidate *candidate_ptr = &(
-                    context_ptr
-                        ->fast_candidate_array[uv_cand_buff_indices[uv_mode_count] -
-                                               start_full_buffer_index + start_fast_buffer_index]);
-                candidate_ptr->angle_delta[PLANE_TYPE_Y] = angle_delta;
-                candidate_ptr->pred_mode                 = (PredictionMode)intra_mode;
-
-                // Fast Cost
-                av1_product_fast_cost_func_table[is_inter_mode(candidate_ptr->pred_mode)](
-                    context_ptr,
-                    context_ptr->blk_ptr,
-                    candidate_buffer,
-                    NOT_USED_VALUE,
-                    0,
-                    0,
-                    0,
-                    pcs_ptr,
-                    &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-                          .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
-                    context_ptr->blk_geom,
-                    context_ptr->blk_origin_y >> MI_SIZE_LOG2,
-                    context_ptr->blk_origin_x >> MI_SIZE_LOG2,
-                    context_ptr->inter_intra_comp_ctrls.enabled,
-                    context_ptr->intra_luma_left_mode,
-                    context_ptr->intra_luma_top_mode);
-                uint64_t rate =
-                    coeff_rate[candidate_ptr->intra_chroma_mode]
-                              [MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]] +
-                    candidate_buffer->fast_luma_rate + candidate_buffer->fast_chroma_rate;
-                uint64_t uv_cost = RDCOST(
-                    full_lambda,
-                    rate,
-                    distortion[candidate_ptr->intra_chroma_mode]
-                              [MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]]);
-
-                if (uv_cost <
-                    context_ptr->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta]) {
-                    context_ptr->best_uv_mode[intra_mode][MAX_ANGLE_DELTA + angle_delta] =
-                        candidate_ptr->intra_chroma_mode;
-                    context_ptr->best_uv_angle[intra_mode][MAX_ANGLE_DELTA + angle_delta] =
-                        candidate_ptr->angle_delta[PLANE_TYPE_UV];
-
-                    context_ptr->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta] = uv_cost;
-                    context_ptr->fast_luma_rate[intra_mode][MAX_ANGLE_DELTA + angle_delta] =
-                        candidate_buffer->fast_luma_rate;
-                    context_ptr->fast_chroma_rate[intra_mode][MAX_ANGLE_DELTA + angle_delta] =
-                        candidate_buffer->fast_chroma_rate;
-                }
-            }
-        }
-    }
-
-    free(uv_cand_buff_indices);
-}
-#endif
 // Perform the NIC class pruning and candidate pruning after MSD0
 void post_mds0_nic_pruning(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                            uint64_t best_md_stage_cost, uint64_t best_md_stage_dist) {
@@ -9208,11 +8884,7 @@ void md_encode_block_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *
     assert(fast_candidate_total_count <= context_ptr->max_nics && "not enough cand buffers");
     // If only one candidate, only need to perform compensation, not distortion calc
     // unless if VLPD0 where mds0 will become the last stage and SSD is needed
-#if OPT_LPD0
     if (fast_candidate_total_count == 1 && context_ptr->lpd0_ctrls.pd0_level != VERY_LIGHT_PD0) {
-#else
-    if (fast_candidate_total_count == 1 && context_ptr->pd0_level != VERY_LIGHT_PD0) {
-#endif
         ModeDecisionCandidateBuffer *candidate_buffer = context_ptr->candidate_buffer_ptr_array[0];
         candidate_buffer->candidate_ptr               = &context_ptr->fast_candidate_array[0];
         candidate_buffer->candidate_ptr->tx_depth     = 0;
@@ -9226,11 +8898,8 @@ void md_encode_block_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *
                              input_picture_ptr,
                              input_origin_index,
                              blk_origin_index);
-#if OPT_LPD0
+
     if (context_ptr->lpd0_ctrls.pd0_level == VERY_LIGHT_PD0) {
-#else
-    if (context_ptr->pd0_level == VERY_LIGHT_PD0) {
-#endif
         uint32_t rate = 0;
         uint64_t dist = context_ptr->mds0_best_cost;
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost =
@@ -9248,11 +8917,7 @@ void md_encode_block_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *
     assert(context_ptr->lpd1_ctrls.pd1_level < LPD1_LEVELS);
     // Save info used by the light-PD1 detector (detector uses 64x64 block info only)
     if (context_ptr->lpd1_ctrls.pd1_level > REGULAR_PD1 &&
-#if OPT_LPD0
         context_ptr->lpd0_ctrls.pd0_level != VERY_LIGHT_PD0 &&
-#else
-        context_ptr->pd0_level != VERY_LIGHT_PD0 &&
-#endif
         context_ptr->lpd1_ctrls.use_lpd1_detector[context_ptr->lpd1_ctrls.pd1_level] &&
         blk_geom->sq_size == 64) {
         ModeDecisionCandidate *candidate_ptr =
@@ -11564,7 +11229,7 @@ void update_d2_decision(SequenceControlSet *scs, PictureControlSet *pcs, ModeDec
             pcs, ctx, ctx->md_blk_arr_nsq[last_blk_index_mds].best_d1_blk, sb_org_x, sb_org_y);
     }
 }
-#if FIX_ISSUE_1819
+
 EB_EXTERN EbErrorType svt_aom_check_high_freq(
     PictureControlSet* pcs,
     SuperBlock* sb_ptr,
@@ -11717,7 +11382,7 @@ EB_EXTERN EbErrorType svt_aom_check_high_freq(
 
     return return_error;
 }
-#endif
+
 EB_EXTERN EbErrorType mode_decision_sb_light_pd0(SequenceControlSet *scs, PictureControlSet *pcs,
                                                  const MdcSbData *const mdc_sb_data,
                                                  SuperBlock *sb_ptr, uint16_t sb_org_x,
