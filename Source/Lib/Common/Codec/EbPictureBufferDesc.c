@@ -76,10 +76,10 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
          picture_buffer_desc_init_data_ptr->top_padding +
          picture_buffer_desc_init_data_ptr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->stride_cb *
-        (picture_buffer_desc_init_data_ptr->max_height + subsampling_y +
-         picture_buffer_desc_init_data_ptr->top_padding +
-         picture_buffer_desc_init_data_ptr->bot_padding) >>
-        subsampling_y;
+        ((picture_buffer_desc_init_data_ptr->max_height + subsampling_y +
+          picture_buffer_desc_init_data_ptr->top_padding +
+          picture_buffer_desc_init_data_ptr->bot_padding) >>
+         subsampling_y);
     pictureBufferDescPtr->packed_flag = FALSE;
 
     if (picture_buffer_desc_init_data_ptr->split_mode == TRUE) {
@@ -168,10 +168,10 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
          picture_buffer_desc_init_data_ptr->top_padding +
          picture_buffer_desc_init_data_ptr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->stride_cb *
-        (picture_buffer_desc_init_data_ptr->max_height + subsampling_y +
-         picture_buffer_desc_init_data_ptr->top_padding +
-         picture_buffer_desc_init_data_ptr->bot_padding) >>
-        subsampling_y;
+        ((picture_buffer_desc_init_data_ptr->max_height + subsampling_y +
+          picture_buffer_desc_init_data_ptr->top_padding +
+          picture_buffer_desc_init_data_ptr->bot_padding) >>
+         subsampling_y);
 
     pictureBufferDescPtr->packed_flag = bytes_per_pixel > 1 ? TRUE : FALSE;
 
@@ -266,10 +266,10 @@ EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBuffe
          picture_buffer_desc_init_data_ptr->top_padding +
          picture_buffer_desc_init_data_ptr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->stride_cb *
-        (picture_buffer_desc_init_data_ptr->max_height + subsampling_y +
-         picture_buffer_desc_init_data_ptr->top_padding +
-         picture_buffer_desc_init_data_ptr->bot_padding) >>
-        subsampling_y;
+        ((picture_buffer_desc_init_data_ptr->max_height + subsampling_y +
+          picture_buffer_desc_init_data_ptr->top_padding +
+          picture_buffer_desc_init_data_ptr->bot_padding) >>
+         subsampling_y);
     pictureBufferDescPtr->packed_flag = (picture_buffer_desc_init_data_ptr->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
 
     pictureBufferDescPtr->buffer_enable_mask =

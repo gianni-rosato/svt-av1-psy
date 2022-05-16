@@ -42,6 +42,18 @@ static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 2, 1, 0.9};
 #define KB 400
 
+static void free_private_data_list(EbBufferHeaderType *p) {
+    EbPrivDataNode* p_node = (EbPrivDataNode*)p->p_app_private;
+    while (p_node) {
+        if (p_node->node_type != PRIVATE_DATA)
+            EB_FREE(p_node->data);
+        EbPrivDataNode* p_tmp = p_node;
+        p_node = p_node->next;
+        EB_FREE(p_tmp);
+    }
+    p->p_app_private = NULL;
+}
+
 typedef struct RateControlContext {
     EbFifo *rate_control_input_tasks_fifo_ptr;
     EbFifo *rate_control_output_results_fifo_ptr;
@@ -1243,17 +1255,13 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     if (scs_ptr->static_config.rate_control_mode == 2) {
         rc->avg_frame_qindex[KEY_FRAME]   = rc_cfg->worst_allowed_q;
         rc->avg_frame_qindex[INTER_FRAME] = rc_cfg->worst_allowed_q;
-#if FTR_RESIZE_DYNAMIC
         rc->last_q[KEY_FRAME]             = rc_cfg->worst_allowed_q;
         rc->last_q[INTER_FRAME]           = rc_cfg->worst_allowed_q;
-#endif // FTR_RESIZE_DYNAMIC
     } else {
         rc->avg_frame_qindex[KEY_FRAME]   = (rc_cfg->worst_allowed_q + rc_cfg->best_allowed_q) / 2;
         rc->avg_frame_qindex[INTER_FRAME] = (rc_cfg->worst_allowed_q + rc_cfg->best_allowed_q) / 2;
-#if FTR_RESIZE_DYNAMIC
         rc->last_q[KEY_FRAME]             = (rc_cfg->worst_allowed_q + rc_cfg->best_allowed_q) / 2;
         rc->last_q[INTER_FRAME]           = (rc_cfg->worst_allowed_q + rc_cfg->best_allowed_q) / 2;
-#endif // FTR_RESIZE_DYNAMIC
     }
     rc->buffer_level    = rc->starting_buffer_level;
     rc->bits_off_target = rc->starting_buffer_level;
@@ -1434,11 +1442,7 @@ static int get_active_best_quality(PictureControlSet *pcs_ptr, const int active_
     return active_best_quality;
 }
 
-#if FTR_RSZ_RANDOM_ACCESS
 static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr, int width, int height) {
-#else
-static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr) {
-#endif // FTR_RSZ_RANDOM_ACCESS
     SequenceControlSet                *scs_ptr             = ppcs_ptr->scs_ptr;
     EncodeContext                     *encode_context_ptr  = scs_ptr->encode_context_ptr;
     RATE_CONTROL                      *rc                  = &encode_context_ptr->rc;
@@ -1460,33 +1464,21 @@ static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr) {
         else
             rcf = rc->rate_correction_factors[INTER_NORMAL];
     }
-#if FTR_RSZ_RANDOM_ACCESS
     rcf *= (double)(ppcs_ptr->av1_cm->frm_size.frame_width *
         ppcs_ptr->av1_cm->frm_size.frame_height) / (width * height);
-#else
-    //rcf *= resize_rate_factor(&cpi->oxcf.frm_dim_cfg, width, height);
-#endif // FTR_RSZ_RANDOM_ACCESS
     svt_release_mutex(rc->rc_mutex);
     return fclamp(rcf, MIN_BPB_FACTOR, MAX_BPB_FACTOR);
 }
 
-#if FTR_RSZ_RANDOM_ACCESS
 static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double factor, int width, int height) {
-#else
-static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double factor) {
-#endif // FTR_RSZ_RANDOM_ACCESS
     SequenceControlSet                *scs_ptr             = ppcs_ptr->scs_ptr;
     EncodeContext                     *encode_context_ptr  = scs_ptr->encode_context_ptr;
     RATE_CONTROL                      *rc                  = &encode_context_ptr->rc;
     svt_block_on_mutex(rc->rc_mutex);
 
     // Normalize RCF to account for the size-dependent scaling factor.
-#if FTR_RSZ_RANDOM_ACCESS
     factor /= (double)(ppcs_ptr->av1_cm->frm_size.frame_width *
         ppcs_ptr->av1_cm->frm_size.frame_height) / (width * height);
-#else
-    //factor /= resize_rate_factor(&cpi->oxcf.frm_dim_cfg, width, height);
-#endif // FTR_RSZ_RANDOM_ACCESS
 
     factor = fclamp(factor, MIN_BPB_FACTOR, MAX_BPB_FACTOR);
 
@@ -1605,11 +1597,7 @@ static int av1_rc_regulate_q(PictureParentControlSet *ppcs_ptr, int target_bits_
                              int active_best_quality, int active_worst_quality, int width,
                              int height) {
     const int    MBs = ((width + 15) / 16) * ((height + 15) / 16); //av1_get_MBs(width, height);
-#if FTR_RSZ_RANDOM_ACCESS
     const double correction_factor  = get_rate_correction_factor(ppcs_ptr, width, height);
-#else
-    const double correction_factor  = get_rate_correction_factor(ppcs_ptr /*, width, height*/);
-#endif // FTR_RSZ_RANDOM_ACCESS
     const int    target_bits_per_mb = (int)(((uint64_t)target_bits_per_frame << BPER_MB_NORMBITS) /
                                          MBs);
 
@@ -1791,7 +1779,6 @@ static int calc_active_best_quality_no_stats_cbr(PictureControlSet *pcs_ptr,
     return active_best_quality;
 }
 
-#if FTR_RESIZE_DYNAMIC
 void svt_av1_resize_reset_rc(PictureParentControlSet* ppcs_ptr,
                              int32_t resize_width, int32_t resize_height,
                              int32_t prev_width, int32_t prev_height) {
@@ -1832,7 +1819,6 @@ void svt_av1_resize_reset_rc(PictureParentControlSet* ppcs_ptr,
             rc->rate_correction_factors[INTER_NORMAL] *= 2.0;
     }
 }
-#endif // FTR_RESIZE_DYNAMIC
 
 static int rc_pick_q_and_bounds_no_stats_cbr(PictureControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr            = pcs_ptr->parent_pcs_ptr->scs_ptr;
@@ -1984,11 +1970,7 @@ static void av1_rc_update_rate_correction_factors(PictureParentControlSet *ppcs_
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
     int                 correction_factor  = 100;
-#if FTR_RSZ_RANDOM_ACCESS
     double rate_correction_factor = get_rate_correction_factor(ppcs_ptr, width, height);
-#else
-    double rate_correction_factor = get_rate_correction_factor(ppcs_ptr /*, width, height*/);
-#endif // FTR_RSZ_RANDOM_ACCESS
     double adjustment_limit;
     //const int MBs = av1_get_MBs(width, height);
     const int MBs = ((width + 15) / 16) * ((height + 15) / 16); //av1_get_MBs(width, height);
@@ -2059,11 +2041,7 @@ static void av1_rc_update_rate_correction_factors(PictureParentControlSet *ppcs_
             rate_correction_factor = MIN_BPB_FACTOR;
     }
 
-#if FTR_RSZ_RANDOM_ACCESS
     set_rate_correction_factor(ppcs_ptr, rate_correction_factor, width, height);
-#else
-    set_rate_correction_factor(ppcs_ptr, rate_correction_factor /*, width, height*/);
-#endif // FTR_RSZ_RANDOM_ACCESS
 }
 
 // Update the buffer level: leaky bucket model.
@@ -2103,10 +2081,8 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
     if (frm_hdr->frame_type == KEY_FRAME) {
         rc->avg_frame_qindex[KEY_FRAME] = ROUND_POWER_OF_TWO(
             3 * rc->avg_frame_qindex[KEY_FRAME] + qindex, 2);
-#if FTR_RESIZE_DYNAMIC
         rc->last_q[KEY_FRAME] =
             (int32_t)svt_av1_convert_qindex_to_q(qindex, scs_ptr->encoder_bit_depth);
-#endif // FTR_RESIZE_DYNAMIC
         svt_block_on_mutex(encode_context_ptr->frame_updated_mutex);
         encode_context_ptr->frame_updated = 0;
         svt_release_mutex(encode_context_ptr->frame_updated_mutex);
@@ -2118,10 +2094,8 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
             !(ppcs_ptr->update_type == GF_UPDATE || ppcs_ptr->update_type == ARF_UPDATE || is_intrnl_arf))) {
             rc->avg_frame_qindex[INTER_FRAME] = ROUND_POWER_OF_TWO(
                 3 * rc->avg_frame_qindex[INTER_FRAME] + qindex, 2);
-#if FTR_RESIZE_DYNAMIC
             rc->last_q[INTER_FRAME] =
                 (int32_t)svt_av1_convert_qindex_to_q(qindex, scs_ptr->encoder_bit_depth);
-#endif // FTR_RESIZE_DYNAMIC
         }
     }
 
@@ -3250,6 +3224,10 @@ void *rate_control_kernel(void *input_ptr) {
                 //y8b needs to get decremented at the same time of regular input
                 svt_release_object(parentpicture_control_set_ptr->eb_y8b_wrapper_ptr);
             }
+
+            // free private data list before release input picture buffer
+            free_private_data_list(
+                (EbBufferHeaderType*)parentpicture_control_set_ptr->input_picture_wrapper_ptr->object_ptr);
 
             svt_release_object(parentpicture_control_set_ptr->input_picture_wrapper_ptr);
 

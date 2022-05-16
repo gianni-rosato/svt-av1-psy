@@ -1321,9 +1321,7 @@ typedef enum ATTRIBUTE_PACKED {
 #define NUM_SR_SCALES 8          // number of super-res scales
 #define NUM_RESIZE_SCALES 9      // number of resize scales, index 0~8 means 8/8~8/16 and index 9 means 3/4 for dynamic mode
 #define SCALE_DENOMINATOR_MAX 16 // maximum scaling denominator is 16
-#if FTR_RESIZE_DYNAMIC
 #define SCALE_THREE_QUATER 17    // 3/4 of resize dynamic mode is defined as 17
-#endif // FTR_RESIZE_DYNAMIC
 
 //**********************************************************************************************************************//
 // onyxc_int.h

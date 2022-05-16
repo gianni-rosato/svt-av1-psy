@@ -84,7 +84,6 @@ typedef struct coded_frames_stats_entry {
     Bool     end_of_sequence_flag;
 } coded_frames_stats_entry;
 
-#if FTR_RESIZE_DYNAMIC
 typedef enum {
     NO_RESIZE = 0,
     DOWN_THREEFOUR = 1,  // From orig to 3/4.
@@ -106,7 +105,6 @@ typedef struct {
     RESIZE_STATE resize_state;
     uint8_t  resize_denom;
 } ResizePendingParams;
-#endif // FTR_RESIZE_DYNAMIC
 
 extern EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
                                                                 uint64_t picture_number);
@@ -182,14 +180,12 @@ typedef struct {
     uint64_t rate_average_periodin_frames;
 
     EbHandle rc_mutex;
-#if FTR_RESIZE_DYNAMIC
     // For dynamic resize, 1 pass cbr.
     RESIZE_STATE resize_state;
     int32_t resize_avg_qp;
     int32_t resize_buffer_underflow;
     int32_t resize_count;
     int32_t last_q[FRAME_TYPES]; // Q used on last encoded frame of the given type.
-#endif // FTR_RESIZE_DYNAMIC
 
 } RATE_CONTROL;
 

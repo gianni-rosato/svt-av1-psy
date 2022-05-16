@@ -603,7 +603,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-#if FTR_RSZ_RANDOM_ACCESS
     if (config->resize_mode > RESIZE_RANDOM_ACCESS) {
         SVT_LOG("Error instance %u: invalid resize-mode %d, should be in the range [%d - %d]\n",
                 channel_number + 1,
@@ -612,16 +611,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                 RESIZE_RANDOM_ACCESS);
         return_error = EB_ErrorBadParameter;
     }
-#else
-    if (config->resize_mode > RESIZE_DYNAMIC) {
-        SVT_LOG("Error instance %u: invalid resize-mode %d, should be in the range [%d - %d]\n",
-                channel_number + 1,
-                config->resize_mode,
-                RESIZE_NONE,
-                RESIZE_DYNAMIC);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif // FTR_RSZ_RANDOM_ACCESS
 
     if (config->resize_kf_denom < MIN_RESIZE_DENOM || config->resize_kf_denom > MAX_RESIZE_DENOM) {
         SVT_LOG("Error instance %u: invalid resize-kf-denom %d, should be in the range [%d - %d] \n",

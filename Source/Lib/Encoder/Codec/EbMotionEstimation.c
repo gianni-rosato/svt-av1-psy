@@ -1289,8 +1289,8 @@ void integer_search_b64(PictureParentControlSet *pcs_ptr, uint32_t b64_index, ui
     SequenceControlSet *scs_ptr        = pcs_ptr->scs_ptr;
     int16_t             picture_width  = pcs_ptr->aligned_width;
     int16_t             picture_height = pcs_ptr->aligned_height;
-    uint32_t            b64_width       = (picture_width - b64_origin_x) < BLOCK_SIZE_64 ? picture_width - b64_origin_x : BLOCK_SIZE_64;
-    uint32_t            b64_height      = (picture_height - b64_origin_y) < BLOCK_SIZE_64 ? picture_height - b64_origin_y : BLOCK_SIZE_64;
+    uint32_t            b64_width      = context_ptr->b64_width;
+    uint32_t            b64_height     = context_ptr->b64_height;
     int16_t             pad_width      = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t             pad_height     = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t             origin_x       = (int16_t)b64_origin_x;
@@ -1772,8 +1772,8 @@ static Bool check_prehme_early_exit(MeContext *ctx, uint8_t list_i, uint8_t ref_
 /* Perform Pre-HME for one Block 64x64*/
 static void prehme_b64(PictureParentControlSet *pcs, uint32_t origin_x, uint32_t origin_y,
                        MeContext *ctx, EbPictureBufferDesc *input_ptr) {
-    const uint32_t block_width  = ctx->block_width;
-    const uint32_t block_height = ctx->block_height;
+    const uint32_t block_width  = ctx->b64_width;
+    const uint32_t block_height = ctx->b64_height;
     // List Loop
     for (int list_i = REF_LIST_0; list_i < ctx->num_of_list_to_search; ++list_i) {
         // Ref Picture Loop
@@ -1898,8 +1898,8 @@ static void get_hme_l0_search_area(MeContext *context_ptr, uint8_t list_index,
  *******************************************/
 static void hme_level0_b64(PictureParentControlSet *pcs, uint32_t origin_x, uint32_t origin_y,
                            MeContext *ctx, EbPictureBufferDesc *input_ptr) {
-    const uint32_t block_width  = ctx->block_width;
-    const uint32_t block_height = ctx->block_height;
+    const uint32_t block_width  = ctx->b64_width;
+    const uint32_t block_height = ctx->b64_height;
 
     // store base HME sizes, to be used if using ref-index based HME resizing
     SearchAreaMinMax base_hme_sa;
@@ -2008,8 +2008,8 @@ static void hme_level0_b64(PictureParentControlSet *pcs, uint32_t origin_x, uint
  *******************************************/
 void hme_level1_b64(PictureParentControlSet *pcs, uint32_t origin_x, uint32_t origin_y,
                     MeContext *ctx, EbPictureBufferDesc *input_ptr) {
-    const uint32_t block_width  = ctx->block_width;
-    const uint32_t block_height = ctx->block_height;
+    const uint32_t block_width  = ctx->b64_width;
+    const uint32_t block_height = ctx->b64_height;
 
     // List Loop
     const uint8_t num_of_list_to_search = ctx->num_of_list_to_search;
@@ -2072,8 +2072,8 @@ void hme_level1_b64(PictureParentControlSet *pcs, uint32_t origin_x, uint32_t or
  *******************************************/
 static void hme_level2_b64(PictureParentControlSet *pcs, uint32_t origin_x, uint32_t origin_y,
                            MeContext *ctx, EbPictureBufferDesc *input_ptr) {
-    const uint32_t block_width  = ctx->block_width;
-    const uint32_t block_height = ctx->block_height;
+    const uint32_t block_width  = ctx->b64_width;
+    const uint32_t block_height = ctx->b64_height;
     // List Loop
     const uint8_t num_of_list_to_search = ctx->num_of_list_to_search;
     for (int list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
@@ -2316,8 +2316,8 @@ void set_final_seach_centre_sb(PictureParentControlSet *pcs_ptr, MeContext *cont
 }
 // Initialize zz SAD array
 void init_zz_sad(MeContext *ctx, uint32_t origin_x, uint32_t origin_y) {
-    const uint32_t block_width  = ctx->block_width;
-    const uint32_t block_height = ctx->block_height;
+    const uint32_t block_width  = ctx->b64_width;
+    const uint32_t block_height = ctx->b64_height;
     // List Loop
     for (int list_i = REF_LIST_0; list_i < ctx->num_of_list_to_search; ++list_i) {
         // Ref Picture Loop
@@ -2941,12 +2941,17 @@ EbErrorType motion_estimation_b64(
 
     uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
 
-    context_ptr->block_width  = (pcs_ptr->aligned_width - b64_origin_x) < BLOCK_SIZE_64
-        ? pcs_ptr->aligned_width - b64_origin_x
-        : BLOCK_SIZE_64;
-    context_ptr->block_height = (pcs_ptr->aligned_height - b64_origin_y) < BLOCK_SIZE_64
-        ? pcs_ptr->aligned_height - b64_origin_y
-        : BLOCK_SIZE_64;
+    // input picture width and height might be disaligned after resizing
+    // we use aligned width and height to avoid disalignment of calculation
+    // of block size
+    uint16_t aligned_width  = (uint16_t)ALIGN_POWER_OF_TWO(input_ptr->width, 3);
+    uint16_t aligned_height = (uint16_t)ALIGN_POWER_OF_TWO(input_ptr->height, 3);
+    context_ptr->b64_width  = (aligned_width - b64_origin_x) < BLOCK_SIZE_64
+                              ? aligned_width - b64_origin_x
+                              : BLOCK_SIZE_64;
+    context_ptr->b64_height = (aligned_height - b64_origin_y) < BLOCK_SIZE_64
+                              ? aligned_height - b64_origin_y
+                              : BLOCK_SIZE_64;
 
     //pruning of the references is not done for alt-ref / when HMeLevel2 not done
     uint8_t prune_ref = context_ptr->enable_hme_flag && context_ptr->me_type != ME_MCTF;

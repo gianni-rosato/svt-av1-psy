@@ -2968,14 +2968,14 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
     }
 }
 
-static AOM_INLINE void write_render_size(struct AomWriteBitBuffer *wb, PictureParentControlSet* pcs_ptr) {
+static AOM_INLINE void write_render_size(struct AomWriteBitBuffer *wb, PictureParentControlSet *ppcs) {
     int render_and_frame_size_different = 0;
-    if (pcs_ptr->frame_resize_enabled)
+    if (ppcs->frame_resize_enabled)
         render_and_frame_size_different = 1;
     svt_aom_wb_write_bit(wb, render_and_frame_size_different);
     if (!render_and_frame_size_different) return;
-    uint32_t render_width_minus_1  = pcs_ptr->render_width - 1;
-    uint32_t render_height_minus_1 = pcs_ptr->render_height - 1;
+    uint32_t render_width_minus_1  = ppcs->render_width - 1;
+    uint32_t render_height_minus_1 = ppcs->render_height - 1;
     svt_aom_wb_write_literal(wb, render_width_minus_1, 16);
     svt_aom_wb_write_literal(wb, render_height_minus_1, 16);
 }

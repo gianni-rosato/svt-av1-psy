@@ -141,9 +141,7 @@ typedef enum {
     RESIZE_FIXED,   // All frames are coded at the specified scale.
     RESIZE_RANDOM,  // All frames are coded at a random scale.
     RESIZE_DYNAMIC, // Resize scale for a frame in dynamic.
-#if FTR_RSZ_RANDOM_ACCESS
     RESIZE_RANDOM_ACCESS, // Resize scale frame by event in random access
-#endif // FTR_RSZ_RANDOM_ACCESS
     RESIZE_MODES
 } RESIZE_MODE;
 
@@ -715,9 +713,24 @@ typedef struct EbSvtAv1EncConfiguration {
      * multiply by fps_num/fps_den.
      */
     Bool multiply_keyint;
+
     // reference scaling parameters
+    /**
+     * @brief Reference scaling mode
+     * the available modes are defined in RESIZE_MODE
+     */
     uint8_t resize_mode;
+    /**
+     * @brief Resize denominator
+     * this value can be from 8 to 16, means downscaling to 8/8-8/16 of original
+     * resolution in both width and height
+     */
     uint8_t resize_denom;
+    /**
+     * @brief Resize denominator of key frames
+     * this value can be from 8 to 16, means downscaling to 8/8-8/16 of original
+     * resolution in both width and height
+     */
     uint8_t resize_kf_denom;
 } EbSvtAv1EncConfiguration;
 

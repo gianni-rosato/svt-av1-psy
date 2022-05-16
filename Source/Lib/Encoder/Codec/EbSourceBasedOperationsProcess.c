@@ -2174,8 +2174,8 @@ void *source_based_operations_kernel(void *input_ptr) {
 
         // Get TPL ME
         if (pcs_ptr->tpl_ctrls.enable) {
+            // tpl ME can be performed on unscaled frames in super-res q-threshold and auto mode
             if (!pcs_ptr->frame_superres_enabled &&
-                scs_ptr->static_config.resize_mode == RESIZE_NONE &&
                 pcs_ptr->temporal_layer_index == 0) {
                 tpl_prep_info(pcs_ptr);
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr, context_ptr);

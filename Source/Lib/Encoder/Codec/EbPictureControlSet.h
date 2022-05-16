@@ -470,11 +470,9 @@ typedef struct PictureControlSet {
             approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
     uint8_t skip_intra;
     PicVqCtrls vq_ctrls;
-#if OPT_RESIZE_INPUT_LR
     // scaled input picture is only used in loop restoration for recon size is
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_picture_ptr;
-#endif // OPT_RESIZE_INPUT_LR
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -969,11 +967,9 @@ typedef struct PictureParentControlSet {
 
     Bool    frame_resize_enabled;
     uint8_t resize_denom;
-#if FTR_RSZ_RANDOM_ACCESS
     // reference scaling random access event
     EbRefFrameScale resize_evt;
     Bool    rc_reset_flag;
-#endif // FTR_RSZ_RANDOM_ACCESS
 
     Bool    frame_superres_enabled;
     uint8_t superres_denom;

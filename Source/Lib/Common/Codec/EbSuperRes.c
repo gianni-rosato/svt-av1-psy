@@ -35,12 +35,10 @@ void calculate_scaled_size_helper(uint16_t *dim, uint8_t denom) {
         *dim = (uint16_t)((*dim * SCALE_NUMERATOR + denom / 2) / (denom));
         *dim = (uint16_t)AOMMAX(*dim, min_dim);
     }
-#if FTR_RESIZE_DYNAMIC
     else if (denom == SCALE_THREE_QUATER) {
         // reference scaling resize defines denom 17 as 3/4
         *dim = (uint16_t)((3 + (*dim * 3)) >> 2);
     }
-#endif // FTR_RESIZE_DYNAMIC
 }
 
 static int32_t av1_get_upscale_convolve_step(int in_length, int out_length) {

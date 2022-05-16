@@ -218,6 +218,9 @@ For this command line, corresponding qindex values are:
 | **SuperresKfQthres**               | --superres-kf-qthres   | [0-63]           | 43            | Super-resolution q-threshold for key frames, only applicable for mode == 3                                                                                              |
 | **SframeInterval**                 | --sframe-dist          | [0-`(2^31)-1`]   | 0             | S-Frame interval (frames) [0: OFF, > 0: ON]                                                                                                                             |
 | **SframeMode**                     | --sframe-mode          | [1-2]            | 2             | S-Frame insertion mode [1: the considered frame will be made into an S-Frame only if it is an altref frame, 2: the next altref frame will be made into an S-Frame]      |
+| **ResizeMode**                     | --resize-mode          | [0-4]            | 0             | Enable reference scaling mode                                                                                                                                           |
+| **ResizeDenom**                    | --resize-denom         | [8-16]           | 8             | Reference scaling denominator, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                                                                          |
+| **ResizeKfDenom**                  | --resize-kf-denom      | [8-16]           | 8             | Reference scaling denominator for key frames, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                                                           |
 
 #### **Super-Resolution**
 

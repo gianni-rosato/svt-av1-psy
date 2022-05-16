@@ -1590,6 +1590,7 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                     do_resize = TRUE;
                 }
 
+                // skip the duplicated scaling on the same reference picture
                 if (reference_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] != ref_picture_number) {
                     do_resize = TRUE;
                 }
@@ -1763,6 +1764,7 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                     do_resize        = TRUE;
                 }
 
+                // skip the duplicated scaling on the same reference picture
                 if (reference_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] != ref_picture_number) {
                     do_resize = TRUE;
                 }
@@ -1868,11 +1870,8 @@ static uint8_t calculate_next_resize_scale(const SequenceControlSet *scs_ptr, co
             new_denom = cfg->resize_denom;
         break;
     case RESIZE_RANDOM: new_denom = lcg_rand16(&seed) % 9 + 8; break;
-#if FTR_RESIZE_DYNAMIC
     case RESIZE_DYNAMIC:
         new_denom = scs_ptr->resize_pending_params.resize_denom; break;
-#endif // FTR_RESIZE_DYNAMIC
-#if FTR_RSZ_RANDOM_ACCESS
     case RESIZE_RANDOM_ACCESS: {
         switch (pcs_ptr->resize_evt.scale_mode) {
         case RESIZE_NONE: new_denom = SCALE_NUMERATOR; break;
@@ -1887,7 +1886,6 @@ static uint8_t calculate_next_resize_scale(const SequenceControlSet *scs_ptr, co
         }
         break;
     }
-#endif // FTR_RSZ_RANDOM_ACCESS
     default: assert_err(0, "unknown resize mode");
     }
     return new_denom;

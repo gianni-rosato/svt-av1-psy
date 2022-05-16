@@ -554,8 +554,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         deq_bd);
                 }
             }
-            // perform tpl_la on unscaled frames only
-            if (pcs_ptr->tpl_ctrls.enable && !pcs_ptr->frame_superres_enabled && !pcs_ptr->frame_resize_enabled) {
+            // tpl_la can be performed on unscaled frames in super-res q-threshold and auto mode
+            if (pcs_ptr->tpl_ctrls.enable && !pcs_ptr->frame_superres_enabled) {
                 svt_set_cond_var(&pcs_ptr->me_ready, 1);
             }
 
@@ -577,9 +577,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
 #if LAD_MG_PRINT
             print_lad_queue(context_ptr, 0);
 #endif
+            // tpl_la can be performed on unscaled frame when in super-res q-threshold and auto mode
             uint8_t lad_queue_pass_thru = !(pcs_ptr->tpl_ctrls.enable &&
-                                            !pcs_ptr->frame_superres_enabled &&
-                                            !pcs_ptr->frame_resize_enabled);
+                                            !pcs_ptr->frame_superres_enabled);
             process_lad_queue(context_ptr, lad_queue_pass_thru);
         }
         // Release the Input Results

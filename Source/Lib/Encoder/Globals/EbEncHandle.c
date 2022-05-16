@@ -3320,10 +3320,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.resize_mode = RESIZE_NONE;
     }
     if (scs_ptr->static_config.resize_mode > RESIZE_NONE) {
-        if (scs_ptr->static_config.enable_tpl_la != 0) {
-            SVT_WARN("TPL will be disabled when resize is enabled!\n");
-            scs_ptr->static_config.enable_tpl_la = 0;
-        }
         if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
             // disable tiles if resize is on
             SVT_WARN("Tiles will be disabled when resize is enabled!\n");
@@ -3335,7 +3331,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 "it creates array of picture buffers for all scaling denominators (up to 8) of each reference frame.\n"
                 "This mode retains a significant amount of memory, much more than other modes!\n");
         }
-#if FTR_RESIZE_DYNAMIC
         if (scs_ptr->static_config.resize_mode == RESIZE_DYNAMIC) {
             if (scs_ptr->static_config.pred_structure != 1 ||
                 scs_ptr->static_config.pass != ENC_SINGLE_PASS ||
@@ -3344,7 +3339,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 scs_ptr->static_config.resize_mode = RESIZE_NONE;
             }
         }
-#endif // FTR_RESIZE_DYNAMIC
     }
     // Set initial qp for single pass vbr
     if ((scs_ptr->static_config.rate_control_mode) && (scs_ptr->static_config.pass == ENC_SINGLE_PASS)){
@@ -3622,10 +3616,8 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->calculate_variance = 0;
 
-#if FTR_RESIZE_DYNAMIC
     scs_ptr->resize_pending_params.resize_state = ORIG;
     scs_ptr->resize_pending_params.resize_denom = SCALE_NUMERATOR;
-#endif // FTR_RESIZE_DYNAMIC
 }
 /******************************************************
  * Read Stat from File
@@ -4722,13 +4714,18 @@ static EbErrorType copy_frame_buffer(
     return return_error;
 }
 
-#if FTR_RSZ_RANDOM_ACCESS
 static EbErrorType copy_private_data_list(EbBufferHeaderType* dst, EbBufferHeaderType* src) {
     EbErrorType return_error = EB_ErrorNone;
     EbPrivDataNode* p_src_node = (EbPrivDataNode*)src->p_app_private;
     EbPrivDataNode* p_first_node = NULL;
     EbPrivDataNode* p_new_node = NULL;
     while (p_src_node) {
+        // skip undefined data type and throw an error in debugging
+        if (p_src_node->node_type < PRIVATE_DATA ||
+            p_src_node->node_type >= PRIVATE_DATA_TYPES) {
+            assert_err(0, "unknown private data types inserted!");
+            continue;
+        }
         if (p_first_node == NULL) {
             EB_MALLOC(p_new_node, sizeof(*p_src_node));
             p_first_node = p_new_node;
@@ -4752,18 +4749,6 @@ static EbErrorType copy_private_data_list(EbBufferHeaderType* dst, EbBufferHeade
     dst->p_app_private = p_first_node;
     return return_error;
 }
-static void free_private_data_list(EbBufferHeaderType* p) {
-    EbPrivDataNode* p_node = (EbPrivDataNode*)p->p_app_private;
-    while (p_node) {
-        if (p_node->node_type != PRIVATE_DATA)
-          EB_FREE(p_node->data);
-        EbPrivDataNode* p_tmp = p_node;
-        p_node = p_node->next;
-        EB_FREE(p_tmp);
-    }
-    p->p_app_private = NULL;
-}
-#endif // FTR_RSZ_RANDOM_ACCESS
 
 /*
  Copy the input buffer header content
@@ -4806,13 +4791,11 @@ static void copy_input_buffer(
             copy_frame_buffer(sequenceControlSet, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
     }
 
-#if FTR_RSZ_RANDOM_ACCESS
     // Copy the private data list
     if (src->p_app_private)
         copy_private_data_list(dst, src);
     else
         dst->p_app_private = NULL;
-#endif // FTR_RSZ_RANDOM_ACCESS
 
 }
 /***********************************************
@@ -4861,9 +4844,6 @@ EB_API EbErrorType svt_av1_enc_send_picture(
      //this would also allow low delay TF to retain pictures
      svt_object_inc_live_count(eb_wrapper_ptr, 1);
 
-#if FTR_RSZ_RANDOM_ACCESS
-    free_private_data_list((EbBufferHeaderType*)eb_wrapper_ptr->object_ptr);
-#endif // FTR_RSZ_RANDOM_ACCESS
     if (p_buffer != NULL) {
 
 
@@ -5275,10 +5255,6 @@ void svt_input_buffer_header_destroyer(    EbPtr p)
     }
 
     EB_DELETE(buf);
-#if FTR_RSZ_RANDOM_ACCESS
-    if (obj->p_app_private)
-        free_private_data_list(obj);
-#endif // FTR_RSZ_RANDOM_ACCESS
     EB_FREE(obj);
 }
 

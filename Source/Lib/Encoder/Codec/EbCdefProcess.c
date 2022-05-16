@@ -24,9 +24,7 @@
 #include "EbSequenceControlSet.h"
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
-#if OPT_RESIZE_INPUT_LR
 #include "EbResize.h"
-#endif // OPT_RESIZE_INPUT_LR
 
 void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
                  int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize, Bool is_16bit);
@@ -469,7 +467,6 @@ void *cdef_kernel(void *input_ptr) {
                 get_recon_pic(pcs_ptr, &recon, is_16bit);
                 recon->width = pcs_ptr->parent_pcs_ptr->render_width;
                 recon->height = pcs_ptr->parent_pcs_ptr->render_height;
-#if OPT_RESIZE_INPUT_LR
                 if (is_lr) {
                     EbPictureBufferDesc* input_picture_ptr =
                         is_16bit
@@ -496,7 +493,6 @@ void *cdef_kernel(void *input_ptr) {
                         pcs_ptr->scaled_input_picture_ptr = scaled_input_picture_ptr;
                     }
                 }
-#endif // OPT_RESIZE_INPUT_LR
             }
             // ------- end: Normative upscaling - super-resolution tool
 

@@ -234,13 +234,11 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     { "RefScalingTest6", {{"ResizeMode", "2"}, {"ScreenContentMode", "2"}, {"EncoderMode", "8"}}, screen_test_vectors },
     // reference scaling tests with loop restoration
     { "RefScalingTest7", {{"ResizeMode", "2"}, {"EnableRestoration", "1"}, {"EncoderMode", "8"}}, default_test_vectors },
-#if FTR_RESIZE_DYNAMIC
     // reference scaling tests for dynamic mode
     { "RefScalingTest8", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "100"}, {"EncoderMode", "8"}}, default_long_test_vectors },
     { "RefScalingTest9", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "50"}, {"EncoderMode", "8"}}, default_long_test_vectors },
     { "RefScalingTest10", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "20"}, {"EncoderMode", "8"}}, default_long_test_vectors },
     { "RefScalingTest11", {{"ResizeMode", "3"}, {"RateControlMode", "2"}, {"PredStructure", "1"}, {"TargetBitRate", "15"}, {"EncoderMode", "8"}}, default_long_test_vectors },
-#endif // FTR_RESIZE_DYNAMIC
 
     // reference scaling tests with super resolution
     { "SuperResRefScalingTest0", {{"SuperresMode", "2"}, {"ResizeMode", "2"}, {"EncoderMode", "8"}}, default_test_vectors },
@@ -501,7 +499,6 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
     // 8-bit test cases
     for (size_t i = 8; i <= 16; i++) {
         for (size_t j = 8; j <= 16; j++) {
-            EncTestSetting new_setting;
             string idx = std::to_string(count);
             string name = test_prefix + idx;
             EncTestSetting setting{name,
@@ -517,7 +514,6 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
     // 16-bit test cases
     for (size_t i = 8; i <= 16; i++) {
         for (size_t j = 8; j <= 16; j++) {
-            EncTestSetting new_setting;
             string idx = std::to_string(count);
             string name = test_prefix + idx;
             EncTestSetting setting{name,
@@ -559,7 +555,6 @@ generate_super_res_q_threshold_settings() {
 
     int count = 0;
     for (auto q_threshold : q_thresholds) {
-        EncTestSetting new_setting;
         string idx = std::to_string(count);
         string name = test_prefix + idx;
         EncTestSetting setting{
@@ -587,7 +582,6 @@ static const std::vector<EncTestSetting> generate_ref_scaling_settings() {
     // 8-bit test cases
     for (size_t i = 8; i <= 16; i++) {
         for (size_t j = 8; j <= 16; j++) {
-            EncTestSetting new_setting;
             string idx = std::to_string(count);
             string name = test_prefix + idx;
             EncTestSetting setting{ name,
@@ -603,7 +597,6 @@ static const std::vector<EncTestSetting> generate_ref_scaling_settings() {
     // 16-bit test cases
     for (size_t i = 8; i <= 16; i++) {
         for (size_t j = 8; j <= 16; j++) {
-            EncTestSetting new_setting;
             string idx = std::to_string(count);
             string name = test_prefix + idx;
             EncTestSetting setting{ name,
@@ -633,7 +626,6 @@ static const std::vector<EncTestSetting> generate_superres_ref_scaling_settings(
     // 8-bit test cases
     for (size_t i = 9; i <= 16; i++) {
         for (size_t j = 9; j <= 16; j++) {
-            EncTestSetting new_setting;
             string idx = std::to_string(count);
             string name = test_prefix + idx;
             EncTestSetting setting{ name,
@@ -737,7 +729,6 @@ static const std::vector<EncTestSetting> generate_testcase_with_preset_settings(
     for (size_t hierarchicallvl = 3; hierarchicallvl <= 5; hierarchicallvl++) {
         for (size_t preset = 0; preset <= 12; preset++) {
             for (std::string value : values) {
-                EncTestSetting new_setting;
                 string idx = std::to_string(count);
                 string name = test_prefix + idx;
                 EncTestSetting setting{ name,

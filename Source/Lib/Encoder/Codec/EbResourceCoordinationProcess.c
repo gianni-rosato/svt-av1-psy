@@ -952,6 +952,25 @@ static EbErrorType realloc_sb_param(SequenceControlSet *scs_ptr, PictureParentCo
     return EB_ErrorNone;
 }
 
+static void update_frame_event(PictureParentControlSet *pcs_ptr) {
+    SequenceControlSet* scs_ptr = pcs_ptr->scs_ptr;
+    EbPrivDataNode* node = (EbPrivDataNode*)pcs_ptr->input_ptr->p_app_private;
+    while (node) {
+        if (node->node_type == REF_FRAME_SCALING_EVENT) {
+            // update resize denominator by input event
+            assert_err(node->size == sizeof(EbRefFrameScale),
+                "private data size mismatch of REF_FRAME_SCALING_EVENT");
+            // update scaling event for future pictures
+            scs_ptr->encode_context_ptr->resize_evt = *(EbRefFrameScale*)node->data;
+            // set reset flag of rate control
+            pcs_ptr->rc_reset_flag = TRUE;
+        }
+        node = node->next;
+    }
+    // update current picture scaling event
+    pcs_ptr->resize_evt = scs_ptr->encode_context_ptr->resize_evt;
+}
+
 /* Resource Coordination Kernel */
 /*********************************************************************************
 *
@@ -1142,26 +1161,8 @@ void *resource_coordination_kernel(void *input_ptr) {
             //store the y8b warapper to be used for release later
             pcs_ptr->eb_y8b_wrapper_ptr   = eb_y8b_wrapper_ptr;
             pcs_ptr->end_of_sequence_flag = end_of_sequence_flag;
-#if FTR_RSZ_RANDOM_ACCESS
             pcs_ptr->rc_reset_flag = FALSE;
-            if (scs_ptr->static_config.resize_mode == RESIZE_RANDOM_ACCESS) {
-                // update resize denominator by input event
-                EbPrivDataNode* node = (EbPrivDataNode*)pcs_ptr->input_ptr->p_app_private;
-                while (node) {
-                    if (node->node_type == REF_FRAME_SCALING_EVENT) {
-                        assert_err(node->size == sizeof(EbRefFrameScale),
-                            "private data size mismatch of REF_FRAME_SCALING_EVENT");
-                        // update scaling event for future pictures
-                        scs_ptr->encode_context_ptr->resize_evt = *(EbRefFrameScale*)node->data;
-                        // set reset flag of rate control
-                        pcs_ptr->rc_reset_flag = TRUE;
-                    }
-                    node = node->next;
-                }
-                // update current picture scaling event
-                pcs_ptr->resize_evt = scs_ptr->encode_context_ptr->resize_evt;
-            }
-#endif // FTR_RSZ_RANDOM_ACCESS
+            update_frame_event(pcs_ptr);
             pcs_ptr->is_not_scaled        = (scs_ptr->static_config.superres_mode == SUPERRES_NONE)
                 && scs_ptr->static_config.resize_mode == RESIZE_NONE;
             if (loop_index == 1) {

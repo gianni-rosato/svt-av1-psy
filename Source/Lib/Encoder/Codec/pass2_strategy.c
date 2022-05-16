@@ -1517,7 +1517,6 @@ static int set_gf_interval_update_onepass_rt(PictureParentControlSet *pcs_ptr) {
     return gf_update;
 }
 
-#if FTR_RESIZE_DYNAMIC
 void reset_update_frame_target(PictureParentControlSet *ppcs_ptr) {
     SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -1634,7 +1633,6 @@ static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs_ptr) {
     }
     return;
 }
-#endif // FTR_RESIZE_DYNAMIC
 
 void one_pass_rt_rate_alloc(PictureParentControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr            = pcs_ptr->scs_ptr;
@@ -1649,7 +1647,11 @@ void one_pass_rt_rate_alloc(PictureParentControlSet *pcs_ptr) {
         rc->this_key_frame_forced = pcs_ptr->picture_number != 0 && rc->frames_to_key == 0;
         rc->frames_to_key         = scs_ptr->static_config.intra_period_length + 1;
     }
-#if FTR_RESIZE_DYNAMIC
+
+    /* resize dynamic mode make desicion of scaling here and store it in resize_pending_params,
+     * the actual resizing performs on the next new input picture in PD, current picture and
+     * other pictures already in pipeline use their own resolution without resizing
+     */
     // resize dynamic mode only works with 1-pass CBR low delay mode
     if (scs_ptr->static_config.resize_mode == RESIZE_DYNAMIC &&
         scs_ptr->static_config.pass == ENC_SINGLE_PASS &&
@@ -1666,17 +1668,13 @@ void one_pass_rt_rate_alloc(PictureParentControlSet *pcs_ptr) {
                 assert_err(0, "unknown resize denom");
             scs_ptr->resize_pending_params.resize_state = rc->resize_state;
         }
-    }
-#if FTR_RSZ_RANDOM_ACCESS
-    else if (pcs_ptr->rc_reset_flag) {
+    } else if (pcs_ptr->rc_reset_flag) {
         svt_av1_resize_reset_rc(pcs_ptr,
             pcs_ptr->render_width,
             pcs_ptr->render_height,
             scs_ptr->max_input_luma_width,
             scs_ptr->max_input_luma_height);
     }
-#endif // FTR_RSZ_RANDOM_ACCESS
-#endif // FTR_RESIZE_DYNAMIC
 
     // Set the GF interval and update flag.
     set_gf_interval_update_onepass_rt(pcs_ptr);

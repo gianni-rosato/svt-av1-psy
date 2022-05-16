@@ -418,10 +418,8 @@ typedef struct SequenceControlSet {
     // If true, calculate and store the SB-based variance
     uint8_t calculate_variance;
 
-#if FTR_RESIZE_DYNAMIC
     // Desired dimensions for an externally triggered resize
     ResizePendingParams resize_pending_params;
-#endif // FTR_RESIZE_DYNAMIC
 } SequenceControlSet;
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;
