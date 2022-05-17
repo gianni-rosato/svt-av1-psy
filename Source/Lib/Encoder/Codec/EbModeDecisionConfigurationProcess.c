@@ -864,16 +864,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     pcs_ptr->mds0_level = 0;
     if (enc_mode <= ENC_M9)
         pcs_ptr->mds0_level = 2;
-#if TUNE_DEFAULT_M10_M11
-    else if (enc_mode <= ENC_M11) {
-#else
     else if (enc_mode <= ENC_M10) {
-#endif
         if (hierarchical_levels <= 3)
             pcs_ptr->mds0_level = is_islice ? 2 : 4;
         else
             pcs_ptr->mds0_level = 2;
-    } else
+    }
+#if TUNE_DEFAULT_M10_M11
+    else if (enc_mode <= ENC_M11)
+            pcs_ptr->mds0_level = 2;
+#endif
+    else
         pcs_ptr->mds0_level = is_islice ? 2 : 4;
     /*
        disallow_4x4
