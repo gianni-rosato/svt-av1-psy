@@ -4570,7 +4570,11 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
 
     if (sc_class1)
         disallow_below_16x16 = 0;
+#if TUNE_DEFAULT_M9
+    else if (enc_mode <= ENC_M9)
+#else
     else if (enc_mode <= ENC_M8)
+#endif
         disallow_below_16x16 = 0;
 #if TUNE_DEFAULT_M10_M11
     else if (enc_mode <= ENC_M10)

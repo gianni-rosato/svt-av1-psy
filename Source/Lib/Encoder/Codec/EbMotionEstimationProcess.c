@@ -196,7 +196,11 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
             me_context_ptr->me_sa.sa_max = (SearchArea) { 16, 9 };
         }
     }
+#if TUNE_DEFAULT_M9
+    else if (pcs_ptr->enc_mode <= ENC_M9) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M8) {
+#endif
         if (hierarchical_levels <= 3) {
             if (input_resolution < INPUT_SIZE_4K_RANGE) {
                 me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 5 };

@@ -2007,14 +2007,17 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     pcs_ptr->max_can_count = get_max_can_count(enc_mode);
 
+#if TUNE_DEFAULT_M9
     if (enc_mode <= ENC_M8)
         pcs_ptr->use_best_me_unipred_cand_only = 0;
+#else
     else if (enc_mode <= ENC_M9) {
         if (hierarchical_levels <= 3)
             pcs_ptr->use_best_me_unipred_cand_only = 1;
         else
             pcs_ptr->use_best_me_unipred_cand_only = 0;
     }
+#endif
     else
         pcs_ptr->use_best_me_unipred_cand_only = 1;
 

@@ -36,6 +36,7 @@ extern "C" {
 #endif // __cplusplus
 
 #define TUNE_DEFAULT_M10_M11    1 // Tune default M10 M11 with consideration to decode speed
+#define TUNE_DEFAULT_M9         1 // Tune default M9 with consideration to decode speed
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
