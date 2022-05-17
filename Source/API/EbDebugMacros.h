@@ -37,8 +37,9 @@ extern "C" {
 
 #define TUNE_DEFAULT_M10_M11    1 // Tune default M10 M11 with consideration to decode speed
 #define TUNE_DEFAULT_M9         1 // Tune default M9 with consideration to decode speed
-#define TUNE_DEFAULT_M8         1 // Tune default M8 with consideration to decode spee
+#define TUNE_DEFAULT_M8         1 // Tune default M8 with consideration to decode speed
 #define OPT_MAX_P0_P1_NSQ       1 // Optimize max_part0_to_part1_dev NSQ-targeting feature
+#define TUNE_DEFAULT_M7         1 // Tune default M7 with consideration to decode speed
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -568,7 +568,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
 
+#if TUNE_DEFAULT_M7
+    if (enc_mode <= ENC_M6)
+#else
     if (enc_mode <= ENC_M7)
+#endif
         context_ptr->me_context_ptr->prune_me_candidates_th = 0;
     else
         context_ptr->me_context_ptr->prune_me_candidates_th = 65;

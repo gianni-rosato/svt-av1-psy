@@ -648,7 +648,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     if (enc_mode <= ENC_MR)
         pcs_ptr->interpolation_search_level = 2;
+#if TUNE_DEFAULT_M7
+    else if (enc_mode <= ENC_M6)
+#else
     else if (enc_mode <= ENC_M7)
+#endif
         pcs_ptr->interpolation_search_level = 4;
     else {
         pcs_ptr->interpolation_search_level = 4;
@@ -1040,7 +1044,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M4)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+#if TUNE_DEFAULT_M7
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M6)
+#endif
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
     else
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
