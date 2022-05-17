@@ -35,6 +35,8 @@
 extern "C" {
 #endif // __cplusplus
 
+#define TUNE_DEFAULT_M10_M11    1 // Tune default M10 M11 with consideration to decode speed
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
