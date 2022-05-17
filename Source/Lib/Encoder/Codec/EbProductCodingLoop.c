@@ -10321,7 +10321,128 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     }
     context_ptr->avail_blk_flag[blk_ptr->mds_idx] = TRUE;
 }
+#if OPT_MAX_P0_P1_NSQ
+Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
+    Bool skip_nsq               = 0;
+    uint32_t max_part0_to_part1_dev = ctx->max_part0_to_part1_dev;
+    const BlockGeom *blk_geom = ctx->blk_geom;
 
+    // return immediately if SQ, or NSQ but Parent not available, or max_part0_to_part1_dev is off
+    if (blk_geom->shape == PART_N ||
+        ctx->avail_blk_flag[blk_geom->sqi_mds] == FALSE ||
+        max_part0_to_part1_dev == 0)
+        return skip_nsq;
+
+    BlkStruct* sq_blk_ptr = &ctx->md_blk_arr_nsq[blk_geom->sqi_mds];
+    MdBlkStruct* sq_md_local_blk_unit = &ctx->md_local_blk_unit[blk_geom->sqi_mds];
+
+    // Derive the distortion/cost ratio
+    const uint32_t full_lambda = ctx->hbd_mode_decision
+        ? ctx->full_lambda_md[EB_10_BIT_MD]
+        : ctx->full_lambda_md[EB_8_BIT_MD];
+    const uint64_t dist = RDCOST(full_lambda, 0, sq_md_local_blk_unit->full_distortion);
+    const uint64_t dist_cost_ratio = (dist * 100) / sq_md_local_blk_unit->default_cost;
+    const uint64_t min_ratio    = 0;
+    const uint64_t max_ratio    = 100;
+    const uint64_t modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
+
+    // Modulate TH based on parent SQ pred_mode
+    switch (sq_blk_ptr->pred_mode)
+    {
+    case NEWMV:
+    case NEW_NEWMV:
+        max_part0_to_part1_dev = max_part0_to_part1_dev - ((max_part0_to_part1_dev * 75) / 100);
+        break;
+    case NEAREST_NEARESTMV:
+    case NEAR_NEARMV:
+        max_part0_to_part1_dev *= 3;
+        break;
+    case GLOBALMV:
+    case GLOBAL_GLOBALMV:
+        max_part0_to_part1_dev <<= 2;
+        break;
+    default:
+        break;
+    }
+
+    if (blk_geom->shape == PART_H || blk_geom->shape == PART_HA ||
+        blk_geom->shape == PART_HB || blk_geom->shape == PART_H4) {
+
+        // multiply the TH by 4 when Parent is D45 or D135 (diagonal) or when Parent is D67 / V / D113 (H_path)
+        if (sq_blk_ptr->pred_mode == V_PRED || sq_blk_ptr->pred_mode == D67_PRED ||
+            sq_blk_ptr->pred_mode == D113_PRED || sq_blk_ptr->pred_mode == D45_PRED ||
+            sq_blk_ptr->pred_mode == D135_PRED)
+            max_part0_to_part1_dev <<= 2;
+        else if (sq_blk_ptr->pred_mode == H_PRED)
+            max_part0_to_part1_dev = 0;
+
+        const uint64_t dist_q0 = MAX(1, sq_md_local_blk_unit->rec_dist_per_quadrant[0]);
+        const uint64_t dist_q1 = MAX(1, sq_md_local_blk_unit->rec_dist_per_quadrant[1]);
+        const uint64_t dist_q2 = MAX(1, sq_md_local_blk_unit->rec_dist_per_quadrant[2]);
+        const uint64_t dist_q3 = MAX(1, sq_md_local_blk_unit->rec_dist_per_quadrant[3]);
+
+        const uint64_t dist_h0 = dist_q0 + dist_q1;
+        const uint64_t dist_h1 = dist_q2 + dist_q3;
+
+        const uint32_t dev = (uint32_t)((ABS((int64_t)dist_h0 - (int64_t)dist_h1) * 100) /
+                                  MIN(dist_h0, dist_h1));
+        // TH = TH + TH * Min(dev_0,dev_1); dev_0 is q0 - to - q1 deviation, and dev_1 is q2 - to - q3 deviation
+        const uint32_t quad_dev_t = (uint32_t)((ABS((int64_t)dist_q0 - (int64_t)dist_q1) * 100) /
+                                         MIN(dist_q0, dist_q1));
+        const uint32_t quad_dev_b = (uint32_t)((ABS((int64_t)dist_q2 - (int64_t)dist_q3) * 100) /
+                                         MIN(dist_q2, dist_q3));
+        max_part0_to_part1_dev = max_part0_to_part1_dev +
+            (((uint64_t)max_part0_to_part1_dev * MIN(quad_dev_t, quad_dev_b)) / 100);
+
+        max_part0_to_part1_dev = (uint32_t)((dist_cost_ratio <= min_ratio) ? 0
+                                                : (dist_cost_ratio <= max_ratio)
+                                                ? (max_part0_to_part1_dev * modulated_th) / 100
+                                                : dist_cost_ratio);
+        if (dev < max_part0_to_part1_dev)
+            return TRUE;
+    }
+
+    if (blk_geom->shape == PART_V || blk_geom->shape == PART_VA ||
+        blk_geom->shape == PART_VB || blk_geom->shape == PART_V4) {
+
+        // multiply the TH by 4 when Parent is D45 or D135 (diagonal) or when Parent is D157 / H / D203 (V_path)
+        if (sq_blk_ptr->pred_mode == H_PRED || sq_blk_ptr->pred_mode == D157_PRED ||
+            sq_blk_ptr->pred_mode == D203_PRED || sq_blk_ptr->pred_mode == D45_PRED ||
+            sq_blk_ptr->pred_mode == D135_PRED)
+            max_part0_to_part1_dev <<= 2;
+        else if (sq_blk_ptr->pred_mode == V_PRED)
+            max_part0_to_part1_dev = 0;
+
+        const uint64_t dist_q0 = MAX(1, sq_md_local_blk_unit->rec_dist_per_quadrant[0]);
+        const uint64_t dist_q1 = MAX(1, sq_md_local_blk_unit->rec_dist_per_quadrant[1]);
+        const uint64_t dist_q2 = MAX(1, sq_md_local_blk_unit->rec_dist_per_quadrant[2]);
+        const uint64_t dist_q3 = MAX(1, sq_md_local_blk_unit->rec_dist_per_quadrant[3]);
+
+        const uint64_t dist_v0 = dist_q0 + dist_q2;
+        const uint64_t dist_v1 = dist_q1 + dist_q3;
+
+        const uint32_t dev = (uint32_t)((ABS((int64_t)dist_v0 - (int64_t)dist_v1) * 100) /
+                                  MIN(dist_v0, dist_v1));
+
+        // TH = TH + TH * Min(dev_0,dev_1); dev_0 is q0-to-q2 deviation, and dev_1 is q1-to-q3 deviation
+        const uint32_t quad_dev_l = (uint32_t)((ABS((int64_t)dist_q0 - (int64_t)dist_q2) * 100) /
+                                         MIN(dist_q0, dist_q2));
+        const uint32_t quad_dev_r = (uint32_t)((ABS((int64_t)dist_q1 - (int64_t)dist_q3) * 100) /
+                                         MIN(dist_q1, dist_q3));
+        max_part0_to_part1_dev = max_part0_to_part1_dev +
+            (((uint64_t)max_part0_to_part1_dev * MIN(quad_dev_l, quad_dev_r)) / 100);
+
+        max_part0_to_part1_dev = (uint32_t)((dist_cost_ratio <= min_ratio) ? 0
+                                                : (dist_cost_ratio <= max_ratio)
+                                                ? (max_part0_to_part1_dev * modulated_th) / 100
+                                                : dist_cost_ratio);
+        if (dev < max_part0_to_part1_dev)
+            return TRUE;
+    }
+
+    return skip_nsq;
+}
+#else
 uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr) {
     uint8_t  skip_nsq               = 0;
     uint32_t max_part0_to_part1_dev = context_ptr->max_part0_to_part1_dev;
@@ -10368,6 +10489,7 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
             context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D45_PRED ||
             context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D135_PRED)
             max_part0_to_part1_dev = max_part0_to_part1_dev << 2;
+
         uint64_t dist_h0 = MAX(1,
                                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
                                        .rec_dist_per_quadrant[0] +
@@ -10420,6 +10542,7 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
             context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D45_PRED ||
             context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D135_PRED)
             max_part0_to_part1_dev = max_part0_to_part1_dev << 2;
+
         uint64_t dist_v0 = MAX(1,
                                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
                                        .rec_dist_per_quadrant[0] +
@@ -10466,6 +10589,7 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
 
     return skip_nsq;
 }
+#endif
 
 /*
  * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
