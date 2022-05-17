@@ -580,6 +580,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->approx_inter_rate = 1;
     if (is_islice || transition_present)
         pcs_ptr->skip_intra = 0;
+#if TUNE_DEFAULT_M8
+    else if (enc_mode <= ENC_M8)
+        pcs_ptr->skip_intra = 0;
+#else
     else if (enc_mode <= ENC_M7)
         pcs_ptr->skip_intra = 0;
     else if (enc_mode <= ENC_M8) {
@@ -587,7 +591,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->skip_intra = 0;
         else
             pcs_ptr->skip_intra = (is_ref || pcs_ptr->ref_intra_percentage > 50) ? 0 : 1;
-    } else
+    }
+#endif
+    else
         pcs_ptr->skip_intra = (is_ref || pcs_ptr->ref_intra_percentage > 50) ? 0 : 1;
 
     // Set the level for the candidate(s) reduction feature

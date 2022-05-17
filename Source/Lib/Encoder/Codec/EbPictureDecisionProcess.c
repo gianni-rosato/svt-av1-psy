@@ -1978,6 +1978,14 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             list0_only_base = 0;
     }
+#if TUNE_DEFAULT_M8
+    else if (enc_mode <= ENC_M8) {
+        if (hierarchical_levels <= 3)
+            list0_only_base = 2;
+        else
+            list0_only_base = 0;
+    }
+#endif
     else  if (enc_mode <= ENC_M9) {
         if (hierarchical_levels <= 3)
             list0_only_base = 2;
