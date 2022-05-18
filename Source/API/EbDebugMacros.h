@@ -103,6 +103,8 @@ extern "C" {
 
 // Switch frame debugging code
 #define DEBUG_SFRAME            0
+// Quantization matrices
+#define DEBUG_QM_LEVEL          0
 
 #ifdef __cplusplus
 }

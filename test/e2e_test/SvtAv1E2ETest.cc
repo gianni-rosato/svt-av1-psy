@@ -249,6 +249,12 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     // only 420 input is supported
     //{"DummySrcTest2", {{"EncoderMode", "8"}, {"Profile", "2"}}, dummy_422_test_vectors},
     //{"DummySrcTest3", {{"EncoderMode", "8"}, {"Profile", "1"}}, dummy_444_test_vectors},
+
+    // test QM
+    {"QMTest1", {{"EnableQM", "0"}}, default_test_vectors},
+    {"QMTest2", {{"EnableQM", "1"}}, default_test_vectors},
+    {"QMTest3", {{"EnableQM", "1"}, {"MinQmLevel", "0"}, {"MaxQmLevel", "15"}}, default_test_vectors},
+    {"QMTest4", {{"EnableQM", "1"}, {"MinQmLevel", "15"}, {"MaxQmLevel", "15"}}, default_test_vectors},
 };
 
 static const std::vector<EncTestSetting> overlay_preset_settings = {

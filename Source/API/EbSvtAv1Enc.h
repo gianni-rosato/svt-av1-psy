@@ -28,7 +28,7 @@ extern "C" {
  * has been modified, and reset anytime the major API version has
  * been changed. Used to keep track if a field has been added or not.
  */
-#define SVT_AV1_ENC_ABI_VERSION 2
+#define SVT_AV1_ENC_ABI_VERSION 3
 
 //***HME***
 
@@ -732,6 +732,26 @@ typedef struct EbSvtAv1EncConfiguration {
      * resolution in both width and height
      */
     uint8_t resize_kf_denom;
+    /**
+     * @brief Signal to the library to enable quantisation matrices
+     *
+     * Default is false.
+     */
+    Bool enable_qm;
+    /**
+     * @brief Min quant matrix flatness. Applicable when enable_qm is true.
+     * Min value is 0.
+     * Max value is 15.
+     * Default is 8.
+     */
+    uint8_t min_qm_level;
+    /**
+     * @brief Max quant matrix flatness. Applicable when enable_qm is true.
+     * Min value is 0.
+     * Max value is 15.
+     * Default is 15.
+     */
+    uint8_t max_qm_level;
 } EbSvtAv1EncConfiguration;
 
 /**

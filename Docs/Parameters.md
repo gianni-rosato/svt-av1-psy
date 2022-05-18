@@ -112,6 +112,9 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **VBRBiasPct**                     | --bias-pct                         | [0-100]          | 50                | CBR/VBR bias [0: CBR-like, 100: VBR-like]                                                                              |
 | **MinSectionPct**                  | --minsection-pct                   | [0-100]          | 0                 | GOP min bitrate (expressed as a percentage of the target rate)                                                         |
 | **MaxSectionPct**                  | --maxsection-pct                   | [0-10000]        | 2000              | GOP max bitrate (expressed as a percentage of the target rate)                                                         |
+| **EnableQM**                       | --enable-qm                        | [0-1]            | 0                 | Enable quantisation matrices                                                                                           |
+| **MinQmLevel**                     | --qm-min                           | [0-15]           | 8                 | Min quant matrix flatness                                                                                              |
+| **MaxQmLevel**                     | --qm-max                           | [0-15]           | 15                | Max quant matrix flatness                                                                                              |
 
 ### **UseFixedQIndexOffsets** and more information
 
@@ -152,6 +155,30 @@ For this command line, corresponding qindex values are:
 | **Layer1 Frame** | 160 (42x4 - 8)  | 160 (160 + 0)     |
 | **Layer2 Frame** | 164 (42x4 - 4)  | 176 (164 + 12)    |
 | **Layer3 Frame** | 168 (42x4 + 0)  | 192 (168 + 24)    |
+
+### **EnableQM** and more information
+
+With `EnableQM`, `MinQmLevel` and `MaxQmLevel`, user can customize the quantization
+matrix used in quantization procedure instead of using the default one. With the default
+quantization matrix, all coefficients share the same weight, whereas with non-default ones,
+coefficients can have different weight through the settings made by users. The deviation
+of weight (or flatness, equivalently) is controlled by arguments `MinQmLevel` and `MaxQmLevel`.
+There are sixteen quantization matrix levels, ranging from level 0 to level 15. The lower
+the level is the larger deviation of weight the quantization matrix will provide. Level 15
+is fully flat in weight and is set as the default quantization matrix. A lower level
+quantization matrix typically results in bitstreams with lower bitrate and slightly worse
+quality in CRF rate control mode. The reduction in bitrate is more obvious with low CRF
+than high CRF.
+
+The quantization matrices feature signals at frame level. When the feature is enabled,
+the encoder decides each frame’s quantization matrix level by normalizing its qindex to
+user specified quantization matrix level range (from `MinQmLevel` to `MaxQmLevel`).
+
+An example command line is:
+
+```bash
+SvtAv1EncApp -i in.y4m -b out.ivf --keyint -1 --enable-qm 1 --qm-min 0 --qm-max 15
+```
 
 ### Recode loop level table
 

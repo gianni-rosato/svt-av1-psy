@@ -849,6 +849,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             "--tile-columns 1 if you are targeting a high quality encode and a multi-core "
             "high-performance decoder HW\n");
     }
+    if (config->enable_qm && config->min_qm_level > config->max_qm_level) {
+        SVT_ERROR("Instance %u:  Min quant matrix level must not greater than max quant matrix level\n",
+                  channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
 
     return return_error;
 }
@@ -983,6 +988,10 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->sframe_mode = SFRAME_NEAREST_BASE;
     config_ptr->force_key_frames = 0;
 
+    // QM
+    config_ptr->enable_qm = 0;
+    config_ptr->min_qm_level = 8;
+    config_ptr->max_qm_level = 15;
     return return_error;
 }
 
@@ -1702,6 +1711,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"resize-mode", &config_struct->resize_mode},
         {"resize-denom", &config_struct->resize_denom},
         {"resize-kf-denom", &config_struct->resize_kf_denom},
+        {"min-qm", &config_struct->min_qm_level},
+        {"max-qm", &config_struct->min_qm_level},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
@@ -1795,6 +1806,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"enable-hdr", &config_struct->high_dynamic_range_input},
         {"fast-decode", &config_struct->fast_decode},
         {"enable-force-key-frames", &config_struct->force_key_frames},
+        {"enable-qm", &config_struct->enable_qm},
     };
     const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
 

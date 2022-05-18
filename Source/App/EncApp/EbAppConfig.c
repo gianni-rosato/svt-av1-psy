@@ -182,6 +182,10 @@
 
 #define SFRAME_DIST_TOKEN "--sframe-dist"
 #define SFRAME_MODE_TOKEN "--sframe-mode"
+
+#define ENABLE_QM_TOKEN "--enable-qm"
+#define MIN_QM_LEVEL_TOKEN "--qm-min"
+#define MAX_QM_LEVEL_TOKEN "--qm-max"
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE *fp) { return (HANDLE)_get_osfhandle(_fileno(fp)); }
 #endif
@@ -368,7 +372,15 @@ static void set_compressed_ten_bit_format(const char *value, EbConfig *cfg) {
 static void set_enc_mode(const char *value, EbConfig *cfg) {
     cfg->config.enc_mode = (uint8_t)strtoul(value, NULL, 0);
 };
-
+static void set_enable_qm(const char *value, EbConfig *cfg) {
+    cfg->config.enable_qm = !!strtoul(value, NULL, 0);
+};
+static void set_min_qm_level(const char *value, EbConfig *cfg) {
+    cfg->config.min_qm_level = (uint8_t)strtoul(value, NULL, 0);
+};
+static void set_max_qm_level(const char *value, EbConfig *cfg) {
+    cfg->config.max_qm_level = (uint8_t)strtoul(value, NULL, 0);
+};
 /**
  * @brief split colon separated string into key=value pairs
  *
@@ -1105,6 +1117,18 @@ ConfigEntry config_entry_rc[] = {
      VBR_MAX_SECTION_PCT_TOKEN,
      "GOP max bitrate (expressed as a percentage of the target rate), default is 2000 [0-10000]",
      set_vbr_max_section_pct},
+    {SINGLE_INPUT,
+     ENABLE_QM_TOKEN,
+     "Enable quantisation matrices, default is 0 [0-1]",
+     set_enable_qm},
+    {SINGLE_INPUT,
+     MIN_QM_LEVEL_TOKEN,
+     "Min quant matrix flatness, default is 8 [0-15]",
+     set_min_qm_level},
+    {SINGLE_INPUT,
+     MAX_QM_LEVEL_TOKEN,
+     "Max quant matrix flatness, default is 15 [0-15]",
+     set_max_qm_level},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1541,6 +1565,11 @@ ConfigEntry config_entry[] = {
      set_cfg_chroma_sample_position},
     {SINGLE_INPUT, MASTERING_DISPLAY_TOKEN, "MasteringDisplay", set_cfg_mastering_display},
     {SINGLE_INPUT, CONTENT_LIGHT_LEVEL_TOKEN, "ContentLightLevel", set_cfg_content_light},
+
+    // QM
+    {SINGLE_INPUT, ENABLE_QM_TOKEN, "EnableQM", set_enable_qm},
+    {SINGLE_INPUT, MIN_QM_LEVEL_TOKEN, "MinQmLevel", set_min_qm_level},
+    {SINGLE_INPUT, MAX_QM_LEVEL_TOKEN, "MaxQmLevel", set_max_qm_level},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 

@@ -4122,6 +4122,15 @@ void copy_api_from_app(
     scs_ptr->seq_header.max_frame_height = config_struct->forced_max_frame_height > 0 ? config_struct->forced_max_frame_height
         : scs_ptr->static_config.sframe_dist > 0 ? 8704 : scs_ptr->max_input_luma_height;
     scs_ptr->static_config.force_key_frames = config_struct->force_key_frames;
+
+    // QM
+    scs_ptr->static_config.enable_qm = config_struct->enable_qm;
+    scs_ptr->static_config.min_qm_level = config_struct->min_qm_level;
+    scs_ptr->static_config.max_qm_level = config_struct->max_qm_level;
+    if (scs_ptr->static_config.enable_qm && scs_ptr->static_config.min_qm_level == 15 && scs_ptr->static_config.max_qm_level == 15) {
+        SVT_WARN("Quantization matrices will be forced off since both min and max quant matrix levels are set to 15\n");
+        scs_ptr->static_config.enable_qm = 0;
+    }
     return;
 }
 

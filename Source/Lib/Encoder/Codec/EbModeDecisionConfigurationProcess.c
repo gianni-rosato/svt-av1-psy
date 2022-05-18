@@ -228,6 +228,12 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
     }
 }
 
+// Reduce the large number of quantizers to a smaller number of levels for which
+// different matrices may be defined
+static INLINE int aom_get_qmlevel(int qindex, int first, int last) {
+    return first + (qindex * (last + 1 - first)) / QINDEX_RANGE;
+}
+
 void svt_av1_qm_init(PictureParentControlSet *pcs_ptr) {
     const uint8_t num_planes = 3; // MAX_MB_PLANE;// NM- No monochroma
     uint8_t       q, c, t;
@@ -252,6 +258,31 @@ void svt_av1_qm_init(PictureParentControlSet *pcs_ptr) {
                 }
             }
         }
+    }
+
+    if (pcs_ptr->frm_hdr.quantization_params.using_qmatrix) {
+        const int32_t min_qmlevel = pcs_ptr->scs_ptr->static_config.min_qm_level;
+        const int32_t max_qmlevel = pcs_ptr->scs_ptr->static_config.max_qm_level;
+        const int32_t base_qindex = pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+
+        pcs_ptr->frm_hdr.quantization_params.qm[AOM_PLANE_Y] = aom_get_qmlevel(
+            base_qindex, min_qmlevel, max_qmlevel);
+        pcs_ptr->frm_hdr.quantization_params.qm[AOM_PLANE_U] = aom_get_qmlevel(
+            base_qindex + pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
+            min_qmlevel,
+            max_qmlevel);
+        pcs_ptr->frm_hdr.quantization_params.qm[AOM_PLANE_V] = aom_get_qmlevel(
+            base_qindex + pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
+            min_qmlevel,
+            max_qmlevel);
+#if DEBUG_QM_LEVEL
+        SVT_LOG("\n[svt_av1_qm_init] Frame %d - qindex %d, qmlevel %d %d %d\n",
+                (int)pcs_ptr->picture_number,
+                base_qindex,
+                pcs_ptr->frm_hdr.quantization_params.qm[AOM_PLANE_Y],
+                pcs_ptr->frm_hdr.quantization_params.qm[AOM_PLANE_U],
+                pcs_ptr->frm_hdr.quantization_params.qm[AOM_PLANE_V]);
+#endif
     }
 }
 

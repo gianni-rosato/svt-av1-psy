@@ -685,7 +685,7 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
         pcs_ptr->scs_ptr->static_config.chroma_v_dc_qindex_offset;
 
     // Encoder
-    frm_hdr->quantization_params.using_qmatrix   = 0;
+    frm_hdr->quantization_params.using_qmatrix   = pcs_ptr->scs_ptr->static_config.enable_qm;
     frm_hdr->quantization_params.qm[AOM_PLANE_Y] = 5;
     frm_hdr->quantization_params.qm[AOM_PLANE_U] = 5;
     frm_hdr->quantization_params.qm[AOM_PLANE_V] = 5;
