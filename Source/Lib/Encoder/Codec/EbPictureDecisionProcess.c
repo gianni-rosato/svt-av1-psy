@@ -1479,7 +1479,11 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
     uint8_t dlf_level;
     // Don't disable DLF for low resolutions when fast-decode is used
     if (fast_decode == 0 || resolution <= INPUT_SIZE_360p_RANGE) {
+#if TUNE_DEFAULT_M6
+        if (enc_mode <= ENC_M5)
+#else
         if (enc_mode <= ENC_M6)
+#endif
             dlf_level = 1;
         else if (enc_mode <= ENC_M7)
             dlf_level = 2;

@@ -3114,7 +3114,11 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
         SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
         tpl_level = 0;
     }
+#if TUNE_DEFAULT_M5
+    else if (enc_mode <= ENC_M4)
+#else
     else if (enc_mode <= ENC_M5)
+#endif
         tpl_level = 1;
     else if (enc_mode <= ENC_M7)
         tpl_level = 3;

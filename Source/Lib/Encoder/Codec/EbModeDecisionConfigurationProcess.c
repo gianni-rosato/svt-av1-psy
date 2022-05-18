@@ -417,7 +417,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     } else {
         if (fast_decode == 0) {
+#if TUNE_DEFAULT_M6
+            if (enc_mode <= ENC_M6)
+#else
             if (enc_mode <= ENC_M5)
+#endif
                 ppcs->frm_hdr.use_ref_frame_mvs = 1;
             else {
                 uint64_t avg_me_dist = 0;
@@ -1043,7 +1047,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->pic_block_based_depth_refinement_level = is_islice ? 6 : 11;
     } else if (enc_mode <= ENC_M2)
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
+#if TUNE_DEFAULT_M5
+    else if (enc_mode <= ENC_M5)
+#else
     else if (enc_mode <= ENC_M4)
+#endif
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
 #if TUNE_DEFAULT_M7
     else if (enc_mode <= ENC_M7)
