@@ -202,7 +202,11 @@ static int rate_estimator(TranLow *qcoeff, int eob, TxSize tx_size) {
 
     for (int idx = 0; idx < eob; ++idx) {
         int abs_level = abs(qcoeff[scan_order->scan[idx]]);
+#if FIX_RATE_EST_SIGN
+        rate_cost += svt_log2f(abs_level + 1) + (abs_level > 0);
+#else
         rate_cost += svt_log2f(abs_level + 1);
+#endif
     }
 
     return (rate_cost << AV1_PROB_COST_SHIFT);
@@ -363,7 +367,11 @@ int16_t av1_dc_quant_qtx(int qindex, int delta, EbBitDepth bit_depth) {
 int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, int qindex) {
     const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
     //const int q = svt_av1_dc_quant_Q3(qindex, 0, bit_depth);
+#if FIX_RDMULT_OVERFLOW
+    int64_t rdmult = q * q;
+#else
     int rdmult = q * q;
+#endif
     rdmult     = rdmult * 3 + (rdmult * 2 / 3);
     switch (bit_depth) {
     case EB_EIGHT_BIT: break;
@@ -373,7 +381,11 @@ int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, int qindex) {
         assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
         return -1;
     }
+#if FIX_RDMULT_OVERFLOW
+    return rdmult > 0 ? (int)AOMMIN(rdmult, INT_MAX) : 1;
+#else
     return rdmult > 0 ? rdmult : 1;
+#endif
 }
 
 double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);

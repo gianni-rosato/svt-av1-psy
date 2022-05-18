@@ -570,6 +570,28 @@ int svt_av1_get_deltaq_offset(EbBitDepth bit_depth, int qindex, double beta, uin
     else
         newq = (int)rint(q / sqrt(beta));
     int orig_qindex = qindex;
+#if FIX_DELTAQ_BOUNDARY
+    if (newq == q) {
+        return 0;
+    }
+    if (newq < q) {
+        while (qindex > 0) {
+            qindex--;
+            q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
+            if (newq >= q)
+                break;
+        }
+    }
+    else {
+        while (qindex < MAXQ) {
+            qindex++;
+            q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
+            if (newq <= q) {
+                break;
+            }
+}
+    }
+#else
     if (newq < q) {
         do {
             qindex--;
@@ -581,6 +603,7 @@ int svt_av1_get_deltaq_offset(EbBitDepth bit_depth, int qindex, double beta, uin
             q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
         } while (newq > q && qindex < MAXQ);
     }
+#endif
     return qindex - orig_qindex;
 }
 
