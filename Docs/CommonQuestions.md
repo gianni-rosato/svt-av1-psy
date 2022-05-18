@@ -300,3 +300,11 @@ zero makes the encode behave more like a CBR encode, while a value closer to
 leads to a favorable visual quality for a given file size and is recommended
 for applications where a target bitrate is not necessary, such as in a home environment.
 Set `--rc=0` to use this method.
+
+## Notes
+
+The feature settings that are described in this document were compiled at
+v1.1.0 of the code and may not reflect the current status of the code. The
+description in this document represents an example showing how features would
+interact with the SVT architecture. For the most up-to-date settings, it's
+recommended to review the section of the code implementing this feature.

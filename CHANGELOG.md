@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.0] - 2022-05-17
+
+Encoder
+- TPL tradeoff optimizations for 4L pred structure
+- Quality-vs-cycles tradeoff improvements across all presets
+- Add ability to force key_frame positions through ffmpeg for CRF mode
+- Minimize the quality impact of fast-decode while maintaining the decoder speedup
+- AVX2 optimizations for low delay mode
+- Fix VQ issues #1896 #1857 and #1819
+
+Build, Cleanup and Documentation
+- API / ABI cleanup and implement independent versioning
+- Add UEB_DLL for static linking with pkgconf
+- Update system requirements docs
+- Rate control code refactoring
+- Fix AVX512 vs AVX2 mismatch
+
 ## [1.0.0] - 2022-04-22
 
 Encoder
