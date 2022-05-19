@@ -1739,7 +1739,7 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
         }
 #if TUNE_DEFAULT_M7
         else if (pcs_ptr->enc_mode <= ENC_M6)
-            gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
+            gm_level = is_ref ? 5 : 0;
 #else
         else if (pcs_ptr->enc_mode <= ENC_M7)
             gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;

@@ -4577,15 +4577,20 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
 #endif
         disallow_below_16x16 = 0;
 #if TUNE_DEFAULT_M10_M11
-    else if (enc_mode <= ENC_M10)
+    else if (enc_mode <= ENC_M10) {
+        if (resolution <= INPUT_SIZE_1080p_RANGE)
+            disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
+        else
+            disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
+    }
 #else
     else if (enc_mode <= ENC_M9)
-#endif
         if (resolution <= INPUT_SIZE_1080p_RANGE)
             disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
         else {
             disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
         }
+#endif
     else if (enc_mode <= ENC_M11)
         disallow_below_16x16 = (resolution <= INPUT_SIZE_480p_RANGE)
             ? (temporal_layer_index == 0 ? 0 : 1)
