@@ -385,7 +385,11 @@ uint8_t svt_aom_get_chroma_level(EncMode enc_mode) {
     uint8_t chroma_level = 0;
     if (enc_mode <= ENC_MRS)
         chroma_level = 1;
+#if TUNE_DEFAULT_M3
+    else if (enc_mode <= ENC_M3)
+#else
     else if (enc_mode <= ENC_M2)
+#endif
         chroma_level = 2;
     else if (enc_mode <= ENC_M6)
         chroma_level = 3;
