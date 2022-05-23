@@ -1229,6 +1229,30 @@ static EbErrorType str_to_keyint(const char *nptr, int32_t *out, Bool *multi) {
     return EB_ErrorNone;
 }
 
+static EbErrorType str_to_bitrate(const char *nptr, uint32_t *out) {
+    char        *suff;
+    const double bitrate = strtod(nptr, &suff);
+
+    if (bitrate < 0 || bitrate > UINT32_MAX) {
+        SVT_WARN("Invalid bitrate value: %s\n", nptr);
+        return EB_ErrorBadParameter;
+    }
+
+    switch (*suff) {
+    case 'b':
+    case 'B': *out = (uint32_t)bitrate; break;
+    case '\0':
+    case 'k':
+    case 'K': *out = (uint32_t)(1000 * bitrate); break;
+    case 'm':
+    case 'M': *out = (uint32_t)(1000000 * bitrate); break;
+    default: return EB_ErrorBadParameter;
+    }
+    if (*out > 100000000)
+        *out = 100000000;
+    return EB_ErrorNone;
+}
+
 static EbErrorType str_to_profile(const char *nptr, EbAv1SeqProfile *out) {
     const struct {
         const char     *name;
@@ -1534,6 +1558,12 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     if (!strcmp(name, "keyint"))
         return str_to_keyint(value, &config_struct->intra_period_length, &config_struct->multiply_keyint);
 
+    if (!strcmp(name, "tbr"))
+        return str_to_bitrate(value, &config_struct->target_bit_rate);
+
+    if (!strcmp(name, "mbr"))
+        return str_to_bitrate(value, &config_struct->max_bit_rate);
+
     // options updating more than one field
     if (!strcmp(name, "crf"))
         return str_to_crf(value, config_struct);
@@ -1597,8 +1627,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"fps-denom", &config_struct->frame_rate_denominator},
         {"rc", &config_struct->rate_control_mode},
         {"lookahead", &config_struct->look_ahead_distance},
-        {"tbr", &config_struct->target_bit_rate},
-        {"mbr", &config_struct->max_bit_rate},
         {"scd", &config_struct->scene_change_detection},
         {"max-qp", &config_struct->max_qp_allowed},
         {"min-qp", &config_struct->min_qp_allowed},

@@ -562,12 +562,12 @@ static void set_rate_control_mode(const char *value, EbConfig *cfg) {
     cfg->config.rate_control_mode = strtoul(value, NULL, 0);
 };
 static void set_target_bit_rate(const char *value, EbConfig *cfg) {
-    const uint32_t readValue = strtoul(value, NULL, 0);
-    cfg->config.target_bit_rate = 1000 * ((readValue > 100000) ? 100000 : readValue);
+    if (svt_av1_enc_parse_parameter(&cfg->config, "tbr", value) != EB_ErrorNone)
+        fprintf(stderr, "Invalid value for target bit rate\n");
 };
 static void set_max_bit_rate(const char *value, EbConfig *cfg) {
-    const uint32_t readValue = strtoul(value, NULL, 0);
-    cfg->config.max_bit_rate = 1000 * ((readValue > 100000) ? 100000 : readValue);
+    if (svt_av1_enc_parse_parameter(&cfg->config, "mbr", value) != EB_ErrorNone)
+        fprintf(stderr, "Invalid value for max bit rate\n");
 };
 static void set_max_qp_allowed(const char *value, EbConfig *cfg) {
     cfg->config.max_qp_allowed = strtoul(value, NULL, 0);
