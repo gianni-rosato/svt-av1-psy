@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <sys/stat.h>
 
 #include "EbSvtAv1Metadata.h"
@@ -2759,17 +2760,27 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     /********************************************************************************************************/
 
     // Check tokens for invalid tokens
-    for (char *const *indx = argv + 1; *indx; ++indx) {
-        // stop at --
-        if (!strcmp(*indx, "--"))
-            break;
-        // Check removed tokens
-        if (warn_legacy_token(*indx))
-            return EB_ErrorBadParameter;
-        // exclude single letter tokens
-        if ((*indx)[0] == '-' && (*indx)[1] != '-' && (*indx)[2] != '\0') {
-            fprintf(stderr, "[SVT-Error]: single dash long tokens have been removed!\n");
-            return EB_ErrorBadParameter;
+    {
+        bool next_is_value = false;
+        for (char *const *indx = argv + 1; *indx; ++indx) {
+            // stop at --
+            if (!strcmp(*indx, "--"))
+                break;
+            // skip the token if the previous token was an argument
+            // assumes all of our tokens flip flop between being an argument and a value
+            if (next_is_value) {
+                next_is_value = false;
+                continue;
+            }
+            // Check removed tokens
+            if (warn_legacy_token(*indx))
+                return EB_ErrorBadParameter;
+            // exclude single letter tokens
+            if ((*indx)[0] == '-' && (*indx)[1] != '-' && (*indx)[2] != '\0') {
+                fprintf(stderr, "[SVT-Error]: single dash long tokens have been removed!\n");
+                return EB_ErrorBadParameter;
+            }
+            next_is_value = true;
         }
     }
 
