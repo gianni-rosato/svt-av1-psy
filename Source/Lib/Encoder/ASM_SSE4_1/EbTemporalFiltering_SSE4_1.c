@@ -1304,7 +1304,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_sse4_1(struct MeContext *conte
     if (context_ptr->tf_ctrls.use_fixed_point) {
         //16*avg_err/context_ptr->tf_decay_factor[0];
         uint32_t scaled_diff_fp4 = AOMMIN(
-            (avg_err << 10) / (context_ptr->tf_decay_factor_fp16[0] >> 10), 7 * 16);
+            (avg_err << 10) / AOMMAX((context_ptr->tf_decay_factor_fp16[0] >> 10), 1), 7 * 16);
         adjusted_weight = (expf_tab_fp16[scaled_diff_fp4] * TF_WEIGHT_SCALE) >> 16;
     } else {
         double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
@@ -1357,7 +1357,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_sse4_1(
     if (context_ptr->tf_ctrls.use_fixed_point) {
         //16*avg_err/context_ptr->tf_decay_factor[0];
         uint32_t scaled_diff_fp4 = AOMMIN(
-            (avg_err << 10) / (context_ptr->tf_decay_factor_fp16[0] >> 10), 7 * 16);
+            (avg_err << 10) / AOMMAX((context_ptr->tf_decay_factor_fp16[0] >> 10), 1), 7 * 16);
         adjusted_weight = (expf_tab_fp16[scaled_diff_fp4] * TF_WEIGHT_SCALE) >> 16;
     } else {
         double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
@@ -1611,7 +1611,7 @@ static void svt_av1_apply_temporal_filter_planewise_medium_partial_sse4_1(
         FP_ASSERT((((int64_t)combined_error_fp8 >> 3) * (d_factor_fp8[subblock_idx] >> 3)) <
                   ((int64_t)1 << 31));
         uint32_t scaled_diff16 = AOMMIN(
-            /*((16*avg_err)<<8)*/ (avg_err_fp10) / (tf_decay_factor >> 10), 7 * 16);
+            /*((16*avg_err)<<8)*/ (avg_err_fp10) / AOMMAX((tf_decay_factor >> 10), 1), 7 * 16);
         uint32_t adjusted_weight = (expf_tab_fp16[scaled_diff16] * TF_WEIGHT_SCALE) >> 16;
 
         adjusted_weight_int16[subblock_idx] = _mm_set1_epi16((int16_t)(adjusted_weight));
@@ -1815,7 +1815,7 @@ static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_sse4_1(
         FP_ASSERT((((int64_t)combined_error_fp8 >> 3) * (d_factor_fp8[subblock_idx] >> 3)) <
                   ((int64_t)1 << 31));
         uint32_t scaled_diff16 = AOMMIN(
-            /*((16*avg_err)<<8)*/ (avg_err_fp10) / (tf_decay_factor >> 10), 7 * 16);
+            /*((16*avg_err)<<8)*/ (avg_err_fp10) / AOMMAX((tf_decay_factor >> 10), 1), 7 * 16);
         int adjusted_weight = (expf_tab_fp16[scaled_diff16] * TF_WEIGHT_SCALE) >> 16;
 
         adjusted_weight_int16[subblock_idx] = _mm_set1_epi16((int16_t)(adjusted_weight));
