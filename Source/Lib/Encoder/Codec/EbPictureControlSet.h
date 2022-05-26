@@ -825,7 +825,9 @@ typedef struct PictureParentControlSet {
     Bool     disallow_HVA_HVB; // Disallow HA/HB/VA/VB NSQ blocks
     DlfCtrls dlf_ctrls;
     uint8_t  intra_pred_mode;
+#if !OPT_TXS
     uint8_t  tx_size_search_mode;
+#endif
     uint8_t  frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON
     //**********************************************************************************************************//
     Av1RpsNode av1_ref_signal;

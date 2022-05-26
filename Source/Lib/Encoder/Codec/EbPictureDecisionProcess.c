@@ -1983,6 +1983,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set whether restoration filtering is enabled for this frame
     pcs_ptr->enable_restoration = (wn > 0 || sg > 0);
 
+#if !OPT_TXS
     // Set tx size search mode
     if (enc_mode <= ENC_M1)
         pcs_ptr->tx_size_search_mode = 1;
@@ -1996,6 +1997,8 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tx_size_search_mode = is_islice ? 1 : 0;
     else
         pcs_ptr->tx_size_search_mode = 0;
+#endif
+
     // Set frame end cdf update mode      Settings
     // 0                                     OFF
     // 1                                     ON
@@ -6618,11 +6621,12 @@ void* picture_decision_kernel(void *input_ptr)
                                     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr);
                                 else
                                     signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);
-
+#if !OPT_TXS
                                 // Set tx_mode
                                 pcs_ptr->frm_hdr.tx_mode = (pcs_ptr->tx_size_search_mode) ?
                                     TX_MODE_SELECT :
                                     TX_MODE_LARGEST;
+#endif
                                 // Update the Dependant List Count - If there was an I-frame or Scene Change or S-frame, then cleanup the Picture Decision PA Reference Queue Dependent Counts
                                 if (pcs_ptr->slice_type == I_SLICE || pcs_ptr->frm_hdr.frame_type == S_FRAME)
                                 {

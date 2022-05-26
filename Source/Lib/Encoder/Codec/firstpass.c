@@ -555,11 +555,12 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs_ptr->enable_restoration = 0;
 
     pcs_ptr->intra_pred_mode = 3;
-
+#if !OPT_TXS
     // Set Tx Search     Settings
     // 0                 OFF
     // 1                 ON
     pcs_ptr->tx_size_search_mode = 1;
+#endif
 
     // Set frame end cdf update mode      Settings
     // 0                                  OFF

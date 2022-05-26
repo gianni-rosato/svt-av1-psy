@@ -837,6 +837,31 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->md_inter_intra_level = 0;
 
+#if OPT_TXS
+    if (enc_mode <= ENC_MRS)
+        pcs_ptr->txs_level = 1;
+    else if (enc_mode <= ENC_MR)
+        pcs_ptr->txs_level = 2;
+    else if (enc_mode <= ENC_M1)
+        pcs_ptr->txs_level = is_base ? 2 : 3;
+    else if (enc_mode <= ENC_M6)
+        pcs_ptr->txs_level = is_base ? 2 : 0;
+    else if (enc_mode <= ENC_M9)
+        pcs_ptr->txs_level = is_islice ? 3 : 0;
+    else if (enc_mode <= ENC_M10) {
+        if (hierarchical_levels <= 3)
+            pcs_ptr->txs_level = is_islice ? 4 : 0;
+        else
+            pcs_ptr->txs_level = is_islice ? 3 : 0;
+    }
+    else if (enc_mode <= ENC_M11)
+        pcs_ptr->txs_level = is_islice ? 4 : 0;
+    else
+        pcs_ptr->txs_level = 0;
+
+    // Set tx_mode for the frame header
+    frm_hdr->tx_mode = (pcs_ptr->txs_level) ? TX_MODE_SELECT : TX_MODE_LARGEST;
+#else
     // Set the level for the tx search
     pcs_ptr->txs_level = 0;
     if (pcs_ptr->parent_pcs_ptr->tx_size_search_mode == 0)
@@ -856,6 +881,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->txs_level = 3;
     } else
         pcs_ptr->txs_level = 4;
+#endif
     // Set the level for nic
     pcs_ptr->nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels);
     // Set the level for SQ me-search

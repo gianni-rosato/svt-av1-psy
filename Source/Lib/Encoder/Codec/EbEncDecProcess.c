@@ -5818,6 +5818,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
 
     context_ptr->md_inter_intra_level = pcs_ptr->md_inter_intra_level;
     set_inter_intra_ctrls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_inter_intra_level);
+
     set_txs_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txs_level);
 
     set_nic_controls(context_ptr, pd_pass == PD_PASS_0 ? 17 : pcs_ptr->nic_level);
