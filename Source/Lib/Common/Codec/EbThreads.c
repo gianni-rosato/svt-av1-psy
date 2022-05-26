@@ -79,24 +79,30 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
 #else
     pthread_attr_t attr;
     if (pthread_attr_init(&attr)) {
+        SVT_ERROR("Failed to initalize thread attributes\n");
         return NULL;
     }
     size_t stack_size;
     if (pthread_attr_getstacksize(&attr, &stack_size)) {
+        SVT_ERROR("Failed to get thread stack size\n");
         pthread_attr_destroy(&attr);
         return NULL;
     }
     // 420 KiB in bytes, gotten empirically by encoding /dev/zero as a 1920x1080 rawvideo with ffmpeg
     const size_t min_stack_size = 420 * 1024;
     if (stack_size < min_stack_size && pthread_attr_setstacksize(&attr, min_stack_size)) {
+        SVT_ERROR("Failed to set thread stack size\n");
         pthread_attr_destroy(&attr);
         return NULL;
     }
     pthread_t *th = malloc(sizeof(*th));
-    if (th == NULL)
+    if (th == NULL) {
+        SVT_ERROR("Failed to allocate thread handle\n");
         return NULL;
+    }
 
     if (pthread_create(th, &attr, thread_function, thread_context)) {
+        SVT_ERROR("Failed to create thread: %s\n", strerror(errno));
         free(th);
         return NULL;
     }
@@ -116,7 +122,8 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
      * https://github.com/google/sanitizers/issues/1088
      */
     if (!EB_THREAD_SANITIZER_ENABLED && !geteuid()) {
-        (void)pthread_setschedparam(*th, SCHED_FIFO, &(struct sched_param){.sched_priority = 99});
+        if (pthread_setschedparam(*th, SCHED_FIFO, &(struct sched_param){.sched_priority = 99}))
+            SVT_WARN("Failed to set thread priority\n");
         // ignore if this failed
     }
     thread_handle = th;
