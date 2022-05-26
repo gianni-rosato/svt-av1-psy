@@ -1082,6 +1082,7 @@ int8_t non_base_boost(PictureControlSet *pcs_ptr) {
     }
     return q_boost;
 }
+
 /******************************************************
  * cqp_qindex_calc
  * Assign the q_index per frame.
@@ -1092,6 +1093,29 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
     int                 q;
     const int           bit_depth = scs_ptr->static_config.encoder_bit_depth;
 
+#if TUNE_CQP_CHROMA_SSIM
+    int active_worst_quality = qindex;
+    if (pcs_ptr->temporal_layer_index == 0) {
+        const double qratio_grad = pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4 ? 0.3
+            : 0.2;
+        const double qstep_ratio = 0.2 +
+            (1.0 - (double)active_worst_quality / MAXQ) * qratio_grad;
+        q = scs_ptr->cqp_base_q = svt_av1_get_q_index_from_qstep_ratio(
+            active_worst_quality, qstep_ratio, bit_depth);
+    }
+    else if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+        int this_height = pcs_ptr->parent_pcs_ptr->temporal_layer_index + 1;
+        int arf_q = scs_ptr->cqp_base_q;
+        while (this_height > 1) {
+            arf_q = (arf_q + active_worst_quality + 1) / 2;
+            --this_height;
+        }
+        q = arf_q;
+    }
+    else {
+        q = active_worst_quality;
+    }
+#else
     int active_best_quality  = 0;
     int active_worst_quality = qindex;
 
@@ -1125,6 +1149,7 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
     active_best_quality = (int32_t)(qindex + delta_qindex);
     q                   = active_best_quality;
     clamp(q, active_best_quality, active_worst_quality);
+#endif
 
     return q;
 }
