@@ -7273,6 +7273,37 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
             candidate_ptr->skip_mode = TRUE;
     }
 }
+
+#if OPT_TXS
+// Derive the start and end TX depths based on block characteristics
+static INLINE void get_start_end_tx_depth(PictureParentControlSet *ppcs, ModeDecisionContext *ctx,
+    ModeDecisionCandidate *candidate_ptr, uint8_t* start_tx_depth, uint8_t* end_tx_depth) {
+    TxsControls* txs_ctrls = &ctx->txs_ctrls;
+    const BlockGeom* const blk_geom = ctx->blk_geom;
+
+    if (txs_ctrls->enabled == 0) {
+        *start_tx_depth = *end_tx_depth = 0;
+    }
+    else if (ctx->md_staging_tx_size_mode == 0) {
+        *start_tx_depth = *end_tx_depth = candidate_ptr->tx_depth;
+    }
+    else {
+        *start_tx_depth = 0;
+        // end_tx_depth set to zero for blocks which go beyond the picture boundaries
+        if ((ctx->sb_origin_x + blk_geom->origin_x + ctx->blk_geom->bwidth <= ppcs->aligned_width &&
+            ctx->sb_origin_y + blk_geom->origin_y + ctx->blk_geom->bheight <= ppcs->aligned_height))
+            *end_tx_depth = get_end_tx_depth(blk_geom->bsize);
+        else
+            *end_tx_depth = 0;
+    }
+
+    *end_tx_depth = MIN(*end_tx_depth,
+        (is_intra_mode(candidate_ptr->pred_mode)
+            ? (blk_geom->shape == PART_N ? txs_ctrls->intra_class_max_depth_sq : txs_ctrls->intra_class_max_depth_nsq)
+            : (blk_geom->shape == PART_N ? txs_ctrls->inter_class_max_depth_sq : txs_ctrls->inter_class_max_depth_nsq)));
+}
+#endif
+
 void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                     ModeDecisionContext *context_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                     ModeDecisionCandidate *candidate_ptr, EbPictureBufferDesc *input_picture_ptr,
@@ -7324,6 +7355,9 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     candidate_buffer->v_has_coeff = 0;
     uint8_t start_tx_depth        = 0;
     uint8_t end_tx_depth          = 0;
+#if OPT_TXS
+    get_start_end_tx_depth(pcs_ptr->parent_pcs_ptr, context_ptr, candidate_ptr, &start_tx_depth, &end_tx_depth);
+#else
     if (context_ptr->txs_ctrls.enabled == 0) {
         start_tx_depth = end_tx_depth = 0;
     } else if (context_ptr->md_staging_tx_size_mode == 0) {
@@ -7344,6 +7378,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                        (is_intra_mode(candidate_buffer->candidate_ptr->pred_mode)
                             ? context_ptr->txs_ctrls.intra_class_max_depth
                             : context_ptr->txs_ctrls.inter_class_max_depth));
+#endif
     if (context_ptr->subres_ctrls.odd_to_even_deviation_th && context_ptr->pd_pass == PD_PASS_0 &&
         context_ptr->md_stage == MD_STAGE_3 &&
         context_ptr->is_subres_safe == (uint8_t)~0 /* only if invalid*/ &&
@@ -7663,6 +7698,17 @@ static void md_stage_2(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
             context_ptr->cand_buff_indices[context_ptr->target_class][fullLoopCandidateIndex];
         ModeDecisionCandidateBuffer *candidate_buffer = candidate_buffer_ptr_array[candidateIndex];
         ModeDecisionCandidate       *candidate_ptr    = candidate_buffer->candidate_ptr;
+#if OPT_TXS
+        context_ptr->md_staging_tx_size_mode          = (context_ptr->txs_ctrls.enabled &&
+                                                        (context_ptr->blk_geom->shape == PART_N
+                                                            ? context_ptr->txs_ctrls.inter_class_max_depth_sq
+                                                            : context_ptr->txs_ctrls.inter_class_max_depth_nsq) &&
+                                                is_inter_mode(candidate_ptr->pred_mode) &&
+                                                (context_ptr->blk_geom->sq_size >=
+                                                 context_ptr->txs_ctrls.min_sq_size))
+                     ? 1
+                     : 0;
+#else
         context_ptr->md_staging_tx_size_mode          = (context_ptr->txs_ctrls.enabled &&
                                                 context_ptr->txs_ctrls.inter_class_max_depth &&
                                                 is_inter_mode(candidate_ptr->pred_mode) &&
@@ -7670,6 +7716,7 @@ static void md_stage_2(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                                  context_ptr->txs_ctrls.min_sq_size))
                      ? 1
                      : 0;
+#endif
         context_ptr->md_staging_txt_level             = is_intra_mode(candidate_ptr->pred_mode)
                         ? context_ptr->txt_ctrls.enabled
                         : 0;

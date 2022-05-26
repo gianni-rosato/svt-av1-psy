@@ -396,8 +396,15 @@ typedef struct CandEliminationCtlrs {
 typedef struct TxsControls {
     uint8_t  enabled;
     uint8_t  prev_depth_coeff_exit; // Skip current depth if previous depth has no coeff
+#if OPT_TXS
+    uint8_t  intra_class_max_depth_sq;  // Max number of depth(s) for INTRA classes in SQ blocks
+    uint8_t  intra_class_max_depth_nsq; // Max number of depth(s) for INTRA classes in NSQ blocks
+    uint8_t  inter_class_max_depth_sq;  // Max number of depth(s) for INTER classes in SQ blocks
+    uint8_t  inter_class_max_depth_nsq; // Max number of depth(s) for INTER classes in NSQ blocks
+#else
     uint8_t  intra_class_max_depth; // Max number of depth(s) for INTRA classes
     uint8_t  inter_class_max_depth; // Max number of depth(s) for INTER classes
+#endif
     int      depth1_txt_group_offset; // Offset to be subtracted from default txt-group to derive the txt-group of depth-1
     int      depth2_txt_group_offset; // Offset to be subtracted from default txt-group to derive the txt-group of depth-2
     uint16_t min_sq_size; // Min. sq size to use TXS for

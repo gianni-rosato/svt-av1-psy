@@ -5019,6 +5019,71 @@ void set_dist_based_ref_pruning_controls(ModeDecisionContext *mdctxt,
     }
 }
 
+#if OPT_TXS
+void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
+    TxsControls *txs_ctrls = &ctx->txs_ctrls;
+
+    switch (txs_level) {
+    case 0: txs_ctrls->enabled = 0; break;
+    case 1:
+        txs_ctrls->enabled = 1;
+        txs_ctrls->prev_depth_coeff_exit = 1;
+        txs_ctrls->intra_class_max_depth_sq  = 2;
+        txs_ctrls->intra_class_max_depth_nsq = 2;
+        txs_ctrls->inter_class_max_depth_sq  = 2;
+        txs_ctrls->inter_class_max_depth_nsq = 2;
+        txs_ctrls->depth1_txt_group_offset = 0;
+        txs_ctrls->depth2_txt_group_offset = 0;
+        txs_ctrls->min_sq_size = 0;
+        break;
+    case 2:
+        txs_ctrls->enabled = 1;
+        txs_ctrls->prev_depth_coeff_exit = 1;
+        txs_ctrls->intra_class_max_depth_sq  = 2;
+        txs_ctrls->intra_class_max_depth_nsq = 2;
+        txs_ctrls->inter_class_max_depth_sq  = 1;
+        txs_ctrls->inter_class_max_depth_nsq = 1;
+        txs_ctrls->depth1_txt_group_offset = 0;
+        txs_ctrls->depth2_txt_group_offset = 0;
+        txs_ctrls->min_sq_size = 0;
+        break;
+    case 3:
+        txs_ctrls->enabled = 1;
+        txs_ctrls->prev_depth_coeff_exit = 1;
+        txs_ctrls->intra_class_max_depth_sq  = 2;
+        txs_ctrls->intra_class_max_depth_nsq = 2;
+        txs_ctrls->inter_class_max_depth_sq  = 0;
+        txs_ctrls->inter_class_max_depth_nsq = 0;
+        txs_ctrls->depth1_txt_group_offset = 0;
+        txs_ctrls->depth2_txt_group_offset = 0;
+        txs_ctrls->min_sq_size = 0;
+        break;
+    case 4:
+        txs_ctrls->enabled = 1;
+        txs_ctrls->prev_depth_coeff_exit = 1;
+        txs_ctrls->intra_class_max_depth_sq  = 1;
+        txs_ctrls->intra_class_max_depth_nsq = 1;
+        txs_ctrls->inter_class_max_depth_sq  = 0;
+        txs_ctrls->inter_class_max_depth_nsq = 0;
+        txs_ctrls->depth1_txt_group_offset = 4;
+        txs_ctrls->depth2_txt_group_offset = 4;
+        txs_ctrls->min_sq_size = 0;
+        break;
+    case 5:
+        txs_ctrls->enabled = 1;
+        txs_ctrls->prev_depth_coeff_exit = 1;
+        txs_ctrls->intra_class_max_depth_sq  = 1;
+        txs_ctrls->intra_class_max_depth_nsq = 1;
+        txs_ctrls->inter_class_max_depth_sq  = 0;
+        txs_ctrls->inter_class_max_depth_nsq = 0;
+        txs_ctrls->depth1_txt_group_offset = 4;
+        txs_ctrls->depth2_txt_group_offset = 4;
+        txs_ctrls->min_sq_size = 32;
+        break;
+    default: assert(0); break;
+    }
+}
+#else
 void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
     TxsControls *txs_ctrls = &ctx->txs_ctrls;
 
@@ -5076,6 +5141,7 @@ void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
     default: assert(0); break;
     }
 }
+#endif
 void set_spatial_sse_full_loop_level(ModeDecisionContext *ctx,
                                      uint8_t              spatial_sse_full_loop_level) {
     SpatialSSECtrls *spatial_sse_ctrls = &ctx->spatial_sse_ctrls;
