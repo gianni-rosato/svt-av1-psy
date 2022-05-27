@@ -3260,10 +3260,41 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
 
     scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
 }
+
+static void validate_scaling_params(SequenceControlSet *scs_ptr) {
+    if (scs_ptr->static_config.superres_mode == SUPERRES_FIXED &&
+        scs_ptr->static_config.superres_denom == SCALE_NUMERATOR &&
+        scs_ptr->static_config.superres_kf_denom == SCALE_NUMERATOR) {
+        scs_ptr->static_config.superres_mode = SUPERRES_NONE;
+    }
+    if (scs_ptr->static_config.resize_mode == RESIZE_DYNAMIC) {
+        if (scs_ptr->static_config.pred_structure != 1 ||
+            scs_ptr->static_config.pass != ENC_SINGLE_PASS ||
+            scs_ptr->static_config.rate_control_mode != 2) {
+            SVT_WARN("Resize dynamic mode only works at 1-pass CBR low delay mode!\n");
+            scs_ptr->static_config.resize_mode = RESIZE_NONE;
+        }
+    }
+    if (scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH &&
+        scs_ptr->static_config.superres_qthres == MAX_QP_VALUE &&
+        scs_ptr->static_config.superres_kf_qthres == MAX_QP_VALUE) {
+        scs_ptr->static_config.superres_mode = SUPERRES_NONE;
+    }
+    if (scs_ptr->static_config.resize_mode == RESIZE_FIXED &&
+        scs_ptr->static_config.resize_denom == SCALE_NUMERATOR &&
+        scs_ptr->static_config.resize_kf_denom == SCALE_NUMERATOR) {
+        scs_ptr->static_config.resize_mode = RESIZE_NONE;
+    }
+}
+
 void set_param_based_on_input(SequenceControlSet *scs_ptr)
 {
     set_multi_pass_params(
         scs_ptr);
+
+    // superres_mode and resize_mode may be updated,
+    // so should call get_tpl_level() after validate_scaling_params()
+    validate_scaling_params(scs_ptr);
 
     scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_rc, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode, scs_ptr->static_config.resize_mode, scs_ptr->static_config.enable_adaptive_quantization);
 
@@ -3291,16 +3322,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->chroma_height = scs_ptr->max_input_luma_height >> subsampling_y;
     scs_ptr->static_config.source_width = scs_ptr->max_input_luma_width;
     scs_ptr->static_config.source_height = scs_ptr->max_input_luma_height;
-    if (scs_ptr->static_config.superres_mode == SUPERRES_FIXED &&
-        scs_ptr->static_config.superres_denom == SCALE_NUMERATOR &&
-        scs_ptr->static_config.superres_kf_denom == SCALE_NUMERATOR) {
-        scs_ptr->static_config.superres_mode = SUPERRES_NONE;
-    }
-    if (scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH &&
-        scs_ptr->static_config.superres_qthres == MAX_QP_VALUE &&
-        scs_ptr->static_config.superres_kf_qthres == MAX_QP_VALUE) {
-        scs_ptr->static_config.superres_mode = SUPERRES_NONE;
-    }
     if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
         if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
             // disable tiles if super-res is on
@@ -3314,11 +3335,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 "This mode retains a significant amount of memory, much more than other modes!\n");
         }
     }
-    if (scs_ptr->static_config.resize_mode == RESIZE_FIXED &&
-        scs_ptr->static_config.resize_denom == SCALE_NUMERATOR &&
-        scs_ptr->static_config.resize_kf_denom == SCALE_NUMERATOR) {
-        scs_ptr->static_config.resize_mode = RESIZE_NONE;
-    }
     if (scs_ptr->static_config.resize_mode > RESIZE_NONE) {
         if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
             // disable tiles if resize is on
@@ -3330,14 +3346,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             SVT_WARN("Resize random mode is designed for test and debugging purpose,\n"
                 "it creates array of picture buffers for all scaling denominators (up to 8) of each reference frame.\n"
                 "This mode retains a significant amount of memory, much more than other modes!\n");
-        }
-        if (scs_ptr->static_config.resize_mode == RESIZE_DYNAMIC) {
-            if (scs_ptr->static_config.pred_structure != 1 ||
-                scs_ptr->static_config.pass != ENC_SINGLE_PASS ||
-                scs_ptr->static_config.rate_control_mode != 2) {
-                SVT_WARN("Resize dynamic mode only works at 1-pass CBR low delay mode!\n");
-                scs_ptr->static_config.resize_mode = RESIZE_NONE;
-            }
         }
     }
     // Set initial qp for single pass vbr
