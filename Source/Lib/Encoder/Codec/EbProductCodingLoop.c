@@ -7699,15 +7699,7 @@ static void md_stage_2(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
         ModeDecisionCandidateBuffer *candidate_buffer = candidate_buffer_ptr_array[candidateIndex];
         ModeDecisionCandidate       *candidate_ptr    = candidate_buffer->candidate_ptr;
 #if OPT_TXS
-        context_ptr->md_staging_tx_size_mode          = (context_ptr->txs_ctrls.enabled &&
-                                                        (context_ptr->blk_geom->shape == PART_N
-                                                            ? context_ptr->txs_ctrls.inter_class_max_depth_sq
-                                                            : context_ptr->txs_ctrls.inter_class_max_depth_nsq) &&
-                                                is_inter_mode(candidate_ptr->pred_mode) &&
-                                                (context_ptr->blk_geom->sq_size >=
-                                                 context_ptr->txs_ctrls.min_sq_size))
-                     ? 1
-                     : 0;
+        context_ptr->md_staging_tx_size_mode = 0;
 #else
         context_ptr->md_staging_tx_size_mode          = (context_ptr->txs_ctrls.enabled &&
                                                 context_ptr->txs_ctrls.inter_class_max_depth &&

@@ -842,20 +842,22 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txs_level = 1;
     else if (enc_mode <= ENC_MR)
         pcs_ptr->txs_level = 2;
-    else if (enc_mode <= ENC_M1)
+    else if (enc_mode <= ENC_M4)
         pcs_ptr->txs_level = is_base ? 2 : 3;
+    else if (enc_mode <= ENC_M5)
+        pcs_ptr->txs_level = is_base ? 2 : 4;
     else if (enc_mode <= ENC_M6)
         pcs_ptr->txs_level = is_base ? 2 : 0;
     else if (enc_mode <= ENC_M9)
         pcs_ptr->txs_level = is_islice ? 3 : 0;
     else if (enc_mode <= ENC_M10) {
         if (hierarchical_levels <= 3)
-            pcs_ptr->txs_level = is_islice ? 4 : 0;
+            pcs_ptr->txs_level = is_islice ? 5 : 0;
         else
             pcs_ptr->txs_level = is_islice ? 3 : 0;
     }
     else if (enc_mode <= ENC_M11)
-        pcs_ptr->txs_level = is_islice ? 4 : 0;
+        pcs_ptr->txs_level = is_islice ? 5 : 0;
     else
         pcs_ptr->txs_level = 0;
 

@@ -5051,8 +5051,8 @@ void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
         txs_ctrls->enabled = 1;
         txs_ctrls->prev_depth_coeff_exit = 1;
         txs_ctrls->intra_class_max_depth_sq  = 2;
-        txs_ctrls->intra_class_max_depth_nsq = 2;
-        txs_ctrls->inter_class_max_depth_sq  = 0;
+        txs_ctrls->intra_class_max_depth_nsq = 1;
+        txs_ctrls->inter_class_max_depth_sq  = 1;
         txs_ctrls->inter_class_max_depth_nsq = 0;
         txs_ctrls->depth1_txt_group_offset = 0;
         txs_ctrls->depth2_txt_group_offset = 0;
@@ -5062,8 +5062,8 @@ void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
         txs_ctrls->enabled = 1;
         txs_ctrls->prev_depth_coeff_exit = 1;
         txs_ctrls->intra_class_max_depth_sq  = 1;
-        txs_ctrls->intra_class_max_depth_nsq = 1;
-        txs_ctrls->inter_class_max_depth_sq  = 0;
+        txs_ctrls->intra_class_max_depth_nsq = 0;
+        txs_ctrls->inter_class_max_depth_sq  = 1;
         txs_ctrls->inter_class_max_depth_nsq = 0;
         txs_ctrls->depth1_txt_group_offset = 4;
         txs_ctrls->depth2_txt_group_offset = 4;
@@ -5073,12 +5073,12 @@ void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
         txs_ctrls->enabled = 1;
         txs_ctrls->prev_depth_coeff_exit = 1;
         txs_ctrls->intra_class_max_depth_sq  = 1;
-        txs_ctrls->intra_class_max_depth_nsq = 1;
+        txs_ctrls->intra_class_max_depth_nsq = 0;
         txs_ctrls->inter_class_max_depth_sq  = 0;
         txs_ctrls->inter_class_max_depth_nsq = 0;
         txs_ctrls->depth1_txt_group_offset = 4;
         txs_ctrls->depth2_txt_group_offset = 4;
-        txs_ctrls->min_sq_size = 32;
+        txs_ctrls->min_sq_size = 0;
         break;
     default: assert(0); break;
     }
