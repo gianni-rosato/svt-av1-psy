@@ -68,25 +68,24 @@ macOS (Static, Tests):
 
 macOS Unit Tests:
   extends: .macos-unit-test-base
+  variables:
+    SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
+    TOTAL_SHARDS: 4
   parallel:
     matrix:
-      - UNIT_TEST: SvtAv1UnitTests
-        GTEST_TOTAL_SHARDS: 4
-        GTEST_SHARD_INDEX: [0, 1, 2, 3]
-      - UNIT_TEST: SvtAv1E2ETests
-        SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
+      - SHARD_INDEX: [0, 1, 2, 3]
   cache:
     key: testvectors
     paths:
       - test/vectors
     policy: pull-push
+  before_script:
+    - curl -Ls "https://raw.githubusercontent.com/1480c1/gtest-parallel/unique_id/gtest_parallel.py" > gtest_parallel.py
   script:
-    - |
-      if [ -n "$SVT_AV1_TEST_VECTOR_PATH" ]; then
-        cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
-        cmake --build Build --target TestVectors
-      fi
-    - ./Bin/Release/$UNIT_TEST
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+    - cmake --build Build --target TestVectors
+    - python3 gtest_parallel.py --print_test_times --shard_index=$SHARD_INDEX --shard_count=$TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:tmp/{#}.xml"
+    - junitparser merge --glob 'tmp/[0-9]*.xml' report.xml
 
 macOS Enc Test:
   extends: .macos-test-base
