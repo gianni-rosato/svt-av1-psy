@@ -248,25 +248,25 @@ Linux Sanitizer Test:
 
 Linux Unit Tests:
   extends: .linux-unit-test-base
-  parallel:
-    matrix:
-      - UNIT_TEST: [SvtAv1UnitTests, SvtAv1E2ETests]
-        GTEST_TOTAL_SHARDS: 10
-        GTEST_SHARD_INDEX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   variables:
     SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
+    TOTAL_SHARDS: 20
+  parallel:
+    matrix:
+      - SHARD_INDEX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
   cache:
     key: testvectors
     paths:
       - test/vectors
     policy: pull-push
+  before_script:
+    - curl -Ls "https://raw.githubusercontent.com/1480c1/gtest-parallel/unique_id/gtest_parallel.py" > gtest_parallel.py
+    - pip install junitparser
   script:
-    - |
-      if [ -n "$SVT_AV1_TEST_VECTOR_PATH" ]; then
-        cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
-        cmake --build Build --target TestVectors
-      fi
-    - ./Bin/Release/$UNIT_TEST
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+    - cmake --build Build --target TestVectors
+    - python3 gtest_parallel.py --print_test_times --shard_index=$SHARD_INDEX --shard_count=$TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:tmp/{#}.xml"
+    - junitparser merge --glob 'tmp/[0-9]*.xml' report.xml
 
 Linux RC Test:
   extends: .linux-test-base
