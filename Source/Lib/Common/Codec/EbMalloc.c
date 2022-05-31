@@ -24,27 +24,32 @@ void svt_print_alloc_fail(const char* file, int line) {
 
 static EbHandle g_malloc_mutex;
 
+static void malloc_mutex_cleanup(void) { svt_destroy_mutex(g_malloc_mutex); }
+static void create_malloc_mutex(void) {
+    g_malloc_mutex = svt_create_mutex();
+    atexit(malloc_mutex_cleanup);
+}
+
 #ifdef _WIN32
 
 #include <windows.h>
 
 static INIT_ONCE g_malloc_once = INIT_ONCE_STATIC_INIT;
 
-BOOL CALLBACK create_malloc_mutex(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* lpContext) {
+BOOL CALLBACK create_malloc_mutex_wrapper(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* lpContext) {
     (void)InitOnce;
     (void)Parameter;
     (void)lpContext;
-    g_malloc_mutex = svt_create_mutex();
+    create_malloc_mutex();
     return TRUE;
 }
 
 static EbHandle get_malloc_mutex() {
-    InitOnceExecuteOnce(&g_malloc_once, create_malloc_mutex, NULL, NULL);
+    InitOnceExecuteOnce(&g_malloc_once, create_malloc_mutex_wrapper, NULL, NULL);
     return g_malloc_mutex;
 }
 #else
 #include <pthread.h>
-static void create_malloc_mutex() { g_malloc_mutex = svt_create_mutex(); }
 
 static pthread_once_t g_malloc_once = PTHREAD_ONCE_INIT;
 
