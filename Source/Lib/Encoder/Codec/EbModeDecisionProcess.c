@@ -120,7 +120,7 @@ uint16_t get_max_can_count(EncMode enc_mode) {
     else if (enc_mode <= ENC_M7)
         mem_max_can_count = 190;
     else if (enc_mode <= ENC_M11)
-        mem_max_can_count = 120;
+        mem_max_can_count = 175;
     else
         mem_max_can_count = 80;
 
