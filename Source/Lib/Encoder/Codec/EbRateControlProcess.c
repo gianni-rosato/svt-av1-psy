@@ -1103,7 +1103,8 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
         q = scs_ptr->cqp_base_q = svt_av1_get_q_index_from_qstep_ratio(
             active_worst_quality, qstep_ratio, bit_depth);
     }
-    else if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+    else if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag &&
+        pcs_ptr->temporal_layer_index < pcs_ptr->parent_pcs_ptr->hierarchical_levels) {
         int this_height = pcs_ptr->parent_pcs_ptr->temporal_layer_index + 1;
         int arf_q = scs_ptr->cqp_base_q;
         while (this_height > 1) {
