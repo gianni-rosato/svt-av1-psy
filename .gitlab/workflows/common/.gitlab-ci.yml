@@ -153,7 +153,6 @@
     -DENABLE_DOCS=0
     -DENABLE_TESTDATA=0
     -DENABLE_TOOLS=0
-    -DCMAKE_CXX_STANDARD=14
   - cmake --build aom-build --config Release --target install
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libaom"
 # libvpx
