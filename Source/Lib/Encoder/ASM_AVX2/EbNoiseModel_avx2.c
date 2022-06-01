@@ -13,6 +13,7 @@
 #include "EbDefinitions.h"
 #include "common_dsp_rtcd.h"
 #include "noise_util.h"
+#include "noise_model.h"
 
 #if FG_LOSSLES_OPT
 void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val,
@@ -155,5 +156,99 @@ void svt_aom_noise_tx_filter_avx2(int32_t block_size, float *block_ptr, const fl
             tx_block += 16;
         }
     }
+}
+
+void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *block_finder,
+                                                  const uint8_t *const data, int32_t w, int32_t h,
+                                                  int32_t stride, int32_t offsx, int32_t offsy,
+                                                  double *plane, double *block) {
+    const int32_t block_size = block_finder->block_size;
+    const int32_t n          = block_size * block_size;
+    const double *A          = block_finder->A;
+    const double *at_a_inv   = block_finder->at_a_inv;
+    const double  recp_norm  = 1 / block_finder->normalization;
+    double        plane_coords[kLowPolyNumParams];
+    double        at_a_inv__b[kLowPolyNumParams];
+    int32_t       xi, yi, i;
+    assert(kLowPolyNumParams == 3);
+
+    if (block_finder->use_highbd) {
+        const uint16_t *const data16 = (const uint16_t *const)data;
+        if (offsx < 0 || (offsx + block_size) > w) {
+            for (yi = 0; yi < block_size; ++yi) {
+                const int32_t y = clamp(offsy + yi, 0, h - 1);
+                for (xi = 0; xi < block_size; ++xi) {
+                    const int32_t x             = clamp(offsx + xi, 0, w - 1);
+                    block[yi * block_size + xi] = ((double)data16[y * stride + x]) * recp_norm;
+                }
+            }
+        } else {
+            __m256d       data_pd;
+            __m256i       data_epi32;
+            const __m256d recp_norm_pd = _mm256_set1_pd(recp_norm);
+            for (yi = 0; yi < block_size; ++yi) {
+                const int32_t  y        = clamp(offsy + yi, 0, h - 1);
+                const uint16_t *data16_ptr = data16 + y * stride + offsx;
+                for (xi = 0; xi + 8 - 1 < block_size; xi += 8) {
+                    data_epi32 = _mm256_cvtepu16_epi32(_mm_loadu_si128((__m128i *)(data16_ptr + xi)));
+                    data_pd    = _mm256_cvtepi32_pd(_mm256_castsi256_si128(data_epi32));
+                    data_pd    = _mm256_mul_pd(data_pd, recp_norm_pd);
+                    _mm256_storeu_pd(block + yi * block_size + xi, data_pd);
+
+                    data_pd = _mm256_cvtepi32_pd(_mm256_extracti128_si256(data_epi32, 0x1));
+                    data_pd = _mm256_mul_pd(data_pd, recp_norm_pd);
+                    _mm256_storeu_pd(block + yi * block_size + xi + 4, data_pd);
+                }
+                for (; xi < block_size; ++xi) {
+                    block[yi * block_size + xi] = ((double)data16_ptr[xi]) * recp_norm;
+                }
+            }
+        }
+    } else {
+        if (offsx < 0 || (offsx + block_size) > w) {
+            for (yi = 0; yi < block_size; ++yi) {
+                const int32_t y = clamp(offsy + yi, 0, h - 1);
+                for (xi = 0; xi < block_size; ++xi) {
+                    const int32_t x             = clamp(offsx + xi, 0, w - 1);
+                    block[yi * block_size + xi] = ((double)data[y * stride + x]) * recp_norm;
+                }
+            }
+        } else {
+            __m256d       data_pd;
+            __m256i       data_epi32;
+            const __m256d recp_norm_pd = _mm256_set1_pd(recp_norm);
+            for (yi = 0; yi < block_size; ++yi) {
+                const int32_t  y        = clamp(offsy + yi, 0, h - 1);
+                const uint8_t *data_ptr = data + y * stride + offsx;
+                for (xi = 0; xi + 8 - 1 < block_size; xi += 8) {
+                    data_epi32 = _mm256_cvtepu8_epi32(_mm_loadl_epi64((__m128i *)(data_ptr + xi)));
+                    data_pd    = _mm256_cvtepi32_pd(_mm256_castsi256_si128(data_epi32));
+                    data_pd    = _mm256_mul_pd(data_pd, recp_norm_pd);
+                    _mm256_storeu_pd(block + yi * block_size + xi, data_pd);
+
+                    data_pd = _mm256_cvtepi32_pd(_mm256_extracti128_si256(data_epi32, 0x1));
+                    data_pd = _mm256_mul_pd(data_pd, recp_norm_pd);
+                    _mm256_storeu_pd(block + yi * block_size + xi + 4, data_pd);
+                }
+                for (; xi < block_size; ++xi) {
+                    block[yi * block_size + xi] = ((double)data_ptr[xi]) * recp_norm;
+                }
+            }
+        }
+    }
+    multiply_mat_1_n_3(block, A, at_a_inv__b, n);
+    multiply_mat_3_3_1(at_a_inv, at_a_inv__b, plane_coords);
+    multiply_mat_n_3_1(A, plane_coords, plane, n);
+
+    __m256d block_pd, plane_pd;
+    for (i = 0; i + 8 - 1 < n; i += 8) {
+        block_pd = _mm256_loadu_pd(block + i);
+        plane_pd = _mm256_loadu_pd(plane + i);
+        _mm256_storeu_pd(block + i, _mm256_sub_pd(block_pd, plane_pd));
+        block_pd = _mm256_loadu_pd(block + i + 4);
+        plane_pd = _mm256_loadu_pd(plane + i + 4);
+        _mm256_storeu_pd(block + i + 4, _mm256_sub_pd(block_pd, plane_pd));
+    }
+    for (; i < n; ++i) block[i] -= plane[i];
 }
 #endif

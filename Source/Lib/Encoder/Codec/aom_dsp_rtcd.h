@@ -19,6 +19,10 @@
 #include "EbDefinitions.h"
 #include "EbCodingUnit.h"
 
+#if FG_LOSSLES_OPT
+#include "noise_model.h"
+#endif
+
 #undef RTCD_EXTERN
 #ifdef AOM_RTCD_C
 #define RTCD_EXTERN                //CHKN RTCD call in effect. declare the function pointers in  encHandle.
@@ -897,7 +901,8 @@ extern "C" {
     void svt_av1_apply_window_function_to_plane_c(int32_t y_size, int32_t x_size, float *result_ptr, uint32_t result_stride, float *block, float *plane, const float *window_function);
     RTCD_EXTERN void (*svt_aom_noise_tx_filter)(int32_t block_size, float *block_ptr, const float psd);
     void svt_aom_noise_tx_filter_c(int32_t block_size, float *block_ptr, const float psd);
-
+    RTCD_EXTERN void (*svt_aom_flat_block_finder_extract_block)(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
+    void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
 #endif
 #ifdef ARCH_X86_64
     int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
@@ -1742,6 +1747,7 @@ extern "C" {
     void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n);
     void svt_av1_apply_window_function_to_plane_avx2(int32_t y_size, int32_t x_size, float *result_ptr, uint32_t result_stride, float *block, float *plane, const float *window_function);
     void svt_aom_noise_tx_filter_avx2(int32_t block_size, float *block_ptr, const float psd);
+    void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
 #endif
 #endif
 

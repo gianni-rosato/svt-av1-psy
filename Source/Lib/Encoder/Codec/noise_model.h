@@ -133,7 +133,11 @@ int32_t svt_aom_flat_block_finder_init(AomFlatBlockFinder *block_finder, int32_t
 void    svt_aom_flat_block_finder_free(AomFlatBlockFinder *block_finder);
 
 /*!\brief Helper to extract a block and low order "planar" model. */
+#if FG_LOSSLES_OPT
+void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder,
+#else
 void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_finder,
+#endif
                                              const uint8_t *const data, int32_t w, int32_t h,
                                              int32_t stride, int32_t offsx, int32_t offsy,
                                              double *plane, double *block);
@@ -354,6 +358,57 @@ void aom_denoise_and_model_free(struct AomDenoiseAndModel *denoise_model, int32_
 
 int32_t is_ref_noise_model_different(AomNoiseModel *const noise_model,
                                      AomNoiseModel *const ref_noise_model);
+
+#if FG_LOSSLES_OPT
+// Matrix multiply
+static INLINE void multiply_mat_1_n_3(const double *m1, const double *m2, double *res,
+                                      const int32_t inner_dim) {
+    double  sum0 = 0, sum1 = 0, sum2 = 0;
+    int32_t inner_m3 = 0;
+
+    for (int32_t inner = 0; inner < inner_dim; ++inner, inner_m3 += 3) {
+        const double m1_inner = m1[inner];
+        sum0 += m1_inner * m2[inner_m3 + 0];
+        sum1 += m1_inner * m2[inner_m3 + 1];
+        sum2 += m1_inner * m2[inner_m3 + 2];
+    }
+
+    *(res++) = sum0;
+    *(res++) = sum1;
+    *(res++) = sum2;
+}
+
+static INLINE void multiply_mat_3_3_1(const double *m1, const double *m2, double *res) {
+    double sum0, sum1, sum2;
+
+    sum0 = m1[0 * 3 + 0] * m2[0 * 1 + 0];
+    sum0 += m1[0 * 3 + 1] * m2[1 * 1 + 0];
+    sum0 += m1[0 * 3 + 2] * m2[2 * 1 + 0];
+    *(res++) = sum0;
+
+    sum1 = m1[1 * 3 + 0] * m2[0 * 1 + 0];
+    sum1 += m1[1 * 3 + 1] * m2[1 * 1 + 0];
+    sum1 += m1[1 * 3 + 2] * m2[2 * 1 + 0];
+    *(res++) = sum1;
+
+    sum2 = m1[2 * 3 + 0] * m2[0 * 1 + 0];
+    sum2 += m1[2 * 3 + 1] * m2[1 * 1 + 0];
+    sum2 += m1[2 * 3 + 2] * m2[2 * 1 + 0];
+    *(res++) = sum2;
+}
+
+static INLINE void multiply_mat_n_3_1(const double *m1, const double *m2, double *res,
+                                      const int32_t m1_rows) {
+    int32_t row_m3 = 0;
+
+    for (int32_t row = 0; row < m1_rows; ++row, row_m3 += 3) {
+        double sum = m1[row_m3 + 0] * m2[0 * 1 + 0];
+        sum += m1[row_m3 + 1] * m2[1 * 1 + 0];
+        sum += m1[row_m3 + 2] * m2[2 * 1 + 0];
+        *(res++) = sum;
+    }
+}
+#endif
 
 #ifdef __cplusplus
 } // extern "C"

@@ -18,7 +18,9 @@
 #include "EbLog.h"
 #include "aom_dsp_rtcd.h"
 
+#if !FG_LOSSLES_OPT
 #define kLowPolyNumParams 3
+#endif
 
 static const int32_t k_max_lag = 4;
 
@@ -477,6 +479,7 @@ void svt_aom_flat_block_finder_free(AomFlatBlockFinder *block_finder) {
     memset(block_finder, 0, sizeof(*block_finder));
 }
 
+#if !FG_LOSSLES_OPT
 // Matrix multiply
 static INLINE void multiply_mat_1_n_3(const double *m1, const double *m2, double *res,
                                       const int32_t inner_dim) {
@@ -525,8 +528,13 @@ static INLINE void multiply_mat_n_3_1(const double *m1, const double *m2, double
         *(res++) = sum;
     }
 }
+#endif
 
+#if FG_LOSSLES_OPT
+void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder,
+#else
 void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_finder,
+#endif
                                              const uint8_t *const data, int32_t w, int32_t h,
                                              int32_t stride, int32_t offsx, int32_t offsy,
                                              double *plane, double *block) {

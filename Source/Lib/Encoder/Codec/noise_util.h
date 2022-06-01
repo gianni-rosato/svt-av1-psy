@@ -17,6 +17,8 @@ extern "C" {
 #endif // __cplusplus
 
 #if FG_LOSSLES_OPT
+#define kLowPolyNumParams 3
+
 // Internal representation of noise transform. It keeps track of the
 // transformed data and a temporary working buffer to use during the
 // transform.
