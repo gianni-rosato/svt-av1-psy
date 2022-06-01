@@ -142,12 +142,6 @@
   - FFMPEG_CONFIG_FLAGS="${FFMPEG_CONFIG_FLAGS:+$FFMPEG_CONFIG_FLAGS }--enable-libsvtav1"
 # aom
 .ffmpeg-aom-script:
-  # Temporary fix for https://bugs.chromium.org/p/aomedia/issues/detail?id=3240
-  - |
-    [ -f aom-src/av1/ratectrl_qmode.cc ] || {
-      git -C aom-src mv av1/ratectrl_qmode.{h,cc}
-      sed -i.bak s/ratectrl_qmode.h/ratectrl_qmode.cc/g aom-src/CMakeLists.txt
-    }
   - cmake
     -S aom-src
     -B aom-build
