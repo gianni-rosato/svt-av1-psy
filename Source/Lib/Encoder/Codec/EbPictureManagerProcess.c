@@ -851,7 +851,8 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
 
                         // force re-ctor sb_ptr since child_pcs_ptrs are reused, and sb_ptr could be altered by superres tool when coding previous pictures
-                        if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
+                        if (scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
+                            scs_ptr->static_config.resize_mode > RESIZE_NONE) {
                             // Modify sb_prt_array in child pcs
                             uint16_t sb_index;
                             uint16_t sb_origin_x = 0;
@@ -874,6 +875,12 @@ void *picture_manager_kernel(void *input_ptr) {
                                 sb_origin_x = (sb_origin_x == pic_width_in_sb - 1)
                                     ? 0
                                     : sb_origin_x + 1;
+                            }
+
+                            // reset input_frame16bit to align with enhanced_picture_ptr
+                            if (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
+                                copy_buffer_info(entry_pcs_ptr->enhanced_picture_ptr,
+                                                 child_pcs_ptr->input_frame16bit);
                             }
                         }
 
