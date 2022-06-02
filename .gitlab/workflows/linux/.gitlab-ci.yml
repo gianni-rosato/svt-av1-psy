@@ -211,10 +211,14 @@ Valgrind:
   parallel:
     matrix:
       - PASSES: 2
-      - PASS: 1
+      - PASS: [1, ]
+        RC: [--rc 1 --tbr 500, -q 35]
+        REF_SCALE: [--resize-mode 0, --resize-mode 1, --resize-mode 2, --resize-mode 3, --resize-mode 4]
   script:
     # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
-    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m --rc 1 --tbr 500 -n 10 --lp 7 -b test1.ivf
+    - printf 'testing:\n'
+    - echo ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m ${RC} -n 10 --lp 7 -b test1.ivf ${REF_SCALE}
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m ${RC} -n 10 --lp 7 -b test1.ivf ${REF_SCALE}
   needs:
     - Linux (Valgrind)
 
