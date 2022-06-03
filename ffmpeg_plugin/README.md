@@ -10,6 +10,7 @@ For the original commits the patch was generated from, see <https://gitlab.com/1
 Notes:
 
 - The patches for n4.4 have been tested to apply cleanly to n4.4.1 and n4.4.2.
+- The patches for n5.0 have been tested to apply cleanly to n5.0.1.
 
 ### n5.0 - [svt-av1/n5.0](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n5.0)
 
@@ -21,6 +22,8 @@ Notes:
 - [51c0b9e829](https://gitlab.com/1480c1/FFmpeg/-/commit/51c0b9e829): Backport patch for passing color description info
 - [e3c4442b24](https://gitlab.com/1480c1/FFmpeg/-/commit/e3c4442b24): Backport patch for parsing svtav1-params last
 - [ded0334d21](https://gitlab.com/1480c1/FFmpeg/-/commit/ded0334d21): Backport patch for choma-sample-location
+- [70887d44ff](https://gitlab.com/1480c1/FFmpeg/-/commit/70887d44ff): Backport patch for not setting tbr if it's not needed
+- [fe100bc556](https://gitlab.com/1480c1/FFmpeg/-/commit/fe100bc556): Backport patch for passing bitrate properties through cpb side data
 
 #### Using SVT-AV1 v1.1?
 

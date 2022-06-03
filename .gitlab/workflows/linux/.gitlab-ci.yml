@@ -491,7 +491,7 @@ Linux FFmpeg (n5.0, Static):
   before_script:
     - !reference [.ffmpeg-before-script-clone]
     - git -C ffmpeg-src checkout n5.0
-    - git -C ffmpeg-src am -3 "$PWD/ffmpeg_plugin/n5.0/FFmpeg-5.0.patch"
+    - git -C ffmpeg-src am -3 "$PWD/ffmpeg_plugin/n5.0/"*.patch
     - !reference [.ffmpeg-before-script-export]
   script:
     - !reference [.ffmpeg-svtav1-script]
