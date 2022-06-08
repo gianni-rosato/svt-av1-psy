@@ -693,11 +693,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cfl_level = is_base ? 2 : 0;
 #if TUNE_SSIM_M5
     } else if (enc_mode <= ENC_M4)
-        pcs_ptr->cfl_level = 1;
 #else
     } else if (enc_mode <= ENC_M5)
-        pcs_ptr->cfl_level = 1;
 #endif
+        pcs_ptr->cfl_level = 1;
     else if (enc_mode <= ENC_M9)
         pcs_ptr->cfl_level = is_base ? 2 : 0;
     else if (enc_mode <= ENC_M11) {
@@ -835,11 +834,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         scs_ptr->seq_header.enable_interintra_compound) {
 #if TUNE_SSIM_M2
         if (enc_mode <= ENC_M1)
-            pcs_ptr->md_inter_intra_level = 1;
 #else
         if (enc_mode <= ENC_M2)
-            pcs_ptr->md_inter_intra_level = 1;
 #endif
+            pcs_ptr->md_inter_intra_level = 1;
         else if (enc_mode <= ENC_M11)
             pcs_ptr->md_inter_intra_level = transition_present ? 1 : 0;
         else

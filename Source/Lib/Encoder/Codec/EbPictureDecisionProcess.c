@@ -1406,11 +1406,10 @@ uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_re
             sg_filter_lvl = 1;
 #if TUNE_SSIM_M5
         else if (enc_mode <= ENC_M5)
-            sg_filter_lvl = is_base ? 1 : 4;
 #else
         else if (enc_mode <= ENC_M4)
-            sg_filter_lvl = is_base ? 1 : 4;
 #endif
+            sg_filter_lvl = is_base ? 1 : 4;
         else
             sg_filter_lvl = 0;
     }

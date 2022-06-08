@@ -4697,11 +4697,10 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
     }
 #if TUNE_SSIM_M1
     else if (enc_mode <= ENC_M0)
-        depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
 #else
     else if (enc_mode <= ENC_M1)
-        depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
 #endif
+        depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
     else if (enc_mode <= ENC_M2)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
     else if (enc_mode <= ENC_M8)
