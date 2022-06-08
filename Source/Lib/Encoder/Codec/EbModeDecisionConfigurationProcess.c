@@ -421,11 +421,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     } else {
         if (fast_decode == 0) {
-#if TUNE_DEFAULT_M6
-            if (enc_mode <= ENC_M6)
-#else
             if (enc_mode <= ENC_M5)
-#endif
                 ppcs->frm_hdr.use_ref_frame_mvs = 1;
             else {
                 uint64_t avg_me_dist = 0;
