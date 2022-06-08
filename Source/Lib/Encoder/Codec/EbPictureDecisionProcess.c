@@ -1719,7 +1719,9 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
 uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
     SequenceControlSet* scs_ptr = pcs_ptr->scs_ptr;
     uint8_t gm_level = 0;
+#if !TUNE_SSIM_M5
     const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#endif
     const EncMode enc_mode = pcs_ptr->enc_mode;
     const uint8_t is_ref = pcs_ptr->is_used_as_reference_flag;
 
