@@ -1485,7 +1485,11 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
     // Don't disable DLF for low resolutions when fast-decode is used
     if (fast_decode == 0 || resolution <= INPUT_SIZE_360p_RANGE) {
 #if TUNE_DEFAULT_M6
+#if TUNE_SSIM_M6
+        if (enc_mode <= ENC_M6)
+#else
         if (enc_mode <= ENC_M5)
+#endif
 #else
         if (enc_mode <= ENC_M6)
 #endif
@@ -1923,8 +1927,13 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = 1;
             else if (enc_mode <= ENC_M3)
                 pcs_ptr->cdef_level = 2;
+#if TUNE_SSIM_M6
+            else if (enc_mode <= ENC_M6)
+                pcs_ptr->cdef_level = 4;
+#else
             else if (enc_mode <= ENC_M5)
                 pcs_ptr->cdef_level = 4;
+#endif
             else if (enc_mode <= ENC_M10)
                 pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
             else if (enc_mode <= ENC_M11)

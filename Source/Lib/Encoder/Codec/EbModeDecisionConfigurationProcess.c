@@ -564,7 +564,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
             if (ppcs->enc_mode <= ENC_M3)
                 ppcs->pic_obmc_level = 1;
+#if TUNE_SSIM_M6
+            else if (enc_mode <= ENC_M5)
+#else
             else if (enc_mode <= ENC_M6)
+#endif
                 ppcs->pic_obmc_level = 2;
             else
                 ppcs->pic_obmc_level = 0;
