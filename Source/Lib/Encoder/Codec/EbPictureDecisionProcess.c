@@ -1518,12 +1518,16 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
                 dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
         }
 #endif
+#if FIX_M9_M10_DLF
 #if TUNE_SSIM_M11
         else if (enc_mode <= ENC_M11)
 #else
         else if (enc_mode <= ENC_M10)
 #endif
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 3 : 0);
+#else
+            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 2 : 0);
+#endif
         else if (enc_mode <= ENC_M12)
             dlf_level = is_used_as_reference_flag ? 4 : 0;
         else
