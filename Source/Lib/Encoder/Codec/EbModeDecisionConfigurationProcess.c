@@ -638,7 +638,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = 5;
     else if (enc_mode <= ENC_M10)
         pcs_ptr->txt_level = is_base ? 6 : 8;
+#if TUNE_SSIM_M12
+    else if (enc_mode <= ENC_M12) {
+#else
     else if (enc_mode <= ENC_M11) {
+#endif
         pcs_ptr->txt_level = is_base ? 6 : 8;
         if (pcs_ptr->ref_intra_percentage < 85 && !is_base && !pcs_ptr->parent_pcs_ptr->sc_class1) {
             pcs_ptr->txt_level = 0;

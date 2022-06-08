@@ -3750,11 +3750,7 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
         else
             nic_level = 14;
     }
-#if TUNE_SSIM_M12
-    else if (enc_mode <= ENC_M12)
-#else
     else if (enc_mode <= ENC_M11)
-#endif
         nic_level = 15;
     else
         nic_level = 16;
