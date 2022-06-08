@@ -959,7 +959,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     if (pcs_ptr->parent_pcs_ptr->sc_class1 || scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
         pcs_ptr->pic_skip_pd0 = 0;
+#if TUNE_SSIM_M13
+    else if (enc_mode <= ENC_M13)
+#else
     else if (enc_mode <= ENC_M12)
+#endif
         pcs_ptr->pic_skip_pd0 = 0;
     else
         pcs_ptr->pic_skip_pd0 = is_base ? 0 : 1;
