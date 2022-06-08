@@ -740,8 +740,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (scs_ptr->compound_level == DEFAULT) {
             if (enc_mode <= ENC_MR)
                 pcs_ptr->inter_compound_mode = 1;
+#if !PUSH_INTER_COMPOUND
             else if (enc_mode <= ENC_M2)
                 pcs_ptr->inter_compound_mode = 2;
+#endif
             else if (enc_mode <= ENC_M3)
                 pcs_ptr->inter_compound_mode = 3;
             else
@@ -823,8 +825,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // 3                                     FAST 2 : Level 1 + do not inject for non-closest ref frames or ref frames with high distortion
     if (pcs_ptr->parent_pcs_ptr->slice_type != I_SLICE &&
         scs_ptr->seq_header.enable_interintra_compound) {
+#if TUNE_SSIM_M2
+        if (enc_mode <= ENC_M1)
+            pcs_ptr->md_inter_intra_level = 1;
+#else
         if (enc_mode <= ENC_M2)
             pcs_ptr->md_inter_intra_level = 1;
+#endif
         else if (enc_mode <= ENC_M11)
             pcs_ptr->md_inter_intra_level = transition_present ? 1 : 0;
         else

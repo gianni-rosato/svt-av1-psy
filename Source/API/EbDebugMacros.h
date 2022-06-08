@@ -51,6 +51,8 @@ extern "C" {
 #define TUNE_SSIM_M12           1 // Tune default M12 for SSIM
 #define TUNE_SSIM_M5            1 // Tune default M5 for SSIM
 #define TUNE_SSIM_M1            1 // Tune default M1 for SSIM
+#define TUNE_SSIM_M2            1 // Tune default M2 for SSIM
+#define PUSH_INTER_COMPOUND		1 // Push down M3 Inter Compound Mode to M0
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

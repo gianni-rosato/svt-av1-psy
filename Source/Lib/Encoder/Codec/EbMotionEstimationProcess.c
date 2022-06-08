@@ -560,12 +560,15 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     } else {
         if (enc_mode <= ENC_MRS)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
-        else if (enc_mode <= ENC_M1)
-
+#if TUNE_SSIM_M2
+		else if (enc_mode <= ENC_M2)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+#else
+		else if (enc_mode <= ENC_M1)
+            set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+#endif
         else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
-
     }
     // Set hme-based me sr adjustment level
     if (pcs_ptr->sc_class1)

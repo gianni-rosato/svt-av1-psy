@@ -3723,10 +3723,15 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
         nic_level = 0;
     else if (enc_mode <= ENC_MR)
         nic_level = 1;
+#if TUNE_SSIM_M1
+    else if (enc_mode <= ENC_M1)
+        nic_level = is_base ? 2 : 4;
+#else
     else if (enc_mode <= ENC_M0)
         nic_level = is_base ? 2 : 4;
     else if (enc_mode <= ENC_M1)
         nic_level = 5;
+#endif
     else if (enc_mode <= ENC_M2)
         nic_level = 9;
     else if (enc_mode <= ENC_M3) {
@@ -4690,8 +4695,13 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
         else
             depth_level = pcs_ptr->slice_type == I_SLICE ? 3 : 0;
     }
+#if TUNE_SSIM_M1
+    else if (enc_mode <= ENC_M0)
+        depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
+#else
     else if (enc_mode <= ENC_M1)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
+#endif
     else if (enc_mode <= ENC_M2)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
     else if (enc_mode <= ENC_M8)
