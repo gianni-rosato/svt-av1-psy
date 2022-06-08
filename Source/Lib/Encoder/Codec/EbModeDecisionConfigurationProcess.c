@@ -687,10 +687,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cfl_level = 1;
         else
             pcs_ptr->cfl_level = is_base ? 2 : 0;
+#if TUNE_SSIM_M5
+    } else if (enc_mode <= ENC_M4)
+        pcs_ptr->cfl_level = 1;
+#else
     } else if (enc_mode <= ENC_M5)
         pcs_ptr->cfl_level = 1;
+#endif
     else if (enc_mode <= ENC_M9)
-
         pcs_ptr->cfl_level = is_base ? 2 : 0;
     else if (enc_mode <= ENC_M11) {
         if (hierarchical_levels <= 3)
