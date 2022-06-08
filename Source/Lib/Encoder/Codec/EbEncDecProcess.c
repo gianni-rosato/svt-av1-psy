@@ -3744,7 +3744,12 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
             nic_level = 15;
         else
             nic_level = 14;
-    } else if (enc_mode <= ENC_M11)
+    }
+#if TUNE_SSIM_M12
+    else if (enc_mode <= ENC_M12)
+#else
+    else if (enc_mode <= ENC_M11)
+#endif
         nic_level = 15;
     else
         nic_level = 16;
@@ -5816,7 +5821,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
     } else if (enc_mode <= ENC_M9)
         context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
+#if TUNE_SSIM_M12
+    else if (enc_mode <= ENC_M12)
+#else
     else if (enc_mode <= ENC_M11)
+#endif
         context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
     else
         context_ptr->md_subpel_me_level = is_ref ? 9 : 11;

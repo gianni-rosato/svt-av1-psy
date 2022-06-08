@@ -44,8 +44,14 @@ extern "C" {
 #define TUNE_DEFAULT_M6         1 // Tune default M6 with consideration to decode speed
 #define TUNE_DEFAULT_M5         1 // Tune default M5 with consideration to decode speed
 #define TUNE_DEFAULT_M3         1 // Tune default M3 with consideration to decode speed
+
 #define CBR_OPT                 1 // Optimisation of the cbr mode towards better coding efficiency and behavior
 #define CBR_QPM                 1 // QP modulation for the cbr mode based on Motion estimatiom distorsion (no tpl)
+
+#define TUNE_SSIM_M12           1 // Tune default M12 for SSIM
+#define TUNE_SSIM_M5            1 // Tune default M5 for SSIM
+#define TUNE_SSIM_M1            1 // Tune default M1 for SSIM
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

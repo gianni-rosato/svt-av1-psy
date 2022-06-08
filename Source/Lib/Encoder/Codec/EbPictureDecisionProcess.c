@@ -1732,12 +1732,14 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
             gm_level = 3;
         else if (enc_mode <= ENC_M4)
             gm_level = is_ref ? 4 : 0;
+#if !TUNE_SSIM_M5
         else if (enc_mode <= ENC_M5) {
             if (hierarchical_levels <= 3)
                 gm_level = is_ref ? 5 : 0;
             else
                 gm_level = is_ref ? 4 : 0;
         }
+#endif
 #if TUNE_DEFAULT_M7
         else if (pcs_ptr->enc_mode <= ENC_M6)
             gm_level = is_ref ? 5 : 0;
@@ -1959,7 +1961,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tx_size_search_mode = 1;
     else if (enc_mode <= ENC_M6)
         pcs_ptr->tx_size_search_mode = is_base ? 1 : 0;
+#if TUNE_SSIM_M12
+    else if (enc_mode <= ENC_M12)
+#else
     else if (enc_mode <= ENC_M11)
+#endif
         pcs_ptr->tx_size_search_mode = is_islice ? 1 : 0;
     else
         pcs_ptr->tx_size_search_mode = 0;

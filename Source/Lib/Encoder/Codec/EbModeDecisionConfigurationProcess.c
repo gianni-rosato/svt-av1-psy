@@ -648,7 +648,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // Set the level for the txt shortcut feature
     // Any tx_shortcut_level having the chroma detector off in REF frames should be reserved for M13+
     pcs_ptr->tx_shortcut_level = 0;
+#if TUNE_SSIM_M5
+    if (enc_mode <= ENC_M4)
+#else
     if (enc_mode <= ENC_M5)
+#endif
         pcs_ptr->tx_shortcut_level = 0;
     else if (enc_mode <= ENC_M10)
         pcs_ptr->tx_shortcut_level = is_islice ? 0 : 1;
@@ -707,10 +711,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->new_nearest_near_comb_injection = scs_ptr->new_nearest_comb_inject;
 
     // Set the level for unipred3x3 injection
+#if TUNE_SSIM_M1
+    if (enc_mode <= ENC_M1)
+        pcs_ptr->unipred3x3_injection = 1;
+#else
     if (enc_mode <= ENC_M0)
         pcs_ptr->unipred3x3_injection = 1;
     else if (enc_mode <= ENC_M1)
         pcs_ptr->unipred3x3_injection = 2;
+#endif
     else
         pcs_ptr->unipred3x3_injection = 0;
 
