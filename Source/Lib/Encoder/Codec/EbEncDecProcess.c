@@ -4635,7 +4635,11 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
 #endif
         disallow_below_16x16 = 0;
 #if TUNE_DEFAULT_M10_M11
+#if TUNE_SSIM_M11
+    else if (enc_mode <= ENC_M11) {
+#else
     else if (enc_mode <= ENC_M10) {
+#endif
         if (resolution <= INPUT_SIZE_1080p_RANGE)
             disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
         else
