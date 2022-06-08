@@ -49,6 +49,7 @@ extern "C" {
 #define CBR_QPM                 1 // QP modulation for the cbr mode based on Motion estimatiom distorsion (no tpl)
 
 #define TUNE_SSIM_M12           1 // Tune default M12 for SSIM
+#define TUNE_SSIM_M8            1 // Tune default M8 for SSIM
 #define TUNE_SSIM_M7            1 // Tune default M7 for SSIM
 #define TUNE_SSIM_M6            1 // Tune default M6 for SSIM
 #define TUNE_SSIM_M5            1 // Tune default M5 for SSIM

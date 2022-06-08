@@ -1495,14 +1495,18 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
             dlf_level = 1;
         else if (enc_mode <= ENC_M7)
             dlf_level = 2;
+#if TUNE_SSIM_M8
+        else if (enc_mode <= ENC_M7) {
+#else
         else if (enc_mode <= ENC_M8) {
+#endif
             if (hierarchical_levels <= 3)
                 dlf_level = is_used_as_reference_flag ? 2 : 0;
             else
                 dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
         }
         else if (enc_mode <= ENC_M10)
-            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 2 : 0);
+            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 3 : 0);
         else if (enc_mode <= ENC_M12)
             dlf_level = is_used_as_reference_flag ? 4 : 0;
         else
@@ -2047,7 +2051,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->max_can_count = get_max_can_count(enc_mode);
 
 #if TUNE_DEFAULT_M9
+#if TUNE_SSIM_M8
+    if (enc_mode <= ENC_M7)
+#else
     if (enc_mode <= ENC_M8)
+#endif
         pcs_ptr->use_best_me_unipred_cand_only = 0;
 #else
     else if (enc_mode <= ENC_M9) {
