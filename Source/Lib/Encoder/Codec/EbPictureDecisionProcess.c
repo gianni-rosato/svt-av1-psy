@@ -1493,6 +1493,18 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
         if (enc_mode <= ENC_M6)
 #endif
             dlf_level = 1;
+#if TUNE_M7_M8_DLF
+        else if (enc_mode <= ENC_M6)
+            dlf_level = 2;
+        else if (enc_mode <= ENC_M7)
+            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 2 : 4);
+        else if (enc_mode <= ENC_M8) {
+            if (hierarchical_levels <= 3)
+                dlf_level = is_used_as_reference_flag ? 2 : 0;
+            else
+                dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 3 : 4);
+        }
+#else
         else if (enc_mode <= ENC_M7)
             dlf_level = 2;
 #if TUNE_SSIM_M8
@@ -1505,6 +1517,7 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
             else
                 dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
         }
+#endif
 #if TUNE_SSIM_M11
         else if (enc_mode <= ENC_M11)
 #else
