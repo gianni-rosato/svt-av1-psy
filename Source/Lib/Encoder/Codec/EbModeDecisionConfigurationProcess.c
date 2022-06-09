@@ -34,10 +34,16 @@ int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth)
 int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
+#if TUNE_SSIM_M11
+uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
+                                               SliceType slice_type, uint8_t sc_class1,
+                                               uint8_t is_used_as_reference_flag);
+#else
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                SliceType slice_type, uint8_t sc_class1,
                                                uint8_t is_used_as_reference_flag,
                                                uint8_t temporal_layer_index);
+#endif
 
 #define MAX_MESH_SPEED 5 // Max speed setting for mesh motion method
 static MeshPattern good_quality_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
@@ -560,11 +566,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
             if (ppcs->enc_mode <= ENC_M3)
                 ppcs->pic_obmc_level = 1;
-#if TUNE_SSIM_M6
-            else if (enc_mode <= ENC_M5)
-#else
             else if (enc_mode <= ENC_M6)
-#endif
                 ppcs->pic_obmc_level = 2;
             else
                 ppcs->pic_obmc_level = 0;
@@ -964,6 +966,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->pic_skip_pd0 = is_base ? 0 : 1;
 
+#if TUNE_SSIM_M11
+    pcs_ptr->pic_disallow_below_16x16 = get_disallow_below_16x16_picture_level(
+        enc_mode,
+        input_resolution,
+        slice_type,
+        ppcs->sc_class1,
+        pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag);
+#else
     pcs_ptr->pic_disallow_below_16x16 = get_disallow_below_16x16_picture_level(
         enc_mode,
         input_resolution,
@@ -971,6 +981,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ppcs->sc_class1,
         pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag,
         pcs_ptr->temporal_layer_index);
+#endif
 
     if (scs_ptr->super_block_size == 64) {
         if (is_islice || transition_present) {

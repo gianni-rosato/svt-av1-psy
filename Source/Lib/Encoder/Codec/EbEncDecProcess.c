@@ -4616,10 +4616,16 @@ static void set_detect_high_freq_ctrls(ModeDecisionContext* ctx, uint8_t detect_
 }
 
 // use this function to set the disallow_below_16x16 level and to set the accompanying enable_me_8x8 level
+#if TUNE_SSIM_M11
+uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
+                                                SliceType slice_type, uint8_t sc_class1,
+                                                uint8_t is_used_as_reference_flag) {
+#else
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                SliceType slice_type, uint8_t sc_class1,
                                                uint8_t is_used_as_reference_flag,
                                                uint8_t temporal_layer_index) {
+#endif
     uint8_t disallow_below_16x16 = 0;
 
     if (sc_class1)
@@ -4630,12 +4636,16 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
     else if (enc_mode <= ENC_M8)
 #endif
         disallow_below_16x16 = 0;
-#if TUNE_DEFAULT_M10_M11
 #if TUNE_SSIM_M11
     else if (enc_mode <= ENC_M11) {
+        if (resolution <= INPUT_SIZE_1080p_RANGE)
+            disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
+        else
+            disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
+    }
 #else
+#if TUNE_DEFAULT_M10_M11
     else if (enc_mode <= ENC_M10) {
-#endif
         if (resolution <= INPUT_SIZE_1080p_RANGE)
             disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
         else
@@ -4653,7 +4663,7 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
         disallow_below_16x16 = (resolution <= INPUT_SIZE_480p_RANGE)
             ? (temporal_layer_index == 0 ? 0 : 1)
             : ((slice_type == I_SLICE) ? 0 : 1);
-
+#endif
     else
         disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
 

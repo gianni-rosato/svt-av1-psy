@@ -3134,11 +3134,7 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
     else if (enc_mode <= ENC_M5)
 #endif
         tpl_level = 1;
-#if TUNE_SSIM_M7
-    else if (enc_mode <= ENC_M6)
-#else
     else if (enc_mode <= ENC_M7)
-#endif
         tpl_level = 3;
     else if (enc_mode <= ENC_M9) {
         tpl_level = 4;

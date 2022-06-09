@@ -52,8 +52,6 @@ extern "C" {
 #define TUNE_SSIM_M12           1 // Tune default M12 for SSIM
 #define TUNE_SSIM_M11           1 // Tune default M11 for SSIM
 #define TUNE_SSIM_M8            1 // Tune default M8 for SSIM
-#define TUNE_SSIM_M7            1 // Tune default M7 for SSIM
-#define TUNE_SSIM_M6            1 // Tune default M6 for SSIM
 #define TUNE_SSIM_M5            1 // Tune default M5 for SSIM
 #define TUNE_SSIM_M2            1 // Tune default M2 for SSIM
 #define TUNE_SSIM_M1            1 // Tune default M1 for SSIM
@@ -61,7 +59,7 @@ extern "C" {
 #define FIX_M9_M10_DLF          1 // Adjust M9 M10 DLF level to fix decoder speed
 #define TUNE_M7_M8_DLF          1 // Adjust M7 M8 DLF level to improve decoder speed
 
-#define PUSH_INTER_COMPOUND		1 // Push down M3 Inter Compound Mode to M0
+#define PUSH_INTER_COMPOUND     1 // Push down M3 Inter Compound Mode to M0
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
