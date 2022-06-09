@@ -29,6 +29,11 @@
 #include "EbMotionEstimation.h"
 #include "EbEncDecResults.h"
 #include "EbRateDistortionCost.h"
+#if FTR_TPL_SUBPEL
+#include "mcomp.h"
+#include "av1me.h"
+#include "EbEncInterPrediction.h"
+#endif
 
 /**************************************
  * Context
@@ -363,7 +368,59 @@ int16_t av1_dc_quant_qtx(int qindex, int delta, EbBitDepth bit_depth) {
         return -1;
     }
 }
+#if OPT_TPL_QPS
+// Returns the default rd multiplier for inter frames for a given qindex.
+// The function here is a first pass estimate based on data from
+// a previous Vizer run
+static double def_inter_rd_multiplier(int qindex) {
+    return 3.2 + (0.0035 * (double)qindex);
+}
 
+// Returns the default rd multiplier for ARF/Golden Frames for a given qindex.
+// The function here is a first pass estimate based on data from
+// a previous Vizer run
+static double def_arf_rd_multiplier(int qindex) {
+    return 3.25 + (0.0035 * (double)qindex);
+}
+
+// Returns the default rd multiplier for key frames for a given qindex.
+// The function here is a first pass estimate based on data from
+// a previous Vizer run
+static double def_kf_rd_multiplier(int qindex) {
+    return 3.3 + (0.0035 * (double)qindex);
+}
+
+int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type, int qindex) {
+    const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
+    int64_t rdmult = q * q;
+
+    // Scale rdmult based on frame type (previously scaled with the following formula for all frame types:
+    // rdmult = rdmult * 3 + (rdmult * 2 / 3);
+    if (update_type == KF_UPDATE) {
+        double def_rd_q_mult = def_kf_rd_multiplier(qindex);
+        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
+    }
+    else if ((update_type == GF_UPDATE) || (update_type == ARF_UPDATE)) {
+        double def_rd_q_mult = def_arf_rd_multiplier(qindex);
+        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
+    }
+    else {
+        double def_rd_q_mult = def_inter_rd_multiplier(qindex);
+        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
+    }
+
+    switch (bit_depth) {
+    case EB_EIGHT_BIT: break;
+    case EB_TEN_BIT: rdmult = ROUND_POWER_OF_TWO(rdmult, 4); break;
+    case EB_TWELVE_BIT: rdmult = ROUND_POWER_OF_TWO(rdmult, 8); break;
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
+    }
+
+    return rdmult > 0 ? (int)AOMMIN(rdmult, INT_MAX) : 1;
+}
+#else
 int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, int qindex) {
     const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
     //const int q = svt_av1_dc_quant_Q3(qindex, 0, bit_depth);
@@ -387,7 +444,7 @@ int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, int qindex) {
     return rdmult > 0 ? rdmult : 1;
 #endif
 }
-
+#endif
 double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
 
 int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_depth);
@@ -555,6 +612,161 @@ uint32_t blk_end_array[MAX_TPL_MODE]      = {20, 4, 0};
 TxSize   tx_size_array[MAX_TPL_MODE]      = {TX_16X16, TX_32X32, TX_64X64};
 TxSize   sub2_tx_size_array[MAX_TPL_MODE] = {TX_16X8, TX_32X16, TX_64X32};
 TxSize   sub4_tx_size_array[MAX_TPL_MODE] = {TX_16X4, TX_32X8, TX_64X16};
+#if FTR_TPL_SUBPEL
+extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+static int  sad_per_bit16lut_8[QINDEX_RANGE];
+static int  sad_per_bit_lut_10[QINDEX_RANGE];
+static void init_me_luts_bd(int *bit16lut, int range, EbBitDepth bit_depth) {
+    int i;
+    // Initialize the sad lut tables using a formulaic calculation for now.
+    // This is to make it easier to resolve the impact of experimental changes
+    // to the quantizer tables.
+    for (i = 0; i < range; i++) {
+        const double q = svt_av1_convert_qindex_to_q(i, bit_depth);
+        bit16lut[i] = (int)(0.0418 * q + 2.4107);
+    }
+}
+void svt_av1_tpl_init_me_luts(void) {
+    init_me_luts_bd(sad_per_bit16lut_8, QINDEX_RANGE, EB_EIGHT_BIT);
+    init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, EB_TEN_BIT);
+}
+static void svt_tpl_init_mv_cost_params(SequenceControlSet *scs_ptr, MV_COST_PARAMS *mv_cost_params, int bsize,
+    const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult,
+    uint8_t hbd_mode_decision) {
+    mv_cost_params->ref_mv = ref_mv;
+    mv_cost_params->full_ref_mv = get_fullmv_from_mv(ref_mv);
+    mv_cost_params->early_exit_th = 1020 - (bsize >> 2);
+    mv_cost_params->mv_cost_type = MV_COST_ENTROPY;// MV_COST_NONE;// MV_COST_ENTROPY;
+    mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
+    mv_cost_params->sad_per_bit = hbd_mode_decision ? sad_per_bit_lut_10[base_q_idx]
+                                            : sad_per_bit16lut_8[base_q_idx];
+    // Use values when approx_inter_rate is enabled
+    memset(scs_ptr->nmv_vec_cost, 0, sizeof(int32_t) * MV_JOINTS);
+    memset(scs_ptr->nmv_costs, 0, sizeof(int32_t) * MV_VALS * 2);
+    mv_cost_params->mvjcost = scs_ptr->nmv_vec_cost;// context_ptr->md_rate_estimation_ptr->nmv_vec_cost;
+    mv_cost_params->mvcost[0] = &scs_ptr->nmv_costs[0][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[0];
+    mv_cost_params->mvcost[1] = &scs_ptr->nmv_costs[1][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[1];
+
+}
+int compute_rdmult_sse(PictureParentControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth);
+void enc_make_inter_predictor(SequenceControlSet *scs_ptr, uint8_t *src_ptr, uint8_t *src_ptr_2b,
+    uint8_t *dst_ptr, int16_t pre_y, int16_t pre_x, MV mv,
+    const struct ScaleFactors *const sf, ConvolveParams *conv_params,
+    InterpFilters interp_filters, InterInterCompoundData *interinter_comp,
+    uint8_t *seg_mask, uint16_t frame_width, uint16_t frame_height,
+    uint8_t blk_width, uint8_t blk_height, BlockSize bsize,
+    MacroBlockD *av1xd, int32_t src_stride, int32_t dst_stride,
+    uint8_t plane, const uint32_t ss_y, const uint32_t ss_x,
+    uint8_t bit_depth, uint8_t use_intrabc, uint8_t is_masked_compound,
+    uint8_t is16bit);
+
+// best_mv inputs the starting full-pel MV, around which subpel search is to be performed and outputs the new best subpel MV
+void tpl_subpel_search(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+    EbPictureBufferDesc *ref_pic_ptr, EbPictureBufferDesc *input_picture_ptr,
+    MacroBlockD* xd, const uint32_t mb_origin_x, const uint32_t mb_origin_y,
+    const uint8_t bsize, MV* best_mv) {
+
+    const Av1Common *const cm = pcs_ptr->av1_cm;
+    const BlockSize block_size = bsize == 8 ? BLOCK_8X8 : bsize == 16 ? BLOCK_16X16 : bsize == 32 ? BLOCK_32X32 : BLOCK_64X64;
+
+    // ref_mv is used to calculate the cost of the motion vector
+    MV ref_mv;
+    ref_mv.col = 0;
+    ref_mv.row = 0;
+    // High level params
+    SUBPEL_MOTION_SEARCH_PARAMS  ms_params_struct;
+    SUBPEL_MOTION_SEARCH_PARAMS *ms_params = &ms_params_struct;
+
+    ms_params->allow_hp = 0; // Allow MAX QUARTER_PEL because pcs_ptr->frm_hdr.allow_high_precision_mv is not set yet
+    ms_params->forced_stop = pcs_ptr->tpl_ctrls.subpel_depth;
+    ms_params->iters_per_step = 2; // Maximum number of steps in logarithmic subpel search before giving up. [1, 2]
+
+    // Set up limit values for MV components.
+    // Mv beyond the range do not produce new/different prediction block.
+    MvLimits mv_limits;
+    int      mi_width = mi_size_wide[block_size];
+    int      mi_height = mi_size_high[block_size];
+    mv_limits.row_min = -(((xd->mi_row + mi_height) * MI_SIZE) + AOM_INTERP_EXTEND);
+    mv_limits.col_min = -(((xd->mi_col + mi_width) * MI_SIZE) + AOM_INTERP_EXTEND);
+    mv_limits.row_max = (cm->mi_rows - xd->mi_row) * MI_SIZE + AOM_INTERP_EXTEND;
+    mv_limits.col_max = (cm->mi_cols - xd->mi_col) * MI_SIZE + AOM_INTERP_EXTEND;
+    svt_av1_set_mv_search_range(&mv_limits, &ref_mv);
+    svt_av1_set_subpel_mv_search_range(&ms_params->mv_limits, (FullMvLimits *)&mv_limits, &ref_mv);
+
+    // Mvcost params
+    int32_t qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+    uint32_t rdmult = compute_rdmult_sse(pcs_ptr, qIndex, 8/*EB_EIGHT_BIT*/);
+    svt_tpl_init_mv_cost_params(scs_ptr,
+        &ms_params->mv_cost_params,
+        bsize,
+        &ref_mv,
+        qIndex,
+        rdmult,
+        0); // 10BIT not supported
+
+    // Subpel variance params
+    ms_params->var_params.vfp = &mefn_ptr[block_size];
+    ms_params->var_params.subpel_search_type = USE_4_TAPS;
+    ms_params->var_params.w = block_size_wide[block_size];
+    ms_params->var_params.h = block_size_high[block_size];
+
+    // Ref and src buffers
+    MSBuffers *ms_buffers = &ms_params->var_params.ms_buffers;
+    int32_t ref_origin_index = ref_pic_ptr->origin_x + mb_origin_x +
+        (mb_origin_y + ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+
+    // Ref buffer
+    struct svt_buf_2d ref_struct;
+    ref_struct.buf = ref_pic_ptr->buffer_y + ref_origin_index;
+    ref_struct.width = ref_pic_ptr->width;
+    ref_struct.height = ref_pic_ptr->height;
+    ref_struct.stride = ref_pic_ptr->stride_y;
+    ms_buffers->ref = &ref_struct;
+
+    // Src buffer
+    uint32_t input_origin_index = (mb_origin_y + input_picture_ptr->origin_y) *
+        input_picture_ptr->stride_y +
+        (mb_origin_x + input_picture_ptr->origin_x);
+    struct svt_buf_2d src_struct;
+    src_struct.buf = input_picture_ptr->buffer_y + input_origin_index;
+    src_struct.width = input_picture_ptr->width;
+    src_struct.height = input_picture_ptr->height;
+    src_struct.stride = input_picture_ptr->stride_y;
+    ms_buffers->src = &src_struct;
+
+    int_mv best_sp_mv;
+    best_sp_mv.as_mv.col = best_mv->col >> 3;
+    best_sp_mv.as_mv.row = best_mv->row >> 3;
+
+    int          not_used = 0;
+    MV           subpel_start_mv = get_mv_from_fullmv(&best_sp_mv.as_fullmv);
+    unsigned int pred_sse = 0; // not used
+
+    // Assign which subpel search method to use - always use pruned because tested regular and did not give any gain
+    fractional_mv_step_fp *subpel_search_method = svt_av1_find_best_sub_pixel_tree_pruned;
+    // Disabled shortcuts for now.
+    ms_params->pred_variance_th = 0;
+    ms_params->abs_th_mult = 0;
+    ms_params->round_dev_th = MAX_SIGNED_VALUE;
+    ms_params->skip_diag_refinement = 0;
+    uint8_t early_exit = 0;
+
+    subpel_search_method(xd,
+        (const struct AV1Common *const)cm,
+        ms_params,
+        subpel_start_mv,
+        &best_sp_mv.as_mv,
+        &not_used,
+        &pred_sse,
+        qIndex,
+        block_size,
+        early_exit);
+
+    // Update the MV to the new best
+    best_mv->col = best_sp_mv.as_mv.col;
+    best_mv->row = best_sp_mv.as_mv.row;
+}
+#endif
 
 void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                       SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
@@ -586,6 +798,9 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
     DECLARE_ALIGNED(32, TranLow, qcoeff[MAX_TPL_SAMPLES_PER_BLOCK]);
     DECLARE_ALIGNED(32, TranLow, dqcoeff[MAX_TPL_SAMPLES_PER_BLOCK]);
     DECLARE_ALIGNED(32, TranLow, best_coeff[MAX_TPL_SAMPLES_PER_BLOCK]);
+#if FTR_TPL_SUBPEL
+    DECLARE_ALIGNED(16, uint8_t, compensated_blk[(const uint32_t)MAX_TPL_SAMPLES_PER_BLOCK]);
+#endif
     uint8_t *predictor = predictor8;
 
     MacroblockPlane mb_plane;
@@ -610,6 +825,9 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
         uint32_t               z_blk_index   = tpl_blk_idx_tab[0][blk_index];
         const CodedBlockStats *blk_stats_ptr = get_coded_blk_stats(z_blk_index);
         const uint8_t          bsize         = blk_stats_ptr->size;
+#if FTR_TPL_SUBPEL
+        const BlockSize        block_size    = bsize == 8 ? BLOCK_8X8 : bsize == 16 ? BLOCK_16X16 : bsize == 32 ? BLOCK_32X32 : BLOCK_64X64;
+#endif
         const uint32_t         mb_origin_x   = sb_params->origin_x + blk_stats_ptr->origin_x;
         const uint32_t         mb_origin_y   = sb_params->origin_y + blk_stats_ptr->origin_y;
 
@@ -617,6 +835,21 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
         if (mb_origin_x + (size >> 1) > pcs_ptr->enhanced_picture_ptr->width ||
             mb_origin_y + (size >> 1) > pcs_ptr->enhanced_picture_ptr->height)
             continue;
+
+#if FTR_TPL_SUBPEL
+        MacroBlockD  xd;
+        const Av1Common *const cm = pcs_ptr->av1_cm;
+        const int32_t bw = mi_size_wide[block_size];
+        const int32_t bh = mi_size_high[block_size];
+        const int       mi_row = mb_origin_y >> MI_SIZE_LOG2;
+        const int       mi_col = mb_origin_x >> MI_SIZE_LOG2;
+        xd.mb_to_top_edge = -((mi_row * MI_SIZE) * 8);
+        xd.mb_to_bottom_edge = ((cm->mi_rows - bh - mi_row) * MI_SIZE) * 8;
+        xd.mb_to_left_edge = -((mi_col * MI_SIZE) * 8);
+        xd.mb_to_right_edge = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
+        xd.mi_row = -xd.mb_to_top_edge / (8 * MI_SIZE);
+        xd.mi_col = -xd.mb_to_left_edge / (8 * MI_SIZE);
+#endif
 
         const int dst_buffer_stride = recon_picture_ptr->stride_y;
         const int dst_mb_offset     = mb_origin_y * dst_buffer_stride + mb_origin_x;
@@ -887,6 +1120,20 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
 
                 MV best_mv = {y_curr_mv, x_curr_mv};
 
+#if FTR_TPL_SUBPEL
+                if (pcs_ptr->tpl_ctrls.subpel_depth != FULL_PEL) {
+                    tpl_subpel_search(scs_ptr,
+                                      pcs_ptr,
+                                      ref_pic_ptr,
+                                      input_picture_ptr,
+                                      &xd,
+                                      mb_origin_x,
+                                      mb_origin_y,
+                                      bsize,
+                                      &best_mv);
+                }
+#endif
+
                 if (pcs_ptr->tpl_ctrls.tpl_opt_flag &&
                     pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
                     int32_t ref_origin_index = (int32_t)ref_pic_ptr->origin_x +
@@ -909,6 +1156,52 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                          (int32_t)ref_pic_ptr->origin_y) *
                             (int32_t)ref_pic_ptr->stride_y;
 
+#if FTR_TPL_SUBPEL
+                    // Need to do compensation for subpel, otherwise, can get pixels directly from REF picture
+                    if (pcs_ptr->tpl_ctrls.subpel_depth != FULL_PEL) {
+                        DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[MAX_TPL_SAMPLES_PER_BLOCK]);
+                        DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_TPL_SAMPLES_PER_BLOCK]);
+                        ConvolveParams conv_params_y = get_conv_params_no_round(
+                            0, 0, 0, tmp_dst_y, 128, 0/*is_compound*/, 8/*bit_depth*/);
+
+                        enc_make_inter_predictor(scs_ptr,
+                            ref_pic_ptr->buffer_y + ref_pic_ptr->origin_x + (ref_pic_ptr->origin_y * ref_pic_ptr->stride_y),
+                            NULL,// src_ptr_2b,
+                            compensated_blk,
+                            (int16_t)mb_origin_y,
+                            (int16_t)mb_origin_x,
+                            best_mv,
+                            &scs_ptr->sf_identity,
+                            &conv_params_y,
+                            0, // interp_filters
+                            0, // interinter_comp
+                            seg_mask,
+                            ref_pic_ptr->width,
+                            ref_pic_ptr->height,
+                            bsize, // bwidth
+                            bsize, // bheight
+                            block_size,
+                            &xd,
+                            ref_pic_ptr->stride_y,
+                            size,
+                            0,
+                            0,// ss_y,
+                            0,// ss_x,
+                            8,// Always use 8bit for now
+                            0,// use_intrabc,
+                            0,
+                            0);// is16bit
+                    }
+
+                    svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
+                                           size,
+                                           src_diff,
+                                           size << tpl_ctrls->subsample_tx,
+                                           src_mb,
+                                           input_picture_ptr->stride_y << tpl_ctrls->subsample_tx,
+                                           pcs_ptr->tpl_ctrls.subpel_depth != FULL_PEL ? compensated_blk : ref_pic_ptr->buffer_y + ref_origin_index,
+                                           (pcs_ptr->tpl_ctrls.subpel_depth != FULL_PEL ? size : ref_pic_ptr->stride_y) << tpl_ctrls->subsample_tx);
+#else
                     svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
                                            size,
                                            src_diff,
@@ -917,6 +1210,7 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                            input_picture_ptr->stride_y << tpl_ctrls->subsample_tx,
                                            ref_pic_ptr->buffer_y + ref_origin_index,
                                            ref_pic_ptr->stride_y << tpl_ctrls->subsample_tx);
+#endif
 
                     EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag
                         ? pcs_ptr->tpl_ctrls.pf_shape
@@ -1040,6 +1334,45 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                 EB_MEMCPY(dst_buffer + i * dst_buffer_stride,
                           ref_pic_ptr->buffer_y + ref_origin_index + i * ref_pic_ptr->stride_y,
                           sizeof(uint8_t) * (size));
+
+#if FTR_TPL_SUBPEL
+            // REDO COMPENSATION WITH REF PIC (INSTEAD OF REF BEING THE SRC PIC)
+            // Need to do compensation for subpel, otherwise, can get pixels directly from RECON picture
+            if (pcs_ptr->tpl_ctrls.subpel_depth != FULL_PEL) {
+                DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[MAX_TPL_SAMPLES_PER_BLOCK]);
+                DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_TPL_SAMPLES_PER_BLOCK]);
+                ConvolveParams conv_params_y = get_conv_params_no_round(
+                    0, 0, 0, tmp_dst_y, 128, 0/*is_compound*/, 8/*bit_depth*/);
+
+                enc_make_inter_predictor(scs_ptr,
+                    ref_pic_ptr->buffer_y + ref_pic_ptr->origin_x + (ref_pic_ptr->origin_y * ref_pic_ptr->stride_y),
+                    NULL,// src_ptr_2b,
+                    dst_buffer,
+                    (int16_t)mb_origin_y,
+                    (int16_t)mb_origin_x,
+                    final_best_mv,
+                    &scs_ptr->sf_identity,
+                    &conv_params_y,
+                    0, // interp_filters
+                    0, // interinter_comp
+                    seg_mask,
+                    ref_pic_ptr->width,
+                    ref_pic_ptr->height,
+                    bsize, // bwidth
+                    bsize, // bheight
+                    block_size,
+                    &xd,
+                    ref_pic_ptr->stride_y,
+                    dst_buffer_stride,
+                    0,
+                    0, // ss_y,
+                    0, // ss_x,
+                    8, // Always 8bit,
+                    0, // use_intrabc,
+                    0,
+                    0);// is16bit
+            }
+#endif
         } else {
             // intra recon
 
@@ -1388,9 +1721,15 @@ void tpl_mc_flow_dispenser(EncodeContext *encode_context_ptr, SequenceControlSet
                 8);
         qIndex = (qIndex + delta_qindex);
     }
+#if OPT_TPL_QPS
+    *base_rdmult = svt_av1_compute_rd_mult_based_on_qindex(
+                       (EbBitDepth)8 /*scs_ptr->static_config.encoder_bit_depth*/,pcs_ptr->update_type, qIndex) /
+        6;
+#else
     *base_rdmult = svt_av1_compute_rd_mult_based_on_qindex(
                        (EbBitDepth)8 /*scs_ptr->static_config.encoder_bit_depth*/, qIndex) /
         6;
+#endif
 
     {
         {
@@ -1904,7 +2243,11 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             if (tpl_on)
                 tpl_mc_flow_dispenser(encode_context_ptr,
                                       scs_ptr,
+#if OPT_TPL_QPS
+                                      &pcs_ptr->tpl_group[frame_idx]->pa_me_data->base_rdmult,
+#else
                                       &pcs_ptr->pa_me_data->base_rdmult,
+#endif
                                       pcs_ptr->tpl_group[frame_idx],
                                       frame_idx,
                                       context_ptr);

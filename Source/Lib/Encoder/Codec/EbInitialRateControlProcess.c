@@ -163,7 +163,7 @@ uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index
             return 1;
     return 0;
 }
-
+#if !OPT_TPL_QPS
 /* decide to inject a frame into the tpl group*/
 uint8_t inj_to_tpl_group(PictureParentControlSet *pcs) {
     uint8_t inj = 0;
@@ -197,11 +197,25 @@ uint8_t inj_to_tpl_group(PictureParentControlSet *pcs) {
 
     return inj;
 }
+#endif
 
 // validate pictures that will be used by the tpl algorithm based on tpl opts
 void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
     // Check wether the i-th pic already exists in the tpl group
     if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number)) {
+#if OPT_TPL_QPS
+        // Discard low important pictures from tpl group
+        if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
+            if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
+                pcs->tpl_valid_pic[pic_index] = 1;
+                pcs->used_tpl_frame_num++;
+            }
+        }
+        else {
+            pcs->tpl_valid_pic[pic_index] = 1;
+            pcs->used_tpl_frame_num++;
+        }
+#else
         // Discard non-ref pic from the tpl group
         uint8_t inject_frame = inj_to_tpl_group(pcs->tpl_group[pic_index]);
         if (inject_frame) {
@@ -222,6 +236,7 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
                 pcs->used_tpl_frame_num++;
             }
         }
+#endif
     }
 }
 

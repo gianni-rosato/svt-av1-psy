@@ -561,6 +561,9 @@ typedef struct TplControls {
     uint8_t vq_adjust_lambda_sb;
     // Calculated qindex based on r0 using qstep calculation
     bool qstep_based_q_calc; // 0: OFF; 1: ON
+#if FTR_TPL_SUBPEL
+    SUBPEL_FORCE_STOP subpel_depth; // max subpel depth to search for TPL; FULL_PEL corresponds to subpel off in TPL, QUARTER_PEL is the max precision for TPL subpel
+#endif
 } TplControls;
 
 typedef struct {

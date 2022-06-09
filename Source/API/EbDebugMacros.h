@@ -70,6 +70,8 @@ extern "C" {
 #define FIX_RDMULT_OVERFLOW     1 // Avoid int overflow in rdmult calculation
 #define FIX_RATE_EST_SIGN       1 // Count sign bit cost in tpl rate cost
 #define OPT_TXS                 1 // Cleanup TXS signalling and improve controls
+#define OPT_TPL_QPS             1 // Optimize QPS when using TPL
+#define FTR_TPL_SUBPEL          1 // Add subpel search to TPL path
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

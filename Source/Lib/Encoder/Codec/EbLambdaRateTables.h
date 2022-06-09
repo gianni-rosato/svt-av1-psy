@@ -59,6 +59,7 @@ static const uint32_t intra_luma_mode_mapping[] = {
     3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3,
     3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3 // conversion to 3 modes
 };
+#if !OPT_TPL_QPS
 // Lambda Table for bit-depth 8
 static const uint32_t av1_lambda_mode_decision8_bit_sse[QINDEX_RANGE /*256*/] = {
     58,      234,     234,     297,     366,     443,     528,     528,     619,     718,
@@ -143,7 +144,7 @@ static const uint32_t av1lambda_mode_decision12_bit_sse[QINDEX_RANGE /*256*/] = 
     1441186, 1503334, 1568592, 1640444, 1716099, 1799876, 1888281, 1986219, 2090438, 2205490,
     2328369, 2464715, 2610738, 2772509, 2946534, 3140260, 3348470, 3581006, 3831649, 4111612,
     4424071, 4763633, 5142852, 5568743, 6031544, 6551356};
-
+#endif
 static const uint32_t av1_lambda_mode_decision8_bit_sad[QINDEX_RANGE /*256*/] = {
     86,    173,   173,   194,   216,   238,   259,   259,   281,   303,   324,   346,   368,
     389,   411,   411,   433,   454,   476,   498,   519,   541,   563,   563,   584,   606,

@@ -303,6 +303,9 @@ void asm_set_convolve_hbd_asm_table(void);
 void init_intra_dc_predictors_c_internal(void);
 void init_intra_predictors_internal(void);
 void svt_av1_init_me_luts(void);
+#if FTR_TPL_SUBPEL
+void svt_av1_tpl_init_me_luts(void);
+#endif
 
 static void enc_switch_to_real_time(){
 #if !defined(_WIN32)
@@ -1459,6 +1462,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     build_blk_geom(enc_handle_ptr->scs_instance_array[0]->scs_ptr->geom_idx);
 
     svt_av1_init_me_luts();
+#if FTR_TPL_SUBPEL
+    svt_av1_tpl_init_me_luts();
+#endif
     init_fn_ptr();
     svt_av1_init_wedge_masks();
     /************************************
@@ -3134,6 +3140,18 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
     else if (enc_mode <= ENC_M5)
 #endif
         tpl_level = 1;
+#if OPT_TPL_QPS
+    else if (enc_mode <= ENC_M7)
+        tpl_level = 3;
+    else if (enc_mode <= ENC_M8)
+        tpl_level = 4;
+    else if (enc_mode <= ENC_M9)
+        tpl_level = 5;
+    else if (enc_mode <= ENC_M10)
+        tpl_level = 6;
+    else
+        tpl_level = 7;
+#else
     else if (enc_mode <= ENC_M7)
         tpl_level = 3;
     else if (enc_mode <= ENC_M9) {
@@ -3144,6 +3162,7 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
     }
     else
         tpl_level = 7;
+#endif
 
     return tpl_level;
 }
