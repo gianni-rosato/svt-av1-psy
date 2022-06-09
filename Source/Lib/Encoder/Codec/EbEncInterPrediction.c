@@ -1873,17 +1873,10 @@ void av1_build_obmc_inter_prediction_hbd(
                                  build_obmc_inter_pred_left_hbd,
                                  &ctxt_left);
 }
-struct calc_target_weighted_pred_ctxt {
-    int32_t       *mask_buf;
-    int32_t       *wsrc_buf;
-    const uint8_t *tmp;
-    int            tmp_stride;
-    int            overlap;
-};
 
-static INLINE void calc_target_weighted_pred_above(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col,
-                                                   uint8_t nb_mi_width, MbModeInfo *nb_mi,
-                                                   void *fun_ctxt, const int num_planes) {
+void svt_av1_calc_target_weighted_pred_above_c(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col,
+                                               uint8_t nb_mi_width, MbModeInfo *nb_mi,
+                                               void *fun_ctxt, const int num_planes) {
     (void)nb_mi;
     (void)num_planes;
     (void)is16bit;
@@ -1911,9 +1904,9 @@ static INLINE void calc_target_weighted_pred_above(uint8_t is16bit, MacroBlockD 
     }
 }
 
-static INLINE void calc_target_weighted_pred_left(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row,
-                                                  uint8_t nb_mi_height, MbModeInfo *nb_mi,
-                                                  void *fun_ctxt, const int num_planes) {
+void svt_av1_calc_target_weighted_pred_left_c(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row,
+                                              uint8_t nb_mi_height, MbModeInfo *nb_mi,
+                                              void *fun_ctxt, const int num_planes) {
     (void)nb_mi;
     (void)num_planes;
     (void)is16bit;
@@ -2086,7 +2079,7 @@ static void calc_target_weighted_pred(PictureControlSet   *picture_control_set_p
                                       (MacroBlockD *)xd,
                                       mi_col,
                                       max_neighbor_obmc[mi_size_wide_log2[bsize]],
-                                      calc_target_weighted_pred_above,
+                                      svt_av1_calc_target_weighted_pred_above,
                                       &ctxt);
     }
 
@@ -2106,7 +2099,7 @@ static void calc_target_weighted_pred(PictureControlSet   *picture_control_set_p
                                      (MacroBlockD *)xd,
                                      mi_row,
                                      max_neighbor_obmc[mi_size_high_log2[bsize]],
-                                     calc_target_weighted_pred_left,
+                                     svt_av1_calc_target_weighted_pred_left,
                                      &ctxt);
     }
 

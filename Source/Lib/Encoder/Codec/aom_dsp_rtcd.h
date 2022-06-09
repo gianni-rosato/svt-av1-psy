@@ -577,6 +577,10 @@ extern "C" {
     unsigned int svt_aom_highbd_10_variance128x128_c(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
     RTCD_EXTERN unsigned int(*svt_aom_highbd_10_variance128x128)(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
     uint32_t svt_aom_sub_pixel_variance128x128_c(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+    RTCD_EXTERN void (*svt_av1_calc_target_weighted_pred_above)(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col, uint8_t nb_mi_width, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
+    void svt_av1_calc_target_weighted_pred_above_c(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col, uint8_t nb_mi_width, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
+    RTCD_EXTERN void (*svt_av1_calc_target_weighted_pred_left)(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row, uint8_t nb_mi_height, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
+    void svt_av1_calc_target_weighted_pred_left_c(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row, uint8_t nb_mi_height, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
 #ifdef ARCH_X86_64
     uint32_t svt_aom_sub_pixel_variance128x128_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance128x128_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
@@ -1736,6 +1740,8 @@ extern "C" {
     uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
                               int w, int h, uint32_t *sse);
     int svt_av1_haar_ac_sad_8x8_uint8_input_avx2(uint8_t *input, int stride, int hbd);
+    void svt_av1_calc_target_weighted_pred_above_avx2(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col, uint8_t nb_mi_width, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
+    void svt_av1_calc_target_weighted_pred_left_avx2(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row, uint8_t nb_mi_height, MbModeInfo *nb_mi, void *fun_ctxt, const int num_planes);
 
     int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
     int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int height, int stride, int bd);

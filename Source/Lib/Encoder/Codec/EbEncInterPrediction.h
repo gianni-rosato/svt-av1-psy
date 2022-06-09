@@ -25,6 +25,14 @@ extern "C" {
 
 extern aom_highbd_convolve_fn_t convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
 
+struct calc_target_weighted_pred_ctxt {
+    int32_t       *mask_buf;
+    int32_t       *wsrc_buf;
+    const uint8_t *tmp;
+    int            tmp_stride;
+    int            overlap;
+};
+
 EbErrorType av1_simple_luma_unipred(SequenceControlSet *scs_ptr, ScaleFactors sf_identity,
                                     uint32_t interp_filters, BlkStruct *blk_ptr,
                                     uint8_t ref_frame_type, MvUnit *mv_unit, uint16_t pu_origin_x,

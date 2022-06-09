@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <immintrin.h>
 #include "aom_dsp_rtcd.h"
+#include "EbEncInterPrediction.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // 8 bit
@@ -220,3 +221,234 @@ OBMCVARWXH(8, 32)
 OBMCVARWXH(32, 8)
 OBMCVARWXH(16, 64)
 OBMCVARWXH(64, 16)
+
+void svt_av1_calc_target_weighted_pred_above_avx2(uint8_t is16bit, MacroBlockD *xd, int rel_mi_col,
+                                                  uint8_t nb_mi_width, MbModeInfo *nb_mi,
+                                                  void *fun_ctxt, const int num_planes) {
+    (void)nb_mi;
+    (void)num_planes;
+    (void)is16bit;
+    struct calc_target_weighted_pred_ctxt *ctxt = (struct calc_target_weighted_pred_ctxt *)fun_ctxt;
+
+    const int            bw     = xd->n4_w << MI_SIZE_LOG2;
+    const uint8_t *const mask1d = svt_av1_get_obmc_mask(ctxt->overlap);
+    assert(mask1d != NULL);
+    int32_t       *wsrc = ctxt->wsrc_buf + (rel_mi_col * MI_SIZE);
+    int32_t       *mask = ctxt->mask_buf + (rel_mi_col * MI_SIZE);
+    const uint8_t *tmp  = ctxt->tmp + rel_mi_col * MI_SIZE;
+
+    uint32_t calc_w = nb_mi_width * MI_SIZE;
+    if (calc_w == 4) {
+        __m128i tmp_sse, wsrc_sse, m0_sse, m1_sse;
+        for (int row = 0; row < ctxt->overlap; ++row) {
+            m0_sse = _mm_set1_epi32(mask1d[row]);
+            m1_sse = _mm_set1_epi32(AOM_BLEND_A64_MAX_ALPHA - mask1d[row]);
+
+            tmp_sse  = _mm_cvtsi32_si128(*(int *)(tmp));
+            tmp_sse  = _mm_unpacklo_epi8(tmp_sse, _mm_setzero_si128());
+            tmp_sse  = _mm_unpacklo_epi16(tmp_sse, _mm_setzero_si128());
+            wsrc_sse = _mm_mullo_epi32(m1_sse, tmp_sse);
+            _mm_storeu_si128((__m128i *)(wsrc), wsrc_sse);
+            _mm_storeu_si128((__m128i *)(mask), m0_sse);
+
+            wsrc += bw;
+            mask += bw;
+            tmp += ctxt->tmp_stride;
+        }
+    } else if (calc_w == 8) {
+        __m256i tmp_avx, wsrc_avx, m0_avx, m1_avx;
+        __m128i tmp_sse;
+        for (int row = 0; row < ctxt->overlap; ++row) {
+            m0_avx = _mm256_set1_epi32(mask1d[row]);
+            m1_avx = _mm256_set1_epi32(AOM_BLEND_A64_MAX_ALPHA - mask1d[row]);
+
+            tmp_sse  = _mm_loadl_epi64((__m128i *)(tmp));
+            tmp_sse  = _mm_unpacklo_epi8(tmp_sse, _mm_setzero_si128());
+            tmp_avx  = _mm256_cvtepi16_epi32(tmp_sse);
+            wsrc_avx = _mm256_mullo_epi32(m1_avx, tmp_avx);
+            _mm256_storeu_si256((__m256i *)(wsrc), wsrc_avx);
+            _mm256_storeu_si256((__m256i *)(mask), m0_avx);
+
+            wsrc += bw;
+            mask += bw;
+            tmp += ctxt->tmp_stride;
+        }
+    } else if (calc_w == 16) {
+        __m256i tmp_avx, wsrc_avx, m0_avx, m1_avx;
+        __m128i tmp_sse1, tmp_sse2;
+        for (int row = 0; row < ctxt->overlap; ++row) {
+            m0_avx = _mm256_set1_epi32(mask1d[row]);
+            m1_avx = _mm256_set1_epi32(AOM_BLEND_A64_MAX_ALPHA - mask1d[row]);
+
+            tmp_sse1  = _mm_loadu_si128((__m128i *)(tmp));
+            tmp_sse2  = _mm_unpacklo_epi8(tmp_sse1, _mm_setzero_si128());
+            tmp_avx  = _mm256_cvtepi16_epi32(tmp_sse2);
+            wsrc_avx = _mm256_mullo_epi32(m1_avx, tmp_avx);
+            _mm256_storeu_si256((__m256i *)(wsrc), wsrc_avx);
+            _mm256_storeu_si256((__m256i *)(mask), m0_avx);
+
+            tmp_sse1  = _mm_unpackhi_epi8(tmp_sse1, _mm_setzero_si128());
+            tmp_avx  = _mm256_cvtepi16_epi32(tmp_sse1);
+            wsrc_avx = _mm256_mullo_epi32(m1_avx, tmp_avx);
+            _mm256_storeu_si256((__m256i *)(wsrc + 8), wsrc_avx);
+            _mm256_storeu_si256((__m256i *)(mask + 8), m0_avx);
+
+            wsrc += bw;
+            mask += bw;
+            tmp += ctxt->tmp_stride;
+        }
+    } else {
+        __m256i tmp_avx, wsrc_avx, m0_avx, m1_avx;
+        __m128i tmp_sse1, tmp_sse2;
+        for (int row = 0; row < ctxt->overlap; ++row) {
+            m0_avx  = _mm256_set1_epi32(mask1d[row]);
+            m1_avx  = _mm256_set1_epi32(AOM_BLEND_A64_MAX_ALPHA - mask1d[row]);
+            int col = 0;
+            for (; col <= (nb_mi_width * MI_SIZE) - 16; col += 16) {
+                tmp_sse1 = _mm_loadu_si128((__m128i *)(tmp + col));
+                tmp_sse2 = _mm_unpacklo_epi8(tmp_sse1, _mm_setzero_si128());
+                tmp_avx  = _mm256_cvtepi16_epi32(tmp_sse2);
+                wsrc_avx = _mm256_mullo_epi32(m1_avx, tmp_avx);
+                _mm256_storeu_si256((__m256i *)(wsrc + col), wsrc_avx);
+                _mm256_storeu_si256((__m256i *)(mask + col), m0_avx);
+
+                tmp_sse1 = _mm_unpackhi_epi8(tmp_sse1, _mm_setzero_si128());
+                tmp_avx  = _mm256_cvtepi16_epi32(tmp_sse1);
+                wsrc_avx = _mm256_mullo_epi32(m1_avx, tmp_avx);
+                _mm256_storeu_si256((__m256i *)(wsrc + col + 8), wsrc_avx);
+                _mm256_storeu_si256((__m256i *)(mask + col + 8), m0_avx);
+            }
+            for (; col < nb_mi_width * MI_SIZE; ++col) {
+                wsrc[col] = (AOM_BLEND_A64_MAX_ALPHA - mask1d[row]) * tmp[col];
+                mask[col] = mask1d[row];
+            }
+            wsrc += bw;
+            mask += bw;
+            tmp += ctxt->tmp_stride;
+        }
+    }
+}
+
+void svt_av1_calc_target_weighted_pred_left_avx2(uint8_t is16bit, MacroBlockD *xd, int rel_mi_row,
+                                                 uint8_t nb_mi_height, MbModeInfo *nb_mi,
+                                                 void *fun_ctxt, const int num_planes) {
+    (void)nb_mi;
+    (void)num_planes;
+    (void)is16bit;
+
+    struct calc_target_weighted_pred_ctxt *ctxt = (struct calc_target_weighted_pred_ctxt *)fun_ctxt;
+
+    const int            bw     = xd->n4_w << MI_SIZE_LOG2;
+    const uint8_t *const mask1d = svt_av1_get_obmc_mask(ctxt->overlap);
+
+    int32_t       *wsrc = ctxt->wsrc_buf + (rel_mi_row * MI_SIZE * bw);
+    int32_t       *mask = ctxt->mask_buf + (rel_mi_row * MI_SIZE * bw);
+    const uint8_t *tmp  = ctxt->tmp + (rel_mi_row * MI_SIZE * ctxt->tmp_stride);
+    assert(mask1d != NULL);
+
+    if (ctxt->overlap == 4) {
+        __m128i tmp_sse, wsrc_sse, m0_sse, m1_sse, mask_sse;
+        __m128i blend_max_alpha_sse = _mm_set1_epi32(AOM_BLEND_A64_MAX_ALPHA);
+        m0_sse                      = _mm_cvtsi32_si128(*(int *)(mask1d));
+        m0_sse                      = _mm_unpacklo_epi8(m0_sse, _mm_setzero_si128());
+        m0_sse                      = _mm_unpacklo_epi16(m0_sse, _mm_setzero_si128());
+        m1_sse                      = _mm_sub_epi32(blend_max_alpha_sse, m0_sse);
+        for (int row = 0; row < nb_mi_height * MI_SIZE; ++row) {
+            //(tmp[col] << AOM_BLEND_A64_ROUND_BITS) * m1
+            tmp_sse = _mm_cvtsi32_si128(*(int *)(tmp));
+            tmp_sse = _mm_unpacklo_epi8(tmp_sse, _mm_setzero_si128());
+            tmp_sse = _mm_unpacklo_epi16(tmp_sse, _mm_setzero_si128());
+            tmp_sse = _mm_slli_epi32(tmp_sse, AOM_BLEND_A64_ROUND_BITS);
+            tmp_sse = _mm_mullo_epi32(tmp_sse, m1_sse);
+
+            //(wsrc[col] >> AOM_BLEND_A64_ROUND_BITS) * m0
+            wsrc_sse = _mm_loadu_si128((__m128i *)(wsrc));
+            wsrc_sse = _mm_srai_epi32(wsrc_sse, AOM_BLEND_A64_ROUND_BITS);
+            wsrc_sse = _mm_mullo_epi32(wsrc_sse, m0_sse);
+            wsrc_sse = _mm_add_epi32(wsrc_sse, tmp_sse);
+            _mm_storeu_si128((__m128i *)(wsrc), wsrc_sse);
+
+            mask_sse = _mm_loadu_si128((__m128i *)(mask));
+            mask_sse = _mm_srai_epi32(mask_sse, AOM_BLEND_A64_ROUND_BITS);
+            mask_sse = _mm_mullo_epi32(mask_sse, m0_sse);
+            _mm_storeu_si128((__m128i *)(mask), mask_sse);
+
+            wsrc += bw;
+            mask += bw;
+            tmp += ctxt->tmp_stride;
+        }
+    }else if (ctxt->overlap == 8) {
+        __m256i tmp_avx, wsrc_avx, m0_avx, m1_avx, mask_avx;
+        __m128i m0_sse, tmp_sse;
+        __m256i blend_max_alpha_sse = _mm256_set1_epi32(AOM_BLEND_A64_MAX_ALPHA);
+        m0_sse                      = _mm_loadl_epi64((__m128i *)(mask1d));
+        m0_sse                      = _mm_unpacklo_epi8(m0_sse, _mm_setzero_si128());
+        m0_avx                      = _mm256_cvtepi16_epi32(m0_sse);
+        m1_avx                      = _mm256_sub_epi32(blend_max_alpha_sse, m0_avx);
+        for (int row = 0; row < nb_mi_height * MI_SIZE; ++row) {
+            //(tmp[col] << AOM_BLEND_A64_ROUND_BITS) * m1
+            tmp_sse = _mm_loadl_epi64((__m128i *)(tmp));
+            tmp_sse = _mm_unpacklo_epi8(tmp_sse, _mm_setzero_si128());
+            tmp_avx = _mm256_cvtepi16_epi32(tmp_sse);
+            tmp_avx = _mm256_slli_epi32(tmp_avx, AOM_BLEND_A64_ROUND_BITS);
+            tmp_avx = _mm256_mullo_epi32(tmp_avx, m1_avx);
+
+            //(wsrc[col] >> AOM_BLEND_A64_ROUND_BITS) * m0
+            wsrc_avx = _mm256_loadu_si256((__m256i *)(wsrc));
+            wsrc_avx = _mm256_srai_epi32(wsrc_avx, AOM_BLEND_A64_ROUND_BITS);
+            wsrc_avx = _mm256_mullo_epi32(wsrc_avx, m0_avx);
+            wsrc_avx = _mm256_add_epi32(wsrc_avx, tmp_avx);
+            _mm256_storeu_si256((__m256i *)(wsrc), wsrc_avx);
+
+            mask_avx = _mm256_loadu_si256((__m256i *)(mask));
+            mask_avx = _mm256_srai_epi32(mask_avx, AOM_BLEND_A64_ROUND_BITS);
+            mask_avx = _mm256_mullo_epi32(mask_avx, m0_avx);
+            _mm256_storeu_si256((__m256i *)(mask), mask_avx);
+
+            wsrc += bw;
+            mask += bw;
+            tmp += ctxt->tmp_stride;
+        }
+    } else {
+        __m256i tmp_avx, wsrc_avx, m0_avx, m1_avx, mask_avx;
+        __m128i m0_sse, tmp_sse;
+        __m256i blend_max_alpha_sse = _mm256_set1_epi32(AOM_BLEND_A64_MAX_ALPHA);
+        for (int row = 0; row < nb_mi_height * MI_SIZE; ++row) {
+            int col = 0;
+            for (; col <= ctxt->overlap - 8; col += 8) {
+                m0_sse = _mm_loadl_epi64((__m128i *)(mask1d + col));
+                m0_sse = _mm_unpacklo_epi8(m0_sse, _mm_setzero_si128());
+                m0_avx = _mm256_cvtepi16_epi32(m0_sse);
+                m1_avx = _mm256_sub_epi32(blend_max_alpha_sse, m0_avx);
+                //(tmp[col] << AOM_BLEND_A64_ROUND_BITS) * m1
+                tmp_sse = _mm_loadl_epi64((__m128i *)(tmp + col));
+                tmp_sse = _mm_unpacklo_epi8(tmp_sse, _mm_setzero_si128());
+                tmp_avx = _mm256_cvtepi16_epi32(tmp_sse);
+                tmp_avx = _mm256_slli_epi32(tmp_avx, AOM_BLEND_A64_ROUND_BITS);
+                tmp_avx = _mm256_mullo_epi32(tmp_avx, m1_avx);
+
+                //(wsrc[col] >> AOM_BLEND_A64_ROUND_BITS) * m0
+                wsrc_avx = _mm256_loadu_si256((__m256i *)(wsrc + col));
+                wsrc_avx = _mm256_srai_epi32(wsrc_avx, AOM_BLEND_A64_ROUND_BITS);
+                wsrc_avx = _mm256_mullo_epi32(wsrc_avx, m0_avx);
+                wsrc_avx = _mm256_add_epi32(wsrc_avx, tmp_avx);
+                _mm256_storeu_si256((__m256i *)(wsrc + col), wsrc_avx);
+
+                mask_avx = _mm256_loadu_si256((__m256i *)(mask + col));
+                mask_avx = _mm256_srai_epi32(mask_avx, AOM_BLEND_A64_ROUND_BITS);
+                mask_avx = _mm256_mullo_epi32(mask_avx, m0_avx);
+                _mm256_storeu_si256((__m256i *)(mask + col), mask_avx);
+            }
+            for (; col < ctxt->overlap; ++col) {
+                const uint8_t m0 = mask1d[col];
+                const uint8_t m1 = AOM_BLEND_A64_MAX_ALPHA - m0;
+                wsrc[col]        = (wsrc[col] >> AOM_BLEND_A64_ROUND_BITS) * m0 +
+                    (tmp[col] << AOM_BLEND_A64_ROUND_BITS) * m1;
+                mask[col] = (mask[col] >> AOM_BLEND_A64_ROUND_BITS) * m0;
+            }
+            wsrc += bw;
+            mask += bw;
+            tmp += ctxt->tmp_stride;
+        }
+    }
+}
