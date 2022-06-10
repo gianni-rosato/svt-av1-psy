@@ -95,16 +95,20 @@ void av1_make_masked_scaled_inter_predictor(
 
     if (bitdepth > EB_EIGHT_BIT || is_16bit) {
         // for super-res, the reference frame block might be 2x than predictor in maximum
+        // for reference scaling, it might be 4x since both width and height is scaled 2x
         // should pack enough buffer for scaled reference
-        DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE * 2]);
+        DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE * 4]);
         uint16_t *src_ptr_10b = src16;
         int32_t   src_stride16;
         if (src_ptr_2b) {
             // pack the reference into temp 16bit buffer
             uint8_t  offset      = INTERPOLATION_OFFSET;
             uint32_t width_scale = 1;
-            if (av1_is_scaled(sf))
-                width_scale = 2; // super-res scale maximum 2x in width for reference
+            uint32_t height_scale = 1;
+            if (av1_is_scaled(sf)) {
+                width_scale = sf->x_scale_fp != REF_NO_SCALE ? 2 : 1;
+                height_scale = sf->y_scale_fp != REF_NO_SCALE ? 2 : 1;
+            }
             // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
             src_stride16 = bwidth * width_scale + (offset << 1);
             // 16-byte align of src16
@@ -118,7 +122,7 @@ void av1_make_masked_scaled_inter_predictor(
                        src16,
                        src_stride16,
                        bwidth * width_scale + (offset << 1),
-                       bheight + (offset << 1));
+                       bheight * height_scale + (offset << 1));
             src_ptr_10b = src16 + offset + (offset * src_stride16);
         } else {
             src_ptr_10b  = (uint16_t *)src_ptr;
@@ -3905,16 +3909,20 @@ void enc_make_inter_predictor(SequenceControlSet *scs_ptr, uint8_t *src_ptr, uin
     }
     if (is16bit) {
         // for super-res, the reference frame block might be 2x than predictor in maximum
+        // for reference scaling, it might be 4x since both width and height is scaled 2x
         // should pack enough buffer for scaled reference
-        DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE * 2]);
+        DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE * 4]);
         uint16_t *src16_ptr = src16;
         int32_t   src_stride16;
         if (src_ptr_2b) {
             // pack the reference into temp 16bit buffer
             uint8_t  offset      = INTERPOLATION_OFFSET;
             uint32_t width_scale = 1;
-            if (av1_is_scaled(sf))
-                width_scale = 2; // super-res scale maximum 2x in width for reference
+            uint32_t height_scale = 1;
+            if (av1_is_scaled(sf)) {
+                width_scale = sf->x_scale_fp != REF_NO_SCALE ? 2 : 1;
+                height_scale = sf->y_scale_fp != REF_NO_SCALE ? 2 : 1;
+            }
             // optimize stride from MAX_SB_SIZE to blk_width to minimum the block buffer size
             src_stride16 = blk_width * width_scale + (offset << 1);
             // 16-byte align of src16
@@ -3928,7 +3936,7 @@ void enc_make_inter_predictor(SequenceControlSet *scs_ptr, uint8_t *src_ptr, uin
                        src16,
                        src_stride16,
                        blk_width * width_scale + (offset << 1),
-                       blk_height + (offset << 1));
+                       blk_height * height_scale + (offset << 1));
             src16_ptr = src16 + offset + (offset * src_stride16);
         } else {
             src16_ptr    = (uint16_t *)src_mod;
