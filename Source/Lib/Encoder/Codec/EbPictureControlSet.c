@@ -27,10 +27,10 @@ void *svt_aom_malloc(size_t size);
 
 EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs, Av1Common *cm);
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
-#if TUNE_SSIM_M11
+#if FIX_DISALLOW_8x8_SC
 uint8_t     get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
-                                                   SliceType slice_type, uint8_t sc_class1,
-                                                   uint8_t is_used_as_reference_flag);
+                                                   Bool is_islice, Bool sc_class1,
+                                                   Bool is_ref);
 #else
 uint8_t     get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                    SliceType slice_type, uint8_t sc_class1,
@@ -116,13 +116,24 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *
     EbInputResolution resolution;
     derive_input_resolution(&resolution,
                             init_data_ptr->picture_width * init_data_ptr->picture_height);
-#if TUNE_SSIM_M11
+#if FIX_DISALLOW_8x8_SC
+    //islice is hardcoded to 0 because no islice in ME
+    uint8_t allow_below_16x16 = 0;
+    for (uint8_t is_sc_class1 = 0; is_sc_class1 < 2; is_sc_class1++) {
+        for (uint8_t is_ref = 0; is_ref < 2; is_ref++) {
+            allow_below_16x16 |= !get_disallow_below_16x16_picture_level(
+                init_data_ptr->enc_mode, resolution, 0, is_sc_class1, is_ref);
+            if (allow_below_16x16)
+                break;
+        }
+    }
+
     uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode)
-        ? !get_disallow_below_16x16_picture_level(
-            init_data_ptr->enc_mode, resolution, B_SLICE, 0, 1)
+        ? allow_below_16x16
             ? SQUARE_PU_COUNT
             : MAX_SB64_PU_COUNT_NO_8X8
         : MAX_SB64_PU_COUNT_WO_16X16;
+
 #else
     uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode)
         ? !get_disallow_below_16x16_picture_level(
@@ -1521,14 +1532,28 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EbInputResolution resolution;
     derive_input_resolution(&resolution,
                             init_data_ptr->picture_width * init_data_ptr->picture_height);
-#if TUNE_SSIM_M11
-    object_ptr->enable_me_8x8 = !get_disallow_below_16x16_picture_level(
-        init_data_ptr->enc_mode, resolution, B_SLICE, 0, 1);
+#if FIX_DISALLOW_8x8_SC
+    object_ptr->enable_me_16x16 = get_enable_me_16x16(init_data_ptr->enc_mode);
+
+    object_ptr->enable_me_8x8 = 0;
+    //8x8 can only be used if 16x16 is enabled
+    if (object_ptr->enable_me_16x16) {
+        for (uint8_t is_sc_class1 = 0; is_sc_class1 < 2; is_sc_class1++) {
+            for (uint8_t is_ref = 0; is_ref < 2; is_ref++) {
+                //islice is hardcoded to 0 because no islice in ME
+                object_ptr->enable_me_8x8 |= !get_disallow_below_16x16_picture_level(
+                    init_data_ptr->enc_mode, resolution, 0, is_sc_class1, is_ref);
+                if (object_ptr->enable_me_8x8)
+                    break;
+            }
+        }
+    }
 #else
     object_ptr->enable_me_8x8 = !get_disallow_below_16x16_picture_level(
         init_data_ptr->enc_mode, resolution, B_SLICE, 0, 1, 0);
-#endif
+
     object_ptr->enable_me_16x16 = get_enable_me_16x16(init_data_ptr->enc_mode);
+#endif
     return return_error;
 }
 static void me_dctor(EbPtr p) {

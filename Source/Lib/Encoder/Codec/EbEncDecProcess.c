@@ -4616,10 +4616,10 @@ static void set_detect_high_freq_ctrls(ModeDecisionContext* ctx, uint8_t detect_
 }
 
 // use this function to set the disallow_below_16x16 level and to set the accompanying enable_me_8x8 level
-#if TUNE_SSIM_M11
+#if FIX_DISALLOW_8x8_SC
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
-                                                SliceType slice_type, uint8_t sc_class1,
-                                                uint8_t is_used_as_reference_flag) {
+                                                Bool is_islice, Bool sc_class1,
+                                                Bool is_ref) {
 #else
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                SliceType slice_type, uint8_t sc_class1,
@@ -4627,7 +4627,6 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
                                                uint8_t temporal_layer_index) {
 #endif
     uint8_t disallow_below_16x16 = 0;
-
     if (sc_class1)
         disallow_below_16x16 = 0;
 #if TUNE_DEFAULT_M9
@@ -4639,9 +4638,9 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
 #if TUNE_SSIM_M11
     else if (enc_mode <= ENC_M11) {
         if (resolution <= INPUT_SIZE_1080p_RANGE)
-            disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
+            disallow_below_16x16 = is_ref ? 0 : 1;
         else
-            disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
+            disallow_below_16x16 = is_islice ? 0 : 1;
     }
 #else
 #if TUNE_DEFAULT_M10_M11
@@ -4664,9 +4663,13 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
             ? (temporal_layer_index == 0 ? 0 : 1)
             : ((slice_type == I_SLICE) ? 0 : 1);
 #endif
+#if TUNE_SSIM_M11
+    else
+        disallow_below_16x16 = is_islice ? 0 : 1;
+#else
     else
         disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
-
+#endif
     return disallow_below_16x16;
 }
 /*

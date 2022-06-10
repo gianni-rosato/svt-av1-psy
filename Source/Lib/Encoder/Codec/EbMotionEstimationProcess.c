@@ -182,7 +182,11 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
         me_context_ptr->me_sa.sa_min = (SearchArea){16, 16};
         me_context_ptr->me_sa.sa_max = (SearchArea){64, 64};
     }
+#if TUNE_DEFAULT_M6 && !FIX_DEC_SPEED_M6
+    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
         me_context_ptr->me_sa.sa_min = (SearchArea) { 16, 16 };
         me_context_ptr->me_sa.sa_max = (SearchArea) { 64, 32 };
     }

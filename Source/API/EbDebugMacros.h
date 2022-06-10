@@ -58,8 +58,10 @@ extern "C" {
 
 #define FIX_M9_M10_DLF          1 // Adjust M9 M10 DLF level to fix decoder speed
 #define TUNE_M7_M8_DLF          1 // Adjust M7 M8 DLF level to improve decoder speed
+#define FIX_DEC_SPEED_M6        1 // Fix M6 decoder speed
 
-#define PUSH_INTER_COMPOUND     1 // Push down M3 Inter Compound Mode to M0
+#define TUNE_INTER_COMPOUND     1 // Push down M3 Inter Compound Mode to M0
+#define FIX_DISALLOW_8x8_SC     1 // Align sc and nsc settings for disallow 8x8 (keep NSC memory footprint reduction)
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -34,10 +34,10 @@ int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth)
 int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
-#if TUNE_SSIM_M11
+#if FIX_DISALLOW_8x8_SC
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
-                                               SliceType slice_type, uint8_t sc_class1,
-                                               uint8_t is_used_as_reference_flag);
+                                               Bool is_islice, Bool sc_class1,
+                                               Bool is_ref);
 #else
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                SliceType slice_type, uint8_t sc_class1,
@@ -427,7 +427,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     } else {
         if (fast_decode == 0) {
+#if TUNE_DEFAULT_M6 && !FIX_DEC_SPEED_M6
+            if (enc_mode <= ENC_M6)
+#else
             if (enc_mode <= ENC_M5)
+#endif
                 ppcs->frm_hdr.use_ref_frame_mvs = 1;
             else {
                 uint64_t avg_me_dist = 0;
@@ -693,11 +697,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cfl_level = 1;
         else
             pcs_ptr->cfl_level = is_base ? 2 : 0;
-#if TUNE_SSIM_M5
-    } else if (enc_mode <= ENC_M4)
-#else
     } else if (enc_mode <= ENC_M5)
-#endif
         pcs_ptr->cfl_level = 1;
     else if (enc_mode <= ENC_M9)
         pcs_ptr->cfl_level = is_base ? 2 : 0;
@@ -749,7 +749,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (scs_ptr->compound_level == DEFAULT) {
             if (enc_mode <= ENC_MR)
                 pcs_ptr->inter_compound_mode = 1;
-#if !PUSH_INTER_COMPOUND
+#if !TUNE_INTER_COMPOUND
             else if (enc_mode <= ENC_M2)
                 pcs_ptr->inter_compound_mode = 2;
 #endif
@@ -966,13 +966,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->pic_skip_pd0 = is_base ? 0 : 1;
 
-#if TUNE_SSIM_M11
+#if FIX_DISALLOW_8x8_SC
     pcs_ptr->pic_disallow_below_16x16 = get_disallow_below_16x16_picture_level(
         enc_mode,
         input_resolution,
-        slice_type,
+        is_islice,
         ppcs->sc_class1,
-        pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag);
+        is_ref);
 #else
     pcs_ptr->pic_disallow_below_16x16 = get_disallow_below_16x16_picture_level(
         enc_mode,
