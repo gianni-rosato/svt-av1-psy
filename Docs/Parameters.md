@@ -272,6 +272,26 @@ best one for each of the appropriate frames.
 For more information on the decision-making process,
 please look at [section 2.2 of the super-resolution doc](./Appendix-Super-Resolution.md#22-determination-of-the-downscaling-factor)
 
+#### **Reference Scaling**
+
+Reference Scaling is better described in [the reference scaling documentation](./Appendix-Reference-Scaling.md),
+but this basically allows the input to be encoded and the output at a lower
+resolution, scaling ratio applys on both horizontally and vertically.
+
+| **ResizeMode** | **Value**                                                                                                                   |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| 0                | None, no frame resize allowed                                                                                            |
+| 1                | Fixed mode, all frames are encoded at the specified scale of 8/`denom`, thus a `denom` of 8 means no scaling, and 16 means half-scaling |
+| 2                | Random mode, all frames are coded at a random scale, the scaling `denom` can be picked from 8 to 16                        |
+| 3                | Dynamic mode, scale for a frame is determined based on buffer level and average qp in rate control, scaling ratio can be 3/4 or 1/2. This mode can only work in 1-pass CBR low-delay mode                  |
+| 4                | Random access mode, scaling is controlled by scale events, which determine scaling in a specified scaling `denom` or recover to original resolution                                                       |
+
+Example CLI of reference scaling dynamic mode:
+> -i input.yuv -b output.ivf --resize-mode 3 --rc 2 --pred-struct 1 --tbr 1000
+
+TODO: Random access mode is not available until scaling event parameter is
+supported. An example will be added here to guide using random access mode.
+
 ### Color Description Options
 
 | **Configuration file parameter**   | **Command line**             | **Range**    | **Default**   | **Description**                                                                                                                            |
