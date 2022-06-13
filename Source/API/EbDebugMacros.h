@@ -35,6 +35,7 @@
 extern "C" {
 #endif // __cplusplus
 
+
 #define TUNE_DEFAULT_M10_M11    1 // Tune default M10 M11 with consideration to decode speed
 #define TUNE_DEFAULT_M9         1 // Tune default M9 with consideration to decode speed
 #define TUNE_DEFAULT_M8         1 // Tune default M8 with consideration to decode speed
@@ -43,7 +44,8 @@ extern "C" {
 #define TUNE_DEFAULT_M6         1 // Tune default M6 with consideration to decode speed
 #define TUNE_DEFAULT_M5         1 // Tune default M5 with consideration to decode speed
 #define TUNE_DEFAULT_M3         1 // Tune default M3 with consideration to decode speed
-
+#define CBR_OPT                 1 // Optimisation of the cbr mode towards better coding efficiency and behavior
+#define CBR_QPM                 1 // QP modulation for the cbr mode based on Motion estimatiom distorsion (no tpl)
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
