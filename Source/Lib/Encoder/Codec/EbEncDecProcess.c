@@ -4615,6 +4615,28 @@ static void set_detect_high_freq_ctrls(ModeDecisionContext* ctx, uint8_t detect_
     }
 }
 
+#if FIX_DISALLOW_8x8_SC
+// use this function to set the disallow_below_16x16 level in MD. ME 8x8 blocks are controlled by get_enable_me_8x8()
+uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
+                                                Bool is_islice, Bool sc_class1,
+                                                Bool is_ref) {
+    uint8_t disallow_below_16x16 = 0;
+    if (sc_class1)
+        disallow_below_16x16 = 0;
+    else if (enc_mode <= ENC_M9)
+        disallow_below_16x16 = 0;
+    else if (enc_mode <= ENC_M11) {
+        if (resolution <= INPUT_SIZE_1080p_RANGE)
+            disallow_below_16x16 = is_ref ? 0 : 1;
+        else
+            disallow_below_16x16 = is_islice ? 0 : 1;
+    }
+    else
+        disallow_below_16x16 = is_islice ? 0 : 1;
+
+    return disallow_below_16x16;
+}
+#else
 // use this function to set the disallow_below_16x16 level and to set the accompanying enable_me_8x8 level
 #if FIX_DISALLOW_8x8_SC
 uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
@@ -4672,6 +4694,7 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
 #endif
     return disallow_below_16x16;
 }
+#endif
 /*
  * Generate per-SB MD settings (do not change per-PD)
  */
