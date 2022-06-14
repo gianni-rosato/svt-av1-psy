@@ -856,7 +856,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->txs_level = is_islice ? 3 : 0;
     }
-    else if (enc_mode <= ENC_M11)
+    else if (enc_mode <= ENC_M12)
         pcs_ptr->txs_level = is_islice ? 5 : 0;
     else
         pcs_ptr->txs_level = 0;
