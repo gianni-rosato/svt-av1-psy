@@ -29,6 +29,7 @@
 #include "EbPictureControlSet.h"
 #include "EbTransforms.h"
 #include "EbUnitTestUtility.h"
+#include "EbQMatrices.h"
 
 namespace {
 using svt_av1_test_tool::SVTRandom;
@@ -45,9 +46,17 @@ extern "C" void svt_av1_build_quantizer(
         TranLow *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, \
         const int16_t *scan, const int16_t *iscan
 #define QUAN_HBD_PARAM int16_t log_scale
+#define QUAN_QM_PARAM_LIST                                                      \
+    const TranLow *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr,    \
+        const int16_t *round_ptr, const int16_t *quant_ptr,                  \
+        const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,                 \
+        TranLow *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, \
+        const int16_t *scan, const int16_t *iscan, const QmVal *qm_ptr,      \
+        const QmVal *iqm_ptr
 
 typedef void (*QuantizeFunc)(QUAN_PARAM_LIST);
 typedef void (*QuantizeHbdFunc)(QUAN_PARAM_LIST, QUAN_HBD_PARAM);
+typedef void (*QuantizeQmFunc)(QUAN_QM_PARAM_LIST, QUAN_HBD_PARAM);
 
 enum QuantType { TYPE_B, TYPE_DC, TYPE_FP };
 
@@ -56,6 +65,8 @@ typedef tuple<QuantizeFunc, QuantizeFunc, TxSize, QuantType, EbBitDepth>
     QuantizeParam;
 typedef tuple<QuantizeHbdFunc, QuantizeHbdFunc, TxSize, QuantType, EbBitDepth>
     QuantizeHbdParam;
+typedef tuple<QuantizeQmFunc, QuantizeQmFunc, TxSize, QuantType, EbBitDepth>
+    QuantizeQmParam;
 
 typedef struct {
     Quants quant;
@@ -581,6 +592,216 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
     }
 }
 
+class QuantizeQmTest : public QuantizeTest<QuantizeQmParam, QuantizeQmFunc> {
+  protected:
+    QuantizeQmTest() {
+        quant_ref_ = TEST_GET_PARAM(0);
+        quant_ = TEST_GET_PARAM(1);
+        tx_size_ = TEST_GET_PARAM(2);
+        type_ = TEST_GET_PARAM(3);
+        bd_ = TEST_GET_PARAM(4);
+
+        qm_level_ = 8;
+        init_qm();
+    }
+
+    void QuantizeRun(bool is_loop, int q = 0, int test_num = 1) override {
+        TranLow *coeff_ptr = coeff_;
+        const intptr_t n_coeffs = coeff_num();
+
+        TranLow *qcoeff_ref = coeff_ptr + n_coeffs;
+        TranLow *dqcoeff_ref = qcoeff_ref + n_coeffs;
+
+        TranLow *qcoeff = dqcoeff_ref + n_coeffs;
+        TranLow *dqcoeff = qcoeff + n_coeffs;
+        uint16_t *eob = (uint16_t *)(dqcoeff + n_coeffs);
+
+        // Testing uses 2-D DCT scan order table
+        const ScanOrder *const sc = &av1_scan_orders[tx_size_][DCT_DCT];
+
+        // Testing uses luminance quantization table
+        const int16_t *zbin = qtab_->quant.y_zbin[q];
+
+        // ASSERT_EQ(type_ == TYPE_FP);
+        const int16_t *round = qtab_->quant.y_round_fp[q];
+        const int16_t *quant = qtab_->quant.y_quant_fp[q];
+
+        const int16_t *quant_shift = qtab_->quant.y_quant_shift[q];
+        const int16_t *dequant = qtab_->dequant.y_dequant_qtx[q];
+
+        const TxSize qm_tx_size = av1_get_adjusted_tx_size(tx_size_);
+        const QmVal *qm_ptr = qmatrix_[qm_level_][0][qm_tx_size];
+        const QmVal *iqm_ptr = iqmatrix_[qm_level_][0][qm_tx_size];
+
+        for (int i = 0; i < test_num; ++i) {
+            if (is_loop)
+                FillCoeffRandom();
+
+            memset(qcoeff_ref, 0, 5 * n_coeffs * sizeof(*qcoeff_ref));
+            int log_scale = av1_get_tx_scale(tx_size_);
+
+            quant_ref_(coeff_ptr,
+                       n_coeffs,
+                       zbin,
+                       round,
+                       quant,
+                       quant_shift,
+                       qcoeff_ref,
+                       dqcoeff_ref,
+                       dequant,
+                       &eob[0],
+                       sc->scan,
+                       sc->iscan,
+                       qm_ptr,
+                       iqm_ptr,
+                       log_scale);
+
+            quant_(coeff_ptr,
+                   n_coeffs,
+                   zbin,
+                   round,
+                   quant,
+                   quant_shift,
+                   qcoeff,
+                   dqcoeff,
+                   dequant,
+                   &eob[1],
+                   sc->scan,
+                   sc->iscan,
+                   qm_ptr,
+                   iqm_ptr,
+                   log_scale);
+
+            for (int j = 0; j < n_coeffs; ++j) {
+                ASSERT_EQ(qcoeff_ref[j], qcoeff[j])
+                    << "Q mismatch on test: " << i << " at position: " << j
+                    << " Q: " << q << " coeff: " << coeff_ptr[j];
+            }
+
+            for (int j = 0; j < n_coeffs; ++j) {
+                ASSERT_EQ(dqcoeff_ref[j], dqcoeff[j])
+                    << "Dq mismatch on test: " << i << " at position: " << j
+                    << " Q: " << q << " coeff: " << coeff_ptr[j];
+            }
+
+            ASSERT_EQ(eob[0], eob[1])
+                << "eobs mismatch on test: " << i << " Q: " << q;
+        }
+    }
+
+  private:
+    TxSize av1_get_adjusted_tx_size(TxSize tx_size) {
+        switch (tx_size) {
+        case TX_64X64:
+        case TX_64X32:
+        case TX_32X64: return TX_32X32;
+        case TX_64X16: return TX_32X16;
+        case TX_16X64: return TX_16X32;
+        default: return tx_size;
+        }
+    }
+
+    void init_qm() {
+        const uint8_t num_planes = 1;
+        uint8_t q, c, t;
+        int32_t current;
+        for (q = 0; q < NUM_QM_LEVELS; ++q) {
+            for (c = 0; c < num_planes; ++c) {
+                current = 0;
+                for (t = 0; t < TX_SIZES_ALL; ++t) {
+                    const int32_t size = tx_size_2d[t];
+                    const TxSize qm_tx_size =
+                        av1_get_adjusted_tx_size(static_cast<TxSize>(t));
+                    if (q == NUM_QM_LEVELS - 1) {
+                        qmatrix_[q][c][t] = NULL;
+                        iqmatrix_[q][c][t] = NULL;
+                    } else if (t !=
+                               qm_tx_size) {  // Reuse matrices for 'qm_tx_size'
+                        qmatrix_[q][c][t] = qmatrix_[q][c][qm_tx_size];
+                        iqmatrix_[q][c][t] = iqmatrix_[q][c][qm_tx_size];
+                    } else {
+                        assert(current + size <= QM_TOTAL_SIZE);
+                        qmatrix_[q][c][t] = &wt_matrix_ref[q][c >= 1][current];
+                        iqmatrix_[q][c][t] =
+                            &iwt_matrix_ref[q][c >= 1][current];
+                        current += size;
+                    }
+                }
+            }
+        }
+    }
+
+    const QmVal *iqmatrix_[NUM_QM_LEVELS][3][TX_SIZES_ALL];
+    const QmVal *qmatrix_[NUM_QM_LEVELS][3][TX_SIZES_ALL];
+    int qm_level_;
+};
+
+TEST_P(QuantizeQmTest, ZeroInput) {
+    FillCoeffZero();
+    QuantizeRun(false);
+}
+
+TEST_P(QuantizeQmTest, LargeNegativeInput) {
+    FillDcLargeNegative();
+    QuantizeRun(false, 0, 1);
+}
+
+TEST_P(QuantizeQmTest, DcOnlyInput) {
+    FillDcOnly();
+    QuantizeRun(false, 0, 1);
+}
+
+TEST_P(QuantizeQmTest, RandomInput) {
+    QuantizeRun(true, 0, kTestNum);
+}
+
+TEST_P(QuantizeQmTest, MultipleQ) {
+    for (int q = 0; q < QINDEX_RANGE; ++q) {
+        QuantizeRun(true, q, kTestNum);
+    }
+}
+
+// Force the coeff to be half the value of the dequant.  This exposes a
+// mismatch found in av1_quantize_fp_sse2().
+TEST_P(QuantizeQmTest, CoeffHalfDequant) {
+    FillCoeff(16);
+    QuantizeRun(false, 25, 1);
+}
+
+using QuantizeQmHbdTest = QuantizeQmTest;
+
+TEST_P(QuantizeQmHbdTest, ZeroInput) {
+    FillCoeffZero();
+    QuantizeRun(false);
+}
+
+TEST_P(QuantizeQmHbdTest, LargeNegativeInput) {
+    FillDcLargeNegative();
+    QuantizeRun(false, 0, 1);
+}
+
+TEST_P(QuantizeQmHbdTest, DcOnlyInput) {
+    FillDcOnly();
+    QuantizeRun(false, 0, 1);
+}
+
+TEST_P(QuantizeQmHbdTest, RandomInput) {
+    QuantizeRun(true, 0, kTestNum);
+}
+
+TEST_P(QuantizeQmHbdTest, MultipleQ) {
+    for (int q = 0; q < QINDEX_RANGE; ++q) {
+        QuantizeRun(true, q, kTestNum);
+    }
+}
+
+// Force the coeff to be half the value of the dequant.  This exposes a
+// mismatch found in av1_quantize_fp_sse2().
+TEST_P(QuantizeQmHbdTest, CoeffHalfDequant) {
+    FillCoeff(16);
+    QuantizeRun(false, 25, 1);
+}
+
 using std::make_tuple;
 
 #if HAS_AVX2
@@ -716,11 +937,44 @@ const QuantizeHbdParam kQHbdParamArrayAvx2[] = {
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
                static_cast<TxSize>(TX_64X64), TYPE_FP, EB_TWELVE_BIT)};
 
+    const QuantizeQmParam kQmParamArrayAvx2[] = {
+    make_tuple(&svt_av1_quantize_fp_qm_c, &svt_av1_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_qm_c, &svt_av1_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_4X16), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_qm_c, &svt_av1_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_16X4), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_qm_c, &svt_av1_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_32X8), TYPE_FP, EB_EIGHT_BIT),
+    make_tuple(&svt_av1_quantize_fp_qm_c, &svt_av1_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_8X32), TYPE_FP, EB_EIGHT_BIT)};
+
+    const QuantizeQmParam kQmParamHbdArrayAvx2[] = {
+    make_tuple(&svt_av1_highbd_quantize_fp_qm_c,
+               &svt_av1_highbd_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_16X16), TYPE_FP, EB_TEN_BIT),
+    make_tuple(&svt_av1_highbd_quantize_fp_qm_c,
+               &svt_av1_highbd_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_4X16), TYPE_FP, EB_TEN_BIT),
+    make_tuple(&svt_av1_highbd_quantize_fp_qm_c,
+               &svt_av1_highbd_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_16X4), TYPE_FP, EB_TEN_BIT),
+    make_tuple(&svt_av1_highbd_quantize_fp_qm_c,
+               &svt_av1_highbd_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_32X8), TYPE_FP, EB_TEN_BIT),
+    make_tuple(&svt_av1_highbd_quantize_fp_qm_c,
+               &svt_av1_highbd_quantize_fp_qm_avx2,
+               static_cast<TxSize>(TX_8X32), TYPE_FP, EB_TEN_BIT)};
+
 INSTANTIATE_TEST_CASE_P(AVX2, QuantizeLbdTest,
                         ::testing::ValuesIn(kQParamArrayAvx2));
 INSTANTIATE_TEST_CASE_P(SSE4_1, QuantizeHbdTest,
                         ::testing::ValuesIn(kQHbdParamArraySse41));
 INSTANTIATE_TEST_CASE_P(AVX2, QuantizeHbdTest,
                         ::testing::ValuesIn(kQHbdParamArrayAvx2));
+INSTANTIATE_TEST_CASE_P(AVX2, QuantizeQmTest,
+                        ::testing::ValuesIn(kQmParamArrayAvx2));
+INSTANTIATE_TEST_CASE_P(AVX2, QuantizeQmHbdTest,
+                        ::testing::ValuesIn(kQmParamHbdArrayAvx2));
 #endif  // HAS_AVX2
 }  // namespace

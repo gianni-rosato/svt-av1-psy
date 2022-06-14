@@ -346,13 +346,34 @@ static INLINE void update_qp_qm(int log_scale, __m256i *thr, __m256i *qp) {
     qp[2] = _mm256_permute2x128_si256(qp[2], qp[2], 0x11);
     *thr  = _mm256_slli_epi16(qp[2], AOM_QM_BITS - (1 + log_scale));
 }
-
+// 64 bit multiply. return the low 64 bits of the intermediate integers
+static inline __m256i mm256_mullo_epi64(const __m256i a, const __m256i b) {
+    // if a 64bit integer 'a' can be represented by its low 32bit part a0 and high 32bit part a1 as: a1<<32+a0,
+    // 64bit integer multiply a*b can expand to: (a1*b1)<<64 + (a1*b0 + a0*b1)<<32 + a0*b0.
+    // since only the low 64bit part of the result 128bit integer is needed, the above expression can be simplified as: (a1*b0 + a0*b1)<<32 + a0*b0
+    const __m256i bswap   = _mm256_shuffle_epi32(b, 0xB1); // b6 b7 b4 b5 b2 b3 b0 b1
+    __m256i       prod_hi = _mm256_mullo_epi32(a,
+                                         bswap); // a7*b6 a6*b7 a5*b4 a4*b5 a3*b2 a2*b3 a1*b0 a0*b1
+    const __m256i zero    = _mm256_setzero_si256();
+    prod_hi               = _mm256_hadd_epi32(prod_hi,
+                                zero); // 0 0 a7*b6+a6*b7 a5*b4+a4*b5 0 0 a3*b2+a2*b3 a1*b0+a0*b1
+    prod_hi               = _mm256_shuffle_epi32(prod_hi,
+                                   0x73); // a7*b6+a6*b7 0 a5*b4+a4*b5 0 a3*b2+a2*b3 0 a1*b0+a0*b1 0
+    const __m256i prod_lo = _mm256_mul_epu32(a, b); // 0 a6*b6 0 a4*b4 0 a2*b2 0 a0*b0
+    const __m256i prod    = _mm256_add_epi64(prod_lo, prod_hi);
+    return prod;
+}
+static INLINE void clamp_epi32(__m256i *x, __m256i min, __m256i max) {
+    *x = _mm256_min_epi32(*x, max);
+    *x = _mm256_max_epi32(*x, min);
+}
 static INLINE void quantize_qm(const __m256i *thr, const __m256i *qp, __m256i *c,
                                const int16_t *iscan_ptr, TranLow *qcoeff, TranLow *dqcoeff,
                                __m256i *eob, const __m256i qm, const __m256i iqm,
                                int16_t log_scale) {
     const __m256i zero = _mm256_setzero_si256();
-
+    __m256i       min       = _mm256_set1_epi32(INT16_MIN);
+    __m256i       max       = _mm256_set1_epi32(INT16_MAX);
     const __m256i abs_coeff = _mm256_abs_epi32(*c);
 
     __m256i coeff_wt = _mm256_mullo_epi32(abs_coeff, qm);
@@ -361,10 +382,22 @@ static INLINE void quantize_qm(const __m256i *thr, const __m256i *qp, __m256i *c
     const int nzflag = _mm256_movemask_epi8(mask);
 
     if (LIKELY(~nzflag)) {
+        // q*tmp would overflow 32-bit
         const __m256i tmp = _mm256_mullo_epi32(qm, qp[1]);
+        const __m256i tmp_hi = _mm256_srli_epi64(tmp, 32);
+        const __m256i tmp_lo = _mm256_srli_epi64(_mm256_slli_epi64(tmp, 32), 32);
+
         __m256i       q   = _mm256_add_epi32(abs_coeff, qp[0]);
-        q                 = _mm256_mullo_epi32(q, tmp);
-        q                 = _mm256_srli_epi32(q, AOM_QM_BITS + 16 - log_scale);
+        clamp_epi32(&q, min, max);
+        __m256i q_hi = _mm256_srli_epi64(q, 32);
+        __m256i q_lo = _mm256_srli_epi64(_mm256_slli_epi64(q, 32), 32);
+
+        q_lo = mm256_mullo_epi64(q_lo, tmp_lo);
+        q_hi = mm256_mullo_epi64(q_hi, tmp_hi);
+        q_lo = _mm256_srli_epi64(q_lo, AOM_QM_BITS + 16 - log_scale);
+        q_hi = _mm256_srli_epi64(q_hi, AOM_QM_BITS + 16 - log_scale);
+        q_hi              = _mm256_slli_epi64(q_hi, 32);
+        q                 = _mm256_or_si256(q_lo, q_hi);
 
         __m256i       dq  = _mm256_mullo_epi32(qp[2], iqm);
         const __m256i rnd = _mm256_set1_epi32(1 << (AOM_QM_BITS - 1));
