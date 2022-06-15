@@ -1399,9 +1399,19 @@ int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_mode
     return 1;
 }
 
+#if FG_LOSSLES_OPT
+void svt_av1_pointwise_multiply_c(const float *a, float *b, float *c, double *b_d, double *c_d,
+                                  int32_t n) {
+    for (int32_t i = 0; i < n; i++) {
+        b[i] = a[i] * (float)b_d[i];
+        c[i] = a[i] * (float)c_d[i];
+    }
+}
+#else
 static void pointwise_multiply(const float *a, float *b, int32_t n) {
     for (int32_t i = 0; i < n; ++i) b[i] *= a[i];
 }
+#endif
 
 //window_function[y * block_size + x] = (float)(cos((.5 + y) * PI / block_size - PI / 2) * cos((.5 + x) * PI / block_size - PI / 2));
 static const float window_function_half_cos_window_2[4] = {
@@ -2362,18 +2372,25 @@ int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoise
                             by * (block_size >> chroma_sub_h) + offsy,
                             plane_d,
                             block_d);
+#if FG_LOSSLES_OPT
+                        svt_av1_pointwise_multiply(
+                            window_function, plane, block, plane_d, block_d, pixels_per_block);
+#else
                         for (int32_t j = 0; j < pixels_per_block; ++j) {
                             block[j] = (float)block_d[j];
                             plane[j] = (float)plane_d[j];
                         }
                         pointwise_multiply(window_function, block, pixels_per_block);
+#endif
                         svt_aom_noise_tx_forward(tx, block);
                         svt_aom_noise_tx_filter(tx, noise_psd[c]);
                         svt_aom_noise_tx_inverse(tx, block);
 
                         // Apply window function to the plane approximation (we will apply
                         // it to the sum of plane + block when composing the results).
+#if !FG_LOSSLES_OPT
                         pointwise_multiply(window_function, plane, pixels_per_block);
+#endif
 
                         for (int32_t y = 0; y < (block_size >> chroma_sub_h); ++y) {
                             const int32_t y_result = y + (by + 1) * (block_size >> chroma_sub_h) +

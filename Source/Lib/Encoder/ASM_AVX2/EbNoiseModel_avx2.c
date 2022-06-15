@@ -66,4 +66,28 @@ void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val,
     }
 }
 
+void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d,
+                                     int32_t n) {
+    int32_t i = 0;
+    __m256   a_ps, b_ps, c_ps;
+    __m128   tmp_ps1, tmp_ps2;
+
+    for (; i + 8 - 1 < n; i += 8) {
+        a_ps = _mm256_loadu_ps(a + i);
+
+        tmp_ps1 = _mm256_cvtpd_ps(_mm256_loadu_pd(b_d + i));
+        tmp_ps2 = _mm256_cvtpd_ps(_mm256_loadu_pd(b_d + i + 4));
+        b_ps    = _mm256_insertf128_ps(_mm256_castps128_ps256(tmp_ps1), tmp_ps2, 0x1);
+        tmp_ps1 = _mm256_cvtpd_ps(_mm256_loadu_pd(c_d + i));
+        tmp_ps2 = _mm256_cvtpd_ps(_mm256_loadu_pd(c_d + i + 4));
+        c_ps    = _mm256_insertf128_ps(_mm256_castps128_ps256(tmp_ps1), tmp_ps2, 0x1);
+
+        _mm256_storeu_ps(b + i, _mm256_mul_ps(a_ps, b_ps));
+        _mm256_storeu_ps(c + i, _mm256_mul_ps(a_ps, c_ps));
+    }
+    for (; i < n; i++) {
+        b[i] = a[i] * (float)b_d[i];
+        c[i] = a[i] * (float)c_d[i];
+    }
+}
 #endif
