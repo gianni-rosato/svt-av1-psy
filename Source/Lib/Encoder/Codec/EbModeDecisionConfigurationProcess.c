@@ -34,16 +34,6 @@ int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth)
 int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
-#if FIX_DISALLOW_8x8_SC
-uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
-                                               Bool is_islice, Bool sc_class1,
-                                               Bool is_ref);
-#else
-uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
-                                               SliceType slice_type, uint8_t sc_class1,
-                                               uint8_t is_used_as_reference_flag,
-                                               uint8_t temporal_layer_index);
-#endif
 
 #define MAX_MESH_SPEED 5 // Max speed setting for mesh motion method
 static MeshPattern good_quality_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
@@ -967,14 +957,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_skip_pd0 = is_base ? 0 : 1;
 
 #if FIX_DISALLOW_8x8_SC
-    pcs_ptr->pic_disallow_below_16x16 = get_disallow_below_16x16_picture_level(
+    pcs_ptr->pic_disallow_below_16x16 = svt_aom_get_disallow_below_16x16_picture_level(
         enc_mode,
         input_resolution,
         is_islice,
         ppcs->sc_class1,
         is_ref);
 #else
-    pcs_ptr->pic_disallow_below_16x16 = get_disallow_below_16x16_picture_level(
+    pcs_ptr->pic_disallow_below_16x16 = svt_aom_get_disallow_below_16x16_picture_level(
         enc_mode,
         input_resolution,
         slice_type,

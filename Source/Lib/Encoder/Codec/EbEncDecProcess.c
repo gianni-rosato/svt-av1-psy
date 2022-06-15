@@ -4617,7 +4617,7 @@ static void set_detect_high_freq_ctrls(ModeDecisionContext* ctx, uint8_t detect_
 
 #if FIX_DISALLOW_8x8_SC
 // use this function to set the disallow_below_16x16 level in MD. ME 8x8 blocks are controlled by get_enable_me_8x8()
-uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
+uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                 Bool is_islice, Bool sc_class1,
                                                 Bool is_ref) {
     uint8_t disallow_below_16x16 = 0;
@@ -4639,11 +4639,11 @@ uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResoluti
 #else
 // use this function to set the disallow_below_16x16 level and to set the accompanying enable_me_8x8 level
 #if FIX_DISALLOW_8x8_SC
-uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
+uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                 Bool is_islice, Bool sc_class1,
                                                 Bool is_ref) {
 #else
-uint8_t get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
+uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                SliceType slice_type, uint8_t sc_class1,
                                                uint8_t is_used_as_reference_flag,
                                                uint8_t temporal_layer_index) {
