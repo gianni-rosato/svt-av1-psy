@@ -319,7 +319,7 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
     // Derive synthesizer block size from frame size and tpl level
     tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs->aligned_width, pcs->aligned_height);
 
-    if (pcs->hierarchical_levels <= tpl_ctrls->reduced_tpl_group)
+    if ((int)scs->static_config.hierarchical_levels <= tpl_ctrls->reduced_tpl_group)
         tpl_ctrls->reduced_tpl_group = -1;
 
     // TPL may only look at a subset of available pictures in tpl group, which may affect the r0 calcuation.
