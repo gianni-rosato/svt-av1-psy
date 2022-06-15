@@ -12,6 +12,7 @@
 #include <immintrin.h>
 #include "EbDefinitions.h"
 #include "common_dsp_rtcd.h"
+#include "noise_util.h"
 
 #if FG_LOSSLES_OPT
 void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val,
@@ -115,4 +116,44 @@ void svt_av1_apply_window_function_to_plane_avx2(int32_t y_size, int32_t x_size,
     }
 }
 
+void svt_aom_noise_tx_filter_avx2(int32_t block_size, float *block_ptr, const float psd) {
+    if (block_size % 8) {
+        svt_aom_noise_tx_filter_c(block_size, block_ptr, psd);
+        return;
+    }
+    const float k_beta               = 1.1f;
+    const float k_beta_m1_div_k_beta = (k_beta - 1.0f) / k_beta;
+    const float psd_mul_k_beta       = k_beta * psd;
+    const float k_eps                = 1e-6f;
+    const float p_cmp                = psd_mul_k_beta > k_eps ? psd_mul_k_beta : k_eps;
+    float      *tx_block             = block_ptr;
+
+    const __m256  p_cmp_ps = _mm256_set1_ps(p_cmp);
+    const __m256  psd_ps   = _mm256_set1_ps(psd);
+    const __m256  k_eps_ps = _mm256_set1_ps(k_eps);
+    const __m256  mul_ps   = _mm256_set1_ps(k_beta_m1_div_k_beta);
+    const __m256i mask1    = _mm256_setr_epi32(0, 0, 1, 1, 4, 4, 5, 5);
+    const __m256i mask2    = _mm256_setr_epi32(2, 2, 3, 3, 6, 6, 7, 7);
+
+    for (int32_t y = 0; y < block_size; ++y) {
+        for (int32_t x = 0; x < block_size; x += 8) {
+            __m256 block_ps1 = _mm256_loadu_ps(tx_block);
+            __m256 block_ps2 = _mm256_loadu_ps(tx_block + 8);
+            __m256 p_ps1     = _mm256_mul_ps(block_ps1, block_ps1);
+            __m256 p_ps2     = _mm256_mul_ps(block_ps2, block_ps2);
+            // 0 1 4 5 2 3 6 7
+            __m256 p_ps      = _mm256_hadd_ps(p_ps1, p_ps2);
+            __m256 cmp_ps    = _mm256_cmp_ps(p_ps, p_cmp_ps, _CMP_GT_OQ);
+            __m256 val_ps    = _mm256_div_ps(_mm256_sub_ps(p_ps, psd_ps),
+                                          _mm256_max_ps(p_ps, k_eps_ps));
+            __m256 mul_final = _mm256_blendv_ps(mul_ps, val_ps, cmp_ps);
+
+            block_ps1 = _mm256_mul_ps(block_ps1, _mm256_permutevar8x32_ps(mul_final, mask1));
+            block_ps2 = _mm256_mul_ps(block_ps2, _mm256_permutevar8x32_ps(mul_final, mask2));
+            _mm256_storeu_ps(tx_block + 0, block_ps1);
+            _mm256_storeu_ps(tx_block + 8, block_ps2);
+            tx_block += 16;
+        }
+    }
+}
 #endif

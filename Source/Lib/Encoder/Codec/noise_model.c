@@ -2396,7 +2396,11 @@ int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoise
                         pointwise_multiply(window_function, block, pixels_per_block);
 #endif
                         svt_aom_noise_tx_forward(tx, block);
+#if FG_LOSSLES_OPT
+                        svt_aom_noise_tx_filter(tx->block_size, tx->tx_block, noise_psd[c]);
+#else
                         svt_aom_noise_tx_filter(tx, noise_psd[c]);
+#endif
                         svt_aom_noise_tx_inverse(tx, block);
 
                         // Apply window function to the plane approximation (we will apply
