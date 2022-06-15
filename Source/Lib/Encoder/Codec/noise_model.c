@@ -2291,6 +2291,19 @@ static const float *get_half_cos_window(int32_t block_size) {
 DITHER_AND_QUANTIZE(uint8_t, lowbd);
 DITHER_AND_QUANTIZE(uint16_t, highbd);
 
+#if FG_LOSSLES_OPT
+void svt_av1_apply_window_function_to_plane_c(int32_t y_size, int32_t x_size, float *result_ptr,
+                                              uint32_t result_stride, float *block, float *plane,
+                                              const float *window_function) {
+    for (int32_t y = 0; y < y_size; ++y) {
+        for (int32_t x = 0; x < x_size; ++x) {
+            result_ptr[y * result_stride + x] += (block[y * x_size + x] + plane[y * x_size + x]) *
+                window_function[y * x_size + x];
+        }
+    }
+}
+#endif
+
 int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised[3], int32_t w,
                                   int32_t h, int32_t stride[3], int32_t chroma_sub[2],
                                   float noise_psd[3], int32_t block_size, int32_t bit_depth,
@@ -2392,6 +2405,19 @@ int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoise
                         pointwise_multiply(window_function, plane, pixels_per_block);
 #endif
 
+#if FG_LOSSLES_OPT
+                        const int y_size  = (block_size >> chroma_sub_h);
+                        const int x_size  = (block_size >> chroma_sub_w);
+                        float *result_ptr = result + ((by + 1) * y_size + offsy) * result_stride +
+                            (bx + 1) * x_size + offsx;
+                        svt_av1_apply_window_function_to_plane(y_size,
+                                                               x_size,
+                                                               result_ptr,
+                                                               result_stride,
+                                                               block,
+                                                               plane,
+                                                               window_function);
+#else
                         for (int32_t y = 0; y < (block_size >> chroma_sub_h); ++y) {
                             const int32_t y_result = y + (by + 1) * (block_size >> chroma_sub_h) +
                                 offsy;
@@ -2404,6 +2430,7 @@ int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoise
                                     window_function[y * (block_size >> chroma_sub_w) + x];
                             }
                         }
+#endif
                     }
                 }
             }

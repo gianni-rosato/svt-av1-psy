@@ -90,4 +90,29 @@ void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double 
         c[i] = a[i] * (float)c_d[i];
     }
 }
+
+void svt_av1_apply_window_function_to_plane_avx2(int32_t y_size, int32_t x_size, float *result_ptr,
+                                                 uint32_t result_stride, float *block, float *plane,
+                                                 const float *window_function) {
+    __m256 block_ps, plane_ps, wnd_funct_ps, res_ps;
+    for (int32_t y = 0; y < y_size; ++y) {
+        int32_t x = 0;
+        for (; x + 8 - 1 < x_size; x += 8) {
+            block_ps     = _mm256_loadu_ps(block + y * x_size + x);
+            plane_ps     = _mm256_loadu_ps(plane + y * x_size + x);
+            wnd_funct_ps = _mm256_loadu_ps(window_function + y * x_size + x);
+            res_ps       = _mm256_loadu_ps(result_ptr + y * result_stride + x);
+
+            block_ps = _mm256_add_ps(block_ps, plane_ps);
+            block_ps = _mm256_mul_ps(block_ps, wnd_funct_ps);
+            block_ps = _mm256_add_ps(block_ps, res_ps);
+            _mm256_storeu_ps(result_ptr + y * result_stride + x, block_ps);
+        }
+        for (; x < x_size; ++x) {
+            result_ptr[y * result_stride + x] += (block[y * x_size + x] + plane[y * x_size + x]) *
+                window_function[y * x_size + x];
+        }
+    }
+}
+
 #endif

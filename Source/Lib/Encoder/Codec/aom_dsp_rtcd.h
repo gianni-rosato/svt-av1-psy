@@ -893,6 +893,8 @@ extern "C" {
     void svt_av1_add_block_observations_internal_c(uint32_t n, const double val, const double recp_sqr_norm, double *buffer, double *buffer_norm, double *b, double *A);
     RTCD_EXTERN void (*svt_av1_pointwise_multiply)(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n);
     void svt_av1_pointwise_multiply_c(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n);
+    RTCD_EXTERN void (*svt_av1_apply_window_function_to_plane)(int32_t y_size, int32_t x_size, float *result_ptr, uint32_t result_stride, float *block, float *plane, const float *window_function);
+    void svt_av1_apply_window_function_to_plane_c(int32_t y_size, int32_t x_size, float *result_ptr, uint32_t result_stride, float *block, float *plane, const float *window_function);
 #endif
 #ifdef ARCH_X86_64
     int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
@@ -1733,8 +1735,9 @@ extern "C" {
     double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height, int stride, int bd);
     void svt_copy_mi_map_grid_avx2(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols);
 #if FG_LOSSLES_OPT
-void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val, const double recp_sqr_norm, double *buffer, double *buffer_norm, double *b, double *A);
-void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n);
+    void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val, const double recp_sqr_norm, double *buffer, double *buffer_norm, double *b, double *A);
+    void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n);
+    void svt_av1_apply_window_function_to_plane_avx2(int32_t y_size, int32_t x_size, float *result_ptr, uint32_t result_stride, float *block, float *plane, const float *window_function);
 #endif
 #endif
 
