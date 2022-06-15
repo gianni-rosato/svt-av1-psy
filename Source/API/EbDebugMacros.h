@@ -73,6 +73,8 @@ extern "C" {
 #define OPT_TPL_QPS             1 // Optimize QPS when using TPL
 #define FTR_TPL_SUBPEL          1 // Add subpel search to TPL path
 
+#define FTR_USE_COEFF_LVL       1 // Use me_8x8_distortion and QP to predict the coeff level per frame
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

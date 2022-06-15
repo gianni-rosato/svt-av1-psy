@@ -609,11 +609,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->cand_reduction_level = 0;
     else if (enc_mode <= ENC_M5)
         pcs_ptr->cand_reduction_level = 0;
+#if FTR_USE_COEFF_LVL
+    else if (enc_mode <= ENC_M8) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->cand_reduction_level = 0;
+        else
+            pcs_ptr->cand_reduction_level = 1;
+#else
     else if (enc_mode <= ENC_M6) {
         if (hierarchical_levels <= 3)
             pcs_ptr->cand_reduction_level = 1;
         else
             pcs_ptr->cand_reduction_level = 0;
+#endif
     } else if (enc_mode <= ENC_M10)
         pcs_ptr->cand_reduction_level = 1;
     else
@@ -625,20 +633,83 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (enc_mode <= ENC_M2)
         pcs_ptr->txt_level = 1;
     else if (enc_mode <= ENC_M3)
+#if FTR_USE_COEFF_LVL // txt
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = 1;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = 5;
+        }
+        else { // regular
+            pcs_ptr->txt_level = is_base ? 1 : 3;
+        }
+    }
+#else
         pcs_ptr->txt_level = is_base ? 1 : 3;
+#endif
     else if (enc_mode <= ENC_M9)
+#if FTR_USE_COEFF_LVL // txt
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = is_base ? 1 : 3;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 6 : 8;
+        }
+        else { // regular
+            pcs_ptr->txt_level = 5;
+        }
+    }
+#else
         pcs_ptr->txt_level = 5;
+#endif
     else if (enc_mode <= ENC_M10)
+#if FTR_USE_COEFF_LVL // txt
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = 5;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 6 : 8;
+            if (pcs_ptr->ref_intra_percentage < 85 && !is_base && !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        }
+        else { // regular
+            pcs_ptr->txt_level = is_base ? 6 : 8;
+        }
+    }
+#else
         pcs_ptr->txt_level = is_base ? 6 : 8;
+#endif
 #if TUNE_SSIM_M12
     else if (enc_mode <= ENC_M12) {
 #else
     else if (enc_mode <= ENC_M11) {
 #endif
+#if FTR_USE_COEFF_LVL // txt
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = is_base ? 6 : 8;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 6 : 8;
+            if (pcs_ptr->ref_intra_percentage < 85 && !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        }
+        else { // regular
+            pcs_ptr->txt_level = is_base ? 6 : 8;
+            if (pcs_ptr->ref_intra_percentage < 85 && !is_base && !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        }
+#else
         pcs_ptr->txt_level = is_base ? 6 : 8;
         if (pcs_ptr->ref_intra_percentage < 85 && !is_base && !pcs_ptr->parent_pcs_ptr->sc_class1) {
             pcs_ptr->txt_level = 0;
         }
+#endif
     } else {
         pcs_ptr->txt_level = is_base ? 6 : 8;
         if (pcs_ptr->ref_intra_percentage < 85 && !pcs_ptr->parent_pcs_ptr->sc_class1) {
@@ -764,7 +835,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else if (enc_mode <= ENC_M6)
             pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
         else
+#if FTR_USE_COEFF_LVL
+            if (pcs_ptr->coeff_lvl == LOW_LVL) {
+                pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
+            }
+            else {
+                pcs_ptr->dist_based_ref_pruning = 4;
+            }
+#else
             pcs_ptr->dist_based_ref_pruning = 4;
+#endif
     } else {
         pcs_ptr->dist_based_ref_pruning = 0;
     }
@@ -813,8 +893,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (enc_mode <= ENC_M3)
         pcs_ptr->max_part0_to_part1_dev = 0;
     else
+#if FTR_USE_COEFF_LVL
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 0;
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 60;
+        else // regular
+            pcs_ptr->max_part0_to_part1_dev = 40;
+    }
+#else
         pcs_ptr->max_part0_to_part1_dev = 40;
-
+#endif
     // Set the level for enable_inter_intra
     // Block level switch, has to follow the picture level
     // inter intra pred                      Settings
@@ -958,21 +1048,79 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_lpd0_lvl = 0;
     else if (enc_mode <= ENC_M6)
         pcs_ptr->pic_lpd0_lvl = 1;
+#if !FTR_USE_COEFF_LVL // lpd0
     else if (enc_mode <= ENC_M7) {
         if (hierarchical_levels <= 3)
             pcs_ptr->pic_lpd0_lvl = 2;
         else
             pcs_ptr->pic_lpd0_lvl = 1;
     }
+#endif
     else if (enc_mode <= ENC_M9)
+#if FTR_USE_COEFF_LVL // lpd0
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_lpd0_lvl = 1;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 2 : 4;
+        }
+        else { // Regular
+            pcs_ptr->pic_lpd0_lvl = 2;
+        }
+    }
+#else
         pcs_ptr->pic_lpd0_lvl = 2;
+#endif
     else if (enc_mode <= ENC_M10)
+#if FTR_USE_COEFF_LVL // lpd0
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_lpd0_lvl = 2;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 6;
+        }
+        else { // Regular
+            pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 2 : 4;
+        }
+    }
+#else
         pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 2 : 4;
+#endif
     else if (enc_mode <= ENC_M11)
+#if FTR_USE_COEFF_LVL // lpd0
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 2 : 4;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 7;
+        }
+        else { // Regular
+            pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 6;
+        }
+    }
+#else
         pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 6;
+#endif
+#if FTR_USE_COEFF_LVL // lpd0
+    else if (enc_mode <= ENC_M12) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 6;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->pic_lpd0_lvl = 7;
+        }
+        else { // regular
+            pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 7;
+        }
+    } else
+        pcs_ptr->pic_lpd0_lvl = 7;
+#else
     else
         pcs_ptr->pic_lpd0_lvl = (is_base || transition_present) ? 5 : 7;
-
+#endif
     if (pcs_ptr->parent_pcs_ptr->sc_class1 || scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
         pcs_ptr->pic_skip_pd0 = 0;
 #if TUNE_SSIM_M13
@@ -1020,22 +1168,66 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 if (enc_mode <= ENC_M2)
                     pcs_ptr->pic_depth_removal_level = 0;
                 else if (enc_mode <= ENC_M5) {
+#if FTR_USE_COEFF_LVL
+                    if (pcs_ptr->coeff_lvl == LOW_LVL) {
+                        pcs_ptr->pic_depth_removal_level = 0;
+                    }
+                    else {
+                        if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 0;
+                        else
+                            pcs_ptr->pic_depth_removal_level = 2;
+                    }
+#else
                     if (input_resolution <= INPUT_SIZE_480p_RANGE)
                         pcs_ptr->pic_depth_removal_level = 0;
                     else
                         pcs_ptr->pic_depth_removal_level = 2;
+#endif
                 } else if (enc_mode <= ENC_M7) {
+#if FTR_USE_COEFF_LVL
+                    if (pcs_ptr->coeff_lvl == LOW_LVL) {
+                        if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 0;
+                        else
+                            pcs_ptr->pic_depth_removal_level = 2;
+                    }
+                    else {
+                        if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 1;
+                        else
+                            pcs_ptr->pic_depth_removal_level = 2;
+                    }
+#else
                     if (input_resolution <= INPUT_SIZE_1080p_RANGE)
                         pcs_ptr->pic_depth_removal_level = 1;
                     else
                         pcs_ptr->pic_depth_removal_level = 2;
+#endif
                 } else if (enc_mode <= ENC_M9) {
+#if FTR_USE_COEFF_LVL
+                    if (pcs_ptr->coeff_lvl == LOW_LVL) {
+                        if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 1;
+                        else
+                            pcs_ptr->pic_depth_removal_level = 2;
+                    }
+                    else {
+                        if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
+                        else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
+                        else
+                            pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
+                }
+#else
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
                     else
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
+#endif
                 } else if (enc_mode <= ENC_M11) {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 4;
@@ -1120,10 +1312,33 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #else
     else if (enc_mode <= ENC_M6)
 #endif
+#if FTR_USE_COEFF_LVL
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+
+        }
+        else { // regular
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+
+        }
+    }
+#else
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+#endif
+#if FTR_USE_COEFF_LVL
+    else {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
+        }
+        else { // regular
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
+        }
+    }
+#else
     else
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
-
+#endif
     if (scs_ptr->max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1))
         pcs_ptr->pic_block_based_depth_refinement_level = MAX(
             0, pcs_ptr->pic_block_based_depth_refinement_level - 1);
@@ -1143,11 +1358,73 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M7)
         pcs_ptr->pic_lpd1_lvl = 0;
     else if (enc_mode <= ENC_M9)
+#if FTR_USE_COEFF_LVL // lpd1
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_lpd1_lvl = 0;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
+        }
+        else { // Regular
+            pcs_ptr->pic_lpd1_lvl = is_ref ? 0 : 1;
+        }
+    }
+#else
         pcs_ptr->pic_lpd1_lvl = is_ref ? 0 : 1;
+#endif
     else if (enc_mode <= ENC_M10)
+#if FTR_USE_COEFF_LVL // lpd1
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_lpd1_lvl = is_ref ? 0 : 1;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 3;
+        }
+        else { // Regular
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
+        }
+    }
+#else
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
+#endif
     else if (enc_mode <= ENC_M11)
+#if FTR_USE_COEFF_LVL // lpd1
+    {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
+        }
+        else { // Regular
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 3;
+        }
+    }
+#else
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 3;
+#endif
+#if FTR_USE_COEFF_LVL // lpd1
+    else if (enc_mode <= ENC_M12) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 3;
+        }
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 5;
+        }
+        else { // regular
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
+        }
+    }
+    else {
+        if (input_resolution <= INPUT_SIZE_1080p_RANGE &&
+            scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT)
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 6;
+        else
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 5;
+     }
+#else
     else if (enc_mode <= ENC_M12)
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
     else {
@@ -1157,7 +1434,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
     }
-
+#endif
     // Can only use light-PD1 under the following conditions
     // There is another check before PD1 is called; pred_depth_only is not checked here, because some modes
     // may force pred_depth_only at the light-pd1 detector
@@ -1451,6 +1728,30 @@ void get_ref_skip_percentage(PictureControlSet *pcs_ptr, uint8_t *skip_area) {
     *skip_area = skip_perc;
 }
 void *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
+
+#if FTR_USE_COEFF_LVL
+// Use me_8x8_distortion and QP to predict the coeff level per frame
+void predict_frame_coeff_lvl(struct PictureControlSet* pcs_ptr) {
+
+    uint64_t tot_me_8x8_dis = 0;
+    for (uint32_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; sb_idx++) {
+        tot_me_8x8_dis += pcs_ptr->parent_pcs_ptr->me_8x8_distortion[sb_idx];
+    }
+    tot_me_8x8_dis = tot_me_8x8_dis / pcs_ptr->picture_qp;
+
+    pcs_ptr->coeff_lvl = NORMAL_LVL;
+
+    if (tot_me_8x8_dis < COEFF_LVL_TH_0) {
+
+        pcs_ptr->coeff_lvl = LOW_LVL;
+    }
+    else if (tot_me_8x8_dis > COEFF_LVL_TH_1) {
+
+        pcs_ptr->coeff_lvl = HIGH_LVL;
+    }
+}
+#endif
+
 /* Mode Decision Configuration Kernel */
 
 /*********************************************************************************
@@ -1501,6 +1802,15 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                          rate_control_results_ptr->pcs_wrapper_ptr->object_ptr;
         SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
 
+
+#if FTR_USE_COEFF_LVL
+        pcs_ptr->coeff_lvl = INVALID_LVL;
+        if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+            if (pcs_ptr->slice_type != I_SLICE && !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                predict_frame_coeff_lvl(pcs_ptr);
+            }
+        }
+#endif
         // -------
         // Scale references if resolution of the reference is different than the input
         // super-res reference frame size is same as original input size, only check current frame scaled flag;

@@ -428,6 +428,9 @@ typedef struct PictureControlSet {
     Bool             pic_bypass_encdec;
     RefList          colocated_pu_ref_list;
     EncMode          enc_mode;
+#if FTR_USE_COEFF_LVL
+    InputCoeffLvl    coeff_lvl;
+#endif
     int32_t          cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo       wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];
     SgrprojInfo      sgrproj_info[MAX_TILE_CNTS][MAX_MB_PLANE];

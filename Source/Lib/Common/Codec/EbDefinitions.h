@@ -169,7 +169,16 @@ typedef enum SqWeightOffsets {
     AGGRESSIVE_OFFSET_0   = -5,
     AGGRESSIVE_OFFSET_1   = -10
 } SqWeightOffsets;
-
+#if FTR_USE_COEFF_LVL
+#define COEFF_LVL_TH_0  30000
+#define COEFF_LVL_TH_1 100000
+typedef enum InputCoeffLvl {
+    LOW_LVL     =  0,
+    NORMAL_LVL  =  1,
+    HIGH_LVL    =  2,
+    INVALID_LVL = ~0,
+} InputCoeffLvl;
+#endif
 struct Buf2D {
     uint8_t *buf;
     uint8_t *buf0;
