@@ -160,12 +160,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
         tpl_ctrls->enable                       = 0;
         tpl_ctrls->tpl_opt_flag                 = 0;
         tpl_ctrls->enable_tpl_qps               = 0;
-        tpl_ctrls->disable_intra_pred_nbase     = 0;
         tpl_ctrls->disable_intra_pred_nref      = 0;
         tpl_ctrls->reduced_tpl_group            = -1;
         tpl_ctrls->pf_shape                     = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
-        tpl_ctrls->get_best_ref                 = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th     = 4;
         tpl_ctrls->dispenser_search_level       = 0;
@@ -179,12 +177,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
         tpl_ctrls->enable                       = 1;
         tpl_ctrls->tpl_opt_flag                 = 0;
         tpl_ctrls->enable_tpl_qps               = 0;
-        tpl_ctrls->disable_intra_pred_nbase     = 0;
         tpl_ctrls->disable_intra_pred_nref      = 0;
         tpl_ctrls->reduced_tpl_group            = -1;
         tpl_ctrls->pf_shape                     = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
-        tpl_ctrls->get_best_ref                 = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th     = 4;
         tpl_ctrls->dispenser_search_level       = 0;
@@ -198,12 +194,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
         tpl_ctrls->enable                       = 1;
         tpl_ctrls->tpl_opt_flag                 = 1;
         tpl_ctrls->enable_tpl_qps               = 0;
-        tpl_ctrls->disable_intra_pred_nbase     = 0;
         tpl_ctrls->disable_intra_pred_nref      = 1;
         tpl_ctrls->reduced_tpl_group            = -1;
         tpl_ctrls->pf_shape                     = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
-        tpl_ctrls->get_best_ref                 = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th     = 4;
         tpl_ctrls->dispenser_search_level       = 0;
@@ -217,12 +211,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
         tpl_ctrls->enable                       = 1;
         tpl_ctrls->tpl_opt_flag                 = 1;
         tpl_ctrls->enable_tpl_qps               = 0;
-        tpl_ctrls->disable_intra_pred_nbase     = 0;
         tpl_ctrls->disable_intra_pred_nref      = 1;
         tpl_ctrls->reduced_tpl_group            = -1;
         tpl_ctrls->pf_shape                     = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
-        tpl_ctrls->get_best_ref                 = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th     = 4;
         tpl_ctrls->dispenser_search_level       = 0;
@@ -236,10 +228,8 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
         tpl_ctrls->enable                       = 1;
         tpl_ctrls->tpl_opt_flag                 = 1;
         tpl_ctrls->enable_tpl_qps               = 0;
-        tpl_ctrls->disable_intra_pred_nbase     = 0;
         tpl_ctrls->disable_intra_pred_nref      = 1;
         tpl_ctrls->reduced_tpl_group            = is_islice ? -1 : 3;
-        tpl_ctrls->get_best_ref                 = 0;
         tpl_ctrls->pf_shape                     = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
@@ -255,12 +245,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
         tpl_ctrls->enable                       = 1;
         tpl_ctrls->tpl_opt_flag                 = 1;
         tpl_ctrls->enable_tpl_qps               = 0;
-        tpl_ctrls->disable_intra_pred_nbase     = 0;
         tpl_ctrls->disable_intra_pred_nref      = 1;
         tpl_ctrls->reduced_tpl_group            = pcs->hierarchical_levels == 5
                                                 ? (is_islice ? 4 : 3)
                                                 : (is_islice ? 3 : 2);
-        tpl_ctrls->get_best_ref                 = 0;
         tpl_ctrls->pf_shape                     = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
@@ -276,12 +264,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
         tpl_ctrls->enable                       = 1;
         tpl_ctrls->tpl_opt_flag                 = 1;
         tpl_ctrls->enable_tpl_qps               = 0;
-        tpl_ctrls->disable_intra_pred_nbase     = 0;
         tpl_ctrls->disable_intra_pred_nref      = 1;
         tpl_ctrls->reduced_tpl_group            = pcs->hierarchical_levels == 5
                                                 ? is_islice ? 4 : (resolution <= INPUT_SIZE_480p_RANGE ? 3 : 2)
                                                 : is_islice ? 3 : (resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1);
-        tpl_ctrls->get_best_ref                 = 0;
         tpl_ctrls->pf_shape                     = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
@@ -297,12 +283,10 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) 
         tpl_ctrls->enable                       = 1;
         tpl_ctrls->tpl_opt_flag                 = 1;
         tpl_ctrls->enable_tpl_qps               = 0;
-        tpl_ctrls->disable_intra_pred_nbase     = 0;
         tpl_ctrls->disable_intra_pred_nref      = 1;
         tpl_ctrls->reduced_tpl_group            = pcs->hierarchical_levels == 5
                                                 ? is_islice ? 4 : (resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1)
                                                 : is_islice ? 3 : (resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
-        tpl_ctrls->get_best_ref                 = 0;
         tpl_ctrls->pf_shape                     = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;

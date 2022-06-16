@@ -543,10 +543,12 @@ typedef struct TplControls {
     uint8_t              tpl_opt_flag; // 0:OFF 1:ON - TPL optimizations : no rate, only DC
     uint8_t              enable_tpl_qps; // 0:OFF 1:ON - QPS in TPL
     uint8_t              disable_intra_pred_nref; // 0:OFF 1:ON - Disable intra prediction in NREF
+#if !OPT_TPL_QPS
     uint8_t              disable_intra_pred_nbase; // Depricated . to remove
     uint8_t              disable_tpl_nref; // 0:OFF 1:ON - Disable tpl in NREF
     uint8_t              disable_tpl_pic_dist; // 16: OFF - 0: ON
     uint8_t              get_best_ref; //Depricated.to remove
+#endif
     EB_TRANS_COEFF_SHAPE pf_shape;
     uint8_t              use_pred_sad_in_intra_search;
     uint8_t              use_pred_sad_in_inter_search;

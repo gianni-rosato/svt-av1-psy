@@ -1334,13 +1334,13 @@ int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_T
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
-int compute_rdmult_sse(PictureParentControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth) {
-    FrameType frame_type = pcs_ptr->frm_hdr.frame_type;
+int compute_rdmult_sse(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth) {
+    FrameType frame_type = pcs->frm_hdr.frame_type;
     // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
-    uint8_t temporal_layer_index = pcs_ptr->temporal_layer_index;
-    uint8_t max_temporal_layer   = pcs_ptr->hierarchical_levels;
+    uint8_t temporal_layer_index = pcs->temporal_layer_index;
+    uint8_t max_temporal_layer   = pcs->hierarchical_levels;
 
-    int64_t rdmult = svt_av1_compute_rd_mult_based_on_qindex(bit_depth, pcs_ptr->update_type, q_index);
+    int64_t rdmult = svt_av1_compute_rd_mult_based_on_qindex(bit_depth, pcs->update_type, q_index);
 
     // Update rdmult based on the frame's position in the miniGOP
     if (frame_type != KEY_FRAME) {
@@ -1349,13 +1349,13 @@ int compute_rdmult_sse(PictureParentControlSet *pcs_ptr, uint8_t q_index, uint8_
                                                            : LF_UPDATE;
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
-    assert(pcs_ptr->tpl_ctrls.vq_adjust_lambda_sb > 0);
-    int    qdiff = q_index - quantizer_to_qindex[pcs_ptr->picture_qp];
+    assert(pcs->tpl_ctrls.vq_adjust_lambda_sb > 0);
+    int    qdiff = q_index - quantizer_to_qindex[pcs->picture_qp];
     int8_t qidx  = (qdiff < -8) ? 0 : (qdiff < -4) ? 1 : (qdiff < -2) ? 2 : (qdiff <= 4) ? 3 : 4;
 
-    if (pcs_ptr->tpl_ctrls.enable) {
+    if (pcs->tpl_ctrls.enable) {
         rdmult = (rdmult *
-                  q_factor[pcs_ptr->tpl_ctrls.vq_adjust_lambda_sb - 1][qidx]) >>
+                  q_factor[pcs->tpl_ctrls.vq_adjust_lambda_sb - 1][qidx]) >>
             7;
     }
     return (int)rdmult;

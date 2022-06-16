@@ -1731,23 +1731,23 @@ void *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 
 #if FTR_USE_COEFF_LVL
 // Use me_8x8_distortion and QP to predict the coeff level per frame
-void predict_frame_coeff_lvl(struct PictureControlSet* pcs_ptr) {
+static void predict_frame_coeff_lvl(struct PictureControlSet* pcs) {
 
     uint64_t tot_me_8x8_dis = 0;
-    for (uint32_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; sb_idx++) {
-        tot_me_8x8_dis += pcs_ptr->parent_pcs_ptr->me_8x8_distortion[sb_idx];
+    for (uint32_t sb_idx = 0; sb_idx < pcs->sb_total_count; sb_idx++) {
+        tot_me_8x8_dis += pcs->parent_pcs_ptr->me_8x8_distortion[sb_idx];
     }
-    tot_me_8x8_dis = tot_me_8x8_dis / pcs_ptr->picture_qp;
+    tot_me_8x8_dis = tot_me_8x8_dis / pcs->picture_qp;
 
-    pcs_ptr->coeff_lvl = NORMAL_LVL;
+    pcs->coeff_lvl = NORMAL_LVL;
 
     if (tot_me_8x8_dis < COEFF_LVL_TH_0) {
 
-        pcs_ptr->coeff_lvl = LOW_LVL;
+        pcs->coeff_lvl = LOW_LVL;
     }
     else if (tot_me_8x8_dis > COEFF_LVL_TH_1) {
 
-        pcs_ptr->coeff_lvl = HIGH_LVL;
+        pcs->coeff_lvl = HIGH_LVL;
     }
 }
 #endif

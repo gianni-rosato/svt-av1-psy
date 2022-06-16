@@ -453,7 +453,7 @@ extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode,
                               uint16_t max_frame_width, uint16_t max_frame_height, int32_t p_angle,
                               int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row,
                               uint8_t *left_col);
-
+#if !OPT_TPL_QPS
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
 static uint8_t is_me_data_valid(MotionEstimationData *pa_me_data, const MeSbResults *me_results,
@@ -575,11 +575,11 @@ void get_best_reference(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uin
     }
     return;
 }
+#endif
 
 /*
     TPL Dispenser SB based (sz 64x64)
 */
-
 uint8_t tpl_blk_idx_tab[2][21] = {
     /*CU index*/ {0, 1, 22, 43, 64, 2, 7, 12, 17, 23, 28, 33, 38, 44, 49, 54, 59, 65, 70, 75, 80},
     /*ME index*/ {0, 1, 2, 3, 4, 5, 6, 9, 10, 7, 8, 11, 12, 13, 14, 17, 18, 15, 16, 19, 20}};
@@ -630,7 +630,7 @@ void svt_av1_tpl_init_me_luts(void) {
     init_me_luts_bd(sad_per_bit16lut_8, QINDEX_RANGE, EB_EIGHT_BIT);
     init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, EB_TEN_BIT);
 }
-static void svt_tpl_init_mv_cost_params(SequenceControlSet *scs_ptr, MV_COST_PARAMS *mv_cost_params, int bsize,
+static void svt_tpl_init_mv_cost_params(SequenceControlSet *scs, MV_COST_PARAMS *mv_cost_params, int bsize,
     const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult,
     uint8_t hbd_mode_decision) {
     mv_cost_params->ref_mv = ref_mv;
@@ -641,15 +641,15 @@ static void svt_tpl_init_mv_cost_params(SequenceControlSet *scs_ptr, MV_COST_PAR
     mv_cost_params->sad_per_bit = hbd_mode_decision ? sad_per_bit_lut_10[base_q_idx]
                                             : sad_per_bit16lut_8[base_q_idx];
     // Use values when approx_inter_rate is enabled
-    memset(scs_ptr->nmv_vec_cost, 0, sizeof(int32_t) * MV_JOINTS);
-    memset(scs_ptr->nmv_costs, 0, sizeof(int32_t) * MV_VALS * 2);
-    mv_cost_params->mvjcost = scs_ptr->nmv_vec_cost;// context_ptr->md_rate_estimation_ptr->nmv_vec_cost;
-    mv_cost_params->mvcost[0] = &scs_ptr->nmv_costs[0][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[0];
-    mv_cost_params->mvcost[1] = &scs_ptr->nmv_costs[1][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[1];
+    memset(scs->nmv_vec_cost, 0, sizeof(int32_t) * MV_JOINTS);
+    memset(scs->nmv_costs, 0, sizeof(int32_t) * MV_VALS * 2);
+    mv_cost_params->mvjcost = scs->nmv_vec_cost;// context_ptr->md_rate_estimation_ptr->nmv_vec_cost;
+    mv_cost_params->mvcost[0] = &scs->nmv_costs[0][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[0];
+    mv_cost_params->mvcost[1] = &scs->nmv_costs[1][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[1];
 
 }
-int compute_rdmult_sse(PictureParentControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth);
-void enc_make_inter_predictor(SequenceControlSet *scs_ptr, uint8_t *src_ptr, uint8_t *src_ptr_2b,
+int compute_rdmult_sse(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth);
+void enc_make_inter_predictor(SequenceControlSet *scs, uint8_t *src_ptr, uint8_t *src_ptr_2b,
     uint8_t *dst_ptr, int16_t pre_y, int16_t pre_x, MV mv,
     const struct ScaleFactors *const sf, ConvolveParams *conv_params,
     InterpFilters interp_filters, InterInterCompoundData *interinter_comp,
@@ -660,13 +660,28 @@ void enc_make_inter_predictor(SequenceControlSet *scs_ptr, uint8_t *src_ptr, uin
     uint8_t bit_depth, uint8_t use_intrabc, uint8_t is_masked_compound,
     uint8_t is16bit);
 
+// Initialize xd fields required by TPL dispenser
+static void init_xd_tpl(MacroBlockD* xd, const Av1Common *const cm, const BlockSize block_size,
+    const uint32_t mb_origin_x, const uint32_t mb_origin_y) {
+    const int32_t bw = mi_size_wide[block_size];
+    const int32_t bh = mi_size_high[block_size];
+    const int mi_row = mb_origin_y >> MI_SIZE_LOG2;
+    const int mi_col = mb_origin_x >> MI_SIZE_LOG2;
+    xd->mb_to_top_edge = -((mi_row * MI_SIZE) * 8);
+    xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mi_row) * MI_SIZE) * 8;
+    xd->mb_to_left_edge = -((mi_col * MI_SIZE) * 8);
+    xd->mb_to_right_edge = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
+    xd->mi_row = -xd->mb_to_top_edge / (8 * MI_SIZE);
+    xd->mi_col = -xd->mb_to_left_edge / (8 * MI_SIZE);
+}
+
 // best_mv inputs the starting full-pel MV, around which subpel search is to be performed and outputs the new best subpel MV
-void tpl_subpel_search(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-    EbPictureBufferDesc *ref_pic_ptr, EbPictureBufferDesc *input_picture_ptr,
+static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *pcs,
+    EbPictureBufferDesc *ref_pic, EbPictureBufferDesc *input_pic,
     MacroBlockD* xd, const uint32_t mb_origin_x, const uint32_t mb_origin_y,
     const uint8_t bsize, MV* best_mv) {
 
-    const Av1Common *const cm = pcs_ptr->av1_cm;
+    const Av1Common *const cm = pcs->av1_cm;
     const BlockSize block_size = bsize == 8 ? BLOCK_8X8 : bsize == 16 ? BLOCK_16X16 : bsize == 32 ? BLOCK_32X32 : BLOCK_64X64;
 
     // ref_mv is used to calculate the cost of the motion vector
@@ -677,8 +692,8 @@ void tpl_subpel_search(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
     SUBPEL_MOTION_SEARCH_PARAMS  ms_params_struct;
     SUBPEL_MOTION_SEARCH_PARAMS *ms_params = &ms_params_struct;
 
-    ms_params->allow_hp = 0; // Allow MAX QUARTER_PEL because pcs_ptr->frm_hdr.allow_high_precision_mv is not set yet
-    ms_params->forced_stop = pcs_ptr->tpl_ctrls.subpel_depth;
+    ms_params->allow_hp = 0; // Allow MAX QUARTER_PEL because pcs->frm_hdr.allow_high_precision_mv is not set yet
+    ms_params->forced_stop = pcs->tpl_ctrls.subpel_depth;
     ms_params->iters_per_step = 2; // Maximum number of steps in logarithmic subpel search before giving up. [1, 2]
 
     // Set up limit values for MV components.
@@ -694,9 +709,9 @@ void tpl_subpel_search(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
     svt_av1_set_subpel_mv_search_range(&ms_params->mv_limits, (FullMvLimits *)&mv_limits, &ref_mv);
 
     // Mvcost params
-    int32_t qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
-    uint32_t rdmult = compute_rdmult_sse(pcs_ptr, qIndex, 8/*EB_EIGHT_BIT*/);
-    svt_tpl_init_mv_cost_params(scs_ptr,
+    int32_t qIndex = quantizer_to_qindex[(uint8_t)scs->static_config.qp];
+    uint32_t rdmult = compute_rdmult_sse(pcs, qIndex, 8/*EB_EIGHT_BIT*/);
+    svt_tpl_init_mv_cost_params(scs,
         &ms_params->mv_cost_params,
         bsize,
         &ref_mv,
@@ -712,26 +727,25 @@ void tpl_subpel_search(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
 
     // Ref and src buffers
     MSBuffers *ms_buffers = &ms_params->var_params.ms_buffers;
-    int32_t ref_origin_index = ref_pic_ptr->origin_x + mb_origin_x +
-        (mb_origin_y + ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+    int32_t ref_origin_index = ref_pic->origin_x + mb_origin_x +
+        (mb_origin_y + ref_pic->origin_y) * ref_pic->stride_y;
 
     // Ref buffer
     struct svt_buf_2d ref_struct;
-    ref_struct.buf = ref_pic_ptr->buffer_y + ref_origin_index;
-    ref_struct.width = ref_pic_ptr->width;
-    ref_struct.height = ref_pic_ptr->height;
-    ref_struct.stride = ref_pic_ptr->stride_y;
+    ref_struct.buf = ref_pic->buffer_y + ref_origin_index;
+    ref_struct.width = ref_pic->width;
+    ref_struct.height = ref_pic->height;
+    ref_struct.stride = ref_pic->stride_y;
     ms_buffers->ref = &ref_struct;
 
     // Src buffer
-    uint32_t input_origin_index = (mb_origin_y + input_picture_ptr->origin_y) *
-        input_picture_ptr->stride_y +
-        (mb_origin_x + input_picture_ptr->origin_x);
+    uint32_t input_origin_index = (mb_origin_x + input_pic->origin_x) +
+        (mb_origin_y + input_pic->origin_y) * input_pic->stride_y;
     struct svt_buf_2d src_struct;
-    src_struct.buf = input_picture_ptr->buffer_y + input_origin_index;
-    src_struct.width = input_picture_ptr->width;
-    src_struct.height = input_picture_ptr->height;
-    src_struct.stride = input_picture_ptr->stride_y;
+    src_struct.buf = input_pic->buffer_y + input_origin_index;
+    src_struct.width = input_pic->width;
+    src_struct.height = input_pic->height;
+    src_struct.stride = input_pic->stride_y;
     ms_buffers->src = &src_struct;
 
     int_mv best_sp_mv;
@@ -838,17 +852,7 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
 
 #if FTR_TPL_SUBPEL
         MacroBlockD  xd;
-        const Av1Common *const cm = pcs_ptr->av1_cm;
-        const int32_t bw = mi_size_wide[block_size];
-        const int32_t bh = mi_size_high[block_size];
-        const int       mi_row = mb_origin_y >> MI_SIZE_LOG2;
-        const int       mi_col = mb_origin_x >> MI_SIZE_LOG2;
-        xd.mb_to_top_edge = -((mi_row * MI_SIZE) * 8);
-        xd.mb_to_bottom_edge = ((cm->mi_rows - bh - mi_row) * MI_SIZE) * 8;
-        xd.mb_to_left_edge = -((mi_col * MI_SIZE) * 8);
-        xd.mb_to_right_edge = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
-        xd.mi_row = -xd.mb_to_top_edge / (8 * MI_SIZE);
-        xd.mi_col = -xd.mb_to_left_edge / (8 * MI_SIZE);
+        init_xd_tpl(&xd, pcs_ptr->av1_cm, block_size, mb_origin_x, mb_origin_y);
 #endif
 
         const int dst_buffer_stride = recon_picture_ptr->stride_y;

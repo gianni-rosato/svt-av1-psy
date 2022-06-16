@@ -520,23 +520,23 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t ti
 }
 
 #if OPT_TPL_QPS
-int compute_rdmult_sse(PictureParentControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth);
+int compute_rdmult_sse(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth);
 
 // Set the lambda for each sb.
 // When lambda tuning is on (blk_lambda_tuning), lambda of each block is set separately (full_lambda_md/fast_lambda_md)
 // later in set_tuned_blk_lambda
 // Testing showed that updating SAD lambda based on frame info was not helpful; therefore, the SAD lambda generation is not changed.
-void av1_lambda_assign_md(PictureParentControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
-    context_ptr->full_lambda_md[0] = (uint32_t)compute_rdmult_sse(pcs_ptr, context_ptr->qp_index, 8);
-    context_ptr->fast_lambda_md[0] = av1_lambda_mode_decision8_bit_sad[context_ptr->qp_index];
+void av1_lambda_assign_md(PictureParentControlSet *pcs, ModeDecisionContext *ctx) {
+    ctx->full_lambda_md[0] = (uint32_t)compute_rdmult_sse(pcs, ctx->qp_index, 8);
+    ctx->fast_lambda_md[0] = av1_lambda_mode_decision8_bit_sad[ctx->qp_index];
 
-    context_ptr->full_lambda_md[1] = (uint32_t)compute_rdmult_sse(pcs_ptr, context_ptr->qp_index, 10);
-    context_ptr->fast_lambda_md[1] = av1lambda_mode_decision10_bit_sad[context_ptr->qp_index];
+    ctx->full_lambda_md[1] = (uint32_t)compute_rdmult_sse(pcs, ctx->qp_index, 10);
+    ctx->fast_lambda_md[1] = av1lambda_mode_decision10_bit_sad[ctx->qp_index];
 
-    context_ptr->full_lambda_md[1] *= 16;
-    context_ptr->fast_lambda_md[1] *= 4;
-    context_ptr->full_sb_lambda_md[0] = context_ptr->full_lambda_md[0];
-    context_ptr->full_sb_lambda_md[1] = context_ptr->full_lambda_md[1];
+    ctx->full_lambda_md[1] *= 16;
+    ctx->fast_lambda_md[1] *= 4;
+    ctx->full_sb_lambda_md[0] = ctx->full_lambda_md[0];
+    ctx->full_sb_lambda_md[1] = ctx->full_lambda_md[1];
 }
 #else
 // Set the lambda for each sb.
