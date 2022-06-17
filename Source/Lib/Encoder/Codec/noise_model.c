@@ -826,6 +826,53 @@ void svt_aom_noise_model_free(AomNoiseModel *model) {
 EXTRACT_AR_ROW(uint8_t, lowbd);
 EXTRACT_AR_ROW(uint16_t, highbd);
 
+#if FG_LOSSLES_OPT
+void svt_av1_add_block_observations_internal_c(uint32_t n, const double val,
+                                               const double recp_sqr_norm, double *buffer,
+                                               double *buffer_norm, double *b, double *A) {
+    uint32_t i;
+    for (i = 0; i + 8 - 1 < n; i += 8) {
+        buffer_norm[i + 0] = buffer[i + 0] * recp_sqr_norm;
+        buffer_norm[i + 1] = buffer[i + 1] * recp_sqr_norm;
+        buffer_norm[i + 2] = buffer[i + 2] * recp_sqr_norm;
+        buffer_norm[i + 3] = buffer[i + 3] * recp_sqr_norm;
+        buffer_norm[i + 4] = buffer[i + 4] * recp_sqr_norm;
+        buffer_norm[i + 5] = buffer[i + 5] * recp_sqr_norm;
+        buffer_norm[i + 6] = buffer[i + 6] * recp_sqr_norm;
+        buffer_norm[i + 7] = buffer[i + 7] * recp_sqr_norm;
+        b[i + 0] += buffer_norm[i + 0] * val;
+        b[i + 1] += buffer_norm[i + 1] * val;
+        b[i + 2] += buffer_norm[i + 2] * val;
+        b[i + 3] += buffer_norm[i + 3] * val;
+        b[i + 4] += buffer_norm[i + 4] * val;
+        b[i + 5] += buffer_norm[i + 5] * val;
+        b[i + 6] += buffer_norm[i + 6] * val;
+        b[i + 7] += buffer_norm[i + 7] * val;
+    }
+    for (; i < n; ++i) {
+        buffer_norm[i] = buffer[i] * recp_sqr_norm;
+        b[i] += buffer_norm[i] * val;
+    }
+
+    for (i = 0; i < n; ++i) {
+        uint32_t     j             = 0;
+        const double buffer_norm_i = buffer_norm[i];
+
+        for (j = 0; j + 8 - 1 < n; j += 8) {
+            A[i * n + j + 0] += (buffer_norm_i * buffer[j + 0]);
+            A[i * n + j + 1] += (buffer_norm_i * buffer[j + 1]);
+            A[i * n + j + 2] += (buffer_norm_i * buffer[j + 2]);
+            A[i * n + j + 3] += (buffer_norm_i * buffer[j + 3]);
+            A[i * n + j + 4] += (buffer_norm_i * buffer[j + 4]);
+            A[i * n + j + 5] += (buffer_norm_i * buffer[j + 5]);
+            A[i * n + j + 6] += (buffer_norm_i * buffer[j + 6]);
+            A[i * n + j + 7] += (buffer_norm_i * buffer[j + 7]);
+        }
+        for (; j < n; ++j) { A[i * n + j] += (buffer_norm_i * buffer[j]); }
+    }
+}
+#endif
+
 static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                                       const uint8_t *const data, const uint8_t *const denoised,
                                       int32_t w, int32_t h, int32_t stride, int32_t sub_log2[2],
@@ -875,7 +922,9 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                     : ((block_size >> sub_log2[0]) - lag));
             for (int32_t y = y_start; y < y_end; ++y) {
                 for (int32_t x = x_start; x < x_end; ++x) {
+#if !FG_LOSSLES_OPT
                     int32_t      i   = 0;
+#endif
                     const double val = noise_model->params.use_highbd
                         ? extract_ar_row_highbd(noise_model->coords,
                                                 num_coords,
@@ -902,6 +951,10 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                                                y + y_o,
                                                buffer);
 
+#if FG_LOSSLES_OPT
+                    svt_av1_add_block_observations_internal(
+                        n, val, recp_sqr_norm, buffer, buffer_norm, b, A);
+#else
                     for (i = 0; i + 8 - 1 < n; i += 8) {
                         buffer_norm[i + 0] = buffer[i + 0] * recp_sqr_norm;
                         buffer_norm[i + 1] = buffer[i + 1] * recp_sqr_norm;
@@ -943,8 +996,14 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                     }
 
                     noise_model->latest_state[c].num_observations++;
+#endif
                 }
             }
+#if FG_LOSSLES_OPT
+            //There is situation when x_start is greater than x_end,
+            //use max() to cap negative result and do not increment num_observations
+            noise_model->latest_state[c].num_observations += AOMMAX((y_end - y_start), 0)  * AOMMAX((x_end - x_start), 0);
+#endif
         }
     }
     EB_FREE_ALIGNED(buffer);

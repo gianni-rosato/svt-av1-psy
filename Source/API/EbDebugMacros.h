@@ -62,6 +62,7 @@ extern "C" {
 
 #define TUNE_INTER_COMPOUND     1 // Push down M3 Inter Compound Mode to M0
 #define FIX_DISALLOW_8x8_SC     1 // Align sc and nsc settings for disallow 8x8 (keep NSC memory footprint reduction)
+#define FG_LOSSLES_OPT          1 // Film Graing Lossless optimization
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

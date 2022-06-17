@@ -440,5 +440,9 @@ void setup_rtcd_internal(EbCpuFlags flags) {
     SET_AVX2(svt_estimate_noise, svt_estimate_noise_c, svt_estimate_noise_avx2);
     SET_AVX2(svt_estimate_noise_highbd, svt_estimate_noise_highbd_c, svt_estimate_noise_highbd_avx2);
     SET_AVX2(svt_copy_mi_map_grid, svt_copy_mi_map_grid_c, svt_copy_mi_map_grid_avx2);
+#if FG_LOSSLES_OPT
+    SET_AVX2(svt_av1_add_block_observations_internal, svt_av1_add_block_observations_internal_c, svt_av1_add_block_observations_internal_avx2);
+#endif
+
 }
 // clang-format on
