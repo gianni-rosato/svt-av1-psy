@@ -74,6 +74,7 @@ extern "C" {
 #define FTR_TPL_SUBPEL          1 // Add subpel search to TPL path
 
 #define FTR_USE_COEFF_LVL       1 // Use me_8x8_distortion and QP to predict the coeff level per frame
+#define FTR_NO_TILE_FAST_DEC    1 // Disable use of tiles by default when fast-decode is used
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

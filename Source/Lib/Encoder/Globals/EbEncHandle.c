@@ -3878,6 +3878,11 @@ void copy_api_from_app(
     }
     else {
         if (((EbSvtAv1EncConfiguration*)config_struct)->tile_rows == DEFAULT && ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns == DEFAULT) {
+
+#if FTR_NO_TILE_FAST_DEC
+            scs_ptr->static_config.tile_rows = 0;
+            scs_ptr->static_config.tile_columns = 0;
+#else
             if (scs_ptr->static_config.fast_decode == 0) {
                 scs_ptr->static_config.tile_rows = 0;
                 scs_ptr->static_config.tile_columns = 0;
@@ -3898,6 +3903,7 @@ void copy_api_from_app(
                     SVT_WARN("Tiles are enabled when using fast decode mode for 480p+ content.\n");
                 }
             }
+#endif
 
         }
         else {
