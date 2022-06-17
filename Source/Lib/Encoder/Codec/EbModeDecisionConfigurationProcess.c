@@ -231,6 +231,7 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
 // Reduce the large number of quantizers to a smaller number of levels for which
 // different matrices may be defined
 static INLINE int aom_get_qmlevel(int qindex, int first, int last) {
+    // mapping qindex(0, 255) to QM level(first, last)
     return first + (qindex * (last + 1 - first)) / QINDEX_RANGE;
 }
 

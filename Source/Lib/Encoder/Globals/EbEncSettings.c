@@ -988,7 +988,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->sframe_mode = SFRAME_NEAREST_BASE;
     config_ptr->force_key_frames = 0;
 
-    // QM
+    // Quant Matrices (QM)
     config_ptr->enable_qm = 0;
     config_ptr->min_qm_level = 8;
     config_ptr->max_qm_level = 15;
