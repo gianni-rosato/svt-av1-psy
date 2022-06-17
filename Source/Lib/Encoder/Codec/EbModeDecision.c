@@ -2836,10 +2836,35 @@ void svt_av1_setup_pred_block(BlockSize sb_type, struct Buf2D dst[MAX_MB_PLANE],
                      0);
 }
 
+#if FTR_TPL_SUBPEL
+static int sad_per_bit_lut_8[QINDEX_RANGE];
+static int sad_per_bit_lut_10[QINDEX_RANGE];
+
+// Get the sad per bit for the relevant qindex and bit depth
+int svt_aom_get_sad_per_bit(int qidx, EbBitDepth is_hbd) {
+    return is_hbd ? sad_per_bit_lut_10[qidx] : sad_per_bit_lut_8[qidx];
+}
+
+static void init_me_luts_bd(int *bit16lut, int range, EbBitDepth bit_depth) {
+    int i;
+    // Initialize the sad lut tables using a formulaic calculation for now.
+    // This is to make it easier to resolve the impact of experimental changes
+    // to the quantizer tables.
+    for (i = 0; i < range; i++) {
+        const double q = svt_av1_convert_qindex_to_q(i, bit_depth);
+        bit16lut[i] = (int)(0.0418 * q + 2.4107);
+    }
+}
+void svt_av1_init_me_luts(void) {
+    init_me_luts_bd(sad_per_bit_lut_8, QINDEX_RANGE, EB_EIGHT_BIT);
+    init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, EB_TEN_BIT);
+}
+#else
 // Values are now correlated to quantizer.
 static int              sad_per_bit16lut_8[QINDEX_RANGE];
 static int              sad_per_bit_lut_10[QINDEX_RANGE];
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+#endif
 
 int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, IntraBcContext *x,
                                              const AV1_COMMON *const cm, int mi_row, int mi_col,
@@ -2878,7 +2903,11 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
     x->mv_limits.row_max = (cm->mi_rows - mi_row) * MI_SIZE + AOM_INTERP_EXTEND;
     x->mv_limits.col_max = (cm->mi_cols - mi_col) * MI_SIZE + AOM_INTERP_EXTEND;
     //set search paramters
+#if FTR_TPL_SUBPEL
+    x->sadperbit16 = svt_aom_get_sad_per_bit(frm_hdr->quantization_params.base_q_idx, 0);
+#else
     x->sadperbit16 = sad_per_bit16lut_8[frm_hdr->quantization_params.base_q_idx];
+#endif
     x->errorperbit = full_lambda >> RD_EPB_SHIFT;
     x->errorperbit += (x->errorperbit == 0);
 
@@ -4374,6 +4403,7 @@ static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
 double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
 
 // Values are now correlated to quantizer.
+#if !OPT_TPL_QPS
 static int  sad_per_bit16lut_8[QINDEX_RANGE];
 static int  sad_per_bit_lut_10[QINDEX_RANGE];
 static void init_me_luts_bd(int *bit16lut, int range, EbBitDepth bit_depth) {
@@ -4390,6 +4420,7 @@ void svt_av1_init_me_luts(void) {
     init_me_luts_bd(sad_per_bit16lut_8, QINDEX_RANGE, EB_EIGHT_BIT);
     init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, EB_TEN_BIT);
 }
+#endif
 static INLINE int mv_check_bounds(const MvLimits *mv_limits, const MV *mv) {
     return (mv->row >> 3) < mv_limits->row_min || (mv->row >> 3) > mv_limits->row_max ||
         (mv->col >> 3) < mv_limits->col_min || (mv->col >> 3) > mv_limits->col_max;
@@ -4442,7 +4473,11 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     x->mv_limits.row_max = (cm->mi_rows - mi_row) * MI_SIZE + AOM_INTERP_EXTEND;
     x->mv_limits.col_max = (cm->mi_cols - mi_col) * MI_SIZE + AOM_INTERP_EXTEND;
     //set search paramters
+#if FTR_TPL_SUBPEL
+    x->sadperbit16 = svt_aom_get_sad_per_bit(frm_hdr->quantization_params.base_q_idx, 0);
+#else
     x->sadperbit16 = sad_per_bit16lut_8[frm_hdr->quantization_params.base_q_idx];
+#endif
     x->errorperbit = full_lambda >> RD_EPB_SHIFT;
     x->errorperbit += (x->errorperbit == 0);
     //temp buffer for hash me
@@ -4582,8 +4617,12 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext
          ? MV_COST_OPT
          : MV_COST_ENTROPY;
     mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
+#if FTR_TPL_SUBPEL
+    mv_cost_params->sad_per_bit = svt_aom_get_sad_per_bit(base_q_idx, hbd_mode_decision);
+#else
     mv_cost_params->sad_per_bit   = hbd_mode_decision ? sad_per_bit_lut_10[base_q_idx]
                                                       : sad_per_bit16lut_8[base_q_idx];
+#endif
     mv_cost_params->mvjcost       = context_ptr->md_rate_estimation_ptr->nmv_vec_cost;
     mv_cost_params->mvcost[0]     = context_ptr->md_rate_estimation_ptr->nmvcoststack[0];
     mv_cost_params->mvcost[1]     = context_ptr->md_rate_estimation_ptr->nmvcoststack[1];

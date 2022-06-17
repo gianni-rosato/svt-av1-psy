@@ -118,7 +118,11 @@ typedef struct logicalProcessorGroup {
 #define INITIAL_PROCESSOR_GROUP 16
 static processorGroup           *lp_group = NULL;
 #endif
+#if OPT_TPL_QPS
+uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
+#else
 uint8_t  get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
+#endif
 
 uint8_t get_disallow_nsq(EncMode enc_mode);
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
@@ -303,9 +307,6 @@ void asm_set_convolve_hbd_asm_table(void);
 void init_intra_dc_predictors_c_internal(void);
 void init_intra_predictors_internal(void);
 void svt_av1_init_me_luts(void);
-#if FTR_TPL_SUBPEL
-void svt_av1_tpl_init_me_luts(void);
-#endif
 
 static void enc_switch_to_real_time(){
 #if !defined(_WIN32)
@@ -1462,9 +1463,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     build_blk_geom(enc_handle_ptr->scs_instance_array[0]->scs_ptr->geom_idx);
 
     svt_av1_init_me_luts();
-#if FTR_TPL_SUBPEL
-    svt_av1_tpl_init_me_luts();
-#endif
     init_fn_ptr();
     svt_av1_init_wedge_masks();
     /************************************
@@ -1523,9 +1521,13 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             MAX(mrp_ctrl->sc_base_ref_list1_count,
                 MAX(mrp_ctrl->base_ref_list1_count,
                     MAX(mrp_ctrl->sc_non_base_ref_list1_count, mrp_ctrl->non_base_ref_list1_count)));
-
+#if OPT_TPL_QPS
+        input_data.tpl_synth_size = svt_aom_get_tpl_synthesizer_block_size(enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_level,
+            input_data.picture_width, input_data.picture_height);
+#else
         input_data.tpl_synth_size = get_tpl_synthesizer_block_size( enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_level,
             input_data.picture_width, input_data.picture_height);
+#endif
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->calculate_variance;
         input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection ||

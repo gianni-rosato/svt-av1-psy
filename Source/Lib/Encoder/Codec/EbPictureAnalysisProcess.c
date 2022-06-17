@@ -30,6 +30,9 @@
 #include "EbMotionEstimationContext.h"
 #include "EbPictureOperators.h"
 #include "EbResize.h"
+#if FTR_TPL_SUBPEL
+#include "av1me.h"
+#endif
 
 void generate_padding_compressed_10bit(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
@@ -2427,7 +2430,9 @@ int svt_av1_count_colors(const uint8_t *src, int stride, int rows, int cols, int
             ++n;
     return n;
 }
+#if !FTR_TPL_SUBPEL
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+#endif
 
 // This is used as a reference when computing the source variance for the
 //  purposes of activity masking.

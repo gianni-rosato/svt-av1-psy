@@ -60,7 +60,9 @@ static const uint32_t subblock_xy_16x16[N_16X16_BLOCKS][2] = {{0, 0},
 static const uint32_t idx_32x32_to_idx_16x16[4][4]         = {
     {0, 1, 4, 5}, {2, 3, 6, 7}, {8, 9, 12, 13}, {10, 11, 14, 15}};
 
+#if !FTR_TPL_SUBPEL
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+#endif
 int32_t get_frame_update_type(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, EbBitDepth bit_depth);
 int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_depth);

@@ -29,6 +29,9 @@
 #include "EbMotionEstimation.h"
 #include "EbEncDecResults.h"
 #include "EbRateDistortionCost.h"
+#if OPT_TPL_QPS
+#include "EbRateControlProcess.h"
+#endif
 #if FTR_TPL_SUBPEL
 #include "mcomp.h"
 #include "av1me.h"
@@ -296,6 +299,7 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats *tpl_s
     }
 }
 
+#if !OPT_TPL_QPS
 static const int16_t dc_qlookup_QTX[QINDEX_RANGE] = {
     4,   8,   8,   9,   10,  11,  12,  12,  13,   14,   15,   16,   17,   18,   19,   19,
     20,  21,  22,  23,  24,  25,  26,  26,  27,   28,   29,   30,   31,   32,   32,   33,
@@ -368,59 +372,7 @@ int16_t av1_dc_quant_qtx(int qindex, int delta, EbBitDepth bit_depth) {
         return -1;
     }
 }
-#if OPT_TPL_QPS
-// Returns the default rd multiplier for inter frames for a given qindex.
-// The function here is a first pass estimate based on data from
-// a previous Vizer run
-static double def_inter_rd_multiplier(int qindex) {
-    return 3.2 + (0.0035 * (double)qindex);
-}
 
-// Returns the default rd multiplier for ARF/Golden Frames for a given qindex.
-// The function here is a first pass estimate based on data from
-// a previous Vizer run
-static double def_arf_rd_multiplier(int qindex) {
-    return 3.25 + (0.0035 * (double)qindex);
-}
-
-// Returns the default rd multiplier for key frames for a given qindex.
-// The function here is a first pass estimate based on data from
-// a previous Vizer run
-static double def_kf_rd_multiplier(int qindex) {
-    return 3.3 + (0.0035 * (double)qindex);
-}
-
-int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type, int qindex) {
-    const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
-    int64_t rdmult = q * q;
-
-    // Scale rdmult based on frame type (previously scaled with the following formula for all frame types:
-    // rdmult = rdmult * 3 + (rdmult * 2 / 3);
-    if (update_type == KF_UPDATE) {
-        double def_rd_q_mult = def_kf_rd_multiplier(qindex);
-        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
-    }
-    else if ((update_type == GF_UPDATE) || (update_type == ARF_UPDATE)) {
-        double def_rd_q_mult = def_arf_rd_multiplier(qindex);
-        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
-    }
-    else {
-        double def_rd_q_mult = def_inter_rd_multiplier(qindex);
-        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
-    }
-
-    switch (bit_depth) {
-    case EB_EIGHT_BIT: break;
-    case EB_TEN_BIT: rdmult = ROUND_POWER_OF_TWO(rdmult, 4); break;
-    case EB_TWELVE_BIT: rdmult = ROUND_POWER_OF_TWO(rdmult, 8); break;
-    default:
-        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
-        return -1;
-    }
-
-    return rdmult > 0 ? (int)AOMMIN(rdmult, INT_MAX) : 1;
-}
-#else
 int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, int qindex) {
     const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
     //const int q = svt_av1_dc_quant_Q3(qindex, 0, bit_depth);
@@ -613,23 +565,6 @@ TxSize   tx_size_array[MAX_TPL_MODE]      = {TX_16X16, TX_32X32, TX_64X64};
 TxSize   sub2_tx_size_array[MAX_TPL_MODE] = {TX_16X8, TX_32X16, TX_64X32};
 TxSize   sub4_tx_size_array[MAX_TPL_MODE] = {TX_16X4, TX_32X8, TX_64X16};
 #if FTR_TPL_SUBPEL
-extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
-static int  sad_per_bit16lut_8[QINDEX_RANGE];
-static int  sad_per_bit_lut_10[QINDEX_RANGE];
-static void init_me_luts_bd(int *bit16lut, int range, EbBitDepth bit_depth) {
-    int i;
-    // Initialize the sad lut tables using a formulaic calculation for now.
-    // This is to make it easier to resolve the impact of experimental changes
-    // to the quantizer tables.
-    for (i = 0; i < range; i++) {
-        const double q = svt_av1_convert_qindex_to_q(i, bit_depth);
-        bit16lut[i] = (int)(0.0418 * q + 2.4107);
-    }
-}
-void svt_av1_tpl_init_me_luts(void) {
-    init_me_luts_bd(sad_per_bit16lut_8, QINDEX_RANGE, EB_EIGHT_BIT);
-    init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, EB_TEN_BIT);
-}
 static void svt_tpl_init_mv_cost_params(SequenceControlSet *scs, MV_COST_PARAMS *mv_cost_params, int bsize,
     const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult,
     uint8_t hbd_mode_decision) {
@@ -638,8 +573,7 @@ static void svt_tpl_init_mv_cost_params(SequenceControlSet *scs, MV_COST_PARAMS 
     mv_cost_params->early_exit_th = 1020 - (bsize >> 2);
     mv_cost_params->mv_cost_type = MV_COST_ENTROPY;// MV_COST_NONE;// MV_COST_ENTROPY;
     mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
-    mv_cost_params->sad_per_bit = hbd_mode_decision ? sad_per_bit_lut_10[base_q_idx]
-                                            : sad_per_bit16lut_8[base_q_idx];
+    mv_cost_params->sad_per_bit = svt_aom_get_sad_per_bit(base_q_idx, hbd_mode_decision);
     // Use values when approx_inter_rate is enabled
     memset(scs->nmv_vec_cost, 0, sizeof(int32_t) * MV_JOINTS);
     memset(scs->nmv_costs, 0, sizeof(int32_t) * MV_VALS * 2);
@@ -648,17 +582,6 @@ static void svt_tpl_init_mv_cost_params(SequenceControlSet *scs, MV_COST_PARAMS 
     mv_cost_params->mvcost[1] = &scs->nmv_costs[1][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[1];
 
 }
-int compute_rdmult_sse(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth);
-void enc_make_inter_predictor(SequenceControlSet *scs, uint8_t *src_ptr, uint8_t *src_ptr_2b,
-    uint8_t *dst_ptr, int16_t pre_y, int16_t pre_x, MV mv,
-    const struct ScaleFactors *const sf, ConvolveParams *conv_params,
-    InterpFilters interp_filters, InterInterCompoundData *interinter_comp,
-    uint8_t *seg_mask, uint16_t frame_width, uint16_t frame_height,
-    uint8_t blk_width, uint8_t blk_height, BlockSize bsize,
-    MacroBlockD *av1xd, int32_t src_stride, int32_t dst_stride,
-    uint8_t plane, const uint32_t ss_y, const uint32_t ss_x,
-    uint8_t bit_depth, uint8_t use_intrabc, uint8_t is_masked_compound,
-    uint8_t is16bit);
 
 // Initialize xd fields required by TPL dispenser
 static void init_xd_tpl(MacroBlockD* xd, const Av1Common *const cm, const BlockSize block_size,
@@ -710,7 +633,11 @@ static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *
 
     // Mvcost params
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs->static_config.qp];
+#if OPT_TPL_QPS
+    uint32_t rdmult = svt_aom_compute_rd_mult(pcs, qIndex, 8/*EB_EIGHT_BIT*/);
+#else
     uint32_t rdmult = compute_rdmult_sse(pcs, qIndex, 8/*EB_EIGHT_BIT*/);
+#endif
     svt_tpl_init_mv_cost_params(scs,
         &ms_params->mv_cost_params,
         bsize,
@@ -1726,7 +1653,7 @@ void tpl_mc_flow_dispenser(EncodeContext *encode_context_ptr, SequenceControlSet
         qIndex = (qIndex + delta_qindex);
     }
 #if OPT_TPL_QPS
-    *base_rdmult = svt_av1_compute_rd_mult_based_on_qindex(
+    *base_rdmult = svt_aom_compute_rd_mult_based_on_qindex(
                        (EbBitDepth)8 /*scs_ptr->static_config.encoder_bit_depth*/,pcs_ptr->update_type, qIndex) /
         6;
 #else

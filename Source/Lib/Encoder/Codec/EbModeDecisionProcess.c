@@ -14,6 +14,9 @@
 #include "EbUtility.h"
 #include "EbModeDecisionProcess.h"
 #include "EbLambdaRateTables.h"
+#if OPT_TPL_QPS
+#include "EbRateControlProcess.h"
+#endif
 
 uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
 void    set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt,
@@ -520,17 +523,15 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t ti
 }
 
 #if OPT_TPL_QPS
-int compute_rdmult_sse(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth);
-
 // Set the lambda for each sb.
 // When lambda tuning is on (blk_lambda_tuning), lambda of each block is set separately (full_lambda_md/fast_lambda_md)
 // later in set_tuned_blk_lambda
 // Testing showed that updating SAD lambda based on frame info was not helpful; therefore, the SAD lambda generation is not changed.
-void av1_lambda_assign_md(PictureParentControlSet *pcs, ModeDecisionContext *ctx) {
-    ctx->full_lambda_md[0] = (uint32_t)compute_rdmult_sse(pcs, ctx->qp_index, 8);
+static void av1_lambda_assign_md(PictureParentControlSet *pcs, ModeDecisionContext *ctx) {
+    ctx->full_lambda_md[0] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, 8);
     ctx->fast_lambda_md[0] = av1_lambda_mode_decision8_bit_sad[ctx->qp_index];
 
-    ctx->full_lambda_md[1] = (uint32_t)compute_rdmult_sse(pcs, ctx->qp_index, 10);
+    ctx->full_lambda_md[1] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, 10);
     ctx->fast_lambda_md[1] = av1lambda_mode_decision10_bit_sad[ctx->qp_index];
 
     ctx->full_lambda_md[1] *= 16;
@@ -563,14 +564,14 @@ void av1_lambda_assign(PictureControlSet *pcs_ptr, uint32_t *fast_lambda, uint32
                        uint8_t bit_depth, uint16_t qp_index, Bool multiply_lambda) {
     if (bit_depth == 8) {
 #if OPT_TPL_QPS
-        *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
 #else
         *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr, (uint8_t)qp_index, bit_depth);
 #endif
         *fast_lambda = av1_lambda_mode_decision8_bit_sad[qp_index];
     } else if (bit_depth == 10) {
 #if OPT_TPL_QPS
-        *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
 #else
         *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr, (uint8_t)qp_index, bit_depth);
 #endif
@@ -581,7 +582,7 @@ void av1_lambda_assign(PictureControlSet *pcs_ptr, uint32_t *fast_lambda, uint32
         }
     } else if (bit_depth == 12) {
 #if OPT_TPL_QPS
-        *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
 #else
         *full_lambda = (uint32_t)compute_rdmult_sse(pcs_ptr, (uint8_t)qp_index, bit_depth);
 #endif

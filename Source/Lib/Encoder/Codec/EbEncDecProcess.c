@@ -5020,7 +5020,7 @@ void set_dist_based_ref_pruning_controls(ModeDecisionContext *mdctxt,
 }
 
 #if OPT_TXS
-void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
+static void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
     TxsControls *txs_ctrls = &ctx->txs_ctrls;
 
     switch (txs_level) {

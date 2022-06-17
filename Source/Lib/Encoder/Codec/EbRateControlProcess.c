@@ -98,6 +98,22 @@ EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
 
+#if OPT_TPL_QPS
+// These functions use formulaic calculations to make playing with the
+// quantizer tables easier. If necessary they can be replaced by lookup
+// tables if and when things settle down in the experimental Bitstream
+int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, EbBitDepth bit_depth) {
+    // Convert the index to a real Q value (scaled down to match old Q values)
+    switch (bit_depth) {
+    case EB_EIGHT_BIT: return svt_aom_ac_quant_qtx(qindex, 0, bit_depth) << 6; // / 4.0;
+    case EB_TEN_BIT: return svt_aom_ac_quant_qtx(qindex, 0, bit_depth) << 4; // / 16.0;
+    case EB_TWELVE_BIT: return svt_aom_ac_quant_qtx(qindex, 0, bit_depth) << 3; // / 64.0;
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
+    }
+}
+#else
 extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 // These functions use formulaic calculations to make playing with the
 // quantizer tables easier. If necessary they can be replaced by lookup
@@ -114,6 +130,7 @@ int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, EbBitDepth bit_depth) {
         return -1;
     }
 }
+#endif
 
 int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, EbBitDepth bit_depth) {
     int32_t start_index  = MAX_Q_INDEX;
@@ -136,6 +153,19 @@ int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, EbBit
 
     return target_index - start_index;
 }
+#if OPT_TPL_QPS
+double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth) {
+    // Convert the index to a real Q value (scaled down to match old Q values)
+    switch (bit_depth) {
+    case EB_EIGHT_BIT: return svt_aom_ac_quant_qtx(qindex, 0, bit_depth) / 4.0;
+    case EB_TEN_BIT: return svt_aom_ac_quant_qtx(qindex, 0, bit_depth) / 16.0;
+    case EB_TWELVE_BIT: return svt_aom_ac_quant_qtx(qindex, 0, bit_depth) / 64.0;
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1.0;
+    }
+}
+#else
 double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth) {
     // Convert the index to a real Q value (scaled down to match old Q values)
     switch (bit_depth) {
@@ -147,6 +177,7 @@ double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth) {
         return -1.0;
     }
 }
+#endif
 int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_depth) {
     int32_t start_index  = MAX_Q_INDEX;
     int32_t target_index = MAX_Q_INDEX;
@@ -529,7 +560,9 @@ static int get_gf_high_motion_quality(int q, EbBitDepth bit_depth) {
     ASSIGN_MINQ_TABLE(bit_depth, arfgf_high_motion_minq);
     return arfgf_high_motion_minq[q];
 }
+#if !OPT_TPL_QPS
 int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
+#endif
 
 static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key,
                                     EbInputResolution input_resolution) {
@@ -567,7 +600,11 @@ static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor, doubl
 }
 int svt_av1_get_deltaq_offset(EbBitDepth bit_depth, int qindex, double beta, uint8_t is_intra) {
     assert(beta > 0.0);
+#if OPT_TPL_QPS
+    int q = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
+#else
     int q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
+#endif
     int newq;
     // use a less aggressive action when lowering the q for non I_slice
     if (!is_intra && beta > 1)
@@ -582,7 +619,11 @@ int svt_av1_get_deltaq_offset(EbBitDepth bit_depth, int qindex, double beta, uin
     if (newq < q) {
         while (qindex > 0) {
             qindex--;
+#if OPT_TPL_QPS
+            q = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
+#else
             q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
+#endif
             if (newq >= q)
                 break;
         }
@@ -590,7 +631,11 @@ int svt_av1_get_deltaq_offset(EbBitDepth bit_depth, int qindex, double beta, uin
     else {
         while (qindex < MAXQ) {
             qindex++;
+#if OPT_TPL_QPS
+            q = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
+#else
             q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
+#endif
             if (newq <= q) {
                 break;
             }
@@ -873,11 +918,19 @@ static void adjust_active_best_and_worst_quality(PictureControlSet *pcs_ptr, RAT
 }
 static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio,
                                                 const int bit_depth) {
+#if OPT_TPL_QPS
+    const double leaf_qstep   = svt_aom_dc_quant_qtx(leaf_qindex, 0, bit_depth);
+#else
     const double leaf_qstep   = svt_av1_dc_quant_qtx(leaf_qindex, 0, bit_depth);
+#endif
     const double target_qstep = leaf_qstep * qstep_ratio;
     int          qindex;
     for (qindex = leaf_qindex; qindex > 0; --qindex) {
+#if OPT_TPL_QPS
+        const double qstep = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
+#else
         const double qstep = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
+#endif
         if (qstep + 0.1 <= target_qstep)
             break;
     }
@@ -1323,29 +1376,81 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
 
     return q;
 }
-const int64_t q_factor[2][6] = {{100, 110, 120, 138, 140, 150}, {100, 110, 112, 125, 135, 140}};
+
+#if OPT_TPL_QPS
+// Returns the default rd multiplier for inter frames for a given qindex.
+// The function here is a first pass estimate based on data from
+// a previous Vizer run
+static double def_inter_rd_multiplier(int qindex) {
+    return 3.2 + (0.0035 * (double)qindex);
+}
+
+// Returns the default rd multiplier for ARF/Golden Frames for a given qindex.
+// The function here is a first pass estimate based on data from
+// a previous Vizer run
+static double def_arf_rd_multiplier(int qindex) {
+    return 3.25 + (0.0035 * (double)qindex);
+}
+
+// Returns the default rd multiplier for key frames for a given qindex.
+// The function here is a first pass estimate based on data from
+// a previous Vizer run
+static double def_kf_rd_multiplier(int qindex) {
+    return 3.3 + (0.0035 * (double)qindex);
+}
+
+int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type, int qindex) {
+    const int q = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
+    int64_t rdmult = q * q;
+
+    // Scale rdmult based on frame type (previously scaled with the following formula for all frame types:
+    // rdmult = rdmult * 3 + (rdmult * 2 / 3);
+    if (update_type == KF_UPDATE) {
+        double def_rd_q_mult = def_kf_rd_multiplier(qindex);
+        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
+    }
+    else if ((update_type == GF_UPDATE) || (update_type == ARF_UPDATE)) {
+        double def_rd_q_mult = def_arf_rd_multiplier(qindex);
+        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
+    }
+    else {
+        double def_rd_q_mult = def_inter_rd_multiplier(qindex);
+        rdmult = (int64_t)((double)rdmult * def_rd_q_mult);
+    }
+
+    switch (bit_depth) {
+    case EB_EIGHT_BIT: break;
+    case EB_TEN_BIT: rdmult = ROUND_POWER_OF_TWO(rdmult, 4); break;
+    case EB_TWELVE_BIT: rdmult = ROUND_POWER_OF_TWO(rdmult, 8); break;
+    default:
+        assert(0 && "bit_depth should be EB_EIGHT_BIT, EB_TEN_BIT or EB_TWELVE_BIT");
+        return -1;
+    }
+
+    return rdmult > 0 ? (int)AOMMIN(rdmult, INT_MAX) : 1;
+}
+
+static const int64_t q_factor[2][6] = { {100, 110, 120, 138, 140, 150}, {100, 110, 112, 125, 135, 140} };
 // The table we use is modified from libaom; here is the original, from libaom:
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
 //                                                               128, 144, 144,
 //                                                               128 };
-static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = {128, 164, 128, 128, 164, 164, 128};
-#if OPT_TPL_QPS
-int svt_av1_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type, int qindex);
+static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 164, 128, 128, 164, 164, 128 };
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
-int compute_rdmult_sse(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth) {
+int svt_aom_compute_rd_mult(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth) {
     FrameType frame_type = pcs->frm_hdr.frame_type;
     // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
     uint8_t temporal_layer_index = pcs->temporal_layer_index;
     uint8_t max_temporal_layer   = pcs->hierarchical_levels;
 
-    int64_t rdmult = svt_av1_compute_rd_mult_based_on_qindex(bit_depth, pcs->update_type, q_index);
+    int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(bit_depth, pcs->update_type, q_index);
 
     // Update rdmult based on the frame's position in the miniGOP
     if (frame_type != KEY_FRAME) {
         uint8_t gf_update_type = temporal_layer_index == 0 ? ARF_UPDATE
-            : temporal_layer_index < max_temporal_layer    ? INTNL_ARF_UPDATE
+               : temporal_layer_index < max_temporal_layer ? INTNL_ARF_UPDATE
                                                            : LF_UPDATE;
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
@@ -1361,6 +1466,12 @@ int compute_rdmult_sse(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bi
     return (int)rdmult;
 }
 #else
+const int64_t q_factor[2][6] = { {100, 110, 120, 138, 140, 150}, {100, 110, 112, 125, 135, 140} };
+// The table we use is modified from libaom; here is the original, from libaom:
+// static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
+//                                                               128, 144, 144,
+//                                                               128 };
+static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 164, 128, 128, 164, 164, 128 };
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
@@ -1432,9 +1543,9 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
 
     uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
 #if OPT_TPL_QPS
-    const int orig_rdmult = compute_rdmult_sse(
+    const int orig_rdmult = svt_aom_compute_rd_mult(
         ppcs_ptr, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, bit_depth);
-    const int new_rdmult = compute_rdmult_sse(ppcs_ptr, sb_ptr->qindex, bit_depth);
+    const int new_rdmult = svt_aom_compute_rd_mult(ppcs_ptr, sb_ptr->qindex, bit_depth);
 #else
     const int orig_rdmult = compute_rdmult_sse(
         pcs_ptr, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, bit_depth);

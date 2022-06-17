@@ -42,7 +42,9 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext
                              const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult,
                              uint8_t hbd_mode_decision);
 int  fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
+#if !FTR_TPL_SUBPEL
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+#endif
 EbErrorType generate_md_stage_0_cand(SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
                                      uint32_t          *fast_candidate_total_count,
                                      PictureControlSet *pcs_ptr);
@@ -52,7 +54,9 @@ void        generate_md_stage_0_cand_light_pd1(SuperBlock *sb_ptr, ModeDecisionC
 EbErrorType generate_md_stage_0_cand_light_pd0(ModeDecisionContext *context_ptr,
                                                uint32_t            *fast_candidate_total_count,
                                                PictureControlSet   *pcs_ptr);
+#if !OPT_TPL_QPS
 int16_t     svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
+#endif
 
 static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);

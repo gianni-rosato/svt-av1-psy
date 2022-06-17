@@ -17,9 +17,9 @@
 #include <stdint.h>
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
-
+#if !OPT_TPL_QPS
 extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
-
+#endif
 #include "EbRateDistortionCost.h"
 
 void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);

@@ -17,9 +17,14 @@
 #include "aom_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 #include "EbResize.h"
+#if FTR_TPL_SUBPEL
+#include "av1me.h"
+#endif
 
 void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+#if !FTR_TPL_SUBPEL
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+#endif
 
 void enc_make_inter_predictor(SequenceControlSet *scs_ptr, uint8_t *src_ptr, uint8_t *src_ptr_2b,
                               uint8_t *dst_ptr, int16_t pre_y, int16_t pre_x, MV mv,
@@ -310,7 +315,11 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
     SequenceControlSet *scs_ptr   = picture_control_set_ptr->scs_ptr;
     Dequants *const     dequants  = context_ptr->hbd_mode_decision ? &scs_ptr->deq_bd
                                                                    : &scs_ptr->deq_8bit;
+#if OPT_TPL_QPS
+    int16_t             quantizer = dequants->y_dequant_qtx[current_q_index][1];
+#else
     int16_t             quantizer = dequants->y_dequant_q3[current_q_index][1];
+#endif
 
     const int qstep = AOMMAX(quantizer >> dequant_shift, 1);
 
@@ -2701,7 +2710,11 @@ static void model_rd_for_sb(PictureControlSet   *picture_control_set_ptr,
                 picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
             Dequants *const dequants  = md_context_ptr->hbd_mode_decision ? &scs_ptr->deq_bd
                                                                           : &scs_ptr->deq_8bit;
+#if OPT_TPL_QPS
+            int16_t         quantizer = dequants->y_dequant_qtx[current_q_index][1];
+#else
             int16_t         quantizer = dequants->y_dequant_q3[current_q_index][1];
+#endif
             model_rd_from_sse(
                 plane == 0 ? md_context_ptr->blk_geom->bsize : md_context_ptr->blk_geom->bsize_uv,
                 quantizer,

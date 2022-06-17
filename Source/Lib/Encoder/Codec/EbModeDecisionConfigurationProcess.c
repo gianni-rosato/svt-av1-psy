@@ -26,12 +26,16 @@
 #include "EbCoefficients.h"
 #include "EbCommonUtils.h"
 #include "EbResize.h"
-
+#if OPT_TPL_QPS
+#include "EbInvTransforms.h"
+#else
 int32_t get_qzbin_factor(int32_t q, EbBitDepth bit_depth);
 void    invert_quant(int16_t *quant, int16_t *shift, int32_t d);
 int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
+#endif
+
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
 
@@ -116,7 +120,11 @@ void           set_global_motion_field(PictureControlSet *pcs_ptr) {
 void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
                              Quants *const quants, Dequants *const deq) {
+#if OPT_TPL_QPS
+    int32_t i, q, quant_qtx;
+#else
     int32_t i, q, quant_q3, quant_qtx;
+#endif
 
     for (q = 0; q < QINDEX_RANGE; q++) {
         const int32_t qzbin_factor     = get_qzbin_factor(q, bit_depth);
@@ -124,18 +132,27 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
 
         for (i = 0; i < 2; ++i) {
             int32_t qrounding_factor_fp = 64;
+#if OPT_TPL_QPS
+            quant_qtx = i == 0 ? svt_aom_dc_quant_qtx(q, y_dc_delta_q, bit_depth)
+                               : svt_aom_ac_quant_qtx(q, 0, bit_depth);
+#else
             // y quantizer setup with original coeff shift of Q3
             quant_q3 = i == 0 ? svt_av1_dc_quant_q3(q, y_dc_delta_q, bit_depth)
                               : svt_av1_ac_quant_q3(q, 0, bit_depth);
             // y quantizer with TX scale
             quant_qtx = i == 0 ? svt_av1_dc_quant_qtx(q, y_dc_delta_q, bit_depth)
                                : svt_av1_ac_quant_qtx(q, 0, bit_depth);
+#endif
             invert_quant(&quants->y_quant[q][i], &quants->y_quant_shift[q][i], quant_qtx);
             quants->y_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->y_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
             quants->y_zbin[q][i]     = (int16_t)ROUND_POWER_OF_TWO(qzbin_factor * quant_qtx, 7);
             quants->y_round[q][i]    = (int16_t)((qrounding_factor * quant_qtx) >> 7);
             deq->y_dequant_qtx[q][i] = (int16_t)quant_qtx;
+#if OPT_TPL_QPS
+            quant_qtx = i == 0 ? svt_aom_dc_quant_qtx(q, u_dc_delta_q, bit_depth)
+                               : svt_aom_ac_quant_qtx(q, u_ac_delta_q, bit_depth);
+#else
             deq->y_dequant_q3[q][i]  = (int16_t)quant_q3;
 
             // u quantizer setup with original coeff shift of Q3
@@ -144,12 +161,17 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             // u quantizer with TX scale
             quant_qtx = i == 0 ? svt_av1_dc_quant_qtx(q, u_dc_delta_q, bit_depth)
                                : svt_av1_ac_quant_qtx(q, u_ac_delta_q, bit_depth);
+#endif
             invert_quant(&quants->u_quant[q][i], &quants->u_quant_shift[q][i], quant_qtx);
             quants->u_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->u_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
             quants->u_zbin[q][i]     = (int16_t)ROUND_POWER_OF_TWO(qzbin_factor * quant_qtx, 7);
             quants->u_round[q][i]    = (int16_t)((qrounding_factor * quant_qtx) >> 7);
             deq->u_dequant_qtx[q][i] = (int16_t)quant_qtx;
+#if OPT_TPL_QPS
+            quant_qtx = i == 0 ? svt_aom_dc_quant_qtx(q, v_dc_delta_q, bit_depth)
+                               : svt_aom_ac_quant_qtx(q, v_ac_delta_q, bit_depth);
+#else
             deq->u_dequant_q3[q][i]  = (int16_t)quant_q3;
 
             // v quantizer setup with original coeff shift of Q3
@@ -158,13 +180,16 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             // v quantizer with TX scale
             quant_qtx = i == 0 ? svt_av1_dc_quant_qtx(q, v_dc_delta_q, bit_depth)
                                : svt_av1_ac_quant_qtx(q, v_ac_delta_q, bit_depth);
+#endif
             invert_quant(&quants->v_quant[q][i], &quants->v_quant_shift[q][i], quant_qtx);
             quants->v_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->v_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
             quants->v_zbin[q][i]     = (int16_t)ROUND_POWER_OF_TWO(qzbin_factor * quant_qtx, 7);
             quants->v_round[q][i]    = (int16_t)((qrounding_factor * quant_qtx) >> 7);
             deq->v_dequant_qtx[q][i] = (int16_t)quant_qtx;
+#if !OPT_TPL_QPS
             deq->v_dequant_q3[q][i]  = (int16_t)quant_q3;
+#endif
         }
 
         for (i = 2; i < 8; i++) { // 8: SIMD width
@@ -175,7 +200,9 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             quants->y_zbin[q][i]        = quants->y_zbin[q][1];
             quants->y_round[q][i]       = quants->y_round[q][1];
             deq->y_dequant_qtx[q][i]    = deq->y_dequant_qtx[q][1];
+#if !OPT_TPL_QPS
             deq->y_dequant_q3[q][i]     = deq->y_dequant_q3[q][1];
+#endif
 
             quants->u_quant[q][i]       = quants->u_quant[q][1];
             quants->u_quant_fp[q][i]    = quants->u_quant_fp[q][1];
@@ -184,7 +211,9 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             quants->u_zbin[q][i]        = quants->u_zbin[q][1];
             quants->u_round[q][i]       = quants->u_round[q][1];
             deq->u_dequant_qtx[q][i]    = deq->u_dequant_qtx[q][1];
+#if !OPT_TPL_QPS
             deq->u_dequant_q3[q][i]     = deq->u_dequant_q3[q][1];
+#endif
             quants->v_quant[q][i]       = quants->u_quant[q][1];
             quants->v_quant_fp[q][i]    = quants->v_quant_fp[q][1];
             quants->v_round_fp[q][i]    = quants->v_round_fp[q][1];
@@ -192,7 +221,9 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             quants->v_zbin[q][i]        = quants->v_zbin[q][1];
             quants->v_round[q][i]       = quants->v_round[q][1];
             deq->v_dequant_qtx[q][i]    = deq->v_dequant_qtx[q][1];
+#if !OPT_TPL_QPS
             deq->v_dequant_q3[q][i]     = deq->v_dequant_q3[q][1];
+#endif
         }
     }
 }

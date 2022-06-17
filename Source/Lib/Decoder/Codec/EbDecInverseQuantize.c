@@ -22,6 +22,15 @@
 #include "EbQMatrices.h"
 #include "EbInvTransforms.h"
 
+#if OPT_TPL_QPS
+static INLINE int16_t get_dc_quant(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
+    return svt_aom_dc_quant_qtx(qindex, delta, bit_depth);
+}
+
+static INLINE int16_t get_ac_quant(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
+    return svt_aom_ac_quant_qtx(qindex, delta, bit_depth);
+}
+#else
 // Same wrapper(av1_ac/dc_quant_qtx) available in .c file of encoder
 static INLINE int16_t get_dc_quant(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
     return svt_av1_dc_quant_q3(qindex, delta, bit_depth);
@@ -30,6 +39,7 @@ static INLINE int16_t get_dc_quant(int32_t qindex, int32_t delta, EbBitDepth bit
 static INLINE int16_t get_ac_quant(int32_t qindex, int32_t delta, EbBitDepth bit_depth) {
     return svt_av1_ac_quant_q3(qindex, delta, bit_depth);
 }
+#endif
 
 // Called in read_frame_header_obu() -> av1_decode_frame_headers_and_setup() -> read_uncompressed_header()
 void setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt) {

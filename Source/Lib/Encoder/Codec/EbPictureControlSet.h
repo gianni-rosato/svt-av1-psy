@@ -124,15 +124,14 @@ typedef struct Quants {
 // Fields are sufffixed according to whether or not they're expressed in
 // the same coefficient shift/precision as TX or a fixed Q3 format.
 typedef struct Dequants {
-    DECLARE_ALIGNED(16, int16_t,
-                    y_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
-    DECLARE_ALIGNED(16, int16_t,
-                    u_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
-    DECLARE_ALIGNED(16, int16_t,
-                    v_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
+    DECLARE_ALIGNED(16, int16_t, y_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
+    DECLARE_ALIGNED(16, int16_t, u_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
+    DECLARE_ALIGNED(16, int16_t, v_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
+#if !OPT_TPL_QPS
     DECLARE_ALIGNED(16, int16_t, y_dequant_q3[QINDEX_RANGE][8]); // 8: SIMD width
     DECLARE_ALIGNED(16, int16_t, u_dequant_q3[QINDEX_RANGE][8]); // 8: SIMD width
     DECLARE_ALIGNED(16, int16_t, v_dequant_q3[QINDEX_RANGE][8]); // 8: SIMD width
+#endif
 } Dequants;
 
 typedef struct MacroblockdPlane {
