@@ -45,12 +45,10 @@
 
 .linux-unit-test-base:
   extends: .linux-test-base
-  variables:
-    GTEST_OUTPUT: xml:report.xml
   artifacts:
     when: always
     reports:
-      junit: report.xml
+      junit: reports/*.xml
   needs:
     - Linux (GCC 10, Tests, Static)
 
@@ -261,12 +259,10 @@ Linux Unit Tests:
     policy: pull-push
   before_script:
     - curl -Ls "https://raw.githubusercontent.com/1480c1/gtest-parallel/unique_id/gtest_parallel.py" > gtest_parallel.py
-    - pip install junitparser
   script:
     - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
     - cmake --build Build --target TestVectors
-    - python3 gtest_parallel.py --print_test_times --shard_index=$SHARD_INDEX --shard_count=$TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:tmp/{#}.xml"
-    - junitparser merge --glob 'tmp/[0-9]*.xml' report.xml
+    - python3 gtest_parallel.py --print_test_times --shard_index=$SHARD_INDEX --shard_count=$TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:reports/{#}.xml"
 
 Linux RC Test:
   extends: .linux-test-base

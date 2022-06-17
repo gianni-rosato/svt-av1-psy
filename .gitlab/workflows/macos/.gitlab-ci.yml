@@ -28,12 +28,10 @@
 
 .macos-unit-test-base:
   extends: .macos-test-base
-  variables:
-    GTEST_OUTPUT: xml:report.xml
   artifacts:
     when: always
     reports:
-      junit: report.xml
+      junit: reports/*.xml
   needs:
     - macOS (Static, Tests)
 
@@ -84,8 +82,7 @@ macOS Unit Tests:
   script:
     - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
     - cmake --build Build --target TestVectors
-    - python3 gtest_parallel.py --print_test_times --shard_index=$SHARD_INDEX --shard_count=$TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:tmp/{#}.xml"
-    - junitparser merge --glob 'tmp/[0-9]*.xml' report.xml
+    - python3 gtest_parallel.py --print_test_times --shard_index=$SHARD_INDEX --shard_count=$TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:reports/{#}.xml"
 
 macOS Enc Test:
   extends: .macos-test-base

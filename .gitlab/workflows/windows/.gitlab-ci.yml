@@ -33,12 +33,10 @@
 
 .windows-unit-test-base:
   extends: .windows-test-base
-  variables:
-    GTEST_OUTPUT: xml:report.xml
   artifacts:
     when: always
     reports:
-      junit: report.xml
+      junit: reports/*.xml
   needs:
     - Win64 (MSVC, Tests)
 
@@ -82,14 +80,10 @@ Win64 Unit Tests:
     policy: pull-push
   before_script:
     - Invoke-WebRequest -OutFile gtest_parallel.py -Uri https://raw.githubusercontent.com/1480c1/gtest-parallel/unique_id/gtest_parallel.py
-    - pacman -Syyuu --noconfirm --needed mingw-w64-x86_64-junitparser
-    - pacman -Suu --noconfirm --needed mingw-w64-x86_64-junitparser
   script:
     - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
     - cmake --build Build --target TestVectors
-    - python gtest_parallel.py --print_test_times --shard_index=$env:SHARD_INDEX --shard_count=$env:TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:tmp/{#}.xml"
-    # dumb glob due to windows automatically expanding globs on the command line
-    - junitparser merge --glob 'tmp/[0-9]*.xml' report.xml
+    - python gtest_parallel.py --print_test_times --shard_index=$env:SHARD_INDEX --shard_count=$env:TOTAL_SHARDS ./Bin/Release/SvtAv1UnitTests ./Bin/Release/SvtAv1E2ETests -- --gtest_output="xml:reports/{#}.xml"
 
 Win64 Enc Test:
   extends: .windows-test-base
