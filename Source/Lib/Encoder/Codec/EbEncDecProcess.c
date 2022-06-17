@@ -3732,8 +3732,13 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
     else if (enc_mode <= ENC_M1)
         nic_level = 5;
 #endif
+#if TUNE_M1_M3_BDR
+    else if (enc_mode <= ENC_M2)
+        nic_level = is_base ? 7 : 9;
+#else
     else if (enc_mode <= ENC_M2)
         nic_level = 9;
+#endif
     else if (enc_mode <= ENC_M3) {
         if (hierarchical_levels <= 3)
             nic_level = 11;

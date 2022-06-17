@@ -571,6 +571,10 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         else if (enc_mode <= ENC_M1)
 #endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+#if TUNE_M1_M3_BDR
+        else if (enc_mode <= ENC_M3)
+            set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
+#endif
         else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
     }

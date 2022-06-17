@@ -2106,6 +2106,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set if H4/V4 blocks should considered
     if (enc_mode <= ENC_M2)
         pcs_ptr->disallow_HV4 = FALSE;
+#if TUNE_M1_M3_BDR
+    else if (enc_mode <= ENC_M3)
+        pcs_ptr->disallow_HV4 = is_base ? FALSE : TRUE;
+#endif
     else
         pcs_ptr->disallow_HV4 = TRUE;
 

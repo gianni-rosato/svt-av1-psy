@@ -77,6 +77,8 @@ extern "C" {
 #define FTR_NO_TILE_FAST_DEC    1 // Disable use of tiles by default when fast-decode is used
 
 #define FTR_RC_VBR_IMR          1 // optimize TPL for VBR, 1 Pass VBR improvement
+#define TUNE_M1_M3_BDR          1 // Tune m1 to m3 to recover maximum bdr
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

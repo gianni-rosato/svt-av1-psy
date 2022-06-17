@@ -895,6 +895,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->dist_based_ref_pruning = 1;
         else if (enc_mode <= ENC_M0)
             pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 2;
+#if TUNE_M1_M3_BDR
+        else if (enc_mode <= ENC_M1)
+            pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 4;
+#endif
         else if (enc_mode <= ENC_M6)
             pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
         else
@@ -983,6 +987,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (enc_mode <= ENC_M2)
 #endif
             pcs_ptr->md_inter_intra_level = 1;
+#if TUNE_M1_M3_BDR
+        else if (enc_mode <= ENC_M2)
+            pcs_ptr->md_inter_intra_level = transition_present ? 1 : (is_base ? 1 : 0);
+#endif
         else if (enc_mode <= ENC_M11)
             pcs_ptr->md_inter_intra_level = transition_present ? 1 : 0;
         else
