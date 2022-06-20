@@ -44,7 +44,11 @@ extern "C" {
 #define MAX_TPL_EXT_GROUP_SIZE MAX_TPL_GROUP_SIZE
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
 #define MIN_LAD_MG 1
+#if FTR_RC_VBR_IMR
+#define RC_DEFAULT_LAD_MG 2
+#else
 #define RC_DEFAULT_LAD_MG 1
+#endif
 void assert_err(uint32_t condition, char *err_msg);
 
 #define TPL_DEP_COST_SCALE_LOG2 4

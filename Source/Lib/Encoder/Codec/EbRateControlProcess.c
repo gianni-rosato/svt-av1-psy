@@ -1155,11 +1155,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
             }
         }
-#if FTR_RC_VBR_IMR
-        if (!scs_ptr->tpl_lad_mg) {
-#else
         if (!scs_ptr->lad_mg) {
-#endif
             double div_factor           = pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor
                           ? pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * 0.2
                           : 1.0;
@@ -1258,11 +1254,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
         double weight = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 0.7 : 0.9;
         // adjust the weight for base layer frames with shorter minigops
-#if FTR_RC_VBR_IMR
-        if (scs_ptr->tpl_lad_mg && !frame_is_intra_only(pcs_ptr->parent_pcs_ptr) &&
-#else
         if (scs_ptr->lad_mg && !frame_is_intra_only(pcs_ptr->parent_pcs_ptr) &&
-#endif
             (pcs_ptr->parent_pcs_ptr->tpl_group_size <
              (uint32_t)(2 << pcs_ptr->parent_pcs_ptr->hierarchical_levels)))
             weight *= 0.9;
@@ -1795,6 +1787,48 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
 
 #define MIN_BOOST_COMBINE_FACTOR 4.0
 #define MAX_BOOST_COMBINE_FACTOR 12.0
+#if FTR_RC_VBR_IMR
+/******************************************************************************
+* process_tpl_stats_frame_kf_gfu_boost
+* update r0, calculate kf and gfu boosts for VBR
+*******************************************************************************/
+void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
+    PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
+    SequenceControlSet *scs = ppcs->scs_ptr;
+    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
+    RATE_CONTROL *const rc = &encode_context_ptr->rc;
+    // The new tpl only looks at pictures in tpl group, which is fewer than before,
+    // As a results, we defined a factor to adjust r0
+    if (!frame_is_intra_only(ppcs)) {
+        if (ppcs->tpl_ctrls.r0_adjust_factor) {
+            double div_factor = ppcs->used_tpl_frame_num *
+                ppcs->tpl_ctrls.r0_adjust_factor;
+                ppcs->r0 = ppcs->r0 / div_factor;
+                // Further scale r0 based on the GOP structure
+                ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs->max_heirachical_level];
+        }
+        rc->gfu_boost = get_gfu_boost_from_r0_lap(MIN_BOOST_COMBINE_FACTOR,
+            MAX_GFUBOOST_FACTOR,
+            ppcs->r0,
+            rc->frames_to_key);
+    }
+
+    if (ppcs->frm_hdr.frame_type == KEY_FRAME) {
+        if (ppcs->tpl_ctrls.r0_adjust_factor) {
+            const double div_factor = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
+            ppcs->r0 = ppcs->r0 / div_factor;
+        }
+        // Scale r0 based on the GOP structure
+        ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[scs->max_heirachical_level];
+
+        // when frames_to_key not available, i.e. in 1 pass encoding
+        rc->kf_boost = get_cqp_kf_boost_from_r0(
+            ppcs->r0, rc->frames_to_key, scs->input_resolution);
+        int max_boost = ppcs->used_tpl_frame_num * KB;
+        rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
+    }
+}
+#else
 void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr            = pcs_ptr->parent_pcs_ptr->scs_ptr;
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -1809,10 +1843,6 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
         }
 
         pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
-#if FTR_RC_VBR_IMR
-        pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 /
-            tpl_hl_base_frame_div_factor[scs_ptr->max_heirachical_level];
-#endif
     } else if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
         double factor               = 2;
         pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
@@ -1834,14 +1864,6 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
             }
         }
-#if FTR_RC_VBR_IMR
-        if (!scs_ptr->tpl_lad_mg) {
-            double div_factor = pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor
-                ? pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * 0.2
-                : 1.0;
-            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
-        }
-#endif
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost = get_cqp_kf_boost_from_r0(
             pcs_ptr->parent_pcs_ptr->r0, rc->frames_to_key, scs_ptr->input_resolution);
@@ -1849,7 +1871,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
         rc->kf_boost  = AOMMIN(rc->kf_boost, max_boost);
     }
 }
-
+#endif
 static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr, int *active_best, int *active_worst,
                                    int is_fwd_kf) {
     SequenceControlSet *scs_ptr            = pcs_ptr->parent_pcs_ptr->scs_ptr;
@@ -2492,28 +2514,21 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
             active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
         }
     }
-
 #if FTR_RC_VBR_IMR
     // Calculated qindex based on r0 using qstep calculation
     if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.qstep_based_q_calc &&
         pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
-        double weight = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 0.7 : 0.9;
-        // adjust the weight for base layer frames with shorter minigops
-        if (scs_ptr->tpl_lad_mg && !frame_is_intra_only(pcs_ptr->parent_pcs_ptr) &&
-            (pcs_ptr->parent_pcs_ptr->tpl_group_size <
-            (uint32_t)(2 << pcs_ptr->parent_pcs_ptr->hierarchical_levels)))
-            weight *= 0.9;
-
+        const double weight = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 0.7 : 0.9;
         const double qstep_ratio = sqrt(pcs_ptr->parent_pcs_ptr->r0) * weight;
-        /*const*/ int    q_qstep_ratio = svt_av1_get_q_index_from_qstep_ratio(
-            rc->active_worst_quality, qstep_ratio, scs_ptr->static_config.encoder_bit_depth);
+        int    qindex_from_qstep_ratio =
+            svt_av1_get_q_index_from_qstep_ratio(rc->active_worst_quality,
+                qstep_ratio, scs_ptr->static_config.encoder_bit_depth);
         if (pcs_ptr->parent_pcs_ptr->sc_class1 && scs_ptr->passes == 1 &&
             encode_context_ptr->rc_cfg.mode == AOM_VBR && frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
-            q_qstep_ratio /= 2;
-
+            qindex_from_qstep_ratio /= 2;
         if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
-            rc->arf_q = q_qstep_ratio;
-        active_best_quality = clamp(q_qstep_ratio, rc->best_quality, rc->active_worst_quality);
+            rc->arf_q = qindex_from_qstep_ratio;
+        active_best_quality = clamp(qindex_from_qstep_ratio, rc->best_quality, rc->active_worst_quality);
         active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
     }
 #endif
