@@ -681,6 +681,9 @@ static void allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL *c
     }
 }
 
+#if FTR_RC_VBR_IMR
+#define RC_FACTOR_MIN_1P_VBR 1
+#endif
 #define RC_FACTOR_MIN 0.75
 #define RC_FACTOR_MAX 2
 static INLINE void set_baseline_gf_interval(PictureParentControlSet *pcs_ptr, int arf_position) {
@@ -929,7 +932,12 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
             rate_error = (int)((rc->vbr_bits_off_target * 100) / bits);
             rate_error = clamp(rate_error, -100, 100);
             if (rate_error > 0) {
+#if FTR_RC_VBR_IMR
+                double rc_factor_min = (scs->static_config.pass == ENC_SINGLE_PASS) ? RC_FACTOR_MIN_1P_VBR : RC_FACTOR_MIN;
+                rc_factor = AOMMAX(rc_factor_min, (double)(100 - rate_error) / 100.0);
+#else
                 rc_factor = AOMMAX(RC_FACTOR_MIN, (double)(100 - rate_error) / 100.0);
+#endif
             } else {
                 rc_factor = AOMMIN(RC_FACTOR_MAX, (double)(100 - rate_error) / 100.0);
             }

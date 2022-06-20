@@ -963,7 +963,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         }
 
         // Adjust r0 scaling factor based on GOP structure and lookahead
+#if FTR_RC_VBR_IMR
+        if (!scs->tpl_lad_mg)
+#else
         if (!scs->lad_mg)
+#endif
             tpl_ctrls->r0_adjust_factor *= 3;
     }
     else {
@@ -971,7 +975,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->r0_adjust_factor = 0;
 
         // If no lookahead, apply r0 scaling
+#if FTR_RC_VBR_IMR
+        if (!scs->tpl_lad_mg) {
+#else
         if (!scs->lad_mg) {
+#endif
             tpl_ctrls->r0_adjust_factor = is_islice
                 ? ((tpl_ctrls->tpl_opt_flag && tpl_ctrls->reduced_tpl_group >= 0) ? 0.2 : 0)
                 : 0.1;

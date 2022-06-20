@@ -3065,6 +3065,36 @@ void set_ipp_pass_ctrls(
         ipp_pass_ctrls->reduce_me_search = 0;
         break;
 
+#if FTR_RC_VBR_IMR
+    case 1:
+        ipp_pass_ctrls->skip_frame_first_pass = 0;
+        ipp_pass_ctrls->ds = 0;
+        ipp_pass_ctrls->bypass_blk_step = 0;
+        ipp_pass_ctrls->dist_ds = 0;
+        ipp_pass_ctrls->bypass_zz_check = 0;
+        ipp_pass_ctrls->use8blk = 0;
+        ipp_pass_ctrls->reduce_me_search = 1;
+        break;
+
+    case 2:
+        ipp_pass_ctrls->skip_frame_first_pass = 1;
+        ipp_pass_ctrls->ds = 0;
+        ipp_pass_ctrls->bypass_blk_step = 0;
+        ipp_pass_ctrls->dist_ds = 1;
+        ipp_pass_ctrls->bypass_zz_check = 1;
+        ipp_pass_ctrls->use8blk = 1;
+        ipp_pass_ctrls->reduce_me_search = 1;
+        break;
+    case 3:
+        ipp_pass_ctrls->skip_frame_first_pass = 1;
+        ipp_pass_ctrls->ds = 1;
+        ipp_pass_ctrls->bypass_blk_step = 1;
+        ipp_pass_ctrls->dist_ds = 1;
+        ipp_pass_ctrls->bypass_zz_check = 1;
+        ipp_pass_ctrls->use8blk = 1;
+        ipp_pass_ctrls->reduce_me_search = 1;
+        break;
+#else
     case 1:
         ipp_pass_ctrls->skip_frame_first_pass = 1;
         ipp_pass_ctrls->ds = 0;
@@ -3084,6 +3114,7 @@ void set_ipp_pass_ctrls(
         ipp_pass_ctrls->use8blk = 1;
         ipp_pass_ctrls->reduce_me_search = 1;
         break;
+#endif
 
     default:
         assert(0);
@@ -3188,7 +3219,14 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
     switch (config->pass) {
 
         case ENC_SINGLE_PASS: {
+#if FTR_RC_VBR_IMR
+            if (config->enc_mode <= ENC_M9)
+                set_ipp_pass_ctrls(scs_ptr, 0);
+            else
+                set_ipp_pass_ctrls(scs_ptr, 1);
+#else
             set_ipp_pass_ctrls(scs_ptr, 0);
+#endif
             set_mid_pass_ctrls(scs_ptr, 0);
             scs_ptr->ipp_was_ds = 0;
             scs_ptr->final_pass_preset = config->enc_mode;
@@ -3198,6 +3236,15 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
         case ENC_FIRST_PASS: {
             if (config->enc_mode <= ENC_M4)
                 set_ipp_pass_ctrls(scs_ptr, 0);
+#if FTR_RC_VBR_IMR
+            else if (config->enc_mode <= ENC_M10)
+                set_ipp_pass_ctrls(scs_ptr, 2);
+            else
+                if (config->rate_control_mode == 0)
+                    set_ipp_pass_ctrls(scs_ptr, 3);
+                else
+                    set_ipp_pass_ctrls(scs_ptr, 2);
+#else
             else if (config->enc_mode <= ENC_M10)
                 set_ipp_pass_ctrls(scs_ptr, 1);
             else
@@ -3205,6 +3252,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
                     set_ipp_pass_ctrls(scs_ptr, 2);
                 else
                     set_ipp_pass_ctrls(scs_ptr, 1);
+#endif
             set_mid_pass_ctrls(scs_ptr, 0);
             scs_ptr->ipp_was_ds = 0;
             scs_ptr->final_pass_preset = config->enc_mode;
