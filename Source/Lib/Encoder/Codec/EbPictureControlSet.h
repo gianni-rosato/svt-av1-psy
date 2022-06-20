@@ -539,9 +539,16 @@ typedef struct MotionEstimationData {
 } MotionEstimationData;
 typedef struct TplControls {
     uint8_t              enable; // 0: TPL OFF; 1: TPL ON
+#if CLN_TPL_OPT
+    uint8_t              compute_rate; // 1: use rate 1: no rate
+#else
     uint8_t              tpl_opt_flag; // 0:OFF 1:ON - TPL optimizations : no rate, only DC
+#endif
     uint8_t              enable_tpl_qps; // 0:OFF 1:ON - QPS in TPL
     uint8_t              disable_intra_pred_nref; // 0:OFF 1:ON - Disable intra prediction in NREF
+#if CLN_TPL_OPT
+    PredictionMode       intra_mode_end; // The MAX intra mode to be tested in TPL
+#endif
 #if !OPT_TPL_QPS
     uint8_t              disable_intra_pred_nbase; // Depricated . to remove
     uint8_t              disable_tpl_nref; // 0:OFF 1:ON - Disable tpl in NREF

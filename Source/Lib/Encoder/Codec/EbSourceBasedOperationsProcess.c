@@ -759,8 +759,12 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
 
     const uint8_t disable_intra_pred = (pcs_ptr->tpl_ctrls.disable_intra_pred_nref &&
                                         (pcs_ptr->tpl_data.is_used_as_reference_flag == 0));
+#if CLN_TPL_OPT
+    const uint8_t intra_dc_sad_path = pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search;
+#else
     const uint8_t intra_dc_sad_path  = (pcs_ptr->tpl_ctrls.tpl_opt_flag &&
                                        pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search);
+#endif
 
     for (uint32_t blk_index = blk_start; blk_index <= blk_end; blk_index++) {
         uint32_t               z_blk_index   = tpl_blk_idx_tab[0][blk_index];
@@ -819,6 +823,9 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                         pcs_ptr->pa_me_data
                             ->ois_mb_results[(mb_origin_y / size) * picture_width_in_mb +
                                              (mb_origin_x / size)];
+#if FTR_USE_TPL_INTRA
+                    best_mode       = ois_mb_results_ptr->intra_mode;
+#endif
                     best_intra_mode = ois_mb_results_ptr->intra_mode;
                     best_intra_cost = ois_mb_results_ptr->intra_cost;
                 } else {
@@ -896,7 +903,9 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                                                    mb_origin_y,
                                                                    bsize,
                                                                    bsize);
-
+#if CLN_TPL_OPT
+                        uint8_t intra_mode_end = pcs_ptr->tpl_ctrls.intra_mode_end;
+#else
                         Bool    enable_paeth   = pcs_ptr->scs_ptr->enable_paeth == DEFAULT
                                  ? TRUE
                                  : (Bool)pcs_ptr->scs_ptr->enable_paeth;
@@ -907,6 +916,7 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                             : enable_paeth                                       ? PAETH_PRED
                             : enable_smooth                                      ? SMOOTH_H_PRED
                                                                                  : D67_PRED;
+#endif
 
                         for (uint8_t ois_intra_mode = DC_PRED; ois_intra_mode <= intra_mode_end;
                              ++ois_intra_mode) {
@@ -953,8 +963,12 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
 
                             // Distortion
                             int64_t intra_cost;
+#if CLN_TPL_OPT
+                            if (pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
+#else
                             if (pcs_ptr->tpl_ctrls.tpl_opt_flag &&
                                 pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
+#endif
                                 intra_cost = svt_nxm_sad_kernel_sub_sampled(
                                     src_mb,
                                     input_picture_ptr->stride_y,
@@ -973,9 +987,13 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                     predictor,
                                     size << tpl_ctrls->subsample_tx);
 
+#if CLN_TPL_OPT
+                                EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.pf_shape;
+#else
                                 EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag
                                     ? pcs_ptr->tpl_ctrls.pf_shape
                                     : DEFAULT_SHAPE;
+#endif
                                 svt_av1_wht_fwd_txfm(src_diff,
                                                      size << tpl_ctrls->subsample_tx,
                                                      coeff,
@@ -990,6 +1008,9 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                             }
 
                             if (intra_cost < best_intra_cost) {
+#if FTR_USE_TPL_INTRA
+                                best_mode = ois_intra_mode;
+#endif
                                 best_intra_cost = intra_cost;
                                 best_intra_mode = ois_intra_mode;
                             }
@@ -1064,9 +1085,12 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                       &best_mv);
                 }
 #endif
-
+#if CLN_TPL_OPT
+                if (pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+#else
                 if (pcs_ptr->tpl_ctrls.tpl_opt_flag &&
                     pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+#endif
                     int32_t ref_origin_index = (int32_t)ref_pic_ptr->origin_x +
                         ((int32_t)mb_origin_x + (best_mv.col >> 3)) +
                         ((int32_t)mb_origin_y + (best_mv.row >> 3) +
@@ -1142,10 +1166,13 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                            ref_pic_ptr->buffer_y + ref_origin_index,
                                            ref_pic_ptr->stride_y << tpl_ctrls->subsample_tx);
 #endif
-
+#if CLN_TPL_OPT
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.pf_shape;
+#else
                     EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag
                         ? pcs_ptr->tpl_ctrls.pf_shape
                         : DEFAULT_SHAPE;
+#endif
                     svt_av1_wht_fwd_txfm(
                         src_diff, size << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
 
@@ -1154,9 +1181,14 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                 }
 
                 if (inter_cost < best_inter_cost) {
+#if CLN_TPL_OPT
+                    if (!pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search)
+                        EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
+#else
                     if (!(pcs_ptr->tpl_ctrls.tpl_opt_flag &&
                           pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search))
                         EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
+#endif
 
                     best_ref_poc = pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index]
                                        .picture_number;
@@ -1172,8 +1204,12 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
             if (best_mode == NEWMV) {
                 uint16_t eob = 0;
 
+#if CLN_TPL_OPT
+                if (pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+#else
                 if (pcs_ptr->tpl_ctrls.tpl_opt_flag &&
                     pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+#endif
                     uint32_t list_index    = best_rf_idx < 4 ? 0 : 1;
                     uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
                     ref_pic_ptr = pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index]
@@ -1193,9 +1229,13 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                            ref_pic_ptr->buffer_y + ref_origin_index,
                                            ref_pic_ptr->stride_y << tpl_ctrls->subsample_tx);
 
+#if CLN_TPL_OPT
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.pf_shape;
+#else
                     EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag
                         ? pcs_ptr->tpl_ctrls.pf_shape
                         : DEFAULT_SHAPE;
+#endif
 
                     svt_av1_wht_fwd_txfm(src_diff,
                                          size << tpl_ctrls->subsample_tx,
@@ -1209,9 +1249,13 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                 get_quantize_error(
                     &mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
 
+#if CLN_TPL_OPT
+                int rate_cost = pcs_ptr->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
+#else
                 int rate_cost        = pcs_ptr->tpl_ctrls.tpl_opt_flag
                            ? 0
                            : rate_estimator(qcoeff, eob, tx_size);
+#endif
                 tpl_stats.srcrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2)
                     << tpl_ctrls->subsample_tx;
                 tpl_stats.srcrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2))
@@ -1404,17 +1448,24 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                                input_picture_ptr->stride_y << tpl_ctrls->subsample_tx,
                                dst_buffer,
                                dst_buffer_stride << tpl_ctrls->subsample_tx);
+#if CLN_TPL_OPT
+        EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.pf_shape;
+#else
         EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag
             ? pcs_ptr->tpl_ctrls.pf_shape
             : DEFAULT_SHAPE;
+#endif
         svt_av1_wht_fwd_txfm(
             src_diff, size << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
 
         uint16_t eob = 0;
 
         get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
-
+#if CLN_TPL_OPT
+        int rate_cost = pcs_ptr->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
+#else
         int rate_cost = pcs_ptr->tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
+#endif
 
         if (!disable_intra_pred || (pcs_ptr->tpl_data.is_used_as_reference_flag)) {
             if (eob) {
@@ -1800,6 +1851,14 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr,
     int64_t mc_dep_dist  = tpl_stats_ptr->mc_dep_dist *
         (tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist) / tpl_stats_ptr->recrf_dist;
     int64_t delta_rate  = tpl_stats_ptr->recrf_rate - tpl_stats_ptr->srcrf_rate;
+#if CLN_TPL_OPT
+    int64_t mc_dep_rate = pcs_ptr->tpl_ctrls.compute_rate
+        ? delta_rate_cost(tpl_stats_ptr->mc_dep_rate,
+            tpl_stats_ptr->recrf_dist,
+            tpl_stats_ptr->srcrf_dist,
+            pix_num)
+        : 0;
+#else
     int64_t mc_dep_rate = pcs_ptr->tpl_ctrls.tpl_opt_flag
         ? 0
 
@@ -1807,6 +1866,7 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr,
                           tpl_stats_ptr->recrf_dist,
                           tpl_stats_ptr->srcrf_dist,
                           pix_num);
+#endif
 
     for (block = 0; block < 4; ++block) {
         int grid_pos_row = grid_pos_row_base + bh * (block >> 1);

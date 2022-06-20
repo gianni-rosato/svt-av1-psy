@@ -5313,8 +5313,64 @@ void set_rate_est_ctrls(ModeDecisionContext *ctx, uint8_t rate_est_level) {
     default: assert(0); break;
     }
 }
+#if FTR_USE_TPL_INTRA
+/*
+Loop over TPL blocks in the SB to update intra information.  Return 1 if the stats for the SB are valid; else return 0.
+
+sb_intra_count: Number of TPL blocks in the SB where the best_mode was an angular intra mode
+sb_max_intra: The maximum intra mode selected by any TPL block in the SB (DC_PRED is lowest, PAETH_PRED is highest)
+*/
+static Bool get_sb_tpl_intra_stats(PictureControlSet *pcs, ModeDecisionContext *ctx, int* sb_ang_intra_count, PredictionMode* sb_max_intra) {
+    PictureParentControlSet *ppcs = pcs->parent_pcs_ptr;
+
+    // Check that TPL data is available and that INTRA was tested in TPL.
+    // Note that not all INTRA modes may be tested in TPL.
+    if (ppcs->tpl_ctrls.enable && ppcs->tpl_src_data_ready &&
+        (ppcs->is_used_as_reference_flag || !ppcs->tpl_ctrls.disable_intra_pred_nref)) {
+
+        const int aligned16_width = (ppcs->aligned_width + 15) >> 4;
+        const uint32_t mb_origin_x = ctx->sb_origin_x;
+        const uint32_t mb_origin_y = ctx->sb_origin_y;
+        TplSrcStats *tpl_src_stats_buffer;
+        const int tpl_blk_size = ppcs->tpl_ctrls.dispenser_search_level == 0 ? 16 : ppcs->tpl_ctrls.dispenser_search_level == 1 ? 32 : 64;
+
+        // Get actual SB width (for cases of incomplete SBs)
+        SbParams *sb_params = &ppcs->sb_params_array[ctx->sb_index];
+        const int sb_cols = sb_params->width / tpl_blk_size;
+        const int sb_rows = sb_params->height / tpl_blk_size;
+
+        int ang_intra_count = 0;
+        PredictionMode max_intra = DC_PRED;
+
+        // Loop over all blocks in the SB
+        for (int i = 0; i < sb_rows; i++) {
+            tpl_src_stats_buffer =
+                &ppcs->pa_me_data->tpl_src_stats_buffer[((mb_origin_y >> 4) + i) * aligned16_width + (mb_origin_x >> 4)];
+            for (int j = 0; j < sb_cols; j++) {
+
+                if (is_intra_mode(tpl_src_stats_buffer->best_mode)) {
+                    max_intra = MAX(max_intra, tpl_src_stats_buffer->best_mode);
+                }
+
+                if (av1_is_directional_mode(tpl_src_stats_buffer->best_mode)) {
+                    ang_intra_count++;
+                }
+                tpl_src_stats_buffer++;
+            }
+        }
+
+        *sb_ang_intra_count = ang_intra_count;
+        *sb_max_intra = max_intra;
+        return 1;
+    }
+    return 0;
+}
+#endif
 void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t intra_level) {
     IntraCtrls *ctrls = &ctx->intra_ctrls;
+#if FTR_USE_TPL_INTRA
+    PictureParentControlSet *ppcs = pcs->parent_pcs_ptr;
+#endif
 
     // If intra is disallowed at the pic level, must disallow at SB level
     if (pcs->skip_intra)
@@ -5337,11 +5393,57 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
         ctrls->enable_intra       = 1;
         ctrls->intra_mode_end     = PAETH_PRED;
         ctrls->angular_pred_level = 2;
+
+#if FTR_USE_TPL_INTRA
+        // Only use TPL info if all INTRA modes are tested
+        if (ppcs->tpl_ctrls.enable && ppcs->tpl_ctrls.intra_mode_end == PAETH_PRED) {
+            int sb_ang_intra_count;
+            PredictionMode sb_max_intra;
+            if (get_sb_tpl_intra_stats(pcs, ctx, &sb_ang_intra_count, &sb_max_intra)) {
+                // if SB has angluar modes, use full search
+                if (sb_ang_intra_count) {
+                    ctrls->angular_pred_level = 1;
+                }
+                else {
+                    ctrls->angular_pred_level = 3;
+                }
+            }
+        }
+#endif
         break;
     case 3:
         ctrls->enable_intra       = 1;
         ctrls->intra_mode_end     = SMOOTH_H_PRED;
         ctrls->angular_pred_level = 3;
+
+#if FTR_USE_TPL_INTRA
+        // Only use TPL info if all INTRA modes are tested
+        if (ppcs->tpl_ctrls.enable && ppcs->tpl_ctrls.intra_mode_end == PAETH_PRED) {
+            int sb_ang_intra_count;
+            PredictionMode sb_max_intra;
+            if (get_sb_tpl_intra_stats(pcs, ctx, &sb_ang_intra_count, &sb_max_intra)) {
+
+                int tpl_blk_size = ppcs->tpl_ctrls.dispenser_search_level == 0 ? 16 : ppcs->tpl_ctrls.dispenser_search_level == 1 ? 32 : 64;
+                // Get actual SB width (for cases of incomplete SBs)
+                SbParams *sb_params = &ppcs->sb_params_array[ctx->sb_index];
+                int sb_cols = sb_params->width / tpl_blk_size;
+                int sb_rows = sb_params->height / tpl_blk_size;
+
+                // if more than a quarter of SB is angular, use safe intra_level
+                if (sb_ang_intra_count > ((sb_rows * sb_cols) >> 2)) {
+                    ctrls->angular_pred_level = 1;
+                }
+                else if (sb_ang_intra_count > 2) {
+                    ctrls->angular_pred_level = 2;
+                }
+                else {
+                    ctrls->angular_pred_level = 4;
+                }
+
+                ctrls->intra_mode_end = sb_max_intra;
+            }
+        }
+#endif
         break;
     case 4:
         ctrls->enable_intra       = 1;
@@ -5989,10 +6091,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             intra_level = 5;
         else
             intra_level = is_base ? 5 : 0;
-    } else if (enc_mode <= ENC_M0)
+    }
+#if FTR_USE_TPL_INTRA
+    else if (enc_mode <= ENC_M1)
+        intra_level = 1;
+    else if (enc_mode <= ENC_M2)
+        intra_level = is_base ? 1 : 2;
+    else if (enc_mode <= ENC_M4)
+        intra_level = is_base ? 1 : 3;
+#else
+    else if (enc_mode <= ENC_M0)
         intra_level = 1;
     else if (enc_mode <= ENC_M2)
         intra_level = is_ref ? 1 : 4;
+#endif
     else if (enc_mode <= ENC_M5)
         intra_level = is_base ? 1 : 4;
     else if (enc_mode <= ENC_M7)

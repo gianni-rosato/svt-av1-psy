@@ -78,6 +78,8 @@ extern "C" {
 
 #define FTR_RC_VBR_IMR          1 // optimize TPL for VBR, 1 Pass VBR improvement
 #define TUNE_M1_M3_BDR          1 // Tune m1 to m3 to recover maximum bdr
+#define CLN_TPL_OPT             1 // Remove tpl_opt_flag that acts as an enable switch for many TPL features, despite having their own signals
+#define FTR_USE_TPL_INTRA       1 // Use TPL results to restrict tested INTRA modes in MD
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -205,7 +205,11 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
     if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number)) {
 #if OPT_TPL_QPS
         // Discard low important pictures from tpl group
+#if CLN_TPL_OPT
+        if (pcs->tpl_ctrls.reduced_tpl_group >= 0) {
+#else
         if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
+#endif
             if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group &&
                 // In the middle pass when rc_stat_gen_pass_mode is set, pictures in the highest temporal layer are skipped,
                 // except the first one. The condition is added to prevent validating these frames for tpl

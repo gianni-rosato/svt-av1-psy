@@ -771,6 +771,11 @@ uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t pictur
     return blk_size;
 }
 
+#if CLN_TPL_OPT
+/*************************************************************************************
+Set the TPL controls that control TPL search complexity.
+***************************************************************************************/
+#else
 /*************************************************************************************
 tpl level control
 When the flag tpl_opt_flag is active, it implies that the TPL optimization actions
@@ -780,6 +785,7 @@ only on distortion.
 When tpl_opt_flag is set to 0, none of the actions mentioned above could be considered
 0:OFF; 1:ON.
 ***************************************************************************************/
+#endif
 static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) {
     TplControls *       tpl_ctrls = &pcs->tpl_ctrls;
     SequenceControlSet *scs = pcs->scs_ptr;
@@ -789,9 +795,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
     switch (tpl_level) {
     case 0:
         tpl_ctrls->enable = 0;
+#if CLN_TPL_OPT
+        tpl_ctrls->compute_rate = 0;
+#else
         tpl_ctrls->tpl_opt_flag = 0;
+#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 0;
+#if CLN_TPL_OPT
+        tpl_ctrls->intra_mode_end = DC_PRED;
+#endif
         tpl_ctrls->reduced_tpl_group = -1;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
@@ -806,14 +819,25 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         break;
     case 1:
         tpl_ctrls->enable = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->compute_rate = 1;
+#else
         tpl_ctrls->tpl_opt_flag = 0;
+#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 0;
+#if CLN_TPL_OPT
+        tpl_ctrls->intra_mode_end = PAETH_PRED;
+#endif
         tpl_ctrls->reduced_tpl_group = -1;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#if CLN_TPL_OPT
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 0;
+#else
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#endif
         tpl_ctrls->dispenser_search_level = 0;
         tpl_ctrls->subsample_tx = 0;
         tpl_ctrls->vq_adjust_lambda_sb = 1;
@@ -823,9 +847,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         break;
     case 2:
         tpl_ctrls->enable = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->compute_rate = 0;
+#else
         tpl_ctrls->tpl_opt_flag = 1;
+#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->intra_mode_end = DC_PRED;
+#endif
         tpl_ctrls->reduced_tpl_group = -1;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
@@ -840,9 +871,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         break;
     case 3:
         tpl_ctrls->enable = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->compute_rate = 0;
+#else
         tpl_ctrls->tpl_opt_flag = 1;
+#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->intra_mode_end = DC_PRED;
+#endif
         tpl_ctrls->reduced_tpl_group = -1;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
@@ -857,9 +895,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         break;
     case 4:
         tpl_ctrls->enable = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->compute_rate = 0;
+#else
         tpl_ctrls->tpl_opt_flag = 1;
+#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->intra_mode_end = DC_PRED;
+#endif
         tpl_ctrls->reduced_tpl_group = is_islice ? -1 : 3;
         tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
@@ -874,9 +919,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         break;
     case 5:
         tpl_ctrls->enable = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->compute_rate = 0;
+#else
         tpl_ctrls->tpl_opt_flag = 1;
+#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->intra_mode_end = DC_PRED;
+#endif
         tpl_ctrls->reduced_tpl_group = pcs->hierarchical_levels == 5
             ? (is_islice ? 4 : 3)
             : (is_islice ? 3 : 2);
@@ -893,9 +945,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         break;
     case 6:
         tpl_ctrls->enable = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->compute_rate = 0;
+#else
         tpl_ctrls->tpl_opt_flag = 1;
+#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->intra_mode_end = DC_PRED;
+#endif
         tpl_ctrls->reduced_tpl_group = pcs->hierarchical_levels == 5
             ? is_islice ? 4 : (resolution <= INPUT_SIZE_480p_RANGE ? 3 : 2)
             : is_islice ? 3 : (resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1);
@@ -912,9 +971,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         break;
     case 7:
         tpl_ctrls->enable = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->compute_rate = 0;
+#else
         tpl_ctrls->tpl_opt_flag = 1;
+#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
+#if CLN_TPL_OPT
+        tpl_ctrls->intra_mode_end = DC_PRED;
+#endif
         tpl_ctrls->reduced_tpl_group = pcs->hierarchical_levels == 5
             ? is_islice ? 4 : (resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1)
             : is_islice ? 3 : (resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
@@ -931,6 +997,15 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         break;
     }
 
+#if CLN_TPL_OPT
+    // Check user-defined settings for MAX intra mode
+    if (scs->enable_paeth == 0)
+        tpl_ctrls->intra_mode_end = MIN(tpl_ctrls->intra_mode_end, SMOOTH_H_PRED);
+
+    if (scs->enable_smooth == 0)
+        tpl_ctrls->intra_mode_end = MIN(tpl_ctrls->intra_mode_end, D67_PRED);
+#endif
+
     // Derive synthesizer block size from frame size and tpl level
     tpl_ctrls->synth_blk_size = svt_aom_get_tpl_synthesizer_block_size(tpl_level, pcs->aligned_width, pcs->aligned_height);
 
@@ -939,7 +1014,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
 
     // TPL may only look at a subset of available pictures in tpl group, which may affect the r0 calcuation.
     // As a result, we defined a factor to adjust r0 (to compensate for TPL not using all available frames).
+#if CLN_TPL_OPT
+    if (!is_islice && tpl_ctrls->reduced_tpl_group >= 0) {
+#else
     if (!is_islice && tpl_ctrls->tpl_opt_flag && tpl_ctrls->reduced_tpl_group >= 0) {
+#endif
         switch ((pcs->hierarchical_levels - tpl_ctrls->reduced_tpl_group)) {
         case 0:
         default:
@@ -981,7 +1060,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         if (!scs->lad_mg) {
 #endif
             tpl_ctrls->r0_adjust_factor = is_islice
+#if CLN_TPL_OPT
+                ? ((tpl_ctrls->reduced_tpl_group >= 0) ? 0.2 : 0)
+#else
                 ? ((tpl_ctrls->tpl_opt_flag && tpl_ctrls->reduced_tpl_group >= 0) ? 0.2 : 0)
+#endif
                 : 0.1;
         }
     }

@@ -3083,6 +3083,9 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
                                                        bsize);
             uint8_t        ois_intra_mode;
             uint8_t        intra_mode_start = DC_PRED;
+#if CLN_TPL_OPT
+            uint8_t intra_mode_end = pcs_ptr->tpl_ctrls.intra_mode_end;
+#else
             Bool         enable_paeth   = pcs_ptr->scs_ptr->enable_paeth == DEFAULT
                           ? TRUE
                           : (Bool)pcs_ptr->scs_ptr->enable_paeth;
@@ -3093,6 +3096,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
                        : enable_paeth                                       ? PAETH_PRED
                        : enable_smooth                                      ? SMOOTH_H_PRED
                                                                             : D67_PRED;
+#endif
             PredictionMode best_mode      = DC_PRED;
             int64_t        best_intra_cost = INT64_MAX;
 
@@ -3133,8 +3137,12 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
                                               16);
                 // Distortion
                 int64_t intra_cost;
+#if CLN_TPL_OPT
+                if (pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
+#else
                 if (pcs_ptr->tpl_ctrls.tpl_opt_flag &&
                     pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
+#endif
                     intra_cost = svt_nxm_sad_kernel_sub_sampled(
                         src, input_ptr->stride_y, predictor, 16, 16, 16);
                 } else {
@@ -3148,9 +3156,13 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
                                            predictor,
                                            16 << pcs_ptr->tpl_ctrls.subsample_tx);
 
+#if CLN_TPL_OPT
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.pf_shape;
+#else
                     EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag
                         ? pcs_ptr->tpl_ctrls.pf_shape
                         : DEFAULT_SHAPE;
+#endif
                     svt_av1_wht_fwd_txfm(src_diff,
                                          16 << pcs_ptr->tpl_ctrls.subsample_tx,
                                          coeff,
