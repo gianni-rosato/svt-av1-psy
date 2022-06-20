@@ -69,10 +69,10 @@ size of reconstructed pictures with the same non-normative scaling method.
 ### 2.2. Determination of the downscaling factor
 The downscaling factor is constrained to 8/9 ~ 8/16. Since the numerator of the
 factor is fixed to 8, only the denominator needs to be determined. There is a
-special downscaling factor exist in dynamic mode, which is described in
-following mode description.
+special downscaling factor in dynamic mode, which is described in following
+mode description.
 
-Three modes are used to set the denominator namely Fixed, Random, Dynamic
+Three modes are used to set the denominator namely Fixed, Random and Dynamic
 modes, respectively. The mode is set by the user. A brief description of how
 each of the above-mentioned modes works is included below.
 
@@ -112,7 +112,7 @@ advance.
 Dynamic mode only works in 1-pass CBR low-delay mode, it requires a collection
 of buffer level and QP (or qindex) to determine which to be used, the original
 resolution or downscaling in two stages. In SVT-AV1 encoder, picture buffer
-level and QP is determined in the Rate Control process. So, the pictures
+level and QP are determined in the Rate Control process. So, the pictures
 already in pipeline should keep their current resolution, the new scaling
 denominator will be performed on new input pictures.
 
@@ -128,9 +128,9 @@ freed. The most noticeable data structures are parent PCS
 (PictureParentControlSet) and child PCS (PictureControlSet). They are acquired
 in Resource Coordination process and Picture Manager process respectively.
 
-In dynamic mode, a reset of frame size related information is applied when the
-new scaled picture arrives Rate Control process, a new watch window of scaling
-decision starts after this reset.
+In the dynamic mode, a reset of frame size related information is applied when
+the new scaled picture arrives in the Rate Control process, a new watch window
+of scaling decision starts after this reset.
 
 ### 2.4. Reference Scaling API
 Table 1 illustrates the usage of reference scaling functions. Only related
@@ -139,12 +139,24 @@ processes are listed.
 ##### Table 1. Reference Scaling API
 
 ## 3. Optimization
-Reference Scaling affects the coding speed: The current picture and its
+How reference Scaling affects the coding speed: The current picture and its
 references are downscaled to the same size for motion estimation search.
-Considering interact with super-res, in current implementation,
-pa ref[sr_denom][10] array and recon ref[sr_denom][10] array is used to hold
-downscaled reference pictures, to avoid duplicate downscaling on the same
-reference picture for different input pictures.
+Considering its interaction with super-res, in current implementation,
+pa ref[sr_denom_idx][10] array and recon ref[sr_denom_idx][10] array is used to
+hold downscaled reference pictures, to avoid duplicate downscaling on the same
+reference picture for different input pictures. The sr_denom_idx and the
+resize_denom_idx is calculated from scale_denom - scale_numerator.
+E.g., pictures with index 4, 8 and 16 refer to picture 0 and their downscaled
+reference frame of reference scaling combined with super-res are as following
+table:
+| pic index | refer scale ratio | super-res ratio |                      | scaling ref in array  |                      |
+|-----------|-------------------|-----------------|----------------------|-----------------------|----------------------|
+| 0         | 8/8               | 8/8             | N/A                  | N/A                   | N/A                  |
+| 4         | 8/9               | 8/12            | ref_pic_0->downscaled_reference_picture[4][1] | ref_pic_16->downscaled_reference_picture[4][1] | ref_pic_8->downscaled_reference_picture[4][1] |
+| 8         | 8/10              | 8/11            | ref_pic_0->downscaled_reference_picture[3][2] | ref_pic_16->downscaled_reference_picture[3][2] | N/A                  |
+| 16        | 8/9               | 8/12            | ref_pic_0->downscaled_reference_picture[4][1] | N/A                   | N/A                  |
+
+The duplicated downscaling of ref_pic_0->downscaled_reference_picture[4][1] performs only once.
 
 Reference Scaling also has an impact on memory usage: Extra buffers are
 allocated to hold downscaled pictures, including current coding picture, PA
@@ -154,14 +166,22 @@ references and reconstructed references as shown in Figure 4.
 
 ## 4. Usage recommendation
 The Random mode is preferred to be used for validation or testing only because
-it consumes more memory. Consider the requirement to interact with super-res,
-pa ref and recon ref are expended to 2D array (pa ref[9][10] and recon ref[9]
-[10] might be fully filled) and this calls for more CPU time (scaling the same
-reference on all different denominator values) but brings no benefit as
-compared to other modes.
+it consumes more memory. Consider reference scaling is required to interact
+with super-res, pa_ref and recon_ref are expended to 2D arrays. The super-res
+denom index is up to 9 (mapping from denom 8 to denom 16), and the resize denom
+index is up to 10 (mapping from denom 8 to denom 16 and one special index for
+3/4 in dynamic mode). The pa_ref and the recon_ref might be fully filled, and
+this calls for more CPU time to scale the same reference with different
+denominator values, but random mode brings no benefit compared to other modes.
 
 The Fixed mode with constant QP configuration can achieve the target to work
-with a narrow bandwidth with acceptable quality.
+with a narrow bandwidth with acceptable quality. The video quality goes down
+with lower scaling ratio, it is recommended to set higher scaling ratio (8/9
+or 8/10) for key frames and lower scaling ratio (8/13 to 8/16) for non-key
+frames. It can balance between bit-rate and quality. The settings of lower ratio
+for key frames and higher ratio for non-key frames are not recommended, because
+the smaller key frames will lose too many details in scaling yet they are always
+referred by other frames.
 
 The Dynamic mode only works with 1-Pass CBR low-delay configuration, any
 settings in conflict with those will make dynamic mode to be rejected. The new
