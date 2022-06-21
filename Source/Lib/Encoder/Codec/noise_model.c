@@ -1286,7 +1286,7 @@ int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_mode
     film_grain->ar_coeff_lag = noise_model->params.lag;
 
     // Convert the scaling functions to 8 bit values
-    AomNoiseStrengthLut scaling_points[3];
+    AomNoiseStrengthLut scaling_points[3] = {{.points = NULL, .num_points = 0}};
     svt_aom_noise_strength_solver_fit_piecewise(
         &noise_model->combined_state[0].strength_solver, 14, scaling_points + 0);
     svt_aom_noise_strength_solver_fit_piecewise(
