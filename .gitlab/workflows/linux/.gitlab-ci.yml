@@ -30,7 +30,7 @@
   parallel: !reference [.enc-test-parallel]
   artifacts: !reference [.enc-test-artifacts]
   needs:
-    - Linux (GCC 10, Static)
+    - Linux (GCC 11, Static)
 
 .linux-default-test-base:
   extends: .linux-test-base
@@ -41,7 +41,7 @@
   parallel: !reference [.enc-test-parallel]
   artifacts: !reference [.enc-test-artifacts]
   needs:
-    - Linux (GCC 10, Default, Static)
+    - Linux (GCC 11, Default, Static)
 
 .linux-unit-test-base:
   extends: .linux-test-base
@@ -50,7 +50,7 @@
     reports:
       junit: reports/*.xml
   needs:
-    - Linux (GCC 10, Tests, Static)
+    - Linux (GCC 11, Tests, Static)
 
 #
 # Compile jobs
@@ -106,8 +106,8 @@ Linux (GCC):
         CXX: g++-8
       - CC: gcc-9
         CXX: g++-9
-      - CC: gcc-10
-        CXX: g++-10
+      - CC: gcc-11
+        CXX: g++-11
         EXTRA_CMAKE_FLAGS: -DENABLE_AVX512=ON
       - CC: aarch64-linux-gnu-gcc
         CXX: aarch64-linux-gnu-g++
@@ -128,11 +128,11 @@ Linux (GCC):
         ;;
       esac
 
-Linux (GCC 10, Static):
+Linux (GCC 11, Static):
   extends: .linux-compiler-base
   variables:
-    CC: gcc-10
-    CXX: g++-10
+    CC: gcc-11
+    CXX: g++-11
     EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
     GIT_DEPTH: 0
   parallel:
@@ -145,11 +145,11 @@ Linux (GCC 10, Static):
       - Bin/*/SvtAv1EncApp
       - Bin/*/SvtAv1DecApp
 
-Linux (GCC 10, Tests, Static):
+Linux (GCC 11, Tests, Static):
   extends: .linux-compiler-base
   variables:
-    CC: gcc-10
-    CXX: g++-10
+    CC: gcc-11
+    CXX: g++-11
     EXTRA_CFLAGS: -g
     EXTRA_CXXFLAGS: -g
     EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
@@ -162,11 +162,11 @@ Linux (GCC 10, Tests, Static):
       - Bin/Release/SvtAv1ApiTests
       - Bin/Release/SvtAv1E2ETests
 
-Linux (GCC 10, Default, Static):
+Linux (GCC 11, Default, Static):
   extends: .linux-compiler-base
   variables:
-    CC: gcc-10
-    CXX: g++-10
+    CC: gcc-11
+    CXX: g++-11
     EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
     GIT_DEPTH: 0
   parallel:
@@ -310,7 +310,7 @@ Linux RC Test:
       done
       $ret
   needs:
-    - Linux (GCC 10, Static)
+    - Linux (GCC 11, Static)
 
 Linux Enc Test:
   extends: .linux-enc-test-base
@@ -439,8 +439,8 @@ Linux Gstreamer (Static):
   extends: .linux-test-base
   stage: compile
   variables:
-    CC: gcc-10
-    CXX: g++-10
+    CC: gcc-11
+    CXX: g++-11
     CFLAGS: -pipe
     CXXFLAGS: -pipe
     LDFLAGS: -pipe
@@ -462,8 +462,8 @@ Linux FFmpeg (Static):
   extends: .linux-test-base
   stage: compile
   variables:
-    CC: gcc-10
-    CXX: g++-10
+    CC: gcc-11
+    CXX: g++-11
     CFLAGS: -pipe
     CXXFLAGS: -pipe
     LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
@@ -501,8 +501,8 @@ Linux FFmpeg (n5.0, Static):
   extends: .linux-test-base
   stage: compile
   variables:
-    CC: gcc-10
-    CXX: g++-10
+    CC: gcc-11
+    CXX: g++-11
     CFLAGS: -pipe
     CXXFLAGS: -pipe
     LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
@@ -549,5 +549,5 @@ Decoder Test:
     - diff decout10.yuv ffmpegout10.yuv
   needs:
     - Linux Enc Test
-    - Linux (GCC 10, Static)
+    - Linux (GCC 11, Static)
     - Linux FFmpeg (Static)
