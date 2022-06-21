@@ -89,8 +89,8 @@ Linux (Clang):
     matrix:
       - CC: clang-6.0
         CXX: clang++-6.0
-      - CC: clang-10
-        CXX: clang++-10
+      - CC: clang-12
+        CXX: clang++-12
 
 Linux (GCC 4):
   extends: .linux-compiler-base
@@ -185,8 +185,8 @@ Linux (GCC 11, Default, Static):
 Linux Sanitizer Compile:
   extends: .linux-compiler-base
   variables:
-    CC: clang-10
-    CXX: clang++-10
+    CC: clang-12
+    CXX: clang++-12
     CMAKE_BUILD_TYPE: Debug
     EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=$SANITIZER -DSANITIZER=$SANITIZER
   parallel:
@@ -203,8 +203,8 @@ Linux Sanitizer Compile:
 Linux Integer Overflow Compile:
   extends: .linux-compiler-base
   variables:
-    CC: clang-10
-    CXX: clang++-10
+    CC: clang-12
+    CXX: clang++-12
     CMAKE_BUILD_TYPE: Debug
     EXTRA_CFLAGS: -fsanitize=signed-integer-overflow,unsigned-integer-overflow
     EXTRA_CXXFLAGS: -fsanitize=signed-integer-overflow,unsigned-integer-overflow
