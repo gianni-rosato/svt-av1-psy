@@ -1902,31 +1902,32 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
     {
         const int16_t *d_t                                   = d;
         __m128i        deltas[(2 * WIENER_WIN_3TAP - 1) * 2] = {_mm_setzero_si128()};
-        __m128i        dd[WIENER_WIN_3TAP * 2], ds[WIENER_WIN_3TAP * 2];
+        __m128i        dd[WIENER_WIN_3TAP * 2]               = {_mm_setzero_si128()};
+        __m128i        ds[WIENER_WIN_3TAP * 2]               = {_mm_setzero_si128()};
         __m128i        se0[2], se1[2], xx[2], yy[2];
         __m128i        delta[2];
-        se0[0] = se0[1] = _mm_setzero_si128(); // Initialize to avoid warning.
-        y               = 0;
+
+        y = 0;
         while (y < h8) {
             // 00s 01s 10s 11s 20s 21s 30s 31s  00e 01e 10e 11e 20e 21e 30e 31e
-            se0[0] = _mm_insert_epi32(se0[0], *(int32_t *)(d_t + 0 * d_stride), 0);
-            se0[1] = _mm_insert_epi32(se0[1], *(int32_t *)(d_t + 0 * d_stride + width), 0);
-            se0[0] = _mm_insert_epi32(se0[0], *(int32_t *)(d_t + 1 * d_stride), 1);
-            se0[1] = _mm_insert_epi32(se0[1], *(int32_t *)(d_t + 1 * d_stride + width), 1);
-            se0[0] = _mm_insert_epi32(se0[0], *(int32_t *)(d_t + 2 * d_stride), 2);
-            se0[1] = _mm_insert_epi32(se0[1], *(int32_t *)(d_t + 2 * d_stride + width), 2);
-            se0[0] = _mm_insert_epi32(se0[0], *(int32_t *)(d_t + 3 * d_stride), 3);
-            se0[1] = _mm_insert_epi32(se0[1], *(int32_t *)(d_t + 3 * d_stride + width), 3);
+            se0[0] = _mm_setr_epi32(*(int32_t *)(d_t + 0 * d_stride),
+                                    *(int32_t *)(d_t + 1 * d_stride),
+                                    *(int32_t *)(d_t + 2 * d_stride),
+                                    *(int32_t *)(d_t + 3 * d_stride));
+            se0[1] = _mm_setr_epi32(*(int32_t *)(d_t + 0 * d_stride + width),
+                                    *(int32_t *)(d_t + 1 * d_stride + width),
+                                    *(int32_t *)(d_t + 2 * d_stride + width),
+                                    *(int32_t *)(d_t + 3 * d_stride + width));
 
             // 40s 41s 50s 51s 60s 61s 70s 71s  40e 41e 50e 51e 60e 61e 70e 71e
-            se1[0] = _mm_insert_epi32(se0[0], *(int32_t *)(d_t + 4 * d_stride), 0);
-            se1[1] = _mm_insert_epi32(se1[1], *(int32_t *)(d_t + 4 * d_stride + width), 0);
-            se1[0] = _mm_insert_epi32(se1[0], *(int32_t *)(d_t + 5 * d_stride), 1);
-            se1[1] = _mm_insert_epi32(se1[1], *(int32_t *)(d_t + 5 * d_stride + width), 1);
-            se1[0] = _mm_insert_epi32(se1[0], *(int32_t *)(d_t + 6 * d_stride), 2);
-            se1[1] = _mm_insert_epi32(se1[1], *(int32_t *)(d_t + 6 * d_stride + width), 2);
-            se1[0] = _mm_insert_epi32(se1[0], *(int32_t *)(d_t + 7 * d_stride), 3);
-            se1[1] = _mm_insert_epi32(se1[1], *(int32_t *)(d_t + 7 * d_stride + width), 3);
+            se1[0] = _mm_setr_epi32(*(int32_t *)(d_t + 4 * d_stride),
+                                    *(int32_t *)(d_t + 5 * d_stride),
+                                    *(int32_t *)(d_t + 6 * d_stride),
+                                    *(int32_t *)(d_t + 7 * d_stride));
+            se1[1] = _mm_setr_epi32(*(int32_t *)(d_t + 4 * d_stride + width),
+                                    *(int32_t *)(d_t + 5 * d_stride + width),
+                                    *(int32_t *)(d_t + 6 * d_stride + width),
+                                    *(int32_t *)(d_t + 7 * d_stride + width));
 
             // 00s 10s 20s 30s 40s 50s 60s 70s  00e 10e 20e 30e 40e 50e 60e 70e
             xx[0] = _mm_slli_epi32(se0[0], 16);
@@ -3140,6 +3141,8 @@ static void compute_stats_win7_sse4_1(const int16_t *const d, const int32_t d_st
             const int16_t *d_j                              = d + j - 1;
             __m128i        deltas[(2 * WIENER_WIN - 1) * 2] = {_mm_setzero_si128()};
             __m128i        dd[WIENER_WIN * 2], ds[WIENER_WIN * 2];
+
+            dd[5] = _mm_setzero_si128(); // Initialize to avoid warning.
 
             dd[0] = _mm_setr_epi16(di[0 * d_stride],
                                    di[1 * d_stride],
