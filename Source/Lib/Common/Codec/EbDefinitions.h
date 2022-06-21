@@ -165,8 +165,14 @@ typedef struct TfControls {
 } TfControls;
 typedef enum GM_LEVEL {
     GM_FULL   = 0, // Exhaustive search mode.
+#if FIX_GMV_DOWN
+    GM_ADAPT  = 1, // The search mode is set adaptively (whether GM_FULL or GM_DOWN) based on the average ME distortion
+    GM_DOWN   = 2, // Downsampled search mode, with a downsampling factor of 2 in each dimension
+    GM_DOWN16 = 3, // Downsampled search mode, with a downsampling factor of 4 in each dimension
+#else
     GM_DOWN   = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
     GM_DOWN16 = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
+#endif
 } GM_LEVEL;
 typedef enum SqWeightOffsets {
     CONSERVATIVE_OFFSET_0 = 5,

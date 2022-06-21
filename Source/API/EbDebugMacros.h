@@ -80,7 +80,8 @@ extern "C" {
 #define TUNE_M1_M3_BDR          1 // Tune m1 to m3 to recover maximum bdr
 #define CLN_TPL_OPT             1 // Remove tpl_opt_flag that acts as an enable switch for many TPL features, despite having their own signals
 #define FTR_USE_TPL_INTRA       1 // Use TPL results to restrict tested INTRA modes in MD
-
+#define FIX_GMV_LVL4            1 // GMV - Shut unipred-ref restriction (params generation)
+#define FIX_GMV_DOWN            1 // GMV - Add the ability to specify the down-sampling method per input (instead of per preset), then use the average ME distortion to switch between Full and 1/4
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

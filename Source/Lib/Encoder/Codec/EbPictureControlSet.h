@@ -1019,6 +1019,9 @@ typedef struct PictureParentControlSet {
     uint8_t      is_not_scaled;
     TfControls   tf_ctrls;
     GmControls   gm_ctrls;
+#if FIX_GMV_DOWN
+    GM_LEVEL gm_downsample_level;
+#endif
     CdefControls cdef_ctrls;
     // RC related variables
     int                             q_low;

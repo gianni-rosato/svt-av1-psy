@@ -91,7 +91,11 @@ void           set_global_motion_field(PictureControlSet *pcs_ptr) {
 
         // Upscale the translation parameters by 2, because the search is done on a down-sampled
         // version of the source picture (with a down-sampling factor of 2 in each dimension).
+#if FIX_GMV_DOWN
+        if (parent_pcs_ptr->gm_downsample_level == GM_DOWN16) {
+#else
         if (parent_pcs_ptr->gm_ctrls.downsample_level == GM_DOWN16) {
+#endif
             parent_pcs_ptr->global_motion[frame_index].wmmat[0] *= 4;
             parent_pcs_ptr->global_motion[frame_index].wmmat[1] *= 4;
             parent_pcs_ptr->global_motion[frame_index].wmmat[0] = (int32_t)clamp(
@@ -102,7 +106,11 @@ void           set_global_motion_field(PictureControlSet *pcs_ptr) {
                 parent_pcs_ptr->global_motion[frame_index].wmmat[1],
                 GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
                 GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+#if FIX_GMV_DOWN
+        } else if (parent_pcs_ptr->gm_downsample_level == GM_DOWN) {
+#else
         } else if (parent_pcs_ptr->gm_ctrls.downsample_level == GM_DOWN) {
+#endif
             parent_pcs_ptr->global_motion[frame_index].wmmat[0] *= 2;
             parent_pcs_ptr->global_motion[frame_index].wmmat[1] *= 2;
             parent_pcs_ptr->global_motion[frame_index].wmmat[0] = (int32_t)clamp(

@@ -2014,12 +2014,20 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
         gm_ctrls->rotzoom_model_only = 1;
+#if FIX_GMV_LVL4
+        gm_ctrls->bipred_only = 0;
+#else
         gm_ctrls->bipred_only = 1;
+#endif
         gm_ctrls->bypass_based_on_me = 1;
         gm_ctrls->use_stationary_block = 0;
         gm_ctrls->use_distance_based_active_th = 0;
         gm_ctrls->params_refinement_steps = 5;
+#if FIX_GMV_DOWN
+        gm_ctrls->downsample_level = GM_ADAPT;
+#else
         gm_ctrls->downsample_level = GM_DOWN;
+#endif
         break;
     case 5:
         gm_ctrls->enabled = 1;
