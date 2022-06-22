@@ -556,7 +556,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
 
     if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
+#if TUNE_M1_M3
+        if (pcs_ptr->enc_mode <= ENC_M3)
+#else
         if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;

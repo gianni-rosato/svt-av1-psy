@@ -4742,7 +4742,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
     else if (enc_mode <= ENC_M1)
 #endif
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
+#if TUNE_M1_M3
+    else if (enc_mode <= ENC_M3)
+#else
     else if (enc_mode <= ENC_M2)
+#endif
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
     else if (enc_mode <= ENC_M8)
         depth_level = 3;
@@ -6093,7 +6097,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             intra_level = is_base ? 5 : 0;
     }
 #if FTR_USE_TPL_INTRA
+#if TUNE_M1_M3
+    else if (enc_mode <= ENC_M0)
+#else
     else if (enc_mode <= ENC_M1)
+#endif
         intra_level = 1;
     else if (enc_mode <= ENC_M2)
         intra_level = is_base ? 1 : 2;
