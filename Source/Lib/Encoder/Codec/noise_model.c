@@ -247,7 +247,8 @@ void svt_aom_noise_strength_lut_free(AomNoiseStrengthLut *lut) {
     if (!lut)
         return;
     free(lut->points);
-    memset(lut, 0, sizeof(*lut));
+    lut->points     = NULL;
+    lut->num_points = 0;
 }
 
 static double noise_strength_solver_get_bin_index(const AomNoiseStrengthSolver *solver,
