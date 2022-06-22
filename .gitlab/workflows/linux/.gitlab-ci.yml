@@ -315,6 +315,13 @@ Linux RC Test:
 Linux Enc Test:
   extends: .linux-enc-test-base
 
+Linux Enc Musl Test:
+  extends: .linux-test-base
+  script:
+    - ./musl/SvtAv1EncApp -i akiyo_cif.y4m -b test1.ivf
+  needs:
+    - Linux (Alpine, musl)
+
 Linux Defaut Test:
   extends: .linux-default-test-base
 
