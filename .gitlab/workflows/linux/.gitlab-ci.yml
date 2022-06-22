@@ -70,6 +70,19 @@ Linux (Valgrind):
     paths:
       - valgrind/
 
+Linux (Alpine, musl):
+  extends: .linux-compiler-base
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3-cc
+  variables:
+    EXTRA_LDFLAGS: -static -static-libgcc
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=musl
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - musl/SvtAv1EncApp
+      - musl/SvtAv1DecApp
+
 Linux (Clang):
   extends: .linux-compiler-base
   parallel:
