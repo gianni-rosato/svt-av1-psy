@@ -608,7 +608,6 @@ static int calculate_boost_bits(int frame_count, int boost, int64_t total_group_
 static void av1_gop_bit_allocation_same_pred(PictureParentControlSet *pcs, int64_t gf_group_bits, GF_GROUP_STATS gf_stats) {
     // For key frames the frame target rate is already set
     int frame_index = (pcs->slice_type == I_SLICE) ? 1 : 0;
-    assert(gf_stats.gf_group_err != 0);
     for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
         pcs->gf_group[idx]->base_frame_target =
             (int)(gf_group_bits * pcs->gf_group[idx]->stat_struct.total_num_bits /

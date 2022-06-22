@@ -3528,8 +3528,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->super_block_size = 128;
         else
             scs_ptr->super_block_size = 64;
-    if (scs_ptr->static_config.rate_control_mode && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && !scs_ptr->lap_rc)
-        scs_ptr->super_block_size = 64;
     // When switch frame is on, all renditions must have same super block size. See spec 5.5.1, 5.9.15.
     if (scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.sframe_dist != 0)
         scs_ptr->super_block_size = 64;

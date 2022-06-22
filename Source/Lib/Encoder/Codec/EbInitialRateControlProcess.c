@@ -206,7 +206,10 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
 #if OPT_TPL_QPS
         // Discard low important pictures from tpl group
         if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
-            if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
+          //  if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
+            if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group && 
+                !(!pcs->tpl_group[pic_index]->is_used_as_reference_flag && pcs->scs_ptr->rc_stat_gen_pass_mode &&
+                    !pcs->tpl_group[pic_index]->first_frame_in_minigop)) {
                 pcs->tpl_valid_pic[pic_index] = 1;
                 pcs->used_tpl_frame_num++;
             }

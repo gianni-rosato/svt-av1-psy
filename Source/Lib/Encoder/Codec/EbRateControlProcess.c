@@ -2051,7 +2051,6 @@ static int get_bits_per_mb(PictureParentControlSet *ppcs_ptr, int use_cyclic_ref
                                  iperiod_fctr);
 #endif
 }
-//anaghdin --> update this if desired is less than cur_bit_diff by far
 // Similar to find_qindex_by_rate() function in ratectrl.c, but returns the q
 // index with rate just above or below the desired rate, depending on which of
 // the two rates is closer to the desired rate.
