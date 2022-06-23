@@ -741,6 +741,9 @@ typedef struct ModeDecisionContext {
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t          sq_weight;
     uint32_t          max_part0_to_part1_dev;
+#if TUNE_M3_NSQ
+    uint32_t          skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
+#endif
     IntraCtrls        intra_ctrls;
     MdRateEstCtrls    rate_est_ctrls;
     uint8_t           shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)

@@ -10634,6 +10634,117 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
 }
 #endif
 
+#if TUNE_M3_NSQ
+/*
+ * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
+ * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
+ * determines how likely it is to skip blocks, and is a function of the qp, block shape,
+ * prediction mode, block coeffs, and encode mode.  If skip_hv4_on_best_part is enabled
+ * H4/V4 blocks will be skipped if the best partition so far is not H/V.
+ *
+ * skip HA, HB and H4 if (valid SQ and H) and (H_COST > (SQ_WEIGHT * SQ_COST) / 100)
+ * skip VA, VB and V4 if (valid SQ and V) and (V_COST > (SQ_WEIGHT * SQ_COST) / 100)
+ *
+ * Returns TRUE if the blocks should be skipped; FALSE otherwise.
+ */
+static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
+
+    const BlockGeom *blk_geom   = ctx->blk_geom;
+    const uint16_t sqi          = blk_geom->sqi_mds;
+    const Part shape            = blk_geom->shape;
+
+    if (ctx->skip_hv4_on_best_part) {
+        // Skip H4/V4 shapes when best partition so far is not H/V
+        if (shape == PART_H4) {
+            if (ctx->md_blk_arr_nsq[sqi].part != PARTITION_HORZ)
+                return 1;
+        }
+        else if (blk_geom->shape == PART_V4) {
+            if (ctx->md_blk_arr_nsq[sqi].part != PARTITION_VERT)
+                return 1;
+        }
+    }
+
+    uint8_t  skip_nsq  = 0;
+    uint32_t sq_weight = ctx->sq_weight;
+
+    // return immediately if the skip nsq threshold is infinite
+    if (sq_weight == (uint32_t)~0)
+        return skip_nsq;
+
+    // use a conservative threshold for H4, V4 blocks
+    if (shape == PART_H4 || shape == PART_V4)
+        sq_weight += CONSERVATIVE_OFFSET_0;
+
+    MdBlkStruct *local_cu_unit = ctx->md_local_blk_unit;
+
+    if (shape == PART_HA || shape == PART_HB || shape == PART_H4) {
+        if (ctx->avail_blk_flag[sqi] && ctx->avail_blk_flag[sqi + 1] && ctx->avail_blk_flag[sqi + 2]) {
+
+            // Use aggressive thresholds for blocks without coeffs
+            if (shape == PART_HA) {
+                if (!ctx->md_blk_arr_nsq[sqi + 1].block_has_coeff)
+                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
+            }
+            if (shape == PART_HB) {
+                if (!ctx->md_blk_arr_nsq[sqi + 2].block_has_coeff)
+                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
+            }
+
+            // compute the cost of the SQ block and H block
+            const uint64_t sq_cost = local_cu_unit[sqi].default_cost;
+            const uint64_t h_cost  = local_cu_unit[sqi + 1].default_cost + local_cu_unit[sqi + 2].default_cost;
+
+            // Determine if nsq shapes can be skipped based on the relative cost of SQ and H blocks
+            skip_nsq = (h_cost > ((sq_cost * sq_weight) / 100));
+            // If not skipping, perform a check on the relative H/V costs
+            if (!skip_nsq &&
+                ctx->avail_blk_flag[sqi + 3] && ctx->avail_blk_flag[sqi + 4]) {
+                //compute the cost of V partition
+                const uint64_t v_cost = local_cu_unit[sqi + 3].default_cost + local_cu_unit[sqi + 4].default_cost;
+                const uint32_t v_weight = 110;
+
+                //if the cost of H partition is bigger than the V partition by a certain percentage
+                skip_nsq = (h_cost > ((v_cost * v_weight) / 100));
+            }
+        }
+    }
+
+    if (shape == PART_VA || shape == PART_VB || shape == PART_V4) {
+        if (ctx->avail_blk_flag[sqi] && ctx->avail_blk_flag[sqi + 3] && ctx->avail_blk_flag[sqi + 4]) {
+
+            // Use aggressive thresholds for blocks without coeffs
+            if (shape == PART_VA) {
+                if (!ctx->md_blk_arr_nsq[sqi + 3].block_has_coeff)
+                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
+            }
+            if (shape == PART_VB) {
+                if (!ctx->md_blk_arr_nsq[sqi + 4].block_has_coeff)
+                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
+            }
+
+            // compute the cost of the SQ block and V block
+            const uint64_t sq_cost = local_cu_unit[sqi].default_cost;
+            const uint64_t v_cost  = local_cu_unit[sqi + 3].default_cost + local_cu_unit[sqi + 4].default_cost;
+
+            // Determine if nsq shapes can be skipped based on the relative cost of SQ and V blocks
+            skip_nsq = (v_cost > ((sq_cost * sq_weight) / 100));
+
+            // If not skipping, perform a check on the relative H/V costs
+            if (!skip_nsq &&
+                ctx->avail_blk_flag[sqi + 1] && ctx->avail_blk_flag[sqi + 2]) {
+                const uint64_t h_cost = local_cu_unit[sqi + 1].default_cost + local_cu_unit[sqi + 2].default_cost;
+                const uint32_t h_weight = 110;
+
+                //if the cost of V partition is bigger than the H partition by a certain percentage
+                skip_nsq          = (v_cost > ((h_cost * h_weight) / 100));
+            }
+        }
+    }
+
+    return skip_nsq;
+}
+#else
 /*
  * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
  * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
@@ -10743,6 +10854,8 @@ uint8_t update_skip_nsq_shapes(ModeDecisionContext *context_ptr) {
 
     return skip_nsq;
 }
+#endif
+
 void md_pme_search_controls(ModeDecisionContext *ctx, uint8_t md_pme_level);
 void set_inter_intra_ctrls(ModeDecisionContext *ctx, uint8_t inter_intra_level);
 void set_dist_based_ref_pruning_controls(ModeDecisionContext *mdctxt,

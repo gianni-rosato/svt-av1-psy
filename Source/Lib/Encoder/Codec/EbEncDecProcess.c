@@ -5984,6 +5984,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
 
     context_ptr->max_part0_to_part1_dev = pd_pass == PD_PASS_0 ? 0
                                                                : pcs_ptr->max_part0_to_part1_dev;
+#if TUNE_M3_NSQ
+    context_ptr->skip_hv4_on_best_part = pd_pass == PD_PASS_0 ? 0
+                                                              : pcs_ptr->skip_hv4_on_best_part;
+#endif
 
     // Set pic_obmc_level @ MD
     if (pd_pass == PD_PASS_0)

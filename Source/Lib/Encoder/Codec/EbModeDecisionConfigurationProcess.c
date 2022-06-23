@@ -969,8 +969,21 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // max_part0_to_part1_dev is used to:
     // (1) skip the H_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 2nd quadrant) and the Parent-SQ src-to-recon distortion of (3rd quadrant + 4th quadrant) is less than TH,
     // (2) skip the V_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 3rd quadrant) and the Parent-SQ src-to-recon distortion of (2nd quadrant + 4th quadrant) is less than TH.
+#if TUNE_M3_NSQ
+    if (enc_mode <= ENC_M2)
+        pcs_ptr->max_part0_to_part1_dev = 0;
+    else if (enc_mode <= ENC_M3) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 0;
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 10;
+        else // regular
+            pcs_ptr->max_part0_to_part1_dev = 5;
+    }
+#else
     if (enc_mode <= ENC_M3)
         pcs_ptr->max_part0_to_part1_dev = 0;
+#endif
     else
 #if FTR_USE_COEFF_LVL
     {
@@ -984,6 +997,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #else
         pcs_ptr->max_part0_to_part1_dev = 40;
 #endif
+
+#if TUNE_M3_NSQ
+    if (enc_mode <= ENC_M2)
+        pcs_ptr->skip_hv4_on_best_part = 0;
+    else
+        pcs_ptr->skip_hv4_on_best_part = 1;
+#endif
+
     // Set the level for enable_inter_intra
     // Block level switch, has to follow the picture level
     // inter intra pred                      Settings

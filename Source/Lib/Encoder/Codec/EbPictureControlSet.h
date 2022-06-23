@@ -409,6 +409,9 @@ typedef struct PictureControlSet {
     uint8_t  parent_sq_coeff_area_based_cycles_reduction_level;
     uint32_t sq_weight;
     uint32_t max_part0_to_part1_dev;
+#if TUNE_M3_NSQ
+    uint32_t skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
+#endif
     uint8_t  md_inter_intra_level;
     uint8_t  txs_level;
     uint8_t  nic_level;

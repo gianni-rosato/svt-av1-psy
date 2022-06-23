@@ -84,6 +84,7 @@ extern "C" {
 #define FIX_GMV_DOWN            1 // GMV - Add the ability to specify the down-sampling method per input (instead of per preset), then use the average ME distortion to switch between Full and 1/4
 #define TUNE_M1_M3              1 // Tune M1 and M3 features
 #define TUNE_M4                 1 // Tune M4 features for SSIM
+#define TUNE_M3_NSQ             1 // Use HV4 blocks in M3 (all frames).  Adopt new shortcuts to offset the speed cost.
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
