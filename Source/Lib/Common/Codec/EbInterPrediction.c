@@ -1414,6 +1414,8 @@ void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int
         height_scale = subpel_params->ys != SCALE_SUBPEL_SHIFTS ? 2 : 1;
     }
     EB_NO_THROW_MALLOC_ALIGNED(src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
+    if (!src16)
+        return;
     // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
     src_stride16 = w * width_scale + (offset << 1);
     // 16-byte align of src16
@@ -1481,6 +1483,8 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
             height_scale = subpel_params->ys != SCALE_SUBPEL_SHIFTS ? 2 : 1;
         }
         EB_NO_THROW_MALLOC_ALIGNED(src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
+        if (!src16)
+            return;
         // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
         src_stride16 = w * width_scale + (offset << 1);
         // 16-byte align of src16

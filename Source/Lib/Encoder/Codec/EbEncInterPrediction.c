@@ -110,6 +110,8 @@ void av1_make_masked_scaled_inter_predictor(
                 height_scale = sf->y_scale_fp != REF_NO_SCALE ? 2 : 1;
             }
             EB_NO_THROW_MALLOC_ALIGNED(pack_src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
+            if (!pack_src16)
+                return;
             // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
             src_stride16 = bwidth * width_scale + (offset << 1);
             // 16-byte align of src16
@@ -3926,6 +3928,8 @@ void enc_make_inter_predictor(SequenceControlSet *scs_ptr, uint8_t *src_ptr, uin
                 height_scale = sf->y_scale_fp != REF_NO_SCALE ? 2 : 1;
             }
             EB_NO_THROW_MALLOC_ALIGNED(pack_src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
+            if (!pack_src16)
+                return;
             // optimize stride from MAX_SB_SIZE to blk_width to minimum the block buffer size
             src_stride16 = blk_width * width_scale + (offset << 1);
             // 16-byte align of src16

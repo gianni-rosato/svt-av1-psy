@@ -193,9 +193,10 @@ void svt_remove_mem_entry(void* ptr, EbPtrType type);
 #define EB_NO_THROW_MALLOC_ALIGNED(pointer, size)                     \
     do {                                                              \
         if (posix_memalign((void**)&(pointer), ALVALUE, size) != 0) { \
-            svt_print_alloc_fail(__FILE__, __LINE__); return;         \
+            svt_print_alloc_fail(__FILE__, __LINE__);                 \
+        } else {                                                      \
+            EB_NO_THROW_ADD_MEM(pointer, size, EB_A_PTR);             \
         }                                                             \
-        EB_NO_THROW_ADD_MEM(pointer, size, EB_A_PTR);                 \
     } while (0)
 
 #define EB_MALLOC_ALIGNED(pointer, size)                            \
