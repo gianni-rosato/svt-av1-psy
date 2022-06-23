@@ -2198,7 +2198,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (enc_mode <= ENC_M2)
         pcs_ptr->disallow_HV4 = FALSE;
 #if TUNE_M1_M3_BDR
+#if TUNE_M4
+    else if (enc_mode <= ENC_M4)
+#else
     else if (enc_mode <= ENC_M3)
+#endif
         pcs_ptr->disallow_HV4 = is_base ? FALSE : TRUE;
 #endif
     else
@@ -2271,7 +2275,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
             if (enc_mode <= ENC_M0)
                 pcs_ptr->cdef_level = 1;
+#if TUNE_M4
+            else if (enc_mode <= ENC_M4)
+#else
             else if (enc_mode <= ENC_M3)
+#endif
                 pcs_ptr->cdef_level = 2;
             else if (enc_mode <= ENC_M5)
                 pcs_ptr->cdef_level = 4;
