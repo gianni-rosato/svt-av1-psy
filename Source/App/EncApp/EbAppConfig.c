@@ -1630,6 +1630,12 @@ void svt_config_dtor(EbConfig *config_ptr) {
         fclose(config_ptr->stat_file);
         config_ptr->stat_file = (FILE *)NULL;
     }
+
+    if (config_ptr->output_stat_file) {
+        fclose(config_ptr->output_stat_file);
+        config_ptr->output_stat_file = (FILE *)NULL;
+    }
+
     free((void *)config_ptr->stats);
     free(config_ptr);
     return;
