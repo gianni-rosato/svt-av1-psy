@@ -1391,7 +1391,8 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     ref_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
     ref_pic_buf_desc_init_data.sb_total_count = scs_ptr->sb_total_count;
     uint16_t padding = scs_ptr->super_block_size + 32;
-    if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
+    if (scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
+        scs_ptr->static_config.resize_mode > RESIZE_NONE) {
         padding += scs_ptr->super_block_size;
     }
 
@@ -1534,7 +1535,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
                                             enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition;
         input_data.tpl_lad_mg = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_lad_mg;
         input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
-        input_data.superres_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.superres_mode;
+        input_data.is_scale = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
+                              enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.resize_mode > RESIZE_NONE;
 
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
@@ -1606,7 +1608,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
 
             input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
-            input_data.superres_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.superres_mode;
+            input_data.is_scale = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
+                                  enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.resize_mode > RESIZE_NONE;
 
             EB_NEW(
                 enc_handle_ptr->enc_dec_pool_ptr_array[instance_index],
@@ -1669,7 +1672,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config;
 
             input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
-            input_data.superres_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.superres_mode;
+            input_data.is_scale = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
+                                  enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.resize_mode > RESIZE_NONE;
 
             EB_NEW(
                 enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],

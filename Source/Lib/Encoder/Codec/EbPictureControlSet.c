@@ -341,7 +341,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     input_pic_buf_desc_init_data.color_format       = init_data_ptr->color_format;
     uint16_t padding                                = init_data_ptr->sb_size_pix + 32;
-    if (init_data_ptr->superres_mode > SUPERRES_NONE) {
+    if (init_data_ptr->is_scale) {
         padding += init_data_ptr->sb_size_pix;
     }
     input_pic_buf_desc_init_data.left_padding       = padding;

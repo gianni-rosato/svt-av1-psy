@@ -1174,8 +1174,7 @@ typedef struct PictureControlSetInitData {
     uint8_t reduce_me_search;
     uint8_t input_resolution;
     uint8_t calculate_variance;
-
-    SUPERRES_MODE superres_mode;
+    Bool    is_scale;
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {
