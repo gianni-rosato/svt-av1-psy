@@ -609,6 +609,7 @@ static void av1_gop_bit_allocation_same_pred(PictureParentControlSet *pcs, int64
     // For key frames the frame target rate is already set
     int frame_index = (pcs->slice_type == I_SLICE) ? 1 : 0;
     for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
+        assert(gf_stats.gf_group_err != 0);
         pcs->gf_group[idx]->base_frame_target =
             (int)(gf_group_bits * pcs->gf_group[idx]->stat_struct.total_num_bits /
                 gf_stats.gf_group_err);
