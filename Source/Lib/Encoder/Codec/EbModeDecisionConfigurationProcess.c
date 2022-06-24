@@ -632,6 +632,28 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //         0        | OFF subject to possible constraints
     //       > 1        | Faster level subject to possible constraints
     if (scs_ptr->obmc_level == DEFAULT) {
+#if FTR_OPTIMIZE_OBMC
+        if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
+            if (ppcs->enc_mode <= ENC_M3)
+                ppcs->pic_obmc_level = 1;
+            else if (ppcs->enc_mode <= ENC_M4)
+                ppcs->pic_obmc_level = 2;
+            else if (enc_mode <= ENC_M6)
+                ppcs->pic_obmc_level = 3;
+            else
+                ppcs->pic_obmc_level = 0;
+        }
+        else {
+            if (ppcs->enc_mode <= ENC_M3)
+                ppcs->pic_obmc_level = 1;
+            else if (ppcs->enc_mode <= ENC_M4)
+                ppcs->pic_obmc_level = 3;
+            else if (ppcs->enc_mode <= ENC_M6)
+                ppcs->pic_obmc_level = is_ref ? 3 : 0;
+            else
+                ppcs->pic_obmc_level = 0;
+        }
+#else
         if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
             if (ppcs->enc_mode <= ENC_M3)
                 ppcs->pic_obmc_level = 1;
@@ -649,6 +671,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             else
                 ppcs->pic_obmc_level = 0;
         }
+#endif
     } else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->obmc_level;
 

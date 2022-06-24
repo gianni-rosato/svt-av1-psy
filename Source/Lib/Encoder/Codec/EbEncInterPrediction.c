@@ -2073,6 +2073,15 @@ static void calc_target_weighted_pred(PictureControlSet   *picture_control_set_p
                                       const MacroBlockD *xd, int mi_row, int mi_col,
                                       const uint8_t *above, int above_stride, const uint8_t *left,
                                       int left_stride) {
+
+#if FTR_OPTIMIZE_OBMC
+    if (context_ptr->obmc_ctrls.max_blk_size_to_refine_16x16) {
+        if (block_size_wide[context_ptr->blk_geom->bsize] > 16 || block_size_high[context_ptr->blk_geom->bsize] > 16) {
+            return;
+        }
+    }
+#endif
+
     uint8_t         is16bit  = 0;
     const BlockSize bsize    = context_ptr->blk_geom->bsize;
     const int       bw       = xd->n4_w << MI_SIZE_LOG2;

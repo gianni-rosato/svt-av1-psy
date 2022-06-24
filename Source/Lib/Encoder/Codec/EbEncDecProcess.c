@@ -1883,6 +1883,23 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
     ObmcControls *obmc_ctrls = &mdctxt->obmc_ctrls;
     switch (obmc_mode) {
     case 0: obmc_ctrls->enabled = 0; break;
+#if FTR_OPTIMIZE_OBMC
+    case 1:
+        obmc_ctrls->enabled = 1;
+        obmc_ctrls->max_blk_size_to_refine_16x16 = 0;
+        obmc_ctrls->max_blk_size_16x16 = 0;
+        break;
+    case 2:
+        obmc_ctrls->enabled = 1;
+        obmc_ctrls->max_blk_size_to_refine_16x16 = 1;
+        obmc_ctrls->max_blk_size_16x16 = 0;
+        break;
+    case 3:
+        obmc_ctrls->enabled = 1;
+        obmc_ctrls->max_blk_size_to_refine_16x16 = 1;
+        obmc_ctrls->max_blk_size_16x16 = 1;
+        break;
+#else
     case 1:
         obmc_ctrls->enabled            = 1;
         obmc_ctrls->max_blk_size_16x16 = 0;
@@ -1891,6 +1908,7 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
         obmc_ctrls->enabled            = 1;
         obmc_ctrls->max_blk_size_16x16 = 1;
         break;
+#endif
     default: assert(0); break;
     }
 }

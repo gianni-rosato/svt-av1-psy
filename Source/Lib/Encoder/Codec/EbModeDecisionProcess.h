@@ -131,8 +131,14 @@ typedef struct InterIntraCompCtrls {
     uint8_t enabled;
 } InterIntraCompCtrls;
 typedef struct ObmcControls {
+#if FTR_OPTIMIZE_OBMC
+    uint8_t enabled;
+    Bool max_blk_size_to_refine_16x16; // if true, cap the max block size to refine to 16x16
+    Bool max_blk_size_16x16; // if true, cap the max block size to test to 16x16
+#else
     uint8_t enabled;
     Bool    max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
+#endif
 } ObmcControls;
 typedef struct TxtControls {
     uint8_t enabled;

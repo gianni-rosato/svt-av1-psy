@@ -2974,6 +2974,14 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
 
 void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                             ModeDecisionCandidate *candidate, uint8_t ref_list_idx) {
+
+#if FTR_OPTIMIZE_OBMC
+    if (context_ptr->obmc_ctrls.max_blk_size_to_refine_16x16) {
+        if (block_size_wide[context_ptr->blk_geom->bsize] > 16 || block_size_high[context_ptr->blk_geom->bsize] > 16) {
+            return;
+        }
+    }
+#endif
     IntMv           best_pred_mv[2] = {{0}, {0}};
     IntraBcContext  x_st;
     IntraBcContext *x = &x_st;
