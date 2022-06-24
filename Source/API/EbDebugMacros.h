@@ -85,6 +85,7 @@ extern "C" {
 #define TUNE_M1_M3              1 // Tune M1 and M3 features
 #define TUNE_M4                 1 // Tune M4 features for SSIM
 #define TUNE_M3_NSQ             1 // Use HV4 blocks in M3 (all frames).  Adopt new shortcuts to offset the speed cost.
+#define TUNE_M5                 1 // Tune M5 features for SSIM
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

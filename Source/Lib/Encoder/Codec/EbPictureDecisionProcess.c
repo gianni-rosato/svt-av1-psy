@@ -2029,6 +2029,52 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         gm_ctrls->downsample_level = GM_DOWN;
 #endif
         break;
+#if TUNE_M5
+    case 5:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 0;
+        gm_ctrls->bypass_based_on_me = 1;
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_DOWN;
+        break;
+    case 6:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 1;
+        gm_ctrls->bypass_based_on_me = 1;
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_DOWN16;
+        break;
+    case 7:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 1;
+        gm_ctrls->bypass_based_on_me = 1;
+        gm_ctrls->use_stationary_block = 1;
+        gm_ctrls->use_distance_based_active_th = 1;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_DOWN16;
+        break;
+    case 8:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 1;
+        gm_ctrls->bypass_based_on_me = 1;
+        gm_ctrls->use_stationary_block = 1;
+        gm_ctrls->use_distance_based_active_th = 1;
+        gm_ctrls->params_refinement_steps = 1;
+        gm_ctrls->downsample_level = GM_DOWN16;
+        break;
+#else
     case 5:
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
@@ -2062,6 +2108,7 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         gm_ctrls->params_refinement_steps = 1;
         gm_ctrls->downsample_level = GM_DOWN16;
         break;
+#endif
     default:
         assert(0);
         break;
@@ -2094,8 +2141,15 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
         }
 #endif
 #if TUNE_DEFAULT_M7
+#if TUNE_M5
+        else if (pcs_ptr->enc_mode <= ENC_M5)
+            gm_level = is_ref ? 5 : 0;
+        else if (pcs_ptr->enc_mode <= ENC_M6)
+            gm_level = is_ref ? 6 : 0;
+#else
         else if (pcs_ptr->enc_mode <= ENC_M6)
             gm_level = is_ref ? 5 : 0;
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M7)
             gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;

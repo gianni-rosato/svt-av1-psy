@@ -3181,6 +3181,10 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
 #endif
         tpl_level = 1;
 #if OPT_TPL_QPS
+#if TUNE_M5
+    else if (enc_mode <= ENC_M5)
+        tpl_level = 2;
+#endif
     else if (enc_mode <= ENC_M7)
         tpl_level = 3;
     else if (enc_mode <= ENC_M8)

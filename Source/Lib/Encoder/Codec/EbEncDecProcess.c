@@ -5335,7 +5335,6 @@ static Bool get_sb_tpl_intra_stats(PictureControlSet *pcs, ModeDecisionContext *
         const int aligned16_width = (ppcs->aligned_width + 15) >> 4;
         const uint32_t mb_origin_x = ctx->sb_origin_x;
         const uint32_t mb_origin_y = ctx->sb_origin_y;
-        TplSrcStats *tpl_src_stats_buffer;
         const int tpl_blk_size = ppcs->tpl_ctrls.dispenser_search_level == 0 ? 16 : ppcs->tpl_ctrls.dispenser_search_level == 1 ? 32 : 64;
 
         // Get actual SB width (for cases of incomplete SBs)
@@ -5348,7 +5347,7 @@ static Bool get_sb_tpl_intra_stats(PictureControlSet *pcs, ModeDecisionContext *
 
         // Loop over all blocks in the SB
         for (int i = 0; i < sb_rows; i++) {
-            tpl_src_stats_buffer =
+            TplSrcStats *tpl_src_stats_buffer =
                 &ppcs->pa_me_data->tpl_src_stats_buffer[((mb_origin_y >> 4) + i) * aligned16_width + (mb_origin_x >> 4)];
             for (int j = 0; j < sb_cols; j++) {
 
