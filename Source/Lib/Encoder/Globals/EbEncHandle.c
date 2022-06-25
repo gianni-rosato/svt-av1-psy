@@ -3025,7 +3025,43 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
         break;
+#if TUNE_M5_MRP
+    case 4:
+        mrp_ctrl->referencing_scheme          = 0;
+        mrp_ctrl->sc_base_ref_list0_count     = 2;
+        mrp_ctrl->sc_base_ref_list1_count     = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count        = 3;
+        mrp_ctrl->base_ref_list1_count        = 2;
+        mrp_ctrl->non_base_ref_list0_count    = 3;
+        mrp_ctrl->non_base_ref_list1_count    = 2;
+        break;
 
+    case 5:
+        mrp_ctrl->referencing_scheme          = 0;
+        mrp_ctrl->sc_base_ref_list0_count     = 2;
+        mrp_ctrl->sc_base_ref_list1_count     = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count        = 2;
+        mrp_ctrl->base_ref_list1_count        = 2;
+        mrp_ctrl->non_base_ref_list0_count    = 2;
+        mrp_ctrl->non_base_ref_list1_count    = 2;
+        break;
+
+    case 6:
+        mrp_ctrl->referencing_scheme          = 0;
+        mrp_ctrl->sc_base_ref_list0_count     = 2;
+        mrp_ctrl->sc_base_ref_list1_count     = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count        = 2;
+        mrp_ctrl->base_ref_list1_count        = 2;
+        mrp_ctrl->non_base_ref_list0_count    = 1;
+        mrp_ctrl->non_base_ref_list1_count    = 1;
+        break;
+#else
     case 4:
         mrp_ctrl->referencing_scheme          = 0;
         mrp_ctrl->sc_base_ref_list0_count     = 2;
@@ -3049,7 +3085,7 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list0_count    = 1;
         mrp_ctrl->non_base_ref_list1_count    = 1;
         break;
-
+#endif
     default:
         assert(0);
         break;
@@ -3683,6 +3719,26 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else if (scs_ptr->static_config.enc_mode <= ENC_M4) {
         mrp_level = 3;
     }
+#if TUNE_M5_MRP
+    else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
+        mrp_level = 4;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
+        mrp_level = 5;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            mrp_level = 5;
+        else
+            mrp_level = 6;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
+        mrp_level = 6;
+    }
+    else {
+        mrp_level = 0;
+    }
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
         mrp_level = 4;
     }
@@ -3698,6 +3754,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else {
         mrp_level = 0;
     }
+#endif
 
     set_mrp_ctrl(scs_ptr, mrp_level);
     scs_ptr->is_short_clip = 0; // set to 1 if multipass and less than 200 frames in resourcecordination
