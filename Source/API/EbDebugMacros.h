@@ -87,6 +87,7 @@ extern "C" {
 #define TUNE_M3_NSQ             1 // Use HV4 blocks in M3 (all frames).  Adopt new shortcuts to offset the speed cost.
 #define TUNE_M5                 1 // Tune M5 features for SSIM
 #define FTR_OPTIMIZE_OBMC       1 // Bypass the OBMC-refinement (both fullpel and subpel), and use the regular MV(s)  (instead of shutting OBMC) for 32x32&above block(s))
+#define TUNE_M3                 1 // Tune m3 md inter intra level
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

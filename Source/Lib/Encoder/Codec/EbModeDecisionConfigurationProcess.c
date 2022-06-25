@@ -1044,7 +1044,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
             pcs_ptr->md_inter_intra_level = 1;
 #if TUNE_M1_M3_BDR
+#if TUNE_M3
+        else if (enc_mode <= ENC_M3)
+#else
         else if (enc_mode <= ENC_M2)
+#endif
             pcs_ptr->md_inter_intra_level = transition_present ? 1 : (is_base ? 1 : 0);
 #endif
         else if (enc_mode <= ENC_M11)
