@@ -70,6 +70,31 @@ uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t e
     return bypass_encdec;
 }
 
+/*
+* check if the reference picture is in same frame size
+* TRUE -- in same frame size
+* FALSE -- reference picture not exist or in difference frame size
+*/
+static Bool is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t ref_idx) {
+    // skip the checking if reference scaling and super-res are disabled
+    if (pcs->parent_pcs_ptr->is_not_scaled)
+        return TRUE;
+    if (pcs->slice_type != P_SLICE && pcs->slice_type != B_SLICE)
+        return FALSE;
+    if (pcs->slice_type != B_SLICE && list_idx == REF_LIST_1)
+        return FALSE;
+    if (pcs->ref_pic_ptr_array[list_idx][ref_idx] == NULL)
+        return FALSE;
+
+    EbReferenceObject *ref_obj =
+        (EbReferenceObject*)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+    if (ref_obj == NULL || ref_obj->reference_picture == NULL)
+        return FALSE;
+
+    return ref_obj->reference_picture->width == pcs->parent_pcs_ptr->frame_width &&
+           ref_obj->reference_picture->height == pcs->parent_pcs_ptr->frame_height;
+}
+
 static void enc_dec_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
     EncDecContext   *obj                = (EncDecContext *)thread_context_ptr->priv;
@@ -5713,15 +5738,21 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     uint8_t        l0_was_skip = 0, l1_was_skip = 0;
     uint8_t        l0_was_64x64_mvp = 0, l1_was_64x64_mvp = 0;
 
+    // the frame size of reference pics are different if enable reference scaling.
+    // sb info can not be reused because super blocks are mismatched, so we set
+    // the reference pic unavailable to avoid using wrong info
+    const Bool is_ref_l0_avail = is_ref_same_size(pcs_ptr, REF_LIST_0, 0);
+    const Bool is_ref_l1_avail = is_ref_same_size(pcs_ptr, REF_LIST_1, 0);
+
     // REF info only available if frame is not an I_SLICE
-    if (!is_islice) {
+    if (!is_islice && is_ref_l0_avail) {
         me_8x8_cost_variance = ppcs->me_8x8_cost_variance[context_ptr->sb_index];
         me_64x64_distortion  = ppcs->me_64x64_distortion[context_ptr->sb_index];
         EbReferenceObject *ref_obj_l0 =
             (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
         l0_was_skip = ref_obj_l0->sb_skip[context_ptr->sb_index], l1_was_skip = 1;
         l0_was_64x64_mvp = ref_obj_l0->sb_64x64_mvp[context_ptr->sb_index], l1_was_64x64_mvp = 1;
-        if (slice_type == B_SLICE) {
+        if (slice_type == B_SLICE && is_ref_l1_avail) {
             EbReferenceObject *ref_obj_l1 =
                 (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
             l1_was_skip      = ref_obj_l1->sb_skip[context_ptr->sb_index];
@@ -6921,15 +6952,21 @@ void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PictureParentCont
 /* Light-PD1 classifier used when cost/coeff info is available.  If PD0 is skipped, or the trasnsform is
 not performed, a separate detector (lpd1_detector_skip_pd0) is used. */
 void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
+    // the frame size of reference pics are different if enable reference scaling.
+    // sb info can not be reused because super blocks are mismatched, so we set
+    // the reference pic unavailable to avoid using wrong info
+    const Bool is_ref_l0_avail = is_ref_same_size(pcs, REF_LIST_0, 0);
+    const Bool is_ref_l1_avail = is_ref_same_size(pcs, REF_LIST_1, 0);
+
     for (int pd1_lvl = LPD1_LEVELS - 1; pd1_lvl > REGULAR_PD1; pd1_lvl--) {
         if (md_ctx->lpd1_ctrls.pd1_level == pd1_lvl) {
             if (md_ctx->lpd1_ctrls.use_lpd1_detector[pd1_lvl]) {
                 // Use info from ref frames (if available)
-                if (md_ctx->lpd1_ctrls.use_ref_info[pd1_lvl] && pcs->slice_type != I_SLICE) {
+                if (md_ctx->lpd1_ctrls.use_ref_info[pd1_lvl] && pcs->slice_type != I_SLICE && is_ref_l0_avail) {
                     EbReferenceObject *ref_obj_l0 =
                         (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
                     uint8_t l0_was_intra = ref_obj_l0->sb_intra[md_ctx->sb_index], l1_was_intra = 0;
-                    if (pcs->slice_type == B_SLICE) {
+                    if (pcs->slice_type == B_SLICE && is_ref_l1_avail) {
                         EbReferenceObject *ref_obj_l1 =
                             (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
                         l1_was_intra = ref_obj_l1->sb_intra[md_ctx->sb_index];
@@ -7016,11 +7053,17 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
     const uint16_t left_sb_index = md_ctx->sb_index - 1;
     const uint16_t top_sb_index  = md_ctx->sb_index - (uint16_t)pic_width_in_sb;
 
+    // the frame size of reference pics are different if enable reference scaling.
+    // sb info can not be reused because super blocks are mismatched, so we set
+    // the reference pic unavailable to avoid using wrong info
+    const Bool is_ref_l0_avail = is_ref_same_size(pcs, REF_LIST_0, 0);
+    const Bool is_ref_l1_avail = is_ref_same_size(pcs, REF_LIST_1, 0);
+
     for (int pd1_lvl = LPD1_LEVELS - 1; pd1_lvl > REGULAR_PD1; pd1_lvl--) {
         if (md_ctx->lpd1_ctrls.pd1_level == pd1_lvl) {
             if (md_ctx->lpd1_ctrls.use_lpd1_detector[pd1_lvl]) {
                 // Use info from ref. frames (if available)
-                if (md_ctx->lpd1_ctrls.use_ref_info[pd1_lvl] && pcs->slice_type != I_SLICE) {
+                if (md_ctx->lpd1_ctrls.use_ref_info[pd1_lvl] && pcs->slice_type != I_SLICE && is_ref_l0_avail) {
                     EbReferenceObject *ref_obj_l0 =
                         (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
                     uint8_t l0_was_intra = ref_obj_l0->sb_intra[md_ctx->sb_index], l1_was_intra = 0;
@@ -7033,7 +7076,7 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
                         ? ref_obj_l0->sb_me_8x8_cost_var[md_ctx->sb_index]
                         : 0,
                              l1_me_8x8_cost_var = 0;
-                    if (pcs->slice_type == B_SLICE) {
+                    if (pcs->slice_type == B_SLICE && is_ref_l1_avail) {
                         EbReferenceObject *ref_obj_l1 =
                             (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
                         l1_was_intra       = ref_obj_l1->sb_intra[md_ctx->sb_index];
@@ -7131,6 +7174,11 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
 /* Light-PD0 classifier. */
 void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
     Lpd0Ctrls* lpd0_ctrls = &md_ctx->lpd0_ctrls;
+    // the frame size of reference pics are different if enable reference scaling.
+    // sb info can not be reused because super blocks are mismatched, so we set
+    // the reference pic unavailable to avoid using wrong info
+    const Bool is_ref_l0_avail = is_ref_same_size(pcs, REF_LIST_0, 0);
+    const Bool is_ref_l1_avail = is_ref_same_size(pcs, REF_LIST_1, 0);
 
     for (int pd0_lvl = LPD0_LEVELS - 1; pd0_lvl > REGULAR_PD0; pd0_lvl--) {
         if (lpd0_ctrls->pd0_level == pd0_lvl) {
@@ -7145,11 +7193,11 @@ void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
             if (lpd0_ctrls->use_lpd0_detector[pd0_lvl]) {
 
                 // Use info from ref. frames (if available)
-                if (lpd0_ctrls->use_ref_info[pd0_lvl] && pcs->slice_type != I_SLICE) {
+                if (lpd0_ctrls->use_ref_info[pd0_lvl] && pcs->slice_type != I_SLICE && is_ref_l0_avail) {
                     EbReferenceObject *ref_obj_l0 =
                         (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
                     uint8_t l0_was_intra = ref_obj_l0->sb_intra[md_ctx->sb_index], l1_was_intra = 0;
-                    if (pcs->slice_type == B_SLICE) {
+                    if (pcs->slice_type == B_SLICE && is_ref_l1_avail) {
                         EbReferenceObject *ref_obj_l1 =
                             (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
                         l1_was_intra       = ref_obj_l1->sb_intra[md_ctx->sb_index];
