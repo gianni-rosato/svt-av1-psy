@@ -88,8 +88,8 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
         pthread_attr_destroy(&attr);
         return NULL;
     }
-    // 420 KiB in bytes, gotten empirically by encoding /dev/zero as a 1920x1080 rawvideo with ffmpeg
-    const size_t min_stack_size = 420 * 1024;
+    // 1 MiB in bytes for now since we can't easily change the stack size after creation
+    const size_t min_stack_size = 1024 * 1024;
     if (stack_size < min_stack_size && pthread_attr_setstacksize(&attr, min_stack_size)) {
         SVT_ERROR("Failed to set thread stack size\n");
         pthread_attr_destroy(&attr);
