@@ -2451,8 +2451,15 @@ static uint32_t compute_default_look_ahead(
 
     if (config->rate_control_mode == 0)
         lad = (1 + mg_size) * (1 + MIN_LAD_MG) + max_tf_delay + eos_delay;
+#if FTR_RC_VBR_IMR
+    else if(config->logical_processors == 1)
+        lad = (1 + mg_size) * (1 + RC_DEFAULT_LAD_MG_LP1) + max_tf_delay + eos_delay;
+    else
+        lad = (1 + mg_size) * (1 + RC_DEFAULT_LAD_MG_MT) + max_tf_delay + eos_delay;
+#else
     else
         lad = (1 + mg_size) * (1 + RC_DEFAULT_LAD_MG) + max_tf_delay + eos_delay;
+#endif
 
     lad = lad > MAX_LAD ? MAX_LAD : lad; // clip to max allowed lad
     return lad;

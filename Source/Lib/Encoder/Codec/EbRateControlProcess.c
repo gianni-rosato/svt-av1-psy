@@ -2488,7 +2488,25 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     int active_worst_quality = rc->active_worst_quality;
     int q;
     int is_intrl_arf_boost = pcs_ptr->parent_pcs_ptr->update_type == INTNL_ARF_UPDATE;
-
+#if FTR_RC_VBR_IMR
+    // Calculated qindex based on r0 using qstep calculation
+    if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.qstep_based_q_calc &&
+        pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
+        const double weight = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 0.7 : 0.9;
+        const double qstep_ratio = sqrt(pcs_ptr->parent_pcs_ptr->r0) * weight;
+        int    qindex_from_qstep_ratio =
+            svt_av1_get_q_index_from_qstep_ratio(rc->active_worst_quality,
+                qstep_ratio, scs_ptr->static_config.encoder_bit_depth);
+        if (pcs_ptr->parent_pcs_ptr->sc_class1 && scs_ptr->passes == 1 &&
+            encode_context_ptr->rc_cfg.mode == AOM_VBR && frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
+            qindex_from_qstep_ratio /= 2;
+        if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
+            rc->arf_q = qindex_from_qstep_ratio;
+        active_best_quality = clamp(qindex_from_qstep_ratio, rc->best_quality, rc->active_worst_quality);
+        active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
+    }
+    else
+#endif
     if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
         const int is_fwd_kf = pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME &&
             pcs_ptr->parent_pcs_ptr->frm_hdr.show_frame == 0;
@@ -2513,24 +2531,6 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
             active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
         }
     }
-#if FTR_RC_VBR_IMR
-    // Calculated qindex based on r0 using qstep calculation
-    if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.qstep_based_q_calc &&
-        pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
-        const double weight = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 0.7 : 0.9;
-        const double qstep_ratio = sqrt(pcs_ptr->parent_pcs_ptr->r0) * weight;
-        int    qindex_from_qstep_ratio =
-            svt_av1_get_q_index_from_qstep_ratio(rc->active_worst_quality,
-                qstep_ratio, scs_ptr->static_config.encoder_bit_depth);
-        if (pcs_ptr->parent_pcs_ptr->sc_class1 && scs_ptr->passes == 1 &&
-            encode_context_ptr->rc_cfg.mode == AOM_VBR && frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
-            qindex_from_qstep_ratio /= 2;
-        if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr))
-            rc->arf_q = qindex_from_qstep_ratio;
-        active_best_quality = clamp(qindex_from_qstep_ratio, rc->best_quality, rc->active_worst_quality);
-        active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
-    }
-#endif
     adjust_active_best_and_worst_quality_org(
         pcs_ptr, rc, &active_worst_quality, &active_best_quality);
 

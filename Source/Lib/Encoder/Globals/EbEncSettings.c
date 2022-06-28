@@ -918,10 +918,12 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_manual_pred_struct    = FALSE;
     config_ptr->manual_pred_struct_entry_num = 0;
     config_ptr->encoder_color_format         = EB_YUV420;
-    // Two pass data rate control options
 #if FTR_RC_VBR_IMR
+    // Rate control options
+    // Set the default value toward more flexible rate allocation
     config_ptr->vbr_bias_pct             = 100;
 #else
+    // Two pass data rate control options
     config_ptr->vbr_bias_pct             = 50;
 #endif
     config_ptr->vbr_min_section_pct      = 0;

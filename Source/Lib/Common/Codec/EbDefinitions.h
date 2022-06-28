@@ -45,7 +45,8 @@ extern "C" {
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
 #define MIN_LAD_MG 1
 #if FTR_RC_VBR_IMR
-#define RC_DEFAULT_LAD_MG 2
+#define RC_DEFAULT_LAD_MG_MT  2 // default look ahead value for rate control in Multi-threaded mode
+#define RC_DEFAULT_LAD_MG_LP1 1 // default look ahead value for rate control in LP 1
 #else
 #define RC_DEFAULT_LAD_MG 1
 #endif
