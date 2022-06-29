@@ -1150,8 +1150,18 @@ enum {
 
 // These numbers are empirically obtained.
 static const int plane_rd_mult[REF_TYPES][PLANE_TYPES] = {
+#if TUNE_CHROMA_RDOQ
+#if TUNE_CHROMA_SSIM
     {17, 13},
     {16, 10},
+#else
+    {17, 20},
+    {16, 20},
+#endif
+#else
+    {17, 13},
+    {16, 10},
+#endif
 };
 
 /*

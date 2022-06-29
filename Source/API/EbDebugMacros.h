@@ -89,7 +89,7 @@ extern "C" {
 #define FTR_OPTIMIZE_OBMC       1 // Bypass the OBMC-refinement (both fullpel and subpel), and use the regular MV(s)  (instead of shutting OBMC) for 32x32&above block(s))
 #define TUNE_M3                 1 // Tune m3 md inter intra level
 #define TUNE_M5_MRP             1 // Tune m5 MRP level
-
+#define TUNE_CHROMA_RDOQ        1 // Increase the lambda used for RDOQ of chroma towards rate savings
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
