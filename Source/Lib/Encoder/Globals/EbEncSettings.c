@@ -1717,8 +1717,8 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"resize-mode", &config_struct->resize_mode},
         {"resize-denom", &config_struct->resize_denom},
         {"resize-kf-denom", &config_struct->resize_kf_denom},
-        {"min-qm", &config_struct->min_qm_level},
-        {"max-qm", &config_struct->min_qm_level},
+        {"qm-min", &config_struct->min_qm_level},
+        {"qm-max", &config_struct->max_qm_level},
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
