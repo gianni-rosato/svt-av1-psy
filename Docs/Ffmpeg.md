@@ -110,7 +110,7 @@ A short GOP size (the `g` parameter) results in better seeking performance and f
 
 An example use of a single-scene video:
 
-    ffmpeg -i infile.mkv -c:v libsvtav1 -preset 2 -crf 25 -g 24 -pix_fmt yuv420p10le -svtav1-params tune=0:film-grain=8 -c:v copy outfile.mkv
+    ffmpeg -i infile.mkv -c:v libsvtav1 -preset 2 -crf 25 -g 24 -pix_fmt yuv420p10le -svtav1-params tune=0:film-grain=8 -c:a copy outfile.mkv
 
 Note that using 8-bit instead may increase decode performance and compatibility.
 
