@@ -102,9 +102,9 @@ static void show_help() {
     H0(" -parallel-frames <arg>    Number of frames to be processed in parallel \n");
     H0(" -md5                      MD5 support flag \n");
     H0(" -fps-frm                  Show fps after each frame decoded\n");
-    H0(" -fps-summary              Show fps summary");
-    H0(" -skip-film-grain          Disable Film Grain");
-    H0(" -16bit-pipeline           Enable 16b pipeline. [1 - enable, 0 - disable]");
+    H0(" -fps-summary              Show fps summary\n");
+    H0(" -skip-film-grain          Disable Film Grain\n");
+    H0(" -16bit-pipeline           Enable 16b pipeline. [1 - enable, 0 - disable]\n");
 
     exit(1);
 }
