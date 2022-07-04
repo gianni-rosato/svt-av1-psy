@@ -202,19 +202,20 @@ uint8_t inj_to_tpl_group(PictureParentControlSet *pcs) {
 // validate pictures that will be used by the tpl algorithm based on tpl opts
 void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
     // Check wether the i-th pic already exists in the tpl group
-    if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number)) {
 #if OPT_TPL_QPS
+    if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number) &&
+        // In the middle pass when rc_stat_gen_pass_mode is set, pictures in the highest temporal layer are skipped,
+        // except the first one. The condition is added to prevent validating these frames for tpl
+        !(!pcs->tpl_group[pic_index]->is_used_as_reference_flag &&
+          pcs->scs_ptr->rc_stat_gen_pass_mode &&
+          !pcs->tpl_group[pic_index]->first_frame_in_minigop)) {
         // Discard low important pictures from tpl group
 #if CLN_TPL_OPT
         if (pcs->tpl_ctrls.reduced_tpl_group >= 0) {
 #else
         if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
 #endif
-            if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group &&
-                // In the middle pass when rc_stat_gen_pass_mode is set, pictures in the highest temporal layer are skipped,
-                // except the first one. The condition is added to prevent validating these frames for tpl
-                !(!pcs->tpl_group[pic_index]->is_used_as_reference_flag && pcs->scs_ptr->rc_stat_gen_pass_mode &&
-                    !pcs->tpl_group[pic_index]->first_frame_in_minigop)) {
+            if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
                 pcs->tpl_valid_pic[pic_index] = 1;
                 pcs->used_tpl_frame_num++;
             }
@@ -224,6 +225,7 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
             pcs->used_tpl_frame_num++;
         }
 #else
+    if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number)) {
         // Discard non-ref pic from the tpl group
         uint8_t inject_frame = inj_to_tpl_group(pcs->tpl_group[pic_index]);
         if (inject_frame) {
