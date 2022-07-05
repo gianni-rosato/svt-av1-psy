@@ -2061,7 +2061,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                         is_block_same[k][j] = rtime_alloc_block_hash_block_is_same(
                             sizeof(int8_t) * pic_width * pic_height);
                 }
-                pcs_ptr->hash_table.p_lookup_table = NULL;
                 rtime_alloc_svt_av1_hash_table_create(&pcs_ptr->hash_table);
                 Yv12BufferConfig cpi_source;
                 link_eb_to_aom_buffer_desc_8bit(pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,

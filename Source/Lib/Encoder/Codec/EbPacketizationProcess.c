@@ -910,6 +910,8 @@ void *packetization_kernel(void *input_ptr) {
              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr))
             // Post the Full Results Object
             svt_post_full_object(picture_manager_results_wrapper_ptr);
+        if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
+            svt_av1_hash_table_destroy(&pcs_ptr->hash_table);
         svt_release_object(pcs_ptr->parent_pcs_ptr->enc_dec_ptr->enc_dec_wrapper_ptr); //Child
         //Release the Parent PCS then the Child PCS
         assert(entropy_coding_results_ptr->pcs_wrapper_ptr->live_count == 1);

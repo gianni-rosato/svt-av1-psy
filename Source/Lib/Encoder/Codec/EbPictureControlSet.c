@@ -446,6 +446,8 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     object_ptr->dctor = picture_control_set_dctor;
 
+    object_ptr->hash_table.p_lookup_table = NULL;
+
     // Init Picture Init data
     uint16_t padding = init_data_ptr->sb_size_pix + 32;
 
