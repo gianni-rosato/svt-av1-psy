@@ -565,21 +565,24 @@ TxSize   tx_size_array[MAX_TPL_MODE]      = {TX_16X16, TX_32X32, TX_64X64};
 TxSize   sub2_tx_size_array[MAX_TPL_MODE] = {TX_16X8, TX_32X16, TX_64X32};
 TxSize   sub4_tx_size_array[MAX_TPL_MODE] = {TX_16X4, TX_32X8, TX_64X16};
 #if FTR_TPL_SUBPEL
-static void svt_tpl_init_mv_cost_params(SequenceControlSet *scs, MV_COST_PARAMS *mv_cost_params, int bsize,
+static void svt_tpl_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params,
     const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult,
     uint8_t hbd_mode_decision) {
     mv_cost_params->ref_mv = ref_mv;
     mv_cost_params->full_ref_mv = get_fullmv_from_mv(ref_mv);
-    mv_cost_params->early_exit_th = 1020 - (bsize >> 2);
-    mv_cost_params->mv_cost_type = MV_COST_ENTROPY;// MV_COST_NONE;// MV_COST_ENTROPY;
+    mv_cost_params->early_exit_th = 0;
     mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
     mv_cost_params->sad_per_bit = svt_aom_get_sad_per_bit(base_q_idx, hbd_mode_decision);
-    // Use values when approx_inter_rate is enabled
-    memset(scs->nmv_vec_cost, 0, sizeof(int32_t) * MV_JOINTS);
-    memset(scs->nmv_costs, 0, sizeof(int32_t) * MV_VALS * 2);
-    mv_cost_params->mvjcost = scs->nmv_vec_cost;// context_ptr->md_rate_estimation_ptr->nmv_vec_cost;
-    mv_cost_params->mvcost[0] = &scs->nmv_costs[0][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[0];
-    mv_cost_params->mvcost[1] = &scs->nmv_costs[1][MV_MAX];// context_ptr->md_rate_estimation_ptr->nmvcoststack[1];
+
+    /*
+    TPL has no rate estimation update for mv costs, so MV_COST_NONE is used.
+    If MV_COST_ENTROPY is to be used, must assign TPL its own mv cost arrays to avoid overwriting MD data and causing a r2r.
+    MV_COST_ENTROPY could only help if mvjcost and mvcost are not all zeroes (otherwise it's the same as MV_COST_NONE).
+    */
+    mv_cost_params->mv_cost_type = MV_COST_NONE;
+    mv_cost_params->mvjcost = NULL;
+    mv_cost_params->mvcost[0] = NULL;
+    mv_cost_params->mvcost[1] = NULL;
 
 }
 
@@ -638,9 +641,7 @@ static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *
 #else
     uint32_t rdmult = compute_rdmult_sse(pcs, qIndex, 8/*EB_EIGHT_BIT*/);
 #endif
-    svt_tpl_init_mv_cost_params(scs,
-        &ms_params->mv_cost_params,
-        bsize,
+    svt_tpl_init_mv_cost_params(&ms_params->mv_cost_params,
         &ref_mv,
         qIndex,
         rdmult,
