@@ -1198,6 +1198,8 @@ extern EbErrorType me_sb_results_ctor(MeSbResults               *obj_ptr,
 extern void    set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
 extern uint8_t derive_gm_level(PictureParentControlSet *pcs_ptr);
 
+extern Bool is_pic_skipped(PictureParentControlSet *pcs);
+
 #ifdef __cplusplus
 }
 #endif

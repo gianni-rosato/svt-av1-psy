@@ -849,9 +849,7 @@ void *packetization_kernel(void *input_ptr) {
                 stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits;
             stat_struct.qindex       = frm_hdr->quantization_params.base_q_idx;
             stat_struct.worst_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
-            if (scs_ptr->rc_stat_gen_pass_mode &&
-                !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag &&
-                !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)
+            if (is_pic_skipped(pcs_ptr->parent_pcs_ptr))
                 stat_struct.total_num_bits = 0;
             stat_struct.temporal_layer_index = pcs_ptr->temporal_layer_index;
             (scs_ptr->twopass.stats_buf_ctx->stats_in_start +

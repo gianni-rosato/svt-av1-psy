@@ -7299,8 +7299,7 @@ void *mode_decision_kernel(void *input_ptr) {
         context_ptr->tot_skip_coded_area  = 0;
         // Bypass encdec for the first pass
         if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
-            (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag &&
-             scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
+            is_pic_skipped(pcs_ptr->parent_pcs_ptr)) {
             svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
             pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
             pcs_ptr->parent_pcs_ptr->pa_me_data          = NULL;

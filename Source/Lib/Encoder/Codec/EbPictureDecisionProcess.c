@@ -2160,6 +2160,14 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
     return gm_level;
 }
 
+Bool is_pic_skipped(PictureParentControlSet *pcs) {
+    if (!pcs->is_used_as_reference_flag &&
+        pcs->scs_ptr->rc_stat_gen_pass_mode &&
+        !pcs->first_frame_in_minigop)
+        return TRUE;
+    return FALSE;
+}
+
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune

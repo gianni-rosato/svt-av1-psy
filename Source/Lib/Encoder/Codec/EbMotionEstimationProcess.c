@@ -812,8 +812,7 @@ void *motion_estimation_kernel(void *input_ptr) {
 
             Bool skip_me = FALSE;
             if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
-                (!pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode &&
-                 !pcs_ptr->first_frame_in_minigop))
+                is_pic_skipped(pcs_ptr))
                 skip_me = TRUE;
             // skip me for the first pass. ME is already performed
             if (!skip_me) {

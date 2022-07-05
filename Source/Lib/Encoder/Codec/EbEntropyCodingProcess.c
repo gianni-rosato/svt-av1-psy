@@ -296,8 +296,7 @@ void *entropy_coding_kernel(void *input_ptr) {
 
 #if TURN_OFF_EC_FIRST_PASS
         if (scs_ptr->static_config.pass != ENC_FIRST_PASS &&
-            !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag &&
-              scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
+            !is_pic_skipped(pcs_ptr->parent_pcs_ptr)) {
 #endif
             for (uint32_t y_sb_index = 0; y_sb_index < tile_height_in_sb; ++y_sb_index) {
                 for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
