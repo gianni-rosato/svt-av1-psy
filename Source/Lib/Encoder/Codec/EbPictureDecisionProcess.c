@@ -824,7 +824,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
 #else
         tpl_ctrls->tpl_opt_flag = 0;
 #endif
+#if OPT_QPS_WEIGHT
+        tpl_ctrls->enable_tpl_qps = 1;
+#else
         tpl_ctrls->enable_tpl_qps = 0;
+#endif
         tpl_ctrls->disable_intra_pred_nref = 0;
 #if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = PAETH_PRED;
@@ -1015,7 +1019,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
     // TPL may only look at a subset of available pictures in tpl group, which may affect the r0 calcuation.
     // As a result, we defined a factor to adjust r0 (to compensate for TPL not using all available frames).
 #if CLN_TPL_OPT
+#if OPT_QPS_WEIGHT
+    if (tpl_ctrls->reduced_tpl_group >= 0) {
+#else
     if (!is_islice && tpl_ctrls->reduced_tpl_group >= 0) {
+#endif
 #else
     if (!is_islice && tpl_ctrls->tpl_opt_flag && tpl_ctrls->reduced_tpl_group >= 0) {
 #endif
@@ -1050,7 +1058,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
             tpl_ctrls->r0_adjust_factor *= 3;
     }
     else {
+#if OPT_QPS_WEIGHT
+        // No r0 adjustment when all frames are used
+#else
         // No r0 adjustment for I_SLICE or when all frames are used
+#endif
         tpl_ctrls->r0_adjust_factor = 0;
 
         // If no lookahead, apply r0 scaling
@@ -1059,6 +1071,9 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
 #else
         if (!scs->lad_mg) {
 #endif
+#if OPT_QPS_WEIGHT
+            tpl_ctrls->r0_adjust_factor = is_islice ? 0 : 0.1;
+#else
             tpl_ctrls->r0_adjust_factor = is_islice
 #if CLN_TPL_OPT
                 ? ((tpl_ctrls->reduced_tpl_group >= 0) ? 0.2 : 0)
@@ -1066,6 +1081,7 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
                 ? ((tpl_ctrls->tpl_opt_flag && tpl_ctrls->reduced_tpl_group >= 0) ? 0.2 : 0)
 #endif
                 : 0.1;
+#endif
         }
     }
 

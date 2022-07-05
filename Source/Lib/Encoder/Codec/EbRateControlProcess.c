@@ -936,6 +936,13 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
     }
     return qindex;
 }
+#if OPT_QPS_WEIGHT
+static const double r0_weight[2/* VBR/CRF */][2 /* BASE/ISLICE */] = {
+    // {BASE, ISLICE}
+    {0.85, 0.75}, // VBR
+    {0.85, 0.75}  // CRF
+};
+#endif
 #if OPT_TPL_QPS
 /******************************************************
  * cqp_qindex_calc_tpl_la
@@ -1073,7 +1080,16 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs, RATE_CONTROL *rc, int 
 
     // Calculated qindex based on r0 using qstep calculation
     if (ppcs->tpl_ctrls.qstep_based_q_calc && temporal_layer == 0) {
+#if OPT_QPS_WEIGHT
+        double weight = r0_weight[1 /* CRF */][frame_is_intra_only(ppcs)];
+
+        // adjust the weight for base layer frames with shorter minigops
+        if (scs_ptr->lad_mg && !frame_is_intra_only(ppcs) &&
+            (ppcs->tpl_group_size < (uint32_t)(2 << scs_ptr->max_heirachical_level)))
+            weight += 0.05;
+#else
         double weight = frame_is_intra_only(ppcs) ? 0.7 : 0.9;
+#endif
         const double qstep_ratio   = sqrt(ppcs->r0) * weight;
         const int    qindex_from_qstep_ratio =
             svt_av1_get_q_index_from_qstep_ratio(qindex, qstep_ratio, bit_depth);
@@ -2492,7 +2508,11 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     // Calculated qindex based on r0 using qstep calculation
     if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.qstep_based_q_calc &&
         pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
+#if OPT_QPS_WEIGHT
+        const double weight = r0_weight[0 /* VBR */][frame_is_intra_only(pcs_ptr->parent_pcs_ptr)];
+#else
         const double weight = frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? 0.7 : 0.9;
+#endif
         const double qstep_ratio = sqrt(pcs_ptr->parent_pcs_ptr->r0) * weight;
         int    qindex_from_qstep_ratio =
             svt_av1_get_q_index_from_qstep_ratio(rc->active_worst_quality,

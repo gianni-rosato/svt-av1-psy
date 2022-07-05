@@ -90,6 +90,8 @@ extern "C" {
 #define TUNE_M3                 1 // Tune m3 md inter intra level
 #define TUNE_M5_MRP             1 // Tune m5 MRP level
 #define TUNE_CHROMA_RDOQ        1 // Increase the lambda used for RDOQ of chroma towards rate savings
+#define OPT_QPS_WEIGHT          1 // Optimize the weighting used in QPS to improve VMAF in low presets, SSIM in high presets
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

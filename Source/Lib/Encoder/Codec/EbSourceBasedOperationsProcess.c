@@ -558,6 +558,9 @@ static inline void get_neighbor_samples_dc(uint8_t *src, uint32_t src_stride, ui
 #define MAX_TPL_MODE 3
 #define MAX_TPL_SIZE 32
 #define MAX_TPL_SAMPLES_PER_BLOCK MAX_TPL_SIZE *MAX_TPL_SIZE
+#if OPT_TPL_QPS
+#define TPL_RDMULT_SCALING_FACTOR 6 // rdmult used in TPL will be divided by this factor
+#endif
 uint32_t size_array[MAX_TPL_MODE]         = {16, 32, 64};
 uint32_t blk_start_array[MAX_TPL_MODE]    = {5, 1, 0};
 uint32_t blk_end_array[MAX_TPL_MODE]      = {20, 4, 0};
@@ -637,7 +640,8 @@ static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *
     // Mvcost params
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs->static_config.qp];
 #if OPT_TPL_QPS
-    uint32_t rdmult = svt_aom_compute_rd_mult(pcs, qIndex, 8/*EB_EIGHT_BIT*/);
+    uint32_t rdmult =
+        svt_aom_compute_rd_mult_based_on_qindex((EbBitDepth)8, pcs->update_type, qIndex) / TPL_RDMULT_SCALING_FACTOR;
 #else
     uint32_t rdmult = compute_rdmult_sse(pcs, qIndex, 8/*EB_EIGHT_BIT*/);
 #endif
@@ -1705,9 +1709,8 @@ void tpl_mc_flow_dispenser(EncodeContext *encode_context_ptr, SequenceControlSet
         qIndex = (qIndex + delta_qindex);
     }
 #if OPT_TPL_QPS
-    *base_rdmult = svt_aom_compute_rd_mult_based_on_qindex(
-                       (EbBitDepth)8 /*scs_ptr->static_config.encoder_bit_depth*/,pcs_ptr->update_type, qIndex) /
-        6;
+    *base_rdmult =
+        svt_aom_compute_rd_mult_based_on_qindex((EbBitDepth)8,pcs_ptr->update_type, qIndex) / TPL_RDMULT_SCALING_FACTOR;
 #else
     *base_rdmult = svt_av1_compute_rd_mult_based_on_qindex(
                        (EbBitDepth)8 /*scs_ptr->static_config.encoder_bit_depth*/, qIndex) /
