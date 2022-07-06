@@ -48,6 +48,9 @@ void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
 
 Bool is_delayed_intra(PictureParentControlSet *pcs);
 
+void svt_aom_set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level,
+                              uint8_t bit_depth);
+
 /**************************************
  * Context
  **************************************/

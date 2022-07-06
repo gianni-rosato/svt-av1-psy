@@ -491,7 +491,7 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
 void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
 void set_sg_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
-void set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level);
+
 /******************************************************
 * Derive Multi-Processes Settings for first pass
 Input   : encoder mode and tune
@@ -545,7 +545,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     frm_hdr->allow_intrabc              = 0;
     pcs_ptr->palette_level = 0;
 
-    set_dlf_controls(pcs_ptr, 0);
+    svt_aom_set_dlf_controls(pcs_ptr, 0, scs_ptr->static_config.encoder_bit_depth);
 
     pcs_ptr->cdef_level = 0;
 

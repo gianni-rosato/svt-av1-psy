@@ -1849,7 +1849,7 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
 
     return dlf_level;
 }
-void set_dlf_controls(PictureParentControlSet* pcs_ptr, uint8_t dlf_level, uint8_t bit_depth) {
+void svt_aom_set_dlf_controls(PictureParentControlSet* pcs_ptr, uint8_t dlf_level, uint8_t bit_depth) {
     DlfCtrls* ctrls = &pcs_ptr->dlf_ctrls;
 
     switch (dlf_level) {
@@ -2334,7 +2334,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->scs_ptr->static_config.enable_dlf_flag && frm_hdr->allow_intrabc == 0) {
         dlf_level = get_dlf_level(enc_mode, is_ref, bit_depth > EB_EIGHT_BIT, fast_decode, hierarchical_levels, input_resolution);
     }
-    set_dlf_controls(pcs_ptr, dlf_level, bit_depth);
+    svt_aom_set_dlf_controls(pcs_ptr, dlf_level, bit_depth);
 
     // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
