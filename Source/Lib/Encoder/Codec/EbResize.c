@@ -27,8 +27,8 @@ EbPictureBufferDesc *get_ref_pic_buffer(PictureControlSet *pcs_ptr, uint8_t is_h
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 
 // Filters for factor of 2 downsampling.
-static const int16_t av1_down2_symeven_half_filter[] = {56, 12, -3, -1};
-static const int16_t av1_down2_symodd_half_filter[]  = {64, 35, 0, -3};
+const int16_t av1_down2_symeven_half_filter[] = {56, 12, -3, -1};
+const int16_t av1_down2_symodd_half_filter[]  = {64, 35, 0, -3};
 
 // Filters for interpolation (0.5-band) - note this also filters integer pels.
 static const InterpKernel filteredinterp_filters500[(1 << RS_SUBPEL_BITS)] = {
@@ -209,7 +209,7 @@ static int get_down2_steps(int in_length, int out_length) {
     return steps;
 }
 
-static void down2_symeven(const uint8_t *const input, int length, uint8_t *output) {
+void svt_av1_down2_symeven_c(const uint8_t *const input, int length, uint8_t *output) {
     // Actual filter len = 2 * filter_len_half.
     const int16_t *filter          = av1_down2_symeven_half_filter;
     const int      filter_len_half = sizeof(av1_down2_symeven_half_filter) / 2;
@@ -327,8 +327,8 @@ static const InterpKernel *choose_interp_filter(int in_length, int out_length) {
         return filteredinterp_filters500;
 }
 
-static void interpolate_core(const uint8_t *const input, int in_length, uint8_t *output,
-                             int out_length, const int16_t *interp_filters, int interp_taps) {
+void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8_t *output,
+                             int out_length, const int16_t *interp_filters) {
     const int32_t delta = (((uint32_t)in_length << RS_SCALE_SUBPEL_BITS) + out_length / 2) /
         out_length;
     const int32_t offset = in_length > out_length
@@ -342,14 +342,14 @@ static void interpolate_core(const uint8_t *const input, int in_length, uint8_t 
 
     x = 0;
     y = offset + RS_SCALE_EXTRA_OFF;
-    while ((y >> RS_SCALE_SUBPEL_BITS) < (interp_taps / 2 - 1)) {
+    while ((y >> RS_SCALE_SUBPEL_BITS) < (SUBPEL_TAPS / 2 - 1)) {
         x++;
         y += delta;
     }
     x1 = x;
     x  = out_length - 1;
     y  = delta * x + offset + RS_SCALE_EXTRA_OFF;
-    while ((y >> RS_SCALE_SUBPEL_BITS) + (int32_t)(interp_taps / 2) >= in_length) {
+    while ((y >> RS_SCALE_SUBPEL_BITS) + (int32_t)(SUBPEL_TAPS / 2) >= in_length) {
         x--;
         y -= delta;
     }
@@ -358,10 +358,10 @@ static void interpolate_core(const uint8_t *const input, int in_length, uint8_t 
         for (x = 0, y = offset + RS_SCALE_EXTRA_OFF; x < out_length; ++x, y += delta) {
             int_pel               = y >> RS_SCALE_SUBPEL_BITS;
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
-            const int16_t *filter = &interp_filters[sub_pel * interp_taps];
+            const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < interp_taps; ++k) {
-                const int pk = int_pel - interp_taps / 2 + 1 + k;
+            for (k = 0; k < SUBPEL_TAPS; ++k) {
+                const int pk = int_pel - SUBPEL_TAPS / 2 + 1 + k;
                 sum += filter[k] * input[AOMMAX(AOMMIN(pk, in_length - 1), 0)];
             }
             *optr++ = clip_pixel(ROUND_POWER_OF_TWO(sum, FILTER_BITS));
@@ -371,30 +371,30 @@ static void interpolate_core(const uint8_t *const input, int in_length, uint8_t 
         for (x = 0, y = offset + RS_SCALE_EXTRA_OFF; x < x1; ++x, y += delta) {
             int_pel               = y >> RS_SCALE_SUBPEL_BITS;
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
-            const int16_t *filter = &interp_filters[sub_pel * interp_taps];
+            const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < interp_taps; ++k)
-                sum += filter[k] * input[AOMMAX(int_pel - interp_taps / 2 + 1 + k, 0)];
+            for (k = 0; k < SUBPEL_TAPS; ++k)
+                sum += filter[k] * input[AOMMAX(int_pel - SUBPEL_TAPS / 2 + 1 + k, 0)];
             *optr++ = clip_pixel(ROUND_POWER_OF_TWO(sum, FILTER_BITS));
         }
         // Middle part.
         for (; x <= x2; ++x, y += delta) {
             int_pel               = y >> RS_SCALE_SUBPEL_BITS;
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
-            const int16_t *filter = &interp_filters[sub_pel * interp_taps];
+            const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < interp_taps; ++k)
-                sum += filter[k] * input[int_pel - interp_taps / 2 + 1 + k];
+            for (k = 0; k < SUBPEL_TAPS; ++k)
+                sum += filter[k] * input[int_pel - SUBPEL_TAPS / 2 + 1 + k];
             *optr++ = clip_pixel(ROUND_POWER_OF_TWO(sum, FILTER_BITS));
         }
         // End part.
         for (; x < out_length; ++x, y += delta) {
             int_pel               = y >> RS_SCALE_SUBPEL_BITS;
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
-            const int16_t *filter = &interp_filters[sub_pel * interp_taps];
+            const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < interp_taps; ++k)
-                sum += filter[k] * input[AOMMIN(int_pel - interp_taps / 2 + 1 + k, in_length - 1)];
+            for (k = 0; k < SUBPEL_TAPS; ++k)
+                sum += filter[k] * input[AOMMIN(int_pel - SUBPEL_TAPS / 2 + 1 + k, in_length - 1)];
             *optr++ = clip_pixel(ROUND_POWER_OF_TWO(sum, FILTER_BITS));
         }
     }
@@ -404,7 +404,7 @@ static void interpolate(const uint8_t *const input, int in_length, uint8_t *outp
                         int out_length) {
     const InterpKernel *interp_filters = choose_interp_filter(in_length, out_length);
 
-    interpolate_core(input, in_length, output, out_length, &interp_filters[0][0], SUBPEL_TAPS);
+    svt_av1_interpolate_core(input, in_length, output, out_length, &interp_filters[0][0]);
 }
 
 static void resize_multistep(const uint8_t *const input, int length, uint8_t *output, int olength,
@@ -416,6 +416,7 @@ static void resize_multistep(const uint8_t *const input, int length, uint8_t *ou
     const int steps = get_down2_steps(length, olength);
 
     if (steps > 0) {
+        // only denom 16 will come here and steps equals to 1
         uint8_t *out            = NULL;
         int      filteredlength = length;
 
@@ -431,13 +432,14 @@ static void resize_multistep(const uint8_t *const input, int length, uint8_t *ou
             if (filteredlength & 1)
                 down2_symodd(in, filteredlength, out);
             else
-                down2_symeven(in, filteredlength, out);
+                svt_av1_down2_symeven(in, filteredlength, out);
             filteredlength = proj_filteredlength;
         }
         if (filteredlength != olength) {
             interpolate(out, filteredlength, output, olength);
         }
     } else {
+        // denom 9~15 comes here
         interpolate(input, length, output, olength);
     }
 }
@@ -456,7 +458,7 @@ static void fill_col_to_arr(uint8_t *img, int stride, int len, uint8_t *arr) {
     for (i = 0; i < len; ++i, iptr += stride) { *aptr++ = *iptr; }
 }
 
-static EbErrorType av1_resize_plane(const uint8_t *const input, int height, int width,
+EbErrorType svt_av1_resize_plane(const uint8_t *const input, int height, int width,
                                     int in_stride, uint8_t *output, int height2, int width2,
                                     int out_stride) {
     int      i;
@@ -482,8 +484,11 @@ static EbErrorType av1_resize_plane(const uint8_t *const input, int height, int 
         resize_multistep(input + in_stride * i, width, intbuf + width2 * i, width2, tmpbuf);
 
     for (i = 0; i < width2; ++i) {
+        // column to array conversion
         fill_col_to_arr(intbuf + i, width2, height, arrbuf);
+        // resize 'arrbuf' from height to height2 and store the result to arrbuf2
         resize_multistep(arrbuf, height, arrbuf2, height2, tmpbuf);
+        // array to column conversion
         fill_arr_to_col(output + i, out_stride, height2, arrbuf2);
     }
 
@@ -495,7 +500,7 @@ static EbErrorType av1_resize_plane(const uint8_t *const input, int height, int 
     return EB_ErrorNone;
 }
 
-static EbErrorType av1_resize_plane_horizontal(const uint8_t *const input, int height, int width,
+EbErrorType svt_av1_resize_plane_horizontal(const uint8_t *const input, int height, int width,
                                                int in_stride, uint8_t *output, int height2,
                                                int width2, int out_stride) {
     int      i;
@@ -519,9 +524,8 @@ static EbErrorType av1_resize_plane_horizontal(const uint8_t *const input, int h
     return EB_ErrorNone;
 }
 
-static void highbd_interpolate_core(const uint16_t *const input, int in_length, uint16_t *output,
-                                    int out_length, int bd, const int16_t *interp_filters,
-                                    int interp_taps) {
+void svt_av1_highbd_interpolate_core_c(const uint16_t *const input, int in_length, uint16_t *output,
+                                       int out_length, int bd, const int16_t *interp_filters) {
     const int32_t delta = (((uint32_t)in_length << RS_SCALE_SUBPEL_BITS) + out_length / 2) /
         out_length;
     const int32_t offset = in_length > out_length
@@ -535,14 +539,14 @@ static void highbd_interpolate_core(const uint16_t *const input, int in_length, 
 
     x = 0;
     y = offset + RS_SCALE_EXTRA_OFF;
-    while ((y >> RS_SCALE_SUBPEL_BITS) < (interp_taps / 2 - 1)) {
+    while ((y >> RS_SCALE_SUBPEL_BITS) < (SUBPEL_TAPS / 2 - 1)) {
         x++;
         y += delta;
     }
     x1 = x;
     x  = out_length - 1;
     y  = delta * x + offset + RS_SCALE_EXTRA_OFF;
-    while ((y >> RS_SCALE_SUBPEL_BITS) + (int32_t)(interp_taps / 2) >= in_length) {
+    while ((y >> RS_SCALE_SUBPEL_BITS) + (int32_t)(SUBPEL_TAPS / 2) >= in_length) {
         x--;
         y -= delta;
     }
@@ -551,10 +555,10 @@ static void highbd_interpolate_core(const uint16_t *const input, int in_length, 
         for (x = 0, y = offset + RS_SCALE_EXTRA_OFF; x < out_length; ++x, y += delta) {
             int_pel               = y >> RS_SCALE_SUBPEL_BITS;
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
-            const int16_t *filter = &interp_filters[sub_pel * interp_taps];
+            const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < interp_taps; ++k) {
-                const int pk = int_pel - interp_taps / 2 + 1 + k;
+            for (k = 0; k < SUBPEL_TAPS; ++k) {
+                const int pk = int_pel - SUBPEL_TAPS / 2 + 1 + k;
                 sum += filter[k] * input[AOMMAX(AOMMIN(pk, in_length - 1), 0)];
             }
             *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
@@ -564,30 +568,30 @@ static void highbd_interpolate_core(const uint16_t *const input, int in_length, 
         for (x = 0, y = offset + RS_SCALE_EXTRA_OFF; x < x1; ++x, y += delta) {
             int_pel               = y >> RS_SCALE_SUBPEL_BITS;
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
-            const int16_t *filter = &interp_filters[sub_pel * interp_taps];
+            const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < interp_taps; ++k)
-                sum += filter[k] * input[AOMMAX(int_pel - interp_taps / 2 + 1 + k, 0)];
+            for (k = 0; k < SUBPEL_TAPS; ++k)
+                sum += filter[k] * input[AOMMAX(int_pel - SUBPEL_TAPS / 2 + 1 + k, 0)];
             *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
         }
         // Middle part.
         for (; x <= x2; ++x, y += delta) {
             int_pel               = y >> RS_SCALE_SUBPEL_BITS;
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
-            const int16_t *filter = &interp_filters[sub_pel * interp_taps];
+            const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < interp_taps; ++k)
-                sum += filter[k] * input[int_pel - interp_taps / 2 + 1 + k];
+            for (k = 0; k < SUBPEL_TAPS; ++k)
+                sum += filter[k] * input[int_pel - SUBPEL_TAPS / 2 + 1 + k];
             *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
         }
         // End part.
         for (; x < out_length; ++x, y += delta) {
             int_pel               = y >> RS_SCALE_SUBPEL_BITS;
             sub_pel               = (y >> RS_SCALE_EXTRA_BITS) & RS_SUBPEL_MASK;
-            const int16_t *filter = &interp_filters[sub_pel * interp_taps];
+            const int16_t *filter = &interp_filters[sub_pel * SUBPEL_TAPS];
             sum                   = 0;
-            for (k = 0; k < interp_taps; ++k)
-                sum += filter[k] * input[AOMMIN(int_pel - interp_taps / 2 + 1 + k, in_length - 1)];
+            for (k = 0; k < SUBPEL_TAPS; ++k)
+                sum += filter[k] * input[AOMMIN(int_pel - SUBPEL_TAPS / 2 + 1 + k, in_length - 1)];
             *optr++ = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, FILTER_BITS), bd);
         }
     }
@@ -597,11 +601,11 @@ static void highbd_interpolate(const uint16_t *const input, int in_length, uint1
                                int out_length, int bd) {
     const InterpKernel *interp_filters = choose_interp_filter(in_length, out_length);
 
-    highbd_interpolate_core(
-        input, in_length, output, out_length, bd, &interp_filters[0][0], SUBPEL_TAPS);
+    svt_av1_highbd_interpolate_core(
+        input, in_length, output, out_length, bd, &interp_filters[0][0]);
 }
 
-static void highbd_down2_symeven(const uint16_t *const input, int length, uint16_t *output,
+void svt_av1_highbd_down2_symeven_c(const uint16_t *const input, int length, uint16_t *output,
                                  int bd) {
     // Actual filter len = 2 * filter_len_half.
     static const int16_t *filter          = av1_down2_symeven_half_filter;
@@ -728,7 +732,7 @@ static void highbd_resize_multistep(const uint16_t *const input, int length, uin
             if (filteredlength & 1)
                 highbd_down2_symodd(in, filteredlength, out, bd);
             else
-                highbd_down2_symeven(in, filteredlength, out, bd);
+                svt_av1_highbd_down2_symeven(in, filteredlength, out, bd);
             filteredlength = proj_filteredlength;
         }
         if (filteredlength != olength) {
@@ -753,7 +757,7 @@ static void highbd_fill_arr_to_col(uint16_t *img, int stride, int len, uint16_t 
     for (i = 0; i < len; ++i, iptr += stride) { *iptr = *aptr++; }
 }
 
-static EbErrorType av1_highbd_resize_plane(const uint16_t *const input, int height, int width,
+EbErrorType svt_av1_highbd_resize_plane(const uint16_t *const input, int height, int width,
                                            int in_stride, uint16_t *output, int height2, int width2,
                                            int out_stride, int bd) {
     int       i;
@@ -767,10 +771,10 @@ static EbErrorType av1_highbd_resize_plane(const uint16_t *const input, int heig
     EB_MALLOC_ARRAY(arrbuf, height);
     EB_MALLOC_ARRAY(arrbuf2, height2);
     if (intbuf == NULL || tmpbuf == NULL || arrbuf == NULL || arrbuf2 == NULL) {
-        EB_FREE(intbuf);
-        EB_FREE(tmpbuf);
-        EB_FREE(arrbuf);
-        EB_FREE(arrbuf2);
+        EB_FREE_ARRAY(intbuf);
+        EB_FREE_ARRAY(tmpbuf);
+        EB_FREE_ARRAY(arrbuf);
+        EB_FREE_ARRAY(arrbuf2);
         return EB_ErrorInsufficientResources;
     }
     for (i = 0; i < height; ++i) {
@@ -783,15 +787,15 @@ static EbErrorType av1_highbd_resize_plane(const uint16_t *const input, int heig
         highbd_fill_arr_to_col(output + i, out_stride, height2, arrbuf2);
     }
 
-    EB_FREE(intbuf);
-    EB_FREE(tmpbuf);
-    EB_FREE(arrbuf);
-    EB_FREE(arrbuf2);
+    EB_FREE_ARRAY(intbuf);
+    EB_FREE_ARRAY(tmpbuf);
+    EB_FREE_ARRAY(arrbuf);
+    EB_FREE_ARRAY(arrbuf2);
 
     return EB_ErrorNone;
 }
 
-static EbErrorType av1_highbd_resize_plane_horizontal(const uint16_t *const input, int height,
+EbErrorType svt_av1_highbd_resize_plane_horizontal(const uint16_t *const input, int height,
                                                       int width, int in_stride, uint16_t *output,
                                                       int height2, int width2, int out_stride,
                                                       int bd) {
@@ -898,8 +902,8 @@ EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc
     for (int plane = 0; plane <= AOMMIN(num_planes, MAX_MB_PLANE - 1); ++plane) {
         if (bd > 8) {
             Av1HighbdResizePlane resize_plane_func = (src->height == dst->height)
-                ? av1_highbd_resize_plane_horizontal
-                : av1_highbd_resize_plane;
+                ? svt_av1_highbd_resize_plane_horizontal
+                : svt_av1_highbd_resize_plane;
             switch (plane) {
             case 0:
                 if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && src_buffer_highbd[0] &&
@@ -951,8 +955,8 @@ EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc
             }
         } else {
             Av1ResizePlane resize_plane_func = (src->height == dst->height)
-                ? av1_resize_plane_horizontal
-                : av1_resize_plane;
+                ? svt_av1_resize_plane_horizontal
+                : svt_av1_resize_plane;
             switch (plane) {
             case 0:
                 if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && src->buffer_y &&

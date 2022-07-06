@@ -33,3 +33,9 @@ void setup_test_env() {
 
     setup_rtcd_internal(cpu_flags);
 }
+
+void reset_test_env() {
+    EbCpuFlags cpu_flags = 0;
+    setup_common_rtcd_internal(cpu_flags);
+    setup_rtcd_internal(cpu_flags);
+}

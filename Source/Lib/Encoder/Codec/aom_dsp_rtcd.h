@@ -914,6 +914,14 @@ extern "C" {
     RTCD_EXTERN void (*svt_aom_flat_block_finder_extract_block)(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
     void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
 #endif
+    RTCD_EXTERN void(*svt_av1_interpolate_core)(const uint8_t *const input, int in_length, uint8_t *output, int out_length, const int16_t *interp_filters);
+    void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8_t *output, int out_length, const int16_t *interp_filters);
+    RTCD_EXTERN void(*svt_av1_down2_symeven)(const uint8_t *const input, int length, uint8_t *output);
+    void svt_av1_down2_symeven_c(const uint8_t *const input, int length, uint8_t *output);
+    RTCD_EXTERN void(*svt_av1_highbd_interpolate_core)(const uint16_t *const input, int in_length, uint16_t *output, int out_length, int bd, const int16_t *interp_filters);
+    void svt_av1_highbd_interpolate_core_c(const uint16_t *const input, int in_length, uint16_t *output, int out_length, int bd, const int16_t *interp_filters);
+    RTCD_EXTERN void(*svt_av1_highbd_down2_symeven)(const uint16_t *const input, int length, uint16_t *output, int bd);
+    void svt_av1_highbd_down2_symeven_c(const uint16_t *const input, int length, uint16_t *output, int bd);
 #ifdef ARCH_X86_64
     int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     int64_t svt_aom_highbd_sse_avx2(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
@@ -1767,6 +1775,10 @@ extern "C" {
     void svt_aom_noise_tx_filter_avx2(int32_t block_size, float *block_ptr, const float psd);
     void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
 #endif
+    void svt_av1_interpolate_core_avx2(const uint8_t *const input, int in_length, uint8_t *output, int out_length, const int16_t *interp_filters);
+    void svt_av1_down2_symeven_avx2(const uint8_t *const input, int length, uint8_t *output);
+    void svt_av1_highbd_interpolate_core_avx2(const uint16_t *const input, int in_length, uint16_t *output, int out_length, int bd, const int16_t *interp_filters);
+    void svt_av1_highbd_down2_symeven_avx2(const uint16_t *const input, int length, uint16_t *output, int bd);
 #endif
 
     /* Moved to aom_dsp_rtcd.c file:

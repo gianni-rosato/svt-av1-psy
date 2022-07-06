@@ -24,6 +24,9 @@
 extern "C" {
 #endif
 
+extern const int16_t av1_down2_symeven_half_filter[4];
+extern const int16_t av1_down2_symodd_half_filter[4];
+
 typedef struct {
     uint16_t encoding_width;
     uint16_t encoding_height;

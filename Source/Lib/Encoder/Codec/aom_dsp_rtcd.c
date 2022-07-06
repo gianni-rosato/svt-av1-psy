@@ -453,5 +453,9 @@ void setup_rtcd_internal(EbCpuFlags flags) {
 #endif
     SET_AVX2(svt_av1_calc_target_weighted_pred_above, svt_av1_calc_target_weighted_pred_above_c,svt_av1_calc_target_weighted_pred_above_avx2);
     SET_AVX2(svt_av1_calc_target_weighted_pred_left, svt_av1_calc_target_weighted_pred_left_c,svt_av1_calc_target_weighted_pred_left_avx2);
+    SET_AVX2(svt_av1_interpolate_core, svt_av1_interpolate_core_c, svt_av1_interpolate_core_avx2);
+    SET_AVX2(svt_av1_down2_symeven, svt_av1_down2_symeven_c, svt_av1_down2_symeven_avx2);
+    SET_AVX2(svt_av1_highbd_interpolate_core, svt_av1_highbd_interpolate_core_c, svt_av1_highbd_interpolate_core_avx2);
+    SET_AVX2(svt_av1_highbd_down2_symeven, svt_av1_highbd_down2_symeven_c, svt_av1_highbd_down2_symeven_avx2);
 }
 // clang-format on
