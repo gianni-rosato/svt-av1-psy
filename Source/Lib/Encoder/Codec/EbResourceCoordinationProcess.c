@@ -27,6 +27,7 @@
 #include "pass2_strategy.h"
 #include "common_dsp_rtcd.h"
 #include "EbResize.h"
+#include "EbMetadataHandle.h"
 typedef struct ResourceCoordinationContext {
     EbFifo *                       input_cmd_fifo_ptr;
     EbFifo *                       resource_coordination_results_output_fifo_ptr;
@@ -862,23 +863,6 @@ static EbErrorType copy_frame_buffer_overlay(SequenceControlSet *scs_ptr, uint8_
     return return_error;
 }
 
-/***********************************************
-**** Deep copy of the input metadata buffer
-************************************************/
-static EbErrorType copy_metadata_buffer(EbBufferHeaderType *dst, EbBufferHeaderType *src) {
-    EbErrorType return_error = EB_ErrorNone;
-    for (size_t i = 0; i < src->metadata->sz; ++i) {
-        SvtMetadataT * current_metadata = src->metadata->metadata_array[i];
-        const uint32_t type             = current_metadata->type;
-        const uint8_t *payload          = current_metadata->payload;
-        const size_t   sz               = current_metadata->sz;
-
-        if (svt_add_metadata(dst, type, payload, sz) != 0)
-            SVT_ERROR("Metadata of type %d could not be added to the buffer.\n", type);
-    }
-    return return_error;
-}
-
 /* overlay specific version of copy_input_buffer without passes specializations */
 static void copy_input_buffer_overlay(SequenceControlSet *sequenceControlSet,
                                       EbBufferHeaderType *dst, EbBufferHeaderType *src) {
@@ -893,9 +877,7 @@ static void copy_input_buffer_overlay(SequenceControlSet *sequenceControlSet,
     dst->pic_type     = src->pic_type;
 
     // Copy the metadata array
-    if (src->metadata)
-        copy_metadata_buffer(dst, src);
-    else
+    if (svt_aom_copy_metadata_buffer(dst, src->metadata) != EB_ErrorNone)
         dst->metadata = NULL;
 
     // Copy the picture buffer

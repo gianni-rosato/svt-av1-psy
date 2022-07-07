@@ -55,6 +55,7 @@
 #include "EbDlfProcess.h"
 #include "EbRateControlResults.h"
 #include "EbDefinitions.h"
+#include "EbMetadataHandle.h"
 
 #include"EbPackUnPack_C.h"
 
@@ -4970,23 +4971,6 @@ static void copy_input_buffer(
         dst->p_app_private = NULL;
 
 }
-/***********************************************
-**** Deep copy of the input metadata buffer
-************************************************/
-static EbErrorType copy_metadata_buffer(EbBufferHeaderType *dst, EbBufferHeaderType *src)
-{
-    EbErrorType return_error = EB_ErrorNone;
-    for (size_t i = 0; i < src->metadata->sz; ++i) {
-        SvtMetadataT *current_metadata = src->metadata->metadata_array[i];
-        const uint32_t type = current_metadata->type;
-        const uint8_t *payload = current_metadata->payload;
-        const size_t sz = current_metadata->sz;
-
-        if (svt_add_metadata(dst, type, payload, sz) != 0)
-            SVT_WARN("Metadata of type %d could not be added to the buffer.\n", type);
-    }
-    return return_error;
-}
 /**********************************
 * Empty This Buffer
 **********************************/
@@ -5061,9 +5045,7 @@ static void copy_output_recon_buffer(
     dst->pic_type = src->pic_type;
 
     // Copy the metadata array
-    if (src->metadata)
-        copy_metadata_buffer(dst, src);
-    else
+    if (svt_aom_copy_metadata_buffer(dst, src->metadata) != EB_ErrorNone)
         dst->metadata = NULL;
 
     // Copy the picture buffer

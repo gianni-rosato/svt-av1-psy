@@ -100,6 +100,25 @@ EB_API int svt_add_metadata(EbBufferHeaderType *buffer, const uint32_t type, con
     return 0;
 }
 
+EbErrorType svt_aom_copy_metadata_buffer(EbBufferHeaderType                  *dst,
+                                         const struct SvtMetadataArray *const src) {
+    if (!dst || !src)
+        return EB_ErrorBadParameter;
+    EbErrorType return_error = EB_ErrorNone;
+    for (size_t i = 0; i < src->sz; ++i) {
+        SvtMetadataT  *current_metadata = src->metadata_array[i];
+        const uint32_t type             = current_metadata->type;
+        const uint8_t *payload          = current_metadata->payload;
+        const size_t   sz               = current_metadata->sz;
+
+        if (svt_add_metadata(dst, type, payload, sz)) {
+            return_error = EB_ErrorInsufficientResources;
+            SVT_ERROR("Metadata of type %d could not be added to the buffer.\n", type);
+        }
+    }
+    return return_error;
+}
+
 EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1MetadataType type) {
     size_t sz = 0;
     if (!metadata || !metadata->metadata_array || metadata->sz == 0) {
