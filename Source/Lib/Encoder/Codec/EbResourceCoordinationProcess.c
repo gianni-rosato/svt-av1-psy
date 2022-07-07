@@ -784,7 +784,8 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 **** Copy the input buffer from the
 **** sample application to the library buffers
 ************************************************/
-static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, uint8_t *src) {
+static EbErrorType copy_frame_buffer_overlay(SequenceControlSet *scs_ptr, uint8_t *dst,
+                                             uint8_t *src) {
     EbSvtAv1EncConfiguration *config       = &scs_ptr->static_config;
     EbErrorType               return_error = EB_ErrorNone;
 
@@ -878,8 +879,9 @@ static EbErrorType copy_metadata_buffer(EbBufferHeaderType *dst, EbBufferHeaderT
     return return_error;
 }
 
-static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHeaderType *dst,
-                              EbBufferHeaderType *src) {
+/* overlay specific version of copy_input_buffer without passes specializations */
+static void copy_input_buffer_overlay(SequenceControlSet *sequenceControlSet,
+                                      EbBufferHeaderType *dst, EbBufferHeaderType *src) {
     // Copy the higher level structure
     dst->n_alloc_len  = src->n_alloc_len;
     dst->n_filled_len = src->n_filled_len;
@@ -898,7 +900,7 @@ static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHe
 
     // Copy the picture buffer
     if (src->p_buffer != NULL)
-        copy_frame_buffer(sequenceControlSet, dst->p_buffer, src->p_buffer);
+        copy_frame_buffer_overlay(sequenceControlSet, dst->p_buffer, src->p_buffer);
 }
 
 /******************************************************
@@ -1178,7 +1180,7 @@ void *resource_coordination_kernel(void *input_ptr) {
 
                 // Copy from original picture (pcs_ptr->input_picture_wrapper_ptr), which is shared between overlay and alt_ref up to this point, to the new input picture.
                 if (pcs_ptr->alt_ref_ppcs_ptr->input_picture_wrapper_ptr->object_ptr != NULL) {
-                    copy_input_buffer(scs_ptr,
+                    copy_input_buffer_overlay(scs_ptr,
                                       (EbBufferHeaderType *)input_pic_wrapper_ptr->object_ptr,
                                       (EbBufferHeaderType *)pcs_ptr->alt_ref_ppcs_ptr
                                           ->input_picture_wrapper_ptr->object_ptr);
