@@ -4927,41 +4927,34 @@ static EbErrorType copy_private_data_list(EbBufferHeaderType* dst, EbBufferHeade
  Copy the input buffer header content
 from the sample application to the library buffers
 */
-static void copy_input_buffer(
-    SequenceControlSet*    sequenceControlSet,
-    EbBufferHeaderType*     dst,
-    EbBufferHeaderType*     dst_y8b,
-    EbBufferHeaderType*     src,
-    int                     pass
-)
-{
+static void copy_input_buffer(SequenceControlSet* scs, EbBufferHeaderType* dst,
+                              EbBufferHeaderType* dst_y8b, EbBufferHeaderType* src, int pass) {
     // Copy the higher level structure
-    dst->n_alloc_len = src->n_alloc_len;
+    dst->n_alloc_len  = src->n_alloc_len;
     dst->n_filled_len = src->n_filled_len;
-    dst->flags = src->flags;
-    dst->pts = src->pts;
+    dst->flags        = src->flags;
+    dst->pts          = src->pts;
     dst->n_tick_count = src->n_tick_count;
-    dst->size = src->size;
-    dst->qp = src->qp;
-    dst->pic_type = src->pic_type;
+    dst->size         = src->size;
+    dst->qp           = src->qp;
+    dst->pic_type     = src->pic_type;
 
     int copy_frame = 1;
-    if (sequenceControlSet->ipp_pass_ctrls.skip_frame_first_pass == 1)
+    if (scs->ipp_pass_ctrls.skip_frame_first_pass == 1)
         copy_frame = (((src->pts % 8) == 0) || ((src->pts % 8) == 6) || ((src->pts % 8) == 7));
-    else if (sequenceControlSet->ipp_pass_ctrls.skip_frame_first_pass == 2)
-        copy_frame = ((src->pts < 7) || ((src->pts % 8) == 0) || ((src->pts % 8) == 6) || ((src->pts % 8) == 7));
-    if (sequenceControlSet->mid_pass_ctrls.ds || sequenceControlSet->ipp_pass_ctrls.ds) {
+    else if (scs->ipp_pass_ctrls.skip_frame_first_pass == 2)
+        copy_frame = ((src->pts < 7) || ((src->pts % 8) == 0) || ((src->pts % 8) == 6) ||
+                      ((src->pts % 8) == 7));
+    if (scs->mid_pass_ctrls.ds || scs->ipp_pass_ctrls.ds) {
         // Copy the picture buffer
         if (src->p_buffer != NULL)
-            downsample_copy_frame_buffer(sequenceControlSet, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
-    }
-    else
-
-    // Bypass copy for the unecessary picture in IPPP pass
-    if ((pass != ENCODE_FIRST_PASS) || ((pass == ENCODE_FIRST_PASS) && copy_frame)) {
+            downsample_copy_frame_buffer(
+                scs, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
+    } else if (pass != ENCODE_FIRST_PASS || copy_frame) {
+        // Bypass copy for the unecessary picture in IPPP pass
         // Copy the picture buffer
         if (src->p_buffer != NULL)
-            copy_frame_buffer(sequenceControlSet, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
+            copy_frame_buffer(scs, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
         // Copy the metadata array
         if (svt_aom_copy_metadata_buffer(dst, src->metadata) != EB_ErrorNone)
             dst->metadata = NULL;
@@ -4972,7 +4965,6 @@ static void copy_input_buffer(
         copy_private_data_list(dst, src);
     else
         dst->p_app_private = NULL;
-
 }
 /**********************************
 * Empty This Buffer
