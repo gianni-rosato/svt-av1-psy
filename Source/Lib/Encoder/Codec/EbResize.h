@@ -69,7 +69,8 @@ EbErrorType downscaled_source_buffer_desc_ctor(
 
 EbErrorType av1_resize_frame(const EbPictureBufferDesc* src, EbPictureBufferDesc* dst,
     int bd, const int num_planes, const uint32_t ss_x,
-    const uint32_t ss_y, uint8_t is_packed, uint32_t buffer_enable_mask);
+    const uint32_t ss_y, uint8_t is_packed, uint32_t buffer_enable_mask,
+    uint8_t is_2bcompress);
 
 static INLINE int coded_to_superres_mi(int mi_col, int denom) {
     return (mi_col * denom + SCALE_NUMERATOR / 2) / SCALE_NUMERATOR;

@@ -489,7 +489,8 @@ void *cdef_kernel(void *input_ptr) {
                             scs_ptr->subsampling_x,
                             scs_ptr->subsampling_y,
                             input_picture_ptr->packed_flag,
-                            PICTURE_BUFFER_DESC_FULL_MASK);
+                            PICTURE_BUFFER_DESC_FULL_MASK,
+                            0); // is_2bcompress
                         pcs_ptr->scaled_input_picture_ptr = scaled_input_picture_ptr;
                     }
                 }

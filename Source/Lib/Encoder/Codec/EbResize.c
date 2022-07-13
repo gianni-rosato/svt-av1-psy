@@ -841,6 +841,75 @@ typedef EbErrorType (*Av1ResizePlane)(const uint8_t *const input, int height, in
                                       int in_stride, uint8_t *output, int height2, int width2,
                                       int out_stride);
 
+static void pack_highbd_pic_2d(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3],
+                               uint32_t ss_x, uint32_t ss_y) {
+    uint16_t width  = pic_ptr->stride_y;
+    uint16_t height = (uint16_t)(pic_ptr->origin_y + pic_ptr->height + pic_ptr->origin_bot_y);
+
+    pack2d_src(pic_ptr->buffer_y,
+               pic_ptr->stride_y,
+               pic_ptr->buffer_bit_inc_y,
+               pic_ptr->stride_bit_inc_y,
+               buffer_16bit[0],
+               pic_ptr->stride_y,
+               width,
+               height);
+
+    if (buffer_16bit[1])
+        pack2d_src(pic_ptr->buffer_cb,
+                   pic_ptr->stride_cb,
+                   pic_ptr->buffer_bit_inc_cb,
+                   pic_ptr->stride_bit_inc_cb,
+                   buffer_16bit[1],
+                   pic_ptr->stride_cb,
+                   (width + ss_x) >> ss_x,
+                   (height + ss_y) >> ss_y);
+    if (buffer_16bit[2])
+        pack2d_src(pic_ptr->buffer_cr,
+                   pic_ptr->stride_cr,
+                   pic_ptr->buffer_bit_inc_cr,
+                   pic_ptr->stride_bit_inc_cr,
+                   buffer_16bit[2],
+                   pic_ptr->stride_cr,
+                   (width + ss_x) >> ss_x,
+                   (height + ss_y) >> ss_y);
+}
+
+static void unpack_highbd_pic_2d(uint16_t* buffer_highbd[3], EbPictureBufferDesc* pic_ptr,
+                                 uint32_t ss_x, uint32_t ss_y) {
+    uint16_t width  = pic_ptr->stride_y;
+    uint16_t height = (uint16_t)(pic_ptr->origin_y + pic_ptr->height + pic_ptr->origin_bot_y);
+
+    un_pack2d(buffer_highbd[0],
+              pic_ptr->stride_y,
+              pic_ptr->buffer_y,
+              pic_ptr->stride_y,
+              pic_ptr->buffer_bit_inc_y,
+              pic_ptr->stride_bit_inc_y,
+              width,
+              height);
+
+    if (buffer_highbd[1])
+        un_pack2d(buffer_highbd[1],
+                  pic_ptr->stride_cb,
+                  pic_ptr->buffer_cb,
+                  pic_ptr->stride_cb,
+                  pic_ptr->buffer_bit_inc_cb,
+                  pic_ptr->stride_bit_inc_cb,
+                  (width + ss_x) >> ss_x,
+                  (height + ss_y) >> ss_y);
+
+    if (buffer_highbd[2])
+        un_pack2d(buffer_highbd[2],
+                  pic_ptr->stride_cr,
+                  pic_ptr->buffer_cr,
+                  pic_ptr->stride_cr,
+                  pic_ptr->buffer_bit_inc_cr,
+                  pic_ptr->stride_bit_inc_cr,
+                  (width + ss_x) >> ss_x,
+                  (height + ss_y) >> ss_y);
+}
+
 /*
  * Resize frame according to dst resolution.
  * Supports 8-bit / 10-bit and either packed or unpacked buffers
@@ -848,7 +917,7 @@ typedef EbErrorType (*Av1ResizePlane)(const uint8_t *const input, int height, in
 EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
                                     int bd, const int num_planes, const uint32_t ss_x,
                                     const uint32_t ss_y, uint8_t is_packed,
-                                    uint32_t buffer_enable_mask) {
+                                    uint32_t buffer_enable_mask, uint8_t is_2bcompress) {
     uint16_t *src_buffer_highbd[MAX_MB_PLANE];
     uint16_t *dst_buffer_highbd[MAX_MB_PLANE];
 
@@ -859,7 +928,10 @@ EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc
         EB_MALLOC_ARRAY(dst_buffer_highbd[0], dst->luma_size);
         EB_MALLOC_ARRAY(dst_buffer_highbd[1], dst->chroma_size);
         EB_MALLOC_ARRAY(dst_buffer_highbd[2], dst->chroma_size);
-        pack_highbd_pic(src, src_buffer_highbd, ss_x, ss_y, TRUE);
+        if (is_2bcompress)
+            pack_highbd_pic(src, src_buffer_highbd, ss_x, ss_y, TRUE);
+        else
+            pack_highbd_pic_2d(src, src_buffer_highbd, ss_x, ss_y);
     } else {
         src_buffer_highbd[0] = (uint16_t *)src->buffer_y;
         src_buffer_highbd[1] = (uint16_t *)src->buffer_cb;
@@ -1081,8 +1153,10 @@ EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc
                          1);
 #endif
     if (bd > 8 && !is_packed) {
-        unpack_highbd_pic(dst_buffer_highbd, dst, ss_x, ss_y, TRUE);
-
+        if (is_2bcompress)
+            unpack_highbd_pic(dst_buffer_highbd, dst, ss_x, ss_y, TRUE);
+        else
+            unpack_highbd_pic_2d(dst_buffer_highbd, dst, ss_x, ss_y);
         EB_FREE(src_buffer_highbd[0]);
         EB_FREE(src_buffer_highbd[1]);
         EB_FREE(src_buffer_highbd[2]);
@@ -1357,6 +1431,7 @@ EbErrorType downscaled_source_buffer_desc_ctor(
     initData.right_padding      = picture_ptr_for_reference->origin_x;
     initData.top_padding        = picture_ptr_for_reference->origin_y;
     initData.bot_padding        = picture_ptr_for_reference->origin_bot_y;
+    initData.is_16bit_pipeline  = picture_ptr_for_reference->is_16bit_pipeline;
 
     EB_NEW(*picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1611,7 +1686,8 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                                      ss_x,
                                      ss_y,
                                      0, // is_packed
-                                     PICTURE_BUFFER_DESC_LUMA_MASK); // buffer_enable_mask
+                                     PICTURE_BUFFER_DESC_LUMA_MASK, // buffer_enable_mask
+                                     0);                            // is_2bcompress
 
                     // 1/4 & 1/16 input picture downsampling
                     if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
@@ -1782,7 +1858,8 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                                      ss_x,
                                      ss_y,
                                      down_ref_pic8bit->packed_flag,
-                                     PICTURE_BUFFER_DESC_FULL_MASK); // buffer_enable_mask
+                                     PICTURE_BUFFER_DESC_FULL_MASK, // buffer_enable_mask
+                                     0); // is_2bcompress
 
                     reference_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] = ref_picture_number;
                     //printf("rescaled reference picture %d\n", (int)ref_picture_number);
@@ -2059,7 +2136,8 @@ void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* p
                          ss_x,
                          ss_y,
                          pcs_ptr->enhanced_downscaled_picture_ptr->packed_flag,
-                         PICTURE_BUFFER_DESC_FULL_MASK); // buffer_enable_mask
+                         PICTURE_BUFFER_DESC_FULL_MASK, // buffer_enable_mask
+                         1);                            // is_2bcompress
 
         // use downscaled picture instead of original res for mode decision, encoding loop etc
         // after temporal filtering and motion estimation

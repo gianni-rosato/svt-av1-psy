@@ -834,13 +834,14 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
         superres_params_type spr_params = { input_picture_ptr->width, input_picture_ptr->height, 0 };
         downscaled_source_buffer_desc_ctor(&upscaled_recon, recon_ptr, spr_params);
         av1_resize_frame(recon_ptr,
-            upscaled_recon,
-            scs_ptr->static_config.encoder_bit_depth,
-            av1_num_planes(&scs_ptr->seq_header.color_config),
-            ss_x,
-            ss_y,
-            recon_ptr->packed_flag,
-            PICTURE_BUFFER_DESC_FULL_MASK);
+                         upscaled_recon,
+                         scs_ptr->static_config.encoder_bit_depth,
+                         av1_num_planes(&scs_ptr->seq_header.color_config),
+                         ss_x,
+                         ss_y,
+                         recon_ptr->packed_flag,
+                         PICTURE_BUFFER_DESC_FULL_MASK,
+                         0); // is_2bcompress
         recon_ptr = upscaled_recon;
     }
 
@@ -1224,13 +1225,14 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
         superres_params_type spr_params = {input_picture_ptr->width, input_picture_ptr->height, 0};
         downscaled_source_buffer_desc_ctor(&upscaled_recon, recon_ptr, spr_params);
         av1_resize_frame(recon_ptr,
-            upscaled_recon,
-            scs_ptr->static_config.encoder_bit_depth,
-            av1_num_planes(&scs_ptr->seq_header.color_config),
-            ss_x,
-            ss_y,
-            recon_ptr->packed_flag,
-            PICTURE_BUFFER_DESC_FULL_MASK);
+                         upscaled_recon,
+                         scs_ptr->static_config.encoder_bit_depth,
+                         av1_num_planes(&scs_ptr->seq_header.color_config),
+                         ss_x,
+                         ss_y,
+                         recon_ptr->packed_flag,
+                         PICTURE_BUFFER_DESC_FULL_MASK,
+                         0); // is_2bcompress
         recon_ptr = upscaled_recon;
     }
 
