@@ -191,7 +191,7 @@ Linux Sanitizer Compile:
     EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=$SANITIZER -DSANITIZER=$SANITIZER
   parallel:
     matrix:
-      - SANITIZER: [address, memory, thread]
+      - SANITIZER: [address, memory, thread, "signed-integer-overflow,unsigned-integer-overflow"]
   artifacts:
     untracked: false
     expire_in: 1 days
@@ -199,20 +199,7 @@ Linux Sanitizer Compile:
       - address/
       - memory/
       - thread/
-
-Linux Integer Overflow Compile:
-  extends: .linux-compiler-base
-  variables:
-    CC: clang-12
-    CXX: clang++-12
-    CMAKE_BUILD_TYPE: Debug
-    EXTRA_CFLAGS: -fsanitize=signed-integer-overflow,unsigned-integer-overflow
-    EXTRA_CXXFLAGS: -fsanitize=signed-integer-overflow,unsigned-integer-overflow
-  artifacts:
-    untracked: false
-    expire_in: 1 days
-    paths:
-      - Bin/Debug/SvtAv1EncApp
+      - signed-integer-overflow,unsigned-integer-overflow/
 
 #
 # Test jobs
@@ -251,12 +238,13 @@ Linux Sanitizer Test:
       - SANITIZER: memory
         svt_asm: 0
       - SANITIZER: thread
+      - SANITIZER: "signed-integer-overflow,unsigned-integer-overflow"
   script:
     - |
-      command="$PWD/$SANITIZER/SvtAv1EncApp -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m ${svt_asm:+--asm $svt_asm} -n 60 --preset 8 -b output.ivf"
+      command="$PWD/$SANITIZER/SvtAv1EncApp -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m ${svt_asm:+--asm $svt_asm} -n 60 --preset 8 -b output.ivf --progress 0"
       case $SANITIZER in
-      address|memory) $command ;;
-      *) gdb -q -ex "handle SIG32 nostop" -ex r -ex bt -ex q --return-child-result --args $command ;;
+      thread) gdb -q -ex "handle SIG32 nostop" -ex r -ex bt -ex q --return-child-result --args $command ;;
+      *) $command ;;
       esac
   needs:
     - Linux Sanitizer Compile
@@ -343,22 +331,6 @@ Linux Intra Enc Test:
         ./Bin/Release/SvtAv1EncApp --preset 2 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
         ./Bin/Release/SvtAv1EncApp --preset 8 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
       done
-
-Linux Integer Overflow Test:
-  extends: .linux-enc-test-base
-  script:
-    - ret=true
-    - ./Bin/Debug/SvtAv1EncApp --preset 2 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.log"
-    - ./Bin/Debug/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.log"
-    - num_errors=$(sort -u test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m*.log | awk 'BEGIN{count=0}/error/ {print $0 > "/dev/stderr"; count=count+1} END{print count}')
-    - |
-      if [[ $num_errors > 0 ]]; then
-        ret=false
-        echo "Found $num_errors integer overflows"
-      fi
-    - $ret
-  needs:
-    - Linux Integer Overflow Compile
 
 Linux Passes vs Passes Test:
   extends: .linux-enc-test-base
