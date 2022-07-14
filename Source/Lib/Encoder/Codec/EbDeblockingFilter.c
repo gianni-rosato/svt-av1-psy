@@ -797,6 +797,14 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
     SequenceControlSet *scs_ptr  = pcs_ptr->parent_pcs_ptr->scs_ptr;
     Bool                is_16bit = scs_ptr->is_16bit_pipeline;
 
+    // svt_spatial_full_distortion_kernel note:
+    // intrinsic optimization require width and height in 4 pixel aligned.
+    // when scaling is enabled the width and height might be not aligned.
+    // here uses aligned_width and aligned_height to avoid wrong sse results.
+    // if encoding in non-scaled frame, aligned_width and aligned_height equals
+    // frame width and height, it has no effect to original resolution
+    const uint16_t input_align_width = pcs_ptr->parent_pcs_ptr->aligned_width;
+    const uint16_t input_align_height = pcs_ptr->parent_pcs_ptr->aligned_height;
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
@@ -822,8 +830,8 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                                       recon_coeff_buffer,
                                                       0,
                                                       recon_ptr->stride_y,
-                                                      input_picture_ptr->width,
-                                                      input_picture_ptr->height);
+                                                      input_align_width,
+                                                      input_align_height);
         } else if (plane == 1) {
             recon_coeff_buffer = (uint8_t *)&(
                 (recon_ptr->buffer_cb)[recon_ptr->origin_x / 2 +
@@ -839,8 +847,8 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                                       recon_coeff_buffer,
                                                       0,
                                                       recon_ptr->stride_cb,
-                                                      (input_picture_ptr->width + ss_x) >> ss_x,
-                                                      (input_picture_ptr->height + ss_y) >> ss_y);
+                                                      input_align_width >> ss_x,
+                                                      input_align_height >> ss_y);
         } else if (plane == 2) {
             recon_coeff_buffer = (uint8_t *)&(
                 (recon_ptr->buffer_cr)[recon_ptr->origin_x / 2 +
@@ -856,8 +864,8 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                                       recon_coeff_buffer,
                                                       0,
                                                       recon_ptr->stride_cr,
-                                                      (input_picture_ptr->width + ss_x) >> ss_x,
-                                                      (input_picture_ptr->height + ss_y) >> ss_y);
+                                                      input_align_width >> ss_x,
+                                                      input_align_height >> ss_y);
         }
         return 0;
     } else {
