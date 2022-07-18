@@ -10,20 +10,24 @@ addressing ringing artifacts. CDEF is a combination of the directional
 de-ringing filter from the Daala codec (Mozilla) and the Constrained Low
 Pass Filter (CLPF) from the Thor codec (Cisco).
 
-Filtering is applied on an 8x8 block level, which is a large enough
-block size to reliably detect edges, but small enough block size to
-accurately detect edge directions. Filtering is applied to both luma and
-chroma samples. For a given block, the algorithm consists of the two
-main steps outlined below:
+Filtering is applied on an 8x8 block level. 8x8 blocks have enough pixels
+that an edge can be accurately detected, which would not be possible for
+4x4 blocks. However, 8x8 blocks don't have so many pixels that the detected
+edge will have more than one direction, which would be much more likely
+to occur for an edge present in a 16x16 block. Filtering is applied to
+both luma and chroma samples. For a given block, the algorithm consists
+of the two main steps outlined below:
 
-1. Identify the direction **d** of the block (i.e. direction of edges). Eight directions {0,…,7} could be identified.
+1. Identify the direction **d** of the block (i.e. direction of edges). One
+of eight possible directions {0,…,7} can be utilized to identify the direction
+of the block.
 
 2. Filtering
     * Apply a nonlinear filter along the edge in the identified direction. Filter taps are aligned in the direction of the block. The main goal is to address ringing artifacts.
 
     * Filter mildly along a 45 degree direction from the edge.
 
-The two steps are outlined in more detail in the following.
+The two steps are outlined in more detail in the following section.
 
 ***Step 1 – Identification of edge direction***. Eight edge directions
 could be considered. The directions are indexed with d=0,…,7 as
@@ -50,8 +54,8 @@ performed as follows:
     direction.
 
 The example in Figure 2 below illustrates this step for an 8x8 input block. In this
-example, direction 0 results in the smallest error variance and hence
-was selected as the block direction.
+example, direction 0 has the smallest error variance and is selected as the block
+direction.
 
 ![image25](./img/image25.png)
 
@@ -62,12 +66,11 @@ steps, namely a primary filtering operation and a secondary filtering
 operation. The primary filter acts along the identified block direction.
 The secondary filter acts at ![math](http://latex.codecogs.com/gif.latex?45^o) from the identified
 direction. In the example shown in Figure 3 below, the block direction
-is d=0 ![math](http://latex.codecogs.com/gif.latex?45^o). The sample to be filtered is highlighted in
-red. The samples to be considered when filtering the red sample in
-primary filtering are highlighted in green (a total of four samples).
-Those considered in the secondary filtering of the red sample are
-located at ![math](http://latex.codecogs.com/gif.latex?45^o) angle from the block direction and are
-highlighted in blue (a total of eight samples).
+is d=0, ![math](http://latex.codecogs.com/gif.latex?45^o). The sample to be filtered is highlighted in
+red. During primary filtering of the red sample the four green samples are considered.
+During secondary filtering of the red sample the eight blue samples
+located at a ![math](http://latex.codecogs.com/gif.latex?45^o) angle from the block direction
+are considered.
 
 ![image26](./img/image26.png)
 
@@ -145,25 +148,23 @@ The main steps involved in the implementation of the algorithm are
 outlined below, followed by more details on some of the important
 functions.
 
-Step 1 - Splitting the frame into segments
-
-- The frame to be filtered is divided into segments to allow for parallel filtering operations on
-  different parts of the frame. The segments are set according to the following
-  (see ```load_default_buffer_configuration_settings``` in ```EbEncHandle.c```)
-  The number of segment rows is set to 1 if ```(luma height/64)<6```, else it set to 6.
-- The number of segment columns is set to 1 if ```(luma width/64)<10```, else it set to 6.
+Step 1: Split the frame to be filtered into segments to allow for parallel filtering operations on
+  different parts of the frame. The segments are set according to the following rules
+  (see ```load_default_buffer_configuration_settings``` in ```EbEncHandle.c```):
+- The number of segment rows is set to 1 if ```(luma height/64)<6```, else it is set to 6.
+- The number of segment columns is set to 1 if ```(luma width/64)<10```, else it is set to 6.
 
 The segments are processed in ```cdef_kernel```. Each segment is split into
 64x64 filter blocks.
 
-Step 2: Perform CDEF search for each segment \[each running on a
-separate thread\]. Each segment goes through a filter search operation
+Step 2: CDEF search is performed for each segment using a separate thread.
+Each segment goes through a filter search operation
 through the function (```cdef_seg_search```). For a given 64x64 filter block
 in a segment, the main purpose of the search is to identify the
 directions of the 8x8 blocks in the filter block, and the best filter
 (Primary strength, Secondary strength) pair to use in filtering the
-filter block. The primary filter strength takes value in {0,…,15},
-whereas the secondary filter strength takes value in {0, 1, 2, 4}. The
+filter block. The primary filter strength can take any value between 0 and 15 inclusive,
+whereas the secondary filter strength can take one of the following values: 0, 1, 2 or 4. The
 (primary strength, secondary strength) pairs are then indexed and
 ordered as indicated in Table 2 below:
 
@@ -180,8 +181,8 @@ ordered as indicated in Table 2 below:
 | …                         | (...,…)                                         |
 | 63                        | (15,4)                                          |
 
-The search for the best (Primary strength, Secondary strength) pair to
-use is equivalent to the search for the index for such pair.
+Searching for the best filter (Primary strength, Secondary strength) pair is equivalent
+to searching for the best filter strength index.
 
 The primary luma damping (```pri_damping```) and secondary luma damping (```sec_damping```)
 values are set as a function of the base qindex for the picture and are given by:
@@ -191,7 +192,7 @@ pri_damping = 3 + (base_qindex/64);
 sec_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex/64);
 ```
 
-Chroma damping values are always one less the luma damping value.
+Chroma damping values are always one less than the luma damping values.
 
 The CDEF search (```cdef_seg_search```) proceeds along the following steps.
 
@@ -204,24 +205,24 @@ The CDEF search (```cdef_seg_search```) proceeds along the following steps.
 
     - Perform the following for each 8x8 non-skip block (```cdef_filter_fb```):
 
-      - Perform the following for each 8x8 non-skip block (```cdef_filter_fb```):
-
-        - Find the direction for each 8x8 block (```cdef_find_dir```).
-        - Filter the 8x8 block according to the identified direction using the set filter strength
-          (```cdef_filter_block```, C only version ```cdef_filter_block_c```.
-          More details on ```cdef_filter_block_c``` are provided below.).
+      - Find the direction for each 8x8 block (```cdef_find_dir```).
+      - Filter the 8x8 block according to the identified direction using the set filter strength
+        (```cdef_filter_block```). More details on the C-only version of this
+        function, ```cdef_filter_block_c```, are provided below.
 
 
     - Compute the filtering mse for the filter block corresponding to the filter strength being considered
       (```compute_cdef_dist```).
 
 Step 3: Select a subset of filter strengths to use in the final filtering of the 64x64
-filter blocks in the frame based on the filtering results from step 2
-(```finish_cdef_search```. More details on ```finish_cdef_search``` are provided below.).
-This step is frame-based and is performed by only one thread.
+filter blocks using the results from step 2. The entire frame will be filtered using the subset of filter
+strenghts chosen, therefore before the subset can be chosen all segements must be completed in order to
+collect the filter strength data from all 64x64 filter blocks. This step is frame-based and is performed
+using only one thread (```finish_cdef_search```). More details on ```finish_cdef_search``` are
+provided below.
 
-Step 4: Complete the filtering of the frame based on the selected set of filtering strengths from Step 3.
-(```av1_cdef_frame```. More details on ```av1_cdef_frame``` are provided below.)
+Step 4: Complete the filtering of the frame using the subset of filtering strengths chosen in Step 3.
+(```av1_cdef_frame```). More details on ```av1_cdef_frame``` are provided below
 
 **More details about cdef\_filter\_block\_c**
 
@@ -361,44 +362,44 @@ of zero coefficients in the nearest ref frames) is above 75%.
 
 ### Cost Biasing to Reduce CDEF Application
 
-After the CDEF search, the best selected filters must be applied to each SB;
-however, if the best selected filter for an SB is (0,0), then no filtering is
+After the CDEF search, the best selected filters must be applied to each filter block;
+however, if the best selected filter for a filter block is (0,0), then no filtering is
 required. By enabling ```cdef_ctrls->zero_fs_cost_bias```, the cost of the
 (0,0) filter can be scaled down to make it more favourable, resulting in fewer
-SBs requiring filtering in ```svt_av1_cdef_frame```.
+filter blocks requiring filtering in ```av1_cdef_frame```.
 
-When ```cdef_ctrls->zero_fs_cost_bias``` is non-zero, the cost of the (0,0) filter for each SB will be
-scaled by (```cdef_ctrls->zero_fs_cost_bias /64```).
+When ```cdef_ctrls->zero_fs_cost_bias``` is non-zero, the cost of the (0,0) filter for each filter block will be
+scaled by ```cdef_ctrls->zero_fs_cost_bias /64```.
 
-4. **Signaling**
+## 4. Signaling
 
 At the frame level, the algorithm signals the luma damping value and up to 8
-different filter strength presets to choose from. Each preset includes luma
-primary preset, chroma primary preset, luma secondary preset, a chroma
-secondary preset and the number of bits used to signal the 64x64 level preset.
+different filter strength pairs to choose from. Each pair includes luma
+primary strength, chroma primary strength, luma secondary strength, chroma
+secondary strength and the number of bits used to signal the 64x64 level pairs.
 Table 4 summarizes the parameters signaled at the frame level.
 
 At the 64x64 filter block level, the algorithm signals the index for the
-specific preset to work with for the 64x64 filter block from among the set of
-presets specified at the frame level. Table 5 summarizes the parameters
+specific filter strength pair to work with for the 64x64 filter block from among the set of
+filter strength pairs specified at the frame level. Table 5 summarizes the parameters
 signaled at the filter block level.
 
 ##### Table 4. CDEF parameters signaled at the frame level.
 
-| **Frame level Parameters**                                        | **Values (for 8-bit content)** |
-| ----------------------------------------------------------------- | ------------------------------ |
-| Luma Damping D                                                    | {3, 4, 5, 6}                   |
-| Number of bits used for filter block signaling                    | {0,..,3}                       |
-| List of 1, 2, 4 or 8 presets. Each preset contains the following: |                                |
-| Luma primary strength                                             | {0,…,15}                       |
-| Chroma primary strength                                           | {0,…,15}                       |
-| Luma secondary strength                                           | {0,1,2,3}                      |
-| Chroma secondary strength                                         | {0,1,2,3}                      |
+| **Frame level Parameters**                                                    | **Values (for 8-bit content)** |
+| ----------------------------------------------------------------------------- | ------------------------------ |
+| Luma Damping D                                                                | {3, 4, 5, 6}                   |
+| Number of bits used for filter block signaling                                | {0,..,3}                       |
+| List of 1, 2, 4 or 8 filter strength pairs. Each pair contains the following: |                                |
+| Luma primary strength                                                         | {0,…,15}                       |
+| Chroma primary strength                                                       | {0,…,15}                       |
+| Luma secondary strength                                                       | {0,1,2,3}                      |
+| Chroma secondary strength                                                     | {0,1,2,3}                      |
 
 ##### Table 5. CDEF parameters signaled at the filter block level.
-| **Filter-Block-level Parameters**                                 | **Values**                     |
-| ----------------------------------------------------------------- | ------------------------------ |
-| Index for the preset to use                                       | Up to 7                        |
+| **Filter-Block-level Parameters**                                               | **Values**                     |
+| ------------------------------------------------------------------------------- | ------------------------------ |
+| Index for the filter strength pair to use                                       | Up to 7                        |
 
 
 ## Notes
