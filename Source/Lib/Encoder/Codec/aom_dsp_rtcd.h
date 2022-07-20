@@ -922,6 +922,10 @@ extern "C" {
     void svt_av1_highbd_interpolate_core_c(const uint16_t *const input, int in_length, uint16_t *output, int out_length, int bd, const int16_t *interp_filters);
     RTCD_EXTERN void(*svt_av1_highbd_down2_symeven)(const uint16_t *const input, int length, uint16_t *output, int bd);
     void svt_av1_highbd_down2_symeven_c(const uint16_t *const input, int length, uint16_t *output, int bd);
+    RTCD_EXTERN EbErrorType(*svt_av1_highbd_resize_plane)(const uint16_t *const input, int height, int width, int in_stride, uint16_t *output, int height2, int width2, int out_stride, int bd);
+    EbErrorType svt_av1_highbd_resize_plane_c(const uint16_t *const input, int height, int width, int in_stride, uint16_t *output, int height2, int width2, int out_stride, int bd);
+    RTCD_EXTERN EbErrorType(*svt_av1_resize_plane)(const uint8_t *const input, int height, int width, int in_stride, uint8_t *output, int height2, int width2, int out_stride);
+    EbErrorType svt_av1_resize_plane_c(const uint8_t *const input, int height, int width, int in_stride, uint8_t *output, int height2, int width2, int out_stride);
 #ifdef ARCH_X86_64
     int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     int64_t svt_aom_highbd_sse_avx2(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
@@ -1779,6 +1783,8 @@ extern "C" {
     void svt_av1_down2_symeven_avx2(const uint8_t *const input, int length, uint8_t *output);
     void svt_av1_highbd_interpolate_core_avx2(const uint16_t *const input, int in_length, uint16_t *output, int out_length, int bd, const int16_t *interp_filters);
     void svt_av1_highbd_down2_symeven_avx2(const uint16_t *const input, int length, uint16_t *output, int bd);
+    EbErrorType svt_av1_highbd_resize_plane_avx2(const uint16_t *const input, int height, int width, int in_stride, uint16_t *output, int height2, int width2, int out_stride, int bd);
+    EbErrorType svt_av1_resize_plane_avx2(const uint8_t *const input, int height, int width, int in_stride, uint8_t *output, int height2, int width2, int out_stride);
 #endif
 
     /* Moved to aom_dsp_rtcd.c file:
