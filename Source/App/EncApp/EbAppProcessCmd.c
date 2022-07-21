@@ -27,6 +27,8 @@
 #include <sys/mman.h>
 #endif
 
+#include "EbAppOutputivf.h"
+
 /***************************************
  * Macros
  ***************************************/
@@ -613,52 +615,10 @@ void process_input_buffer(EncChannel *channel) {
 #define LONG_ENCODE_FRAME_ENCODE 4000
 #define SPEED_MEASUREMENT_INTERVAL 2000
 #define START_STEADY_STATE 1000
-#define AV1_FOURCC 0x31305641 // used for ivf header
-#define IVF_STREAM_HEADER_SIZE 32
-#define IVF_FRAME_HEADER_SIZE 12
 #define OBU_FRAME_HEADER_SIZE 3
 #define TD_SIZE 2
-static __inline void mem_put_le32(void *vmem, int32_t val) {
-    uint8_t *mem = (uint8_t *)vmem;
 
-    mem[0] = (uint8_t)((val >> 0) & 0xff);
-    mem[1] = (uint8_t)((val >> 8) & 0xff);
-    mem[2] = (uint8_t)((val >> 16) & 0xff);
-    mem[3] = (uint8_t)((val >> 24) & 0xff);
-}
 #define MEM_VALUE_T_SZ_BITS (sizeof(MEM_VALUE_T) << 3)
-
-static __inline void mem_put_le16(void *vmem, int32_t val) {
-    uint8_t *mem = (uint8_t *)vmem;
-
-    mem[0] = (uint8_t)((val >> 0) & 0xff);
-    mem[1] = (uint8_t)((val >> 8) & 0xff);
-}
-
-static void write_ivf_stream_header(EbConfig *config) {
-    char header[IVF_STREAM_HEADER_SIZE] = {'D', 'K', 'I', 'F'};
-    mem_put_le16(header + 4, 0); // version
-    mem_put_le16(header + 6, 32); // header size
-    mem_put_le32(header + 8, AV1_FOURCC); // fourcc
-    mem_put_le16(header + 12, config->input_padded_width); // width
-    mem_put_le16(header + 14, config->input_padded_height); // height
-    mem_put_le32(header + 16, config->config.frame_rate_numerator); // rate
-    mem_put_le32(header + 20, config->config.frame_rate_denominator); // scale
-    mem_put_le32(header + 24, 0); // length
-    mem_put_le32(header + 28, 0); // unused
-    fwrite(header, 1, IVF_STREAM_HEADER_SIZE, config->bitstream_file);
-}
-
-static void write_ivf_frame_header(EbConfig *config, uint32_t byte_count) {
-    char header[IVF_FRAME_HEADER_SIZE];
-
-    mem_put_le32(&header[0], (int32_t)byte_count);
-    mem_put_le32(&header[4], (int32_t)(config->ivf_count & 0xFFFFFFFF));
-    mem_put_le32(&header[8], (int32_t)(config->ivf_count >> 32));
-
-    config->ivf_count++;
-    fwrite(header, 1, IVF_FRAME_HEADER_SIZE, config->bitstream_file);
-}
 
 double get_psnr(double sse, double max) {
     double psnr;
