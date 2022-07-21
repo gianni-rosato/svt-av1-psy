@@ -28,7 +28,7 @@ extern "C" {
  * has been modified, and reset anytime the major API version has
  * been changed. Used to keep track if a field has been added or not.
  */
-#define SVT_AV1_ENC_ABI_VERSION 3
+#define SVT_AV1_ENC_ABI_VERSION 4
 
 //***HME***
 
@@ -398,18 +398,16 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is 0.*/
     Bool use_qp_file;
 
-    /* Target bitrate in bits/second, only apllicable when rate control mode is
-     * set to 2 or 3.
+    /* Target bitrate in bits/second, only applicable when rate control mode is
+     * set to 1 (VBR) or 2 (CBR).
      *
-     * Default is 7000000. */
+     * Default is 2000000. */
     uint32_t target_bit_rate;
     /* maximum bitrate in bits/second, only apllicable when rate control mode is
      * set to 0.
      *
      * Default is 0. */
     uint32_t max_bit_rate;
-    /* VBV Buffer size */
-    uint32_t vbv_bufsize;
     /* Maxium QP value allowed for rate control use, only applicable when rate
      * control mode is set to 1. It has to be greater or equal to minQpAllowed.
      *
