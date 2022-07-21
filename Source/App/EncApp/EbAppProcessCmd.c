@@ -764,7 +764,10 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
             if (stream_file) {
                 if (config->performance_context.frame_count == 1 &&
                     !(flags & EB_BUFFERFLAG_IS_ALT_REF)) {
-                    write_ivf_stream_header(config);
+                    write_ivf_stream_header(config,
+                                            config->frames_to_be_encoded == -1
+                                                ? 0
+                                                : (int32_t)config->frames_to_be_encoded);
                 }
                 write_ivf_frame_header(config, header_ptr->n_filled_len);
                 fwrite(header_ptr->p_buffer, 1, header_ptr->n_filled_len, stream_file);

@@ -16,7 +16,7 @@
 
 #include "EbAppConfig.h"
 
-void write_ivf_stream_header(EbConfig *config);
+void write_ivf_stream_header(EbConfig *config, int32_t length);
 void write_ivf_frame_header(EbConfig *config, uint32_t byte_count);
 
 #endif

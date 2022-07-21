@@ -35,7 +35,7 @@ static __inline void mem_put_le16(void *vmem, int32_t val) {
     mem[1] = (uint8_t)((val >> 8) & 0xff);
 }
 
-void write_ivf_stream_header(EbConfig *config) {
+ void write_ivf_stream_header(EbConfig *config, int32_t length) {
     char header[IVF_STREAM_HEADER_SIZE] = {'D', 'K', 'I', 'F'};
     mem_put_le16(header + 4, 0); // version
     mem_put_le16(header + 6, 32); // header size
@@ -44,7 +44,7 @@ void write_ivf_stream_header(EbConfig *config) {
     mem_put_le16(header + 14, config->input_padded_height); // height
     mem_put_le32(header + 16, config->config.frame_rate_numerator); // rate
     mem_put_le32(header + 20, config->config.frame_rate_denominator); // scale
-    mem_put_le32(header + 24, 0); // length
+    mem_put_le32(header + 24, length); // length
     mem_put_le32(header + 28, 0); // unused
     fwrite(header, 1, IVF_STREAM_HEADER_SIZE, config->bitstream_file);
 }

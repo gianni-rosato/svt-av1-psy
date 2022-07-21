@@ -27,6 +27,8 @@
 #include <sys/file.h>
 #endif
 
+#include "EbAppOutputivf.h"
+
 #if !defined(_WIN32) || !defined(HAVE_STRNLEN_S)
 #include "third_party/safestringlib/safe_str_lib.h"
 #endif
@@ -1602,6 +1604,8 @@ void svt_config_dtor(EbConfig *config_ptr) {
     }
 
     if (config_ptr->bitstream_file) {
+        if (!fseek(config_ptr->bitstream_file, 0, SEEK_SET))
+            write_ivf_stream_header(config_ptr, config_ptr->frames_encoded);
         fclose(config_ptr->bitstream_file);
         config_ptr->bitstream_file = (FILE *)NULL;
     }

@@ -14,6 +14,7 @@
 
 extern "C" {
 #include "EbAppConfig.c"
+#include "EbAppOutputivf.c"
 #include "EbAppContext.c"
 }
 
