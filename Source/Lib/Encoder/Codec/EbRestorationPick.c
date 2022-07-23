@@ -1553,6 +1553,20 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
         const int32_t highbd = rsc.cm->use_highbitdepth;
         svt_block_on_mutex(pcs_ptr->rest_search_mutex);
         if (!pcs_ptr->rest_extend_flag[plane]) {
+#if FIX_REST_SANITIZER
+            // The horizontal padding is increased by 1 to address an uninitialized memory access when
+            // using the "C" code path.  In horz_scalar_product, where the wiener filter is applied to the pixels,
+            // the right-edge pixels will need 3 padded pixels to perform a 7-tap filter. However, the filter is applied
+            // over 8 (SUBPEL_TAPS) pixels, with the final 8th weight being zero. Therefore, the extra right-most pixel
+            // will not affect the result, but will cause a sanitizer failure if not initialized.
+            svt_extend_frame(rsc.dgd_buffer,
+                             rsc.plane_width,
+                             rsc.plane_height,
+                             rsc.dgd_stride,
+                             RESTORATION_BORDER + 1,
+                             RESTORATION_BORDER,
+                             highbd);
+#else
             svt_extend_frame(rsc.dgd_buffer,
                              rsc.plane_width,
                              rsc.plane_height,
@@ -1560,6 +1574,7 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                              RESTORATION_BORDER,
                              RESTORATION_BORDER,
                              highbd);
+#endif
             pcs_ptr->rest_extend_flag[plane] = TRUE;
         }
         svt_release_mutex(pcs_ptr->rest_search_mutex);
