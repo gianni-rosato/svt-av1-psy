@@ -5383,9 +5383,9 @@ static Bool get_sb_tpl_intra_stats(PictureControlSet *pcs, ModeDecisionContext *
         const int tpl_blk_size = ppcs->tpl_ctrls.dispenser_search_level == 0 ? 16 : ppcs->tpl_ctrls.dispenser_search_level == 1 ? 32 : 64;
 
         // Get actual SB width (for cases of incomplete SBs)
-        SbParams *sb_params = &ppcs->sb_params_array[ctx->sb_index];
-        const int sb_cols = sb_params->width / tpl_blk_size;
-        const int sb_rows = sb_params->height / tpl_blk_size;
+        SbGeom *sb_geom = &ppcs->sb_geom[ctx->sb_index];
+        int sb_cols = sb_geom->width / tpl_blk_size;
+        int sb_rows = sb_geom->height / tpl_blk_size;
 
         int ang_intra_count = 0;
         PredictionMode max_intra = DC_PRED;
@@ -5473,9 +5473,9 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
 
                 int tpl_blk_size = ppcs->tpl_ctrls.dispenser_search_level == 0 ? 16 : ppcs->tpl_ctrls.dispenser_search_level == 1 ? 32 : 64;
                 // Get actual SB width (for cases of incomplete SBs)
-                SbParams *sb_params = &ppcs->sb_params_array[ctx->sb_index];
-                int sb_cols = sb_params->width / tpl_blk_size;
-                int sb_rows = sb_params->height / tpl_blk_size;
+                SbGeom *sb_geom = &ppcs->sb_geom[ctx->sb_index];
+                int sb_cols = sb_geom->width / tpl_blk_size;
+                int sb_rows = sb_geom->height / tpl_blk_size;
 
                 // if more than a quarter of SB is angular, use safe intra_level
                 if (sb_ang_intra_count > ((sb_rows * sb_cols) >> 2)) {
