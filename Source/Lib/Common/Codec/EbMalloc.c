@@ -16,7 +16,7 @@
 #define LOG_TAG "SvtMalloc"
 #include "EbLog.h"
 
-void svt_print_alloc_fail(const char* file, int line) {
+void svt_print_alloc_fail_impl(const char* file, int line) {
     SVT_FATAL("allocate memory failed, at %s:%d\n", file, line);
 }
 
@@ -320,7 +320,8 @@ void svt_decrease_component_count() {
     svt_release_mutex(m);
 }
 
-void svt_add_mem_entry(void* ptr, EbPtrType type, size_t count, const char* file, uint32_t line) {
+void svt_add_mem_entry_impl(void* ptr, EbPtrType type, size_t count, const char* file,
+                            uint32_t line) {
     if (for_each_mem_entry(
             hash(ptr),
             add_mem_entry,
