@@ -430,6 +430,41 @@ Linux Gstreamer (Static):
         ! webmmux \
         ! filesink location=akiyo.mkv
 
+Linux libavif (Static):
+  extends: .linux-test-base
+  stage: compile
+  variables:
+    CC: gcc-11
+    CXX: g++-11
+    CFLAGS: -pipe
+    CXXFLAGS: -pipe
+    LDFLAGS: -pipe
+    PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+    GIT_DEPTH: 0
+    CMAKE_BUILD_TYPE: Debug
+  before_script:
+    - !reference [.ffmpeg-before-script-git-setup]
+    - git clone $PWD svtav1-src
+    - git clone https://github.com/AOMediaCodec/libavif.git libavif-src
+    - git clone https://code.videolan.org/videolan/dav1d.git dav1d-src
+    - !reference [.ffmpeg-before-script-export]
+    - apt update && apt install -yyy libpng-dev libjpeg-dev
+  script:
+    - !reference [.ffmpeg-svtav1-script]
+    - !reference [.ffmpeg-dav1d-script]
+    - cmake
+      -S libavif-src
+      -B libavif-build
+      -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
+      -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
+      -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR"
+      -DAVIF_CODEC_DAV1D=ON
+      -DAVIF_CODEC_SVT=ON
+      -DAVIF_BUILD_EXAMPLES=ON
+      -DAVIF_BUILD_APPS=ON
+    - cmake --build libavif-build --config Release --target install
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- avifenc -c svt -d 8 -y 420 -r limited -j all ./Docs/img/me_fig_new.png out.avif
+
 Linux FFmpeg (Static):
   extends: .linux-test-base
   stage: compile
@@ -441,6 +476,7 @@ Linux FFmpeg (Static):
     LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
     GIT_DEPTH: 0
   before_script:
+    - !reference [.ffmpeg-before-script-git-setup]
     - !reference [.ffmpeg-before-script-clone]
     - !reference [.ffmpeg-before-script-export]
   script:
@@ -481,6 +517,7 @@ Linux FFmpeg (n5.0, Static):
     GIT_DEPTH: 0
     CMAKE_BUILD_TYPE: Debug
   before_script:
+    - !reference [.ffmpeg-before-script-git-setup]
     - !reference [.ffmpeg-before-script-clone]
     - git -C ffmpeg-src checkout n5.0
     - git -C ffmpeg-src am -3 "$PWD/ffmpeg_plugin/n5.0/"*.patch

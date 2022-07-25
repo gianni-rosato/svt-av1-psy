@@ -113,9 +113,11 @@
     ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp -i "$SVT_ENCTEST_FILENAME" --rc 2 --tbr 100 --lp 1 -b "cbr-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m12.ivf" --pred-struct 1 --preset 12
   done
 
-.ffmpeg-before-script-clone:
+.ffmpeg-before-script-git-setup:
   - git config --global user.email "ci@gitlab.com"
   - git config --global user.name "GitLab CI"
+
+.ffmpeg-before-script-clone:
   - git clone $PWD svtav1-src
   - git clone https://aomedia.googlesource.com/aom aom-src
   - git clone https://chromium.googlesource.com/webm/libvpx libvpx-src
@@ -126,6 +128,7 @@
 .ffmpeg-before-script-export:
   - true "${CMAKE_BUILD_TYPE:=Release}" "${BUILD_SHARED_LIBS:=OFF}" "${PREFIX_DIR:=/usr/local}"
   - export PKG_CONFIG_PATH=$PREFIX_DIR/lib/pkgconfig${PKG_CONFIG_PATH:+:PKG_CONFIG_PATH}
+  - export PATH="${PREFIX_DIR}/bin:${PATH}"
 
 # SVT-AV1
 .ffmpeg-svtav1-script:
