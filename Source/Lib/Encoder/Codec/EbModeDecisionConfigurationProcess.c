@@ -1933,7 +1933,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                          rate_control_results_ptr->pcs_wrapper_ptr->object_ptr;
         SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
 
-
 #if FTR_USE_COEFF_LVL
         pcs_ptr->coeff_lvl = INVALID_LVL;
         if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {

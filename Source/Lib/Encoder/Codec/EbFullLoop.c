@@ -1458,6 +1458,7 @@ int32_t av1_quantize_inv_quantize_light(PictureControlSet *pcs_ptr, int32_t *coe
         pcs_ptr->parent_pcs_ptr->gqmatrix[qmatrix_level][AOM_PLANE_Y][adjusted_tx_size];
     const QmVal *iq_matrix =
         pcs_ptr->parent_pcs_ptr->giqmatrix[qmatrix_level][AOM_PLANE_Y][adjusted_tx_size];
+
     if (q_matrix == NULL && iq_matrix == NULL) {
         if (bit_depth > EB_EIGHT_BIT) {
             svt_aom_highbd_quantize_b((TranLow *)coeff,
@@ -1547,7 +1548,9 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     (void)is_encode_pass;
     (void)coeff_stride;
     (void)is_intra_bc;
-
+#if FIX_UV_QINDEX_OFFSET
+    PictureParentControlSet* ppcs = pcs_ptr->parent_pcs_ptr;
+#endif
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     int32_t             plane   = component_type == COMPONENT_LUMA ? AOM_PLANE_Y
                                : COMPONENT_CHROMA_CB ? AOM_PLANE_U : AOM_PLANE_V;
@@ -1565,7 +1568,22 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                           255,
                           (int32_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                               segmentation_qp_offset);
+
+#if FIX_UV_QINDEX_OFFSET
+    if (component_type != COMPONENT_LUMA) {
+        if (frame_is_intra_only(ppcs)) {
+            q_index += scs_ptr->static_config.key_frame_chroma_qindex_offset;
+        }
+        else {
+            q_index += scs_ptr->static_config.chroma_qindex_offsets[pcs_ptr->temporal_layer_index];
+        }
+
+        q_index = (uint32_t) CLIP3(0, 255, (int32_t) q_index);
+    }
+#endif
+
     if (bit_depth == EB_EIGHT_BIT) {
+
         if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_qtx       = scs_ptr->quants_8bit.y_quant[q_index];
             candidate_plane.quant_fp_qtx    = scs_ptr->quants_8bit.y_quant_fp[q_index];
@@ -1626,6 +1644,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
             candidate_plane.dequant_qtx     = scs_ptr->deq_bd.v_dequant_qtx[q_index];
         }
     }
+
     const ScanOrder *const scan_order =
         &av1_scan_orders[txsize][tx_type]; //get_scan(tx_size, tx_type);
 

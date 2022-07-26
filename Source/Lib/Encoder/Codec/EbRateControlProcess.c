@@ -3576,6 +3576,7 @@ void *rate_control_kernel(void *input_ptr) {
                         qindex = CLIP3(quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
                                        quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
                                        qindex);
+#if !FIX_UV_QINDEX_OFFSET
                         int32_t chroma_qindex = qindex;
                         if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
                             chroma_qindex += scs_ptr->static_config.key_frame_chroma_qindex_offset;
@@ -3589,12 +3590,15 @@ void *rate_control_kernel(void *input_ptr) {
                             quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
                             quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
                             chroma_qindex);
+#endif
                         frm_hdr->quantization_params.base_q_idx = qindex;
+#if !FIX_UV_QINDEX_OFFSET
                         frm_hdr->quantization_params.delta_q_dc[1] =
                             frm_hdr->quantization_params.delta_q_dc[2] =
                                 frm_hdr->quantization_params.delta_q_ac[1] =
                                     frm_hdr->quantization_params.delta_q_ac[2] = (chroma_qindex -
                                                                                   qindex);
+#endif
                         pcs_ptr->picture_qp                                    = (uint8_t)CLIP3(
                             (int32_t)scs_ptr->static_config.min_qp_allowed,
                             (int32_t)scs_ptr->static_config.max_qp_allowed,
@@ -3655,6 +3659,26 @@ void *rate_control_kernel(void *input_ptr) {
                             quantizer_to_qindex[pcs_ptr->picture_qp];
                     }
 
+#if FIX_UV_QINDEX_OFFSET
+                    int32_t chroma_qindex = frm_hdr->quantization_params.base_q_idx;
+                    if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
+                        chroma_qindex += scs_ptr->static_config.key_frame_chroma_qindex_offset;
+                    }
+                    else {
+                        chroma_qindex += scs_ptr->static_config.chroma_qindex_offsets[pcs_ptr->temporal_layer_index];
+                    }
+
+                    chroma_qindex = CLIP3(
+                        quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+                        quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+                        chroma_qindex);
+
+                    frm_hdr->quantization_params.delta_q_dc[1] =
+                    frm_hdr->quantization_params.delta_q_dc[2] =
+                    frm_hdr->quantization_params.delta_q_ac[1] =
+                    frm_hdr->quantization_params.delta_q_ac[2] =
+                        chroma_qindex - frm_hdr->quantization_params.base_q_idx;
+#endif
                     pcs_ptr->parent_pcs_ptr->picture_qp = pcs_ptr->picture_qp;
                     setup_segmentation(pcs_ptr, scs_ptr);
                 } else {

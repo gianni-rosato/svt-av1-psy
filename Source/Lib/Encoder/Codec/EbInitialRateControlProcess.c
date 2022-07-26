@@ -549,7 +549,37 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 svt_release_object(in_results_wrapper_ptr);
                 continue;
             }
+#if FIX_UV_QINDEX_OFFSET
+            // The quant/dequant params derivation is performaed 1 time per sequence assuming the qindex offset(s) are 0
+            // then adjusted per TU prior of the quantization at av1_quantize_inv_quantize() depending on the qindex offset(s)
+            if (pcs_ptr->picture_number == 0) {
+                Quants *const   quants_8bit = &scs_ptr->quants_8bit;
+                Dequants *const deq_8bit    = &scs_ptr->deq_8bit;
+                svt_av1_build_quantizer(
+                    EB_EIGHT_BIT,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    quants_8bit,
+                    deq_8bit);
 
+                if (scs_ptr->static_config.encoder_bit_depth == EB_TEN_BIT) {
+                    Quants *const   quants_bd = &scs_ptr->quants_bd;
+                    Dequants *const deq_bd    = &scs_ptr->deq_bd;
+                    svt_av1_build_quantizer(
+                        EB_TEN_BIT,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        quants_bd,
+                        deq_bd);
+                }
+            }
+#else
             if (pcs_ptr->picture_number == 0) {
                 Quants *const   quants_8bit = &scs_ptr->quants_8bit;
                 Dequants *const deq_8bit    = &scs_ptr->deq_8bit;
@@ -577,6 +607,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         deq_bd);
                 }
             }
+#endif
             // tpl_la can be performed on unscaled frames in super-res q-threshold and auto mode
             if (pcs_ptr->tpl_ctrls.enable && !pcs_ptr->frame_superres_enabled) {
                 svt_set_cond_var(&pcs_ptr->me_ready, 1);

@@ -3938,10 +3938,15 @@ void copy_api_from_app(
         scs_ptr->static_config.use_qp_file = 0;
         memcpy(scs_ptr->static_config.qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->qindex_offsets,
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
+#if !FIX_UV_QINDEX_OFFSET
         memcpy(scs_ptr->static_config.chroma_qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->chroma_qindex_offsets,
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
+#endif
     }
-
+#if FIX_UV_QINDEX_OFFSET
+    memcpy(scs_ptr->static_config.chroma_qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->chroma_qindex_offsets,
+        MAX_TEMPORAL_LAYERS * sizeof(int32_t));
+#endif
     scs_ptr->static_config.luma_y_dc_qindex_offset =
       MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->luma_y_dc_qindex_offset, 63));
     scs_ptr->static_config.chroma_u_dc_qindex_offset =

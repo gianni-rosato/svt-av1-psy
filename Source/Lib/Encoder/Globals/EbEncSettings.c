@@ -330,7 +330,23 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if FIX_UV_QINDEX_OFFSET
+    if (config->key_frame_chroma_qindex_offset < -64 || config->key_frame_chroma_qindex_offset > 63) {
+        SVT_ERROR(
+            "Instance %u : Invalid key_frame_chroma_qindex_offset. key_frame_chroma_qindex_offset must be [-64 - 63]\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
 
+    for (uint8_t i= 0; i < config->hierarchical_levels + 1; ++i) {
+        if (config->chroma_qindex_offsets[i] < -64 || config->chroma_qindex_offsets[i] > 63) {
+            SVT_ERROR(
+                "Instance %u : Invalid chroma_qindex_offsets. chroma_qindex_offsets must be [-64 - 63]\n",
+                channel_number + 1);
+            return_error = EB_ErrorBadParameter;
+        }
+    }
+#endif
     if (config->stat_report > 1) {
         SVT_ERROR("Instance %u : Invalid StatReport. StatReport must be [0 - 1]\n",
                   channel_number + 1);
