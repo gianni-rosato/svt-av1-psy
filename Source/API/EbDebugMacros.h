@@ -92,6 +92,7 @@ extern "C" {
 #define TUNE_CHROMA_RDOQ        1 // Increase the lambda used for RDOQ of chroma towards rate savings
 #define OPT_QPS_WEIGHT          1 // Optimize the weighting used in QPS to improve VMAF in low presets, SSIM in high presets
 #define FIX_REST_SANITIZER      1 // Fix sanitizer failure in restoration
+#define FIX_SCALE_SANITIZER     1 // Fix sanitizer failure in restoration when scaled
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
