@@ -330,6 +330,28 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if FIX_Y_QINDEX_OFFSET
+    if (config->use_fixed_qindex_offsets > 2) {
+        SVT_ERROR("Instance %u: The use_fixed_qindex_offsets must be [0 - 2] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->key_frame_qindex_offset < -64 || config->key_frame_qindex_offset > 63) {
+        SVT_ERROR(
+            "Instance %u : Invalid key_frame_qindex_offset. key_frame_qindex_offset must be [-64 - 63]\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    for (uint8_t i = 0; i < config->hierarchical_levels + 1; ++i) {
+        if (config->qindex_offsets[i] < -64 || config->qindex_offsets[i] > 63) {
+            SVT_ERROR(
+                "Instance %u : Invalid qindex_offsets. qindex_offsets must be [-64 - 63]\n",
+                channel_number + 1);
+            return_error = EB_ErrorBadParameter;
+        }
+    }
+#endif
 #if FIX_UV_QINDEX_OFFSET
     if (config->key_frame_chroma_qindex_offset < -64 || config->key_frame_chroma_qindex_offset > 63) {
         SVT_ERROR(
@@ -897,8 +919,11 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->tile_columns              = DEFAULT;
     config_ptr->qp = DEFAULT_QP;
     config_ptr->use_qp_file = FALSE;
-
+#if FIX_Y_QINDEX_OFFSET
+    config_ptr->use_fixed_qindex_offsets = 0;
+#else
     config_ptr->use_fixed_qindex_offsets = FALSE;
+#endif
     memset(config_ptr->qindex_offsets, 0, sizeof(config_ptr->qindex_offsets));
     config_ptr->key_frame_chroma_qindex_offset = 0;
     config_ptr->key_frame_qindex_offset        = 0;

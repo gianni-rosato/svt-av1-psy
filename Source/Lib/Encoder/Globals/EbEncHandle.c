@@ -3933,8 +3933,15 @@ void copy_api_from_app(
     scs_ptr->static_config.use_fixed_qindex_offsets = ((EbSvtAv1EncConfiguration*)config_struct)->use_fixed_qindex_offsets;
     scs_ptr->static_config.key_frame_chroma_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_chroma_qindex_offset;
     scs_ptr->static_config.key_frame_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_qindex_offset;
+#if FIX_Y_QINDEX_OFFSET
+    if (scs_ptr->static_config.use_fixed_qindex_offsets) {
+        scs_ptr->enable_qp_scaling_flag = scs_ptr->static_config.use_fixed_qindex_offsets == 1
+            ? 0
+            : 1; // do not shut the auto QPS if use_fixed_qindex_offsets 2
+#else
     if (scs_ptr->static_config.use_fixed_qindex_offsets == 1) {
         scs_ptr->enable_qp_scaling_flag = 0;
+#endif
         scs_ptr->static_config.use_qp_file = 0;
         memcpy(scs_ptr->static_config.qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->qindex_offsets,
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
@@ -3944,7 +3951,7 @@ void copy_api_from_app(
 #endif
     }
 #if FIX_UV_QINDEX_OFFSET
-    memcpy(scs_ptr->static_config.chroma_qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->chroma_qindex_offsets,
+    memcpy(scs_ptr->static_config.chroma_qindex_offsets, config_struct->chroma_qindex_offsets,
         MAX_TEMPORAL_LAYERS * sizeof(int32_t));
 #endif
     scs_ptr->static_config.luma_y_dc_qindex_offset =

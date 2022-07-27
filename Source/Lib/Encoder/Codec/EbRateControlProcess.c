@@ -3563,7 +3563,7 @@ void *rate_control_kernel(void *input_ptr) {
                     // QP scaling based on POC number for Flat IPPP structure
                     frm_hdr->quantization_params.base_q_idx =
                         quantizer_to_qindex[pcs_ptr->picture_qp];
-
+#if !FIX_Y_QINDEX_OFFSET
                     if (scs_ptr->static_config.use_fixed_qindex_offsets == 1) {
                         pcs_ptr->picture_qp = scs_ptr->static_config.qp;
                         int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
@@ -3616,40 +3616,84 @@ void *rate_control_kernel(void *input_ptr) {
 */
                     } else if (scs_ptr->enable_qp_scaling_flag &&
                                pcs_ptr->parent_pcs_ptr->qp_on_the_fly == FALSE) {
-                        const int32_t qindex =
-                            quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
-                        // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
-                        int32_t new_qindex;
-                        if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
-                            // Content adaptive qp assignment
-                            if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable) {
-                                if (pcs_ptr->picture_number == 0) {
-                                    rc->active_worst_quality =
-                                        quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
-                                    av1_rc_init(scs_ptr);
+#else
+                    if (pcs_ptr->parent_pcs_ptr->qp_on_the_fly == TRUE) {
+                        pcs_ptr->picture_qp = (uint8_t)CLIP3(
+                            (int32_t)scs_ptr->static_config.min_qp_allowed,
+                            (int32_t)scs_ptr->static_config.max_qp_allowed,
+                            pcs_ptr->parent_pcs_ptr->picture_qp);
+                        frm_hdr->quantization_params.base_q_idx =
+                            quantizer_to_qindex[pcs_ptr->picture_qp];
+
+                    }
+                    else {
+                        if (scs_ptr->enable_qp_scaling_flag) {
+#endif
+                            const int32_t qindex =
+                                quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+                            // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
+                            int32_t new_qindex;
+                            if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+                                // Content adaptive qp assignment
+                                if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable) {
+                                    if (pcs_ptr->picture_number == 0) {
+                                        rc->active_worst_quality =
+                                            quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+                                        av1_rc_init(scs_ptr);
+                                    }
+                                    new_qindex = cqp_qindex_calc_tpl_la(
+                                        pcs_ptr, rc, rc->active_worst_quality);
                                 }
-                                new_qindex = cqp_qindex_calc_tpl_la(
-                                    pcs_ptr, rc, rc->active_worst_quality);
-                            } else
-                                new_qindex = cqp_qindex_calc(pcs_ptr, qindex);
-                        } else {
-                            new_qindex = find_fp_qindex(
-                                (EbBitDepth)scs_ptr->static_config.encoder_bit_depth);
+                                else
+                                    new_qindex = cqp_qindex_calc(pcs_ptr, qindex);
+                            }
+                            else {
+                                new_qindex = find_fp_qindex(
+                                    (EbBitDepth)scs_ptr->static_config.encoder_bit_depth);
+                            }
+                            frm_hdr->quantization_params.base_q_idx = (uint8_t)CLIP3(
+                                (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+                                (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+                                (int32_t)(new_qindex));
+#if FIX_Y_QINDEX_OFFSET
                         }
-                        frm_hdr->quantization_params.base_q_idx = (uint8_t)CLIP3(
-                            (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
-                            (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
-                            (int32_t)(new_qindex));
+
+                        if (scs_ptr->static_config.use_fixed_qindex_offsets) {
+
+                            int32_t qindex = scs_ptr->static_config.use_fixed_qindex_offsets == 1
+                                ? quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp]
+                                : frm_hdr->quantization_params.base_q_idx;  // do not shut the auto QPS if use_fixed_qindex_offsets 2
+
+                            if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
+                                qindex += scs_ptr->static_config
+                                    .qindex_offsets[pcs_ptr->temporal_layer_index];
+                            }
+                            else {
+                                qindex += scs_ptr->static_config.key_frame_qindex_offset;
+                            }
+
+                            qindex = CLIP3(quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+                                quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+                                qindex);
+
+                            frm_hdr->quantization_params.base_q_idx = qindex;
+                        }
 
                         pcs_ptr->picture_qp = (uint8_t)CLIP3(
                             (int32_t)scs_ptr->static_config.min_qp_allowed,
                             (int32_t)scs_ptr->static_config.max_qp_allowed,
                             (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
-
+                    }
+#else
+                        pcs_ptr->picture_qp = (uint8_t)CLIP3(
+                            (int32_t)scs_ptr->static_config.min_qp_allowed,
+                            (int32_t)scs_ptr->static_config.max_qp_allowed,
+                            (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
                         // max bit rate is only active for 1 pass CRF
                         if (scs_ptr->static_config.rate_control_mode == 0 &&
                             scs_ptr->static_config.max_bit_rate)
                             crf_assign_max_rate(pcs_ptr->parent_pcs_ptr);
+
                     } else if (pcs_ptr->parent_pcs_ptr->qp_on_the_fly == TRUE) {
                         pcs_ptr->picture_qp = (uint8_t)CLIP3(
                             (int32_t)scs_ptr->static_config.min_qp_allowed,
@@ -3658,7 +3702,7 @@ void *rate_control_kernel(void *input_ptr) {
                         frm_hdr->quantization_params.base_q_idx =
                             quantizer_to_qindex[pcs_ptr->picture_qp];
                     }
-
+#endif
 #if FIX_UV_QINDEX_OFFSET
                     int32_t chroma_qindex = frm_hdr->quantization_params.base_q_idx;
                     if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
@@ -3678,6 +3722,15 @@ void *rate_control_kernel(void *input_ptr) {
                     frm_hdr->quantization_params.delta_q_ac[1] =
                     frm_hdr->quantization_params.delta_q_ac[2] =
                         chroma_qindex - frm_hdr->quantization_params.base_q_idx;
+#endif
+#if FIX_Y_QINDEX_OFFSET
+                    if (scs_ptr->enable_qp_scaling_flag &&
+                        pcs_ptr->parent_pcs_ptr->qp_on_the_fly == FALSE) {
+                        // max bit rate is only active for 1 pass CRF
+                        if (scs_ptr->static_config.rate_control_mode == 0 &&
+                            scs_ptr->static_config.max_bit_rate)
+                            crf_assign_max_rate(pcs_ptr->parent_pcs_ptr);
+                    }
 #endif
                     pcs_ptr->parent_pcs_ptr->picture_qp = pcs_ptr->picture_qp;
                     setup_segmentation(pcs_ptr, scs_ptr);

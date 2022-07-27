@@ -463,11 +463,20 @@ typedef struct EbSvtAv1EncConfiguration {
     // End rate control tuning
 
     // Individual tuning flags
-
+#if FIX_Y_QINDEX_OFFSET
+    /* use fixed qp offset for every picture based on temporal layer index
+    * 0: off (use the auto mode QP)
+    * 1: on (the offset is applied on top of the user QP)
+    * 2: on (the offset is applied on top of the auto mode QP)
+    *
+    * Default is 0.*/
+    uint8_t use_fixed_qindex_offsets;
+#else
     /* use fixed qp offset for every picture based on temporal layer index
     *
     * Default is 0.*/
     Bool    use_fixed_qindex_offsets;
+#endif
     int32_t qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
     int32_t key_frame_chroma_qindex_offset;
     int32_t key_frame_qindex_offset;

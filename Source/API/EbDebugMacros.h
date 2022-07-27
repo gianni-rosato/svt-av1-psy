@@ -95,6 +95,8 @@ extern "C" {
 #define FIX_SCALE_SANITIZER     1 // Fix sanitizer failure in restoration when scaled
 #define FIX_UV_QINDEX_OFFSET    1 // Make av1_quantize_inv_quantize() chroma qindex aware
                                   // Decouple use-fixed-qindex-offsets and chroma qp offset for non-RC configurations(s)
+#define FIX_Y_QINDEX_OFFSET     1 // Add the ability to specify a luma qindex on top of the auto mode
+
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
