@@ -196,10 +196,10 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* The intra period defines the interval of frames after which you insert an
      * Intra refresh. It is strongly recommended to set the value to multiple of
-     * 2^(hierarchical_levels) subtracting one if using open GOP (intra_refresh_type == 1)
+     * 2^(hierarchical_levels), subtracting one if using open GOP (intra_refresh_type == 1).
      * For instance, to get a 5-second GOP (default being >=5 seconds)
      * with hierarchical_levels = 3 and open GOP you could use 319, 279, 159
-     * for 60, 50, or 30 respectively
+     * for 60, 50, or 30 respectively.
      *
      * -1 = no intra update.
      * -2 = auto.
@@ -410,6 +410,12 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 0. */
     uint32_t max_bit_rate;
+
+#if !SVT_AV1_CHECK_VERSION(1, 3, 0)
+    /* DEPRECATED: to be removed in 1.3.0. */
+    uint32_t vbv_bufsize;
+#endif
+
     /* Maxium QP value allowed for rate control use, only applicable when rate
      * control mode is set to 1. It has to be greater or equal to minQpAllowed.
      *
