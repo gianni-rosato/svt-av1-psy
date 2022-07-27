@@ -421,7 +421,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0. */
     uint32_t min_qp_allowed;
 
-    /* TWO PASS DATARATE CONTROL OPTIONS.
+    /* DATARATE CONTROL OPTIONS.
      * Indicates the bias (expressed on a scale of 0 to 100) for determining
      * target size for the current frame. The value 0 indicates the optimal CBR
      * mode value should be used, and 100 indicates the optimal VBR mode value
