@@ -51,9 +51,6 @@ extern PredictionStructureConfigEntry three_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
-#if !OPT_TPL_QPS
-void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_level);
-#endif
 void  get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
 void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
@@ -756,7 +753,6 @@ static INLINE void update_list0_only_base(SequenceControlSet* scs, PictureParent
     }
 }
 
-#if OPT_TPL_QPS
 /* Wrapper function to compute TPL Synthesizer block size: Used in init memory allocation and TPL Controls*/
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width,
     uint32_t picture_height) {
@@ -771,21 +767,9 @@ uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t pictur
     return blk_size;
 }
 
-#if CLN_TPL_OPT
 /*************************************************************************************
 Set the TPL controls that control TPL search complexity.
 ***************************************************************************************/
-#else
-/*************************************************************************************
-tpl level control
-When the flag tpl_opt_flag is active, it implies that the TPL optimization actions
-listed in the tpl_control funtion could be considered
-In addition, only intra DC prediction could be considered and cost would be based
-only on distortion.
-When tpl_opt_flag is set to 0, none of the actions mentioned above could be considered
-0:OFF; 1:ON.
-***************************************************************************************/
-#endif
 static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level) {
     TplControls *       tpl_ctrls = &pcs->tpl_ctrls;
     SequenceControlSet *scs = pcs->scs_ptr;
@@ -795,16 +779,10 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
     switch (tpl_level) {
     case 0:
         tpl_ctrls->enable = 0;
-#if CLN_TPL_OPT
         tpl_ctrls->compute_rate = 0;
-#else
-        tpl_ctrls->tpl_opt_flag = 0;
-#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 0;
-#if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = DC_PRED;
-#endif
         tpl_ctrls->reduced_tpl_group = -1;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
@@ -813,54 +791,30 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->dispenser_search_level = 0;
         tpl_ctrls->subsample_tx = 0;
         tpl_ctrls->vq_adjust_lambda_sb = 1;
-#if FTR_TPL_SUBPEL
         tpl_ctrls->subpel_depth = FULL_PEL;
-#endif
         break;
     case 1:
         tpl_ctrls->enable = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->compute_rate = 1;
-#else
-        tpl_ctrls->tpl_opt_flag = 0;
-#endif
-#if OPT_QPS_WEIGHT
         tpl_ctrls->enable_tpl_qps = 1;
-#else
-        tpl_ctrls->enable_tpl_qps = 0;
-#endif
         tpl_ctrls->disable_intra_pred_nref = 0;
-#if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = PAETH_PRED;
-#endif
         tpl_ctrls->reduced_tpl_group = -1;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
-#if CLN_TPL_OPT
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 0;
-#else
-        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
-#endif
         tpl_ctrls->dispenser_search_level = 0;
         tpl_ctrls->subsample_tx = 0;
         tpl_ctrls->vq_adjust_lambda_sb = 1;
-#if FTR_TPL_SUBPEL
         tpl_ctrls->subpel_depth = QUARTER_PEL;
-#endif
         break;
     case 2:
         tpl_ctrls->enable = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->compute_rate = 0;
-#else
-        tpl_ctrls->tpl_opt_flag = 1;
-#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = DC_PRED;
-#endif
         tpl_ctrls->reduced_tpl_group = -1;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
@@ -869,22 +823,14 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->dispenser_search_level = 0;
         tpl_ctrls->subsample_tx = 0;
         tpl_ctrls->vq_adjust_lambda_sb = 1;
-#if FTR_TPL_SUBPEL
         tpl_ctrls->subpel_depth = QUARTER_PEL;
-#endif
         break;
     case 3:
         tpl_ctrls->enable = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->compute_rate = 0;
-#else
-        tpl_ctrls->tpl_opt_flag = 1;
-#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = DC_PRED;
-#endif
         tpl_ctrls->reduced_tpl_group = -1;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
@@ -893,22 +839,14 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->dispenser_search_level = 0;
         tpl_ctrls->subsample_tx = 0;
         tpl_ctrls->vq_adjust_lambda_sb = 1;
-#if FTR_TPL_SUBPEL
         tpl_ctrls->subpel_depth = FULL_PEL;
-#endif
         break;
     case 4:
         tpl_ctrls->enable = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->compute_rate = 0;
-#else
-        tpl_ctrls->tpl_opt_flag = 1;
-#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = DC_PRED;
-#endif
         tpl_ctrls->reduced_tpl_group = is_islice ? -1 : 3;
         tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
@@ -917,22 +855,14 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->dispenser_search_level = 0;
         tpl_ctrls->subsample_tx = 0;
         tpl_ctrls->vq_adjust_lambda_sb = 1;
-#if FTR_TPL_SUBPEL
         tpl_ctrls->subpel_depth = FULL_PEL;
-#endif
         break;
     case 5:
         tpl_ctrls->enable = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->compute_rate = 0;
-#else
-        tpl_ctrls->tpl_opt_flag = 1;
-#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = DC_PRED;
-#endif
         tpl_ctrls->reduced_tpl_group = pcs->hierarchical_levels == 5
             ? (is_islice ? 4 : 3)
             : (is_islice ? 3 : 2);
@@ -943,22 +873,14 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->dispenser_search_level = 0;
         tpl_ctrls->subsample_tx = 0;
         tpl_ctrls->vq_adjust_lambda_sb = 1;
-#if FTR_TPL_SUBPEL
         tpl_ctrls->subpel_depth = FULL_PEL;
-#endif
         break;
     case 6:
         tpl_ctrls->enable = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->compute_rate = 0;
-#else
-        tpl_ctrls->tpl_opt_flag = 1;
-#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = DC_PRED;
-#endif
         tpl_ctrls->reduced_tpl_group = pcs->hierarchical_levels == 5
             ? is_islice ? 4 : (resolution <= INPUT_SIZE_480p_RANGE ? 3 : 2)
             : is_islice ? 3 : (resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1);
@@ -969,22 +891,14 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->dispenser_search_level = 0;
         tpl_ctrls->subsample_tx = 1;
         tpl_ctrls->vq_adjust_lambda_sb = 1;
-#if FTR_TPL_SUBPEL
         tpl_ctrls->subpel_depth = FULL_PEL;
-#endif
         break;
     case 7:
         tpl_ctrls->enable = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->compute_rate = 0;
-#else
-        tpl_ctrls->tpl_opt_flag = 1;
-#endif
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
-#if CLN_TPL_OPT
         tpl_ctrls->intra_mode_end = DC_PRED;
-#endif
         tpl_ctrls->reduced_tpl_group = pcs->hierarchical_levels == 5
             ? is_islice ? 4 : (resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1)
             : is_islice ? 3 : (resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
@@ -995,20 +909,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->dispenser_search_level = 1;
         tpl_ctrls->subsample_tx = 2;
         tpl_ctrls->vq_adjust_lambda_sb = 2;
-#if FTR_TPL_SUBPEL
         tpl_ctrls->subpel_depth = FULL_PEL;
-#endif
         break;
     }
 
-#if CLN_TPL_OPT
     // Check user-defined settings for MAX intra mode
     if (scs->enable_paeth == 0)
         tpl_ctrls->intra_mode_end = MIN(tpl_ctrls->intra_mode_end, SMOOTH_H_PRED);
 
     if (scs->enable_smooth == 0)
         tpl_ctrls->intra_mode_end = MIN(tpl_ctrls->intra_mode_end, D67_PRED);
-#endif
 
     // Derive synthesizer block size from frame size and tpl level
     tpl_ctrls->synth_blk_size = svt_aom_get_tpl_synthesizer_block_size(tpl_level, pcs->aligned_width, pcs->aligned_height);
@@ -1018,15 +928,7 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
 
     // TPL may only look at a subset of available pictures in tpl group, which may affect the r0 calcuation.
     // As a result, we defined a factor to adjust r0 (to compensate for TPL not using all available frames).
-#if CLN_TPL_OPT
-#if OPT_QPS_WEIGHT
     if (tpl_ctrls->reduced_tpl_group >= 0) {
-#else
-    if (!is_islice && tpl_ctrls->reduced_tpl_group >= 0) {
-#endif
-#else
-    if (!is_islice && tpl_ctrls->tpl_opt_flag && tpl_ctrls->reduced_tpl_group >= 0) {
-#endif
         switch ((pcs->hierarchical_levels - tpl_ctrls->reduced_tpl_group)) {
         case 0:
         default:
@@ -1050,45 +952,22 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         }
 
         // Adjust r0 scaling factor based on GOP structure and lookahead
-#if FTR_RC_VBR_IMR
         if (!scs->tpl_lad_mg)
-#else
-        if (!scs->lad_mg)
-#endif
             tpl_ctrls->r0_adjust_factor *= 3;
     }
     else {
-#if OPT_QPS_WEIGHT
         // No r0 adjustment when all frames are used
-#else
-        // No r0 adjustment for I_SLICE or when all frames are used
-#endif
         tpl_ctrls->r0_adjust_factor = 0;
 
         // If no lookahead, apply r0 scaling
-#if FTR_RC_VBR_IMR
         if (!scs->tpl_lad_mg) {
-#else
-        if (!scs->lad_mg) {
-#endif
-#if OPT_QPS_WEIGHT
             tpl_ctrls->r0_adjust_factor = is_islice ? 0 : 0.1;
-#else
-            tpl_ctrls->r0_adjust_factor = is_islice
-#if CLN_TPL_OPT
-                ? ((tpl_ctrls->reduced_tpl_group >= 0) ? 0.2 : 0)
-#else
-                ? ((tpl_ctrls->tpl_opt_flag && tpl_ctrls->reduced_tpl_group >= 0) ? 0.2 : 0)
-#endif
-                : 0.1;
-#endif
         }
     }
 
     // Calculated qindex based on r0 using qstep calculation
     tpl_ctrls->qstep_based_q_calc = 1;
 }
-#endif
 
 uint8_t pf_gi[16] = { 0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60 };
 
@@ -1738,11 +1617,7 @@ uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_re
     if (fast_decode == 0) {
         if (enc_mode <= ENC_M2)
             sg_filter_lvl = 1;
-#if TUNE_SSIM_M5
         else if (enc_mode <= ENC_M5)
-#else
-        else if (enc_mode <= ENC_M4)
-#endif
             sg_filter_lvl = is_base ? 1 : 4;
         else
             sg_filter_lvl = 0;
@@ -1817,13 +1692,8 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
     uint8_t dlf_level;
     // Don't disable DLF for low resolutions when fast-decode is used
     if (fast_decode == 0 || resolution <= INPUT_SIZE_360p_RANGE) {
-#if TUNE_DEFAULT_M6
         if (enc_mode <= ENC_M5)
-#else
-        if (enc_mode <= ENC_M6)
-#endif
         dlf_level = 1;
-#if TUNE_M7_M8_DLF
         else if (enc_mode <= ENC_M6)
             dlf_level = 2;
         else if (enc_mode <= ENC_M7)
@@ -1834,26 +1704,8 @@ uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8
             else
                 dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 3 : 4);
         }
-#else
-        else if (enc_mode <= ENC_M7)
-            dlf_level = 2;
-        else if (enc_mode <= ENC_M8) {
-            if (hierarchical_levels <= 3)
-                dlf_level = is_used_as_reference_flag ? 2 : 0;
-            else
-                dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
-        }
-#endif
-#if FIX_M9_M10_DLF
-#if TUNE_SSIM_M11
         else if (enc_mode <= ENC_M11)
-#else
-        else if (enc_mode <= ENC_M10)
-#endif
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 3 : 0);
-#else
-            dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 2 : 0);
-#endif
         else if (enc_mode <= ENC_M12)
             dlf_level = is_used_as_reference_flag ? 4 : 0;
         else
@@ -2030,22 +1882,13 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
         gm_ctrls->rotzoom_model_only = 1;
-#if FIX_GMV_LVL4
         gm_ctrls->bipred_only = 0;
-#else
-        gm_ctrls->bipred_only = 1;
-#endif
         gm_ctrls->bypass_based_on_me = 1;
         gm_ctrls->use_stationary_block = 0;
         gm_ctrls->use_distance_based_active_th = 0;
         gm_ctrls->params_refinement_steps = 5;
-#if FIX_GMV_DOWN
         gm_ctrls->downsample_level = GM_ADAPT;
-#else
-        gm_ctrls->downsample_level = GM_DOWN;
-#endif
         break;
-#if TUNE_M5
     case 5:
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
@@ -2090,41 +1933,6 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         gm_ctrls->params_refinement_steps = 1;
         gm_ctrls->downsample_level = GM_DOWN16;
         break;
-#else
-    case 5:
-        gm_ctrls->enabled = 1;
-        gm_ctrls->identiy_exit = 1;
-        gm_ctrls->rotzoom_model_only = 1;
-        gm_ctrls->bipred_only = 1;
-        gm_ctrls->bypass_based_on_me = 1;
-        gm_ctrls->use_stationary_block = 0;
-        gm_ctrls->use_distance_based_active_th = 0;
-        gm_ctrls->params_refinement_steps = 5;
-        gm_ctrls->downsample_level = GM_DOWN16;
-        break;
-    case 6:
-        gm_ctrls->enabled = 1;
-        gm_ctrls->identiy_exit = 1;
-        gm_ctrls->rotzoom_model_only = 1;
-        gm_ctrls->bipred_only = 1;
-        gm_ctrls->bypass_based_on_me = 1;
-        gm_ctrls->use_stationary_block = 1;
-        gm_ctrls->use_distance_based_active_th = 1;
-        gm_ctrls->params_refinement_steps = 5;
-        gm_ctrls->downsample_level = GM_DOWN16;
-        break;
-    case 7:
-        gm_ctrls->enabled = 1;
-        gm_ctrls->identiy_exit = 1;
-        gm_ctrls->rotzoom_model_only = 1;
-        gm_ctrls->bipred_only = 1;
-        gm_ctrls->bypass_based_on_me = 1;
-        gm_ctrls->use_stationary_block = 1;
-        gm_ctrls->use_distance_based_active_th = 1;
-        gm_ctrls->params_refinement_steps = 1;
-        gm_ctrls->downsample_level = GM_DOWN16;
-        break;
-#endif
     default:
         assert(0);
         break;
@@ -2133,9 +1941,6 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
 uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
     SequenceControlSet* scs_ptr = pcs_ptr->scs_ptr;
     uint8_t gm_level = 0;
-#if !TUNE_SSIM_M5
-    const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
-#endif
     const EncMode enc_mode = pcs_ptr->enc_mode;
     const uint8_t is_ref = pcs_ptr->is_used_as_reference_flag;
 
@@ -2148,28 +1953,10 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
             gm_level = 3;
         else if (enc_mode <= ENC_M4)
             gm_level = is_ref ? 4 : 0;
-#if !TUNE_SSIM_M5
-        else if (enc_mode <= ENC_M5) {
-            if (hierarchical_levels <= 3)
-                gm_level = is_ref ? 5 : 0;
-            else
-                gm_level = is_ref ? 4 : 0;
-        }
-#endif
-#if TUNE_DEFAULT_M7
-#if TUNE_M5
         else if (pcs_ptr->enc_mode <= ENC_M5)
             gm_level = is_ref ? 5 : 0;
         else if (pcs_ptr->enc_mode <= ENC_M6)
             gm_level = is_ref ? 6 : 0;
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M6)
-            gm_level = is_ref ? 5 : 0;
-#endif
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M7)
-            gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
-#endif
         else
             gm_level = 0;
     }
@@ -2273,20 +2060,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->disallow_HVA_HVB = TRUE;
 
     // Set if H4/V4 blocks should considered
-#if TUNE_M3_NSQ
     if (enc_mode <= ENC_M3)
-#else
-    if (enc_mode <= ENC_M2)
-#endif
         pcs_ptr->disallow_HV4 = FALSE;
-#if TUNE_M1_M3_BDR
-#if TUNE_M4
     else if (enc_mode <= ENC_M4)
-#else
-    else if (enc_mode <= ENC_M3)
-#endif
         pcs_ptr->disallow_HV4 = is_base ? FALSE : TRUE;
-#endif
     else
         pcs_ptr->disallow_HV4 = TRUE;
 
@@ -2357,11 +2134,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
             if (enc_mode <= ENC_M0)
                 pcs_ptr->cdef_level = 1;
-#if TUNE_M4
             else if (enc_mode <= ENC_M4)
-#else
-            else if (enc_mode <= ENC_M3)
-#endif
                 pcs_ptr->cdef_level = 2;
             else if (enc_mode <= ENC_M5)
                 pcs_ptr->cdef_level = 4;
@@ -2403,21 +2176,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set whether restoration filtering is enabled for this frame
     pcs_ptr->enable_restoration = (wn > 0 || sg > 0);
 
-#if !OPT_TXS
-    // Set tx size search mode
-    if (enc_mode <= ENC_M1)
-        pcs_ptr->tx_size_search_mode = 1;
-    else if (enc_mode <= ENC_M6)
-        pcs_ptr->tx_size_search_mode = is_base ? 1 : 0;
-#if TUNE_SSIM_M12
-    else if (enc_mode <= ENC_M12)
-#else
-    else if (enc_mode <= ENC_M11)
-#endif
-        pcs_ptr->tx_size_search_mode = is_islice ? 1 : 0;
-    else
-        pcs_ptr->tx_size_search_mode = 0;
-#endif
 
     // Set frame end cdf update mode      Settings
     // 0                                     OFF
@@ -2444,14 +2202,12 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             list0_only_base = 0;
     }
-#if TUNE_DEFAULT_M8
     else if (enc_mode <= ENC_M8) {
         if (hierarchical_levels <= 3)
             list0_only_base = 2;
         else
             list0_only_base = 0;
     }
-#endif
     else  if (enc_mode <= ENC_M9) {
         if (hierarchical_levels <= 3)
             list0_only_base = 2;
@@ -2481,21 +2237,8 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     pcs_ptr->max_can_count = get_max_can_count(enc_mode);
 
-#if TUNE_DEFAULT_M9
-#if TUNE_SSIM_M8
     if (enc_mode <= ENC_M7)
-#else
-    if (enc_mode <= ENC_M8)
-#endif
         pcs_ptr->use_best_me_unipred_cand_only = 0;
-#else
-    else if (enc_mode <= ENC_M9) {
-        if (hierarchical_levels <= 3)
-            pcs_ptr->use_best_me_unipred_cand_only = 1;
-        else
-            pcs_ptr->use_best_me_unipred_cand_only = 0;
-    }
-#endif
     else
         pcs_ptr->use_best_me_unipred_cand_only = 1;
 
@@ -7041,12 +6784,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr);
                                 else
                                     signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);
-#if !OPT_TXS
-                                // Set tx_mode
-                                pcs_ptr->frm_hdr.tx_mode = (pcs_ptr->tx_size_search_mode) ?
-                                    TX_MODE_SELECT :
-                                    TX_MODE_LARGEST;
-#endif
                                 // Update the Dependant List Count - If there was an I-frame or Scene Change or S-frame, then cleanup the Picture Decision PA Reference Queue Dependent Counts
                                 if (pcs_ptr->slice_type == I_SLICE || pcs_ptr->frm_hdr.frame_type == S_FRAME)
                                 {

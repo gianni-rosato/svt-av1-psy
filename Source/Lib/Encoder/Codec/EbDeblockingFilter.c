@@ -724,9 +724,6 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
         }
     }
 }
-#if !OPT_TPL_QPS
-extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
-#endif
 
 void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuffer,
                      PictureControlSet *pcs_ptr, uint8_t plane) {
@@ -1125,15 +1122,9 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
 
         const int32_t min_filter_level = 0;
         const int32_t max_filter_level = MAX_LOOP_FILTER; // av1_get_max_filter_level(cpi);
-#if OPT_TPL_QPS
         const int32_t q = svt_aom_ac_quant_qtx(frm_hdr->quantization_params.base_q_idx,
                                                0,
                                                (EbBitDepth)scs_ptr->static_config.encoder_bit_depth);
-#else
-        const int32_t q = svt_av1_ac_quant_q3(frm_hdr->quantization_params.base_q_idx,
-                                              0,
-                                              (EbBitDepth)scs_ptr->static_config.encoder_bit_depth);
-#endif
         // These values were determined by linear fitting the result of the
         // searched level for 8 bit depth:
         // Keyframes: filt_guess = q * 0.06699 - 1.60817

@@ -681,9 +681,7 @@ static void allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL *c
     }
 }
 
-#if FTR_RC_VBR_IMR
 #define RC_FACTOR_MIN_1P_VBR 1
-#endif
 #define RC_FACTOR_MIN 0.75
 #define RC_FACTOR_MAX 2
 static INLINE void set_baseline_gf_interval(PictureParentControlSet *pcs_ptr, int arf_position) {
@@ -766,18 +764,11 @@ static int av1_calc_pframe_target_size_one_pass_cbr(PictureParentControlSet *pcs
     return AOMMAX(min_frame_target, target);
 }
 // buffer level weights to calculate the target rate for Key frame
-#if !CBR_OPT
-const int  buffer_level_weight[3] = {1, 2, 3};
-#endif
 static int av1_calc_iframe_target_size_one_pass_cbr(PictureParentControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr            = pcs_ptr->scs_ptr;
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
     int                 target;
-#if !CBR_OPT
-    const int ip    = pcs_ptr->scs_ptr->static_config.intra_period_length;
-    const int w_idx = ip < 0 ? 2 : MIN(ip / 64, 2);
-#endif
     const int           w     = 3;
     if (pcs_ptr->picture_number == 0) {
         target = ((rc->starting_buffer_level / 2) > INT_MAX)
@@ -932,12 +923,8 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
             rate_error = (int)((rc->vbr_bits_off_target * 100) / bits);
             rate_error = clamp(rate_error, -100, 100);
             if (rate_error > 0) {
-#if FTR_RC_VBR_IMR
                 double rc_factor_min = (scs->static_config.pass == ENC_SINGLE_PASS) ? RC_FACTOR_MIN_1P_VBR : RC_FACTOR_MIN;
                 rc_factor = AOMMAX(rc_factor_min, (double)(100 - rate_error) / 100.0);
-#else
-                rc_factor = AOMMAX(RC_FACTOR_MIN, (double)(100 - rate_error) / 100.0);
-#endif
             } else {
                 rc_factor = AOMMIN(RC_FACTOR_MAX, (double)(100 - rate_error) / 100.0);
             }

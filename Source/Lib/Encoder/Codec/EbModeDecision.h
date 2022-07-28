@@ -195,9 +195,7 @@ struct CodingLoopContext_s;
 uint8_t                 get_ref_frame_idx(uint8_t ref_type);
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 uint8_t                 get_list_idx(uint8_t ref_type);
-#if FTR_TPL_SUBPEL
 int svt_aom_get_sad_per_bit(int qidx, EbBitDepth is_hbd);
-#endif
 #ifdef __cplusplus
 }
 #endif

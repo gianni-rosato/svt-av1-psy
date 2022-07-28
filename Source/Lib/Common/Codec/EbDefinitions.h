@@ -44,12 +44,8 @@ extern "C" {
 #define MAX_TPL_EXT_GROUP_SIZE MAX_TPL_GROUP_SIZE
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
 #define MIN_LAD_MG 1
-#if FTR_RC_VBR_IMR
 #define RC_DEFAULT_LAD_MG_MT  2 // default look ahead value for rate control in Multi-threaded mode
 #define RC_DEFAULT_LAD_MG_LP1 1 // default look ahead value for rate control in LP 1
-#else
-#define RC_DEFAULT_LAD_MG 1
-#endif
 void assert_err(uint32_t condition, char *err_msg);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
@@ -165,14 +161,9 @@ typedef struct TfControls {
 } TfControls;
 typedef enum GM_LEVEL {
     GM_FULL   = 0, // Exhaustive search mode.
-#if FIX_GMV_DOWN
     GM_ADAPT  = 1, // The search mode is set adaptively (whether GM_FULL or GM_DOWN) based on the average ME distortion
     GM_DOWN   = 2, // Downsampled search mode, with a downsampling factor of 2 in each dimension
     GM_DOWN16 = 3, // Downsampled search mode, with a downsampling factor of 4 in each dimension
-#else
-    GM_DOWN   = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
-    GM_DOWN16 = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
-#endif
 } GM_LEVEL;
 typedef enum SqWeightOffsets {
     CONSERVATIVE_OFFSET_0 = 5,
@@ -180,7 +171,6 @@ typedef enum SqWeightOffsets {
     AGGRESSIVE_OFFSET_0   = -5,
     AGGRESSIVE_OFFSET_1   = -10
 } SqWeightOffsets;
-#if FTR_USE_COEFF_LVL
 #define COEFF_LVL_TH_0  30000
 #define COEFF_LVL_TH_1 100000
 typedef enum InputCoeffLvl {
@@ -189,7 +179,6 @@ typedef enum InputCoeffLvl {
     HIGH_LVL    =  2,
     INVALID_LVL = ~0,
 } InputCoeffLvl;
-#endif
 struct Buf2D {
     uint8_t *buf;
     uint8_t *buf0;

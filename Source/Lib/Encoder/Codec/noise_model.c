@@ -18,9 +18,6 @@
 #include "EbLog.h"
 #include "aom_dsp_rtcd.h"
 
-#if !FG_LOSSLES_OPT
-#define kLowPolyNumParams 3
-#endif
 
 static const int32_t k_max_lag = 4;
 
@@ -480,62 +477,8 @@ void svt_aom_flat_block_finder_free(AomFlatBlockFinder *block_finder) {
     memset(block_finder, 0, sizeof(*block_finder));
 }
 
-#if !FG_LOSSLES_OPT
-// Matrix multiply
-static INLINE void multiply_mat_1_n_3(const double *m1, const double *m2, double *res,
-                                      const int32_t inner_dim) {
-    double  sum0 = 0, sum1 = 0, sum2 = 0;
-    int32_t inner_m3 = 0;
 
-    for (int32_t inner = 0; inner < inner_dim; ++inner, inner_m3 += 3) {
-        const double m1_inner = m1[inner];
-        sum0 += m1_inner * m2[inner_m3 + 0];
-        sum1 += m1_inner * m2[inner_m3 + 1];
-        sum2 += m1_inner * m2[inner_m3 + 2];
-    }
-
-    *(res++) = sum0;
-    *(res++) = sum1;
-    *(res++) = sum2;
-}
-
-static INLINE void multiply_mat_3_3_1(const double *m1, const double *m2, double *res) {
-    double sum0, sum1, sum2;
-
-    sum0 = m1[0 * 3 + 0] * m2[0 * 1 + 0];
-    sum0 += m1[0 * 3 + 1] * m2[1 * 1 + 0];
-    sum0 += m1[0 * 3 + 2] * m2[2 * 1 + 0];
-    *(res++) = sum0;
-
-    sum1 = m1[1 * 3 + 0] * m2[0 * 1 + 0];
-    sum1 += m1[1 * 3 + 1] * m2[1 * 1 + 0];
-    sum1 += m1[1 * 3 + 2] * m2[2 * 1 + 0];
-    *(res++) = sum1;
-
-    sum2 = m1[2 * 3 + 0] * m2[0 * 1 + 0];
-    sum2 += m1[2 * 3 + 1] * m2[1 * 1 + 0];
-    sum2 += m1[2 * 3 + 2] * m2[2 * 1 + 0];
-    *(res++) = sum2;
-}
-
-static INLINE void multiply_mat_n_3_1(const double *m1, const double *m2, double *res,
-                                      const int32_t m1_rows) {
-    int32_t row_m3 = 0;
-
-    for (int32_t row = 0; row < m1_rows; ++row, row_m3 += 3) {
-        double sum = m1[row_m3 + 0] * m2[0 * 1 + 0];
-        sum += m1[row_m3 + 1] * m2[1 * 1 + 0];
-        sum += m1[row_m3 + 2] * m2[2 * 1 + 0];
-        *(res++) = sum;
-    }
-}
-#endif
-
-#if FG_LOSSLES_OPT
 void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder,
-#else
-void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_finder,
-#endif
                                              const uint8_t *const data, int32_t w, int32_t h,
                                              int32_t stride, int32_t offsx, int32_t offsy,
                                              double *plane, double *block) {
@@ -835,7 +778,6 @@ void svt_aom_noise_model_free(AomNoiseModel *model) {
 EXTRACT_AR_ROW(uint8_t, lowbd);
 EXTRACT_AR_ROW(uint16_t, highbd);
 
-#if FG_LOSSLES_OPT
 void svt_av1_add_block_observations_internal_c(uint32_t n, const double val,
                                                const double recp_sqr_norm, double *buffer,
                                                double *buffer_norm, double *b, double *A) {
@@ -880,7 +822,6 @@ void svt_av1_add_block_observations_internal_c(uint32_t n, const double val,
         for (; j < n; ++j) { A[i * n + j] += (buffer_norm_i * buffer[j]); }
     }
 }
-#endif
 
 static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                                       const uint8_t *const data, const uint8_t *const denoised,
@@ -931,9 +872,6 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                     : ((block_size >> sub_log2[0]) - lag));
             for (int32_t y = y_start; y < y_end; ++y) {
                 for (int32_t x = x_start; x < x_end; ++x) {
-#if !FG_LOSSLES_OPT
-                    int32_t      i   = 0;
-#endif
                     const double val = noise_model->params.use_highbd
                         ? extract_ar_row_highbd(noise_model->coords,
                                                 num_coords,
@@ -960,59 +898,13 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                                                y + y_o,
                                                buffer);
 
-#if FG_LOSSLES_OPT
                     svt_av1_add_block_observations_internal(
                         n, val, recp_sqr_norm, buffer, buffer_norm, b, A);
-#else
-                    for (i = 0; i + 8 - 1 < n; i += 8) {
-                        buffer_norm[i + 0] = buffer[i + 0] * recp_sqr_norm;
-                        buffer_norm[i + 1] = buffer[i + 1] * recp_sqr_norm;
-                        buffer_norm[i + 2] = buffer[i + 2] * recp_sqr_norm;
-                        buffer_norm[i + 3] = buffer[i + 3] * recp_sqr_norm;
-                        buffer_norm[i + 4] = buffer[i + 4] * recp_sqr_norm;
-                        buffer_norm[i + 5] = buffer[i + 5] * recp_sqr_norm;
-                        buffer_norm[i + 6] = buffer[i + 6] * recp_sqr_norm;
-                        buffer_norm[i + 7] = buffer[i + 7] * recp_sqr_norm;
-                        b[i + 0] += buffer_norm[i + 0] * val;
-                        b[i + 1] += buffer_norm[i + 1] * val;
-                        b[i + 2] += buffer_norm[i + 2] * val;
-                        b[i + 3] += buffer_norm[i + 3] * val;
-                        b[i + 4] += buffer_norm[i + 4] * val;
-                        b[i + 5] += buffer_norm[i + 5] * val;
-                        b[i + 6] += buffer_norm[i + 6] * val;
-                        b[i + 7] += buffer_norm[i + 7] * val;
-                    }
-                    for (; i < n; ++i) {
-                        buffer_norm[i] = buffer[i] * recp_sqr_norm;
-                        b[i] += buffer_norm[i] * val;
-                    }
-
-                    for (i = 0; i < n; ++i) {
-                        int32_t      j             = 0;
-                        const double buffer_norm_i = buffer_norm[i];
-
-                        for (j = 0; j + 8 - 1 < n; j += 8) {
-                            A[i * n + j + 0] += (buffer_norm_i * buffer[j + 0]);
-                            A[i * n + j + 1] += (buffer_norm_i * buffer[j + 1]);
-                            A[i * n + j + 2] += (buffer_norm_i * buffer[j + 2]);
-                            A[i * n + j + 3] += (buffer_norm_i * buffer[j + 3]);
-                            A[i * n + j + 4] += (buffer_norm_i * buffer[j + 4]);
-                            A[i * n + j + 5] += (buffer_norm_i * buffer[j + 5]);
-                            A[i * n + j + 6] += (buffer_norm_i * buffer[j + 6]);
-                            A[i * n + j + 7] += (buffer_norm_i * buffer[j + 7]);
-                        }
-                        for (; j < n; ++j) { A[i * n + j] += (buffer_norm_i * buffer[j]); }
-                    }
-
-                    noise_model->latest_state[c].num_observations++;
-#endif
                 }
             }
-#if FG_LOSSLES_OPT
             //There is situation when x_start is greater than x_end,
             //use max() to cap negative result and do not increment num_observations
             noise_model->latest_state[c].num_observations += AOMMAX((y_end - y_start), 0)  * AOMMAX((x_end - x_start), 0);
-#endif
         }
     }
     EB_FREE_ALIGNED(buffer);
@@ -1408,7 +1300,6 @@ int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_mode
     return 1;
 }
 
-#if FG_LOSSLES_OPT
 void svt_av1_pointwise_multiply_c(const float *a, float *b, float *c, double *b_d, double *c_d,
                                   int32_t n) {
     for (int32_t i = 0; i < n; i++) {
@@ -1416,11 +1307,6 @@ void svt_av1_pointwise_multiply_c(const float *a, float *b, float *c, double *b_
         c[i] = a[i] * (float)c_d[i];
     }
 }
-#else
-static void pointwise_multiply(const float *a, float *b, int32_t n) {
-    for (int32_t i = 0; i < n; ++i) b[i] *= a[i];
-}
-#endif
 
 //window_function[y * block_size + x] = (float)(cos((.5 + y) * PI / block_size - PI / 2) * cos((.5 + x) * PI / block_size - PI / 2));
 static const float window_function_half_cos_window_2[4] = {
@@ -2300,7 +2186,6 @@ static const float *get_half_cos_window(int32_t block_size) {
 DITHER_AND_QUANTIZE(uint8_t, lowbd);
 DITHER_AND_QUANTIZE(uint16_t, highbd);
 
-#if FG_LOSSLES_OPT
 void svt_av1_apply_window_function_to_plane_c(int32_t y_size, int32_t x_size, float *result_ptr,
                                               uint32_t result_stride, float *block, float *plane,
                                               const float *window_function) {
@@ -2311,7 +2196,6 @@ void svt_av1_apply_window_function_to_plane_c(int32_t y_size, int32_t x_size, fl
         }
     }
 }
-#endif
 
 int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised[3], int32_t w,
                                   int32_t h, int32_t stride[3], int32_t chroma_sub[2],
@@ -2394,31 +2278,15 @@ int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoise
                             by * (block_size >> chroma_sub_h) + offsy,
                             plane_d,
                             block_d);
-#if FG_LOSSLES_OPT
                         svt_av1_pointwise_multiply(
                             window_function, plane, block, plane_d, block_d, pixels_per_block);
-#else
-                        for (int32_t j = 0; j < pixels_per_block; ++j) {
-                            block[j] = (float)block_d[j];
-                            plane[j] = (float)plane_d[j];
-                        }
-                        pointwise_multiply(window_function, block, pixels_per_block);
-#endif
                         svt_aom_noise_tx_forward(tx, block);
-#if FG_LOSSLES_OPT
                         svt_aom_noise_tx_filter(tx->block_size, tx->tx_block, noise_psd[c]);
-#else
-                        svt_aom_noise_tx_filter(tx, noise_psd[c]);
-#endif
                         svt_aom_noise_tx_inverse(tx, block);
 
                         // Apply window function to the plane approximation (we will apply
                         // it to the sum of plane + block when composing the results).
-#if !FG_LOSSLES_OPT
-                        pointwise_multiply(window_function, plane, pixels_per_block);
-#endif
 
-#if FG_LOSSLES_OPT
                         const int y_size  = (block_size >> chroma_sub_h);
                         const int x_size  = (block_size >> chroma_sub_w);
                         float *result_ptr = result + ((by + 1) * y_size + offsy) * result_stride +
@@ -2430,20 +2298,6 @@ int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoise
                                                                block,
                                                                plane,
                                                                window_function);
-#else
-                        for (int32_t y = 0; y < (block_size >> chroma_sub_h); ++y) {
-                            const int32_t y_result = y + (by + 1) * (block_size >> chroma_sub_h) +
-                                offsy;
-                            for (int32_t x = 0; x < (block_size >> chroma_sub_w); ++x) {
-                                const int32_t x_result = x +
-                                    (bx + 1) * (block_size >> chroma_sub_w) + offsx;
-                                result[y_result * result_stride + x_result] +=
-                                    (block[y * (block_size >> chroma_sub_w) + x] +
-                                     plane[y * (block_size >> chroma_sub_w) + x]) *
-                                    window_function[y * (block_size >> chroma_sub_w) + x];
-                            }
-                        }
-#endif
                     }
                 }
             }

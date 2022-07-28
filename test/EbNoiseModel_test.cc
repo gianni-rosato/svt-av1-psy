@@ -16,7 +16,6 @@
 #include "noise_model.h"
 
 
-#if FG_LOSSLES_OPT
 namespace {
 using svt_av1_test_tool::SVTRandom;
 const int32_t MAX_SIZE = 300;
@@ -345,4 +344,3 @@ TEST(fg_flat_block_finder_extract_block, hbd_AVX2) {
 }
 
 }
-#endif

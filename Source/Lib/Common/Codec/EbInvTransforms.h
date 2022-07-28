@@ -373,14 +373,10 @@ static const int8_t txsize_log2_minus4[TX_SIZES_ALL] = {
     5, // TX_64X16
 };
 
-#if OPT_TPL_QPS
 int32_t get_qzbin_factor(int32_t q, EbBitDepth bit_depth);
 void    invert_quant(int16_t *quant, int16_t *shift, int32_t d);
 int16_t svt_aom_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
 int16_t svt_aom_ac_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
-#else
-int16_t svt_av1_ac_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
-#endif
 
 #ifdef __cplusplus
 }

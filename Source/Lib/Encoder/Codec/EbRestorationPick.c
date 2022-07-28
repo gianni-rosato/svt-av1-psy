@@ -1554,7 +1554,6 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
         const int32_t highbd = rsc.cm->use_highbitdepth;
         svt_block_on_mutex(pcs_ptr->rest_search_mutex);
         if (!pcs_ptr->rest_extend_flag[plane]) {
-#if FIX_SCALE_SANITIZER
             // Add additional padding to align 16 pixel in width to address uninitialized memory warning in sanitizer.
             // There is a width extension of 16 pixel alignment in wiener_filter_stripe for SIMD, it causes warning of
             // access uninitialized memory reported in "C" code path when pictures are downscaled and are not aligned.
@@ -1562,8 +1561,6 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
             const int32_t align16_pad = (rsc.plane_width % 16) ?
                                         16 - (rsc.plane_width % 16) :
                                         0;
-#endif
-#if FIX_REST_SANITIZER
             // The horizontal padding is increased by 1 to address an uninitialized memory access when
             // using the "C" code path.  In horz_scalar_product, where the wiener filter is applied to the pixels,
             // the right-edge pixels will need 3 padded pixels to perform a 7-tap filter. However, the filter is applied
@@ -1576,15 +1573,6 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                              RESTORATION_BORDER + 1 + align16_pad,
                              RESTORATION_BORDER,
                              highbd);
-#else
-            svt_extend_frame(rsc.dgd_buffer,
-                             rsc.plane_width,
-                             rsc.plane_height,
-                             rsc.dgd_stride,
-                             RESTORATION_BORDER,
-                             RESTORATION_BORDER,
-                             highbd);
-#endif
             pcs_ptr->rest_extend_flag[plane] = TRUE;
         }
         svt_release_mutex(pcs_ptr->rest_search_mutex);

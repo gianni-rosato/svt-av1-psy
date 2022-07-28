@@ -100,7 +100,6 @@ EbErrorType warped_motion_prediction(
 const uint8_t *svt_av1_get_obmc_mask(int length);
 void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, uint64_t sse,
                        uint32_t *rate, uint64_t *dist, uint8_t simple_model_rd_from_var);
-#if FTR_TPL_SUBPEL
 void enc_make_inter_predictor(SequenceControlSet *scs, uint8_t *src_ptr, uint8_t *src_ptr_2b,
     uint8_t *dst_ptr, int16_t pre_y, int16_t pre_x, MV mv,
     const struct ScaleFactors *const sf, ConvolveParams *conv_params,
@@ -111,7 +110,6 @@ void enc_make_inter_predictor(SequenceControlSet *scs, uint8_t *src_ptr, uint8_t
     uint8_t plane, const uint32_t ss_y, const uint32_t ss_x,
     uint8_t bit_depth, uint8_t use_intrabc, uint8_t is_masked_compound,
     uint8_t is16bit);
-#endif
 
 #ifdef __cplusplus
 }

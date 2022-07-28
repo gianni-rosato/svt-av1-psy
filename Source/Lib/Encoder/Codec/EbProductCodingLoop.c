@@ -42,9 +42,6 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext
                              const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult,
                              uint8_t hbd_mode_decision);
 int  fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
-#if !FTR_TPL_SUBPEL
-extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
-#endif
 EbErrorType generate_md_stage_0_cand(SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
                                      uint32_t          *fast_candidate_total_count,
                                      PictureControlSet *pcs_ptr);
@@ -54,9 +51,6 @@ void        generate_md_stage_0_cand_light_pd1(SuperBlock *sb_ptr, ModeDecisionC
 EbErrorType generate_md_stage_0_cand_light_pd0(ModeDecisionContext *context_ptr,
                                                uint32_t            *fast_candidate_total_count,
                                                PictureControlSet   *pcs_ptr);
-#if !OPT_TPL_QPS
-int16_t     svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
-#endif
 
 static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
@@ -7278,7 +7272,6 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     }
 }
 
-#if OPT_TXS
 // Derive the start and end TX depths based on block characteristics
 static INLINE void get_start_end_tx_depth(PictureParentControlSet *ppcs, ModeDecisionContext *ctx,
     ModeDecisionCandidate *candidate_ptr, uint8_t* start_tx_depth, uint8_t* end_tx_depth) {
@@ -7306,7 +7299,6 @@ static INLINE void get_start_end_tx_depth(PictureParentControlSet *ppcs, ModeDec
             ? (blk_geom->shape == PART_N ? txs_ctrls->intra_class_max_depth_sq : txs_ctrls->intra_class_max_depth_nsq)
             : (blk_geom->shape == PART_N ? txs_ctrls->inter_class_max_depth_sq : txs_ctrls->inter_class_max_depth_nsq)));
 }
-#endif
 
 void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                     ModeDecisionContext *context_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
@@ -7359,30 +7351,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     candidate_buffer->v_has_coeff = 0;
     uint8_t start_tx_depth        = 0;
     uint8_t end_tx_depth          = 0;
-#if OPT_TXS
     get_start_end_tx_depth(pcs_ptr->parent_pcs_ptr, context_ptr, candidate_ptr, &start_tx_depth, &end_tx_depth);
-#else
-    if (context_ptr->txs_ctrls.enabled == 0) {
-        start_tx_depth = end_tx_depth = 0;
-    } else if (context_ptr->md_staging_tx_size_mode == 0) {
-        start_tx_depth = end_tx_depth = candidate_buffer->candidate_ptr->tx_depth;
-    } else {
-        // end_tx_depth set to zero for blocks which go beyond the picture boundaries
-        if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
-                     context_ptr->blk_geom->bwidth <=
-                 pcs_ptr->parent_pcs_ptr->aligned_width &&
-             context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
-                     context_ptr->blk_geom->bheight <=
-                 pcs_ptr->parent_pcs_ptr->aligned_height))
-            end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize);
-        else
-            end_tx_depth = 0;
-    }
-    end_tx_depth = MIN(end_tx_depth,
-                       (is_intra_mode(candidate_buffer->candidate_ptr->pred_mode)
-                            ? context_ptr->txs_ctrls.intra_class_max_depth
-                            : context_ptr->txs_ctrls.inter_class_max_depth));
-#endif
     if (context_ptr->subres_ctrls.odd_to_even_deviation_th && context_ptr->pd_pass == PD_PASS_0 &&
         context_ptr->md_stage == MD_STAGE_3 &&
         context_ptr->is_subres_safe == (uint8_t)~0 /* only if invalid*/ &&
@@ -7702,17 +7671,7 @@ static void md_stage_2(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
             context_ptr->cand_buff_indices[context_ptr->target_class][fullLoopCandidateIndex];
         ModeDecisionCandidateBuffer *candidate_buffer = candidate_buffer_ptr_array[candidateIndex];
         ModeDecisionCandidate       *candidate_ptr    = candidate_buffer->candidate_ptr;
-#if OPT_TXS
         context_ptr->md_staging_tx_size_mode = 0;
-#else
-        context_ptr->md_staging_tx_size_mode          = (context_ptr->txs_ctrls.enabled &&
-                                                context_ptr->txs_ctrls.inter_class_max_depth &&
-                                                is_inter_mode(candidate_ptr->pred_mode) &&
-                                                (context_ptr->blk_geom->sq_size >=
-                                                 context_ptr->txs_ctrls.min_sq_size))
-                     ? 1
-                     : 0;
-#endif
         context_ptr->md_staging_txt_level             = is_intra_mode(candidate_ptr->pred_mode)
                         ? context_ptr->txt_ctrls.enabled
                         : 0;
@@ -10364,7 +10323,6 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     }
     context_ptr->avail_blk_flag[blk_ptr->mds_idx] = TRUE;
 }
-#if OPT_MAX_P0_P1_NSQ
 Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
     Bool skip_nsq               = 0;
     uint32_t max_part0_to_part1_dev = ctx->max_part0_to_part1_dev;
@@ -10485,156 +10443,7 @@ Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
 
     return skip_nsq;
 }
-#else
-uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr) {
-    uint8_t  skip_nsq               = 0;
-    uint32_t max_part0_to_part1_dev = context_ptr->max_part0_to_part1_dev;
 
-    // return immediately if SQ, or NSQ but Parent not available, or max_part0_to_part1_dev is set to infinity
-    if (context_ptr->blk_geom->shape == PART_N ||
-        context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds] == FALSE ||
-        max_part0_to_part1_dev == 0)
-        return skip_nsq;
-
-    // Derive the distortion/cost ratio
-    uint32_t full_lambda = context_ptr->hbd_mode_decision
-        ? context_ptr->full_lambda_md[EB_10_BIT_MD]
-        : context_ptr->full_lambda_md[EB_8_BIT_MD];
-    uint64_t dist        = RDCOST(
-        full_lambda,
-        0,
-        context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].full_distortion);
-    uint64_t dist_cost_ratio = (dist * 100) /
-        context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost;
-    uint64_t min_ratio    = 0;
-    uint64_t max_ratio    = 100;
-    uint64_t modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
-
-    // increase TH by 25 % when Parent is New (go conservative)
-    if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEWMV ||
-        context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEW_NEWMV)
-        max_part0_to_part1_dev = max_part0_to_part1_dev - ((max_part0_to_part1_dev * 25) / 100);
-    else
-        // decrease TH by 25 % when Parent is Nearest-Near (go agressive)
-        if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEARESTMV ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode ==
-                NEAREST_NEARESTMV ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEARMV ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEAR_NEARMV)
-            max_part0_to_part1_dev = max_part0_to_part1_dev + ((max_part0_to_part1_dev * 25) / 100);
-
-    if (context_ptr->blk_geom->shape == PART_H || context_ptr->blk_geom->shape == PART_HA ||
-        context_ptr->blk_geom->shape == PART_HB || context_ptr->blk_geom->shape == PART_H4) {
-        // multiply the TH by 4 when Parent is D45 or D135 (diagonal) or when Parent is D67 / V / D113 (H_path)
-        if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == V_PRED ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D67_PRED ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D113_PRED ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D45_PRED ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D135_PRED)
-            max_part0_to_part1_dev = max_part0_to_part1_dev << 2;
-
-        uint64_t dist_h0 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                       .rec_dist_per_quadrant[0] +
-                                   context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                       .rec_dist_per_quadrant[1]);
-
-        uint64_t dist_h1 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                       .rec_dist_per_quadrant[2] +
-                                   context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                       .rec_dist_per_quadrant[3]);
-
-        uint32_t dev = (uint32_t)((ABS((int64_t)dist_h0 - (int64_t)dist_h1) * 100) /
-                                  MIN(dist_h0, dist_h1));
-        // TH = TH + TH * Min(dev_0,dev_1); dev_0 is q0 - to - q1 deviation, and dev_1 is q2 - to - q3 deviation
-        uint64_t dist_q0 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                   .rec_dist_per_quadrant[0]);
-        uint64_t dist_q1 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                   .rec_dist_per_quadrant[1]);
-        uint64_t dist_q2 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                   .rec_dist_per_quadrant[2]);
-        uint64_t dist_q3 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                   .rec_dist_per_quadrant[3]);
-
-        uint32_t quad_dev_t    = (uint32_t)((ABS((int64_t)dist_q0 - (int64_t)dist_q1) * 100) /
-                                         MIN(dist_q0, dist_q1));
-        uint32_t quad_dev_b    = (uint32_t)((ABS((int64_t)dist_q2 - (int64_t)dist_q3) * 100) /
-                                         MIN(dist_q2, dist_q3));
-        max_part0_to_part1_dev = max_part0_to_part1_dev +
-            (((uint64_t)max_part0_to_part1_dev * MIN(quad_dev_t, quad_dev_b)) / 100);
-
-        max_part0_to_part1_dev = (uint32_t)((dist_cost_ratio <= min_ratio) ? 0
-                                                : (dist_cost_ratio <= max_ratio)
-                                                ? (max_part0_to_part1_dev * modulated_th) / 100
-                                                : dist_cost_ratio);
-        if (dev < max_part0_to_part1_dev)
-            return TRUE;
-    }
-
-    if (context_ptr->blk_geom->shape == PART_V || context_ptr->blk_geom->shape == PART_VA ||
-        context_ptr->blk_geom->shape == PART_VB || context_ptr->blk_geom->shape == PART_V4) {
-        // multiply the TH by 4 when Parent is D45 or D135 (diagonal) or when Parent is D157 / H / D203 (V_path)
-        if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == H_PRED ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D157_PRED ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D203_PRED ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D45_PRED ||
-            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D135_PRED)
-            max_part0_to_part1_dev = max_part0_to_part1_dev << 2;
-
-        uint64_t dist_v0 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                       .rec_dist_per_quadrant[0] +
-                                   context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                       .rec_dist_per_quadrant[2]);
-
-        uint64_t dist_v1 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                       .rec_dist_per_quadrant[1] +
-                                   context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                       .rec_dist_per_quadrant[3]);
-
-        uint32_t dev = (uint32_t)((ABS((int64_t)dist_v0 - (int64_t)dist_v1) * 100) /
-                                  MIN(dist_v0, dist_v1));
-
-        // TH = TH + TH * Min(dev_0,dev_1); dev_0 is q0-to-q2 deviation, and dev_1 is q1-to-q3 deviation
-        uint64_t dist_q0 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                   .rec_dist_per_quadrant[0]);
-        uint64_t dist_q1 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                   .rec_dist_per_quadrant[1]);
-        uint64_t dist_q2 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                   .rec_dist_per_quadrant[2]);
-        uint64_t dist_q3 = MAX(1,
-                               context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
-                                   .rec_dist_per_quadrant[3]);
-
-        uint32_t quad_dev_l    = (uint32_t)((ABS((int64_t)dist_q0 - (int64_t)dist_q2) * 100) /
-                                         MIN(dist_q0, dist_q2));
-        uint32_t quad_dev_r    = (uint32_t)((ABS((int64_t)dist_q1 - (int64_t)dist_q3) * 100) /
-                                         MIN(dist_q1, dist_q3));
-        max_part0_to_part1_dev = max_part0_to_part1_dev +
-            (((uint64_t)max_part0_to_part1_dev * MIN(quad_dev_l, quad_dev_r)) / 100);
-
-        max_part0_to_part1_dev = (uint32_t)((dist_cost_ratio <= min_ratio) ? 0
-                                                : (dist_cost_ratio <= max_ratio)
-                                                ? (max_part0_to_part1_dev * modulated_th) / 100
-                                                : dist_cost_ratio);
-        if (dev < max_part0_to_part1_dev)
-            return TRUE;
-    }
-
-    return skip_nsq;
-}
-#endif
-
-#if TUNE_M3_NSQ
 /*
  * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
  * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
@@ -10744,117 +10553,6 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
 
     return skip_nsq;
 }
-#else
-/*
- * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
- * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
- * determines how likely it is to skip blocks, and is a function of the qp, block shape,
- * prediction mode, block coeffs, and encode mode.
- *
- * skip HA, HB and H4 if (valid SQ and H) and (H_COST > (SQ_WEIGHT * SQ_COST) / 100)
- * skip VA, VB and V4 if (valid SQ and V) and (V_COST > (SQ_WEIGHT * SQ_COST) / 100)
- *
- * Returns TRUE if the blocks should be skipped; FALSE otherwise.
- */
-uint8_t update_skip_nsq_shapes(ModeDecisionContext *context_ptr) {
-    uint8_t  skip_nsq  = 0;
-    uint32_t sq_weight = context_ptr->sq_weight;
-
-    // return immediately if the skip nsq threshold is infinite
-    if (sq_weight == (uint32_t)~0)
-        return skip_nsq;
-    // use a conservative threshold for H4, V4 blocks
-    if (context_ptr->blk_geom->shape == PART_H4 || context_ptr->blk_geom->shape == PART_V4)
-        sq_weight += CONSERVATIVE_OFFSET_0;
-
-    uint32_t     sqi           = context_ptr->blk_geom->sqi_mds;
-    MdBlkStruct *local_cu_unit = context_ptr->md_local_blk_unit;
-
-    if (context_ptr->blk_geom->shape == PART_HA || context_ptr->blk_geom->shape == PART_HB ||
-        context_ptr->blk_geom->shape == PART_H4) {
-        if (context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds] &&
-            context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds + 1] &&
-            context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds + 2]) {
-            // Use aggressive thresholds for blocks without coeffs
-            if (context_ptr->blk_geom->shape == PART_HA) {
-                if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 1]
-                         .block_has_coeff)
-                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
-            }
-            if (context_ptr->blk_geom->shape == PART_HB) {
-                if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 2]
-                         .block_has_coeff)
-                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
-            }
-
-            // compute the cost of the SQ block and H block
-            uint64_t sq_cost =
-                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost;
-            uint64_t h_cost =
-                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 1].default_cost +
-                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 2].default_cost;
-
-            // Determine if nsq shapes can be skipped based on the relative cost of SQ and H blocks
-            skip_nsq = (h_cost > ((sq_cost * sq_weight) / 100));
-            // If not skipping, perform a check on the relative H/V costs
-            if (!skip_nsq) {
-                if (context_ptr->avail_blk_flag[sqi + 3] && context_ptr->avail_blk_flag[sqi + 4]) {
-                    //compute the cost of V partition
-                    uint64_t v_cost = local_cu_unit[sqi + 3].default_cost +
-                        local_cu_unit[sqi + 4].default_cost;
-                    uint32_t offset   = 10;
-                    uint32_t v_weight = 100 + offset;
-
-                    //if the cost of H partition is bigger than the V partition by a certain percentage, skip HA/HB
-                    //use 10% to skip HA/HB, use 5% to skip H4, also for very low QP be more aggressive to skip
-                    skip_nsq = (h_cost > ((v_cost * v_weight) / 100));
-                }
-            }
-        }
-    }
-    if (context_ptr->blk_geom->shape == PART_VA || context_ptr->blk_geom->shape == PART_VB ||
-        context_ptr->blk_geom->shape == PART_V4) {
-        if (context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds] &&
-            context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds + 3] &&
-            context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds + 4]) {
-            // Use aggressive thresholds for blocks without coeffs
-            if (context_ptr->blk_geom->shape == PART_VA) {
-                if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 3]
-                         .block_has_coeff)
-                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
-            }
-            if (context_ptr->blk_geom->shape == PART_VB) {
-                if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 4]
-                         .block_has_coeff)
-                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
-            }
-
-            // compute the cost of the SQ block and V block
-            uint64_t sq_cost =
-                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost;
-            uint64_t v_cost =
-                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 3].default_cost +
-                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 4].default_cost;
-
-            // Determine if nsq shapes can be skipped based on the relative cost of SQ and V blocks
-            skip_nsq = (v_cost > ((sq_cost * sq_weight) / 100));
-            // If not skipping, perform a check on the relative H/V costs
-            if (!skip_nsq) {
-                if (context_ptr->avail_blk_flag[sqi + 1] && context_ptr->avail_blk_flag[sqi + 2]) {
-                    uint64_t h_cost = local_cu_unit[sqi + 1].default_cost +
-                        local_cu_unit[sqi + 2].default_cost;
-                    uint32_t offset = 10;
-
-                    uint32_t h_weight = 100 + offset;
-                    skip_nsq          = (v_cost > ((h_cost * h_weight) / 100));
-                }
-            }
-        }
-    }
-
-    return skip_nsq;
-}
-#endif
 
 void md_pme_search_controls(ModeDecisionContext *ctx, uint8_t md_pme_level);
 void set_inter_intra_ctrls(ModeDecisionContext *ctx, uint8_t inter_intra_level);

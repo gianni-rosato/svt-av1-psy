@@ -330,7 +330,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if FIX_Y_QINDEX_OFFSET
     if (config->use_fixed_qindex_offsets > 2) {
         SVT_ERROR("Instance %u: The use_fixed_qindex_offsets must be [0 - 2] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -351,8 +350,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             return_error = EB_ErrorBadParameter;
         }
     }
-#endif
-#if FIX_UV_QINDEX_OFFSET
     if (config->key_frame_chroma_qindex_offset < -64 || config->key_frame_chroma_qindex_offset > 63) {
         SVT_ERROR(
             "Instance %u : Invalid key_frame_chroma_qindex_offset. key_frame_chroma_qindex_offset must be [-64 - 63]\n",
@@ -368,7 +365,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             return_error = EB_ErrorBadParameter;
         }
     }
-#endif
     if (config->stat_report > 1) {
         SVT_ERROR("Instance %u : Invalid StatReport. StatReport must be [0 - 1]\n",
                   channel_number + 1);
@@ -919,11 +915,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->tile_columns              = DEFAULT;
     config_ptr->qp = DEFAULT_QP;
     config_ptr->use_qp_file = FALSE;
-#if FIX_Y_QINDEX_OFFSET
     config_ptr->use_fixed_qindex_offsets = 0;
-#else
-    config_ptr->use_fixed_qindex_offsets = FALSE;
-#endif
     memset(config_ptr->qindex_offsets, 0, sizeof(config_ptr->qindex_offsets));
     config_ptr->key_frame_chroma_qindex_offset = 0;
     config_ptr->key_frame_qindex_offset        = 0;
@@ -959,14 +951,9 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_manual_pred_struct    = FALSE;
     config_ptr->manual_pred_struct_entry_num = 0;
     config_ptr->encoder_color_format         = EB_YUV420;
-#if FTR_RC_VBR_IMR
     // Rate control options
     // Set the default value toward more flexible rate allocation
     config_ptr->vbr_bias_pct             = 100;
-#else
-    // Two pass data rate control options
-    config_ptr->vbr_bias_pct             = 50;
-#endif
     config_ptr->vbr_min_section_pct      = 0;
     config_ptr->vbr_max_section_pct      = 2000;
     config_ptr->under_shoot_pct          = 25;

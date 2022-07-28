@@ -77,7 +77,6 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
         global_motion_estimation_level = 2;
     else
         global_motion_estimation_level = 3;
-#if FIX_GMV_DOWN
     if (pcs_ptr->gm_ctrls.downsample_level == GM_ADAPT) {
         pcs_ptr->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_1)
             ? GM_DOWN
@@ -86,7 +85,6 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
     else {
         pcs_ptr->gm_downsample_level = pcs_ptr->gm_ctrls.downsample_level;
     }
-#endif
     if (pcs_ptr->gm_ctrls.bypass_based_on_me) {
         if ((total_gm_sbs < (uint32_t)(pcs_ptr->sb_total_count >> 1)) ||
             (pcs_ptr->gm_ctrls.use_stationary_block &&
@@ -116,21 +114,13 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
 
                 // Set the source and the reference picture to be used by the global motion search
                 // based on the input search mode
-#if FIX_GMV_DOWN
                 if (pcs_ptr->gm_downsample_level == GM_DOWN16) {
-#else
-                if (pcs_ptr->gm_ctrls.downsample_level == GM_DOWN16) {
-#endif
                     sixteenth_ref_pic_ptr = (EbPictureBufferDesc *)
                                                 reference_object->sixteenth_downsampled_picture_ptr;
                     ref_picture_ptr   = sixteenth_ref_pic_ptr;
                     input_picture_ptr = sixteenth_picture_ptr;
-#if FIX_GMV_DOWN
                 }
                 else if (pcs_ptr->gm_downsample_level == GM_DOWN) {
-#else
-                } else if (pcs_ptr->gm_ctrls.downsample_level == GM_DOWN) {
-#endif
                     quarter_ref_pic_ptr = (EbPictureBufferDesc *)
                                               reference_object->quarter_downsampled_picture_ptr;
                     ref_picture_ptr   = quarter_ref_pic_ptr;

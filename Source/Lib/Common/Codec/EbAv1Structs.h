@@ -319,17 +319,10 @@ typedef struct TilesInfo {
 typedef struct QuantizationParams {
     /*!< Indicates the base frame qindex */
     uint8_t base_q_idx;
-#if FIX_UV_QINDEX_OFFSET
     /*!< Indicates the DC quantizer relative to base_q_idx - applicable for non-RC configuration(s) only*/
     int8_t delta_q_dc[MAX_MB_PLANE];
     /*!< Indicates the AC quantizer relative to base_q_idx - applicable for non-RC configuration(s) only*/
     int8_t delta_q_ac[MAX_MB_PLANE];
-#else
-    /*!< Indicates the DC quantizer relative to base_q_idx */
-    int8_t delta_q_dc[MAX_MB_PLANE];
-    /*!< Indicates the AC quantizer relative to base_q_idx */
-    int8_t delta_q_ac[MAX_MB_PLANE];
-#endif
     /*!<Specifies that the quantizer matrix will be used to compute quantizers*/
     uint8_t using_qmatrix;
     /*!< Specifies the level in the quantizer matrix that should be used for

@@ -133,11 +133,7 @@ int32_t svt_aom_flat_block_finder_init(AomFlatBlockFinder *block_finder, int32_t
 void    svt_aom_flat_block_finder_free(AomFlatBlockFinder *block_finder);
 
 /*!\brief Helper to extract a block and low order "planar" model. */
-#if FG_LOSSLES_OPT
 void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder,
-#else
-void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_finder,
-#endif
                                              const uint8_t *const data, int32_t w, int32_t h,
                                              int32_t stride, int32_t offsx, int32_t offsy,
                                              double *plane, double *block);
@@ -359,7 +355,6 @@ void aom_denoise_and_model_free(struct AomDenoiseAndModel *denoise_model, int32_
 int32_t is_ref_noise_model_different(AomNoiseModel *const noise_model,
                                      AomNoiseModel *const ref_noise_model);
 
-#if FG_LOSSLES_OPT
 // Matrix multiply
 static INLINE void multiply_mat_1_n_3(const double *m1, const double *m2, double *res,
                                       const int32_t inner_dim) {
@@ -408,7 +403,6 @@ static INLINE void multiply_mat_n_3_1(const double *m1, const double *m2, double
         *(res++) = sum;
     }
 }
-#endif
 
 #ifdef __cplusplus
 } // extern "C"

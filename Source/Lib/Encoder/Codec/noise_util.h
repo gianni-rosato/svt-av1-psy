@@ -16,7 +16,6 @@
 extern "C" {
 #endif // __cplusplus
 
-#if FG_LOSSLES_OPT
 #define kLowPolyNumParams 3
 
 // Internal representation of noise transform. It keeps track of the
@@ -29,12 +28,6 @@ struct aom_noise_tx_t {
     void (*fft)(const float *, float *, float *);
     void (*ifft)(const float *, float *, float *);
 };
-#else
-// aom_noise_tx_t is an abstraction of a transform that is used for denoising.
-// It is meant to be lightweight and does hold the transformed data (as
-// the user should not be manipulating the transformed data directly).
-struct aom_noise_tx_t;
-#endif
 
 // Allocates and returns a aom_noise_tx_t useful for denoising the given
 // block_size. The resulting aom_noise_tx_t should be free'd with
@@ -51,11 +44,7 @@ void svt_aom_noise_tx_forward(struct aom_noise_tx_t *aom_noise_tx, const float *
 // density. The PSD must be at least BlockSize * BlockSize and should be
 // populated with a constant or via estimates taken from
 // aom_noise_tx_add_energy.
-#if FG_LOSSLES_OPT
 void svt_aom_noise_tx_filter_c(int32_t block_size, float *block_ptr, const float psd);
-#else
-void svt_aom_noise_tx_filter(struct aom_noise_tx_t *aom_noise_tx, const float psd);
-#endif
 
 // Performs an inverse transform using the internal transform data.
 // For compatibility with existing SIMD implementations, "data" must be 32-byte

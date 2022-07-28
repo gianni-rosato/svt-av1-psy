@@ -127,11 +127,6 @@ typedef struct Dequants {
     DECLARE_ALIGNED(16, int16_t, y_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
     DECLARE_ALIGNED(16, int16_t, u_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
     DECLARE_ALIGNED(16, int16_t, v_dequant_qtx[QINDEX_RANGE][8]); // 8: SIMD width
-#if !OPT_TPL_QPS
-    DECLARE_ALIGNED(16, int16_t, y_dequant_q3[QINDEX_RANGE][8]); // 8: SIMD width
-    DECLARE_ALIGNED(16, int16_t, u_dequant_q3[QINDEX_RANGE][8]); // 8: SIMD width
-    DECLARE_ALIGNED(16, int16_t, v_dequant_q3[QINDEX_RANGE][8]); // 8: SIMD width
-#endif
 } Dequants;
 
 typedef struct MacroblockdPlane {
@@ -409,9 +404,7 @@ typedef struct PictureControlSet {
     uint8_t  parent_sq_coeff_area_based_cycles_reduction_level;
     uint32_t sq_weight;
     uint32_t max_part0_to_part1_dev;
-#if TUNE_M3_NSQ
     uint32_t skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
-#endif
     uint8_t  md_inter_intra_level;
     uint8_t  txs_level;
     uint8_t  nic_level;
@@ -430,9 +423,7 @@ typedef struct PictureControlSet {
     Bool             pic_bypass_encdec;
     RefList          colocated_pu_ref_list;
     EncMode          enc_mode;
-#if FTR_USE_COEFF_LVL
     InputCoeffLvl    coeff_lvl;
-#endif
     int32_t          cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo       wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];
     SgrprojInfo      sgrproj_info[MAX_TILE_CNTS][MAX_MB_PLANE];
@@ -542,22 +533,10 @@ typedef struct MotionEstimationData {
 } MotionEstimationData;
 typedef struct TplControls {
     uint8_t              enable; // 0: TPL OFF; 1: TPL ON
-#if CLN_TPL_OPT
     uint8_t              compute_rate; // 1: use rate 1: no rate
-#else
-    uint8_t              tpl_opt_flag; // 0:OFF 1:ON - TPL optimizations : no rate, only DC
-#endif
     uint8_t              enable_tpl_qps; // 0:OFF 1:ON - QPS in TPL
     uint8_t              disable_intra_pred_nref; // 0:OFF 1:ON - Disable intra prediction in NREF
-#if CLN_TPL_OPT
     PredictionMode       intra_mode_end; // The MAX intra mode to be tested in TPL
-#endif
-#if !OPT_TPL_QPS
-    uint8_t              disable_intra_pred_nbase; // Depricated . to remove
-    uint8_t              disable_tpl_nref; // 0:OFF 1:ON - Disable tpl in NREF
-    uint8_t              disable_tpl_pic_dist; // 16: OFF - 0: ON
-    uint8_t              get_best_ref; //Depricated.to remove
-#endif
     EB_TRANS_COEFF_SHAPE pf_shape;
     uint8_t              use_pred_sad_in_intra_search;
     uint8_t              use_pred_sad_in_inter_search;
@@ -575,9 +554,7 @@ typedef struct TplControls {
     uint8_t vq_adjust_lambda_sb;
     // Calculated qindex based on r0 using qstep calculation
     bool qstep_based_q_calc; // 0: OFF; 1: ON
-#if FTR_TPL_SUBPEL
     SUBPEL_FORCE_STOP subpel_depth; // max subpel depth to search for TPL; FULL_PEL corresponds to subpel off in TPL, QUARTER_PEL is the max precision for TPL subpel
-#endif
 } TplControls;
 
 typedef struct {
@@ -842,9 +819,6 @@ typedef struct PictureParentControlSet {
     Bool     disallow_HVA_HVB; // Disallow HA/HB/VA/VB NSQ blocks
     DlfCtrls dlf_ctrls;
     uint8_t  intra_pred_mode;
-#if !OPT_TXS
-    uint8_t  tx_size_search_mode;
-#endif
     uint8_t  frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON
     //**********************************************************************************************************//
     Av1RpsNode av1_ref_signal;
@@ -1022,9 +996,7 @@ typedef struct PictureParentControlSet {
     uint8_t      is_not_scaled;
     TfControls   tf_ctrls;
     GmControls   gm_ctrls;
-#if FIX_GMV_DOWN
     GM_LEVEL gm_downsample_level;
-#endif
     CdefControls cdef_ctrls;
     // RC related variables
     int                             q_low;

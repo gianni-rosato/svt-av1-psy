@@ -15,7 +15,6 @@
 #include "noise_util.h"
 #include "noise_model.h"
 
-#if FG_LOSSLES_OPT
 void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val,
                                                   const double recp_sqr_norm, double *buffer,
                                                   double *buffer_norm, double *b, double *A) {
@@ -251,4 +250,3 @@ void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *bloc
     }
     for (; i < n; ++i) block[i] -= plane[i];
 }
-#endif

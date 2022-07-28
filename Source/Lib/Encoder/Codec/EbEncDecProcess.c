@@ -1910,7 +1910,6 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
     ObmcControls *obmc_ctrls = &mdctxt->obmc_ctrls;
     switch (obmc_mode) {
     case 0: obmc_ctrls->enabled = 0; break;
-#if FTR_OPTIMIZE_OBMC
     case 1:
         obmc_ctrls->enabled = 1;
         obmc_ctrls->max_blk_size_to_refine_16x16 = 0;
@@ -1926,16 +1925,6 @@ void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
         obmc_ctrls->max_blk_size_to_refine_16x16 = 1;
         obmc_ctrls->max_blk_size_16x16 = 1;
         break;
-#else
-    case 1:
-        obmc_ctrls->enabled            = 1;
-        obmc_ctrls->max_blk_size_16x16 = 0;
-        break;
-    case 2:
-        obmc_ctrls->enabled            = 1;
-        obmc_ctrls->max_blk_size_16x16 = 1;
-        break;
-#endif
     default: assert(0); break;
     }
 }
@@ -3768,22 +3757,10 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
         nic_level = 0;
     else if (enc_mode <= ENC_MR)
         nic_level = 1;
-#if TUNE_SSIM_M1
     else if (enc_mode <= ENC_M1)
         nic_level = is_base ? 2 : 4;
-#else
-    else if (enc_mode <= ENC_M0)
-        nic_level = is_base ? 2 : 4;
-    else if (enc_mode <= ENC_M1)
-        nic_level = 5;
-#endif
-#if TUNE_M1_M3_BDR
     else if (enc_mode <= ENC_M2)
         nic_level = is_base ? 7 : 9;
-#else
-    else if (enc_mode <= ENC_M2)
-        nic_level = 9;
-#endif
     else if (enc_mode <= ENC_M3) {
         if (hierarchical_levels <= 3)
             nic_level = 11;
@@ -4665,7 +4642,6 @@ static void set_detect_high_freq_ctrls(ModeDecisionContext* ctx, uint8_t detect_
     }
 }
 
-#if FIX_DISALLOW_8x8_SC
 // use this function to set the disallow_below_16x16 level in MD. ME 8x8 blocks are controlled by get_enable_me_8x8()
 uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
                                                 Bool is_islice, Bool sc_class1,
@@ -4686,65 +4662,6 @@ uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInput
 
     return disallow_below_16x16;
 }
-#else
-// use this function to set the disallow_below_16x16 level and to set the accompanying enable_me_8x8 level
-#if FIX_DISALLOW_8x8_SC
-uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
-                                                Bool is_islice, Bool sc_class1,
-                                                Bool is_ref) {
-#else
-uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode enc_mode, EbInputResolution resolution,
-                                               SliceType slice_type, uint8_t sc_class1,
-                                               uint8_t is_used_as_reference_flag,
-                                               uint8_t temporal_layer_index) {
-#endif
-    uint8_t disallow_below_16x16 = 0;
-    if (sc_class1)
-        disallow_below_16x16 = 0;
-#if TUNE_DEFAULT_M9
-    else if (enc_mode <= ENC_M9)
-#else
-    else if (enc_mode <= ENC_M8)
-#endif
-        disallow_below_16x16 = 0;
-#if TUNE_SSIM_M11
-    else if (enc_mode <= ENC_M11) {
-        if (resolution <= INPUT_SIZE_1080p_RANGE)
-            disallow_below_16x16 = is_ref ? 0 : 1;
-        else
-            disallow_below_16x16 = is_islice ? 0 : 1;
-    }
-#else
-#if TUNE_DEFAULT_M10_M11
-    else if (enc_mode <= ENC_M10) {
-        if (resolution <= INPUT_SIZE_1080p_RANGE)
-            disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
-        else
-            disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
-    }
-#else
-    else if (enc_mode <= ENC_M9)
-        if (resolution <= INPUT_SIZE_1080p_RANGE)
-            disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
-        else {
-            disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
-        }
-#endif
-    else if (enc_mode <= ENC_M11)
-        disallow_below_16x16 = (resolution <= INPUT_SIZE_480p_RANGE)
-            ? (temporal_layer_index == 0 ? 0 : 1)
-            : ((slice_type == I_SLICE) ? 0 : 1);
-#endif
-#if TUNE_SSIM_M11
-    else
-        disallow_below_16x16 = is_islice ? 0 : 1;
-#else
-    else
-        disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
-#endif
-    return disallow_below_16x16;
-}
-#endif
 /*
  * Generate per-SB MD settings (do not change per-PD)
  */
@@ -4781,17 +4698,9 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
         else
             depth_level = pcs_ptr->slice_type == I_SLICE ? 3 : 0;
     }
-#if TUNE_SSIM_M1
     else if (enc_mode <= ENC_M0)
-#else
-    else if (enc_mode <= ENC_M1)
-#endif
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
-#if TUNE_M1_M3
     else if (enc_mode <= ENC_M3)
-#else
-    else if (enc_mode <= ENC_M2)
-#endif
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
     else if (enc_mode <= ENC_M8)
         depth_level = 3;
@@ -5073,7 +4982,6 @@ void set_dist_based_ref_pruning_controls(ModeDecisionContext *mdctxt,
     }
 }
 
-#if OPT_TXS
 static void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
     TxsControls *txs_ctrls = &ctx->txs_ctrls;
 
@@ -5137,65 +5045,6 @@ static void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
     default: assert(0); break;
     }
 }
-#else
-void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
-    TxsControls *txs_ctrls = &ctx->txs_ctrls;
-
-    switch (txs_level) {
-    case 0: txs_ctrls->enabled = 0; break;
-
-    case 1:
-        txs_ctrls->enabled                 = 1;
-        txs_ctrls->prev_depth_coeff_exit   = 1;
-        txs_ctrls->intra_class_max_depth   = 2;
-        txs_ctrls->inter_class_max_depth   = 2;
-        txs_ctrls->depth1_txt_group_offset = 0;
-        txs_ctrls->depth2_txt_group_offset = 0;
-        txs_ctrls->min_sq_size             = 0;
-        break;
-
-    case 2:
-        txs_ctrls->enabled                 = 1;
-        txs_ctrls->prev_depth_coeff_exit   = 1;
-        txs_ctrls->intra_class_max_depth   = 2;
-        txs_ctrls->inter_class_max_depth   = 1;
-        txs_ctrls->depth1_txt_group_offset = 0;
-        txs_ctrls->depth2_txt_group_offset = 0;
-        txs_ctrls->min_sq_size             = 0;
-        break;
-
-    case 3:
-        txs_ctrls->enabled                 = 1;
-        txs_ctrls->prev_depth_coeff_exit   = 1;
-        txs_ctrls->intra_class_max_depth   = 2;
-        txs_ctrls->inter_class_max_depth   = 0;
-        txs_ctrls->depth1_txt_group_offset = 0;
-        txs_ctrls->depth2_txt_group_offset = 0;
-        txs_ctrls->min_sq_size             = 0;
-        break;
-
-    case 4:
-        txs_ctrls->enabled                 = 1;
-        txs_ctrls->prev_depth_coeff_exit   = 1;
-        txs_ctrls->intra_class_max_depth   = 1;
-        txs_ctrls->inter_class_max_depth   = 0;
-        txs_ctrls->depth1_txt_group_offset = 4;
-        txs_ctrls->depth2_txt_group_offset = 4;
-        txs_ctrls->min_sq_size             = 0;
-        break;
-    case 5:
-        txs_ctrls->enabled                 = 1;
-        txs_ctrls->prev_depth_coeff_exit   = 1;
-        txs_ctrls->intra_class_max_depth   = 1;
-        txs_ctrls->inter_class_max_depth   = 0;
-        txs_ctrls->depth1_txt_group_offset = 4;
-        txs_ctrls->depth2_txt_group_offset = 4;
-        txs_ctrls->min_sq_size             = 32;
-        break;
-    default: assert(0); break;
-    }
-}
-#endif
 void set_spatial_sse_full_loop_level(ModeDecisionContext *ctx,
                                      uint8_t              spatial_sse_full_loop_level) {
     SpatialSSECtrls *spatial_sse_ctrls = &ctx->spatial_sse_ctrls;
@@ -5362,7 +5211,6 @@ void set_rate_est_ctrls(ModeDecisionContext *ctx, uint8_t rate_est_level) {
     default: assert(0); break;
     }
 }
-#if FTR_USE_TPL_INTRA
 /*
 Loop over TPL blocks in the SB to update intra information.  Return 1 if the stats for the SB are valid; else return 0.
 
@@ -5413,12 +5261,9 @@ static Bool get_sb_tpl_intra_stats(PictureControlSet *pcs, ModeDecisionContext *
     }
     return 0;
 }
-#endif
 void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t intra_level) {
     IntraCtrls *ctrls = &ctx->intra_ctrls;
-#if FTR_USE_TPL_INTRA
     PictureParentControlSet *ppcs = pcs->parent_pcs_ptr;
-#endif
 
     // If intra is disallowed at the pic level, must disallow at SB level
     if (pcs->skip_intra)
@@ -5442,7 +5287,6 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
         ctrls->intra_mode_end     = PAETH_PRED;
         ctrls->angular_pred_level = 2;
 
-#if FTR_USE_TPL_INTRA
         // Only use TPL info if all INTRA modes are tested
         if (ppcs->tpl_ctrls.enable && ppcs->tpl_ctrls.intra_mode_end == PAETH_PRED) {
             int sb_ang_intra_count;
@@ -5457,14 +5301,12 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
                 }
             }
         }
-#endif
         break;
     case 3:
         ctrls->enable_intra       = 1;
         ctrls->intra_mode_end     = SMOOTH_H_PRED;
         ctrls->angular_pred_level = 3;
 
-#if FTR_USE_TPL_INTRA
         // Only use TPL info if all INTRA modes are tested
         if (ppcs->tpl_ctrls.enable && ppcs->tpl_ctrls.intra_mode_end == PAETH_PRED) {
             int sb_ang_intra_count;
@@ -5491,7 +5333,6 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
                 ctrls->intra_mode_end = sb_max_intra;
             }
         }
-#endif
         break;
     case 4:
         ctrls->enable_intra       = 1;
@@ -6034,10 +5875,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
 
     context_ptr->max_part0_to_part1_dev = pd_pass == PD_PASS_0 ? 0
                                                                : pcs_ptr->max_part0_to_part1_dev;
-#if TUNE_M3_NSQ
     context_ptr->skip_hv4_on_best_part = pd_pass == PD_PASS_0 ? 0
                                                               : pcs_ptr->skip_hv4_on_best_part;
-#endif
 
     // Set pic_obmc_level @ MD
     if (pd_pass == PD_PASS_0)
@@ -6098,11 +5937,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
     } else if (enc_mode <= ENC_M9)
         context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
-#if TUNE_SSIM_M12
     else if (enc_mode <= ENC_M12)
-#else
-    else if (enc_mode <= ENC_M11)
-#endif
         context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
     else
         context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
@@ -6150,23 +5985,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         else
             intra_level = is_base ? 5 : 0;
     }
-#if FTR_USE_TPL_INTRA
-#if TUNE_M1_M3
     else if (enc_mode <= ENC_M0)
-#else
-    else if (enc_mode <= ENC_M1)
-#endif
         intra_level = 1;
     else if (enc_mode <= ENC_M2)
         intra_level = is_base ? 1 : 2;
     else if (enc_mode <= ENC_M4)
         intra_level = is_base ? 1 : 3;
-#else
-    else if (enc_mode <= ENC_M0)
-        intra_level = 1;
-    else if (enc_mode <= ENC_M2)
-        intra_level = is_ref ? 1 : 4;
-#endif
     else if (enc_mode <= ENC_M5)
         intra_level = is_base ? 1 : 4;
     else if (enc_mode <= ENC_M7)

@@ -116,7 +116,6 @@ void svt_av1_wiener_convolve_add_src_c(const uint8_t *const src, const ptrdiff_t
     const int32_t             y0_q4     = get_filter_offset(filter_y, filters_y);
 
     uint16_t      temp[WIENER_MAX_EXT_SIZE * MAX_SB_SIZE];
-#if FIX_REST_SANITIZER
     const int32_t intermediate_height = (((h - 1) * y_step_q4 + y0_q4) >> SUBPEL_BITS) +
         SUBPEL_TAPS - 1;
 
@@ -126,10 +125,6 @@ void svt_av1_wiener_convolve_add_src_c(const uint8_t *const src, const ptrdiff_t
     // over 8 (SUBPEL_TAPS) pixels, with the final 8th weight being zero. Therefore, the extra bottom-most pixel
     // will not affect the result, but will cause a sanitizer failure if not initialized.
     memset(temp + (intermediate_height * MAX_SB_SIZE), 0, MAX_SB_SIZE);
-#else
-    const int32_t intermediate_height = (((h - 1) * y_step_q4 + y0_q4) >> SUBPEL_BITS) +
-        SUBPEL_TAPS;
-#endif
 
     assert(w <= MAX_SB_SIZE);
     assert(h <= MAX_SB_SIZE);

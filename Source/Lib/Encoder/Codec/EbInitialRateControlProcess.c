@@ -163,56 +163,16 @@ uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index
             return 1;
     return 0;
 }
-#if !OPT_TPL_QPS
-/* decide to inject a frame into the tpl group*/
-uint8_t inj_to_tpl_group(PictureParentControlSet *pcs) {
-    uint8_t inj = 0;
-    if (pcs->hierarchical_levels != 4) {
-        if (pcs->temporal_layer_index < pcs->hierarchical_levels)
-            inj = 1;
-        else
-            inj = 0;
-    } else {
-        if (pcs->scs_ptr->mrp_ctrls.referencing_scheme == 1) {
-            if (pcs->temporal_layer_index < 4)
-                inj = 1;
-            else if (
-                pcs->is_used_as_reference_flag &&
-                (pcs->pic_index == 6 ||
-                 pcs->pic_index ==
-                     10)) //TODO: could be removed once TPL r0 adapts dyncamically  to TPL group size
-                inj = 1;
-            else
-                inj = 0;
-
-        } else {
-            if (pcs->temporal_layer_index < 4)
-                inj = 1;
-            else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 0 || pcs->pic_index == 8))
-                inj = 1;
-            else
-                inj = 0;
-        }
-    }
-
-    return inj;
-}
-#endif
 
 // validate pictures that will be used by the tpl algorithm based on tpl opts
 void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
     // Check wether the i-th pic already exists in the tpl group
-#if OPT_TPL_QPS
     if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number) &&
         // In the middle pass when rc_stat_gen_pass_mode is set, pictures in the highest temporal layer are skipped,
         // except the first one. The condition is added to prevent validating these frames for tpl
         !is_pic_skipped(pcs->tpl_group[pic_index])) {
         // Discard low important pictures from tpl group
-#if CLN_TPL_OPT
         if (pcs->tpl_ctrls.reduced_tpl_group >= 0) {
-#else
-        if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
-#endif
             if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
                 pcs->tpl_valid_pic[pic_index] = 1;
                 pcs->used_tpl_frame_num++;
@@ -222,29 +182,6 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
             pcs->tpl_valid_pic[pic_index] = 1;
             pcs->used_tpl_frame_num++;
         }
-#else
-    if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number)) {
-        // Discard non-ref pic from the tpl group
-        uint8_t inject_frame = inj_to_tpl_group(pcs->tpl_group[pic_index]);
-        if (inject_frame) {
-            if (pcs->slice_type != I_SLICE) {
-                // Discard low important pictures from tpl group
-                if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
-                    if (pcs->tpl_group[pic_index]->temporal_layer_index <=
-                        pcs->tpl_ctrls.reduced_tpl_group) {
-                        pcs->tpl_valid_pic[pic_index] = 1;
-                        pcs->used_tpl_frame_num++;
-                    }
-                } else {
-                    pcs->tpl_valid_pic[pic_index] = 1;
-                    pcs->used_tpl_frame_num++;
-                }
-            } else {
-                pcs->tpl_valid_pic[pic_index] = 1;
-                pcs->used_tpl_frame_num++;
-            }
-        }
-#endif
     }
 }
 
@@ -549,7 +486,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 svt_release_object(in_results_wrapper_ptr);
                 continue;
             }
-#if FIX_UV_QINDEX_OFFSET
             // The quant/dequant params derivation is performaed 1 time per sequence assuming the qindex offset(s) are 0
             // then adjusted per TU prior of the quantization at av1_quantize_inv_quantize() depending on the qindex offset(s)
             if (pcs_ptr->picture_number == 0) {
@@ -579,35 +515,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         deq_bd);
                 }
             }
-#else
-            if (pcs_ptr->picture_number == 0) {
-                Quants *const   quants_8bit = &scs_ptr->quants_8bit;
-                Dequants *const deq_8bit    = &scs_ptr->deq_8bit;
-                svt_av1_build_quantizer(
-                    EB_EIGHT_BIT,
-                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
-                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
-                    pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
-                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
-                    pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
-                    quants_8bit,
-                    deq_8bit);
-
-                if (scs_ptr->static_config.encoder_bit_depth == EB_TEN_BIT) {
-                    Quants *const   quants_bd = &scs_ptr->quants_bd;
-                    Dequants *const deq_bd    = &scs_ptr->deq_bd;
-                    svt_av1_build_quantizer(
-                        EB_TEN_BIT,
-                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
-                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
-                        pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
-                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
-                        pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
-                        quants_bd,
-                        deq_bd);
-                }
-            }
-#endif
             // tpl_la can be performed on unscaled frames in super-res q-threshold and auto mode
             if (pcs_ptr->tpl_ctrls.enable && !pcs_ptr->frame_superres_enabled) {
                 svt_set_cond_var(&pcs_ptr->me_ready, 1);

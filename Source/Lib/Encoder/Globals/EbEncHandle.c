@@ -119,11 +119,7 @@ typedef struct logicalProcessorGroup {
 #define INITIAL_PROCESSOR_GROUP 16
 static processorGroup           *lp_group = NULL;
 #endif
-#if OPT_TPL_QPS
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
-#else
-uint8_t  get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
-#endif
 
 uint8_t get_disallow_nsq(EncMode enc_mode);
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
@@ -1523,13 +1519,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             MAX(mrp_ctrl->sc_base_ref_list1_count,
                 MAX(mrp_ctrl->base_ref_list1_count,
                     MAX(mrp_ctrl->sc_non_base_ref_list1_count, mrp_ctrl->non_base_ref_list1_count)));
-#if OPT_TPL_QPS
         input_data.tpl_synth_size = svt_aom_get_tpl_synthesizer_block_size(enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_level,
             input_data.picture_width, input_data.picture_height);
-#else
-        input_data.tpl_synth_size = get_tpl_synthesizer_block_size( enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_level,
-            input_data.picture_width, input_data.picture_height);
-#endif
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->calculate_variance;
         input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection ||
@@ -2456,15 +2447,10 @@ static uint32_t compute_default_look_ahead(
 
     if (config->rate_control_mode == 0)
         lad = (1 + mg_size) * (1 + MIN_LAD_MG) + max_tf_delay + eos_delay;
-#if FTR_RC_VBR_IMR
     else if(config->logical_processors == 1)
         lad = (1 + mg_size) * (1 + RC_DEFAULT_LAD_MG_LP1) + max_tf_delay + eos_delay;
     else
         lad = (1 + mg_size) * (1 + RC_DEFAULT_LAD_MG_MT) + max_tf_delay + eos_delay;
-#else
-    else
-        lad = (1 + mg_size) * (1 + RC_DEFAULT_LAD_MG) + max_tf_delay + eos_delay;
-#endif
 
     lad = lad > MAX_LAD ? MAX_LAD : lad; // clip to max allowed lad
     return lad;
@@ -2949,11 +2935,7 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     if (do_tf == 0) {
         tf_level = 0;
     }
-#if TUNE_SSIM_M1
     else if (enc_mode <= ENC_M0) {
-#else
-    else if (enc_mode <= ENC_M1) {
-#endif
         tf_level = 1;
     }
     else if (enc_mode <= ENC_M5) {
@@ -3030,7 +3012,6 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
         break;
-#if TUNE_M5_MRP
     case 4:
         mrp_ctrl->referencing_scheme          = 0;
         mrp_ctrl->sc_base_ref_list0_count     = 2;
@@ -3066,31 +3047,6 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list0_count    = 1;
         mrp_ctrl->non_base_ref_list1_count    = 1;
         break;
-#else
-    case 4:
-        mrp_ctrl->referencing_scheme          = 0;
-        mrp_ctrl->sc_base_ref_list0_count     = 2;
-        mrp_ctrl->sc_base_ref_list1_count     = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count        = 2;
-        mrp_ctrl->base_ref_list1_count        = 2;
-        mrp_ctrl->non_base_ref_list0_count    = 2;
-        mrp_ctrl->non_base_ref_list1_count    = 2;
-        break;
-
-    case 5:
-        mrp_ctrl->referencing_scheme          = 0;
-        mrp_ctrl->sc_base_ref_list0_count     = 2;
-        mrp_ctrl->sc_base_ref_list1_count     = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count        = 2;
-        mrp_ctrl->base_ref_list1_count        = 2;
-        mrp_ctrl->non_base_ref_list0_count    = 1;
-        mrp_ctrl->non_base_ref_list1_count    = 1;
-        break;
-#endif
     default:
         assert(0);
         break;
@@ -3113,7 +3069,6 @@ void set_ipp_pass_ctrls(
         ipp_pass_ctrls->reduce_me_search = 0;
         break;
 
-#if FTR_RC_VBR_IMR
     case 1:
         ipp_pass_ctrls->skip_frame_first_pass = 0;
         ipp_pass_ctrls->ds = 0;
@@ -3142,27 +3097,6 @@ void set_ipp_pass_ctrls(
         ipp_pass_ctrls->use8blk = 1;
         ipp_pass_ctrls->reduce_me_search = 1;
         break;
-#else
-    case 1:
-        ipp_pass_ctrls->skip_frame_first_pass = 1;
-        ipp_pass_ctrls->ds = 0;
-        ipp_pass_ctrls->bypass_blk_step = 0;
-        ipp_pass_ctrls->dist_ds = 1;
-        ipp_pass_ctrls->bypass_zz_check = 1;
-        ipp_pass_ctrls->use8blk = 1;
-        ipp_pass_ctrls->reduce_me_search = 1;
-        break;
-
-    case 2:
-        ipp_pass_ctrls->skip_frame_first_pass = 1;
-        ipp_pass_ctrls->ds = 1;
-        ipp_pass_ctrls->bypass_blk_step = 1;
-        ipp_pass_ctrls->dist_ds = 1;
-        ipp_pass_ctrls->bypass_zz_check = 1;
-        ipp_pass_ctrls->use8blk = 1;
-        ipp_pass_ctrls->reduce_me_search = 1;
-        break;
-#endif
 
     default:
         assert(0);
@@ -3215,17 +3149,10 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
         SVT_WARN("TPL will be disabled when reference scalings (resize) is enabled!\n");
         tpl_level = 0;
     }
-#if TUNE_DEFAULT_M5
     else if (enc_mode <= ENC_M4)
-#else
-    else if (enc_mode <= ENC_M5)
-#endif
         tpl_level = 1;
-#if OPT_TPL_QPS
-#if TUNE_M5
     else if (enc_mode <= ENC_M5)
         tpl_level = 2;
-#endif
     else if (enc_mode <= ENC_M7)
         tpl_level = 3;
     else if (enc_mode <= ENC_M8)
@@ -3236,18 +3163,6 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
         tpl_level = 6;
     else
         tpl_level = 7;
-#else
-    else if (enc_mode <= ENC_M7)
-        tpl_level = 3;
-    else if (enc_mode <= ENC_M9) {
-        tpl_level = 4;
-    }
-    else if (enc_mode <= ENC_M10) {
-        tpl_level = 5;
-    }
-    else
-        tpl_level = 7;
-#endif
 
     return tpl_level;
 }
@@ -3271,14 +3186,10 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
     switch (config->pass) {
 
         case ENC_SINGLE_PASS: {
-#if FTR_RC_VBR_IMR
             if (config->enc_mode <= ENC_M9)
                 set_ipp_pass_ctrls(scs_ptr, 0);
             else
                 set_ipp_pass_ctrls(scs_ptr, 1);
-#else
-            set_ipp_pass_ctrls(scs_ptr, 0);
-#endif
             set_mid_pass_ctrls(scs_ptr, 0);
             scs_ptr->ipp_was_ds = 0;
             scs_ptr->final_pass_preset = config->enc_mode;
@@ -3288,7 +3199,6 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
         case ENC_FIRST_PASS: {
             if (config->enc_mode <= ENC_M4)
                 set_ipp_pass_ctrls(scs_ptr, 0);
-#if FTR_RC_VBR_IMR
             else if (config->enc_mode <= ENC_M10)
                 set_ipp_pass_ctrls(scs_ptr, 2);
             else
@@ -3296,15 +3206,6 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
                     set_ipp_pass_ctrls(scs_ptr, 3);
                 else
                     set_ipp_pass_ctrls(scs_ptr, 2);
-#else
-            else if (config->enc_mode <= ENC_M10)
-                set_ipp_pass_ctrls(scs_ptr, 1);
-            else
-                if (config->rate_control_mode == 0)
-                    set_ipp_pass_ctrls(scs_ptr, 2);
-                else
-                    set_ipp_pass_ctrls(scs_ptr, 1);
-#endif
             set_mid_pass_ctrls(scs_ptr, 0);
             scs_ptr->ipp_was_ds = 0;
             scs_ptr->final_pass_preset = config->enc_mode;
@@ -3724,7 +3625,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else if (scs_ptr->static_config.enc_mode <= ENC_M4) {
         mrp_level = 3;
     }
-#if TUNE_M5_MRP
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
         mrp_level = 4;
     }
@@ -3743,23 +3643,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else {
         mrp_level = 0;
     }
-#else
-    else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
-        mrp_level = 4;
-    }
-    else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
-        if (scs_ptr->static_config.hierarchical_levels <= 3)
-            mrp_level = 4;
-        else
-            mrp_level = 5;
-    }
-    else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
-        mrp_level = 5;
-    }
-    else {
-        mrp_level = 0;
-    }
-#endif
 
     set_mrp_ctrl(scs_ptr, mrp_level);
     scs_ptr->is_short_clip = 0; // set to 1 if multipass and less than 200 frames in resourcecordination
@@ -3933,27 +3816,16 @@ void copy_api_from_app(
     scs_ptr->static_config.use_fixed_qindex_offsets = ((EbSvtAv1EncConfiguration*)config_struct)->use_fixed_qindex_offsets;
     scs_ptr->static_config.key_frame_chroma_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_chroma_qindex_offset;
     scs_ptr->static_config.key_frame_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_qindex_offset;
-#if FIX_Y_QINDEX_OFFSET
     if (scs_ptr->static_config.use_fixed_qindex_offsets) {
         scs_ptr->enable_qp_scaling_flag = scs_ptr->static_config.use_fixed_qindex_offsets == 1
             ? 0
             : 1; // do not shut the auto QPS if use_fixed_qindex_offsets 2
-#else
-    if (scs_ptr->static_config.use_fixed_qindex_offsets == 1) {
-        scs_ptr->enable_qp_scaling_flag = 0;
-#endif
         scs_ptr->static_config.use_qp_file = 0;
         memcpy(scs_ptr->static_config.qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->qindex_offsets,
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
-#if !FIX_UV_QINDEX_OFFSET
-        memcpy(scs_ptr->static_config.chroma_qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->chroma_qindex_offsets,
-            MAX_TEMPORAL_LAYERS * sizeof(int32_t));
-#endif
     }
-#if FIX_UV_QINDEX_OFFSET
     memcpy(scs_ptr->static_config.chroma_qindex_offsets, config_struct->chroma_qindex_offsets,
         MAX_TEMPORAL_LAYERS * sizeof(int32_t));
-#endif
     scs_ptr->static_config.luma_y_dc_qindex_offset =
       MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->luma_y_dc_qindex_offset, 63));
     scs_ptr->static_config.chroma_u_dc_qindex_offset =
@@ -4010,31 +3882,8 @@ void copy_api_from_app(
     else {
         if (((EbSvtAv1EncConfiguration*)config_struct)->tile_rows == DEFAULT && ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns == DEFAULT) {
 
-#if FTR_NO_TILE_FAST_DEC
             scs_ptr->static_config.tile_rows = 0;
             scs_ptr->static_config.tile_columns = 0;
-#else
-            if (scs_ptr->static_config.fast_decode == 0) {
-                scs_ptr->static_config.tile_rows = 0;
-                scs_ptr->static_config.tile_columns = 0;
-            }
-            else {
-                if (input_resolution <= INPUT_SIZE_360p_RANGE) {
-                    scs_ptr->static_config.tile_rows = 0;
-                    scs_ptr->static_config.tile_columns = 0;
-                }
-                else if (input_resolution <= INPUT_SIZE_480p_RANGE) {
-                    scs_ptr->static_config.tile_rows = 0;
-                    scs_ptr->static_config.tile_columns = 1;
-                    SVT_WARN("Tiles are enabled when using fast decode mode for 480p+ content.\n");
-                }
-                else {
-                    scs_ptr->static_config.tile_rows = 1;
-                    scs_ptr->static_config.tile_columns = 1;
-                    SVT_WARN("Tiles are enabled when using fast decode mode for 480p+ content.\n");
-                }
-            }
-#endif
 
         }
         else {

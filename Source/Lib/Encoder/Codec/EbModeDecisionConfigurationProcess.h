@@ -56,17 +56,9 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext   *thread_c
 
 extern void *mode_decision_configuration_kernel(void *input_ptr);
 
-#if FIX_DISALLOW_8x8_SC
 uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode           enc_mode,
                                                        EbInputResolution resolution, Bool is_islice,
                                                        Bool sc_class1, Bool is_ref);
-#else
-uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode           enc_mode,
-                                                       EbInputResolution resolution,
-                                                       SliceType slice_type, uint8_t sc_class1,
-                                                       uint8_t is_used_as_reference_flag,
-                                                       uint8_t temporal_layer_index);
-#endif
 
 #ifdef __cplusplus
 }

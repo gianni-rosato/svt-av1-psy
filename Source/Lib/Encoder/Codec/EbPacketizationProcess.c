@@ -24,9 +24,7 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbPictureDecisionResults.h"
 #include "EbRestoration.h" // RDCOST_DBL
-#if OPT_TPL_QPS
 #include "EbRateControlProcess.h"
-#endif
 
 #define RDCOST_DBL_WITH_NATIVE_BD_DIST(RM, R, D, BD) \
     RDCOST_DBL((RM), (R), (double)((D) >> (2 * (BD - 8))))
@@ -55,9 +53,6 @@ typedef struct PacketizationContext {
 } PacketizationContext;
 
 static Bool is_passthrough_data(EbLinkedListNode *data_node) { return data_node->passthrough; }
-#if !OPT_TPL_QPS
-int  compute_rdmult_sse(PictureControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth);
-#endif
 void free_temporal_filtering_buffer(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
@@ -471,11 +466,7 @@ void *packetization_kernel(void *input_ptr) {
             int64_t sse       = parent_pcs_ptr->luma_sse;
             uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
             uint8_t qindex    = parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-#if OPT_TPL_QPS
             int32_t rdmult    = svt_aom_compute_rd_mult(pcs_ptr->parent_pcs_ptr, qindex, bit_depth);
-#else
-            int32_t rdmult    = compute_rdmult_sse(pcs_ptr, qindex, bit_depth);
-#endif
 
             double rdcost = RDCOST_DBL_WITH_NATIVE_BD_DIST(
                 rdmult, rate, sse, scs_ptr->static_config.encoder_bit_depth);

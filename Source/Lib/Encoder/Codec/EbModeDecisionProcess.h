@@ -131,14 +131,9 @@ typedef struct InterIntraCompCtrls {
     uint8_t enabled;
 } InterIntraCompCtrls;
 typedef struct ObmcControls {
-#if FTR_OPTIMIZE_OBMC
     uint8_t enabled;
     Bool max_blk_size_to_refine_16x16; // if true, cap the max block size to refine to 16x16
     Bool max_blk_size_16x16; // if true, cap the max block size to test to 16x16
-#else
-    uint8_t enabled;
-    Bool    max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
-#endif
 } ObmcControls;
 typedef struct TxtControls {
     uint8_t enabled;
@@ -402,15 +397,10 @@ typedef struct CandEliminationCtlrs {
 typedef struct TxsControls {
     uint8_t  enabled;
     uint8_t  prev_depth_coeff_exit; // Skip current depth if previous depth has no coeff
-#if OPT_TXS
     uint8_t  intra_class_max_depth_sq;  // Max number of depth(s) for INTRA classes in SQ blocks
     uint8_t  intra_class_max_depth_nsq; // Max number of depth(s) for INTRA classes in NSQ blocks
     uint8_t  inter_class_max_depth_sq;  // Max number of depth(s) for INTER classes in SQ blocks
     uint8_t  inter_class_max_depth_nsq; // Max number of depth(s) for INTER classes in NSQ blocks
-#else
-    uint8_t  intra_class_max_depth; // Max number of depth(s) for INTRA classes
-    uint8_t  inter_class_max_depth; // Max number of depth(s) for INTER classes
-#endif
     int      depth1_txt_group_offset; // Offset to be subtracted from default txt-group to derive the txt-group of depth-1
     int      depth2_txt_group_offset; // Offset to be subtracted from default txt-group to derive the txt-group of depth-2
     uint16_t min_sq_size; // Min. sq size to use TXS for
@@ -747,9 +737,7 @@ typedef struct ModeDecisionContext {
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t          sq_weight;
     uint32_t          max_part0_to_part1_dev;
-#if TUNE_M3_NSQ
     uint32_t          skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
-#endif
     IntraCtrls        intra_ctrls;
     MdRateEstCtrls    rate_est_ctrls;
     uint8_t           shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)

@@ -24,18 +24,6 @@ float svt_aom_noise_psd_get_default_value(int32_t block_size, float factor) {
     return (factor * factor / 10000) * block_size * block_size / 8;
 }
 
-#if !FG_LOSSLES_OPT
-// Internal representation of noise transform. It keeps track of the
-// transformed data and a temporary working buffer to use during the
-// transform.
-struct aom_noise_tx_t {
-    float  *tx_block;
-    float  *temp;
-    int32_t block_size;
-    void (*fft)(const float *, float *, float *);
-    void (*ifft)(const float *, float *, float *);
-};
-#endif
 
 struct aom_noise_tx_t *svt_aom_noise_tx_malloc(int32_t block_size) {
     struct aom_noise_tx_t *noise_tx = (struct aom_noise_tx_t *)malloc(
@@ -89,21 +77,12 @@ void svt_aom_noise_tx_forward(struct aom_noise_tx_t *noise_tx, const float *data
     noise_tx->fft(data, noise_tx->temp, noise_tx->tx_block);
 }
 
-#if FG_LOSSLES_OPT
 void svt_aom_noise_tx_filter_c(int32_t block_size, float *block_ptr, const float psd) {
-#else
-void svt_aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float psd) {
-    const int32_t block_size           = noise_tx->block_size;
-#endif
     const float   k_beta               = 1.1f;
     const float   k_beta_m1_div_k_beta = (k_beta - 1.0f) / k_beta;
     const float   psd_mul_k_beta       = k_beta * psd;
     const float   k_eps                = 1e-6f;
-#if FG_LOSSLES_OPT
     float        *tx_block             = block_ptr;
-#else
-    float        *tx_block             = noise_tx->tx_block;
-#endif
     for (int32_t y = 0; y < block_size; ++y) {
         for (int32_t x = 0; x < block_size; ++x) {
             const float p = tx_block[0] * tx_block[0] + tx_block[1] * tx_block[1];

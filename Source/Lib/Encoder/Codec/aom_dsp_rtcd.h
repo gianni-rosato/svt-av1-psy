@@ -19,9 +19,7 @@
 #include "EbDefinitions.h"
 #include "EbCodingUnit.h"
 
-#if FG_LOSSLES_OPT
 #include "noise_model.h"
-#endif
 
 #undef RTCD_EXTERN
 #ifdef AOM_RTCD_C
@@ -902,7 +900,6 @@ extern "C" {
     double svt_estimate_noise_highbd_c(const uint16_t *src, int width, int height, int stride, int bd);
     RTCD_EXTERN void(*svt_copy_mi_map_grid)(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols);
     void svt_copy_mi_map_grid_c(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols);
-#if FG_LOSSLES_OPT
     RTCD_EXTERN void (*svt_av1_add_block_observations_internal)(uint32_t n, const double val, const double recp_sqr_norm, double *buffer, double *buffer_norm, double *b, double *A);
     void svt_av1_add_block_observations_internal_c(uint32_t n, const double val, const double recp_sqr_norm, double *buffer, double *buffer_norm, double *b, double *A);
     RTCD_EXTERN void (*svt_av1_pointwise_multiply)(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n);
@@ -913,7 +910,6 @@ extern "C" {
     void svt_aom_noise_tx_filter_c(int32_t block_size, float *block_ptr, const float psd);
     RTCD_EXTERN void (*svt_aom_flat_block_finder_extract_block)(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
     void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
-#endif
     RTCD_EXTERN void(*svt_av1_interpolate_core)(const uint8_t *const input, int in_length, uint8_t *output, int out_length, const int16_t *interp_filters);
     void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8_t *output, int out_length, const int16_t *interp_filters);
     RTCD_EXTERN void(*svt_av1_down2_symeven)(const uint8_t *const input, int length, uint8_t *output);
@@ -1772,13 +1768,11 @@ extern "C" {
     double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
     double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height, int stride, int bd);
     void svt_copy_mi_map_grid_avx2(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols);
-#if FG_LOSSLES_OPT
     void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val, const double recp_sqr_norm, double *buffer, double *buffer_norm, double *b, double *A);
     void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n);
     void svt_av1_apply_window_function_to_plane_avx2(int32_t y_size, int32_t x_size, float *result_ptr, uint32_t result_stride, float *block, float *plane, const float *window_function);
     void svt_aom_noise_tx_filter_avx2(int32_t block_size, float *block_ptr, const float psd);
     void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *block_finder, const uint8_t *const data, int32_t w, int32_t h, int32_t stride, int32_t offsx, int32_t offsy, double *plane, double *block);
-#endif
     void svt_av1_interpolate_core_avx2(const uint8_t *const input, int in_length, uint8_t *output, int out_length, const int16_t *interp_filters);
     void svt_av1_down2_symeven_avx2(const uint8_t *const input, int length, uint8_t *output);
     void svt_av1_highbd_interpolate_core_avx2(const uint16_t *const input, int in_length, uint16_t *output, int out_length, int bd, const int16_t *interp_filters);

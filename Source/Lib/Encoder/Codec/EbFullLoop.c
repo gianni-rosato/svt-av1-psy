@@ -1150,17 +1150,12 @@ enum {
 
 // These numbers are empirically obtained.
 static const int plane_rd_mult[REF_TYPES][PLANE_TYPES] = {
-#if TUNE_CHROMA_RDOQ
 #if TUNE_CHROMA_SSIM
     {17, 13},
     {16, 10},
 #else
     {17, 20},
     {16, 20},
-#endif
-#else
-    {17, 13},
-    {16, 10},
 #endif
 };
 
@@ -1548,9 +1543,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     (void)is_encode_pass;
     (void)coeff_stride;
     (void)is_intra_bc;
-#if FIX_UV_QINDEX_OFFSET
     PictureParentControlSet* ppcs = pcs_ptr->parent_pcs_ptr;
-#endif
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     int32_t             plane   = component_type == COMPONENT_LUMA ? AOM_PLANE_Y
                                : COMPONENT_CHROMA_CB ? AOM_PLANE_U : AOM_PLANE_V;
@@ -1569,7 +1562,6 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                           (int32_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                               segmentation_qp_offset);
 
-#if FIX_UV_QINDEX_OFFSET
     if (component_type != COMPONENT_LUMA) {
         if (frame_is_intra_only(ppcs)) {
             q_index += scs_ptr->static_config.key_frame_chroma_qindex_offset;
@@ -1580,7 +1572,6 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
 
         q_index = (uint32_t) CLIP3(0, 255, (int32_t) q_index);
     }
-#endif
 
     if (bit_depth == EB_EIGHT_BIT) {
 
@@ -1672,12 +1663,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
             (md_context->rdoq_ctrls.skip_uv && component_type != COMPONENT_LUMA))
             perform_rdoq = 0;
     }
-#if CLN_TPL_OPT
     if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th) {
-#else
-    if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.tpl_opt_flag &&
-        pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th) {
-#endif
         const int qp_offset_th = pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th;
         if (component_type == COMPONENT_CHROMA_CB || component_type == COMPONENT_CHROMA_CR) {
             int diff = (int32_t)q_index -

@@ -17,9 +17,7 @@
 #include "EbSvtAv1Enc.h"
 #include "EbPictureControlSet.h"
 #include "EbObject.h"
-#if OPT_TPL_QPS
 #include "EbInvTransforms.h"
-#endif
 
 #define MINQ_ADJ_LIMIT 48
 #define HIGH_UNDERSHOOT_RATIO 2
@@ -240,9 +238,7 @@ EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr, int me_port_index);
 
 extern void *rate_control_kernel(void *input_ptr);
-#if OPT_TPL_QPS
 int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type, int qindex);
 struct PictureParentControlSet;
 int svt_aom_compute_rd_mult(struct PictureParentControlSet* pcs, uint8_t q_index, uint8_t bit_depth);
-#endif
 #endif // EbRateControl_h

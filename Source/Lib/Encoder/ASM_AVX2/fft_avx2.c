@@ -25,7 +25,6 @@ GEN_FFT_16(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_stor
 GEN_FFT_32(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps,
            _mm256_set1_ps, _mm256_add_ps, _mm256_sub_ps, _mm256_mul_ps);
 
-#if FG_LOSSLES_OPT
 static INLINE void transpose8x8_float(const float *A, float *b, const int32_t lda, const int32_t ldb) {
     __m256 in0 = _mm256_loadu_ps(&A[0 * lda]);
     __m256 in1 = _mm256_loadu_ps(&A[1 * lda]);
@@ -78,7 +77,6 @@ static INLINE void transpose8x8_float(const float *A, float *b, const int32_t ld
          for (int32_t x = 0; x < n; x += 8) transpose8x8_float(A + y * n + x, b + x * n + y, n, n);
         }
  }
- #endif
 
 void svt_aom_fft8x8_float_avx2(const float *input, float *temp, float *output) {
     svt_aom_fft_2d_gen(input,
@@ -86,11 +84,7 @@ void svt_aom_fft8x8_float_avx2(const float *input, float *temp, float *output) {
                        output,
                        8,
                        svt_aom_fft1d_8_avx2,
-#if FG_LOSSLES_OPT
                        svt_aom_transpose_float_avx2,
-#else
-                       svt_aom_transpose_float_sse2,
-#endif
                        svt_aom_fft_unpack_2d_output_sse2,
                        8);
 }
@@ -101,11 +95,7 @@ void svt_aom_fft16x16_float_avx2(const float *input, float *temp, float *output)
                        output,
                        16,
                        svt_aom_fft1d_16_avx2,
-#if FG_LOSSLES_OPT
                        svt_aom_transpose_float_avx2,
-#else
-                       svt_aom_transpose_float_sse2,
-#endif
                        svt_aom_fft_unpack_2d_output_sse2,
                        8);
 }
@@ -116,11 +106,7 @@ void svt_aom_fft32x32_float_avx2(const float *input, float *temp, float *output)
                        output,
                        32,
                        svt_aom_fft1d_32_avx2,
-#if FG_LOSSLES_OPT
                        svt_aom_transpose_float_avx2,
-#else
-                       svt_aom_transpose_float_sse2,
-#endif
                        svt_aom_fft_unpack_2d_output_sse2,
                        8);
 }
@@ -141,11 +127,7 @@ void svt_aom_ifft8x8_float_avx2(const float *input, float *temp, float *output) 
                         svt_aom_fft1d_8_float,
                         svt_aom_fft1d_8_avx2,
                         svt_aom_ifft1d_8_avx2,
-#if FG_LOSSLES_OPT
                         svt_aom_transpose_float_avx2,
-#else
-                        svt_aom_transpose_float_sse2,
-#endif
                         8);
 }
 
@@ -157,11 +139,7 @@ void svt_aom_ifft16x16_float_avx2(const float *input, float *temp, float *output
                         svt_aom_fft1d_16_float,
                         svt_aom_fft1d_16_avx2,
                         svt_aom_ifft1d_16_avx2,
-#if FG_LOSSLES_OPT
                         svt_aom_transpose_float_avx2,
-#else
-                        svt_aom_transpose_float_sse2,
-#endif
                         8);
 }
 
@@ -173,10 +151,6 @@ void svt_aom_ifft32x32_float_avx2(const float *input, float *temp, float *output
                         svt_aom_fft1d_32_float,
                         svt_aom_fft1d_32_avx2,
                         svt_aom_ifft1d_32_avx2,
-#if FG_LOSSLES_OPT
                         svt_aom_transpose_float_avx2,
-#else
-                        svt_aom_transpose_float_sse2,
-#endif
                         8);
 }
