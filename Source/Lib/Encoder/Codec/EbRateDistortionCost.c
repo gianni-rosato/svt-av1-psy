@@ -592,7 +592,7 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
         ref_mv.row        = pred_ref_y;
         ref_mv.col        = pred_ref_x;
         int    *dvcost[2] = {(int *)&ctx->md_rate_estimation_ptr->dv_cost[0][MV_MAX],
-                          (int *)&ctx->md_rate_estimation_ptr->dv_cost[1][MV_MAX]};
+                             (int *)&ctx->md_rate_estimation_ptr->dv_cost[1][MV_MAX]};
         int32_t mv_rate   = svt_av1_mv_bit_cost(
             &mv, &ref_mv, ctx->md_rate_estimation_ptr->dv_joint_cost, dvcost, MV_COST_WEIGHT_SUB);
 

@@ -52,15 +52,15 @@ typedef struct EbPictureBufferDesc {
     uint16_t stride_bit_inc_cr; // pointer to the V chroma buffer Bit increment
 
     // Picture Parameters
-    uint16_t       origin_x; // Horizontal padding distance
-    uint16_t       origin_y; // Vertical padding distance
-    uint16_t       origin_bot_y; // Vertical bottom padding distance
-    uint16_t       width; // Luma picture width which excludes the padding
-    uint16_t       height; // Luma picture height which excludes the padding
-    uint16_t       max_width; // input Luma picture width
-    uint16_t       max_height; // input Luma picture height
-    EbBitDepth     bit_depth; // Pixel Bit Depth
-    EbColorFormat  color_format; // Chroma Subsumpling
+    uint16_t      origin_x; // Horizontal padding distance
+    uint16_t      origin_y; // Vertical padding distance
+    uint16_t      origin_bot_y; // Vertical bottom padding distance
+    uint16_t      width; // Luma picture width which excludes the padding
+    uint16_t      height; // Luma picture height which excludes the padding
+    uint16_t      max_width; // input Luma picture width
+    uint16_t      max_height; // input Luma picture height
+    EbBitDepth    bit_depth; // Pixel Bit Depth
+    EbColorFormat color_format; // Chroma Subsumpling
 
     // Buffer Parameters
     uint32_t luma_size; // Size of the luma buffer
@@ -138,21 +138,21 @@ typedef struct Yv12BufferConfig {
     uint8_t *y_buffer_8bit;
     int32_t  buf_8bit_valid;
 
-    uint8_t                   *buffer_alloc;
-    size_t                     buffer_alloc_sz;
-    int32_t                    border;
-    size_t                     frame_size;
-    int32_t                    subsampling_x;
-    int32_t                    subsampling_y;
-    uint32_t                   bit_depth;
-    EbColorPrimaries           color_primaries;
-    EbTransferCharacteristics  transfer_characteristics;
-    EbMatrixCoefficients       matrix_coefficients;
-    int32_t                    monochrome;
-    EbChromaSamplePosition     chroma_sample_position;
-    EbColorRange               color_range;
-    int32_t                    render_width;
-    int32_t                    render_height;
+    uint8_t                  *buffer_alloc;
+    size_t                    buffer_alloc_sz;
+    int32_t                   border;
+    size_t                    frame_size;
+    int32_t                   subsampling_x;
+    int32_t                   subsampling_y;
+    uint32_t                  bit_depth;
+    EbColorPrimaries          color_primaries;
+    EbTransferCharacteristics transfer_characteristics;
+    EbMatrixCoefficients      matrix_coefficients;
+    int32_t                   monochrome;
+    EbChromaSamplePosition    chroma_sample_position;
+    EbColorRange              color_range;
+    int32_t                   render_width;
+    int32_t                   render_height;
 
     int32_t corrupted;
     int32_t flags;
@@ -200,17 +200,17 @@ typedef int32_t (*AomGetFrameBufferCbFn)(void *priv, size_t min_size, AomCodecFr
  * EbPictureBufferDesc Init Data
  ************************************/
 typedef struct EbPictureBufferDescInitData {
-    uint16_t       max_width;
-    uint16_t       max_height;
-    EbBitDepth     bit_depth;
-    EbColorFormat  color_format;
-    uint32_t       buffer_enable_mask;
-    int32_t        rest_units_per_tile;
-    uint16_t       left_padding;
-    uint16_t       right_padding;
-    uint16_t       top_padding;
-    uint16_t       bot_padding;
-    Bool           split_mode; //ON: allocate 8bit data seperately from nbit data
+    uint16_t      max_width;
+    uint16_t      max_height;
+    EbBitDepth    bit_depth;
+    EbColorFormat color_format;
+    uint32_t      buffer_enable_mask;
+    int32_t       rest_units_per_tile;
+    uint16_t      left_padding;
+    uint16_t      right_padding;
+    uint16_t      top_padding;
+    uint16_t      bot_padding;
+    Bool          split_mode; //ON: allocate 8bit data seperately from nbit data
 
     Bool down_sampled_filtered;
 

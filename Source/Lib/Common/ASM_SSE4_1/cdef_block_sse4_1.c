@@ -134,12 +134,12 @@ void svt_av1_cdef_filter_block_8xn_8_sse4_1(uint8_t *dst, int dstride, const uin
                                             int pri_strength, int sec_strength, int dir,
                                             int pri_damping, int sec_damping, int coeff_shift,
                                             uint8_t height, uint8_t subsampling_factor) {
-    int     i;
-    __m128i p0, p1, p2, p3;
-    v256    sum, row, res, tap;
-    v256    max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    const int32_t po1 = eb_cdef_directions[dir][0];
-    const int32_t po2 = eb_cdef_directions[dir][1];
+    int           i;
+    __m128i       p0, p1, p2, p3;
+    v256          sum, row, res, tap;
+    v256          max, min, large = v256_dup_16(CDEF_VERY_LARGE);
+    const int32_t po1  = eb_cdef_directions[dir][0];
+    const int32_t po2  = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
     const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
     const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
@@ -285,11 +285,11 @@ void svt_av1_cdef_filter_block_4xn_8_sse4_1(uint8_t *dst, int dstride, const uin
                                             int pri_strength, int sec_strength, int dir,
                                             int pri_damping, int sec_damping, int coeff_shift,
                                             uint8_t height, uint8_t subsampling_factor) {
-    __m128i p0, p1, p2, p3;
-    v256    sum, row, tap, res;
-    v256    max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    const int32_t po1 = eb_cdef_directions[dir][0];
-    const int32_t po2 = eb_cdef_directions[dir][1];
+    __m128i       p0, p1, p2, p3;
+    v256          sum, row, tap, res;
+    v256          max, min, large = v256_dup_16(CDEF_VERY_LARGE);
+    const int32_t po1  = eb_cdef_directions[dir][0];
+    const int32_t po2  = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
     const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
     const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
@@ -507,11 +507,11 @@ void svt_av1_cdef_filter_block_8xn_16_sse4_1(uint16_t *dst, int dstride, const u
                                              int pri_strength, int sec_strength, int dir,
                                              int pri_damping, int sec_damping, int coeff_shift,
                                              uint8_t height, uint8_t subsampling_factor) {
-    int  i;
-    v256 sum, p0, p1, p2, p3, row, res;
-    v256 max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    const int32_t po1 = eb_cdef_directions[dir][0];
-    const int32_t po2 = eb_cdef_directions[dir][1];
+    int           i;
+    v256          sum, p0, p1, p2, p3, row, res;
+    v256          max, min, large = v256_dup_16(CDEF_VERY_LARGE);
+    const int32_t po1  = eb_cdef_directions[dir][0];
+    const int32_t po2  = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
     const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
     const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
@@ -636,11 +636,11 @@ void svt_av1_cdef_filter_block_4xn_16_sse4_1(uint16_t *dst, int dstride, const u
                                              int pri_strength, int sec_strength, int dir,
                                              int pri_damping, int sec_damping, int coeff_shift,
                                              uint8_t height, uint8_t subsampling_factor) {
-    int  i;
-    v256 p0, p1, p2, p3, sum, row, res;
-    v256 max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    const int32_t po1 = eb_cdef_directions[dir][0];
-    const int32_t po2 = eb_cdef_directions[dir][1];
+    int           i;
+    v256          p0, p1, p2, p3, sum, row, res;
+    v256          max, min, large = v256_dup_16(CDEF_VERY_LARGE);
+    const int32_t po1  = eb_cdef_directions[dir][0];
+    const int32_t po2  = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
     const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
     const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
@@ -1034,7 +1034,7 @@ static INLINE void array_reverse_transpose_8x8(__m128i *in, __m128i *res) {
 }
 
 uint8_t svt_aom_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *var,
-                                 int32_t coeff_shift) {
+                                     int32_t coeff_shift) {
     int     i;
     int32_t cost[8];
     int32_t best_cost = 0;
@@ -1071,10 +1071,10 @@ uint8_t svt_aom_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_
     return best_dir;
 }
 
-void svt_aom_cdef_find_dir_dual_sse4_1(const uint16_t *img1, const uint16_t *img2,
-    int stride, int32_t *var_out_1st,
-    int32_t *var_out_2nd, int32_t coeff_shift,
-    uint8_t *out_dir_1st_8x8, uint8_t *out_dir_2nd_8x8) {
+void svt_aom_cdef_find_dir_dual_sse4_1(const uint16_t *img1, const uint16_t *img2, int stride,
+                                       int32_t *var_out_1st, int32_t *var_out_2nd,
+                                       int32_t coeff_shift, uint8_t *out_dir_1st_8x8,
+                                       uint8_t *out_dir_2nd_8x8) {
     // Process first 8x8.
     *out_dir_1st_8x8 = svt_aom_cdef_find_dir_sse4_1(img1, stride, var_out_1st, coeff_shift);
 
@@ -1083,7 +1083,7 @@ void svt_aom_cdef_find_dir_dual_sse4_1(const uint16_t *img1, const uint16_t *img
 }
 
 void svt_aom_copy_rect8_8bit_to_16bit_sse4_1(uint16_t *dst, int32_t dstride, const uint8_t *src,
-                                         int32_t sstride, int32_t v, int32_t h) {
+                                             int32_t sstride, int32_t v, int32_t h) {
     int32_t i, j;
     for (i = 0; i < v; i++) {
         for (j = 0; j < (h & ~0x7); j += 8) {

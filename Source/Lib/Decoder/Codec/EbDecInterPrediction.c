@@ -50,7 +50,7 @@ static INLINE MV dec_clamp_mv_to_umv_border_sb(int32_t mb_to_left_edge, int32_t 
     const int32_t spel_top    = (AOM_INTERP_EXTEND + bh) << SUBPEL_BITS;
     const int32_t spel_bottom = spel_top - SUBPEL_SHIFTS;
     MV            clamped_mv  = {(int16_t)(src_mv->row * (1 << (1 - ss_y))),
-                     (int16_t)(src_mv->col * (1 << (1 - ss_x)))};
+                                 (int16_t)(src_mv->col * (1 << (1 - ss_x)))};
     assert(ss_x <= 1);
     assert(ss_y <= 1);
 

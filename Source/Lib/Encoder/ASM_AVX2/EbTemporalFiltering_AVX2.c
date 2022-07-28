@@ -2030,7 +2030,8 @@ void apply_filtering_central_highbd_avx2(MeContext           *context_ptr,
     }
 }
 
-int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y) {
+int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_t height,
+                                     uint16_t stride_y) {
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -2061,18 +2062,22 @@ int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_
             __m256i H = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + stride_y])));
             __m256i I = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(&src[k + stride_y + 1])));
 
-            __m256i A_m_I = _mm256_sub_epi16(A, I);
-            __m256i G_m_C = _mm256_sub_epi16(G, C);
+            __m256i A_m_I   = _mm256_sub_epi16(A, I);
+            __m256i G_m_C   = _mm256_sub_epi16(G, C);
             __m256i D_m_Fx2 = _mm256_slli_epi16(_mm256_sub_epi16(D, F), 1);
             __m256i B_m_Hx2 = _mm256_slli_epi16(_mm256_sub_epi16(B, H), 1);
 
-            __m256i gx_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
-            __m256i gy_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
+            __m256i gx_avx = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
+            __m256i gy_avx = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
             __m256i ga_avx = _mm256_add_epi16(gx_avx, gy_avx);
 
-            __m256i D_F_B_Hx2 = _mm256_slli_epi16(_mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
+            __m256i D_F_B_Hx2 = _mm256_slli_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
             __m256i A_C_G_I = _mm256_add_epi16(_mm256_add_epi16(A, C), _mm256_add_epi16(G, I));
-            __m256i v_avx2  = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
+            __m256i v_avx2  = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
 
             //if (ga < EDGE_THRESHOLD)
             __m256i cmp = _mm256_srli_epi16(_mm256_cmpgt_epi16(edge_treshold, ga_avx), 15);
@@ -2081,8 +2086,10 @@ int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_
             //num_accumulator and sum_accumulator have 32bit values
             num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpacklo_epi16(cmp, zero));
             num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpackhi_epi16(cmp, zero));
-            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpacklo_epi16(v_avx2, zero));
-            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpackhi_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator,
+                                               _mm256_unpacklo_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator,
+                                               _mm256_unpackhi_epi16(v_avx2, zero));
         }
         for (; j < width - 1; ++j) {
             const int k = i * stride_y + j;
@@ -2123,8 +2130,8 @@ int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_
     return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
 }
 
-
-int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int height, int stride, int bd) {
+int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int height, int stride,
+                                            int bd) {
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -2156,28 +2163,36 @@ int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int 
             __m256i H = _mm256_loadu_si256((__m256i *)(&src[k + stride]));
             __m256i I = _mm256_loadu_si256((__m256i *)(&src[k + stride + 1]));
 
-            __m256i A_m_I = _mm256_sub_epi16(A, I);
-            __m256i G_m_C = _mm256_sub_epi16(G, C);
+            __m256i A_m_I   = _mm256_sub_epi16(A, I);
+            __m256i G_m_C   = _mm256_sub_epi16(G, C);
             __m256i D_m_Fx2 = _mm256_slli_epi16(_mm256_sub_epi16(D, F), 1);
             __m256i B_m_Hx2 = _mm256_slli_epi16(_mm256_sub_epi16(B, H), 1);
 
-            __m256i gx_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
-            __m256i gy_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
-            __m256i ga_avx = _mm256_srai_epi16(_mm256_add_epi16(_mm256_add_epi16(gx_avx, gy_avx),rounding), (bd - 8));
+            __m256i gx_avx = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
+            __m256i gy_avx = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
+            __m256i ga_avx = _mm256_srai_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(gx_avx, gy_avx), rounding), (bd - 8));
 
-            __m256i D_F_B_Hx2 = _mm256_slli_epi16(_mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
+            __m256i D_F_B_Hx2 = _mm256_slli_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
             __m256i A_C_G_I = _mm256_add_epi16(_mm256_add_epi16(A, C), _mm256_add_epi16(G, I));
-            __m256i v_avx2  = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
+            __m256i v_avx2  = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
 
             //if (ga < EDGE_THRESHOLD)
             __m256i cmp = _mm256_srli_epi16(_mm256_cmpgt_epi16(edge_treshold, ga_avx), 15);
-            v_avx2      = _mm256_srai_epi16(_mm256_add_epi16(_mm256_mullo_epi16(v_avx2, cmp),rounding), (bd - 8));
+            v_avx2 = _mm256_srai_epi16(_mm256_add_epi16(_mm256_mullo_epi16(v_avx2, cmp), rounding),
+                                       (bd - 8));
 
             //num_accumulator and sum_accumulator have 32bit values
             num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpacklo_epi16(cmp, zero));
             num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpackhi_epi16(cmp, zero));
-            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpacklo_epi16(v_avx2, zero));
-            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpackhi_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator,
+                                               _mm256_unpacklo_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator,
+                                               _mm256_unpackhi_epi16(v_avx2, zero));
         }
         for (; j < width - 1; ++j) {
             const int k = i * stride + j;
@@ -2218,7 +2233,8 @@ int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int 
     return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
 }
 
-double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y) {
+double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t height,
+                               uint16_t stride_y) {
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -2254,13 +2270,17 @@ double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t heig
             __m256i D_m_Fx2 = _mm256_slli_epi16(_mm256_sub_epi16(D, F), 1);
             __m256i B_m_Hx2 = _mm256_slli_epi16(_mm256_sub_epi16(B, H), 1);
 
-            __m256i gx_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
-            __m256i gy_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
+            __m256i gx_avx = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
+            __m256i gy_avx = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
             __m256i ga_avx = _mm256_add_epi16(gx_avx, gy_avx);
 
-            __m256i D_F_B_Hx2 = _mm256_slli_epi16(_mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
+            __m256i D_F_B_Hx2 = _mm256_slli_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
             __m256i A_C_G_I = _mm256_add_epi16(_mm256_add_epi16(A, C), _mm256_add_epi16(G, I));
-            __m256i v_avx2  = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
+            __m256i v_avx2  = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
 
             //if (ga < EDGE_THRESHOLD)
             __m256i cmp = _mm256_srli_epi16(_mm256_cmpgt_epi16(edge_treshold, ga_avx), 15);
@@ -2269,8 +2289,10 @@ double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t heig
             //num_accumulator and sum_accumulator have 32bit values
             num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpacklo_epi16(cmp, zero));
             num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpackhi_epi16(cmp, zero));
-            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpacklo_epi16(v_avx2, zero));
-            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpackhi_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator,
+                                               _mm256_unpacklo_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator,
+                                               _mm256_unpackhi_epi16(v_avx2, zero));
         }
         for (; j < width - 1; ++j) {
             const int k = i * stride_y + j;
@@ -2310,7 +2332,8 @@ double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t heig
     return sigma;
 }
 
-double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height, int stride, int bd) {
+double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height, int stride,
+                                      int bd) {
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -2347,23 +2370,31 @@ double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height
             __m256i D_m_Fx2 = _mm256_slli_epi16(_mm256_sub_epi16(D, F), 1);
             __m256i B_m_Hx2 = _mm256_slli_epi16(_mm256_sub_epi16(B, H), 1);
 
-            __m256i gx_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
-            __m256i gy_avx = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
-            __m256i ga_avx = _mm256_srai_epi16(_mm256_add_epi16(_mm256_add_epi16(gx_avx, gy_avx), rounding), (bd - 8));
+            __m256i gx_avx = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(A_m_I, G_m_C), D_m_Fx2));
+            __m256i gy_avx = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_sub_epi16(A_m_I, G_m_C), B_m_Hx2));
+            __m256i ga_avx = _mm256_srai_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(gx_avx, gy_avx), rounding), (bd - 8));
 
-            __m256i D_F_B_Hx2 = _mm256_slli_epi16(_mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
+            __m256i D_F_B_Hx2 = _mm256_slli_epi16(
+                _mm256_add_epi16(_mm256_add_epi16(D, F), _mm256_add_epi16(B, H)), 1);
             __m256i A_C_G_I = _mm256_add_epi16(_mm256_add_epi16(A, C), _mm256_add_epi16(G, I));
-            __m256i v_avx2  = _mm256_abs_epi16(_mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
+            __m256i v_avx2  = _mm256_abs_epi16(
+                _mm256_add_epi16(_mm256_sub_epi16(_mm256_slli_epi16(E, 2), D_F_B_Hx2), A_C_G_I));
 
             //if (ga < EDGE_THRESHOLD)
             __m256i cmp = _mm256_srli_epi16(_mm256_cmpgt_epi16(edge_treshold, ga_avx), 15);
-            v_avx2 = _mm256_srai_epi16(_mm256_add_epi16(_mm256_mullo_epi16(v_avx2, cmp), rounding),(bd - 8));
+            v_avx2 = _mm256_srai_epi16(_mm256_add_epi16(_mm256_mullo_epi16(v_avx2, cmp), rounding),
+                                       (bd - 8));
 
             //num_accumulator and sum_accumulator have 32bit values
             num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpacklo_epi16(cmp, zero));
             num_accumulator = _mm256_add_epi32(num_accumulator, _mm256_unpackhi_epi16(cmp, zero));
-            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpacklo_epi16(v_avx2, zero));
-            sum_accumulator = _mm256_add_epi32(sum_accumulator, _mm256_unpackhi_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator,
+                                               _mm256_unpacklo_epi16(v_avx2, zero));
+            sum_accumulator = _mm256_add_epi32(sum_accumulator,
+                                               _mm256_unpackhi_epi16(v_avx2, zero));
         }
         for (; j < width - 1; ++j) {
             const int k = i * stride + j;

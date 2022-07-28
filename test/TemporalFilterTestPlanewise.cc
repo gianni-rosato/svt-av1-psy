@@ -1513,19 +1513,24 @@ TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_avx2) {
     }
 }
 
-int32_t estimate_noise_fp16_c_wrapper(const uint16_t* src, int width, int height, int stride, int bd) {
+int32_t estimate_noise_fp16_c_wrapper(const uint16_t *src, int width,
+                                      int height, int stride, int bd) {
     UNUSED(bd);
-    return svt_estimate_noise_fp16_c((const uint8_t *)src, width, height, stride);
+    return svt_estimate_noise_fp16_c(
+        (const uint8_t *)src, width, height, stride);
 }
-int32_t estimate_noise_fp16_avx2_wrapper(const uint16_t* src, int width, int height, int stride, int bd) {
+int32_t estimate_noise_fp16_avx2_wrapper(const uint16_t *src, int width,
+                                         int height, int stride, int bd) {
     UNUSED(bd);
-    return svt_estimate_noise_fp16_avx2((const uint8_t *)src, width, height, stride);
+    return svt_estimate_noise_fp16_avx2(
+        (const uint8_t *)src, width, height, stride);
 }
 
 typedef int32_t (*EstimateNoiseFuncFP)(const uint16_t *src, int width,
                                        int height, int stride, int bd);
 
-typedef std::tuple<EstimateNoiseFuncFP, EstimateNoiseFuncFP, int, int, int> EstimateNoiseParamFP;
+typedef std::tuple<EstimateNoiseFuncFP, EstimateNoiseFuncFP, int, int, int>
+    EstimateNoiseParamFP;
 class EstimateNoiseTestFP
     : public ::testing::TestWithParam<EstimateNoiseParamFP> {
   public:
@@ -1537,21 +1542,23 @@ class EstimateNoiseTestFP
         ref_func = TEST_GET_PARAM(0);
         tst_func = TEST_GET_PARAM(1);
         width = TEST_GET_PARAM(2);
-        height= TEST_GET_PARAM(3);
+        height = TEST_GET_PARAM(3);
         encoder_bit_depth = TEST_GET_PARAM(4);
-        src_ptr = reinterpret_cast<uint16_t *>(svt_aom_memalign(8, 4000 * 2500 * sizeof(uint16_t)));
+        src_ptr = reinterpret_cast<uint16_t *>(
+            svt_aom_memalign(8, 4000 * 2500 * sizeof(uint16_t)));
         GenRandomData(4000 * 2500);
     }
 
     void TearDown() {
-            svt_aom_free(src_ptr);
+        svt_aom_free(src_ptr);
     }
     void RunTest() {
-
         for (int i = 0; i < 10; i++) {
             stride = width + rnd_.random() % 100;
-            int32_t ref_out = ref_func(src_ptr, width, height, stride, encoder_bit_depth);
-            int32_t tst_out = tst_func(src_ptr, width, height, stride, encoder_bit_depth);
+            int32_t ref_out =
+                ref_func(src_ptr, width, height, stride, encoder_bit_depth);
+            int32_t tst_out =
+                tst_func(src_ptr, width, height, stride, encoder_bit_depth);
 
             EXPECT_EQ(ref_out, tst_out);
         }
@@ -1561,7 +1568,7 @@ class EstimateNoiseTestFP
         if (encoder_bit_depth == 8) {
             for (int ii = 0; ii < size; ii++)
                 src_ptr[ii] = rnd_.Rand16();
-        }else
+        } else
             for (int ii = 0; ii < size; ii++)
                 src_ptr[ii] = rnd_.random();
     }
@@ -1578,7 +1585,7 @@ class EstimateNoiseTestFP
 };
 
 TEST_P(EstimateNoiseTestFP, fixed_point) {
-        RunTest();
+    RunTest();
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -1595,13 +1602,15 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(svt_estimate_noise_highbd_fp16_avx2),
                        ::testing::Values(3840, 1920, 1280, 800, 640, 360),
                        ::testing::Values(2160, 1080, 720, 600, 480, 240),
-                       ::testing::Values(10,12)));
+                       ::testing::Values(10, 12)));
 
-double estimate_noise_c_wrapper(const uint16_t *src, int width, int height, int stride, int bd) {
+double estimate_noise_c_wrapper(const uint16_t *src, int width, int height,
+                                int stride, int bd) {
     UNUSED(bd);
     return svt_estimate_noise_c((const uint8_t *)src, width, height, stride);
 }
-double estimate_noise_avx2_wrapper(const uint16_t *src, int width, int height, int stride, int bd) {
+double estimate_noise_avx2_wrapper(const uint16_t *src, int width, int height,
+                                   int stride, int bd) {
     UNUSED(bd);
     return svt_estimate_noise_avx2((const uint8_t *)src, width, height, stride);
 }
@@ -1635,8 +1644,10 @@ class EstimateNoiseTestDbl
     void RunTest() {
         for (int i = 0; i < 10; i++) {
             stride = width + rnd_.random() % 100;
-            double ref_out = ref_func(src_ptr, width, height, stride, encoder_bit_depth);
-            double tst_out = tst_func(src_ptr, width, height, stride, encoder_bit_depth);
+            double ref_out =
+                ref_func(src_ptr, width, height, stride, encoder_bit_depth);
+            double tst_out =
+                tst_func(src_ptr, width, height, stride, encoder_bit_depth);
 
             EXPECT_EQ(ref_out, tst_out);
         }

@@ -70,8 +70,8 @@ void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val,
 void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d,
                                      int32_t n) {
     int32_t i = 0;
-    __m256   a_ps, b_ps, c_ps;
-    __m128   tmp_ps1, tmp_ps2;
+    __m256  a_ps, b_ps, c_ps;
+    __m128  tmp_ps1, tmp_ps2;
 
     for (; i + 8 - 1 < n; i += 8) {
         a_ps = _mm256_loadu_ps(a + i);
@@ -186,12 +186,13 @@ void svt_aom_flat_block_finder_extract_block_avx2(const AomFlatBlockFinder *bloc
             __m256i       data_epi32;
             const __m256d recp_norm_pd = _mm256_set1_pd(recp_norm);
             for (yi = 0; yi < block_size; ++yi) {
-                const int32_t  y        = clamp(offsy + yi, 0, h - 1);
+                const int32_t   y          = clamp(offsy + yi, 0, h - 1);
                 const uint16_t *data16_ptr = data16 + y * stride + offsx;
                 for (xi = 0; xi + 8 - 1 < block_size; xi += 8) {
-                    data_epi32 = _mm256_cvtepu16_epi32(_mm_loadu_si128((__m128i *)(data16_ptr + xi)));
-                    data_pd    = _mm256_cvtepi32_pd(_mm256_castsi256_si128(data_epi32));
-                    data_pd    = _mm256_mul_pd(data_pd, recp_norm_pd);
+                    data_epi32 = _mm256_cvtepu16_epi32(
+                        _mm_loadu_si128((__m128i *)(data16_ptr + xi)));
+                    data_pd = _mm256_cvtepi32_pd(_mm256_castsi256_si128(data_epi32));
+                    data_pd = _mm256_mul_pd(data_pd, recp_norm_pd);
                     _mm256_storeu_pd(block + yi * block_size + xi, data_pd);
 
                     data_pd = _mm256_cvtepi32_pd(_mm256_extracti128_si256(data_epi32, 0x1));

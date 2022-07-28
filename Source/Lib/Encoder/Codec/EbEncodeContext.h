@@ -204,9 +204,9 @@ typedef struct EncodeContext {
     RecodeLoopType    recode_loop;
     // This feature controls the tolerence vs target used in deciding whether to
     // recode a frame. It has no meaning if recode is disabled.
-    int      recode_tolerance;
-    int32_t  frame_updated;
-    EbHandle frame_updated_mutex;
+    int                               recode_tolerance;
+    int32_t                           frame_updated;
+    EbHandle                          frame_updated_mutex;
     RateControlIntervalParamContext **rc_param_queue;
     int32_t                           rc_param_queue_head_index;
     EbHandle                          rc_param_queue_mutex;

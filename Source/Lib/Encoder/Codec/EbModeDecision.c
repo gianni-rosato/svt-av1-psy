@@ -2371,7 +2371,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                 cand_array[cand_idx].drl_index             = drli;
                                 cand_array[cand_idx].ref_frame_type        = ref_pair;
                                 cand_array[cand_idx].pred_mv[REF_LIST_0]   = (Mv){
-                                    {ref_mv[0].as_mv.col, ref_mv[0].as_mv.row}};
+                                      {ref_mv[0].as_mv.col, ref_mv[0].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
                                         if (calc_pred_masked_compound(
@@ -2453,7 +2453,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                 cand_array[cand_idx].drl_index             = drli;
                                 cand_array[cand_idx].ref_frame_type        = ref_pair;
                                 cand_array[cand_idx].pred_mv[REF_LIST_1]   = (Mv){
-                                    {ref_mv[1].as_mv.col, ref_mv[1].as_mv.row}};
+                                      {ref_mv[1].as_mv.col, ref_mv[1].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
                                         if (calc_pred_masked_compound(
@@ -2851,7 +2851,7 @@ static void init_me_luts_bd(int *bit16lut, int range, EbBitDepth bit_depth) {
     // to the quantizer tables.
     for (i = 0; i < range; i++) {
         const double q = svt_av1_convert_qindex_to_q(i, bit_depth);
-        bit16lut[i] = (int)(0.0418 * q + 2.4107);
+        bit16lut[i]    = (int)(0.0418 * q + 2.4107);
     }
 }
 void svt_av1_init_me_luts(void) {
@@ -2963,9 +2963,9 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
 
 void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                             ModeDecisionCandidate *candidate, uint8_t ref_list_idx) {
-
     if (context_ptr->obmc_ctrls.max_blk_size_to_refine_16x16) {
-        if (block_size_wide[context_ptr->blk_geom->bsize] > 16 || block_size_high[context_ptr->blk_geom->bsize] > 16) {
+        if (block_size_wide[context_ptr->blk_geom->bsize] > 16 ||
+            block_size_high[context_ptr->blk_geom->bsize] > 16) {
             return;
         }
     }
@@ -3217,7 +3217,7 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
                     cand_array[cand_total_cnt].mv[REF_LIST_0].as_int = to_inj_mv.as_int;
                     cand_array[cand_total_cnt].ref_frame_type        = to_inject_ref_type;
                     cand_array[cand_total_cnt].pred_mv[REF_LIST_0]   = (Mv){
-                        {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
+                          {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
                     INC_MD_CAND_CNT(cand_total_cnt, pcs->parent_pcs_ptr->max_can_count);
                     // Add the injected MV to the list of injected MVs
                     ctx->injected_mvs[ctx->injected_mv_count][0].as_int = to_inj_mv.as_int;
@@ -3269,7 +3269,7 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
                         cand_array[cand_total_cnt].mv[REF_LIST_1].as_int = to_inj_mv.as_int;
                         cand_array[cand_total_cnt].ref_frame_type        = to_inject_ref_type;
                         cand_array[cand_total_cnt].pred_mv[REF_LIST_1]   = (Mv){
-                            {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
+                              {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
                         INC_MD_CAND_CNT(cand_total_cnt, pcs->parent_pcs_ptr->max_can_count);
 
                         // Add the injected MV to the list of injected MVs
@@ -3334,7 +3334,7 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
                         cand_array[cand_total_cnt].motion_mode           = SIMPLE_TRANSLATION;
                         cand_array[cand_total_cnt].ref_frame_type        = to_inject_ref_type;
                         cand_array[cand_total_cnt].pred_mv[REF_LIST_0]   = (Mv){
-                            {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
+                              {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
                         cand_array[cand_total_cnt].pred_mv[REF_LIST_1] = (Mv){
                             {best_pred_mv[1].as_mv.col, best_pred_mv[1].as_mv.row}};
                         cand_array[cand_total_cnt].comp_group_idx       = 0;
@@ -4063,7 +4063,7 @@ void inject_pme_candidates(
                             cand_array[cand_total_cnt].mv[list_idx].as_int = to_inj_mv.as_int;
                             cand_array[cand_total_cnt].ref_frame_type      = frame_type;
                             cand_array[cand_total_cnt].pred_mv[list_idx]   = (Mv){
-                                {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
+                                  {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
                             uint8_t local_warp_valid = 0;
                             if (inter_type == 0) {
                                 cand_array[cand_total_cnt].is_interintra_used = 0;
@@ -4590,7 +4590,7 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext
          ? MV_COST_OPT
          : MV_COST_ENTROPY;
     mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
-    mv_cost_params->sad_per_bit = svt_aom_get_sad_per_bit(base_q_idx, hbd_mode_decision);
+    mv_cost_params->sad_per_bit   = svt_aom_get_sad_per_bit(base_q_idx, hbd_mode_decision);
     mv_cost_params->mvjcost       = context_ptr->md_rate_estimation_ptr->nmv_vec_cost;
     mv_cost_params->mvcost[0]     = context_ptr->md_rate_estimation_ptr->nmvcoststack[0];
     mv_cost_params->mvcost[1]     = context_ptr->md_rate_estimation_ptr->nmvcoststack[1];

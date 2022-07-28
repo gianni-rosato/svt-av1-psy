@@ -319,7 +319,8 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, con
     int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
                                                                    : (SB64_MIB_SIZE >> scale_horz);
 
-    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled || pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
+    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled ||
+        pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
         // the boundary of last column should use the actual width for frame might be downscaled in super resolution
         const uint32_t       sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
         EbPictureBufferDesc *pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -335,7 +336,7 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, con
             y_range = (((pic_ptr->height) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
                 y_range = ((((pic_ptr->height) % sb_size + scale_vert) >> scale_vert) + MI_SIZE -
-                    1) >>
+                           1) >>
                     MI_SIZE_LOG2;
             }
         }
@@ -454,7 +455,8 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, con
                                                                       : (SB64_MIB_SIZE >> scale_horz);
     uint32_t mi_stride = pcs_ptr->mi_stride;
 
-    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled || pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
+    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled ||
+        pcs_ptr->parent_pcs_ptr->frame_resize_enabled) {
         // the boundary of last column should use the actual width for frames might be downscaled in super resolution
         const uint32_t       sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
         EbPictureBufferDesc *pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -470,7 +472,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, con
             y_range = (((pic_ptr->height) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
                 y_range = ((((pic_ptr->height) % sb_size + scale_vert) >> scale_vert) + MI_SIZE -
-                    1) >>
+                           1) >>
                     MI_SIZE_LOG2;
             }
         }
@@ -727,19 +729,19 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
 
 void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuffer,
                      PictureControlSet *pcs_ptr, uint8_t plane) {
-    Bool is_16bit          = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
-    dstBuffer->origin_x    = srcBuffer->origin_x;
-    dstBuffer->origin_y    = srcBuffer->origin_y;
-    dstBuffer->origin_bot_y= srcBuffer->origin_bot_y;
-    dstBuffer->width       = srcBuffer->width;
-    dstBuffer->height      = srcBuffer->height;
-    dstBuffer->max_width   = srcBuffer->max_width;
-    dstBuffer->max_height  = srcBuffer->max_height;
-    dstBuffer->bit_depth   = srcBuffer->bit_depth;
-    dstBuffer->color_format= srcBuffer->color_format;
-    dstBuffer->luma_size   = srcBuffer->luma_size;
-    dstBuffer->chroma_size = srcBuffer->chroma_size;
-    dstBuffer->packed_flag = srcBuffer->packed_flag;
+    Bool is_16bit           = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
+    dstBuffer->origin_x     = srcBuffer->origin_x;
+    dstBuffer->origin_y     = srcBuffer->origin_y;
+    dstBuffer->origin_bot_y = srcBuffer->origin_bot_y;
+    dstBuffer->width        = srcBuffer->width;
+    dstBuffer->height       = srcBuffer->height;
+    dstBuffer->max_width    = srcBuffer->max_width;
+    dstBuffer->max_height   = srcBuffer->max_height;
+    dstBuffer->bit_depth    = srcBuffer->bit_depth;
+    dstBuffer->color_format = srcBuffer->color_format;
+    dstBuffer->luma_size    = srcBuffer->luma_size;
+    dstBuffer->chroma_size  = srcBuffer->chroma_size;
+    dstBuffer->packed_flag  = srcBuffer->packed_flag;
 
     uint32_t luma_buffer_offset = (srcBuffer->origin_x + srcBuffer->origin_y * srcBuffer->stride_y)
         << is_16bit;
@@ -800,10 +802,10 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
     // here uses aligned_width and aligned_height to avoid wrong sse results.
     // if encoding in non-scaled frame, aligned_width and aligned_height equals
     // frame width and height, it has no effect to original resolution
-    const uint16_t input_align_width = pcs_ptr->parent_pcs_ptr->aligned_width;
+    const uint16_t input_align_width  = pcs_ptr->parent_pcs_ptr->aligned_width;
     const uint16_t input_align_height = pcs_ptr->parent_pcs_ptr->aligned_height;
-    const uint32_t ss_x = scs_ptr->subsampling_x;
-    const uint32_t ss_y = scs_ptr->subsampling_y;
+    const uint32_t ss_x               = scs_ptr->subsampling_x;
+    const uint32_t ss_y               = scs_ptr->subsampling_y;
 
     uint8_t *input_buffer;
     uint8_t *recon_coeff_buffer;
@@ -1098,10 +1100,9 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
     if (method == LPF_PICK_MINIMAL_LPF)
         lf->filter_level[0] = lf->filter_level[1] = 0;
     else if (method >= LPF_PICK_FROM_Q) {
-
-        int32_t min_ref_filter_level[2] = { MAX_LOOP_FILTER, MAX_LOOP_FILTER };
-        int32_t min_ref_filter_level_u  =   MAX_LOOP_FILTER;
-        int32_t min_ref_filter_level_v  =   MAX_LOOP_FILTER;
+        int32_t min_ref_filter_level[2] = {MAX_LOOP_FILTER, MAX_LOOP_FILTER};
+        int32_t min_ref_filter_level_u  = MAX_LOOP_FILTER;
+        int32_t min_ref_filter_level_v  = MAX_LOOP_FILTER;
 
         for (uint32_t ref_it = 0; ref_it < pcs_ptr->parent_pcs_ptr->tot_ref_frame_types; ++ref_it) {
             MvReferenceFrame ref_pair = pcs_ptr->parent_pcs_ptr->ref_frame_type_arr[ref_it];
@@ -1109,22 +1110,24 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
             av1_set_ref_frame(rf, ref_pair);
 
             if (rf[1] == NONE_FRAME) {
-                uint8_t list_idx = get_list_idx(rf[0]);
-                uint8_t ref_idx = get_ref_frame_idx(rf[0]);
-                EbReferenceObject* ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+                uint8_t            list_idx = get_list_idx(rf[0]);
+                uint8_t            ref_idx  = get_ref_frame_idx(rf[0]);
+                EbReferenceObject *ref_obj =
+                    pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
 
                 min_ref_filter_level[0] = MIN(min_ref_filter_level[0], ref_obj->filter_level[0]);
                 min_ref_filter_level[1] = MIN(min_ref_filter_level[1], ref_obj->filter_level[1]);
-                min_ref_filter_level_u = MIN(min_ref_filter_level_u, ref_obj->filter_level_u);
-                min_ref_filter_level_v = MIN(min_ref_filter_level_v, ref_obj->filter_level_v);
+                min_ref_filter_level_u  = MIN(min_ref_filter_level_u, ref_obj->filter_level_u);
+                min_ref_filter_level_v  = MIN(min_ref_filter_level_v, ref_obj->filter_level_v);
             }
         }
 
         const int32_t min_filter_level = 0;
         const int32_t max_filter_level = MAX_LOOP_FILTER; // av1_get_max_filter_level(cpi);
-        const int32_t q = svt_aom_ac_quant_qtx(frm_hdr->quantization_params.base_q_idx,
-                                               0,
-                                               (EbBitDepth)scs_ptr->static_config.encoder_bit_depth);
+        const int32_t q                = svt_aom_ac_quant_qtx(
+            frm_hdr->quantization_params.base_q_idx,
+            0,
+            (EbBitDepth)scs_ptr->static_config.encoder_bit_depth);
         // These values were determined by linear fitting the result of the
         // searched level for 8 bit depth:
         // Keyframes: filt_guess = q * 0.06699 - 1.60817
@@ -1157,23 +1160,27 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
         int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 
         // Force filter_level to 0 if loop-filter is shut for 1 (or many) of the sub-layer reference frame(s)
-        lf->filter_level[0] = min_ref_filter_level[0] || !pcs_ptr->parent_pcs_ptr->temporal_layer_index
+        lf->filter_level[0] = min_ref_filter_level[0] ||
+                !pcs_ptr->parent_pcs_ptr->temporal_layer_index
             ? clamp(filt_guess, min_filter_level, max_filter_level)
-            : 0 ;
+            : 0;
 
-        lf->filter_level[1] = min_ref_filter_level[1] || !pcs_ptr->parent_pcs_ptr->temporal_layer_index
+        lf->filter_level[1] = min_ref_filter_level[1] ||
+                !pcs_ptr->parent_pcs_ptr->temporal_layer_index
             ? clamp(filt_guess, min_filter_level, max_filter_level)
-            : 0 ;
+            : 0;
 
-        lf->filter_level_u = min_ref_filter_level_u || !pcs_ptr->parent_pcs_ptr->temporal_layer_index
+        lf->filter_level_u = min_ref_filter_level_u ||
+                !pcs_ptr->parent_pcs_ptr->temporal_layer_index
             ? clamp(filt_guess_chroma, min_filter_level, max_filter_level)
-            : 0 ;
+            : 0;
 
-        lf->filter_level_v = min_ref_filter_level_v || !pcs_ptr->parent_pcs_ptr->temporal_layer_index
+        lf->filter_level_v = min_ref_filter_level_v ||
+                !pcs_ptr->parent_pcs_ptr->temporal_layer_index
             ? clamp(filt_guess_chroma, min_filter_level, max_filter_level)
-            : 0 ;
+            : 0;
     } else {
-        uint16_t                    padding = scs_ptr->super_block_size + 32;
+        uint16_t padding = scs_ptr->super_block_size + 32;
         if (scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
             scs_ptr->static_config.resize_mode > RESIZE_NONE) {
             padding += scs_ptr->super_block_size;

@@ -44,13 +44,12 @@ static const uint8_t TST_STUFF = 0xBB;
 extern "C" void setup_test_env();
 extern "C" void reset_test_env();
 
-
-extern "C" EbErrorType svt_av1_resize_plane_horizontal(const uint8_t* const input,
-    int height, int width, int in_stride, uint8_t *output,
-    int height2, int width2, int out_stride);
-extern "C" EbErrorType svt_av1_highbd_resize_plane_horizontal(const uint16_t* const input,
-    int height, int width, int in_stride, uint16_t * output,
-    int height2, int width2, int out_stride, int bd);
+extern "C" EbErrorType svt_av1_resize_plane_horizontal(
+    const uint8_t *const input, int height, int width, int in_stride,
+    uint8_t *output, int height2, int width2, int out_stride);
+extern "C" EbErrorType svt_av1_highbd_resize_plane_horizontal(
+    const uint16_t *const input, int height, int width, int in_stride,
+    uint16_t *output, int height2, int width2, int out_stride, int bd);
 
 typedef std::tuple<int, /**< width of source/upscaled picture */
                    int, /**< height of source picture */
@@ -234,43 +233,43 @@ class ResizePlaneLbdTest : public ResizePlaneTest<uint8_t> {
         reset_test_env();
         if (width_only) {
             svt_av1_resize_plane_horizontal(src_,
-                                        src_height_,
-                                        src_width_,
-                                        src_stride_,
-                                        scaled_ref_,
-                                        src_height_,
-                                        scaled_width_,
-                                        src_stride_);
+                                            src_height_,
+                                            src_width_,
+                                            src_stride_,
+                                            scaled_ref_,
+                                            src_height_,
+                                            scaled_width_,
+                                            src_stride_);
         } else {
             svt_av1_resize_plane(src_,
-                             src_height_,
-                             src_width_,
-                             src_stride_,
-                             scaled_ref_,
-                             scaled_height_,
-                             scaled_width_,
-                             src_stride_);
+                                 src_height_,
+                                 src_width_,
+                                 src_stride_,
+                                 scaled_ref_,
+                                 scaled_height_,
+                                 scaled_width_,
+                                 src_stride_);
         }
         // setup using simd accelerating
         setup_test_env();
         if (width_only) {
             svt_av1_resize_plane_horizontal(src_,
-                                        src_height_,
-                                        src_width_,
-                                        src_stride_,
-                                        scaled_tst_,
-                                        src_height_,
-                                        scaled_width_,
-                                        src_stride_);
+                                            src_height_,
+                                            src_width_,
+                                            src_stride_,
+                                            scaled_tst_,
+                                            src_height_,
+                                            scaled_width_,
+                                            src_stride_);
         } else {
             svt_av1_resize_plane(src_,
-                             src_height_,
-                             src_width_,
-                             src_stride_,
-                             scaled_tst_,
-                             scaled_height_,
-                             scaled_width_,
-                             src_stride_);
+                                 src_height_,
+                                 src_width_,
+                                 src_stride_,
+                                 scaled_tst_,
+                                 scaled_height_,
+                                 scaled_width_,
+                                 src_stride_);
         }
     }
     void speed_test(int loop, bool width_only) override {
@@ -291,8 +290,7 @@ class ResizePlaneLbdTest : public ResizePlaneTest<uint8_t> {
                                                 src_height_,
                                                 scaled_width_,
                                                 src_stride_);
-            }
-            else {
+            } else {
                 svt_av1_resize_plane(src_,
                                      src_height_,
                                      src_width_,
@@ -346,10 +344,11 @@ class ResizePlaneLbdTest : public ResizePlaneTest<uint8_t> {
         printf("Average Nanoseconds per Function Call\n");
         printf("    svt_av1_resize_plane_c   : %6.2f\n",
                1000000 * time_c / loop);
-        printf("    svt_av1_resize_plane_avx2 : %6.2f   (Comparison: "
-               "%5.2fx)\n",
-               1000000 * time_o / loop,
-               time_c / time_o);
+        printf(
+            "    svt_av1_resize_plane_avx2 : %6.2f   (Comparison: "
+            "%5.2fx)\n",
+            1000000 * time_o / loop,
+            time_c / time_o);
     }
 };
 
@@ -450,8 +449,7 @@ class ResizePlaneHbdTest : public ResizePlaneTest<uint16_t> {
                                                        scaled_width_,
                                                        src_stride_,
                                                        bd_);
-            }
-            else {
+            } else {
                 svt_av1_highbd_resize_plane(src_,
                                             src_height_,
                                             src_width_,
@@ -483,8 +481,7 @@ class ResizePlaneHbdTest : public ResizePlaneTest<uint16_t> {
                                                        scaled_width_,
                                                        src_stride_,
                                                        bd_);
-            }
-            else {
+            } else {
                 svt_av1_highbd_resize_plane(src_,
                                             src_height_,
                                             src_width_,
@@ -504,10 +501,11 @@ class ResizePlaneHbdTest : public ResizePlaneTest<uint16_t> {
         printf("Average Nanoseconds per Function Call\n");
         printf("    svt_av1_highbd_resize_plane_c   : %6.2f\n",
                1000000 * time_c / loop);
-        printf("    svt_av1_highbd_resize_plane_avx2 : %6.2f   (Comparison: "
-               "%5.2fx)\n",
-               1000000 * time_o / loop,
-               time_c / time_o);
+        printf(
+            "    svt_av1_highbd_resize_plane_avx2 : %6.2f   (Comparison: "
+            "%5.2fx)\n",
+            1000000 * time_o / loop,
+            time_c / time_o);
     }
 };
 

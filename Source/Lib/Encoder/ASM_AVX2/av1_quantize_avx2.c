@@ -371,7 +371,7 @@ static INLINE void quantize_qm(const __m256i *thr, const __m256i *qp, __m256i *c
                                const int16_t *iscan_ptr, TranLow *qcoeff, TranLow *dqcoeff,
                                __m256i *eob, const __m256i qm, const __m256i iqm,
                                int16_t log_scale) {
-    const __m256i zero = _mm256_setzero_si256();
+    const __m256i zero      = _mm256_setzero_si256();
     __m256i       min       = _mm256_set1_epi32(INT16_MIN);
     __m256i       max       = _mm256_set1_epi32(INT16_MAX);
     const __m256i abs_coeff = _mm256_abs_epi32(*c);
@@ -383,11 +383,11 @@ static INLINE void quantize_qm(const __m256i *thr, const __m256i *qp, __m256i *c
 
     if (LIKELY(~nzflag)) {
         // q*tmp would overflow 32-bit
-        const __m256i tmp = _mm256_mullo_epi32(qm, qp[1]);
+        const __m256i tmp    = _mm256_mullo_epi32(qm, qp[1]);
         const __m256i tmp_hi = _mm256_srli_epi64(tmp, 32);
         const __m256i tmp_lo = _mm256_srli_epi64(_mm256_slli_epi64(tmp, 32), 32);
 
-        __m256i       q   = _mm256_add_epi32(abs_coeff, qp[0]);
+        __m256i q = _mm256_add_epi32(abs_coeff, qp[0]);
         clamp_epi32(&q, min, max);
         __m256i q_hi = _mm256_srli_epi64(q, 32);
         __m256i q_lo = _mm256_srli_epi64(_mm256_slli_epi64(q, 32), 32);
@@ -396,8 +396,8 @@ static INLINE void quantize_qm(const __m256i *thr, const __m256i *qp, __m256i *c
         q_hi = mm256_mullo_epi64(q_hi, tmp_hi);
         q_lo = _mm256_srli_epi64(q_lo, AOM_QM_BITS + 16 - log_scale);
         q_hi = _mm256_srli_epi64(q_hi, AOM_QM_BITS + 16 - log_scale);
-        q_hi              = _mm256_slli_epi64(q_hi, 32);
-        q                 = _mm256_or_si256(q_lo, q_hi);
+        q_hi = _mm256_slli_epi64(q_hi, 32);
+        q    = _mm256_or_si256(q_lo, q_hi);
 
         __m256i       dq  = _mm256_mullo_epi32(qp[2], iqm);
         const __m256i rnd = _mm256_set1_epi32(1 << (AOM_QM_BITS - 1));
@@ -479,9 +479,9 @@ void svt_av1_quantize_fp_qm_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
         iqm_ptr += step;
         n_coeffs -= step;
 
-        qm  = load_bytes_to_m256_avx2(qm_ptr);
-        iqm = load_bytes_to_m256_avx2(iqm_ptr);
-        coeff       = _mm256_load_si256((const __m256i *)coeff_ptr);
+        qm    = load_bytes_to_m256_avx2(qm_ptr);
+        iqm   = load_bytes_to_m256_avx2(iqm_ptr);
+        coeff = _mm256_load_si256((const __m256i *)coeff_ptr);
         quantize_qm(&thr, qp, &coeff, iscan_ptr, qcoeff_ptr, dqcoeff_ptr, &eob, qm, iqm, log_scale);
     }
     *eob_ptr = quant_gather_eob_qm(eob);

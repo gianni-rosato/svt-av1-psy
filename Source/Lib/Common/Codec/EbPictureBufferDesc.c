@@ -270,7 +270,10 @@ EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBuffe
           picture_buffer_desc_init_data_ptr->top_padding +
           picture_buffer_desc_init_data_ptr->bot_padding) >>
          subsampling_y);
-    pictureBufferDescPtr->packed_flag = (picture_buffer_desc_init_data_ptr->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
+    pictureBufferDescPtr->packed_flag = (picture_buffer_desc_init_data_ptr->bit_depth >
+                                         EB_EIGHT_BIT)
+        ? TRUE
+        : FALSE;
 
     pictureBufferDescPtr->buffer_enable_mask =
         picture_buffer_desc_init_data_ptr->buffer_enable_mask;

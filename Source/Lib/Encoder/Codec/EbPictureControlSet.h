@@ -290,14 +290,14 @@ typedef struct PictureControlSet {
     uint64_t (*mse_seg[2])[TOTAL_STRENGTHS];
     uint8_t     *skip_cdef_seg;
     CdefDirData *cdef_dir_data;
-    EbByte cdef_input_recon[3]; // DLF'd recon
-    EbByte cdef_input_source[3]; // Input video
-    uint32_t tot_seg_searched_rest;
-    EbHandle rest_search_mutex;
-    uint16_t rest_segments_total_count;
-    uint8_t  rest_segments_column_count;
-    uint8_t  rest_segments_row_count;
-    Bool     rest_extend_flag
+    EbByte       cdef_input_recon[3]; // DLF'd recon
+    EbByte       cdef_input_source[3]; // Input video
+    uint32_t     tot_seg_searched_rest;
+    EbHandle     rest_search_mutex;
+    uint16_t     rest_segments_total_count;
+    uint8_t      rest_segments_column_count;
+    uint8_t      rest_segments_row_count;
+    Bool         rest_extend_flag
         [3]; // flag to indicate whether the frame is extended for restoration search
 
     // Slice Type
@@ -404,18 +404,19 @@ typedef struct PictureControlSet {
     uint8_t  parent_sq_coeff_area_based_cycles_reduction_level;
     uint32_t sq_weight;
     uint32_t max_part0_to_part1_dev;
-    uint32_t skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
-    uint8_t  md_inter_intra_level;
-    uint8_t  txs_level;
-    uint8_t  nic_level;
-    uint8_t  md_sq_mv_search_level;
-    uint8_t  md_nsq_mv_search_level;
-    uint8_t  md_pme_level;
-    uint8_t  mds0_level;
-    uint8_t  pic_disallow_4x4; //disallow 4x4 at pic level
-    uint8_t  pic_skip_pd0; // skip_pd0 at pic level
-    uint8_t  pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
-    uint8_t  pic_depth_removal_level; // depth_removal_level signal at the picture level
+    uint32_t
+        skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
+    uint8_t md_inter_intra_level;
+    uint8_t txs_level;
+    uint8_t nic_level;
+    uint8_t md_sq_mv_search_level;
+    uint8_t md_nsq_mv_search_level;
+    uint8_t md_pme_level;
+    uint8_t mds0_level;
+    uint8_t pic_disallow_4x4; //disallow 4x4 at pic level
+    uint8_t pic_skip_pd0; // skip_pd0 at pic level
+    uint8_t pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
+    uint8_t pic_depth_removal_level; // depth_removal_level signal at the picture level
     uint8_t
                      pic_block_based_depth_refinement_level; // block_based_depth_refinement_level signal set at the picture level
     uint8_t          pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
@@ -463,8 +464,8 @@ typedef struct PictureControlSet {
     uint8_t ref_intra_percentage;
     uint8_t ref_skip_percentage;
     uint8_t
-            approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
-    uint8_t skip_intra;
+               approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
+    uint8_t    skip_intra;
     PicVqCtrls vq_ctrls;
     // scaled input picture is only used in loop restoration for recon size is
     // different with input frame when reference scaling is enabled
@@ -554,7 +555,8 @@ typedef struct TplControls {
     uint8_t vq_adjust_lambda_sb;
     // Calculated qindex based on r0 using qstep calculation
     bool qstep_based_q_calc; // 0: OFF; 1: ON
-    SUBPEL_FORCE_STOP subpel_depth; // max subpel depth to search for TPL; FULL_PEL corresponds to subpel off in TPL, QUARTER_PEL is the max precision for TPL subpel
+    SUBPEL_FORCE_STOP
+    subpel_depth; // max subpel depth to search for TPL; FULL_PEL corresponds to subpel off in TPL, QUARTER_PEL is the max precision for TPL subpel
 } TplControls;
 
 typedef struct {
@@ -763,13 +765,13 @@ typedef struct PictureParentControlSet {
     uint32_t *me_16x16_distortion;
     uint32_t *me_8x8_distortion;
     // Global motion estimation results
-    Bool                  is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    EbWarpedMotionParams  global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint16_t              me_processed_b64_count;
-    EbHandle              me_processed_b64_mutex;
-    FirstPassData         firstpass_data;
-    double                ts_duration;
-    double                r0;
+    Bool                 is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    EbWarpedMotionParams global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint16_t             me_processed_b64_count;
+    EbHandle             me_processed_b64_mutex;
+    FirstPassData        firstpass_data;
+    double               ts_duration;
+    double               r0;
     uint8_t tpl_src_data_ready; //track pictures that are processd in two different TPL groups
     Bool    blk_lambda_tuning;
     // Dynamic GOP
@@ -892,13 +894,13 @@ typedef struct PictureParentControlSet {
     PictureControlSet   *child_pcs;
     EncDecSet           *enc_dec_ptr;
     Macroblock          *av1x;
-    int32_t      film_grain_params_present; //todo (AN): Do we need this flag at picture level?
-    int8_t       cdef_level;
-    Bool enable_restoration; // TRUE if restoration filtering is enabled for the current frame
-    uint8_t      palette_level;
-    uint8_t      sc_class0;
-    uint8_t      sc_class1;
-    uint8_t      sc_class2;
+    int32_t film_grain_params_present; //todo (AN): Do we need this flag at picture level?
+    int8_t  cdef_level;
+    Bool    enable_restoration; // TRUE if restoration filtering is enabled for the current frame
+    uint8_t palette_level;
+    uint8_t sc_class0;
+    uint8_t sc_class1;
+    uint8_t sc_class2;
     SkipModeInfo skip_mode_info;
     uint64_t     picture_number_alt; // The picture number overlay includes all the overlay frames
     uint8_t      is_alt_ref;
@@ -935,9 +937,11 @@ typedef struct PictureParentControlSet {
     uint16_t   *altref_buffer_highbd[3];
     uint8_t     pic_obmc_level;
 
-    Bool              is_pcs_sb_params;
-    SbParams         *sb_params_array; // Contains info for 64x64 blocks, NOT SB info.  Should not be used in MD; use sb_geom instead.
-    SbGeom           *sb_geom;         // Contains SB info (adapts automatically when SB 128x128 is used). This should be used in MD.
+    Bool is_pcs_sb_params;
+    SbParams *
+        sb_params_array; // Contains info for 64x64 blocks, NOT SB info.  Should not be used in MD; use sb_geom instead.
+    SbGeom               *
+        sb_geom; // Contains SB info (adapts automatically when SB 128x128 is used). This should be used in MD.
     EbInputResolution input_resolution;
     uint16_t          picture_sb_width;
     uint16_t          picture_sb_height;
@@ -962,7 +966,7 @@ typedef struct PictureParentControlSet {
     uint8_t resize_denom;
     // reference scaling random access event
     EbRefFrameScale resize_evt;
-    Bool    rc_reset_flag;
+    Bool            rc_reset_flag;
 
     Bool    frame_superres_enabled;
     uint8_t superres_denom;
@@ -970,9 +974,8 @@ typedef struct PictureParentControlSet {
     int32_t
         superres_recode_loop; // which loop is now running, range from 0 to superres_total_recode_loop - 1
     int32_t superres_total_recode_loop; // how many loops to run, set to 2 in dual search mode
-    uint8_t
-           superres_denom_array[NUM_SR_SCALES + 1]; // denom candidate array used in auto supreres
-    double superres_rdcost[NUM_SR_SCALES + 1]; // 9 slots, for denom 8 ~ 16
+    uint8_t superres_denom_array[NUM_SR_SCALES + 1]; // denom candidate array used in auto supreres
+    double  superres_rdcost[NUM_SR_SCALES + 1]; // 9 slots, for denom 8 ~ 16
 
     EbObjectWrapper      *me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
@@ -996,7 +999,7 @@ typedef struct PictureParentControlSet {
     uint8_t      is_not_scaled;
     TfControls   tf_ctrls;
     GmControls   gm_ctrls;
-    GM_LEVEL gm_downsample_level;
+    GM_LEVEL     gm_downsample_level;
     CdefControls cdef_ctrls;
     // RC related variables
     int                             q_low;
@@ -1083,16 +1086,16 @@ typedef struct TplDispResults {
 } TplDispResults;
 
 typedef struct PictureControlSetInitData {
-    uint16_t       picture_width;
-    uint16_t       picture_height;
-    uint16_t       left_padding;
-    uint16_t       right_padding;
-    uint16_t       top_padding;
-    uint16_t       bot_padding;
-    EbBitDepth     bit_depth;
-    EbColorFormat  color_format;
-    uint32_t       sb_sz;
-    uint8_t        cfg_palette;
+    uint16_t      picture_width;
+    uint16_t      picture_height;
+    uint16_t      left_padding;
+    uint16_t      right_padding;
+    uint16_t      top_padding;
+    uint16_t      bot_padding;
+    EbBitDepth    bit_depth;
+    EbColorFormat color_format;
+    uint32_t      sb_sz;
+    uint8_t       cfg_palette;
     uint32_t
         sb_size_pix; //since we still have lot of code assuming 64x64 SB, we add a new paramter supporting both128x128 and 64x64,
     //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.

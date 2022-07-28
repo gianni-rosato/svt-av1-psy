@@ -51,7 +51,7 @@ static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_
     const int32_t spel_top    = (AOM_INTERP_EXTEND + bh) << SUBPEL_BITS;
     const int32_t spel_bottom = spel_top - SUBPEL_SHIFTS;
     MV            clamped_mv  = {(int16_t)(src_mv->row * (1 << (1 - ss_y))),
-                     (int16_t)(src_mv->col * (1 << (1 - ss_x)))};
+                                 (int16_t)(src_mv->col * (1 << (1 - ss_x)))};
     assert(ss_x <= 1);
     assert(ss_y <= 1);
 
@@ -90,21 +90,22 @@ void av1_make_masked_scaled_inter_predictor(
 
     if (bitdepth > EB_EIGHT_BIT || is_16bit) {
         uint16_t *src_ptr_10b = NULL;
-        uint16_t *pack_src16 = NULL;
+        uint16_t *pack_src16  = NULL;
         int32_t   src_stride16;
         if (src_ptr_2b) {
             // pack the reference into temp 16bit buffer
-            uint8_t  offset      = INTERPOLATION_OFFSET;
-            uint32_t width_scale = 1;
+            uint8_t  offset       = INTERPOLATION_OFFSET;
+            uint32_t width_scale  = 1;
             uint32_t height_scale = 1;
             // for super-res, the reference frame block might be 2x than predictor in maximum
             // for reference scaling, it might be 4x since both width and height is scaled 2x
             // should pack enough buffer for scaled reference
             if (av1_is_scaled(sf)) {
-                width_scale = sf->x_scale_fp != REF_NO_SCALE ? 2 : 1;
+                width_scale  = sf->x_scale_fp != REF_NO_SCALE ? 2 : 1;
                 height_scale = sf->y_scale_fp != REF_NO_SCALE ? 2 : 1;
             }
-            EB_NO_THROW_MALLOC_ALIGNED(pack_src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
+            EB_NO_THROW_MALLOC_ALIGNED(
+                pack_src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
             if (!pack_src16)
                 return;
             // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
@@ -2064,9 +2065,9 @@ static void calc_target_weighted_pred(PictureControlSet   *picture_control_set_p
                                       const MacroBlockD *xd, int mi_row, int mi_col,
                                       const uint8_t *above, int above_stride, const uint8_t *left,
                                       int left_stride) {
-
     if (context_ptr->obmc_ctrls.max_blk_size_to_refine_16x16) {
-        if (block_size_wide[context_ptr->blk_geom->bsize] > 16 || block_size_high[context_ptr->blk_geom->bsize] > 16) {
+        if (block_size_wide[context_ptr->blk_geom->bsize] > 16 ||
+            block_size_high[context_ptr->blk_geom->bsize] > 16) {
             return;
         }
     }
@@ -3724,7 +3725,7 @@ void compute_subpel_params(SequenceControlSet *scs_ptr, int16_t pre_y, int16_t p
         //      Limit top & left offset from AOM_INTERP_EXTEND(4) to INTERPOLATION_OFFSET(8) to avoid memory access underflow,
         //      because pack_block() may access src_mod - INTERPOLATION_OFFSET - (INTERPOLATION_OFFSET * src_stride) later.
         const int border_in_pixels = scs_ptr->super_block_size * 2 + 32;
-        const int top    = -(((border_in_pixels >> ss_y) - INTERPOLATION_OFFSET) << SCALE_SUBPEL_BITS);
+        const int top = -(((border_in_pixels >> ss_y) - INTERPOLATION_OFFSET) << SCALE_SUBPEL_BITS);
         const int left   = -(((border_in_pixels >> ss_x) - INTERPOLATION_OFFSET)
                            << SCALE_SUBPEL_BITS);
         const int bottom = ((frame_height >> ss_y) + AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS;
@@ -3904,22 +3905,23 @@ void enc_make_inter_predictor(SequenceControlSet *scs_ptr, uint8_t *src_ptr, uin
         return;
     }
     if (is16bit) {
-        uint16_t *src16_ptr = NULL;
+        uint16_t *src16_ptr  = NULL;
         uint16_t *pack_src16 = NULL;
         int32_t   src_stride16;
         if (src_ptr_2b) {
             // pack the reference into temp 16bit buffer
-            uint8_t  offset      = INTERPOLATION_OFFSET;
-            uint32_t width_scale = 1;
+            uint8_t  offset       = INTERPOLATION_OFFSET;
+            uint32_t width_scale  = 1;
             uint32_t height_scale = 1;
             // for super-res, the reference frame block might be 2x than predictor in maximum
             // for reference scaling, it might be 4x since both width and height is scaled 2x
             // should pack enough buffer for scaled reference
             if (av1_is_scaled(sf)) {
-                width_scale = sf->x_scale_fp != REF_NO_SCALE ? 2 : 1;
+                width_scale  = sf->x_scale_fp != REF_NO_SCALE ? 2 : 1;
                 height_scale = sf->y_scale_fp != REF_NO_SCALE ? 2 : 1;
             }
-            EB_NO_THROW_MALLOC_ALIGNED(pack_src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
+            EB_NO_THROW_MALLOC_ALIGNED(
+                pack_src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
             if (!pack_src16)
                 return;
             // optimize stride from MAX_SB_SIZE to blk_width to minimum the block buffer size

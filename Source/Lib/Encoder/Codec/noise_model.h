@@ -134,9 +134,9 @@ void    svt_aom_flat_block_finder_free(AomFlatBlockFinder *block_finder);
 
 /*!\brief Helper to extract a block and low order "planar" model. */
 void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder,
-                                             const uint8_t *const data, int32_t w, int32_t h,
-                                             int32_t stride, int32_t offsx, int32_t offsy,
-                                             double *plane, double *block);
+                                               const uint8_t *const data, int32_t w, int32_t h,
+                                               int32_t stride, int32_t offsx, int32_t offsy,
+                                               double *plane, double *block);
 
 /*!\brief Runs the flat block finder on the input data.
      *
@@ -213,7 +213,7 @@ typedef struct DenoiseAndModelInitData {
     uint16_t stride_y;
     uint16_t stride_cb;
     uint16_t stride_cr;
-    uint8_t denoise_apply;
+    uint8_t  denoise_apply;
 } DenoiseAndModelInitData;
 
 typedef struct AomDenoiseAndModel {
@@ -240,7 +240,7 @@ typedef struct AomDenoiseAndModel {
 
     AomFlatBlockFinder flat_block_finder;
     AomNoiseModel      noise_model;
-    uint8_t denoise_apply;
+    uint8_t            denoise_apply;
 } AomDenoiseAndModel;
 
 /************************************

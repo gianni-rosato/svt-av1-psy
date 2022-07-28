@@ -46,7 +46,7 @@ extern "C" void svt_av1_build_quantizer(
         TranLow *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, \
         const int16_t *scan, const int16_t *iscan
 #define QUAN_HBD_PARAM int16_t log_scale
-#define QUAN_QM_PARAM_LIST                                                      \
+#define QUAN_QM_PARAM_LIST                                                   \
     const TranLow *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr,    \
         const int16_t *round_ptr, const int16_t *quant_ptr,                  \
         const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,                 \
@@ -937,7 +937,7 @@ const QuantizeHbdParam kQHbdParamArrayAvx2[] = {
     make_tuple(&svt_av1_highbd_quantize_fp_c, &svt_av1_highbd_quantize_fp_avx2,
                static_cast<TxSize>(TX_64X64), TYPE_FP, EB_TWELVE_BIT)};
 
-    const QuantizeQmParam kQmParamArrayAvx2[] = {
+const QuantizeQmParam kQmParamArrayAvx2[] = {
     make_tuple(&svt_av1_quantize_fp_qm_c, &svt_av1_quantize_fp_qm_avx2,
                static_cast<TxSize>(TX_16X16), TYPE_FP, EB_EIGHT_BIT),
     make_tuple(&svt_av1_quantize_fp_qm_c, &svt_av1_quantize_fp_qm_avx2,
@@ -949,7 +949,7 @@ const QuantizeHbdParam kQHbdParamArrayAvx2[] = {
     make_tuple(&svt_av1_quantize_fp_qm_c, &svt_av1_quantize_fp_qm_avx2,
                static_cast<TxSize>(TX_8X32), TYPE_FP, EB_EIGHT_BIT)};
 
-    const QuantizeQmParam kQmParamHbdArrayAvx2[] = {
+const QuantizeQmParam kQmParamHbdArrayAvx2[] = {
     make_tuple(&svt_av1_highbd_quantize_fp_qm_c,
                &svt_av1_highbd_quantize_fp_qm_avx2,
                static_cast<TxSize>(TX_16X16), TYPE_FP, EB_TEN_BIT),

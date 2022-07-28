@@ -1476,12 +1476,12 @@ static void foreach_rest_unit_in_tile_seg(
         if (limits.v_end < tile_rect->bottom)
             limits.v_end -= voffset;
 
-        int32_t x0   = x_unit_start_idx * unit_size;
+        int32_t x0 = x_unit_start_idx * unit_size;
         // for the superblock below-right. If we're at the bottom or right of the tile,
         // this restoration unit might not exist, in which case we'll clamp accordingly.
         int32_t xend = ((int32_t)x_unit_end_idx == (int32_t)picture_width_in_units)
-                       ? tile_w
-                       : AOMMIN((int32_t)x_unit_end_idx * (int32_t)unit_size, tile_w);
+            ? tile_w
+            : AOMMIN((int32_t)x_unit_end_idx * (int32_t)unit_size, tile_w);
         int32_t j    = x_unit_start_idx;
 
         while (x0 < xend) {

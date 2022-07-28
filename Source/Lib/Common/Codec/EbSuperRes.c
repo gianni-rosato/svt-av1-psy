@@ -34,8 +34,7 @@ void calculate_scaled_size_helper(uint16_t *dim, uint8_t denom) {
         // *width <<= 1;
         *dim = (uint16_t)((*dim * SCALE_NUMERATOR + denom / 2) / (denom));
         *dim = (uint16_t)AOMMAX(*dim, min_dim);
-    }
-    else if (denom == SCALE_THREE_QUATER) {
+    } else if (denom == SCALE_THREE_QUATER) {
         // reference scaling resize defines denom 17 as 3/4
         *dim = (uint16_t)((3 + (*dim * 3)) >> 2);
     }

@@ -53,11 +53,11 @@ typedef struct PacketizationContext {
 } PacketizationContext;
 
 static Bool is_passthrough_data(EbLinkedListNode *data_node) { return data_node->passthrough; }
-void free_temporal_filtering_buffer(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
-void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
-void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
-void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
-void update_rc_counts(PictureParentControlSet *ppcs_ptr);
+void        free_temporal_filtering_buffer(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
+void        recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
+void        init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
+void        pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
+void        update_rc_counts(PictureParentControlSet *ppcs_ptr);
 void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, Bool free_memory);
 
 // Extracts passthrough data from a linked list. The extracted data nodes are removed from the original linked list and

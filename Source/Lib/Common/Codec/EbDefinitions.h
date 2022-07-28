@@ -44,7 +44,7 @@ extern "C" {
 #define MAX_TPL_EXT_GROUP_SIZE MAX_TPL_GROUP_SIZE
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
 #define MIN_LAD_MG 1
-#define RC_DEFAULT_LAD_MG_MT  2 // default look ahead value for rate control in Multi-threaded mode
+#define RC_DEFAULT_LAD_MG_MT 2 // default look ahead value for rate control in Multi-threaded mode
 #define RC_DEFAULT_LAD_MG_LP1 1 // default look ahead value for rate control in LP 1
 void assert_err(uint32_t condition, char *err_msg);
 
@@ -160,8 +160,9 @@ typedef struct TfControls {
 
 } TfControls;
 typedef enum GM_LEVEL {
-    GM_FULL   = 0, // Exhaustive search mode.
-    GM_ADAPT  = 1, // The search mode is set adaptively (whether GM_FULL or GM_DOWN) based on the average ME distortion
+    GM_FULL = 0, // Exhaustive search mode.
+    GM_ADAPT =
+        1, // The search mode is set adaptively (whether GM_FULL or GM_DOWN) based on the average ME distortion
     GM_DOWN   = 2, // Downsampled search mode, with a downsampling factor of 2 in each dimension
     GM_DOWN16 = 3, // Downsampled search mode, with a downsampling factor of 4 in each dimension
 } GM_LEVEL;
@@ -171,12 +172,12 @@ typedef enum SqWeightOffsets {
     AGGRESSIVE_OFFSET_0   = -5,
     AGGRESSIVE_OFFSET_1   = -10
 } SqWeightOffsets;
-#define COEFF_LVL_TH_0  30000
+#define COEFF_LVL_TH_0 30000
 #define COEFF_LVL_TH_1 100000
 typedef enum InputCoeffLvl {
-    LOW_LVL     =  0,
-    NORMAL_LVL  =  1,
-    HIGH_LVL    =  2,
+    LOW_LVL     = 0,
+    NORMAL_LVL  = 1,
+    HIGH_LVL    = 2,
     INVALID_LVL = ~0,
 } InputCoeffLvl;
 struct Buf2D {
@@ -574,11 +575,12 @@ typedef enum PdPass {
 } PdPass;
 
 typedef enum ATTRIBUTE_PACKED {
-    REGULAR_PD0    = -1, // The regular PD0 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd0_ctrls)
-    LPD0_LVL_0 = 0,
-    LPD0_LVL_1 = 1,
-    LPD0_LVL_2 = 2,
-    LPD0_LVL_3 = 3,
+    REGULAR_PD0 =
+        -1, // The regular PD0 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd0_ctrls)
+    LPD0_LVL_0     = 0,
+    LPD0_LVL_1     = 1,
+    LPD0_LVL_2     = 2,
+    LPD0_LVL_3     = 3,
     VERY_LIGHT_PD0 = 4, // Lightest PD0 path, doesn't perform TX
     LPD0_LEVELS // Number of light-PD0 paths (regular PD0 isn't a light-PD0 path)
 } Pd0Level;
@@ -1327,10 +1329,11 @@ typedef enum ATTRIBUTE_PACKED {
 #define SCALE_NUMERATOR 8
 #define SUPERRES_SCALE_BITS 3
 #define SUPERRES_SCALE_DENOMINATOR_MIN (SCALE_NUMERATOR + 1)
-#define NUM_SR_SCALES 8          // number of super-res scales
-#define NUM_RESIZE_SCALES 9      // number of resize scales, index 0~8 means 8/8~8/16 and index 9 means 3/4 for dynamic mode
+#define NUM_SR_SCALES 8 // number of super-res scales
+#define NUM_RESIZE_SCALES \
+    9 // number of resize scales, index 0~8 means 8/8~8/16 and index 9 means 3/4 for dynamic mode
 #define SCALE_DENOMINATOR_MAX 16 // maximum scaling denominator is 16
-#define SCALE_THREE_QUATER 17    // 3/4 of resize dynamic mode is defined as 17
+#define SCALE_THREE_QUATER 17 // 3/4 of resize dynamic mode is defined as 17
 
 //**********************************************************************************************************************//
 // onyxc_int.h

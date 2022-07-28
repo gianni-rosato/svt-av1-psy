@@ -249,8 +249,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
 
 class QuantizeBQmTest : public QuantizeBTest {
   protected:
-    QuantizeBQmTest()
-        : QuantizeBTest() {
+    QuantizeBQmTest() : QuantizeBTest() {
         qm_level_ = 8;
         init_qm();
     }
@@ -349,14 +348,11 @@ class QuantizeBQmTest : public QuantizeBTest {
                         iqmatrix_[q][c][t] = NULL;
                     } else if (t !=
                                qm_tx_size) {  // Reuse matrices for 'qm_tx_size'
-                        qmatrix_[q][c][t] =
-                            qmatrix_[q][c][qm_tx_size];
-                        iqmatrix_[q][c][t] =
-                            iqmatrix_[q][c][qm_tx_size];
+                        qmatrix_[q][c][t] = qmatrix_[q][c][qm_tx_size];
+                        iqmatrix_[q][c][t] = iqmatrix_[q][c][qm_tx_size];
                     } else {
                         assert(current + size <= QM_TOTAL_SIZE);
-                        qmatrix_[q][c][t] =
-                            &wt_matrix_ref[q][c >= 1][current];
+                        qmatrix_[q][c][t] = &wt_matrix_ref[q][c >= 1][current];
                         iqmatrix_[q][c][t] =
                             &iwt_matrix_ref[q][c >= 1][current];
                         current += size;

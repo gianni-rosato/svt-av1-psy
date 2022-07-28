@@ -300,8 +300,8 @@ int32_t svt_sb_compute_cdef_list(PictureControlSet *pcs_ptr, const Av1Common *co
                 !grid[(mi_row + r) * mi_stride + (mi_col + c + 1)]->mbmi.block_mi.skip ||
                 !grid[(mi_row + r + 1) * mi_stride + (mi_col + c)]->mbmi.block_mi.skip ||
                 !grid[(mi_row + r + 1) * mi_stride + (mi_col + c + 1)]->mbmi.block_mi.skip) {
-                dlist[count].by   = (uint8_t)(r >> r_shift);
-                dlist[count].bx   = (uint8_t)(c >> c_shift);
+                dlist[count].by = (uint8_t)(r >> r_shift);
+                dlist[count].bx = (uint8_t)(c >> c_shift);
                 count++;
             }
         }
@@ -314,7 +314,6 @@ Loop over all 64x64 filter blocks and perform the CDEF filtering for each block,
 the filter strength pairs chosen in finish_cdef_search().
 */
 void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
-
     struct PictureParentControlSet *ppcs     = pcs->parent_pcs_ptr;
     Av1Common                      *cm       = ppcs->av1_cm;
     FrameHeader                    *frm_hdr  = &ppcs->frm_hdr;
@@ -323,11 +322,13 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
     EbPictureBufferDesc *recon_pic;
     get_recon_pic(pcs, &recon_pic, is_16bit);
 
-    const uint32_t offset_y = recon_pic->origin_x + recon_pic->origin_y * recon_pic->stride_y;
-    EbByte recon_buffer_y = recon_pic->buffer_y + (offset_y << is_16bit);
-    const uint32_t offset_cb = (recon_pic->origin_x + recon_pic->origin_y * recon_pic->stride_cb) >> 1;
-    EbByte recon_buffer_cb = recon_pic->buffer_cb + (offset_cb << is_16bit);
-    const uint32_t offset_cr = (recon_pic->origin_x + recon_pic->origin_y * recon_pic->stride_cr) >> 1;
+    const uint32_t offset_y       = recon_pic->origin_x + recon_pic->origin_y * recon_pic->stride_y;
+    EbByte         recon_buffer_y = recon_pic->buffer_y + (offset_y << is_16bit);
+    const uint32_t offset_cb = (recon_pic->origin_x + recon_pic->origin_y * recon_pic->stride_cb) >>
+        1;
+    EbByte         recon_buffer_cb = recon_pic->buffer_cb + (offset_cb << is_16bit);
+    const uint32_t offset_cr = (recon_pic->origin_x + recon_pic->origin_y * recon_pic->stride_cr) >>
+        1;
     EbByte recon_buffer_cr = recon_pic->buffer_cr + (offset_cr << is_16bit);
 
     const int32_t num_planes = av1_num_planes(&scs->seq_header.color_config);
@@ -342,9 +343,9 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
     int32_t        mi_high_l2[3];
     int32_t        xdec[3];
     int32_t        ydec[3];
-    int32_t coeff_shift = AOMMAX(scs->static_config.encoder_bit_depth - 8, 0);
-    const int32_t nvfb  = (cm->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    const int32_t nhfb  = (cm->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
+    int32_t        coeff_shift = AOMMAX(scs->static_config.encoder_bit_depth - 8, 0);
+    const int32_t  nvfb        = (cm->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
+    const int32_t  nhfb        = (cm->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
 
     row_cdef = (uint8_t *)svt_aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
     assert(row_cdef != NULL);
@@ -354,10 +355,10 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
     for (int32_t pli = 0; pli < num_planes; pli++) {
         int32_t subsampling_x = (pli == 0) ? 0 : 1;
         int32_t subsampling_y = (pli == 0) ? 0 : 1;
-        xdec[pli]       = subsampling_x; //CHKN xd->plane[pli].subsampling_x;
-        ydec[pli]       = subsampling_y; //CHKN  xd->plane[pli].subsampling_y;
-        mi_wide_l2[pli] = MI_SIZE_LOG2 - subsampling_x; //CHKN xd->plane[pli].subsampling_x;
-        mi_high_l2[pli] = MI_SIZE_LOG2 - subsampling_y; //CHKN xd->plane[pli].subsampling_y;
+        xdec[pli]             = subsampling_x; //CHKN xd->plane[pli].subsampling_x;
+        ydec[pli]             = subsampling_y; //CHKN  xd->plane[pli].subsampling_y;
+        mi_wide_l2[pli]       = MI_SIZE_LOG2 - subsampling_x; //CHKN xd->plane[pli].subsampling_x;
+        mi_high_l2[pli]       = MI_SIZE_LOG2 - subsampling_y; //CHKN xd->plane[pli].subsampling_y;
     }
 
     const int32_t stride = (cm->mi_cols << MI_SIZE_LOG2) + 2 * CDEF_HBORDER;
@@ -471,7 +472,7 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
                     rend = vsize + CDEF_VBORDER;
 
                 coffset             = fbc * MI_SIZE_64X64 << mi_wide_l2[pli];
-                EbByte rec_buff   = 0;
+                EbByte   rec_buff   = 0;
                 uint32_t rec_stride = 0;
 
                 switch (pli) {
@@ -630,10 +631,14 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
                 // Therefore, need to make sure dir and var are initialized
                 if (level || sec_strength || !dirinit) {
                     svt_cdef_filter_fb(
-                        is_16bit ? NULL : &rec_buff[rec_stride * (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
-                                  (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
-                        is_16bit ? &((uint16_t*)rec_buff)[rec_stride * (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
-                        (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])] : NULL,
+                        is_16bit ? NULL
+                                 : &rec_buff[rec_stride * (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
+                                             (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
+                        is_16bit
+                            ? &((uint16_t *)rec_buff)[rec_stride *
+                                                          (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
+                                                      (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])]
+                            : NULL,
                         rec_stride,
                         &src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER],
                         xdec[pli],

@@ -52,7 +52,7 @@ void app_svt_av1_get_time(uint64_t *const seconds, uint64_t *const useconds) {
     struct _timeb curr_time;
     _ftime_s(&curr_time);
     *seconds  = curr_time.time;
-    *useconds = curr_time.millitm*1000;
+    *useconds = curr_time.millitm * 1000;
 #elif defined(CLOCK_MONOTONIC) && !defined(OLD_MACOS)
     struct timespec curr_time;
     clock_gettime(CLOCK_MONOTONIC, &curr_time);

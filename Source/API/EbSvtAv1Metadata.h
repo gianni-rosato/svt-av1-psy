@@ -48,13 +48,13 @@ typedef struct SvtMetadataArray {
 
 /*!\brief Frame size struct in metadata. */
 typedef struct SvtMetadataFrameSize {
-    uint16_t width;        /**< pixel width of frame */
-    uint16_t height;       /**< pixel height of frame */
-    uint16_t disp_width;   /**< display pixel width of frame */
-    uint16_t disp_height;  /**< display pixel height of frame */
-    uint16_t stride;       /**< pixel stride of frame */
-    uint16_t subsampling_x;/**< subsampling of Cb/Cr in width */
-    uint16_t subsampling_y;/**< subsampling of Cb/Cr in height */
+    uint16_t width; /**< pixel width of frame */
+    uint16_t height; /**< pixel height of frame */
+    uint16_t disp_width; /**< display pixel width of frame */
+    uint16_t disp_height; /**< display pixel height of frame */
+    uint16_t stride; /**< pixel stride of frame */
+    uint16_t subsampling_x; /**< subsampling of Cb/Cr in width */
+    uint16_t subsampling_y; /**< subsampling of Cb/Cr in height */
 } SvtMetadataFrameSizeT;
 
 /*!\brief Allocate memory for SvtMetadataT struct.

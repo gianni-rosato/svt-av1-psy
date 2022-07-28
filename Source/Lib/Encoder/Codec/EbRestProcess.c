@@ -81,8 +81,6 @@ static void rest_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj);
 }
 
-
-
 /******************************************************
  * Rest Context Constructor
  ******************************************************/
@@ -110,9 +108,9 @@ EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
     Bool is_16bit = scs_ptr->is_16bit_pipeline;
 
     if (get_enable_restoration(init_data_ptr->enc_mode,
-        config->enable_restoration_filtering,
-        scs_ptr->input_resolution,
-        scs_ptr->static_config.fast_decode)) {
+                               config->enable_restoration_filtering,
+                               scs_ptr->input_resolution,
+                               scs_ptr->static_config.fast_decode)) {
         EbPictureBufferDescInitData init_data;
 
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -162,7 +160,7 @@ extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **reco
     if (*recon_ptr &&
         (pcs_ptr->parent_pcs_ptr->render_width != (*recon_ptr)->width ||
          pcs_ptr->parent_pcs_ptr->render_height != (*recon_ptr)->height)) {
-        (*recon_ptr)->width = pcs_ptr->parent_pcs_ptr->render_width;
+        (*recon_ptr)->width  = pcs_ptr->parent_pcs_ptr->render_width;
         (*recon_ptr)->height = pcs_ptr->parent_pcs_ptr->render_height;
     }
 }
@@ -462,7 +460,8 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
             for (int row = 0; row < height; ++row) {
                 svt_memcpy(dst_buf,
                            src_buf,
-                           ((recon_picture_src->width + sub_x) >> sub_x) * sizeof(*src_buf) << use_highbd);
+                           ((recon_picture_src->width + sub_x) >> sub_x) * sizeof(*src_buf)
+                               << use_highbd);
                 src_buf += src_stride << use_highbd;
                 dst_buf += dst_stride << use_highbd;
             }
@@ -530,26 +529,28 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
     EB_FREE_ALIGNED_ARRAY(ps_recon_pic_temp->buffer_cr);
 }
 
-static void copy_statistics_to_ref_obj_ect(PictureControlSet* pcs, SequenceControlSet* scs) {
+static void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs, SequenceControlSet *scs) {
+    EbReferenceObject *obj = (EbReferenceObject *)
+                                 pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
 
-    EbReferenceObject* obj = (EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
-
-    pcs->intra_coded_area = (100 * pcs->intra_coded_area) / (pcs->parent_pcs_ptr->aligned_width * pcs->parent_pcs_ptr->aligned_height);
-    pcs->skip_coded_area = (100 * pcs->skip_coded_area) / (pcs->parent_pcs_ptr->aligned_width * pcs->parent_pcs_ptr->aligned_height);
+    pcs->intra_coded_area = (100 * pcs->intra_coded_area) /
+        (pcs->parent_pcs_ptr->aligned_width * pcs->parent_pcs_ptr->aligned_height);
+    pcs->skip_coded_area = (100 * pcs->skip_coded_area) /
+        (pcs->parent_pcs_ptr->aligned_width * pcs->parent_pcs_ptr->aligned_height);
 
     if (pcs->slice_type == I_SLICE)
         pcs->intra_coded_area = 0;
-    obj->intra_coded_area = (uint8_t)(pcs->intra_coded_area);
-    obj->skip_coded_area = (uint8_t)(pcs->skip_coded_area);
-    struct PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
-    FrameHeader* frm_hdr = &ppcs->frm_hdr;
+    obj->intra_coded_area                   = (uint8_t)(pcs->intra_coded_area);
+    obj->skip_coded_area                    = (uint8_t)(pcs->skip_coded_area);
+    struct PictureParentControlSet *ppcs    = pcs->parent_pcs_ptr;
+    FrameHeader                    *frm_hdr = &ppcs->frm_hdr;
 
-    struct LoopFilter* const lf = &frm_hdr->loop_filter_params;
+    struct LoopFilter *const lf = &frm_hdr->loop_filter_params;
 
     obj->filter_level[0] = lf->filter_level[0];
     obj->filter_level[1] = lf->filter_level[1];
-    obj->filter_level_u = lf->filter_level_u;
-    obj->filter_level_v = lf->filter_level_v;
+    obj->filter_level_u  = lf->filter_level_u;
+    obj->filter_level_v  = lf->filter_level_v;
 
     obj->ref_cdef_strengths_num = ppcs->nb_cdef_strengths;
     for (int i = 0; i < ppcs->nb_cdef_strengths; i++) {
@@ -558,16 +559,16 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet* pcs, SequenceContr
     }
     uint32_t sb_index;
     for (sb_index = 0; sb_index < pcs->sb_total_count; ++sb_index) {
-        obj->sb_intra[sb_index] = pcs->sb_intra[sb_index];
-        obj->sb_skip[sb_index] = pcs->sb_skip[sb_index];
-        obj->sb_64x64_mvp[sb_index] = pcs->sb_64x64_mvp[sb_index];
-        obj->sb_me_64x64_dist[sb_index] = pcs->parent_pcs_ptr->me_64x64_distortion[sb_index];
+        obj->sb_intra[sb_index]           = pcs->sb_intra[sb_index];
+        obj->sb_skip[sb_index]            = pcs->sb_skip[sb_index];
+        obj->sb_64x64_mvp[sb_index]       = pcs->sb_64x64_mvp[sb_index];
+        obj->sb_me_64x64_dist[sb_index]   = pcs->parent_pcs_ptr->me_64x64_distortion[sb_index];
         obj->sb_me_8x8_cost_var[sb_index] = pcs->parent_pcs_ptr->me_8x8_cost_variance[sb_index];
     }
-    obj->tmp_layer_idx = (uint8_t)pcs->temporal_layer_index;
+    obj->tmp_layer_idx   = (uint8_t)pcs->temporal_layer_index;
     obj->is_scene_change = pcs->parent_pcs_ptr->scene_change_flag;
 
-    Av1Common* cm = pcs->parent_pcs_ptr->av1_cm;
+    Av1Common *cm    = pcs->parent_pcs_ptr->av1_cm;
     obj->sg_frame_ep = cm->sg_frame_ep;
     if (scs->mfmv_enabled || !pcs->parent_pcs_ptr->is_not_scaled) {
         obj->frame_type = pcs->parent_pcs_ptr->frm_hdr.frame_type;
@@ -582,7 +583,8 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet* pcs, SequenceContr
                 obj->unit_info[plane][u].restoration_type =
                     pcs->rst_info[plane].unit_info[u].restoration_type;
                 if (pcs->rst_info[plane].unit_info[u].restoration_type == RESTORE_WIENER)
-                    obj->unit_info[plane][u].wiener_info = pcs->rst_info[plane].unit_info[u].wiener_info;
+                    obj->unit_info[plane][u].wiener_info =
+                        pcs->rst_info[plane].unit_info[u].wiener_info;
             }
         }
     }
@@ -617,13 +619,13 @@ void *rest_kernel(void *input_ptr) {
         // Get Cdef Results
         EB_GET_FULL_OBJECT(context_ptr->rest_input_fifo_ptr, &cdef_results_wrapper_ptr);
 
-        cdef_results_ptr      = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
-        pcs_ptr               = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
-        PictureParentControlSet* ppcs = pcs_ptr->parent_pcs_ptr;
-        scs_ptr               = pcs_ptr->scs_ptr;
-        FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-        Bool         is_16bit = scs_ptr->is_16bit_pipeline;
-        Av1Common   *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
+        cdef_results_ptr = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
+        pcs_ptr          = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
+        PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
+        scs_ptr                       = pcs_ptr->scs_ptr;
+        FrameHeader *frm_hdr          = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+        Bool         is_16bit         = scs_ptr->is_16bit_pipeline;
+        Av1Common   *cm               = pcs_ptr->parent_pcs_ptr->av1_cm;
         if (ppcs->enable_restoration && frm_hdr->allow_intrabc == 0) {
             // If using boundaries during the filter search, copy the recon pic to a new buffer (to
             // avoid race condition from many threads modifying the same recon pic).
@@ -632,19 +634,19 @@ void *rest_kernel(void *input_ptr) {
             // to be used in restoration search (save cycles/memory of copying pic to a new buffer).
             // The recon pic should not be modified during the search, otherwise there will be a race
             // condition between threads.
-            EbPictureBufferDesc* recon_picture_ptr = get_own_recon(
+            EbPictureBufferDesc *recon_picture_ptr = get_own_recon(
                 scs_ptr, pcs_ptr, context_ptr, is_16bit);
-            EbPictureBufferDesc* input_picture_ptr = is_16bit
+            EbPictureBufferDesc *input_picture_ptr = is_16bit
                 ? pcs_ptr->input_frame16bit
                 : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
-            EbPictureBufferDesc* scaled_input_picture_ptr = NULL;
+            EbPictureBufferDesc *scaled_input_picture_ptr = NULL;
             // downscale input picture if recon is resized
-            Bool is_resized = recon_picture_ptr->width != input_picture_ptr->width
-                || recon_picture_ptr->height != input_picture_ptr->height;
+            Bool is_resized = recon_picture_ptr->width != input_picture_ptr->width ||
+                recon_picture_ptr->height != input_picture_ptr->height;
             if (is_resized) {
                 scaled_input_picture_ptr = pcs_ptr->scaled_input_picture_ptr;
-                input_picture_ptr = scaled_input_picture_ptr;
+                input_picture_ptr        = scaled_input_picture_ptr;
             }
 
             Yv12BufferConfig cpi_source;
@@ -711,10 +713,10 @@ void *rest_kernel(void *input_ptr) {
 
                 if (cm->sg_filter_ctrls.enabled) {
                     uint8_t best_ep_cnt = 0;
-                    uint8_t best_ep = 0;
+                    uint8_t best_ep     = 0;
                     for (uint8_t i = 0; i < SGRPROJ_PARAMS; i++) {
                         if (cm->sg_frame_ep_cnt[i] > best_ep_cnt) {
-                            best_ep = i;
+                            best_ep     = i;
                             best_ep_cnt = cm->sg_frame_ep_cnt[i];
                         }
                     }

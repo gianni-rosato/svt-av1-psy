@@ -132,8 +132,8 @@ typedef struct InterIntraCompCtrls {
 } InterIntraCompCtrls;
 typedef struct ObmcControls {
     uint8_t enabled;
-    Bool max_blk_size_to_refine_16x16; // if true, cap the max block size to refine to 16x16
-    Bool max_blk_size_16x16; // if true, cap the max block size to test to 16x16
+    Bool    max_blk_size_to_refine_16x16; // if true, cap the max block size to refine to 16x16
+    Bool    max_blk_size_16x16; // if true, cap the max block size to test to 16x16
 } ObmcControls;
 typedef struct TxtControls {
     uint8_t enabled;
@@ -183,7 +183,7 @@ typedef struct DepthCtrls {
     int8_t
         s_depth; // start depth; 0: consider no parent blocks; else number of parent blocks to consider, specified as a negative number (e.g. -2 means consider 2 parents)
     int8_t
-        e_depth; // end depth; 0: consider no child blocks; else number of child blocks to consider, specified as a positive number (e.g. 2 means consider 2 children)
+         e_depth; // end depth; 0: consider no child blocks; else number of child blocks to consider, specified as a positive number (e.g. 2 means consider 2 children)
     Bool allow_nsq_in_child_depths; // Allow NSQ in depths below the PD0-selected depths.
 } DepthCtrls;
 #define MAX_RANGE_CNT 8
@@ -397,9 +397,9 @@ typedef struct CandEliminationCtlrs {
 typedef struct TxsControls {
     uint8_t  enabled;
     uint8_t  prev_depth_coeff_exit; // Skip current depth if previous depth has no coeff
-    uint8_t  intra_class_max_depth_sq;  // Max number of depth(s) for INTRA classes in SQ blocks
+    uint8_t  intra_class_max_depth_sq; // Max number of depth(s) for INTRA classes in SQ blocks
     uint8_t  intra_class_max_depth_nsq; // Max number of depth(s) for INTRA classes in NSQ blocks
-    uint8_t  inter_class_max_depth_sq;  // Max number of depth(s) for INTER classes in SQ blocks
+    uint8_t  inter_class_max_depth_sq; // Max number of depth(s) for INTER classes in SQ blocks
     uint8_t  inter_class_max_depth_nsq; // Max number of depth(s) for INTER classes in NSQ blocks
     int      depth1_txt_group_offset; // Offset to be subtracted from default txt-group to derive the txt-group of depth-1
     int      depth2_txt_group_offset; // Offset to be subtracted from default txt-group to derive the txt-group of depth-2
@@ -418,7 +418,7 @@ typedef struct UvCtrls {
         // CHROMA_MODE_2: Chroma blind @ MD
     uint8_t
              nd_uv_serach_mode; // Non-direct chroma search 0: pre chroma search is used, 1: chroma search at last md_stage is used
-    uint8_t uv_nic_scaling_num; // Scaling numerator for independent chroma NICS: <x>/16
+    uint8_t  uv_nic_scaling_num; // Scaling numerator for independent chroma NICS: <x>/16
     uint32_t uv_intra_th; // Threshold to skip non-directional chroma search.
     uint32_t uv_cfl_th; // Threshold to skip cfl.
 } UvCtrls;
@@ -452,10 +452,14 @@ typedef struct BlockLocation {
 } BlockLocation;
 
 typedef struct Lpd0Ctrls {
-    Pd0Level pd0_level; // Whether light-PD0 is set to be used for an SB (the detector may change this)
-    Bool use_lpd0_detector[LPD0_LEVELS]; // Whether to use a detector; if use_light_pd0 is set to 1, the detector will protect tough SBs
-    Bool use_ref_info[LPD0_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector
-    uint32_t me_8x8_cost_variance_th[LPD0_LEVELS]; // me_8x8_cost_variance_th beyond which the PD0 is used (instead of light-PD0)
+    Pd0Level
+         pd0_level; // Whether light-PD0 is set to be used for an SB (the detector may change this)
+    Bool use_lpd0_detector
+        [LPD0_LEVELS]; // Whether to use a detector; if use_light_pd0 is set to 1, the detector will protect tough SBs
+    Bool use_ref_info
+        [LPD0_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector
+    uint32_t me_8x8_cost_variance_th
+        [LPD0_LEVELS]; // me_8x8_cost_variance_th beyond which the PD0 is used (instead of light-PD0)
 } Lpd0Ctrls;
 
 typedef struct Lpd1Ctrls {
@@ -478,14 +482,16 @@ typedef struct Lpd1Ctrls {
 } Lpd1Ctrls;
 
 typedef struct DetectHighFreqCtrls {
-    int8_t   enabled;
-    uint16_t me_8x8_sad_var_th;   // me-8x8 SADs deviation threshold beyond which the SB is not considered
-    uint16_t high_satd_th;        // 32x32 satd threshold beyond which the SB is tagged
-    uint16_t satd_to_sad_dev_th;  // me-SAD-to-SATD deviation of the 32x32 blocks threshold beyond which the SB is tagged (~2x is the fundamental deviation)
-    uint8_t  depth_removal_shift; // depth-removal level left-shift for the detected SB(s)
-    uint8_t  max_pic_lpd0_lvl;    // maximum lpd0 level for the detected SB(s)
-    uint8_t  max_pic_lpd1_lvl;    // maximum lpd1 level for the detected SB(s)
-    uint8_t  max_pd1_txt_lvl;     // maximum pd1-txt level for the detected SB(s)
+    int8_t enabled;
+    uint16_t
+        me_8x8_sad_var_th; // me-8x8 SADs deviation threshold beyond which the SB is not considered
+    uint16_t high_satd_th; // 32x32 satd threshold beyond which the SB is tagged
+    uint16_t
+            satd_to_sad_dev_th; // me-SAD-to-SATD deviation of the 32x32 blocks threshold beyond which the SB is tagged (~2x is the fundamental deviation)
+    uint8_t depth_removal_shift; // depth-removal level left-shift for the detected SB(s)
+    uint8_t max_pic_lpd0_lvl; // maximum lpd0 level for the detected SB(s)
+    uint8_t max_pic_lpd1_lvl; // maximum lpd1 level for the detected SB(s)
+    uint8_t max_pd1_txt_lvl; // maximum pd1-txt level for the detected SB(s)
 } DetectHighFreqCtrls;
 
 typedef struct Lpd1TxCtrls {
@@ -735,9 +741,10 @@ typedef struct ModeDecisionContext {
     uint8_t     *above_txfm_context;
     uint8_t     *left_txfm_context;
     // square cost weighting for deciding if a/b shapes could be skipped
-    uint32_t          sq_weight;
-    uint32_t          max_part0_to_part1_dev;
-    uint32_t          skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
+    uint32_t sq_weight;
+    uint32_t max_part0_to_part1_dev;
+    uint32_t
+        skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
     IntraCtrls        intra_ctrls;
     MdRateEstCtrls    rate_est_ctrls;
     uint8_t           shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
@@ -819,13 +826,15 @@ typedef struct ModeDecisionContext {
     uint32_t        max_nics_uv; // Maximum number of candidates MD can support
     InterpolationSearchCtrls ifs_ctrls;
     Bool bypass_encdec; // If enabled, will bypass EncDec and copy recon/quant coeffs from MD
-    Bool pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 (set per SB)
-    Bool pic_pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 (set per frame)
-                              // Per frame is necessary because some shortcuts can only be taken if the whole frame
-                              // uses pred depth only
-    uint16_t coded_area_sb;
-    uint16_t coded_area_sb_uv;
-    Lpd0Ctrls lpd0_ctrls;
+    Bool
+        pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 (set per SB)
+    Bool
+        pic_pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 (set per frame)
+    // Per frame is necessary because some shortcuts can only be taken if the whole frame
+    // uses pred depth only
+    uint16_t            coded_area_sb;
+    uint16_t            coded_area_sb_uv;
+    Lpd0Ctrls           lpd0_ctrls;
     DetectHighFreqCtrls detect_high_freq_ctrls;
     // 0 : Use regular PD0
     // 1 : Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
@@ -861,7 +870,7 @@ typedef struct ModeDecisionContext {
     uint8_t
         scale_palette; //   when MD is done on 8bit, scale  palette colors to 10bit (valid when bypass is 1)
     uint32_t b32_satd[4];
-    uint8_t high_freq_present;
+    uint8_t  high_freq_present;
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,

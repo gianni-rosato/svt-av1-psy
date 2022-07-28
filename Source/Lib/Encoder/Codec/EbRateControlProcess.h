@@ -72,7 +72,7 @@ typedef enum rate_factor_level {
 } rate_factor_level;
 #define CODED_FRAMES_STAT_QUEUE_MAX_DEPTH 2000
 // max bit rate average period
-#define MAX_RATE_AVG_PERIOD (CODED_FRAMES_STAT_QUEUE_MAX_DEPTH>>1)
+#define MAX_RATE_AVG_PERIOD (CODED_FRAMES_STAT_QUEUE_MAX_DEPTH >> 1)
 #define CRITICAL_BUFFER_LEVEL 15
 #define OPTIMAL_BUFFER_LEVEL 70
 /**************************************
@@ -86,11 +86,11 @@ typedef struct coded_frames_stats_entry {
 } coded_frames_stats_entry;
 
 typedef enum {
-    NO_RESIZE = 0,
-    DOWN_THREEFOUR = 1,  // From orig to 3/4.
-    DOWN_ONEHALF = 2,    // From orig or 3/4 to 1/2.
-    UP_THREEFOUR = -1,   // From 1/2 to 3/4.
-    UP_ORIG = -2,        // From 1/2 or 3/4 to orig.
+    NO_RESIZE      = 0,
+    DOWN_THREEFOUR = 1, // From orig to 3/4.
+    DOWN_ONEHALF   = 2, // From orig or 3/4 to 1/2.
+    UP_THREEFOUR   = -1, // From 1/2 to 3/4.
+    UP_ORIG        = -2, // From 1/2 or 3/4 to orig.
 } RESIZE_ACTION;
 
 typedef enum { ORIG = 0, THREE_QUARTER = 1, ONE_HALF = 2 } RESIZE_STATE;
@@ -104,7 +104,7 @@ typedef enum { ORIG = 0, THREE_QUARTER = 1, ONE_HALF = 2 } RESIZE_STATE;
  */
 typedef struct {
     RESIZE_STATE resize_state;
-    uint8_t  resize_denom;
+    uint8_t      resize_denom;
 } ResizePendingParams;
 
 extern EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
@@ -183,10 +183,10 @@ typedef struct {
     EbHandle rc_mutex;
     // For dynamic resize, 1 pass cbr.
     RESIZE_STATE resize_state;
-    int32_t resize_avg_qp;
-    int32_t resize_buffer_underflow;
-    int32_t resize_count;
-    int32_t last_q[FRAME_TYPES]; // Q used on last encoded frame of the given type.
+    int32_t      resize_avg_qp;
+    int32_t      resize_buffer_underflow;
+    int32_t      resize_count;
+    int32_t      last_q[FRAME_TYPES]; // Q used on last encoded frame of the given type.
 
 } RATE_CONTROL;
 
@@ -238,7 +238,9 @@ EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr, int me_port_index);
 
 extern void *rate_control_kernel(void *input_ptr);
-int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type, int qindex);
+int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type,
+                                            int qindex);
 struct PictureParentControlSet;
-int svt_aom_compute_rd_mult(struct PictureParentControlSet* pcs, uint8_t q_index, uint8_t bit_depth);
+int svt_aom_compute_rd_mult(struct PictureParentControlSet *pcs, uint8_t q_index,
+                            uint8_t bit_depth);
 #endif // EbRateControl_h

@@ -18,7 +18,6 @@
 #include "EbLog.h"
 #include "aom_dsp_rtcd.h"
 
-
 static const int32_t k_max_lag = 4;
 
 void *svt_aom_memalign(size_t align, size_t size);
@@ -161,8 +160,8 @@ static int32_t equation_system_init(AomEquationSystem *eqns, int32_t n) {
 
 static int32_t equation_system_solve(AomEquationSystem *eqns) {
     const int32_t n   = eqns->n;
-    double *      b   = (double *)malloc(sizeof(*b) * n);
-    double *      A   = (double *)malloc(sizeof(*A) * n * n);
+    double       *b   = (double *)malloc(sizeof(*b) * n);
+    double       *A   = (double *)malloc(sizeof(*A) * n * n);
     int32_t       ret = 0;
     if (A == NULL || b == NULL) {
         SVT_ERROR("Unable to allocate temp values of size %dx%d\n", n, n);
@@ -372,7 +371,7 @@ static void update_piecewise_linear_residual(const AomNoiseStrengthSolver *solve
 
 int32_t svt_aom_noise_strength_solver_fit_piecewise(const AomNoiseStrengthSolver *solver,
                                                     int32_t                       max_output_points,
-                                                    AomNoiseStrengthLut *         lut) {
+                                                    AomNoiseStrengthLut          *lut) {
     // The tolerance is normalized to be give consistent results between
     // different bit-depths.
     const double k_tolerance = solver->max_intensity * 0.00625 / 255.0;
@@ -477,11 +476,10 @@ void svt_aom_flat_block_finder_free(AomFlatBlockFinder *block_finder) {
     memset(block_finder, 0, sizeof(*block_finder));
 }
 
-
 void svt_aom_flat_block_finder_extract_block_c(const AomFlatBlockFinder *block_finder,
-                                             const uint8_t *const data, int32_t w, int32_t h,
-                                             int32_t stride, int32_t offsx, int32_t offsy,
-                                             double *plane, double *block) {
+                                               const uint8_t *const data, int32_t w, int32_t h,
+                                               int32_t stride, int32_t offsx, int32_t offsy,
+                                               double *plane, double *block) {
     const int32_t block_size = block_finder->block_size;
     const int32_t n          = block_size * block_size;
     const double *A          = block_finder->A;
@@ -549,8 +547,8 @@ int32_t svt_aom_flat_block_finder_run(const AomFlatBlockFinder *block_finder,
     const int32_t  num_blocks_w      = (w + block_size - 1) / block_size;
     const int32_t  num_blocks_h      = (h + block_size - 1) / block_size;
     int32_t        num_flat          = 0;
-    double *       plane             = (double *)malloc(n * sizeof(*plane));
-    double *       block             = (double *)malloc(n * sizeof(*block));
+    double        *plane             = (double *)malloc(n * sizeof(*plane));
+    double        *block             = (double *)malloc(n * sizeof(*block));
     IndexAndscore *scores = (IndexAndscore *)malloc(num_blocks_w * num_blocks_h * sizeof(*scores));
     if (plane == NULL || block == NULL || scores == NULL) {
         SVT_ERROR("Failed to allocate memory for block of size %d\n", n);
@@ -750,7 +748,7 @@ void svt_aom_noise_model_free(AomNoiseModel *model) {
                                           int32_t               alt_stride,              \
                                           int32_t               x,                       \
                                           int32_t               y,                       \
-                                          double *              buffer) {                              \
+                                          double               *buffer) {                              \
         for (int32_t i = 0; i < num_coords; ++i) {                                       \
             const int32_t x_i = x + coords[i][0], y_i = y + coords[i][1];                \
             buffer[i] = (double)data[y_i * stride + x_i] - denoised[y_i * stride + x_i]; \
@@ -834,11 +832,11 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
     const int32_t num_coords    = noise_model->n;
     const double  normalization = (1 << noise_model->params.bit_depth) - 1;
     const double  recp_sqr_norm = 1 / (normalization * normalization);
-    double *      A             = noise_model->latest_state[c].eqns.A;
-    double *      b             = noise_model->latest_state[c].eqns.b;
+    double       *A             = noise_model->latest_state[c].eqns.A;
+    double       *b             = noise_model->latest_state[c].eqns.b;
     const int32_t n             = noise_model->latest_state[c].eqns.n;
-    double *      buffer;
-    double *      buffer_norm;
+    double       *buffer;
+    double       *buffer_norm;
 
     EB_MALLOC_ALIGNED(buffer, sizeof(*buffer) * (num_coords + 1));
 
@@ -868,8 +866,8 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
             int32_t x_end   = AOMMIN(
                 (w >> sub_log2[0]) - bx * (block_size >> sub_log2[0]) - lag,
                 (bx + 1 < num_blocks_w && flat_blocks[by * num_blocks_w + bx + 1])
-                    ? (block_size >> sub_log2[0])
-                    : ((block_size >> sub_log2[0]) - lag));
+                      ? (block_size >> sub_log2[0])
+                      : ((block_size >> sub_log2[0]) - lag));
             for (int32_t y = y_start; y < y_end; ++y) {
                 for (int32_t x = x_start; x < x_end; ++x) {
                     const double val = noise_model->params.use_highbd
@@ -904,7 +902,8 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
             }
             //There is situation when x_start is greater than x_end,
             //use max() to cap negative result and do not increment num_observations
-            noise_model->latest_state[c].num_observations += AOMMAX((y_end - y_start), 0)  * AOMMAX((x_end - x_start), 0);
+            noise_model->latest_state[c].num_observations += AOMMAX((y_end - y_start), 0) *
+                AOMMAX((x_end - x_start), 0);
         }
     }
     EB_FREE_ALIGNED(buffer);
@@ -946,7 +945,7 @@ static void add_noise_std_observations(AomNoiseModel *noise_model, int32_t c, co
                                                          y_o << sub_log2[1],
                                                          block_size,
                                                          noise_model->params.use_highbd);
-                const double noise_var  = get_noise_var(data,
+                const double noise_var = get_noise_var(data,
                                                        denoised,
                                                        stride,
                                                        w >> sub_log2[0],
@@ -962,7 +961,7 @@ static void add_noise_std_observations(AomNoiseModel *noise_model, int32_t c, co
                 const double luma_strength = c > 0
                     ? luma_gain * noise_strength_solver_get_value(noise_strength_luma, block_mean)
                     : 0;
-                const double corr = c > 0 ? coeffs[num_coords] : 0;
+                const double corr          = c > 0 ? coeffs[num_coords] : 0;
                 // Chroma noise:
                 //    N(0, noise_var) = N(0, uncorr_var) + corr * N(0, luma_strength^2)
                 // The uncorrelated component:
@@ -1061,7 +1060,7 @@ AomNoiseStatus svt_aom_noise_model_update(AomNoiseModel *const noise_model,
         int32_t        no_subsampling[2] = {0, 0};
         const uint8_t *alt_data          = channel > 0 ? data[0] : 0;
         const uint8_t *alt_denoised      = channel > 0 ? denoised[0] : 0;
-        int32_t *      sub               = channel > 0 ? chroma_sub_log2 : no_subsampling;
+        int32_t       *sub               = channel > 0 ? chroma_sub_log2 : no_subsampling;
         const int32_t  is_chroma         = channel != 0;
         if (!data[channel] || !denoised[channel])
             break;
@@ -1164,7 +1163,7 @@ void svt_aom_noise_model_save_latest(AomNoiseModel *noise_model) {
 }
 
 int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_model,
-                                                 AomFilmGrain *       film_grain) {
+                                                 AomFilmGrain        *film_grain) {
     if (noise_model->params.lag > 3) {
         SVT_ERROR("params.lag = %d > 3\n", noise_model->params.lag);
         return 0;
@@ -1269,9 +1268,9 @@ int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_mode
         7 - (int32_t)AOMMAX(1 + floor(log2(max_coeff)), ceil(log2(-min_coeff))), 6, 9);
     double   scale_ar_coeff = 1 << film_grain->ar_coeff_shift;
     int32_t *ar_coeffs[3]   = {
-        film_grain->ar_coeffs_y,
-        film_grain->ar_coeffs_cb,
-        film_grain->ar_coeffs_cr,
+          film_grain->ar_coeffs_y,
+          film_grain->ar_coeffs_cb,
+          film_grain->ar_coeffs_cr,
     };
     for (int32_t c = 0; c < 3; ++c) {
         AomEquationSystem *eqns = &noise_model->combined_state[c].eqns;
@@ -2148,7 +2147,7 @@ static const float *get_half_cos_window(int32_t block_size) {
 }
 
 #define DITHER_AND_QUANTIZE(INT_TYPE, suffix)                                                     \
-    static void dither_and_quantize_##suffix(float *   result,                                    \
+    static void dither_and_quantize_##suffix(float    *result,                                    \
                                              int32_t   result_stride,                             \
                                              INT_TYPE *denoised,                                  \
                                              int32_t   w,                                         \
@@ -2202,17 +2201,17 @@ int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoise
                                   float noise_psd[3], int32_t block_size, int32_t bit_depth,
                                   int32_t use_highbd) {
     const float *window_full = NULL, *window_chroma = NULL;
-    float *      plane = NULL;
+    float       *plane = NULL;
     DECLARE_ALIGNED(32, float, *block);
     block                          = NULL;
-    double *               block_d = NULL, *plane_d = NULL;
+    double                *block_d = NULL, *plane_d = NULL;
     struct aom_noise_tx_t *tx_full       = NULL;
     struct aom_noise_tx_t *tx_chroma     = NULL;
     const int32_t          num_blocks_w  = (w + block_size - 1) / block_size;
     const int32_t          num_blocks_h  = (h + block_size - 1) / block_size;
     const int32_t          result_stride = (num_blocks_w + 2) * block_size;
     const int32_t          result_height = (num_blocks_h + 2) * block_size;
-    float *                result        = NULL;
+    float                 *result        = NULL;
     int32_t                init_success  = 1;
     AomFlatBlockFinder     block_finder_full;
     AomFlatBlockFinder     block_finder_chroma;
@@ -2247,8 +2246,8 @@ int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoise
                               (plane_d != NULL) && (block != NULL) && (block_d != NULL) &&
                               (window_full != NULL) && (window_chroma != NULL) && (result != NULL));
     for (int32_t c = init_success ? 0 : 3; c < 3; ++c) {
-        const float *          window_function = c == 0 ? window_full : window_chroma;
-        AomFlatBlockFinder *   block_finder    = &block_finder_full;
+        const float           *window_function = c == 0 ? window_full : window_chroma;
+        AomFlatBlockFinder    *block_finder    = &block_finder_full;
         const int32_t          chroma_sub_h    = c > 0 ? chroma_sub[1] : 0;
         const int32_t          chroma_sub_w    = c > 0 ? chroma_sub[0] : 0;
         struct aom_noise_tx_t *tx              = (c > 0 && chroma_sub[0] > 0) ? tx_chroma : tx_full;
@@ -2544,7 +2543,7 @@ static void unpack_2d_pic(uint8_t *packed[3], EbPictureBufferDesc *outputPicture
 int32_t svt_aom_denoise_and_model_run(struct AomDenoiseAndModel *ctx, EbPictureBufferDesc *sd,
                                       AomFilmGrain *film_grain, int32_t use_highbd) {
     const int32_t block_size = ctx->block_size;
-    uint8_t *     raw_data[3];
+    uint8_t      *raw_data[3];
     int32_t       chroma_sub_log2[2] = {1, 1}; //todo: send chroma subsampling
     int32_t       strides[3]         = {sd->stride_y, sd->stride_cb, sd->stride_cr};
 

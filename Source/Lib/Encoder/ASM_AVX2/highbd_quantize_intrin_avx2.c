@@ -163,11 +163,13 @@ static INLINE __m256i load_bytes_to_m256_avx2(const QmVal *p) {
     return _mm256_cvtepu8_epi32(small_load);
 }
 
-void svt_av1_quantize_b_qm_avx2(
-    const TranLow *coeff_ptr, intptr_t n_coeffs, const int16_t *zbin_ptr, const int16_t *round_ptr,
-    const int16_t *quant_ptr, const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,
-    TranLow *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan,
-    const int16_t *iscan, const QmVal *qm_ptr, const QmVal *iqm_ptr, const int32_t log_scale) {
+void svt_av1_quantize_b_qm_avx2(const TranLow *coeff_ptr, intptr_t n_coeffs,
+                                const int16_t *zbin_ptr, const int16_t *round_ptr,
+                                const int16_t *quant_ptr, const int16_t *quant_shift_ptr,
+                                TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
+                                const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan,
+                                const int16_t *iscan, const QmVal *qm_ptr, const QmVal *iqm_ptr,
+                                const int32_t log_scale) {
     (void)scan;
     const uint32_t step = 8;
 
@@ -659,8 +661,8 @@ void svt_av1_highbd_quantize_fp_qm_avx2(
         n_coeffs -= step;
 
         coeff = _mm256_loadu_si256((const __m256i *)coeff_ptr);
-        qm = load_bytes_to_m256_avx2(qm_ptr);
-        iqm = load_bytes_to_m256_avx2(iqm_ptr);
+        qm    = load_bytes_to_m256_avx2(qm_ptr);
+        iqm   = load_bytes_to_m256_avx2(iqm_ptr);
         quantize_highbd_fp_qm(qp, &coeff, iscan, log_scale, qcoeff_ptr, dqcoeff_ptr, &eob, qm, iqm);
     }
 

@@ -36,7 +36,7 @@ void svt_picture_average_kernel1_line_c(EbByte src0, EbByte src1, EbByte dst, ui
 /*********************************
 * Picture Copy Kernel
 *********************************/
-void svt_memcpy_c(void *dst_ptr, void const *src_ptr, size_t size) {
+void svt_memcpy_c(void* dst_ptr, void const* src_ptr, size_t size) {
     memcpy(dst_ptr, src_ptr, size);
 }
 void picture_copy_kernel(EbByte src, uint32_t src_stride, EbByte dst, uint32_t dst_stride,
@@ -62,8 +62,8 @@ void picture_copy_kernel(EbByte src, uint32_t src_stride, EbByte dst, uint32_t d
 
 // C equivalents
 
-uint64_t svt_spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_offset,
-                                              uint32_t input_stride, uint8_t *recon,
+uint64_t svt_spatial_full_distortion_kernel_c(uint8_t* input, uint32_t input_offset,
+                                              uint32_t input_stride, uint8_t* recon,
                                               int32_t recon_offset, uint32_t recon_stride,
                                               uint32_t area_width, uint32_t area_height) {
     uint64_t spatial_distortion = 0;
@@ -84,8 +84,7 @@ uint64_t svt_spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_off
     return spatial_distortion;
 }
 
-static void hadamard_col4(const int16_t* src_diff, ptrdiff_t src_stride,
-    int16_t* coeff) {
+static void hadamard_col4(const int16_t* src_diff, ptrdiff_t src_stride, int16_t* coeff) {
     int16_t b0 = (src_diff[0 * src_stride] + src_diff[1 * src_stride]) >> 1;
     int16_t b1 = (src_diff[0 * src_stride] - src_diff[1 * src_stride]) >> 1;
     int16_t b2 = (src_diff[2 * src_stride] + src_diff[3 * src_stride]) >> 1;
@@ -97,22 +96,21 @@ static void hadamard_col4(const int16_t* src_diff, ptrdiff_t src_stride,
     coeff[3] = b1 - b3;
 }
 
-void svt_aom_hadamard_4x4_c(const int16_t* src_diff, ptrdiff_t src_stride,
-    int32_t* coeff) {
-    int idx;
-    int16_t buffer[16];
-    int16_t buffer2[16];
+void svt_aom_hadamard_4x4_c(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff) {
+    int      idx;
+    int16_t  buffer[16];
+    int16_t  buffer2[16];
     int16_t* tmp_buf = &buffer[0];
     for (idx = 0; idx < 4; ++idx) {
-        hadamard_col4(src_diff, src_stride, tmp_buf);  // src_diff: 9 bit
-                                                       // dynamic range [-255, 255]
+        hadamard_col4(src_diff, src_stride, tmp_buf); // src_diff: 9 bit
+            // dynamic range [-255, 255]
         tmp_buf += 4;
         ++src_diff;
     }
 
     tmp_buf = &buffer[0];
     for (idx = 0; idx < 4; ++idx) {
-        hadamard_col4(tmp_buf, 4, buffer2 + 4 * idx);  // tmp_buf: 12 bit
+        hadamard_col4(tmp_buf, 4, buffer2 + 4 * idx); // tmp_buf: 12 bit
         // dynamic range [-2040, 2040]
         // buffer2: 15 bit
         // dynamic range [-16320, 16320]
@@ -124,8 +122,7 @@ void svt_aom_hadamard_4x4_c(const int16_t* src_diff, ptrdiff_t src_stride,
 
 // src_diff: first pass, 9 bit, dynamic range [-255, 255]
 //           second pass, 12 bit, dynamic range [-2040, 2040]
-static void hadamard_col8(const int16_t* src_diff, ptrdiff_t src_stride,
-    int16_t* coeff) {
+static void hadamard_col8(const int16_t* src_diff, ptrdiff_t src_stride, int16_t* coeff) {
     int16_t b0 = src_diff[0 * src_stride] + src_diff[1 * src_stride];
     int16_t b1 = src_diff[0 * src_stride] - src_diff[1 * src_stride];
     int16_t b2 = src_diff[2 * src_stride] + src_diff[3 * src_stride];
@@ -156,22 +153,21 @@ static void hadamard_col8(const int16_t* src_diff, ptrdiff_t src_stride,
 
 // The order of the output coeff of the hadamard is not important. For
 // optimization purposes the final transpose may be skipped.
-void svt_aom_hadamard_8x8_c(const int16_t* src_diff, ptrdiff_t src_stride,
-    int32_t* coeff) {
-    int idx;
-    int16_t buffer[64];
-    int16_t buffer2[64];
+void svt_aom_hadamard_8x8_c(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff) {
+    int      idx;
+    int16_t  buffer[64];
+    int16_t  buffer2[64];
     int16_t* tmp_buf = &buffer[0];
     for (idx = 0; idx < 8; ++idx) {
-        hadamard_col8(src_diff, src_stride, tmp_buf);  // src_diff: 9 bit
-                                                       // dynamic range [-255, 255]
+        hadamard_col8(src_diff, src_stride, tmp_buf); // src_diff: 9 bit
+            // dynamic range [-255, 255]
         tmp_buf += 8;
         ++src_diff;
     }
 
     tmp_buf = &buffer[0];
     for (idx = 0; idx < 8; ++idx) {
-        hadamard_col8(tmp_buf, 8, buffer2 + 8 * idx);  // tmp_buf: 12 bit
+        hadamard_col8(tmp_buf, 8, buffer2 + 8 * idx); // tmp_buf: 12 bit
         // dynamic range [-2040, 2040]
         // buffer2: 15 bit
         // dynamic range [-16320, 16320]
@@ -182,13 +178,11 @@ void svt_aom_hadamard_8x8_c(const int16_t* src_diff, ptrdiff_t src_stride,
 }
 
 // In place 16x16 2D Hadamard transform
-void svt_aom_hadamard_16x16_c(const int16_t* src_diff, ptrdiff_t src_stride,
-    int32_t* coeff) {
+void svt_aom_hadamard_16x16_c(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff) {
     int idx;
     for (idx = 0; idx < 4; ++idx) {
         // src_diff: 9 bit, dynamic range [-255, 255]
-        const int16_t* src_ptr =
-            src_diff + (idx >> 1) * 8 * src_stride + (idx & 0x01) * 8;
+        const int16_t* src_ptr = src_diff + (idx >> 1) * 8 * src_stride + (idx & 0x01) * 8;
         svt_aom_hadamard_8x8_c(src_ptr, src_stride, coeff + idx * 64);
     }
 
@@ -199,13 +193,13 @@ void svt_aom_hadamard_16x16_c(const int16_t* src_diff, ptrdiff_t src_stride,
         int32_t a2 = coeff[128];
         int32_t a3 = coeff[192];
 
-        int32_t b0 = (a0 + a1) >> 1;  // (a0 + a1): 16 bit, [-32640, 32640]
-        int32_t b1 = (a0 - a1) >> 1;  // b0-b3: 15 bit, dynamic range
-        int32_t b2 = (a2 + a3) >> 1;  // [-16320, 16320]
+        int32_t b0 = (a0 + a1) >> 1; // (a0 + a1): 16 bit, [-32640, 32640]
+        int32_t b1 = (a0 - a1) >> 1; // b0-b3: 15 bit, dynamic range
+        int32_t b2 = (a2 + a3) >> 1; // [-16320, 16320]
         int32_t b3 = (a2 - a3) >> 1;
 
-        coeff[0] = b0 + b2;  // 16 bit, [-32640, 32640]
-        coeff[64] = b1 + b3;
+        coeff[0]   = b0 + b2; // 16 bit, [-32640, 32640]
+        coeff[64]  = b1 + b3;
         coeff[128] = b0 - b2;
         coeff[192] = b1 - b3;
 
@@ -213,13 +207,11 @@ void svt_aom_hadamard_16x16_c(const int16_t* src_diff, ptrdiff_t src_stride,
     }
 }
 
-void svt_aom_hadamard_32x32_c(const int16_t* src_diff, ptrdiff_t src_stride,
-    int32_t* coeff) {
+void svt_aom_hadamard_32x32_c(const int16_t* src_diff, ptrdiff_t src_stride, int32_t* coeff) {
     int idx;
     for (idx = 0; idx < 4; ++idx) {
         // src_diff: 9 bit, dynamic range [-255, 255]
-        const int16_t* src_ptr =
-            src_diff + (idx >> 1) * 16 * src_stride + (idx & 0x01) * 16;
+        const int16_t* src_ptr = src_diff + (idx >> 1) * 16 * src_stride + (idx & 0x01) * 16;
         svt_aom_hadamard_16x16_c(src_ptr, src_stride, coeff + idx * 256);
     }
 
@@ -230,12 +222,12 @@ void svt_aom_hadamard_32x32_c(const int16_t* src_diff, ptrdiff_t src_stride,
         int32_t a2 = coeff[512];
         int32_t a3 = coeff[768];
 
-        int32_t b0 = (a0 + a1) >> 2;  // (a0 + a1): 16 bit, [-32640, 32640]
-        int32_t b1 = (a0 - a1) >> 2;  // b0-b3: 15 bit, dynamic range
-        int32_t b2 = (a2 + a3) >> 2;  // [-16320, 16320]
+        int32_t b0 = (a0 + a1) >> 2; // (a0 + a1): 16 bit, [-32640, 32640]
+        int32_t b1 = (a0 - a1) >> 2; // b0-b3: 15 bit, dynamic range
+        int32_t b2 = (a2 + a3) >> 2; // [-16320, 16320]
         int32_t b3 = (a2 - a3) >> 2;
 
-        coeff[0] = b0 + b2;  // 16 bit, [-32640, 32640]
+        coeff[0]   = b0 + b2; // 16 bit, [-32640, 32640]
         coeff[256] = b1 + b3;
         coeff[512] = b0 - b2;
         coeff[768] = b1 - b3;

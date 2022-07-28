@@ -1214,7 +1214,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
         dd[0] = _mm256_setzero_si256(); // Initialize to avoid warning.
         ds[0] = _mm256_setzero_si256(); // Initialize to avoid warning.
 
-        y   = 0;
+        y = 0;
         while (y < h8) {
             // 00s 01s 10s 11s 20s 21s 30s 31s  00e 01e 10e 11e 20e 21e 30e 31e
             se0 = _mm256_setr_epi32(*(int32_t *)(d_t + 0 * d_stride),
@@ -2107,7 +2107,7 @@ static INLINE void compute_stats_win5_avx2(const int16_t *const d, const int32_t
         do {
             const int16_t *const d_j                                                  = d + j;
             __m256i              deltas[WIENER_WIN_CHROMA - 1][WIENER_WIN_CHROMA - 1] = {
-                {_mm256_setzero_si256()}, {_mm256_setzero_si256()}};
+                             {_mm256_setzero_si256()}, {_mm256_setzero_si256()}};
             __m256i d_is[WIENER_WIN_CHROMA - 1], d_ie[WIENER_WIN_CHROMA - 1];
             __m256i d_js[WIENER_WIN_CHROMA - 1], d_je[WIENER_WIN_CHROMA - 1];
 
@@ -2612,8 +2612,8 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
             __m256i        deltas[2 * WIENER_WIN - 1] = {_mm256_setzero_si256()};
             __m256i        deltas_t[8], deltas_tt[4];
             __m256i        dd[WIENER_WIN] = {_mm256_setzero_si256()}, ds[WIENER_WIN];
-            dd[0] = _mm256_setzero_si256(); // Initialize to avoid warning.
-            ds[0] = _mm256_setzero_si256(); // Initialize to avoid warning.
+            dd[0]                         = _mm256_setzero_si256(); // Initialize to avoid warning.
+            ds[0]                         = _mm256_setzero_si256(); // Initialize to avoid warning.
 
             dd[0] = _mm256_insert_epi16(dd[0], di[0 * d_stride], 0);
             dd[0] = _mm256_insert_epi16(dd[0], di[0 * d_stride + width], 8);
@@ -2878,7 +2878,7 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
         do {
             const int16_t *const d_j                                    = d + j;
             __m256i              deltas[WIENER_WIN - 1][WIENER_WIN - 1] = {{_mm256_setzero_si256()},
-                                                              {_mm256_setzero_si256()}};
+                                                                           {_mm256_setzero_si256()}};
             __m256i              d_is[WIENER_WIN - 1], d_ie[WIENER_WIN - 1];
             __m256i              d_js[WIENER_WIN - 1], d_je[WIENER_WIN - 1];
 

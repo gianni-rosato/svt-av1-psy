@@ -150,7 +150,7 @@ typedef struct {
     FIRSTPASS_STATS *total_stats;
     FIRSTPASS_STATS *total_left_stats;
     int64_t          last_frame_accumulated;
-    EbHandle stats_in_write_mutex; // mutex for write point protection
+    EbHandle         stats_in_write_mutex; // mutex for write point protection
 } STATS_BUFFER_CTX;
 
 /*!\endcond */

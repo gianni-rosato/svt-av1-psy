@@ -173,12 +173,12 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
         !is_pic_skipped(pcs->tpl_group[pic_index])) {
         // Discard low important pictures from tpl group
         if (pcs->tpl_ctrls.reduced_tpl_group >= 0) {
-            if (pcs->tpl_group[pic_index]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
+            if (pcs->tpl_group[pic_index]->temporal_layer_index <=
+                pcs->tpl_ctrls.reduced_tpl_group) {
                 pcs->tpl_valid_pic[pic_index] = 1;
                 pcs->used_tpl_frame_num++;
             }
-        }
-        else {
+        } else {
             pcs->tpl_valid_pic[pic_index] = 1;
             pcs->used_tpl_frame_num++;
         }
@@ -358,16 +358,17 @@ void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
             if (head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                 head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS ||
                 head_pcs->scs_ptr->lap_rc) {
-                head_pcs->stats_in_offset     = head_pcs->decode_order;
+                head_pcs->stats_in_offset = head_pcs->decode_order;
                 svt_block_on_mutex(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_write_mutex);
-                head_pcs->stats_in_end_offset = head_pcs->ext_group_size && head_pcs->scs_ptr->lap_rc
+                head_pcs->stats_in_end_offset = head_pcs->ext_group_size &&
+                        head_pcs->scs_ptr->lap_rc
                     ? MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
-                        head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
-                        head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size)
+                                     head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
+                          head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size)
                     : (uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
                                  head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);
                 svt_release_mutex(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_write_mutex);
-                head_pcs->frames_in_sw        = (int)(head_pcs->stats_in_end_offset -
+                head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset -
                                                head_pcs->stats_in_offset);
                 if (head_pcs->scs_ptr->enable_dec_order == 0 && head_pcs->scs_ptr->lap_rc &&
                     head_pcs->temporal_layer_index == 0) {
@@ -491,28 +492,12 @@ void *initial_rate_control_kernel(void *input_ptr) {
             if (pcs_ptr->picture_number == 0) {
                 Quants *const   quants_8bit = &scs_ptr->quants_8bit;
                 Dequants *const deq_8bit    = &scs_ptr->deq_8bit;
-                svt_av1_build_quantizer(
-                    EB_EIGHT_BIT,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0,
-                    quants_8bit,
-                    deq_8bit);
+                svt_av1_build_quantizer(EB_EIGHT_BIT, 0, 0, 0, 0, 0, quants_8bit, deq_8bit);
 
                 if (scs_ptr->static_config.encoder_bit_depth == EB_TEN_BIT) {
                     Quants *const   quants_bd = &scs_ptr->quants_bd;
                     Dequants *const deq_bd    = &scs_ptr->deq_bd;
-                    svt_av1_build_quantizer(
-                        EB_TEN_BIT,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        quants_bd,
-                        deq_bd);
+                    svt_av1_build_quantizer(EB_TEN_BIT, 0, 0, 0, 0, 0, quants_bd, deq_bd);
                 }
             }
             // tpl_la can be performed on unscaled frames in super-res q-threshold and auto mode

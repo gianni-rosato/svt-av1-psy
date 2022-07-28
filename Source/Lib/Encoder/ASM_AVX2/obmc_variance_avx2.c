@@ -280,14 +280,14 @@ void svt_av1_calc_target_weighted_pred_above_avx2(uint8_t is16bit, MacroBlockD *
             m0_avx = _mm256_set1_epi32(mask1d[row]);
             m1_avx = _mm256_set1_epi32(AOM_BLEND_A64_MAX_ALPHA - mask1d[row]);
 
-            tmp_sse1  = _mm_loadu_si128((__m128i *)(tmp));
-            tmp_sse2  = _mm_unpacklo_epi8(tmp_sse1, _mm_setzero_si128());
+            tmp_sse1 = _mm_loadu_si128((__m128i *)(tmp));
+            tmp_sse2 = _mm_unpacklo_epi8(tmp_sse1, _mm_setzero_si128());
             tmp_avx  = _mm256_cvtepi16_epi32(tmp_sse2);
             wsrc_avx = _mm256_mullo_epi32(m1_avx, tmp_avx);
             _mm256_storeu_si256((__m256i *)(wsrc), wsrc_avx);
             _mm256_storeu_si256((__m256i *)(mask), m0_avx);
 
-            tmp_sse1  = _mm_unpackhi_epi8(tmp_sse1, _mm_setzero_si128());
+            tmp_sse1 = _mm_unpackhi_epi8(tmp_sse1, _mm_setzero_si128());
             tmp_avx  = _mm256_cvtepi16_epi32(tmp_sse1);
             wsrc_avx = _mm256_mullo_epi32(m1_avx, tmp_avx);
             _mm256_storeu_si256((__m256i *)(wsrc + 8), wsrc_avx);
@@ -377,7 +377,7 @@ void svt_av1_calc_target_weighted_pred_left_avx2(uint8_t is16bit, MacroBlockD *x
             mask += bw;
             tmp += ctxt->tmp_stride;
         }
-    }else if (ctxt->overlap == 8) {
+    } else if (ctxt->overlap == 8) {
         __m256i tmp_avx, wsrc_avx, m0_avx, m1_avx, mask_avx;
         __m128i m0_sse, tmp_sse;
         __m256i blend_max_alpha_sse = _mm256_set1_epi32(AOM_BLEND_A64_MAX_ALPHA);

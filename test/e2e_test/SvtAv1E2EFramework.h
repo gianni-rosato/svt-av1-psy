@@ -124,8 +124,7 @@ class SvtAv1E2ETestFramework : public ::testing::TestWithParam<EncTestSetting> {
     /* generate event list by frame settings,
        e.g. reference scaling
     */
-    void gen_frame_event(EncTestSetting &setting,
-                         uint32_t frame_count,
+    void gen_frame_event(EncTestSetting &setting, uint32_t frame_count,
                          void **head);
 
   public:

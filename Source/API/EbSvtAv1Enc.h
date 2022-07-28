@@ -137,9 +137,9 @@ typedef enum {
 
 // reference scaling modes
 typedef enum {
-    RESIZE_NONE,    // No frame resize allowed.
-    RESIZE_FIXED,   // All frames are coded at the specified scale.
-    RESIZE_RANDOM,  // All frames are coded at a random scale.
+    RESIZE_NONE, // No frame resize allowed.
+    RESIZE_FIXED, // All frames are coded at the specified scale.
+    RESIZE_RANDOM, // All frames are coded at a random scale.
     RESIZE_DYNAMIC, // Resize scale for a frame in dynamic.
     RESIZE_RANDOM_ACCESS, // Resize scale frame by event in random access
     RESIZE_MODES

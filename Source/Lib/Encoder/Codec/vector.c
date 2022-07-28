@@ -100,9 +100,9 @@ Iterator svt_aom_vector_iterator(Vector *vector, size_t index) {
 
 void *iterator_get(Iterator *iterator) { return iterator->pointer; }
 void  iterator_increment(Iterator *iterator) {
-    assert(iterator != NULL);
-    // iterator->pointer += iterator->element_size;
-    iterator->pointer = (unsigned char *)iterator->pointer + iterator->element_size;
+     assert(iterator != NULL);
+     // iterator->pointer += iterator->element_size;
+     iterator->pointer = (unsigned char *)iterator->pointer + iterator->element_size;
 }
 
 /***** PRIVATE *****/

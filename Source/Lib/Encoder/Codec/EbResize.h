@@ -24,8 +24,8 @@
 extern "C" {
 #endif
 
-extern const int16_t av1_down2_symeven_half_filter[4];
-extern const int16_t av1_down2_symodd_half_filter[4];
+extern const int16_t      av1_down2_symeven_half_filter[4];
+extern const int16_t      av1_down2_symodd_half_filter[4];
 extern const InterpKernel av1_filteredinterp_filters500[(1 << RS_SUBPEL_BITS)];
 extern const InterpKernel av1_filteredinterp_filters625[(1 << RS_SUBPEL_BITS)];
 extern const InterpKernel av1_filteredinterp_filters750[(1 << RS_SUBPEL_BITS)];
@@ -60,21 +60,20 @@ void scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_
                       uint16_t source_height);
 
 // resize picture for both super-res and scaling-ref
-void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
+void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 
 void reset_resized_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                            EbPictureBufferDesc *input_picture_ptr);
 
 uint8_t get_denom_idx(uint8_t scale_denom);
 
-EbErrorType downscaled_source_buffer_desc_ctor(
-    EbPictureBufferDesc** picture_ptr, EbPictureBufferDesc* picture_ptr_for_reference,
-    superres_params_type spr_params);
+EbErrorType downscaled_source_buffer_desc_ctor(EbPictureBufferDesc **picture_ptr,
+                                               EbPictureBufferDesc  *picture_ptr_for_reference,
+                                               superres_params_type  spr_params);
 
-EbErrorType av1_resize_frame(const EbPictureBufferDesc* src, EbPictureBufferDesc* dst,
-    int bd, const int num_planes, const uint32_t ss_x,
-    const uint32_t ss_y, uint8_t is_packed, uint32_t buffer_enable_mask,
-    uint8_t is_2bcompress);
+EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc *dst, int bd,
+                             const int num_planes, const uint32_t ss_x, const uint32_t ss_y,
+                             uint8_t is_packed, uint32_t buffer_enable_mask, uint8_t is_2bcompress);
 
 static INLINE int coded_to_superres_mi(int mi_col, int denom) {
     return (mi_col * denom + SCALE_NUMERATOR / 2) / SCALE_NUMERATOR;

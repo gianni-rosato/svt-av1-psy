@@ -2429,7 +2429,8 @@ void svt_av1_round_shift_array_c(int32_t *arr, int32_t size, int32_t bit) {
 }
 
 static const int32_t *cast_to_int32(const TranLow *input) { return (const int32_t *)input; }
-void                  svt_av1_get_inv_txfm_cfg(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg) {
+
+void svt_av1_get_inv_txfm_cfg(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg) {
     assert(cfg != NULL);
     cfg->tx_size = tx_size;
     set_flip_cfg(tx_type, cfg);

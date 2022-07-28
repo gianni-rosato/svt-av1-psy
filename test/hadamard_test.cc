@@ -279,5 +279,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(HadamardFuncWithSize(&svt_aom_hadamard_8x8_sse2, 8),
                       HadamardFuncWithSize(&svt_aom_hadamard_16x16_avx2, 16),
                       HadamardFuncWithSize(&svt_aom_hadamard_32x32_avx2, 32)));
-}
-
+}  // namespace

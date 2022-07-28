@@ -207,9 +207,9 @@ void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t
         const T_VEC w14       = add(w4, w11);                                                    \
         const T_VEC w15       = sub(w4, w11);                                                    \
         const T_VEC w16[2]    = {add(w1, mul(k_weight2, sub(w8, w10))),                          \
-                              sub(sub(k_weight0, w3), mul(k_weight2, add(w10, w8)))};         \
+                                 sub(sub(k_weight0, w3), mul(k_weight2, add(w10, w8)))};         \
         const T_VEC w18[2]    = {sub(w1, mul(k_weight2, sub(w8, w10))),                          \
-                              sub(w3, mul(k_weight2, add(w10, w8)))};                         \
+                                 sub(w3, mul(k_weight2, add(w10, w8)))};                         \
         const T_VEC w19       = add(i1, i9);                                                     \
         const T_VEC w20       = sub(i1, i9);                                                     \
         const T_VEC w21       = add(i5, i13);                                                    \
@@ -225,9 +225,9 @@ void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t
         const T_VEC w33       = add(w23, w30);                                                   \
         const T_VEC w34       = sub(w23, w30);                                                   \
         const T_VEC w35[2]    = {add(w20, mul(k_weight2, sub(w27, w29))),                        \
-                              sub(sub(k_weight0, w22), mul(k_weight2, add(w29, w27)))};       \
+                                 sub(sub(k_weight0, w22), mul(k_weight2, add(w29, w27)))};       \
         const T_VEC w37[2]    = {sub(w20, mul(k_weight2, sub(w27, w29))),                        \
-                              sub(w22, mul(k_weight2, add(w29, w27)))};                       \
+                                 sub(w22, mul(k_weight2, add(w29, w27)))};                       \
         store(output + 0 * stride, add(w14, w33));                                               \
         store(output + 1 * stride,                                                               \
               add(w16[0], add(mul(k_weight3, w35[0]), mul(k_weight4, w35[1]))));                 \
@@ -311,9 +311,9 @@ void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t
         const T_VEC w14       = add(w4, w11);                                                       \
         const T_VEC w15       = sub(w4, w11);                                                       \
         const T_VEC w16[2]    = {add(w1, mul(k_weight2, sub(w8, w10))),                             \
-                              sub(sub(k_weight0, w3), mul(k_weight2, add(w10, w8)))};            \
+                                 sub(sub(k_weight0, w3), mul(k_weight2, add(w10, w8)))};            \
         const T_VEC w18[2]    = {sub(w1, mul(k_weight2, sub(w8, w10))),                             \
-                              sub(w3, mul(k_weight2, add(w10, w8)))};                            \
+                                 sub(w3, mul(k_weight2, add(w10, w8)))};                            \
         const T_VEC w19       = add(i2, i18);                                                       \
         const T_VEC w20       = sub(i2, i18);                                                       \
         const T_VEC w21       = add(i10, i26);                                                      \
@@ -329,20 +329,20 @@ void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t
         const T_VEC w33       = add(w23, w30);                                                      \
         const T_VEC w34       = sub(w23, w30);                                                      \
         const T_VEC w35[2]    = {add(w20, mul(k_weight2, sub(w27, w29))),                           \
-                              sub(sub(k_weight0, w22), mul(k_weight2, add(w29, w27)))};          \
+                                 sub(sub(k_weight0, w22), mul(k_weight2, add(w29, w27)))};          \
         const T_VEC w37[2]    = {sub(w20, mul(k_weight2, sub(w27, w29))),                           \
-                              sub(w22, mul(k_weight2, add(w29, w27)))};                          \
+                                 sub(w22, mul(k_weight2, add(w29, w27)))};                          \
         const T_VEC w38       = add(w14, w33);                                                      \
         const T_VEC w39       = sub(w14, w33);                                                      \
         const T_VEC w40[2]    = {add(w16[0], add(mul(k_weight3, w35[0]), mul(k_weight4, w35[1]))),  \
-                              add(w16[1], sub(mul(k_weight3, w35[1]), mul(k_weight4, w35[0])))}; \
+                                 add(w16[1], sub(mul(k_weight3, w35[1]), mul(k_weight4, w35[0])))}; \
         const T_VEC w41[2]    = {add(w5, mul(k_weight2, sub(w24, w31))),                            \
-                              sub(sub(k_weight0, w12), mul(k_weight2, add(w31, w24)))};          \
+                                 sub(sub(k_weight0, w12), mul(k_weight2, add(w31, w24)))};          \
         const T_VEC w42[2]    = {add(w18[0], add(mul(k_weight4, w37[0]), mul(k_weight3, w37[1]))),  \
-                              add(w18[1], sub(mul(k_weight4, w37[1]), mul(k_weight3, w37[0])))}; \
+                                 add(w18[1], sub(mul(k_weight4, w37[1]), mul(k_weight3, w37[0])))}; \
         const T_VEC w44[2]    = {                                                                   \
-            add(w18[0], sub(sub(k_weight0, mul(k_weight4, w37[0])), mul(k_weight3, w37[1]))),    \
-            sub(sub(k_weight0, w18[1]), sub(mul(k_weight3, w37[0]), mul(k_weight4, w37[1])))};   \
+               add(w18[0], sub(sub(k_weight0, mul(k_weight4, w37[0])), mul(k_weight3, w37[1]))),    \
+               sub(sub(k_weight0, w18[1]), sub(mul(k_weight3, w37[0]), mul(k_weight4, w37[1])))};   \
         const T_VEC w45[2] = {sub(w5, mul(k_weight2, sub(w24, w31))),                               \
                               sub(w12, mul(k_weight2, add(w31, w24)))};                             \
         const T_VEC w46[2] = {                                                                      \
@@ -563,10 +563,10 @@ void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t
         const T_VEC w30[2]    = {add(w18[0], w26[0]), add(w18[1], w26[1])};                      \
         const T_VEC w31[2]    = {sub(w18[0], w26[0]), sub(w18[1], w26[1])};                      \
         const T_VEC w32[2]    = {add(w20[0], mul(k_weight2, add(w28[0], w28[1]))),               \
-                              add(w20[1], mul(k_weight2, sub(w28[1], w28[0])))};              \
+                                 add(w20[1], mul(k_weight2, sub(w28[1], w28[0])))};              \
         const T_VEC w33[2]    = {                                                                \
-            add(w20[0], sub(sub(k_weight0, mul(k_weight2, w28[0])), mul(k_weight2, w28[1]))), \
-            add(w20[1], mul(k_weight2, sub(w28[0], w28[1])))};                                \
+               add(w20[0], sub(sub(k_weight0, mul(k_weight2, w28[0])), mul(k_weight2, w28[1]))), \
+               add(w20[1], mul(k_weight2, sub(w28[0], w28[1])))};                                \
         const T_VEC w34[2] = {add(w19[0], w27[1]), sub(w19[1], w27[0])};                         \
         const T_VEC w35[2] = {sub(w19[0], w27[1]), add(w19[1], w27[0])};                         \
         const T_VEC w36[2] = {sub(w21[0], mul(k_weight2, sub(w29[0], w29[1]))),                  \
@@ -689,10 +689,10 @@ void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t
         const T_VEC w46[2]    = {add(w34[0], w42[0]), add(w34[1], w42[1])};                        \
         const T_VEC w47[2]    = {sub(w34[0], w42[0]), sub(w34[1], w42[1])};                        \
         const T_VEC w48[2]    = {add(w36[0], mul(k_weight2, add(w44[0], w44[1]))),                 \
-                              add(w36[1], mul(k_weight2, sub(w44[1], w44[0])))};                \
+                                 add(w36[1], mul(k_weight2, sub(w44[1], w44[0])))};                \
         const T_VEC w49[2]    = {                                                                  \
-            add(w36[0], sub(sub(k_weight0, mul(k_weight2, w44[0])), mul(k_weight2, w44[1]))),   \
-            add(w36[1], mul(k_weight2, sub(w44[0], w44[1])))};                                  \
+               add(w36[0], sub(sub(k_weight0, mul(k_weight2, w44[0])), mul(k_weight2, w44[1]))),   \
+               add(w36[1], mul(k_weight2, sub(w44[0], w44[1])))};                                  \
         const T_VEC w50[2] = {add(w35[0], w43[1]), sub(w35[1], w43[0])};                           \
         const T_VEC w51[2] = {sub(w35[0], w43[1]), add(w35[1], w43[0])};                           \
         const T_VEC w52[2] = {sub(w37[0], mul(k_weight2, sub(w45[0], w45[1]))),                    \
@@ -760,7 +760,7 @@ void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t
             sub(w53[0], sub(mul(k_weight3, w77[0]), mul(k_weight4, w77[1]))),                      \
             add(w53[1], sub(sub(k_weight0, mul(k_weight3, w77[1])), mul(k_weight4, w77[0])))};     \
         const T_VEC w93[2]  = {add(w53[0], sub(mul(k_weight3, w77[0]), mul(k_weight4, w77[1]))),   \
-                              add(w53[1], add(mul(k_weight3, w77[1]), mul(k_weight4, w77[0])))};  \
+                               add(w53[1], add(mul(k_weight3, w77[1]), mul(k_weight4, w77[0])))};  \
         const T_VEC w94[2]  = {add(i1, i15), sub(i31, i17)};                                       \
         const T_VEC w95[2]  = {sub(i1, i15), sub(sub(k_weight0, i17), i31)};                       \
         const T_VEC w96[2]  = {add(i9, i7), sub(i23, i25)};                                        \

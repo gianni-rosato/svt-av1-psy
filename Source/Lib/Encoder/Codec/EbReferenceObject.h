@@ -27,11 +27,13 @@ typedef struct EbReferenceObject {
     EbPictureBufferDesc        *input_picture;
     EbPictureBufferDesc        *quarter_input_picture;
     EbPictureBufferDesc        *sixteenth_input_picture;
-    EbPictureBufferDesc        *downscaled_reference_picture[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    uint64_t downscaled_picture_number[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
-    EbHandle resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    uint64_t ref_poc;
-    uint16_t qp;
+    EbPictureBufferDesc *downscaled_reference_picture[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    uint64_t
+        downscaled_picture_number[NUM_SR_SCALES + 1]
+                                 [NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
+    EbHandle  resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    uint64_t  ref_poc;
+    uint16_t  qp;
     SliceType slice_type;
     uint8_t   intra_coded_area; //percentage of intra coded area 0-100%
     uint8_t   skip_coded_area;
@@ -76,10 +78,15 @@ typedef struct EbPaReferenceObject {
     EbPictureBufferDesc *sixteenth_downsampled_picture_ptr;
     // downscaled reference pointers
     // [super-res scales][resize scales]
-    EbPictureBufferDesc *downscaled_input_padded_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    EbPictureBufferDesc *downscaled_quarter_downsampled_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    EbPictureBufferDesc *downscaled_sixteenth_downsampled_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
-    uint64_t downscaled_picture_number[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
+    EbPictureBufferDesc
+        *downscaled_input_padded_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    EbPictureBufferDesc
+        *downscaled_quarter_downsampled_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    EbPictureBufferDesc
+        *downscaled_sixteenth_downsampled_picture_ptr[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
+    uint64_t
+        downscaled_picture_number[NUM_SR_SCALES + 1]
+                                 [NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
     EbHandle resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
     uint64_t picture_number;
     uint8_t  dummy_obj;

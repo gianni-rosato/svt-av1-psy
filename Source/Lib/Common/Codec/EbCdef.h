@@ -40,7 +40,7 @@ extern "C" {
 
 extern const int32_t eb_cdef_pri_taps[2][2];
 extern const int32_t eb_cdef_sec_taps[2][2];
-extern const int(*const eb_cdef_directions)[2];
+extern const int (*const eb_cdef_directions)[2];
 
 #define REDUCED_PRI_STRENGTHS 8
 #define REDUCED_TOTAL_STRENGTHS (REDUCED_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)

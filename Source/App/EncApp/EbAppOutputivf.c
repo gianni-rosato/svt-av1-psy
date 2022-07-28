@@ -35,7 +35,7 @@ static __inline void mem_put_le16(void *vmem, int32_t val) {
     mem[1] = (uint8_t)((val >> 8) & 0xff);
 }
 
- void write_ivf_stream_header(EbConfig *config, int32_t length) {
+void write_ivf_stream_header(EbConfig *config, int32_t length) {
     char header[IVF_STREAM_HEADER_SIZE] = {'D', 'K', 'I', 'F'};
     mem_put_le16(header + 4, 0); // version
     mem_put_le16(header + 6, 32); // header size

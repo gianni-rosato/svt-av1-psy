@@ -23,7 +23,7 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext* thread_context_p
                                                EbEncHandle*     enc_handle_ptr);
 
 uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-    uint8_t input_resolution, Bool fast_decode);
+                               uint8_t input_resolution, Bool fast_decode);
 
 extern void* resource_coordination_kernel(void* input_ptr);
 #ifdef __cplusplus

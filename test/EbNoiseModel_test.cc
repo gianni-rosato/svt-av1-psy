@@ -1,20 +1,20 @@
 /*
-* Copyright(c) 2022 Intel Corporation
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2022 Intel Corporation
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 #include "gtest/gtest.h"
 #include "random.h"
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 #include "noise_util.h"
 #include "noise_model.h"
-
 
 namespace {
 using svt_av1_test_tool::SVTRandom;
@@ -48,12 +48,12 @@ void rand_u16_array(uint16_t *buf, int32_t size, SVTRandom *rnd) {
 TEST(fg_add_block_observations_internal, AVX2) {
     SVTRandom rnd_float(-10.0f, 10.0f);
 
-    //only input
+    // only input
     double *buffer = new double[MAX_SIZE];
-    //only output
+    // only output
     double *buffer_norm_ref = new double[MAX_SIZE];
     double *buffer_norm_mod = new double[MAX_SIZE];
-    //input and output
+    // input and output
     double *b_buff_ref = new double[MAX_SIZE];
     double *b_buff_mod = new double[MAX_SIZE];
     double *a_buff_ref = new double[MAX_SIZE * MAX_SIZE];
@@ -65,11 +65,11 @@ TEST(fg_add_block_observations_internal, AVX2) {
     rand_double_array(buffer, MAX_SIZE, &rnd_float);
 
     for (int i = 0; i < test_time; i++) {
-        int32_t n       = (200 + test_time) % MAX_SIZE;
-        double val      = (double)rnd_float.random_float();
+        int32_t n = (200 + test_time) % MAX_SIZE;
+        double val = (double)rnd_float.random_float();
         double recp_sqr = (double)rnd_float.random_float();
 
-        //input and output
+        // input and output
         rand_double_array(b_buff_ref, MAX_SIZE, &rnd_float);
         memcpy(b_buff_mod, b_buff_ref, sizeof(double) * MAX_SIZE);
         rand_double_array(a_buff_ref, MAX_SIZE * MAX_SIZE, &rnd_float);
@@ -85,11 +85,16 @@ TEST(fg_add_block_observations_internal, AVX2) {
             << "test"
             << "[" << i << "] "
             << "add_block_observations b_buff_ mismatch!\n";
-        ASSERT_EQ(0, memcmp(a_buff_ref, a_buff_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
+        ASSERT_EQ(
+            0,
+            memcmp(
+                a_buff_ref, a_buff_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
             << "test"
             << "[" << i << "] "
             << "add_block_observations a_buff_ mismatch!\n";
-        ASSERT_EQ(0, memcmp(buffer_norm_ref, buffer_norm_mod, sizeof(double) * MAX_SIZE))
+        ASSERT_EQ(
+            0,
+            memcmp(buffer_norm_ref, buffer_norm_mod, sizeof(double) * MAX_SIZE))
             << "test"
             << "[" << i << "] "
             << "add_block_observations buffer_norm_ mismatch!\n";
@@ -108,7 +113,7 @@ TEST(fg_pointwise_multiply, AVX2) {
     SVTRandom rnd_float(-10.0f, 10.0f);
 
     // only input
-    float *a_buff  = new float[MAX_SIZE];
+    float *a_buff = new float[MAX_SIZE];
     double *b_d_buff = new double[MAX_SIZE];
     double *c_d_buff = new double[MAX_SIZE];
     // only output
@@ -125,7 +130,7 @@ TEST(fg_pointwise_multiply, AVX2) {
     for (int i = 0; i < test_time; i++) {
         int32_t n = (200 + test_time) % MAX_SIZE;
 
-        //input
+        // input
         rand_float_array(a_buff, MAX_SIZE, &rnd_float);
         rand_double_array(b_d_buff, MAX_SIZE, &rnd_float);
         rand_double_array(c_d_buff, MAX_SIZE, &rnd_float);
@@ -159,10 +164,10 @@ TEST(fg_apply_window_to_plane, AVX2) {
     SVTRandom rnd_float(-10.0f, 10.0f);
 
     // only input
-    float *block  = new float[MAX_SIZE * MAX_SIZE];
-    float *plane  = new float[MAX_SIZE * MAX_SIZE];
+    float *block = new float[MAX_SIZE * MAX_SIZE];
+    float *plane = new float[MAX_SIZE * MAX_SIZE];
     float *window = new float[MAX_SIZE * MAX_SIZE];
-    //input and output
+    // input and output
     float *out_ref = new float[MAX_SIZE * MAX_SIZE];
     float *out_mod = new float[MAX_SIZE * MAX_SIZE];
 
@@ -177,11 +182,14 @@ TEST(fg_apply_window_to_plane, AVX2) {
         rand_float_array(out_ref, MAX_SIZE * MAX_SIZE, &rnd_float);
         memcpy(out_mod, out_ref, sizeof(float) * MAX_SIZE * MAX_SIZE);
 
-        svt_av1_apply_window_function_to_plane_c(MAX_SIZE, n, out_ref, MAX_SIZE, block, plane, window);
-        svt_av1_apply_window_function_to_plane_avx2(MAX_SIZE, n, out_mod, MAX_SIZE, block, plane, window);
+        svt_av1_apply_window_function_to_plane_c(
+            MAX_SIZE, n, out_ref, MAX_SIZE, block, plane, window);
+        svt_av1_apply_window_function_to_plane_avx2(
+            MAX_SIZE, n, out_mod, MAX_SIZE, block, plane, window);
 
         // compare results
-        ASSERT_EQ(0, memcmp(out_ref, out_mod, sizeof(float) * MAX_SIZE * MAX_SIZE))
+        ASSERT_EQ(0,
+                  memcmp(out_ref, out_mod, sizeof(float) * MAX_SIZE * MAX_SIZE))
             << "test"
             << "[" << i << "] "
             << "apply_window_to_plane mismatch!\n";
@@ -213,7 +221,8 @@ TEST(fg_noise_tx_filter, AVX2) {
         svt_aom_noise_tx_filter_avx2(n, out_mod, psd);
 
         // compare results
-        ASSERT_EQ(0, memcmp(out_ref, out_mod, sizeof(float) * MAX_SIZE * MAX_SIZE))
+        ASSERT_EQ(0,
+                  memcmp(out_ref, out_mod, sizeof(float) * MAX_SIZE * MAX_SIZE))
             << "test"
             << "[" << i << "] "
             << "apply_window_to_plane mismatch!\n";
@@ -250,24 +259,47 @@ TEST(fg_flat_block_finder_extract_block, lbd_AVX2) {
 
     for (int i = 0; i < test_time; i++) {
         block_finder->block_size = (50 + test_time) % MAX_SIZE;
-        int32_t offsx = i==0 ? -1 : i==1 ? (MAX_SIZE + 100) : rnd_uint8.random() % 10;
+        int32_t offsx = i == 0   ? -1
+                        : i == 1 ? (MAX_SIZE + 100)
+                                 : rnd_uint8.random() % 10;
         int32_t offsy = rnd_uint8.random() % 10;
 
-        //input
+        // input
         rand_u8_array(data, MAX_SIZE * MAX_SIZE, &rnd_uint8);
-        rand_double_array(block_finder->at_a_inv, MAX_SIZE * MAX_SIZE, &rnd_float);
+        rand_double_array(
+            block_finder->at_a_inv, MAX_SIZE * MAX_SIZE, &rnd_float);
         rand_double_array(block_finder->A, MAX_SIZE * MAX_SIZE, &rnd_float);
 
         // input and output
-        svt_aom_flat_block_finder_extract_block_c(block_finder, data, MAX_SIZE, MAX_SIZE, MAX_SIZE, offsx, offsy, plane_ref, block_ref);
-        svt_aom_flat_block_finder_extract_block_avx2(block_finder, data, MAX_SIZE, MAX_SIZE, MAX_SIZE, offsx, offsy, plane_mod, block_mod);
+        svt_aom_flat_block_finder_extract_block_c(block_finder,
+                                                  data,
+                                                  MAX_SIZE,
+                                                  MAX_SIZE,
+                                                  MAX_SIZE,
+                                                  offsx,
+                                                  offsy,
+                                                  plane_ref,
+                                                  block_ref);
+        svt_aom_flat_block_finder_extract_block_avx2(block_finder,
+                                                     data,
+                                                     MAX_SIZE,
+                                                     MAX_SIZE,
+                                                     MAX_SIZE,
+                                                     offsx,
+                                                     offsy,
+                                                     plane_mod,
+                                                     block_mod);
 
         // compare results
-        ASSERT_EQ(0, memcmp(block_ref, block_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
+        ASSERT_EQ(
+            0,
+            memcmp(block_ref, block_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
             << "test"
             << "[" << i << "] "
             << "flat_block_finder_extract_block block_ mismatch !\n ";
-        ASSERT_EQ(0, memcmp(plane_ref, plane_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
+        ASSERT_EQ(
+            0,
+            memcmp(plane_ref, plane_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
             << "test"
             << "[" << i << "] "
             << "flat_block_finder_extract_block plane_ mismatch !\n ";
@@ -310,24 +342,47 @@ TEST(fg_flat_block_finder_extract_block, hbd_AVX2) {
 
     for (int i = 0; i < test_time; i++) {
         block_finder->block_size = (50 + test_time) % MAX_SIZE;
-        int32_t offsx = i==0 ? -1 : i==1 ? (MAX_SIZE + 100) : rnd_uint16.random() % 10;
+        int32_t offsx = i == 0   ? -1
+                        : i == 1 ? (MAX_SIZE + 100)
+                                 : rnd_uint16.random() % 10;
         int32_t offsy = rnd_uint16.random() % 10;
 
         // input
         rand_u16_array(data, MAX_SIZE * MAX_SIZE, &rnd_uint16);
-        rand_double_array(block_finder->at_a_inv, MAX_SIZE * MAX_SIZE, &rnd_float);
+        rand_double_array(
+            block_finder->at_a_inv, MAX_SIZE * MAX_SIZE, &rnd_float);
         rand_double_array(block_finder->A, MAX_SIZE * MAX_SIZE, &rnd_float);
 
         // input and output
-        svt_aom_flat_block_finder_extract_block_c(block_finder, (uint8_t *)data, MAX_SIZE, MAX_SIZE, MAX_SIZE, offsx, offsy, plane_ref, block_ref);
-        svt_aom_flat_block_finder_extract_block_avx2(block_finder, (uint8_t *)data, MAX_SIZE, MAX_SIZE, MAX_SIZE, offsx, offsy, plane_mod, block_mod);
+        svt_aom_flat_block_finder_extract_block_c(block_finder,
+                                                  (uint8_t *)data,
+                                                  MAX_SIZE,
+                                                  MAX_SIZE,
+                                                  MAX_SIZE,
+                                                  offsx,
+                                                  offsy,
+                                                  plane_ref,
+                                                  block_ref);
+        svt_aom_flat_block_finder_extract_block_avx2(block_finder,
+                                                     (uint8_t *)data,
+                                                     MAX_SIZE,
+                                                     MAX_SIZE,
+                                                     MAX_SIZE,
+                                                     offsx,
+                                                     offsy,
+                                                     plane_mod,
+                                                     block_mod);
 
         // compare results
-        ASSERT_EQ(0, memcmp(block_ref, block_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
+        ASSERT_EQ(
+            0,
+            memcmp(block_ref, block_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
             << "test"
             << "[" << i << "] "
             << "flat_block_finder_extract_block block_ mismatch !\n ";
-        ASSERT_EQ(0, memcmp(plane_ref, plane_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
+        ASSERT_EQ(
+            0,
+            memcmp(plane_ref, plane_mod, sizeof(double) * MAX_SIZE * MAX_SIZE))
             << "test"
             << "[" << i << "] "
             << "flat_block_finder_extract_block plane_ mismatch !\n ";
@@ -343,4 +398,4 @@ TEST(fg_flat_block_finder_extract_block, hbd_AVX2) {
     delete block_finder;
 }
 
-}
+}  // namespace

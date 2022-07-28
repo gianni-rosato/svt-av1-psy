@@ -24,7 +24,6 @@ float svt_aom_noise_psd_get_default_value(int32_t block_size, float factor) {
     return (factor * factor / 10000) * block_size * block_size / 8;
 }
 
-
 struct aom_noise_tx_t *svt_aom_noise_tx_malloc(int32_t block_size) {
     struct aom_noise_tx_t *noise_tx = (struct aom_noise_tx_t *)malloc(
         sizeof(struct aom_noise_tx_t));
@@ -78,11 +77,11 @@ void svt_aom_noise_tx_forward(struct aom_noise_tx_t *noise_tx, const float *data
 }
 
 void svt_aom_noise_tx_filter_c(int32_t block_size, float *block_ptr, const float psd) {
-    const float   k_beta               = 1.1f;
-    const float   k_beta_m1_div_k_beta = (k_beta - 1.0f) / k_beta;
-    const float   psd_mul_k_beta       = k_beta * psd;
-    const float   k_eps                = 1e-6f;
-    float        *tx_block             = block_ptr;
+    const float k_beta               = 1.1f;
+    const float k_beta_m1_div_k_beta = (k_beta - 1.0f) / k_beta;
+    const float psd_mul_k_beta       = k_beta * psd;
+    const float k_eps                = 1e-6f;
+    float      *tx_block             = block_ptr;
     for (int32_t y = 0; y < block_size; ++y) {
         for (int32_t x = 0; x < block_size; ++x) {
             const float p = tx_block[0] * tx_block[0] + tx_block[1] * tx_block[1];

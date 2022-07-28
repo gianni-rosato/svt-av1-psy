@@ -1455,7 +1455,7 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
                             const int mi_col = x_pos / MI_SIZE;
                             const int mi_row = y_pos / MI_SIZE;
                             const MV  dv     = {8 * (ref_block_hash.y - y_pos),
-                                           8 * (ref_block_hash.x - x_pos)};
+                                                8 * (ref_block_hash.x - x_pos)};
                             if (!av1_is_dv_valid(
                                     dv,
                                     x->xd,

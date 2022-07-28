@@ -520,8 +520,8 @@ static uint8_t has_tr_64x128[1]  = {3};
 static uint8_t has_tr_128x64[1]  = {1};
 static uint8_t has_tr_128x128[1] = {1};
 static uint8_t has_tr_4x16[32]   = {
-    255, 255, 255, 255, 127, 127, 127, 127, 255, 127, 255, 127, 127, 127, 127, 127,
-    255, 255, 255, 127, 127, 127, 127, 127, 255, 127, 255, 127, 127, 127, 127, 127,
+      255, 255, 255, 255, 127, 127, 127, 127, 255, 127, 255, 127, 127, 127, 127, 127,
+      255, 255, 255, 127, 127, 127, 127, 127, 255, 127, 255, 127, 127, 127, 127, 127,
 };
 static uint8_t has_tr_16x4[32] = {
     255, 0, 0, 0, 85, 0, 0, 0, 119, 0, 0, 0, 85, 0, 0, 0,
@@ -782,7 +782,7 @@ static uint8_t has_bl_64x128[1]  = {0};
 static uint8_t has_bl_128x64[1]  = {0};
 static uint8_t has_bl_128x128[1] = {0};
 static uint8_t has_bl_4x16[32]   = {
-    0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0,
+      0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0,
 };
 static uint8_t has_bl_16x4[32] = {
     254, 254, 254, 84, 254, 254, 254, 16, 254, 254, 254, 84, 254, 254, 254, 0,
@@ -1201,9 +1201,9 @@ static INLINE void highbd_smooth_predictor(uint16_t *dst, ptrdiff_t stride, int3
         for (int32_t c = 0; c < bw; ++c) {
             const uint16_t pixels[]  = {above[c], below_pred, left[r], right_pred};
             const uint8_t  weights[] = {sm_weights_h[r],
-                                       (uint8_t)(scale - sm_weights_h[r]),
-                                       sm_weights_w[c],
-                                       (uint8_t)(scale - sm_weights_w[c])};
+                                        (uint8_t)(scale - sm_weights_h[r]),
+                                        sm_weights_w[c],
+                                        (uint8_t)(scale - sm_weights_w[c])};
             uint32_t       this_pred = 0;
             assert(scale >= sm_weights_h[r] && scale >= sm_weights_w[c]);
             for (int i = 0; i < 4; ++i) this_pred += weights[i] * pixels[i];
@@ -1865,15 +1865,15 @@ intra_pred_highbd_sized(paeth, 64, 32);
 IntraPredFnC       dc_pred_c[2][2];
 IntraHighBdPredFnC highbd_dc_pred_c[2][2];
 void               init_intra_dc_predictors_c_internal(void) {
-    dc_pred_c[0][0] = dc_128_predictor;
-    dc_pred_c[0][1] = dc_top_predictor;
-    dc_pred_c[1][0] = dc_left_predictor;
-    dc_pred_c[1][1] = dc_predictor;
+                  dc_pred_c[0][0] = dc_128_predictor;
+                  dc_pred_c[0][1] = dc_top_predictor;
+                  dc_pred_c[1][0] = dc_left_predictor;
+                  dc_pred_c[1][1] = dc_predictor;
 
-    highbd_dc_pred_c[0][0] = highbd_dc_128_predictor;
-    highbd_dc_pred_c[0][1] = highbd_dc_top_predictor;
-    highbd_dc_pred_c[1][0] = highbd_dc_left_predictor;
-    highbd_dc_pred_c[1][1] = highbd_dc_predictor;
+                  highbd_dc_pred_c[0][0] = highbd_dc_128_predictor;
+                  highbd_dc_pred_c[0][1] = highbd_dc_top_predictor;
+                  highbd_dc_pred_c[1][0] = highbd_dc_left_predictor;
+                  highbd_dc_pred_c[1][1] = highbd_dc_predictor;
 }
 
 /*static*/ void init_intra_predictors_internal(void) {

@@ -78,11 +78,8 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
     else
         global_motion_estimation_level = 3;
     if (pcs_ptr->gm_ctrls.downsample_level == GM_ADAPT) {
-        pcs_ptr->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_1)
-            ? GM_DOWN
-            : GM_FULL;
-    }
-    else {
+        pcs_ptr->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_1) ? GM_DOWN : GM_FULL;
+    } else {
         pcs_ptr->gm_downsample_level = pcs_ptr->gm_ctrls.downsample_level;
     }
     if (pcs_ptr->gm_ctrls.bypass_based_on_me) {
@@ -119,8 +116,7 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
                                                 reference_object->sixteenth_downsampled_picture_ptr;
                     ref_picture_ptr   = sixteenth_ref_pic_ptr;
                     input_picture_ptr = sixteenth_picture_ptr;
-                }
-                else if (pcs_ptr->gm_downsample_level == GM_DOWN) {
+                } else if (pcs_ptr->gm_downsample_level == GM_DOWN) {
                     quarter_ref_pic_ptr = (EbPictureBufferDesc *)
                                               reference_object->quarter_downsampled_picture_ptr;
                     ref_picture_ptr   = quarter_ref_pic_ptr;

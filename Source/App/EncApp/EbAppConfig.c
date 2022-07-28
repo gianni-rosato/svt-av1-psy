@@ -352,7 +352,7 @@ static void set_progress(const char *value, EbConfig *cfg) {
     }
 }
 static void set_frame_rate(const char *value, EbConfig *cfg) {
-    cfg->config.frame_rate_numerator = strtoul(value, NULL, 0);
+    cfg->config.frame_rate_numerator   = strtoul(value, NULL, 0);
     cfg->config.frame_rate_denominator = 1;
 }
 
@@ -513,7 +513,7 @@ int arg_parse_list(const char *value, int *list, int n) {
     const char *ptr = value;
     char       *endptr;
     int         i = 0;
-    memset(list,0, n);
+    memset(list, 0, n);
     while (ptr[0] != '\0') {
         if (ptr[0] == '[' || ptr[0] == ']') {
             ptr++;
@@ -661,13 +661,13 @@ static void set_superres_kf_qthres(const char *value, EbConfig *cfg) {
 };
 // --- end: SUPER-RESOLUTION SUPPORT
 // --- start: REFERENCE SCALING SUPPORT
-static void set_resize_mode(const char* value, EbConfig* cfg) {
+static void set_resize_mode(const char *value, EbConfig *cfg) {
     cfg->config.resize_mode = (RESIZE_MODE)strtoul(value, NULL, 0);
 };
-static void set_resize_denom(const char* value, EbConfig* cfg) {
+static void set_resize_denom(const char *value, EbConfig *cfg) {
     cfg->config.resize_denom = (uint8_t)strtoul(value, NULL, 0);
 };
-static void set_resize_kf_denom(const char* value, EbConfig* cfg) {
+static void set_resize_kf_denom(const char *value, EbConfig *cfg) {
     cfg->config.resize_kf_denom = (uint8_t)strtoul(value, NULL, 0);
 };
 // --- end: REFERENCE SCALING SUPPORT
@@ -764,8 +764,7 @@ static void set_cfg_color_range(const char *value, EbConfig *cfg) {
     svt_av1_enc_parse_parameter(&cfg->config, "color-range", value);
 }
 static void set_cfg_chroma_sample_position(const char *value, EbConfig *cfg) {
-    svt_av1_enc_parse_parameter(&cfg->config, "chroma-sample-position",
-                                value);
+    svt_av1_enc_parse_parameter(&cfg->config, "chroma-sample-position", value);
 }
 static void set_cfg_mastering_display(const char *value, EbConfig *cfg) {
     if (!svt_aom_parse_mastering_display(&cfg->config.mastering_display, value))
@@ -1262,7 +1261,8 @@ ConfigEntry config_entry_specific[] = {
 
     {SINGLE_INPUT,
      FILM_GRAIN_DENOISE_APPLY_TOKEN,
-     "Apply denoising when film grain is ON, default is 1 [0: no denoising, film grain data is still in frame header, "
+     "Apply denoising when film grain is ON, default is 1 [0: no denoising, film grain data is "
+     "still in frame header, "
      "1: level of denoising is set by the film-grain parameter]",
      set_cfg_film_grain_denoise_apply},
 
@@ -1308,7 +1308,8 @@ ConfigEntry config_entry_specific[] = {
     // --- start: REFERENCE SCALING SUPPORT
     {SINGLE_INPUT,
      RESIZE_MODE_INPUT,
-     "Enable resize mode [0: none, 1: fixed scale, 2: random scale, 3: dynamic scale, 4: random access]",
+     "Enable resize mode [0: none, 1: fixed scale, 2: random scale, 3: dynamic scale, 4: random "
+     "access]",
      set_resize_mode},
     {SINGLE_INPUT,
      RESIZE_DENOM,
@@ -1343,7 +1344,8 @@ ConfigEntry config_entry_color_description[] = {
      set_cfg_color_range},
     {SINGLE_INPUT,
      CHROMA_SAMPLE_POSITION_TOKEN,
-     "Chroma sample position, default is 'unknown' ['unknown', 'vertical'/'left', 'colocated'/'topleft']",
+     "Chroma sample position, default is 'unknown' ['unknown', 'vertical'/'left', "
+     "'colocated'/'topleft']",
      set_cfg_chroma_sample_position},
 
     {SINGLE_INPUT,
@@ -1533,7 +1535,10 @@ ConfigEntry config_entry[] = {
      "RestrictedMotionVector",
      set_restricted_motion_vector},
     {SINGLE_INPUT, FILM_GRAIN_TOKEN, "FilmGrain", set_cfg_film_grain},
-    {SINGLE_INPUT, FILM_GRAIN_DENOISE_APPLY_TOKEN, "FilmGrainDenoise", set_cfg_film_grain_denoise_apply},
+    {SINGLE_INPUT,
+     FILM_GRAIN_DENOISE_APPLY_TOKEN,
+     "FilmGrainDenoise",
+     set_cfg_film_grain_denoise_apply},
 
     //   Super-resolution support
     {SINGLE_INPUT, SUPERRES_MODE_INPUT, "SuperresMode", set_superres_mode},
@@ -2105,14 +2110,14 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
     }
     if (config->config.frame_rate_numerator == 0 || config->config.frame_rate_denominator == 0) {
         fprintf(config->error_log_file,
-            "Error Instance %u: The frame_rate_numerator and frame_rate_denominator should be greater than 0\n",
-            channel_number + 1);
+                "Error Instance %u: The frame_rate_numerator and frame_rate_denominator should be "
+                "greater than 0\n",
+                channel_number + 1);
         return_error = EB_ErrorBadParameter;
-    }
-    else if (config->config.frame_rate_numerator / config->config.frame_rate_denominator > 240 ) {
+    } else if (config->config.frame_rate_numerator / config->config.frame_rate_denominator > 240) {
         fprintf(config->error_log_file,
-            "Error Instance %u: The maximum allowed frame_rate is 240 fps\n",
-            channel_number + 1);
+                "Error Instance %u: The maximum allowed frame_rate is 240 fps\n",
+                channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2395,11 +2400,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             }
 #else
             struct stat st;
-            if (!stat(config_string, &st)) {
-                if (S_ISFIFO(st.st_mode)) {
-                    using_fifo = 1;
-                }
-            }
+            using_fifo = !stat(config_string, &st) && S_ISFIFO(st.st_mode);
 #endif
         }
     }

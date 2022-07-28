@@ -51,8 +51,8 @@ int32_t svt_av1_loop_restoration_corners_in_sb(Av1Common *cm, SeqHeader *seq_hea
                                                int32_t *tile_tl_idx);
 int     has_second_ref(const MbModeInfo *mbmi) { return mbmi->block_mi.ref_frame[1] > INTRA_FRAME; }
 int     has_uni_comp_refs(const MbModeInfo *mbmi) {
-    return has_second_ref(mbmi) &&
-        (!((mbmi->block_mi.ref_frame[0] >= BWDREF_FRAME) ^
+        return has_second_ref(mbmi) &&
+            (!((mbmi->block_mi.ref_frame[0] >= BWDREF_FRAME) ^
            (mbmi->block_mi.ref_frame[1] >= BWDREF_FRAME)));
 }
 int32_t is_inter_block(const BlockModeInfoEnc *mbmi);
@@ -276,8 +276,8 @@ static void set_bitstream_level_tier(SequenceControlSet *scs_ptr) {
 }
 
 static void write_golomb(AomWriter *w, int32_t level) {
-    int32_t x      = level + 1;
-    int32_t i      = x;
+    int32_t x = level + 1;
+    int32_t i = x;
     // while (i) { i >>= 1; ++length; }
     const int32_t length = svt_log2f(x) + 1;
 
@@ -2968,12 +2968,14 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
     }
 }
 
-static AOM_INLINE void write_render_size(struct AomWriteBitBuffer *wb, PictureParentControlSet *ppcs) {
+static AOM_INLINE void write_render_size(struct AomWriteBitBuffer *wb,
+                                         PictureParentControlSet  *ppcs) {
     int render_and_frame_size_different = 0;
     if (ppcs->frame_resize_enabled)
         render_and_frame_size_different = 1;
     svt_aom_wb_write_bit(wb, render_and_frame_size_different);
-    if (!render_and_frame_size_different) return;
+    if (!render_and_frame_size_different)
+        return;
     uint32_t render_width_minus_1  = ppcs->render_width - 1;
     uint32_t render_height_minus_1 = ppcs->render_height - 1;
     svt_aom_wb_write_literal(wb, render_width_minus_1, 16);
@@ -3097,8 +3099,7 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
             assert(scs_ptr->subsampling_x == 0 && scs_ptr->subsampling_y == 0);
         }
         if (scs_ptr->subsampling_x == 1 && scs_ptr->subsampling_y == 1) {
-            svt_aom_wb_write_literal(
-                wb, scs_ptr->static_config.chroma_sample_position, 2);
+            svt_aom_wb_write_literal(wb, scs_ptr->static_config.chroma_sample_position, 2);
         }
     }
     Bool separate_uv_delta_q = (scs_ptr->static_config.chroma_u_ac_qindex_offset !=
@@ -3716,7 +3717,8 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
     } else
         assert(frm_hdr->force_integer_mv == 0);
 
-    const int32_t frame_size_override_flag = frame_is_sframe(pcs_ptr) || pcs_ptr->frame_resize_enabled
+    const int32_t frame_size_override_flag = frame_is_sframe(pcs_ptr) ||
+            pcs_ptr->frame_resize_enabled
         ? 1
         : ((pcs_ptr->av1_cm->frm_size.superres_upscaled_width !=
             scs_ptr->seq_header.max_frame_width) ||

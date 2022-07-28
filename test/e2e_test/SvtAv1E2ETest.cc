@@ -590,11 +590,11 @@ static const std::vector<EncTestSetting> generate_ref_scaling_settings() {
         for (size_t j = 8; j <= 16; j++) {
             string idx = std::to_string(count);
             string name = test_prefix + idx;
-            EncTestSetting setting{ name,
+            EncTestSetting setting{name,
                                    {{"ResizeMode", "1"},
                                     {"ResizeDenom", std::to_string(i)},
                                     {"ResizeKfDenom", std::to_string(j)}},
-                                   default_test_vectors };
+                                   default_test_vectors};
             settings.push_back(setting);
             count++;
         }
@@ -605,26 +605,28 @@ static const std::vector<EncTestSetting> generate_ref_scaling_settings() {
         for (size_t j = 8; j <= 16; j++) {
             string idx = std::to_string(count);
             string name = test_prefix + idx;
-            EncTestSetting setting{ name,
+            EncTestSetting setting{name,
                                    {{"ResizeMode", "1"},
                                     {"ResizeDenom", std::to_string(i)},
                                     {"ResizeKfDenom", std::to_string(j)}},
-                                    {"Encoder16BitPipeline", "1"}},
-                                   default_test_vectors };
-            settings.push_back(setting);
-            count++;
-        }
+                                   {"Encoder16BitPipeline", "1"}},
+                default_test_vectors
+        };
+        settings.push_back(setting);
+        count++;
     }
+}
 #endif  // ENBALE_16BIT_PIPELINE_TEST
-    return settings;
+return settings;
 }
 
 INSTANTIATE_TEST_CASE_P(REFSCALINGTEST, SuperResTest,
-    ::testing::ValuesIn(generate_ref_scaling_settings()),
-    EncTestSetting::GetSettingName);
+                        ::testing::ValuesIn(generate_ref_scaling_settings()),
+                        EncTestSetting::GetSettingName);
 
 // Test cases of super resolution combine with reference scaling in fixed mode
-static const std::vector<EncTestSetting> generate_superres_ref_scaling_settings() {
+static const std::vector<EncTestSetting>
+generate_superres_ref_scaling_settings() {
     static const std::string test_prefix = "SuperResRefScaling";
     std::vector<EncTestSetting> settings;
 
@@ -634,14 +636,14 @@ static const std::vector<EncTestSetting> generate_superres_ref_scaling_settings(
         for (size_t j = 9; j <= 16; j++) {
             string idx = std::to_string(count);
             string name = test_prefix + idx;
-            EncTestSetting setting{ name,
+            EncTestSetting setting{name,
                                    {{"ResizeMode", "1"},
                                     {"ResizeDenom", std::to_string(i)},
                                     {"ResizeKfDenom", std::to_string(i)},
                                     {"SuperresMode", "1"},
                                     {"SuperresDenom", std::to_string(j)},
                                     {"SuperresKfDenom", std::to_string(j)}},
-                                   default_test_vectors };
+                                   default_test_vectors};
             settings.push_back(setting);
             count++;
         }
@@ -649,56 +651,59 @@ static const std::vector<EncTestSetting> generate_superres_ref_scaling_settings(
     return settings;
 }
 
-INSTANTIATE_TEST_CASE_P(SUPERRESREFSCALINGTEST, SuperResTest,
+INSTANTIATE_TEST_CASE_P(
+    SUPERRESREFSCALINGTEST, SuperResTest,
     ::testing::ValuesIn(generate_superres_ref_scaling_settings()),
     EncTestSetting::GetSettingName);
 
 // Test cases of reference scaling random access mode
-static const std::vector<EncTestSetting> generate_ref_scaling_random_access_settings() {
+static const std::vector<EncTestSetting>
+generate_ref_scaling_random_access_settings() {
     static const std::string test_prefix = "RefScalingRandomAccess";
     std::vector<EncTestSetting> settings;
 
     int count = 0;
     static const std::string event_prefix = "ScalingEvent @ Frame ";
     static const std::vector<std::string> param_event_vecs[] = {
-        { std::to_string(RESIZE_FIXED), "16", "15" },
-        { std::to_string(RESIZE_NONE), "0", "0" },
-        { std::to_string(RESIZE_RANDOM), "0", "0" },
-        { std::to_string(RESIZE_FIXED), "12", "10" },
-        { std::to_string(RESIZE_FIXED), "9", "13" },
+        {std::to_string(RESIZE_FIXED), "16", "15"},
+        {std::to_string(RESIZE_NONE), "0", "0"},
+        {std::to_string(RESIZE_RANDOM), "0", "0"},
+        {std::to_string(RESIZE_FIXED), "12", "10"},
+        {std::to_string(RESIZE_FIXED), "9", "13"},
     };
     static const EncSetting param_vecs[] = {
         // CQP
-        { {"ResizeMode", "4"}, {"RateControlMode", "0"} },
+        {{"ResizeMode", "4"}, {"RateControlMode", "0"}},
         // VBR
-        { {"ResizeMode", "4"}, {"RateControlMode", "1"}, {"TargetBitRate", "1000"} },
+        {{"ResizeMode", "4"},
+         {"RateControlMode", "1"},
+         {"TargetBitRate", "1000"}},
         // CBR
-        { {"ResizeMode", "4"}, {"RateControlMode", "2"}, {"TargetBitRate", "1000"} }
-    };
+        {{"ResizeMode", "4"},
+         {"RateControlMode", "2"},
+         {"TargetBitRate", "1000"}}};
     std::vector<TestFrameEvent> event_vec;
     uint32_t frame_count = 10;
-    for (std::vector<std::string> param_event: param_event_vecs) {
-        event_vec.push_back(std::make_tuple(
-            event_prefix + std::to_string(frame_count),
-            frame_count,
-            REF_FRAME_SCALING_EVENT,
-            param_event));
+    for (std::vector<std::string> param_event : param_event_vecs) {
+        event_vec.push_back(
+            std::make_tuple(event_prefix + std::to_string(frame_count),
+                            frame_count,
+                            REF_FRAME_SCALING_EVENT,
+                            param_event));
         frame_count += 10;
     }
     for (EncSetting param : param_vecs) {
         string idx = std::to_string(count);
         string name = test_prefix + idx;
-        EncTestSetting setting{name,
-                               param,
-                               default_test_vectors,
-                               event_vec };
+        EncTestSetting setting{name, param, default_test_vectors, event_vec};
         settings.push_back(setting);
         count++;
     }
     return settings;
 }
 
-INSTANTIATE_TEST_CASE_P(REFSCALINGRANDOMACCESSTEST, SuperResTest,
+INSTANTIATE_TEST_CASE_P(
+    REFSCALINGRANDOMACCESSTEST, SuperResTest,
     ::testing::ValuesIn(generate_ref_scaling_random_access_settings()),
     EncTestSetting::GetSettingName);
 
@@ -707,9 +712,10 @@ INSTANTIATE_TEST_CASE_P(REFSCALINGRANDOMACCESSTEST, SuperResTest,
  * output frame from decoder buffer list
  *
  * Test strategy:
- * Setup SVT-AV1 encoder with user input parameter combined with different presets
- * and hierarchical levels, and encode the input YUV data frames. Collect the
- * reconstructed frames and compared them with reference decoder output.
+ * Setup SVT-AV1 encoder with user input parameter combined with different
+ * presets and hierarchical levels, and encode the input YUV data frames.
+ * Collect the reconstructed frames and compared them with reference decoder
+ * output.
  *
  * Expected result:
  * No error is reported in encoding progress. The reconstructed frame
@@ -725,8 +731,7 @@ TEST_P(FeaturePresetConformanceTest, DISABLED_FeaturePresetConformanceTest) {
 }
 
 static const std::vector<EncTestSetting> generate_testcase_with_preset_settings(
-    const std::string test_case_name,
-    const std::string feature_name,
+    const std::string test_case_name, const std::string feature_name,
     const std::vector<std::string> values) {
     static const std::string test_prefix = test_case_name;
     std::vector<EncTestSetting> settings;
@@ -737,11 +742,12 @@ static const std::vector<EncTestSetting> generate_testcase_with_preset_settings(
             for (std::string value : values) {
                 string idx = std::to_string(count);
                 string name = test_prefix + idx;
-                EncTestSetting setting{ name,
-                                       {{"HierarchicalLevels", std::to_string(hierarchicallvl)},
-                                        {"EncoderMode", std::to_string(preset)},
-                                        {feature_name, value}},
-                                       default_test_vectors };
+                EncTestSetting setting{
+                    name,
+                    {{"HierarchicalLevels", std::to_string(hierarchicallvl)},
+                     {"EncoderMode", std::to_string(preset)},
+                     {feature_name, value}},
+                    default_test_vectors};
                 settings.push_back(setting);
                 count++;
             }
@@ -767,9 +773,10 @@ static const std::vector<EncTestSetting> generate_testcase_with_preset_settings(
  *
  * Test coverage:
  * All test vectors of 640*480, default disabled */
-static const std::vector<std::string> resize_mode = { "2" };
+static const std::vector<std::string> resize_mode = {"2"};
 INSTANTIATE_TEST_CASE_P(
     REFSCALINGTEST, FeaturePresetConformanceTest,
-    ::testing::ValuesIn(generate_testcase_with_preset_settings(
-        "RefScaling", "ResizeMode", resize_mode)),
+    ::testing::ValuesIn(generate_testcase_with_preset_settings("RefScaling",
+                                                               "ResizeMode",
+                                                               resize_mode)),
     EncTestSetting::GetSettingName);

@@ -223,7 +223,7 @@ MV32 svt_av1_scale_mv(const MV *mvq4, int x, int y, const ScaleFactors *sf) {
     const int  x_off_q4 = scaled_x(x << SUBPEL_BITS, sf);
     const int  y_off_q4 = scaled_y(y << SUBPEL_BITS, sf);
     const MV32 res      = {scaled_y((y << SUBPEL_BITS) + mvq4->row, sf) - y_off_q4,
-                      scaled_x((x << SUBPEL_BITS) + mvq4->col, sf) - x_off_q4};
+                           scaled_x((x << SUBPEL_BITS) + mvq4->col, sf) - x_off_q4};
     return res;
 }
 
@@ -1400,20 +1400,21 @@ void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int
                                           SubpelParams *subpel_params, ConvolveParams *conv_params,
                                           int32_t bd) {
     const int32_t is_scaled = has_scale(subpel_params->xs, subpel_params->ys);
-    int32_t src_stride16;
+    int32_t       src_stride16;
     // pack the reference into temp 16bit buffer
-    uint8_t  offset      = INTERPOLATION_OFFSET;
-    uint32_t width_scale = 1;
-    uint32_t height_scale = 1;
-    uint16_t *src16 = NULL;
+    uint8_t   offset       = INTERPOLATION_OFFSET;
+    uint32_t  width_scale  = 1;
+    uint32_t  height_scale = 1;
+    uint16_t *src16        = NULL;
     // for super-res, the reference frame block might be 2x than predictor in maximum
     // for reference scaling, it might be 4x since both width and height is scaled 2x
     // should pack enough buffer for scaled reference
     if (is_scaled) {
-        width_scale = subpel_params->xs != SCALE_SUBPEL_SHIFTS ? 2 : 1;
+        width_scale  = subpel_params->xs != SCALE_SUBPEL_SHIFTS ? 2 : 1;
         height_scale = subpel_params->ys != SCALE_SUBPEL_SHIFTS ? 2 : 1;
     }
-    EB_NO_THROW_MALLOC_ALIGNED(src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
+    EB_NO_THROW_MALLOC_ALIGNED(
+        src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
     if (!src16)
         return;
     // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
@@ -1471,18 +1472,19 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
     if (bd > EB_EIGHT_BIT) {
         int32_t src_stride16;
         // pack the reference into temp 16bit buffer
-        uint8_t  offset      = INTERPOLATION_OFFSET;
-        uint32_t width_scale = 1;
-        uint32_t height_scale = 1;
-        uint16_t *src16 = NULL;
+        uint8_t   offset       = INTERPOLATION_OFFSET;
+        uint32_t  width_scale  = 1;
+        uint32_t  height_scale = 1;
+        uint16_t *src16        = NULL;
         // for super-res, the reference frame block might be 2x than predictor in maximum
         // for reference scaling, it might be 4x since both width and height is scaled 2x
         // should pack enough buffer for scaled reference
         if (is_scaled) {
-            width_scale = subpel_params->xs != SCALE_SUBPEL_SHIFTS ? 2 : 1;
+            width_scale  = subpel_params->xs != SCALE_SUBPEL_SHIFTS ? 2 : 1;
             height_scale = subpel_params->ys != SCALE_SUBPEL_SHIFTS ? 2 : 1;
         }
-        EB_NO_THROW_MALLOC_ALIGNED(src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
+        EB_NO_THROW_MALLOC_ALIGNED(
+            src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
         if (!src16)
             return;
         // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size

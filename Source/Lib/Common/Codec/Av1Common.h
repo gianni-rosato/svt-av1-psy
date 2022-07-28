@@ -40,13 +40,16 @@ typedef struct WnFilterCtrls {
     Bool
         use_prev_frame_coeffs; // Skip coeff generation and use the filter params from the colocated rest. unit on the previous frame, if available, else generate new
     // Requires that previous frames saved their params (only true if this flag is on for all frames)
-    Bool use_chroma; // if 1, enable Wiener filtering to be used for chroma planes, else use for luma plane only
+    Bool
+        use_chroma; // if 1, enable Wiener filtering to be used for chroma planes, else use for luma plane only
 } WnFilterCtrls;
 
 typedef struct SgFilterCtrls {
     Bool enabled;
-    int8_t step_range; // [0,16] - the range of epsilon to test for the self-guided filter selection; lower is more aggressive
-    Bool use_chroma; // if 1, enable Wiener filtering to be used for chroma planes, else use for luma plane only
+    int8_t
+        step_range; // [0,16] - the range of epsilon to test for the self-guided filter selection; lower is more aggressive
+    Bool
+        use_chroma; // if 1, enable Wiener filtering to be used for chroma planes, else use for luma plane only
 } SgFilterCtrls;
 typedef struct Av1Common {
     int32_t      mi_rows;

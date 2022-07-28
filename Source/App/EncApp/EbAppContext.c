@@ -205,7 +205,7 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
 
     callback_data->recon_buffer->n_alloc_len   = (uint32_t)frame_size;
     callback_data->recon_buffer->p_app_private = NULL;
-    callback_data->recon_buffer->metadata = NULL;
+    callback_data->recon_buffer->metadata      = NULL;
 
     return EB_ErrorNone;
 }

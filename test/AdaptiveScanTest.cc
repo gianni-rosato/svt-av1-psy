@@ -171,7 +171,7 @@ TEST(CopyMiMapGrid, avx2) {
         EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) == 0);
     }
 
-    //special case non power of 2 cols
+    // special case non power of 2 cols
     for (int cols = 0; cols < 15; ++cols) {
         const uint32_t stride = cols + rnd.random() % 10;
 
@@ -185,5 +185,4 @@ TEST(CopyMiMapGrid, avx2) {
 
         EXPECT_TRUE(memcmp(mi_grid_ref, mi_grid_tst, sizeof(mi_grid_ref)) == 0);
     }
-
 }

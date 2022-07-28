@@ -25,7 +25,8 @@ GEN_FFT_16(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_stor
 GEN_FFT_32(static INLINE void, avx2, float, __m256, _mm256_loadu_ps, _mm256_storeu_ps,
            _mm256_set1_ps, _mm256_add_ps, _mm256_sub_ps, _mm256_mul_ps);
 
-static INLINE void transpose8x8_float(const float *A, float *b, const int32_t lda, const int32_t ldb) {
+static INLINE void transpose8x8_float(const float *A, float *b, const int32_t lda,
+                                      const int32_t ldb) {
     __m256 in0 = _mm256_loadu_ps(&A[0 * lda]);
     __m256 in1 = _mm256_loadu_ps(&A[1 * lda]);
     __m256 in2 = _mm256_loadu_ps(&A[2 * lda]);
@@ -72,11 +73,11 @@ static INLINE void transpose8x8_float(const float *A, float *b, const int32_t ld
     _mm256_storeu_ps(&b[7 * ldb], temp7);
 }
 
- void svt_aom_transpose_float_avx2(const float *A, float *b, int32_t n) {
-        for (int32_t y = 0; y < n; y += 8) {
-         for (int32_t x = 0; x < n; x += 8) transpose8x8_float(A + y * n + x, b + x * n + y, n, n);
-        }
- }
+void svt_aom_transpose_float_avx2(const float *A, float *b, int32_t n) {
+    for (int32_t y = 0; y < n; y += 8) {
+        for (int32_t x = 0; x < n; x += 8) transpose8x8_float(A + y * n + x, b + x * n + y, n, n);
+    }
+}
 
 void svt_aom_fft8x8_float_avx2(const float *input, float *temp, float *output) {
     svt_aom_fft_2d_gen(input,

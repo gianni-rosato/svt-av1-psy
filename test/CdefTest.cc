@@ -476,16 +476,17 @@ TEST_P(CDEFFindDirTest, MatchTest) {
 // structs as arguments, which makes the v256 type of the intrinsics
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
-INSTANTIATE_TEST_CASE_P(Cdef, CDEFFindDirTest,
-                        ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_sse4_1,
-                                                     &svt_aom_cdef_find_dir_c),
-                                          make_tuple(&svt_aom_cdef_find_dir_avx2,
-                                                     &svt_aom_cdef_find_dir_c)));
+INSTANTIATE_TEST_CASE_P(
+    Cdef, CDEFFindDirTest,
+    ::testing::Values(
+        make_tuple(&svt_aom_cdef_find_dir_sse4_1, &svt_aom_cdef_find_dir_c),
+        make_tuple(&svt_aom_cdef_find_dir_avx2, &svt_aom_cdef_find_dir_c)));
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
 
-using FindDirDualFunc = void(*)(const uint16_t *img1, const uint16_t *img2,
-    int stride, int32_t *var1, int32_t *var2, int32_t coeff_shift,
-    uint8_t *out1, uint8_t *out2);
+using FindDirDualFunc = void (*)(const uint16_t *img1, const uint16_t *img2,
+                                 int stride, int32_t *var1, int32_t *var2,
+                                 int32_t coeff_shift, uint8_t *out1,
+                                 uint8_t *out2);
 using TestFindDirDualParam = ::testing::tuple<FindDirDualFunc, FindDirDualFunc>;
 /**
  * @brief Unit test for svt_cdef_find_dir_dual_avx2
@@ -504,8 +505,9 @@ using TestFindDirDualParam = ::testing::tuple<FindDirDualFunc, FindDirDualFunc>;
  * bitdepth: 8, 10, 12
  *
  */
-class CDEFFindDirDualTest : public ::testing::TestWithParam<TestFindDirDualParam> {
-public:
+class CDEFFindDirDualTest
+    : public ::testing::TestWithParam<TestFindDirDualParam> {
+  public:
     CDEFFindDirDualTest() : rnd_(0, (1 << 16) - 1) {
     }
 
@@ -524,12 +526,12 @@ public:
     void prepare_data(int depth, int bits, int level) {
         for (unsigned int i = 0; i < sizeof(src_) / sizeof(src_[0]); i++)
             src_[i] = clamp((rnd_.random() & ((1 << bits) - 1)) + level,
-                0,
-                (1 << depth) - 1);
+                            0,
+                            (1 << depth) - 1);
         for (unsigned int i = 0; i < sizeof(src2_) / sizeof(src2_[0]); i++)
             src2_[i] = clamp((rnd_.random() & ((1 << bits) - 1)) + level,
-                0,
-                (1 << depth) - 1);
+                             0,
+                             (1 << depth) - 1);
     }
 
     void test_finddir() {
@@ -544,22 +546,40 @@ public:
                     for (bits = 1; bits <= depth; bits++) {
                         prepare_data(depth, bits, level);
 
-                        func_ref_(src_, src2_, size_, &var_ref_1, &var_ref_2, shift, &res_ref_1, &res_ref_2);
-                        func_tst_(src_, src2_, size_, &var_tst_1, &var_tst_2, shift, &res_tst_1, &res_tst_2);
+                        func_ref_(src_,
+                                  src2_,
+                                  size_,
+                                  &var_ref_1,
+                                  &var_ref_2,
+                                  shift,
+                                  &res_ref_1,
+                                  &res_ref_2);
+                        func_tst_(src_,
+                                  src2_,
+                                  size_,
+                                  &var_tst_1,
+                                  &var_tst_2,
+                                  shift,
+                                  &res_tst_1,
+                                  &res_tst_2);
                         ASSERT_EQ(res_tst_1, res_ref_1)
-                            << "Error: CDEFFindDirDualTest, SIMD and C mismatch."
+                            << "Error: CDEFFindDirDualTest, SIMD and C "
+                               "mismatch."
                             << "return " << res_tst_1 << " : " << res_ref_1
                             << "depth: " << depth;
                         ASSERT_EQ(res_tst_2, res_ref_2)
-                            << "Error: CDEFFindDirDualTest, SIMD and C mismatch."
+                            << "Error: CDEFFindDirDualTest, SIMD and C "
+                               "mismatch."
                             << "return " << res_tst_2 << " : " << res_ref_2
                             << "depth: " << depth;
                         ASSERT_EQ(var_tst_1, var_ref_1)
-                            << "Error: CDEFFindDirDualTest, SIMD and C mismatch."
+                            << "Error: CDEFFindDirDualTest, SIMD and C "
+                               "mismatch."
                             << "var: " << var_tst_1 << " : " << var_ref_1
                             << "depth: " << depth;
                         ASSERT_EQ(var_tst_2, var_ref_2)
-                            << "Error: CDEFFindDirDualTest, SIMD and C mismatch."
+                            << "Error: CDEFFindDirDualTest, SIMD and C "
+                               "mismatch."
                             << "var: " << var_tst_2 << " : " << var_ref_2
                             << "depth: " << depth;
                     }
@@ -568,7 +588,7 @@ public:
         }
     }
 
-protected:
+  protected:
     FindDirDualFunc func_tst_;
     FindDirDualFunc func_ref_;
     SVTRandom rnd_;
@@ -585,7 +605,8 @@ TEST_P(CDEFFindDirDualTest, MatchTest) {
 // structs as arguments, which makes the v256 type of the intrinsics
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
-INSTANTIATE_TEST_CASE_P(Cdef, CDEFFindDirDualTest,
+INSTANTIATE_TEST_CASE_P(
+    Cdef, CDEFFindDirDualTest,
     ::testing::Values(make_tuple(&svt_aom_cdef_find_dir_dual_sse4_1,
                                  &svt_aom_cdef_find_dir_dual_c),
                       make_tuple(&svt_aom_cdef_find_dir_dual_avx2,

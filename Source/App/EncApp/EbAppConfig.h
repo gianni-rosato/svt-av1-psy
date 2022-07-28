@@ -211,7 +211,7 @@ typedef struct EbConfig {
     uint32_t injector;
     uint32_t speed_control_flag;
 
-    Bool     stop_encoder; // to signal CTRL+C Event, need to stop encoding.
+    Bool stop_encoder; // to signal CTRL+C Event, need to stop encoding.
 
     uint64_t processed_frame_count;
     uint64_t processed_byte_count;

@@ -141,10 +141,10 @@ void SvtAv1E2ETestFramework::config_test() {
     // sort frame event vector
     if (enc_setting.event_vector.size() > 0) {
         std::sort(enc_setting.event_vector.begin(),
-            enc_setting.event_vector.end(),
-            [](TestFrameEvent evt1, TestFrameEvent evt2) {
-                return std::get<1>(evt1) < std::get<1>(evt2);
-            });
+                  enc_setting.event_vector.end(),
+                  [](TestFrameEvent evt1, TestFrameEvent evt2) {
+                      return std::get<1>(evt1) < std::get<1>(evt2);
+                  });
     }
 }
 
@@ -382,19 +382,17 @@ void SvtAv1E2ETestFramework::gen_frame_event(EncTestSetting &setting,
                 (EbPrivDataNode *)malloc(sizeof(EbPrivDataNode));
             ASSERT_NE(new_node, nullptr);
             switch (std::get<2>(event)) {
-            case REF_FRAME_SCALING_EVENT:
-                {
-                    EbRefFrameScale *data =
-                        (EbRefFrameScale *)malloc(sizeof(EbRefFrameScale));
-                    ASSERT_NE(data, nullptr);
-                    data->scale_mode = std::stoi(std::get<3>(event)[0]);
-                    data->scale_denom = std::stoi(std::get<3>(event)[1]);
-                    data->scale_kf_denom = std::stoi(std::get<3>(event)[2]);
-                    new_node->size = sizeof(EbRefFrameScale);
-                    new_node->node_type = REF_FRAME_SCALING_EVENT;
-                    new_node->data = data;
-                }
-                break;
+            case REF_FRAME_SCALING_EVENT: {
+                EbRefFrameScale *data =
+                    (EbRefFrameScale *)malloc(sizeof(EbRefFrameScale));
+                ASSERT_NE(data, nullptr);
+                data->scale_mode = std::stoi(std::get<3>(event)[0]);
+                data->scale_denom = std::stoi(std::get<3>(event)[1]);
+                data->scale_kf_denom = std::stoi(std::get<3>(event)[2]);
+                new_node->size = sizeof(EbRefFrameScale);
+                new_node->node_type = REF_FRAME_SCALING_EVENT;
+                new_node->data = data;
+            } break;
             default: GTEST_FAIL() << "unhandled frame event"; break;
             }
             new_node->next = node;
@@ -406,7 +404,7 @@ void SvtAv1E2ETestFramework::gen_frame_event(EncTestSetting &setting,
 
 static void free_private_data_list(void *node_head) {
     while (node_head) {
-        EbPrivDataNode* node = (EbPrivDataNode*)node_head;
+        EbPrivDataNode *node = (EbPrivDataNode *)node_head;
         node_head = node->next;
         if (node->data) {
             free(node->data);
@@ -458,7 +456,8 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                     av1enc_ctx_.input_picture_buffer->flags = 0;
                     free_private_data_list(
                         av1enc_ctx_.input_picture_buffer->p_app_private);
-                    gen_frame_event(enc_setting,
+                    gen_frame_event(
+                        enc_setting,
                         video_src_->get_frame_index(),
                         &av1enc_ctx_.input_picture_buffer->p_app_private);
                     av1enc_ctx_.input_picture_buffer->pts =
@@ -612,8 +611,8 @@ void SvtAv1E2ETestFramework::write_output_header() {
                  av1enc_ctx_.enc_params.frame_rate_numerator);  // rate
     mem_put_le32(header + 20,
                  av1enc_ctx_.enc_params.frame_rate_denominator);  // scale
-    mem_put_le32(header + 24, 0);  // length
-    mem_put_le32(header + 28, 0);  // unused
+    mem_put_le32(header + 24, 0);                                 // length
+    mem_put_le32(header + 28, 0);                                 // unused
     if (output_file_ && output_file_->file)
         fwrite(header, 1, IVF_STREAM_HEADER_SIZE, output_file_->file);
 }
@@ -761,24 +760,24 @@ void SvtAv1E2ETestFramework::get_recon_frame(const SvtAv1Context &ctxt,
             break;
         } else {
             // adjust recon frame size if resize feature enabled in encoder
-            if (recon_frame.n_filled_len != new_frame->buf_size
-             && recon_frame.metadata) {
+            if (recon_frame.n_filled_len != new_frame->buf_size &&
+                recon_frame.metadata) {
                 for (size_t i = 0; i < recon_frame.metadata->sz; i++) {
-                    SvtMetadataT* metadata =
+                    SvtMetadataT *metadata =
                         recon_frame.metadata->metadata_array[i];
                     ASSERT_NE(metadata, nullptr);
                     if (metadata->type == EB_AV1_METADATA_TYPE_FRAME_SIZE) {
                         ASSERT_EQ(metadata->sz, sizeof(SvtMetadataFrameSizeT));
-                        SvtMetadataFrameSizeT* frame_size =
-                            (SvtMetadataFrameSizeT*)metadata->payload;
+                        SvtMetadataFrameSizeT *frame_size =
+                            (SvtMetadataFrameSizeT *)metadata->payload;
                         new_frame->width = frame_size->width;
                         new_frame->height = frame_size->height;
                         new_frame->disp_width = frame_size->disp_width;
                         new_frame->disp_height = frame_size->disp_height;
                         new_frame->stride[0] = frame_size->stride;
                         new_frame->stride[2] = new_frame->stride[1] =
-                            (frame_size->stride + frame_size->subsampling_x)
-                            >> frame_size->subsampling_x;
+                            (frame_size->stride + frame_size->subsampling_x) >>
+                            frame_size->subsampling_x;
                         new_frame->buf_size = recon_frame.n_filled_len;
                         break;
                     }

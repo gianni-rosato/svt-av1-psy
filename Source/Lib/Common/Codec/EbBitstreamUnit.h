@@ -264,7 +264,7 @@ static INLINE void daala_write_symbol(DaalaWriter *w, int32_t symb, const AomCdf
 // bitwriter.h
 typedef struct DaalaWriter AomWriter;
 static INLINE void         aom_start_encode(AomWriter *bc, OutputBitstreamUnit *buffer) {
-    svt_aom_daala_start_encode(bc, buffer);
+            svt_aom_daala_start_encode(bc, buffer);
 }
 static INLINE int32_t aom_stop_encode(AomWriter *bc) { return svt_aom_daala_stop_encode(bc); }
 

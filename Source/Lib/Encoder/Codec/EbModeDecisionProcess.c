@@ -186,8 +186,8 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     }
 
     // If independent chroma search is used, need to allocate additional 84 candidate buffers
-    const uint8_t ind_uv_cands = svt_aom_set_chroma_controls(NULL, svt_aom_get_chroma_level(enc_mode)) ==
-            CHROMA_MODE_0
+    const uint8_t ind_uv_cands = svt_aom_set_chroma_controls(
+                                     NULL, svt_aom_get_chroma_level(enc_mode)) == CHROMA_MODE_0
         ? 84
         : 0;
     max_nics += CAND_CLASS_TOTAL; //need one extra temp buffer for each fast loop call
@@ -385,8 +385,8 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
 
-    picture_buffer_desc_init_data.max_width  = sb_size;
-    picture_buffer_desc_init_data.max_height = sb_size;
+    picture_buffer_desc_init_data.max_width          = sb_size;
+    picture_buffer_desc_init_data.max_height         = sb_size;
     picture_buffer_desc_init_data.bit_depth          = context_ptr->hbd_mode_decision ? EB_TEN_BIT
                                                                                       : EB_EIGHT_BIT;
     picture_buffer_desc_init_data.color_format       = EB_YUV420;
@@ -540,17 +540,20 @@ static void av1_lambda_assign_md(PictureParentControlSet *pcs, ModeDecisionConte
 void av1_lambda_assign(PictureControlSet *pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
                        uint8_t bit_depth, uint16_t qp_index, Bool multiply_lambda) {
     if (bit_depth == 8) {
-        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
+            pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
         *fast_lambda = av1_lambda_mode_decision8_bit_sad[qp_index];
     } else if (bit_depth == 10) {
-        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
+            pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
         *fast_lambda = av1lambda_mode_decision10_bit_sad[qp_index];
         if (multiply_lambda) {
             *full_lambda *= 16;
             *fast_lambda *= 4;
         }
     } else if (bit_depth == 12) {
-        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
+            pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
         *fast_lambda = av1lambda_mode_decision12_bit_sad[qp_index];
     } else {
         assert(bit_depth >= 8);

@@ -118,9 +118,7 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *
     derive_input_resolution(&resolution,
                             init_data_ptr->picture_width * init_data_ptr->picture_height);
     uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode)
-        ? get_enable_me_8x8(init_data_ptr->enc_mode)
-            ? SQUARE_PU_COUNT
-            : MAX_SB64_PU_COUNT_NO_8X8
+        ? get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8
         : MAX_SB64_PU_COUNT_WO_16X16;
 
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array, number_of_pus * max_ref_to_alloc);
@@ -333,11 +331,11 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     if (init_data_ptr->is_scale) {
         padding += init_data_ptr->sb_size_pix;
     }
-    input_pic_buf_desc_init_data.left_padding       = padding;
-    input_pic_buf_desc_init_data.right_padding      = padding;
-    input_pic_buf_desc_init_data.top_padding        = padding;
-    input_pic_buf_desc_init_data.bot_padding        = padding;
-    input_pic_buf_desc_init_data.split_mode         = FALSE;
+    input_pic_buf_desc_init_data.left_padding  = padding;
+    input_pic_buf_desc_init_data.right_padding = padding;
+    input_pic_buf_desc_init_data.top_padding   = padding;
+    input_pic_buf_desc_init_data.bot_padding   = padding;
+    input_pic_buf_desc_init_data.split_mode    = FALSE;
 
     object_ptr->recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->recon_picture_ptr      = (EbPictureBufferDesc *)NULL; //OMK
@@ -457,15 +455,14 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->temp_lf_recon_picture_ptr         = (EbPictureBufferDesc *)NULL;
     object_ptr->scaled_input_picture_ptr          = (EbPictureBufferDesc *)NULL;
     if (get_enable_restoration(init_data_ptr->enc_mode,
-        init_data_ptr->static_config.enable_restoration_filtering,
-        init_data_ptr->input_resolution,
-        init_data_ptr->static_config.fast_decode)) {
-
+                               init_data_ptr->static_config.enable_restoration_filtering,
+                               init_data_ptr->input_resolution,
+                               init_data_ptr->static_config.fast_decode)) {
         set_restoration_unit_size(init_data_ptr->picture_width,
-            init_data_ptr->picture_height,
-            1,
-            1,
-            object_ptr->rst_info);
+                                  init_data_ptr->picture_height,
+                                  1,
+                                  1,
+                                  object_ptr->rst_info);
 
         return_error = svt_av1_alloc_restoration_buffers(object_ptr, init_data_ptr->av1_cm);
 
@@ -1225,9 +1222,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     }
 
     if (get_enable_restoration(init_data_ptr->enc_mode,
-        init_data_ptr->static_config.enable_restoration_filtering,
-        init_data_ptr->input_resolution,
-        init_data_ptr->static_config.fast_decode))
+                               init_data_ptr->static_config.enable_restoration_filtering,
+                               init_data_ptr->input_resolution,
+                               init_data_ptr->static_config.fast_decode))
         EB_MALLOC_ALIGNED(object_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
 
     return EB_ErrorNone;
@@ -1503,7 +1500,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     memset(&object_ptr->superres_denom_array, 0, sizeof(object_ptr->superres_denom_array));
 
     object_ptr->frame_resize_enabled = FALSE;
-    object_ptr->resize_denom = SCALE_NUMERATOR;
+    object_ptr->resize_denom         = SCALE_NUMERATOR;
 
     // Loop variables
     object_ptr->loop_count      = 0;
@@ -1517,7 +1514,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->enable_me_16x16 = get_enable_me_16x16(init_data_ptr->enc_mode);
 
     // 8x8 can only be used if 16x16 is enabled
-    object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16 ? get_enable_me_8x8(init_data_ptr->enc_mode) : 0;
+    object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16
+        ? get_enable_me_8x8(init_data_ptr->enc_mode)
+        : 0;
     return return_error;
 }
 static void me_dctor(EbPtr p) {
