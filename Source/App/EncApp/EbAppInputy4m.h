@@ -16,7 +16,7 @@
 
 #include "EbAppConfig.h"
 
-int32_t read_y4m_header(EbConfig *cfg);
+EbErrorType read_y4m_header(EbConfig *cfg);
 
 void read_and_skip_y4m_header(FILE *input_file);
 
