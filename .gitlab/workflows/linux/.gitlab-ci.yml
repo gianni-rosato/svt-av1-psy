@@ -463,7 +463,7 @@ Linux libavif (Static):
       -DAVIF_BUILD_EXAMPLES=ON
       -DAVIF_BUILD_APPS=ON
     - cmake --build libavif-build --config Release --target install
-    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- avifenc -c svt -d 8 -y 420 -r limited -j all ./Docs/img/me_fig_new.png out.avif
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- avifenc -c svt -d 8 -y 420 -r limited -j 2 ./Docs/img/me_fig_new.png out.avif
 
 Linux FFmpeg (Static):
   extends: .linux-test-base
