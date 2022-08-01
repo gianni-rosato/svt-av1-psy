@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.2.0] - 2022-08-02
+
+Encoder
+- Improve CRF preset tradeoffs for both the default and fast-decode modes
+- Improve the SSIM-based tradeoffs of the presets without impacting those of PSNR / VMAF
+- Improve CBR mode by enhancing the bit-distribution within the gop
+- Added support for reference frame scaling
+- Added support for quantization matrices
+- Added svtparams patches applicable to ffmpeg 4.4
+- AVX2 optimizations for low-delay mode
+- TPL-based VBR mode improvements
+- Improved Chroma RDOQ
+- Improve TPL QP Scaling
+- Add length info to ivf header
+- Fix support for metadata pass-through
+- Add ability to specify Chroma and Luma qindex offsets independently on top of CRF qp assignments
+
+Build, Cleanup and Documentation
+- Fix multiple API documentation mismatches
+- Updated features documentation
+- Various functional bug fixes
+
 ## [1.1.0] - 2022-05-17
 
 Encoder
