@@ -168,7 +168,7 @@ typedef struct MemMapFile {
     int32_t  align_mask; //page size alignment mask
     int32_t  fd; //file descriptor
     int64_t  y4m_seq_hdr; //y4m seq length
-    uint32_t y4m_frm_hdr; //y4m frame length
+    size_t   y4m_frm_hdr; //y4m frame length
     uint64_t file_frame_it; //frame iterator within the input file
 } MemMapFile;
 

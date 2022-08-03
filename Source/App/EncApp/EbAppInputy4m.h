@@ -20,8 +20,6 @@ EbErrorType read_y4m_header(EbConfig *cfg);
 
 void read_and_skip_y4m_header(FILE *input_file);
 
-void read_and_compute_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file,
-                                          uint32_t *frame_hdr);
-void read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file);
+size_t read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file);
 
 Bool check_if_y4m(EbConfig *cfg);

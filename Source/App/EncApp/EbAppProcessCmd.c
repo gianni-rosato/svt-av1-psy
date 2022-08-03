@@ -199,14 +199,12 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
 
             header_ptr->n_filled_len = 0;
 
-            if (config->mmap.enable) {
-                if (config->y4m_input == TRUE && config->processed_frame_count == 0) {
-                    read_and_compute_y4m_frame_delimiter(
-                        config->input_file, config->error_log_file, &config->mmap.y4m_frm_hdr);
-                }
-            } else {
+            if (config->y4m_input) {
                 /* if input is a y4m file, read next line which contains "FRAME" */
-                if (config->y4m_input == TRUE)
+                if (config->processed_frame_count == 0 && config->mmap.enable)
+                    config->mmap.y4m_frm_hdr = read_y4m_frame_delimiter(config->input_file,
+                                                                        config->error_log_file);
+                else if (!config->mmap.enable)
                     read_y4m_frame_delimiter(config->input_file, config->error_log_file);
             }
             uint64_t luma_read_size = (uint64_t)input_padded_width * input_padded_height

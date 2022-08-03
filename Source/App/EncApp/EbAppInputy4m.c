@@ -225,37 +225,20 @@ EbErrorType read_y4m_header(EbConfig *cfg) {
 }
 
 /* read next line which contains the "FRAME" delimiter */
-void read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file) {
+size_t read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file) {
     char buffer_y4m_header[YFM_HEADER_MAX] = {0};
 
     if (!fgets(buffer_y4m_header, sizeof(buffer_y4m_header), input_file)) {
         assert(feof(input_file));
-        return;
+        return 0;
     }
     if (strncmp(buffer_y4m_header, "FRAME", sizeof("FRAME") - 1)) {
         fprintf(error_log_file, "Failed to read proper y4m frame delimeter. Read broken.\n");
-        return;
+        return 0;
     }
+    return strlen(buffer_y4m_header);
 }
-/* computes size of y4m frame header*/
-void read_and_compute_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file,
-                                          uint32_t *frame_hdr) {
-    char buffer_y4m_header[YFM_HEADER_MAX] = {0};
 
-    if (!fgets(buffer_y4m_header, sizeof(buffer_y4m_header), input_file)) {
-        assert(feof(input_file));
-        return;
-    }
-    if (strncmp(buffer_y4m_header, "FRAME", sizeof("FRAME") - 1)) {
-        fprintf(error_log_file, "Failed to read proper y4m frame delimeter. Read broken.\n");
-        return;
-    }
-
-    int i = 0;
-    while (i < YFM_HEADER_MAX && buffer_y4m_header[i] != '\n') i++;
-
-    *frame_hdr = i + 1;
-}
 /* check if the input file is in YUV4MPEG2 (y4m) format */
 Bool check_if_y4m(EbConfig *cfg) {
     const size_t y4m_magic_size = 9;
