@@ -1748,7 +1748,7 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
     FrameInfo     *frame_info         = &encode_context_ptr->frame_info;
 
-    const int is_vbr = scs_ptr->static_config.rate_control_mode == 1;
+    const int is_vbr = scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR;
     if (scs_ptr->mid_pass_ctrls.ds) {
         frame_info->frame_width  = scs_ptr->max_input_luma_width << 1;
         frame_info->frame_height = scs_ptr->max_input_luma_height << 1;
@@ -1767,9 +1767,10 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
     encode_context_ptr->two_pass_cfg.vbrmax_section = scs_ptr->static_config.vbr_max_section_pct;
     encode_context_ptr->two_pass_cfg.vbrbias        = scs_ptr->static_config.vbr_bias_pct;
     encode_context_ptr->rc_cfg.gf_cbr_boost_pct     = 0;
-    encode_context_ptr->rc_cfg.mode                 = scs_ptr->static_config.rate_control_mode == 1
+    encode_context_ptr->rc_cfg.mode                 = scs_ptr->static_config.rate_control_mode ==
+            SVT_AV1_RC_MODE_VBR
                         ? AOM_VBR
-                        : (scs_ptr->static_config.rate_control_mode == 2 ? AOM_CBR : AOM_Q);
+                        : (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ? AOM_CBR : AOM_Q);
     encode_context_ptr->rc_cfg.best_allowed_q       = (int32_t)
         quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed];
     encode_context_ptr->rc_cfg.worst_allowed_q = (int32_t)

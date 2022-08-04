@@ -432,7 +432,7 @@ EbErrorType load_default_buffer_configuration_settings(
         ((scs_ptr->max_input_luma_width + 64) / 128) :
         ((scs_ptr->max_input_luma_width + 32) / 64);
 
-    if (scs_ptr->static_config.rate_control_mode != 0)
+    if (scs_ptr->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
     {
         me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
             (((scs_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 8;
@@ -518,7 +518,7 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->rest_segment_column_count =  MIN(rest_seg_w, 6);
     scs_ptr->rest_segment_row_count =  MIN(rest_seg_h, 4);
 
-    if (scs_ptr->static_config.rate_control_mode != 0)
+    if (scs_ptr->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
     {
         scs_ptr->tf_segment_column_count = 15;
         scs_ptr->tf_segment_row_count = 15;
@@ -632,7 +632,7 @@ EbErrorType load_default_buffer_configuration_settings(
         }
         //Configure max needed buffers to process 1+n_extra_mg Mini-Gops in the pipeline. n extra MGs to feed to picMgr on top of current one.
         uint32_t n_extra_mg;
-        if (scs_ptr->static_config.rate_control_mode != 0)
+        if (scs_ptr->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
         {
             if ((core_count < PARALLEL_LEVEL_4_RANGE) || (scs_ptr->input_resolution > INPUT_SIZE_8K_RANGE)) {
                 n_extra_mg = 0;
@@ -813,7 +813,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->total_process_init_count += (scs_ptr->rest_process_init_count                        = clamp(max_rest_proc, 1, max_rest_proc));
     }
     else {
-        if (scs_ptr->static_config.rate_control_mode != 0)
+        if (scs_ptr->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
         {
             scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count = 1);
             scs_ptr->total_process_init_count += (scs_ptr->picture_analysis_process_init_count = clamp(max_pa_proc, 1, max_pa_proc));
@@ -2445,7 +2445,7 @@ static uint32_t compute_default_look_ahead(
     uint32_t eos_delay = 1;
     uint32_t max_tf_delay = 6;
 
-    if (config->rate_control_mode == 0)
+    if (config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF)
         lad = (1 + mg_size) * (1 + MIN_LAD_MG) + max_tf_delay + eos_delay;
     else if(config->logical_processors == 1)
         lad = (1 + mg_size) * (1 + RC_DEFAULT_LAD_MG_LP1) + max_tf_delay + eos_delay;
@@ -2490,7 +2490,7 @@ static void update_look_ahead(SequenceControlSet *scs_ptr) {
         SVT_WARN("Lookahead distance is not long enough to get best bdrate trade off. Force the look_ahead_distance to be %d\n",
             scs_ptr->static_config.look_ahead_distance);
     }
-    else if (scs_ptr->lad_mg > scs_ptr->tpl_lad_mg && (scs_ptr->static_config.rate_control_mode == 0 || scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS)) {
+    else if (scs_ptr->lad_mg > scs_ptr->tpl_lad_mg && (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF || scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS)) {
         scs_ptr->lad_mg = scs_ptr->tpl_lad_mg;
         scs_ptr->static_config.look_ahead_distance = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
         SVT_WARN("For CRF or 2PASS RC mode, the maximum needed Lookahead distance is %d. Force the look_ahead_distance to be %d\n",
@@ -3176,11 +3176,11 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
 
     // Update passes
     if (scs_ptr->static_config.pass != ENC_SINGLE_PASS)
-        scs_ptr->passes = (scs_ptr->static_config.rate_control_mode == 1) ? 3 : 2;
+        scs_ptr->passes = (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) ? 3 : 2;
     else
         scs_ptr->passes = 1;
 
-    if (config->rate_control_mode == 0 && config->pass == 2)
+    if (config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF && config->pass == 2)
         scs_ptr->static_config.pass = 3; //use last pass for 2nd pass CRF
 
     switch (config->pass) {
@@ -3202,7 +3202,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
             else if (config->enc_mode <= ENC_M10)
                 set_ipp_pass_ctrls(scs_ptr, 2);
             else
-                if (config->rate_control_mode == 0)
+                if (config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF)
                     set_ipp_pass_ctrls(scs_ptr, 3);
                 else
                     set_ipp_pass_ctrls(scs_ptr, 2);
@@ -3211,7 +3211,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
             scs_ptr->final_pass_preset = config->enc_mode;
             scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
             scs_ptr->static_config.look_ahead_distance = 0;
-            scs_ptr->static_config.rate_control_mode = 0;
+            scs_ptr->static_config.rate_control_mode = SVT_AV1_RC_MODE_CQP_OR_CRF;
             scs_ptr->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
             scs_ptr->static_config.max_bit_rate = 0;
             scs_ptr->static_config.hierarchical_levels = 0;
@@ -3232,7 +3232,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
                 scs_ptr->static_config.enc_mode = ENC_M12;
             else
                 scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
-            scs_ptr->static_config.rate_control_mode = 0;
+            scs_ptr->static_config.rate_control_mode = SVT_AV1_RC_MODE_CQP_OR_CRF;
             scs_ptr->static_config.qp = 43;
             scs_ptr->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
             scs_ptr->static_config.max_bit_rate = 0;
@@ -3245,7 +3245,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
             if (config->enc_mode <= ENC_M10)
                 scs_ptr->ipp_was_ds = 0;
             else
-                scs_ptr->ipp_was_ds = config->rate_control_mode == 0 ? 1 : 0;
+                scs_ptr->ipp_was_ds = config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF ? 1 : 0;
             scs_ptr->final_pass_preset = config->enc_mode;
             scs_ptr->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
             break;
@@ -3277,8 +3277,8 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
         scs_ptr->rc_stat_gen_pass_mode = 0;
 
     if (scs_ptr->static_config.recode_loop > 0 &&
-        ((scs_ptr->static_config.rate_control_mode == 0 && scs_ptr->static_config.max_bit_rate == 0) ||
-        (scs_ptr->static_config.rate_control_mode == 2))) {
+        ((scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF && scs_ptr->static_config.max_bit_rate == 0) ||
+        (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR))) {
         // Only allow re-encoding for VBR or capped CRF, otherwise force recode_loop to DISALLOW_RECODE or 0
         scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
     }
@@ -3302,7 +3302,7 @@ static void validate_scaling_params(SequenceControlSet *scs_ptr) {
     if (scs_ptr->static_config.resize_mode == RESIZE_DYNAMIC) {
         if (scs_ptr->static_config.pred_structure != 1 ||
             scs_ptr->static_config.pass != ENC_SINGLE_PASS ||
-            scs_ptr->static_config.rate_control_mode != 2) {
+            scs_ptr->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR) {
             SVT_WARN("Resize dynamic mode only works at 1-pass CBR low delay mode!\n");
             scs_ptr->static_config.resize_mode = RESIZE_NONE;
         }
@@ -3465,7 +3465,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             tpl_lad_mg = 0;
         }
         scs_ptr->tpl_lad_mg = MIN(2, tpl_lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops
-        if (scs_ptr->static_config.rate_control_mode == 0)
+        if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF)
             scs_ptr->lad_mg = scs_ptr->tpl_lad_mg;
         else
             // update the look ahead size
@@ -3545,7 +3545,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
 
     scs_ptr->static_config.enable_overlays = !scs_ptr->static_config.enable_tf ||
-        (scs_ptr->static_config.rate_control_mode > 0) ?
+        (scs_ptr->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF) ?
         0 : scs_ptr->static_config.enable_overlays;
     //0: ON
     //1: OFF
@@ -3907,13 +3907,13 @@ void copy_api_from_app(
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
-    if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
+    if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
         SVT_WARN("CBR Rate control is currently not supported for SVT_AV1_PRED_RANDOM_ACCESS, switching to VBR\n");
-        scs_ptr->static_config.rate_control_mode = 1;
+        scs_ptr->static_config.rate_control_mode = SVT_AV1_RC_MODE_VBR;
     }
     if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-        if (scs_ptr->static_config.rate_control_mode == 1) {
-            scs_ptr->static_config.rate_control_mode = 2;
+        if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
+            scs_ptr->static_config.rate_control_mode = SVT_AV1_RC_MODE_CBR;
             SVT_WARN("Low delay mode does not support VBR. Forcing RC mode to CBR\n");
         }
 
@@ -3967,7 +3967,7 @@ void copy_api_from_app(
     scs_ptr->static_config.starting_buffer_level_ms = ((EbSvtAv1EncConfiguration*)config_struct)->starting_buffer_level_ms;
     scs_ptr->static_config.optimal_buffer_level_ms  = ((EbSvtAv1EncConfiguration*)config_struct)->optimal_buffer_level_ms;
     scs_ptr->static_config.recode_loop         = ((EbSvtAv1EncConfiguration*)config_struct)->recode_loop;
-    if (scs_ptr->static_config.rate_control_mode == 1 && scs_ptr->static_config.pass == ENC_SINGLE_PASS)
+    if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR && scs_ptr->static_config.pass == ENC_SINGLE_PASS)
         scs_ptr->lap_rc = 1;
     else
         scs_ptr->lap_rc = 0;

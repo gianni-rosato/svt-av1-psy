@@ -7579,7 +7579,7 @@ void *mode_decision_kernel(void *input_ptr) {
 
             if (last_sb_flag) {
                 Bool do_recode = FALSE;
-                if ((scs_ptr->static_config.rate_control_mode == 1 ||
+                if ((scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR ||
                      scs_ptr->static_config.max_bit_rate != 0) &&
                     scs_ptr->encode_context_ptr->recode_loop != DISALLOW_RECODE) {
                     recode_loop_decision_maker(pcs_ptr, scs_ptr, &do_recode);

@@ -150,14 +150,15 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 
     if (config->force_key_frames &&
-        (config->rate_control_mode != 0 || config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)) {
+        (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF ||
+         config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)) {
         SVT_ERROR("Instance %u: Force key frame is only supported with RA CRF/CQP mode\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->rate_control_mode != 0 && (config->target_bit_rate >= config->max_bit_rate) &&
-        (config->max_bit_rate != 0)) {
+    if (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF &&
+        (config->target_bit_rate >= config->max_bit_rate) && (config->max_bit_rate != 0)) {
         SVT_ERROR("Instance %u: Max Bitrate must be greater than Target Bitrate\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -228,11 +229,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
     if ((config->intra_period_length < -2 || config->intra_period_length > 2 * ((1 << 30) - 1)) &&
-        config->rate_control_mode == 0) {
+        config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
         SVT_ERROR("Instance %u: The intra period must be [-2, 2^31-2]  \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if ((config->intra_period_length < 0) && config->rate_control_mode == 1) {
+    if ((config->intra_period_length < 0) && config->rate_control_mode == SVT_AV1_RC_MODE_VBR) {
         SVT_ERROR("Instance %u: The intra period must be > 0 for RateControlMode %d \n",
                   channel_number + 1,
                   config->rate_control_mode);
@@ -250,7 +251,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->rate_control_mode > 2 &&
+    if (config->rate_control_mode > SVT_AV1_RC_MODE_CBR &&
         (config->pass == ENC_FIRST_PASS || config->rc_stats_buffer.buf)) {
         SVT_ERROR("Instance %u: Only rate control mode 0~2 are supported for 2-pass \n",
                   channel_number + 1);
@@ -285,7 +286,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         SVT_ERROR("Instance %u: The recode_loop must be [0 - 4] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->rate_control_mode > 2) {
+    if (config->rate_control_mode > SVT_AV1_RC_MODE_CBR) {
         SVT_ERROR("Instance %u: The rate control mode must be [0 - 2] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -685,7 +686,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->rate_control_mode == 1 && config->intra_period_length == -1) {
+    if (config->rate_control_mode == SVT_AV1_RC_MODE_VBR && config->intra_period_length == -1) {
         SVT_ERROR(
             "Instance %u: keyint = -1 is not supported for modes other than CRF rate control "
             "encoding modes.\n",
@@ -732,7 +733,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (pass == 3 && config->rate_control_mode == 0) {
+    if (pass == 3 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
         SVT_ERROR("Instance %u: CRF does not support 3-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -943,7 +944,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->chroma_v_ac_qindex_offset = 0;
 
     config_ptr->scene_change_detection = 0;
-    config_ptr->rate_control_mode      = 0;
+    config_ptr->rate_control_mode      = SVT_AV1_RC_MODE_CQP_OR_CRF;
     config_ptr->look_ahead_distance    = (uint32_t)~0;
     config_ptr->enable_tpl_la          = 1;
     config_ptr->target_bit_rate        = 2000000;
@@ -1112,7 +1113,7 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                                                                    : "Unknown key frame type");
 
         switch (config->rate_control_mode) {
-        case 0:
+        case SVT_AV1_RC_MODE_CQP_OR_CRF:
             if (config->max_bit_rate)
                 SVT_INFO(
                     "SVT [config]: BRC mode / %s / max bitrate (kbps)\t\t\t: %s / %d / "
@@ -1127,11 +1128,11 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
                          scs->tpl_level ? "CRF" : "CQP",
                          scs->static_config.qp);
             break;
-        case 1:
+        case SVT_AV1_RC_MODE_VBR:
             SVT_INFO("SVT [config]: BRC mode / target bitrate (kbps)\t\t\t\t: VBR / %d \n",
                      (int)config->target_bit_rate / 1000);
             break;
-        case 2:
+        case SVT_AV1_RC_MODE_CBR:
             SVT_INFO(
                 "SVT [config]: BRC mode / target bitrate (kbps)\t\t\t\t: CBR "
                 "/ %d\n",
@@ -1293,7 +1294,7 @@ static EbErrorType str_to_crf(const char *nptr, EbSvtAv1EncConfiguration *config
         return return_error;
 
     config_struct->qp                           = crf;
-    config_struct->rate_control_mode            = 0;
+    config_struct->rate_control_mode            = SVT_AV1_RC_MODE_CQP_OR_CRF;
     config_struct->enable_adaptive_quantization = 2;
 
     return EB_ErrorNone;

@@ -1331,7 +1331,7 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     RATE_CONTROL               *rc                 = &encode_context_ptr->rc;
     const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
     int                         i;
-    if (scs_ptr->static_config.rate_control_mode == 2) {
+    if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR) {
         rc->avg_frame_qindex[KEY_FRAME]   = rc_cfg->worst_allowed_q;
         rc->avg_frame_qindex[INTER_FRAME] = rc_cfg->worst_allowed_q;
         rc->last_q[KEY_FRAME]             = rc_cfg->worst_allowed_q;
@@ -1360,7 +1360,7 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     // Set absolute upper and lower quality limits
     rc->worst_quality = rc_cfg->worst_allowed_q;
     rc->best_quality  = rc_cfg->best_allowed_q;
-    if (scs_ptr->static_config.rate_control_mode == 2) {
+    if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR) {
         rc->onepass_cbr_mode = 1;
     } else {
         rc->onepass_cbr_mode = 0;
@@ -1521,7 +1521,7 @@ static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr, int 
     RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
     svt_block_on_mutex(rc->rc_mutex);
     double rcf;
-    if (scs_ptr->static_config.rate_control_mode == 1) {
+    if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
         const rate_factor_level rf_lvl = ppcs_ptr->frm_hdr.frame_type == KEY_FRAME
             ? 0
             : ppcs_ptr->temporal_layer_index + 1;
@@ -1558,7 +1558,7 @@ static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double
 
     factor = fclamp(factor, MIN_BPB_FACTOR, MAX_BPB_FACTOR);
 
-    if (scs_ptr->static_config.rate_control_mode == 1) {
+    if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
         const rate_factor_level rf_lvl      = ppcs_ptr->frm_hdr.frame_type == KEY_FRAME
                  ? 0
                  : ppcs_ptr->temporal_layer_index + 1;
@@ -2755,7 +2755,7 @@ static void restore_param(PictureParentControlSet         *ppcs,
                           RateControlIntervalParamContext *rate_control_param_ptr) {
     SequenceControlSet *scs    = ppcs->scs_ptr;
     EncodeContext      *ec_ctx = scs->encode_context_ptr;
-    if (scs->static_config.rate_control_mode != 2)
+    if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR)
         restore_two_pass_param(ppcs, rate_control_param_ptr);
 
     ppcs->frames_since_key = (int)(ppcs->decode_order - ppcs->last_idr_picture);
@@ -2771,13 +2771,13 @@ static void restore_param(PictureParentControlSet         *ppcs,
         else
             key_max = scs->static_config.intra_period_length + 1;
     } else {
-        if (scs->static_config.rate_control_mode != 2)
+        if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR)
             key_max = (int)MIN(
                 scs->static_config.intra_period_length + 1,
                 (int)((int64_t)((scs->twopass.stats_buf_ctx->stats_in_end - 1)->frame) -
                       ppcs->last_idr_picture + 1));
     }
-    if (scs->static_config.rate_control_mode != 2) {
+    if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR) {
         ppcs->frames_to_key     = key_max - ppcs->frames_since_key;
         TWO_PASS *const twopass = &scs->twopass;
         RATE_CONTROL   *rc      = &ec_ctx->rc;
@@ -3016,7 +3016,7 @@ void *rate_control_kernel(void *input_ptr) {
                         restore_param(pcs_ptr->parent_pcs_ptr,
                                       pcs_ptr->parent_pcs_ptr->rate_control_param_ptr);
 
-                        if (scs_ptr->static_config.rate_control_mode == 2)
+                        if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR)
                             one_pass_rt_rate_alloc(pcs_ptr->parent_pcs_ptr);
                         else
                             process_rc_stat(pcs_ptr->parent_pcs_ptr);
@@ -3027,7 +3027,7 @@ void *rate_control_kernel(void *input_ptr) {
                     }
                 }
 
-                if (scs_ptr->static_config.rate_control_mode == 0) {
+                if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
                     // if RC mode is 0,  fixed QP is used
                     // QP scaling based on POC number for Flat IPPP structure
                     frm_hdr->quantization_params.base_q_idx =
@@ -3115,7 +3115,8 @@ void *rate_control_kernel(void *input_ptr) {
                     if (scs_ptr->enable_qp_scaling_flag &&
                         pcs_ptr->parent_pcs_ptr->qp_on_the_fly == FALSE) {
                         // max bit rate is only active for 1 pass CRF
-                        if (scs_ptr->static_config.rate_control_mode == 0 &&
+                        if (scs_ptr->static_config.rate_control_mode ==
+                                SVT_AV1_RC_MODE_CQP_OR_CRF &&
                             scs_ptr->static_config.max_bit_rate)
                             crf_assign_max_rate(pcs_ptr->parent_pcs_ptr);
                     }
@@ -3133,7 +3134,7 @@ void *rate_control_kernel(void *input_ptr) {
                         process_tpl_stats_frame_kf_gfu_boost(pcs_ptr);
                     }
                     // Qindex calculating
-                    if (scs_ptr->static_config.rate_control_mode == 2)
+                    if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR)
                         new_qindex = rc_pick_q_and_bounds_no_stats_cbr(pcs_ptr);
                     else
                         new_qindex = rc_pick_q_and_bounds(pcs_ptr);
@@ -3271,7 +3272,7 @@ void *rate_control_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable && pcs_ptr->parent_pcs_ptr->r0 != 0) {
                 sb_qp_derivation_tpl_la(pcs_ptr);
             } else if (scs_ptr->static_config.enable_adaptive_quantization &&
-                       scs_ptr->static_config.rate_control_mode == 2) {
+                       scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR) {
                 sb_qp_derivation(pcs_ptr);
             } else {
                 pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
@@ -3322,7 +3323,7 @@ void *rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.rate_control_mode) {
                 av1_rc_postencode_update(parentpicture_control_set_ptr);
                 // Qindex calculating
-                if (scs_ptr->static_config.rate_control_mode == 1)
+                if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR)
                     svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
             }
             // Queue variables

@@ -213,7 +213,8 @@ static void print_summary(const EncContext* const enc_context) {
         const EbConfig*         config = c->config;
         if (c->exit_cond == APP_ExitConditionFinished && c->return_error == EB_ErrorNone &&
             (config->config.pass == 0 ||
-             (config->config.pass == 2 && config->config.rate_control_mode == 0) ||
+             (config->config.pass == 2 &&
+              config->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
              config->config.pass == 3)) {
 #if LOG_ENC_DONE
             tot_frames_done = (int)config->performance_context.frame_count;
@@ -318,7 +319,8 @@ static void print_performance(const EncContext* const enc_context) {
             EbConfig* config = c->config;
             if (config->stop_encoder == FALSE) {
                 if ((config->config.pass == 0 ||
-                     (config->config.pass == 2 && config->config.rate_control_mode == 0) ||
+                     (config->config.pass == 2 &&
+                      config->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
                      config->config.pass == 3))
                     fprintf(stderr,
                             "\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f "

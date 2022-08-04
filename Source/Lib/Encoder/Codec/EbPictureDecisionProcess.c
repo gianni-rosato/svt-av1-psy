@@ -2246,7 +2246,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     set_tpl_extended_controls(pcs_ptr, scs_ptr->tpl_level);
 
     pcs_ptr->adjust_under_shoot_gf = 0;
-    if (scs_ptr->passes == 1 && scs_ptr->static_config.rate_control_mode == 1)
+    if (scs_ptr->passes == 1 && scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR)
         pcs_ptr->adjust_under_shoot_gf = enc_mode <= ENC_M11 ? 1 : 2;
     return return_error;
 }

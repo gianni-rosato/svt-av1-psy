@@ -111,10 +111,10 @@ class EncParamTestBase : public ::testing::Test {
     void config_enc_param() {
         // special cases for parameter
         if (!param_name_str_.compare("max_qp_allowed")) {
-            ctxt_.enc_params.rate_control_mode = 1;
+            ctxt_.enc_params.rate_control_mode = SVT_AV1_RC_MODE_VBR;
             ctxt_.enc_params.min_qp_allowed = MIN_QP_VALUE;
         } else if (!param_name_str_.compare("min_qp_allowed")) {
-            ctxt_.enc_params.rate_control_mode = 1;
+            ctxt_.enc_params.rate_control_mode = SVT_AV1_RC_MODE_VBR;
             ctxt_.enc_params.max_qp_allowed = MAX_QP_VALUE;
         } else if (!param_name_str_.compare("profile")) {
             if (ctxt_.enc_params.profile == 0) {
@@ -130,7 +130,7 @@ class EncParamTestBase : public ::testing::Test {
                 ctxt_.enc_params.encoder_color_format = EB_YUV422;
             }
         } else if (!param_name_str_.compare("target_bit_rate")) {
-            ctxt_.enc_params.rate_control_mode = 1;
+            ctxt_.enc_params.rate_control_mode = SVT_AV1_RC_MODE_VBR;
         }
     }
 

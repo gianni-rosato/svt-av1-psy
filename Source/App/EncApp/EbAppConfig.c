@@ -469,7 +469,7 @@ static void set_cfg_qp(const char *value, EbConfig *cfg) {
 };
 static void set_cfg_crf(const char *value, EbConfig *cfg) {
     cfg->config.qp                           = strtoul(value, NULL, 0);
-    cfg->config.rate_control_mode            = 0;
+    cfg->config.rate_control_mode            = SVT_AV1_RC_MODE_CQP_OR_CRF;
     cfg->config.enable_adaptive_quantization = 2;
 }
 static void set_cfg_use_qp_file(const char *value, EbConfig *cfg) {
@@ -1936,7 +1936,8 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
         // Multi pass VBR has 3 passes, and pass = 2 is the middle pass
         // In this pass, data is read from the file, copied to memory, updated and
         // written back to the same file
-        else if (config->config.pass == 2 && config->config.rate_control_mode == 1) {
+        else if (config->config.pass == 2 &&
+                 config->config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
             if (!fopen_and_lock(&config->input_stat_file, stats, FALSE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
@@ -1967,8 +1968,10 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
             }
         }
         // Final pass: pass = 2 for CRF and pass = 3 for VBR
-        else if ((config->config.pass == 2 && config->config.rate_control_mode == 0) ||
-                 (config->config.pass == 3 && config->config.rate_control_mode == 1)) {
+        else if ((config->config.pass == 2 &&
+                  config->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
+                 (config->config.pass == 3 &&
+                  config->config.rate_control_mode == SVT_AV1_RC_MODE_VBR)) {
             if (!fopen_and_lock(&config->input_stat_file, stats, FALSE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
