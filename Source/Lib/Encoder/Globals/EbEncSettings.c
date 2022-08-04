@@ -1620,6 +1620,60 @@ static EbErrorType str_to_sframe_mode(const char *nptr, EbSFrameMode *out) {
     return EB_ErrorBadParameter;
 }
 
+static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_mode,
+                                  uint8_t *pred_structure) {
+    // separate rc mode enum to distinguish between cqp and crf modes
+    enum rc_modes {
+        RC_MODE_ZERO = 0, // unique mode in case user passes a literal 0
+        RC_MODE_CQP,
+        RC_MODE_CRF,
+        RC_MODE_VBR,
+        RC_MODE_CBR,
+        RC_MODE_INVALID,
+    };
+    const struct {
+        const char *name;
+        uint32_t    mode;
+    } rc_mode[] = {
+        {"0", RC_MODE_ZERO},
+        {"1", RC_MODE_VBR},
+        {"2", RC_MODE_CBR},
+        {"cqp", RC_MODE_CQP},
+        {"crf", RC_MODE_CRF},
+        {"vbr", RC_MODE_VBR},
+        {"cbr", RC_MODE_CBR},
+    };
+    const size_t rc_mode_size = sizeof(rc_mode) / sizeof(rc_mode[0]);
+
+    enum rc_modes mode = RC_MODE_INVALID;
+
+    for (size_t i = 0; i < rc_mode_size; i++) {
+        if (!strcmp(nptr, rc_mode[i].name)) {
+            mode = rc_mode[i].mode;
+            break;
+        }
+    }
+
+    switch (mode) {
+    case RC_MODE_ZERO: *out = 0; break;
+    case RC_MODE_CQP:
+        *out     = SVT_AV1_RC_MODE_CQP_OR_CRF;
+        *aq_mode = 0;
+        break;
+    case RC_MODE_CRF:
+        *out     = SVT_AV1_RC_MODE_CQP_OR_CRF;
+        *aq_mode = 2;
+        break;
+    case RC_MODE_VBR: *out = SVT_AV1_RC_MODE_VBR; break;
+    case RC_MODE_CBR:
+        *out            = SVT_AV1_RC_MODE_CBR;
+        *pred_structure = SVT_AV1_PRED_LOW_DELAY_B;
+        break;
+    default: SVT_WARN("Invalid rc mode: %s\n", nptr); return EB_ErrorBadParameter;
+    }
+    return EB_ErrorNone;
+}
+
 #define COLOR_OPT(par, opt)                                          \
     do {                                                             \
         if (!strcmp(name, par)) {                                    \
@@ -1661,6 +1715,12 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     // options updating more than one field
     if (!strcmp(name, "crf"))
         return str_to_crf(value, config_struct);
+
+    if (!strcmp(name, "rc"))
+        return str_to_rc_mode(value,
+                              &config_struct->rate_control_mode,
+                              &config_struct->enable_adaptive_quantization,
+                              &config_struct->pred_structure);
 
     // custom enum fields
     if (!strcmp(name, "profile"))
@@ -1719,7 +1779,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"pin", &config_struct->pin_threads},
         {"fps-num", &config_struct->frame_rate_numerator},
         {"fps-denom", &config_struct->frame_rate_denominator},
-        {"rc", &config_struct->rate_control_mode},
         {"lookahead", &config_struct->look_ahead_distance},
         {"scd", &config_struct->scene_change_detection},
         {"max-qp", &config_struct->max_qp_allowed},

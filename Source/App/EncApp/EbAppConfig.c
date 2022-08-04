@@ -580,7 +580,8 @@ static void set_enable_tpl_la(const char *value, EbConfig *cfg) {
     cfg->config.enable_tpl_la = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_rate_control_mode(const char *value, EbConfig *cfg) {
-    cfg->config.rate_control_mode = strtoul(value, NULL, 0);
+    if (svt_av1_enc_parse_parameter(&cfg->config, "rc", value) != EB_ErrorNone)
+        fprintf(stderr, "Invalid value for rate control mode\n");
 };
 static void set_target_bit_rate(const char *value, EbConfig *cfg) {
     if (svt_av1_enc_parse_parameter(&cfg->config, "tbr", value) != EB_ErrorNone)
