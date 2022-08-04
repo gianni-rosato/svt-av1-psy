@@ -177,6 +177,15 @@ typedef enum EbSFrameMode {
         2, /**< If the considered frame is not an altref frame, the next base layer inter frame will be made into an S-Frame */
 } EbSFrameMode;
 
+/* Indicates what rate control mode is used.
+ * Currently, cqp is distinguised by setting enable_adaptive_quantization to 0
+ */
+typedef enum SvtAv1RcMode {
+    SVT_AV1_RC_MODE_CQP_OR_CRF = 0, // constant quantization parameter/constant rate factor
+    SVT_AV1_RC_MODE_VBR        = 1, // variable bit rate
+    SVT_AV1_RC_MODE_CBR        = 2, // constant bit rate
+} SvtAv1RcMode;
+
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
@@ -380,9 +389,7 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* Rate control mode.
      *
-     * 0 = Constant QP.
-     * 1 = Variable Bit Rate, achieve the target bitrate at entire stream.
-     * 2 = Constant Bit Rate, achieve the target bitrate
+     * Refer to the SvtAv1RcMode enum for valid values
      * Default is 0. */
     uint32_t rate_control_mode;
 
