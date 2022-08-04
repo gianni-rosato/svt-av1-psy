@@ -147,23 +147,25 @@ static const vector<uint32_t> invalid_hierarchical_levels = {
  * same reference picture.
  *
  * Following values are supported and defined in EbDefinitions.h
- * #define PRED_LOW_DELAY_P     0
- * #define PRED_LOW_DELAY_B     1
- * #define PRED_RANDOM_ACCESS   2
- * #define PRED_TOTAL_COUNT     3
+ * #define SVT_AV1_PRED_LOW_DELAY_P     0
+ * #define SVT_AV1_PRED_LOW_DELAY_B     1
+ * #define SVT_AV1_PRED_RANDOM_ACCESS   2
+ * #define SVT_AV1_PRED_TOTAL_COUNT     3
 
  * In Random Access structure, the b/b pictures can refer to reference pictures
  * from both directions (past and future).
  *
  * Default is 2. */
 static const vector<uint8_t> default_pred_structure = {
-    PRED_RANDOM_ACCESS,
+    SVT_AV1_PRED_RANDOM_ACCESS,
 };
 static const vector<uint8_t> valid_pred_structure = {
-    PRED_LOW_DELAY_P, PRED_LOW_DELAY_B, PRED_RANDOM_ACCESS};
+    SVT_AV1_PRED_LOW_DELAY_P,
+    SVT_AV1_PRED_LOW_DELAY_B,
+    SVT_AV1_PRED_RANDOM_ACCESS};
 static const vector<uint8_t> invalid_pred_structure = {
     /* _pred_structure override in code
-    PRED_TOTAL_COUNT, PRED_TOTAL_COUNT + 1, EB_PRED_INVALID*/};
+    SVT_AV1_PRED_TOTAL_COUNT, SVT_AV1_PRED_TOTAL_COUNT + 1, EB_PRED_INVALID*/};
 
 // Input Info
 /* The width of input source in units of picture luma pixels.

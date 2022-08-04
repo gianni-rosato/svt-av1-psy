@@ -775,10 +775,10 @@ typedef struct PictureParentControlSet {
     uint8_t tpl_src_data_ready; //track pictures that are processd in two different TPL groups
     Bool    blk_lambda_tuning;
     // Dynamic GOP
-    PredStructure pred_structure;
-    uint8_t       hierarchical_levels;
-    Bool          init_pred_struct_position_flag;
-    int8_t        hierarchical_layers_diff;
+    SvtAv1PredStructure pred_structure;
+    uint8_t             hierarchical_levels;
+    Bool                init_pred_struct_position_flag;
+    int8_t              hierarchical_layers_diff;
     //Dep-Cnt Clean up is done using 2 mechanism
     //1: a triggering picture that will clean up all previous pictures;
     //2: a picture does a self clean up

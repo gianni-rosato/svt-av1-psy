@@ -1007,8 +1007,8 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
                    100),
               0.0);
 
-    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
-        scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
+    if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index) {
             int8_t boost = non_base_boost(pcs_ptr);
             if (boost)

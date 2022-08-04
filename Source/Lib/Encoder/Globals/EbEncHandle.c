@@ -614,8 +614,8 @@ EbErrorType load_default_buffer_configuration_settings(
 
         min_recon = min_ref;
 
-        if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
-            scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B)
+        if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+            scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
         {
             min_input = min_parent = 1 + scs_ptr->scd_delay + eos_delay;
             min_child = 1;
@@ -2863,8 +2863,8 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         assert(0);
         break;
     }
-    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B ||
-        scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P)
+    if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ||
+        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P)
     {
         //for Low Delay, filter only the base B , as Intra is not delayed.
         //if speed not a concern we can add layer1 B
@@ -2919,7 +2919,7 @@ void derive_vq_params(SequenceControlSet* scs_ptr) {
         vq_ctrl->stability_ctrls.depth_refinement = 0;
     }
     // Do not use scene_transition if LD or 1st pass or middle pass
-    if (scs_ptr->static_config.pred_structure != PRED_RANDOM_ACCESS || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
+    if (scs_ptr->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
         vq_ctrl->sharpness_ctrls.scene_transition = 0;
 }
 /*
@@ -3133,7 +3133,7 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
         SVT_WARN("TPL is disabled for aq_mode 0\n");
         tpl_level = 0;
     }
-    else if (pred_structure == PRED_LOW_DELAY_B) {
+    else if (pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         SVT_WARN("TPL is disabled in low delay applications.\n");
         tpl_level = 0;
     }
@@ -3439,7 +3439,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
 
     // no future minigop is used for lowdelay prediction structure
-    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P || scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
+    if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P || scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         scs_ptr->lad_mg = scs_ptr->tpl_lad_mg = 0;
     }
     else
@@ -3907,11 +3907,11 @@ void copy_api_from_app(
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
-    if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS) {
-        SVT_WARN("CBR Rate control is currently not supported for PRED_RANDOM_ACCESS, switching to VBR\n");
+    if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
+        SVT_WARN("CBR Rate control is currently not supported for SVT_AV1_PRED_RANDOM_ACCESS, switching to VBR\n");
         scs_ptr->static_config.rate_control_mode = 1;
     }
-    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         if (scs_ptr->static_config.rate_control_mode == 1) {
             scs_ptr->static_config.rate_control_mode = 2;
             SVT_WARN("Low delay mode does not support VBR. Forcing RC mode to CBR\n");
@@ -3927,11 +3927,11 @@ void copy_api_from_app(
 
     // set the default hierarchical levels depending on the pred structure
     if (scs_ptr->static_config.hierarchical_levels == 0){
-        scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B ?
+        scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ?
             3 : 4;
     }
 
-    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         if (scs_ptr->static_config.hierarchical_levels != 3) {
             scs_ptr->static_config.hierarchical_levels = 3;
             SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 3\n");
@@ -4007,7 +4007,7 @@ void copy_api_from_app(
     scs_ptr->static_config.channel_id = ((EbSvtAv1EncConfiguration*)config_struct)->channel_id;
     scs_ptr->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)config_struct)->active_channel_count;
     scs_ptr->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
-    if (scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) {
+    if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         if (scs_ptr->static_config.logical_processors == 0){
             scs_ptr->static_config.logical_processors = 3;
         }else if (scs_ptr->static_config.logical_processors > 3){

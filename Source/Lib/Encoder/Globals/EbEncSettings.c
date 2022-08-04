@@ -150,7 +150,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 
     if (config->force_key_frames &&
-        (config->rate_control_mode != 0 || config->pred_structure != PRED_RANDOM_ACCESS)) {
+        (config->rate_control_mode != 0 || config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)) {
         SVT_ERROR("Instance %u: Force key frame is only supported with RA CRF/CQP mode\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -747,8 +747,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         SVT_ERROR("Error instance %u: switch frame interval must be >= 0\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->sframe_dist > 0 && config->pred_structure != PRED_LOW_DELAY_P &&
-        config->pred_structure != PRED_LOW_DELAY_B) {
+    if (config->sframe_dist > 0 && config->pred_structure != SVT_AV1_PRED_LOW_DELAY_P &&
+        config->pred_structure != SVT_AV1_PRED_LOW_DELAY_B) {
         SVT_ERROR(
             "Error instance %u: switch frame feature only supports low delay prediction "
             "structure\n",
@@ -957,7 +957,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->multiply_keyint              = FALSE;
     config_ptr->intra_refresh_type           = 2;
     config_ptr->hierarchical_levels          = 0;
-    config_ptr->pred_structure               = PRED_RANDOM_ACCESS;
+    config_ptr->pred_structure               = SVT_AV1_PRED_RANDOM_ACCESS;
     config_ptr->enable_dlf_flag              = TRUE;
     config_ptr->cdef_level                   = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;

@@ -2062,17 +2062,6 @@ typedef enum MD_BIT_DEPTH_MODE
     EB_DUAL_BIT_MD  = 2     // Auto: 8bit & 10bit mode decision
 } MD_BIT_DEPTH_MODE;
 
-/** The EB_GOP type is used to describe the hierarchical coding structure of
-Groups of Pictures (GOP) units.
-*/
-typedef enum ATTRIBUTE_PACKED {
-    PRED_LOW_DELAY_P = 0,
-    PRED_LOW_DELAY_B = 1,
-    PRED_RANDOM_ACCESS = 2,
-    PRED_TOTAL_COUNT = 3,
-    PRED_INVALID = 0xFF
-} PredStructure;
-
 /*
  * The SliceType type is used to describe the slice prediction type.
  */

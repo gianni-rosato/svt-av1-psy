@@ -534,7 +534,7 @@ uint8_t is_pic_cutting_short_ra_mg(PictureDecisionContext   *context_ptr, Pictur
 {
     //if the size < complete MG or if there is usage of closed GOP
     if ((context_ptr->mini_gop_length[mg_idx] < pcs_ptr->pred_struct_ptr->pred_struct_period || context_ptr->mini_gop_idr_count[mg_idx] > 0) &&
-        pcs_ptr->pred_struct_ptr->pred_type == PRED_RANDOM_ACCESS &&
+        pcs_ptr->pred_struct_ptr->pred_type == SVT_AV1_PRED_RANDOM_ACCESS &&
         pcs_ptr->idr_flag == FALSE &&
         pcs_ptr->cra_flag == FALSE) {
 
@@ -2349,14 +2349,14 @@ static Bool set_frame_display_params(
     Av1RpsNode *av1_rps = &pcs_ptr->av1_ref_signal;
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
 
-    if (pcs_ptr->pred_struct_ptr->pred_type == PRED_LOW_DELAY_P || pcs_ptr->is_overlay) {
+    if (pcs_ptr->pred_struct_ptr->pred_type == SVT_AV1_PRED_LOW_DELAY_P || pcs_ptr->is_overlay) {
         //P frames
         av1_rps->ref_dpb_index[BWD] = av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[LAST];
         av1_rps->ref_poc_array[BWD] = av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[LAST];
 
         frm_hdr->show_frame = TRUE;
         pcs_ptr->has_show_existing = FALSE;
-    } else if (pcs_ptr->pred_struct_ptr->pred_type == PRED_LOW_DELAY_B) {
+    } else if (pcs_ptr->pred_struct_ptr->pred_type == SVT_AV1_PRED_LOW_DELAY_B) {
         av1_rps->ref_dpb_index[BWD] = av1_rps->ref_dpb_index[LAST];
         av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[LAST2];
         av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[LAST3];
@@ -2366,7 +2366,7 @@ static Bool set_frame_display_params(
 
         frm_hdr->show_frame = TRUE;
         pcs_ptr->has_show_existing = FALSE;
-    } else if (pcs_ptr->pred_struct_ptr->pred_type == PRED_RANDOM_ACCESS) {
+    } else if (pcs_ptr->pred_struct_ptr->pred_type == SVT_AV1_PRED_RANDOM_ACCESS) {
         //Decide on Show Mecanism
         if (pcs_ptr->slice_type == I_SLICE) {
             //3 cases for I slice:  1:Key Frame treated above.  2: broken MiniGop due to sc or intra refresh  3: complete miniGop due to sc or intra refresh
@@ -2477,7 +2477,7 @@ This miniGOP has P frames with predStruct=LDP, and the last frame=I with pred st
 * 5) part of non-complete LDP MiniGop at the end of the stream.This miniGOP has P frames with
 predStruct=LDP, and the last frame=I with pred struct=RA.
 *
-*Note: the  SceneChange I has pred_type = PRED_RANDOM_ACCESS. if SChange is aligned on the miniGop,
+*Note: the  SceneChange I has pred_type = SVT_AV1_PRED_RANDOM_ACCESS. if SChange is aligned on the miniGop,
 we do not break the GOP.
 *************************************************/
 static void  av1_generate_rps_info(
@@ -2656,9 +2656,9 @@ static void  av1_generate_rps_info(
         // Toggle layer0 and layer1
         if ((picture_index == context_ptr->mini_gop_end_index[mini_gop_index] &&
                     !pcs_ptr->is_overlay &&
-                    scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS) ||
-                ((scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
-                  scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) &&
+                    scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) ||
+                ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+                  scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
                  (pcs_ptr->temporal_layer_index == 0))) {
             context_ptr->lay0_toggle = (1 + context_ptr->lay0_toggle) % 5;
             context_ptr->lay1_toggle = (1 + context_ptr->lay1_toggle) % 3;
@@ -2827,9 +2827,9 @@ static void  av1_generate_rps_info(
 
         if ((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index]) &&
                     !pcs_ptr->is_overlay &&
-                    scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS) ||
-                ((scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
-                 scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) &&
+                    scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) ||
+                ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+                 scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
                  (pcs_ptr->temporal_layer_index == 0))) {
             //Layer0 toggle 0->1->2
             context_ptr->lay0_toggle = circ_inc(3, 1, context_ptr->lay0_toggle);
@@ -2865,9 +2865,9 @@ static void  av1_generate_rps_info(
         //                 4                        12
         //
         //base0:0                   base1:8                          base2:16
-        if (pcs_ptr->pred_struct_ptr->pred_type == PRED_LOW_DELAY_P &&
+        if (pcs_ptr->pred_struct_ptr->pred_type == SVT_AV1_PRED_LOW_DELAY_P &&
                 context_ptr->mini_gop_length[mini_gop_index] < 8 &&
-                pcs_ptr->scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS) {
+                pcs_ptr->scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
             is_trailing_frames = TRUE;
         }
 
@@ -2990,7 +2990,7 @@ static void  av1_generate_rps_info(
             //toggle 3->4
             if (!is_trailing_frames ||
                     (context_ptr->mini_gop_length[mini_gop_index] >= 7 && is_trailing_frames &&
-                     pcs_ptr->scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS)) {
+                     pcs_ptr->scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)) {
                 //For trailing frames, Only toggle it if we are sure we have 2 layer 2 frames in trailing frames
                 context_ptr->lay2_toggle = 1 - context_ptr->lay2_toggle;
             }
@@ -3159,9 +3159,9 @@ static void  av1_generate_rps_info(
         //whoever needs a miniGOP Level toggling, this is the time
         if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index] % 8) &&
                         !pcs_ptr->is_overlay &&
-                        scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS)) ||
-                ((scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
-                  scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) &&
+                        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)) ||
+                ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+                  scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
                  (pcs_ptr->temporal_layer_index == 0))) {
 
             //Layer0 toggle 0->1->2
@@ -3171,8 +3171,8 @@ static void  av1_generate_rps_info(
 
 
             //layer2 toggle for low delay b/P case
-            if ((scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
-                  scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) &&
+            if ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+                  scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
                     scs_ptr->static_config.intra_period_length != -1 &&
                     pcs_ptr->cra_flag) {
                 int32_t trailing_count = (scs_ptr->static_config.intra_period_length % 8);
@@ -3660,9 +3660,9 @@ static void  av1_generate_rps_info(
         //whoever needs a miniGOP Level toggling, this is the time
         if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index]) &&
                         !pcs_ptr->is_overlay &&
-                        scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS)) ||
-                ((scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
-                  scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) &&
+                        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)) ||
+                ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+                  scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
                  (pcs_ptr->temporal_layer_index == 0))) {
 
             //Layer0 toggle 0->1->2
@@ -4451,9 +4451,9 @@ static void  av1_generate_rps_info(
         //whoever needs a miniGOP Level toggling, this is the time
         if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index]) &&
                         !pcs_ptr->is_overlay &&
-                        scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS)) ||
-                ((scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_P ||
-                  scs_ptr->static_config.pred_structure == PRED_LOW_DELAY_B) &&
+                        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)) ||
+                ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
+                  scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
                  (pcs_ptr->temporal_layer_index == 0))) {
             //Layer0 toggle 0->1
             context_ptr->lay0_toggle = 1 - context_ptr->lay0_toggle;
@@ -4832,7 +4832,7 @@ static EbErrorType av1_generate_minigop_rps_info_from_user_config(
         }
         else if ((context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
         &&(context_ptr->mini_gop_idr_count[mini_gop_index] == 0)
-        &&(scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS)){
+        &&(scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)){
             uint32_t pic_idx = context_ptr->mini_gop_start_index[mini_gop_index];
             do {
                 picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_idx]->object_ptr;
@@ -5028,7 +5028,7 @@ int32_t search_this_pic(PictureParentControlSet**buf, uint32_t buf_size, uint64_
 Bool is_delayed_intra(PictureParentControlSet *pcs) {
 
 
-    if ((pcs->idr_flag || pcs->cra_flag) && pcs->pred_structure == PRED_RANDOM_ACCESS) {
+    if ((pcs->idr_flag || pcs->cra_flag) && pcs->pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
         if (pcs->scs_ptr->static_config.intra_period_length == 0 || pcs->end_of_sequence_flag)
             return 0;
         else if (pcs->idr_flag || (pcs->cra_flag && pcs->pre_assignment_buffer_count < pcs->pred_struct_ptr->pred_struct_period))
@@ -5140,7 +5140,7 @@ void mctf_frame(
     uint32_t               out_stride_diff64
 )
 {
-    if (scs_ptr->static_config.pred_structure != PRED_RANDOM_ACCESS &&
+    if (scs_ptr->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS &&
         scs_ptr->tf_params_per_type[1].enabled)
         low_delay_store_tf_pictures(
             scs_ptr,
@@ -5202,7 +5202,7 @@ void mctf_frame(
 
     pcs_ptr->is_noise_level = (context_ptr->last_i_noise_levels_log1p_fp16[0] >= VQ_NOISE_LVL_TH);
 
-    if (scs_ptr->static_config.pred_structure != PRED_RANDOM_ACCESS &&
+    if (scs_ptr->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS &&
         scs_ptr->tf_params_per_type[1].enabled&&
         pcs_ptr->temporal_layer_index == 0)
         low_delay_release_tf_pictures(context_ptr);
@@ -5434,7 +5434,7 @@ void print_pre_ass_buffer(EncodeContext *ctx, PictureParentControlSet *pcs_ptr, 
             SVT_LOG("PRE-ASSIGN COMPLETE   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
         if (ctx->pre_assignment_buffer_eos_flag == 1)
             SVT_LOG("PRE-ASSIGN EOS   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
-        if (pcs_ptr->pred_structure == PRED_LOW_DELAY_P)
+        if (pcs_ptr->pred_structure == SVT_AV1_PRED_LOW_DELAY_P)
             SVT_LOG("PRE-ASSIGN LDP   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
 
         SVT_LOG("\n Pre-Assign(%i):  ", ctx->pre_assignment_buffer_count);
@@ -5656,7 +5656,7 @@ EbErrorType derive_tf_window_params(
         adjust_num = 2;
     }
     (void)out_stride_diff64;
-    if (scs_ptr->static_config.pred_structure != PRED_RANDOM_ACCESS) {
+    if (scs_ptr->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS) {
         int num_past_pics = pcs_ptr->tf_ctrls.num_past_pics + (pcs_ptr->tf_ctrls.noise_adjust_past_pics ? (adjust_num >> 1) : 0);
         num_past_pics = MIN(pcs_ptr->tf_ctrls.max_num_past_pics, num_past_pics);
 
@@ -5864,7 +5864,7 @@ PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
 void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
 
     // Map TF settings sps -> pcs
-   if (scs_ptr->static_config.pred_structure != PRED_RANDOM_ACCESS)
+   if (scs_ptr->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)
    {
         if (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)
             pcs_ptr->tf_ctrls = scs_ptr->tf_params_per_type[1];
@@ -5980,7 +5980,7 @@ static void set_frame_update_type(PictureParentControlSet *ppcs) {
     if (ppcs->frm_hdr.frame_type == KEY_FRAME) {
         ppcs->update_type = KF_UPDATE;
     }
-    else if (scs->max_temporal_layers > 0 && ppcs->pred_structure != PRED_LOW_DELAY_B) {
+    else if (scs->max_temporal_layers > 0 && ppcs->pred_structure != SVT_AV1_PRED_LOW_DELAY_B) {
         if (ppcs->temporal_layer_index == 0) {
             ppcs->update_type = ARF_UPDATE;
         }
@@ -5991,7 +5991,7 @@ static void set_frame_update_type(PictureParentControlSet *ppcs) {
             ppcs->update_type = INTNL_ARF_UPDATE;
         }
     }
-    else if (ppcs->pred_structure == PRED_LOW_DELAY_B && (ppcs->frame_offset % MAX_GF_INTERVAL) == 0) {
+    else if (ppcs->pred_structure == SVT_AV1_PRED_LOW_DELAY_B && (ppcs->frame_offset % MAX_GF_INTERVAL) == 0) {
         ppcs->update_type = GF_UPDATE;
     }
     else {
@@ -6377,8 +6377,8 @@ void* picture_decision_kernel(void *input_ptr)
                 if ((encode_context_ptr->pre_assignment_buffer_intra_count > 0) ||
                     (encode_context_ptr->pre_assignment_buffer_count == (uint32_t)(1 << scs_ptr->static_config.hierarchical_levels)) ||
                     (encode_context_ptr->pre_assignment_buffer_eos_flag == TRUE) ||
-                    (pcs_ptr->pred_structure == PRED_LOW_DELAY_P) ||
-                    (pcs_ptr->pred_structure == PRED_LOW_DELAY_B))
+                    (pcs_ptr->pred_structure == SVT_AV1_PRED_LOW_DELAY_P) ||
+                    (pcs_ptr->pred_structure == SVT_AV1_PRED_LOW_DELAY_B))
                 {
 #if LAD_MG_PRINT
                     print_pre_ass_buffer(encode_context_ptr, pcs_ptr,0);
@@ -6473,7 +6473,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     encode_context_ptr->pred_struct_position -= pcs_ptr->pred_struct_ptr->init_pic_index;
                                 pcs_ptr->pred_struct_ptr = get_prediction_structure(
                                     encode_context_ptr->prediction_structure_group_ptr,
-                                    PRED_LOW_DELAY_P,
+                                    SVT_AV1_PRED_LOW_DELAY_P,
                                     scs_ptr->reference_count,
                                     pcs_ptr->hierarchical_levels);
                                 picture_type = P_SLICE;
@@ -6488,7 +6488,7 @@ void* picture_decision_kernel(void *input_ptr)
                             // Open GOP CRA - adjust the RPS
                             else if ((context_ptr->mini_gop_length[mini_gop_index] == pcs_ptr->pred_struct_ptr->pred_struct_period) &&
 
-                                (pcs_ptr->pred_struct_ptr->pred_type == PRED_RANDOM_ACCESS || pcs_ptr->pred_struct_ptr->temporal_layer_count == 1) &&
+                                (pcs_ptr->pred_struct_ptr->pred_type == SVT_AV1_PRED_RANDOM_ACCESS || pcs_ptr->pred_struct_ptr->temporal_layer_count == 1) &&
                                 pcs_ptr->idr_flag == FALSE &&
                                 pcs_ptr->cra_flag == TRUE)
                             {
@@ -6499,8 +6499,8 @@ void* picture_decision_kernel(void *input_ptr)
                                 picture_type =
                                     (pcs_ptr->idr_flag) ? I_SLICE :
                                     (pcs_ptr->cra_flag) ? I_SLICE :
-                                    (pcs_ptr->pred_structure == PRED_LOW_DELAY_P) ? P_SLICE :
-                                    (pcs_ptr->pred_structure == PRED_LOW_DELAY_B) ? B_SLICE :
+                                    (pcs_ptr->pred_structure == SVT_AV1_PRED_LOW_DELAY_P) ? P_SLICE :
+                                    (pcs_ptr->pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? B_SLICE :
                                     (pcs_ptr->pre_assignment_buffer_count == pcs_ptr->pred_struct_ptr->pred_struct_period) ? ((out_stride_diff64 == context_ptr->mini_gop_end_index[mini_gop_index] && 0) ? P_SLICE : B_SLICE) :
 
                                     (encode_context_ptr->pre_assignment_buffer_eos_flag) ? P_SLICE :
@@ -6663,7 +6663,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         *fgn_random_seed_ptr += 7391;
                                 }
                                 uint32_t pic_index = 0;
-                                if (scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS) {
+                                if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
                                     pic_index = out_stride_diff64 - context_ptr->mini_gop_start_index[mini_gop_index];
                                 } else {
                                     // For low delay P or low delay b case, get the the picture_index by mini_gop size
@@ -6720,7 +6720,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 memset(pcs_ptr->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
                                 if (pcs_ptr->frm_hdr.reference_mode == REFERENCE_MODE_SELECT &&
                                         pcs_ptr->temporal_layer_index &&
-                                        scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS)
+                                        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)
                                 {
                                     pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF_FRAME] =
                                         pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF2_FRAME] =
@@ -6728,7 +6728,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                                 if (pcs_ptr->frm_hdr.reference_mode == REFERENCE_MODE_SELECT &&
                                     pcs_ptr->temporal_layer_index &&
-                                    scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS)
+                                    scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)
                                 {
                                     if (pcs_ptr->av1_ref_signal.ref_poc_array[ALT] >= pcs_ptr->picture_number)
                                         pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF_FRAME] = 1;
@@ -7011,7 +7011,7 @@ void* picture_decision_kernel(void *input_ptr)
                             // Set the Decode Order
                             if ((context_ptr->mini_gop_idr_count[mini_gop_index] == 0) &&
                                 (context_ptr->mini_gop_length[mini_gop_index] == pcs_ptr->pred_struct_ptr->pred_struct_period) &&
-                                (scs_ptr->static_config.pred_structure == PRED_RANDOM_ACCESS) &&
+                                (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) &&
                                 !pcs_ptr->is_overlay) {
                                 pcs_ptr->decode_order = encode_context_ptr->decode_base_number + pcs_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[pcs_ptr->pred_struct_index]->decode_order;
                             }
@@ -7220,7 +7220,7 @@ void* picture_decision_kernel(void *input_ptr)
                        //split MG into two for these two special cases
                        uint8_t ldp_delayi_mg = 0;
                        uint8_t ldp_i_eos_mg = 0;
-                       if (pcs_ptr->pred_struct_ptr->pred_type == PRED_RANDOM_ACCESS &&
+                       if (pcs_ptr->pred_struct_ptr->pred_type == SVT_AV1_PRED_RANDOM_ACCESS &&
                            context_ptr->mg_pictures_array[0]->slice_type == P_SLICE) {
                            if (is_delayed_intra(context_ptr->mg_pictures_array[mg_size - 1]))
                                ldp_delayi_mg = 1;

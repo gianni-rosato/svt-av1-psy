@@ -1851,7 +1851,7 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     // *Note - As in JCTVC-G1102, the JCT-VC uses the Mode Decision forumula where the chroma_sse has been weighted
     //  CostMode = (luma_sse + wchroma * chroma_sse) + lambda_sse * rateMode
 
-    //if (pcs_ptr->parent_pcs_ptr->pred_structure == PRED_RANDOM_ACCESS) {
+    //if (pcs_ptr->parent_pcs_ptr->pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
     //    // Random Access
     //    if (pcs_ptr->temporal_layer_index == 0) {
     //        merge_chroma_sse = (((merge_chroma_sse * chroma_weight_factor_ra[qp]) + CHROMA_WEIGHT_OFFSET) >> CHROMA_WEIGHT_SHIFT);
@@ -1896,7 +1896,7 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     // *Note - As in JCTVC-G1102, the JCT-VC uses the Mode Decision forumula where the chroma_sse has been weighted
     //  CostMode = (luma_sse + wchroma * chroma_sse) + lambda_sse * rateMode
 
-    //if (pcs_ptr->parent_pcs_ptr->pred_structure == PRED_RANDOM_ACCESS) {
+    //if (pcs_ptr->parent_pcs_ptr->pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
     //    if (pcs_ptr->temporal_layer_index == 0) {
     //        skip_chroma_sse = (((skip_chroma_sse * chroma_weight_factor_ra[qp]) + CHROMA_WEIGHT_OFFSET) >> CHROMA_WEIGHT_SHIFT);
     //    }

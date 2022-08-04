@@ -100,7 +100,7 @@ typedef struct PredictionStructure {
     EbDctor                    dctor;
     uint32_t                   pred_struct_entry_count;
     PredictionStructureEntry **pred_struct_entry_ptr_array;
-    PredStructure              pred_type;
+    SvtAv1PredStructure        pred_type;
     uint32_t                   temporal_layer_count;
     uint32_t                   pred_struct_period;
     uint32_t                   maximum_extent;
@@ -131,7 +131,7 @@ typedef struct PredictionStructureGroup {
 //   PredictionStructureGroup* pred_struct_group_ptr,
 //   struct SequenceControlSet* scs_ptr);
 extern PredictionStructure *get_prediction_structure(
-    PredictionStructureGroup *prediction_structure_group_ptr, PredStructure pred_structure,
+    PredictionStructureGroup *prediction_structure_group_ptr, SvtAv1PredStructure pred_structure,
     uint32_t number_of_references, uint32_t levels_of_hierarchy);
 typedef enum {
     LAST  = 0,
