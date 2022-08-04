@@ -193,17 +193,6 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
                 << "QP fluctuate in const qp mode";
         }
 
-        // verify the bitrate
-        if (config->rate_control_mode == 3) {
-            uint32_t avg_bit_rate = (config->frame_rate_numerator /
-                                     config->frame_rate_denominator) *
-                                    stream_info->frame_bit_rate;
-            printf("%d--%d\n", config->target_bit_rate, avg_bit_rate);
-            EXPECT_GE(config->target_bit_rate, avg_bit_rate)
-                << "target bit-rate is less than actual: "
-                << config->target_bit_rate << "--" << avg_bit_rate;
-        }
-
         // verify tile row and tile column
         uint32_t expect_cols =
             (uint32_t)((video_src_->get_width_with_padding() >> 2) /
