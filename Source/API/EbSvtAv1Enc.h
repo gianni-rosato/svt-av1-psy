@@ -177,6 +177,18 @@ typedef enum EbSFrameMode {
         2, /**< If the considered frame is not an altref frame, the next base layer inter frame will be made into an S-Frame */
 } EbSFrameMode;
 
+/* Indicates what prediction structure to use
+ * was PredStructure in EbDefinitions.h
+ * Only SVT_AV1_PRED_LOW_DELAY_B and SVT_AV1_PRED_RANDOM_ACCESS are valid
+ */
+typedef enum SvtAv1PredStructure {
+    SVT_AV1_PRED_LOW_DELAY_P   = 0, // No longer active
+    SVT_AV1_PRED_LOW_DELAY_B   = 1,
+    SVT_AV1_PRED_RANDOM_ACCESS = 2,
+    SVT_AV1_PRED_TOTAL_COUNT   = 3,
+    SVT_AV1_PRED_INVALID       = 0xFF,
+} SvtAv1PredStructure;
+
 /* Indicates what rate control mode is used.
  * Currently, cqp is distinguised by setting enable_adaptive_quantization to 0
  */
@@ -244,7 +256,9 @@ typedef struct EbSvtAv1EncConfiguration {
      * In Random Access structure, the B/b pictures can refer to reference pictures
      * from both directions (past and future).
      *
-     * Default is 2. */
+     * Refer to SvtAv1PredStructure enum for valid values.
+     *
+     * Default is SVT_AV1_PRED_RANDOM_ACCESS. */
     uint8_t pred_structure;
 
     // Input Info
