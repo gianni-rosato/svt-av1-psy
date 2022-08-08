@@ -775,11 +775,11 @@ static const double r0_weight[2 /* VBR/CRF */][2 /* BASE/ISLICE */] = {
     {0.85, 0.75} // CRF
 };
 /******************************************************
- * cqp_qindex_calc_tpl_la
+ * crf_qindex_calc
  * Assign the q_index per frame.
  * Used in the one pass encoding with tpl stats
  ******************************************************/
-static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex) {
+static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex) {
     PictureParentControlSet *ppcs                 = pcs->parent_pcs_ptr;
     SequenceControlSet      *scs_ptr              = ppcs->scs_ptr;
     const int                cq_level             = qindex;
@@ -3047,16 +3047,16 @@ void *rate_control_kernel(void *input_ptr) {
                             // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                             int32_t new_qindex;
                             if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
-                                // Content adaptive qp assignment
+                                // if CRF
                                 if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable) {
                                     if (pcs_ptr->picture_number == 0) {
                                         rc->active_worst_quality =
                                             quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                                         av1_rc_init(scs_ptr);
                                     }
-                                    new_qindex = cqp_qindex_calc_tpl_la(
+                                    new_qindex = crf_qindex_calc(
                                         pcs_ptr, rc, rc->active_worst_quality);
-                                } else
+                                } else // if CQP
                                     new_qindex = cqp_qindex_calc(pcs_ptr, qindex);
                             } else {
                                 new_qindex = find_fp_qindex(
