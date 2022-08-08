@@ -2370,17 +2370,35 @@ static Bool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
 /*
 * Returns the number of passes, multi_pass_mode
 */
-uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS],
-                    MultiPassModes *multi_pass_mode) {
-    char config_string[COMMAND_LINE_MAX_SIZE];
+uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS]) {
+    char           config_string[COMMAND_LINE_MAX_SIZE];
+    MultiPassModes multi_pass_mode;
 
-    int rc_mode  = 0;
-    int enc_mode = 0;
-    int ip       = -1;
+    int rc_mode = 0;
+    // copied from str_to_rc_mode()
+    const struct {
+        const char *name;
+        uint32_t    mode;
+    } rc[] = {
+        {"0", 0},
+        {"1", 1},
+        {"2", 2},
+        {"cqp", 0},
+        {"crf", 0},
+        {"vbr", 1},
+        {"cbr", 2},
+    };
+    const size_t rc_size  = sizeof(rc) / sizeof(rc[0]);
+    int          enc_mode = 0;
+    int          ip       = -1;
     // Read required inputs to decide on the number of passes and check the validity of their ranges
-    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "--rc", config_string) == 0) {
-        rc_mode = strtol(config_string, NULL, 0);
+    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0) {
+        for (size_t i = 0; i < rc_size; i++) {
+            if (!strcmp(config_string, rc[i].name)) {
+                rc_mode = rc[i].mode;
+                break;
+            }
+        }
         if (rc_mode > 2 || rc_mode < 0) {
             fprintf(stderr, "Error: The rate control mode must be [0 - 2] \n");
             return 0;
@@ -2463,8 +2481,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         fprintf(
             stderr,
             "[SVT-Warning]: The number of passes has to be 1 when using a fifo, using 1-pass\n");
-        *multi_pass_mode = SINGLE_PASS;
-        passes           = 1;
+        multi_pass_mode = SINGLE_PASS;
+        passes          = 1;
     }
     // Determine the number of passes in CRF mode
     if (rc_mode == 0) {
@@ -2476,23 +2494,23 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
                 "1-pass encoding\n\n",
                 ip);
         }
-        *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
+        multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
     }
     // Determine the number of passes in rate control mode
     else if (rc_mode == 1) {
         if (passes == 1)
-            *multi_pass_mode = SINGLE_PASS;
+            multi_pass_mode = SINGLE_PASS;
         else if (passes > 1) {
             if (enc_mode > ENC_M12) {
                 fprintf(stderr,
                         "[SVT-Warning]: Multipass VBR is not supported for preset %d. Switching to "
                         "1-pass encoding\n\n",
                         enc_mode);
-                passes           = 1;
-                *multi_pass_mode = SINGLE_PASS;
+                passes          = 1;
+                multi_pass_mode = SINGLE_PASS;
             } else {
-                passes           = 3;
-                *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
+                passes          = 3;
+                multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
             }
         }
     } else {
@@ -2502,11 +2520,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
                 "[SVT-Warning]: Multipass CBR is not supported. Switching to 1-pass encoding\n\n");
             passes = 1;
         }
-        *multi_pass_mode = SINGLE_PASS;
+        multi_pass_mode = SINGLE_PASS;
     }
 
     // Set the settings for each pass based on multi_pass_mode
-    switch (*multi_pass_mode) {
+    switch (multi_pass_mode) {
     case SINGLE_PASS: enc_pass[0] = ENC_SINGLE_PASS; break;
     case TWO_PASS_IPP_FINAL:
         enc_pass[0] = ENC_FIRST_PASS;

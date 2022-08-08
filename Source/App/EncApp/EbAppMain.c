@@ -469,8 +469,7 @@ int32_t main(int32_t argc, char* argv[]) {
         return 0;
 
     enc_app_ctor(&enc_app);
-    MultiPassModes multi_pass_mode;
-    passes = get_passes(argc, argv, enc_pass, &multi_pass_mode);
+    passes = get_passes(argc, argv, enc_pass);
     for (uint8_t pass_idx = 0; pass_idx < passes; pass_idx++) {
         return_error = enc_context_ctor(
             &enc_app, &enc_context, argc, argv, enc_pass[pass_idx], passes);
