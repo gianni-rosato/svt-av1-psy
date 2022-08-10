@@ -90,6 +90,7 @@ For each enable-*, there is a disable-* option, and vice versa.
 -j, --jobs, jobs=*      Set number of jobs for make/CMake [$jobs]
     --no-enc, no-enc    Don't build the encoder app and libs
     --no-dec, no-dec    Don't build the decoder app and libs
+    --no-apps, no-apps  Don't build the apps, only build the libs
 -p, --prefix, prefix=*  Set installation prefix
     --pgo-dir,          Directory to store the pgo profiles
     pgo-dir=*
@@ -301,6 +302,7 @@ parse_options() {
         jobs=*) jobs="${1#*=}" && shift ;;
         no-enc) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_ENC=OFF" && shift ;;
         no-dec) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_DEC=OFF" && shift ;;
+        no-apps) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_APPS=OFF" && shift ;;
         prefix=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_INSTALL_PREFIX=${1#*=}" && shift ;;
         pgo-dir=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_PGO_DIR=${1#*=}" && shift ;;
         pgo-compile-gen) PGO_COMPILE_STAGE=gen && shift ;;
@@ -369,6 +371,7 @@ else
             install) parse_options install && shift ;;
             no-enc) parse_options no-enc && shift ;;
             no-dec) parse_options no-dec && shift ;;
+            no-apps) parse_options no-apps && shift ;;
             pgo-compile-gen) parse_options pgo-compile-gen && shift ;;
             pgo-compile-use) parse_options pgo-compile-use && shift ;;
             release) parse_options release && shift ;;
@@ -490,6 +493,7 @@ else
             pgo-videos=*) parse_options pgo-videos="${1#*=}" && shift ;;
             no-enc) parse_options no-enc && shift ;;
             no-dec) parse_options no-dec && shift ;;
+            no-apps) parse_options no-apps && shift ;;
             target_system=*) parse_options target_system="${1#*=}" && shift ;;
             shared) parse_options shared && shift ;;
             static) parse_options static && shift ;;
