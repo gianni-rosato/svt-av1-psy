@@ -4814,11 +4814,12 @@ static void copy_input_buffer(SequenceControlSet* scs, EbBufferHeaderType* dst,
     } else if (pass != ENCODE_FIRST_PASS || copy_frame) {
         // Bypass copy for the unecessary picture in IPPP pass
         // Copy the picture buffer
-        if (src->p_buffer != NULL)
+        if (src->p_buffer != NULL) {
             copy_frame_buffer(scs, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer, pass);
-        // Copy the metadata array
-        if (svt_aom_copy_metadata_buffer(dst, src->metadata) != EB_ErrorNone)
-            dst->metadata = NULL;
+            // Copy the metadata array
+            if (svt_aom_copy_metadata_buffer(dst, src->metadata) != EB_ErrorNone)
+                dst->metadata = NULL;
+        }
     }
 
     // Copy the private data list
