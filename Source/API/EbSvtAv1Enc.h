@@ -448,39 +448,130 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0. */
     uint32_t min_qp_allowed;
 
-    /* DATARATE CONTROL OPTIONS.
-     * Indicates the bias (expressed on a scale of 0 to 100) for determining
-     * target size for the current frame. The value 0 indicates the optimal CBR
-     * mode value should be used, and 100 indicates the optimal VBR mode value
-     * should be used. */
+    // DATARATE CONTROL OPTIONS
+
+    /**
+     * @brief Variable Bit Rate Bias Percentage
+     *
+     * Indicates the bias for determining target size for the current frame.
+     * A value 0 indicates the optimal CBR mode value should be used, and 100
+     * indicates the optimal VBR mode value should be used.
+     *
+     * Min is 0.
+     * Max is 100.
+     * Default is 100
+     */
     uint32_t vbr_bias_pct;
-    /* Indicates the minimum bitrate to be used for a single GOP as a percentage
-     * of the target bitrate. */
+
+    /**
+     * @brief Variable Bit Rate Minimum Section Percentage
+     *
+     * Indicates the minimum bitrate to be used for a single GOP as a percentage
+     * of the target bitrate.
+     *
+     * Min is 0.
+     * Max is 100.
+     * Default is 0.
+     */
     uint32_t vbr_min_section_pct;
-    /* Indicates the maximum bitrate to be used for a single GOP as a percentage
-     * of the target bitrate. */
+
+    /**
+     * @brief Variable Bit Rate Maximum Section Percentage
+     *
+     * Indicates the maximum bitrate to be used for a single GOP as a percentage
+     * of the target bitrate.
+     *
+     * Min is 0.
+     * Max is 10000.
+     * Default is 2000.
+     */
     uint32_t vbr_max_section_pct;
-    /* under_shoot_pct indicates the tolerance of the VBR algorithm to undershoot
-     * and is used as a trigger threshold for more agressive adaptation of Q. Its
-     * value can range from 0-100. */
+
+    /**
+     * @brief UnderShoot Percentage
+     *
+     * Only applicable for VBR and CBR.
+     *
+     * Indicates the tolerance of the VBR algorithm to undershoot and is used
+     * as a trigger threshold for more agressive adaptation of Quantization.
+     *
+     * Min is 0.
+     * Max is 100.
+     * Default is 25.
+     */
     uint32_t under_shoot_pct;
-    /* over_shoot_pct indicates the tolerance of the VBR algorithm to overshoot
-     * and is used as a trigger threshold for more agressive adaptation of Q. Its
-     * value can range from 0-1000. */
+
+    /**
+     * @brief OverShoot Percentage
+     *
+     * Only applicable for VBR and CBR
+     *
+     * Indicates the tolerance of the VBR algorithm to overshoot and is used as
+     * a trigger threshold for more agressive adaptation of Quantization.
+     *
+     * Min is 0.
+     * Max is 100.
+     * Default is 25.
+     */
     uint32_t over_shoot_pct;
-    /* over_shoot_pct indicates the tolerance of the Capped CRF algorithm to overshoot
-     * and is used as a trigger threshold for more agressive adaptation of Q. Its
-     * value can range from 0-1000. */
+
+    /**
+     * @brief MaxBitRate OverShoot Percentage
+     *
+     * Only applicable for Capped CRF.
+     *
+     * Indicates the tolerance of the Capped CRF algorithm to overshoot
+     * and is used as a trigger threshold for more agressive adaptation of
+     * Quantization.
+     *
+     * Min is 0.
+     * Max is 100.
+     * Default is 50.
+     */
     uint32_t mbr_over_shoot_pct;
-    /* Indicates the amount of data that will be buffered by the decoding
+
+    /**
+     * @brief Starting Buffer Level in MilliSeconds
+     *
+     * Only applicable for CBR.
+     *
+     * Indicates the amount of data that will be buffered by the decoding
      * application prior to beginning playback, and is expressed in units of
-     * time(milliseconds). */
+     * time. Must be less than maximum_buffer_size_ms.
+     *
+     * Min is 20.
+     * Max is 10000.
+     * Default is 600.
+     */
     int64_t starting_buffer_level_ms;
-    /* Indicates the amount of data that the encoder should try to maintain in the
-     * decoder's buffer, and is expressed in units of time(milliseconds). */
+
+    /**
+     * @brief Optimal Buffer Level in MilliSeconds
+     *
+     * Only applicable for CBR.
+     *
+     * indicates the amount of data that the encoder should try to maintain in the
+     * decoder's buffer, and is expressed in units of time. Must be less than
+     * maximum_buffer_size_ms.
+     *
+     * Min is 20.
+     * Max is 10000.
+     * Default is 600.
+     */
     int64_t optimal_buffer_level_ms;
-    /* Indicates the maximum amount of data that may be buffered by the decoding
-     * application, and is expressed in units of time(milliseconds).*/
+
+    /**
+     * @brief Maximum Buffer Size in MilliSeconds
+     *
+     * Only applicable for CBR.
+     *
+     * indicates the maximum amount of data that may be buffered by the
+     * decoding application, and is expressed in units of time.
+     *
+     * Min is 20.
+     * Max is 10000.
+     * Default is 1000.
+     */
     int64_t maximum_buffer_size_ms;
 
     // input / output buffer to be used for multi-pass encoding
