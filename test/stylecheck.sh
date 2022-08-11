@@ -10,13 +10,13 @@ fi
 git fetch --all -pf || true
 
 echo "Checking for tabs" >&2
-! git --no-pager grep -InP --heading "\t" -- . ':!third_party/**/*' || ret=1
+! git --no-pager grep -InP "\t" -- . ':!third_party/**/*' || ret=1
 
 echo "Checking for carriage returns" >&2
-! git --no-pager grep -InP --heading "\r" -- . ':!third_party/**/*' || ret=1
+! git --no-pager grep -InP "\r" -- . ':!third_party/**/*' || ret=1
 
 echo "Checking for trailing spaces" >&2
-! git --no-pager grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch' || ret=1
+! git --no-pager grep -InP " $" -- . ':!third_party/**/*' ':!*.patch' || ret=1
 
 # Test only "new" commits, that is, commits that are not upstream on
 # the default branch.
