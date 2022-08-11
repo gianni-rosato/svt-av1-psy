@@ -122,6 +122,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->mbr_over_shoot_pct > 100) {
+        SVT_ERROR("Instance %u: The max bitrate overshoot percentage must be between [0, 100] \n",
+                  channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->under_shoot_pct > 100) {
         SVT_ERROR("Instance %u: The undershoot percentage must be between [0, 100] \n",
                   channel_number + 1);
