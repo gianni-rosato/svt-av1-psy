@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.1] - 2022-08-15
+
+- Fix a crash at the end of the encode that may occur when an invalid metadata packet is sent with the EOS packet
+
+Build, Cleanup
+- y4m header pasring code cleanup
+- API cleanup and enhancements adding string options for RC mode
+- Added option to build without app / dec / enc using the build.sh / build.bat scripts
+
 ## [1.2.0] - 2022-08-02
 
 Encoder
