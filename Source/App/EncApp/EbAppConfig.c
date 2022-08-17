@@ -1085,12 +1085,12 @@ ConfigEntry config_entry_rc[] = {
      set_cfg_chroma_v_ac_qindex_offset},
     {SINGLE_INPUT,
      UNDER_SHOOT_PCT_TOKEN,
-     "Only for VBR and CRF, allowable datarate undershoot (min) target (percentage), default is "
+     "Only for VBR and CBR, allowable datarate undershoot (min) target (percentage), default is "
      "25, but can change based on rate control [0-100]",
      set_under_shoot_pct},
     {SINGLE_INPUT,
      OVER_SHOOT_PCT_TOKEN,
-     "Only for CBR and CRF, allowable datarate overshoot (max) target (percentage), default is 25, "
+     "Only for VBR and CBR, allowable datarate overshoot (max) target (percentage), default is 25, "
      "but can change based on rate control [0-100]",
      set_over_shoot_pct},
     {SINGLE_INPUT,
