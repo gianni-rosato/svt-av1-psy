@@ -116,6 +116,7 @@
 #define VBR_MAX_SECTION_PCT_TOKEN "--maxsection-pct"
 #define UNDER_SHOOT_PCT_TOKEN "--undershoot-pct"
 #define OVER_SHOOT_PCT_TOKEN "--overshoot-pct"
+#define MBR_OVER_SHOOT_PCT_TOKEN "--mbr-overshoot-pct"
 #define BUFFER_SIZE_TOKEN "--buf-sz"
 #define BUFFER_INITIAL_SIZE_TOKEN "--buf-initial-sz"
 #define BUFFER_OPTIMAL_SIZE_TOKEN "--buf-optimal-sz"
@@ -610,9 +611,11 @@ static void set_under_shoot_pct(const char *value, EbConfig *cfg) {
     cfg->config.under_shoot_pct = strtoul(value, NULL, 0);
 };
 static void set_over_shoot_pct(const char *value, EbConfig *cfg) {
-    cfg->config.over_shoot_pct     = strtoul(value, NULL, 0);
-    cfg->config.mbr_over_shoot_pct = strtoul(value, NULL, 0);
+    cfg->config.over_shoot_pct = strtoul(value, NULL, 0);
 };
+static void set_mbr_over_shoot_pct(const char *value, EbConfig *cfg) {
+    cfg->config.mbr_over_shoot_pct = strtoul(value, NULL, 0);
+}
 static void set_buf_sz(const char *value, EbConfig *cfg) {
     cfg->config.maximum_buffer_size_ms = strtoul(value, NULL, 0);
 };
@@ -1082,14 +1085,19 @@ ConfigEntry config_entry_rc[] = {
      set_cfg_chroma_v_ac_qindex_offset},
     {SINGLE_INPUT,
      UNDER_SHOOT_PCT_TOKEN,
-     "Allowable datarate undershoot (min) target (percentage), default is 25, but can change based "
-     "on rate control [0-100]",
+     "Only for VBR and CRF, allowable datarate undershoot (min) target (percentage), default is "
+     "25, but can change based on rate control [0-100]",
      set_under_shoot_pct},
     {SINGLE_INPUT,
      OVER_SHOOT_PCT_TOKEN,
-     "Allowable datarate overshoot (max) target (percentage), default is 25, but can change based "
-     "on rate control [0-100]",
+     "Only for CBR and CRF, allowable datarate overshoot (max) target (percentage), default is 25, "
+     "but can change based on rate control [0-100]",
      set_over_shoot_pct},
+    {SINGLE_INPUT,
+     MBR_OVER_SHOOT_PCT_TOKEN,
+     "Only for Capped CRF, allowable datarate overshoot (max) target (percentage), default is 50, "
+     "but can change based on rate control [0-100]",
+     set_mbr_over_shoot_pct},
     {SINGLE_INPUT,
      BUFFER_SIZE_TOKEN,
      "Client buffer size (ms), only applicable for CBR, default is 6000 [0-10000]",
@@ -1491,6 +1499,7 @@ ConfigEntry config_entry[] = {
      set_cfg_chroma_v_ac_qindex_offset},
     {SINGLE_INPUT, UNDER_SHOOT_PCT_TOKEN, "UnderShootPct", set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "OverShootPct", set_over_shoot_pct},
+    {SINGLE_INPUT, MBR_OVER_SHOOT_PCT_TOKEN, "MbrOverShootPct", set_mbr_over_shoot_pct},
     {SINGLE_INPUT, BUFFER_SIZE_TOKEN, "BufSz", set_buf_sz},
     {SINGLE_INPUT, BUFFER_INITIAL_SIZE_TOKEN, "BufInitialSz", set_buf_initial_sz},
     {SINGLE_INPUT, BUFFER_OPTIMAL_SIZE_TOKEN, "BufOptimalSz", set_buf_optimal_sz},

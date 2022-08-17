@@ -1794,6 +1794,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"maxsection-pct", &config_struct->vbr_max_section_pct},
         {"undershoot-pct", &config_struct->under_shoot_pct},
         {"overshoot-pct", &config_struct->over_shoot_pct},
+        {"mbr-overshoot-pct", &config_struct->mbr_over_shoot_pct},
         {"recode-loop", &config_struct->recode_loop},
         {"enable-stat-report", &config_struct->stat_report},
         {"scm", &config_struct->screen_content_mode},
