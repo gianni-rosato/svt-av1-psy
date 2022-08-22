@@ -1543,7 +1543,6 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     (void)is_encode_pass;
     (void)coeff_stride;
     (void)is_intra_bc;
-    PictureParentControlSet *ppcs             = pcs_ptr->parent_pcs_ptr;
     SequenceControlSet      *scs_ptr          = pcs_ptr->scs_ptr;
     int32_t                  plane            = component_type == COMPONENT_LUMA ? AOM_PLANE_Y
                                     : COMPONENT_CHROMA_CB                        ? AOM_PLANE_U
@@ -1564,17 +1563,14 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                           255,
                           (int32_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                               segmentation_qp_offset);
-
     if (component_type != COMPONENT_LUMA) {
-        if (frame_is_intra_only(ppcs)) {
-            q_index += scs_ptr->static_config.key_frame_chroma_qindex_offset;
-        } else {
-            q_index += scs_ptr->static_config.chroma_qindex_offsets[pcs_ptr->temporal_layer_index];
-        }
-
+        int32_t offset = (component_type == COMPONENT_CHROMA_CB)
+            ? pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params
+                  .delta_q_dc[1] // we are assuming delta_q_ac == delta_q_dc
+            : pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.delta_q_dc[2];
+        q_index += offset;
         q_index = (uint32_t)CLIP3(0, 255, (int32_t)q_index);
     }
-
     if (bit_depth == EB_EIGHT_BIT) {
         if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_qtx       = scs_ptr->quants_8bit.y_quant[q_index];
