@@ -1564,7 +1564,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                           (int32_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                               segmentation_qp_offset);
     if (component_type != COMPONENT_LUMA) {
-        int32_t offset = (component_type == COMPONENT_CHROMA_CB)
+        const int8_t offset = (component_type == COMPONENT_CHROMA_CB)
             ? pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params
                   .delta_q_dc[1] // we are assuming delta_q_ac == delta_q_dc
             : pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.delta_q_dc[2];
