@@ -19,20 +19,24 @@ estimating global motion parameters based on the matched features.
 
 The general motion model is given by:
 
-![gm_math1](./img/gm_math1.png)
+$`\begin{bmatrix} x_r \\  y_r \\ 1 \\
+\end{bmatrix} = \begin{bmatrix} h_{11} & h_{12} & h_{13} \\  h_{21} & h_{22} &
+h_{23} \\ h_{31} & h_{32} & h_{33} \\
+\end{bmatrix} \begin{bmatrix} x \\  y \\ 1 \\
+\end{bmatrix}`$
 
-where ![gm_math2](./img/gm_math2.png) and ![gm_math3](./img/gm_math3.png) are the pixel coordinates in the current and reference
-frames, respectively. The supported motion models include:
+where $`\begin{bmatrix} x \\ y\end{bmatrix}`$  and $`\begin{bmatrix} x_r \\ y_r \end{bmatrix}`$ are the pixel coordinates in the
+current and reference
+frames respectively. The supported motion models include:
 
-  - Affine projection: ![gm_math4](./img/gm_math4.png). This
-    transformation preserves parallelism and has six parameters to
-    estimate.
+  - Affine projection: $`h_{31} = h_{32} = 0, h_{33}=1`$ . This
+    transformation preserves parallelism and has six parameters to estimate.
 
-  - Rotation-zoom projection: ![gm_math5](./img/gm_math5.png), which
+  - Rotation-zoom projection: $`h_{31} = h_{32} = 0, h_{33}=1; h_{11}=h_{22};h_{12}=-h_{21}`$, which
     corresponds rotation + scaling. This transformation preserves
     angles and has four parameters to estimate.
 
-  - Translation: ![gm_math6](./img/gm_math6.png) . This transformation
+  - Translation: $`h_{31} = h_{32} = 0, h_{33}=1; h_{11}=h_{22}=1;h_{12}=h_{21}=0`$. This transformation
     preserves orientation and size and has two parameters to estimate.
 
 The global motion estimation involves two main steps. The first step

@@ -4,10 +4,7 @@
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Sample Application Guide](#sample-application-guide)
-    - [Running the decoder](#running-the-decoder)
-
+__[TOC]__
 ## Introduction
 
 This document describes how to use the Scalable Video Technology for AV1

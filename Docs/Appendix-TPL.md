@@ -192,46 +192,47 @@ lambda parameter used in cost calculation.
     - mc_dep_cost_base: Represents an accumulation over the whole frame of (recrf_dist + mc_dep_delta) for all (16x16 or 8x8) blocks in the frame.
 
 The r0 value for the base layer picture is given by:
-```
-r0= intra_cost_base / mc_dep_cost_base
-```
+$`r0= intra\_cost\_base / mc\_dep\_cost\_base`$
 or
 
-![tpl_math1](./img/tpl_math1.png)
+$`r0 =
+\frac{(\sum_{blocks\_in\_frame}recrf\_dist)}{(\sum_{blocks\_in\_frame}recrf\_dist)+(\sum_{blocks\_in\_frame}mc\_dep\_delta)}`$
 
-Based on the definitions above, r0 takes value between 0 and 1. A large r0
-value implies ![tpl_math_sum](./img/tpl_math_sum.png) is small and that the
+Based on the definitions above, $`r0`$ takes value between `0` and `1`. A large $`r0`$ value implies $`\sum_{blocks\_in\_frame}mc\_dep\_delta)`$ is small and that the
 base layer picture is of good quality and is not contributing much to the
 degradation in quality in the pictures they use it as a reference.
 Consequently, such picture may not need any adjustment in QP. On the other
-hand, small r0 values imply ![tpl_math_sum](./img/tpl_math_sum.png) is large
+hand, small $`r0`$ values imply $`\sum_{blocks\_in\_frame}mc\_dep\_delta)`$ is large
 and that the base layer picture is contributing significantly to the
 degradation in quality in the pictures that use it directly or indirectly as a
 reference. Consequently, such picture may need to have its QP reduced.
 
-- beta: The beta parameter is used to adjust the QP per superblock. For the SB of interest in the base layer picture, beta is determined by performing the
-  same computations performed above for r0 but restricted only to the SB of interest. An SB-based parameter rk is then computed as follows:
+- beta: The beta parameter is used to adjust the QP per superblock. For the SB
+  of interest in the base layer picture, beta is determined by performing the
+  same computations performed above for $`r0`$ but restricted only to the SB of
+  interest. An SB-based parameter $`rk`$ is then computed as follows:
+  ```math
+  rk = intra\_cost\_base / mc\_dep\_cost\_base
   ```
-  rk= intra_cost_base / mc_dep_cost_base
-  ```
+
   The parameter beta for the SB is defined as:
-  ```
+  ```math
   beta = r0/rk
   ```
-  Beta is a measure of how much better or worse rk is as compared to r0. For
-  beta >> 1, rk is much smaller as compared to r0, implying that the
+  Beta is a measure of how much better or worse $`rk`$ is as compared to $`r0`$. For
+  beta >> 1, $`rk`$ is much smaller as compared to $`r0`$, implying that the
   corresponding SB is of low quality as compared to the average quality of the
-  frame, and would need a significant QP adjustment. For beta <<1, rk is much
-  larger than r0, implying that the corresponding SB is of good quality as
+  frame, and would need a significant QP adjustment. For beta <<1, $`rk`$ is much
+  larger than $`r0`$, implying that the corresponding SB is of good quality as
   compared to the average quality of the picture and may not need much in terms
   of QP adjustment or could have its QP increased.
 
 - tpl_rdmult_scaling_factors: The tpl_rdmult_scaling_factors is computed on a 16x16 block basis, regardless of the picture resolution. For each 16x16 block,
   calculations similar to those performed for beta are performed for the 16x16 block. The corresponding tpl_rdmult_scaling_factors is given by:
+  ```math
+  tpl\_rdmult\_scaling\_factors = rk/r0 + c, c = 1.2
   ```
-  tpl_rdmult_scaling_factors = rk/r0 + c, c = 1.2
-  ```
-  tpl_rdmult_scaling_factors >= c, where values close to c imply that rk/r0 is small and that the block is of worse quality as compared to the average frame
+  tpl_rdmult_scaling_factors >= c, where values close to c imply that $`rk/r0`$ is small and that the block is of worse quality as compared to the average frame
   quality and that there would be more emphasis on distortion for such blocks. Large values of tpl_rdmult_scaling_factors imply that the block has better
   quality as compared to the average frame quality and that more emphasis would be placed on rate in that case.
 
@@ -243,7 +244,7 @@ prediction structure where lower quantization parameters (QP) are assigned to
 frames in the lower temporal layers, which serve as reference pictures for the
 higher temporal layer pictures. In the TPL algorithm, the propagation factor r0
 is used to improve the base layer picture QP assignment. The main idea is that
-the lower r0 is the more improvements the picture would need.
+the lower $`r0`$ is the more improvements the picture would need.
 
 The picture qindex in CRF mode is computed (in the cqp_qindex_calc_tpl_la()
 function) following different methods depending on the picture type, namely
@@ -253,23 +254,23 @@ and represents the quantization parameter the encoder works with internally
 instead of QP. The later is just an input parameter.
 
 - Intra pictures: The qindex for both Intra Key Frames (IDR) and non-Key frames (CRA) is generated using similar approaches with slightly different tuning.
-  A lower qindex is assigned to the pictures with small r0 values. The main idea behind the adjustment of the qindex for a given picture is as follows:
+  A lower qindex is assigned to the pictures with small $`r0`$ values. The main idea behind the adjustment of the qindex for a given picture is as follows:
 
-  - Compute kf_boost based on the r0 for the picture, where kf_boost is inversely proportional to r0. A range for allowed kf_boost values is defined by kf_boost_low = 600 and kf_boost_high= 3200.
+  - Compute kf_boost based on the $`r0`$ for the picture, where kf_boost is inversely proportional to $`r0`$. A range for allowed kf_boost values is defined by $`kf\_boost\_low = 600`$ and $`kf\_boost\_high= 3200`$.
 
   - The range of qindex adjustment is defined by two lookup tables that associate to qindex an upper bound (high_motion_minq) and a lower bound (low_motion_minq) to the qindex adjustment interval.
 
   - The adjusted qindex is given by:
-    ```
-    active_best_quality = low_motion_minq[qindex] + adjustment
+    ```math
+    active\_best\_quality = low\_motion\_minq[qindex] + adjustment
     ```
     where
-    ```
-    adjustment = ((kf_boost_high – kf_boost)/ (kf_boost_high – kf_boost_low))* qdiff
+    ```math
+    adjustment = ((kf\_boost\_high – kf\_boost)/ (kf\_boost\_high – kf\_boost\_low))* qdiff
     ```
     and where
-    ```
-    qdiff = (high_motion_minq[qindex] - low_motion_minq[qindex])
+    ```math
+    qdiff = (high\_motion\_minq[qindex] - low\_motion\_minq[qindex])
     ```
 - Inter pictures
 
@@ -288,42 +289,45 @@ of that SB should be improved. For each SB, the main idea in QP modulation is
 that a new QP value is determined based on the corresponding beta value using
 the following equation:
 
-![tpl_math2](./img/tpl_math2.png)
+$`QP' = \frac{QP}{f(beta)}`$
 
-where f = sqrt(.) for intra_picture or when beta < 1, and f=sqrt(sqrt(.)) otherwise. The idea then behind the TPL QP modulation is as follows:
+where $`f = sqrt(.)`$ for intra_picture or when $`beta < 1`$, and $`f=sqrt(sqrt(.))`$ otherwise. The idea then behind the TPL QP modulation is as follows:
 
-- If beta > 1 → rk<r0 → SB does not have a good quality as compared to average picture quality → Reduce QP for the SB, e.g. QP’=QP/sqrt(beta) or QP’=QP/sqrt(sqrt(beta)). Since beta > 1, QP’<QP.
+- If $`beta > 1 \rightarrow rk<r0 \rightarrow`$ SB does not have a good quality as compared to average picture quality $`\rightarrow`$ Reduce QP for the SB, e.g. $`QP’=QP/sqrt(beta)`$ or $`QP’=QP/sqrt(sqrt(beta))`$. Since $`beta > 1, QP’<QP`$.
 
-- If beta < 1 → rk>r0 → SB has better quality than average picture quality  Can increase the QP for the SB, e.g. QP’=QP/sqrt(beta). QP’ would then be larger than QP since beta <1.
+- If $`beta < 1 \rightarrow rk>r0 \rightarrow`$ SB has better quality than average picture quality $`\rightarrow`$ Can increase the `QP` for the SB, e.g. $`QP’=QP/sqrt(beta)`$. `QP’` would then be larger than `QP` since $`beta <1`$.
 
-For the case of beta > 1, QP modulation for intra pictures and inter pictures is given by QP’=QP/sqrt(beta) and QP’=QP/sqrt(sqrt(beta)), respectively.
-This implies that for a given beta value, the resulting QP’ for intra picture SB is smaller as compared to that for and inter picture SB,
-i.e. better quality for the intra picture SB. When beta < 1, QP’=QP/sqrt(beta) in both intra and inter pictures.
+For the case of $`beta > 1`$, QP modulation for intra pictures and inter pictures is given by $`QP’=QP/sqrt(beta)`$ and $`QP’=QP/sqrt(sqrt(beta))`$, respectively.
+This implies that for a given beta value, the resulting `QP’` for intra picture SB is smaller as compared to that for and inter picture SB,
+i.e. better quality for the intra picture SB. When $`beta < 1, QP’=QP/sqrt(beta)`$ in both intra and inter pictures.
 
 ### SB-based Lambda Modulation Algorithm
 
 - Update the tpl_rdmult_scaling_factors for the 16x16 blocks in a given SB
 
-  ![tpl_math3](./img/tpl_math3.png)
+  $`tpl\_sb\_rdmult\_scaling\_factors = (\frac{new\_rdmult}{orig\_rdmult})*(\frac{tpl\_rdmult\_scaling\_factors}{geom\_mean\_tpl\_rdmult\_scaling\_factors})`$
 
   where
-  - geom_mean_tpl_rdmult_scaling_factors: Geometric mean of the tpl_rdmult_scaling_factors values for the 16x16 blocks within the SB.
-  - orig_rdmult: Lambda corresponding to the original frame qindex.
-  - new_rdmult: Lambda corresponding to the modified SB qindex.
+  - $`geom\_mean\_tpl\_rdmult\_scaling\_factors`$: Geometric mean of the $`tpl\_sb\_rdmult\_scaling\_factors`$ values for the 16x16 blocks within the SB.
+  - $`orig\_rdmult`$: Lambda corresponding to the original frame qindex.
+  - $`new\_rdmult`$: Lambda corresponding to the modified SB qindex.
 
-  The above scaling factor is then the original lambda scaling factor ![tpl_math_fraction1](./img/tpl_math_fraction1.png) modified using the factor
-  ![tpl_math_fraction2](./img/tpl_math_fraction2.png). The latter represents the relative size of the original tpl_rdmult_scaling_factors for a 16x16
+  The above scaling factor is then the original lambda scaling factor
+  $`(\frac{new\_rdmult}{orig\_rdmult})`$ modified using the factor
+  $`(\frac{tpl\_rdmult\_scaling\_factors}{geom\_mean\_tpl\_rdmult\_scaling\_factors})`$.
+  The latter represents the relative size of the original
+  $`tpl\_sb\_rdmult\_scaling\_factors`$ for a 16x16
   block as compared to the geometric mean for that variable over the SB.
 
 - Compute the rdmult corresponding to a given block in the SB
-  - geom_mean_of_scale:
+  - `geom_mean_of_scale`:
     - For blocks that are 16x16 or larger in size : Geometric mean of the tpl_sb_rdmult_scaling_factors values for the 16x16 blocks within the given block (for block that are 16x16 or larger in size),
     - For block sizes smaller than 16x16: The tpl_sb_rdmult_scaling_factors values for the 16x16 block to which belongs the block.
-  - new_full_lambda: The updated lambda value for a given block.
+  - `new_full_lambda`: The updated lambda value for a given block.
+    ```math
+    new\_full\_lambda = pic\_full\_lambda * geom\_mean\_of\_scale + 0.5
     ```
-    new_full_lambda = pic_full_lambda * geom_mean_of_scale + 0.5
-    ```
-    where pic_full_lambda is the original lambda value based on the picture qindex.
+    where `pic_full_lambda` is the original lambda value based on the picture qindex.
 
 ## 3. Optimization of the algorithm
 
@@ -678,7 +682,7 @@ be.
 
 - Final qindex adjustment: The final value of qindex is roughly given by (to avoid unnecessary details)
 
-  active_best_quality $$\approx$$ q_adj_factor x active_best_quality
+  active_best_quality $`\approx`$ q_adj_factor x active_best_quality
 
 ### 2. Case of Inter Pictures
 

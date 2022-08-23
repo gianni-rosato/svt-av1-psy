@@ -42,7 +42,7 @@ The prediction procedure is outlined as follows:
 
 ##### Figure 4. Reference sample around a 4x2 block.
 
-The ![kth](http://latex.codecogs.com/gif.latex?k^{th}) predicted sample P_k, k=0,…,7, in the 4x2 block is given
+The $`k^{th}`$ predicted sample P_k, k=0,…,7, in the 4x2 block is given
 by:
 
 av1_filter_intra_taps[mode][k][0] * R0 + av1_filter_intra_taps[mode][k][1] * R1 +\

@@ -203,7 +203,7 @@ performed on a per-SB basis after HME (before ME) and after ME (so that
 candidates will not be passed to MD). Pruning decisions are based on the
 relative SAD of each reference frame (relative to the best SAD), as follows:
 
-![me_eqn1](./img/me_eqn1.png)
+$\frac{`Curr\_frame\_SAD - Best\_frame\_SAD`}{Best\_frame\_SAD}>TH$
 
 Reference pruning controls are set in ```set_me_hme_ref_prune_ctrls()```, with
 the following controls:

@@ -4,22 +4,7 @@
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-- [High-level decoder architecture](#high-level-decoder-architecture)
-  * [Bit-Stream Parse](#bit-stream-parse)
-  * [Reconstruction](#reconstruction)
-  * [Loop Filter](#loop-filter)
-  * [CDEF](#cdef)
-  * [Loop Restoration](#loop-restoration)
-- [Multi-Threaded Architecture](#multi-threaded-architecture)
-  * [Tile level Parallelism](#tile-level-parallelism)
-  * [Tile Row-level Parallelism](#tile-row-level-parallelism)
-  * [Frame Row-level Parallelism](#frame-row-level-parallelism)
-  * [Job Selection and Sync Points in MT](#job-selection-and-sync-points-in-mt)
-- [Frame Level Buffers](#frame-level-buffers)
-- [Appendix](#appendix)
-  * [High-level Data Structures](#high-level-data-structures)
-
+__[TOC]__
 ## List of Figures
 
 - [Figure 1](#figure-1): High-Level Decoder Architecture

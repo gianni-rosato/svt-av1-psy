@@ -20,89 +20,111 @@ local motion for a given block. The feature makes use of motion vector
 information for neighboring blocks to extract the affine local motion model
 parameters. The general motion model for local warped motion is given by
 
-![local_warped_motion_math1](./img/local_warped_motion_math1.png)
+$`\begin{bmatrix}x_r \\ y_r\end{bmatrix}=
+\begin{bmatrix}h_{11} & h_{12} & h_{13} \\ h_{21} & h_{22} & h_{23} \end{bmatrix}\begin{bmatrix}x \\ y \\ 1\end{bmatrix}`$
 
-where ![local_warped_motion_math2](./img/local_warped_motion_math2.png) and ![local_warped_motion_math3](./img/local_warped_motion_math3.png) represent the sample pixel coordinates in the current
+where $`\begin{bmatrix}x \\ y\end{bmatrix}`$ and $`\begin{bmatrix}x_r \\ y_r\end{bmatrix}`$ represent the sample pixel coordinates in the current
 and reference frames, respectively. The decoder performs the same model
 estimation, so the encoder needs only to signal whether local warped
 motion is the selected mode for the current block and the corresponding
-translational model parameters ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{13}}) and
-![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{23}}), i.e. the rest of the model parameters are
-not signaled in the bitstream.
+translational model parameters $`\mathbf{h_{13}}`$ and $`\mathbf{h_{23}}`$, i.e.
+the rest of the model parameters are not signaled in the bitstream.
 
-Model parameters ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{13}}) and
-![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{23}})
-represent the entries in the current block motion vector ( ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{MV_0}) in Figure 1 below).
+Model parameters $`\mathbf{h_{13}}`$ and $`\mathbf{h_{23}}`$
+represent the entries in the current block motion vector ( $`\mathbf{MV_0}`$) in Figure 1 below).
 
-Let ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{MV_0}) =
-![local_warped_motion_math6](./img/local_warped_motion_math6.png). Then the above implies ![local_warped_motion_math7](./img/local_warped_motion_math7.png). The remaining parameters ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{11},h_{12},h_{21}}),
-. The remaining parameters ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{22}}) are estimated using a least squares approach.
+Let $`\mathbf{MV_0} = \begin{bmatrix}x_{mv} \\ y_{mv}\end{bmatrix}`$\
+Then the above implies,\
+$`\begin{bmatrix}h_{13} \\ h_{23}\end{bmatrix} = \begin{bmatrix}x_{mv} \\
+y_{mv}\end{bmatrix}`$,\
+The remaining parameters $`h_{11}, h_{12}, h_{21}, h_{22}`$ are estimated using a least squares approach.
 
-To illustrate the estimation of the parameters
-![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{11},h_{12},h_{21}}) and
-![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{22}}) using a
-least squares approach, consider the example shown in Figure 1 below.
+To illustrate the estimation of these parameters, consider example shown in Figure 1 below.
 
 ![local_warped_motion_fig1](./img/local_warped_motion_fig1.png)
 
 ##### Figure 1. Current block in yellow is a 32x32 block. Neighboring blocks that refer to the same reference picture as the current block are in blue. MVs (in orange) for the current block and the blue blocks are used to infer the local warp motion of the yellow block.
 
-Let
-![math12](./img/local_warped_motion_math12.png) be the center of the current block, and
-![math13](./img/local_warped_motion_math13.png) the projection of (C) onto the reference frame using
-the motion vector ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{MV_0}) for the current block. According to the motion
-model:
+Let $`C = \begin{bmatrix}x_0 \\ y_0\end{bmatrix}`$ be the center of the current
+block, and $`C' = \begin{bmatrix}x'_0 \\ y'_0\end{bmatrix}`$
+be the projection of $`(C)`$ onto the reference frame using
+the motion vector $`\mathbf{MV_0}`$ for the current block. According to the
+motion model: \
+$`\begin{bmatrix}x'_0 \\ y'_0\end{bmatrix}=
+\begin{bmatrix}\color{orange}{h_{11}} & \color{orange}{h_{12}} & \color{blue}{h_{13}} \\ \color{orange}{h_{21}} & \color{orange}{h_{22}} & \color{blue}{h_{23}}
+\end{bmatrix}\begin{bmatrix}x_0 \\ y_0 \\ 1\end{bmatrix}`$
 
-![local_warped_motion_math14](./img/local_warped_motion_math14.png)
+where the translational component
+$`\begin{bmatrix}\color{blue}{h_{13}}\\\color{blue}{h_{23}}\end{bmatrix}`$ of
+the motion model would correspond to the motion vector $`\mathbf{MV_0}`$ for the
+current block. For block 7, define $`C_7 = \begin{bmatrix}x_7 \\
+y_7\end{bmatrix}`$ to be the center of block 7, and $`C'_7 = \begin{bmatrix}x'_7
+\\ y'_7\end{bmatrix}`$ to be the projection of
+$`\mathbf{C}`$ onto the reference frame using the motion vector $`\mathbf{MV_7}`$ for block 7.
 
-where the translational component ![local_warped_motion_math_new1](./img/local_warped_motion_math_new1.png) of the motion model would correspond to the motion vector
-![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{MV_0}) for the current block. For block 7, define
-![local_warped_motion_math_new1](./img/local_warped_motion_math_new2.png) to be the center of block 7, and
-![local_warped_motion_math_new3](./img/local_warped_motion_math_new3.png) to be the projection of ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C}) onto
-the reference frame using the motion vector ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{MV_7}) for block 7.
+The local warp transformation defines how the vector relating $`\mathbf{C}`$ and $`\mathbf{C_7}`$ in the source frame is mapped into the vector relating
+$`\mathbf{C'}`$ and $`\mathbf{C'_7}`$ in the reference frame.
 
-The local warp transformation defines how the vector relating ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C})
-and ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C_7}) in the source frame is mapped into the vector relating
-![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C^{\'}) and ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C^{\'}_7}) in the reference frame.
-
-![local_warped_motion_math_new4](./img/local_warped_motion_math_new4.png)
+$`\begin{bmatrix}x'_7-x'_0 \\ y'_7 - y'_0\end{bmatrix}=
+\begin{bmatrix}\color{orange}{h_{11}} & \color{orange}{h_{12}} \\
+\color{orange}{h_{21}} & \color{orange}{h_{22}}
+\end{bmatrix}\begin{bmatrix}x_7-x_0 \\ y_7 - y_0 \end{bmatrix}`$
 
 In addition to block 7, considering blocks 6 and 4 results in the following:
+$`\begin{bmatrix}x'_4 - x'_0 & y'_4 - y'_0 \\ x'_6 - x'_0 & y'_6 - y'_0 \\ x'_7 - x'_0 & y'_7 - y'_0\end{bmatrix}=
+\begin{bmatrix}x_4 - x_0 & y_4 - y_0 \\ x_6 - x_0 & y_6 - y_0 \\ x_7 - x_0 & y_7 - y_0\end{bmatrix}\begin{bmatrix}\color{orange}{h_{11}} & \color{orange}{h_{21}} \\
+\color{orange}{h_{12}} & \color{orange}{h_{22}}
+\end{bmatrix}`$
 
-![local_warped_motion_math_new5](./img/local_warped_motion_math_new5.png)
+Define,
+$`V_1 = \begin{bmatrix}x'_4 - x'_0 \\ x'_6 - x'_0 \\ x'_7 - x'_0\end{bmatrix},
+V_2 = \begin{bmatrix} y'_4 - y'_0 \\ y'_6 - y'_0 \\  y'_7 - y'_0\end{bmatrix}, R=
+\begin{bmatrix}x_4 - x_0 & y_4 - y_0 \\ x_6 - x_0 & y_6 - y_0 \\ x_7 - x_0 & y_7 - y_0\end{bmatrix}`$
 
-Define ![local_warped_motion_math_new6](./img/local_warped_motion_math_new6.png). it follows that:
+it follows that:\
+$`\begin{bmatrix}V_1 & V2\end{bmatrix} = R\begin{bmatrix}\color{orange}{h_{11}} & \color{orange}{h_{21}} \\
+\color{orange}{h_{12}} & \color{orange}{h_{22}}
+\end{bmatrix}`$
 
-![local_warped_motion_math_new7](./img/local_warped_motion_math_new7.png)
 
-Solving a least square estimation for ![local_warped_motion_math_new8](./img/local_warped_motion_math_new8.png) yields:
+Solving a least square estimation for $`\begin{bmatrix}\color{orange}{h_{11}} & \color{orange}{h_{21}} \\ \color{orange}{h_{12}} & \color{orange}{h_{22}}\end{bmatrix}`$ yields:
 
-![local_warped_motion_math_new9](./img/local_warped_motion_math_new9.png)
+$`\begin{bmatrix}\color{orange}{h_{11}} & \color{orange}{h_{21}} \\
+\color{orange}{h_{12}} & \color{orange}{h_{22}}
+\end{bmatrix} = (R^TR)^{-1}R^T\begin{bmatrix}V_1 & V_2\end{bmatrix}`$
 
 For implementation purposes, the local warp transform is implemented as
 two shears: A horizontal shear and vertical shear. The model matrix H is
 then decomposed as follows:
 
-![local_warped_motion_math29](./img/local_warped_motion_math29.png)
+$`\begin{bmatrix}\color{orange}{h_{11}} & \color{orange}{h_{12}} \\
+\color{orange}{h_{21}} & \color{orange}{h_{22}}
+\end{bmatrix} = \begin{bmatrix}1 & 0 \\
+\gamma & 1+ \Delta
+\end{bmatrix}\begin{bmatrix}1+\alpha & \beta \\
+0 & 1
+\end{bmatrix}`$
 
-where ![latexmath](http://latex.codecogs.com/gif.latex?\alpha,\beta,\Delta,\gamma) are shear
-model parameters. The Vertical shear is given by the following model:
+where $`\alpha,\beta,\Delta,\gamma`$ are shear model parameters. The Vertical shear is given by the following model:
 
-![local_warped_motion_math31](./img/local_warped_motion_math31.png)
+$`\begin{bmatrix}x_r \\ y_r\end{bmatrix} =  \begin{bmatrix}1 & 0 \\
+\gamma & 1+ \Delta
+\end{bmatrix}\begin{bmatrix}x \\ y\end{bmatrix}`$
 
-whereas the horizontal shear is given by:
 
-![local_warped_motion_math32](./img/local_warped_motion_math32.png)
+whereas the horizontal shear is given by, \
+$`\begin{bmatrix}x_r \\ y_r\end{bmatrix} =  \begin{bmatrix}1 + \alpha & \beta \\
+0 & 1 \end{bmatrix}\begin{bmatrix}x \\ y\end{bmatrix}`$
+
 
 The combined transform is given by:
+$`\begin{bmatrix}x_r \\ y_r\end{bmatrix} = \begin{bmatrix}1 & 0 \\
+\gamma & 1+ \Delta
+\end{bmatrix}\begin{bmatrix}1+\alpha & \beta \\
+0 & 1
+\end{bmatrix}\begin{bmatrix}x \\ y\end{bmatrix}`$
 
-![local_warped_motion_math33](./img/local_warped_motion_math33.png)
-
-The shear parameters ![latexmath](http://latex.codecogs.com/gif.latex?\alpha,\beta,\Delta,\gamma) are determined based on the parameters
-![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{11},h_{12},h_{21}}) and
-![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{h_{22}}). Subpel displacements that results from the application of
-the horizontal and vertical shears are evaluated using 8-tap
-interpolation filters with ![latexmath](http://latex.codecogs.com/gif.latex?1/64^{th}) pel precision.
+The shear parameters $`\alpha,\beta,\Delta,\gamma`$ are determined based on the parameters $`\mathbf{h_{11},h_{12},h_{21}}`$ and $`\mathbf{h_{22}}`$. Subpel displacements that results from the application of the horizontal and vertical shears are evaluated using 8-tap interpolation filters with $`1/64^{th}`$ pel precision.
 
 The final warped motion model is applied on an 8x8 basis in the reference
 frame. The predicted block is constructed by assembling the 8x8 predicted

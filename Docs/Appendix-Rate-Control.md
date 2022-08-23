@@ -3,33 +3,7 @@
 # High Level Description of Rate Control in SVT-AV1
 
 ## Table of Contents
-1. [Introduction](#introduction)
-2. [High Level Idea](#high-level-idea)
-  * One-Pass VBR + Look Ahead
-  * Multi-Pass VBR
-3. [Rate Control Flow](#vbr-rate-control-flow)
-  * CRF IPP Pass
-  * Middle-Pass: CRF Encoding based on the Final Prediction Strucutre
-  * Final Pass
-4. [Final Pass RC Algorithm in Detail](#final-pass-rc-algorithm-in-detail)
-  * GoP-Level Bit Assignment (get_kf_group_bits())
-    * One-Pass VBR + LAD with look ahead shorter than GoP size
-    * One-Pass VBR + LAD with look ahead longer than GoP size
-    * Multi-Pass VBR
-  * Mini-GoP Level Bit Assignment (calculate_total_GF_group_bits())
-    * One-Pass VBR + LAD
-    * Multi-Pass
-  * Frame Level Bit Assignment
-    * One-Pass VBR + LAD
-    * Multi-Pass
-  * SB-based QP_Modulation Algorithm
-  * Block-basd Lambda Modulation Algorithm
-  * Re-encoding
-  * Post Encode RC Update
-5. [Constant Bitrate Rate Control](#constant-bitrate-rate-control)
-- Appendix A: Final-Pass Rate Control Functions
-- Appendix B: Speed Optimization of the Middle Pass
-- Appendix C: Capped CRF
+__[TOC]__
 
 ## Introduction
 
@@ -389,13 +363,13 @@ given SB implies that quality of that SB should be improved. For each SB, the
 main idea in QP modulation is that a new QP value is determined based on the
 corresponding beta value using the following equation:
 
-![rc_math1](./img/rc_math1.PNG)
+$`QP'= \frac{QP}{f(beta)}`$
 
-where f = sqrt(.) for intra_picture or when beta < 1, and f=sqrt(sqrt(.)) otherwise. The idea then behind the TPL QP modulation is as follows:
-- If beta > 1 -> rk<r0 -> SB does not have a good quality as compared to average picture quality -> Reduce QP for the SB, e.g. QP'=QP/sqrt(beta) or QP'=QP/sqrt(sqrt(beta)). Since beta > 1, QP'<QP.
-- If beta <1 -> rk>r0 -> SB has better quality than average picture quality -> Can increase the QP for the SB, e.g. QP'=QP/sqrt(beta). QP' would then be larger than QP since beta <1.
+where $`f = sqrt(.)`$ for intra_picture or when $`beta < 1`$, and $`f=sqrt(sqrt(.))`$ otherwise. The idea then behind the TPL QP modulation is as follows:
+- If $`beta > 1 \rightarrow rk<r0 \rightarrow`$ SB does not have a good quality as compared to average picture quality $`\rightarrow`$ Reduce QP for the SB, e.g. $`QP'=QP/sqrt(beta)`$ or $`QP'=QP/sqrt(sqrt(beta))`$. Since $`beta > 1`$, $`QP'<QP`$.
+- If $`beta <1 \rightarrow rk>r0 \rightarrow`$ SB has better quality than average picture quality $`\rightarrow`$ Can increase the QP for the SB, e.g. $`QP'=QP/sqrt(beta)`$. $`QP'`$ would then be larger than QP since $`beta <1`$.
 
-For the case of beta > 1, QP modulation for intra pictures and inter pictures is given by QP’=QP/sqrt(beta) and QP’=QP/sqrt(sqrt(beta)), respectively. This implies that for a given beta value, the resulting QP’for intra picture SB is smaller as compared to that for and inter picture SB, i.e. better quality for the intra picture SB. When beta < 1, QP’=QP/sqrt(beta) in both intra and inter pictures.
+For the case of $`beta > 1`$, QP modulation for intra pictures and inter pictures is given by $`QP’=QP/sqrt(beta)`$ and $`QP’=QP/sqrt(sqrt(beta))`$, respectively. This implies that for a given beta value, the resulting QP’for intra picture SB is smaller as compared to that for and inter picture SB, i.e. better quality for the intra picture SB. When $`beta < 1`$, $`QP’=QP/sqrt(beta)`$ in both intra and inter pictures.
 
 ### Block-based Lambda Modulation Algorithm
 
@@ -403,23 +377,23 @@ The block-based lambda modulation algorithm is based on TPL and is also the same
 
 - Update the tpl_rdmult_scaling_factors for the 16x16 blocks in a given SB
 
-![rc_math2](./img/rc_math2.PNG)
+$`tpl\_sb\_rdmult\_scaling\_factors = (\frac{new\_rdmult}{orig\_rdmult})*(\frac{tpl\_rdmult\_scaling\_factors}{geom\_mean\_tpl\_rdmult\_scaling\_factors})`$
 
 where
-  * geom_mean_tpl_rdmult_scaling_factors: Geometric mean of the tpl_rdmult_scaling_factors values for the 16x16 blocks within the SB.
-  * orig_rdmult: Lambda corresponding to the original frame qindex.
-  * new_rdmult: Lambda corresponding to the modified SB qindex.
-  The above scaling factor is then the original lambda scaling factor (new_rdmult/ orig_rdmult) modified using the factor (tpl_rdmult_scaling_factors/geom_mean_tpl_rdmult_scaling_factors). The latter represents the relative size of the original tpl_rdmult_scaling_factors for a 16x16 block as compared to the geometric mean for that variable over the SB.
+  * $`geom\_mean\_tpl\_rdmult\_scaling\_factors`$: Geometric mean of the tpl_rdmult_scaling_factors values for the 16x16 blocks within the SB.
+  * $`orig\_rdmult`$: Lambda corresponding to the original frame qindex.
+  * $`new\_rdmult`$: Lambda corresponding to the modified SB qindex.
+  The above scaling factor is then the original lambda scaling factor $`(\frac{new\_rdmult}{orig\_rdmult})`$ modified using the factor $`(\frac{tpl\_rdmult\_scaling\_factors}{geom\_mean\_tpl\_rdmult\_scaling\_factors})`$. The latter represents the relative size of the original $`tpl\_sb\_rdmult\_scaling\_factors`$ for a 16x16 block as compared to the geometric mean for that variable over the SB.
 
 - Compute the rdmult corresponding to a given block in the SB
-  * geom_mean_of_scale:
+  * $`geom\_mean\_of\_scale`$:
     * For blocks that are 16x16 or larger in size : Geometric mean of the tpl_sb_rdmult_scaling_factors values for the 16x16 blocks within the given block (for block that are 16x16 or larger in size),
     * For block sizes smaller than 16x16: The tpl_sb_rdmult_scaling_factors values for the 16x16 block to which belongs the block.
-  * new_full_lambda: The updated lambda value for a given block.
-
-  ___new_full_lambda = pic_full_lambda * geom_mean_of_scale + 0.5___
-
-    where pic_full_lambda is the original lambda value based on the picture qindex.
+  * $`new\_full\_lambda`$: The updated lambda value for a given block.
+  ```math
+  new\_full\_lambda = pic\_full\_lambda * geom\_mean\_of\_scale + 0.5
+  ```
+    where $`pic\_full\_lambda`$ is the original lambda value based on the picture qindex.
 
 ### Re-encoding
 
@@ -609,9 +583,9 @@ The final qindex for the frame is obtained by looping over all the qindex
 values in the interval [worst quality qindex, best quality qindex] and using
 the following model to determine an estimate for the frame size:
 
-![rc_math3](./img/rc_math3.PNG)
+$`Estimated Frame Size = \frac{\alpha * correction\_factor}{qindex}`$
 
-where α is 1500000 for key frames and 1300000 otherwise. The correction_factor
+where $`\alpha`$ is $`1500000`$ for key frames and $`1300000`$ otherwise. The correction_factor
 is as in the VBR case. The qindex that provides the closest rate to the target
 frame size is considered.
 

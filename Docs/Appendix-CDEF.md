@@ -64,12 +64,12 @@ direction.
 ***Step 2 – Filtering***. The filtering operation consists of two main
 steps, namely a primary filtering operation and a secondary filtering
 operation. The primary filter acts along the identified block direction.
-The secondary filter acts at ![math](http://latex.codecogs.com/gif.latex?45^o) from the identified
+The secondary filter acts at $`45^o`$ from the identified
 direction. In the example shown in Figure 3 below, the block direction
-is d=0, ![math](http://latex.codecogs.com/gif.latex?45^o). The sample to be filtered is highlighted in
+is d=0, $`45^o`$. The sample to be filtered is highlighted in
 red. During primary filtering of the red sample the four green samples are considered.
 During secondary filtering of the red sample the eight blue samples
-located at a ![math](http://latex.codecogs.com/gif.latex?45^o) angle from the block direction
+located at a $`45^o`$ angle from the block direction
 are considered.
 
 ![image26](./img/image26.png)
@@ -79,20 +79,20 @@ are considered.
 The nonlinear low-pass filters used in the filtering process are given
 by [\[1\]](#ref-1):
 
-![math](http://latex.codecogs.com/gif.latex?P_{filtered}(i,j)=p(i,j)+\sum_{m,n}w_{m,n}f(p(m,n)-p(i,j),S,D))
+$`P_{filtered}(i,j)=p(i,j)+\sum_{m,n}w_{m,n}f(p(m,n)-p(i,j),S,D)`$
 
-Where ![image](http://latex.codecogs.com/gif.latex?p(i,j)) is the sample to be filtered,
-![image](http://latex.codecogs.com/gif.latex?P_{filtered}(i,j)) is the filtered value of
-sample ![image](http://latex.codecogs.com/gif.latex?p(i,j)), ![image](http://latex.codecogs.com/gif.latex?w) are the filter weights,
-![image](http://latex.codecogs.com/gif.latex?f) is a nonlinear constraint function, ![image](http://latex.codecogs.com/gif.latex?S) is the
-filter strength and ![image](http://latex.codecogs.com/gif.latex?D) is the filter damping.
+Where $`p(i,j)`$ is the sample to be filtered,
+$`P_{filtered}(i,j)`$ is the filtered value of
+sample $`p(i,j)`$, $`w`$ are the filter weights,
+$`f`$ is a nonlinear constraint function, $`S`$ is the
+filter strength and $`D`$ is the filter damping.
 
-When ![image](http://latex.codecogs.com/gif.latex?|p(m,n)-p(i,j)|) is small, ![image](http://latex.codecogs.com/gif.latex?f(p(m,n)-p(i,j),S,D)=p(m,n)-p(i,j)), implying that the filter
-behaves as an FIR filter. When ![image](http://latex.codecogs.com/gif.latex?|p(m,n)-p(i,j)|) is large,
-![image](http://latex.codecogs.com/gif.latex?f(p(m,n)-p(i,j),S,D)=0) and no filtering is applied to the sample. The function ![image](http://latex.codecogs.com/gif.latex?f)
-de-emphasizes neighboring pixels ![image](http://latex.codecogs.com/gif.latex?p(m,n)) with large
-contrast (i.e. large magnitude of ![image](http://latex.codecogs.com/gif.latex?p(m,n)-p(i,j))). The strength
-![image](http://latex.codecogs.com/gif.latex?S) and damping ![image](http://latex.codecogs.com/gif.latex?D) parameters control the attenuation of the large magnitude differences.
+When $`|p(m,n)-p(i,j)|`$ is small, $`f(p(m,n)-p(i,j),S,D)=p(m,n)-p(i,j)`$, implying that the filter
+behaves as an FIR filter. When $`|p(m,n)-p(i,j)|$ is large,
+$f(p(m,n)-p(i,j),S,D)=0`$ and no filtering is applied to the sample. The function $`f`$
+de-emphasizes neighboring pixels $`p(m,n)`$ with large
+contrast (i.e. large magnitude of $`p(m,n)-p(i,j)`$. The strength
+$`S`$ and damping $`D`$ parameters control the attenuation of the large magnitude differences.
 
 
 Filtering along the identified block direction is referred to as primary

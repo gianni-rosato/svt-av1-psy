@@ -24,9 +24,9 @@ Smooth) are used with small block sizes (width \<= 4).
 Vertical and horizontal interpolation can be performed using different
 1D filters. Interpolation filter selection can be performed at the frame
 level or at the block level. Luma filters are different from chroma
-filters. As noted in Table 1 below, beyond ![math](http://latex.codecogs.com/gif.latex?8/16^{th) position,
+filters. As noted in Table 1 below, beyond $`8/16^{th}`$ position,
 filter coefficients are in reverse order as compared to the filter coefficients for the
-mirror position before ![math](http://latex.codecogs.com/gif.latex?8/16^{th) position.
+mirror position before $`8/16^{th}`$ position.
 
 ##### Table 1. Sub-pel interpolation filters.
 
@@ -50,13 +50,13 @@ either in one step or in two steps.
     combination of horizontal and vertical filters.
 
       - Horizontal filtering is performed first. The filter to use is
-    deduced from the ![math](http://latex.codecogs.com/gif.latex?1/16^{th) offset of the sub-pel position
+    deduced from the $`1/16^{th}`$ offset of the sub-pel position
     from the full-pel position. The buffer for horizontal filtering is
     expanded in the y direction on both ends of the block to produce
     additional filtered rows that would be used in vertical filtering.
 
       - Vertical filtering is then performed. The filter to use is deduced
-    from the ![math](http://latex.codecogs.com/gif.latex?1/16^{th) offset of the sub-pel position from the
+    from the $`1/16^{th}`$ offset of the sub-pel position from the
     full-pel position.
 
 ![csifsa_fig2](./img/csifsa_fig2.png)
@@ -68,7 +68,7 @@ by considering the sub-pel positions illustrated in Figure 2 below.
 Consider for example the case of generating half-pel samples around the
 best full-pel position (in orange), and assume regular filters are used.
 The steps involved in the process are outlined in the following:
-  - All half-pel positions are generated using the ![math](http://latex.codecogs.com/gif.latex?8/16^{th)
+  - All half-pel positions are generated using the $`8/16^{th}`$
     filter: **{** **0,** **2,** **-14,** **76,** **76,** **-14,**
     **2,** **0** **}**
   - Half-pel positions (orange and yellow) in the row of full-pel

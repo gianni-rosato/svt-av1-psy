@@ -3,54 +3,7 @@
 # Encoder Design for SVT-AV1 (Scalable Video Technology for AV1 Encoder)
 
 ## Table of Contents
-- [Revision History](#revision-history)
-- [Table of Contents](#table-of-contents)
-- [List of Figures](#list-of-figures)
-- [List of Tables](#list-of-tables)
-- [Introduction](#introduction)
-- [Definitions](#definitions)
-  * [General Definitions](#general-definitions)
-  * [Source Partitioning](#source-partitioning)
-- [High-level encoder architecture](#high-level-encoder-architecture)
-- [Inter-process data and control management](#inter-process-data-and-control-management)
-  * [Objects](#objects)
-    * [Sequence Control Set](#sequence-control-set)
-    * [Picture Control Set](#picture-control-set)
-    * [Picture Descriptors](#picture-descriptors)
-    * [Results](#results)
-  * [System Resource Manager (SRM)](#system-resource-manager-srm)
-    * [Resource manager components](#resource-manager-components)
-      * [Empty object FIFO](#empty-object-FIFO)
-      * [Producer empty object FIFO](#producer-empty-object-FIFO)
-      * [Producer process](#producer-process)
-      * [Producer process FIFO](#producer-process-FIFO)
-      * [Full object FIFO](#full-object-FIFO)
-      * [Consumer full object FIFO](#consumer-full-object-FIFO)
-      * [Consumer process](#consumer-process)
-      * [Consumer process FIFO](#consumer-process-FIFO)
-    * [Resource manager execution flow snapshot](#resource-manager-execution-flow-snapshot)
-  * [High-level Data Structures](#high-level-data-structures)
-    * [Configuration Set](#configuration-set)
-    * [Sequence Control Set (SCS)](#sequence-control-set-scs)
-    * [Picture Control Set (PCS)](#picture-control-set-pcs)
-    * [Picture Descriptors](#picture-descriptors)
-- [Encoder Processes and Algorithms](#encoder-processes-and-algorithms)
-  * [Resource Coordination Process](#resource-coordination-process)
-  * [Picture Analysis Process](#pictureanalysisprocess)
-  * [Picture Decision Process](#picture-decision-process)
-  * [Motion Estimation Process](#motion-estimation-process)
-  * [Initial Rate Control Process](#initial-rate-control-process)
-  * [Source-based Operations Process](#source-based-operations-process)
-  * [Picture Manager Process](#picture-manager-process)
-  * [Rate Control Process](#rate-control-process)
-  * [Mode Decision Configuration Process](#mode-decision-configuration-process)
-  * [Mode Decision](#mode-decision)
-  * [Deblocking Loop Filter Process](#deblocking-loop-filter-process)
-  * [Constrained Directional Enhancement Filter Process](#constrained-directional-enhancement-filter-process)
-  * [Restoration Filter Process](#restoration-filter-process)
-  * [Entropy Coding Process](#entropy-coding-process)
-  * [Packetization Process](#packetization-process)
-- [Detailed Feature Implementation Design Appendices](#detailed-feature-implementation-design-appendices)
+__[TOC]__
 
 ## List of Figures
 - [Figure 1](#figure-1): Five-layer prediction structure used in the SVT-AV1 encoder with one reference picture in each direction.
@@ -327,12 +280,12 @@ encoder pipeline.
 
 #### Producer empty object FIFO
 
-The ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) producer empty object FIFO contains empty objects
-that have been assigned to the ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) producer process. The
-![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) producer process requires an empty object from the
-![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) producer empty object FIFO in order to begin execution.
-The ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) producer empty object FIFO is hardcoded to the
-![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) producer process.
+The $`\mathrm{i^{th}}`$ producer empty object FIFO contains empty objects
+that have been assigned to the $`\mathrm{i^{th}}`$ producer process. The
+$`\mathrm{i^{th}}`$ producer process requires an empty object from the
+$`\mathrm{i^{th}}`$ producer empty object FIFO in order to begin execution.
+The $`\mathrm{i^{th}}`$ producer empty object FIFO is hardcoded to the
+$`\mathrm{i^{th}}`$ producer process.
 
 #### Producer process
 
@@ -360,12 +313,12 @@ manage results objects have full object FIFOs.
 
 #### Consumer full object FIFO
 
-The ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{j^{th}}) consumer full object FIFO contains full objects that
-have been assigned to the ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{j^{th}}) consumer process. The
-![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{j^{th}}) consumer process requires an empty object from the
-![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{j^{th}}) consumer full object FIFO in order to begin execution.
-The ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{j^{th}}) consumer full object FIFO is hardwired to the
-![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{j^{th}}) consumer process.
+The $`\mathrm{j^{th}}`$ consumer full object FIFO contains full objects that
+have been assigned to the $`\mathrm{j^{th}}`$ consumer process. The
+$`\mathrm{j^{th}}`$ consumer process requires an empty object from the
+$`\mathrm{j^{th}}`$ consumer full object FIFO in order to begin execution.
+The $`\mathrm{j^{th}}`$ consumer full object FIFO is hardwired to the
+$`\mathrm{j^{th}}`$ consumer process.
 
 #### Consumer process
 
@@ -420,11 +373,11 @@ Note the following:
 carried out in the system resource code, while steps 4 and 5 are
 executed by the consumer process.
 
-- The ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) producer process will not become active if the
-![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) producer empty object FIFO contains no objects
+- The $`\mathrm{i^{th}}`$ producer process will not become active if the
+$`\mathrm{i^{th}}`$ producer empty object FIFO contains no objects
 
-- The ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) consumer process will not become active if the
-![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{i^{th}}) consumer full object FIFO contains no objects
+- The $`\mathrm{i^{th}}`$ consumer process will not become active if the
+$`\mathrm{i^{th}}`$ consumer full object FIFO contains no objects
 
 - The tangerine arrows depict the producer processes’ acquisition of
 empty objects and are not described in the execution flow snapshot
@@ -537,7 +490,7 @@ procedures, such as resampling, color space conversion, or tone mapping.
 The Picture Analysis processes can be multithreaded and as such can
 process multiple input pictures at a time. The encoder pre-analysis
 includes creating an n-bin histogram for the purpose of scene change
-detection, gathering the ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{1^{st}}) and ![latex_i^th](http://latex.codecogs.com/gif.latex?\mathrm{2^{nd}}) moment
+detection, gathering the $`\mathrm{1^{st}}`$ and $`\mathrm{2^{nd}}`$ moment
 statistics for each 8x8 block in the picture which are used to compute
 variance, input subsampling and screen content detection. All
 image-modifying functions should be completed before any

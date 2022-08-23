@@ -6,12 +6,7 @@ See also, the [list of all parameters](Parameters.md)
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Sample Application Guide](#sample-application-guide)
-    - [Input Video Format](#input-video-format)
-    - [Compressed 10-bit format](#compressed-10-bit-format)
-    - [Running the encoder](#running-the-encoder)
-    - [Sample command lines](#sample-command-lines)
+__[TOC]__
 
 ## Introduction
 

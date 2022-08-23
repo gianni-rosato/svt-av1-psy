@@ -28,11 +28,12 @@ filters), where only three, two or one coefficient(s) for the horizontal
 and vertical filters are included in the bit stream due to symmetry. The
 constraints on the Wiener filter to reduce complexity are as follows:
 
-  - The filter is separable. Let ![math](http://latex.codecogs.com/gif.latex?c_v) and ![math](http://latex.codecogs.com/gif.latex?c_h) be the
+  - The filter is separable. Let `c_v` and `c_h` be the
     wx1 vertical and horizontal filter kernels.
-  - The filter kernels ![math](http://latex.codecogs.com/gif.latex?c_v) and ![math](http://latex.codecogs.com/gif.latex?c_h) are symmetric: ![math](http://latex.codecogs.com/gif.latex?c_v(i)=c_v(w-1-i)), ![math](http://latex.codecogs.com/gif.latex?c_h(i)=c_h(w-1-i)), i=0,1...,r-1.
+  - The filter kernels `c_v` and `c_h` are symmetric:\
+   $`c_v(i)=c_v(w-1-i)`$, $`c_h(i)=c_h(w-1-i)`$, where `i=0,1...,r-1`.
 
-  - The sum of the coefficients is 1: ![math](./img/restoration_filter_math1.png)
+  - The sum of the coefficients is 1: $`\sum c_v(i) = \sum c_h(i) = 1`$.
 
 The design of the Wiener filter proceeds in an iterative manner:
 
@@ -129,21 +130,23 @@ objective in this case is to apply filtering that is a function of the
 spatial characteristics (variance) of the immediate neighborhood of the
 pixel to be filtered. The main idea behind the filter is outlined below.
 
-A filtered value ![math](http://latex.codecogs.com/gif.latex?\mathbf{p_f}) of a sample value
-![math](http://latex.codecogs.com/gif.latex?\mathbf{p_r}) in the reconstructed image is generated as follows:
+A filtered value $`\mathbf{p_f}`$ of a sample value
+$`\mathbf{p_r}`$ in the reconstructed image is generated as follows:
 
-![math](http://latex.codecogs.com/gif.latex?\mathbf{p_f=fp_r+(1-f)\mu})
+$`\mathbf{p_f=fp_r+(1-f)\mu}`$
 
-where ![math](http://latex.codecogs.com/gif.latex?\mu) is the average of a small window ***w*** around ![math](http://latex.codecogs.com/gif.latex?\mathbf{p_r}) in the reconstructed picture and 0\<= ![math](http://latex.codecogs.com/gif.latex?\mathbf{f}) \< 1 is a function of the variance of the samples in the window ***w.***
+where $`\mu`$ is the average of a small window ***w*** around $`\mathbf{p_r}`$
+in the reconstructed picture and $`0<= \mathbf{f} < 1`$ is a function of the
+variance of the samples in the window `w`.
 
-  - When the variance of ***w*** is large, then ![math](http://latex.codecogs.com/gif.latex?\mathbf{f}) is close
+  - When the variance of `w` is large, then $`\mathbf{f}`$ is close
     to 1, and the filtered sample value is very close to
-    ![math](http://latex.codecogs.com/gif.latex?\mathbf{p_r}) i.e. very little filtering takes place,
-    and high frequency features (edges) in ***w*** are preserved.
-  - When the variance of ***w*** is very small, then ![math](http://latex.codecogs.com/gif.latex?\mathbf{f}) is
+    $`\mathbf{p_r}`$ i.e. very little filtering takes place,
+    and high frequency features (edges) in `w` are preserved.
+  - When the variance of `w` is very small, then $`\mathbf{f}`$ is
     close to 0, and the filtered sample value is very close to
-    ![math](http://latex.codecogs.com/gif.latex?\mu), i.e. ![math](http://latex.codecogs.com/gif.latex?\mathbf{p_r}) is replaced by a
-    value close to ![math](http://latex.codecogs.com/gif.latex?\mu) and smoothing takes place.
+    $`\mu`$, i.e. $`\mathbf{p_r}`$ is replaced by a
+    value close to $`\mu`$ and smoothing takes place.
 
 The figure below illustrates the main idea behind the filter.
 
@@ -153,11 +156,12 @@ The figure below illustrates the main idea behind the filter.
 
 The derivation of the filter parameters is outlined below.
 
-  - Compute the mean ![math](http://latex.codecogs.com/gif.latex?\mu) and the square of the variance ![math](http://latex.codecogs.com/gif.latex?\sigma^2) of a (2r+1)x(2r+1) window ***w*** around the sample ![math](http://latex.codecogs.com/gif.latex?\mathbf{p_r}) in the reconstructed image.
-  - Define ![math](./img/restoration_filter_math8.png), ![math](http://latex.codecogs.com/gif.latex?\mathbf{g=(1-f)\mu}). The parameter ![math](http://latex.codecogs.com/gif.latex?\varepsilon) is used to tune the filter.
+  - Compute the mean $`\mu`$ and the square of the variance $`\sigma^2$ of a $(2r+1)x(2r+1)`$ window `w` around the sample $`\mathbf{p_r}`$ in the reconstructed image.
+  - Define $`f=\frac{\sigma^2}{\sigma^2+\varepsilon}`$, $`\mathbf{g=(1-f)\mu}`$.
+    The parameter $`\varepsilon`$ is used to tune the filter.
   - Repeat the same computations above for every sample in the window
-    ***w*** (or for a subset of those samples). Define **F** and **G** to be the averages of ![math](http://latex.codecogs.com/gif.latex?\mathbf{f}) and ![math](http://latex.codecogs.com/gif.latex?\mathbf{g}) computed for all samples in the window ***w*** (or for a subset of those samples), respectively.
-  - Filtering: ![math](http://latex.codecogs.com/gif.latex?\mathbf{p_f=Fp_r+G\mu})
+    `w` (or for a subset of those samples). Define `F` and `G` to be the averages of $`\mathbf{f}`$ and $`\mathbf{g}`$ computed for all samples in the window `w` (or for a subset of those samples), respectively.
+  - Filtering: $`\mathbf{p_f=Fp_r+G\mu}`$
 
 The performance of the self-guided filter is generally not sufficient to
 produce good quality reconstructed images. As a result, a further
@@ -169,8 +173,8 @@ projection.
 The main idea behind subspace projection is as follows:
 
   - Construct two restored versions of the reference picture generated
-    using the self-guided filter using two different (r,
-    ![math](http://latex.codecogs.com/gif.latex?\varepsilon) ) parameter pairs.
+    using the self-guided filter using two different $`(r,
+    \varepsilon)`$ parameter pairs.
   - Consider the difference between each of the two restored versions
     and the reference picture and consider the subspace generated by
     those two differences.
@@ -179,20 +183,20 @@ The main idea behind subspace projection is as follows:
 
 To illustrate the idea of subspace projection, consider the following column vectorized version of the corresponding pictures:
 
-  - ![math](http://latex.codecogs.com/gif.latex?X_s) : Source.
-  - ![math](http://latex.codecogs.com/gif.latex?X_r) : Reconstructed.
-  - ![math](http://latex.codecogs.com/gif.latex?X_1) and ![math](http://latex.codecogs.com/gif.latex?X_2) : Filtered (i.e. restored) versions of
-    ![math](http://latex.codecogs.com/gif.latex?X_r) using self-guided filter based on parameters ( ![math](http://latex.codecogs.com/gif.latex?r_1,\varepsilon_1)) and ( ![math](http://latex.codecogs.com/gif.latex?r_2,\varepsilon_2)) respectively.
-  - ![math](http://latex.codecogs.com/gif.latex?X_f) : Final restored version of ![math](http://latex.codecogs.com/gif.latex?X_r). ( ![math](http://latex.codecogs.com/gif.latex?X_f-X_r) ) is obtained by projecting ( ![math](http://latex.codecogs.com/gif.latex?X_s-X_r) ) onto the subspace generated by ( ![math](http://latex.codecogs.com/gif.latex?X_1-X_r) ) and ( ![math](http://latex.codecogs.com/gif.latex?X_2-X_r) )
+  - $`X_s`$: Source.
+  - $`X_r`$: Reconstructed.
+  - $`X_1`$ and $`X_2`$ : Filtered (i.e. restored) versions of
+    $`X_r`$ using self-guided filter based on parameters ( $`r_1,\varepsilon_1`$) and ( $`r_2,\varepsilon_2`$) respectively.
+  - $`X_f`$ : Final restored version of $`X_r`$. ( $`X_f-X_r`$ ) is obtained by projecting ( $`X_s-X_r`$) onto the subspace generated by ( $`X_1-X_r`$ ) and ($`X_2-X_r`$ )
 
 ![restoration_filter_fig2](./img/restoration_filter_fig2.png)
 
 ##### Figure 2. Illustration of the idea of subspace projection in the SGRPROJ filter.
 
-  - ![math23](http://latex.codecogs.com/gif.latex?(X_s-X_r)=\alpha(X_1-X_r)+\beta(X_2-X_r))
-  - ![math24](./img/restoration_filter_math24.png)
-  - ![math25](http://latex.codecogs.com/gif.latex?A=[(X_1-X_r)(X_2-X_r)],b=[(X_s-X_r)])
-  - ![math26](./img/restoration_filter_math26.png)
+  - $`(X_s-X_r)=\alpha(X_1-X_r)+\beta(X_2-X_r)`$
+  - $`\begin{bmatrix}\alpha \\ \beta\end{bmatrix} = (A^TA)^{-1}A^Tb`$
+  - $`A=[(X_1-X_r)(X_2-X_r)],b=[(X_s-X_r)]`$
+  - $`X_f=(1-\alpha-\beta)X_r + \alpha X_1+ \beta X_2`$
 
 
 ### 2. Implementation
@@ -378,16 +382,16 @@ automatically use the computed coeffs without refinement, set
 
 The search for the best SGRPROJ filter is normally performed by evaluating the
 filter performance for each of the sixteen different
-![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values in the
-interval \[0,15\], where
-![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) is used in the
+$`\varepsilon`$ values in the
+interval $`[0,15]`$, where
+$`\varepsilon`$ is used in the
 outline of SGRPROJ algorithm presented above. The algorithmic optimization of
 the filter search involves restricting the range of
-![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values in the
+$`\varepsilon`$ values in the
 search operation. The parameter ```cm->sg_filter_mode``` is used to specify
 different level of search complexity, where a higher value of
 ```cm->sg_filter_mode``` would correspond to a wider interval of
-![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values and a more
+$`\varepsilon`$ values and a more
 costly search. The parameter step is used to control the width of the search
 interval, and is given in the following table.
 
@@ -409,11 +413,11 @@ The optimization proceeds as follows:
 2.  The ```sg_filter_mode``` specifies the parameter step through the
     function ```get_sg_step```.
 
-3.  The interval \[start\_ep, end\_ep\] of ![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon)
+3.  The interval \[start\_ep, end\_ep\] of $`\varepsilon`$
     values to search is specified as follows
     (```search_selfguided_restoration```):
 
-  - The ![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values sg\_ref\_frame\_ep\[0\] and sg\_ref\_frame\_ep\[1\] of the reference pictures are used to define the center of the interval mid\_ep as follows:
+  - The $`\varepsilon`$ values sg\_ref\_frame\_ep\[0\] and sg\_ref\_frame\_ep\[1\] of the reference pictures are used to define the center of the interval mid\_ep as follows:
     ```c
     if (sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0) then mid_ep = 0
     else if (sg_ref_frame_ep[1] < 0) then mid_ep = sg_ref_frame_ep[0]

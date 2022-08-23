@@ -41,29 +41,29 @@ between the input picture and its denoised version, in the areas that
 are identified as suitable areas to include in the noise model
 estimation process, as outlined above. An autoregressive model driven by
 a unit variance Gaussian noise is used to model the film grain. The
-model is defined over a causal neighborhood of lag L around the current
-pixel at position (x,y):
+model is defined over a causal neighborhood of lag $`L`$ around the current
+pixel at position $`(x,y)`$:
 
-![math](http://latex.codecogs.com/gif.latex?n(x,y)) ![math](http://latex.codecogs.com/gif.latex?=a_{0}n(x-2,y-2)+a_{1}n(x-1,y-2)+a_{2}n(x,y-2)+...+a_{N}n(x-1,y)+z)
+$`n(x,y) =a_{0}n(x-2,y-2)+a_{1}n(x-1,y-2)+a_{2}n(x,y-2)+...+a_{N}n(x-1,y)+z`$
 
-where n refers to the film grain, z is unit variance Gaussian noise and
-N=2L(L+1). The same set of unit variance Gaussian noise samples that
+where $`n`$ refers to the film grain, $`z`$ is unit variance Gaussian noise and
+$`N=2L(L+1)`$. The same set of unit variance Gaussian noise samples that
 would drive the film grain model are stored at both the encoder and
-decoder sides. N can take values from 0 to 3.
+decoder sides. $`N`$ can take values from $`0`$ to $`3`$.
 
 To account for film gain strength, samples in the reconstructed image
 are adjusted as follows:
 
-Y’(x,y) = Y(x,y) + f(Y)\*n(x,y)
+$`Y’(x,y) = Y(x,y) + f(Y)*n(x,y)`$
 
 where:
 
-  - Y’(x,y) is the luma sample value after addition of film grain
+  - $`Y’(x,y)`$ is the luma sample value after addition of film grain
 
-  - Y(x,y) is the luma sample value before the addition of the film
+  - $`Y(x,y)`$ is the luma sample value before the addition of the film
     grain sample
 
-  - f(Y(x,y)) is the scaling function that adjusts the value of the film
+  - $`f(Y(x,y))`$ is the scaling function that adjusts the value of the film
     grain as a function of the luma value of the sample in the
     reconstructed picture. A similar operation is performed for the
     chroma samples.
@@ -76,12 +76,11 @@ The chroma film grain scaling is based on the linear combination of the
 corresponding luma and chroma value to account for the luma effect on
 the chroma grain:
 
-![math](http://latex.codecogs.com/gif.latex?Cb'=Cb+\mathit{f}(u)G_{cb}),
+$`Cb'=Cb+\mathit{f}(u)G_{cb}`$,
 
-![math](http://latex.codecogs.com/gif.latex?u=b_{Cb}Cb+d_{Cb}Y_{av}+h),
+$`u=b_{Cb}Cb+d_{Cb}Y_{av}+h`$,
 
-where *u* is the index into the look-up table that corresponds to a Cb
-component scaling function.
+where $`\textbf{u}`$ is the index into the look-up table that corresponds to a Cb component scaling function.
 
 **Re-noising at the decoder side**
 

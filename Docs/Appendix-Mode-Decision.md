@@ -35,18 +35,16 @@ performs MD to determine the best partitions to consider (based on rate
 distortion optimization (RDO) analysis). The tools used in MD depend on the PD
 stage being performed.
 
-The process starts with the very large number ![md_math1](./img/md_math1.png)
-of partitions at the input of partitioning decision stage 0 (PD Stage 0). At
+The process starts with the very large number $`N_0`$ of partitions at the input of partitioning decision stage 0 (PD Stage 0). At
 this stage, very elementary MD tools and performance measures are used in
 evaluating the fitness of the different partitions. The best
-![md_math2](./img/md_math2.png) partitions are selected and passed on to PD
+$`N_1\ll N_0`$ partitions are selected and passed on to PD
 stage 1. More sophisticated MD prediction and performance measure tools are
-considered in PD Stage 1 to evaluate all the ![md_math3](./img/md_math3.png)
-input partitions and select the top ![md_math4](./img/md_math4.png) from among
-the tested ![md_math3](./img/md_math3.png) partitions. The same idea is applied
-in subsequent steps until PD Stage n where ![md_math5](./img/md_math5.png)
-partitions will be tested. The output of the final (nth) PD stage is the final
-partition and its corresponding coding modes that are selected.
+considered in PD Stage 1 to evaluate all the $`N_1`$ input partitions and select
+the top $`N_2\ll N_1`$ from among the tested $`N_1`$ partitions. The same idea
+is applied in subsequent steps until PD Stage n where $`N_N`$ partitions will be
+tested. The output of the final (nth) PD stage is the final partition and its
+corresponding coding modes that are selected.
 
 ![md_figure2](./img/md_figure2.png)
 
@@ -173,7 +171,7 @@ level of ```pic_depth_removal_level```) then all depths below that depth are
 skipped. Additionally, if the relative cost between depths is low, then lower
 depths may be skipped. For example, if:
 
-![md_math6](./img/md_math6.png)
+$`\frac{cost_{16x16}-cost_{8x8}}{cost_{8x8}} < TH`$
 
 then block sizes below 16x16 will not be passed to PD stage 0.
 
