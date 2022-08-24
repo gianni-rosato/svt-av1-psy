@@ -29,15 +29,19 @@ include:
   - remote: 'https://gitlab.com/AOMediaCodec/aom-testing/-/raw/ci-build-testing/.gitlab/workflows/nightly/.gitlab-ci.yml'
     rules:
       - if: $NIGHTLY != null
+  - remote: 'https://gitlab.com/AOMediaCodec/aom-testing/-/raw/ci-build-testing/.gitlab/workflows/weekend-testing/.gitlab-ci.yml'
+    rules:
+      - if: $WEEKEND != null
+
   - local: /.gitlab/workflows/standard/.gitlab-ci.yml
     rules:
-      - if: $NIGHTLY == null
+      - if: $NIGHTLY == null && $WEEKEND == null
 
 Style check:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: never
-    - if: $NIGHTLY == null
+    - if: $NIGHTLY == null && $WEEKEND == null
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   script:
@@ -58,7 +62,7 @@ Style check:
 
 Static analysis (cppcheck):
   rules:
-    - if: $NIGHTLY != null
+    - if: $NIGHTLY != null && $WEEKEND != null
       when: never
     - !reference [.source_code_rules]
   stage: compile
