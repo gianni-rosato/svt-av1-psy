@@ -703,9 +703,14 @@ void setup_two_pass(SequenceControlSet *scs_ptr) {
             scs_ptr->twopass.stats_buf_ctx->stats_in_end =
                 &scs_ptr->twopass.stats_buf_ctx->stats_in_start[packets - 1];
             svt_av1_init_second_pass(scs_ptr);
+            //less than 200 frames or gop_constraint_rc, used in VBR and set in multipass encode
             scs_ptr->is_short_clip = scs_ptr->twopass.stats_buf_ctx->total_stats->count < 200
                 ? 1
+#if FTR_GOP_CONST_RC
+                : scs_ptr->is_short_clip;
+#else
                 : 0; //less than 200 frames, used in VBR and set in multipass encode
+#endif
         }
     } else if (scs_ptr->lap_rc)
         svt_av1_init_single_pass_lap(scs_ptr);

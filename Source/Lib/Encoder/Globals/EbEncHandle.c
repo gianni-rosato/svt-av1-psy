@@ -3645,7 +3645,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
 
     set_mrp_ctrl(scs_ptr, mrp_level);
+#if FTR_GOP_CONST_RC
+    scs_ptr->is_short_clip = scs_ptr->static_config.gop_constraint_rc ? 1 : 0; // set to 1 if multipass and less than 200 frames in resourcecordination
+#else
     scs_ptr->is_short_clip = 0; // set to 1 if multipass and less than 200 frames in resourcecordination
+#endif
 
     // Variance is required for scene change detection and segmentation-based quantization and subjective mode tf control
     if (scs_ptr->static_config.enable_adaptive_quantization == 1 ||
@@ -3930,7 +3934,6 @@ void copy_api_from_app(
         scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ?
             3 : 4;
     }
-
     if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         if (scs_ptr->static_config.hierarchical_levels != 3) {
             scs_ptr->static_config.hierarchical_levels = 3;
@@ -3963,6 +3966,9 @@ void copy_api_from_app(
     scs_ptr->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
     scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
     scs_ptr->static_config.mbr_over_shoot_pct  = ((EbSvtAv1EncConfiguration*)config_struct)->mbr_over_shoot_pct;
+#if FTR_GOP_CONST_RC
+    scs_ptr->static_config.gop_constraint_rc   = ((EbSvtAv1EncConfiguration*)config_struct)->gop_constraint_rc;
+#endif
     scs_ptr->static_config.maximum_buffer_size_ms   = ((EbSvtAv1EncConfiguration*)config_struct)->maximum_buffer_size_ms;
     scs_ptr->static_config.starting_buffer_level_ms = ((EbSvtAv1EncConfiguration*)config_struct)->starting_buffer_level_ms;
     scs_ptr->static_config.optimal_buffer_level_ms  = ((EbSvtAv1EncConfiguration*)config_struct)->optimal_buffer_level_ms;

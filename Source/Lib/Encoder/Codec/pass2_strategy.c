@@ -621,12 +621,12 @@ static double layer_fraction[MAX_ARF_LAYERS + 1] = {1.0, 0.80, 0.7, 0.60, 0.60, 
 static void   allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL *const rc,
                                      int64_t gf_group_bits, int gf_arf_bits, int gf_interval,
                                      int key_frame, int use_arf) {
-      int64_t total_group_bits = gf_group_bits;
-      int     base_frame_bits;
-      int     layer_frames[MAX_ARF_LAYERS + 1] = {0};
+    int64_t total_group_bits = gf_group_bits;
+    int     base_frame_bits;
+    int     layer_frames[MAX_ARF_LAYERS + 1] = {0};
 
-      // Subtract the extra bits set aside for ARF frames from the Group Total
-      if (use_arf || !key_frame)
+    // Subtract the extra bits set aside for ARF frames from the Group Total
+    if (use_arf || !key_frame)
         total_group_bits -= gf_arf_bits;
 
     if (rc->baseline_gf_interval)
@@ -635,53 +635,56 @@ static void   allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL 
         base_frame_bits = (int)1;
 
     // For key frames the frame target rate is already set
-      int frame_index = key_frame ? 1 : 0;
+    int frame_index = key_frame ? 1 : 0;
 
-      // Check the number of frames in each layer in case we have a
-      // non standard group length.
-      int max_arf_layer = pcs->hierarchical_levels;
-      for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
-          if ((pcs->gf_group[idx]->update_type == ARF_UPDATE) ||
+    // Check the number of frames in each layer in case we have a
+    // non standard group length.
+    int max_arf_layer = pcs->hierarchical_levels;
+    for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
+        if ((pcs->gf_group[idx]->update_type == ARF_UPDATE) ||
             (pcs->gf_group[idx]->update_type == INTNL_ARF_UPDATE)) {
-              layer_frames[pcs->gf_group[idx]->layer_depth]++;
+            layer_frames[pcs->gf_group[idx]->layer_depth]++;
         }
     }
-      if (rc->baseline_gf_interval < (gf_interval >> 1)) {
-          for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
-              if (pcs->gf_group[idx]->update_type == ARF_UPDATE) {
-                  layer_frames[pcs->gf_group[idx]->layer_depth] += 1;
+    if (rc->baseline_gf_interval < (gf_interval >> 1)) {
+        for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
+            if (pcs->gf_group[idx]->update_type == ARF_UPDATE) {
+                layer_frames[pcs->gf_group[idx]->layer_depth] += 1;
             }
-              if (pcs->gf_group[idx]->update_type == INTNL_ARF_UPDATE) {
-                  layer_frames[pcs->gf_group[idx]->layer_depth] += 2;
+            if (pcs->gf_group[idx]->update_type == INTNL_ARF_UPDATE) {
+                layer_frames[pcs->gf_group[idx]->layer_depth] += 2;
             }
         }
     }
-      // Allocate extra bits to each ARF layer
-      int layer_extra_bits[MAX_ARF_LAYERS + 1] = {0};
-      for (int i = 1; i <= max_arf_layer; ++i) {
-          if (layer_frames[i]) { // to make sure there is a picture with the depth
+    // Allocate extra bits to each ARF layer
+    int layer_extra_bits[MAX_ARF_LAYERS + 1] = {0};
+    for (int i = 1; i <= max_arf_layer; ++i) {
+        if (layer_frames[i]) { // to make sure there is a picture with the depth
             double fraction     = (i == max_arf_layer) ? 1.0 : layer_fraction[i];
             layer_extra_bits[i] = (int)((gf_arf_bits * fraction) / AOMMAX(1, layer_frames[i]));
             gf_arf_bits -= (int)(gf_arf_bits * fraction);
         }
     }
 
-      // Now combine ARF layer and baseline bits to give total bits for each frame.
-      int arf_extra_bits;
-      for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
-          switch (pcs->gf_group[idx]->update_type) {
-          case ARF_UPDATE:
-          case INTNL_ARF_UPDATE:
+    // Now combine ARF layer and baseline bits to give total bits for each frame.
+    int arf_extra_bits;
+    for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
+        switch (pcs->gf_group[idx]->update_type) {
+        case ARF_UPDATE:
+        case INTNL_ARF_UPDATE:
             arf_extra_bits = layer_extra_bits[pcs->gf_group[idx]->layer_depth];
             pcs->gf_group[idx]->base_frame_target = base_frame_bits + arf_extra_bits;
             break;
-          case INTNL_OVERLAY_UPDATE:
-          case OVERLAY_UPDATE: pcs->gf_group[idx]->base_frame_target = 0; break;
-          default: pcs->gf_group[idx]->base_frame_target = base_frame_bits; break;
+        case INTNL_OVERLAY_UPDATE:
+        case OVERLAY_UPDATE: pcs->gf_group[idx]->base_frame_target = 0; break;
+        default: pcs->gf_group[idx]->base_frame_target = base_frame_bits; break;
         }
     }
 }
 
+#if FTR_GOP_CONST_RC
+#define RC_FACTOR_MIN_GOP_CONST 0.5
+#endif
 #define RC_FACTOR_MIN_1P_VBR 1
 #define RC_FACTOR_MIN 0.75
 #define RC_FACTOR_MAX 2
@@ -925,10 +928,17 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
             rate_error = (int)((rc->vbr_bits_off_target * 100) / bits);
             rate_error = clamp(rate_error, -100, 100);
             if (rate_error > 0) {
+#if FTR_GOP_CONST_RC
+                double rc_factor_min = scs->static_config.gop_constraint_rc
+                    ? RC_FACTOR_MIN_GOP_CONST
+                    : (scs->static_config.pass == ENC_SINGLE_PASS) ? RC_FACTOR_MIN_1P_VBR
+                                                                   : RC_FACTOR_MIN;
+#else
                 double rc_factor_min = (scs->static_config.pass == ENC_SINGLE_PASS)
                     ? RC_FACTOR_MIN_1P_VBR
                     : RC_FACTOR_MIN;
-                rc_factor            = AOMMAX(rc_factor_min, (double)(100 - rate_error) / 100.0);
+#endif
+                rc_factor = AOMMAX(rc_factor_min, (double)(100 - rate_error) / 100.0);
             } else {
                 rc_factor = AOMMIN(RC_FACTOR_MAX, (double)(100 - rate_error) / 100.0);
             }
@@ -991,7 +1001,6 @@ static void gf_group_rate_assingment(PictureParentControlSet *pcs_ptr,
 
     // Calculate the bits to be allocated to the gf/arf group as a whole
     rc->gf_group_bits = calculate_total_gf_group_bits(pcs_ptr, gf_stats.gf_group_err);
-
     // Calculate an estimate of the maxq needed for the group.
     calculate_active_worst_quality(pcs_ptr, gf_stats);
 
@@ -1340,8 +1349,7 @@ static void kf_group_rate_assingment(PictureParentControlSet *pcs_ptr, FIRSTPASS
     reset_fpf_position(twopass, start_position);
     // Store the zero motion percentage
     twopass->kf_zeromotion_pct = (int)(zero_motion_accumulator * 100.0);
-
-    rc->kf_boost = (int)boost_score;
+    rc->kf_boost               = (int)boost_score;
 
     if (scs_ptr->lap_rc) {
         boost_score = get_kf_boost_score(
@@ -1775,9 +1783,20 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
         quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed];
     encode_context_ptr->rc_cfg.worst_allowed_q = (int32_t)
         quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed];
-    encode_context_ptr->rc_cfg.over_shoot_pct  = scs_ptr->static_config.over_shoot_pct;
+
+#if FTR_GOP_CONST_RC
+    if (scs_ptr->static_config.gop_constraint_rc) {
+        encode_context_ptr->rc_cfg.over_shoot_pct  = 0;
+        encode_context_ptr->rc_cfg.under_shoot_pct = 0;
+    } else {
+        encode_context_ptr->rc_cfg.over_shoot_pct  = scs_ptr->static_config.over_shoot_pct;
+        encode_context_ptr->rc_cfg.under_shoot_pct = scs_ptr->static_config.under_shoot_pct;
+    }
+#else
+    encode_context_ptr->rc_cfg.over_shoot_pct = scs_ptr->static_config.over_shoot_pct;
     encode_context_ptr->rc_cfg.under_shoot_pct = scs_ptr->static_config.under_shoot_pct;
-    encode_context_ptr->rc_cfg.cq_level        = quantizer_to_qindex[scs_ptr->static_config.qp];
+#endif
+    encode_context_ptr->rc_cfg.cq_level = quantizer_to_qindex[scs_ptr->static_config.qp];
     encode_context_ptr->rc_cfg.maximum_buffer_size_ms   = is_vbr
           ? 240000
           : scs_ptr->static_config.maximum_buffer_size_ms;
@@ -1956,6 +1975,119 @@ int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
     return frame_is_intra_only(ppcs_ptr) || ppcs_ptr->update_type == ARF_UPDATE ||
         ppcs_ptr->update_type == GF_UPDATE;
 }
+#if FTR_GOP_CONST_RC
+/*********************************************************************************************
+* Update the internal RC and TWO_PASS struct stats based on the received feedback
+***********************************************************************************************/
+void svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs) {
+    SequenceControlSet              *scs          = ppcs->scs_ptr;
+    EncodeContext                   *enc_cont     = scs->encode_context_ptr;
+    RATE_CONTROL *const              rc           = &enc_cont->rc;
+    const RateControlCfg *const      rc_cfg       = &enc_cont->rc_cfg;
+    RateControlIntervalParamContext *rc_param_ptr = ppcs->rate_control_param_ptr;
+
+    // VBR correction is done through rc->vbr_bits_off_target. Based on the
+    // sign of this value, a limited % adjustment is made to the target rate
+    // of subsequent frames, to try and push it back towards 0. This method
+    // is designed to prevent extreme behaviour at the end of a clip
+    // or group of frames.
+    rc_param_ptr->vbr_bits_off_target += ppcs->base_frame_target - ppcs->projected_frame_size;
+    // Target vs actual bits for this arf group.
+    int rate_error_estimate_target = 0;
+    // Calculate the pct rc error.
+    if (rc_param_ptr->total_actual_bits) {
+        if (rc_param_ptr->total_target_bits)
+            rate_error_estimate_target = (int)((rc_param_ptr->vbr_bits_off_target * 100) /
+                                               rc_param_ptr->total_target_bits);
+        rc_param_ptr->rate_error_estimate = (int)((rc_param_ptr->vbr_bits_off_target * 100) /
+                                                  rc_param_ptr->total_actual_bits);
+        rc_param_ptr->rate_error_estimate = clamp(rc_param_ptr->rate_error_estimate, -100, 100);
+    } else {
+        rc_param_ptr->rate_error_estimate = 0;
+    }
+
+    // Update the active best quality pyramid.
+    if (!ppcs->is_overlay) {
+        const int pyramid_level = ppcs->layer_depth;
+        int       i;
+        for (i = pyramid_level; i <= MAX_ARF_LAYERS; ++i) {
+            rc->active_best_quality[i] = ppcs->frm_hdr.quantization_params.base_q_idx;
+        }
+    }
+
+    // If the rate control is drifting consider adjustment to min or maxq.
+    if (!ppcs->is_overlay) {
+        const int maxq_adj_limit = rc->worst_quality - rc->active_worst_quality;
+        const int minq_adj_limit = MINQ_ADJ_LIMIT;
+
+        // Undershoot.
+        if (rc_param_ptr->rate_error_estimate > rc_cfg->under_shoot_pct) {
+            --rc_param_ptr->extend_maxq;
+            if (rc_param_ptr->rolling_target_bits >= rc_param_ptr->rolling_actual_bits)
+                ++rc_param_ptr->extend_minq;
+            // Overshoot.
+        } else if (rc_param_ptr->rate_error_estimate < -rc_cfg->over_shoot_pct) {
+            --rc_param_ptr->extend_minq;
+            if (rc_param_ptr->rolling_target_bits < rc_param_ptr->rolling_actual_bits)
+                rc_param_ptr->extend_maxq += (scs->is_short_clip)
+                    ? rate_error_estimate_target < -100 ? 10 : 2
+                    : 1;
+        } else {
+            // Adjustment for extreme local overshoot.
+            if (ppcs->projected_frame_size > (2 * ppcs->base_frame_target) &&
+                ppcs->projected_frame_size > (2 * rc->avg_frame_bandwidth))
+                ++rc_param_ptr->extend_maxq;
+
+            // Unwind undershoot or overshoot adjustment.
+            if (rc_param_ptr->rolling_target_bits < rc_param_ptr->rolling_actual_bits)
+                --rc_param_ptr->extend_minq;
+            else if (rc_param_ptr->rolling_target_bits > rc_param_ptr->rolling_actual_bits)
+                --rc_param_ptr->extend_maxq;
+            if (scs->is_short_clip) {
+                if (rc_param_ptr->extend_minq > minq_adj_limit / 3)
+                    rc_param_ptr->extend_minq -= 5;
+                if (rc_param_ptr->extend_maxq < -maxq_adj_limit / 3)
+                    rc_param_ptr->extend_maxq += 5;
+            }
+        }
+        if (scs->is_short_clip)
+            rc_param_ptr->extend_minq = clamp(
+                rc_param_ptr->extend_minq, -minq_adj_limit / 4, minq_adj_limit);
+        else
+            rc_param_ptr->extend_minq = clamp(rc_param_ptr->extend_minq, 0, minq_adj_limit);
+        if (!scs->is_short_clip)
+            rc_param_ptr->extend_maxq = clamp(rc_param_ptr->extend_maxq, 0, maxq_adj_limit);
+
+        // If there is a big and undexpected undershoot then feed the extra
+        // bits back in quickly. One situation where this may happen is if a
+        // frame is unexpectedly almost perfectly predicted by the ARF or GF
+        // but not very well predcited by the previous frame.
+        if (!frame_is_kf_gf_arf(ppcs) && !ppcs->is_overlay) {
+            int fast_extra_thresh = ppcs->base_frame_target / HIGH_UNDERSHOOT_RATIO;
+            if (ppcs->projected_frame_size < fast_extra_thresh &&
+                rc_param_ptr->rate_error_estimate > 0) {
+                rc_param_ptr->vbr_bits_off_target_fast += fast_extra_thresh -
+                    ppcs->projected_frame_size;
+                rc_param_ptr->vbr_bits_off_target_fast = AOMMIN(
+                    rc_param_ptr->vbr_bits_off_target_fast, (4 * rc->avg_frame_bandwidth));
+
+                // Fast adaptation of minQ if necessary to use up the extra bits.
+                if (rc->avg_frame_bandwidth) {
+                    rc_param_ptr->extend_minq_fast = (int)(rc_param_ptr->vbr_bits_off_target_fast *
+                                                           8 / rc->avg_frame_bandwidth);
+                }
+                rc_param_ptr->extend_minq_fast = AOMMIN(rc_param_ptr->extend_minq_fast,
+                                                        minq_adj_limit - rc_param_ptr->extend_minq);
+            } else if (rc_param_ptr->vbr_bits_off_target_fast) {
+                rc_param_ptr->extend_minq_fast = AOMMIN(rc_param_ptr->extend_minq_fast,
+                                                        minq_adj_limit - rc_param_ptr->extend_minq);
+            } else {
+                rc_param_ptr->extend_minq_fast = 0;
+            }
+        }
+    }
+}
+#endif
 void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
     SequenceControlSet         *scs_ptr            = ppcs_ptr->scs_ptr;
     EncodeContext              *encode_context_ptr = scs_ptr->encode_context_ptr;

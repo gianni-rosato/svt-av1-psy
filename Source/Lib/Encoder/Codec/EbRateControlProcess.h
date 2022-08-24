@@ -133,7 +133,6 @@ typedef struct {
 
     int64_t total_actual_bits;
     int64_t total_target_bits;
-    int64_t total_target_vs_actual;
 
     int worst_quality;
     int best_quality;

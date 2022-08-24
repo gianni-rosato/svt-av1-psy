@@ -41,15 +41,18 @@ typedef struct {
     double this_frame_mv_in_out;
 } GF_GROUP_STATS;
 
-void        svt_av1_init_second_pass(struct SequenceControlSet *scs_ptr);
-void        svt_av1_init_single_pass_lap(struct SequenceControlSet *scs_ptr);
-void        svt_av1_new_framerate(struct SequenceControlSet *scs_ptr, double framerate);
-void        find_init_qp_middle_pass(struct SequenceControlSet      *scs_ptr,
-                                     struct PictureParentControlSet *pcs_ptr);
-void        one_pass_rt_rate_alloc(struct PictureParentControlSet *pcs_ptr);
-void        process_rc_stat(struct PictureParentControlSet *pcs_ptr);
-void        reset_update_frame_target(struct PictureParentControlSet *ppcs_ptr);
-void        svt_av1_twopass_postencode_update(struct PictureParentControlSet *ppcs_ptr);
+void svt_av1_init_second_pass(struct SequenceControlSet *scs_ptr);
+void svt_av1_init_single_pass_lap(struct SequenceControlSet *scs_ptr);
+void svt_av1_new_framerate(struct SequenceControlSet *scs_ptr, double framerate);
+void find_init_qp_middle_pass(struct SequenceControlSet      *scs_ptr,
+                              struct PictureParentControlSet *pcs_ptr);
+void one_pass_rt_rate_alloc(struct PictureParentControlSet *pcs_ptr);
+void process_rc_stat(struct PictureParentControlSet *pcs_ptr);
+void reset_update_frame_target(struct PictureParentControlSet *ppcs_ptr);
+void svt_av1_twopass_postencode_update(struct PictureParentControlSet *ppcs_ptr);
+#if FTR_GOP_CONST_RC
+void svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs);
+#endif
 extern void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr);
 extern void set_rc_param(struct SequenceControlSet *scs_ptr);
 int         frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);

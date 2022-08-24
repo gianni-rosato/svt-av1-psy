@@ -35,6 +35,9 @@
 extern "C" {
 #endif // __cplusplus
 
+#define FTR_GOP_CONST_RC        1 // When enabled, the rate control matches the target rate for each GoP
+                                  // Currently, only applicable for VBR and  when GoP size is greater than 119 frames.
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

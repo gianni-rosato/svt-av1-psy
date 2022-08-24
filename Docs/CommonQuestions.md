@@ -295,7 +295,9 @@ scenes get too many bits and complex scenes get too few. Use `--rc=2` for this m
 can vary above and below the target. Use `--rc=1` to enable VBR mode and set
 the flexibility of the effective bitrate using `--bias-pct`. A value closer to
 zero makes the encode behave more like a CBR encode, while a value closer to
-100 gives it greater flexibility.
+100 gives it greater flexibility. In the VBR mode, the rate control algorithm matches the rate over the sequence.
+Use `--gop-constraint-rc 1` to enable rate matching over each gop.
+This feature is currently supported with VBR mode when Gop size is greater than 119.
 * CRF (constant rate factor) mode targets a constant visual quality. This approach
 leads to a favorable visual quality for a given file size and is recommended
 for applications where a target bitrate is not necessary, such as in a home environment.

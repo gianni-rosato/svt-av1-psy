@@ -188,6 +188,20 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
         encode_context_ptr->rc_param_queue[interval_index]->size                   = -1;
         encode_context_ptr->rc_param_queue[interval_index]->end_of_seq_seen        = 0;
         encode_context_ptr->rc_param_queue[interval_index]->last_i_qp              = 0;
+#if FTR_GOP_CONST_RC
+        encode_context_ptr->rc_param_queue[interval_index]->vbr_bits_off_target      = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->vbr_bits_off_target_fast = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->rolling_target_bits =
+            encode_context_ptr->rc.avg_frame_bandwidth;
+        encode_context_ptr->rc_param_queue[interval_index]->rolling_actual_bits =
+            encode_context_ptr->rc.avg_frame_bandwidth;
+        encode_context_ptr->rc_param_queue[interval_index]->rate_error_estimate = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->total_actual_bits   = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->total_target_bits   = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->extend_minq         = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->extend_maxq         = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->extend_minq_fast    = 0;
+#endif
     }
     encode_context_ptr->rc_param_queue_head_index = 0;
     EB_CREATE_MUTEX(encode_context_ptr->rc_param_queue_mutex);

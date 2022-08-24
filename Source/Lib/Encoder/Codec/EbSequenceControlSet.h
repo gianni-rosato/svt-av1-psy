@@ -251,10 +251,11 @@ typedef struct SequenceControlSet {
     TfControls       tf_params_per_type[3]; // [I_SLICE][BASE][L1]
     MrpCtrls         mrp_ctrls;
     /*!< The RC stat generation pass mode (0: The default, 1: optimized)*/
-    uint8_t         rc_stat_gen_pass_mode;
-    int             cqp_base_q_tf;
-    int             cqp_base_q;
-    uint8_t         is_short_clip; //less than 200 frames, used in VBR and set in multipass encode
+    uint8_t rc_stat_gen_pass_mode;
+    int     cqp_base_q_tf;
+    int     cqp_base_q;
+    uint8_t
+                    is_short_clip; //less than 200 frames or gop_constraint_rc is set, used in VBR and set in multipass encode
     uint8_t         passes;
     IppPassControls ipp_pass_ctrls;
     MidPassControls mid_pass_ctrls;
