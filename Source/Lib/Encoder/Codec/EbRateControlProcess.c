@@ -953,12 +953,12 @@ int8_t non_base_boost(PictureControlSet *pcs_ptr) {
         (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
     uint32_t l0_was_intra = 0;
     if (ref_obj_l0->slice_type != I_SLICE) {
-        for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; sb_index++) {
+        for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; sb_index++) {
             l0_was_intra += ref_obj_l0->sb_intra[sb_index];
         }
     }
     if (l0_was_intra) {
-        int8_t intra_percentage = (l0_was_intra * 100) / pcs_ptr->sb_total_count_pix;
+        int8_t intra_percentage = (l0_was_intra * 100) / pcs_ptr->sb_total_count;
         q_boost                 = intra_percentage >> 2;
     }
     return q_boost;
@@ -1183,15 +1183,15 @@ static void sb_qp_derivation(PictureControlSet *pcs) {
     else
         pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
     // super res pictures scaled with different sb count, should use sb_total_count for each picture
-    uint16_t sb_cnt = scs->sb_tot_cnt;
+    uint16_t sb_cnt = scs->sb_total_count;
     if (scs->static_config.superres_mode > SUPERRES_NONE)
-        sb_cnt = ppcs->sb_total_count;
+        sb_cnt = ppcs->b64_total_count;
     if (pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
         uint64_t avg_me_dist = 0;
         for (sb_addr = 0; sb_addr < sb_cnt; ++sb_addr) {
             avg_me_dist += ppcs->me_8x8_cost_variance[sb_addr];
         }
-        avg_me_dist /= ppcs->sb_total_count;
+        avg_me_dist /= ppcs->b64_total_count;
         for (sb_addr = 0; sb_addr < sb_cnt; ++sb_addr) {
             sb               = pcs->sb_ptr_array[sb_addr];
             double diff_dist = (double)(ppcs->me_8x8_cost_variance[sb_addr] - avg_me_dist);
@@ -1236,9 +1236,9 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
     else
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
     // super res pictures scaled with different sb count, should use sb_total_count for each picture
-    uint16_t sb_cnt = scs_ptr->sb_tot_cnt;
+    uint16_t sb_cnt = scs_ptr->sb_total_count;
     if (ppcs_ptr->frame_superres_enabled || ppcs_ptr->frame_resize_enabled)
-        sb_cnt = ppcs_ptr->sb_total_count;
+        sb_cnt = ppcs_ptr->b64_total_count;
     if ((pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) &&
         (pcs_ptr->parent_pcs_ptr->tpl_is_valid == 1)) {
         for (sb_addr = 0; sb_addr < sb_cnt; ++sb_addr) {
@@ -3412,7 +3412,7 @@ void *rate_control_kernel(void *input_ptr) {
                 sb_qp_derivation(pcs_ptr);
             } else {
                 pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
-                for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
+                for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count; ++sb_addr) {
                     SuperBlock *sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
                     sb_ptr->qindex     = quantizer_to_qindex[pcs_ptr->picture_qp];
                 }

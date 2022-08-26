@@ -66,7 +66,7 @@ extern "C" {
         EbPictureBufferDesc       *input_ptr);
     extern EbErrorType open_loop_intra_search_mb(
         PictureParentControlSet *pcs_ptr,
-        uint32_t                   sb_index,
+        uint32_t                   b64_index,
         EbPictureBufferDesc       *input_ptr);
 #define a_b_c  0
 #define a_c_b  1

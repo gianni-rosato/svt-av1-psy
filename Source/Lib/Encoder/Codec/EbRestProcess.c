@@ -558,7 +558,7 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs, SequenceContr
         obj->ref_cdef_strengths[1][i] = frm_hdr->cdef_params.cdef_uv_strength[i];
     }
     uint32_t sb_index;
-    for (sb_index = 0; sb_index < pcs->sb_total_count; ++sb_index) {
+    for (sb_index = 0; sb_index < pcs->b64_total_count; ++sb_index) {
         obj->sb_intra[sb_index]           = pcs->sb_intra[sb_index];
         obj->sb_skip[sb_index]            = pcs->sb_skip[sb_index];
         obj->sb_64x64_mvp[sb_index]       = pcs->sb_64x64_mvp[sb_index];

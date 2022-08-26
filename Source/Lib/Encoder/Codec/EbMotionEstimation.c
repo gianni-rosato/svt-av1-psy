@@ -1403,14 +1403,14 @@ void integer_search_b64(PictureParentControlSet *pcs_ptr, uint32_t b64_index, ui
             y_search_area_origin = y_search_center - (search_area_height >> 1);
 
             if (scs_ptr->static_config.restricted_motion_vector) {
-                // sb_params_array in scs and ppcs are different when super-res is enabled
+                // b64_geom in scs and ppcs are different when super-res is enabled
                 // ME_OPEN_LOOP is performed on downscaled frames while others (ME_MCTF and ME_FIRST_PASS) are performed on unscaled frames
-                SbParams *sb_params_array = context_ptr->me_type != ME_OPEN_LOOP
-                    ? scs_ptr->sb_params_array
-                    : pcs_ptr->sb_params_array;
+                B64Geom *b64_geom = context_ptr->me_type != ME_OPEN_LOOP
+                    ? scs_ptr->b64_geom
+                    : pcs_ptr->b64_geom;
 
-                int       tile_start_x    = sb_params_array[b64_index].tile_start_x;
-                int       tile_end_x      = sb_params_array[b64_index].tile_end_x;
+                int       tile_start_x    = b64_geom[b64_index].tile_start_x;
+                int       tile_end_x      = b64_geom[b64_index].tile_end_x;
 
                 // Correct the left edge of the Search Area if it is not on the
                 // reference Picture
@@ -1465,14 +1465,14 @@ void integer_search_b64(PictureParentControlSet *pcs_ptr, uint32_t b64_index, ui
                                                             : search_area_width & ~0x07;
             }
             if (scs_ptr->static_config.restricted_motion_vector) {
-                // sb_params_array in scs and ppcs are different when super-res is enabled
+                // b64_geom in scs and ppcs are different when super-res is enabled
                 // ME_OPEN_LOOP is performed on downscaled frames while others (ME_MCTF and ME_FIRST_PASS) are performed on unscaled frames
-                SbParams *sb_params_array = context_ptr->me_type != ME_OPEN_LOOP
-                    ? scs_ptr->sb_params_array
-                    : pcs_ptr->sb_params_array;
+                B64Geom *b64_geom = context_ptr->me_type != ME_OPEN_LOOP
+                    ? scs_ptr->b64_geom
+                    : pcs_ptr->b64_geom;
 
-                int       tile_start_y    = sb_params_array[b64_index].tile_start_y;
-                int       tile_end_y      = sb_params_array[b64_index].tile_end_y;
+                int       tile_start_y    = b64_geom[b64_index].tile_start_y;
+                int       tile_end_y      = b64_geom[b64_index].tile_end_y;
 
                 // Correct the top edge of the Search Area if it is not on the
                 // reference Picture
@@ -2813,14 +2813,14 @@ void perform_gm_detection(
 // Compute the distortion per block size based on the ME results
 void compute_distortion(
     PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
-    uint32_t                 sb_index, // input parameter, SB Index
+    uint32_t                 b64_index, // input parameter, B64 Index
     MeContext
         *context_ptr // input parameter, ME Context Ptr, used to store decimated/interpolated SB/SR
 ) {
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     // Determine sb_64x64_me_class
-    SbParams *sb_params  = &pcs_ptr->sb_params_array[sb_index];
-    uint32_t  sb_size    = 64 * 64;
+    B64Geom *b64_geom  = &pcs_ptr->b64_geom[b64_index];
+    uint32_t  b64_size    = 64 * 64;
     uint32_t  dist_64x64 = 0, dist_32x32 = 0, dist_16x16 = 0, dist_8x8 = 0;
 
     // 64x64
@@ -2842,24 +2842,24 @@ void compute_distortion(
         sum_ofsq_dist_8x8 += diff * diff;
     }
 
-    pcs_ptr->me_8x8_cost_variance[sb_index] = (uint32_t)(sum_ofsq_dist_8x8 / 64);
+    pcs_ptr->me_8x8_cost_variance[b64_index] = (uint32_t)(sum_ofsq_dist_8x8 / 64);
     // Compute the sum of the distortion of all 16 16x16 (720 and above) and
     // 64 8x8 (for lower resolutions) blocks in the SB
-    pcs_ptr->rc_me_distortion[sb_index] = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+    pcs_ptr->rc_me_distortion[b64_index] = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
         ? dist_8x8
         : dist_16x16;
-    const uint32_t pix_num              = sb_params->width * sb_params->height;
+    const uint32_t pix_num              = b64_geom->width * b64_geom->height;
     // Normalize
-    pcs_ptr->me_64x64_distortion[sb_index] = (((dist_64x64 * sb_size) / (pix_num)) *
+    pcs_ptr->me_64x64_distortion[b64_index] = (((dist_64x64 * b64_size) / (pix_num)) *
                                               context_ptr->stat_factor) /
         100;
-    pcs_ptr->me_32x32_distortion[sb_index] = (((dist_32x32 * sb_size) / (pix_num)) *
+    pcs_ptr->me_32x32_distortion[b64_index] = (((dist_32x32 * b64_size) / (pix_num)) *
                                               context_ptr->stat_factor) /
         100;
-    pcs_ptr->me_16x16_distortion[sb_index] = (((dist_16x16 * sb_size) / (pix_num)) *
+    pcs_ptr->me_16x16_distortion[b64_index] = (((dist_16x16 * b64_size) / (pix_num)) *
                                               context_ptr->stat_factor) /
         100;
-    pcs_ptr->me_8x8_distortion[sb_index] = (((dist_8x8 * sb_size) / (pix_num)) *
+    pcs_ptr->me_8x8_distortion[b64_index] = (((dist_8x8 * b64_size) / (pix_num)) *
                                             context_ptr->stat_factor) /
         100;
 }
@@ -3006,7 +3006,7 @@ EbErrorType motion_estimation_b64(
     return return_error;
 }
 
-EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t sb_index,
+EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t b64_index,
                                       EbPictureBufferDesc *input_ptr) {
     EbErrorType         return_error = EB_ErrorNone;
     SequenceControlSet *scs_ptr      = pcs_ptr->scs_ptr;
@@ -3014,7 +3014,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
     uint32_t      cu_origin_x;
     uint32_t      cu_origin_y;
     uint32_t      pa_blk_index = 0;
-    SbParams *    sb_params    = &scs_ptr->sb_params_array[sb_index];
+    B64Geom *    b64_geom    = &scs_ptr->b64_geom[b64_index];
     OisMbResults *ois_mb_results_ptr;
     uint8_t *     above_row;
     uint8_t *     left_col;
@@ -3040,8 +3040,8 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
 
         //if(sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]])
         {
-            cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
-            cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
+            cu_origin_x = b64_geom->origin_x + blk_stats_ptr->origin_x;
+            cu_origin_y = b64_geom->origin_y + blk_stats_ptr->origin_y;
             if ((blk_stats_ptr->origin_x % 16) == 0 && (blk_stats_ptr->origin_y % 16) == 0 &&
                 ((pcs_ptr->enhanced_picture_ptr->width - cu_origin_x) < 16 ||
                  (pcs_ptr->enhanced_picture_ptr->height - cu_origin_y) < 16))
@@ -3052,12 +3052,12 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
             pa_blk_index++;
             continue;
         }
-        if (sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]]) {
+        if (b64_geom->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]]) {
             // always process as block16x16 even bsize or tx_size is 8x8
             TxSize tx_size = TX_16X16;
             bsize          = 16;
-            cu_origin_x    = sb_params->origin_x + blk_stats_ptr->origin_x;
-            cu_origin_y    = sb_params->origin_y + blk_stats_ptr->origin_y;
+            cu_origin_x    = b64_geom->origin_x + blk_stats_ptr->origin_x;
+            cu_origin_y    = b64_geom->origin_y + blk_stats_ptr->origin_y;
             above0_row     = above0_data + 16;
             left0_col      = left0_data + 16;
             above_row      = above_data + 16;
@@ -3160,7 +3160,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
             ois_mb_results_ptr->intra_mode = best_mode;
             ois_mb_results_ptr->intra_cost = best_intra_cost;
             //if(pcs_ptr->picture_number == 16 && cu_origin_x <= 15 && cu_origin_y == 0)
-            //    printf("open_loop_intra_search_mb cost0 poc%d sb_index=%d, mb_origin_xy=%d %d, best_mode=%d, best_intra_cost=%d, offset=%d, src[0~3]= %d %d %d %d\n", pcs_ptr->picture_number, sb_index, cu_origin_x, cu_origin_y, best_mode, best_intra_cost, (cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4), src[0], src[1], src[2], src[3]);
+            //    printf("open_loop_intra_search_mb cost0 poc%d b64_index=%d, mb_origin_xy=%d %d, best_mode=%d, best_intra_cost=%d, offset=%d, src[0~3]= %d %d %d %d\n", pcs_ptr->picture_number, b64_index, cu_origin_x, cu_origin_y, best_mode, best_intra_cost, (cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4), src[0], src[1], src[2], src[3]);
         }
         pa_blk_index++;
     }

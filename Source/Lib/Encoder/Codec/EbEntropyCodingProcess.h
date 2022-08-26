@@ -42,7 +42,6 @@ typedef struct EntropyCodingContext {
     uint32_t        blk_index;
     uint8_t         cu_depth;
     uint32_t        cu_size;
-    uint32_t        sb_sz;
     uint32_t        cu_size_log2;
     uint32_t        blk_origin_x;
     uint32_t        blk_origin_y;

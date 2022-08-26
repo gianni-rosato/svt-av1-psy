@@ -58,7 +58,6 @@ typedef struct EncDecContext {
     //const CodedBlockStats                *cu_stats;
     uint16_t      blk_origin_x; // within the picture
     uint16_t      blk_origin_y; // within the picture
-    uint8_t       sb_sz;
     uint32_t      sb_index;
     MvUnit        mv_unit;
     uint8_t       txb_itr;

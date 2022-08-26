@@ -2263,8 +2263,8 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
     context_ptr->geom_offset_y = 0;
 
     if (scs_ptr->seq_header.sb_size == BLOCK_128X128) {
-        uint32_t me_sb_size         = scs_ptr->sb_sz;
-        uint32_t me_pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_sz -
+        uint32_t me_sb_size         = scs_ptr->b64_size;
+        uint32_t me_pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->b64_size -
                                        1) /
             me_sb_size;
         uint32_t me_sb_x             = (context_ptr->blk_origin_x / me_sb_size);
@@ -4321,7 +4321,7 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext         *md_context_pt
             : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
     TxSize tx_size =
         md_context_ptr->blk_geom->txsize[md_context_ptr->tx_depth][md_context_ptr->txb_itr];
-    uint32_t sb_size_luma = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix;
+    uint32_t sb_size_luma = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size;
 
     PredictionMode mode;
     if (!md_context_ptr->hbd_mode_decision) {
@@ -10665,8 +10665,8 @@ EbPictureBufferDesc *pad_hbd_pictures(SequenceControlSet *scs, PictureControlSet
                                           in_pic->stride_cr) +
             ((sb_org_x + in_pic->origin_x) >> 1);
 
-        uint32_t sb_width  = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_width - sb_org_x);
-        uint32_t sb_height = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_height - sb_org_y);
+        uint32_t sb_width  = MIN(scs->sb_size, pcs->parent_pcs_ptr->aligned_width - sb_org_x);
+        uint32_t sb_height = MIN(scs->sb_size, pcs->parent_pcs_ptr->aligned_height - sb_org_y);
 
         //sb_width is n*8 so the 2bit-decompression kernel works properly
         uint32_t comp_stride_y           = in_pic->stride_y / 4;
@@ -10710,28 +10710,24 @@ EbPictureBufferDesc *pad_hbd_pictures(SequenceControlSet *scs, PictureControlSet
                                 ctx->input_sample16bit_buffer->stride_y,
                                 sb_width,
                                 sb_height,
-                                scs->sb_size_pix - sb_width,
-                                scs->sb_size_pix - sb_height);
+                                scs->sb_size - sb_width,
+                                scs->sb_size - sb_height);
 
         pad_input_picture_16bit((uint16_t *)ctx->input_sample16bit_buffer->buffer_cb,
                                 ctx->input_sample16bit_buffer->stride_cb,
                                 sb_width >> 1,
                                 sb_height >> 1,
-                                (scs->sb_size_pix - sb_width) >> 1,
-                                (scs->sb_size_pix - sb_height) >> 1);
+                                (scs->sb_size - sb_width) >> 1,
+                                (scs->sb_size - sb_height) >> 1);
 
         pad_input_picture_16bit((uint16_t *)ctx->input_sample16bit_buffer->buffer_cr,
                                 ctx->input_sample16bit_buffer->stride_cr,
                                 sb_width >> 1,
                                 sb_height >> 1,
-                                (scs->sb_size_pix - sb_width) >> 1,
-                                (scs->sb_size_pix - sb_height) >> 1);
-        store16bit_input_src(ctx->input_sample16bit_buffer,
-                             pcs,
-                             sb_org_x,
-                             sb_org_y,
-                             scs->sb_size_pix,
-                             scs->sb_size_pix);
+                                (scs->sb_size - sb_width) >> 1,
+                                (scs->sb_size - sb_height) >> 1);
+        store16bit_input_src(
+            ctx->input_sample16bit_buffer, pcs, sb_org_x, sb_org_y, scs->sb_size, scs->sb_size);
 
         ctx->hbd_pack_done = 1;
     }
@@ -10913,7 +10909,6 @@ void check_curr_to_parent_cost(SequenceControlSet *scs, PictureControlSet *pcs,
             parent_depth_cost = MAX_MODE_COST;
         else
             compute_depth_costs_md_skip(ctx,
-                                        scs,
                                         pcs->parent_pcs_ptr,
                                         parent_depth_idx_mds,
                                         blk_geom->ns_depth_offset,

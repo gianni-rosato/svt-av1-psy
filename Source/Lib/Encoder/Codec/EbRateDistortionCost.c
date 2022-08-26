@@ -2139,9 +2139,7 @@ void coding_loop_context_generation(PictureControlSet *pcs_ptr, ModeDecisionCont
 EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                 BlkStruct *blk_ptr, uint32_t leaf_index,
                                 PartitionType partitionType, uint64_t *split_rate, uint64_t lambda,
-                                MdRateEstimationContext *md_rate_estimation_ptr,
-                                uint32_t                 tb_max_depth) {
-    (void)tb_max_depth;
+                                MdRateEstimationContext *md_rate_estimation_ptr) {
     (void)leaf_index;
 
     const BlockGeom *blk_geom     = get_blk_geom_mds(blk_ptr->mds_idx);

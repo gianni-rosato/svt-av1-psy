@@ -756,8 +756,8 @@ EbErrorType svt_av1_intra_prediction_cl(
     }
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; // Nader - Intra 128x128 not supported
     TxSize  tx_size_chroma = md_context_ptr->blk_geom->txsize_uv[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; //Nader - Intra 128x128 not supported
-    uint32_t sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix;
-    uint32_t sb_size_chroma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix/2;
+    uint32_t sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size;
+    uint32_t sb_size_chroma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size/2;
 
     if(!md_context_ptr->hbd_mode_decision) {
         uint8_t    top_neigh_array[64 * 2 + 1];
@@ -1055,7 +1055,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
     }
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[0][0];  //CHKN  TOcheck
     PredictionMode mode = interintra_to_intra_mode[interintra_mode];
-    uint32_t        sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix;
+    uint32_t        sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size;
 
     if (!md_context_ptr->hbd_mode_decision) {
         uint8_t    top_neigh_array[64 * 2 + 1];

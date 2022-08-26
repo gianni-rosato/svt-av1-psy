@@ -43,8 +43,10 @@ typedef struct SourceBasedOperationsContext {
     EbFifo *initial_rate_control_results_input_fifo_ptr;
     EbFifo *picture_demux_results_output_fifo_ptr;
     EbFifo *sbo_output_fifo_ptr;
+#if !CLN_B64_RENAMING
     // local zz cost array
     uint32_t complete_sb_count;
+#endif
     uint8_t *y_mean_ptr;
     uint8_t *cr_mean_ptr;
     uint8_t *cb_mean_ptr;
@@ -524,7 +526,7 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
     mb_plane.dequant_qtx     = scs_ptr->deq_8bit.y_dequant_qtx[qIndex];
 
     const uint32_t src_stride      = pcs_ptr->enhanced_picture_ptr->stride_y;
-    SbParams      *sb_params       = &scs_ptr->sb_params_array[sb_index];
+    B64Geom       *b64_geom        = &scs_ptr->b64_geom[sb_index];
     const int      aligned16_width = (pcs_ptr->aligned_width + 15) >> 4;
 
     const uint8_t disable_intra_pred = (pcs_ptr->tpl_ctrls.disable_intra_pred_nref &&
@@ -539,8 +541,8 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
                       : bsize == 16                       ? BLOCK_16X16
                       : bsize == 32                       ? BLOCK_32X32
                                                           : BLOCK_64X64;
-        const uint32_t         mb_origin_x   = sb_params->origin_x + blk_stats_ptr->origin_x;
-        const uint32_t         mb_origin_y   = sb_params->origin_y + blk_stats_ptr->origin_y;
+        const uint32_t         mb_origin_x   = b64_geom->origin_x + blk_stats_ptr->origin_x;
+        const uint32_t         mb_origin_y   = b64_geom->origin_y + blk_stats_ptr->origin_y;
 
         // at least half of the block inside
         if (mb_origin_x + (size >> 1) > pcs_ptr->enhanced_picture_ptr->width ||
@@ -1673,13 +1675,13 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
     // If superres scale down is on, should use scaled width instead of full size
-    const int32_t  sb_mi_sz = (int32_t)(scs_ptr->sb_size_pix >> 2);
-    const uint32_t picture_sb_width =
-        (uint32_t)((pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
-    const uint32_t picture_sb_height =
-        (uint32_t)((pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
-    const int32_t mi_high = sb_mi_sz; // sb size in 4x4 units
-    const int32_t mi_wide = sb_mi_sz;
+    const int32_t  sb_mi_sz          = (int32_t)(scs_ptr->sb_size >> 2);
+    const uint32_t picture_sb_width  = (uint32_t)((pcs_ptr->aligned_width + scs_ptr->sb_size - 1) /
+                                                 scs_ptr->sb_size);
+    const uint32_t picture_sb_height = (uint32_t)((pcs_ptr->aligned_height + scs_ptr->sb_size - 1) /
+                                                  scs_ptr->sb_size);
+    const int32_t  mi_high           = sb_mi_sz; // sb size in 4x4 units
+    const int32_t  mi_wide           = sb_mi_sz;
     for (uint32_t sb_y = 0; sb_y < picture_sb_height; ++sb_y) {
         for (uint32_t sb_x = 0; sb_x < picture_sb_width; ++sb_x) {
             uint16_t  mi_row = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_y >> 2;
@@ -1790,8 +1792,8 @@ void init_tpl_segments(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
         // TPL segments are 64x64 SB based
         uint16_t pic_width_in_sb;
         uint16_t pic_height_in_sb;
-        pic_width_in_sb  = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-        pic_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+        pic_width_in_sb  = (pcs_ptr->aligned_width + scs_ptr->b64_size - 1) / scs_ptr->b64_size;
+        pic_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->b64_size - 1) / scs_ptr->b64_size;
 
         if (tile_group_cols * tile_group_rows > 1) {
             enc_dec_seg_col_cnt = MIN(enc_dec_seg_col_cnt,
@@ -2028,9 +2030,9 @@ void *tpl_disp_kernel(void *input_ptr) {
         // Segments
         uint16_t segment_index;
 
-        uint8_t  sb_sz           = (uint8_t)scs_ptr->sb_sz;
-        uint8_t  sb_size_log2    = (uint8_t)svt_log2f(sb_sz);
-        uint32_t pic_width_in_sb = (pcs_ptr->aligned_width + sb_sz - 1) >> sb_size_log2;
+        uint8_t  b64_size        = (uint8_t)scs_ptr->b64_size;
+        uint8_t  sb_size_log2    = (uint8_t)svt_log2f(b64_size);
+        uint32_t pic_width_in_sb = (pcs_ptr->aligned_width + b64_size - 1) >> sb_size_log2;
 
         segment_index = 0;
         // no Tiles path
@@ -2086,7 +2088,7 @@ void *tpl_disp_kernel(void *input_ptr) {
                                                            x_sb_index + tile_group_x_sb_start);
 
                         // TPL dispenser per SB (64)
-                        SbParams *sb_params = &scs_ptr->sb_params_array[context_ptr->sb_index];
+                        B64Geom *b64_geom = &scs_ptr->b64_geom[context_ptr->sb_index];
                         tpl_mc_flow_dispenser_sb_generic(
                             pcs_ptr->scs_ptr->encode_context_ptr,
                             scs_ptr,
@@ -2094,7 +2096,7 @@ void *tpl_disp_kernel(void *input_ptr) {
                             frame_idx,
                             context_ptr->sb_index,
                             in_results_ptr->qIndex,
-                            (sb_params->width == 64 && sb_params->height == 64)
+                            (b64_geom->width == 64 && b64_geom->height == 64)
                                 ? pcs_ptr->tpl_ctrls.dispenser_search_level
                                 : 0);
                         context_ptr->coded_sb_count++;
@@ -2106,22 +2108,22 @@ void *tpl_disp_kernel(void *input_ptr) {
 
             svt_block_on_mutex(pcs_ptr->tpl_disp_mutex);
             pcs_ptr->tpl_disp_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
-            Bool last_sb_flag = (pcs_ptr->sb_total_count == pcs_ptr->tpl_disp_coded_sb_count);
+            Bool last_sb_flag = (pcs_ptr->b64_total_count == pcs_ptr->tpl_disp_coded_sb_count);
 
             svt_release_mutex(pcs_ptr->tpl_disp_mutex);
             if (last_sb_flag)
                 svt_post_semaphore(pcs_ptr->tpl_disp_done_semaphore);
         } else {
             // Tiles path does not suupport segments
-            for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-                SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
+            for (uint32_t sb_index = 0; sb_index < pcs_ptr->b64_total_count; ++sb_index) {
+                B64Geom *b64_geom = &scs_ptr->b64_geom[sb_index];
                 tpl_mc_flow_dispenser_sb_generic(pcs_ptr->scs_ptr->encode_context_ptr,
                                                  scs_ptr,
                                                  pcs_ptr,
                                                  frame_idx,
                                                  sb_index,
                                                  in_results_ptr->qIndex,
-                                                 (sb_params->width == 64 && sb_params->height == 64)
+                                                 (b64_geom->width == 64 && b64_geom->height == 64)
                                                      ? pcs_ptr->tpl_ctrls.dispenser_search_level
                                                      : 0);
             }
@@ -2169,8 +2171,10 @@ void *source_based_operations_kernel(void *input_ptr) {
                                                         in_results_wrapper_ptr->object_ptr;
         PictureParentControlSet *pcs_ptr = (PictureParentControlSet *)
                                                in_results_ptr->pcs_wrapper_ptr->object_ptr;
-        SequenceControlSet *scs_ptr    = pcs_ptr->scs_ptr;
+        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+#if !CLN_B64_RENAMING
         context_ptr->complete_sb_count = 0;
+#endif
 
         if (in_results_ptr->superres_recode) {
             if (pcs_ptr->tpl_ctrls.enable) {
@@ -2199,19 +2203,20 @@ void *source_based_operations_kernel(void *input_ptr) {
                 // printf ("\n PIC \t %d\n",pcs_ptr->picture_number);
             }
         }
-
+#if !CLN_B64_RENAMING
         /***********************************************SB-based operations************************************************************/
-        uint16_t sb_cnt = scs_ptr->sb_tot_cnt;
+        uint16_t sb_cnt = scs_ptr->sb_total_count;
         if (pcs_ptr->frame_superres_enabled || pcs_ptr->frame_resize_enabled)
-            sb_cnt = pcs_ptr->sb_total_count;
+            sb_cnt = pcs_ptr->b64_total_count;
         uint32_t sb_index;
         for (sb_index = 0; sb_index < sb_cnt; ++sb_index) {
-            SbParams *sb_params      = &pcs_ptr->sb_params_array[sb_index];
-            Bool      is_complete_sb = sb_params->is_complete_sb;
+            B64Geom *b64_geom       = &pcs_ptr->b64_geom[sb_index];
+            Bool     is_complete_sb = b64_geom->is_complete_b64;
             if (is_complete_sb) {
                 context_ptr->complete_sb_count++;
             }
         }
+#endif
         /*********************************************Picture-based operations**********************************************************/
         sbo_send_picture_out(context_ptr, pcs_ptr, FALSE);
 

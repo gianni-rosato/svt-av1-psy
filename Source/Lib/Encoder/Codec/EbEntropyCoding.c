@@ -2799,11 +2799,11 @@ static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_pt
 void svt_av1_get_tile_limits(PictureParentControlSet *pcs_ptr) {
     Av1Common *cm = pcs_ptr->av1_cm;
 
-    int32_t mi_cols                  = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->log2_sb_sz);
-    int32_t mi_rows                  = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->log2_sb_sz);
-    int32_t sb_cols                  = mi_cols >> pcs_ptr->log2_sb_sz;
-    int32_t sb_rows                  = mi_rows >> pcs_ptr->log2_sb_sz;
-    int32_t sb_size_log2             = pcs_ptr->log2_sb_sz + MI_SIZE_LOG2;
+    int32_t mi_cols                  = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->log2_sb_size);
+    int32_t mi_rows                  = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->log2_sb_size);
+    int32_t sb_cols                  = mi_cols >> pcs_ptr->log2_sb_size;
+    int32_t sb_rows                  = mi_rows >> pcs_ptr->log2_sb_size;
+    int32_t sb_size_log2             = pcs_ptr->log2_sb_size + MI_SIZE_LOG2;
     cm->tiles_info.max_tile_width_sb = MAX_TILE_WIDTH >> sb_size_log2;
     int32_t max_tile_area_sb         = MAX_TILE_AREA >> (2 * sb_size_log2);
 
@@ -2819,11 +2819,11 @@ void svt_av1_get_tile_limits(PictureParentControlSet *pcs_ptr) {
 void svt_av1_calculate_tile_cols(PictureParentControlSet *pcs_ptr) {
     Av1Common *const cm = pcs_ptr->av1_cm;
 
-    const int mi_cols      = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->log2_sb_sz);
-    const int mi_rows      = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->log2_sb_sz);
-    const int sb_cols      = mi_cols >> pcs_ptr->log2_sb_sz;
-    const int sb_rows      = mi_rows >> pcs_ptr->log2_sb_sz;
-    const int sb_size_log2 = pcs_ptr->log2_sb_sz;
+    const int mi_cols      = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->log2_sb_size);
+    const int mi_rows      = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->log2_sb_size);
+    const int sb_cols      = mi_cols >> pcs_ptr->log2_sb_size;
+    const int sb_rows      = mi_rows >> pcs_ptr->log2_sb_size;
+    const int sb_size_log2 = pcs_ptr->log2_sb_size;
 
     if (cm->tiles_info.uniform_tile_spacing_flag) {
         int size_sb = ALIGN_POWER_OF_TWO(sb_cols, cm->log2_tile_cols);
@@ -2840,7 +2840,7 @@ void svt_av1_calculate_tile_cols(PictureParentControlSet *pcs_ptr) {
             cm->tiles_info.min_log2_tiles - cm->log2_tile_cols, 0);
         cm->tiles_info.max_tile_height_sb = sb_rows >> cm->tiles_info.min_log2_tile_rows;
 
-        cm->tile_width = size_sb << pcs_ptr->log2_sb_sz;
+        cm->tile_width = size_sb << pcs_ptr->log2_sb_size;
         cm->tile_width = AOMMIN(cm->tile_width, cm->mi_cols);
     } else {
         int max_tile_area_sb = (sb_rows * sb_cols);
@@ -2862,9 +2862,9 @@ void svt_av1_calculate_tile_cols(PictureParentControlSet *pcs_ptr) {
 void svt_av1_calculate_tile_rows(PictureParentControlSet *pcs_ptr) {
     Av1Common *const cm = pcs_ptr->av1_cm;
 
-    int mi_rows      = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->log2_sb_sz);
-    int sb_rows      = mi_rows >> pcs_ptr->log2_sb_sz;
-    int sb_size_log2 = pcs_ptr->log2_sb_sz;
+    int mi_rows      = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->log2_sb_size);
+    int sb_rows      = mi_rows >> pcs_ptr->log2_sb_size;
+    int sb_size_log2 = pcs_ptr->log2_sb_size;
 
     if (cm->tiles_info.uniform_tile_spacing_flag) {
         int size_sb = ALIGN_POWER_OF_TWO(sb_rows, cm->log2_tile_rows);
@@ -2878,7 +2878,7 @@ void svt_av1_calculate_tile_rows(PictureParentControlSet *pcs_ptr) {
         cm->tiles_info.tile_rows            = i;
         cm->tiles_info.tile_row_start_mi[i] = sb_rows << sb_size_log2;
 
-        cm->tile_height = size_sb << pcs_ptr->log2_sb_sz;
+        cm->tile_height = size_sb << pcs_ptr->log2_sb_size;
         cm->tile_height = AOMMIN(cm->tile_height, cm->mi_rows);
     } else
         cm->log2_tile_rows = tile_log2(1, cm->tiles_info.tile_rows);
@@ -2915,8 +2915,8 @@ void set_tile_info(PictureParentControlSet *pcs_ptr) {
         cm->log2_tile_rows = AOMMIN(cm->log2_tile_rows, cm->tiles_info.max_log2_tile_rows);
     } else {
         int       i            = 0;
-        const int mi_rows      = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->log2_sb_sz);
-        const int sb_rows      = mi_rows >> pcs_ptr->log2_sb_sz;
+        const int mi_rows      = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->log2_sb_size);
+        const int sb_rows      = mi_rows >> pcs_ptr->log2_sb_size;
         const int sb_size_log2 = pcs_ptr->scs_ptr->seq_header.sb_size_log2;
         for (int start_sb = 0; start_sb < sb_rows && i < MAX_TILE_ROWS; i++) {
             cm->tiles_info.tile_row_start_mi[i] = start_sb << sb_size_log2;

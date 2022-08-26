@@ -4897,82 +4897,154 @@ static void av1_generate_rps_ref_poc_from_user_config(
 /***************************************************************************************************
 // Perform Required Picture Analysis Processing for the Overlay frame
 ***************************************************************************************************/
-void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pcs_ptr) {
-    EbPictureBufferDesc           *input_padded_picture_ptr;
-    EbPictureBufferDesc           *input_picture_ptr;
-    EbPaReferenceObject           *pa_ref_obj_;
-    uint32_t                        pic_width_in_sb;
-    uint32_t                        pic_height_in_sb;
-    uint32_t                        sb_total_count;
+#if CLN_B64_RENAMING
+    void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pcs_ptr) {
+        EbPictureBufferDesc           *input_padded_picture_ptr;
+        EbPictureBufferDesc           *input_picture_ptr;
+        EbPaReferenceObject           *pa_ref_obj_;
 
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-    pa_ref_obj_ = (EbPaReferenceObject*)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-    input_padded_picture_ptr = (EbPictureBufferDesc*)pa_ref_obj_->input_padded_picture_ptr;
-    pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-    pic_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-    sb_total_count = pic_width_in_sb * pic_height_in_sb;
+        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+        input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+        pa_ref_obj_ = (EbPaReferenceObject*)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+        input_padded_picture_ptr = (EbPictureBufferDesc*)pa_ref_obj_->input_padded_picture_ptr;
 
-    // Pad pictures to multiple min cu size
-    pad_picture_to_multiple_of_min_blk_size_dimensions(
-        scs_ptr,
-        input_picture_ptr);
+        // Pad pictures to multiple min cu size
+        pad_picture_to_multiple_of_min_blk_size_dimensions(
+            scs_ptr,
+            input_picture_ptr);
 
-    // Pre processing operations performed on the input picture
-    picture_pre_processing_operations(
-        pcs_ptr,
-        scs_ptr);
+        // Pre processing operations performed on the input picture
+        picture_pre_processing_operations(
+            pcs_ptr,
+            scs_ptr);
 
-    if (input_picture_ptr->color_format >= EB_YUV422) {
-        // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
-        //       Reuse the Y, only add cb/cr in the newly created buffer desc
-        //       NOTE: since denoise may change the src, so this part is after picture_pre_processing_operations()
-        pcs_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
-        down_sample_chroma(input_picture_ptr, pcs_ptr->chroma_downsampled_picture_ptr);
-    }
-    else
-        pcs_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
+        if (input_picture_ptr->color_format >= EB_YUV422) {
+            // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
+            //       Reuse the Y, only add cb/cr in the newly created buffer desc
+            //       NOTE: since denoise may change the src, so this part is after picture_pre_processing_operations()
+            pcs_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
+            down_sample_chroma(input_picture_ptr, pcs_ptr->chroma_downsampled_picture_ptr);
+        }
+        else
+            pcs_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
 
-    // R2R FIX: copying input_picture_ptr to input_padded_picture_ptr for motion_estimate_sb needs it
-    {
-        uint8_t *pa = input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
-            input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
-        uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
-            input_picture_ptr->origin_y * input_picture_ptr->stride_y;
-        for (uint32_t row = 0; row < input_picture_ptr->height; row++)
-            svt_memcpy(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
-    }
+        // R2R FIX: copying input_picture_ptr to input_padded_picture_ptr for motion_estimate_sb needs it
+        {
+            uint8_t *pa = input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
+                input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
+            uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
+                input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+            for (uint32_t row = 0; row < input_picture_ptr->height; row++)
+                svt_memcpy(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
+        }
 
-    // Pad input picture to complete border SBs
-    pad_picture_to_multiple_of_sb_dimensions(
-        input_padded_picture_ptr);
-    // 1/4 & 1/16 input picture downsampling through filtering
-    if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-        downsample_filtering_input_picture(
+        // Pad input picture to complete border SBs
+        pad_picture_to_multiple_of_sb_dimensions(
+            input_padded_picture_ptr);
+        // 1/4 & 1/16 input picture downsampling through filtering
+        if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+            downsample_filtering_input_picture(
+                pcs_ptr,
+                input_padded_picture_ptr,
+                (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+        }
+        else {
+            downsample_decimation_input_picture(
+                pcs_ptr,
+                input_padded_picture_ptr,
+                (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+        }
+        // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+        gathering_picture_statistics(
+            scs_ptr,
             pcs_ptr,
             input_padded_picture_ptr,
-            (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
-            (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+            pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+
+        pcs_ptr->sc_class0 = pcs_ptr->alt_ref_ppcs_ptr->sc_class0;
+        pcs_ptr->sc_class1 = pcs_ptr->alt_ref_ppcs_ptr->sc_class1;
+        pcs_ptr->sc_class2 = pcs_ptr->alt_ref_ppcs_ptr->sc_class2;
     }
-    else {
-        downsample_decimation_input_picture(
+#else
+    void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pcs_ptr) {
+        EbPictureBufferDesc           *input_padded_picture_ptr;
+        EbPictureBufferDesc           *input_picture_ptr;
+        EbPaReferenceObject           *pa_ref_obj_;
+        uint32_t                        pic_width_in_sb;
+        uint32_t                        pic_height_in_sb;
+        uint32_t                        sb_total_count;
+
+        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+        input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+        pa_ref_obj_ = (EbPaReferenceObject*)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+        input_padded_picture_ptr = (EbPictureBufferDesc*)pa_ref_obj_->input_padded_picture_ptr;
+        pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->b64_size - 1) / scs_ptr->b64_size;
+        pic_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->b64_size - 1) / scs_ptr->b64_size;
+        sb_total_count = pic_width_in_sb * pic_height_in_sb;
+
+        // Pad pictures to multiple min cu size
+        pad_picture_to_multiple_of_min_blk_size_dimensions(
+            scs_ptr,
+            input_picture_ptr);
+
+        // Pre processing operations performed on the input picture
+        picture_pre_processing_operations(
+            pcs_ptr,
+            scs_ptr);
+
+        if (input_picture_ptr->color_format >= EB_YUV422) {
+            // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
+            //       Reuse the Y, only add cb/cr in the newly created buffer desc
+            //       NOTE: since denoise may change the src, so this part is after picture_pre_processing_operations()
+            pcs_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
+            down_sample_chroma(input_picture_ptr, pcs_ptr->chroma_downsampled_picture_ptr);
+        }
+        else
+            pcs_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
+
+        // R2R FIX: copying input_picture_ptr to input_padded_picture_ptr for motion_estimate_sb needs it
+        {
+            uint8_t *pa = input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
+                input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
+            uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
+                input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+            for (uint32_t row = 0; row < input_picture_ptr->height; row++)
+                svt_memcpy(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
+        }
+
+        // Pad input picture to complete border SBs
+        pad_picture_to_multiple_of_sb_dimensions(
+            input_padded_picture_ptr);
+        // 1/4 & 1/16 input picture downsampling through filtering
+        if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+            downsample_filtering_input_picture(
+                pcs_ptr,
+                input_padded_picture_ptr,
+                (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+        }
+        else {
+            downsample_decimation_input_picture(
+                pcs_ptr,
+                input_padded_picture_ptr,
+                (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+        }
+        // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+        gathering_picture_statistics(
+            scs_ptr,
             pcs_ptr,
             input_padded_picture_ptr,
-            (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
-            (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-    }
-    // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
-    gathering_picture_statistics(
-        scs_ptr,
-        pcs_ptr,
-        input_padded_picture_ptr,
-        pa_ref_obj_->sixteenth_downsampled_picture_ptr,
-        sb_total_count);
+            pa_ref_obj_->sixteenth_downsampled_picture_ptr,
+            sb_total_count);
 
-    pcs_ptr->sc_class0 = pcs_ptr->alt_ref_ppcs_ptr->sc_class0;
-    pcs_ptr->sc_class1 = pcs_ptr->alt_ref_ppcs_ptr->sc_class1;
-    pcs_ptr->sc_class2 = pcs_ptr->alt_ref_ppcs_ptr->sc_class2;
-}
+        pcs_ptr->sc_class0 = pcs_ptr->alt_ref_ppcs_ptr->sc_class0;
+        pcs_ptr->sc_class1 = pcs_ptr->alt_ref_ppcs_ptr->sc_class1;
+        pcs_ptr->sc_class2 = pcs_ptr->alt_ref_ppcs_ptr->sc_class2;
+    }
+#endif
 /***************************************************************************************************
  * Initialize the overlay frame
 ***************************************************************************************************/

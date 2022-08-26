@@ -231,9 +231,7 @@ typedef struct EncDecSet {
     EbObjectWrapper                *enc_dec_wrapper_ptr;
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
     EbObjectWrapper                *picture_parent_control_set_wrapper_ptr;
-
-    uint16_t sb_total_count_unscaled;
-
+    uint16_t                        b64_total_count;
 } EncDecSet;
 typedef struct CdefDirData {
     uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS];
@@ -306,7 +304,7 @@ typedef struct PictureControlSet {
     // Rate Control
     uint8_t picture_qp;
     // SB Array
-    uint16_t     sb_total_count;
+    uint16_t     b64_total_count;
     SuperBlock **sb_ptr_array;
     uint8_t     *sb_intra;
     uint8_t     *sb_skip;
@@ -447,8 +445,7 @@ typedef struct PictureControlSet {
     //Put it here for deinit, don't need to go pcs->ppcs->av1_cm which may already be released
     uint16_t tile_row_count;
     uint16_t tile_column_count;
-    uint16_t sb_total_count_pix;
-    uint16_t sb_total_count_unscaled;
+    uint16_t sb_total_count;
     // pointer to a scratch buffer used by self-guided restoration
     int32_t *rst_tmpbuf;
 
@@ -474,21 +471,21 @@ typedef struct PictureControlSet {
 
 // To optimize based on the max input size
 // To study speed-memory trade-offs
-typedef struct SbParams {
+typedef struct B64Geom {
     uint8_t  horizontal_index;
     uint8_t  vertical_index;
     uint16_t origin_x;
     uint16_t origin_y;
     uint8_t  width;
     uint8_t  height;
-    uint8_t  is_complete_sb;
+    uint8_t  is_complete_b64;
     Bool     raster_scan_blk_validity[CU_MAX_COUNT];
     uint8_t  is_edge_sb;
     uint32_t tile_start_x;
     uint32_t tile_start_y;
     uint32_t tile_end_x;
     uint32_t tile_end_y;
-} SbParams;
+} B64Geom;
 
 typedef struct SbGeom {
     uint16_t horizontal_index;
@@ -518,7 +515,7 @@ typedef struct TileGroupInfo {
 typedef struct MotionEstimationData {
     EbDctor        dctor;
     MeSbResults  **me_results;
-    uint16_t       sb_total_count_unscaled;
+    uint16_t       b64_total_count;
     uint8_t        max_cand; //total max me candidates given the active references
     uint8_t        max_refs; //total max active references
     uint8_t        max_l0; //max active refs in L0
@@ -684,7 +681,7 @@ typedef struct PictureParentControlSet {
     EbBufferHeaderType *input_ptr; // input picture buffer
     uint8_t             log2_tile_rows;
     uint8_t             log2_tile_cols;
-    uint8_t             log2_sb_sz;
+    uint8_t             log2_sb_size;
     TileGroupInfo      *tile_group_info;
     uint8_t             tile_group_cols;
     uint8_t             tile_group_rows;
@@ -714,7 +711,7 @@ typedef struct PictureParentControlSet {
     uint8_t          tot_ref_frame_types;
     // Rate Control
     uint64_t                                total_num_bits;
-    uint16_t                                sb_total_count;
+    uint16_t                                b64_total_count;
     Bool                                    end_of_sequence_region;
     int                                     frames_in_sw; // used for Look ahead
     struct RateControlIntervalParamContext *rate_control_param_ptr;
@@ -938,14 +935,13 @@ typedef struct PictureParentControlSet {
     uint8_t     pic_obmc_level;
 
     Bool is_pcs_sb_params;
-    SbParams *
-        sb_params_array; // Contains info for 64x64 blocks, NOT SB info.  Should not be used in MD; use sb_geom instead.
+    B64Geom *
+        b64_geom; // Contains info for 64x64 blocks, NOT SB info.  Should not be used in MD; use sb_geom instead.
     SbGeom               *
         sb_geom; // Contains SB info (adapts automatically when SB 128x128 is used). This should be used in MD.
     EbInputResolution input_resolution;
     uint16_t          picture_sb_width;
     uint16_t          picture_sb_height;
-    uint16_t          sb_total_count_unscaled;
 
     // Picture dimensions (resized or not)
     // aligned to be a multiple of 8 pixels
@@ -1030,7 +1026,9 @@ typedef struct PictureParentControlSet {
     uint16_t tile_group_index;
     uint16_t tpl_disp_coded_sb_count;
 
-    uint16_t         sb_total_count_pix;
+#if !CLN_B64_RENAMING
+    uint16_t sb_total_count_pix;
+#endif
     EncDecSegments **tpl_disp_segment_ctrl;
     // the offsets for STATS_BUFFER_CTX
     uint64_t stats_in_end_offset;
@@ -1094,10 +1092,10 @@ typedef struct PictureControlSetInitData {
     uint16_t      bot_padding;
     EbBitDepth    bit_depth;
     EbColorFormat color_format;
-    uint32_t      sb_sz;
+    uint32_t      b64_size;
     uint8_t       cfg_palette;
     uint32_t
-        sb_size_pix; //since we still have lot of code assuming 64x64 SB, we add a new paramter supporting both128x128 and 64x64,
+        sb_size; //since we still have lot of code assuming 64x64 SB, we add a new paramter supporting both128x128 and 64x64,
     //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
     uint32_t max_depth;
     //Bool                             is_16bit;
@@ -1119,7 +1117,7 @@ typedef struct PictureControlSetInitData {
     //Init value for parent pcs
     uint8_t log2_tile_rows; //from command line
     uint8_t log2_tile_cols;
-    uint8_t log2_sb_sz; //in mi unit
+    uint8_t log2_sb_size; //in mi unit
     Bool    is_16bit_pipeline;
 
     uint16_t   non_m8_pad_w;

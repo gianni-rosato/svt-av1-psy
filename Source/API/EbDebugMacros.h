@@ -9,7 +9,6 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-
 /*
 * This file contains only debug macros that are used during the development
 * and are supposed to be cleaned up every tag cycle
@@ -25,7 +24,6 @@
 * - #if 0 / #if 1 are not to be used
 */
 
-
 #ifndef EbDebugMacros_h
 #define EbDebugMacros_h
 
@@ -37,6 +35,7 @@ extern "C" {
 
 #define FTR_GOP_CONST_RC        1 // When enabled, the rate control matches the target rate for each GoP
                                   // Currently, only applicable for VBR and  when GoP size is greater than 119 frames.
+#define CLN_B64_RENAMING        1 // Use b64 where appropriate rather than sb variant
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

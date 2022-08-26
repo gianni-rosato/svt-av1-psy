@@ -690,18 +690,18 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     //SuperBlock                     *sb_ptr;
     //uint16_t                                   sb_index;
-    uint8_t  sb_size_log2 = (uint8_t)svt_log2f(scs_ptr->sb_size_pix);
+    uint8_t  sb_size_log2 = (uint8_t)svt_log2f(scs_ptr->sb_size);
     uint32_t x_sb_index;
     uint32_t y_sb_index;
     uint32_t sb_origin_x;
     uint32_t sb_origin_y;
     Bool     end_of_row_flag;
 
-    uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) /
-        scs_ptr->sb_size_pix;
-    uint32_t picture_height_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_height +
-                                     scs_ptr->sb_size_pix - 1) /
-        scs_ptr->sb_size_pix;
+    uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_size - 1) /
+        scs_ptr->sb_size;
+    uint32_t picture_height_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size -
+                                     1) /
+        scs_ptr->sb_size;
 
     svt_av1_loop_filter_frame_init(&pcs_ptr->parent_pcs_ptr->frm_hdr,
                                    &pcs_ptr->parent_pcs_ptr->lf_info,

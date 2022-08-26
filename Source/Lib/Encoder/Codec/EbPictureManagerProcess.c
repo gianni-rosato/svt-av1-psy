@@ -55,12 +55,12 @@ void largest_coding_unit_dctor(EbPtr p);
   ************************************************/
 static void configure_picture_edges(SequenceControlSet *scs_ptr, PictureControlSet *ppsPtr) {
     // Tiles Initialisation
-    const uint16_t pic_width_in_sb = (ppsPtr->parent_pcs_ptr->aligned_width + scs_ptr->sb_size_pix -
+    const uint16_t pic_width_in_sb = (ppsPtr->parent_pcs_ptr->aligned_width + scs_ptr->sb_size -
                                       1) /
-        scs_ptr->sb_size_pix;
+        scs_ptr->sb_size;
     const uint16_t picture_height_in_sb = (ppsPtr->parent_pcs_ptr->aligned_height +
-                                           scs_ptr->sb_size_pix - 1) /
-        scs_ptr->sb_size_pix;
+                                           scs_ptr->sb_size - 1) /
+        scs_ptr->sb_size;
     unsigned x_sb_index, y_sb_index, sb_index;
 
     // SB-loops
@@ -213,11 +213,11 @@ void copy_dep_cnt_cleaning_list(EncodeContext *ctx, PictureParentControlSet *pcs
 void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_ptr) {
     SequenceControlSet *scs_ptr         = parentpicture_control_set_ptr->scs_ptr;
     uint8_t             pic_width_in_sb = (uint8_t)((parentpicture_control_set_ptr->aligned_width +
-                                         scs_ptr->sb_size_pix - 1) /
-                                        scs_ptr->sb_size_pix);
+                                         scs_ptr->sb_size - 1) /
+                                        scs_ptr->sb_size);
     uint8_t picture_height_in_sb        = (uint8_t)((parentpicture_control_set_ptr->aligned_height +
-                                              scs_ptr->sb_size_pix - 1) /
-                                             scs_ptr->sb_size_pix);
+                                              scs_ptr->sb_size - 1) /
+                                             scs_ptr->sb_size);
     set_tile_info(parentpicture_control_set_ptr);
     int      sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
     uint32_t enc_dec_seg_col_cnt =
@@ -316,15 +316,14 @@ void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
     uint8_t pic_width_in_sb;
     uint8_t picture_height_in_sb;
 
-    child_pcs_ptr->sb_total_count = entry_pcs_ptr->sb_total_count;
+    child_pcs_ptr->b64_total_count = entry_pcs_ptr->b64_total_count;
 
-    pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width + entry_scs_ptr->sb_size_pix - 1) /
-                                entry_scs_ptr->sb_size_pix);
-    picture_height_in_sb = (uint8_t)((entry_pcs_ptr->aligned_height + entry_scs_ptr->sb_size_pix -
-                                      1) /
-                                     entry_scs_ptr->sb_size_pix);
+    pic_width_in_sb      = (uint8_t)((entry_pcs_ptr->aligned_width + entry_scs_ptr->sb_size - 1) /
+                                entry_scs_ptr->sb_size);
+    picture_height_in_sb = (uint8_t)((entry_pcs_ptr->aligned_height + entry_scs_ptr->sb_size - 1) /
+                                     entry_scs_ptr->sb_size);
 
-    child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
+    child_pcs_ptr->sb_total_count = pic_width_in_sb * picture_height_in_sb;
 
     //if (entry_pcs_ptr->frame_superres_enabled)
     {
@@ -332,12 +331,12 @@ void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
         uint16_t sb_index;
         uint16_t sb_origin_x = 0;
         uint16_t sb_origin_y = 0;
-        for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count_pix; ++sb_index) {
+        for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count; ++sb_index) {
             largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
             largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
-                                     (uint8_t)entry_scs_ptr->sb_size_pix,
-                                     (uint16_t)(sb_origin_x * entry_scs_ptr->sb_size_pix),
-                                     (uint16_t)(sb_origin_y * entry_scs_ptr->sb_size_pix),
+                                     (uint8_t)entry_scs_ptr->sb_size,
+                                     (uint16_t)(sb_origin_x * entry_scs_ptr->sb_size),
+                                     (uint16_t)(sb_origin_y * entry_scs_ptr->sb_size),
                                      (uint16_t)sb_index,
                                      child_pcs_ptr->enc_mode,
                                      entry_scs_ptr->max_block_cnt,
@@ -349,7 +348,7 @@ void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
     }
 
     // Update pcs_ptr->mi_stride
-    child_pcs_ptr->mi_stride = pic_width_in_sb * (entry_scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
+    child_pcs_ptr->mi_stride = pic_width_in_sb * (entry_scs_ptr->sb_size >> MI_SIZE_LOG2);
 
     // init segment since picture scaled
     init_enc_dec_segement(entry_pcs_ptr);
@@ -820,7 +819,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->parent_pcs_ptr->total_num_bits = 0;
                         child_pcs_ptr->parent_pcs_ptr->picture_qp     = entry_pcs_ptr->picture_qp;
                         child_pcs_ptr->enc_mode                       = entry_pcs_ptr->enc_mode;
-                        child_pcs_ptr->sb_total_count = entry_pcs_ptr->sb_total_count;
+                        child_pcs_ptr->b64_total_count = entry_pcs_ptr->b64_total_count;
 
                         child_pcs_ptr->enc_dec_coded_sb_count = 0;
                         child_pcs_ptr->parent_pcs_ptr->av1_cm->rst_tmpbuf =
@@ -830,12 +829,12 @@ void *picture_manager_kernel(void *input_ptr) {
                         context_ptr->pmgr_dec_order = child_pcs_ptr->parent_pcs_ptr->decode_order;
                         //3.make all  init for ChildPCS
 
-                        pic_width_in_sb = (entry_pcs_ptr->aligned_width +
-                                           entry_scs_ptr->sb_size_pix - 1) /
-                            entry_scs_ptr->sb_size_pix;
+                        pic_width_in_sb = (entry_pcs_ptr->aligned_width + entry_scs_ptr->sb_size -
+                                           1) /
+                            entry_scs_ptr->sb_size;
                         picture_height_in_sb = (entry_pcs_ptr->aligned_height +
-                                                entry_scs_ptr->sb_size_pix - 1) /
-                            entry_scs_ptr->sb_size_pix;
+                                                entry_scs_ptr->sb_size - 1) /
+                            entry_scs_ptr->sb_size;
 
                         init_enc_dec_segement(entry_pcs_ptr);
 
@@ -848,7 +847,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         uint32_t         x_sb_index, y_sb_index;
                         TileInfo         tile_info;
 
-                        child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
+                        child_pcs_ptr->sb_total_count = pic_width_in_sb * picture_height_in_sb;
 
                         // force re-ctor sb_ptr since child_pcs_ptrs are reused, and sb_ptr could be altered by superres tool when coding previous pictures
                         if (scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
@@ -857,18 +856,17 @@ void *picture_manager_kernel(void *input_ptr) {
                             uint16_t sb_index;
                             uint16_t sb_origin_x = 0;
                             uint16_t sb_origin_y = 0;
-                            for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count_pix;
+                            for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count;
                                  ++sb_index) {
                                 largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
-                                largest_coding_unit_ctor(
-                                    child_pcs_ptr->sb_ptr_array[sb_index],
-                                    (uint8_t)scs_ptr->sb_size_pix,
-                                    (uint16_t)(sb_origin_x * scs_ptr->sb_size_pix),
-                                    (uint16_t)(sb_origin_y * scs_ptr->sb_size_pix),
-                                    (uint16_t)sb_index,
-                                    child_pcs_ptr->enc_mode,
-                                    scs_ptr->max_block_cnt,
-                                    child_pcs_ptr);
+                                largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
+                                                         (uint8_t)scs_ptr->sb_size,
+                                                         (uint16_t)(sb_origin_x * scs_ptr->sb_size),
+                                                         (uint16_t)(sb_origin_y * scs_ptr->sb_size),
+                                                         (uint16_t)sb_index,
+                                                         child_pcs_ptr->enc_mode,
+                                                         scs_ptr->max_block_cnt,
+                                                         child_pcs_ptr);
                                 // Increment the Order in coding order (Raster Scan Order)
                                 sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1
                                                                                    : sb_origin_y;
@@ -886,7 +884,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
                         // Update pcs_ptr->mi_stride
                         child_pcs_ptr->mi_stride = pic_width_in_sb *
-                            (scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
+                            (scs_ptr->sb_size >> MI_SIZE_LOG2);
 
                         // copy buffer info from the downsampled picture to the input frame 16 bit buffer
                         if ((entry_pcs_ptr->frame_superres_enabled ||

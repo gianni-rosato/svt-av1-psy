@@ -1325,10 +1325,10 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         quart_pic_buf_desc_init_data.bit_depth = EB_EIGHT_BIT;
         quart_pic_buf_desc_init_data.color_format = EB_YUV420;
         quart_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-        quart_pic_buf_desc_init_data.left_padding = scs_ptr->sb_sz >> 1;
-        quart_pic_buf_desc_init_data.right_padding = scs_ptr->sb_sz >> 1;
-        quart_pic_buf_desc_init_data.top_padding = scs_ptr->sb_sz >> 1;
-        quart_pic_buf_desc_init_data.bot_padding = scs_ptr->sb_sz >> 1;
+        quart_pic_buf_desc_init_data.left_padding = scs_ptr->b64_size >> 1;
+        quart_pic_buf_desc_init_data.right_padding = scs_ptr->b64_size >> 1;
+        quart_pic_buf_desc_init_data.top_padding = scs_ptr->b64_size >> 1;
+        quart_pic_buf_desc_init_data.bot_padding = scs_ptr->b64_size >> 1;
         quart_pic_buf_desc_init_data.split_mode = FALSE;
         quart_pic_buf_desc_init_data.down_sampled_filtered = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? TRUE : FALSE;
         quart_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
@@ -1341,10 +1341,10 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         sixteenth_pic_buf_desc_init_data.bit_depth = EB_EIGHT_BIT;
         sixteenth_pic_buf_desc_init_data.color_format = EB_YUV420;
         sixteenth_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-        sixteenth_pic_buf_desc_init_data.left_padding = scs_ptr->sb_sz >> 2;
-        sixteenth_pic_buf_desc_init_data.right_padding = scs_ptr->sb_sz >> 2;
-        sixteenth_pic_buf_desc_init_data.top_padding = scs_ptr->sb_sz >> 2;
-        sixteenth_pic_buf_desc_init_data.bot_padding = scs_ptr->sb_sz >> 2;
+        sixteenth_pic_buf_desc_init_data.left_padding = scs_ptr->b64_size >> 2;
+        sixteenth_pic_buf_desc_init_data.right_padding = scs_ptr->b64_size >> 2;
+        sixteenth_pic_buf_desc_init_data.top_padding = scs_ptr->b64_size >> 2;
+        sixteenth_pic_buf_desc_init_data.bot_padding = scs_ptr->b64_size >> 2;
         sixteenth_pic_buf_desc_init_data.split_mode = FALSE;
         sixteenth_pic_buf_desc_init_data.down_sampled_filtered = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? TRUE : FALSE;
         sixteenth_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
@@ -1386,7 +1386,7 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     ref_pic_buf_desc_init_data.color_format = scs_ptr->static_config.encoder_color_format;
     ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     ref_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
-    ref_pic_buf_desc_init_data.sb_total_count = scs_ptr->sb_total_count;
+    ref_pic_buf_desc_init_data.sb_total_count = scs_ptr->b64_total_count;
     uint16_t padding = scs_ptr->super_block_size + 32;
     if (scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
         scs_ptr->static_config.resize_mode > RESIZE_NONE) {
@@ -1479,8 +1479,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.top_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->top_padding;
         input_data.bot_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->bot_padding;
         input_data.color_format = color_format;
-        input_data.sb_sz = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz;
-        input_data.max_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_sb_depth;
+        input_data.b64_size = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->b64_size;
         input_data.ten_bit_format = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ten_bit_format;
         input_data.compressed_ten_bit_format = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.compressed_ten_bit_format;
         input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
@@ -1489,7 +1488,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_bit_depth;
         input_data.log2_tile_rows = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_rows;
         input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
-        input_data.log2_sb_sz = (enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->super_block_size == 128) ? 5 : 4;
+        input_data.log2_sb_size = (enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->super_block_size == 128) ? 5 : 4;
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->is_16bit_pipeline;
         input_data.non_m8_pad_w = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_right;
         input_data.non_m8_pad_h = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_bottom;
@@ -1584,9 +1583,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.bot_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->bot_padding;
             input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
             input_data.color_format = color_format;
-            input_data.sb_sz = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz;
-            input_data.sb_size_pix = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->super_block_size;
-            input_data.max_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_sb_depth;
+            input_data.b64_size = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->b64_size;
+            input_data.sb_size = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->super_block_size;
             input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enable_hbd_mode_decision;
             input_data.cdf_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->cdf_mode;
             input_data.mfmv = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mfmv_enabled;
@@ -1647,9 +1645,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.bot_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->bot_padding;
             input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
             input_data.color_format = color_format;
-            input_data.sb_sz = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz;
-            input_data.sb_size_pix = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->super_block_size;
-            input_data.max_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_sb_depth;
+            input_data.b64_size = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->b64_size;
+            input_data.sb_size = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->super_block_size;
             input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enable_hbd_mode_decision;
             input_data.cdf_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->cdf_mode;
             input_data.mfmv = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mfmv_enabled;
@@ -1707,7 +1704,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             // The restoration assumes only 1 tile is used, so only allocate for 1 tile... see svt_av1_alloc_restoration_struct()
             PictureControlSet *pcs = (PictureControlSet *)enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index]->wrapper_ptr_pool[0]->object_ptr;
             enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->rest_units_per_tile = pcs->rst_info[0/*Y-plane*/].units_per_tile;
-            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_total_count = pcs->sb_total_count;
+            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->b64_total_count = pcs->b64_total_count;
             create_ref_buf_descs(enc_handle_ptr, instance_index);
 
         create_pa_ref_buf_descs(enc_handle_ptr, instance_index);
@@ -3487,13 +3484,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Set config info related to SB size
     if (scs_ptr->super_block_size == 128) {
         scs_ptr->seq_header.sb_size = BLOCK_128X128;
-        scs_ptr->sb_size_pix = 128;
+        scs_ptr->sb_size = 128;
         scs_ptr->seq_header.sb_mi_size = 32; // Size of the superblock in units of MI blocks
         scs_ptr->seq_header.sb_size_log2 = 5;
     }
     else {
         scs_ptr->seq_header.sb_size = BLOCK_64X64;
-        scs_ptr->sb_size_pix = 64;
+        scs_ptr->sb_size = 64;
         scs_ptr->seq_header.sb_mi_size = 16; // Size of the superblock in units of MI blocks
         scs_ptr->seq_header.sb_size_log2 = 4;
     }
@@ -3802,8 +3799,7 @@ void copy_api_from_app(
     scs_ptr->speed_control_flag = 0;
 
     // Padding Offsets
-    scs_ptr->sb_sz = 64;
-    scs_ptr->max_sb_depth = (uint8_t)EB_MAX_SB_DEPTH;
+    scs_ptr->b64_size = 64;
     scs_ptr->static_config.intra_period_length = ((EbSvtAv1EncConfiguration*)config_struct)->intra_period_length;
     scs_ptr->static_config.multiply_keyint = config_struct->multiply_keyint;
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;

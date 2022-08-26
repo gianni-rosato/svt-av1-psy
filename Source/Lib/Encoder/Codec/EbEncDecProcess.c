@@ -1943,7 +1943,8 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
     DepthRemovalCtrls *depth_removal_ctrls = &mdctxt->depth_removal_ctrls;
 
     if (pcs_ptr->slice_type == I_SLICE) {
-        SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[mdctxt->sb_index];
+        // Use b64_geom here because feature is only enabled when 64x64 SB size is used
+        B64Geom *b64_geom = &pcs_ptr->parent_pcs_ptr->b64_geom[mdctxt->sb_index];
 
         uint16_t disallow_below_16x16_variance_th = 0;
         uint16_t disallow_below_32x32_variance_th = 0;
@@ -1963,39 +1964,39 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
         if (depth_removal_ctrls->enabled) {
             // If variance is available, use in depth removal decision
             if (pcs_ptr->parent_pcs_ptr->variance) {
-                depth_removal_ctrls->disallow_below_16x16 = (sb_params->width % 16 == 0 &&
-                                                             sb_params->height % 16 == 0)
+                depth_removal_ctrls->disallow_below_16x16 = (b64_geom->width % 16 == 0 &&
+                                                             b64_geom->height % 16 == 0)
                     ? (depth_removal_ctrls->disallow_below_16x16 ||
                        pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <
                            disallow_below_16x16_variance_th)
                     : 0;
 
-                depth_removal_ctrls->disallow_below_32x32 = (sb_params->width % 32 == 0 &&
-                                                             sb_params->height % 32 == 0)
+                depth_removal_ctrls->disallow_below_32x32 = (b64_geom->width % 32 == 0 &&
+                                                             b64_geom->height % 32 == 0)
                     ? (depth_removal_ctrls->disallow_below_32x32 ||
                        pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <
                            disallow_below_32x32_variance_th)
                     : 0;
 
-                depth_removal_ctrls->disallow_below_64x64 = (sb_params->width % 64 == 0 &&
-                                                             sb_params->height % 64 == 0)
+                depth_removal_ctrls->disallow_below_64x64 = (b64_geom->width % 64 == 0 &&
+                                                             b64_geom->height % 64 == 0)
                     ? (depth_removal_ctrls->disallow_below_64x64 ||
                        pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <
                            disallow_below_64x64_variance_th)
                     : 0;
             } else {
-                depth_removal_ctrls->disallow_below_16x16 = (sb_params->width % 16 == 0 &&
-                                                             sb_params->height % 16 == 0)
+                depth_removal_ctrls->disallow_below_16x16 = (b64_geom->width % 16 == 0 &&
+                                                             b64_geom->height % 16 == 0)
                     ? depth_removal_ctrls->disallow_below_16x16
                     : 0;
 
-                depth_removal_ctrls->disallow_below_32x32 = (sb_params->width % 32 == 0 &&
-                                                             sb_params->height % 32 == 0)
+                depth_removal_ctrls->disallow_below_32x32 = (b64_geom->width % 32 == 0 &&
+                                                             b64_geom->height % 32 == 0)
                     ? depth_removal_ctrls->disallow_below_32x32
                     : 0;
 
-                depth_removal_ctrls->disallow_below_64x64 = (sb_params->width % 64 == 0 &&
-                                                             sb_params->height % 64 == 0)
+                depth_removal_ctrls->disallow_below_64x64 = (b64_geom->width % 64 == 0 &&
+                                                             b64_geom->height % 64 == 0)
                     ? depth_removal_ctrls->disallow_below_64x64
                     : 0;
             }
@@ -2004,7 +2005,8 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
         uint32_t me_8x8_cost_variance =
             pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[mdctxt->sb_index];
 
-        SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[mdctxt->sb_index];
+        // Use b64_geom here because feature is only enabled when 64x64 SB size is used
+        B64Geom *b64_geom = &pcs_ptr->parent_pcs_ptr->b64_geom[mdctxt->sb_index];
 
         // me_distortion => EB_8_BIT_MD
         uint32_t fast_lambda = mdctxt->fast_lambda_md[EB_8_BIT_MD];
@@ -2238,22 +2240,22 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
             int64_t dev_16x16_to_8x8 =
                 (int64_t)(((int64_t)MAX(cost_16x16, 1) - (int64_t)MAX(cost_8x8, 1)) * 1000) /
                 (int64_t)MAX(cost_8x8, 1);
-            depth_removal_ctrls->disallow_below_64x64 = (sb_params->width % 64 == 0 &&
-                                                         sb_params->height % 64 == 0)
+            depth_removal_ctrls->disallow_below_64x64 = (b64_geom->width % 64 == 0 &&
+                                                         b64_geom->height % 64 == 0)
                 ? (depth_removal_ctrls->disallow_below_64x64 ||
                    cost_64x64 < disallow_below_64x64_cost_th)
                 : 0;
 
-            depth_removal_ctrls->disallow_below_32x32 = (sb_params->width % 32 == 0 &&
-                                                         sb_params->height % 32 == 0)
+            depth_removal_ctrls->disallow_below_32x32 = (b64_geom->width % 32 == 0 &&
+                                                         b64_geom->height % 32 == 0)
                 ? (depth_removal_ctrls->disallow_below_32x32 ||
                    cost_32x32 < disallow_below_32x32_cost_th ||
                    (dev_32x32_to_16x16 < dev_32x32_to_16x16_th &&
                     dev_32x32_to_8x8 < dev_32x32_to_8x8_th))
                 : 0;
 
-            depth_removal_ctrls->disallow_below_16x16 = (sb_params->width % 16 == 0 &&
-                                                         sb_params->height % 16 == 0)
+            depth_removal_ctrls->disallow_below_16x16 = (b64_geom->width % 16 == 0 &&
+                                                         b64_geom->height % 16 == 0)
                 ? (depth_removal_ctrls->disallow_below_16x16 ||
                    cost_16x16 < disallow_below_16x16_cost_th ||
                    dev_16x16_to_8x8 < dev_16x16_to_8x8_th)
@@ -4711,7 +4713,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
                        ? MIN(pcs_ptr->pic_lpd0_lvl, ctx->detect_high_freq_ctrls.max_pic_lpd0_lvl)
                        : pcs_ptr->pic_lpd0_lvl);
 
-    SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[ctx->sb_index];
+    B64Geom *b64_geom = &pcs_ptr->parent_pcs_ptr->b64_geom[ctx->sb_index];
     ctx->depth_removal_ctrls.disallow_below_64x64 = 0;
     ctx->depth_removal_ctrls.disallow_below_32x32 = 0;
     /*
@@ -4723,11 +4725,11 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
 */
     ctx->depth_removal_ctrls.disallow_below_16x16 = pcs_ptr->pic_disallow_below_16x16;
 
-    if (sb_params->width % 32 != 0 || sb_params->height % 32 != 0)
+    if (b64_geom->width % 32 != 0 || b64_geom->height % 32 != 0)
         ctx->depth_removal_ctrls.disallow_below_64x64 = FALSE;
-    if (sb_params->width % 16 != 0 || sb_params->height % 16 != 0)
+    if (b64_geom->width % 16 != 0 || b64_geom->height % 16 != 0)
         ctx->depth_removal_ctrls.disallow_below_32x32 = FALSE;
-    if (sb_params->width % 8 != 0 || sb_params->height % 8 != 0)
+    if (b64_geom->width % 8 != 0 || b64_geom->height % 8 != 0)
         ctx->depth_removal_ctrls.disallow_below_16x16 = FALSE;
 
     // me_distortion/variance generated for 64x64 blocks only
@@ -4745,15 +4747,15 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
         // ctx->depth_removal_ctrls.disallow_below_64x64 = 1;
         ctx->depth_removal_ctrls.disallow_below_32x32 = 1;
         //ctx->depth_removal_ctrls.disallow_below_16x16 = 1;
-        if (sb_params->width % 32 != 0 || sb_params->height % 32 != 0) {
+        if (b64_geom->width % 32 != 0 || b64_geom->height % 32 != 0) {
             ctx->depth_removal_ctrls.disallow_below_64x64 = FALSE;
             ctx->depth_removal_ctrls.disallow_below_32x32 = FALSE;
         }
-        if (sb_params->width % 16 != 0 || sb_params->height % 16 != 0)
+        if (b64_geom->width % 16 != 0 || b64_geom->height % 16 != 0)
             ctx->depth_removal_ctrls.disallow_below_32x32 = FALSE;
         else
             ctx->depth_removal_ctrls.enabled = 1;
-        if (sb_params->width % 8 != 0 || sb_params->height % 8 != 0)
+        if (b64_geom->width % 8 != 0 || b64_geom->height % 8 != 0)
             ctx->depth_removal_ctrls.disallow_below_16x16 = FALSE;
     }
 
@@ -5508,11 +5510,12 @@ void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet *scs, Pict
     } else {
         subres_level = 0;
 
-        SbParams *sb_params_ptr = &pcs->parent_pcs_ptr->sb_params_array[ctx->sb_index];
+        // Use b64_geom here because LPD0 is only enabled when 64x64 SB size is used
+        B64Geom *b64_geom = &pcs->parent_pcs_ptr->b64_geom[ctx->sb_index];
 
         // The controls checks the deviation between: (1) the pred-to-src SAD of even rows and (2) the pred-to-src SAD of odd rows for each 64x64 to decide whether to use subres or not
         // then applies the result to the 64x64 block and to all children, therefore if incomplete 64x64 then shut subres
-        if (sb_params_ptr->is_complete_sb) {
+        if (b64_geom->is_complete_b64) {
             // Use ME distortion and variance detector to enable subres
             uint64_t use_subres_th = compute_subres_th(scs, pcs, ctx);
             uint32_t fast_lambda   = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
@@ -6449,9 +6452,8 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     int8_t e_depth = context_ptr->depth_ctrls.e_depth;
 
                     if (context_ptr->skip_pd0) {
-                        SbParams *sb_params =
-                            &pcs_ptr->parent_pcs_ptr->sb_params_array[context_ptr->sb_index];
-                        if ((sb_params->width % 32 == 0) && (sb_params->height % 32 == 0)) {
+                        SbGeom *sb_geom = &pcs_ptr->parent_pcs_ptr->sb_geom[context_ptr->sb_index];
+                        if ((sb_geom->width % 32 == 0) && (sb_geom->height % 32 == 0)) {
                             s_depth = 0;
                             e_depth = 0;
                         }
@@ -6724,7 +6726,7 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr, SequenceContr
             sb_qp_derivation_tpl_la(pcs_ptr);
         else {
             ppcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
-            for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
+            for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count; ++sb_addr) {
                 SuperBlock *sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
                 sb_ptr->qindex     = quantizer_to_qindex[pcs_ptr->picture_qp];
             }
@@ -7156,10 +7158,9 @@ void *mode_decision_kernel(void *input_ptr) {
         context_ptr->coded_sb_count   = 0;
         segments_ptr = pcs_ptr->enc_dec_segment_ctrl[context_ptr->tile_group_index];
         // SB Constants
-        uint8_t sb_sz            = (uint8_t)scs_ptr->sb_size_pix;
-        uint8_t sb_size_log2     = (uint8_t)svt_log2f(sb_sz);
-        context_ptr->sb_sz       = sb_sz;
-        uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >>
+        uint8_t  sb_size         = (uint8_t)scs_ptr->sb_size;
+        uint8_t  sb_size_log2    = (uint8_t)svt_log2f(sb_size);
+        uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_size - 1) >>
             sb_size_log2;
         uint16_t tile_group_width_in_sb = pcs_ptr->parent_pcs_ptr
                                               ->tile_group_info[context_ptr->tile_group_index]
@@ -7514,7 +7515,11 @@ void *mode_decision_kernel(void *input_ptr) {
                                 pcs_ptr,
                                 context_ptr->md_context,
                                 sb_index,
-                                pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index].is_complete_sb);
+#if CLN_B64_RENAMING
+                                pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].is_complete_sb);
+#else
+                                pcs_ptr->parent_pcs_ptr->b64_geom[sb_index].is_complete_b64);
+#endif
                         else
                             // Build the t=0 cand_block_array
                             build_starting_cand_block_array(
@@ -7574,7 +7579,7 @@ void *mode_decision_kernel(void *input_ptr) {
             pcs_ptr->skip_coded_area += (uint32_t)context_ptr->tot_skip_coded_area;
             // Accumulate block selection
             pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
-            Bool last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
+            Bool last_sb_flag = (pcs_ptr->sb_total_count == pcs_ptr->enc_dec_coded_sb_count);
             svt_release_mutex(pcs_ptr->intra_mutex);
 
             if (last_sb_flag) {

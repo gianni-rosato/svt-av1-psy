@@ -75,7 +75,7 @@ typedef struct SequenceControlSet {
     /*!< Super block geomerty pointer */
     SbGeom *sb_geom;
     /*!< Array of superblock parameters computed at the resource coordination stage */
-    SbParams *sb_params_array;
+    B64Geom *b64_geom;
     /*!< Bitstream level */
     BitstreamLevel level[MAX_NUM_OPERATING_POINTS];
     /*!< Sequence header structure, common between the encoder and decoder */
@@ -162,13 +162,12 @@ typedef struct SequenceControlSet {
     EbInputResolution input_resolution;
 
     /*!< Super block parameters set for the stream */
-    uint8_t  sb_sz;
-    uint8_t  max_sb_depth;
-    uint16_t pic_width_in_sb;
-    uint16_t picture_height_in_sb;
+    uint8_t  b64_size;
+    uint16_t pic_width_in_b64;
+    uint16_t pic_height_in_b64;
+    uint16_t b64_total_count;
+    uint16_t sb_size;
     uint16_t sb_total_count;
-    uint16_t sb_size_pix;
-    uint16_t sb_tot_cnt;
     uint16_t max_block_cnt;
     /*!< Restoration Unit parameters set for the stream */
     int32_t rest_units_per_tile;
@@ -433,7 +432,11 @@ typedef struct EbSequenceControlSetInstance {
      **************************************/
 extern EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr);
 
+#if CLN_B64_RENAMING
+extern EbErrorType b64_geom_init(SequenceControlSet *scs_ptr);
+#else
 extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr);
+#endif
 
 extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
                                            uint32_t           input_size);

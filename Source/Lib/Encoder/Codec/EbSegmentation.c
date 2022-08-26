@@ -133,7 +133,7 @@ void find_segment_qps(SegmentationParams *segmentation_params,
     const float strength = 2; //to tune
 
     // get range of variance
-    for (uint32_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
+    for (uint32_t sb_idx = 0; sb_idx < pcs_ptr->b64_total_count; ++sb_idx) {
         uint16_t *variance_ptr = pcs_ptr->parent_pcs_ptr->variance[sb_idx];
         uint32_t  var_index, local_avg = 0;
         // Loop over all 8x8s in a 64x64
@@ -144,7 +144,7 @@ void find_segment_qps(SegmentationParams *segmentation_params,
         }
         avg_var += (local_avg >> 6);
     }
-    avg_var /= pcs_ptr->sb_total_count;
+    avg_var /= pcs_ptr->b64_total_count;
     avg_var = svt_log2f(avg_var);
 
     //get variance bin edges & QPs

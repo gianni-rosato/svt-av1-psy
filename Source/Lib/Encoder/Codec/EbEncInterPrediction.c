@@ -5478,8 +5478,8 @@ EbErrorType av1_inter_prediction(
 
         uint8_t *dst_ptr;
         int32_t  dst_stride, intra_stride;
-        uint32_t sb_size_luma   = scs_ptr->sb_size_pix;
-        uint32_t sb_size_chroma = scs_ptr->sb_size_pix >> 1;
+        uint32_t sb_size_luma   = scs_ptr->sb_size;
+        uint32_t sb_size_chroma = scs_ptr->sb_size >> 1;
 
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             EbPictureBufferDesc intra_pred_desc;

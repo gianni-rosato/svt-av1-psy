@@ -1356,8 +1356,8 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
     uint16_t eobs[MAX_TXB_COUNT][3];
     get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
     uint32_t tot_tu         = context_ptr->blk_geom->txb_count[blk_ptr->tx_depth];
-    uint32_t sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix;
-    uint32_t sb_size_chroma = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix >> 1;
+    uint32_t sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size;
+    uint32_t sb_size_chroma = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size >> 1;
 
     // Luma path
     for (context_ptr->txb_itr = 0; context_ptr->txb_itr < tot_tu; context_ptr->txb_itr++) {
@@ -2314,8 +2314,8 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs, 
 void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs, EncDecContext *ctx,
                            EbPictureBufferDesc *input_pic, uint32_t sb_org_x, uint32_t sb_org_y) {
     Bool     is_16bit  = ctx->is_16bit;
-    uint32_t sb_width  = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_width - sb_org_x);
-    uint32_t sb_height = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_height - sb_org_y);
+    uint32_t sb_width  = MIN(scs->sb_size, pcs->parent_pcs_ptr->aligned_width - sb_org_x);
+    uint32_t sb_height = MIN(scs->sb_size, pcs->parent_pcs_ptr->aligned_height - sb_org_y);
 
     if (is_16bit && scs->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
         //SB128_TODO change 10bit SB creation
@@ -2372,29 +2372,25 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs, EncD
                                 ctx->input_sample16bit_buffer->stride_y,
                                 sb_width,
                                 sb_height,
-                                scs->sb_size_pix - sb_width,
-                                scs->sb_size_pix - sb_height);
+                                scs->sb_size - sb_width,
+                                scs->sb_size - sb_height);
         pad_input_picture_16bit((uint16_t *)ctx->input_sample16bit_buffer->buffer_cb,
                                 ctx->input_sample16bit_buffer->stride_cb,
                                 sb_width >> 1,
                                 sb_height >> 1,
-                                (scs->sb_size_pix - sb_width) >> 1,
-                                (scs->sb_size_pix - sb_height) >> 1);
+                                (scs->sb_size - sb_width) >> 1,
+                                (scs->sb_size - sb_height) >> 1);
 
         pad_input_picture_16bit((uint16_t *)ctx->input_sample16bit_buffer->buffer_cr,
                                 ctx->input_sample16bit_buffer->stride_cr,
                                 sb_width >> 1,
                                 sb_height >> 1,
-                                (scs->sb_size_pix - sb_width) >> 1,
-                                (scs->sb_size_pix - sb_height) >> 1);
+                                (scs->sb_size - sb_width) >> 1,
+                                (scs->sb_size - sb_height) >> 1);
 
         if (ctx->md_context->hbd_mode_decision == 0)
-            store16bit_input_src(ctx->input_sample16bit_buffer,
-                                 pcs,
-                                 sb_org_x,
-                                 sb_org_y,
-                                 scs->sb_size_pix,
-                                 scs->sb_size_pix);
+            store16bit_input_src(
+                ctx->input_sample16bit_buffer, pcs, sb_org_x, sb_org_y, scs->sb_size, scs->sb_size);
     }
 
     if (is_16bit && scs->static_config.encoder_bit_depth == EB_EIGHT_BIT) {
@@ -2410,13 +2406,12 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs, EncD
 
         sb_width  = ((sb_width < MIN_SB_SIZE) ||
                     ((sb_width > MIN_SB_SIZE) && (sb_width < MAX_SB_SIZE)))
-             ? MIN(scs->sb_size_pix,
+             ? MIN(scs->sb_size,
                   (pcs->parent_pcs_ptr->aligned_width + scs->right_padding) - sb_org_x)
              : sb_width;
         sb_height = ((sb_height < MIN_SB_SIZE) ||
                      ((sb_height > MIN_SB_SIZE) && (sb_height < MAX_SB_SIZE)))
-            ? MIN(scs->sb_size_pix,
-                  (pcs->parent_pcs_ptr->aligned_height + scs->bot_padding) - sb_org_y)
+            ? MIN(scs->sb_size, (pcs->parent_pcs_ptr->aligned_height + scs->bot_padding) - sb_org_y)
             : sb_height;
 
         // PACK Y
@@ -3171,8 +3166,7 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
         //Jing: Don't work for tile_parallel since the SB of bottom tile comes early than the bottom SB of top tile
         if (pcs->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[0] ||
             pcs->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[1]) {
-            uint32_t sb_width = MIN(scs->sb_size_pix,
-                                    pcs->parent_pcs_ptr->aligned_width - sb_org_x);
+            uint32_t sb_width = MIN(scs->sb_size, pcs->parent_pcs_ptr->aligned_width - sb_org_x);
             uint8_t  last_col = ((sb_org_x + sb_width) == pcs->parent_pcs_ptr->aligned_width) ? 1
                                                                                               : 0;
             loop_filter_sb(recon_buffer, pcs, sb_org_y >> 2, sb_org_x >> 2, 0, 3, last_col);

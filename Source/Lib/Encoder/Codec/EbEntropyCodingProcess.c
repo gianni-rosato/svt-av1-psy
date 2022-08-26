@@ -261,11 +261,10 @@ void *entropy_coding_kernel(void *input_ptr) {
         SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
         // SB Constants
 
-        uint8_t sb_sz = (uint8_t)scs_ptr->sb_size_pix;
+        uint8_t sb_size = (uint8_t)scs_ptr->sb_size;
 
-        uint8_t sb_size_log2     = (uint8_t)svt_log2f(sb_sz);
-        context_ptr->sb_sz       = sb_sz;
-        uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >>
+        uint8_t  sb_size_log2    = (uint8_t)svt_log2f(sb_size);
+        uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_size - 1) >>
             sb_size_log2;
         uint16_t         tile_idx        = rest_results_ptr->tile_index;
         Av1Common *const cm              = pcs_ptr->parent_pcs_ptr->av1_cm;

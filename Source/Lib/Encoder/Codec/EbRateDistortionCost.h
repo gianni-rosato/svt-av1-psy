@@ -66,8 +66,7 @@ extern EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr,
                                        ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                        uint32_t leaf_index, PartitionType partitionType,
                                        uint64_t *split_rate, uint64_t lambda,
-                                       MdRateEstimationContext *md_rate_estimation_ptr,
-                                       uint32_t                 tb_max_depth);
+                                       MdRateEstimationContext *md_rate_estimation_ptr);
 extern uint64_t    av1_intra_fast_cost(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                        ModeDecisionCandidateBuffer *candidate_buffer, uint32_t qp,
                                        uint64_t luma_distortion, uint64_t chroma_distortion,

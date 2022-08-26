@@ -871,7 +871,7 @@ static int open_loop_firstpass_inter_prediction(
         uint32_t           me_mb_offset = 0;
         BlockGeom          blk_geom;
         const MeSbResults *me_results = ppcs_ptr->pa_me_data->me_results[me_sb_addr];
-        uint32_t           me_sb_size = ppcs_ptr->scs_ptr->sb_sz;
+        uint32_t           me_sb_size = ppcs_ptr->scs_ptr->b64_size;
         blk_geom.origin_x             = blk_origin_x - (blk_origin_x / me_sb_size) * me_sb_size;
         blk_geom.origin_y             = blk_origin_y - (blk_origin_y / me_sb_size) * me_sb_size;
         blk_geom.bwidth               = FORCED_BLK_SIZE;
@@ -1029,7 +1029,7 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
     const uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + FORCED_BLK_SIZE - 1) /
         FORCED_BLK_SIZE;
 
-    uint32_t me_sb_size         = ppcs_ptr->scs_ptr->sb_sz;
+    uint32_t me_sb_size         = ppcs_ptr->scs_ptr->b64_size;
     uint32_t me_pic_width_in_sb = (ppcs_ptr->aligned_width + me_sb_size - 1) / me_sb_size;
     uint32_t me_sb_x, me_sb_y, me_sb_addr;
 

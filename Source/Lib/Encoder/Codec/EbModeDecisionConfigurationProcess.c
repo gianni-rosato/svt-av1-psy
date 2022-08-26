@@ -425,10 +425,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 ppcs->frm_hdr.use_ref_frame_mvs = 1;
             else {
                 uint64_t avg_me_dist = 0;
-                for (uint16_t b64_idx = 0; b64_idx < ppcs->sb_total_count; b64_idx++) {
+                for (uint16_t b64_idx = 0; b64_idx < ppcs->b64_total_count; b64_idx++) {
                     avg_me_dist += ppcs->me_64x64_distortion[b64_idx];
                 }
-                avg_me_dist /= ppcs->sb_total_count;
+                avg_me_dist /= ppcs->b64_total_count;
                 avg_me_dist /= pcs_ptr->picture_qp;
 
                 ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 200 ||
@@ -439,10 +439,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         } else {
             if (enc_mode <= ENC_M9) {
                 uint64_t avg_me_dist = 0;
-                for (uint16_t b64_idx = 0; b64_idx < ppcs->sb_total_count; b64_idx++) {
+                for (uint16_t b64_idx = 0; b64_idx < ppcs->b64_total_count; b64_idx++) {
                     avg_me_dist += ppcs->me_64x64_distortion[b64_idx];
                 }
-                avg_me_dist /= ppcs->sb_total_count;
+                avg_me_dist /= ppcs->b64_total_count;
                 avg_me_dist /= pcs_ptr->picture_qp;
 
                 ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 50 ||
@@ -1489,8 +1489,8 @@ void *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 // Use me_8x8_distortion and QP to predict the coeff level per frame
 static void predict_frame_coeff_lvl(struct PictureControlSet *pcs) {
     uint64_t tot_me_8x8_dis = 0;
-    for (uint32_t sb_idx = 0; sb_idx < pcs->sb_total_count; sb_idx++) {
-        tot_me_8x8_dis += pcs->parent_pcs_ptr->me_8x8_distortion[sb_idx];
+    for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
+        tot_me_8x8_dis += pcs->parent_pcs_ptr->me_8x8_distortion[b64_idx];
     }
     tot_me_8x8_dis = tot_me_8x8_dis / pcs->picture_qp;
 

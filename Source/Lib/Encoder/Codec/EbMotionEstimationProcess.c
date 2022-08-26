@@ -777,8 +777,8 @@ void *motion_estimation_kernel(void *input_ptr) {
 
             // Segments
             uint32_t segment_index   = in_results_ptr->segment_index;
-            uint32_t pic_width_in_b64 = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-            uint32_t picture_height_in_b64 = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+            uint32_t pic_width_in_b64 = (pcs_ptr->aligned_width + scs_ptr->b64_size - 1) / scs_ptr->b64_size;
+            uint32_t picture_height_in_b64 = (pcs_ptr->aligned_height + scs_ptr->b64_size - 1) / scs_ptr->b64_size;
             uint32_t y_segment_index;
             uint32_t x_segment_index;
 
@@ -809,8 +809,8 @@ void *motion_estimation_kernel(void *input_ptr) {
 
                             uint32_t b64_index    = (uint16_t)(x_b64_index + y_b64_index * pic_width_in_b64);
 
-                            uint32_t b64_origin_x = x_b64_index * scs_ptr->sb_sz;
-                            uint32_t b64_origin_y = y_b64_index * scs_ptr->sb_sz;
+                            uint32_t b64_origin_x = x_b64_index * scs_ptr->b64_size;
+                            uint32_t b64_origin_y = y_b64_index * scs_ptr->b64_size;
 
                             // Load the 64x64 Block from the input to the intermediate block buffer
                             uint32_t buffer_index = (input_picture_ptr->origin_y + b64_origin_y) * input_picture_ptr->stride_y +
@@ -907,7 +907,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 svt_block_on_mutex(pcs_ptr->me_processed_b64_mutex);
                                 pcs_ptr->me_processed_b64_count++;
                                 // We need to finish ME for all SBs to do GM
-                                if (pcs_ptr->me_processed_b64_count == pcs_ptr->sb_total_count) {
+                                if (pcs_ptr->me_processed_b64_count == pcs_ptr->b64_total_count) {
                                     if (pcs_ptr->gm_ctrls.enabled)
                                         global_motion_estimation(pcs_ptr, input_picture_ptr);
                                     else

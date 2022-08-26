@@ -562,7 +562,9 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 
     pcs_ptr->me_segments_total_count = (uint16_t)(pcs_ptr->me_segments_column_count *
                                                   pcs_ptr->me_segments_row_count);
-    pcs_ptr->sb_total_count_pix      = pcs_ptr->sb_total_count;
+#if !CLN_B64_RENAMING
+    pcs_ptr->sb_total_count_pix = pcs_ptr->b64_total_count;
+#endif
     pcs_ptr->tpl_disp_coded_sb_count = 0;
 
     pcs_ptr->tpl_src_data_ready  = 0;
@@ -720,14 +722,12 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_pcs(PictureParentCo
 extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControlSet *scs_ptr);
 
 static EbErrorType realloc_sb_param(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
-    EB_FREE_ARRAY(pcs_ptr->sb_params_array);
-    EB_MALLOC_ARRAY(pcs_ptr->sb_params_array, scs_ptr->sb_total_count);
-    memcpy(pcs_ptr->sb_params_array,
-           scs_ptr->sb_params_array,
-           sizeof(SbParams) * scs_ptr->sb_total_count);
+    EB_FREE_ARRAY(pcs_ptr->b64_geom);
+    EB_MALLOC_ARRAY(pcs_ptr->b64_geom, scs_ptr->b64_total_count);
+    memcpy(pcs_ptr->b64_geom, scs_ptr->b64_geom, sizeof(B64Geom) * scs_ptr->b64_total_count);
     EB_FREE_ARRAY(pcs_ptr->sb_geom);
-    EB_MALLOC_ARRAY(pcs_ptr->sb_geom, scs_ptr->sb_tot_cnt);
-    memcpy(pcs_ptr->sb_geom, scs_ptr->sb_geom, sizeof(SbGeom) * scs_ptr->sb_tot_cnt);
+    EB_MALLOC_ARRAY(pcs_ptr->sb_geom, scs_ptr->sb_total_count);
+    memcpy(pcs_ptr->sb_geom, scs_ptr->sb_geom, sizeof(SbGeom) * scs_ptr->sb_total_count);
     pcs_ptr->is_pcs_sb_params = TRUE;
     return EB_ErrorNone;
 }
@@ -837,7 +837,11 @@ void *resource_coordination_kernel(void *input_ptr) {
                 scs_ptr->max_input_luma_height;
             derive_input_resolution(&scs_ptr->input_resolution, input_size);
 
+#if CLN_B64_RENAMING
+            b64_geom_init(scs_ptr);
+#else
             sb_params_init(scs_ptr);
+#endif
             sb_geom_init(scs_ptr);
 
             // sf_identity
@@ -881,13 +885,13 @@ void *resource_coordination_kernel(void *input_ptr) {
                 scs_ptr->static_config.resize_mode > RESIZE_NONE)
                 realloc_sb_param(scs_ptr, pcs_ptr);
             else {
-                pcs_ptr->sb_params_array  = scs_ptr->sb_params_array;
+                pcs_ptr->b64_geom         = scs_ptr->b64_geom;
                 pcs_ptr->sb_geom          = scs_ptr->sb_geom;
                 pcs_ptr->is_pcs_sb_params = FALSE;
             }
             pcs_ptr->input_resolution  = scs_ptr->input_resolution;
-            pcs_ptr->picture_sb_width  = scs_ptr->pic_width_in_sb;
-            pcs_ptr->picture_sb_height = scs_ptr->picture_height_in_sb;
+            pcs_ptr->picture_sb_width  = scs_ptr->pic_width_in_b64;
+            pcs_ptr->picture_sb_height = scs_ptr->pic_height_in_b64;
 
             pcs_ptr->overlay_ppcs_ptr   = NULL;
             pcs_ptr->is_alt_ref         = 0;
@@ -974,7 +978,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->idr_flag          = scs_ptr->encode_context_ptr->initial_picture;
             pcs_ptr->scene_change_flag = FALSE;
             pcs_ptr->qp_on_the_fly     = FALSE;
-            pcs_ptr->sb_total_count    = scs_ptr->sb_total_count;
+            pcs_ptr->b64_total_count   = scs_ptr->b64_total_count;
             if (scs_ptr->speed_control_flag) {
                 speed_buffer_control(context_ptr, pcs_ptr, scs_ptr);
             } else
@@ -1052,10 +1056,9 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (scs_ptr->static_config.restricted_motion_vector) {
                 struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
                 Av1Common *const                cm       = ppcs_ptr->av1_cm;
-                uint8_t pic_width_in_sb = (uint8_t)((pcs_ptr->aligned_width + scs_ptr->sb_size_pix -
-                                                     1) /
-                                                    scs_ptr->sb_size_pix);
-                int     tile_row, tile_col;
+                uint8_t                         pic_width_in_sb =
+                    (uint8_t)((pcs_ptr->aligned_width + scs_ptr->sb_size - 1) / scs_ptr->sb_size);
+                int       tile_row, tile_col;
                 uint32_t  x_sb_index, y_sb_index;
                 const int tile_cols = cm->tiles_info.tile_cols;
                 const int tile_rows = cm->tiles_info.tile_rows;
@@ -1080,16 +1083,14 @@ void *resource_coordination_kernel(void *input_ptr) {
                                   ((uint32_t)cm->tiles_info.tile_col_start_mi[tile_col + 1] >>
                                    sb_size_log2));
                                  x_sb_index++) {
-                                int sb_index = (uint16_t)(x_sb_index +
+                                int sb_index                             = (uint16_t)(x_sb_index +
                                                           y_sb_index * pic_width_in_sb);
-                                scs_ptr->sb_params_array[sb_index].tile_start_x = 4 *
+                                scs_ptr->b64_geom[sb_index].tile_start_x = 4 *
                                     tile_info.mi_col_start;
-                                scs_ptr->sb_params_array[sb_index].tile_end_x = 4 *
-                                    tile_info.mi_col_end;
-                                scs_ptr->sb_params_array[sb_index].tile_start_y = 4 *
+                                scs_ptr->b64_geom[sb_index].tile_end_x   = 4 * tile_info.mi_col_end;
+                                scs_ptr->b64_geom[sb_index].tile_start_y = 4 *
                                     tile_info.mi_row_start;
-                                scs_ptr->sb_params_array[sb_index].tile_end_y = 4 *
-                                    tile_info.mi_row_end;
+                                scs_ptr->b64_geom[sb_index].tile_end_y = 4 * tile_info.mi_row_end;
                             }
                         }
                     }
