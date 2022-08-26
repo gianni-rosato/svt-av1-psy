@@ -191,14 +191,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (scs_ptr->max_input_luma_width % 8 &&
-        scs_ptr->static_config.compressed_ten_bit_format == 1) {
-        SVT_ERROR(
-            "Instance %u: Only multiple of 8 width is supported for compressed 10-bit inputs \n",
-            channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
     if (scs_ptr->max_input_luma_width > 16384) {
         SVT_ERROR("Instance %u: Source Width must be less than or equal to 16384\n",
                   channel_number + 1);
@@ -483,6 +475,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         SVT_ERROR("Instance %u: Invalid Compressed Ten Bit Format flag [0 - 1]\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->compressed_ten_bit_format) {
+        SVT_WARN("Instance %u: Compressed Ten Bit Format has been deprecated and has no effect\n",
+                 channel_number + 1);
     }
 
     if (config->use_cpu_flags & EB_CPU_FLAGS_INVALID) {
@@ -1116,15 +1113,14 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
             config->frame_rate_numerator,
             config->frame_rate_denominator);
         SVT_INFO(
-            "SVT [config]: bit-depth / color format / compressed 10-bit format\t\t: %d / "
-            "%s / %d\n",
+            "SVT [config]: bit-depth / color format \t\t\t\t\t: %d / "
+            "%s\n",
             config->encoder_bit_depth,
             config->encoder_color_format == EB_YUV400       ? "YUV400"
                 : config->encoder_color_format == EB_YUV420 ? "YUV420"
                 : config->encoder_color_format == EB_YUV422 ? "YUV422"
                 : config->encoder_color_format == EB_YUV444 ? "YUV444"
-                                                            : "Unknown color format",
-            config->compressed_ten_bit_format);
+                                                            : "Unknown color format");
 
         SVT_INFO("SVT [config]: preset / tune / pred struct \t\t\t\t\t: %d / %s / %s\n",
                  config->enc_mode,

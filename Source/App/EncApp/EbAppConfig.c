@@ -961,7 +961,7 @@ ConfigEntry config_entry_global_options[] = {
      set_encoder_bit_depth},
     {SINGLE_INPUT,
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
-     "Pack 10bit video, handled between the app and library, default is 0 [0-1]",
+     "Depreciated and ignored, default is 0 [0-1]",
      set_compressed_ten_bit_format},
     // Latency
     {SINGLE_INPUT,
@@ -2605,10 +2605,7 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
     if (frame_size == 0)
         return -1;
 
-    if (config->config.encoder_bit_depth == 10 && config->config.compressed_ten_bit_format == 1)
-        frame_count = (int32_t)(2 * ((double)file_size / frame_size) / 1.25);
-    else
-        frame_count = (int32_t)(file_size / frame_size);
+    frame_count = (int32_t)(file_size / frame_size);
 
     if (frame_count == 0)
         return -1;

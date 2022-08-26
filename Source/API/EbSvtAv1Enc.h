@@ -319,10 +319,11 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is YUV420.
      */
     EbColorFormat encoder_color_format;
-    /* Offline packing of the 2bits: requires two bits packed input.
-     *
-     * Default is 0. */
+
+#if !SVT_AV1_CHECK_VERSION(1, 3, 0)
+    /* DEPRECATED: to be removed in 1.3.0. */
     uint32_t compressed_ten_bit_format;
+#endif
 
     /**
      * @brief Enable writing of HDR metadata in the bitstream
