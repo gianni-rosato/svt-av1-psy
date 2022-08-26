@@ -1854,6 +1854,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"resize-kf-denom", &config_struct->resize_kf_denom},
         {"qm-min", &config_struct->min_qm_level},
         {"qm-max", &config_struct->max_qm_level},
+        {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},
 #if FTR_GOP_CONST_RC
         {"gop-constraint-rc", &config_struct->gop_constraint_rc},
 #endif
@@ -1942,7 +1943,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         Bool       *out;
     } bool_opts[] = {
         {"use-q-file", &config_struct->use_qp_file},
-        {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},
         {"enable-dlf", &config_struct->enable_dlf_flag},
         {"rmv", &config_struct->restricted_motion_vector},
         {"enable-tf", &config_struct->enable_tf},

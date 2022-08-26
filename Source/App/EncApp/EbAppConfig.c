@@ -481,7 +481,7 @@ static void set_cfg_use_qp_file(const char *value, EbConfig *cfg) {
 };
 
 static void set_cfg_use_fixed_qindex_offsets(const char *value, EbConfig *cfg) {
-    cfg->config.use_fixed_qindex_offsets = (Bool)strtol(value, NULL, 0);
+    cfg->config.use_fixed_qindex_offsets = (uint8_t)strtol(value, NULL, 0);
 }
 
 static void set_cfg_key_frame_qindex_offset(const char *value, EbConfig *cfg) {
@@ -1051,7 +1051,7 @@ ConfigEntry config_entry_rc[] = {
     {SINGLE_INPUT,
      USE_FIXED_QINDEX_OFFSETS_TOKEN,
      "Overwrite the encoder default hierarchical layer based QP assignment and use fixed Q index "
-     "offsets, default is 0 [0-1]",
+     "offsets, default is 0 [0-2]",
      set_cfg_use_fixed_qindex_offsets},
     {SINGLE_INPUT,
      KEY_FRAME_QINDEX_OFFSET_TOKEN,
