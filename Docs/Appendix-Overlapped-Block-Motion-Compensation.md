@@ -117,7 +117,7 @@ are as follows:
 
 3. Generate predictions for the current block based on the top and left blocks (```precompute_obmc_data```). The generation of these predictions is performed as follows:
     - For each of the overlapping top blocks, prediction candidate for the current block based on the MV of the top block is generated. (```build_prediction_by_above_preds```)
-    - For each of the overlapping top blocks, prediction candidate for the current block based on the MV of the top block is generated. (```build_prediction_by_left_preds```)
+    - For each of the overlapping left blocks, prediction candidate for the current block based on the MV of the left block is generated. (```build_prediction_by_left_preds```)
 
    The predictions for the current block based on the MVs of the top blocks and
    those of the left blocks are prepared in the above steps to be used in
