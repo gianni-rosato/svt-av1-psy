@@ -456,7 +456,9 @@ typedef struct MeContext {
     signed short tf_32x32_mv_y[4];
     uint64_t     tf_32x32_block_error[4];
     int          tf_32x32_block_split_flag[4];
-    int          tf_16x16_search_do[4];
+#if !OPT_TF_1
+    int tf_16x16_search_do[4];
+#endif
     int          tf_block_row;
     int          tf_block_col;
     uint32_t     idx_32x32;
@@ -468,6 +470,9 @@ typedef struct MeContext {
     uint8_t      stat_factor;
     uint16_t     tf_me_exit_th;
     uint8_t      tf_use_pred_64x64_only_th;
+#if OPT_TF_2
+    uint8_t tf_subpel_early_exit;
+#endif
     uint32_t     zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t     me_early_exit_th;
     uint32_t     tf_tot_vert_blks; //total vertical motion blocks in TF

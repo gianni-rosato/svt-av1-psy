@@ -239,7 +239,13 @@ EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
 extern void *rate_control_kernel(void *input_ptr);
 int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type,
                                             int qindex);
+#if OPT_LAMBDA_MODULATION
+struct PictureControlSet;
+int svt_aom_compute_rd_mult(struct PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index,
+                            uint8_t bit_depth);
+#else
 struct PictureParentControlSet;
 int svt_aom_compute_rd_mult(struct PictureParentControlSet *pcs, uint8_t q_index,
                             uint8_t bit_depth);
+#endif
 #endif // EbRateControl_h

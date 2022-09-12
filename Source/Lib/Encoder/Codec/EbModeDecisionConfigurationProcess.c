@@ -27,8 +27,9 @@
 #include "EbCommonUtils.h"
 #include "EbResize.h"
 #include "EbInvTransforms.h"
-
+#if !FIX_DISALLOW_CTRL
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
+#endif
 uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t encoder_bit_depth);
 
 #define MAX_MESH_SPEED 5 // Max speed setting for mesh motion method
@@ -421,7 +422,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     } else {
         if (fast_decode == 0) {
+#if OPT_M6
+#if OPT_M7
+#if OPT_M8
+            if (enc_mode <= ENC_M8)
+#else
+            if (enc_mode <= ENC_M7)
+#endif
+#else
+            if (enc_mode <= ENC_M6)
+#endif
+#else
             if (enc_mode <= ENC_M5)
+#endif
                 ppcs->frm_hdr.use_ref_frame_mvs = 1;
             else {
                 uint64_t avg_me_dist = 0;
@@ -484,7 +497,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
 
     if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
+#if OPT_M4
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
@@ -559,8 +576,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
             if (ppcs->enc_mode <= ENC_M3)
                 ppcs->pic_obmc_level = 1;
+#if OPT_M5
+            else if (ppcs->enc_mode <= ENC_M5)
+                ppcs->pic_obmc_level = 2;
+#else
             else if (ppcs->enc_mode <= ENC_M4)
                 ppcs->pic_obmc_level = 2;
+#endif
             else if (enc_mode <= ENC_M6)
                 ppcs->pic_obmc_level = 3;
             else
@@ -593,7 +615,27 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->skip_intra = (is_ref || pcs_ptr->ref_intra_percentage > 50) ? 0 : 1;
 
-    // Set the level for the candidate(s) reduction feature
+        // Set the level for the candidate(s) reduction feature
+#if FTR_MDS0_INTRA_OPT
+    pcs_ptr->cand_reduction_level = 0;
+    if (is_islice)
+        pcs_ptr->cand_reduction_level = 0;
+    else if (enc_mode <= ENC_M4)
+        pcs_ptr->cand_reduction_level = 0;
+    else if (enc_mode <= ENC_M5)
+        pcs_ptr->cand_reduction_level = 1;
+    else if (enc_mode <= ENC_M8) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->cand_reduction_level = 1;
+        else
+            pcs_ptr->cand_reduction_level = 2;
+    } else if (enc_mode <= ENC_M10)
+        pcs_ptr->cand_reduction_level = 2;
+    else
+        pcs_ptr->cand_reduction_level = 3;
+    if (scs_ptr->rc_stat_gen_pass_mode)
+        pcs_ptr->cand_reduction_level = 6;
+#else
     pcs_ptr->cand_reduction_level = 0;
     if (is_islice)
         pcs_ptr->cand_reduction_level = 0;
@@ -610,10 +652,146 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->cand_reduction_level = 2;
     if (scs_ptr->rc_stat_gen_pass_mode)
         pcs_ptr->cand_reduction_level = 5;
+#endif
+#if OPT_M0_TXT
+    // Set the level for the txt search
+    pcs_ptr->txt_level = 0;
+    if (enc_mode <= ENC_MR)
+        pcs_ptr->txt_level = 1;
+    else if (enc_mode <= ENC_M1)
+        pcs_ptr->txt_level = 2;
+    else if (enc_mode <= ENC_M2)
+        pcs_ptr->txt_level = 3;
+    else if (enc_mode <= ENC_M5) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = 4;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = 7;
+        } else { // regular
+            pcs_ptr->txt_level = is_base ? 4 : 5;
+        }
+    } else if (enc_mode <= ENC_M9) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = is_base ? 4 : 5;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 8 : 10;
+        } else { // regular
+            pcs_ptr->txt_level = 7;
+        }
+    } else if (enc_mode <= ENC_M10) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = 7;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 8 : 10;
+            if (pcs_ptr->ref_intra_percentage < 85 && !is_base &&
+                !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        } else { // regular
+            pcs_ptr->txt_level = is_base ? 8 : 10;
+        }
+    } else if (enc_mode <= ENC_M12) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = is_base ? 8 : 10;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 8 : 10;
+            if (pcs_ptr->ref_intra_percentage < 85 && !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        } else { // regular
+            pcs_ptr->txt_level = is_base ? 8 : 10;
+            if (pcs_ptr->ref_intra_percentage < 85 && !is_base &&
+                !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        }
+    } else {
+        pcs_ptr->txt_level = is_base ? 8 : 10;
+        if (pcs_ptr->ref_intra_percentage < 85 && !pcs_ptr->parent_pcs_ptr->sc_class1) {
+            pcs_ptr->txt_level = 0;
+        }
+    }
+#else
+#if OPT_M2
+    // Set the level for the txt search
+    pcs_ptr->txt_level = 0;
+    if (enc_mode <= ENC_M1)
+        pcs_ptr->txt_level = 1;
+    else if (enc_mode <= ENC_M2)
+        pcs_ptr->txt_level = 2;
+    else if (enc_mode <= ENC_M5) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = 3;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = 6;
+        } else { // regular
+            pcs_ptr->txt_level = is_base ? 3 : 4;
+        }
+    } else if (enc_mode <= ENC_M9) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = is_base ? 3 : 4;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 7 : 9;
+        } else { // regular
+            pcs_ptr->txt_level = 6;
+        }
+    } else if (enc_mode <= ENC_M10) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = 6;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 7 : 9;
+            if (pcs_ptr->ref_intra_percentage < 85 && !is_base &&
+                !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        } else { // regular
+            pcs_ptr->txt_level = is_base ? 7 : 9;
+        }
+    } else if (enc_mode <= ENC_M12) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = is_base ? 7 : 9;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 7 : 9;
+            if (pcs_ptr->ref_intra_percentage < 85 && !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        } else { // regular
+            pcs_ptr->txt_level = is_base ? 7 : 9;
+            if (pcs_ptr->ref_intra_percentage < 85 && !is_base &&
+                !pcs_ptr->parent_pcs_ptr->sc_class1) {
+                pcs_ptr->txt_level = 0;
+            }
+        }
+    } else {
+        pcs_ptr->txt_level = is_base ? 7 : 9;
+        if (pcs_ptr->ref_intra_percentage < 85 && !pcs_ptr->parent_pcs_ptr->sc_class1) {
+            pcs_ptr->txt_level = 0;
+        }
+    }
+#else
     // Set the level for the txt search
     pcs_ptr->txt_level = 0;
     if (enc_mode <= ENC_M2)
         pcs_ptr->txt_level = 1;
+#if FTR_USE_SATD_TXT
+    else if (enc_mode <= ENC_M5) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = 2;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = 5;
+        } else { // regular
+            pcs_ptr->txt_level = is_base ? 2 : 3;
+        }
+    } else if (enc_mode <= ENC_M9) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->txt_level = is_base ? 2 : 3;
+        } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
+            pcs_ptr->txt_level = is_base ? 6 : 8;
+        } else { // regular
+            pcs_ptr->txt_level = 5;
+        }
+    }
+#else
     else if (enc_mode <= ENC_M3) {
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->txt_level = 1;
@@ -630,7 +808,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         } else { // regular
             pcs_ptr->txt_level = 5;
         }
-    } else if (enc_mode <= ENC_M10) {
+    }
+#endif
+    else if (enc_mode <= ENC_M10) {
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->txt_level = 5;
         } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
@@ -663,6 +843,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->txt_level = 0;
         }
     }
+#endif
+#endif
     // Set the level for the txt shortcut feature
     // Any tx_shortcut_level having the chroma detector off in REF frames should be reserved for M13+
     pcs_ptr->tx_shortcut_level = 0;
@@ -727,9 +909,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     // Set the level for bipred3x3 injection
     if (scs_ptr->bipred_3x3_inject == DEFAULT) {
+#if OPT_M1
+        if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_M1)
+#endif
             pcs_ptr->bipred3x3_injection = 1;
+#if OPT_M4
+        else if (enc_mode <= ENC_M3)
+#else
         else if (enc_mode <= ENC_M4)
+#endif
             pcs_ptr->bipred3x3_injection = 2;
         else
             pcs_ptr->bipred3x3_injection = 0;
@@ -742,8 +932,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (scs_ptr->compound_level == DEFAULT) {
             if (enc_mode <= ENC_MR)
                 pcs_ptr->inter_compound_mode = 1;
+#if OPT_M3
+            else if (enc_mode <= ENC_M2)
+#else
             else if (enc_mode <= ENC_M3)
+#endif
                 pcs_ptr->inter_compound_mode = 3;
+#if OPT_INTER_COMP
+            else if (enc_mode <= ENC_M5)
+                pcs_ptr->inter_compound_mode = 4;
+#endif
             else
                 pcs_ptr->inter_compound_mode = 0;
         } else {
@@ -760,15 +958,49 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->dist_based_ref_pruning = 1;
         else if (enc_mode <= ENC_M0)
             pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 2;
+#if OPT_M2
+        else if (enc_mode <= ENC_M2)
+#else
         else if (enc_mode <= ENC_M1)
+#endif
             pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 4;
+#if OPT_INTER_COMP
+#if !OPT_M2
+#if OPT_M3
+        else if (enc_mode <= ENC_M2)
+#else
+        else if (enc_mode <= ENC_M3)
+#endif
+            pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
+#endif
+        else if (enc_mode <= ENC_M4)
+            pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 5;
+        else if (enc_mode <= ENC_M5)
+            pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 6;
+        else {
+            if (pcs_ptr->coeff_lvl == LOW_LVL) {
+                pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 6;
+            } else {
+#if OPT_MRP
+                pcs_ptr->dist_based_ref_pruning = is_base ? 3 : 6;
+#else
+                pcs_ptr->dist_based_ref_pruning = 4;
+#endif
+            }
+        }
+#else
         else if (enc_mode <= ENC_M6)
             pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
         else if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 4;
         } else {
+#if OPT_MRP
+            pcs_ptr->dist_based_ref_pruning = is_base ? 3 : 4;
+#else
             pcs_ptr->dist_based_ref_pruning = 4;
+#endif
         }
+#endif
     } else {
         pcs_ptr->dist_based_ref_pruning = 0;
     }
@@ -791,7 +1023,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = 0;
     else if (enc_mode <= ENC_MR)
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 1;
+#if OPT_M1
+    else if (enc_mode <= ENC_M0)
+#else
     else if (enc_mode <= ENC_M1)
+#endif
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 2;
     else if (enc_mode <= ENC_M3)
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0
@@ -812,11 +1048,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->sq_weight = 95;
 
-    // max_part0_to_part1_dev is used to:
-    // (1) skip the H_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 2nd quadrant) and the Parent-SQ src-to-recon distortion of (3rd quadrant + 4th quadrant) is less than TH,
-    // (2) skip the V_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 3rd quadrant) and the Parent-SQ src-to-recon distortion of (2nd quadrant + 4th quadrant) is less than TH.
+        // max_part0_to_part1_dev is used to:
+        // (1) skip the H_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 2nd quadrant) and the Parent-SQ src-to-recon distortion of (3rd quadrant + 4th quadrant) is less than TH,
+        // (2) skip the V_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 3rd quadrant) and the Parent-SQ src-to-recon distortion of (2nd quadrant + 4th quadrant) is less than TH.
+#if OPT_M3
+    if (enc_mode <= ENC_M3)
+#else
     if (enc_mode <= ENC_M2)
+#endif
         pcs_ptr->max_part0_to_part1_dev = 0;
+#if !OPT_M3
     else if (enc_mode <= ENC_M3) {
         if (pcs_ptr->coeff_lvl == LOW_LVL)
             pcs_ptr->max_part0_to_part1_dev = 0;
@@ -824,7 +1065,26 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->max_part0_to_part1_dev = 10;
         else // regular
             pcs_ptr->max_part0_to_part1_dev = 5;
+    }
+#endif
+#if OPT_NSQ_M5
+    else if (enc_mode <= ENC_M4) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 0;
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 60;
+        else // regular
+            pcs_ptr->max_part0_to_part1_dev = 40;
     } else {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 80;
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 140;
+        else // regular
+            pcs_ptr->max_part0_to_part1_dev = 120;
+    }
+#else
+    else {
         if (pcs_ptr->coeff_lvl == LOW_LVL)
             pcs_ptr->max_part0_to_part1_dev = 0;
         else if (pcs_ptr->coeff_lvl == HIGH_LVL)
@@ -832,7 +1092,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else // regular
             pcs_ptr->max_part0_to_part1_dev = 40;
     }
-
+#endif
     if (enc_mode <= ENC_M2)
         pcs_ptr->skip_hv4_on_best_part = 0;
     else
@@ -866,7 +1126,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txs_level = is_base ? 2 : 3;
     else if (enc_mode <= ENC_M5)
         pcs_ptr->txs_level = is_base ? 2 : 4;
+#if OPT_M7
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M6)
+#endif
         pcs_ptr->txs_level = is_base ? 2 : 0;
     else if (enc_mode <= ENC_M9)
         pcs_ptr->txs_level = is_islice ? 3 : 0;
@@ -885,7 +1149,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // Set the level for nic
     pcs_ptr->nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels);
     // Set the level for SQ me-search
+#if OPT_M3
+    if (enc_mode <= ENC_M2)
+#else
     if (enc_mode <= ENC_M3)
+#endif
         pcs_ptr->md_sq_mv_search_level = 1;
     else
         pcs_ptr->md_sq_mv_search_level = 0;
@@ -899,8 +1167,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // Set the level for PME search
     if (enc_mode <= ENC_MR)
         pcs_ptr->md_pme_level = 1;
+#if OPT_M4
+    else if (enc_mode <= ENC_M3)
+#else
     else if (enc_mode <= ENC_M4)
+#endif
+#if OPT_PME
+        pcs_ptr->md_pme_level = 2;
+#else
         pcs_ptr->md_pme_level = 3;
+#endif
     else if (enc_mode <= ENC_M5) {
         if (hierarchical_levels <= 3)
             pcs_ptr->md_pme_level = 6;
@@ -922,10 +1198,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->mds0_level = 2;
     } else
         pcs_ptr->mds0_level = is_islice ? 2 : 4;
-    /*
+        /*
        disallow_4x4
     */
+#if FIX_DISALLOW_CTRL
+    pcs_ptr->pic_disallow_4x4 = svt_aom_get_disallow_4x4(enc_mode, slice_type);
+#else
     pcs_ptr->pic_disallow_4x4 = get_disallow_4x4(enc_mode, slice_type);
+#endif
     /*
        Bypassing EncDec
     */
@@ -944,10 +1224,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->pic_bypass_encdec = 0;
 
-    /*
+        /*
         set lpd0_level
     */
+#if OPT_M4
+    if (enc_mode <= ENC_M3)
+#else
     if (enc_mode <= ENC_M4)
+#endif
         pcs_ptr->pic_lpd0_lvl = 0;
     else if (enc_mode <= ENC_M6)
         pcs_ptr->pic_lpd0_lvl = 1;
@@ -1014,32 +1298,61 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 if (enc_mode <= ENC_M2)
                     pcs_ptr->pic_depth_removal_level = 0;
                 else if (enc_mode <= ENC_M5) {
+#if !OPT_DEPTH_REMOVAL
                     if (pcs_ptr->coeff_lvl == LOW_LVL) {
                         pcs_ptr->pic_depth_removal_level = 0;
                     } else {
+#endif
                         if (input_resolution <= INPUT_SIZE_480p_RANGE)
-                            pcs_ptr->pic_depth_removal_level = 0;
+#if OPT_DEPTH_REMOVAL
+                            pcs_ptr->pic_depth_removal_level = 1;
+#else
+                        pcs_ptr->pic_depth_removal_level = 0;
+#endif
                         else
                             pcs_ptr->pic_depth_removal_level = 2;
+#if !OPT_DEPTH_REMOVAL
                     }
+#endif
                 } else if (enc_mode <= ENC_M7) {
                     if (pcs_ptr->coeff_lvl == LOW_LVL) {
+#if OPT_DEPTH_REMOVAL
+                        if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 1;
+                        else
+                            pcs_ptr->pic_depth_removal_level = 2;
+#else
                         if (input_resolution <= INPUT_SIZE_480p_RANGE)
                             pcs_ptr->pic_depth_removal_level = 0;
                         else
                             pcs_ptr->pic_depth_removal_level = 2;
+#endif
                     } else {
+#if OPT_DEPTH_REMOVAL
+                        if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 1;
+                        else
+                            pcs_ptr->pic_depth_removal_level = 2;
+#else
                         if (input_resolution <= INPUT_SIZE_1080p_RANGE)
                             pcs_ptr->pic_depth_removal_level = 1;
                         else
                             pcs_ptr->pic_depth_removal_level = 2;
+#endif
                     }
                 } else if (enc_mode <= ENC_M9) {
                     if (pcs_ptr->coeff_lvl == LOW_LVL) {
+#if OPT_DEPTH_REMOVAL
+                        if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 1;
+                        else
+                            pcs_ptr->pic_depth_removal_level = 2;
+#else
                         if (input_resolution <= INPUT_SIZE_1080p_RANGE)
                             pcs_ptr->pic_depth_removal_level = 1;
                         else
                             pcs_ptr->pic_depth_removal_level = 2;
+#endif
                     } else {
                         if (input_resolution <= INPUT_SIZE_360p_RANGE)
                             pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
@@ -1072,7 +1385,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     pcs_ptr->pic_depth_removal_level = 0;
                 else if (enc_mode <= ENC_M5) {
                     if (input_resolution <= INPUT_SIZE_480p_RANGE)
+#if OPT_DEPTH_REMOVAL
+                        pcs_ptr->pic_depth_removal_level = 1;
+#else
                         pcs_ptr->pic_depth_removal_level = 0;
+#endif
                     else
                         pcs_ptr->pic_depth_removal_level = 2;
                 } else if (enc_mode <= ENC_M7) {
@@ -1109,7 +1426,53 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             }
         }
     }
+#if FTR_USE_PD0_COEFF
+    if (pcs_ptr->parent_pcs_ptr->sc_class1) {
+        if (enc_mode <= ENC_M6)
+            pcs_ptr->pic_block_based_depth_refinement_level = 0;
+        else if (enc_mode <= ENC_M9)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 5;
+        else if (enc_mode <= ENC_M10)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_islice ? 1 : 5;
+        else
+            pcs_ptr->pic_block_based_depth_refinement_level = is_islice ? 7 : 12;
+    } else if (enc_mode <= ENC_M2)
+        pcs_ptr->pic_block_based_depth_refinement_level = 0;
+    else if (enc_mode <= ENC_M3)
+        pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+    else if (enc_mode <= ENC_M4) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+        else
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 4;
+    } else if (enc_mode <= ENC_M5) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 3;
+        else
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 4;
+    } else if (enc_mode <= ENC_M7) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 3;
+        } else { // regular
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 4;
+        }
+    } else {
+        if (pcs_ptr->coeff_lvl == LOW_LVL) {
+#if OPT_M8
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 4;
+#else
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 3;
+#endif
+        } else { // regular
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 5;
+        }
+    }
 
+    if (scs_ptr->max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1)) {
+        pcs_ptr->pic_block_based_depth_refinement_level = MAX(
+            0, pcs_ptr->pic_block_based_depth_refinement_level - 1);
+    }
+#else
     if (pcs_ptr->parent_pcs_ptr->sc_class1) {
         if (enc_mode <= ENC_M6)
             pcs_ptr->pic_block_based_depth_refinement_level = 0;
@@ -1121,8 +1484,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->pic_block_based_depth_refinement_level = is_islice ? 6 : 11;
     } else if (enc_mode <= ENC_M2)
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
-    else if (enc_mode <= ENC_M5)
+#if OPT_M4
+    else if (enc_mode <= ENC_M3)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+#endif
+    else if (enc_mode <= ENC_M5)
+#if OPT_DEPTH_REFINMENT
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+        else
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 3;
+#else
+        pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+#endif
     else if (enc_mode <= ENC_M7) {
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
@@ -1140,6 +1514,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (scs_ptr->max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1))
         pcs_ptr->pic_block_based_depth_refinement_level = MAX(
             0, pcs_ptr->pic_block_based_depth_refinement_level - 1);
+#endif
+#if FTR_DEPTH_EARLY_EXIT
+    if (enc_mode <= ENC_M1)
+        pcs_ptr->pic_depth_early_exit_th = 0;
+    else
+        pcs_ptr->pic_depth_early_exit_th = 90;
+#endif
 
     if (pcs_ptr->parent_pcs_ptr->sc_class1) {
         if (enc_mode <= ENC_M7)

@@ -13,6 +13,7 @@
 #define EbTransQuantBuffers_h
 
 #include "EbPictureBufferDesc.h"
+#if !CLN_COEFF_BUFFER // TODO: remove this file
 #include "EbObject.h"
 
 #ifdef __cplusplus
@@ -28,5 +29,6 @@ extern EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers *trans_quant
 
 #ifdef __cplusplus
 }
+#endif
 #endif
 #endif // EbTransQuantBuffers_h

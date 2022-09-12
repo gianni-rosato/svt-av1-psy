@@ -62,6 +62,12 @@ extern "C" {
         EbBitFraction  mvd_bits[NUMBER_OF_MVD_CASES];
         // Partition
         int32_t partition_fac_bits[PARTITION_CONTEXTS][CDF_SIZE(EXT_PARTITION_TYPES)];
+#if FIX_PARTITION_COST
+        int32_t partition_vert_alike_fac_bits[PARTITION_CONTEXTS][CDF_SIZE(2)];
+        int32_t partition_horz_alike_fac_bits[PARTITION_CONTEXTS][CDF_SIZE(2)];
+        int32_t partition_vert_alike_128x128_fac_bits[PARTITION_CONTEXTS][CDF_SIZE(2)];
+        int32_t partition_horz_alike_128x128_fac_bits[PARTITION_CONTEXTS][CDF_SIZE(2)];
+#endif
 
         // MV Mode
         int32_t skip_mode_fac_bits[SKIP_CONTEXTS][CDF_SIZE(2)];
@@ -405,6 +411,16 @@ void update_part_stats(
     uint16_t                    tile_idx,
     int                         mi_row,
     int                         mi_col);
+
+#if OPT_LAMBDA_MODULATION
+/*
+* Returns the me-based qindex (used for lambda modulation only; not at Q/Q-1)
+*/
+uint8_t svt_aom_get_me_qindex(
+    struct PictureControlSet* pcs_ptr,
+    struct SuperBlock* sb_ptr,
+    uint8_t is_sb128);
+#endif
 
 #ifdef __cplusplus
 }

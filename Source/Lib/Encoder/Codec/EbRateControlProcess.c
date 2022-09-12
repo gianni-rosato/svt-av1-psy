@@ -779,7 +779,11 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
 static const double r0_weight[2 /* VBR/CRF */][2 /* BASE/ISLICE */] = {
     // {BASE, ISLICE}
     {0.85, 0.75}, // VBR
+#if TUNE_TPL_WEIGHTS // TODO: test for VBR
+    {0.9, 0.75} // CRF
+#else
     {0.85, 0.75} // CRF
+#endif
 };
 /******************************************************
  * crf_qindex_calc
@@ -1076,9 +1080,10 @@ int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_T
 
     return rdmult > 0 ? (int)AOMMIN(rdmult, INT_MAX) : 1;
 }
-
+#if !OPT_LAMBDA_MODULATION
 static const int64_t q_factor[2][6] = {{100, 110, 120, 138, 140, 150},
                                        {100, 110, 112, 125, 135, 140}};
+#endif
 // The table we use is modified from libaom; here is the original, from libaom:
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
 //                                                               128, 144, 144,
@@ -1087,14 +1092,25 @@ static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = {128, 164, 128, 128,
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
+#if OPT_LAMBDA_MODULATION
+int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index,
+                            uint8_t bit_depth) {
+    FrameType frame_type = pcs->parent_pcs_ptr->frm_hdr.frame_type;
+    // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
+    uint8_t temporal_layer_index = pcs->parent_pcs_ptr->temporal_layer_index;
+    uint8_t max_temporal_layer   = pcs->parent_pcs_ptr->hierarchical_levels;
+    // Always use q_index for the derivation of the initial rdmult (i.e. don't use me_q_index)
+    int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(
+        bit_depth, pcs->parent_pcs_ptr->update_type, q_index);
+#else
 int svt_aom_compute_rd_mult(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth) {
     FrameType frame_type = pcs->frm_hdr.frame_type;
     // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
     uint8_t temporal_layer_index = pcs->temporal_layer_index;
-    uint8_t max_temporal_layer   = pcs->hierarchical_levels;
+    uint8_t max_temporal_layer = pcs->hierarchical_levels;
 
     int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(bit_depth, pcs->update_type, q_index);
-
+#endif
     // Update rdmult based on the frame's position in the miniGOP
     if (frame_type != KEY_FRAME) {
         uint8_t gf_update_type = temporal_layer_index == 0 ? ARF_UPDATE
@@ -1102,13 +1118,45 @@ int svt_aom_compute_rd_mult(PictureParentControlSet *pcs, uint8_t q_index, uint8
                                                            : LF_UPDATE;
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
+#if OPT_LAMBDA_MODULATION
+    if (pcs->scs_ptr->stats_based_sb_lambda_modulation) {
+        if (pcs->temporal_layer_index > 0) {
+            if (pcs->ref_intra_percentage < 5)
+                rdmult = (rdmult * 148) >> 7;
+            else if (pcs->ref_intra_percentage > 50)
+                rdmult = (rdmult * 118) >> 7;
+            else
+                rdmult = (rdmult * 138) >> 7;
+        }
+
+        int factor = 128;
+        if (pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
+            int qdiff = q_index - pcs->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+            if (qdiff < 0) {
+                factor = (qdiff <= -8) ? 90 : 115;
+            } else if (qdiff > 0) {
+                factor = (qdiff <= 8) ? 135 : 150;
+            }
+        } else {
+            int qdiff = me_q_index - pcs->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+            if (qdiff < 0) {
+                factor = (qdiff <= -4) ? 100 : 115;
+            } else if (qdiff > 0) {
+                factor = (qdiff <= 4) ? 135 : 150;
+            }
+        }
+
+        rdmult = (rdmult * factor) >> 7;
+    }
+#else
     assert(pcs->tpl_ctrls.vq_adjust_lambda_sb > 0);
-    int    qdiff = q_index - quantizer_to_qindex[pcs->picture_qp];
-    int8_t qidx  = (qdiff < -8) ? 0 : (qdiff < -4) ? 1 : (qdiff < -2) ? 2 : (qdiff <= 4) ? 3 : 4;
+    int qdiff = q_index - quantizer_to_qindex[pcs->picture_qp];
+    int8_t qidx = (qdiff < -8) ? 0 : (qdiff < -4) ? 1 : (qdiff < -2) ? 2 : (qdiff <= 4) ? 3 : 4;
 
     if (pcs->tpl_ctrls.enable) {
         rdmult = (rdmult * q_factor[pcs->tpl_ctrls.vq_adjust_lambda_sb - 1][qidx]) >> 7;
     }
+#endif
     return (int)rdmult;
 }
 static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
@@ -1148,10 +1196,24 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
     }
     assert(base_block_count > 0);
 
-    uint8_t   bit_depth   = pcs_ptr->hbd_mode_decision ? 10 : 8;
+    uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
+#if OPT_LAMBDA_MODULATION
+    const int orig_rdmult = svt_aom_compute_rd_mult(
+        pcs_ptr,
+        ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+        ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+        bit_depth);
+
+    const int new_rdmult = svt_aom_compute_rd_mult(
+        pcs_ptr,
+        sb_ptr->qindex,
+        svt_aom_get_me_qindex(pcs_ptr, sb_ptr, scs_ptr->seq_header.sb_size == BLOCK_128X128),
+        bit_depth);
+#else
     const int orig_rdmult = svt_aom_compute_rd_mult(
         ppcs_ptr, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, bit_depth);
-    const int    new_rdmult     = svt_aom_compute_rd_mult(ppcs_ptr, sb_ptr->qindex, bit_depth);
+    const int new_rdmult = svt_aom_compute_rd_mult(ppcs_ptr, sb_ptr->qindex, bit_depth);
+#endif
     const double scaling_factor = (double)new_rdmult / (double)orig_rdmult;
     //double scale_adj = exp(log(scaling_factor) - log_sum / base_block_count);
     double scale_adj = scaling_factor / exp(log_sum / base_block_count);
@@ -1221,6 +1283,63 @@ static void sb_qp_derivation(PictureControlSet *pcs) {
         }
     }
 }
+
+#if OPT_LAMBDA_MODULATION
+/*
+* Derives a qindex per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)
+*/
+static void generate_b64_me_qindex_map(PictureControlSet *pcs) {
+    PictureParentControlSet *ppcs = pcs->parent_pcs_ptr;
+    uint32_t                 b64_idx;
+
+    int min_offset[MAX_TEMPORAL_LAYERS] = {0, -8, -8, -8, -8, -8};
+    int max_offset[MAX_TEMPORAL_LAYERS] = {0, 8, 8, 8, 8, 8};
+
+    if (min_offset[pcs->parent_pcs_ptr->temporal_layer_index] != 0 ||
+        max_offset[pcs->parent_pcs_ptr->temporal_layer_index] != 0) {
+        uint64_t avg_me_dist = 0;
+        uint64_t min_dist    = (uint64_t)~0;
+        uint64_t max_dist    = 0;
+
+        for (b64_idx = 0; b64_idx < ppcs->b64_total_count; ++b64_idx) {
+            avg_me_dist += ppcs->me_8x8_cost_variance[b64_idx];
+            min_dist = MIN(ppcs->me_8x8_cost_variance[b64_idx], min_dist);
+            max_dist = MAX(ppcs->me_8x8_cost_variance[b64_idx], max_dist);
+        }
+        avg_me_dist /= ppcs->b64_total_count;
+
+        for (b64_idx = 0; b64_idx < ppcs->b64_total_count; ++b64_idx) {
+            int diff_dist = (int)(ppcs->me_8x8_cost_variance[b64_idx] - avg_me_dist);
+            int offset    = 0;
+            if (diff_dist <= 0) {
+                offset = (min_dist != avg_me_dist)
+                    ? (int)((min_offset[pcs->parent_pcs_ptr->temporal_layer_index] * diff_dist) /
+                            (int)(min_dist - avg_me_dist))
+                    : 0;
+            } else {
+                offset = (max_dist != avg_me_dist)
+                    ? (int)((max_offset[pcs->parent_pcs_ptr->temporal_layer_index] * diff_dist) /
+                            (int)(max_dist - avg_me_dist))
+                    : 0;
+            }
+
+            offset                      = AOMMIN(offset,
+                            pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
+            offset                      = AOMMAX(offset,
+                            -pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
+            pcs->b64_me_qindex[b64_idx] = CLIP3(
+                pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res,
+                255 - pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res,
+                ((int16_t)ppcs->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
+        }
+    } else {
+        for (b64_idx = 0; b64_idx < ppcs->b64_total_count; ++b64_idx) {
+            pcs->b64_me_qindex[b64_idx] = ppcs->frm_hdr.quantization_params.base_q_idx;
+        }
+    }
+}
+#endif
+
 /******************************************************
  * sb_qp_derivation_tpl_la
  * Calculates the QP per SB based on the tpl statistics
@@ -3420,6 +3539,12 @@ void *rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.rate_control_mode && !is_superres_recode_task) {
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
             }
+
+#if OPT_LAMBDA_MODULATION // to upgarde
+            // Derive a QP per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)
+            if (scs_ptr->stats_based_sb_lambda_modulation)
+                generate_b64_me_qindex_map(pcs_ptr);
+#endif
             // Get Empty Rate Control Results Buffer
             svt_get_empty_object(context_ptr->rate_control_output_results_fifo_ptr,
                                  &rate_control_results_wrapper_ptr);

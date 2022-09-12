@@ -1650,7 +1650,16 @@ EbErrorType av1_full_cost_light_pd0(ModeDecisionContext                *context_
                            (uint64_t)context_ptr->md_rate_estimation_ptr->skip_fac_bits[0][0]);
 
     // Assign full cost
+#if FIX_PARTITION_COST
+    // Use context index 0 for the partition rate as an approximation to skip call to av1_partition_rate_cost
+    // Partition cost is only needed for > 4x4 blocks, but light-PD0 assumes 4x4 blocks are disallowed
+    *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(
+        lambda,
+        coeff_rate + context_ptr->md_rate_estimation_ptr->partition_fac_bits[0][PARTITION_NONE],
+        y_distortion[0]);
+#else
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, coeff_rate, y_distortion[0]);
+#endif
     return return_error;
 }
 /*********************************************************************************
@@ -2122,6 +2131,78 @@ void coding_loop_context_generation(PictureControlSet *pcs_ptr, ModeDecisionCont
     }
     return;
 }
+#if FIX_PARTITION_COST
+/*
+* av1_partition_rate_cost function is used to generate the rate of signaling the
+* partition type for a given block.
+*/
+uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionContext *ctx,
+                                     BlkStruct *blk_ptr, PartitionType p, uint64_t lambda,
+                                     MdRateEstimationContext *md_rate_estimation_ptr) {
+    const BlockGeom *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
+    const BlockSize  bsize    = blk_geom->bsize;
+    assert(mi_size_wide_log2[bsize] == mi_size_high_log2[bsize]);
+    assert(bsize < BlockSizeS_ALL);
+    const Bool is_partition_point = (bsize >= BLOCK_8X8);
+
+    if (!is_partition_point) {
+        return 0;
+    }
+
+    const int blk_origin_x = ctx->sb_origin_x + blk_geom->origin_x;
+    const int blk_origin_y = ctx->sb_origin_y + blk_geom->origin_y;
+    const int hbs          = (mi_size_wide[bsize] << 2) >> 1;
+    const int has_rows     = (blk_origin_y + hbs) < pcs->aligned_height;
+    const int has_cols     = (blk_origin_x + hbs) < pcs->aligned_width;
+
+    if (!has_rows && !has_cols) {
+#if !REMOVE_PART_ASSERT
+        assert(p == PARTITION_SPLIT);
+#endif
+        return 0;
+    }
+
+    const PartitionContextType left_ctx =
+        ctx->md_local_blk_unit[blk_ptr->mds_idx].left_neighbor_partition ==
+            (char)(INVALID_NEIGHBOR_DATA)
+        ? 0
+        : ctx->md_local_blk_unit[blk_ptr->mds_idx].left_neighbor_partition;
+    const PartitionContextType above_ctx =
+        ctx->md_local_blk_unit[blk_ptr->mds_idx].above_neighbor_partition ==
+            (char)(INVALID_NEIGHBOR_DATA)
+        ? 0
+        : ctx->md_local_blk_unit[blk_ptr->mds_idx].above_neighbor_partition;
+
+    const int bsl = mi_size_wide_log2[bsize] - mi_size_wide_log2[BLOCK_8X8];
+    assert(bsl >= 0);
+
+    const int above = (above_ctx >> bsl) & 1, left = (left_ctx >> bsl) & 1;
+
+    const int      partitio_ploffset = pcs->partition_contexts == 4 ? 0 : PARTITION_PLOFFSET;
+    const uint32_t context_index     = (left * 2 + above) + bsl * partitio_ploffset;
+
+    uint64_t split_rate = 0;
+
+    if (has_rows && has_cols) {
+        split_rate = (uint64_t)md_rate_estimation_ptr->partition_fac_bits[context_index][p];
+    } else if (!has_rows && has_cols) {
+        split_rate = bsize == BLOCK_128X128
+            ? (uint64_t)md_rate_estimation_ptr
+                  ->partition_vert_alike_128x128_fac_bits[context_index][p == PARTITION_SPLIT]
+            : (uint64_t)md_rate_estimation_ptr
+                  ->partition_vert_alike_fac_bits[context_index][p == PARTITION_SPLIT];
+    } else {
+        split_rate = bsize == BLOCK_128X128
+            ? (uint64_t)md_rate_estimation_ptr
+                  ->partition_horz_alike_128x128_fac_bits[context_index][p == PARTITION_SPLIT]
+            : (uint64_t)md_rate_estimation_ptr
+                  ->partition_horz_alike_fac_bits[context_index][p == PARTITION_SPLIT];
+    }
+
+    return (RDCOST(lambda, split_rate, 0));
+}
+
+#else
 /*********************************************************************************
 * split_flag_rate function is used to generate the Split rate
 *
@@ -2193,3 +2274,4 @@ EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr, ModeDecisionCo
 
     return return_error;
 }
+#endif

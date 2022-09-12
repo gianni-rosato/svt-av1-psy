@@ -24,6 +24,7 @@
 int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 #define UNUSED_FUNC
 
+#if !FTR_DEPTH_EARLY_EXIT
 /** ScaleMV
         is used to scale the motion vector in AMVP process.
  */
@@ -64,7 +65,7 @@ static PartitionType from_shape_to_part[] = {PARTITION_NONE,
                                              PARTITION_HORZ_4,
                                              PARTITION_VERT_4,
                                              PARTITION_SPLIT};
-
+#endif
 #define MVREF_ROWS 3
 #define MVREF_COLS 3
 

@@ -17,6 +17,7 @@
 #include "EbModeDecisionProcess.h"
 #include "common_dsp_rtcd.h"
 
+#if !FTR_DEPTH_EARLY_EXIT
 static PartitionType from_shape_to_part[] = {
         PARTITION_NONE,
         PARTITION_HORZ,
@@ -29,7 +30,7 @@ static PartitionType from_shape_to_part[] = {
         PARTITION_VERT_4,
         PARTITION_SPLIT
 };
-
+#endif
 IntraSize intra_unit[] =
 {
     /*Note: e.g for V: there are case where we need the first

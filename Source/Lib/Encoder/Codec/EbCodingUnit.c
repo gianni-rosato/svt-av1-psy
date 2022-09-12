@@ -22,8 +22,41 @@ void largest_coding_unit_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->final_blk_arr);
     EB_FREE_ARRAY(obj->cu_partition_array);
 }
+#if FIX_DISALLOW_CTRL
+/*
+* return the NSQ level
+  Used by signal_derivation_multi_processes_oq and memory allocation
+*/
+bool svt_aom_get_disallow_nsq(EncMode enc_mode, bool is_islice) {
+    // Set disallow_nsq
+    if (enc_mode <= ENC_M4)
+        return false;
+    else if (enc_mode <= ENC_M5)
+        return (is_islice ? false : true);
+    else
+        return true;
+}
+
+/*
+* return the 4x4 level
+Used by signal_derivation_enc_dec_kernel_oq and memory allocation
+*/
+bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type) {
+    (void)slice_type;
+    if (enc_mode <= ENC_M5)
+        return false;
+    else
+        return true;
+}
+#else
+#if OPT_NSQ_M5
+uint8_t get_disallow_nsq(EncMode enc_mode, Bool is_islice);
+#else
 uint8_t get_disallow_nsq(EncMode enc_mode);
+#endif
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
+#endif
+
 /*
 Tasks & Questions
     -Need a GetEmptyChain function for testing sub partitions.  Tie it to an Itr?
@@ -51,11 +84,19 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     larget_coding_unit_ptr->origin_y = sb_origin_y;
 
     larget_coding_unit_ptr->index = sb_index;
-    uint8_t disallow_nsq          = get_disallow_nsq(enc_mode);
-    uint8_t disallow_4x4          = 1;
+#if OPT_NSQ_M5
+    bool disallow_nsq = true;
+    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
+        disallow_nsq = MIN(disallow_nsq, svt_aom_get_disallow_nsq(enc_mode, is_islice));
+    bool disallow_4x4 = true;
+    for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
+        disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, slice_type));
+#else
+    uint8_t disallow_nsq = get_disallow_nsq(enc_mode);
+    uint8_t disallow_4x4 = 1;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(enc_mode, slice_type));
-
+#endif
     uint32_t tot_blk_num;
     if (sb_size_pix == 128)
         if (disallow_4x4 && disallow_nsq)

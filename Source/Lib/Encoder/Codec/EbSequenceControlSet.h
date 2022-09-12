@@ -417,7 +417,10 @@ typedef struct SequenceControlSet {
 
     // If true, calculate and store the SB-based variance
     uint8_t calculate_variance;
-
+#if OPT_LAMBDA_MODULATION
+    // Whether to modulation lambda using TPL stats or/and ME-stats or/and the percentage of INTRA selection at reference frame(s)
+    bool stats_based_sb_lambda_modulation;
+#endif
     // Desired dimensions for an externally triggered resize
     ResizePendingParams resize_pending_params;
 } SequenceControlSet;

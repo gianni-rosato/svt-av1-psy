@@ -84,7 +84,11 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){480, 480};
         }
     }
+#if OPT_M5
+    else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
         me_context_ptr->hme_l0_sa.sa_min = (SearchArea){32, 32};
         me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
     }
@@ -555,8 +559,36 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     } else {
         if (enc_mode <= ENC_MRS)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#if OPT_M2
+        else if (enc_mode <= ENC_M1)
+#else
         else if (enc_mode <= ENC_M2)
+#endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+#if OPT_M2
+        else if (enc_mode <= ENC_M2) {
+            if (pcs_ptr->temporal_layer_index == 0)
+                set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+            else
+                set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
+        }
+#endif
+#if OPT_MRP
+#if OPT_M6
+#if OPT_M7
+        else if (enc_mode <= ENC_M7) {
+#else
+        else if (enc_mode <= ENC_M6) {
+#endif
+#else
+        else if (enc_mode <= ENC_M5) {
+#endif
+            if (pcs_ptr->temporal_layer_index == 0)
+                set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+            else
+                set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
+        }
+#endif
         else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
     }
@@ -568,12 +600,23 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 5);
     else if (enc_mode <= ENC_MRS)
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+#if OPT_M5
+    else if (enc_mode <= ENC_M4)
+#else
     else if (enc_mode <= ENC_M5)
+#endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 1);
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
-
+#if OPT_M6
+#if OPT_M5_2
+    if (enc_mode <= ENC_M4)
+#else
+    if (enc_mode <= ENC_M5)
+#endif
+#else
     if (enc_mode <= ENC_M6)
+#endif
         context_ptr->me_context_ptr->prune_me_candidates_th = 0;
     else
         context_ptr->me_context_ptr->prune_me_candidates_th = 65;

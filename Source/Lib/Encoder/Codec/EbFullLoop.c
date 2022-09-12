@@ -22,6 +22,7 @@
 #define LIKELY(v) (v)
 #define UNLIKELY(v) (v)
 #endif
+#if !FTR_DEPTH_EARLY_EXIT
 static PartitionType from_shape_to_part[] = {PARTITION_NONE,
                                              PARTITION_HORZ,
                                              PARTITION_VERT,
@@ -32,7 +33,7 @@ static PartitionType from_shape_to_part[] = {PARTITION_NONE,
                                              PARTITION_HORZ_4,
                                              PARTITION_VERT_4,
                                              PARTITION_SPLIT};
-
+#endif
 void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *pred,
                      uint32_t pred_offset, uint32_t pred_stride, int16_t *residual,
                      uint32_t residual_offset, uint32_t residual_stride, Bool hbd,
@@ -1660,6 +1661,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
             (md_context->rdoq_ctrls.skip_uv && component_type != COMPONENT_LUMA))
             perform_rdoq = 0;
     }
+#if !OPT_REMOVE_RDOQ_FEAT
     if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th) {
         const int qp_offset_th = pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th;
         if (component_type == COMPONENT_CHROMA_CB || component_type == COMPONENT_CHROMA_CR) {
@@ -1669,6 +1671,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                 perform_rdoq = 0;
         }
     }
+#endif
     if (perform_rdoq && md_context->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
         int       satd  = svt_aom_satd(coeff, n_coeffs);
         const int shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[txsize]);
@@ -1901,8 +1904,12 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
         av1_estimate_transform(
             &(((int16_t *)candidate_buffer->residual_ptr->buffer_cb)[blk_chroma_origin_index]),
             candidate_buffer->residual_ptr->stride_cb,
+#if CLN_COEFF_BUFFER
+            &(((int32_t *)context_ptr->tx_coeffs->buffer_cb)[0]),
+#else
             &(((int32_t *)
                    context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_cb)[0]),
+#endif
             NOT_USED_VALUE,
             tx_size_uv,
             &context_ptr->three_quad_energy,
@@ -1913,8 +1920,12 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
         candidate_buffer->quantized_dc[1][0] = av1_quantize_inv_quantize(
             pcs_ptr,
             context_ptr,
+#if CLN_COEFF_BUFFER
+            &(((int32_t *)context_ptr->tx_coeffs->buffer_cb)[0]),
+#else
             &(((int32_t *)
                    context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_cb)[0]),
+#endif
             NOT_USED_VALUE,
             &(((int32_t *)candidate_buffer->quant_coeff_ptr->buffer_cb)[0]),
             &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_cb)[0]),
@@ -1937,8 +1948,12 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             FALSE);
 
         picture_full_distortion32_bits_single(
+#if CLN_COEFF_BUFFER
+            &(((int32_t *)context_ptr->tx_coeffs->buffer_cb)[0]),
+#else
             &(((int32_t *)
                    context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_cb)[0]),
+#endif
             &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_cb)[0]),
             context_ptr->blk_geom->tx_width_uv[0][0],
             bwidth,
@@ -1998,8 +2013,12 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
         av1_estimate_transform(
             &(((int16_t *)candidate_buffer->residual_ptr->buffer_cr)[blk_chroma_origin_index]),
             candidate_buffer->residual_ptr->stride_cr,
+#if CLN_COEFF_BUFFER
+            &(((int32_t *)context_ptr->tx_coeffs->buffer_cr)[0]),
+#else
             &(((int32_t *)
                    context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_cr)[0]),
+#endif
             NOT_USED_VALUE,
             tx_size_uv,
             &context_ptr->three_quad_energy,
@@ -2010,8 +2029,12 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
         candidate_buffer->quantized_dc[2][0] = av1_quantize_inv_quantize(
             pcs_ptr,
             context_ptr,
+#if CLN_COEFF_BUFFER
+            &(((int32_t *)context_ptr->tx_coeffs->buffer_cr)[0]),
+#else
             &(((int32_t *)
                    context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_cr)[0]),
+#endif
             NOT_USED_VALUE,
             &(((int32_t *)candidate_buffer->quant_coeff_ptr->buffer_cr)[0]),
             &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_cr)[0]),
@@ -2034,8 +2057,12 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
             FALSE);
 
         picture_full_distortion32_bits_single(
+#if CLN_COEFF_BUFFER
+            &(((int32_t *)context_ptr->tx_coeffs->buffer_cr)[0]),
+#else
             &(((int32_t *)
                    context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_cr)[0]),
+#endif
             &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_cr)[0]),
             context_ptr->blk_geom->tx_width_uv[0][0],
             bwidth,
@@ -2176,8 +2203,12 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             // Cb Transform
             av1_estimate_transform(chroma_residual_ptr,
                                    candidate_buffer->residual_ptr->stride_cb,
+#if CLN_COEFF_BUFFER
+                                   &(((int32_t *)context_ptr->tx_coeffs->buffer_cb)[txb_1d_offset]),
+#else
                                    &(((int32_t *)context_ptr->trans_quant_buffers_ptr
                                           ->txb_trans_coeff2_nx2_n_ptr->buffer_cb)[txb_1d_offset]),
+#endif
                                    NOT_USED_VALUE,
                                    context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                                    &context_ptr->three_quad_energy,
@@ -2194,8 +2225,12 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             candidate_buffer->quantized_dc[1][0] = av1_quantize_inv_quantize(
                 pcs_ptr,
                 context_ptr,
+#if CLN_COEFF_BUFFER
+                &(((int32_t *)context_ptr->tx_coeffs->buffer_cb)[txb_1d_offset]),
+#else
                 &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                        ->buffer_cb)[txb_1d_offset]),
+#endif
                 NOT_USED_VALUE,
                 &(((int32_t *)candidate_buffer->quant_coeff_ptr->buffer_cb)[txb_1d_offset]),
                 &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_cb)[txb_1d_offset]),
@@ -2288,8 +2323,10 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 // *Note - there are known issues with how this distortion metric is currently
                 //    calculated.  The amount of scaling between the two arrays is not
                 //    equivalent.
+#if !CLN_COEFF_BUFFER
                 EbPictureBufferDesc *transform_buffer =
                     context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr;
+#endif
 
                 uint32_t bwidth  = context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr];
                 uint32_t bheight = context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr];
@@ -2298,7 +2335,11 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                     bheight = (bheight >> pf_shape);
                 }
                 picture_full_distortion32_bits_single(
+#if CLN_COEFF_BUFFER
+                    &(((int32_t *)context_ptr->tx_coeffs->buffer_cb)[txb_1d_offset]),
+#else
                     &(((int32_t *)transform_buffer->buffer_cb)[txb_1d_offset]),
+#endif
                     &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_cb)[txb_1d_offset]),
                     context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                     bwidth,
@@ -2342,8 +2383,12 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             // Cr Transform
             av1_estimate_transform(chroma_residual_ptr,
                                    candidate_buffer->residual_ptr->stride_cr,
+#if CLN_COEFF_BUFFER
+                                   &(((int32_t *)context_ptr->tx_coeffs->buffer_cr)[txb_1d_offset]),
+#else
                                    &(((int32_t *)context_ptr->trans_quant_buffers_ptr
                                           ->txb_trans_coeff2_nx2_n_ptr->buffer_cr)[txb_1d_offset]),
+#endif
                                    NOT_USED_VALUE,
                                    context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                                    &context_ptr->three_quad_energy,
@@ -2359,8 +2404,12 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             candidate_buffer->quantized_dc[2][0] = av1_quantize_inv_quantize(
                 pcs_ptr,
                 context_ptr,
+#if CLN_COEFF_BUFFER
+                &(((int32_t *)context_ptr->tx_coeffs->buffer_cr)[txb_1d_offset]),
+#else
                 &(((int32_t *)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr
                        ->buffer_cr)[txb_1d_offset]),
+#endif
                 NOT_USED_VALUE,
                 &(((int32_t *)candidate_buffer->quant_coeff_ptr->buffer_cr)[txb_1d_offset]),
                 &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_cr)[txb_1d_offset]),
@@ -2451,8 +2500,10 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 // *Note - there are known issues with how this distortion metric is currently
                 //    calculated.  The amount of scaling between the two arrays is not
                 //    equivalent.
+#if !CLN_COEFF_BUFFER
                 EbPictureBufferDesc *transform_buffer =
                     context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr;
+#endif
 
                 uint32_t bwidth  = context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr];
                 uint32_t bheight = context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr];
@@ -2461,7 +2512,11 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                     bheight = (bheight >> pf_shape);
                 }
                 picture_full_distortion32_bits_single(
+#if CLN_COEFF_BUFFER
+                    &(((int32_t *)context_ptr->tx_coeffs->buffer_cr)[txb_1d_offset]),
+#else
                     &(((int32_t *)transform_buffer->buffer_cr)[txb_1d_offset]),
+#endif
                     &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_cr)[txb_1d_offset]),
                     context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                     bwidth,
@@ -2531,6 +2586,17 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t
     for (blk_it = 0; blk_it < context_ptr->blk_geom->totns; blk_it++) {
         tot_cost += context_ptr->md_local_blk_unit[first_blk_idx + blk_it].cost;
     }
+#if FIX_PARTITION_COST
+    uint64_t split_cost = svt_aom_partition_rate_cost(
+        context_ptr->sb_ptr->pcs_ptr->parent_pcs_ptr,
+        context_ptr,
+        &context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds],
+        from_shape_to_part[context_ptr->blk_geom->shape],
+        full_lambda,
+        context_ptr->md_rate_estimation_ptr);
+
+    tot_cost += split_cost;
+#else
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
         uint64_t split_cost           = 0;
         uint32_t parent_depth_idx_mds = context_ptr->blk_geom->sqi_mds;
@@ -2545,6 +2611,7 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t
 
         tot_cost += split_cost;
     }
+#endif
     if ((d1_block_itr == 0) ||
         (tot_cost < context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost)) {
         //store best partition cost in parent square
@@ -2579,17 +2646,38 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, PictureParentControlS
     uint32_t curr_depth_blk1_mds = curr_depth_mds - 2 * step;
     uint32_t curr_depth_blk2_mds = curr_depth_mds - 1 * step;
     uint32_t curr_depth_blk3_mds = curr_depth_mds;
-
+#if !FIX_PARTITION_COST
     // Rate of not spliting the current depth (Depth != 4) in case the children were omitted by MDC
     uint64_t curr_non_split_rate_blk0 = 0;
     uint64_t curr_non_split_rate_blk1 = 0;
     uint64_t curr_non_split_rate_blk2 = 0;
     uint64_t curr_non_split_rate_blk3 = 0;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
     context_ptr->md_local_blk_unit[above_depth_mds].above_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].above_neighbor_partition;
+#if FIX_PARTITION_COST
 
+    // Get split rate for current depth
+    above_split_rate = svt_aom_partition_rate_cost(pcs_ptr,
+                                                   context_ptr,
+                                                   &context_ptr->md_blk_arr_nsq[above_depth_mds],
+                                                   PARTITION_SPLIT,
+                                                   full_lambda,
+                                                   context_ptr->md_rate_estimation_ptr);
+
+    // Compute current depth cost
+    *curr_depth_cost = context_ptr->md_local_blk_unit[curr_depth_blk0_mds].cost +
+        context_ptr->md_local_blk_unit[curr_depth_blk1_mds].cost +
+        context_ptr->md_local_blk_unit[curr_depth_blk2_mds].cost +
+        context_ptr->md_local_blk_unit[curr_depth_blk3_mds].cost + above_split_rate;
+
+    // Compute above depth cost
+    *above_depth_cost = context_ptr->tested_blk_flag[above_depth_mds]
+        ? context_ptr->md_local_blk_unit[above_depth_mds].cost
+        : MAX_MODE_COST;
+#else
     // Compute above depth  cost
     if (context_ptr->tested_blk_flag[above_depth_mds]) {
         uint64_t above_non_split_rate = 0;
@@ -2655,6 +2743,7 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, PictureParentControlS
         curr_non_split_rate_blk2 + context_ptr->md_local_blk_unit[curr_depth_mds - 2 * step].cost +
         curr_non_split_rate_blk1 + context_ptr->md_local_blk_unit[curr_depth_mds - 3 * step].cost +
         curr_non_split_rate_blk0 + above_split_rate;
+#endif
 }
 
 /*
@@ -2718,6 +2807,7 @@ void compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *context_ptr,
     // sum the previous ones
     for (int i = 1; i < context_ptr->blk_geom->quadi + 1; i++) {
         uint32_t curr_depth_cur_blk_mds = context_ptr->blk_geom->sqi_mds - i * step;
+#if !FIX_PARTITION_COST
         if (context_ptr->tested_blk_flag[curr_depth_cur_blk_mds] &&
             context_ptr->md_blk_arr_nsq[curr_depth_cur_blk_mds].mdc_split_flag == 0) {
             context_ptr->md_local_blk_unit[curr_depth_cur_blk_mds].cost += RDCOST(
@@ -2727,8 +2817,21 @@ void compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *context_ptr,
                 0);
             context_ptr->md_blk_arr_nsq[curr_depth_cur_blk_mds].mdc_split_flag = 1;
         }
+#endif
         *curr_depth_cost += context_ptr->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
     }
+#if FIX_PARTITION_COST
+    // Add split rate to the cost of the current depth
+    // Use context index 0 for the split rate as an approximation to skip call to av1_partition_rate_cost
+    *curr_depth_cost += RDCOST(
+        full_lambda,
+        (uint64_t)context_ptr->md_rate_estimation_ptr->partition_fac_bits[0][PARTITION_SPLIT],
+        0);
+
+    *above_depth_cost = context_ptr->tested_blk_flag[above_depth_mds]
+        ? context_ptr->md_local_blk_unit[above_depth_mds].cost
+        : MAX_MODE_COST;
+#else
     /*
     ___________
     |     |     |
@@ -2749,6 +2852,7 @@ void compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *context_ptr,
     } else {
         *above_depth_cost = MAX_MODE_COST;
     }
+#endif
 }
 void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, PictureParentControlSet *pcs_ptr,
                                  uint32_t above_depth_mds, uint32_t step,
@@ -2761,7 +2865,11 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, PictureParent
     *curr_depth_cost          = 0;
     // sum the previous ones
     for (int i = 1; i < context_ptr->blk_geom->quadi + 1; i++) {
-        uint32_t curr_depth_cur_blk_mds  = context_ptr->blk_geom->sqi_mds - i * step;
+        uint32_t curr_depth_cur_blk_mds = context_ptr->blk_geom->sqi_mds - i * step;
+
+#if FIX_PARTITION_COST
+        *curr_depth_cost += context_ptr->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
+#else
         uint64_t curr_non_split_rate_blk = 0;
         if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
             if (context_ptr->tested_blk_flag[curr_depth_cur_blk_mds])
@@ -2777,6 +2885,7 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, PictureParent
         }
         *curr_depth_cost += context_ptr->md_local_blk_unit[curr_depth_cur_blk_mds].cost +
             curr_non_split_rate_blk;
+#endif
     }
     /*
     ___________
@@ -2794,6 +2903,20 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, PictureParent
     context_ptr->md_local_blk_unit[above_depth_mds].above_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].above_neighbor_partition;
 
+#if FIX_PARTITION_COST
+    above_split_rate = svt_aom_partition_rate_cost(pcs_ptr,
+                                                   context_ptr,
+                                                   &context_ptr->md_blk_arr_nsq[above_depth_mds],
+                                                   PARTITION_SPLIT,
+                                                   full_lambda,
+                                                   context_ptr->md_rate_estimation_ptr);
+
+    *curr_depth_cost += above_split_rate;
+
+    *above_depth_cost = context_ptr->tested_blk_flag[above_depth_mds]
+        ? context_ptr->md_local_blk_unit[above_depth_mds].cost
+        : MAX_MODE_COST;
+#else
     // Compute above depth  cost
     if (context_ptr->tested_blk_flag[above_depth_mds]) {
         uint64_t above_non_split_rate = 0;
@@ -2812,4 +2935,5 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, PictureParent
         *above_depth_cost = MAX_MODE_COST;
 
     *curr_depth_cost += above_split_rate;
+#endif
 }

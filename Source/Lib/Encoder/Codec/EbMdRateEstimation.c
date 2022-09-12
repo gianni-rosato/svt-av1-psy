@@ -77,9 +77,41 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
     int32_t i, j;
 
     md_rate_estimation_array->initialized = 1;
+#if FIX_PARTITION_COST
+    for (i = 0; i < partition_contexts; ++i) {
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
+
+        AomCdfProb cdf[CDF_SIZE(2)];
+        // The cdf will be updated differently for BLOCK_128X128 vs. all other blocks sizes.
+        // therefore, we must compute the syntax rate for two cases: 128x128 blocks and all other blocks.
+
+        // Vert alike rate (128x128 and all other blocks)
+        partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
+        // inverse map only needs 2 entries b/c cdf only has 2 active entries
+        static const int bot_inv_map[2] = {PARTITION_HORZ, PARTITION_SPLIT};
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->partition_vert_alike_fac_bits[i], cdf, bot_inv_map);
+
+        partition_gather_vert_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->partition_vert_alike_128x128_fac_bits[i], cdf, bot_inv_map);
+
+        // Horz alike rate (128x128 and all other blocks)
+        partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_8X8);
+        static const int rhs_inv_map[2] = {PARTITION_VERT, PARTITION_SPLIT};
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->partition_horz_alike_fac_bits[i], cdf, rhs_inv_map);
+
+        partition_gather_horz_alike(cdf, fc->partition_cdf[i], BLOCK_128X128);
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->partition_horz_alike_128x128_fac_bits[i], cdf, rhs_inv_map);
+    }
+#else
     for (i = 0; i < partition_contexts; ++i)
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
+#endif
 
     for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(
@@ -1215,3 +1247,35 @@ void update_part_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, uint16_t 
         }
     }
 }
+#if OPT_LAMBDA_MODULATION
+uint8_t svt_aom_get_me_qindex(PictureControlSet *pcs, SuperBlock *sb_ptr, uint8_t is_sb128) {
+    if (!is_sb128)
+        return pcs->b64_me_qindex[sb_ptr->index];
+
+    uint32_t pic_width_in_b64  = (pcs->parent_pcs_ptr->aligned_width + 64 - 1) / 64;
+    uint32_t pic_height_in_b64 = (pcs->parent_pcs_ptr->aligned_height + 64 - 1) / 64;
+
+    uint32_t x_b64_index = sb_ptr->origin_x / 64;
+    uint32_t y_b64_index = sb_ptr->origin_y / 64;
+    uint32_t b64_index   = x_b64_index + y_b64_index * pic_width_in_b64;
+
+    uint8_t valid_b64_cnt = 1;
+
+    uint16_t sum_me_qindex = pcs->b64_me_qindex[b64_index];
+
+    if ((x_b64_index + 1) < pic_width_in_b64) {
+        sum_me_qindex += pcs->b64_me_qindex[b64_index + 1];
+        valid_b64_cnt++;
+    }
+    if ((y_b64_index + 1) < pic_height_in_b64) {
+        sum_me_qindex += pcs->b64_me_qindex[b64_index + pic_width_in_b64];
+        valid_b64_cnt++;
+    }
+    if (valid_b64_cnt == 3) {
+        sum_me_qindex += pcs->b64_me_qindex[b64_index + 1 + pic_width_in_b64];
+        valid_b64_cnt++;
+    }
+
+    return sum_me_qindex / valid_b64_cnt;
+}
+#endif

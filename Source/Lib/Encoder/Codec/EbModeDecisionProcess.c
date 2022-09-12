@@ -50,7 +50,9 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->candidate_buffer_tx_depth_1);
     EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_2->candidate_ptr);
     EB_DELETE(obj->candidate_buffer_tx_depth_2);
+#if !CLN_COEFF_BUFFER
     EB_DELETE(obj->trans_quant_buffers_ptr);
+#endif
     EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
     EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon);
     EB_FREE_ARRAY(obj->fast_candidate_array);
@@ -72,6 +74,9 @@ static void mode_decision_context_dctor(EbPtr p) {
     }
     EB_FREE_ARRAY(obj->avail_blk_flag);
     EB_FREE_ARRAY(obj->tested_blk_flag);
+#if FTR_BLOCK4x4_PER_SB
+    EB_FREE_ARRAY(obj->do_not_process_blk);
+#endif
     EB_FREE_ARRAY(obj->md_local_blk_unit);
     EB_FREE_ARRAY(obj->md_blk_arr_nsq);
     if (obj->rate_est_table)
@@ -82,6 +87,9 @@ static void mode_decision_context_dctor(EbPtr p) {
         EB_DELETE(obj->recon_ptr[txt_itr]);
         EB_DELETE(obj->quant_coeff_ptr[txt_itr]);
     }
+#if CLN_COEFF_BUFFER
+    EB_DELETE(obj->tx_coeffs);
+#endif
     EB_DELETE(obj->scratch_prediction_ptr);
     EB_DELETE(obj->temp_residual_ptr);
     EB_DELETE(obj->temp_recon_ptr);
@@ -104,6 +112,16 @@ uint16_t get_max_can_count(EncMode enc_mode) {
     //NOTE: this is a memory feature and not a speed feature. it should not be have any speed/quality impact.
     uint16_t mem_max_can_count;
 
+#if FIX_CAND_COUNT
+    if (enc_mode <= ENC_M0)
+        mem_max_can_count = 1225;
+    else if (enc_mode <= ENC_M1)
+        mem_max_can_count = 1000;
+    else if (enc_mode <= ENC_M2)
+        mem_max_can_count = 720;
+    else if (enc_mode <= ENC_M3)
+        mem_max_can_count = 576;
+#else
     if (enc_mode <= ENC_M0)
         mem_max_can_count = 900;
     else if (enc_mode <= ENC_M1)
@@ -112,6 +130,7 @@ uint16_t get_max_can_count(EncMode enc_mode) {
         mem_max_can_count = 576;
     else if (enc_mode <= ENC_M3)
         mem_max_can_count = 461;
+#endif
     else if (enc_mode <= ENC_M4)
         mem_max_can_count = 369;
     else if (enc_mode <= ENC_M5)
@@ -238,8 +257,10 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EB_MALLOC_ARRAY(context_ptr->palette_size_array_0, MAX_PAL_CAND);
     EB_MALLOC_ARRAY(context_ptr->palette_size_array_1, MAX_PAL_CAND);
 
+#if !CLN_COEFF_BUFFER
     // Transform and Quantization Buffers
     EB_NEW(context_ptr->trans_quant_buffers_ptr, svt_trans_quant_buffers_ctor, sb_size);
+#endif
 
     // Cost Arrays
     EB_MALLOC_ARRAY(context_ptr->fast_cost_array, context_ptr->max_nics_uv);
@@ -328,6 +349,9 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EB_MALLOC_ARRAY(context_ptr->md_blk_arr_nsq[0].av1xd, block_max_count_sb);
     EB_MALLOC_ARRAY(context_ptr->avail_blk_flag, block_max_count_sb);
     EB_MALLOC_ARRAY(context_ptr->tested_blk_flag, block_max_count_sb);
+#if FTR_BLOCK4x4_PER_SB
+    EB_MALLOC_ARRAY(context_ptr->do_not_process_blk, block_max_count_sb);
+#endif
     EB_MALLOC_ARRAY(context_ptr->mdc_sb_array, 1);
     for (coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
         context_ptr->md_blk_arr_nsq[coded_leaf_index].av1xd = context_ptr->md_blk_arr_nsq[0].av1xd +
@@ -420,6 +444,11 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                svt_picture_buffer_desc_ctor,
                (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
     }
+#if CLN_COEFF_BUFFER
+    EB_NEW(context_ptr->tx_coeffs,
+           svt_picture_buffer_desc_ctor,
+           (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
+#endif
     EB_NEW(context_ptr->scratch_prediction_ptr,
            svt_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
@@ -524,11 +553,24 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t ti
 // When lambda tuning is on (blk_lambda_tuning), lambda of each block is set separately (full_lambda_md/fast_lambda_md)
 // later in set_tuned_blk_lambda
 // Testing showed that updating SAD lambda based on frame info was not helpful; therefore, the SAD lambda generation is not changed.
+#if OPT_LAMBDA_MODULATION
+static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ctx) {
+#else
 static void av1_lambda_assign_md(PictureParentControlSet *pcs, ModeDecisionContext *ctx) {
+#endif
+#if OPT_LAMBDA_MODULATION
+    ctx->full_lambda_md[0] = (uint32_t)svt_aom_compute_rd_mult(
+        pcs, ctx->qp_index, ctx->me_q_index, 8);
+#else
     ctx->full_lambda_md[0] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, 8);
+#endif
     ctx->fast_lambda_md[0] = av1_lambda_mode_decision8_bit_sad[ctx->qp_index];
-
+#if OPT_LAMBDA_MODULATION
+    ctx->full_lambda_md[1] = (uint32_t)svt_aom_compute_rd_mult(
+        pcs, ctx->qp_index, ctx->me_q_index, 10);
+#else
     ctx->full_lambda_md[1] = (uint32_t)svt_aom_compute_rd_mult(pcs, ctx->qp_index, 10);
+#endif
     ctx->fast_lambda_md[1] = av1lambda_mode_decision10_bit_sad[ctx->qp_index];
 
     ctx->full_lambda_md[1] *= 16;
@@ -540,20 +582,35 @@ static void av1_lambda_assign_md(PictureParentControlSet *pcs, ModeDecisionConte
 void av1_lambda_assign(PictureControlSet *pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
                        uint8_t bit_depth, uint16_t qp_index, Bool multiply_lambda) {
     if (bit_depth == 8) {
+#if OPT_LAMBDA_MODULATION
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
+            pcs_ptr, (uint8_t)qp_index, (uint8_t)qp_index, bit_depth);
+#else
         *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
             pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+#endif
         *fast_lambda = av1_lambda_mode_decision8_bit_sad[qp_index];
     } else if (bit_depth == 10) {
+#if OPT_LAMBDA_MODULATION
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
+            pcs_ptr, (uint8_t)qp_index, (uint8_t)qp_index, bit_depth);
+#else
         *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
             pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+#endif
         *fast_lambda = av1lambda_mode_decision10_bit_sad[qp_index];
         if (multiply_lambda) {
             *full_lambda *= 16;
             *fast_lambda *= 4;
         }
     } else if (bit_depth == 12) {
+#if OPT_LAMBDA_MODULATION
+        *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
+            pcs_ptr, (uint8_t)qp_index, (uint8_t)qp_index, bit_depth);
+#else
         *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
             pcs_ptr->parent_pcs_ptr, (uint8_t)qp_index, bit_depth);
+#endif
         *fast_lambda = av1lambda_mode_decision12_bit_sad[qp_index];
     } else {
         assert(bit_depth >= 8);
@@ -572,11 +629,15 @@ const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4] = {
 void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
                          PictureControlSet *pcs_ptr, uint16_t tile_group_idx,
                          uint32_t segment_index) {
-    FrameHeader *frm_hdr           = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if !OPT_LAMBDA_MODULATION
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#endif
     context_ptr->hbd_mode_decision = pcs_ptr->hbd_mode_decision;
+#if !OPT_LAMBDA_MODULATION
     // QP
     context_ptr->qp_index = (uint8_t)frm_hdr->quantization_params.base_q_idx;
     av1_lambda_assign_md(pcs_ptr->parent_pcs_ptr, context_ptr);
+#endif
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
     context_ptr->md_rate_estimation_ptr = pcs_ptr->md_rate_estimation_array;
     // Reset CABAC Contexts
@@ -597,9 +658,10 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
         }
         (void)scs_ptr;
     }
-
+#if !OPT_DEPTH_REMOVAL
     //each segment enherits the disallow 4x4 from the picture level
     context_ptr->disallow_4x4 = pcs_ptr->pic_disallow_4x4;
+#endif
     //each segment enherits the bypass encdec from the picture level
     context_ptr->bypass_encdec = pcs_ptr->pic_bypass_encdec;
     context_ptr->skip_pd0      = pcs_ptr->pic_skip_pd0;
@@ -612,7 +674,11 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
  * Mode Decision Configure SB
  ******************************************************/
 void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
+#if OPT_LAMBDA_MODULATION
+                                uint8_t sb_qp, uint8_t me_sb_qp) {
+#else
                                 uint8_t sb_qp) {
+#endif
     /* Note(CHKN) : when Qp modulation varies QP on a sub-SB(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
 
     // Lambda Assignement
@@ -620,7 +686,15 @@ void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControl
         ? sb_qp
         : (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
 
+#if OPT_LAMBDA_MODULATION //-- to upgrade
+    context_ptr->me_q_index = me_sb_qp;
+#endif
+
+#if OPT_LAMBDA_MODULATION
+    av1_lambda_assign_md(pcs_ptr, context_ptr);
+#else
     av1_lambda_assign_md(pcs_ptr->parent_pcs_ptr, context_ptr);
+#endif
 
     context_ptr->hbd_pack_done = 0;
 

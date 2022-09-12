@@ -310,7 +310,10 @@ typedef struct PictureControlSet {
     uint8_t     *sb_skip;
     uint8_t     *sb_64x64_mvp;
     uint32_t    *sb_count_nz_coeffs;
-
+#if OPT_LAMBDA_MODULATION
+    uint8_t *
+        b64_me_qindex; // qindex per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)
+#endif
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_skip_flag_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -416,7 +419,12 @@ typedef struct PictureControlSet {
     uint8_t pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
     uint8_t pic_depth_removal_level; // depth_removal_level signal at the picture level
     uint8_t
-                     pic_block_based_depth_refinement_level; // block_based_depth_refinement_level signal set at the picture level
+        pic_block_based_depth_refinement_level; // block_based_depth_refinement_level signal set at the picture level
+#if FTR_DEPTH_EARLY_EXIT
+    uint8_t
+        pic_depth_early_exit_th; // Skip testing remaining blocks at the current depth if (curr_cost * 100 > pic_depth_early_exit_th * parent_cost);
+    // [0-100], 0 is OFF, lower percentage is more aggressive
+#endif
     uint8_t          pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
     uint8_t          pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
     Bool             pic_bypass_encdec;
@@ -539,8 +547,10 @@ typedef struct TplControls {
     uint8_t              use_pred_sad_in_intra_search;
     uint8_t              use_pred_sad_in_inter_search;
     int8_t               reduced_tpl_group;
-    uint8_t              skip_rdoq_uv_qp_based_th;
-    double               r0_adjust_factor;
+#if !OPT_REMOVE_RDOQ_FEAT
+    uint8_t skip_rdoq_uv_qp_based_th;
+#endif
+    double r0_adjust_factor;
     uint8_t
         dispenser_search_level; // 0: use 16x16 block(s), 1: use 32x32 block(s), 2: use 64x64 block(s)  (for incomplete 64x64, dispenser_search_level is set to 0)
     // it is recommended to use subsample_tx=2, when dispenser_search_level is set to 1
@@ -549,7 +559,9 @@ typedef struct TplControls {
     uint8_t
         synth_blk_size; //syntheszier block size, support 8x8 and 16x16 for now. NOTE: this field must be
     //modified inside the get_ function, as it is linked to memory allocation at init time
+#if !OPT_LAMBDA_MODULATION
     uint8_t vq_adjust_lambda_sb;
+#endif
     // Calculated qindex based on r0 using qstep calculation
     bool qstep_based_q_calc; // 0: OFF; 1: ON
     SUBPEL_FORCE_STOP

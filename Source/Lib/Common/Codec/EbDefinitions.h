@@ -19,6 +19,9 @@
 #include <assert.h>
 #include "EbSvtAv1.h"
 #include "EbSvtAv1Enc.h"
+#if OPT_MDS0_PRUNE
+#include <stdbool.h>
+#endif
 #ifdef _WIN32
 #define inline __inline
 #elif __GNUC__
@@ -70,6 +73,10 @@ void assert_err(uint32_t condition, char *err_msg);
 #define VQ_NOISE_LVL_TH 15000
 #define VQ_STABILITY_ME_VAR_TH 750
 #define VQ_PIC_AVG_VARIANCE_TH 1000
+
+#if FTR_MDS0_INTRA_OPT
+#define MDS0_REDUCE_ANGULAR_INTRA_TH 25
+#endif
 
 #define NUM_MV_COMPONENTS 2
 #define NUM_MV_HIST 2
@@ -157,14 +164,26 @@ typedef struct TfControls {
         me_exit_th; // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the Full-Pel search), NA if use_fast_filter is set 0)
     uint8_t
         use_pred_64x64_only_th; // Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default size(s) (32x32 or/ and 16x16) (∞: perform Sub-Pel search for default size(s), else if the deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block, NA if use_fast_filter is set 0)
-
+#if OPT_TF_2
+    uint8_t
+        subpel_early_exit; // Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not
+#endif
 } TfControls;
 typedef enum GM_LEVEL {
     GM_FULL = 0, // Exhaustive search mode.
+#if OPT_GMV_M5
+    GM_DOWN   = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
+    GM_DOWN16 = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
+    GM_ADAPT_0 =
+        3, // The search mode is set adaptively (whether GM_FULL or GM_DOWN) based on the average ME distortion
+    GM_ADAPT_1 =
+        4, // The search mode is set adaptively (whether GM_DOWN or GM_DOWN16) based on the average ME distortion, and the picture variance
+#else
     GM_ADAPT =
         1, // The search mode is set adaptively (whether GM_FULL or GM_DOWN) based on the average ME distortion
     GM_DOWN   = 2, // Downsampled search mode, with a downsampling factor of 2 in each dimension
     GM_DOWN16 = 3, // Downsampled search mode, with a downsampling factor of 4 in each dimension
+#endif
 } GM_LEVEL;
 typedef enum SqWeightOffsets {
     CONSERVATIVE_OFFSET_0 = 5,
@@ -596,6 +615,9 @@ typedef enum ATTRIBUTE_PACKED {
     LPD1_LVL_5 = 5, // Light-PD1 path, with most aggressive feature levels
     LPD1_LEVELS // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
 } Pd1Level;
+#if OPT_MDS0_PRUNE
+// If adding/removing a class, must also update is_intra_class func and MD_STAGE_NICS array
+#endif
 typedef enum CandClass {
     CAND_CLASS_0,
     CAND_CLASS_1,
@@ -612,7 +634,9 @@ typedef enum MdStagingMode {
     MD_STAGING_MODE_2,
     MD_STAGING_MODE_TOTAL
 } MdStagingMode;
-
+#if OPT_MDS0_PRUNE
+static INLINE bool is_intra_class(CandClass c) { return (c == CAND_CLASS_0 || c == CAND_CLASS_3); }
+#endif
 #define NICS_PIC_TYPE 3
 #define NICS_SCALING_LEVELS 16
 static const uint32_t MD_STAGE_NICS[NICS_PIC_TYPE][CAND_CLASS_TOTAL] =
@@ -637,7 +661,11 @@ static const uint32_t MD_STAGE_NICS_SCAL_NUM[NICS_SCALING_LEVELS][MD_STAGE_TOTAL
     {0, 6, 6, 6}, // LEVEL 6
     {0, 4, 5, 5}, // LEVEL 7
     {0, 4, 4, 4}, // LEVEL 8
+#if FTR_MDS1_PRUNE
+    {0, 3, 4, 4}, // LEVEL 9
+#else
     {0, 4, 3, 3}, // LEVEL 9
+#endif
     {0, 3, 3, 3}, // LEVEL 10
     {0, 3, 2, 2}, // LEVEL 11
     {0, 3, 1, 1}, // LEVEL 12
@@ -763,6 +791,19 @@ typedef enum ATTRIBUTE_PACKED {
     PART_V4,
     PART_S
 } Part;
+
+#if FTR_DEPTH_EARLY_EXIT
+static const PartitionType from_shape_to_part[EXT_PARTITION_TYPES] = {PARTITION_NONE,
+                                                                      PARTITION_HORZ,
+                                                                      PARTITION_VERT,
+                                                                      PARTITION_HORZ_A,
+                                                                      PARTITION_HORZ_B,
+                                                                      PARTITION_VERT_A,
+                                                                      PARTITION_VERT_B,
+                                                                      PARTITION_HORZ_4,
+                                                                      PARTITION_VERT_4,
+                                                                      PARTITION_SPLIT};
+#endif
 
 static const uint8_t mi_size_wide[BlockSizeS_ALL] = {1,  1,  2,  2,  2,  4, 4, 4, 8, 8, 8,
                                                      16, 16, 16, 32, 32, 1, 4, 2, 8, 4, 16};

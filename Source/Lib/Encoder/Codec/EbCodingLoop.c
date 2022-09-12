@@ -2664,7 +2664,10 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
 
     // CU Loop
     uint32_t final_blk_itr = 0;
-    uint32_t blk_it        = 0;
+#if FIX_ISSUE_1969
+    sb_ptr->final_blk_cnt = 0;
+#endif
+    uint32_t blk_it = 0;
     while (blk_it < scs->max_block_cnt) {
         sb_ptr->cu_partition_array[blk_it] = md_ctx->md_blk_arr_nsq[blk_it].part;
 
@@ -3103,7 +3106,9 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
         }
         blk_it += ctx->blk_geom->ns_depth_offset;
     } // CU Loop
-
+#if FIX_ISSUE_1969
+    sb_ptr->final_blk_cnt = final_blk_itr;
+#endif
     // free MD palette info buffer
     if (pcs->parent_pcs_ptr->palette_level) {
         const uint16_t max_block_cnt = scs->max_block_cnt;

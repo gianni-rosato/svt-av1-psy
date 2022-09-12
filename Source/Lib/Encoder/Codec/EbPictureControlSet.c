@@ -213,6 +213,9 @@ void picture_control_set_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->sb_skip);
     EB_FREE_ARRAY(obj->sb_64x64_mvp);
     EB_FREE_ARRAY(obj->sb_count_nz_coeffs);
+#if OPT_LAMBDA_MODULATION
+    EB_FREE_ARRAY(obj->b64_me_qindex);
+#endif
     EB_DELETE(obj->bitstream_ptr);
     EB_DELETE_PTR_ARRAY(obj->entropy_coding_info, tile_cnt);
 
@@ -388,10 +391,14 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 
     return EB_ErrorNone;
 }
-
+#if !FIX_DISALLOW_CTRL
 uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
+#if OPT_NSQ_M5
+uint8_t get_disallow_nsq(EncMode enc_mode, Bool is_islice);
+#else
 uint8_t get_disallow_nsq(EncMode enc_mode);
-
+#endif
+#endif
 uint32_t get_out_buffer_size(uint32_t picture_width, uint32_t picture_height) {
     uint32_t frame_size = picture_width * picture_height * 3 / 2; //assuming 4:2:0;
     if (frame_size > INPUT_SIZE_4K_TH)
@@ -501,6 +508,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_64x64_mvp, object_ptr->b64_total_count);
+#if OPT_LAMBDA_MODULATION
+    EB_MALLOC_ARRAY(object_ptr->b64_me_qindex, object_ptr->b64_total_count);
+#endif
 
     sb_origin_x = 0;
     sb_origin_y = 0;
@@ -1181,9 +1191,19 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                         (init_data_ptr->sb_size >> MI_SIZE_LOG2));
 
     // If NSQ is allowed, then need a 4x4 MI grid because 8x8 NSQ shapes will require 4x4 granularity
+#if OPT_NSQ_M5
+    bool disallow_4x4 = true;
+    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
+        disallow_4x4 = MIN(disallow_4x4,
+                           svt_aom_get_disallow_nsq(init_data_ptr->enc_mode, is_islice));
+    for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
+        disallow_4x4 = MIN(disallow_4x4,
+                           svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
+#else
     uint8_t disallow_4x4 = get_disallow_nsq(init_data_ptr->enc_mode);
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
+#endif
 
     object_ptr->disallow_4x4_all_frames = disallow_4x4;
 

@@ -10,7 +10,7 @@
 */
 
 #include "EbTransQuantBuffers.h"
-
+#if !CLN_COEFF_BUFFER // TODO: remove this file
 static void svt_trans_quant_buffers_dctor(EbPtr p) {
     EbTransQuantBuffers* obj = (EbTransQuantBuffers*)p;
     EB_DELETE(obj->txb_trans_coeff2_nx2_n_ptr);
@@ -37,3 +37,4 @@ EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffer
            (EbPtr)&trans_coeff_32bit_init_array);
     return EB_ErrorNone;
 }
+#endif

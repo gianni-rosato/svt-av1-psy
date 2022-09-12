@@ -358,7 +358,9 @@ typedef struct BlkStruct {
     uint8_t qindex; // ec
     uint8_t split_flag;
     uint8_t skip_mode; // ec; skips mode_info + coeff. as defined in section 6.10.10 of the av1 text
+#if !FIX_PARTITION_COST
     uint8_t mdc_split_flag; // ?
+#endif
     EbPictureBufferDesc
         *coeff_tmp; // buffer to store quantized coeffs from MD for the final mode of each block
     EbPictureBufferDesc
@@ -421,8 +423,13 @@ typedef struct SuperBlock {
     unsigned       origin_x : 32;
     unsigned       origin_y : 32;
     uint8_t        qindex;
+#if FIX_ISSUE_1969
+    TileInfo tile_info;
+    uint16_t final_blk_cnt; // number of block(s) posted from EncDec to EC
+#else
     // Quantized Coefficients
     TileInfo tile_info;
+#endif
 } SuperBlock;
 
 extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_size,
@@ -431,6 +438,10 @@ extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, 
                                             uint16_t                  max_block_cnt,
                                             struct PictureControlSet *picture_control_set);
 
+#if FIX_DISALLOW_CTRL
+bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
+bool svt_aom_get_disallow_nsq(EncMode enc_mode, bool is_islice);
+#endif
 #ifdef __cplusplus
 }
 #endif

@@ -24,6 +24,9 @@
 #define GMV_ME_SAD_TH_0 0
 #define GMV_ME_SAD_TH_1 5
 #define GMV_ME_SAD_TH_2 10
+#if OPT_GMV_M5
+#define GMV_PIC_VAR_TH 750
+#endif
 void global_motion_estimation(PictureParentControlSet *pcs_ptr,
                               EbPictureBufferDesc     *input_picture_ptr) {
     // Get downsampled pictures with a downsampling factor of 2 in each dimension
@@ -77,11 +80,27 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
         global_motion_estimation_level = 2;
     else
         global_motion_estimation_level = 3;
+#if OPT_GMV_M5
+    if (pcs_ptr->gm_ctrls.downsample_level == GM_ADAPT_0) {
+        pcs_ptr->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_1) ? GM_DOWN : GM_FULL;
+    } else if (pcs_ptr->gm_ctrls.downsample_level == GM_ADAPT_1) {
+        SequenceControlSet *scs = pcs_ptr->scs_ptr;
+
+        pcs_ptr->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_2 &&
+                                        (!scs->calculate_variance ||
+                                         (pcs_ptr->pic_avg_variance < GMV_PIC_VAR_TH)))
+            ? GM_DOWN16
+            : GM_DOWN;
+    } else {
+        pcs_ptr->gm_downsample_level = pcs_ptr->gm_ctrls.downsample_level;
+    }
+#else
     if (pcs_ptr->gm_ctrls.downsample_level == GM_ADAPT) {
         pcs_ptr->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_1) ? GM_DOWN : GM_FULL;
     } else {
         pcs_ptr->gm_downsample_level = pcs_ptr->gm_ctrls.downsample_level;
     }
+#endif
     if (pcs_ptr->gm_ctrls.bypass_based_on_me) {
         if ((total_gm_sbs < (uint32_t)(pcs_ptr->b64_total_count >> 1)) ||
             (pcs_ptr->gm_ctrls.use_stationary_block &&
