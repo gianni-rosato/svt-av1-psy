@@ -18,9 +18,12 @@ include_directories(${PROJECT_SOURCE_DIR}/test/
     ${PROJECT_SOURCE_DIR}/third_party/googletest/src
     ${PROJECT_SOURCE_DIR}/Source/API)
 
-file(GLOB all_files
-    "*.h"
-    "*.cc")
+set(all_files
+    SvtAv1EncApiTest.cc
+    SvtAv1EncApiTest.h
+    SvtAv1EncParamsTest.cc
+    params.h
+    )
 
 set(lib_list
     SvtAv1Enc
