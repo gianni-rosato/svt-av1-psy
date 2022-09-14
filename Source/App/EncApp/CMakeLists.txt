@@ -14,10 +14,28 @@
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
 
-file(GLOB all_files
-    "*.h"
-    "../../API/*.h"
-    "*.c")
+set(all_files
+    ../../API/EbDebugMacros.h
+    ../../API/EbSvtAv1.h
+    ../../API/EbSvtAv1Dec.h
+    ../../API/EbSvtAv1Enc.h
+    ../../API/EbSvtAv1ErrorCodes.h
+    ../../API/EbSvtAv1ExtFrameBuf.h
+    ../../API/EbSvtAv1Formats.h
+    ../../API/EbSvtAv1Metadata.h
+    EbAppConfig.c
+    EbAppConfig.h
+    EbAppContext.c
+    EbAppContext.h
+    EbAppInputy4m.c
+    EbAppInputy4m.h
+    EbAppMain.c
+    EbAppOutputivf.c
+    EbAppOutputivf.h
+    EbAppProcessCmd.c
+    EbTime.c
+    EbTime.h
+    )
 
 # App Source Files
 add_executable(SvtAv1EncApp
