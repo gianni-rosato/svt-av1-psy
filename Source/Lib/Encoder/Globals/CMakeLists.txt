@@ -30,9 +30,14 @@ include_directories(
         )
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
+set(all_files
+        EbEncHandle.c
+        EbEncHandle.h
+        EbEncSettings.c
+        EbEncSettings.h
+        EbMetadataHandle.c
+        EbMetadataHandle.h
+        )
 
 add_library(ENCODER_GLOBALS OBJECT ${all_files})
 if (BUILD_SHARED_LIBS)
