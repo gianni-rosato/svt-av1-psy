@@ -26,9 +26,19 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel" AND NOT WIN32)
     check_both_flags_add(-static-intel -w)
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
+set(all_files
+    EbAvcStyleMcp_SSSE3.h
+    EbHighbdIntraPrediction_Intrinsic_SSSE3.c
+    aom_subpixel_8t_intrin_ssse3.c
+    av1_inv_txfm_ssse3.c
+    av1_inv_txfm_ssse3.h
+    highbd_convolve_2d_ssse3.c
+    highbd_convolve_ssse3.c
+    highbd_wiener_convolve_ssse3.c
+    intrapred_ssse3.c
+    jnt_convolve_ssse3.c
+    reconinter_ssse3.c
+    )
 
 set(asm_files
     aom_subpixel_bilinear_ssse3.asm
