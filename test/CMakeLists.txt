@@ -59,15 +59,80 @@ if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.c"
-    "*.cc"
-    "ref/*.h"
-    "ref/*.cc"
-    "../Source/Lib/Encoder/Codec/*.c"
-    "../Source/Lib/Decoder/Codec/EbDecBitReader.c"
-    "../Source/Lib/Decoder/Codec/EbDecBitstreamUnit.c")
+set(all_files
+    AdaptiveScanTest.cc
+    BitstreamWriterTest.cc
+    CdefTest.cc
+    CompoundUtilTest.cc
+    DeblockTest.cc
+    EbBlend_a64_mask_1d_test.cc
+    EbBlend_a64_mask_test.cc
+    EbHighbdIntraPredictionTests.cc
+    EbHighbdIntraPredictionTests.h
+    EbNoiseModel_test.cc
+    EbUnitTest.h
+    EbUnitTestUtility.c
+    EbUnitTestUtility.h
+    EncodeTxbAsmTest.cc
+    FFTTest.cc
+    FilmGrainExpectedResult.h
+    FilmGrainTest.cc
+    FilterIntraPredTest.cc
+    ForwardtransformTests.cc
+    FwdTxfm1dTest.cc
+    FwdTxfm2dAsmTest.cc
+    FwdTxfm2dTest.cc
+    GlobalMotionUtilTest.cc
+    HbdVarianceTest.cc
+    IntraBcUtilTest.cc
+    InvTxfm1dTest.cc
+    InvTxfm2dAsmTest.cc
+    MotionEstimationTest.cc
+    OBMCSadTest.cc
+    OBMCVarianceTest.cc
+    PackUnPackTest.cc
+    PaletteModeUtilTest.cc
+    PictureOperatorTest.cc
+    PsnrTest.cc
+    QuantAsmTest.cc
+    ResidualTest.cc
+    ResizeTest.cc
+    RestorationPickTest.cc
+    SadTest.cc
+    SelfGuidedUtilTest.cc
+    SpatialFullDistortionTest.cc
+    TemporalFilterTestPlanewise.cc
+    TestEnv.c
+    TxfmCommon.h
+    VarianceTest.cc
+    WedgeUtilTest.cc
+    acm_random.h
+    av1_convolve_scale_test.cc
+    compute_mean_test.cc
+    convolve_2d_test.cc
+    corner_match_test.cc
+    dwt_test.cc
+    frame_error_test.cc
+    hadamard_test.cc
+    intrapred_cfl_test.cc
+    intrapred_dr_test.cc
+    intrapred_edge_filter_test.cc
+    intrapred_test.cc
+    quantize_func_test.cc
+    random.h
+    selfguided_filter_test.cc
+    subtract_avg_cfl_test.cc
+    util.h
+    warp_filter_test.cc
+    warp_filter_test_util.cc
+    warp_filter_test_util.h
+    wiener_convolve_test.cc
+    ref/TxfmRef.cc
+    ref/TxfmRef.h
+
+    # Decoder sources
+    ../Source/Lib/Decoder/Codec/EbDecBitstreamUnit.c
+    )
 
 set(lib_list
     $<TARGET_OBJECTS:COMMON_CODEC>
@@ -85,6 +150,7 @@ set(lib_list
     $<TARGET_OBJECTS:ENCODER_ASM_AVX2>
     $<TARGET_OBJECTS:ENCODER_ASM_AVX512>
     $<TARGET_OBJECTS:ENCODER_GLOBALS>
+    $<TARGET_OBJECTS:ENCODER_CODEC>
     cpuinfo_public
     gtest_all)
 if(UNIX)
