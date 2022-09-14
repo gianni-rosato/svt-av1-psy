@@ -15,8 +15,16 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/)
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
+set(all_files
+    EbBlend_a64_mask_c.c
+    EbInterPrediction_c.c
+    EbIntraPrediction_c.c
+    EbPackUnPack_C.c
+    EbPackUnPack_C.h
+    EbPictureOperators_C.c
+    EbPictureOperators_C.h
+    cfl_c.c
+    filterintra_c.c
+    )
 
 add_library(COMMON_C_DEFAULT OBJECT ${all_files})
