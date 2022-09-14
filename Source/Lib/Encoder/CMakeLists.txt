@@ -87,9 +87,7 @@ if(CMAKE_GENERATOR STREQUAL "Xcode")
     file(WRITE ${PROJECT_BINARY_DIR}/dummy.c "")
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
+set(all_files "")
 
 get_target_property(common_lib_source common_lib INTERFACE_SOURCES)
 if(common_lib_source)
