@@ -37,9 +37,38 @@ if(MSVC)
     check_both_flags_add(/arch:AVX2)
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
+set(all_files
+    EbBlend_a64_mask_avx2.c
+    EbHighbdIntraPrediction_AVX2.c
+    EbInterPredictionCom_avx2.c
+    EbIntraPrediction_AVX2.h
+    EbIntraPrediction_Intrinsic_AVX2.c
+    EbMemory_AVX2.h
+    EbPackUnPack_Intrinsic_AVX2.c
+    EbPictureOperators_Inline_AVX2.h
+    EbPictureOperators_Intrinsic_AVX2.c
+    aom_subpixel_8t_intrin_avx2.c
+    av1_inv_txfm_avx2.c
+    av1_inv_txfm_avx2.h
+    cdef_block_avx2.c
+    cfl_avx2.c
+    convolve_2d_avx2.c
+    convolve_avx2.c
+    convolve_avx2.h
+    highbd_convolve_2d_avx2.c
+    highbd_convolve_avx2.c
+    highbd_inv_txfm_avx2.c
+    highbd_jnt_convolve_avx2.c
+    highbd_warp_affine_avx2.c
+    jnt_convolve_2d_avx2.c
+    jnt_convolve_avx2.c
+    selfguided_avx2.c
+    synonyms_avx2.h
+    transpose_avx2.h
+    txfm_common_avx2.h
+    warp_plane_avx2.c
+    wiener_convolve_avx2.c
+    wiener_convolve_avx2.h
+    )
 
 add_library(COMMON_ASM_AVX2 OBJECT ${all_files})
