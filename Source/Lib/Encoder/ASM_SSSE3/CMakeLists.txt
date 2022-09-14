@@ -27,9 +27,9 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel" AND NOT WIN32)
     check_both_flags_add(-static-intel -w)
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
+set(all_files
+    variance_impl_ssse3.c
+    )
 
 set(asm_files subpel_variance_ssse3.asm)
 
