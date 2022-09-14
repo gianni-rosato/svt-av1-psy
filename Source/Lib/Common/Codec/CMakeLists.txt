@@ -49,8 +49,69 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
     ${PROJECT_SOURCE_DIR}/third_party/cpuinfo/include/)
 endif ()
-file(GLOB all_files
-    "*.h"
-    "*.c")
+
+set(all_files
+    Av1Common.h
+    EbAv1Structs.h
+    EbAvcStyleMcp.h
+    EbBitstreamUnit.c
+    EbBitstreamUnit.h
+    EbBlend_a64_mask.c
+    EbBlockStructures.c
+    EbBlockStructures.h
+    EbCabacContextModel.c
+    EbCabacContextModel.h
+    EbCdef.c
+    EbCdef.h
+    EbCoefficients.h
+    EbCommonUtils.h
+    EbDeblockingCommon.c
+    EbDeblockingCommon.h
+    EbDefinitions.h
+    EbInterPrediction.c
+    EbInterPrediction.h
+    EbIntraCommon.h
+    EbIntraPrediction.c
+    EbIntraPrediction.h
+    EbInvTransforms.c
+    EbInvTransforms.h
+    EbLog.c
+    EbLog.h
+    EbMalloc.c
+    EbMalloc.h
+    EbMcp.c
+    EbMcp.h
+    EbObject.h
+    EbPackUnPack.h
+    EbPictureBufferDesc.c
+    EbPictureBufferDesc.h
+    EbPictureOperators.c
+    EbPictureOperators.h
+    EbQMatrices.h
+    EbRestoration.c
+    EbRestoration.h
+    EbSegmentationParams.c
+    EbSegmentationParams.h
+    EbSuperRes.c
+    EbSuperRes.h
+    EbSyntaxElements.h
+    EbSystemResourceManager.c
+    EbSystemResourceManager.h
+    EbThreads.c
+    EbThreads.h
+    EbTime.c
+    EbTime.h
+    EbUtility.c
+    EbUtility.h
+    EbWarpedMotion.c
+    EbWarpedMotion.h
+    common_dsp_rtcd.c
+    common_dsp_rtcd.h
+    convolve.c
+    convolve.h
+    filter.h
+    grainSynthesis.c
+    grainSynthesis.h
+    )
 
 add_library(COMMON_CODEC OBJECT ${all_files})
