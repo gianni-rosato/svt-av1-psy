@@ -26,9 +26,16 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel" AND NOT WIN32)
     check_both_flags_add(-static-intel -w)
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
+set(all_files
+    EbComputeMean_Intrinsic_SSE2.c
+    EbComputeMean_SSE2.h
+    EbMeSadCalculation_Intrinsic_SSE2.c
+    EbVariance_SSE2.h
+    encodetxb_sse2.c
+    fft_sse2.c
+    highbd_variance_sse2.c
+    variance_sse2.c
+    )
 
 set(asm_files
     highbd_variance_impl_sse2.asm
