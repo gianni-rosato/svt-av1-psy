@@ -41,9 +41,14 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
     endif()
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
+set(all_files
+    EbCdef_AVX512.c
+    EbComputeSAD_Intrinsic_AVX512.c
+    encodetxb_avx512.c
+    highbd_fwd_txfm_AVX512.c
+    pickrst_avx512.c
+    transpose_encoder_avx512.h
+    variance_avx512.c
+    )
 
 add_library(ENCODER_ASM_AVX512 OBJECT ${all_files})
