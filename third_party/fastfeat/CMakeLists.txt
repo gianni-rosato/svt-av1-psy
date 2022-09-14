@@ -7,8 +7,8 @@
 # Include fastfeat subdirectory
 include_directories(${PROJECT_SOURCE_DIR}/third_party/fastfeat/)
 
-file(GLOB all_files
-    "*.h"
-    "*.c")
-
-add_library(FASTFEAT OBJECT ${all_files})
+add_library(FASTFEAT OBJECT
+    fast.h
+    fast.c
+    fast_9.c
+    nonmax.c)
