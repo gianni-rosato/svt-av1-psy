@@ -1944,9 +1944,14 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
     const EncMode enc_mode = pcs_ptr->enc_mode;
     const uint8_t is_ref = pcs_ptr->is_used_as_reference_flag;
 
+    // disable global motion when reference scaling enabled,
+    // even if current pic is not scaled, because its reference
+    // pics might be scaled in different size
+    // super-res is ok for its reference pics are always upscaled
+    // to original size
     if (scs_ptr->enable_global_motion == TRUE &&
         pcs_ptr->frame_superres_enabled == FALSE &&
-        pcs_ptr->frame_resize_enabled == FALSE) {
+        scs_ptr->static_config.resize_mode == RESIZE_NONE) {
         if (pcs_ptr->enc_mode <= ENC_MRS)
             gm_level = 2;
         else if (pcs_ptr->enc_mode <= ENC_M2)

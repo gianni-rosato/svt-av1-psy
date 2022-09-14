@@ -649,25 +649,28 @@ void *rest_kernel(void *input_ptr) {
                 input_picture_ptr        = scaled_input_picture_ptr;
             }
 
+            // there are padding pixels if input pics are not 8 pixel aligned
+            // but there is no extra padding after input pics are resized for
+            // reference scaling
             Yv12BufferConfig cpi_source;
             link_eb_to_aom_buffer_desc(input_picture_ptr,
                                        &cpi_source,
-                                       scs_ptr->max_input_pad_right,
-                                       scs_ptr->max_input_pad_bottom,
+                                       is_resized ? 0 : scs_ptr->max_input_pad_right,
+                                       is_resized ? 0 : scs_ptr->max_input_pad_bottom,
                                        is_16bit);
 
             Yv12BufferConfig trial_frame_rst;
             link_eb_to_aom_buffer_desc(context_ptr->trial_frame_rst,
                                        &trial_frame_rst,
-                                       scs_ptr->max_input_pad_right,
-                                       scs_ptr->max_input_pad_bottom,
+                                       is_resized ? 0 : scs_ptr->max_input_pad_right,
+                                       is_resized ? 0 : scs_ptr->max_input_pad_bottom,
                                        is_16bit);
 
             Yv12BufferConfig org_fts;
             link_eb_to_aom_buffer_desc(recon_picture_ptr,
                                        &org_fts,
-                                       scs_ptr->max_input_pad_right,
-                                       scs_ptr->max_input_pad_bottom,
+                                       is_resized ? 0 : scs_ptr->max_input_pad_right,
+                                       is_resized ? 0 : scs_ptr->max_input_pad_bottom,
                                        is_16bit);
 
             if (pcs_ptr->parent_pcs_ptr->slice_type != I_SLICE && cm->wn_filter_ctrls.enabled &&
