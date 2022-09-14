@@ -37,9 +37,33 @@ if(MSVC)
     check_both_flags_add(/arch:AVX2)
 endif()
 
-file(GLOB all_files
-    "*.h"
-    "*.asm"
-    "*.c")
+set(all_files
+    EbCdef_AVX2.c
+    EbCombinedAveragingSAD_Intrinsic_AVX2.c
+    EbComputeSAD_AVX2.h
+    EbComputeSAD_Intrinsic_AVX2.c
+    EbNoiseModel_avx2.c
+    EbRestorationPick_AVX2.c
+    EbTemporalFiltering_AVX2.c
+    EbTransforms_Intrinsic_AVX2.c
+    av1_quantize_avx2.c
+    corner_match_avx2.c
+    dwt_avx2.c
+    enc_warp_plane_avx2.c
+    encodetxb_avx2.c
+    fft_avx2.c
+    highbd_fwd_txfm_avx2.c
+    highbd_quantize_intrin_avx2.c
+    highbd_variance_avx2.c
+    obmc_sad_avx2.c
+    obmc_variance_avx2.c
+    palette_avx2.c
+    pickrst_avx2.c
+    pickrst_avx2.h
+    resize_avx2.c
+    sse_avx2.c
+    variance_avx2.c
+    variance_impl_avx2.c
+    )
 
 add_library(ENCODER_ASM_AVX2 OBJECT ${all_files})
