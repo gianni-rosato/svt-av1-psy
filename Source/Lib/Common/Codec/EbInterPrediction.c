@@ -2727,12 +2727,6 @@ static const uint8_t obmc_mask_32[32] = {33, 35, 36, 38, 40, 41, 43, 44, 45, 47,
                                          50, 51, 52, 53, 55, 56, 57, 58, 59, 60, 60,
                                          61, 62, 64, 64, 64, 64, 64, 64, 64, 64};
 
-static const uint8_t obmc_mask_64[64] = {
-    33, 34, 35, 35, 36, 37, 38, 39, 40, 40, 41, 42, 43, 44, 44, 44, 45, 46, 47, 47, 48, 49,
-    50, 51, 51, 51, 52, 52, 53, 54, 55, 56, 56, 56, 57, 57, 58, 58, 59, 60, 60, 60, 60, 60,
-    61, 62, 62, 62, 62, 62, 63, 63, 63, 63, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-};
-
 const uint8_t *svt_av1_get_obmc_mask(int length) {
     switch (length) {
     case 1: return obmc_mask_1;
@@ -2741,7 +2735,6 @@ const uint8_t *svt_av1_get_obmc_mask(int length) {
     case 8: return obmc_mask_8;
     case 16: return obmc_mask_16;
     case 32: return obmc_mask_32;
-    case 64: return obmc_mask_64;
     default: assert(0); return NULL;
     }
 }

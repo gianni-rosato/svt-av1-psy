@@ -269,7 +269,7 @@ class CalcTargetWeightedPredTest
   protected:
     void run_test() {
         uint32_t test_num = 10;
-        int overlap_tab[] = {1, 2, 4, 8, 16, 32, 64};
+        int overlap_tab[] = {1, 2, 4, 8, 16, 32};
 
         for (uint32_t overlap_cnt = 0;
              overlap_cnt < sizeof(overlap_tab) / sizeof(overlap_tab[0]);
