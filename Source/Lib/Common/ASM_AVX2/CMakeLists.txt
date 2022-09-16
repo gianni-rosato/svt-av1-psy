@@ -71,4 +71,12 @@ set(all_files
     wiener_convolve_avx2.h
     )
 
+set(asm_files
+    itx_avx2.asm
+    itx16_avx2.asm
+    mc_avx2.asm
+    mc16_avx2.asm)
+
 add_library(COMMON_ASM_AVX2 OBJECT ${all_files})
+
+asm_compile_to_target(COMMON_ASM_AVX2 ${asm_files})
