@@ -88,6 +88,13 @@ typedef struct {
             reinterpret_cast < InvSqrTxfm2dFun>(name##_##type), is_tx_type_imp \
     }
 
+#define SQR_FUNC_PAIRS_DAV1D(name, type, is_tx_type_imp)                    \
+    {                                                                       \
+#name, reinterpret_cast < InvSqrTxfm2dFun>(svt_av1_##name##_c),     \
+            reinterpret_cast < InvSqrTxfm2dFun>(svt_dav1d_##name##_##type), \
+            is_tx_type_imp                                                  \
+    }
+
 #define EMPTY_FUNC_PAIRS(name) \
     { #name, nullptr, nullptr, nullptr }
 
@@ -122,6 +129,15 @@ static const InvSqrTxfmFuncPair inv_txfm_c_sse4_1_func_pairs[TX_64X64 + 1] = {
     SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_32x32, sse4_1, dct_adst_combine_imp),
     SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_64x64, sse4_1,
                    is_tx_type_imp_64x64_sse4),
+};
+
+static const InvSqrTxfmFuncPair dav1d_inv_txfm_c_avx2_func_pairs[TX_64X64 +
+                                                                 1] = {
+    SQR_FUNC_PAIRS_DAV1D(inv_txfm2d_add_4x4, avx2, all_txtype_imp),
+    SQR_FUNC_PAIRS_DAV1D(inv_txfm2d_add_8x8, avx2, all_txtype_imp),
+    SQR_FUNC_PAIRS_DAV1D(inv_txfm2d_add_16x16, avx2, all_txtype_imp),
+    SQR_FUNC_PAIRS_DAV1D(inv_txfm2d_add_32x32, avx2, is_tx_type_imp_32x32_avx2),
+    SQR_FUNC_PAIRS_DAV1D(inv_txfm2d_add_64x64, avx2, is_tx_type_imp_64x64_sse4),
 };
 
 #if EN_AVX512_SUPPORT
@@ -182,6 +198,29 @@ static const InvRectTxfm2dType1Func rect_type1_ref_funcs_sse4_1[TX_SIZES_ALL] =
         svt_av1_highbd_inv_txfm_add_sse4_1,
         svt_av1_highbd_inv_txfm_add_sse4_1};
 
+static const InvRectTxfm2dType1Func
+    rect_type1_ref_funcs_dav1d_avx2[TX_SIZES_ALL] = {
+        // square transform
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,  // 4x8 and 8x4
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        nullptr,
+        nullptr,  // 4x16 and 16x4
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        svt_dav1d_highbd_inv_txfm_add_avx2,
+        svt_dav1d_highbd_inv_txfm_add_avx2};
+
 #if EN_AVX512_SUPPORT
 static const InvRectTxfm2dType1Func rect_type1_ref_funcs_avx512[TX_SIZES_ALL] =
     {nullptr,
@@ -220,6 +259,25 @@ static const InvRectType2TxfmFuncPair *get_rect_type2_func_pair(
     case TX_8X4: return &inv_8x4;
     case TX_4X16: return &inv_4x16;
     case TX_16X4: return &inv_16x4;
+    default: return nullptr;
+    }
+}
+
+static const InvRectType2TxfmFuncPair inv_4x8_dav1d{
+    svt_av1_inv_txfm2d_add_4x8_c, svt_dav1d_inv_txfm2d_add_4x8_avx2};
+static const InvRectType2TxfmFuncPair inv_8x4_dav1d{
+    svt_av1_inv_txfm2d_add_8x4_c, svt_dav1d_inv_txfm2d_add_8x4_avx2};
+static const InvRectType2TxfmFuncPair inv_4x16_dav1d{
+    svt_av1_inv_txfm2d_add_4x16_c, svt_dav1d_inv_txfm2d_add_4x16_avx2};
+static const InvRectType2TxfmFuncPair inv_16x4_dav1d{
+    svt_av1_inv_txfm2d_add_16x4_c, svt_dav1d_inv_txfm2d_add_16x4_avx2};
+static const InvRectType2TxfmFuncPair *get_rect_type2_func_pair_dav1d(
+    const TxSize tx_size) {
+    switch (tx_size) {
+    case TX_4X8: return &inv_4x8_dav1d;
+    case TX_8X4: return &inv_8x4_dav1d;
+    case TX_4X16: return &inv_4x16_dav1d;
+    case TX_16X4: return &inv_16x4_dav1d;
     default: return nullptr;
     }
 }
@@ -289,7 +347,8 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         const int width = tx_size_wide[tx_size];
         const int height = tx_size_high[tx_size];
         InvSqrTxfmFuncPair pair =
-            (is_asm_kernel == 0) ? inv_txfm_c_avx2_func_pairs[tx_size]
+            (is_asm_kernel == 0)   ? inv_txfm_c_avx2_func_pairs[tx_size]
+            : (is_asm_kernel == 3) ? dav1d_inv_txfm_c_avx2_func_pairs[tx_size]
 #if EN_AVX512_SUPPORT
             : (is_asm_kernel == 2) ? inv_txfm_c_avx512_func_pairs[tx_size]
 #endif
@@ -393,11 +452,12 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         }
     }
 
-    void run_rect_type2_txfm_match_test(const TxSize tx_size) {
+    void run_rect_type2_txfm_match_test(const TxSize tx_size, bool is_dav1d) {
         const int width = tx_size_wide[tx_size];
         const int height = tx_size_high[tx_size];
         const InvRectType2TxfmFuncPair *test_pair =
-            get_rect_type2_func_pair(tx_size);
+            is_dav1d ? get_rect_type2_func_pair_dav1d(tx_size)
+                     : get_rect_type2_func_pair(tx_size);
         if (test_pair == nullptr)
             return;
 
@@ -827,6 +887,7 @@ TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
         const TxSize tx_size = static_cast<TxSize>(i);
         run_sqr_txfm_match_test(tx_size, 0);
         run_sqr_txfm_match_test(tx_size, 1);
+        run_sqr_txfm_match_test(tx_size, 3);
 #if EN_AVX512_SUPPORT
         if (get_cpu_flags_to_use() & EB_CPU_FLAGS_AVX512F)
             run_sqr_txfm_match_test(tx_size, 2);
@@ -845,6 +906,12 @@ TEST_P(InvTxfm2dAsmTest, rect_type1_txfm_match_test) {
         run_rect_type1_txfm_match_test(tx_size, rect_type1_ref_funcs_sse4_1);
     }
 
+    for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
+        const TxSize tx_size = static_cast<TxSize>(i);
+        run_rect_type1_txfm_match_test(tx_size,
+                                       rect_type1_ref_funcs_dav1d_avx2);
+    }
+
 #if EN_AVX512_SUPPORT
     if (get_cpu_flags_to_use() & EB_CPU_FLAGS_AVX512F) {
         for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
@@ -859,7 +926,11 @@ TEST_P(InvTxfm2dAsmTest, rect_type1_txfm_match_test) {
 TEST_P(InvTxfm2dAsmTest, rect_type2_txfm_match_test) {
     for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
         const TxSize tx_size = static_cast<TxSize>(i);
-        run_rect_type2_txfm_match_test(tx_size);
+        run_rect_type2_txfm_match_test(tx_size, 0);
+    }
+    for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
+        const TxSize tx_size = static_cast<TxSize>(i);
+        run_rect_type2_txfm_match_test(tx_size, 1);
     }
 }
 
@@ -1080,7 +1151,8 @@ TEST_P(InvTxfm2dAddTest, svt_av1_inv_txfm_add) {
 INSTANTIATE_TEST_CASE_P(
     TX_ASM, InvTxfm2dAddTest,
     ::testing::Combine(::testing::Values(svt_av1_inv_txfm_add_ssse3,
-                                         svt_av1_inv_txfm_add_avx2),
+                                         svt_av1_inv_txfm_add_avx2,
+                                         svt_dav1d_inv_txfm_add_avx2),
                        ::testing::Values(static_cast<int>(EB_EIGHT_BIT),
                                          static_cast<int>(EB_TEN_BIT))));
 

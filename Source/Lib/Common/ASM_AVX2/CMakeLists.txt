@@ -69,6 +69,8 @@ set(all_files
     warp_plane_avx2.c
     wiener_convolve_avx2.c
     wiener_convolve_avx2.h
+    itx_lbd.h
+    itx_hbd.h
     )
 
 set(asm_files
