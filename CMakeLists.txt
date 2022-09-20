@@ -9,7 +9,7 @@
 # PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 
 if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
     message(WARNING "Building in-source is highly not recommended\n"
