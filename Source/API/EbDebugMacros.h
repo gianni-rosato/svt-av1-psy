@@ -100,6 +100,9 @@ extern "C" {
 
 #define OPT_DAV1D_INV_TXFM      1 // Enable inverse transform functions from dav1d (written in AVX2 assembler)
 #define OPT_DAV1D_BLEND_V_H     1 // Enable blend vertical/horizontal functions from dav1d (written in AVX2 assembler)
+
+#define FIX_TYPO_IN_6L_RPS      1 // Fix a typo in the 6L RPS construction
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
