@@ -365,7 +365,7 @@ EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
         (color_config->subsampling_x ? y_size >> 2 : y_size) +
         (color_config->subsampling_y ? y_size >> 2 : y_size);
 
-    EB_MALLOC_DEC(int32_t*, p_dec_mod_ctxt->sb_iquant_ptr,
+    EB_ALLIGN_MALLOC_DEC(int32_t*, p_dec_mod_ctxt->sb_iquant_ptr,
         iq_size * sizeof(int32_t), EB_N_PTR);
     av1_inverse_qm_init(p_dec_mod_ctxt, seq_header);
 
