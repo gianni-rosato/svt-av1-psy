@@ -58,7 +58,7 @@
 
 Linux (Valgrind):
   extends: .linux-compiler-base
-  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   variables:
     EXTRA_CFLAGS: -Wno-error
     EXTRA_CXXFLAGS: -Wno-error
@@ -207,7 +207,7 @@ Linux Sanitizer Compile:
 
 Valgrind:
   extends: .linux-test-base
-  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   parallel:
     matrix:
       - PASSES: 2
