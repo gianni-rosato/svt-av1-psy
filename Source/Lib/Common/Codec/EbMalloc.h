@@ -167,13 +167,6 @@ void svt_remove_mem_entry(void* ptr, EbPtrType type);
     } while (0)
 
 #ifdef _WIN32
-#define EB_NO_THROW_MALLOC_ALIGNED(pointer, size)          \
-    do {                                                   \
-        void* malloced_p = _aligned_malloc(size, ALVALUE); \
-        EB_NO_THROW_ADD_MEM(malloced_p, size, EB_A_PTR);   \
-        pointer = malloced_p;                              \
-    } while (0)
-
 #define EB_MALLOC_ALIGNED(pointer, size)          \
     do {                                          \
         pointer = _aligned_malloc(size, ALVALUE); \
@@ -187,15 +180,6 @@ void svt_remove_mem_entry(void* ptr, EbPtrType type);
         pointer = NULL;                         \
     } while (0)
 #else
-#define EB_NO_THROW_MALLOC_ALIGNED(pointer, size)                     \
-    do {                                                              \
-        if (posix_memalign((void**)&(pointer), ALVALUE, size) != 0) { \
-            svt_print_alloc_fail(__FILE__, __LINE__);                 \
-        } else {                                                      \
-            EB_NO_THROW_ADD_MEM(pointer, size, EB_A_PTR);             \
-        }                                                             \
-    } while (0)
-
 #define EB_MALLOC_ALIGNED(pointer, size)                            \
     do {                                                            \
         if (posix_memalign((void**)&(pointer), ALVALUE, size) != 0) \

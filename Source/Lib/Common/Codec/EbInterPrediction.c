@@ -1400,23 +1400,19 @@ void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int
                                           SubpelParams *subpel_params, ConvolveParams *conv_params,
                                           int32_t bd) {
     const int32_t is_scaled = has_scale(subpel_params->xs, subpel_params->ys);
-    int32_t       src_stride16;
-    // pack the reference into temp 16bit buffer
-    uint8_t   offset       = INTERPOLATION_OFFSET;
-    uint32_t  width_scale  = 1;
-    uint32_t  height_scale = 1;
-    uint16_t *src16        = NULL;
     // for super-res, the reference frame block might be 2x than predictor in maximum
     // for reference scaling, it might be 4x since both width and height is scaled 2x
     // should pack enough buffer for scaled reference
+    DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE * 4]);
+    int32_t src_stride16;
+    // pack the reference into temp 16bit buffer
+    uint8_t  offset       = INTERPOLATION_OFFSET;
+    uint32_t width_scale  = 1;
+    uint32_t height_scale = 1;
     if (is_scaled) {
         width_scale  = subpel_params->xs != SCALE_SUBPEL_SHIFTS ? 2 : 1;
         height_scale = subpel_params->ys != SCALE_SUBPEL_SHIFTS ? 2 : 1;
     }
-    EB_NO_THROW_MALLOC_ALIGNED(
-        src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
-    if (!src16)
-        return;
     // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
     src_stride16 = w * width_scale + (offset << 1);
     // 16-byte align of src16
@@ -1460,7 +1456,6 @@ void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int
         convolveHbd[0][0][conv_params->is_compound](
             src_10b, src_stride16, dst16, dst_stride, w, h, 0, 0, 0, 0, conv_params, bd);
     }
-    EB_FREE_ALIGNED(src16);
 }
 void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_stride, uint8_t *dst,
                                    int32_t dst_stride, int32_t w, int32_t h,
@@ -1470,23 +1465,19 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
     const int32_t is_scaled = has_scale(subpel_params->xs, subpel_params->ys);
 
     if (bd > EB_EIGHT_BIT) {
-        int32_t src_stride16;
-        // pack the reference into temp 16bit buffer
-        uint8_t   offset       = INTERPOLATION_OFFSET;
-        uint32_t  width_scale  = 1;
-        uint32_t  height_scale = 1;
-        uint16_t *src16        = NULL;
         // for super-res, the reference frame block might be 2x than predictor in maximum
         // for reference scaling, it might be 4x since both width and height is scaled 2x
         // should pack enough buffer for scaled reference
+        DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE * 4]);
+        int32_t src_stride16;
+        // pack the reference into temp 16bit buffer
+        uint8_t  offset       = INTERPOLATION_OFFSET;
+        uint32_t width_scale  = 1;
+        uint32_t height_scale = 1;
         if (is_scaled) {
             width_scale  = subpel_params->xs != SCALE_SUBPEL_SHIFTS ? 2 : 1;
             height_scale = subpel_params->ys != SCALE_SUBPEL_SHIFTS ? 2 : 1;
         }
-        EB_NO_THROW_MALLOC_ALIGNED(
-            src16, sizeof(uint16_t) * PACKED_BUFFER_SIZE * (width_scale * height_scale));
-        if (!src16)
-            return;
         // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
         src_stride16 = w * width_scale + (offset << 1);
         // 16-byte align of src16
@@ -1535,7 +1526,6 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
                                                                                       conv_params,
                                                                                       bd);
         }
-        EB_FREE_ALIGNED(src16);
     } else {
         if (is_scaled) {
             svt_av1_convolve_2d_scale(src,
