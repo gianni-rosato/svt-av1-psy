@@ -71,6 +71,7 @@ set(all_files
     wiener_convolve_avx2.h
     itx_lbd.h
     itx_hbd.h
+    mc.h
     )
 
 set(asm_files

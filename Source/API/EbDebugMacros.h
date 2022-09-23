@@ -91,6 +91,7 @@ extern "C" {
 #define FIX_DISALLOW_CTRL       1 // Move get_disallow_4x4() and get_disallow_nsq() to a header
 
 #define OPT_DAV1D_INV_TXFM      1 // Enable inverse transform functions from dav1d (written in AVX2 assembler)
+#define OPT_DAV1D_BLEND_V_H     1 // Enable blend vertical/horizontal functions from dav1d (written in AVX2 assembler)
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

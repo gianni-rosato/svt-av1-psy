@@ -21,6 +21,7 @@
 #include "EbBlend_sse4.h"
 
 #include "common_dsp_rtcd.h"
+#include "mc.h"
 
 static INLINE __m256i blend_16_u8_avx2(const uint8_t *src0, const uint8_t *src1,
                                        const __m256i *v_m0_b, const __m256i *v_m1_b,
@@ -1573,3 +1574,71 @@ void svt_aom_highbd_blend_a64_d16_mask_avx2(uint8_t *dst8, uint32_t dst_stride,
                                             bd);
     }
 }
+
+void svt_av1_blend_a64_hmask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+                                  uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+                                  const uint8_t *mask, int w, int h) {
+    (void)mask;
+    if (dst == src0) {
+        svt_dav1d_blend_v_8bpc_avx2(dst, dst_stride, src1, src1_stride, w, h);
+    } else if (dst == src1) {
+        svt_dav1d_blend_v_8bpc_avx2(dst, dst_stride, src0, src0_stride, w, h);
+    } else { //TODO: avx2 memcpy
+        for (int hh = 0; hh < h; hh++) memcpy(dst + hh * dst_stride, src0 + hh * src0_stride, w);
+        svt_dav1d_blend_v_8bpc_avx2(dst, dst_stride, src1, src1_stride, w, h);
+    }
+};
+
+void svt_av1_blend_a64_vmask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+                                  uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+                                  const uint8_t *mask, int w, int h) {
+    (void)mask;
+    if (dst == src0) {
+        svt_dav1d_blend_h_8bpc_avx2(dst, dst_stride, src1, src1_stride, w, h);
+    } else if (dst == src1) {
+        svt_dav1d_blend_h_8bpc_avx2(dst, dst_stride, src0, src0_stride, w, h);
+    } else { //TODO: avx2 memcpy
+        for (int hh = 0; hh < h; hh++) memcpy(dst + hh * dst_stride, src0 + hh * src0_stride, w);
+        svt_dav1d_blend_h_8bpc_avx2(dst, dst_stride, src1, src1_stride, w, h);
+    }
+};
+
+void svt_av1_highbd_blend_a64_hmask_16bit_avx2(uint16_t *dst, uint32_t dst_stride,
+                                               const uint16_t *src0, uint32_t src0_stride,
+                                               const uint16_t *src1, uint32_t src1_stride,
+                                               const uint8_t *mask, int w, int h, int bd) {
+    (void)mask;
+    (void)bd;
+    if (dst == src0) {
+        svt_dav1d_blend_v_16bpc_avx2(
+            dst, dst_stride * sizeof(uint16_t), src1, src1_stride * sizeof(uint16_t), w, h);
+    } else if (dst == src1) {
+        svt_dav1d_blend_v_16bpc_avx2(
+            dst, dst_stride * sizeof(uint16_t), src0, src0_stride * sizeof(uint16_t), w, h);
+    } else { //TODO: avx2 memcpy
+        for (int hh = 0; hh < h; hh++)
+            memcpy(dst + hh * dst_stride, src0 + hh * src0_stride, w * sizeof(uint16_t));
+        svt_dav1d_blend_v_16bpc_avx2(
+            dst, dst_stride * sizeof(uint16_t), src1, src1_stride * sizeof(uint16_t), w, h);
+    }
+};
+
+void svt_av1_highbd_blend_a64_vmask_16bit_avx2(uint16_t *dst, uint32_t dst_stride,
+                                               const uint16_t *src0, uint32_t src0_stride,
+                                               const uint16_t *src1, uint32_t src1_stride,
+                                               const uint8_t *mask, int w, int h, int bd) {
+    (void)mask;
+    (void)bd;
+    if (dst == src0) {
+        svt_dav1d_blend_h_16bpc_avx2(
+            dst, dst_stride * sizeof(uint16_t), src1, src1_stride * sizeof(uint16_t), w, h);
+    } else if (dst == src1) {
+        svt_dav1d_blend_h_16bpc_avx2(
+            dst, dst_stride * sizeof(uint16_t), src0, src0_stride * sizeof(uint16_t), w, h);
+    } else { //TODO: avx2 memcpy
+        for (int hh = 0; hh < h; hh++)
+            memcpy(dst + hh * dst_stride, src0 + hh * src0_stride, w * sizeof(uint16_t));
+        svt_dav1d_blend_h_16bpc_avx2(
+            dst, dst_stride * sizeof(uint16_t), src1, src1_stride * sizeof(uint16_t), w, h);
+    }
+};
