@@ -2850,6 +2850,12 @@ void compute_distortion(
         : dist_16x16;
     const uint32_t pix_num              = b64_geom->width * b64_geom->height;
     // Normalize
+#if OPT_M13
+    pcs_ptr->me_64x64_distortion[b64_index] = (dist_64x64 * b64_size) / (pix_num);
+    pcs_ptr->me_32x32_distortion[b64_index] = (dist_32x32 * b64_size) / (pix_num);
+    pcs_ptr->me_16x16_distortion[b64_index] = (dist_16x16 * b64_size) / (pix_num);
+    pcs_ptr->me_8x8_distortion[b64_index]   = (dist_8x8 * b64_size) / (pix_num);
+#else
     pcs_ptr->me_64x64_distortion[b64_index] = (((dist_64x64 * b64_size) / (pix_num)) *
                                               context_ptr->stat_factor) /
         100;
@@ -2862,6 +2868,7 @@ void compute_distortion(
     pcs_ptr->me_8x8_distortion[b64_index] = (((dist_8x8 * b64_size) / (pix_num)) *
                                             context_ptr->stat_factor) /
         100;
+#endif
 }
 
 // Initalize data used in ME/HME

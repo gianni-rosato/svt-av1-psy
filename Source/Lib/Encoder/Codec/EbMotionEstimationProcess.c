@@ -240,6 +240,7 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
             me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 1 };
         }
     }
+#if !OPT_M11
     else if (pcs_ptr->enc_mode <= ENC_M11) {
         if (hierarchical_levels <= 3) {
             if (input_resolution < INPUT_SIZE_720p_RANGE) {
@@ -267,6 +268,7 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
             }
         }
     }
+#endif
     else if (pcs_ptr->enc_mode <= ENC_M12) {
         if (input_resolution < INPUT_SIZE_720p_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
@@ -540,12 +542,15 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     // HME Search Method
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
     context_ptr->me_context_ptr->me_search_method  = SUB_SAD_SEARCH;
+
+#if !OPT_M13
     if (pcs_ptr->sc_class1)
         context_ptr->me_context_ptr->stat_factor = 100;
     else if (pcs_ptr->enc_mode <= ENC_M12)
         context_ptr->me_context_ptr->stat_factor = 100;
     else
         context_ptr->me_context_ptr->stat_factor = 80;
+#endif
 
     if (pcs_ptr->sc_class1) {
         context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
@@ -666,7 +671,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         else
             context_ptr->me_context_ptr->me_early_exit_th = 0;
     }
+#if OPT_M11
+    else if (pcs_ptr->enc_mode <= ENC_M10)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M11)
+#endif
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
     else
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 9;
@@ -760,7 +769,9 @@ EbErrorType tf_signal_derivation_me_kernel_oq(PictureParentControlSet *  pcs_ptr
     set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
 
     context_ptr->me_context_ptr->me_early_exit_th = 0;
+#if !OPT_M13
     context_ptr->me_context_ptr->stat_factor             = 100;
+#endif
     context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
     context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
     context_ptr->me_context_ptr->skip_frame = 0;

@@ -630,7 +630,9 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
  ************************************************/
 void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, SequenceControlSet *scs_ptr,
                                       EbInputResolution input_resolution) {
+#if !OPT_M13
     me_context_ptr->stat_factor = 100;
+#endif
     // HME/ME default settings
     me_context_ptr->num_hme_sa_w = 2;
     me_context_ptr->num_hme_sa_h = 2;

@@ -5666,9 +5666,17 @@ uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode           enc_mod
     uint8_t disallow_below_16x16 = 0;
     if (sc_class1)
         disallow_below_16x16 = 0;
+#if OPT_M9
+    else if (enc_mode <= ENC_M8)
+#else
     else if (enc_mode <= ENC_M9)
+#endif
         disallow_below_16x16 = 0;
+#if OPT_M12
+    else if (enc_mode <= ENC_M12) {
+#else
     else if (enc_mode <= ENC_M11) {
+#endif
         if (resolution <= INPUT_SIZE_1080p_RANGE)
             disallow_below_16x16 = is_ref ? 0 : 1;
         else
@@ -7442,10 +7450,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
     } else if (enc_mode <= ENC_M9)
         context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
+#if OPT_M13
+    else
+        context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
+#else
     else if (enc_mode <= ENC_M12)
         context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
     else
         context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
+#endif
 #if TUNE_HL2
     context_ptr->md_subpel_me_level += hierarchical_levels <= 2 ? 2 : 0;
     context_ptr->md_subpel_me_level = MIN(15, context_ptr->md_subpel_me_level);

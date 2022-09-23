@@ -89,6 +89,11 @@ extern "C" {
 #define OPT_M7                  1 // Tune default M7 for SSIM
 #define OPT_M5_2                1 // Tune default M5 for SSIM
 #define OPT_M8                  1 // Tune default M8 for SSIM
+#define OPT_M9                  1 // Tune default M9 for SSIM
+#define OPT_M10                 1 // Tune default M10 for SSIM
+#define OPT_M11                 1 // Tune default M11 for SSIM
+#define OPT_M12                 1 // Tune default M12 for SSIM
+#define OPT_M13                 1 // Tune default M12 for SSIM
 
 #define FIX_ISSUE_1969          1 // Fix issue #1969
 #define FIX_DISALLOW_CTRL       1 // Move get_disallow_4x4() and get_disallow_nsq() to a header

@@ -467,9 +467,11 @@ typedef struct MeContext {
     uint8_t      use_best_unipred_cand_only; // Use only the best unipred candidate when MRP is off
     uint8_t      reduce_hme_l0_sr_th_min;
     uint8_t      reduce_hme_l0_sr_th_max;
-    uint8_t      stat_factor;
-    uint16_t     tf_me_exit_th;
-    uint8_t      tf_use_pred_64x64_only_th;
+#if !OPT_M13
+    uint8_t stat_factor;
+#endif
+    uint16_t tf_me_exit_th;
+    uint8_t  tf_use_pred_64x64_only_th;
 #if OPT_TF_2
     uint8_t tf_subpel_early_exit;
 #endif
