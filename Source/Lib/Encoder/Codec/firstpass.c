@@ -277,6 +277,14 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
         fps.coded_error    = (double)(stats->coded_error >> 8) + min_err;
         fps.sr_coded_error = (double)(stats->sr_coded_error >> 8) + min_err;
         fps.intra_error     = (double)(stats->intra_error >> 8) + min_err;
+#if EN_HL2
+        // if blocks are skipped, the errors need to be updated
+        if (bypass_blk_step == 2) {
+            fps.coded_error *= 3;
+            fps.sr_coded_error *= 3;
+            fps.intra_error *= 3;
+        }
+#endif
         fps.count           = 1.0;
         fps.pcnt_inter      = (double)stats->inter_count / num_mbs;
         fps.pcnt_second_ref = (double)stats->second_ref_count / num_mbs;

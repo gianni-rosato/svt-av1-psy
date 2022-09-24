@@ -36,6 +36,9 @@ extern "C" {
 #define FTR_GOP_CONST_RC        1 // When enabled, the rate control matches the target rate for each GoP
                                   // Currently, only applicable for VBR and  when GoP size is greater than 119 frames.
 #define CLN_B64_RENAMING        1 // Use b64 where appropriate rather than sb variant
+#define EN_HL2                  1 // Enable and improve the performance of HL2
+#define TUNE_HL2                1 // Tune warp, nics, supbel and cdef for HL2
+#define FIX_LD_R2R              1 // Restrict the number of past frames to 1 in LD
 
 #define FIX_PARTITION_COST      1 // Remove the extra Parition_None cost
 

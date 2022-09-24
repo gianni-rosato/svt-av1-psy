@@ -552,7 +552,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             }
         }
     }
-
+#if TUNE_HL2
+    if (hierarchical_levels <= 2) {
+        pcs_ptr->wm_level = enc_mode <= ENC_M7 ? pcs_ptr->wm_level : 0;
+    }
+#endif
     Bool enable_wm = pcs_ptr->wm_level ? 1 : 0;
     if (scs_ptr->enable_warped_motion != DEFAULT)
         enable_wm = (Bool)scs_ptr->enable_warped_motion;

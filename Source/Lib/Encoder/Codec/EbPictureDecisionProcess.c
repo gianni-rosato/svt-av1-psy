@@ -2337,10 +2337,19 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->cdef_level = is_islice ? 15 : is_ref ? 16 : 17;
             }
             else {
+#if TUNE_HL2
+                if (hierarchical_levels <= 2) {
+                    pcs_ptr->cdef_level = is_islice ? 15 : is_base ? 16 : 0;
+                }
+                else {
+#endif
                 if (input_resolution <= INPUT_SIZE_1080p_RANGE)
                     pcs_ptr->cdef_level = is_base ? 15 : 0;
                 else
                     pcs_ptr->cdef_level = is_islice ? 15 : 0;
+#if TUNE_HL2
+                }
+#endif
             }
         }
         else

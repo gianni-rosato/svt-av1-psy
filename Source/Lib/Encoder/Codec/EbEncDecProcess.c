@@ -4470,8 +4470,15 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
             nic_level = 15;
         else
             nic_level = 14;
+#if TUNE_HL2
+    } else if (enc_mode <= ENC_M10)
+        nic_level = 15;
+    else if (enc_mode <= ENC_M11)
+        nic_level = hierarchical_levels <= 2 ? 16 : 15;
+#else
     } else if (enc_mode <= ENC_M11)
         nic_level = 15;
+#endif
     else
         nic_level = 16;
 
@@ -7439,6 +7446,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
     else
         context_ptr->md_subpel_me_level = is_ref ? 9 : 11;
+#if TUNE_HL2
+    context_ptr->md_subpel_me_level += hierarchical_levels <= 2 ? 2 : 0;
+    context_ptr->md_subpel_me_level = MIN(15, context_ptr->md_subpel_me_level);
+#endif
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M0 ? 3 : 0;

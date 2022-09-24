@@ -38,8 +38,17 @@
 #include "EbPictureDecisionResults.h"
 #include "EbResize.h"
 
+#if EN_HL2
+// Specifies the weights of the ref frame in calculating qindex of non base layer frames
+static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 1, 1, 1};
+// Specifies the weights of the worst quality in calculating qindex of non base layer frames
+static const int    non_base_qindex_weight_wq[EB_MAX_TEMPORAL_LAYERS]    = {1, 1, 3, 1, 1, 1};
+static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 2, 1, 1, 0.7};
+static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 3, 2, 1, 0.5};
+#else
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 1, 1, 1, 0.7};
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 2, 1, 0.5};
+#endif
 #define KB 400
 
 static void free_private_data_list(EbBufferHeaderType *p) {
@@ -902,8 +911,17 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
                 int8_t tmp_layer_delta = (int8_t)ppcs->temporal_layer_index - (int8_t)ref_tmp_layer;
                 // active_best_quality is updated with the q index of the reference
                 if (rf_level == GF_ARF_LOW) {
+#if EN_HL2
+                    int w1 = non_base_qindex_weight_ref[scs_ptr->max_heirachical_level];
+                    int w2 = non_base_qindex_weight_wq[scs_ptr->max_heirachical_level];
+                    while (tmp_layer_delta--)
+                        active_best_quality = (w1 * active_best_quality + (w2 * cq_level) +
+                                               ((w1 + w2) / 2)) /
+                            (w1 + w2);
+#else
                     while (tmp_layer_delta--)
                         active_best_quality = (active_best_quality + cq_level + 1) / 2;
+#endif
                 }
             }
             // For alt_ref and GF frames (including internal arf frames) adjust the
@@ -2149,8 +2167,16 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
             active_best_quality = get_active_best_quality(pcs_ptr, active_worst_quality);
         } else {
             active_best_quality = rc->active_best_quality[pyramid_level - 1] + 1;
+#if EN_HL2
+            int w1              = non_base_qindex_weight_ref[scs_ptr->max_heirachical_level];
+            int w2              = non_base_qindex_weight_wq[scs_ptr->max_heirachical_level];
+            active_best_quality = (w1 * active_best_quality + (w2 * active_worst_quality) +
+                                   ((w1 + w2) / 2)) /
+                (w1 + w2);
+#else
             active_best_quality = AOMMIN(active_best_quality, active_worst_quality);
             active_best_quality += (active_worst_quality - active_best_quality) / 2;
+#endif
         }
         // For alt_ref and GF frames (including internal arf frames) adjust the
         // worst allowed quality as well. This insures that even on hard

@@ -415,6 +415,40 @@ void set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_le
 /*set the skip_frame flag for ipp*/
 void set_skip_frame_in_ipp(PictureParentControlSet * pcs,MeContext *ctx) {
     ctx->skip_frame = 0;
+#if EN_HL2
+    int8_t max_heirachical_level = (int8_t)pcs->scs_ptr->max_heirachical_level;
+    int8_t enc_mode = pcs->scs_ptr->static_config.enc_mode;
+    int8_t pass = (int8_t)pcs->scs_ptr->static_config.pass;
+    uint8_t skip_frame_first_pass = pcs->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass;
+    uint64_t  picture_number = pcs->picture_number;
+    if (!skip_frame_first_pass) {
+        if (enc_mode < ENC_M8)
+            ctx->skip_frame = 0;
+        else if (pass == ENC_SINGLE_PASS)
+        {
+            // SINGLE PASS
+            if (max_heirachical_level <= 2)
+                ctx->skip_frame = ((enc_mode >= ENC_M10) && (picture_number > 1 && picture_number % 2 > 0)) ? 1 : 0;
+            else if ((enc_mode < ENC_M10 && (picture_number > 3 && picture_number % 4 > 0)) ||
+                (enc_mode >= ENC_M10 && (picture_number > 5 && picture_number % 6 > 0))) {
+                ctx->skip_frame = 1;
+            }
+        }
+    }
+    else {
+        if ((skip_frame_first_pass == 1) &&
+            (picture_number % 8 > 0))
+            ctx->skip_frame = 1;
+        else if ((skip_frame_first_pass == 2) &&
+            (picture_number > 7 && picture_number % 8 > 0))
+            ctx->skip_frame = 1;
+        else
+            if (picture_number > 3 && picture_number % 4 > 0)
+                ctx->skip_frame = 1;
+            else
+                ctx->skip_frame = 0;
+    }
+#else
     if (!pcs->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass) {
         if (pcs->scs_ptr->static_config.enc_mode < ENC_M8)
             ctx->skip_frame = 0;
@@ -436,6 +470,7 @@ void set_skip_frame_in_ipp(PictureParentControlSet * pcs,MeContext *ctx) {
             else
                 ctx->skip_frame = 0;
     }
+#endif
 }
 /*configure PreHme control*/
 void set_prehme_ctrls(MeContext *context, uint8_t level) {

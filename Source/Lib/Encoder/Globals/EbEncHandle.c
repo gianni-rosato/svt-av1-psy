@@ -2938,6 +2938,9 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].num_future_pics = 0;
         scs_ptr->tf_params_per_type[1].max_num_future_pics = 0;
+#if FIX_LD_R2R
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = 1;
+#endif
 
         scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0; //I frame not TF-ed
 
@@ -3173,6 +3176,10 @@ void set_ipp_pass_ctrls(
         assert(0);
         break;
     }
+#if EN_HL2
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.hierarchical_levels <= 2 && scs_ptr->static_config.enc_mode >= ENC_M8)
+        ipp_pass_ctrls->bypass_blk_step = 1;
+#endif
 }
 
 void set_mid_pass_ctrls(
