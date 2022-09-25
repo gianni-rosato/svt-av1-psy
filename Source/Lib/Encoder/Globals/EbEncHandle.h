@@ -124,6 +124,9 @@ struct _EbEncHandle {
     EbFifo *input_y8b_buffer_producer_fifo_ptr;
     EbFifo *output_stream_buffer_consumer_fifo_ptr;
     EbFifo *output_recon_buffer_consumer_fifo_ptr;
+
+    bool eos_received; // used to signal we received the EOS from the app
+    bool eos_sent; // used to signal we sent the EOS to the app
 };
 
 #endif // EbEncHandle_h

@@ -2298,33 +2298,60 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     return return_error;
 }
 
+static EbErrorType enc_drain_queue(EbComponentType *svt_enc_component) {
+    bool eos = false;
+    do {
+        EbBufferHeaderType *receive_buffer = NULL;
+        EbErrorType         return_error;
+        switch ((return_error = svt_av1_enc_get_packet(svt_enc_component, &receive_buffer, 1))) {
+        case EB_ErrorMax: return EB_ErrorMax;
+        case EB_NoErrorEmptyQueue: eos = true; break;
+        default: break;
+        }
+        if (receive_buffer) {
+            eos = receive_buffer->flags & EB_BUFFERFLAG_EOS;
+            svt_av1_enc_release_out_buffer(&receive_buffer);
+            receive_buffer = NULL;
+        }
+    } while (!eos);
+    return EB_ErrorNone;
+}
+
 /**********************************
 * DeInitialize Encoder Library
 **********************************/
-EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component){
-    if(svt_enc_component == NULL)
+EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component) {
+    if (!svt_enc_component || !svt_enc_component->p_component_private)
         return EB_ErrorBadParameter;
 
-    EbEncHandle *handle = (EbEncHandle*)svt_enc_component->p_component_private;
-    if (handle) {
-        svt_shutdown_process(handle->input_buffer_resource_ptr);
-        svt_shutdown_process(handle->input_cmd_resource_ptr);
-        svt_shutdown_process(handle->resource_coordination_results_resource_ptr);
-        svt_shutdown_process(handle->picture_analysis_results_resource_ptr);
-        svt_shutdown_process(handle->picture_decision_results_resource_ptr);
-        svt_shutdown_process(handle->motion_estimation_results_resource_ptr);
-        svt_shutdown_process(handle->initial_rate_control_results_resource_ptr);
-        svt_shutdown_process(handle->picture_demux_results_resource_ptr);
-        svt_shutdown_process(handle->tpl_disp_res_srm);
-        svt_shutdown_process(handle->rate_control_tasks_resource_ptr);
-        svt_shutdown_process(handle->rate_control_results_resource_ptr);
-        svt_shutdown_process(handle->enc_dec_tasks_resource_ptr);
-        svt_shutdown_process(handle->enc_dec_results_resource_ptr);
-        svt_shutdown_process(handle->entropy_coding_results_resource_ptr);
-        svt_shutdown_process(handle->dlf_results_resource_ptr);
-        svt_shutdown_process(handle->cdef_results_resource_ptr);
-        svt_shutdown_process(handle->rest_results_resource_ptr);
+    EbEncHandle *handle = svt_enc_component->p_component_private;
+
+    if (!handle->eos_received) {
+        SVT_ERROR("deinit called without sending EOS!\n");
+        svt_av1_enc_send_picture(svt_enc_component, &(EbBufferHeaderType){.flags = EB_BUFFERFLAG_EOS});
     }
+
+    EbErrorType return_error = enc_drain_queue(svt_enc_component);
+    if (return_error != EB_ErrorNone)
+        return return_error;
+
+    svt_shutdown_process(handle->input_buffer_resource_ptr);
+    svt_shutdown_process(handle->input_cmd_resource_ptr);
+    svt_shutdown_process(handle->resource_coordination_results_resource_ptr);
+    svt_shutdown_process(handle->picture_analysis_results_resource_ptr);
+    svt_shutdown_process(handle->picture_decision_results_resource_ptr);
+    svt_shutdown_process(handle->motion_estimation_results_resource_ptr);
+    svt_shutdown_process(handle->initial_rate_control_results_resource_ptr);
+    svt_shutdown_process(handle->picture_demux_results_resource_ptr);
+    svt_shutdown_process(handle->tpl_disp_res_srm);
+    svt_shutdown_process(handle->rate_control_tasks_resource_ptr);
+    svt_shutdown_process(handle->rate_control_results_resource_ptr);
+    svt_shutdown_process(handle->enc_dec_tasks_resource_ptr);
+    svt_shutdown_process(handle->enc_dec_results_resource_ptr);
+    svt_shutdown_process(handle->entropy_coding_results_resource_ptr);
+    svt_shutdown_process(handle->dlf_results_resource_ptr);
+    svt_shutdown_process(handle->cdef_results_resource_ptr);
+    svt_shutdown_process(handle->rest_results_resource_ptr);
 
     return EB_ErrorNone;
 }
@@ -4706,7 +4733,7 @@ EB_API EbErrorType svt_av1_enc_send_picture(
      svt_object_inc_live_count(eb_wrapper_ptr, 1);
 
     if (p_buffer != NULL) {
-
+        enc_handle_ptr->eos_received += p_buffer->flags & EB_BUFFERFLAG_EOS;
 
         //copy the Luma 8bit part into y8b buffer and the rest of samples into the regular buffer
         EbBufferHeaderType *lib_y8b_hdr = (EbBufferHeaderType*)eb_y8b_wrapper_ptr->object_ptr;
@@ -4772,6 +4799,18 @@ EB_API EbErrorType svt_av1_enc_get_packet(
     EbEncHandle          *enc_handle = (EbEncHandle*)svt_enc_component->p_component_private;
     EbObjectWrapper      *eb_wrapper_ptr = NULL;
     EbBufferHeaderType    *packet;
+
+    // check if the user is claiming that the last picture has been sent
+    // without actually signalling it through svt_av1_enc_send_picture()
+    assert(!(!enc_handle->eos_received && pic_send_done));
+
+    // if we have already sent out an EOS, then the user should not be calling
+    // this function again, as it will just block inside svt_get_full_object()
+    if (enc_handle->eos_sent) {
+        *p_buffer = NULL;
+        return EB_NoErrorEmptyQueue;
+    }
+
     if (pic_send_done)
         svt_get_full_object(
             enc_handle->output_stream_buffer_consumer_fifo_ptr,
@@ -4787,6 +4826,9 @@ EB_API EbErrorType svt_av1_enc_get_packet(
             return_error = EB_ErrorMax;
         // return the output stream buffer
         *p_buffer = packet;
+
+        // check if we have reached the end of the output stream
+        enc_handle->eos_sent += packet->flags & EB_BUFFERFLAG_EOS;
 
         // save the wrapper pointer for the release
         (*p_buffer)->wrapper_ptr = (void*)eb_wrapper_ptr;
