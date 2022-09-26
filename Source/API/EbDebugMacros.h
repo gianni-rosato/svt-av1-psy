@@ -103,6 +103,8 @@ extern "C" {
 
 #define FIX_TYPO_IN_6L_RPS      1 // Fix a typo in the 6L RPS construction
 
+#define OPT_COST_COEFFS_TXB     1 // Use coding trick to optimize cost calculation; branch misprediction reduction from ~30% to ~10%
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

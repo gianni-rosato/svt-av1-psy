@@ -398,10 +398,15 @@ static INLINE int32_t av1_cost_coeffs_txb_loop_cost_eob(
                     coeff_costs->lps_cost[ctx][COEFF_BASE_RANGE] +
                     coeff_costs->base_cost[coeff_contexts[pos]][3];
             }
+#if OPT_COST_COEFFS_TXB
+        } else {
+            cost += (cost_literal * !!level) + coeff_costs->base_cost[coeff_contexts[pos]][level];
+#else
         } else if (level) {
             cost += cost_literal + coeff_costs->base_cost[coeff_contexts[pos]][level];
         } else {
             cost += coeff_costs->base_cost[coeff_contexts[pos]][0];
+#endif
         }
     }
     return cost;
