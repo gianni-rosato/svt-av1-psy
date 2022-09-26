@@ -2168,9 +2168,9 @@ cglobal iidentity_8x4_internal_10bpc, 0, 7, 10, dst, stride, c, eob, tx2
     pmulhrsw             m0, m7
     punpckhwd            m1, m0, m2
     punpcklwd            m0, m2
-    mova                xm2, [dstq+strideq*0]
+    movu                xm2, [dstq+strideq*0]
     vinserti128          m2, m2, [r6  +strideq*0], 1
-    mova                xm3, [dstq+strideq*1]
+    movu                xm3, [dstq+strideq*1]
     vinserti128          m3, m3, [r6  +strideq*1], 1
     pxor                 m4, m4
     REPX {mova [cq+32*x], m4}, 0, 1, 2, 3
@@ -2180,8 +2180,8 @@ cglobal iidentity_8x4_internal_10bpc, 0, 7, 10, dst, stride, c, eob, tx2
     pmaxsw               m1, m4
     pminsw               m0, m5
     pminsw               m1, m5
-    mova         [dstq+strideq*0], xm0
-    mova         [dstq+strideq*1], xm1
+    movu         [dstq+strideq*0], xm0
+    movu         [dstq+strideq*1], xm1
     vextracti128 [r6  +strideq*0], m0, 1
     vextracti128 [r6  +strideq*1], m1, 1
     RET
@@ -2682,9 +2682,9 @@ cglobal iidentity_8x8_internal_10bpc, 0, 7, 14, dst, stride, c, eob, tx2
     mova          [cq+32*3], m6
     add                  cq, 32*4
 .write_2x8x2:
-    mova                xm4, [dstq+strideq*0]
+    movu                xm4, [dstq+strideq*0]
     vinserti128          m4, m4, [dstq+strideq*4], 1
-    mova                xm5, [dstq+strideq*1]
+    movu                xm5, [dstq+strideq*1]
     vinserti128          m5, m5, [dstq+r6       ], 1
     paddw                m0, m4
     paddw                m1, m5
@@ -2692,8 +2692,8 @@ cglobal iidentity_8x8_internal_10bpc, 0, 7, 14, dst, stride, c, eob, tx2
     pmaxsw               m1, m6
     pminsw               m0, m7
     pminsw               m1, m7
-    mova         [dstq+strideq*0], xm0
-    mova         [dstq+strideq*1], xm1
+    movu         [dstq+strideq*0], xm0
+    movu         [dstq+strideq*1], xm1
     vextracti128 [dstq+strideq*4], m0, 1
     vextracti128 [dstq+r6       ], m1, 1
     lea                dstq, [dstq+strideq*2]
@@ -7429,10 +7429,10 @@ ALIGN function_align
     REPX    {pmaxsw x, m%2}, m%3, m%4, m%5, m%6
     vpbroadcastd        m%2, [pixel_10bpc_max]
     REPX    {pminsw x, m%2}, m%3, m%4, m%5, m%6
-    mova         [%%d0+%7 ], m%3
-    mova         [%%d1+%8 ], m%4
-    mova         [%%d0+%9 ], m%5
-    mova         [%%d1+%10], m%6
+    movu         [%%d0+%7 ], m%3
+    movu         [%%d1+%8 ], m%4
+    movu         [%%d0+%9 ], m%5
+    movu         [%%d1+%10], m%6
 %endmacro
 
 cglobal inv_txfm_add_dct_dct_16x64_10bpc, 4, 7, 0, dst, stride, c, eob
