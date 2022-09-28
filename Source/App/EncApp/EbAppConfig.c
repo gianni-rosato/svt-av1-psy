@@ -61,6 +61,7 @@
 #define PROGRESS_TOKEN "--progress"
 #define QP_TOKEN "-q"
 #define USE_QP_FILE_TOKEN "--use-q-file"
+#define FORCE_KEY_FRAMES_TOKEN "--force-key-frames"
 
 #define USE_FIXED_QINDEX_OFFSETS_TOKEN "--use-fixed-qindex-offsets"
 #define QINDEX_OFFSETS_TOKEN "--qindex-offsets"
@@ -342,6 +343,47 @@ static void set_cfg_frames_to_be_encoded(const char *value, EbConfig *cfg) {
 static void set_buffered_input(const char *value, EbConfig *cfg) {
     cfg->buffered_input = strtol(value, NULL, 0);
 };
+static void set_cfg_force_key_frames(const char *value, EbConfig *cfg) {
+    struct forced_key_frames fkf;
+    fkf.specifiers = NULL;
+    fkf.frames     = NULL;
+    fkf.count      = 0;
+
+    if (!value)
+        return;
+    const char *p = value;
+    while (p) {
+        const size_t len       = strcspn(p, ",");
+        char        *specifier = (char *)calloc(sizeof(*specifier), len + 1);
+        if (!specifier)
+            goto err;
+        memcpy(specifier, p, len);
+        char **tmp = (char **)realloc(fkf.specifiers, sizeof(*fkf.specifiers) * (fkf.count + 1));
+        if (!tmp) {
+            free(specifier);
+            goto err;
+        }
+        fkf.specifiers            = tmp;
+        fkf.specifiers[fkf.count] = specifier;
+        fkf.count++;
+        if ((p = strchr(p, ',')))
+            ++p;
+    }
+
+    if (!fkf.count)
+        goto err;
+
+    fkf.frames = (uint64_t *)calloc(sizeof(*fkf.frames), fkf.count);
+    if (!fkf.frames)
+        goto err;
+    cfg->forced_keyframes        = fkf;
+    cfg->config.force_key_frames = true;
+    return;
+err:
+    fputs("Error parsing forced key frames list\n", stderr);
+    for (size_t i = 0; i < fkf.count; ++i) free(fkf.specifiers[i]);
+    free(fkf.specifiers);
+}
 static void set_no_progress(const char *value, EbConfig *cfg) {
     switch (value ? *value : '1') {
     case '0': cfg->progress = 1; break; // equal to --progress 1
@@ -1207,6 +1249,10 @@ ConfigEntry config_entry_intra_refresh[] = {
      "Set prediction structure, default is 2 [1: low delay frames, 2: "
      "random access]",
      set_cfg_pred_structure},
+    {SINGLE_INPUT,
+     FORCE_KEY_FRAMES_TOKEN,
+     "Force key frames at the comma separated specifiers. `#f` for frames, `#.#s` for seconds",
+     set_cfg_force_key_frames},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1544,6 +1590,7 @@ ConfigEntry config_entry[] = {
     //   Prediction Structure
     {SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "HierarchicalLevels", set_hierarchical_levels},
     {SINGLE_INPUT, PRED_STRUCT_TOKEN, "PredStructure", set_cfg_pred_structure},
+    {SINGLE_INPUT, FORCE_KEY_FRAMES_TOKEN, "ForceKeyFrames", set_cfg_force_key_frames},
 
     // AV1 Specific Options
     {SINGLE_INPUT, TILE_ROW_TOKEN, "TileRow", set_tile_row},
@@ -1674,6 +1721,10 @@ void svt_config_dtor(EbConfig *config_ptr) {
         config_ptr->output_stat_file = (FILE *)NULL;
     }
 
+    for (size_t i = 0; i < config_ptr->forced_keyframes.count; ++i)
+        free(config_ptr->forced_keyframes.specifiers[i]);
+    free(config_ptr->forced_keyframes.specifiers);
+    free(config_ptr->forced_keyframes.frames);
     free((void *)config_ptr->stats);
     free(config_ptr);
     return;

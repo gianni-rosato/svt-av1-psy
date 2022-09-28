@@ -172,6 +172,14 @@ typedef struct MemMapFile {
     uint64_t file_frame_it; //frame iterator within the input file
 } MemMapFile;
 
+// list of frames that are forced to be key frames
+// pairs with force_key_frames
+struct forced_key_frames {
+    char    **specifiers; // list of specifiers to use to convert into frames
+    uint64_t *frames;
+    size_t    count;
+};
+
 typedef struct EbConfig {
     /****************************************
      * File I/O
@@ -217,6 +225,8 @@ typedef struct EbConfig {
     uint64_t processed_byte_count;
 
     uint64_t ivf_count;
+
+    struct forced_key_frames forced_keyframes;
     /****************************************
      * On-the-fly Testing
      ****************************************/

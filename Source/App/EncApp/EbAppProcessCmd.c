@@ -14,6 +14,7 @@
  ***************************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
@@ -376,6 +377,18 @@ static void injector(uint64_t processed_frame_count, uint32_t injector_frame_rat
     }
 }
 
+static bool is_forced_keyframe(const EbConfig *config, uint64_t pts) {
+    if (config->forced_keyframes.frames) {
+        for (size_t i = 0; i < config->forced_keyframes.count; ++i) {
+            if (config->forced_keyframes.frames[i] == pts)
+                return true;
+            if (config->forced_keyframes.frames[i] > pts)
+                break;
+        }
+    }
+    return false;
+}
+
 //************************************/
 // process_input_buffer
 // Reads yuv frames from file and copy
@@ -430,7 +443,9 @@ void process_input_buffer(EncChannel *channel) {
                 config->stop_encoder = TRUE;
             // Fill in Buffers Header control data
             header_ptr->pts      = config->processed_frame_count - 1;
-            header_ptr->pic_type = EB_AV1_INVALID_PICTURE;
+            header_ptr->pic_type = is_forced_keyframe(config, header_ptr->pts)
+                ? EB_AV1_KEY_PICTURE
+                : EB_AV1_INVALID_PICTURE;
             header_ptr->flags    = 0;
             header_ptr->metadata = NULL;
             // Send the picture

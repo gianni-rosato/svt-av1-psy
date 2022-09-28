@@ -124,6 +124,12 @@ void init_memory_file_map(EbConfig* config) {
     }
 }
 
+static int compar_uint64(const void* a, const void* b) {
+    const uint64_t x = *(const uint64_t*)a;
+    const uint64_t y = *(const uint64_t*)b;
+    return (x < y) ? -1 : (x > y) ? 1 : 0;
+}
+
 static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc,
                                     char* argv[], EncPass enc_pass, int32_t passes) {
 #if LOG_ENC_DONE
@@ -175,6 +181,29 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
             config->config.channel_id           = inst_cnt;
             config->config.recon_enabled        = config->recon_file ? TRUE : FALSE;
 
+            // set force_key_frames frames
+            if (config->config.force_key_frames) {
+                const double fps = (double)config->config.frame_rate_numerator /
+                    config->config.frame_rate_denominator;
+                struct forced_key_frames* forced_keyframes = &config->forced_keyframes;
+
+                for (size_t i = 0; i < forced_keyframes->count; ++i) {
+                    char*  p;
+                    double val = strtod(forced_keyframes->specifiers[i], &p);
+                    switch (*p) {
+                    case 'f':
+                    case 'F': break;
+                    case 's':
+                    case 'S':
+                    default: val *= fps; break;
+                    }
+                    forced_keyframes->frames[i] = (uint64_t)val;
+                }
+                qsort(forced_keyframes->frames,
+                      forced_keyframes->count,
+                      sizeof(forced_keyframes->frames[0]),
+                      compar_uint64);
+            }
             init_memory_file_map(config);
 
             app_svt_av1_get_time(&config->performance_context.lib_start_time[0],
