@@ -3277,6 +3277,7 @@ void *rate_control_kernel(void *input_ptr) {
                             set_rc_buffer_sizes(scs_ptr);
                             av1_rc_init(scs_ptr);
                         }
+                        svt_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
                         restore_param(pcs_ptr->parent_pcs_ptr,
                                       pcs_ptr->parent_pcs_ptr->rate_control_param_ptr);
 
@@ -3288,6 +3289,7 @@ void *rate_control_kernel(void *input_ptr) {
                         av1_set_target_rate(pcs_ptr);
                         store_param(pcs_ptr->parent_pcs_ptr,
                                     pcs_ptr->parent_pcs_ptr->rate_control_param_ptr);
+                        svt_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
                     }
                 }
 
