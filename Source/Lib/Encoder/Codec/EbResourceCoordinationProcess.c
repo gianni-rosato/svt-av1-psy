@@ -976,6 +976,9 @@ void *resource_coordination_kernel(void *input_ptr) {
             }
             // Set Picture Control Flags
             pcs_ptr->idr_flag          = scs_ptr->encode_context_ptr->initial_picture;
+#if FIX_CRA_R2R
+            pcs_ptr->cra_flag          = 0;
+#endif
             pcs_ptr->scene_change_flag = FALSE;
             pcs_ptr->qp_on_the_fly     = FALSE;
             pcs_ptr->b64_total_count   = scs_ptr->b64_total_count;
