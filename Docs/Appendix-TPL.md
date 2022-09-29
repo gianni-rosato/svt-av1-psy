@@ -24,7 +24,7 @@ in the RD cost calculations.
 The following concepts are introduced to define the high level operation of the TPL algorithm:
 
 - Degradation measure: This measure would concern both the distortion and the rate variables.
-  The degradations is based on the difference between the distortion and rate
+  The degradation is based on the difference between the distortion and rate
   that result from considering source samples as reference samples and similar
   quantities when considering reconstructed samples as reference samples. There
   is an underlying assumption in the development of the algorithm that the
@@ -248,38 +248,29 @@ the lower $`r0`$ is the more improvements the picture would need.
 
 The picture qindex in CRF mode is computed (in the cqp_qindex_calc_tpl_la()
 function) following different methods depending on the picture type, namely
-Intra, BASE, REF-NON-BASE and NON-REF. A summary of the QPS adjustment ideas is
-presented below.. In the following, qindex is 4xQP for most of the QP values
-and represents the quantization parameter the encoder works with internally
-instead of QP. The later is just an input parameter.
+Intra, BASE, REF-NON-BASE and NON-REF. Pictures in the top-layer of the
+mini-GOP structure are treated as NON-REF pictures for the QP-scaling algorithm.
+A summary of the QPS adjustment ideas is presented below.. In the following,
+qindex is 4xQP for most of the QP values and represents the quantization parameter
+the encoder works with internally instead of QP. The later is just an input parameter.
 
 - Intra pictures: The qindex for both Intra Key Frames (IDR) and non-Key frames (CRA) is generated using similar approaches with slightly different tuning.
   A lower qindex is assigned to the pictures with small $`r0`$ values. The main idea behind the adjustment of the qindex for a given picture is as follows:
 
-  - Compute kf_boost based on the $`r0`$ for the picture, where kf_boost is inversely proportional to $`r0`$. A range for allowed kf_boost values is defined by $`kf\_boost\_low = 600`$ and $`kf\_boost\_high= 3200`$.
+  - Compute qstep_ratio based on the $`r0`$ for the picture, where qstep_ratio is proportional to the square root of $`r0`$.
 
-  - The range of qindex adjustment is defined by two lookup tables that associate to qindex an upper bound (high_motion_minq) and a lower bound (low_motion_minq) to the qindex adjustment interval.
+  - The target quantization step is calculated using the input qindex and the qtep_ratio.
 
-  - The adjusted qindex is given by:
-    ```math
-    active\_best\_quality = low\_motion\_minq[qindex] + adjustment
-    ```
-    where
-    ```math
-    adjustment = ((kf\_boost\_high – kf\_boost)/ (kf\_boost\_high – kf\_boost\_low))* qdiff
-    ```
-    and where
-    ```math
-    qdiff = (high\_motion\_minq[qindex] - low\_motion\_minq[qindex])
-    ```
+  - The qindex with the closest quantization step to the target is chosen as the qindex of the picture.
+
 - Inter pictures
 
-  - Base layer pictures: The idea for base layer reference pictures is similar to that described above for intra pictures, except that the adjustment interval bounds are different.
+  - Base layer pictures: The idea for base layer pictures is similar to that described above for intra pictures, except that the qstep_ratio weight is different.
 
   - Reference non-base-layer pictures: The tpl data is not used in this case. The picture is initially assigned the qindex of one of the two reference index 0 pictures from lists 0 and 1.
     The farther the distance between the reference index 0 pictures and the current picture, the more the qindex is further adjusted towards its original value.
 
-  - Non-reference pictures: The qindex is simply set to the input qindex.
+  - Non-reference pictures and top-layer pictures: The qindex is simply set to the input qindex.
 
 ### SB-based QP-Modulation Algorithm
 
@@ -359,6 +350,8 @@ Table 2 describes the functionality of each of the TPL control parameters.
 | subsample_tx | Picture | 0: OFF, use full TX size; 1: subsample the transforms in TPL by 2; 2: subsample the transforms in TPL by 4 |
 | 8 synth_blk_size | Picture | Define the block granularity of the synthesizer search. 0: 8x8, 1: 16x16 |
 | vq_adjust_lambda_sb | Picture | Adjust lambda based on the delta PQ between the generated QP of the sb and the picture QP 0: OFF, 1: ON |
+| qstep_based_q_calc | Picture | Calculate the qindex based on r0 using qstep calculation 0: OFF, 1: ON |
+| subpel_depth | Picture | Max subpel depth to search for TPL; FULL_PEL corresponds to subpel off in TPL, QUARTER_PEL is the max precision for TPL subpel |
 
 ## Notes
 
@@ -425,11 +418,13 @@ For a given TPL group of pictures, the dispenser operates as follows:
 
              Select the best intra mode based on INTRA_COST_SRC. Note that the INTRA_COST_SRC information itself is not stored
 
-         - For each of the ME candidates generated using source references:
+         - For each of the single-ref ME candidates generated using source references:
+
+           Perform a subpel search to refine the ME candidate
 
            Perform motion compensation and compute residual RESIDUAL = SRC – PRED.
 
-           Apply the WH transform to the Residuals and compute INTER_COST_SRC = SATD ( transformed Residual)
+           Apply the DCT_DCT transform to the Residuals and compute INTER_COST_SRC = SATD ( transformed Residual)
 
            Get the best inter mode candidate, store MV, reference index and best INTER_COST_SRC.
 
@@ -615,126 +610,50 @@ mc_dep_dist is small. The same applies to mc_dep_rate.
 
 ### 1. Case of Intra Pictures
 
-Main idea: The smaller the r0 value, the more improvements the picture would
-need. The kf_boost variable is inversely proportional to r0 and is used to
-indicate the level of the required improvement in the picture. The larger the
-kf_boost parameter is, the smaller the resulting qindex for the picture would
-be.
+Main idea: The smaller the r0 value, the more improvements the picture would need.
+The square root of r0 is used to calculate a variable called qstep_ratio. Then, a
+target DC quantization step is calculated using the input qindex and qstep_ratio.
+The qindex corresponding to the target DC quantization step is chosen as the qindex
+of the picture. The larger the r0 value is, the larger the resulting qindex for the
+picture would be.
 
-- factor:
-
-  For KEY_FRAME AND (intra_period_length = -1 OR intra_period_length > 64)
-  If r0 < 0.2 set factor = 255/qindex, else factor = 1.
-
-- r0:
+- Adjust r0: r0_adjust_factor is set in the TPL controls, and is based on the lookahead, mini-GOP structure, and size of the TPL group.  When a lookahead is used, the factor is set to 0 for Intra pictures, so the following scaling is not performed.
   ```
-  r0 = r0/factor.
+  r0 = r0 / (used_tpl_frame_num x r0_adjust_factor)
   ```
-  When factor is set to 255/qindex, r0 becomes smaller, implying a larger kf_boost as indicated below.
-
   Further adjustments in r0 are introduced to account for the prediction structure by dividing r0 by tpl_hl_islice_div_factor in the case of an I_SLICE,
   or by tpl_hl_base_frame_div_factor in the case of a base layer picture, where tpl_hl_islice_div_factor and tpl_hl_base_frame_div_factor are given in the
   table below.
 
   |**Hierarchical level**|**0**|**1**|**2**|**3**|**4**|**5**|
   | --- | --- | --- | --- | --- | --- | --- |
-  |**tpl_hl_islice_div_factor**| 1 | 1 | 1 | 2 | 1 | 0.8 |
-  |**tpl_hl_base_frame_div_factor**| 1 | 1 | 1 | 3 | 1 | 0.7 |
+  |**tpl_hl_islice_div_factor**| 1 | 1 | 2 | 1 | 1 | 0.7 |
+  |**tpl_hl_base_frame_div_factor**| 1 | 1 | 3 | 2 | 1 | 0.5 |
 
-- kf_boost:
-
-  For <= 720p,
+- qstep_ratio:
   ```
-  kf_boost = (1.5 * (75.0 + 17.0 * kf_boost_factor) / r0);
+  qstep_ratio = sqrt(r0) x weight
   ```
-  else
+  where the weight is set 0.7 for Intra pictures.
+
+- target_qstep:
   ```
-  kf_boost = (2 * (75.0 + 17.0 * kf_boost_factor) / r0,
+  target_qstep = DC qstep of the input qindex x qstep_ratio
   ```
-  where kf_boost_factor = (10 + 4)/2.
-  ```
-  kf_boost = min(kf_boost, max_boost) where max_boost = 3000 when intra_period_length < 64, else 5000.
-  ```
-- active_best_quality: Represents the adjusted qindex value for the picture.
 
-  - For a given initial qindex for the picture, the range of adjusted qindex values is given by the interval [high_motion_minq[qindex],
-    low_motion_minq[qindex]], where the interval bounds are given by lookup tables. Define:
-    ```
-    qdiff = (high_motion_minq[qindex] - low_motion_minq[qindex])
-    ```
-    high_motion_minq and low_motion_minq are shown in the graph below.
-
-    ![tpl_graph1](./img/tpl_graph1.png)
-
-  - Define adjustment_ratio:
-    ```
-    adjustment_ratio = ((kf_boost_high – kf_boost)/ (kf_boost_high – kf_boost_low))
-    ```
-    where kf_boost_high = 5000; kf_boost_low = 400.
-
-  - Adjusted qindex:
-    ```
-    active_best_quality = low_motion_minq[qindex] + adjustment_ratio*qdiff
-    ```
-- q_adj_factor: Allow for smaller active_best_quality for small resolutions
-  - 0.8 for <=240p
-  - 0.85 otherwise
-
-- Final qindex adjustment: The final value of qindex is roughly given by (to avoid unnecessary details)
-
-  active_best_quality $`\approx`$ q_adj_factor x active_best_quality
+- active_best_quality: Represents the adjusted qindex value for the picture and is set to the qindex with the closest dc qstep to the target_qstep.
 
 ### 2. Case of Inter Pictures
 
-*r0, gfu_boost and arf_boost_factor*
-
-- Adjust r0: If base layer picture AND (lad_mg > 0) AND (r0_adjust_factor > 0) ( r0_adjust_factor depends on tpl_level, and if hierarchical_level < 4,
-  it is set to 0.1), then
+- Adjust r0: r0_adjust_factor is set in the TPL controls, and is based on the lookahead, mini-GOP structure, and size of the TPL group.
 
   ```
   r0 = r0 / (used_tpl_frame_num x r0_adjust_factor)
   ```
 
-- gfu_boost: Clamp (tpl_group_size + mini-gop_size)½ to the range from (mini-gop_size) ½ to 10.
-
-  gfu_boost = (200 + 10 x (tpl_group_size + mini-gop_size) ½ )/ r0
-
-- arf_boost_factor: Set to
-  - 1.3 if (reference[list0][index0] is I_SLICE) and ((reference r0 – current picture r0) >= 0.08)
-  - 1 otherwise.
-
 *Case of base layer pictures*
 
-- For a given qindex, the range of adjusted qindex is given by the interval [arfgf_high_motion_minq[qindex], arfgf_high_motion_minq[qindex]],
-  where the interval bounds are given by lookup tables. Define:
-
-  ```
-  qdiff = (arfgf_high_motion_minq[qindex] - arfgf_low_motion_minq[qindex])
-  ```
-
-arfgf_high_motion_minq and arfgf_low_motion_minq are shown in the graph below.
-
-![tpl_graph2](./img/tpl_graph2.png)
-
-- Define adjustment_ratio:
-
-  ```
-  adjustment_ratio = ((gf_high_tpl_la – gfu_boost)/ (gf_high_tpl_la – gf_low_tpl_la))
-  ```
-
-  where gf_high_tpl_la = 2400; gf_low_tpl_la = 300.
-
-- Initial adjusted qindex:
-
-  ```
-  active_best_quality = arfgf_low_motion_minq[qindex] + adjustment_ratio*qdiff
-  ```
-
-- Final adjusted qindex: Define adjustment = (arfgf_high_motion_minq[qindex] - active_best_quality). Then
-
-  ```
-  active_best_quality = arfgf_high_motion_minq[qindex] – arf_boost_factor x adjustment
-  ```
+- The Qindex computation is the same as the Intra picture case, except that the weight used in calculation of qstep_ratio is set to 0.9 for the base layer pictures
 
 *Case of non-base-layer reference pictures*
 
@@ -781,7 +700,7 @@ arfgf_high_motion_minq and arfgf_low_motion_minq are shown in the graph below.
   active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4
   ```
 
-*Case of non-reference pictures*
+*Case of non-reference pictures and top-layer pictures*
 
 - The qindex for the picture remains unchanged.
 

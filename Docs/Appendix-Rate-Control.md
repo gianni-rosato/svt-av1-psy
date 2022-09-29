@@ -303,7 +303,7 @@ chosen as the final qindex of the picture. (see *av1_rc_regulate_q()* and
 ##### Calculation of Active_Best_Quality
 
 The variable active_best_quality represents the lowest qindex that can be
-assigned per picture given the the value of active_worst_quality. The picture
+assigned per picture given the value of active_worst_quality. The picture
 *qindex* in VBR mode is computed in the *rc_pick_q_and_bounds()* function. The
 details of each step are described in this section.
 
@@ -319,28 +319,13 @@ adjustment ideas is presented below. For more details, refer to Temporal
 Dependency Model (TPL) document.
 
 - Intra pictures: *The active_best_quality* for both Intra Key Frames (IDR) and non-Key frames (CRA) is generated using similar approaches with slightly different tuning. A lower *active_best_quality* is assigned to the pictures with small r0 values. The main idea behind the adjustment of the *active_best_quality* for a given picture is as follows:
-  * Compute *kf_boost* based on the r0 for the picture, where *kf_boost* is inversely proportional to r0. A range for allowed *kf_boost* values is defined by *kf_boost_low* = 400 and *kf_boost_high* = 5000.
-  * The range of *active_best_quality* adjustment is defined by two lookup tables that associate to *active_worst_quality* an upper bound (*high_motion_minq*) and a lower bound (*low_motion_minq*) to the *active_best_quality* adjustment interval. *high_motion_minq* and *low_motion_minq* are shown in Figure 4.
-
-![rc_figure4](./img/rc_figure4.PNG)
-
-###### Figure 4. Range of active_best_quality adjustment for Intra pictures.
-
-  * The adjusted active_best_quality is given by:
-  ___active_best_quality = low_motion_minq[active_worst_quality] + adjustment___
-  where
-  ___adjustment = ((kf_boost_high – kf_boost)/ (kf_boost_high – kf_boost_low))* qdiff___
-  and where
-  ___qdiff = (high_motion_minq[active_worst_quality] - low_motion_minq[active_worst_quality])___
+  * Compute qstep_ratio based on the r0 for the picture, where qstep_ratio is proportional to the square root of r0.
+  * The target quantization step is calculated using the active_worst_quality and the qtep_ratio.
+  * The qindex with the closest quantization step to the target is chosen as the qindex of the picture.
 
 - Inter pictures
-  * Base layer pictures: The idea for base layer pictures is similar to that described above for intra pictures, except that the *gf_boost* is used instead of *kf_boost* and the adjustment interval bounds are different. *arfgf_high_motion_minq* and *arfgf_low_motion_minq* are shown in Figure 5.
-
-![rc_figure5](./img/rc_figure5.PNG)
-
-###### Figure 5. Range of active_best_quality adjustment for inter pictures
-
-  * non-base-layer pictures: The tpl data is not used in this case. The *active_best_quality* is calculated as the average of the *active_best_quality* of the previous layer frame + 1 and the *active_worst_quality*.
+  * Base layer pictures: The idea for base layer pictures is similar to that described above for intra pictures, except that the qstep_ratio weight is different.
+  * Non-base-layer pictures: The tpl data is not used in this case. The active_best_quality is calculated as the average of the active_best_quality of the previous layer frame + 1 and the active_worst_quality.
 
 #### Identifying the Best Qindex
 
@@ -408,12 +393,12 @@ decides to re-encode the frame with a new qindex. In general, re-encoding can
 be very costly, however based on the flexible design of the SVT encoder, only
 the Mode Decision part is performed again and there is no need to redo other
 encoder pipeline tasks such as motion estimation, entropy coding or in-loop
-filtering. The flowchart in Figure 6 shows the high-level design of the
+filtering. The flowchart in Figure 4 shows the high-level design of the
 re-encode decision mechanism.
 
-![rc_figure6](./img/rc_figure6.PNG)
+![rc_figure4](./img/rc_figure4.PNG)
 
-###### Figure 6. Re-encode flowchart.
+###### Figure 4. Re-encode flowchart.
 
 ### Post Encode RC Update
 
@@ -478,15 +463,15 @@ A high-level description of the steps involved in the CBR mode in SVT-AV1 is as 
 The CBR rate control makes use of a virtual buffer and tries to maintain the
 buffer fullness close to a desired optimal fullness level. This goal is
 achieved by adjusting the encoded frame size through the quantization parameter
-qindex. A diagram of a virtual buffer is shown in the Figure 7. The input to
+qindex. A diagram of a virtual buffer is shown in the Figure 5. The input to
 the frame buffer is the desired frame size corresponding to the target bitrate.
 The buffer content is incremented by the target frame size every time a new
 frame is to be processed. The output is the actual encoded frame size, and is
 removed from the buffer content at the same frequency the contents of the
 virtual buffer are updated by the target frame size.
 
-![rc_figure7](./img/rc_figure7.PNG)
-###### Figure 7. CBR virtual buffer diagram.
+![rc_figure5](./img/rc_figure5.PNG)
+###### Figure 5. CBR virtual buffer diagram.
 
 The virtual buffer parameters are initialized once before invoking the CBR rate control for the first frame as follows:
 
@@ -677,6 +662,22 @@ frame. Knowing the maximum bit rate and the size of previously encoded
 pictures, the algorithm adjusts the qindex of the future frame to prevent bit
 rate violation. For more details of the algorithm see
 ```capped_crf_reencode()``` and ```crf_assign_max_rate```.
+
+## Appendix D: GoP Constrained RC
+
+In some video coding applications, it is desired to encode each segment of the video
+at a fixed bit rate and independent of the other parts. These segments are usually
+defined using a Key Frame (KF). The frames between two Key Frames, including the
+first key frame, form a Group of Picture (GoP). Each GoP can be encoded independent
+of other GoPs. In some applications, each GoP is coded at a fixed target rate to be
+used in the streaming ladder. In order to support these applications in SVT-AV1 encoder,
+the GoP constrained mode should be used.
+
+In this mode, each GoP has its independent internal rate control status and extra or
+deficit bits of each GoP are not shared with other GoPs. The overshoot and undershoot
+are set to 0% and the internal rate control algorithm is targeted for more constrained
+rate matching. To enable this mode --gop-constraint-rc should be set to 1. This feature
+is currently supported with VBR mode when GoP size is 120 frames or more.
 
 ## Notes
 
