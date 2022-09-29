@@ -107,6 +107,7 @@ extern "C" {
 
 #define FIX_MDS1_COUNT          1 // Fix mds1 count
 #define FIX_CRA_R2R             1 // Fix r2r when using open-gop configuration caused by not initializing the cra_flag under pcs_ptr
+#define FIX_SUPERRES_MEM_LEAK   1 // Fix memory leak when superres is used
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

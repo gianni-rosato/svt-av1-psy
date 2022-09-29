@@ -2139,7 +2139,8 @@ void md_stage_0(
 
 #if FIX_MDS1_COUNT
     //if pruning happened, update MDS1 count accordingly to not process invalid candidates in subsequent MD stages
-    context_ptr->md_stage_1_count[context_ptr->target_class] = MIN(context_ptr->md_stage_1_count[context_ptr->target_class], tot_processed_cand);
+    context_ptr->md_stage_1_count[context_ptr->target_class] = MIN(
+        context_ptr->md_stage_1_count[context_ptr->target_class], tot_processed_cand);
 #endif
 
     // Set the cost of the scratch canidate to max to get discarded @ the sorting phase

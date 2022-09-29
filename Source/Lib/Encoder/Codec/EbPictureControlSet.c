@@ -208,7 +208,11 @@ void picture_control_set_dctor(EbPtr p) {
         EB_DELETE_PTR_ARRAY(obj->md_ref_frame_type_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_interpolation_type_neighbor_array[depth], tile_cnt);
     }
+#if FIX_SUPERRES_MEM_LEAK
+    EB_DELETE_PTR_ARRAY(obj->sb_ptr_array, obj->sb_total_count_unscaled);
+#else
     EB_DELETE_PTR_ARRAY(obj->sb_ptr_array, obj->b64_total_count);
+#endif
     EB_FREE_ARRAY(obj->sb_intra);
     EB_FREE_ARRAY(obj->sb_skip);
     EB_FREE_ARRAY(obj->sb_64x64_mvp);
@@ -504,7 +508,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     // SB Array
     object_ptr->b64_total_count = picture_sb_width * picture_sb_height;
+#if !FIX_SUPERRES_MEM_LEAK
     EB_ALLOC_PTR_ARRAY(object_ptr->sb_ptr_array, object_ptr->b64_total_count);
+#endif
     EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_64x64_mvp, object_ptr->b64_total_count);
@@ -524,6 +530,10 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     const uint16_t all_sb       = picture_sb_w * picture_sb_h;
 
     object_ptr->sb_total_count = all_sb;
+#if FIX_SUPERRES_MEM_LEAK
+    object_ptr->sb_total_count_unscaled = all_sb;
+    EB_ALLOC_PTR_ARRAY(object_ptr->sb_ptr_array, object_ptr->sb_total_count_unscaled);
+#endif
 
     EB_MALLOC_ARRAY(object_ptr->sb_count_nz_coeffs, object_ptr->sb_total_count);
 

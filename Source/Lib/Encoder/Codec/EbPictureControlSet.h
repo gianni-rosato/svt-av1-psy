@@ -454,6 +454,10 @@ typedef struct PictureControlSet {
     uint16_t tile_row_count;
     uint16_t tile_column_count;
     uint16_t sb_total_count;
+#if FIX_SUPERRES_MEM_LEAK
+    uint16_t
+        sb_total_count_unscaled; // Total SB count of unscaled picture (used for memory alloc/dealloc when superres is used)
+#endif
     // pointer to a scratch buffer used by self-guided restoration
     int32_t *rst_tmpbuf;
 
