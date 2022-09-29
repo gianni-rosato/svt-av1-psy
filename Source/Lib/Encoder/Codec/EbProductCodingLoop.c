@@ -1986,6 +1986,11 @@ void md_stage_0(
     uint64_t       best_reg_intra_cost                = MAX_CU_COST; // Derived at the 1st itr
     PredictionMode best_reg_intra_mode                = INTRA_INVALID; // Derived at the 1st itr
     uint64_t       regular_intra_cost[PAETH_PRED + 1] = {MAX_CU_COST};
+
+#if FIX_MDS1_COUNT
+    uint32_t tot_processed_cand = 0;
+#endif
+
     for (uint8_t itr = 0; itr < tot_itr; itr++) {
         for (fast_loop_cand_index = fast_candidate_end_index;
              fast_loop_cand_index >= fast_candidate_start_index;
@@ -2072,6 +2077,11 @@ void md_stage_0(
                                blk_ptr,
                                blk_origin_index,
                                blk_chroma_origin_index);
+
+#if FIX_MDS1_COUNT
+                tot_processed_cand++;
+#endif
+
                 if (scs_ptr->vq_ctrls.sharpness_ctrls.unipred_bias &&
                     pcs_ptr->parent_pcs_ptr->is_noise_level &&
                     is_inter_singleref_mode(candidate_buffer->candidate_ptr->pred_mode)) {
@@ -2126,6 +2136,11 @@ void md_stage_0(
         }
 #endif
     }
+
+#if FIX_MDS1_COUNT
+    //if pruning happened, update MDS1 count accordingly to not process invalid candidates in subsequent MD stages
+    context_ptr->md_stage_1_count[context_ptr->target_class] = MIN(context_ptr->md_stage_1_count[context_ptr->target_class], tot_processed_cand);
+#endif
 
     // Set the cost of the scratch canidate to max to get discarded @ the sorting phase
     *(candidate_buffer_ptr_array_base[highest_cost_index]->fast_cost_ptr) =
@@ -10665,9 +10680,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                     ? buffer_start_idx
                     : buffer_start_idx + 1;
             } else {
+#if !FIX_MDS1_COUNT
                 memset(context_ptr->cand_buff_indices[cand_class_it],
                        0xFF,
                        context_ptr->md_stage_3_total_count * sizeof(uint32_t));
+#endif
                 sort_fast_cost_based_candidates(
                     context_ptr,
                     buffer_start_idx,

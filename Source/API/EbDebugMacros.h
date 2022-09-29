@@ -105,6 +105,8 @@ extern "C" {
 
 #define OPT_COST_COEFFS_TXB     1 // Use coding trick to optimize cost calculation; branch misprediction reduction from ~30% to ~10%
 
+#define FIX_MDS1_COUNT          1 // Fix mds1 count
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
