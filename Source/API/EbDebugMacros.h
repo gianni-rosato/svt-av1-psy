@@ -110,6 +110,8 @@ extern "C" {
 #define FIX_SUPERRES_MEM_LEAK   1 // Fix memory leak when superres is used
 #define OPT_SPEEDUP_M3_M4       1 // Tune M3 and M4 for faster speed
 
+#define OPT_COST_COEFFS_TXB_V2  1 // Separate cost calculation when eob==1 and some loop unrolling
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
