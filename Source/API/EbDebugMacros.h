@@ -111,6 +111,7 @@ extern "C" {
 #define OPT_SPEEDUP_M3_M4       1 // Tune M3 and M4 for faster speed
 
 #define OPT_COST_COEFFS_TXB_V2  1 // Separate cost calculation when eob==1 and some loop unrolling
+#define OPT_ADDRESS_CALC        1 // Calculate addres offset more efficient in avx2 kernels
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

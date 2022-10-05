@@ -22,10 +22,35 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
     __m256i zero    = _mm256_set1_epi16(0);
     __m256i dup_255 = _mm256_set1_epi16(255);
     col_error       = zero;
+#if OPT_ADDRESS_CALC
+    const uint32_t leftover = p_width & 15;
+#endif
 
     for (i = 0; i < (p_height / 4); i++) {
         row_error = _mm256_set1_epi16(0);
+#if OPT_ADDRESS_CALC
+        const uint8_t *ref_ptr = ref + i * 4 * ref_stride;
+        const uint8_t *dst_ptr = dst + i * 4 * dst_stride;
+#endif
         for (j = 0; j < (p_width / 16); j++) {
+#if OPT_ADDRESS_CALC
+            __m256i ref_1_16 = _mm256_cvtepu8_epi16(
+                _mm_loadu_si128((__m128i *)(ref_ptr + 0 * ref_stride)));
+            __m256i dst_1_16 = _mm256_cvtepu8_epi16(
+                _mm_loadu_si128((__m128i *)(dst_ptr + 0 * dst_stride)));
+            __m256i ref_2_16 = _mm256_cvtepu8_epi16(
+                _mm_loadu_si128((__m128i *)(ref_ptr + 1 * ref_stride)));
+            __m256i dst_2_16 = _mm256_cvtepu8_epi16(
+                _mm_loadu_si128((__m128i *)(dst_ptr + 1 * dst_stride)));
+            __m256i ref_3_16 = _mm256_cvtepu8_epi16(
+                _mm_loadu_si128((__m128i *)(ref_ptr + 2 * ref_stride)));
+            __m256i dst_3_16 = _mm256_cvtepu8_epi16(
+                _mm_loadu_si128((__m128i *)(dst_ptr + 2 * dst_stride)));
+            __m256i ref_4_16 = _mm256_cvtepu8_epi16(
+                _mm_loadu_si128((__m128i *)(ref_ptr + 3 * ref_stride)));
+            __m256i dst_4_16 = _mm256_cvtepu8_epi16(
+                _mm_loadu_si128((__m128i *)(dst_ptr + 3 * dst_stride)));
+#else
             __m256i ref_1_16 = _mm256_cvtepu8_epi16(
                 _mm_loadu_si128((__m128i *)(ref + (j * 16) + (((i * 4) + 0) * ref_stride))));
             __m256i dst_1_16 = _mm256_cvtepu8_epi16(
@@ -42,6 +67,7 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
                 _mm_loadu_si128((__m128i *)(ref + (j * 16) + (((i * 4) + 3) * ref_stride))));
             __m256i dst_4_16 = _mm256_cvtepu8_epi16(
                 _mm_loadu_si128((__m128i *)(dst + (j * 16) + (((i * 4) + 3) * dst_stride))));
+#endif
 
             __m256i diff_1 = _mm256_add_epi16(_mm256_sub_epi16(dst_1_16, ref_1_16), dup_255);
             __m256i diff_2 = _mm256_add_epi16(_mm256_sub_epi16(dst_2_16, ref_2_16), dup_255);
@@ -76,6 +102,10 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
 
             __m256i error_1_2_3_4 = _mm256_add_epi32(error_1_2, error_3_4);
             row_error             = _mm256_add_epi32(row_error, error_1_2_3_4);
+#if OPT_ADDRESS_CALC
+            ref_ptr += 16;
+            dst_ptr += 16;
+#endif
         }
         __m256i col_error_lo   = _mm256_unpacklo_epi32(row_error, zero);
         __m256i col_error_hi   = _mm256_unpackhi_epi32(row_error, zero);
@@ -84,9 +114,15 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
         // Error summation for remaining width, which is not multiple of 16
         if (p_width & 0xf) {
             for (int k = 0; k < 4; ++k) {
+#if OPT_ADDRESS_CALC
+                for (uint32_t cnt = 0; cnt < leftover; ++cnt)
+                    sum_error += (int64_t)error_measure(dst_ptr[cnt + k * dst_stride] -
+                                                        ref_ptr[cnt + k * ref_stride]);
+#else
                 for (int l = j * 16; l < p_width; ++l)
                     sum_error += (int64_t)error_measure(dst[l + ((i * 4) + k) * dst_stride] -
                                                         ref[l + ((i * 4) + k) * ref_stride]);
+#endif
             }
         }
     }
