@@ -1529,6 +1529,28 @@ int32_t av1_quantize_inv_quantize_light(PictureControlSet *pcs_ptr, int32_t *coe
     *count_non_zero_coeffs = *eob;
     return 0;
 }
+
+#if OPT_QUANT_INV_QUANT
+int32_t svt_av1_compute_cul_level_c(const int16_t *const scan, const int32_t *const quant_coeff,
+                                    uint16_t *eob) {
+    int32_t cul_level = 0;
+    for (int32_t c = 0; c < *eob; ++c) {
+        const int16_t pos   = scan[c];
+        const int32_t v     = quant_coeff[pos];
+        int32_t       level = ABS(v);
+        cul_level += level;
+        // Early exit the loop if cul_level reaches COEFF_CONTEXT_MASK
+        if (cul_level >= COEFF_CONTEXT_MASK)
+            break;
+    }
+
+    cul_level = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
+    // DC value
+    set_dc_sign(&cul_level, quant_coeff[0]);
+    return cul_level;
+}
+#endif
+
 int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContext *md_context,
                                   int32_t *coeff, const uint32_t coeff_stride, int32_t *quant_coeff,
                                   int32_t *recon_coeff, uint32_t qindex,
@@ -1791,7 +1813,11 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     *count_non_zero_coeffs = *eob;
     if (!md_context->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
         return 0;
-    // Derive cul_level
+
+        // Derive cul_level
+#if OPT_QUANT_INV_QUANT
+    return svt_av1_compute_cul_level(scan_order->scan, quant_coeff, eob);
+#else
     int32_t              cul_level = 0;
     const int16_t *const scan      = scan_order->scan;
     for (int32_t c = 0; c < *eob; ++c) {
@@ -1808,6 +1834,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     // DC value
     set_dc_sign(&cul_level, quant_coeff[0]);
     return cul_level;
+#endif
 }
 
 void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,

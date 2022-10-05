@@ -18,6 +18,9 @@
 #include "EbMemory_AVX2.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
+#if OPT_QUANT_INV_QUANT
+#include "EbUtility.h"
+#endif
 
 static INLINE void sr_y_round_store_32_avx2(const __m256i res[2], uint8_t *const dst) {
     __m256i r[2];
@@ -2059,3 +2062,45 @@ void svt_av1_wedge_compute_delta_squares_avx2(int16_t *d, const int16_t *a, cons
         N -= 64;
     } while (N);
 }
+#if OPT_QUANT_INV_QUANT
+static INLINE int32_t sum_to_int32(__m256i sum_256) {
+    __m128i sum_128 = _mm_add_epi32(_mm256_castsi256_si128(sum_256),
+                                    _mm256_extractf128_si256(sum_256, 1));
+    sum_128         = _mm_hadd_epi32(sum_128, sum_128);
+    sum_128         = _mm_hadd_epi32(sum_128, sum_128);
+    return _mm_cvtsi128_si32(sum_128);
+}
+
+int32_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t *const quant_coeff,
+                                       uint16_t *eob) {
+    if (*eob == 1) {
+        if (quant_coeff[0] > 0)
+            return (AOMMIN(COEFF_CONTEXT_MASK, quant_coeff[0]) + (2 << COEFF_CONTEXT_BITS));
+        if (quant_coeff[0] < 0) {
+            return (AOMMIN(COEFF_CONTEXT_MASK, ABS(quant_coeff[0])) | (1 << COEFF_CONTEXT_BITS));
+        }
+        return 0;
+    }
+    __m128i scan_128;
+    __m256i scan_256;
+    __m256i quant_coeff_256;
+    __m256i sum_256 = _mm256_setzero_si256();
+
+    for (int32_t c = 0; c < *eob; c += 8) {
+        scan_128        = _mm_loadu_si128((const __m128i *)(scan + c));
+        scan_256        = _mm256_cvtepi16_epi32(scan_128);
+        quant_coeff_256 = _mm256_i32gather_epi32(quant_coeff, scan_256, 4);
+        quant_coeff_256 = _mm256_abs_epi32(quant_coeff_256);
+        sum_256         = _mm256_add_epi32(sum_256, quant_coeff_256);
+    }
+
+    int32_t cul_level = sum_to_int32(sum_256);
+    cul_level         = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
+    // DC value, calculation from set_dc_sign()
+    if (quant_coeff[0] < 0)
+        return (cul_level | (1 << COEFF_CONTEXT_BITS));
+    if (quant_coeff[0] > 0)
+        return (cul_level + (2 << COEFF_CONTEXT_BITS));
+    return cul_level;
+}
+#endif

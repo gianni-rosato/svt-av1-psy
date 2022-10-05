@@ -112,6 +112,7 @@ extern "C" {
 
 #define OPT_COST_COEFFS_TXB_V2  1 // Separate cost calculation when eob==1 and some loop unrolling
 #define OPT_ADDRESS_CALC        1 // Calculate addres offset more efficient in avx2 kernels
+#define OPT_QUANT_INV_QUANT     1 // Optimize av1_quantize_inv_quantize()
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

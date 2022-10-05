@@ -976,5 +976,38 @@ INSTANTIATE_TEST_CASE_P(AVX2, QuantizeQmTest,
                         ::testing::ValuesIn(kQmParamArrayAvx2));
 INSTANTIATE_TEST_CASE_P(AVX2, QuantizeQmHbdTest,
                         ::testing::ValuesIn(kQmParamHbdArrayAvx2));
+
+#if OPT_QUANT_INV_QUANT
+TEST(ComputeCulLevel, avx2) {
+    SVTRandom rnd(0, (1 << 10) - 1);
+    const int max_size = 100 * 100;
+    // scan[] is a set of indexes for quant_coeff[]
+    int16_t scan[max_size];
+    int32_t quant_coeff[max_size];
+    uint16_t eob_ref, eob_mod;
+
+    scan[0] = 0;
+
+    for (int test = 0; test < 1000; test++) {
+        // Every 50 iteration randomize buffers
+        if (!(test % 50))
+            for (uint32_t i = 0; i < max_size; i++) {
+                quant_coeff[i] = rnd.random();
+                if (i != 0)
+                    scan[i] = rnd.random() % max_size;
+            }
+
+        eob_ref = eob_mod = rnd.random() % max_size;
+
+        int32_t ref = svt_av1_compute_cul_level_c(scan, quant_coeff, &eob_ref);
+        int32_t mod =
+            svt_av1_compute_cul_level_avx2(scan, quant_coeff, &eob_mod);
+
+        EXPECT_TRUE(ref == mod);
+        EXPECT_TRUE(eob_ref == eob_mod);
+    }
+}
+#endif /*OPT_QUANT_INV_QUANT*/
+
 #endif  // HAS_AVX2
 }  // namespace
