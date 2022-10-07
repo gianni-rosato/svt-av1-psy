@@ -632,7 +632,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     pcs_ptr->cand_reduction_level = 0;
     if (is_islice)
         pcs_ptr->cand_reduction_level = 0;
+#if OPT_SPEEDUP_M3_M4
+    else if (enc_mode <= ENC_M3)
+#else
     else if (enc_mode <= ENC_M4)
+#endif
         pcs_ptr->cand_reduction_level = 0;
     else if (enc_mode <= ENC_M5)
         pcs_ptr->cand_reduction_level = 1;
@@ -1167,7 +1171,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txs_level = 1;
     else if (enc_mode <= ENC_MR)
         pcs_ptr->txs_level = 2;
+#if OPT_SPEEDUP_M3_M4
+    else if (enc_mode <= ENC_M3)
+#else
     else if (enc_mode <= ENC_M4)
+#endif
         pcs_ptr->txs_level = is_base ? 2 : 3;
     else if (enc_mode <= ENC_M5)
         pcs_ptr->txs_level = is_base ? 2 : 4;

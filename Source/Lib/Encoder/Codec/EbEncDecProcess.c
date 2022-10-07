@@ -4439,9 +4439,14 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
         if (hierarchical_levels <= 3)
             nic_level = 10;
         else
+#if OPT_SPEEDUP_M3_M4
+            nic_level = 11;
+    }
+#else
             nic_level = 9;
     } else if (enc_mode <= ENC_M4)
         nic_level = 11;
+#endif
     else if (enc_mode <= ENC_M5)
         nic_level = is_base ? 12 : 13;
 #else

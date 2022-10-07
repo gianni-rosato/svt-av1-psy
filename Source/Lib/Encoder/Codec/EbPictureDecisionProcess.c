@@ -2118,7 +2118,11 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
             gm_level = 2;
         else if (pcs_ptr->enc_mode <= ENC_M2)
             gm_level = 3;
+#if OPT_SPEEDUP_M3_M4
+        else if (enc_mode <= ENC_M3)
+#else
         else if (enc_mode <= ENC_M4)
+#endif
             gm_level = is_ref ? 4 : 0;
         else if (pcs_ptr->enc_mode <= ENC_M5)
             gm_level = is_ref ? 5 : 0;
