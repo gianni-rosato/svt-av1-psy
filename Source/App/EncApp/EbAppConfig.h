@@ -193,12 +193,12 @@ typedef struct EbConfig {
     FILE      *stat_file;
     FILE      *qp_file;
     /* two pass */
-    const char   *stats;
-    FILE         *input_stat_file;
-    FILE         *output_stat_file;
-    char         *input_pred_struct_filename;
-    Bool          y4m_input;
-    char          y4m_buf[9];
+    const char *stats;
+    FILE       *input_stat_file;
+    FILE       *output_stat_file;
+    char       *input_pred_struct_filename;
+    Bool        y4m_input;
+    char        y4m_buf[9];
 
     uint8_t progress; // 0 = no progress output, 1 = normal, 2 = aomenc style verbose progress
     /****************************************

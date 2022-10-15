@@ -183,11 +183,11 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     EB_MALLOC_2D(encode_context_ptr->rc_param_queue, (int32_t)PARALLEL_GOP_MAX_NUMBER, 1);
 
     for (int interval_index = 0; interval_index < PARALLEL_GOP_MAX_NUMBER; interval_index++) {
-        encode_context_ptr->rc_param_queue[interval_index]->first_poc              = 0;
-        encode_context_ptr->rc_param_queue[interval_index]->processed_frame_number = 0;
-        encode_context_ptr->rc_param_queue[interval_index]->size                   = -1;
-        encode_context_ptr->rc_param_queue[interval_index]->end_of_seq_seen        = 0;
-        encode_context_ptr->rc_param_queue[interval_index]->last_i_qp              = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->first_poc                = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->processed_frame_number   = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->size                     = -1;
+        encode_context_ptr->rc_param_queue[interval_index]->end_of_seq_seen          = 0;
+        encode_context_ptr->rc_param_queue[interval_index]->last_i_qp                = 0;
         encode_context_ptr->rc_param_queue[interval_index]->vbr_bits_off_target      = 0;
         encode_context_ptr->rc_param_queue[interval_index]->vbr_bits_off_target_fast = 0;
         encode_context_ptr->rc_param_queue[interval_index]->rolling_target_bits =

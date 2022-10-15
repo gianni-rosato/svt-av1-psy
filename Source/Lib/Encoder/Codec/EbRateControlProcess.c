@@ -997,7 +997,7 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
         q = active_worst_quality;
     }
 #else
-    int active_best_quality = 0;
+    int active_best_quality  = 0;
     int active_worst_quality = qindex;
 
     double q_val = svt_av1_convert_qindex_to_q(qindex, bit_depth);
@@ -1028,7 +1028,7 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
     const int32_t delta_qindex = svt_av1_compute_qdelta(q_val, q_val_target, bit_depth);
 
     active_best_quality = (int32_t)(qindex + delta_qindex);
-    q = active_best_quality;
+    q                   = active_best_quality;
     clamp(q, active_best_quality, active_worst_quality);
 #endif
 
@@ -1171,7 +1171,7 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
     }
     assert(base_block_count > 0);
 
-    uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
+    uint8_t   bit_depth   = pcs_ptr->hbd_mode_decision ? 10 : 8;
     const int orig_rdmult = svt_aom_compute_rd_mult(
         pcs_ptr,
         ppcs_ptr->frm_hdr.quantization_params.base_q_idx,

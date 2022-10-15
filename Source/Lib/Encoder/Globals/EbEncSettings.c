@@ -997,7 +997,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->under_shoot_pct          = 25;
     config_ptr->over_shoot_pct           = 25;
     config_ptr->mbr_over_shoot_pct       = 50;
-    config_ptr->gop_constraint_rc = 0;
+    config_ptr->gop_constraint_rc        = 0;
     config_ptr->maximum_buffer_size_ms   = 1000; // default settings for CBR
     config_ptr->starting_buffer_level_ms = 600; // default settings for CBR
     config_ptr->optimal_buffer_level_ms  = 600; // default settings for CBR

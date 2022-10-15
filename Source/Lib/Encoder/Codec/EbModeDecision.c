@@ -1831,7 +1831,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                     cand_array[cand_idx].ref_frame_type    = frame_type;
                     assert(list_idx == 0 || list_idx == 1);
                     cand_array[cand_idx].mv[list_idx].as_int = to_inj_mv.as_int;
-                    uint8_t local_warp_valid = 0;
+                    uint8_t local_warp_valid                 = 0;
                     if (inter_type == 0) {
                         cand_array[cand_idx].is_interintra_used = 0;
                         cand_array[cand_idx].motion_mode        = SIMPLE_TRANSLATION;
@@ -1939,7 +1939,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                         cand_array[cand_idx].ref_frame_type    = frame_type;
                         assert(list_idx == 0 || list_idx == 1);
                         cand_array[cand_idx].mv[list_idx].as_int = to_inj_mv.as_int;
-                        uint8_t local_warp_valid = 0;
+                        uint8_t local_warp_valid                 = 0;
                         if (inter_type == 0) {
                             cand_array[cand_idx].is_interintra_used = 0;
                             cand_array[cand_idx].motion_mode        = SIMPLE_TRANSLATION;
@@ -2010,7 +2010,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                         skip_mvp_compound_on_ref_types(context_ptr, rf)
                     ? MD_COMP_DIST
                     : context_ptr->inter_comp_ctrls.tot_comp_types;
-                int16_t to_inject_mv_x_l0 =
+                int16_t      to_inject_mv_x_l0 =
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .this_mv.as_mv.col;
@@ -2100,7 +2100,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                         skip_mvp_compound_on_ref_types(context_ptr, rf)
                     ? MD_COMP_DIST
                     : context_ptr->inter_comp_ctrls.tot_comp_types;
-                max_drl_index = get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
+                max_drl_index  = get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
                 uint8_t cap_max_drl_index = 0;
                 if (context_ptr->cand_reduction_ctrls.near_count_ctrls.enabled)
                     cap_max_drl_index = MIN(
@@ -2958,7 +2958,7 @@ static uint8_t obmc_motion_refinement(PictureControlSet          *pcs,
                          candidate->mv[ref_list_idx],
                          0,
                          pcs->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)) {
-        int umv0_tile = derive_rmv_setting(pcs->scs_ptr, pcs->parent_pcs_ptr);
+        int umv0_tile   = derive_rmv_setting(pcs->scs_ptr, pcs->parent_pcs_ptr);
         int inside_tile = 1;
         if (umv0_tile) {
             inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -3992,7 +3992,7 @@ void inject_pme_candidates(
                                           pcs_ptr->parent_pcs_ptr);
     uint32_t               mi_row          = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t               mi_col          = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
-    MvUnit mv_unit;
+    MvUnit                 mv_unit;
     for (uint32_t ref_it = 0; ref_it < pcs_ptr->parent_pcs_ptr->tot_ref_frame_types; ++ref_it) {
         MvReferenceFrame ref_pair = pcs_ptr->parent_pcs_ptr->ref_frame_type_arr[ref_it];
         MvReferenceFrame rf[2];

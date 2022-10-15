@@ -2664,8 +2664,8 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
 
     // CU Loop
     uint32_t final_blk_itr = 0;
-    sb_ptr->final_blk_cnt = 0;
-    uint32_t blk_it = 0;
+    sb_ptr->final_blk_cnt  = 0;
+    uint32_t blk_it        = 0;
     while (blk_it < scs->max_block_cnt) {
         sb_ptr->cu_partition_array[blk_it] = md_ctx->md_blk_arr_nsq[blk_it].part;
 

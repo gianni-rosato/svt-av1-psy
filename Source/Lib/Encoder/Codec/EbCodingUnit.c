@@ -75,7 +75,7 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     larget_coding_unit_ptr->origin_y = sb_origin_y;
 
     larget_coding_unit_ptr->index = sb_index;
-    bool disallow_nsq = true;
+    bool disallow_nsq             = true;
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
         disallow_nsq = MIN(disallow_nsq, svt_aom_get_disallow_nsq(enc_mode, is_islice));
     bool disallow_4x4 = true;

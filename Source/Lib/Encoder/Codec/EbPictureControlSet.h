@@ -545,7 +545,7 @@ typedef struct TplControls {
     uint8_t              use_pred_sad_in_intra_search;
     uint8_t              use_pred_sad_in_inter_search;
     int8_t               reduced_tpl_group;
-    double r0_adjust_factor;
+    double               r0_adjust_factor;
     uint8_t
         dispenser_search_level; // 0: use 16x16 block(s), 1: use 32x32 block(s), 2: use 64x64 block(s)  (for incomplete 64x64, dispenser_search_level is set to 0)
     // it is recommended to use subsample_tx=2, when dispenser_search_level is set to 1

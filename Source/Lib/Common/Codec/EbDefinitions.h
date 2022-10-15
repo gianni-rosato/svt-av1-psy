@@ -164,7 +164,7 @@ typedef struct TfControls {
         subpel_early_exit; // Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not
 } TfControls;
 typedef enum GM_LEVEL {
-    GM_FULL = 0, // Exhaustive search mode.
+    GM_FULL   = 0, // Exhaustive search mode.
     GM_DOWN   = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
     GM_DOWN16 = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
     GM_ADAPT_0 =

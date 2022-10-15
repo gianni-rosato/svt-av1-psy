@@ -19,13 +19,13 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
     int64_t sum_error = 0;
     int     i, j;
     __m256i row_error, col_error;
-    __m256i zero    = _mm256_set1_epi16(0);
-    __m256i dup_255 = _mm256_set1_epi16(255);
-    col_error       = zero;
+    __m256i zero            = _mm256_set1_epi16(0);
+    __m256i dup_255         = _mm256_set1_epi16(255);
+    col_error               = zero;
     const uint32_t leftover = p_width & 15;
 
     for (i = 0; i < (p_height / 4); i++) {
-        row_error = _mm256_set1_epi16(0);
+        row_error              = _mm256_set1_epi16(0);
         const uint8_t *ref_ptr = ref + i * 4 * ref_stride;
         const uint8_t *dst_ptr = dst + i * 4 * dst_stride;
         for (j = 0; j < (p_width / 16); j++) {

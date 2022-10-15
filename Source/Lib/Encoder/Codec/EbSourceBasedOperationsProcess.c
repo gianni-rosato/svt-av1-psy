@@ -39,10 +39,10 @@
  **************************************/
 
 typedef struct SourceBasedOperationsContext {
-    EbDctor dctor;
-    EbFifo *initial_rate_control_results_input_fifo_ptr;
-    EbFifo *picture_demux_results_output_fifo_ptr;
-    EbFifo *sbo_output_fifo_ptr;
+    EbDctor  dctor;
+    EbFifo  *initial_rate_control_results_input_fifo_ptr;
+    EbFifo  *picture_demux_results_output_fifo_ptr;
+    EbFifo  *sbo_output_fifo_ptr;
     uint8_t *y_mean_ptr;
     uint8_t *cr_mean_ptr;
     uint8_t *cb_mean_ptr;

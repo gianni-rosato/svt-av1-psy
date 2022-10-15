@@ -930,7 +930,7 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
                     ? RC_FACTOR_MIN_GOP_CONST
                     : (scs->static_config.pass == ENC_SINGLE_PASS) ? RC_FACTOR_MIN_1P_VBR
                                                                    : RC_FACTOR_MIN;
-                rc_factor = AOMMAX(rc_factor_min, (double)(100 - rate_error) / 100.0);
+                rc_factor            = AOMMAX(rc_factor_min, (double)(100 - rate_error) / 100.0);
             } else {
                 rc_factor = AOMMIN(RC_FACTOR_MAX, (double)(100 - rate_error) / 100.0);
             }

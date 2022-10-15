@@ -420,8 +420,8 @@ typedef struct SuperBlock {
     unsigned       origin_x : 32;
     unsigned       origin_y : 32;
     uint8_t        qindex;
-    TileInfo tile_info;
-    uint16_t final_blk_cnt; // number of block(s) posted from EncDec to EC
+    TileInfo       tile_info;
+    uint16_t       final_blk_cnt; // number of block(s) posted from EncDec to EC
 } SuperBlock;
 
 extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_size,

@@ -90,8 +90,8 @@ extern EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
                                         int tasks_index);
 
 extern void *mode_decision_kernel(void *input_ptr);
-void svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx,
-                                                 uint8_t              dist_based_ref_pruning_level);
+void         svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx,
+                                                         uint8_t              dist_based_ref_pruning_level);
 #ifdef __cplusplus
 }
 #endif

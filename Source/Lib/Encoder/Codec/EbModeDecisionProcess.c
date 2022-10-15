@@ -239,7 +239,6 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EB_MALLOC_ARRAY(context_ptr->palette_size_array_0, MAX_PAL_CAND);
     EB_MALLOC_ARRAY(context_ptr->palette_size_array_1, MAX_PAL_CAND);
 
-
     // Cost Arrays
     EB_MALLOC_ARRAY(context_ptr->fast_cost_array, context_ptr->max_nics_uv);
     EB_MALLOC_ARRAY(context_ptr->full_cost_array, context_ptr->max_nics_uv);

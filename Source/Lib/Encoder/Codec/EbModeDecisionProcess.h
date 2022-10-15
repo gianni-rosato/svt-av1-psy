@@ -583,7 +583,7 @@ typedef struct CandReductionCtrls {
     UseNeighbouringModeCtrls use_neighbouring_mode_ctrls;
     CandEliminationCtlrs     cand_elimination_ctrls;
     uint8_t                  reduce_unipred_candidates;
-    uint8_t mds0_reduce_intra;
+    uint8_t                  mds0_reduce_intra;
 } CandReductionCtrls;
 typedef struct Skip4x4DepthCtrls {
     uint8_t enabled;
@@ -610,8 +610,8 @@ typedef struct ModeDecisionContext {
     BlkStruct                    *md_blk_arr_nsq;
     uint8_t                      *avail_blk_flag;
     uint8_t                      *tested_blk_flag; //tells whether this CU is tested in MD.
-    uint8_t *do_not_process_blk;
-    MdcSbData *mdc_sb_array;
+    uint8_t                      *do_not_process_blk;
+    MdcSbData                    *mdc_sb_array;
 
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
     NeighborArrayUnit *mode_type_neighbor_array;
@@ -632,11 +632,11 @@ typedef struct ModeDecisionContext {
         tx_search_luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit *
         cr_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit                *
+    NeighborArrayUnit                   *
         cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit *txfm_context_array;
-    NeighborArrayUnit *leaf_partition_neighbor_array;
-    NeighborArrayUnit *skip_coeff_neighbor_array;
+    NeighborArrayUnit    *txfm_context_array;
+    NeighborArrayUnit    *leaf_partition_neighbor_array;
+    NeighborArrayUnit    *skip_coeff_neighbor_array;
     struct EncDecContext *enc_dec_context_ptr;
 
     uint64_t *fast_cost_array;
@@ -670,7 +670,7 @@ typedef struct ModeDecisionContext {
     uint8_t          hbd_mode_decision;
     uint8_t          encoder_bit_depth;
     uint8_t          qp_index;
-    uint8_t me_q_index;
+    uint8_t          me_q_index;
     uint64_t         three_quad_energy;
     uint32_t         txb_1d_offset;
     Bool             uv_intra_comp_only;
@@ -799,7 +799,7 @@ typedef struct ModeDecisionContext {
     DepthRemovalCtrls depth_removal_ctrls;
     DepthCtrls        depth_ctrls; // control which depths can be considered in PD1
     DepthRefinementCtrls depth_refinement_ctrls;
-    Skip4x4DepthCtrls skip_4x4_depth_ctrls;
+    Skip4x4DepthCtrls    skip_4x4_depth_ctrls;
     int64_t              parent_to_current_deviation;
     int64_t              child_to_current_deviation;
     SubresCtrls          subres_ctrls;

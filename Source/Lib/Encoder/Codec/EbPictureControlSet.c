@@ -510,7 +510,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                                              init_data_ptr->sb_size);
     const uint16_t all_sb       = picture_sb_w * picture_sb_h;
 
-    object_ptr->sb_total_count = all_sb;
+    object_ptr->sb_total_count          = all_sb;
     object_ptr->sb_total_count_unscaled = all_sb;
     EB_ALLOC_PTR_ARRAY(object_ptr->sb_ptr_array, object_ptr->sb_total_count_unscaled);
 
@@ -1362,14 +1362,14 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     } else
         return EB_ErrorBadParameter;
     // GOP
-    object_ptr->pred_struct_index       = 0;
-    object_ptr->picture_number          = 0;
-    object_ptr->idr_flag                = FALSE;
-    object_ptr->temporal_layer_index    = 0;
-    object_ptr->total_num_bits          = 0;
-    object_ptr->last_idr_picture        = 0;
-    object_ptr->b64_total_count         = picture_sb_width * picture_sb_height;
-    object_ptr->is_pcs_sb_params        = FALSE;
+    object_ptr->pred_struct_index    = 0;
+    object_ptr->picture_number       = 0;
+    object_ptr->idr_flag             = FALSE;
+    object_ptr->temporal_layer_index = 0;
+    object_ptr->total_num_bits       = 0;
+    object_ptr->last_idr_picture     = 0;
+    object_ptr->b64_total_count      = picture_sb_width * picture_sb_height;
+    object_ptr->is_pcs_sb_params     = FALSE;
 
     object_ptr->data_ll_head_ptr         = (EbLinkedListNode *)NULL;
     object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;

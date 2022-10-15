@@ -1192,9 +1192,8 @@ static uint32_t hadamard_path(ModeDecisionContext *ctx, uint8_t *input, uint32_t
 
             default: assert(0);
             }
-            satd_cost += svt_aom_satd(
-                &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]),
-                tx_size_2d[tx_size]);
+            satd_cost += svt_aom_satd(&(((int32_t *)ctx->tx_coeffs->buffer_y)[0]),
+                                      tx_size_2d[tx_size]);
         }
     }
     return (satd_cost);
@@ -1590,8 +1589,8 @@ void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) 
         inter_comp_ctrls->do_3x3_bi           = 1;
 
         inter_comp_ctrls->skip_mvp_on_ref_info = 0;
-        inter_comp_ctrls->use_rate            = 1;
-        inter_comp_ctrls->pred0_to_pred1_mult = 0;
+        inter_comp_ctrls->use_rate             = 1;
+        inter_comp_ctrls->pred0_to_pred1_mult  = 0;
 
         break;
     case 2:
@@ -1606,8 +1605,8 @@ void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) 
         inter_comp_ctrls->do_3x3_bi           = 0;
 
         inter_comp_ctrls->skip_mvp_on_ref_info = 0;
-        inter_comp_ctrls->use_rate            = 0;
-        inter_comp_ctrls->pred0_to_pred1_mult = 0;
+        inter_comp_ctrls->use_rate             = 0;
+        inter_comp_ctrls->pred0_to_pred1_mult  = 0;
 
         break;
 
@@ -1623,8 +1622,8 @@ void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) 
         inter_comp_ctrls->do_3x3_bi           = 0;
 
         inter_comp_ctrls->skip_mvp_on_ref_info = 0;
-        inter_comp_ctrls->use_rate            = 0;
-        inter_comp_ctrls->pred0_to_pred1_mult = 1;
+        inter_comp_ctrls->use_rate             = 0;
+        inter_comp_ctrls->pred0_to_pred1_mult  = 1;
 
         break;
     case 4:
@@ -1639,8 +1638,8 @@ void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) 
         inter_comp_ctrls->do_3x3_bi           = 0;
 
         inter_comp_ctrls->skip_mvp_on_ref_info = 1;
-        inter_comp_ctrls->use_rate = 0;
-        inter_comp_ctrls->pred0_to_pred1_mult = 4;
+        inter_comp_ctrls->use_rate             = 0;
+        inter_comp_ctrls->pred0_to_pred1_mult  = 4;
 
         break;
     case 5:
@@ -1655,8 +1654,8 @@ void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) 
         inter_comp_ctrls->do_3x3_bi           = 0;
 
         inter_comp_ctrls->skip_mvp_on_ref_info = 1;
-        inter_comp_ctrls->use_rate            = 0;
-        inter_comp_ctrls->pred0_to_pred1_mult = 2;
+        inter_comp_ctrls->use_rate             = 0;
+        inter_comp_ctrls->pred0_to_pred1_mult  = 2;
 
         break;
     default: assert(0); break;
@@ -3565,7 +3564,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
         for (unsigned li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
             for (unsigned ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
                 for (unsigned gi = 0; gi < TOT_INTER_GROUP; gi++) {
-                    uint32_t offset = offset_tab[li][ri];
+                    uint32_t offset     = offset_tab[li][ri];
                     uint32_t pruning_th = (offset == (uint32_t)~0 ||
                                            context_ptr->ref_pruning_ctrls.max_dev_to_best[gi] == 0)
                         ? 0
@@ -5147,7 +5146,7 @@ void perform_tx_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         (context_ptr->blk_geom->origin_y * candidate_buffer->residual_ptr->stride_y);
 
     int32_t *const transf_coeff = &(((int32_t *)context_ptr->tx_coeffs->buffer_y)[0]);
-    int32_t *const recon_coeff = &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_y)[0]);
+    int32_t *const recon_coeff  = &(((int32_t *)candidate_buffer->recon_coeff_ptr->buffer_y)[0]);
 
     EB_TRANS_COEFF_SHAPE pf_shape = context_ptr->pf_ctrls.pf_shape;
 
@@ -5231,10 +5230,9 @@ static INLINE Bool search_dct_dct_only(PictureControlSet *pcs_ptr, ModeDecisionC
     // If previous MD stages have 0 coeffs, use DCT_DCT only
     if (context_ptr->md_stage == MD_STAGE_3 && context_ptr->use_tx_shortcuts_mds3) {
         return 1;
-    }
-    else if (context_ptr->tx_shortcut_ctrls.bypass_tx_when_zcoeff &&
-             context_ptr->md_stage == MD_STAGE_3 && context_ptr->perform_mds1 &&
-             !candidate_buffer->block_has_coeff) {
+    } else if (context_ptr->tx_shortcut_ctrls.bypass_tx_when_zcoeff &&
+               context_ptr->md_stage == MD_STAGE_3 && context_ptr->perform_mds1 &&
+               !candidate_buffer->block_has_coeff) {
         return 1;
     }
 
@@ -5349,14 +5347,14 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             }
         }
     }
-    uint64_t best_cost_tx_search = (uint64_t)~0;
-    int best_satd_tx_search = INT_MAX;
-    const uint16_t satd_early_exit_th = only_dct_dct ? 0
-        : is_inter ? context_ptr->txt_ctrls.satd_early_exit_th_inter
-                   : context_ptr->txt_ctrls
+    uint64_t       best_cost_tx_search = (uint64_t)~0;
+    int            best_satd_tx_search = INT_MAX;
+    const uint16_t satd_early_exit_th  = only_dct_dct ? 0
+         : is_inter ? context_ptr->txt_ctrls.satd_early_exit_th_inter
+                    : context_ptr->txt_ctrls
                          .satd_early_exit_th_intra; // only compute satd when using TXT search
-    int32_t  tx_type;
-    uint16_t txb_origin_x =
+    int32_t        tx_type;
+    uint16_t       txb_origin_x =
         context_ptr->blk_geom->tx_org_x[is_inter][context_ptr->tx_depth][context_ptr->txb_itr];
     uint16_t txb_origin_y =
         context_ptr->blk_geom->tx_org_y[is_inter][context_ptr->tx_depth][context_ptr->txb_itr];
@@ -6457,14 +6455,13 @@ void perform_dct_dct_tx_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
         bheight = txbheight < 64 ? txbheight : 32;
     }
 
-    picture_full_distortion32_bits_single(
-        &(((int32_t *)context_ptr->tx_coeffs->buffer_y)[0]),
-        &(((int32_t *)recon_coeff_ptr->buffer_y)[0]),
-        txbwidth < 64 ? txbwidth : 32,
-        bwidth,
-        bheight,
-        y_full_distortion,
-        candidate_buffer->eob[0][0]);
+    picture_full_distortion32_bits_single(&(((int32_t *)context_ptr->tx_coeffs->buffer_y)[0]),
+                                          &(((int32_t *)recon_coeff_ptr->buffer_y)[0]),
+                                          txbwidth < 64 ? txbwidth : 32,
+                                          bwidth,
+                                          bheight,
+                                          y_full_distortion,
+                                          candidate_buffer->eob[0][0]);
     const int32_t shift                   = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
     y_full_distortion[DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(
         y_full_distortion[DIST_CALC_RESIDUAL] + context_ptr->three_quad_energy, shift);
@@ -9030,64 +9027,64 @@ void calc_scr_to_recon_dist_per_quadrant(ModeDecisionContext         *context_pt
                                          ModeDecisionCandidateBuffer *candidate_buffer,
                                          const uint32_t               blk_origin_index,
                                          const uint32_t               blk_chroma_origin_index) {
-        // if a non-4x4 SQ
-        if ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) &&
-            context_ptr->blk_geom->sq_size > 4) {
-            EbPictureBufferDesc *recon_ptr = candidate_buffer->recon_ptr;
+    // if a non-4x4 SQ
+    if ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) &&
+        context_ptr->blk_geom->sq_size > 4) {
+        EbPictureBufferDesc *recon_ptr = candidate_buffer->recon_ptr;
 
-            EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
-                ? svt_full_distortion_kernel16_bits
-                : svt_spatial_full_distortion_kernel;
+        EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
+            ? svt_full_distortion_kernel16_bits
+            : svt_spatial_full_distortion_kernel;
 
-            uint8_t r, c;
-            int32_t quadrant_size = context_ptr->blk_geom->sq_size >> 1;
+        uint8_t r, c;
+        int32_t quadrant_size = context_ptr->blk_geom->sq_size >> 1;
 
-            for (r = 0; r < 2; r++) {
-                for (c = 0; c < 2; c++) {
+        for (r = 0; r < 2; r++) {
+            for (c = 0; c < 2; c++) {
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                    .rec_dist_per_quadrant[c + (r << 1)] = spatial_full_dist_type_fun(
+                    input_picture_ptr->buffer_y,
+                    input_origin_index + c * quadrant_size +
+                        (r * quadrant_size) * input_picture_ptr->stride_y,
+                    input_picture_ptr->stride_y,
+                    recon_ptr->buffer_y,
+                    blk_origin_index + c * quadrant_size +
+                        (r * quadrant_size) * recon_ptr->stride_y,
+                    recon_ptr->stride_y,
+                    (uint32_t)quadrant_size,
+                    (uint32_t)quadrant_size);
+                // If quadrant_size == 4 then rec_dist_per_quadrant will have luma only because spatial_full_dist_type_fun does not support smaller than 4x4
+                if (context_ptr->blk_geom->has_uv &&
+                    context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1 && quadrant_size > 4) {
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-                        .rec_dist_per_quadrant[c + (r << 1)] = spatial_full_dist_type_fun(
-                        input_picture_ptr->buffer_y,
-                        input_origin_index + c * quadrant_size +
-                            (r * quadrant_size) * input_picture_ptr->stride_y,
-                        input_picture_ptr->stride_y,
-                        recon_ptr->buffer_y,
-                        blk_origin_index + c * quadrant_size +
-                            (r * quadrant_size) * recon_ptr->stride_y,
-                        recon_ptr->stride_y,
-                        (uint32_t)quadrant_size,
-                        (uint32_t)quadrant_size);
-                    // If quadrant_size == 4 then rec_dist_per_quadrant will have luma only because spatial_full_dist_type_fun does not support smaller than 4x4
-                    if (context_ptr->blk_geom->has_uv &&
-                        context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1 && quadrant_size > 4) {
-                        context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-                            .rec_dist_per_quadrant[c + (r << 1)] += spatial_full_dist_type_fun(
-                            input_picture_ptr->buffer_cb,
-                            input_cb_origin_in_index + c * (quadrant_size >> 1) +
-                                (r * (quadrant_size >> 1)) * input_picture_ptr->stride_cb,
-                            input_picture_ptr->stride_cb,
-                            recon_ptr->buffer_cb,
-                            blk_chroma_origin_index + c * (quadrant_size >> 1) +
-                                (r * (quadrant_size >> 1)) * recon_ptr->stride_cb,
-                            recon_ptr->stride_cb,
-                            (uint32_t)(quadrant_size >> 1),
-                            (uint32_t)(quadrant_size >> 1));
+                        .rec_dist_per_quadrant[c + (r << 1)] += spatial_full_dist_type_fun(
+                        input_picture_ptr->buffer_cb,
+                        input_cb_origin_in_index + c * (quadrant_size >> 1) +
+                            (r * (quadrant_size >> 1)) * input_picture_ptr->stride_cb,
+                        input_picture_ptr->stride_cb,
+                        recon_ptr->buffer_cb,
+                        blk_chroma_origin_index + c * (quadrant_size >> 1) +
+                            (r * (quadrant_size >> 1)) * recon_ptr->stride_cb,
+                        recon_ptr->stride_cb,
+                        (uint32_t)(quadrant_size >> 1),
+                        (uint32_t)(quadrant_size >> 1));
 
-                        context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-                            .rec_dist_per_quadrant[c + (r << 1)] += spatial_full_dist_type_fun(
-                            input_picture_ptr->buffer_cr,
-                            input_cb_origin_in_index + c * (quadrant_size >> 1) +
-                                (r * (quadrant_size >> 1)) * input_picture_ptr->stride_cr,
-                            input_picture_ptr->stride_cr,
-                            recon_ptr->buffer_cr,
-                            blk_chroma_origin_index + c * (quadrant_size >> 1) +
-                                (r * (quadrant_size >> 1)) * recon_ptr->stride_cr,
-                            recon_ptr->stride_cr,
-                            (uint32_t)(quadrant_size >> 1),
-                            (uint32_t)(quadrant_size >> 1));
-                    }
+                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                        .rec_dist_per_quadrant[c + (r << 1)] += spatial_full_dist_type_fun(
+                        input_picture_ptr->buffer_cr,
+                        input_cb_origin_in_index + c * (quadrant_size >> 1) +
+                            (r * (quadrant_size >> 1)) * input_picture_ptr->stride_cr,
+                        input_picture_ptr->stride_cr,
+                        recon_ptr->buffer_cr,
+                        blk_chroma_origin_index + c * (quadrant_size >> 1) +
+                            (r * (quadrant_size >> 1)) * recon_ptr->stride_cr,
+                        recon_ptr->stride_cr,
+                        (uint32_t)(quadrant_size >> 1),
+                        (uint32_t)(quadrant_size >> 1));
                 }
             }
         }
+    }
 }
 uint8_t is_intra_bordered(const ModeDecisionContext *ctx) {
     MacroBlockD *xd = ctx->blk_ptr->av1xd;
@@ -11072,15 +11069,15 @@ void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx,
                      const EbMdcLeafData *const leaf_data_ptr, const uint8_t blk_split_flag,
                      uint16_t sb_org_x, uint16_t sb_org_y, uint32_t blk_idx_mds,
                      uint8_t first_d1_blk) {
-    const BlockGeom *blk_geom                       = ctx->blk_geom;
-    BlkStruct       *blk_ptr                        = ctx->blk_ptr;
-    ctx->scale_palette                              = 0;
-    ctx->blk_origin_x                               = sb_org_x + blk_geom->origin_x;
-    ctx->blk_origin_y                               = sb_org_y + blk_geom->origin_y;
-    ctx->round_origin_x                             = ((ctx->blk_origin_x >> 3) << 3);
-    ctx->round_origin_y                             = ((ctx->blk_origin_y >> 3) << 3);
-    ctx->tested_blk_flag[blk_idx_mds]               = TRUE;
-    blk_ptr->mds_idx                                = blk_idx_mds;
+    const BlockGeom *blk_geom         = ctx->blk_geom;
+    BlkStruct       *blk_ptr          = ctx->blk_ptr;
+    ctx->scale_palette                = 0;
+    ctx->blk_origin_x                 = sb_org_x + blk_geom->origin_x;
+    ctx->blk_origin_y                 = sb_org_y + blk_geom->origin_y;
+    ctx->round_origin_x               = ((ctx->blk_origin_x >> 3) << 3);
+    ctx->round_origin_y               = ((ctx->blk_origin_y >> 3) << 3);
+    ctx->tested_blk_flag[blk_idx_mds] = TRUE;
+    blk_ptr->mds_idx                  = blk_idx_mds;
     blk_ptr->split_flag = blk_split_flag; //mdc indicates smallest or non valid CUs with split flag=
     blk_ptr->qindex     = ctx->qp_index;
     ctx->md_local_blk_unit[blk_idx_mds].left_neighbor_partition  = INVALID_NEIGHBOR_DATA;

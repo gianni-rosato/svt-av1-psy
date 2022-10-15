@@ -593,7 +593,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->skip_intra = (is_ref || pcs_ptr->ref_intra_percentage > 50) ? 0 : 1;
 
-        // Set the level for the candidate(s) reduction feature
+    // Set the level for the candidate(s) reduction feature
     pcs_ptr->cand_reduction_level = 0;
     if (is_islice)
         pcs_ptr->cand_reduction_level = 0;
@@ -634,8 +634,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         } else { // regular
             pcs_ptr->txt_level = 7;
         }
-    }
-    else if (enc_mode <= ENC_M12) {
+    } else if (enc_mode <= ENC_M12) {
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->txt_level = is_base ? 8 : 10;
         } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {
@@ -811,9 +810,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->sq_weight = 95;
 
-        // max_part0_to_part1_dev is used to:
-        // (1) skip the H_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 2nd quadrant) and the Parent-SQ src-to-recon distortion of (3rd quadrant + 4th quadrant) is less than TH,
-        // (2) skip the V_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 3rd quadrant) and the Parent-SQ src-to-recon distortion of (2nd quadrant + 4th quadrant) is less than TH.
+    // max_part0_to_part1_dev is used to:
+    // (1) skip the H_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 2nd quadrant) and the Parent-SQ src-to-recon distortion of (3rd quadrant + 4th quadrant) is less than TH,
+    // (2) skip the V_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 3rd quadrant) and the Parent-SQ src-to-recon distortion of (2nd quadrant + 4th quadrant) is less than TH.
     if (enc_mode <= ENC_M3)
         pcs_ptr->max_part0_to_part1_dev = 0;
     else if (enc_mode <= ENC_M4) {
@@ -916,7 +915,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->mds0_level = 2;
     } else
         pcs_ptr->mds0_level = is_islice ? 2 : 4;
-        /*
+    /*
        disallow_4x4
     */
     pcs_ptr->pic_disallow_4x4 = svt_aom_get_disallow_4x4(enc_mode, slice_type);
@@ -938,7 +937,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->pic_bypass_encdec = 0;
 
-        /*
+    /*
         set lpd0_level
     */
     if (enc_mode <= ENC_M3)
@@ -1008,10 +1007,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 if (enc_mode <= ENC_M2)
                     pcs_ptr->pic_depth_removal_level = 0;
                 else if (enc_mode <= ENC_M5) {
-                        if (input_resolution <= INPUT_SIZE_480p_RANGE)
-                            pcs_ptr->pic_depth_removal_level = 1;
-                        else
-                            pcs_ptr->pic_depth_removal_level = 2;
+                    if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = 1;
+                    else
+                        pcs_ptr->pic_depth_removal_level = 2;
                 } else if (enc_mode <= ENC_M7) {
                     if (pcs_ptr->coeff_lvl == LOW_LVL) {
                         if (input_resolution <= INPUT_SIZE_480p_RANGE)

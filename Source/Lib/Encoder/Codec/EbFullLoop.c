@@ -1552,17 +1552,17 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     (void)is_encode_pass;
     (void)coeff_stride;
     (void)is_intra_bc;
-    SequenceControlSet      *scs_ptr          = pcs_ptr->scs_ptr;
-    int32_t                  plane            = component_type == COMPONENT_LUMA ? AOM_PLANE_Y
-                                    : COMPONENT_CHROMA_CB                        ? AOM_PLANE_U
-                                                                                 : AOM_PLANE_V;
-    int32_t                  qmatrix_level    = (IS_2D_TRANSFORM(tx_type) &&
+    SequenceControlSet *scs_ptr          = pcs_ptr->scs_ptr;
+    int32_t             plane            = component_type == COMPONENT_LUMA ? AOM_PLANE_Y
+                               : COMPONENT_CHROMA_CB                        ? AOM_PLANE_U
+                                                                            : AOM_PLANE_V;
+    int32_t             qmatrix_level    = (IS_2D_TRANSFORM(tx_type) &&
                              pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.using_qmatrix)
-                            ? pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.qm[plane]
-                            : NUM_QM_LEVELS - 1;
-    TxSize                   adjusted_tx_size = aom_av1_get_adjusted_tx_size(txsize);
-    MacroblockPlane          candidate_plane;
-    const QmVal             *q_matrix =
+                       ? pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.qm[plane]
+                       : NUM_QM_LEVELS - 1;
+    TxSize              adjusted_tx_size = aom_av1_get_adjusted_tx_size(txsize);
+    MacroblockPlane     candidate_plane;
+    const QmVal        *q_matrix =
         pcs_ptr->parent_pcs_ptr->gqmatrix[qmatrix_level][plane][adjusted_tx_size];
     const QmVal *iq_matrix =
         pcs_ptr->parent_pcs_ptr->giqmatrix[qmatrix_level][plane][adjusted_tx_size];
@@ -1789,7 +1789,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     if (!md_context->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
         return 0;
 
-        // Derive cul_level
+    // Derive cul_level
     return svt_av1_compute_cul_level(scan_order->scan, quant_coeff, eob);
 }
 

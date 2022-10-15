@@ -448,7 +448,6 @@ static INLINE int32_t av1_cost_coeffs_txb_loop_cost_eob(
     return cost;
 }
 
-
 // Note: don't call this function when eob is 0.
 uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_update_cdf,
                                  FRAME_CONTEXT                      *ec_ctx,
@@ -2235,4 +2234,3 @@ uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionC
 
     return (RDCOST(lambda, split_rate, 0));
 }
-
