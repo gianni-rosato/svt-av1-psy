@@ -24,48 +24,6 @@
 int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 #define UNUSED_FUNC
 
-#if !FTR_DEPTH_EARLY_EXIT
-/** ScaleMV
-        is used to scale the motion vector in AMVP process.
- */
-/*
-static inline void scale_mv(
-    uint64_t    current_pic_poc,                // Iuput parameter, the POC of the current picture to be encoded.
-    uint64_t    target_ref_pic_poc,              // Iuput parameter, the POC of the reference picture where the inter coding is searching for.
-    uint64_t    col_pu_pic_poc,                  // Iuput parameter, the POC of picture where the co-located PU is.
-    uint64_t    col_pu_ref_pic_poc,               // Iuput parameter, the POC of the reference picture where the MV of the co-located PU points to.
-    int16_t    *mvx,                          // Output parameter,
-    int16_t    *mvy)                          // Output parameter,
-{
-    int16_t td = (int16_t)(col_pu_pic_poc - col_pu_ref_pic_poc);
-    int16_t tb = (int16_t)(current_pic_poc - target_ref_pic_poc);
-    int16_t scale_factor;
-    int16_t temp;
-
-    if (td != tb) {
-        tb = CLIP3(-128, 127, tb);
-        td = CLIP3(-128, 127, td);
-        temp = (int16_t)((0x4000 + ABS(td >> 1)) / td);
-        scale_factor = CLIP3(-4096, 4095, (tb * temp + 32) >> 6);
-
-        *mvx = CLIP3(-32768, 32767, (scale_factor * (*mvx) + 127 + (scale_factor * (*mvx) < 0)) >> 8);
-        *mvy = CLIP3(-32768, 32767, (scale_factor * (*mvy) + 127 + (scale_factor * (*mvy) < 0)) >> 8);
-    }
-
-    return;
-}
-*/
-static PartitionType from_shape_to_part[] = {PARTITION_NONE,
-                                             PARTITION_HORZ,
-                                             PARTITION_VERT,
-                                             PARTITION_HORZ_A,
-                                             PARTITION_HORZ_B,
-                                             PARTITION_VERT_A,
-                                             PARTITION_VERT_B,
-                                             PARTITION_HORZ_4,
-                                             PARTITION_VERT_4,
-                                             PARTITION_SPLIT};
-#endif
 #define MVREF_ROWS 3
 #define MVREF_COLS 3
 

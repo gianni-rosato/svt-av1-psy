@@ -208,18 +208,12 @@ void picture_control_set_dctor(EbPtr p) {
         EB_DELETE_PTR_ARRAY(obj->md_ref_frame_type_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_interpolation_type_neighbor_array[depth], tile_cnt);
     }
-#if FIX_SUPERRES_MEM_LEAK
     EB_DELETE_PTR_ARRAY(obj->sb_ptr_array, obj->sb_total_count_unscaled);
-#else
-    EB_DELETE_PTR_ARRAY(obj->sb_ptr_array, obj->b64_total_count);
-#endif
     EB_FREE_ARRAY(obj->sb_intra);
     EB_FREE_ARRAY(obj->sb_skip);
     EB_FREE_ARRAY(obj->sb_64x64_mvp);
     EB_FREE_ARRAY(obj->sb_count_nz_coeffs);
-#if OPT_LAMBDA_MODULATION
     EB_FREE_ARRAY(obj->b64_me_qindex);
-#endif
     EB_DELETE(obj->bitstream_ptr);
     EB_DELETE_PTR_ARRAY(obj->entropy_coding_info, tile_cnt);
 
@@ -395,14 +389,6 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 
     return EB_ErrorNone;
 }
-#if !FIX_DISALLOW_CTRL
-uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
-#if OPT_NSQ_M5
-uint8_t get_disallow_nsq(EncMode enc_mode, Bool is_islice);
-#else
-uint8_t get_disallow_nsq(EncMode enc_mode);
-#endif
-#endif
 uint32_t get_out_buffer_size(uint32_t picture_width, uint32_t picture_height) {
     uint32_t frame_size = picture_width * picture_height * 3 / 2; //assuming 4:2:0;
     if (frame_size > INPUT_SIZE_4K_TH)
@@ -508,15 +494,10 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     // SB Array
     object_ptr->b64_total_count = picture_sb_width * picture_sb_height;
-#if !FIX_SUPERRES_MEM_LEAK
-    EB_ALLOC_PTR_ARRAY(object_ptr->sb_ptr_array, object_ptr->b64_total_count);
-#endif
     EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->b64_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_64x64_mvp, object_ptr->b64_total_count);
-#if OPT_LAMBDA_MODULATION
     EB_MALLOC_ARRAY(object_ptr->b64_me_qindex, object_ptr->b64_total_count);
-#endif
 
     sb_origin_x = 0;
     sb_origin_y = 0;
@@ -530,10 +511,8 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     const uint16_t all_sb       = picture_sb_w * picture_sb_h;
 
     object_ptr->sb_total_count = all_sb;
-#if FIX_SUPERRES_MEM_LEAK
     object_ptr->sb_total_count_unscaled = all_sb;
     EB_ALLOC_PTR_ARRAY(object_ptr->sb_ptr_array, object_ptr->sb_total_count_unscaled);
-#endif
 
     EB_MALLOC_ARRAY(object_ptr->sb_count_nz_coeffs, object_ptr->sb_total_count);
 
@@ -1201,7 +1180,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                         (init_data_ptr->sb_size >> MI_SIZE_LOG2));
 
     // If NSQ is allowed, then need a 4x4 MI grid because 8x8 NSQ shapes will require 4x4 granularity
-#if OPT_NSQ_M5
     bool disallow_4x4 = true;
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
         disallow_4x4 = MIN(disallow_4x4,
@@ -1209,11 +1187,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4,
                            svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
-#else
-    uint8_t disallow_4x4 = get_disallow_nsq(init_data_ptr->enc_mode);
-    for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
-        disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
-#endif
 
     object_ptr->disallow_4x4_all_frames = disallow_4x4;
 
@@ -1629,7 +1602,6 @@ EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr
     return return_error;
 }
 
-#if CLN_B64_RENAMING
 EbErrorType b64_geom_init_pcs(SequenceControlSet *scs, PictureParentControlSet *pcs) {
     EbErrorType return_error = EB_ErrorNone;
     uint16_t    b64_idx;
@@ -1691,78 +1663,6 @@ EbErrorType b64_geom_init_pcs(SequenceControlSet *scs, PictureParentControlSet *
 
     return return_error;
 }
-#else
-EbErrorType sb_params_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-    uint16_t    sb_index;
-    uint16_t    raster_scan_blk_index;
-    uint16_t    encoding_width  = pcs_ptr->aligned_width;
-    uint16_t    encoding_height = pcs_ptr->aligned_height;
-
-    uint8_t picture_sb_width  = (uint8_t)((encoding_width + scs_ptr->b64_size - 1) /
-                                         scs_ptr->b64_size);
-    uint8_t picture_sb_height = (uint8_t)((encoding_height + scs_ptr->b64_size - 1) /
-                                          scs_ptr->b64_size);
-
-    EB_FREE_ARRAY(pcs_ptr->b64_geom);
-    EB_MALLOC_ARRAY(pcs_ptr->b64_geom, picture_sb_width * picture_sb_height);
-
-    for (sb_index = 0; sb_index < picture_sb_width * picture_sb_height; ++sb_index) {
-        pcs_ptr->b64_geom[sb_index].horizontal_index = (uint8_t)(sb_index % picture_sb_width);
-        pcs_ptr->b64_geom[sb_index].vertical_index   = (uint8_t)(sb_index / picture_sb_width);
-        pcs_ptr->b64_geom[sb_index].origin_x = pcs_ptr->b64_geom[sb_index].horizontal_index *
-            scs_ptr->b64_size;
-        pcs_ptr->b64_geom[sb_index].origin_y = pcs_ptr->b64_geom[sb_index].vertical_index *
-            scs_ptr->b64_size;
-
-        pcs_ptr->b64_geom[sb_index].width =
-            (uint8_t)(((encoding_width - pcs_ptr->b64_geom[sb_index].origin_x) < scs_ptr->b64_size)
-                          ? encoding_width - pcs_ptr->b64_geom[sb_index].origin_x
-                          : scs_ptr->b64_size);
-
-        pcs_ptr->b64_geom[sb_index].height =
-            (uint8_t)(((encoding_height - pcs_ptr->b64_geom[sb_index].origin_y) < scs_ptr->b64_size)
-                          ? encoding_height - pcs_ptr->b64_geom[sb_index].origin_y
-                          : scs_ptr->b64_size);
-
-        pcs_ptr->b64_geom[sb_index].is_complete_b64 =
-            (uint8_t)(((pcs_ptr->b64_geom[sb_index].width == scs_ptr->b64_size) &&
-                       (pcs_ptr->b64_geom[sb_index].height == scs_ptr->b64_size))
-                          ? 1
-                          : 0);
-
-        pcs_ptr->b64_geom[sb_index].is_edge_sb = (pcs_ptr->b64_geom[sb_index].origin_x <
-                                                  scs_ptr->b64_size) ||
-                (pcs_ptr->b64_geom[sb_index].origin_y < scs_ptr->b64_size) ||
-                (pcs_ptr->b64_geom[sb_index].origin_x > encoding_width - scs_ptr->b64_size) ||
-                (pcs_ptr->b64_geom[sb_index].origin_y > encoding_height - scs_ptr->b64_size)
-            ? 1
-            : 0;
-
-        for (raster_scan_blk_index = RASTER_SCAN_CU_INDEX_64x64;
-             raster_scan_blk_index <= RASTER_SCAN_CU_INDEX_8x8_63;
-             raster_scan_blk_index++) {
-            pcs_ptr->b64_geom[sb_index].raster_scan_blk_validity[raster_scan_blk_index] =
-                ((pcs_ptr->b64_geom[sb_index].origin_x + raster_scan_blk_x[raster_scan_blk_index] +
-                      raster_scan_blk_size[raster_scan_blk_index] >
-                  encoding_width) ||
-                 (pcs_ptr->b64_geom[sb_index].origin_y + raster_scan_blk_y[raster_scan_blk_index] +
-                      raster_scan_blk_size[raster_scan_blk_index] >
-                  encoding_height))
-                ? FALSE
-                : TRUE;
-        }
-
-        // super-res can not work with multi-tiles, just set up it for no tiling
-        pcs_ptr->b64_geom[sb_index].tile_start_x = 0;
-        pcs_ptr->b64_geom[sb_index].tile_start_y = 0;
-        pcs_ptr->b64_geom[sb_index].tile_end_x   = encoding_width;
-        pcs_ptr->b64_geom[sb_index].tile_end_y   = encoding_height;
-    }
-
-    return return_error;
-}
-#endif
 
 EbErrorType sb_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
     uint16_t sb_index;

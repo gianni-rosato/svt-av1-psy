@@ -20,9 +20,6 @@
 #include "EbPictureBufferDesc.h"
 #include "EbEncInterPrediction.h"
 #include "EbEntropyCoding.h"
-#if !CLN_COEFF_BUFFER
-#include "EbTransQuantBuffers.h"
-#endif
 #include "EbCodingUnit.h"
 #include "EbObject.h"
 

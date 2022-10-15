@@ -682,9 +682,7 @@ static void   allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL 
     }
 }
 
-#if FTR_GOP_CONST_RC
 #define RC_FACTOR_MIN_GOP_CONST 0.5
-#endif
 #define RC_FACTOR_MIN_1P_VBR 1
 #define RC_FACTOR_MIN 0.75
 #define RC_FACTOR_MAX 2
@@ -928,16 +926,10 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
             rate_error = (int)((rc->vbr_bits_off_target * 100) / bits);
             rate_error = clamp(rate_error, -100, 100);
             if (rate_error > 0) {
-#if FTR_GOP_CONST_RC
                 double rc_factor_min = scs->static_config.gop_constraint_rc
                     ? RC_FACTOR_MIN_GOP_CONST
                     : (scs->static_config.pass == ENC_SINGLE_PASS) ? RC_FACTOR_MIN_1P_VBR
                                                                    : RC_FACTOR_MIN;
-#else
-                double rc_factor_min = (scs->static_config.pass == ENC_SINGLE_PASS)
-                    ? RC_FACTOR_MIN_1P_VBR
-                    : RC_FACTOR_MIN;
-#endif
                 rc_factor = AOMMAX(rc_factor_min, (double)(100 - rate_error) / 100.0);
             } else {
                 rc_factor = AOMMIN(RC_FACTOR_MAX, (double)(100 - rate_error) / 100.0);
@@ -1784,7 +1776,6 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
     encode_context_ptr->rc_cfg.worst_allowed_q = (int32_t)
         quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed];
 
-#if FTR_GOP_CONST_RC
     if (scs_ptr->static_config.gop_constraint_rc) {
         encode_context_ptr->rc_cfg.over_shoot_pct  = 0;
         encode_context_ptr->rc_cfg.under_shoot_pct = 0;
@@ -1792,10 +1783,6 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
         encode_context_ptr->rc_cfg.over_shoot_pct  = scs_ptr->static_config.over_shoot_pct;
         encode_context_ptr->rc_cfg.under_shoot_pct = scs_ptr->static_config.under_shoot_pct;
     }
-#else
-    encode_context_ptr->rc_cfg.over_shoot_pct = scs_ptr->static_config.over_shoot_pct;
-    encode_context_ptr->rc_cfg.under_shoot_pct = scs_ptr->static_config.under_shoot_pct;
-#endif
     encode_context_ptr->rc_cfg.cq_level = quantizer_to_qindex[scs_ptr->static_config.qp];
     encode_context_ptr->rc_cfg.maximum_buffer_size_ms   = is_vbr
           ? 240000
@@ -1975,7 +1962,6 @@ int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
     return frame_is_intra_only(ppcs_ptr) || ppcs_ptr->update_type == ARF_UPDATE ||
         ppcs_ptr->update_type == GF_UPDATE;
 }
-#if FTR_GOP_CONST_RC
 /*********************************************************************************************
 * Update the internal RC and TWO_PASS struct stats based on the received feedback
 ***********************************************************************************************/
@@ -2087,7 +2073,6 @@ void svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs) 
         }
     }
 }
-#endif
 void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
     SequenceControlSet         *scs_ptr            = ppcs_ptr->scs_ptr;
     EncodeContext              *encode_context_ptr = scs_ptr->encode_context_ptr;

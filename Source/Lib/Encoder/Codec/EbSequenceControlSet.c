@@ -128,7 +128,6 @@ EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance 
     return EB_ErrorNone;
 }
 
-#if CLN_B64_RENAMING
 extern EbErrorType b64_geom_init(SequenceControlSet *scs) {
     EbErrorType return_error = EB_ErrorNone;
     uint16_t    b64_idx;
@@ -186,79 +185,6 @@ extern EbErrorType b64_geom_init(SequenceControlSet *scs) {
 
     return return_error;
 }
-#else
-extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-    uint16_t    sb_index;
-    uint16_t    raster_scan_blk_index;
-
-    uint16_t picture_sb_width = (scs_ptr->max_input_luma_width + scs_ptr->b64_size - 1) /
-        scs_ptr->b64_size;
-    uint16_t picture_sb_height = (scs_ptr->max_input_luma_height + scs_ptr->b64_size - 1) /
-        scs_ptr->b64_size;
-    //free old one;
-    EB_FREE_ARRAY(scs_ptr->b64_geom);
-
-    EB_MALLOC_ARRAY(scs_ptr->b64_geom, picture_sb_width * picture_sb_height);
-
-    for (sb_index = 0; sb_index < picture_sb_width * picture_sb_height; ++sb_index) {
-        scs_ptr->b64_geom[sb_index].horizontal_index = (uint8_t)(sb_index % picture_sb_width);
-        scs_ptr->b64_geom[sb_index].vertical_index   = (uint8_t)(sb_index / picture_sb_width);
-        scs_ptr->b64_geom[sb_index].origin_x = scs_ptr->b64_geom[sb_index].horizontal_index *
-            scs_ptr->b64_size;
-        scs_ptr->b64_geom[sb_index].origin_y = scs_ptr->b64_geom[sb_index].vertical_index *
-            scs_ptr->b64_size;
-
-        scs_ptr->b64_geom[sb_index].width =
-            (uint8_t)(((scs_ptr->max_input_luma_width - scs_ptr->b64_geom[sb_index].origin_x) <
-                       scs_ptr->b64_size)
-                          ? scs_ptr->max_input_luma_width - scs_ptr->b64_geom[sb_index].origin_x
-                          : scs_ptr->b64_size);
-
-        scs_ptr->b64_geom[sb_index].height =
-            (uint8_t)(((scs_ptr->max_input_luma_height - scs_ptr->b64_geom[sb_index].origin_y) <
-                       scs_ptr->b64_size)
-                          ? scs_ptr->max_input_luma_height - scs_ptr->b64_geom[sb_index].origin_y
-                          : scs_ptr->b64_size);
-
-        scs_ptr->b64_geom[sb_index].is_complete_b64 =
-            (uint8_t)(((scs_ptr->b64_geom[sb_index].width == scs_ptr->b64_size) &&
-                       (scs_ptr->b64_geom[sb_index].height == scs_ptr->b64_size))
-                          ? 1
-                          : 0);
-
-        scs_ptr->b64_geom[sb_index].is_edge_sb = (scs_ptr->b64_geom[sb_index].origin_x <
-                                                  scs_ptr->b64_size) ||
-                (scs_ptr->b64_geom[sb_index].origin_y < scs_ptr->b64_size) ||
-                (scs_ptr->b64_geom[sb_index].origin_x >
-                 scs_ptr->max_input_luma_width - scs_ptr->b64_size) ||
-                (scs_ptr->b64_geom[sb_index].origin_y >
-                 scs_ptr->max_input_luma_height - scs_ptr->b64_size)
-            ? 1
-            : 0;
-
-        for (raster_scan_blk_index = RASTER_SCAN_CU_INDEX_64x64;
-             raster_scan_blk_index <= RASTER_SCAN_CU_INDEX_8x8_63;
-             raster_scan_blk_index++) {
-            scs_ptr->b64_geom[sb_index].raster_scan_blk_validity[raster_scan_blk_index] =
-                ((scs_ptr->b64_geom[sb_index].origin_x + raster_scan_blk_x[raster_scan_blk_index] +
-                      raster_scan_blk_size[raster_scan_blk_index] >
-                  scs_ptr->max_input_luma_width) ||
-                 (scs_ptr->b64_geom[sb_index].origin_y + raster_scan_blk_y[raster_scan_blk_index] +
-                      raster_scan_blk_size[raster_scan_blk_index] >
-                  scs_ptr->max_input_luma_height))
-                ? FALSE
-                : TRUE;
-        }
-    }
-
-    scs_ptr->pic_width_in_b64  = picture_sb_width;
-    scs_ptr->pic_height_in_b64 = picture_sb_height;
-    scs_ptr->sb_total_count    = picture_sb_width * picture_sb_height;
-
-    return return_error;
-}
-#endif
 
 EbErrorType rtime_alloc_sb_geom(SequenceControlSet *scs_ptr, uint32_t size) {
     EB_MALLOC_ARRAY(scs_ptr->sb_geom, size);

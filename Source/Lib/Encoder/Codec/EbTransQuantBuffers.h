@@ -13,22 +13,4 @@
 #define EbTransQuantBuffers_h
 
 #include "EbPictureBufferDesc.h"
-#if !CLN_COEFF_BUFFER // TODO: remove this file
-#include "EbObject.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-typedef struct EbTransQuantBuffers {
-    EbDctor              dctor;
-    EbPictureBufferDesc *txb_trans_coeff2_nx2_n_ptr;
-} EbTransQuantBuffers;
-
-extern EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers *trans_quant_buffers_ptr,
-                                                uint8_t              sb_size);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 #endif // EbTransQuantBuffers_h

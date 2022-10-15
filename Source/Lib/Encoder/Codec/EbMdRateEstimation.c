@@ -77,7 +77,6 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
     int32_t i, j;
 
     md_rate_estimation_array->initialized = 1;
-#if FIX_PARTITION_COST
     for (i = 0; i < partition_contexts; ++i) {
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
@@ -107,11 +106,6 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->partition_horz_alike_128x128_fac_bits[i], cdf, rhs_inv_map);
     }
-#else
-    for (i = 0; i < partition_contexts; ++i)
-        av1_get_syntax_rate_from_cdf(
-            md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
-#endif
 
     for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(
@@ -1247,7 +1241,6 @@ void update_part_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, uint16_t 
         }
     }
 }
-#if OPT_LAMBDA_MODULATION
 uint8_t svt_aom_get_me_qindex(PictureControlSet *pcs, SuperBlock *sb_ptr, uint8_t is_sb128) {
     if (!is_sb128)
         return pcs->b64_me_qindex[sb_ptr->index];
@@ -1278,4 +1271,3 @@ uint8_t svt_aom_get_me_qindex(PictureControlSet *pcs, SuperBlock *sb_ptr, uint8_
 
     return sum_me_qindex / valid_b64_cnt;
 }
-#endif

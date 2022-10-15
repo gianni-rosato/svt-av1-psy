@@ -38,17 +38,12 @@
 #include "EbPictureDecisionResults.h"
 #include "EbResize.h"
 
-#if EN_HL2
 // Specifies the weights of the ref frame in calculating qindex of non base layer frames
 static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 1, 1, 1};
 // Specifies the weights of the worst quality in calculating qindex of non base layer frames
 static const int    non_base_qindex_weight_wq[EB_MAX_TEMPORAL_LAYERS]    = {1, 1, 3, 1, 1, 1};
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 2, 1, 1, 0.7};
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 3, 2, 1, 0.5};
-#else
-static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 1, 1, 1, 0.7};
-static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 2, 1, 0.5};
-#endif
 #define KB 400
 
 static void free_private_data_list(EbBufferHeaderType *p) {
@@ -724,15 +719,10 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs_ptr,
     // Extension to max or min Q if undershoot or overshoot is outside
     // the permitted range.
     if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ||
-#if FTR_GOP_CONST_RC
         (scs_ptr->static_config.gop_constraint_rc &&
          pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ||
         (pcs_ptr->parent_pcs_ptr->temporal_layer_index < 2 && scs_ptr->is_short_clip) ||
         (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && !scs_ptr->is_short_clip)) {
-#else
-        (pcs_ptr->parent_pcs_ptr->temporal_layer_index < 2 && scs_ptr->is_short_clip) ||
-        (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && !scs_ptr->is_short_clip)) {
-#endif
         active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast);
         active_worst_quality += (twopass->extend_maxq / 2);
     } else {
@@ -788,11 +778,7 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
 static const double r0_weight[2 /* VBR/CRF */][2 /* BASE/ISLICE */] = {
     // {BASE, ISLICE}
     {0.85, 0.75}, // VBR
-#if TUNE_TPL_WEIGHTS // TODO: test for VBR
     {0.9, 0.75} // CRF
-#else
-    {0.85, 0.75} // CRF
-#endif
 };
 /******************************************************
  * crf_qindex_calc
@@ -911,17 +897,12 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
                 int8_t tmp_layer_delta = (int8_t)ppcs->temporal_layer_index - (int8_t)ref_tmp_layer;
                 // active_best_quality is updated with the q index of the reference
                 if (rf_level == GF_ARF_LOW) {
-#if EN_HL2
                     int w1 = non_base_qindex_weight_ref[scs_ptr->max_heirachical_level];
                     int w2 = non_base_qindex_weight_wq[scs_ptr->max_heirachical_level];
                     while (tmp_layer_delta--)
                         active_best_quality = (w1 * active_best_quality + (w2 * cq_level) +
                                                ((w1 + w2) / 2)) /
                             (w1 + w2);
-#else
-                    while (tmp_layer_delta--)
-                        active_best_quality = (active_best_quality + cq_level + 1) / 2;
-#endif
                 }
             }
             // For alt_ref and GF frames (including internal arf frames) adjust the
@@ -1098,10 +1079,6 @@ int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_T
 
     return rdmult > 0 ? (int)AOMMIN(rdmult, INT_MAX) : 1;
 }
-#if !OPT_LAMBDA_MODULATION
-static const int64_t q_factor[2][6] = {{100, 110, 120, 138, 140, 150},
-                                       {100, 110, 112, 125, 135, 140}};
-#endif
 // The table we use is modified from libaom; here is the original, from libaom:
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
 //                                                               128, 144, 144,
@@ -1110,7 +1087,6 @@ static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = {128, 164, 128, 128,
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
-#if OPT_LAMBDA_MODULATION
 int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index,
                             uint8_t bit_depth) {
     FrameType frame_type = pcs->parent_pcs_ptr->frm_hdr.frame_type;
@@ -1120,15 +1096,6 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
     // Always use q_index for the derivation of the initial rdmult (i.e. don't use me_q_index)
     int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(
         bit_depth, pcs->parent_pcs_ptr->update_type, q_index);
-#else
-int svt_aom_compute_rd_mult(PictureParentControlSet *pcs, uint8_t q_index, uint8_t bit_depth) {
-    FrameType frame_type = pcs->frm_hdr.frame_type;
-    // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
-    uint8_t temporal_layer_index = pcs->temporal_layer_index;
-    uint8_t max_temporal_layer = pcs->hierarchical_levels;
-
-    int64_t rdmult = svt_aom_compute_rd_mult_based_on_qindex(bit_depth, pcs->update_type, q_index);
-#endif
     // Update rdmult based on the frame's position in the miniGOP
     if (frame_type != KEY_FRAME) {
         uint8_t gf_update_type = temporal_layer_index == 0 ? ARF_UPDATE
@@ -1136,7 +1103,6 @@ int svt_aom_compute_rd_mult(PictureParentControlSet *pcs, uint8_t q_index, uint8
                                                            : LF_UPDATE;
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
-#if OPT_LAMBDA_MODULATION
     if (pcs->scs_ptr->stats_based_sb_lambda_modulation) {
         if (pcs->temporal_layer_index > 0) {
             if (pcs->ref_intra_percentage < 5)
@@ -1166,15 +1132,6 @@ int svt_aom_compute_rd_mult(PictureParentControlSet *pcs, uint8_t q_index, uint8
 
         rdmult = (rdmult * factor) >> 7;
     }
-#else
-    assert(pcs->tpl_ctrls.vq_adjust_lambda_sb > 0);
-    int qdiff = q_index - quantizer_to_qindex[pcs->picture_qp];
-    int8_t qidx = (qdiff < -8) ? 0 : (qdiff < -4) ? 1 : (qdiff < -2) ? 2 : (qdiff <= 4) ? 3 : 4;
-
-    if (pcs->tpl_ctrls.enable) {
-        rdmult = (rdmult * q_factor[pcs->tpl_ctrls.vq_adjust_lambda_sb - 1][qidx]) >> 7;
-    }
-#endif
     return (int)rdmult;
 }
 static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
@@ -1215,7 +1172,6 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
     assert(base_block_count > 0);
 
     uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
-#if OPT_LAMBDA_MODULATION
     const int orig_rdmult = svt_aom_compute_rd_mult(
         pcs_ptr,
         ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
@@ -1227,11 +1183,6 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
         sb_ptr->qindex,
         svt_aom_get_me_qindex(pcs_ptr, sb_ptr, scs_ptr->seq_header.sb_size == BLOCK_128X128),
         bit_depth);
-#else
-    const int orig_rdmult = svt_aom_compute_rd_mult(
-        ppcs_ptr, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, bit_depth);
-    const int new_rdmult = svt_aom_compute_rd_mult(ppcs_ptr, sb_ptr->qindex, bit_depth);
-#endif
     const double scaling_factor = (double)new_rdmult / (double)orig_rdmult;
     //double scale_adj = exp(log(scaling_factor) - log_sum / base_block_count);
     double scale_adj = scaling_factor / exp(log_sum / base_block_count);
@@ -1302,7 +1253,6 @@ static void sb_qp_derivation(PictureControlSet *pcs) {
     }
 }
 
-#if OPT_LAMBDA_MODULATION
 /*
 * Derives a qindex per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)
 */
@@ -1356,7 +1306,6 @@ static void generate_b64_me_qindex_map(PictureControlSet *pcs) {
         }
     }
 }
-#endif
 
 /******************************************************
  * sb_qp_derivation_tpl_la
@@ -2167,16 +2116,11 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
             active_best_quality = get_active_best_quality(pcs_ptr, active_worst_quality);
         } else {
             active_best_quality = rc->active_best_quality[pyramid_level - 1] + 1;
-#if EN_HL2
             int w1              = non_base_qindex_weight_ref[scs_ptr->max_heirachical_level];
             int w2              = non_base_qindex_weight_wq[scs_ptr->max_heirachical_level];
             active_best_quality = (w1 * active_best_quality + (w2 * active_worst_quality) +
                                    ((w1 + w2) / 2)) /
                 (w1 + w2);
-#else
-            active_best_quality = AOMMIN(active_best_quality, active_worst_quality);
-            active_best_quality += (active_worst_quality - active_best_quality) / 2;
-#endif
         }
         // For alt_ref and GF frames (including internal arf frames) adjust the
         // worst allowed quality as well. This insures that even on hard
@@ -2315,7 +2259,6 @@ static void update_buffer_level(PictureParentControlSet *ppcs_ptr, int encoded_f
     rc->bits_off_target = AOMMIN(rc->bits_off_target, rc->maximum_buffer_size);
     rc->buffer_level    = rc->bits_off_target;
 }
-#if FTR_GOP_CONST_RC
 /*********************************************************************************************
 * Reset rate_control_param into default values
 ***********************************************************************************************/
@@ -2405,7 +2348,6 @@ static void av1_rc_postencode_update_gop_const(PictureParentControlSet *ppcs) {
     if (frm_hdr->frame_type == KEY_FRAME)
         rc->frames_since_key = 0;
 }
-#endif
 static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
     SequenceControlSet *scs_ptr            = ppcs_ptr->scs_ptr;
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -2986,7 +2928,6 @@ static void restore_two_pass_param(PictureParentControlSet         *ppcs_ptr,
         ppcs_ptr->stats_in_end_offset;
     twopass->kf_group_bits       = rate_control_param_ptr->kf_group_bits;
     twopass->kf_group_error_left = rate_control_param_ptr->kf_group_error_left;
-#if FTR_GOP_CONST_RC
     if (scs_ptr->static_config.gop_constraint_rc) {
         twopass->extend_minq         = rate_control_param_ptr->extend_minq;
         twopass->extend_maxq         = rate_control_param_ptr->extend_maxq;
@@ -3000,7 +2941,6 @@ static void restore_two_pass_param(PictureParentControlSet         *ppcs_ptr,
         rc->total_actual_bits        = rate_control_param_ptr->total_actual_bits;
         rc->total_target_bits        = rate_control_param_ptr->total_target_bits;
     }
-#endif
 }
 
 /************************************************************************************************
@@ -3011,13 +2951,11 @@ static void restore_param(PictureParentControlSet         *ppcs,
     SequenceControlSet *scs    = ppcs->scs_ptr;
     EncodeContext      *ec_ctx = scs->encode_context_ptr;
 
-#if FTR_GOP_CONST_RC
     if (scs->static_config.gop_constraint_rc &&
         rate_control_param_ptr->first_poc == ppcs->picture_number) {
         rate_control_param_ptr->rolling_target_bits = ec_ctx->rc.avg_frame_bandwidth;
         rate_control_param_ptr->rolling_actual_bits = ec_ctx->rc.avg_frame_bandwidth;
     }
-#endif
     if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR)
         restore_two_pass_param(ppcs, rate_control_param_ptr);
 
@@ -3421,7 +3359,6 @@ void *rate_control_kernel(void *input_ptr) {
                         if ((pcs_ptr->slice_type == B_SLICE) &&
                             (pcs_ptr->ref_slice_type_array[1][0] != I_SLICE))
                             ref_qp = MAX(ref_qp, pcs_ptr->ref_pic_qp_array[1][0]);
-#if FTR_GOP_CONST_RC
                         if (scs_ptr->static_config.gop_constraint_rc) {
                             if (ref_qp > 2 && pcs_ptr->picture_qp < ref_qp - 2) {
                                 pcs_ptr->picture_qp = (uint8_t)CLIP3(
@@ -3437,14 +3374,6 @@ void *rate_control_kernel(void *input_ptr) {
                                     (uint8_t)(ref_qp));
                             }
                         }
-#else
-                        if (ref_qp > 0 && pcs_ptr->picture_qp < ref_qp) {
-                            pcs_ptr->picture_qp = (uint8_t)CLIP3(
-                                scs_ptr->static_config.min_qp_allowed,
-                                scs_ptr->static_config.max_qp_allowed,
-                                (uint8_t)(ref_qp));
-                        }
-#endif
                     }
                     frm_hdr->quantization_params.base_q_idx =
                         quantizer_to_qindex[pcs_ptr->picture_qp];
@@ -3568,11 +3497,9 @@ void *rate_control_kernel(void *input_ptr) {
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
             }
 
-#if OPT_LAMBDA_MODULATION // to upgarde
             // Derive a QP per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)
             if (scs_ptr->stats_based_sb_lambda_modulation)
                 generate_b64_me_qindex_map(pcs_ptr);
-#endif
             // Get Empty Rate Control Results Buffer
             svt_get_empty_object(context_ptr->rate_control_output_results_fifo_ptr,
                                  &rate_control_results_wrapper_ptr);
@@ -3603,18 +3530,11 @@ void *rate_control_kernel(void *input_ptr) {
                 // check if all the frames in the interval have arrived
                 if (parentpicture_control_set_ptr->rate_control_param_ptr->size ==
                     parentpicture_control_set_ptr->rate_control_param_ptr->processed_frame_number) {
-#if FTR_GOP_CONST_RC
                     rc_param_reset(parentpicture_control_set_ptr->rate_control_param_ptr);
-#else
-                    parentpicture_control_set_ptr->rate_control_param_ptr->size = -1;
-                    parentpicture_control_set_ptr->rate_control_param_ptr->processed_frame_number =
-                        0;
-#endif
                 }
                 svt_release_mutex(scs_ptr->encode_context_ptr->rc_param_queue_mutex);
             }
             if (scs_ptr->static_config.rate_control_mode) {
-#if FTR_GOP_CONST_RC
                 if (scs_ptr->static_config.gop_constraint_rc) {
                     av1_rc_postencode_update_gop_const(parentpicture_control_set_ptr);
                     // Qindex calculating
@@ -3626,12 +3546,6 @@ void *rate_control_kernel(void *input_ptr) {
                     if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR)
                         svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
                 }
-#else
-                av1_rc_postencode_update(parentpicture_control_set_ptr);
-                // Qindex calculating
-                if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR)
-                    svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
-#endif
             }
             // Queue variables
             if (scs_ptr->static_config.max_bit_rate)

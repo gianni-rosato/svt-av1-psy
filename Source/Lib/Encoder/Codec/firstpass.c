@@ -277,14 +277,12 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
         fps.coded_error    = (double)(stats->coded_error >> 8) + min_err;
         fps.sr_coded_error = (double)(stats->sr_coded_error >> 8) + min_err;
         fps.intra_error     = (double)(stats->intra_error >> 8) + min_err;
-#if EN_HL2
         // if blocks are skipped, the errors need to be updated
         if (bypass_blk_step == 2) {
             fps.coded_error *= 3;
             fps.sr_coded_error *= 3;
             fps.intra_error *= 3;
         }
-#endif
         fps.count           = 1.0;
         fps.pcnt_inter      = (double)stats->inter_count / num_mbs;
         fps.pcnt_second_ref = (double)stats->second_ref_count / num_mbs;
@@ -630,9 +628,6 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
  ************************************************/
 void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, SequenceControlSet *scs_ptr,
                                       EbInputResolution input_resolution) {
-#if !OPT_M13
-    me_context_ptr->stat_factor = 100;
-#endif
     // HME/ME default settings
     me_context_ptr->num_hme_sa_w = 2;
     me_context_ptr->num_hme_sa_h = 2;

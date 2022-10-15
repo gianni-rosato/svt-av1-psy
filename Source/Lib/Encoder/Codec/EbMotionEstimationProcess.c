@@ -84,11 +84,7 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){480, 480};
         }
     }
-#if OPT_M5
     else if (pcs_ptr->enc_mode <= ENC_M4) {
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M5) {
-#endif
         me_context_ptr->hme_l0_sa.sa_min = (SearchArea){32, 32};
         me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
     }
@@ -240,35 +236,6 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
             me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 1 };
         }
     }
-#if !OPT_M11
-    else if (pcs_ptr->enc_mode <= ENC_M11) {
-        if (hierarchical_levels <= 3) {
-            if (input_resolution < INPUT_SIZE_720p_RANGE) {
-                me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
-                me_context_ptr->me_sa.sa_max = (SearchArea){16, 9};
-            } else if (input_resolution < INPUT_SIZE_1080p_RANGE) {
-                me_context_ptr->me_sa.sa_min = (SearchArea){8, 1};
-                me_context_ptr->me_sa.sa_max = (SearchArea){16, 7};
-            } else if (input_resolution < INPUT_SIZE_4K_RANGE) {
-                me_context_ptr->me_sa.sa_min = (SearchArea){8, 1};
-                me_context_ptr->me_sa.sa_max = (SearchArea){8, 7};
-            } else {
-                me_context_ptr->me_sa.sa_min = (SearchArea){8, 1};
-                me_context_ptr->me_sa.sa_max = (SearchArea){8, 1};
-            }
-        }
-        else {
-            if (input_resolution < INPUT_SIZE_4K_RANGE) {
-                me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 5 };
-                me_context_ptr->me_sa.sa_max = (SearchArea) { 16, 9 };
-            }
-            else {
-                me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 1 };
-                me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 1 };
-            }
-        }
-    }
-#endif
     else if (pcs_ptr->enc_mode <= ENC_M12) {
         if (input_resolution < INPUT_SIZE_720p_RANGE) {
             me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
@@ -417,7 +384,6 @@ void set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_le
 /*set the skip_frame flag for ipp*/
 void set_skip_frame_in_ipp(PictureParentControlSet * pcs,MeContext *ctx) {
     ctx->skip_frame = 0;
-#if EN_HL2
     int8_t max_heirachical_level = (int8_t)pcs->scs_ptr->max_heirachical_level;
     int8_t enc_mode = pcs->scs_ptr->static_config.enc_mode;
     int8_t pass = (int8_t)pcs->scs_ptr->static_config.pass;
@@ -450,29 +416,6 @@ void set_skip_frame_in_ipp(PictureParentControlSet * pcs,MeContext *ctx) {
             else
                 ctx->skip_frame = 0;
     }
-#else
-    if (!pcs->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass) {
-        if (pcs->scs_ptr->static_config.enc_mode < ENC_M8)
-            ctx->skip_frame = 0;
-        else if (pcs->scs_ptr->static_config.pass == ENC_SINGLE_PASS)
-            if ((pcs->scs_ptr->static_config.enc_mode < ENC_M10 && (pcs->picture_number > 3 && pcs->picture_number % 4 > 0)) ||
-                (pcs->scs_ptr->static_config.enc_mode >= ENC_M10 && (pcs->picture_number > 5 && pcs->picture_number % 6 > 0)) )
-                ctx->skip_frame = 1;
-    }
-    else {
-        if ((pcs->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 1) &&
-            (pcs->picture_number % 8 > 0))
-            ctx->skip_frame = 1;
-        else if ((pcs->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 2) &&
-            (pcs->picture_number > 7 && pcs->picture_number % 8 > 0))
-            ctx->skip_frame = 1;
-        else
-            if (pcs->picture_number > 3 && pcs->picture_number % 4 > 0)
-                ctx->skip_frame = 1;
-            else
-                ctx->skip_frame = 0;
-    }
-#endif
 }
 /*configure PreHme control*/
 void set_prehme_ctrls(MeContext *context, uint8_t level) {
@@ -543,14 +486,6 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
     context_ptr->me_context_ptr->me_search_method  = SUB_SAD_SEARCH;
 
-#if !OPT_M13
-    if (pcs_ptr->sc_class1)
-        context_ptr->me_context_ptr->stat_factor = 100;
-    else if (pcs_ptr->enc_mode <= ENC_M12)
-        context_ptr->me_context_ptr->stat_factor = 100;
-    else
-        context_ptr->me_context_ptr->stat_factor = 80;
-#endif
 
     if (pcs_ptr->sc_class1) {
         context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
@@ -599,36 +534,20 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     } else {
         if (enc_mode <= ENC_MRS)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
-#if OPT_M2
         else if (enc_mode <= ENC_M1)
-#else
-        else if (enc_mode <= ENC_M2)
-#endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
-#if OPT_M2
         else if (enc_mode <= ENC_M2) {
             if (pcs_ptr->temporal_layer_index == 0)
                 set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
             else
                 set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
         }
-#endif
-#if OPT_MRP
-#if OPT_M6
-#if OPT_M7
         else if (enc_mode <= ENC_M7) {
-#else
-        else if (enc_mode <= ENC_M6) {
-#endif
-#else
-        else if (enc_mode <= ENC_M5) {
-#endif
             if (pcs_ptr->temporal_layer_index == 0)
                 set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
             else
                 set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
         }
-#endif
         else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
     }
@@ -640,23 +559,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 5);
     else if (enc_mode <= ENC_MRS)
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
-#if OPT_M5
     else if (enc_mode <= ENC_M4)
-#else
-    else if (enc_mode <= ENC_M5)
-#endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 1);
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
-#if OPT_M6
-#if OPT_M5_2
     if (enc_mode <= ENC_M4)
-#else
-    if (enc_mode <= ENC_M5)
-#endif
-#else
-    if (enc_mode <= ENC_M6)
-#endif
         context_ptr->me_context_ptr->prune_me_candidates_th = 0;
     else
         context_ptr->me_context_ptr->prune_me_candidates_th = 65;
@@ -671,11 +578,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         else
             context_ptr->me_context_ptr->me_early_exit_th = 0;
     }
-#if OPT_M11
     else if (pcs_ptr->enc_mode <= ENC_M10)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M11)
-#endif
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
     else
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 9;
@@ -769,9 +672,6 @@ EbErrorType tf_signal_derivation_me_kernel_oq(PictureParentControlSet *  pcs_ptr
     set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
 
     context_ptr->me_context_ptr->me_early_exit_th = 0;
-#if !OPT_M13
-    context_ptr->me_context_ptr->stat_factor             = 100;
-#endif
     context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
     context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
     context_ptr->me_context_ptr->skip_frame = 0;

@@ -28,11 +28,7 @@ extern "C" {
  * has been modified, and reset anytime the major API version has
  * been changed. Used to keep track if a field has been added or not.
  */
-#if FTR_GOP_CONST_RC
 #define SVT_AV1_ENC_ABI_VERSION 5
-#else
-#define SVT_AV1_ENC_ABI_VERSION 4
-#endif
 
 //***HME***
 
@@ -878,7 +874,6 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint8_t max_qm_level;
 
-#if FTR_GOP_CONST_RC
     /**
      * @brief gop_constraint_rc
      *
@@ -891,7 +886,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0.
      */
     Bool gop_constraint_rc;
-#endif
 } EbSvtAv1EncConfiguration;
 
 /**

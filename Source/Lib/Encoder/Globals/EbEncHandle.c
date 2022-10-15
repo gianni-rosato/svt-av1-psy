@@ -120,14 +120,6 @@ typedef struct logicalProcessorGroup {
 static processorGroup           *lp_group = NULL;
 #endif
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
-#if !FIX_DISALLOW_CTRL
-#if OPT_NSQ_M5
-uint8_t get_disallow_nsq(EncMode enc_mode, Bool is_islice);
-#else
-uint8_t get_disallow_nsq(EncMode enc_mode);
-#endif
-uint8_t get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
-#endif
 extern uint32_t tot_past_refs[];
 uint32_t  get_num_refs_in_one_mg(PredictionStructure *pred_struct_ptr);
 
@@ -2554,9 +2546,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[0].use_fast_filter,
             &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[0].subpel_early_exit = 0;
-#endif
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].enabled = 1;
         scs_ptr->tf_params_per_type[1].num_past_pics = 3;
@@ -2582,9 +2572,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[1].use_fast_filter,
             &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[1].subpel_early_exit = 0;
-#endif
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 1;
         scs_ptr->tf_params_per_type[2].num_past_pics = 1;
@@ -2610,9 +2598,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[2].use_fast_filter,
             &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[2].subpel_early_exit = 0;
-#endif
         break;
 
     case 2:
@@ -2626,18 +2612,10 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].quarter_pel_mode = 1;
         scs_ptr->tf_params_per_type[0].eight_pel_mode = 1;
         scs_ptr->tf_params_per_type[0].do_chroma = 1;
-#if OPT_TF_1
         scs_ptr->tf_params_per_type[0].pred_error_32x32_th = 8 * 32 * 32;
-#else
-        scs_ptr->tf_params_per_type[0].pred_error_32x32_th = 0;
-#endif
         scs_ptr->tf_params_per_type[0].sub_sampling_shift = 0;
         scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
-#if OPT_TF
         scs_ptr->tf_params_per_type[0].use_medium_filter = 1;
-#else
-        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
-#endif
         scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 0;
         scs_ptr->tf_params_per_type[0].use_2tap = 0;
         scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 0;
@@ -2646,9 +2624,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[0].use_fast_filter,
             &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[0].subpel_early_exit = 0;
-#endif
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].enabled = 1;
         scs_ptr->tf_params_per_type[1].num_past_pics = 3;
@@ -2662,18 +2638,10 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 1;
         scs_ptr->tf_params_per_type[1].eight_pel_mode = 1;
         scs_ptr->tf_params_per_type[1].do_chroma = 1;
-#if OPT_TF_1
         scs_ptr->tf_params_per_type[1].pred_error_32x32_th = 8 * 32 * 32;
-#else
-        scs_ptr->tf_params_per_type[1].pred_error_32x32_th = 0;
-#endif
         scs_ptr->tf_params_per_type[1].sub_sampling_shift = 0;
         scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
-#if OPT_TF
         scs_ptr->tf_params_per_type[1].use_medium_filter = 1;
-#else
-        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
-#endif
         scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
         scs_ptr->tf_params_per_type[1].use_2tap = 0;
         scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0;
@@ -2682,9 +2650,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[1].use_fast_filter,
             &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[1].subpel_early_exit = 0;
-#endif
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 1;
         scs_ptr->tf_params_per_type[2].num_past_pics = 1;
@@ -2698,18 +2664,10 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[2].quarter_pel_mode = 1;
         scs_ptr->tf_params_per_type[2].eight_pel_mode = 1;
         scs_ptr->tf_params_per_type[2].do_chroma = 1;
-#if OPT_TF_1
         scs_ptr->tf_params_per_type[2].pred_error_32x32_th = 8 * 32 * 32;
-#else
-        scs_ptr->tf_params_per_type[2].pred_error_32x32_th = 0;
-#endif
         scs_ptr->tf_params_per_type[2].sub_sampling_shift = 0;
         scs_ptr->tf_params_per_type[2].use_fast_filter = 0;
-#if OPT_TF
         scs_ptr->tf_params_per_type[2].use_medium_filter = 1;
-#else
-        scs_ptr->tf_params_per_type[2].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
-#endif
         scs_ptr->tf_params_per_type[2].avoid_2d_qpel = 0;
         scs_ptr->tf_params_per_type[2].use_2tap = 0;
         scs_ptr->tf_params_per_type[2].use_intra_for_noise_est = 0;
@@ -2718,9 +2676,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[2].use_fast_filter,
             &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[2].subpel_early_exit = 0;
-#endif
         break;
     case 3:
         // I_SLICE TF Params
@@ -2745,9 +2701,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[0].use_fast_filter,
             &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[0].subpel_early_exit = 1;
-#endif
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].enabled = 1;
         scs_ptr->tf_params_per_type[1].num_past_pics = 2;
@@ -2773,9 +2727,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[1].use_fast_filter,
             &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[1].subpel_early_exit = 1;
-#endif
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 1;
         scs_ptr->tf_params_per_type[2].num_past_pics = 1;
@@ -2801,9 +2753,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[2].use_fast_filter,
             &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[2].subpel_early_exit = 1;
-#endif
         break;
 
     case 4:
@@ -2829,9 +2779,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[0].use_fast_filter,
             &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[0].me_exit_th, 35, 16 * 16);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[0].subpel_early_exit = 1;
-#endif
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].enabled = 1;
         scs_ptr->tf_params_per_type[1].num_past_pics = 1;
@@ -2857,9 +2805,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[1].use_fast_filter,
             &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[1].me_exit_th, 35, 16 * 16);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[1].subpel_early_exit = 1;
-#endif
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 0;
 
@@ -2888,9 +2834,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[0].use_fast_filter,
             &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[0].me_exit_th, 35, 16 * 16);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[0].subpel_early_exit = 1;
-#endif
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].enabled = 1;
         scs_ptr->tf_params_per_type[1].num_past_pics = 1;
@@ -2916,9 +2860,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             scs_ptr->tf_params_per_type[1].use_fast_filter,
             &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
             &scs_ptr->tf_params_per_type[1].me_exit_th, 35, 16 * 16);
-#if OPT_TF_2
         scs_ptr->tf_params_per_type[1].subpel_early_exit = 1;
-#endif
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 0;
         break;
@@ -2938,9 +2880,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].num_future_pics = 0;
         scs_ptr->tf_params_per_type[1].max_num_future_pics = 0;
-#if FIX_LD_R2R
         scs_ptr->tf_params_per_type[1].max_num_past_pics = 1;
-#endif
 
         scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0; //I frame not TF-ed
 
@@ -3001,18 +2941,10 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     if (do_tf == 0) {
         tf_level = 0;
     }
-#if OPT_TF
     else if (enc_mode <= ENC_MR) {
-#else
-    else if (enc_mode <= ENC_M0) {
-#endif
         tf_level = 1;
     }
-#if OPT_M6
     else if (enc_mode <= ENC_M6) {
-#else
-    else if (enc_mode <= ENC_M5) {
-#endif
         tf_level = 2;
     }
     else if (enc_mode <= ENC_M7) {
@@ -3176,10 +3108,8 @@ void set_ipp_pass_ctrls(
         assert(0);
         break;
     }
-#if EN_HL2
     if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.hierarchical_levels <= 2 && scs_ptr->static_config.enc_mode >= ENC_M8)
         ipp_pass_ctrls->bypass_blk_step = 1;
-#endif
 }
 
 void set_mid_pass_ctrls(
@@ -3229,16 +3159,8 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
     }
     else if (enc_mode <= ENC_M4)
         tpl_level = 1;
-#if OPT_M6
     else if (enc_mode <= ENC_M6)
-#else
-    else if (enc_mode <= ENC_M5)
-#endif
         tpl_level = 2;
-#if !OPT_M6
-    else if (enc_mode <= ENC_M7)
-        tpl_level = 3;
-#endif
     else if (enc_mode <= ENC_M8)
         tpl_level = 4;
     else if (enc_mode <= ENC_M9)
@@ -3590,19 +3512,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.hierarchical_levels = 4;
         SVT_WARN("Fwd key frame is only supported for hierarchical levels 4 at this point. Hierarchical levels are set to 4\n");
     }
-#if OPT_NSQ_M5
     bool disallow_nsq = true;
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
         disallow_nsq = MIN(disallow_nsq, svt_aom_get_disallow_nsq(scs_ptr->static_config.enc_mode, is_islice));
     bool disallow_4x4 = true;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs_ptr->static_config.enc_mode, slice_type));
-#else
-    uint8_t disallow_nsq = get_disallow_nsq(scs_ptr->static_config.enc_mode);
-    uint8_t disallow_4x4 = 1;
-    for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
-        disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(scs_ptr->static_config.enc_mode, slice_type));
-#endif
     if (scs_ptr->super_block_size == 128) {
         scs_ptr->geom_idx = GEOM_2;
         scs_ptr->max_block_cnt = 4421;
@@ -3714,18 +3629,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else if (scs_ptr->static_config.enc_mode <= ENC_M1) {
         mrp_level = 2;
     }
-#if OPT_MRP
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
-#else
-    else if (scs_ptr->static_config.enc_mode <= ENC_M4) {
-#endif
         mrp_level = 3;
     }
-#if !OPT_MRP
-    else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
-        mrp_level = 4;
-    }
-#endif
     else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
         mrp_level = 5;
     }
@@ -3743,11 +3649,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
 
     set_mrp_ctrl(scs_ptr, mrp_level);
-#if FTR_GOP_CONST_RC
     scs_ptr->is_short_clip = scs_ptr->static_config.gop_constraint_rc ? 1 : 0; // set to 1 if multipass and less than 200 frames in resourcecordination
-#else
-    scs_ptr->is_short_clip = 0; // set to 1 if multipass and less than 200 frames in resourcecordination
-#endif
 
     // Variance is required for scene change detection and segmentation-based quantization and subjective mode tf control
     if (scs_ptr->static_config.enable_adaptive_quantization == 1 ||
@@ -3761,12 +3663,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     scs_ptr->resize_pending_params.resize_state = ORIG;
     scs_ptr->resize_pending_params.resize_denom = SCALE_NUMERATOR;
-#if OPT_LAMBDA_MODULATION
     scs_ptr->stats_based_sb_lambda_modulation = scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS &&
                                                 scs_ptr->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR
         ? 1
         : 0;
-#endif
 }
 /******************************************************
  * Read Stat from File
@@ -4069,9 +3969,7 @@ void copy_api_from_app(
     scs_ptr->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
     scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
     scs_ptr->static_config.mbr_over_shoot_pct  = ((EbSvtAv1EncConfiguration*)config_struct)->mbr_over_shoot_pct;
-#if FTR_GOP_CONST_RC
     scs_ptr->static_config.gop_constraint_rc   = ((EbSvtAv1EncConfiguration*)config_struct)->gop_constraint_rc;
-#endif
     scs_ptr->static_config.maximum_buffer_size_ms   = ((EbSvtAv1EncConfiguration*)config_struct)->maximum_buffer_size_ms;
     scs_ptr->static_config.starting_buffer_level_ms = ((EbSvtAv1EncConfiguration*)config_struct)->starting_buffer_level_ms;
     scs_ptr->static_config.optimal_buffer_level_ms  = ((EbSvtAv1EncConfiguration*)config_struct)->optimal_buffer_level_ms;

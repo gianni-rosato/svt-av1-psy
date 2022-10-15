@@ -154,7 +154,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if FTR_GOP_CONST_RC
     if (config->gop_constraint_rc &&
         ((config->rate_control_mode != SVT_AV1_RC_MODE_VBR) || config->intra_period_length < 119)) {
         SVT_ERROR(
@@ -175,7 +174,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             "available for demos, experimentation, and further development uses and should not be "
             "used for benchmarking until fully implemented.\n",
             channel_number + 1);
-#endif
     if (config->force_key_frames &&
         (config->rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF ||
          config->pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)) {
@@ -704,19 +702,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if EN_HL2
     if (config->hierarchical_levels < 2 || config->hierarchical_levels > 5) {
         SVT_ERROR("Instance %u: Only hierarchical levels 2-5 is currently supported.\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#else
-    if (config->hierarchical_levels < 3 || config->hierarchical_levels > 5) {
-        SVT_ERROR("Instance %u: Only hierarchical levels 3-5 is currently supported.\n",
-                  channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif
     if (config->rate_control_mode == SVT_AV1_RC_MODE_VBR && config->intra_period_length == -1) {
         SVT_ERROR(
             "Instance %u: keyint = -1 is not supported for modes other than CRF rate control "
@@ -1007,9 +997,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->under_shoot_pct          = 25;
     config_ptr->over_shoot_pct           = 25;
     config_ptr->mbr_over_shoot_pct       = 50;
-#if FTR_GOP_CONST_RC
     config_ptr->gop_constraint_rc = 0;
-#endif
     config_ptr->maximum_buffer_size_ms   = 1000; // default settings for CBR
     config_ptr->starting_buffer_level_ms = 600; // default settings for CBR
     config_ptr->optimal_buffer_level_ms  = 600; // default settings for CBR
@@ -1859,9 +1847,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"qm-min", &config_struct->min_qm_level},
         {"qm-max", &config_struct->max_qm_level},
         {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},
-#if FTR_GOP_CONST_RC
         {"gop-constraint-rc", &config_struct->gop_constraint_rc},
-#endif
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

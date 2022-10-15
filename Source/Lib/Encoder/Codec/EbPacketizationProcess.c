@@ -466,11 +466,7 @@ void *packetization_kernel(void *input_ptr) {
             int64_t sse       = parent_pcs_ptr->luma_sse;
             uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
             uint8_t qindex    = parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-#if OPT_LAMBDA_MODULATION
             int32_t rdmult = svt_aom_compute_rd_mult(pcs_ptr, qindex, qindex, bit_depth);
-#else
-            int32_t rdmult = svt_aom_compute_rd_mult(pcs_ptr->parent_pcs_ptr, qindex, bit_depth);
-#endif
 
             double rdcost = RDCOST_DBL_WITH_NATIVE_BD_DIST(
                 rdmult, rate, sse, scs_ptr->static_config.encoder_bit_depth);

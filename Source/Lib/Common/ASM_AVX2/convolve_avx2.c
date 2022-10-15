@@ -18,9 +18,7 @@
 #include "EbMemory_AVX2.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
-#if OPT_QUANT_INV_QUANT
 #include "EbUtility.h"
-#endif
 
 static INLINE void sr_y_round_store_32_avx2(const __m256i res[2], uint8_t *const dst) {
     __m256i r[2];
@@ -2062,7 +2060,6 @@ void svt_av1_wedge_compute_delta_squares_avx2(int16_t *d, const int16_t *a, cons
         N -= 64;
     } while (N);
 }
-#if OPT_QUANT_INV_QUANT
 static INLINE int32_t sum_to_int32(__m256i sum_256) {
     __m128i sum_128 = _mm_add_epi32(_mm256_castsi256_si128(sum_256),
                                     _mm256_extractf128_si256(sum_256, 1));
@@ -2103,4 +2100,3 @@ int32_t svt_av1_compute_cul_level_avx2(const int16_t *const scan, const int32_t 
         return (cul_level + (2 << COEFF_CONTEXT_BITS));
     return cul_level;
 }
-#endif

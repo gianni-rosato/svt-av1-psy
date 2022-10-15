@@ -1439,11 +1439,7 @@ EbErrorType downscaled_source_buffer_desc_ctor(EbPictureBufferDesc **picture_ptr
 
 EbErrorType sb_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 
-#if CLN_B64_RENAMING
 EbErrorType b64_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
-#else
-EbErrorType sb_params_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
-#endif
 
 /*
  * Get the index of downscaled input pictures or reference pictures in 2D array
@@ -1512,11 +1508,7 @@ void scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_
                             spr_params.encoding_width * spr_params.encoding_height);
 
     // create new picture level sb_params and sb_geom
-#if CLN_B64_RENAMING
     b64_geom_init_pcs(scs_ptr, pcs_ptr);
-#else
-    sb_params_init_pcs(scs_ptr, pcs_ptr);
-#endif
     sb_geom_init_pcs(scs_ptr, pcs_ptr);
 
     if (pcs_ptr->frame_superres_enabled == TRUE || pcs_ptr->frame_resize_enabled == TRUE) {

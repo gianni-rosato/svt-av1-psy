@@ -417,10 +417,8 @@ typedef struct SequenceControlSet {
 
     // If true, calculate and store the SB-based variance
     uint8_t calculate_variance;
-#if OPT_LAMBDA_MODULATION
     // Whether to modulation lambda using TPL stats or/and ME-stats or/and the percentage of INTRA selection at reference frame(s)
     bool stats_based_sb_lambda_modulation;
-#endif
     // Desired dimensions for an externally triggered resize
     ResizePendingParams resize_pending_params;
 } SequenceControlSet;
@@ -435,11 +433,7 @@ typedef struct EbSequenceControlSetInstance {
      **************************************/
 extern EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr);
 
-#if CLN_B64_RENAMING
 extern EbErrorType b64_geom_init(SequenceControlSet *scs_ptr);
-#else
-extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr);
-#endif
 
 extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
                                            uint32_t           input_size);

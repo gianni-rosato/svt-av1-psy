@@ -562,9 +562,6 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 
     pcs_ptr->me_segments_total_count = (uint16_t)(pcs_ptr->me_segments_column_count *
                                                   pcs_ptr->me_segments_row_count);
-#if !CLN_B64_RENAMING
-    pcs_ptr->sb_total_count_pix = pcs_ptr->b64_total_count;
-#endif
     pcs_ptr->tpl_disp_coded_sb_count = 0;
 
     pcs_ptr->tpl_src_data_ready  = 0;
@@ -708,11 +705,7 @@ void setup_two_pass(SequenceControlSet *scs_ptr) {
             //less than 200 frames or gop_constraint_rc, used in VBR and set in multipass encode
             scs_ptr->is_short_clip = scs_ptr->twopass.stats_buf_ctx->total_stats->count < 200
                 ? 1
-#if FTR_GOP_CONST_RC
                 : scs_ptr->is_short_clip;
-#else
-                : 0; //less than 200 frames, used in VBR and set in multipass encode
-#endif
         }
     } else if (scs_ptr->lap_rc)
         svt_av1_init_single_pass_lap(scs_ptr);
@@ -837,11 +830,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 scs_ptr->max_input_luma_height;
             derive_input_resolution(&scs_ptr->input_resolution, input_size);
 
-#if CLN_B64_RENAMING
             b64_geom_init(scs_ptr);
-#else
-            sb_params_init(scs_ptr);
-#endif
             sb_geom_init(scs_ptr);
 
             // sf_identity
@@ -976,9 +965,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             }
             // Set Picture Control Flags
             pcs_ptr->idr_flag = scs_ptr->encode_context_ptr->initial_picture;
-#if FIX_CRA_R2R
             pcs_ptr->cra_flag = 0;
-#endif
             pcs_ptr->scene_change_flag = FALSE;
             pcs_ptr->qp_on_the_fly     = FALSE;
             pcs_ptr->b64_total_count   = scs_ptr->b64_total_count;

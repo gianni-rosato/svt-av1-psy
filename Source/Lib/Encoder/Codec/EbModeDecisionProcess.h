@@ -18,9 +18,6 @@
 #include "EbSystemResourceManager.h"
 #include "EbPictureBufferDesc.h"
 #include "EbEntropyCoding.h"
-#if !CLN_COEFF_BUFFER
-#include "EbTransQuantBuffers.h"
-#endif
 #include "EbReferenceObject.h"
 #include "EbNeighborArrays.h"
 #include "EbObject.h"
@@ -124,10 +121,8 @@ typedef struct InterCompCtrls {
     uint8_t do_near_near; // if true, test all compound types for near_near
     uint8_t do_nearest_near_new; // if true, test all compound types for nearest_near_new
     uint8_t do_3x3_bi; // if true, test all compound types for 3x3_bipred
-#if OPT_INTER_COMP
     uint8_t
         skip_mvp_on_ref_info; // Skip MVP compound based on ref frame type and neighbour ref frame types
-#endif
     uint8_t
             pred0_to_pred1_mult; // multiplier to the pred0_to_pred1_sad; 0: no pred0_to_pred1_sad-based pruning, >= 1: towards more inter-inter compound
     uint8_t use_rate; // if true, use rate @ compound params derivation
@@ -152,17 +147,10 @@ typedef struct TxtControls {
         early_exit_dist_th; // Per unit distortion TH; if best TX distortion is below the TH, skip remaining TX types (0 OFF, higher = more aggressive)
     uint32_t
         early_exit_coeff_th; // If best TX number of coeffs is less than the TH, skip remaining TX types (0 OFF, higher = more aggressive)
-#if FTR_USE_SATD_TXT
-#if OPT_SATD_PER_TYPE
     uint16_t
         satd_early_exit_th_intra; // If dev. of satd of current tx_type to best is greater than TH, exit early from testing current tx_type. 0: off; larger value is safer
     uint16_t
         satd_early_exit_th_inter; // If dev. of satd of current tx_type to best is greater than TH, exit early from testing current tx_type. 0: off; larger value is safer
-#else
-    uint16_t
-        satd_early_exit_th; // If dev. of satd of current tx_type to best is greater than TH, exit early from testing current tx_type. 0: off; larger value is safer
-#endif
-#endif
 } TxtControls;
 typedef struct TxsCycleRControls {
     uint8_t  enabled; // On/Off feature control
@@ -181,13 +169,8 @@ typedef struct RefPruningControls {
     uint8_t  enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
     uint32_t max_dev_to_best
         [TOT_INTER_GROUP]; // 0: OFF; 1: limit the injection to the best references based on distortion
-#if OPT_MRP
     uint8_t use_tpl_info_offset;
     uint8_t check_closest_multiplier;
-#else
-    uint32_t ref_idx_2_offset;
-    uint32_t ref_idx_3_offset;
-#endif
     uint8_t closest_refs
         [TOT_INTER_GROUP]; // 0: OFF; 1: limit the injection to the closest references based on distance (LAST/BWD)
 } RefPruningControls;
@@ -199,10 +182,8 @@ typedef struct DepthRemovalCtrls {
         disallow_below_32x32; // remove 16x16 blocks and below based on the sb_64x64 (me_distortion, variance)
     uint8_t
         disallow_below_16x16; // remove 8x8 blocks and below based on the sb_64x64 (me_distortion, variance)
-#if OPT_DEPTH_REMOVAL
     uint8_t
         disallow_4x4; // remove 8x8 blocks and below based on the sb_64x64 (me_distortion, variance)
-#endif
 } DepthRemovalCtrls;
 typedef struct DepthCtrls {
     int8_t
@@ -226,16 +207,12 @@ typedef struct DepthRefinementCtrls {
     uint16_t max_cost_multiplier; // the max cost beyond which the decrement is ignored
     uint8_t  max_band_cnt; // the number of band(s)
     int64_t  decrement_per_band[MAX_RANGE_CNT]; // the offset per band
-#if OPT_DEPTH_REFINMENT
     int64_t
         limit_4x4_depth; // an offset (towards more aggressive pruning) when the child-depth is 4x4
-#endif
-#if FTR_USE_PD0_COEFF
     unsigned int
         sub_to_current_pd0_coeff_th; // If current depth has fewer than sub_to_current_pd0_coeff_th PD0 coeffs, subtract sub_to_current_pd0_coeff_offset from
     // sub_to_current_th towards skipping child depths (doesn't work with very light PD0)
     int sub_to_current_pd0_coeff_offset;
-#endif
 } DepthRefinementCtrls;
 typedef struct SubresCtrls {
     uint8_t step; // Residual sub-sampling step (0:OFF)
@@ -404,24 +381,17 @@ typedef struct NicPruningCtrls {
     // mdsx_cand_th = base_th + sq_offset_th + intra_class_offset_th
 
     // Post mds0
-#if OPT_MDS0_PRUNE
     uint64_t mds1_cand_base_th_intra; // Post-MDS0 candidate pruning TH for intra classes
     uint64_t mds1_cand_base_th_inter; // Post-MDS0 candidate pruning TH for inter classes
-#else
-    uint64_t mds1_cand_base_th; // base_th
-#endif
 
-#if FTR_MDS_PRUNE
     uint16_t
         mds1_cand_th_rank_factor; // Use a more aggressive MDS0 candidate pruning TH based on how the candidate is ranked compared to others
     // (2nd best candidate will use a safer pruning TH than the 3rd best, and so on).
     // The new_th = mds1_cand_base_th / (mds1_cand_th_rank_factor * cand_count); where cand_count is the number of
     // candidates with better cost than the current candidate. 0 is off. Higher is more aggressive.
-#endif
 
     // Post mds1
     uint64_t mds2_cand_base_th;
-#if FTR_MDS1_PRUNE
     uint16_t
         mds2_cand_th_rank_factor; // Use a more aggressive MDS1 candidate pruning TH based on how the candidate is ranked compared to others
     // (2nd best candidate will use a safer pruning TH than the 3rd best, and so on).
@@ -430,7 +400,6 @@ typedef struct NicPruningCtrls {
     uint16_t
         mds2_relative_dev_th; // Prune candidates based on the relative deviation compared to the previous candidate. Deviations are still computed
     // compared to the best candidate. If dev > previous_dev + th then prune the candidate.
-#endif
 
     // Post mds2
     uint64_t mds3_cand_base_th;
@@ -466,12 +435,8 @@ typedef struct TxsControls {
 typedef struct WmCtrls {
     uint8_t enabled;
     uint8_t use_wm_for_mvp; // allow/disallow MW for MVP candidates
-#if FIX_CHECK_OBMC_MVS
     uint8_t
         refinement_iterations; // Number of iterations to use in the refinement search; each iteration searches the cardinal neighbours around the best-so-far position; 0 is no refinement
-#else
-    uint8_t  num_new_mv_refinement; // [0-12] number of refinement positions around NEW_MVs to use
-#endif
 } WmCtrls;
 typedef struct UvCtrls {
     uint8_t enabled;
@@ -618,11 +583,8 @@ typedef struct CandReductionCtrls {
     UseNeighbouringModeCtrls use_neighbouring_mode_ctrls;
     CandEliminationCtlrs     cand_elimination_ctrls;
     uint8_t                  reduce_unipred_candidates;
-#if FTR_MDS0_INTRA_OPT
     uint8_t mds0_reduce_intra;
-#endif
 } CandReductionCtrls;
-#if FTR_BLOCK4x4_PER_SB
 typedef struct Skip4x4DepthCtrls {
     uint8_t enabled;
     float
@@ -632,7 +594,6 @@ typedef struct Skip4x4DepthCtrls {
     uint8_t
         skip_all; // whether to skip all or only next depth; 0: skip only next depth; 1: skip all lower depths
 } Skip4x4DepthCtrls;
-#endif
 typedef struct ModeDecisionContext {
     EbDctor dctor;
 
@@ -649,9 +610,7 @@ typedef struct ModeDecisionContext {
     BlkStruct                    *md_blk_arr_nsq;
     uint8_t                      *avail_blk_flag;
     uint8_t                      *tested_blk_flag; //tells whether this CU is tested in MD.
-#if FTR_BLOCK4x4_PER_SB
     uint8_t *do_not_process_blk;
-#endif
     MdcSbData *mdc_sb_array;
 
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
@@ -678,10 +637,6 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *txfm_context_array;
     NeighborArrayUnit *leaf_partition_neighbor_array;
     NeighborArrayUnit *skip_coeff_neighbor_array;
-#if !CLN_COEFF_BUFFER
-    // Transform and Quantization Buffers
-    EbTransQuantBuffers *trans_quant_buffers_ptr;
-#endif
     struct EncDecContext *enc_dec_context_ptr;
 
     uint64_t *fast_cost_array;
@@ -715,9 +670,7 @@ typedef struct ModeDecisionContext {
     uint8_t          hbd_mode_decision;
     uint8_t          encoder_bit_depth;
     uint8_t          qp_index;
-#if OPT_LAMBDA_MODULATION
     uint8_t me_q_index;
-#endif
     uint64_t         three_quad_energy;
     uint32_t         txb_1d_offset;
     Bool             uv_intra_comp_only;
@@ -829,11 +782,9 @@ typedef struct ModeDecisionContext {
     uint32_t max_part0_to_part1_dev;
     uint32_t
         skip_hv4_on_best_part; // if true, skip H4/V4 shapes when best partition so far is not H/V
-#if FTR_DEPTH_EARLY_EXIT
     uint8_t
         md_depth_early_exit_th; // Skip testing remaining blocks at the current depth if (curr_cost * 100 > pic_depth_early_exit_th * parent_cost)
     // [0-100], 0 is OFF, lower percentage is more aggressive
-#endif
     IntraCtrls        intra_ctrls;
     MdRateEstCtrls    rate_est_ctrls;
     uint8_t           shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
@@ -848,9 +799,7 @@ typedef struct ModeDecisionContext {
     DepthRemovalCtrls depth_removal_ctrls;
     DepthCtrls        depth_ctrls; // control which depths can be considered in PD1
     DepthRefinementCtrls depth_refinement_ctrls;
-#if FTR_BLOCK4x4_PER_SB
     Skip4x4DepthCtrls skip_4x4_depth_ctrls;
-#endif
     int64_t              parent_to_current_deviation;
     int64_t              child_to_current_deviation;
     SubresCtrls          subres_ctrls;
@@ -884,10 +833,8 @@ typedef struct ModeDecisionContext {
     EbPictureBufferDesc                       *recon_coeff_ptr[TX_TYPES];
     EbPictureBufferDesc                       *recon_ptr[TX_TYPES];
     EbPictureBufferDesc                       *quant_coeff_ptr[TX_TYPES];
-#if CLN_COEFF_BUFFER
     EbPictureBufferDesc *tx_coeffs; // buffer used to store transformed coeffs during TX/Q/IQ.
         // TX'd coeffs are only needed temporarily, so no need to save for each TX type.
-#endif
 
     uint8_t              skip_intra;
     EbPictureBufferDesc *temp_residual_ptr;
@@ -1007,11 +954,7 @@ extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext
                                 uint32_t segment_index);
 
 extern void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
-#if OPT_LAMBDA_MODULATION
                                        uint8_t sb_qp, uint8_t me_sb_qp);
-#else
-                                       uint8_t sb_qp);
-#endif
 extern void md_cfl_rd_pick_alpha(PictureControlSet           *pcs_ptr,
                                  ModeDecisionCandidateBuffer *candidate_buffer,
                                  ModeDecisionContext         *context_ptr,

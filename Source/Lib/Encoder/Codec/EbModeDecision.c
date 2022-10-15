@@ -102,14 +102,9 @@ uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbRe
 #define II_COUNT 3
 Bool warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     FrameHeader *frm_hdr = &pcs->parent_pcs_ptr->frm_hdr;
-#if OPT_WM_INJ
     return frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) &&
         ctx->blk_geom->bwidth >= 8 && ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled &&
         ctx->inject_new_warp;
-#else
-    return frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) &&
-        ctx->blk_geom->bwidth >= 8 && ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled;
-#endif
 }
 MotionMode obmc_motion_mode_allowed(const PictureControlSet    *pcs_ptr,
                                     struct ModeDecisionContext *context_ptr, const BlockSize bsize,
@@ -1710,7 +1705,6 @@ void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionCont
     //update tot Candidate count
     *candTotCnt = cand_idx;
 }
-#if OPT_INTER_COMP
 // Determines if inter MVP compound modes should be skipped based on info from neighbouring blocks/ref frame types.
 static bool skip_mvp_compound_on_ref_types(ModeDecisionContext *context_ptr,
                                            MvReferenceFrame     rf[2]) {
@@ -1743,7 +1737,6 @@ static bool skip_mvp_compound_on_ref_types(ModeDecisionContext *context_ptr,
 
     return skip_comp;
 }
-#endif
 /*********************************************************************
 **********************************************************************
         Upto 12 inter Candidated injected
@@ -1817,17 +1810,12 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                 uint8_t is_obmc_allowed =
                     obmc_motion_mode_allowed(
                         pcs_ptr, context_ptr, bsize, rf[0], rf[1], NEARESTMV) == OBMC_CAUSAL;
-#if OPT_WM_INJ
                 uint8_t is_warp_allowed = context_ptr->wm_ctrls.use_wm_for_mvp
                     ? warped_motion_mode_allowed(pcs_ptr, context_ptr)
                     : 0;
                 tot_inter_types         = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
                 tot_inter_types         = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
-#else
-                tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
-#endif
                 for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-#if OPT_WM_INJ
                     if (!is_valid_uni_type(context_ptr,
                                            inter_type,
                                            is_ii_allowed,
@@ -1835,11 +1823,6 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                                            list_idx,
                                            ref_idx))
                         continue;
-#else
-                    if (!is_valid_uni_type(
-                            context_ptr, inter_type, is_ii_allowed, 0, list_idx, ref_idx))
-                        continue;
-#endif
                     cand_array[cand_idx].pred_mode         = NEARESTMV;
                     cand_array[cand_idx].motion_mode       = SIMPLE_TRANSLATION;
                     cand_array[cand_idx].use_intrabc       = 0;
@@ -1848,9 +1831,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                     cand_array[cand_idx].ref_frame_type    = frame_type;
                     assert(list_idx == 0 || list_idx == 1);
                     cand_array[cand_idx].mv[list_idx].as_int = to_inj_mv.as_int;
-#if OPT_WM_INJ
                     uint8_t local_warp_valid = 0;
-#endif
                     if (inter_type == 0) {
                         cand_array[cand_idx].is_interintra_used = 0;
                         cand_array[cand_idx].motion_mode        = SIMPLE_TRANSLATION;
@@ -1867,7 +1848,6 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                                 cand_array[cand_idx].use_wedge_interintra = 0;
                             }
                         }
-#if OPT_WM_INJ
                         if (is_warp_allowed &&
                             inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                             cand_array[cand_idx].is_interintra_used  = 0;
@@ -1888,21 +1868,16 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                                 &cand_array[cand_idx].wm_params_l0,
                                 &cand_array[cand_idx].num_proj_ref);
                         }
-#endif
                         if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                             cand_array[cand_idx].is_interintra_used = 0;
                             cand_array[cand_idx].motion_mode        = OBMC_CAUSAL;
                         }
                     }
-#if OPT_WM_INJ
                     if (!(is_warp_allowed &&
                           inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
                         INC_MD_CAND_CNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
                     else if (local_warp_valid)
                         INC_MD_CAND_CNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
-#else
-                    INC_MD_CAND_CNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
-#endif
                 }
                 context_ptr->injected_mvs[context_ptr->injected_mv_count][0].as_int =
                     to_inj_mv.as_int;
@@ -1943,17 +1918,12 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                     uint8_t is_obmc_allowed =
                         obmc_motion_mode_allowed(
                             pcs_ptr, context_ptr, bsize, rf[0], rf[1], NEARMV) == OBMC_CAUSAL;
-#if OPT_WM_INJ
                     uint8_t is_warp_allowed = context_ptr->wm_ctrls.use_wm_for_mvp
                         ? warped_motion_mode_allowed(pcs_ptr, context_ptr)
                         : 0;
                     tot_inter_types = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
                     tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
-#else
-                    tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
-#endif
                     for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
-#if OPT_WM_INJ
                         if (!is_valid_uni_type(context_ptr,
                                                inter_type,
                                                is_ii_allowed,
@@ -1961,11 +1931,6 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                                                list_idx,
                                                ref_idx))
                             continue;
-#else
-                        if (!is_valid_uni_type(
-                                context_ptr, inter_type, is_ii_allowed, 0, list_idx, ref_idx))
-                            continue;
-#endif
                         cand_array[cand_idx].pred_mode         = NEARMV;
                         cand_array[cand_idx].motion_mode       = SIMPLE_TRANSLATION;
                         cand_array[cand_idx].use_intrabc       = 0;
@@ -1974,9 +1939,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                         cand_array[cand_idx].ref_frame_type    = frame_type;
                         assert(list_idx == 0 || list_idx == 1);
                         cand_array[cand_idx].mv[list_idx].as_int = to_inj_mv.as_int;
-#if OPT_WM_INJ
                         uint8_t local_warp_valid = 0;
-#endif
                         if (inter_type == 0) {
                             cand_array[cand_idx].is_interintra_used = 0;
                             cand_array[cand_idx].motion_mode        = SIMPLE_TRANSLATION;
@@ -1993,7 +1956,6 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                                     cand_array[cand_idx].use_wedge_interintra = 0;
                                 }
                             }
-#if OPT_WM_INJ
                             if (is_warp_allowed &&
                                 inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                                 cand_array[cand_idx].is_interintra_used  = 0;
@@ -2014,21 +1976,16 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                                     &cand_array[cand_idx].wm_params_l0,
                                     &cand_array[cand_idx].num_proj_ref);
                             }
-#endif
                             if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                                 cand_array[cand_idx].is_interintra_used = 0;
                                 cand_array[cand_idx].motion_mode        = OBMC_CAUSAL;
                             }
                         }
-#if OPT_WM_INJ
                         if (!(is_warp_allowed &&
                               inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
                             INC_MD_CAND_CNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
                         else if (local_warp_valid)
                             INC_MD_CAND_CNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
-#else
-                        INC_MD_CAND_CNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
-#endif
                     }
                     context_ptr->injected_mvs[context_ptr->injected_mv_count][0].as_int =
                         to_inj_mv.as_int;
@@ -2047,20 +2004,12 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                     context_ptr, NRST_NEAR_GROUP, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                 continue;
             {
-#if OPT_INTER_COMP
                 //NEAREST_NEAREST
                 MD_COMP_TYPE tot_comp_types = (context_ptr->inter_comp_ctrls.do_nearest_nearest ==
                                                0) ||
                         skip_mvp_compound_on_ref_types(context_ptr, rf)
                     ? MD_COMP_DIST
                     : context_ptr->inter_comp_ctrls.tot_comp_types;
-#else
-                //NEAREST_NEAREST
-                MD_COMP_TYPE tot_comp_types = (context_ptr->inter_comp_ctrls.do_nearest_nearest ==
-                                               0)
-                    ? MD_COMP_DIST
-                    : context_ptr->inter_comp_ctrls.tot_comp_types;
-#endif
                 int16_t to_inject_mv_x_l0 =
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
@@ -2146,18 +2095,11 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                     ++context_ptr->injected_mv_count;
                 }
 
-#if OPT_INTER_COMP
                 //NEAR_NEAR
                 tot_comp_types = (context_ptr->inter_comp_ctrls.do_near_near == 0) ||
                         skip_mvp_compound_on_ref_types(context_ptr, rf)
                     ? MD_COMP_DIST
                     : context_ptr->inter_comp_ctrls.tot_comp_types;
-#else
-                //NEAR_NEAR
-                tot_comp_types = (context_ptr->inter_comp_ctrls.do_near_near == 0)
-                    ? MD_COMP_DIST
-                    : context_ptr->inter_comp_ctrls.tot_comp_types;
-#endif
                 max_drl_index = get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
                 uint8_t cap_max_drl_index = 0;
                 if (context_ptr->cand_reduction_ctrls.near_count_ctrls.enabled)
@@ -2641,7 +2583,6 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
     *candTotCnt = cand_idx;
 }
 
-#if OPT_WM_INJ
 // Refine the WM MV (8 bit search).  Return true if search found a valid MV; false otherwise
 static uint8_t wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                     ModeDecisionCandidate *candidate, uint8_t list_idx) {
@@ -2767,325 +2708,6 @@ static uint8_t wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext 
 
     return 0;
 }
-#else
-void inject_warped_motion_candidates(PictureControlSet *pcs_ptr,
-                                     struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                     uint32_t *cand_tot_cnt, MeSbResults *me_results) {
-    uint32_t can_idx = *cand_tot_cnt;
-    ModeDecisionCandidate *cand_array = context_ptr->fast_candidate_array;
-    MacroBlockD *xd = blk_ptr->av1xd;
-    uint8_t drli, max_drl_index;
-    IntMv nearest_mv[2], near_mv[2], ref_mv[2];
-
-    int inside_tile = 1;
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    int umv0_tile = derive_rmv_setting(scs_ptr, pcs_ptr->parent_pcs_ptr);
-    uint32_t mi_row = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
-    uint32_t mi_col = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
-    uint32_t ref_it;
-    MvReferenceFrame rf[2];
-    Mv mv_0;
-    MvUnit mv_unit;
-    int16_t to_inject_mv_x, to_inject_mv_y;
-    //all of ref pairs: (1)single-ref List0  (2)single-ref List1
-    for (ref_it = 0; ref_it < pcs_ptr->parent_pcs_ptr->tot_ref_frame_types; ++ref_it) {
-        if (!context_ptr->wm_ctrls.use_wm_for_mvp)
-            continue;
-        MvReferenceFrame ref_frame_pair = pcs_ptr->parent_pcs_ptr->ref_frame_type_arr[ref_it];
-        av1_set_ref_frame(rf, ref_frame_pair);
-
-        //single ref/list
-        if (rf[1] == NONE_FRAME) {
-            MvReferenceFrame frame_type = rf[0];
-            uint8_t          list_idx   = get_list_idx(rf[0]);
-            uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
-            if (!is_valid_unipred_ref(
-                    context_ptr, MIN(TOT_INTER_GROUP - 1, WARP_GROUP), list_idx, ref_idx))
-                continue;
-            // Get gm params
-            if (context_ptr->cand_reduction_ctrls.cand_elimination_ctrls.inject_new_warp == 2) {
-                EbWarpedMotionParams *gm_params =
-                    &pcs_ptr->parent_pcs_ptr->global_motion[frame_type];
-                if (gm_params->wmtype <= TRANSLATION)
-                    continue;
-            }
-            //NEAREST
-            to_inject_mv_x = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-                                 .ed_ref_mv_stack[frame_type][0]
-                                 .this_mv.as_mv.col;
-            to_inject_mv_y = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-                                 .ed_ref_mv_stack[frame_type][0]
-                                 .this_mv.as_mv.row;
-            if (umv0_tile)
-                inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                      to_inject_mv_x,
-                                                      to_inject_mv_y,
-                                                      mi_col,
-                                                      mi_row,
-                                                      context_ptr->blk_geom->bsize);
-            if (inside_tile) {
-                cand_array[can_idx].pred_mode           = NEARESTMV;
-                cand_array[can_idx].motion_mode         = WARPED_CAUSAL;
-                cand_array[can_idx].wm_params_l0.wmtype = AFFINE;
-                cand_array[can_idx].is_interintra_used  = 0;
-                cand_array[can_idx].use_intrabc         = 0;
-                cand_array[can_idx].skip_mode_allowed   = FALSE;
-                mv_0                                    = (Mv){{to_inject_mv_x, to_inject_mv_y}};
-                assert(list_idx == 0 || list_idx == 1);
-                cand_array[can_idx].mv[list_idx].as_int = mv_0.as_int;
-                cand_array[can_idx].drl_index           = 0;
-                cand_array[can_idx].ref_frame_type      = frame_type;
-                mv_unit.mv[list_idx]                    = mv_0;
-                mv_unit.pred_direction                  = list_idx;
-                uint8_t local_warp_valid                = warped_motion_parameters(
-                    pcs_ptr,
-                    context_ptr->blk_ptr,
-                    &mv_unit,
-                    context_ptr->blk_geom,
-                    context_ptr->blk_origin_x,
-                    context_ptr->blk_origin_y,
-                    cand_array[can_idx].ref_frame_type,
-                    &cand_array[can_idx].wm_params_l0,
-                    &cand_array[can_idx].num_proj_ref);
-
-                if (local_warp_valid)
-                    INC_MD_CAND_CNT(can_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
-            }
-            //NEAR
-            max_drl_index = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
-            for (drli = 0; drli < max_drl_index; drli++) {
-                get_av1_mv_pred_drl(
-                    context_ptr, blk_ptr, frame_type, 0, NEARMV, drli, nearest_mv, near_mv, ref_mv);
-
-                to_inject_mv_x = near_mv[0].as_mv.col;
-                to_inject_mv_y = near_mv[0].as_mv.row;
-
-                if (umv0_tile)
-                    inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                          to_inject_mv_x,
-                                                          to_inject_mv_y,
-                                                          mi_col,
-                                                          mi_row,
-                                                          context_ptr->blk_geom->bsize);
-                if (inside_tile) {
-                    cand_array[can_idx].pred_mode           = NEARMV;
-                    cand_array[can_idx].motion_mode         = WARPED_CAUSAL;
-                    cand_array[can_idx].wm_params_l0.wmtype = AFFINE;
-                    cand_array[can_idx].is_interintra_used  = 0;
-                    cand_array[can_idx].use_intrabc         = 0;
-                    cand_array[can_idx].skip_mode_allowed   = FALSE;
-                    mv_0 = (Mv){{to_inject_mv_x, to_inject_mv_y}};
-                    assert(list_idx == 0 || list_idx == 1);
-                    cand_array[can_idx].mv[list_idx].as_int = mv_0.as_int;
-                    cand_array[can_idx].drl_index           = drli;
-                    cand_array[can_idx].ref_frame_type      = frame_type;
-                    mv_unit.mv[list_idx]                    = mv_0;
-                    mv_unit.pred_direction                  = list_idx;
-                    uint8_t local_warp_valid                = warped_motion_parameters(
-                        pcs_ptr,
-                        context_ptr->blk_ptr,
-                        &mv_unit,
-                        context_ptr->blk_geom,
-                        context_ptr->blk_origin_x,
-                        context_ptr->blk_origin_y,
-                        cand_array[can_idx].ref_frame_type,
-                        &cand_array[can_idx].wm_params_l0,
-                        &cand_array[can_idx].num_proj_ref);
-
-                    if (local_warp_valid)
-                        INC_MD_CAND_CNT(can_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
-                }
-            }
-        }
-    }
-    // NEWMV L0
-#define NUM_WM_NEIGHBOUR_POS 13
-    const MV neighbors[NUM_WM_NEIGHBOUR_POS] = {{0, 0},
-                                                {0, -1},
-                                                {1, 0},
-                                                {0, 1},
-                                                {-1, 0},
-                                                {0, -2},
-                                                {2, 0},
-                                                {0, 2},
-                                                {-2, 0},
-                                                {1, 1},
-                                                {-1, 1},
-                                                {1, -1},
-                                                {-1, 1}};
-    uint8_t  num_wm_neighbour_pos            = context_ptr->inject_new_warp == 1 ? 13
-                    : context_ptr->inject_new_warp == 2                          ? 9
-                                                                                 : 1;
-    num_wm_neighbour_pos                     = MIN(num_wm_neighbour_pos,
-                               (context_ptr->wm_ctrls.num_new_mv_refinement + 1));
-    IntMv best_pred_mv[2]                    = {{0}, {0}};
-
-    uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
-    const MeCandidate *me_block_results =
-        &me_results->me_candidate_array[context_ptr->me_cand_offset];
-
-    for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
-        const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
-        const uint8_t      inter_direction      = me_block_results_ptr->direction;
-        const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
-        const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
-        if (context_ptr->cand_reduction_ctrls.reduce_unipred_candidates)
-            if ((total_me_cnt > 3) && (inter_direction != 2))
-                continue;
-        /**************
-            NEWMV L0
-        ************* */
-        if (inter_direction == 0) {
-            if (!is_valid_unipred_ref(
-                    context_ptr, MIN(TOT_INTER_GROUP - 1, WARP_GROUP), REF_LIST_0, list0_ref_index))
-                continue;
-            to_inject_mv_x = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0]
-                                                  [list0_ref_index][0];
-            to_inject_mv_y = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0]
-                                                  [list0_ref_index][1];
-            for (int i = 0; i < num_wm_neighbour_pos; i++) {
-                cand_array[can_idx].use_intrabc         = 0;
-                cand_array[can_idx].skip_mode_allowed   = FALSE;
-                cand_array[can_idx].pred_mode           = NEWMV;
-                cand_array[can_idx].motion_mode         = WARPED_CAUSAL;
-                cand_array[can_idx].wm_params_l0.wmtype = AFFINE;
-                cand_array[can_idx].is_interintra_used  = 0;
-                cand_array[can_idx].drl_index           = 0;
-                mv_0 = pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv
-                    ? (Mv){{to_inject_mv_x + neighbors[i].col, to_inject_mv_y + neighbors[i].row}}
-                    : (Mv){{to_inject_mv_x + (neighbors[i].col << 1),
-                            to_inject_mv_y + (neighbors[i].row << 1)}};
-                cand_array[can_idx].mv[REF_LIST_0].as_int = mv_0.as_int;
-                cand_array[can_idx].ref_frame_type        = svt_get_ref_frame_type(REF_LIST_0,
-                                                                            list0_ref_index);
-                choose_best_av1_mv_pred(context_ptr,
-                                        context_ptr->md_rate_estimation_ptr,
-                                        context_ptr->blk_ptr,
-                                        cand_array[can_idx].ref_frame_type,
-                                        0, // is_compound
-                                        cand_array[can_idx].pred_mode,
-                                        mv_0.x,
-                                        mv_0.y,
-                                        0,
-                                        0,
-                                        &cand_array[can_idx].drl_index,
-                                        best_pred_mv);
-                if (!context_ptr->corrupted_mv_check ||
-                    is_valid_mv_diff(best_pred_mv,
-                                     mv_0,
-                                     mv_0,
-                                     0,
-                                     pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)) {
-                    cand_array[can_idx].pred_mv[REF_LIST_0] = (Mv){
-                        {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
-                    mv_unit.mv[0]          = mv_0;
-                    mv_unit.pred_direction = (PredDirection)0;
-                    if (umv0_tile)
-                        inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                              mv_0.x,
-                                                              mv_0.y,
-                                                              mi_col,
-                                                              mi_row,
-                                                              context_ptr->blk_geom->bsize);
-                    if (inside_tile) {
-                        uint8_t local_warp_valid = warped_motion_parameters(
-                            pcs_ptr,
-                            context_ptr->blk_ptr,
-                            &mv_unit,
-                            context_ptr->blk_geom,
-                            context_ptr->blk_origin_x,
-                            context_ptr->blk_origin_y,
-                            cand_array[can_idx].ref_frame_type,
-                            &cand_array[can_idx].wm_params_l0,
-                            &cand_array[can_idx].num_proj_ref);
-
-                        if (local_warp_valid)
-                            INC_MD_CAND_CNT(can_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
-                    }
-                }
-            }
-        }
-        /**************
-           NEWMV L1
-       ************* */
-        if (inter_direction == 1) {
-            if (!is_valid_unipred_ref(
-                    context_ptr, MIN(TOT_INTER_GROUP - 1, WARP_GROUP), REF_LIST_1, list1_ref_index))
-                continue;
-            to_inject_mv_x = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_1]
-                                                  [list1_ref_index][0];
-            to_inject_mv_y = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_1]
-                                                  [list1_ref_index][1];
-            for (int i = 0; i < num_wm_neighbour_pos; i++) {
-                cand_array[can_idx].use_intrabc         = 0;
-                cand_array[can_idx].skip_mode_allowed   = FALSE;
-                cand_array[can_idx].pred_mode           = NEWMV;
-                cand_array[can_idx].motion_mode         = WARPED_CAUSAL;
-                cand_array[can_idx].wm_params_l0.wmtype = AFFINE;
-
-                cand_array[can_idx].is_interintra_used = 0;
-                cand_array[can_idx].drl_index          = 0;
-                mv_0 = pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv
-                    ? (Mv){{to_inject_mv_x + neighbors[i].col, to_inject_mv_y + neighbors[i].row}}
-                    : (Mv){{to_inject_mv_x + (neighbors[i].col << 1),
-                            to_inject_mv_y + (neighbors[i].row << 1)}};
-                cand_array[can_idx].mv[REF_LIST_1].as_int = mv_0.as_int;
-                cand_array[can_idx].ref_frame_type        = svt_get_ref_frame_type(REF_LIST_1,
-                                                                            list1_ref_index);
-
-                cand_array[can_idx].drl_index = 0;
-                choose_best_av1_mv_pred(context_ptr,
-                                        context_ptr->md_rate_estimation_ptr,
-                                        context_ptr->blk_ptr,
-                                        cand_array[can_idx].ref_frame_type,
-                                        0, // is_compound
-                                        cand_array[can_idx].pred_mode,
-                                        mv_0.x,
-                                        mv_0.y,
-                                        0,
-                                        0,
-                                        &cand_array[can_idx].drl_index,
-                                        best_pred_mv);
-                if (!context_ptr->corrupted_mv_check ||
-                    is_valid_mv_diff(best_pred_mv,
-                                     mv_0,
-                                     mv_0,
-                                     0,
-                                     pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)) {
-                    cand_array[can_idx].pred_mv[REF_LIST_1] = (Mv){
-                        {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
-                    mv_unit.mv[1]          = mv_0;
-                    mv_unit.pred_direction = (PredDirection)1;
-                    if (umv0_tile)
-                        inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                              mv_0.x,
-                                                              mv_0.y,
-                                                              mi_col,
-                                                              mi_row,
-                                                              context_ptr->blk_geom->bsize);
-                    if (inside_tile) {
-                        uint8_t local_warp_valid = warped_motion_parameters(
-                            pcs_ptr,
-                            context_ptr->blk_ptr,
-                            &mv_unit,
-                            context_ptr->blk_geom,
-                            context_ptr->blk_origin_x,
-                            context_ptr->blk_origin_y,
-                            cand_array[can_idx].ref_frame_type,
-                            &cand_array[can_idx].wm_params_l0,
-                            &cand_array[can_idx].num_proj_ref);
-
-                        if (local_warp_valid)
-                            INC_MD_CAND_CNT(can_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
-                    }
-                }
-            }
-        }
-    }
-
-    *cand_tot_cnt = can_idx;
-}
-#endif
 static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t *src, int width,
                                     int height, int stride, int mi_row, int mi_col,
                                     int subsampling_x, int subsampling_y) {
@@ -3248,24 +2870,15 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
             &x->best_mv.as_mv, ref_mv, x->nmv_vec_cost, x->mv_cost_stack, MV_COST_WEIGHT);
 }
 
-#if FIX_CHECK_OBMC_MVS
 // Refine the OBMC MV (8 bit search). Return true if search found a valid MV; false otherwise
 static uint8_t obmc_motion_refinement(PictureControlSet          *pcs,
                                       struct ModeDecisionContext *context_ptr,
                                       ModeDecisionCandidate *candidate, uint8_t ref_list_idx) {
-#else
-void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
-                            ModeDecisionCandidate *candidate, uint8_t ref_list_idx) {
-#endif
     if (context_ptr->obmc_ctrls.max_blk_size_to_refine_16x16) {
         if (block_size_wide[context_ptr->blk_geom->bsize] > 16 ||
             block_size_high[context_ptr->blk_geom->bsize] > 16) {
-#if FIX_CHECK_OBMC_MVS
             // No refinement performed, therefore input MVs haven't changed and are assumed to be valid
             return 1;
-#else
-            return;
-#endif
         }
     }
     IntMv           best_pred_mv[2] = {{0}, {0}};
@@ -3282,7 +2895,6 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
         uint8_t list_idx = get_list_idx(candidate->ref_frame_type);
 
         assert(list_idx < MAX_NUM_OF_REF_PIC_LIST);
-#if FIX_CHECK_OBMC_MVS
         EbPictureBufferDesc *reference_picture =
             ((EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)
                 ->reference_picture;
@@ -3293,18 +2905,6 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
             (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr,
             &reference_picture,
             EB_8_BIT_MD);
-#else
-        EbPictureBufferDesc *reference_picture =
-            ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)
-                ->reference_picture;
-
-        use_scaled_rec_refs_if_needed(
-            pcs_ptr,
-            pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
-            (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr,
-            &reference_picture,
-            EB_8_BIT_MD);
-#endif
         Yv12BufferConfig ref_buf;
         link_eb_to_aom_buffer_desc_8bit(reference_picture, &ref_buf);
 
@@ -3325,11 +2925,7 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
     MV ref_mv;
     ref_mv.col = candidate->pred_mv[ref_list_idx].x;
     ref_mv.row = candidate->pred_mv[ref_list_idx].y;
-#if FIX_CHECK_OBMC_MVS
     single_motion_search(pcs,
-#else
-    single_motion_search(pcs_ptr,
-#endif
                          context_ptr,
                          candidate,
                          (const MvReferenceFrame[]){candidate->ref_frame_type, -1},
@@ -3355,20 +2951,14 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
                             best_pred_mv);
     candidate->pred_mv[ref_list_idx].x = best_pred_mv[0].as_mv.col;
     candidate->pred_mv[ref_list_idx].y = best_pred_mv[0].as_mv.row;
-#if FIX_CHECK_OBMC_MVS
     // Check that final chosen MV is valid
     if (!context_ptr->corrupted_mv_check ||
         is_valid_mv_diff(best_pred_mv,
                          candidate->mv[ref_list_idx],
                          candidate->mv[ref_list_idx],
                          0,
-#if FIX_CHECK_OBMC_MVS
                          pcs->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)) {
         int umv0_tile = derive_rmv_setting(pcs->scs_ptr, pcs->parent_pcs_ptr);
-#else
-                         pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv)) {
-        int umv0_tile = derive_rmv_setting(pcs_ptr->scs_ptr, pcs_ptr->parent_pcs_ptr);
-#endif
         int inside_tile = 1;
         if (umv0_tile) {
             inside_tile = is_inside_tile_boundary(&(xd->tile),
@@ -3382,7 +2972,6 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
     }
 
     return 0;
-#endif
 }
 /*
    inject ME candidates for Light PD0
@@ -3788,22 +3377,14 @@ void inject_new_candidates(const SequenceControlSet   *scs_ptr,
                                                                        to_inject_ref_type,
                                                                        -1,
                                                                        NEWMV) == OBMC_CAUSAL;
-#if OPT_WM_INJ
                     uint8_t is_warp_allowed = warped_motion_mode_allowed(pcs_ptr, context_ptr);
                     tot_inter_types = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
                     tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
-#else
-                    tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
-#endif
                     for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
                         if (!is_valid_uni_type(context_ptr,
                                                inter_type,
                                                is_ii_allowed,
-#if OPT_WM_INJ
                                                is_warp_allowed,
-#else
-                                               0,
-#endif
                                                REF_LIST_0,
                                                list0_ref_index))
                             continue;
@@ -3819,9 +3400,7 @@ void inject_new_candidates(const SequenceControlSet   *scs_ptr,
                         cand_array[cand_total_cnt].ref_frame_type      = to_inject_ref_type;
                         cand_array[cand_total_cnt].pred_mv[REF_LIST_0] = (Mv){
                             {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
-#if OPT_WM_INJ
                         uint8_t motion_mode_valid = 0;
-#endif
                         if (inter_type == 0) {
                             cand_array[cand_total_cnt].is_interintra_used = 0;
                             cand_array[cand_total_cnt].motion_mode        = SIMPLE_TRANSLATION;
@@ -3839,7 +3418,6 @@ void inject_new_candidates(const SequenceControlSet   *scs_ptr,
                                     cand_array[cand_total_cnt].use_wedge_interintra = 0;
                                 }
                             }
-#if OPT_WM_INJ
                             if (is_warp_allowed &&
                                 inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                                 cand_array[cand_total_cnt].is_interintra_used  = 0;
@@ -3873,34 +3451,16 @@ void inject_new_candidates(const SequenceControlSet   *scs_ptr,
                                         &cand_array[cand_total_cnt].num_proj_ref);
                                 }
                             }
-#endif
                             if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                                 cand_array[cand_total_cnt].is_interintra_used = 0;
                                 cand_array[cand_total_cnt].motion_mode        = OBMC_CAUSAL;
-#if FIX_CHECK_OBMC_MVS
                                 motion_mode_valid = obmc_motion_refinement(
                                     pcs_ptr, context_ptr, &cand_array[cand_total_cnt], REF_LIST_0);
-#else
-                                obmc_motion_refinement(
-                                    pcs_ptr, context_ptr, &cand_array[cand_total_cnt], REF_LIST_0);
-#endif
                             }
                         }
-#if OPT_WM_INJ
-#if FIX_CHECK_OBMC_MVS
                         if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION ||
                             motion_mode_valid)
                             INC_MD_CAND_CNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
-#else
-                        if (!(is_warp_allowed &&
-                              inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
-                            INC_MD_CAND_CNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
-                        else if (motion_mode_valid)
-                            INC_MD_CAND_CNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
-#endif
-#else
-                        INC_MD_CAND_CNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
-#endif
                     }
                     context_ptr->injected_mvs[context_ptr->injected_mv_count][0].as_int =
                         to_inj_mv.as_int;
@@ -3975,22 +3535,14 @@ void inject_new_candidates(const SequenceControlSet   *scs_ptr,
                                                                            to_inject_ref_type,
                                                                            -1,
                                                                            NEWMV) == OBMC_CAUSAL;
-#if OPT_WM_INJ
                         uint8_t is_warp_allowed = warped_motion_mode_allowed(pcs_ptr, context_ptr);
                         tot_inter_types = is_warp_allowed ? tot_inter_types + 1 : tot_inter_types;
                         tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
-#else
-                        tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
-#endif
                         for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
                             if (!is_valid_uni_type(context_ptr,
                                                    inter_type,
                                                    is_ii_allowed,
-#if OPT_WM_INJ
                                                    is_warp_allowed,
-#else
-                                                   0,
-#endif
                                                    REF_LIST_1,
                                                    list1_ref_index))
                                 continue;
@@ -4006,9 +3558,7 @@ void inject_new_candidates(const SequenceControlSet   *scs_ptr,
                             cand_array[cand_total_cnt].ref_frame_type      = to_inject_ref_type;
                             cand_array[cand_total_cnt].pred_mv[REF_LIST_1] = (Mv){
                                 {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
-#if OPT_WM_INJ
                             uint8_t motion_mode_valid = 0;
-#endif
                             if (inter_type == 0) {
                                 cand_array[cand_total_cnt].is_interintra_used = 0;
                                 cand_array[cand_total_cnt].motion_mode        = SIMPLE_TRANSLATION;
@@ -4026,7 +3576,6 @@ void inject_new_candidates(const SequenceControlSet   *scs_ptr,
                                         cand_array[cand_total_cnt].use_wedge_interintra = 0;
                                     }
                                 }
-#if OPT_WM_INJ
                                 if (is_warp_allowed &&
                                     inter_type == (tot_inter_types - (1 + is_obmc_allowed))) {
                                     cand_array[cand_total_cnt].is_interintra_used  = 0;
@@ -4060,42 +3609,20 @@ void inject_new_candidates(const SequenceControlSet   *scs_ptr,
                                             &cand_array[cand_total_cnt].num_proj_ref);
                                     }
                                 }
-#endif
                                 if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                                     cand_array[cand_total_cnt].is_interintra_used = 0;
                                     cand_array[cand_total_cnt].motion_mode        = OBMC_CAUSAL;
-#if FIX_CHECK_OBMC_MVS
                                     motion_mode_valid = obmc_motion_refinement(
                                         pcs_ptr,
                                         context_ptr,
                                         &cand_array[cand_total_cnt],
                                         REF_LIST_1);
-#else
-                                    obmc_motion_refinement(pcs_ptr,
-                                                           context_ptr,
-                                                           &cand_array[cand_total_cnt],
-                                                           REF_LIST_1);
-#endif
                                 }
                             }
-#if OPT_WM_INJ
-#if FIX_CHECK_OBMC_MVS
                             if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION ||
                                 motion_mode_valid)
                                 INC_MD_CAND_CNT(cand_total_cnt,
                                                 pcs_ptr->parent_pcs_ptr->max_can_count);
-#else
-                            if (!(is_warp_allowed &&
-                                  inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
-                                INC_MD_CAND_CNT(cand_total_cnt,
-                                                pcs_ptr->parent_pcs_ptr->max_can_count);
-                            else if (motion_mode_valid)
-                                INC_MD_CAND_CNT(cand_total_cnt,
-                                                pcs_ptr->parent_pcs_ptr->max_can_count);
-#endif
-#else
-                            INC_MD_CAND_CNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
-#endif
                         }
                         context_ptr->injected_mvs[context_ptr->injected_mv_count][0].as_int =
                             to_inj_mv.as_int;
@@ -4465,9 +3992,6 @@ void inject_pme_candidates(
                                           pcs_ptr->parent_pcs_ptr);
     uint32_t               mi_row          = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t               mi_col          = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
-#if !FIX_CHECK_OBMC_MVS
-    Mv mv;
-#endif
     MvUnit mv_unit;
     for (uint32_t ref_it = 0; ref_it < pcs_ptr->parent_pcs_ptr->tot_ref_frame_types; ++ref_it) {
         MvReferenceFrame ref_pair = pcs_ptr->parent_pcs_ptr->ref_frame_type_arr[ref_it];
@@ -4546,11 +4070,7 @@ void inject_pme_candidates(
                             cand_array[cand_total_cnt].ref_frame_type      = frame_type;
                             cand_array[cand_total_cnt].pred_mv[list_idx]   = (Mv){
                                 {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
-#if FIX_CHECK_OBMC_MVS
                             uint8_t motion_mode_valid = 0;
-#else
-                            uint8_t local_warp_valid = 0;
-#endif
                             if (inter_type == 0) {
                                 cand_array[cand_total_cnt].is_interintra_used = 0;
                                 cand_array[cand_total_cnt].motion_mode        = SIMPLE_TRANSLATION;
@@ -4574,8 +4094,6 @@ void inject_pme_candidates(
                                     cand_array[cand_total_cnt].is_interintra_used  = 0;
                                     cand_array[cand_total_cnt].motion_mode         = WARPED_CAUSAL;
                                     cand_array[cand_total_cnt].wm_params_l0.wmtype = AFFINE;
-#if OPT_WM_INJ
-#if FIX_CHECK_OBMC_MVS
                                     // Perform refinement; if refinement is off, then MV is valid, since it's been checked above
                                     motion_mode_valid = context_ptr->wm_ctrls.refinement_iterations
                                         ? wm_motion_refinement(pcs_ptr,
@@ -4601,81 +4119,21 @@ void inject_pme_candidates(
                                             &cand_array[cand_total_cnt].wm_params_l0,
                                             &cand_array[cand_total_cnt].num_proj_ref);
                                     }
-#else
-                                    // Perform refinement; if refinement is off, then MV is valid, since it's been checked above
-                                    motion_mode_valid = context_ptr->wm_ctrls.refinement_iterations
-                                        ? wm_motion_refinement(pcs_ptr,
-                                                               context_ptr,
-                                                               &cand_array[cand_total_cnt],
-                                                               list_idx)
-                                        : 1;
-
-                                    if (local_warp_valid) {
-                                        //mv.x = to_inject_mv_x;
-                                        //mv.y = to_inject_mv_y;
-                                        mv_unit.mv[list_idx] =
-                                            cand_array[cand_total_cnt].mv[list_idx];
-                                        mv_unit.pred_direction = list_idx;
-                                        local_warp_valid = warped_motion_parameters(
-                                            pcs_ptr,
-                                            context_ptr->blk_ptr,
-                                            &mv_unit,
-                                            context_ptr->blk_geom,
-                                            context_ptr->blk_origin_x,
-                                            context_ptr->blk_origin_y,
-                                            cand_array[cand_total_cnt].ref_frame_type,
-                                            &cand_array[cand_total_cnt].wm_params_l0,
-                                            &cand_array[cand_total_cnt].num_proj_ref);
-                                    }
-#endif
-#else
-                                    mv.x = to_inject_mv_x;
-                                    mv.y = to_inject_mv_y;
-                                    mv_unit.mv[list_idx] = mv;
-                                    mv_unit.pred_direction = list_idx;
-                                    local_warp_valid = warped_motion_parameters(
-                                        pcs_ptr,
-                                        context_ptr->blk_ptr,
-                                        &mv_unit,
-                                        context_ptr->blk_geom,
-                                        context_ptr->blk_origin_x,
-                                        context_ptr->blk_origin_y,
-                                        cand_array[cand_total_cnt].ref_frame_type,
-                                        &cand_array[cand_total_cnt].wm_params_l0,
-                                        &cand_array[cand_total_cnt].num_proj_ref);
-#endif
                                 }
                                 if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
                                     cand_array[cand_total_cnt].is_interintra_used = 0;
                                     cand_array[cand_total_cnt].motion_mode        = OBMC_CAUSAL;
-#if FIX_CHECK_OBMC_MVS
                                     motion_mode_valid = obmc_motion_refinement(
                                         pcs_ptr,
                                         context_ptr,
                                         &cand_array[cand_total_cnt],
                                         list_idx);
-#else
-                                    obmc_motion_refinement(pcs_ptr,
-                                                           context_ptr,
-                                                           &cand_array[cand_total_cnt],
-                                                           list_idx);
-#endif
                                 }
                             }
-#if FIX_CHECK_OBMC_MVS
                             if (cand_array[cand_total_cnt].motion_mode == SIMPLE_TRANSLATION ||
                                 motion_mode_valid)
                                 INC_MD_CAND_CNT(cand_total_cnt,
                                                 pcs_ptr->parent_pcs_ptr->max_can_count);
-#else
-                            if (!(is_warp_allowed &&
-                                  inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
-                                INC_MD_CAND_CNT(cand_total_cnt,
-                                                pcs_ptr->parent_pcs_ptr->max_can_count);
-                            else if (local_warp_valid)
-                                INC_MD_CAND_CNT(cand_total_cnt,
-                                                pcs_ptr->parent_pcs_ptr->max_can_count);
-#endif
                         }
                         context_ptr->injected_mvs[context_ptr->injected_mv_count][0].as_int =
                             to_inj_mv.as_int;
@@ -4856,10 +4314,6 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
     FrameHeader *frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     uint32_t     cand_total_cnt      = *candidate_total_cnt;
     Bool         is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-#if !FIX_CHECK_OBMC_MVS
-    MeSbResults *me_results =
-        pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
-#endif
     Bool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4)
         ? FALSE
         : TRUE;
@@ -4906,15 +4360,6 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
         inject_global_candidates(
             scs_ptr, context_ptr, pcs_ptr, is_compound_enabled, allow_bipred, &cand_total_cnt);
     }
-#if !OPT_WM_INJ
-    // Warped Motion
-    if (context_ptr->inject_new_warp) {
-        if (warped_motion_mode_allowed(pcs_ptr, context_ptr)) {
-            inject_warped_motion_candidates(
-                pcs_ptr, context_ptr, context_ptr->blk_ptr, &cand_total_cnt, me_results);
-        }
-    }
-#endif
     if (is_compound_enabled) {
         if (allow_bipred && context_ptr->bipred3x3_injection > 0 && pcs_ptr->slice_type == B_SLICE)
             //----------------------

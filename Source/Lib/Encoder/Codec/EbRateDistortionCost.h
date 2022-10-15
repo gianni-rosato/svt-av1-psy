@@ -62,18 +62,10 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *
     (ROUND_POWER_OF_TWO(((int64_t)(R)) * ((int64_t)(RM)), AV1_PROB_COST_SHIFT) + \
      ((int64_t)(D) * ((int64_t)1 << RDDIV_BITS)))
 
-#if FIX_PARTITION_COST
 extern uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs_ptr,
                                             ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                             PartitionType p, uint64_t lambda,
                                             MdRateEstimationContext *md_rate_estimation_ptr);
-#else
-extern EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr,
-                                       ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                       uint32_t leaf_index, PartitionType partitionType,
-                                       uint64_t *split_rate, uint64_t lambda,
-                                       MdRateEstimationContext *md_rate_estimation_ptr);
-#endif
 extern uint64_t av1_intra_fast_cost(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     ModeDecisionCandidateBuffer *candidate_buffer, uint32_t qp,
                                     uint64_t luma_distortion, uint64_t chroma_distortion,

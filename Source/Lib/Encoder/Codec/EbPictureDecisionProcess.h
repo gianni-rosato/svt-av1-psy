@@ -37,16 +37,9 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(
 void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
                                        SequenceControlSet      *scs_ptr);
 void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_picture_ptr);
-#if CLN_B64_RENAMING
 void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                                   EbPictureBufferDesc *input_padded_picture_ptr,
                                   EbPictureBufferDesc *sixteenth_decimated_picture_ptr);
-#else
-void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-                                  EbPictureBufferDesc *input_padded_picture_ptr,
-                                  EbPictureBufferDesc *sixteenth_decimated_picture_ptr,
-                                  uint32_t             sb_total_count);
-#endif
 
 void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
                         EbPictureBufferDesc *outputPicturePtr);

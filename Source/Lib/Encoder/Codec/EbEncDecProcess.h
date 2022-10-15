@@ -20,9 +20,6 @@
 #include "EbModeDecision.h"
 #include "EbEncInterPrediction.h"
 #include "EbEntropyCoding.h"
-#if !CLN_COEFF_BUFFER
-#include "EbTransQuantBuffers.h"
-#endif
 #include "EbReferenceObject.h"
 #include "EbNeighborArrays.h"
 #include "EbCodingUnit.h"
@@ -93,10 +90,8 @@ extern EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
                                         int tasks_index);
 
 extern void *mode_decision_kernel(void *input_ptr);
-#if OPT_MRP
 void svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx,
                                                  uint8_t              dist_based_ref_pruning_level);
-#endif
 #ifdef __cplusplus
 }
 #endif

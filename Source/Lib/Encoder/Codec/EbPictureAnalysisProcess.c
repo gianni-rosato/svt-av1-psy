@@ -2058,7 +2058,6 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
  ** Compute Picture Variance
  ** Compute Block Mean for all blocks in the picture
  ************************************************/
-#if CLN_B64_RENAMING
 void compute_picture_spatial_statistics(SequenceControlSet      *scs_ptr,
                                         PictureParentControlSet *pcs_ptr,
                                         EbPictureBufferDesc     *input_padded_picture_ptr) {
@@ -2084,40 +2083,12 @@ void compute_picture_spatial_statistics(SequenceControlSet      *scs_ptr,
 
     return;
 }
-#else
-void compute_picture_spatial_statistics(SequenceControlSet      *scs_ptr,
-                                        PictureParentControlSet *pcs_ptr,
-                                        EbPictureBufferDesc     *input_padded_picture_ptr,
-                                        uint32_t                 sb_total_count) {
-    // Variance
-    uint64_t pic_tot_variance = 0;
-
-    for (uint16_t sb_index = 0; sb_index < pcs_ptr->b64_total_count; ++sb_index) {
-        B64Geom *b64_geom = &pcs_ptr->b64_geom[sb_index];
-
-        uint16_t sb_origin_x             = b64_geom->origin_x; // to avoid using child PCS
-        uint16_t sb_origin_y             = b64_geom->origin_y;
-        uint32_t input_luma_origin_index = (input_padded_picture_ptr->origin_y + sb_origin_y) *
-                input_padded_picture_ptr->stride_y +
-            input_padded_picture_ptr->origin_x + sb_origin_x;
-
-        compute_block_mean_compute_variance(
-            scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_index, input_luma_origin_index);
-        pic_tot_variance += (pcs_ptr->variance[sb_index][RASTER_SCAN_CU_INDEX_64x64]);
-    }
-
-    pcs_ptr->pic_avg_variance = (uint16_t)(pic_tot_variance / sb_total_count);
-
-    return;
-}
-#endif
 
 /************************************************
  * Gathering statistics per picture
  ** Calculating the pixel intensity histogram bins per picture needed for SCD
  ** Computing Picture Variance
  ************************************************/
-#if CLN_B64_RENAMING
 void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                                   EbPictureBufferDesc *input_padded_picture_ptr,
                                   EbPictureBufferDesc *sixteenth_decimated_picture_ptr) {
@@ -2138,30 +2109,6 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
 
     return;
 }
-#else
-void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-                                  EbPictureBufferDesc *input_padded_picture_ptr,
-                                  EbPictureBufferDesc *sixteenth_decimated_picture_ptr,
-                                  uint32_t             sb_total_count) {
-    uint64_t sum_avg_intensity_ttl_regions_luma = 0;
-    // Histogram bins
-    if (scs_ptr->static_config.scene_change_detection ||
-        scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
-        // Use 1/16 Luma for Histogram generation
-        // 1/16 input ready
-        sub_sample_luma_generate_pixel_intensity_histogram_bins(
-            scs_ptr, pcs_ptr, sixteenth_decimated_picture_ptr, &sum_avg_intensity_ttl_regions_luma);
-    }
-
-    if (scs_ptr->calculate_variance)
-        compute_picture_spatial_statistics(
-            scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_total_count);
-    else
-        pcs_ptr->pic_avg_variance = 0;
-
-    return;
-}
-#endif
 
 /*
     pad the  2b-compressed picture on the right and bottom edges to reach n.8 for Luma and n.4 for Chroma
@@ -2824,20 +2771,11 @@ void *picture_analysis_kernel(void *input_ptr) {
             }
             // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
             if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
-#if CLN_B64_RENAMING
                 gathering_picture_statistics(
                     scs_ptr,
                     pcs_ptr,
                     input_padded_picture_ptr,
                     (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-#else
-                gathering_picture_statistics(
-                    scs_ptr,
-                    pcs_ptr,
-                    input_padded_picture_ptr,
-                    (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr,
-                    pcs_ptr->b64_total_count);
-#endif
 
             // If running multi-threaded mode, perform SC detection in picture_analysis_kernel, else in picture_decision_kernel
             if (scs_ptr->static_config.logical_processors != 1) {

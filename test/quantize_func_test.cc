@@ -977,7 +977,6 @@ INSTANTIATE_TEST_CASE_P(AVX2, QuantizeQmTest,
 INSTANTIATE_TEST_CASE_P(AVX2, QuantizeQmHbdTest,
                         ::testing::ValuesIn(kQmParamHbdArrayAvx2));
 
-#if OPT_QUANT_INV_QUANT
 TEST(ComputeCulLevel, avx2) {
     SVTRandom rnd(0, (1 << 10) - 1);
     const int max_size = 100 * 100;
@@ -1007,7 +1006,6 @@ TEST(ComputeCulLevel, avx2) {
         EXPECT_TRUE(eob_ref == eob_mod);
     }
 }
-#endif /*OPT_QUANT_INV_QUANT*/
 
 #endif  // HAS_AVX2
 }  // namespace

@@ -81,7 +81,6 @@ typedef struct RateControlIntervalParamContext {
     int32_t processed_frame_number;
     int32_t size;
     uint8_t last_i_qp;
-#if FTR_GOP_CONST_RC
     int64_t vbr_bits_off_target;
     int64_t vbr_bits_off_target_fast;
     int     rolling_target_bits;
@@ -92,7 +91,6 @@ typedef struct RateControlIntervalParamContext {
     int     extend_minq;
     int     extend_maxq;
     int     extend_minq_fast;
-#endif
 } RateControlIntervalParamContext;
 
 typedef struct EncodeContext {
