@@ -40,7 +40,8 @@ The sample application typically takes the following command line parameters:
  -parallel-frames <arg>    Number of frames to be processed in parallel
  -md5                      MD5 support flag
  -fps-frm                  Show fps after each frame decoded
- -fps-summary              Show fps summary -skip-film-grain
+ -fps-summary              Show fps summary
+ -skip-film-grain          Disable Film Grain
 ```
 
 Sample usage: `SvtAv1DecApp.exe -i test.ivf -o out.yuv`
