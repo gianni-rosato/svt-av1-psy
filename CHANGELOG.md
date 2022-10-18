@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0] - 2022-10-18
+
+Encoder
+- Port SIMD optimizations from libDav1D making the conformant path (Inv. Transform) faster
+- Enabling smaller mini-GOP size configurations and tuning it for the low delay mode
+- Tuning the low-latency mode in random access targeting latencies from 250ms to 1s
+- Adding GOP-constrained Rate Control targeting low-latency streaming applications
+- Optimize mode decision features levels for depth partitioning, RDOQ, MD stage0 pruning in-loop filtering temporal filtering and TPL adding more granularity and gaining further quality
+- Preset tuning M0-M13 to smooth the spacing and utilize the quality improvements towards better tradeoffs
+
+Build, Cleanup and Documentation
+- Update preset and API documentation
+- Various functional bug fixes
+- Remove the use of GLOB in cmake and use file names
+
 ## [1.2.1] - 2022-08-15
 
 - Fix a crash at the end of the encode that may occur when an invalid metadata packet is sent with the EOS packet
