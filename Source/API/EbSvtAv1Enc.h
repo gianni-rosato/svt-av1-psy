@@ -28,7 +28,7 @@ extern "C" {
  * has been modified, and reset anytime the major API version has
  * been changed. Used to keep track if a field has been added or not.
  */
-#define SVT_AV1_ENC_ABI_VERSION 5
+#define SVT_AV1_ENC_ABI_VERSION 6
 
 //***HME***
 
@@ -316,8 +316,8 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     EbColorFormat encoder_color_format;
 
-#if !SVT_AV1_CHECK_VERSION(1, 3, 0)
-    /* DEPRECATED: to be removed in 1.3.0. */
+#if !SVT_AV1_CHECK_VERSION(1, 4, 0)
+    /* DEPRECATED: to be removed in 1.4.0. */
     uint32_t compressed_ten_bit_format;
 #endif
 
@@ -433,8 +433,8 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0. */
     uint32_t max_bit_rate;
 
-#if !SVT_AV1_CHECK_VERSION(1, 3, 0)
-    /* DEPRECATED: to be removed in 1.3.0. */
+#if !SVT_AV1_CHECK_VERSION(1, 4, 0)
+    /* DEPRECATED: to be removed in 1.4.0. */
     uint32_t vbv_bufsize;
 #endif
 
