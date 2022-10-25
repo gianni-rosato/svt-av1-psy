@@ -169,8 +169,6 @@ set(all_files
         EbSourceBasedOperationsProcess.h
         EbTemporalFiltering.c
         EbTemporalFiltering.h
-        EbTransQuantBuffers.c
-        EbTransQuantBuffers.h
         EbTransformUnit.h
         EbTransforms.c
         EbTransforms.h
