@@ -2584,7 +2584,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     }
     // Determine the number of passes in CRF mode
     if (rc_mode == 0) {
+#if FIX_SHORT_KEYINT_WARN
+        if (ip > -1 && ip < 16 && passes != 1) {
+#else
         if (ip > -1 && ip < 16) {
+#endif
             passes = 1;
             fprintf(
                 stderr,

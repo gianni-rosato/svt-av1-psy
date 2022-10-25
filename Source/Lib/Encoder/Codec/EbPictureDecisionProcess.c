@@ -2538,7 +2538,8 @@ static void  av1_generate_rps_info(
         frm_hdr->show_frame = TRUE;
         pcs_ptr->has_show_existing = FALSE;
         context_ptr->lay0_toggle = (1 + context_ptr->lay0_toggle) % 8;
-    } else if (pcs_ptr->hierarchical_levels == 1) {
+    }
+    else if (pcs_ptr->hierarchical_levels == 1) {
         uint8_t gop_i;
         if (frm_hdr->frame_type == KEY_FRAME) {
             set_key_frame_rps(pcs_ptr, context_ptr);
@@ -2627,7 +2628,11 @@ static void  av1_generate_rps_info(
         }
 
         // Toggle layer0 and layer1
+#if FIX_TOGGLE_MG
+        if ((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index] - context_ptr->mini_gop_start_index[mini_gop_index]) &&
+#else
         if ((picture_index == context_ptr->mini_gop_end_index[mini_gop_index] &&
+#endif
                     !pcs_ptr->is_overlay &&
                     scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) ||
                 ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
@@ -2636,7 +2641,8 @@ static void  av1_generate_rps_info(
             context_ptr->lay0_toggle = (1 + context_ptr->lay0_toggle) % 5;
             context_ptr->lay1_toggle = (1 + context_ptr->lay1_toggle) % 3;
         }
-    } else if (pcs_ptr->hierarchical_levels == 2) {
+    }
+    else if (pcs_ptr->hierarchical_levels == 2) {
         uint8_t gop_i;
         if (frm_hdr->frame_type == KEY_FRAME) {
             set_key_frame_rps(pcs_ptr, context_ptr);
@@ -2798,7 +2804,11 @@ static void  av1_generate_rps_info(
             }
         }
 
+#if FIX_TOGGLE_MG
+        if ((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index] - context_ptr->mini_gop_start_index[mini_gop_index]) &&
+#else
         if ((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index]) &&
+#endif
                     !pcs_ptr->is_overlay &&
                     scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) ||
                 ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
@@ -2809,7 +2819,8 @@ static void  av1_generate_rps_info(
             //Layer1 toggle 3->4
             context_ptr->lay1_toggle = 1 - context_ptr->lay1_toggle;
         }
-    } else if (pcs_ptr->hierarchical_levels == 3) {
+    }
+    else if (pcs_ptr->hierarchical_levels == 3) {
 
         uint8_t gop_i;
         Bool is_trailing_frames = FALSE;
@@ -3130,7 +3141,11 @@ static void  av1_generate_rps_info(
         //mini GOP toggling since last Key Frame.
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         //whoever needs a miniGOP Level toggling, this is the time
+#if FIX_TOGGLE_MG
+        if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index] - context_ptr->mini_gop_start_index[mini_gop_index]) &&
+#else
         if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index] % 8) &&
+#endif
                         !pcs_ptr->is_overlay &&
                         scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)) ||
                 ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
@@ -3154,7 +3169,8 @@ static void  av1_generate_rps_info(
                 }
             }
         }
-    } else if (pcs_ptr->hierarchical_levels == 4) {
+    }
+    else if (pcs_ptr->hierarchical_levels == 4) {
         uint8_t gop_i;
         //Av1RpsNode_t *av1_rps = &pcs_ptr->av1RefSignal2;
 
@@ -3631,7 +3647,11 @@ static void  av1_generate_rps_info(
         //mini GOP toggling since last Key Frame.
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         //whoever needs a miniGOP Level toggling, this is the time
+#if FIX_TOGGLE_MG
+        if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index] - context_ptr->mini_gop_start_index[mini_gop_index]) &&
+#else
         if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index]) &&
+#endif
                         !pcs_ptr->is_overlay &&
                         scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)) ||
                 ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
@@ -3643,7 +3663,8 @@ static void  av1_generate_rps_info(
             //Layer1 toggle 3->4
             context_ptr->lay1_toggle = 1 - context_ptr->lay1_toggle;
         }
-    } else if (pcs_ptr->hierarchical_levels == 5) {
+    }
+    else if (pcs_ptr->hierarchical_levels == 5) {
         uint8_t gop_i;
         if (frm_hdr->frame_type == KEY_FRAME) {
             set_key_frame_rps(pcs_ptr, context_ptr);
@@ -4422,7 +4443,11 @@ static void  av1_generate_rps_info(
         //mini GOP toggling since last Key Frame.
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         //whoever needs a miniGOP Level toggling, this is the time
+#if FIX_TOGGLE_MG
+        if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index] - context_ptr->mini_gop_start_index[mini_gop_index]) &&
+#else
         if (((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index]) &&
+#endif
                         !pcs_ptr->is_overlay &&
                         scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS)) ||
                 ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
@@ -4441,6 +4466,10 @@ static void  av1_generate_rps_info(
     if (frm_hdr->frame_type == S_FRAME) {
         set_sframe_rps(pcs_ptr, encode_context_ptr, context_ptr);
     }
+#if FIX_OVERLAY_6L
+    if (pcs_ptr->is_overlay)
+        av1_rps->refresh_frame_mask = 0;
+#endif
 }
 
 static EbErrorType av1_generate_rps_info_from_user_config(

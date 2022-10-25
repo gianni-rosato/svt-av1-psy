@@ -33,6 +33,10 @@
 extern "C" {
 #endif // __cplusplus
 
+#define FIX_TOGGLE_MG              1 // Fix condition for updating lay0_toggle and lay1_toggle to account for case where MG start is not 0
+#define FIX_OVERLAY_6L             1 // Set refresh_frame_mask to 0 for overlay frames
+#define FIX_SHORT_KEYINT_WARN      1 // Fix warning when running short intra-period with 1-pass (implies the default configuration is 2-pass)
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
