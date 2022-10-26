@@ -115,6 +115,9 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
 static void svt_sequence_control_set_instance_dctor(EbPtr p) {
     EbSequenceControlSetInstance *obj = (EbSequenceControlSetInstance *)p;
     EB_DELETE(obj->encode_context_ptr);
+#if OPT_TPL_REF_BUFFERS
+    EB_DESTROY_SEMAPHORE(obj->scs_ptr->ref_buffer_available_semaphore);
+#endif
     EB_DELETE(obj->scs_ptr);
 }
 

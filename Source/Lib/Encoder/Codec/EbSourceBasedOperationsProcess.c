@@ -1718,6 +1718,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
     return;
 }
 
+#if !OPT_TPL_REF_BUFFERS
 EbErrorType rtime_alloc_mc_flow_rec_picture_buffer_noref(
     EncodeContext *encode_context_ptr, EbPictureBufferDescInitData *picture_buffer_desc_init_data) {
     EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer_noref,
@@ -1725,17 +1726,24 @@ EbErrorType rtime_alloc_mc_flow_rec_picture_buffer_noref(
            (EbPtr)picture_buffer_desc_init_data);
     return EB_ErrorNone;
 }
+#endif
 /************************************************
 * Allocate and initialize buffers needed for tpl
 ************************************************/
+#if OPT_TPL_REF_BUFFERS
+EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr) {
+    for (int frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
+#else
 EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr, PictureParentControlSet *pcs_ptr) {
     int32_t frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
     int32_t frame_idx;
 
     for (frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
+#endif
         encode_context_ptr->poc_map_idx[frame_idx]                = -1;
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
     }
+#if !OPT_TPL_REF_BUFFERS
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
     picture_buffer_desc_init_data.max_width          = pcs_ptr->enhanced_picture_ptr->max_width;
     picture_buffer_desc_init_data.max_height         = pcs_ptr->enhanced_picture_ptr->max_height;
@@ -1764,6 +1772,7 @@ EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr, PictureParentCon
                 encode_context_ptr->mc_flow_rec_picture_buffer_noref;
         }
     }
+#endif
     return EB_ErrorNone;
 }
 
@@ -1858,6 +1867,14 @@ void init_tpl_segments(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
     }
 }
 
+#if OPT_TPL_REF_BUFFERS
+typedef struct TplRefList {
+    EbObjectWrapper* ref;
+    int32_t frame_idx;
+    uint8_t refresh_frame_mask;
+    bool is_valid;
+} TplRefList;
+#endif
 /************************************************
 * Genrate TPL MC Flow Based on frames in the tpl group
 ************************************************/
@@ -1880,8 +1897,16 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
         svt_wait_cond_var(&pcs_ptr->tpl_group[i]->me_ready, 0);
     }
     pcs_ptr->tpl_is_valid = 0;
+#if OPT_TPL_REF_BUFFERS
+    init_tpl_buffers(encode_context_ptr);
+#else
     init_tpl_buffers(encode_context_ptr, pcs_ptr);
+#endif
 
+#if OPT_TPL_REF_BUFFERS
+    TplRefList tpl_ref_list[9];
+    memset(tpl_ref_list, 0, sizeof(tpl_ref_list[0]) * 9);
+#endif
     if (pcs_ptr->tpl_group[0]->tpl_data.tpl_temporal_layer_index == 0) {
         // no Tiles path
         if (scs_ptr->static_config.tile_rows == 0 && scs_ptr->static_config.tile_columns == 0)
@@ -1892,6 +1917,38 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
         for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
             encode_context_ptr->poc_map_idx[frame_idx] =
                 pcs_ptr->tpl_group[frame_idx]->picture_number;
+#if OPT_TPL_REF_BUFFERS
+            // NREF need recon buffer for intra pred
+            //if (pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag) {
+            EbObjectWrapper* reference_picture_wrapper;
+            // Get Empty Reference Picture Object
+            svt_get_empty_object(
+                scs_ptr->encode_context_ptr->tpl_reference_picture_pool_fifo_ptr,
+                &reference_picture_wrapper);
+            //pcs_ptr->tpl_group[frame_idx]->reference_picture_wrapper_ptr = reference_picture_wrapper;
+            // reset reference object in case of its members are altered by superres tool
+            //EbTplReferenceObject* ref =
+            //    (EbTplReferenceObject*)reference_picture_wrapper->object_ptr;
+            //svt_reference_object_reset(ref, scs_ptr);
+            // Give the new Reference a nominal live_count of 1
+            svt_object_inc_live_count(reference_picture_wrapper, 1);
+            //}else {
+            //    pcs_ptr->tpl_group[frame_idx]->reference_picture_wrapper_ptr = NULL;
+            //}
+            for (int i = 0; i < 9; i++) {
+                // Get empty list entry
+                if (!tpl_ref_list[i].is_valid) {
+                    tpl_ref_list[i].ref = reference_picture_wrapper;
+                    tpl_ref_list[i].refresh_frame_mask = pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag ? pcs_ptr->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask : 0;
+                    tpl_ref_list[i].frame_idx = frame_idx;
+                    tpl_ref_list[i].is_valid = true;
+                    encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] =
+                        ((EbTplReferenceObject *)reference_picture_wrapper->object_ptr)
+                        ->ref_picture_ptr;
+                    break;
+                }
+            }
+#endif
             for (uint32_t blky = 0; blky < (picture_height_in_mb); blky++) {
                 memset(pcs_ptr->tpl_group[frame_idx]
                            ->pa_me_data->tpl_stats[blky * (picture_width_in_mb)],
@@ -1910,6 +1967,24 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             if (scs_ptr->tpl_lad_mg > 0)
                 if (tpl_on)
                     pcs_ptr->tpl_group[frame_idx]->tpl_src_data_ready = 1;
+
+#if OPT_TPL_REF_BUFFERS
+            // Release references
+            for (int i = 0; i < 9; i++) {
+                // Get empty list entry
+                if (tpl_ref_list[i].is_valid && (frame_idx != tpl_ref_list[i].frame_idx || tpl_ref_list[i].refresh_frame_mask == 0)) {
+                    tpl_ref_list[i].refresh_frame_mask &= ~(pcs_ptr->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask);
+                    if (tpl_ref_list[i].refresh_frame_mask == 0) {
+                        svt_release_object(tpl_ref_list[i].ref);
+                        tpl_ref_list[i].ref = NULL;
+                        encode_context_ptr->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] = NULL;
+                        tpl_ref_list[i].frame_idx = -1;
+                        tpl_ref_list[i].refresh_frame_mask = 0;
+                        tpl_ref_list[i].is_valid = false;
+                    }
+                }
+            }
+#endif
         }
 
         // synthesizer
@@ -1970,7 +2045,25 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
     }
 #endif
 
+#if OPT_TPL_REF_BUFFERS
+    // Release un-released tpl references
+    for (int i = 0; i < 9; i++) {
+        // Get empty list entry
+        if (tpl_ref_list[i].is_valid /*&& (frame_idx != tpl_ref_list[i].frame_idx || tpl_ref_list[i].refresh_frame_mask == 0)*/) {
+            //tpl_ref_list[i].refresh_frame_mask &= ~(pcs_ptr->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask);
+            //if (tpl_ref_list[i].refresh_frame_mask == 0) {
+            svt_release_object(tpl_ref_list[i].ref);
+            tpl_ref_list[i].ref = NULL;
+            encode_context_ptr->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] = NULL;
+            tpl_ref_list[i].frame_idx = -1;
+            tpl_ref_list[i].refresh_frame_mask = 0;
+            tpl_ref_list[i].is_valid = false;
+            //}
+        }
+    }
+#else
     EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
+#endif
 
     // When super-res recode is actived, don't release pa_ref_objs until final loop is finished
     // Although tpl-la won't be enabled in super-res FIXED or RANDOM mode, here we use the condition to align with that in initial rate control process
@@ -2133,6 +2226,13 @@ void *tpl_disp_kernel(void *input_ptr) {
 static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
                                  PictureParentControlSet *pcs, Bool superres_recode) {
     EbObjectWrapper *out_results_wrapper_ptr;
+#if OPT_TPL_REF_BUFFERS
+    SequenceControlSet *scs = pcs->scs_ptr;
+    // NB: overlay frames should be non-ref
+    // Before sending pics out to pic mgr, ensure that pic mgr can handle them
+    if (pcs->is_used_as_reference_flag)
+        svt_block_on_semaphore(scs->ref_buffer_available_semaphore);
+#endif
 
     // Get Empty Results Object
     svt_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr,

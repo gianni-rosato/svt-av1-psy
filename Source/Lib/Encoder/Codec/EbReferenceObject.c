@@ -256,6 +256,13 @@ static void svt_pa_reference_object_dctor(EbPtr p) {
     }
 }
 
+#if OPT_TPL_REF_BUFFERS
+static void svt_tpl_reference_object_dctor(EbPtr p) {
+    EbTplReferenceObject *obj = (EbTplReferenceObject *)p;
+    EB_DELETE(obj->ref_picture_ptr);
+}
+#endif
+
 /*****************************************
  * svt_pa_reference_object_ctor
  *  Initializes the Buffer Descriptor's
@@ -306,6 +313,32 @@ EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_
 
     return EB_ErrorNone;
 }
+
+#if OPT_TPL_REF_BUFFERS
+EbErrorType svt_tpl_reference_object_ctor(EbTplReferenceObject *tpl_ref_obj_,
+    EbPtr                object_init_data_ptr) {
+    EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr = (EbPictureBufferDescInitData *)
+        object_init_data_ptr;
+
+    tpl_ref_obj_->dctor = svt_tpl_reference_object_dctor;
+
+    // Reference picture constructor
+    EB_NEW(tpl_ref_obj_->ref_picture_ptr,
+        svt_picture_buffer_desc_ctor,
+        (EbPtr)picture_buffer_desc_init_data_ptr);
+
+    return EB_ErrorNone;
+}
+EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+    EbTplReferenceObject *obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, svt_tpl_reference_object_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
+}
+#endif
 
 /************************************************
 * Release Pa Reference Objects

@@ -44,6 +44,7 @@ extern "C" {
 #define CLN_PRED_STRUCT_CTOR       1 // Cleanup prediction_structure_ctor
 #define OPT_PD_REF_QUEUE           1 // Refactor the picture decision PA ref queue
 #define OPT_PM_REF_QUEUE           1 // Refactor the picture manager reference queue
+#define OPT_TPL_REF_BUFFERS        1 // Create TPL reference buffers, instead of using closed loop reference objects, towards memory savings
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

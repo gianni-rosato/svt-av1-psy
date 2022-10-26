@@ -112,6 +112,9 @@ typedef struct EncodeContext {
     // Picture Buffer Fifos
     EbFifo *reference_picture_pool_fifo_ptr;
     EbFifo *pa_reference_picture_pool_fifo_ptr;
+#if OPT_TPL_REF_BUFFERS
+    EbFifo *tpl_reference_picture_pool_fifo_ptr;
+#endif
     EbFifo *down_scaled_picture_pool_fifo_ptr;
 
     // Picture Decision Reorder Queue

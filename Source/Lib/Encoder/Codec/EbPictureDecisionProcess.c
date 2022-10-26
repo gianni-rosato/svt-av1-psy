@@ -5309,6 +5309,7 @@ void send_picture_out(
     //every picture enherits latest motion direction from TF
     pcs->tf_motion_direction = ctx->tf_motion_direction;
 
+#if !OPT_TPL_REF_BUFFERS
 
 
 
@@ -5328,9 +5329,10 @@ void send_picture_out(
 #if SRM_REPORT
     pcs->reference_picture_wrapper_ptr->pic_number= pcs->picture_number;
 #endif
-    }else {
+        }else {
             pcs->reference_picture_wrapper_ptr = NULL;
         }
+#endif
 
         //get a new ME data buffer
         if (pcs->me_data_wrapper_ptr == NULL) {
@@ -5339,7 +5341,6 @@ void send_picture_out(
             pcs->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
             //printf("[%ld]: Got me data [NORMAL] %p\n", pcs->picture_number, pcs->pa_me_data);
         }
-
 
         MrpCtrls* mrp_ctrl = &(scs->mrp_ctrls);
         uint8_t ref_count_used_list0 =

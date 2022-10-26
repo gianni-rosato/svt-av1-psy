@@ -555,7 +555,12 @@ void *picture_manager_kernel(void *input_ptr) {
             // set the Reference Counts Based on Temporal Layer and how many frames are active
             input_entry_ptr->list0_ptr = &pred_position_ptr->ref_list0;
             input_entry_ptr->list1_ptr = &pred_position_ptr->ref_list1;
+#if OPT_TPL_REF_BUFFERS
+            // Overlay pics should be NREF
+            if (pcs_ptr->is_used_as_reference_flag) {
+#else
             if (!pcs_ptr->is_overlay) {
+#endif
 #if OPT_PM_REF_QUEUE
                 for (uint32_t i = 0; i < encode_context_ptr->reference_picture_list_length; i++) {
                     reference_entry_ptr = encode_context_ptr->reference_picture_list[i];
@@ -587,9 +592,11 @@ void *picture_manager_kernel(void *input_ptr) {
 #endif
                 reference_entry_ptr->picture_number       = pcs_ptr->picture_number;
                 reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)NULL;
+#if !OPT_TPL_REF_BUFFERS
                 reference_entry_ptr->ref_wraper =
                     pcs_ptr
                         ->reference_picture_wrapper_ptr; //at this time only the src data is valid
+#endif
                 reference_entry_ptr->release_enable            = TRUE;
                 reference_entry_ptr->reference_available       = FALSE;
                 reference_entry_ptr->slice_type                = pcs_ptr->slice_type;
@@ -602,6 +609,9 @@ void *picture_manager_kernel(void *input_ptr) {
                 reference_entry_ptr->decode_order = pcs_ptr->decode_order;
                 reference_entry_ptr->refresh_frame_mask = pcs_ptr->av1_ref_signal.refresh_frame_mask;
                 reference_entry_ptr->dec_order_of_last_ref = pcs_ptr->is_used_as_reference_flag ? UINT64_MAX : 0;
+#endif
+#if OPT_TPL_REF_BUFFERS
+                reference_entry_ptr->frame_end_cdf_update_required = pcs_ptr->frame_end_cdf_update_mode;
 #endif
 #if !OPT_PM_REF_QUEUE
                 encode_context_ptr->reference_picture_queue_tail_index =
@@ -790,6 +800,13 @@ void *picture_manager_kernel(void *input_ptr) {
                         if (entry_pcs_ptr->picture_number > 0 &&
                             entry_pcs_ptr->decode_order != context_ptr->pmgr_dec_order + 1)
                             availability_flag = FALSE;
+#if OPT_TPL_REF_BUFFERS
+                    // Only start pictures that can be reached with the given number of reference buffers.
+                    // PA may have more ref buffers than PM, so can send pictures faster, but PM can't start those
+                    // pictures until it has sufficient buffers to reach it.
+                    if (entry_pcs_ptr->decode_order > (context_ptr->consecutive_dec_order + scs_ptr->reference_picture_buffer_init_count - 8 /*- 1*/))
+                        availability_flag = FALSE;
+#endif
                     // Check RefList0 Availability
                     for (uint8_t ref_idx = 0; ref_idx < entry_pcs_ptr->ref_list0_count; ++ref_idx) {
                         //if (entry_pcs_ptr->ref_list0_count)  // NM: to double check.
@@ -871,6 +888,28 @@ void *picture_manager_kernel(void *input_ptr) {
                     }
 
                     if (availability_flag == TRUE) {
+#if OPT_TPL_REF_BUFFERS
+                        if (entry_pcs_ptr->is_used_as_reference_flag) {
+                            EbObjectWrapper* reference_picture_wrapper;
+                            // Get Empty Reference Picture Object
+                            svt_get_empty_object(
+                                scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
+                                &reference_picture_wrapper);
+                            entry_pcs_ptr->reference_picture_wrapper_ptr = reference_picture_wrapper;
+                            // reset reference object in case of its members are altered by superres tool
+                            EbReferenceObject* ref =
+                                (EbReferenceObject*)reference_picture_wrapper->object_ptr;
+                            svt_reference_object_reset(ref, scs_ptr);
+                            // Give the new Reference a nominal live_count of 1
+                            svt_object_inc_live_count(entry_pcs_ptr->reference_picture_wrapper_ptr, 1);
+#if SRM_REPORT
+                            pcs->reference_picture_wrapper_ptr->pic_number = pcs->picture_number;
+#endif
+                        }
+                        else {
+                            entry_pcs_ptr->reference_picture_wrapper_ptr = NULL;
+                        }
+#endif
                         // Get New  Empty recon-coef from recon-coef  Pool
                         svt_get_empty_object(context_ptr->recon_coef_fifo_ptr,
                                              &enc_dec_wrapper_ptr);
@@ -1488,7 +1527,37 @@ void *picture_manager_kernel(void *input_ptr) {
                     ? 0
                     : input_queue_index + 1;
             }
+#if OPT_TPL_REF_BUFFERS
+            for (uint32_t i = 0; i < encode_context_ptr->reference_picture_list_length; i++) {
+                reference_entry_ptr = encode_context_ptr->reference_picture_list[i];
+                if (reference_entry_ptr->is_valid) {
 
+                    // Remove the entry & release the reference if there are no remaining references
+                    if (reference_entry_ptr->dec_order_of_last_ref <= context_ptr->consecutive_dec_order &&
+                        reference_entry_ptr->release_enable &&
+                        reference_entry_ptr->reference_available &&
+#if OPT_TPL_REF_BUFFERS // why wasn't this a condition previously?
+                        reference_entry_ptr->reference_object_ptr &&
+                        (!reference_entry_ptr->frame_end_cdf_update_required ||
+                            reference_entry_ptr->frame_context_updated)) {
+#else
+                        reference_entry_ptr->reference_object_ptr) {
+#endif
+                            // Release the nominal live_count value
+                            svt_release_object(reference_entry_ptr->reference_object_ptr);
+                            reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)NULL;
+                            reference_entry_ptr->reference_available = FALSE;
+                            reference_entry_ptr->is_used_as_reference_flag = FALSE;
+                            reference_entry_ptr->is_valid = false;
+#if OPT_TPL_REF_BUFFERS
+                            reference_entry_ptr->frame_context_updated = FALSE;
+                            reference_entry_ptr->feedback_arrived = FALSE;
+                            svt_post_semaphore(scs_ptr->ref_buffer_available_semaphore);
+#endif
+                        }
+                    }
+                }
+#endif
 #if !OPT_REPLACE_DEP_CNT_CL
             // Walk the reference queue and remove entries that have been completely referenced.
             reference_queue_index = encode_context_ptr->reference_picture_queue_head_index;

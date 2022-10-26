@@ -199,6 +199,10 @@ typedef struct SequenceControlSet {
     uint32_t picture_control_set_pool_init_count_child;
     uint32_t enc_dec_pool_init_count;
     uint32_t pa_reference_picture_buffer_init_count;
+#if OPT_TPL_REF_BUFFERS
+    uint32_t tpl_reference_picture_buffer_init_count;
+    EbHandle ref_buffer_available_semaphore; // needed so that all REF pictures sent to PM will have an available ref buffer
+#endif
     uint32_t reference_picture_buffer_init_count;
     uint32_t input_buffer_fifo_init_count;
     uint32_t overlay_input_picture_buffer_init_count;

@@ -536,8 +536,12 @@ EbErrorType load_default_buffer_configuration_settings(
     // bistream buffer will be allocated at run time. app will free the buffer once written to file.
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
+#if OPT_TPL_REF_BUFFERS
+    uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_tpl_ref, min_overlay, min_recon, min_me;
+#else
     uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay, min_recon;
     uint32_t min_me;
+#endif
     uint32_t max_input, max_parent, max_child, max_paref, max_me, max_recon;
     {
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
@@ -584,7 +588,12 @@ EbErrorType load_default_buffer_configuration_settings(
         const uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(pred_struct_ptr) + 1; //+1: to accomodate one for a delayed-I
         const uint16_t num_ref_lad_mgs = num_ref_from_cur_mg * scs_ptr->lad_mg;
         const uint8_t dpb_frames = 8; // up to dpb_frame refs from prev MGs can be used (AV1 spec allows holding up to 8 frames for references)
+#if OPT_TPL_REF_BUFFERS
+        min_ref = (scs_ptr->enable_dec_order) ? dpb_frames + 1 : num_ref_from_cur_mg + num_ref_lad_mgs + dpb_frames;
+        min_tpl_ref = dpb_frames + 1; // TPL pictures are processed in decode order
+#else
         min_ref = num_ref_from_cur_mg + num_ref_lad_mgs + dpb_frames;
+#endif
 #else
         uint16_t num_ref_from_past_mgs = tot_past_refs[scs_ptr->static_config.hierarchical_levels];
         uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(pred_struct_ptr) + 1 ;//+1: to accomodate one for a delayed-I
@@ -712,6 +721,9 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count                  = min_input;
         scs_ptr->picture_control_set_pool_init_count           = min_parent;
         scs_ptr->pa_reference_picture_buffer_init_count        = min_paref;
+#if OPT_TPL_REF_BUFFERS
+        scs_ptr->tpl_reference_picture_buffer_init_count       = min_tpl_ref;
+#endif
         scs_ptr->reference_picture_buffer_init_count           = min_ref;
         scs_ptr->picture_control_set_pool_init_count_child     = min_child;
         scs_ptr->enc_dec_pool_init_count                    = min_child;
@@ -724,6 +736,9 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
+#if OPT_TPL_REF_BUFFERS
+        scs_ptr->tpl_reference_picture_buffer_init_count = min_tpl_ref;
+#endif
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
         scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(2, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
@@ -733,6 +748,9 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
+#if OPT_TPL_REF_BUFFERS
+        scs_ptr->tpl_reference_picture_buffer_init_count = min_tpl_ref;
+#endif
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
         scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(6, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
@@ -742,6 +760,9 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
+#if OPT_TPL_REF_BUFFERS
+        scs_ptr->tpl_reference_picture_buffer_init_count = min_tpl_ref;
+#endif
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
         scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(16, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
@@ -752,6 +773,9 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
+#if OPT_TPL_REF_BUFFERS
+        scs_ptr->tpl_reference_picture_buffer_init_count = min_tpl_ref;
+#endif
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
         scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(max_child, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
@@ -882,6 +906,10 @@ EbErrorType load_default_buffer_configuration_settings(
         }
     }
 
+#if OPT_TPL_REF_BUFFERS
+    // TPL in each thread is performed in decode order; therefore, each thread requires the same number of TPL refs
+    scs_ptr->tpl_reference_picture_buffer_init_count *= scs_ptr->source_based_operations_process_init_count;
+#endif
     scs_ptr->total_process_init_count += 6; // single processes count
     if (scs_ptr->static_config.pass == 0 || scs_ptr->static_config.pass == 3){
         SVT_INFO("Number of logical cores available: %u\n", core_count);
@@ -1089,8 +1117,10 @@ static void svt_enc_handle_dctor(EbPtr p)
 
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->enc_dec_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
 
-
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#if OPT_TPL_REF_BUFFERS
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->tpl_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#endif
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE(enc_handle_ptr->input_cmd_resource_ptr);
     EB_DELETE(enc_handle_ptr->input_y8b_buffer_resource_ptr);
@@ -1399,6 +1429,54 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         return 0;
 }
 
+#if OPT_TPL_REF_BUFFERS
+static int create_tpl_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_index)
+{
+    SequenceControlSet* scs_ptr = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr;
+    EbTplReferenceObjectDescInitData   eb_tpl_ref_obj_ect_desc_init_data_structure;
+    EbPictureBufferDescInitData       ref_pic_buf_desc_init_data;
+    // PA Reference Picture Buffers
+    // Currently, only Luma samples are needed in the PA
+    ref_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width;
+    ref_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height;
+    ref_pic_buf_desc_init_data.bit_depth = EB_EIGHT_BIT;
+    ref_pic_buf_desc_init_data.color_format = EB_YUV420; //use 420 for picture analysis
+
+    // Allocate one ref pic to be used in TPL
+    ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
+
+    ref_pic_buf_desc_init_data.left_padding = TPL_PADX;// scs_ptr->left_padding;
+    ref_pic_buf_desc_init_data.right_padding = TPL_PADX;// scs_ptr->right_padding;
+    ref_pic_buf_desc_init_data.top_padding = TPL_PADY;// scs_ptr->top_padding;
+    ref_pic_buf_desc_init_data.bot_padding = TPL_PADY;// scs_ptr->bot_padding;
+    ref_pic_buf_desc_init_data.split_mode = FALSE;
+    ref_pic_buf_desc_init_data.mfmv = 0;
+    ref_pic_buf_desc_init_data.is_16bit_pipeline = FALSE;
+    ref_pic_buf_desc_init_data.enc_mode = scs_ptr->static_config.enc_mode;
+
+    ref_pic_buf_desc_init_data.rest_units_per_tile = 0;// rest not needed in tpl scs_ptr->rest_units_per_tile;
+    ref_pic_buf_desc_init_data.down_sampled_filtered = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? TRUE : FALSE;
+    ref_pic_buf_desc_init_data.sb_total_count = scs_ptr->sb_total_count;
+
+    eb_tpl_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
+    // Reference Picture Buffers
+    EB_NEW(enc_handle_ptr->tpl_reference_picture_pool_ptr_array[instance_index],
+        svt_system_resource_ctor,
+        scs_ptr->tpl_reference_picture_buffer_init_count,
+        EB_PictureDecisionProcessInitCount,
+        0,
+        svt_tpl_reference_object_creator,
+        &(eb_tpl_ref_obj_ect_desc_init_data_structure),
+        NULL);
+    // Set the SequenceControlSet Picture Pool Fifo Ptrs
+    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->tpl_reference_picture_pool_fifo_ptr =
+        svt_system_resource_get_producer_fifo(enc_handle_ptr->tpl_reference_picture_pool_ptr_array[instance_index], 0);
+#if SRM_REPORT
+    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->tpl_reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
+#endif
+    return 0;
+}
+#endif
 static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_index)
 {
     EbReferenceObjectDescInitData     eb_ref_obj_ect_desc_init_data_structure;
@@ -1466,6 +1544,11 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
         EB_NEW(enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_list[idx],
             reference_queue_entry_ctor);
     }
+#if OPT_TPL_REF_BUFFERS
+    EB_CREATE_SEMAPHORE(scs_ptr->ref_buffer_available_semaphore,
+        reference_picture_list_length,
+        reference_picture_list_length);
+#endif
 #endif
     enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr =
         svt_system_resource_get_producer_fifo(enc_handle_ptr->reference_picture_pool_ptr_array[instance_index], 0);
@@ -1725,7 +1808,10 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     ************************************/
 
     // Allocate Resource Arrays
-        EB_ALLOC_PTR_ARRAY(enc_handle_ptr->reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#if OPT_TPL_REF_BUFFERS
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->tpl_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#endif
 
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
 
@@ -1745,13 +1831,16 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     tpl_ports[TPL_INPUT_PORT_TPL].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count;
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
 
-            // Must always allocate mem b/c don't know if restoration is on or off at this point
-            // The restoration assumes only 1 tile is used, so only allocate for 1 tile... see svt_av1_alloc_restoration_struct()
-            PictureControlSet *pcs = (PictureControlSet *)enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index]->wrapper_ptr_pool[0]->object_ptr;
-            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->rest_units_per_tile = pcs->rst_info[0/*Y-plane*/].units_per_tile;
-            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->b64_total_count = pcs->b64_total_count;
-            create_ref_buf_descs(enc_handle_ptr, instance_index);
+        // Must always allocate mem b/c don't know if restoration is on or off at this point
+        // The restoration assumes only 1 tile is used, so only allocate for 1 tile... see svt_av1_alloc_restoration_struct()
+        PictureControlSet *pcs = (PictureControlSet *)enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index]->wrapper_ptr_pool[0]->object_ptr;
+        enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->rest_units_per_tile = pcs->rst_info[0/*Y-plane*/].units_per_tile;
+        enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->b64_total_count = pcs->b64_total_count;
+        create_ref_buf_descs(enc_handle_ptr, instance_index);
 
+#if OPT_TPL_REF_BUFFERS
+        create_tpl_ref_buf_descs(enc_handle_ptr, instance_index);
+#endif
         create_pa_ref_buf_descs(enc_handle_ptr, instance_index);
 
         if (enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.enable_overlays) {
@@ -3643,8 +3732,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     // Enforce starting frame in decode order (at PicMgr)
     // Does not wait for feedback from PKT
+#if OPT_TPL_REF_BUFFERS
+    if (scs_ptr->static_config.logical_processors == 1)
+#else
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
         scs_ptr->tpl_level)
+#endif
         scs_ptr->enable_pic_mgr_dec_order = 1;
     else
         scs_ptr->enable_pic_mgr_dec_order = 0;
@@ -3653,8 +3746,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if RC_NO_R2R
     scs_ptr->enable_dec_order = 1;
 #else
+#if OPT_TPL_REF_BUFFERS
+    if (scs_ptr->static_config.logical_processors == 1)
+#else
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
         ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) || scs_ptr->static_config.rate_control_mode))
+#endif
         scs_ptr->enable_dec_order = 1;
     else
         scs_ptr->enable_dec_order = 0;

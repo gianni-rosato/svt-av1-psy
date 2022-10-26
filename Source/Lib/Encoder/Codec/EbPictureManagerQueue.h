@@ -49,7 +49,9 @@ typedef struct ReferenceQueueEntry {
     uint64_t         picture_number;
     uint64_t         decode_order;
     EbObjectWrapper *reference_object_ptr;
+#if !OPT_TPL_REF_BUFFERS
     EbObjectWrapper *ref_wraper;
+#endif
 #if !OPT_REPLACE_DEP_CNT_CL
     uint32_t         dependent_count;
 #endif
@@ -71,6 +73,9 @@ typedef struct ReferenceQueueEntry {
 #if OPT_REPLACE_DEP_CNT_CL
     uint8_t refresh_frame_mask;
     uint64_t dec_order_of_last_ref; // decode order of the last frame to use the current entry as a reference
+#endif
+#if OPT_TPL_REF_BUFFERS
+    bool frame_end_cdf_update_required; // True if frame_end_cdf_update_mode is enabled for this frame
 #endif
 #if OPT_PM_REF_QUEUE
     bool is_valid;
