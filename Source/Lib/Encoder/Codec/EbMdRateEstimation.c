@@ -940,7 +940,11 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
         pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled &&
         pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.seg_id_pre_skip;
 
+#if CLN_PIC_DEC_PROC
+    if (pcs_ptr->parent_pcs_ptr->frm_hdr.skip_mode_params.skip_mode_flag && !seg_ref_active && is_comp_ref_allowed(bsize)) {
+#else
     if (pcs_ptr->parent_pcs_ptr->skip_mode_flag && !seg_ref_active && is_comp_ref_allowed(bsize)) {
+#endif
         const int skip_mode_ctx = av1_get_skip_mode_context(xd);
         update_cdf(fc->skip_mode_cdfs[skip_mode_ctx], mbmi->block_mi.skip_mode, 2);
     }

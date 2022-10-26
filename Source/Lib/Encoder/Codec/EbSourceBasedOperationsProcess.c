@@ -114,7 +114,82 @@ EbErrorType tpl_disp_context_ctor(EbThreadContext   *thread_context_ptr,
     return EB_ErrorNone;
 }
 
+#if CLN_PIC_DEC_PROC
+/* this function sets up ME refs for a regular pic*/
+static void tpl_regular_setup_me_refs(
+    PictureParentControlSet         *base_pcs,
+    PictureParentControlSet         *cur_pcs)
+{
+
+    for (uint8_t list_index = REF_LIST_0; list_index < TOTAL_NUM_OF_REF_LISTS; list_index++) {
+
+        uint8_t  ref_list_count = (list_index == REF_LIST_0) ?
+            cur_pcs->ref_list0_count_try :
+            cur_pcs->ref_list1_count_try;
+
+        if (list_index == REF_LIST_0)
+            cur_pcs->tpl_data.tpl_ref0_count = ref_list_count;
+        else
+            cur_pcs->tpl_data.tpl_ref1_count = ref_list_count;
+
+
+        for (uint8_t ref_idx = 0; ref_idx < ref_list_count; ref_idx++) {
+
+            uint64_t ref_poc = cur_pcs->ref_pic_poc_array[list_index][ref_idx];
+
+            cur_pcs->tpl_data.ref_tpl_group_idx[list_index][ref_idx] = -1;
+            for (uint32_t j = 0; j < base_pcs->tpl_group_size; j++) {
+                if (ref_poc == base_pcs->tpl_group[j]->picture_number) {
+                    cur_pcs->tpl_data.ref_in_slide_window[list_index][ref_idx] = TRUE;
+                    cur_pcs->tpl_data.ref_tpl_group_idx[list_index][ref_idx] = j;
+                    break;
+                }
+            }
+
+            EbPaReferenceObject *ref_obj = (EbPaReferenceObject *)cur_pcs->ref_pa_pic_ptr_array[list_index][ref_idx]->object_ptr;
+
+            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_number = ref_obj->picture_number;
+            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_ptr = ref_obj->input_padded_picture_ptr;
+            //not needed for TPL but could be linked.
+            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].sixteenth_picture_ptr = NULL;
+            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].quarter_picture_ptr = NULL;
+        }
+    }
+}
+
+/*
+  prepare TPL data fields
+*/
+static void tpl_prep_info(PictureParentControlSet* pcs) {
+
+    for (uint32_t pic_i = 0; pic_i < pcs->tpl_group_size; ++pic_i) {
+
+        PictureParentControlSet* pcs_tpl = pcs->tpl_group[pic_i];
+
+        pcs_tpl->tpl_data.tpl_ref0_count = 0;
+        pcs_tpl->tpl_data.tpl_ref1_count = 0;
+        EB_MEMSET(pcs_tpl->tpl_data.ref_in_slide_window, 0, MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH * sizeof(Bool));
+        EB_MEMSET(pcs_tpl->tpl_data.tpl_ref_ds_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
+        EB_MEMSET(pcs_tpl->tpl_data.tpl_ref_ds_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
+
+        pcs_tpl->tpl_data.tpl_slice_type = pcs_tpl->slice_type;
+        pcs_tpl->tpl_data.tpl_temporal_layer_index = pcs_tpl->temporal_layer_index;
+        pcs_tpl->tpl_data.is_used_as_reference_flag = pcs_tpl->is_used_as_reference_flag;
+        pcs_tpl->tpl_data.tpl_decode_order = pcs_tpl->decode_order;
+
+        pcs_tpl->tpl_data.base_pcs = pcs;
+
+        if (pcs_tpl->tpl_data.tpl_slice_type != I_SLICE) {
+            tpl_regular_setup_me_refs(
+                pcs,
+                pcs_tpl);
+
+        }
+    }
+}
+#else
 void tpl_prep_info(PictureParentControlSet *pcs);
+#endif
 
 // Generate lambda factor to tune lambda based on TPL stats
 static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,

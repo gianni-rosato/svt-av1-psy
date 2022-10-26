@@ -43,10 +43,12 @@ static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size
 }
 void rtime_alloc_palette_tokens(SequenceControlSet *scs_ptr, PictureControlSet *child_pcs_ptr);
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
+#if !CLN_PIC_MGR_PROC
 /************************************************
  * Defines
  ************************************************/
 #define POC_CIRCULAR_ADD(base, offset) (((base) + (offset)))
+#endif
 
 void largest_coding_unit_dctor(EbPtr p);
 
@@ -453,7 +455,9 @@ void *picture_manager_kernel(void *input_ptr) {
 
     Bool availability_flag;
 
+#if !CLN_PIC_MGR_PROC
     PredictionStructureEntry *pred_position_ptr;
+#endif
     InputQueueEntry          *input_entry_ptr;
     uint32_t                  input_queue_index;
 #if OPT_PM_REF_QUEUE
@@ -462,7 +466,9 @@ void *picture_manager_kernel(void *input_ptr) {
     ReferenceQueueEntry      *reference_entry_ptr;
     uint32_t                  reference_queue_index;
 #endif
+#if !CLN_PIC_MGR_PROC
     uint64_t                  ref_poc;
+#endif
 #if !OPT_REPLACE_DEP_CNT_CL
     uint32_t                  dep_idx;
 #endif
@@ -522,9 +528,10 @@ void *picture_manager_kernel(void *input_ptr) {
             encode_context_ptr = scs_ptr->encode_context_ptr;
 
             //SVT_LOG("\nPicture Manager Process @ %d \n ", pcs_ptr->picture_number);
+#if !CLN_PIC_MGR_PROC
             pred_position_ptr =
                 pcs_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[pcs_ptr->pred_struct_index];
-
+#endif
 #if !OPT_REPLACE_DEP_CNT_CL
             // overlay dep is counted by alt-ref, does not copy to cleaning list
             if (!pcs_ptr->is_overlay)
@@ -551,10 +558,12 @@ void *picture_manager_kernel(void *input_ptr) {
                 ? 0
                 : encode_context_ptr->input_picture_queue_tail_index + 1;
 
+#if !CLN_PIC_MGR_PROC
             // Copy the reference lists into the inputEntry and
             // set the Reference Counts Based on Temporal Layer and how many frames are active
             input_entry_ptr->list0_ptr = &pred_position_ptr->ref_list0;
             input_entry_ptr->list1_ptr = &pred_position_ptr->ref_list1;
+#endif
 #if OPT_TPL_REF_BUFFERS
             // Overlay pics should be NREF
             if (pcs_ptr->is_used_as_reference_flag) {
@@ -807,6 +816,47 @@ void *picture_manager_kernel(void *input_ptr) {
                     if (entry_pcs_ptr->decode_order > (context_ptr->consecutive_dec_order + scs_ptr->reference_picture_buffer_init_count - 8 /*- 1*/))
                         availability_flag = FALSE;
 #endif
+#if CLN_PIC_MGR_PROC
+                    if ((entry_pcs_ptr->slice_type == P_SLICE) || (entry_pcs_ptr->slice_type == B_SLICE)) {
+                        uint8_t max_ref_count = (entry_pcs_ptr->slice_type == B_SLICE) ? ALT + 1 : BWD; // no list1 refs for P_SLICE
+                        for (REF_FRAME_MINUS1 ref = LAST; ref < max_ref_count; ref++) {
+                            // hardcode the reference for the overlay frame
+                            uint64_t ref_poc = entry_pcs_ptr->is_overlay ? entry_pcs_ptr->picture_number : entry_pcs_ptr->av1_ref_signal.ref_poc_array[ref];
+
+                            uint8_t list_idx = get_list_idx(ref + 1);
+                            uint8_t ref_idx = get_ref_frame_idx(ref + 1);
+                            assert(IMPLIES(entry_pcs_ptr->is_overlay, list_idx == 0));
+                            if ((list_idx == 0 && ref_idx >= entry_pcs_ptr->ref_list0_count) ||
+                                (list_idx == 1 && ref_idx >= entry_pcs_ptr->ref_list1_count))
+                                continue;
+
+                            reference_entry_ptr = search_ref_in_ref_queue(encode_context_ptr,
+                                ref_poc);
+
+                            if (reference_entry_ptr != NULL) {
+                                availability_flag = (availability_flag == FALSE)
+                                    ? FALSE
+                                    : // Don't update if already False
+                                    (scs_ptr->static_config.rate_control_mode &&
+                                        entry_pcs_ptr->slice_type != I_SLICE &&
+                                        entry_pcs_ptr->temporal_layer_index == 0 &&
+                                        !reference_entry_ptr->feedback_arrived &&
+                                        !encode_context_ptr->terminating_sequence_flag_received)
+                                    ? FALSE
+                                    : (entry_pcs_ptr->frame_end_cdf_update_mode &&
+                                        !reference_entry_ptr->frame_context_updated)
+                                    ? FALSE
+                                    : (reference_entry_ptr->reference_available)
+                                    ? TRUE
+                                    : // The Reference has been completed
+                                    FALSE; // The Reference has not been completed
+                            }
+                            else {
+                                availability_flag = FALSE;
+                            }
+                        }
+                    }
+#else
                     // Check RefList0 Availability
                     for (uint8_t ref_idx = 0; ref_idx < entry_pcs_ptr->ref_list0_count; ++ref_idx) {
                         //if (entry_pcs_ptr->ref_list0_count)  // NM: to double check.
@@ -886,6 +936,7 @@ void *picture_manager_kernel(void *input_ptr) {
                             }
                         }
                     }
+#endif
 
                     if (availability_flag == TRUE) {
 #if OPT_TPL_REF_BUFFERS
@@ -1147,6 +1198,111 @@ void *picture_manager_kernel(void *input_ptr) {
                         EB_MEMSET(child_pcs_ptr->ref_pic_r0[REF_LIST_1],
                                   0,
                                   REF_LIST_MAX_DEPTH * sizeof(double));
+#if CLN_PIC_MGR_PROC
+                        int8_t ref_index = 0;
+                        if ((entry_pcs_ptr->slice_type == P_SLICE) || (entry_pcs_ptr->slice_type == B_SLICE)) {
+                            int8_t max_temporal_index = -1;
+                            uint8_t max_ref_count = (entry_pcs_ptr->slice_type == B_SLICE) ? ALT + 1 : BWD; // no list1 refs for P_SLICE
+                            for (REF_FRAME_MINUS1 ref = LAST; ref < max_ref_count; ref++) {
+                                // hardcode the reference for the overlay frame
+                                uint64_t ref_poc = entry_pcs_ptr->is_overlay ? entry_pcs_ptr->picture_number : entry_pcs_ptr->av1_ref_signal.ref_poc_array[ref];
+
+                                uint8_t list_idx = get_list_idx(ref + 1);
+                                uint8_t ref_idx = get_ref_frame_idx(ref + 1);
+                                assert(IMPLIES(entry_pcs_ptr->is_overlay, list_idx == 0));
+                                if ((list_idx == 0 && ref_idx >= entry_pcs_ptr->ref_list0_count) ||
+                                    (list_idx == 1 && ref_idx >= entry_pcs_ptr->ref_list1_count))
+                                    continue;
+
+                                reference_entry_ptr = search_ref_in_ref_queue(encode_context_ptr,
+                                    ref_poc);
+                                assert(reference_entry_ptr != 0);
+                                CHECK_REPORT_ERROR((reference_entry_ptr),
+                                    encode_context_ptr->app_callback_ptr,
+                                    EB_ENC_PM_ERROR10);
+
+                                if (entry_pcs_ptr->frame_end_cdf_update_mode) {
+                                    child_pcs_ptr->ref_frame_context[svt_get_ref_frame_type(list_idx, ref_idx) - LAST_FRAME] =
+                                        ((EbReferenceObject *)reference_entry_ptr
+                                            ->reference_object_ptr->object_ptr)
+                                        ->frame_context;
+                                    if (max_temporal_index <
+                                        (int8_t)reference_entry_ptr->temporal_layer_index &&
+                                        (int8_t)reference_entry_ptr->temporal_layer_index <=
+                                        child_pcs_ptr->temporal_layer_index) {
+                                        max_temporal_index =
+                                            (int8_t)reference_entry_ptr->temporal_layer_index;
+                                        ref_index = svt_get_ref_frame_type(list_idx, ref_idx) - LAST_FRAME;
+                                        for (int frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame) {
+                                            EbReferenceObject *ref_obj =
+                                                (EbReferenceObject *)reference_entry_ptr
+                                                ->reference_object_ptr->object_ptr;
+
+                                            child_pcs_ptr->ref_global_motion[frame] =
+                                                ref_obj->slice_type != I_SLICE
+                                                ? ref_obj->global_motion[frame]
+                                                : default_warp_params;
+                                        }
+                                    }
+                                }
+                                // Set the Reference Object
+                                child_pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx] =
+                                    reference_entry_ptr->reference_object_ptr;
+                                child_pcs_ptr->ref_pic_qp_array[list_idx][ref_idx] =
+                                    (uint8_t)((EbReferenceObject *)reference_entry_ptr
+                                        ->reference_object_ptr->object_ptr)
+                                    ->qp;
+                                child_pcs_ptr->ref_slice_type_array[list_idx][ref_idx] =
+                                    ((EbReferenceObject *)
+                                        reference_entry_ptr->reference_object_ptr->object_ptr)
+                                    ->slice_type;
+                                child_pcs_ptr->ref_pic_r0[list_idx][ref_idx] =
+                                    ((EbReferenceObject *)
+                                        reference_entry_ptr->reference_object_ptr->object_ptr)
+                                    ->r0;
+                                // Increment the Reference's liveCount by the number of tiles in the input picture
+                                svt_object_inc_live_count(
+                                    reference_entry_ptr->reference_object_ptr, 1);
+
+#if DEBUG_SFRAME
+                                if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+                                    fprintf(stderr,
+                                        "\nframe %d, layer %d, ref-list-0 count %u, ref "
+                                        "frame %d, ref frame remain dep count %d\n",
+                                        (int)child_pcs_ptr->picture_number,
+                                        entry_pcs_ptr->temporal_layer_index,
+                                        entry_pcs_ptr->ref_list0_count,
+                                        (int)child_pcs_ptr->parent_pcs_ptr
+                                        ->ref_pic_poc_array[REF_LIST_0][ref_idx],
+                                        reference_entry_ptr->dependent_count);
+                                }
+#endif
+                            }
+
+                            //fill the non used spots to be used in MFMV.
+                            for (uint8_t ref_idx = entry_pcs_ptr->ref_list0_count; ref_idx < 4;
+                                ++ref_idx)
+                                child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][ref_idx] =
+                                child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0];
+
+                            if (entry_pcs_ptr->ref_list1_count == 0) {
+                                for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count; ref_idx < 3;
+                                    ++ref_idx)
+                                    child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx] =
+                                    child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0];
+                            }
+
+                            if (entry_pcs_ptr->slice_type == B_SLICE) {
+                                //fill the non used spots to be used in MFMV.
+                                if (entry_pcs_ptr->ref_list1_count) {
+                                    for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count; ref_idx < 3;
+                                        ++ref_idx)
+                                        child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx] =
+                                        child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0];
+                                }
+                            }
+                        }
+#else
                         int8_t max_temporal_index = -1, ref_index = 0;
                         // Configure List0
                         if ((entry_pcs_ptr->slice_type == P_SLICE) ||
@@ -1352,6 +1508,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                         child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0];
                             }
                         }
+#endif
 
                         if (entry_pcs_ptr->frame_end_cdf_update_mode) {
                             if (entry_pcs_ptr->slice_type != I_SLICE &&

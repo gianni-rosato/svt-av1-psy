@@ -32,8 +32,10 @@ typedef struct InputQueueEntry {
 #if !OPT_REPLACE_DEP_CNT_CL
     uint32_t         dependent_count;
 #endif
+#if !CLN_PIC_MGR_PROC
     ReferenceList   *list0_ptr;
     ReferenceList   *list1_ptr;
+#endif
     uint32_t         use_count;
     Bool             memory_mgmt_loop_done;
     Bool             rate_control_loop_done;

@@ -57,7 +57,9 @@ typedef struct PictureDecisionContext {
     EbFifo  *picture_analysis_results_input_fifo_ptr;
     EbFifo  *picture_decision_results_output_fifo_ptr;
     EbFifo  *me_fifo_ptr;
+#if !CLN_PIC_DEC_PROC
     uint64_t last_solid_color_frame_poc;
+#endif
 
     Bool        reset_running_avg;
     int8_t      tf_motion_direction; // -1: invalid   0: horz  1: vert

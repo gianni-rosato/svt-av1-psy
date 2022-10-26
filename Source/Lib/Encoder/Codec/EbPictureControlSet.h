@@ -698,7 +698,11 @@ typedef struct PictureParentControlSet {
     uint8_t   picture_qp;
     uint64_t  picture_number;
     uint32_t  cur_order_hint;
+#if CLN_PIC_DEC_PROC
+    uint32_t  ref_order_hint[INTER_REFS_PER_FRAME];
+#else
     uint32_t  ref_order_hint[7];
+#endif
     SliceType slice_type;
     uint8_t   pred_struct_index;
     uint8_t   temporal_layer_index;
@@ -745,7 +749,9 @@ typedef struct PictureParentControlSet {
     uint16_t       **variance;
     uint32_t         pre_assignment_buffer_count;
     uint16_t         pic_avg_variance;
+#if !CLN_PIC_DEC_PROC
     Bool             scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
+#endif
 
     uint32_t ***picture_histogram;
     uint64_t    average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
@@ -833,9 +839,13 @@ typedef struct PictureParentControlSet {
     Av1RpsNode av1_ref_signal;
     Bool       has_show_existing;
     int32_t    ref_frame_map[REF_FRAMES]; /* maps fb_idx to reference slot */
+#if CLN_PIC_DEC_PROC
+    uint32_t   pic_idx_in_mg; //index of picture in the mg
+#else
     int32_t    is_skip_mode_allowed;
     int32_t    skip_mode_flag;
     uint32_t   pic_index; //index of picture in the mg
+#endif
     // Flag for a frame used as a reference - not written to the Bitstream
     int32_t is_reference_frame;
 

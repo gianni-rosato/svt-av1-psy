@@ -3971,8 +3971,13 @@ static void write_uncompressed_header_obu(SequenceControlSet      *scs_ptr /*Av1
         svt_aom_wb_write_bit(wb, use_hybrid_pred);
     }
 
+#if CLN_PIC_DEC_PROC
+    if (frm_hdr->skip_mode_params.skip_mode_allowed)
+        svt_aom_wb_write_bit(wb, frm_hdr->skip_mode_params.skip_mode_flag);
+#else
     if (pcs_ptr->is_skip_mode_allowed)
         svt_aom_wb_write_bit(wb, pcs_ptr->skip_mode_flag);
+#endif
 
     if (frame_might_allow_warped_motion(pcs_ptr, scs_ptr))
         svt_aom_wb_write_bit(wb, frm_hdr->allow_warped_motion);
@@ -5615,7 +5620,11 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     } else {
         write_inter_segment_id(
             pcs_ptr, frame_context, ec_writer, blk_geom, blk_origin_x, blk_origin_y, blk_ptr, 0, 1);
+#if CLN_PIC_DEC_PROC
+        if (frm_hdr->skip_mode_params.skip_mode_flag && is_comp_ref_allowed(bsize)) {
+#else
         if (pcs_ptr->parent_pcs_ptr->skip_mode_flag && is_comp_ref_allowed(bsize)) {
+#endif
             encode_skip_mode_av1(frame_context,
                                  ec_writer,
                                  blk_ptr->skip_mode,
@@ -5623,7 +5632,11 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                                  blk_origin_y,
                                  skip_flag_neighbor_array);
         }
+#if CLN_PIC_DEC_PROC
+        if (!frm_hdr->skip_mode_params.skip_mode_flag && blk_ptr->skip_mode)
+#else
         if (!pcs_ptr->parent_pcs_ptr->skip_mode_flag && blk_ptr->skip_mode)
+#endif
             SVT_ERROR("SKIP not supported\n");
         if (!blk_ptr->skip_mode) {
             //const int32_t skip = write_skip(cm, xd, mbmi->segment_id, mi, w);

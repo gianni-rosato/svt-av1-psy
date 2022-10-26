@@ -2320,7 +2320,9 @@ void(*error_handler)(
 //***Prediction Structure***
 #define MAX_TEMPORAL_LAYERS                         6
 #define MAX_REF_IDX                                 4
+#if !CLN_PIC_MGR_PROC
 #define INVALID_POC                                 (((uint32_t) (~0)) - (((uint32_t) (~0)) >> 1))
+#endif
 #define MAX_ELAPSED_IDR_COUNT                       1024
 
 typedef enum DownSamplingMethod

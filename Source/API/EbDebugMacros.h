@@ -45,6 +45,9 @@ extern "C" {
 #define OPT_PD_REF_QUEUE           1 // Refactor the picture decision PA ref queue
 #define OPT_PM_REF_QUEUE           1 // Refactor the picture manager reference queue
 #define OPT_TPL_REF_BUFFERS        1 // Create TPL reference buffers, instead of using closed loop reference objects, towards memory savings
+#define CLN_PIC_DEC_PROC           1 // Cleanup picture_decision_kernel
+#define CLN_PIC_MGR_PROC           1 // Cleanup picture_manager_kernel
+#define FIX_REF_SIGN_BIAS          1 // Fix ref_frame_sign_bias derivation
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

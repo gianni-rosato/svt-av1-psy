@@ -1631,11 +1631,18 @@ void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionCont
                                             .ed_ref_mv_stack[ref_pair][0]
                                             .comp_mv.as_mv.row;
 
+#if CLN_PIC_DEC_PROC
+            const bool is_skip_mode =
+                frm_hdr->skip_mode_params.skip_mode_flag &&
+                (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0) &&
+                (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1);
+#else
             Bool is_skip_mode = pcs->parent_pcs_ptr->is_skip_mode_allowed &&
                     (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0 + 1) &&
                     (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1 + 1)
                 ? TRUE
                 : FALSE;
+#endif
 
             cand_array[cand_idx].pred_mode         = NEAREST_NEARESTMV;
             cand_array[cand_idx].motion_mode       = SIMPLE_TRANSLATION;
@@ -2049,11 +2056,18 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                 }
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
+#if CLN_PIC_DEC_PROC
+                    const bool is_skip_mode =
+                        frm_hdr->skip_mode_params.skip_mode_flag &&
+                        (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0) &&
+                        (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1);
+#else
                     Bool is_skip_mode = pcs_ptr->parent_pcs_ptr->is_skip_mode_allowed &&
                             (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0 + 1) &&
                             (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1 + 1)
                         ? TRUE
                         : FALSE;
+#endif
                     Bool mask_done    = 0;
                     for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                          cur_type++) {
