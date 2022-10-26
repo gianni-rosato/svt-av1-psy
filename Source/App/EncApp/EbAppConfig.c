@@ -52,7 +52,9 @@
 #define TWO_PASS_STATS_TOKEN "--stats"
 #define PASSES_TOKEN "--passes"
 #define STAT_FILE_TOKEN "--stat-file"
+#if !REMOVE_MANUAL_PRED
 #define INPUT_PREDSTRUCT_FILE_TOKEN "--pred-struct-file"
+#endif
 #define WIDTH_TOKEN "-w"
 #define HEIGHT_TOKEN "-h"
 #define NUMBER_OF_PICTURES_TOKEN "-n"
@@ -257,6 +259,7 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
     cfg->y4m_input = check_if_y4m(cfg);
 };
 
+#if !REMOVE_MANUAL_PRED
 static void set_pred_struct_file(const char *value, EbConfig *cfg) {
     if (cfg->input_pred_struct_filename)
         free(cfg->input_pred_struct_filename);
@@ -267,6 +270,7 @@ static void set_pred_struct_file(const char *value, EbConfig *cfg) {
 #endif
     cfg->config.enable_manual_pred_struct = TRUE;
 }
+#endif
 
 static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
     if (cfg->bitstream_file && cfg->bitstream_file != stdout) {
@@ -889,11 +893,12 @@ ConfigEntry config_entry_options[] = {
      "PSNR / SSIM per picture stat output file path, requires `--enable-stat-report 1`",
      set_cfg_stat_file},
 
+#if !REMOVE_MANUAL_PRED
     {SINGLE_INPUT,
      INPUT_PREDSTRUCT_FILE_TOKEN,
      "Manual prediction structure file path",
      set_pred_struct_file},
-
+#endif
     {SINGLE_INPUT,
      PROGRESS_TOKEN,
      "Verbosity of the output, default is 1 [0: no progress is printed, 2: aomenc style output]",
@@ -1437,7 +1442,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", set_cfg_recon_file},
     {SINGLE_INPUT, OUTPUT_RECON_LONG_TOKEN, "ReconFile", set_cfg_recon_file},
     {SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", set_cfg_stat_file},
+#if !REMOVE_MANUAL_PRED
     {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "PredStructFile", set_pred_struct_file},
+#endif
     {SINGLE_INPUT, PROGRESS_TOKEN, "Progress", set_progress},
     {SINGLE_INPUT, NO_PROGRESS_TOKEN, "NoProgress", set_no_progress},
     {SINGLE_INPUT, PRESET_TOKEN, "EncoderMode", set_enc_mode},
@@ -1688,10 +1695,12 @@ void svt_config_dtor(EbConfig *config_ptr) {
         config_ptr->recon_file = (FILE *)NULL;
     }
 
+#if !REMOVE_MANUAL_PRED
     if (config_ptr->input_pred_struct_filename) {
         free(config_ptr->input_pred_struct_filename);
         config_ptr->input_pred_struct_filename = NULL;
     }
+#endif
 
     if (config_ptr->error_log_file && config_ptr->error_log_file != stderr) {
         fclose(config_ptr->error_log_file);
@@ -2680,6 +2689,7 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
     return frame_count;
 }
 
+#if !REMOVE_MANUAL_PRED
 /**********************************
 * Parse Pred Struct File
 **********************************/
@@ -2844,6 +2854,7 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
 
     return return_error;
 }
+#endif
 
 static Bool warn_legacy_token(const char *const token) {
     static struct warn_set {
@@ -3017,6 +3028,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             }
         }
     }
+#if !REMOVE_MANUAL_PRED
     /***************************************************************************************************/
     /*******************************   Parse manual prediction structure  ******************************/
     /***************************************************************************************************/
@@ -3029,6 +3041,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             return_error = (EbErrorType)(return_error & c->return_error);
         }
     }
+#endif
     /***************************************************************************************************/
     /**************************************   Verify configuration parameters   ************************/
     /***************************************************************************************************/

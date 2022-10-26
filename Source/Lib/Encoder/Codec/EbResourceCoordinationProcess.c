@@ -1033,6 +1033,13 @@ void *resource_coordination_kernel(void *input_ptr) {
             EbPictureBufferDesc *input_padded_picture_ptr =
                 (EbPictureBufferDesc *)pa_ref_obj->input_padded_picture_ptr;
             input_padded_picture_ptr->buffer_y = buff_y8b;
+#if OPT_PD_REF_QUEUE
+            svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
+            if (pcs_ptr->eb_y8b_wrapper_ptr) {
+                // y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
+                svt_object_inc_live_count(pcs_ptr->eb_y8b_wrapper_ptr, 1);
+            }
+#else
             // Since overlay pictures are not added to PA_Reference queue in PD and not released there, the life count is only set to 1
             if (pcs_ptr->is_overlay)
                 // Give the new Reference a nominal live_count of 1
@@ -1043,6 +1050,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 // y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
                 svt_object_inc_live_count(pcs_ptr->eb_y8b_wrapper_ptr, 2);
             }
+#endif
             if (scs_ptr->static_config.restricted_motion_vector) {
                 struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
                 Av1Common *const                cm       = ppcs_ptr->av1_cm;

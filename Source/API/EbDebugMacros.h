@@ -36,6 +36,14 @@ extern "C" {
 #define FIX_TOGGLE_MG              1 // Fix condition for updating lay0_toggle and lay1_toggle to account for case where MG start is not 0
 #define FIX_OVERLAY_6L             1 // Set refresh_frame_mask to 0 for overlay frames
 #define FIX_SHORT_KEYINT_WARN      1 // Fix warning when running short intra-period with 1-pass (implies the default configuration is 2-pass)
+#define OPT_REPLACE_DEP_CNT        1 // Update the live count of PA refs at runtime based on the actual references, not init-time info
+#define OPT_REPLACE_DEP_CNT_CL     1 // Update the live count of closed-loop refs at runtime based on the actual references, not init-time info
+#define REMOVE_MANUAL_PRED         1 // Remove support for specifying a manual prediction structure
+#define CLN_ENC_CTX                1 // Remove unused entries from encode_context
+#define REMOVE_DEP_PIC_LIST        1 // Remove the list of dependent pics in the pred struct entries
+#define CLN_PRED_STRUCT_CTOR       1 // Cleanup prediction_structure_ctor
+#define OPT_PD_REF_QUEUE           1 // Refactor the picture decision PA ref queue
+#define OPT_PM_REF_QUEUE           1 // Refactor the picture manager reference queue
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

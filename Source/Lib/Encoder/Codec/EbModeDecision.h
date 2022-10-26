@@ -186,15 +186,19 @@ typedef EbErrorType (*EB_FULL_NXN_COST_FUNC)(PictureControlSet           *pcs_pt
 struct CodingLoopContext_s;
 /*
       |-------------------------------------------------------------|
-      | ref_idx          0            1           2            3       |
-      | List0            LAST        LAST2        LAST3        GOLD    |
-      | List1            BWD            ALT2            ALT                |
+      | ref_idx          0            1           2            3    |
+      | List0            LAST        LAST2        LAST3        GOLD |
+      | List1            BWD         ALT2         ALT               |
       |-------------------------------------------------------------|
     */
 #define INVALID_REF 0xF
+#if OPT_REPLACE_DEP_CNT
+extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
+#else
 uint8_t                 get_ref_frame_idx(uint8_t ref_type);
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 uint8_t                 get_list_idx(uint8_t ref_type);
+#endif
 int                     svt_aom_get_sad_per_bit(int qidx, EbBitDepth is_hbd);
 #ifdef __cplusplus
 }

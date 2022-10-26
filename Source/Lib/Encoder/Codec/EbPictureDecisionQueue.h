@@ -24,13 +24,24 @@ typedef struct PaReferenceQueueEntry {
     EbObjectWrapper *input_object_ptr;
     EbObjectWrapper *eb_y8b_wrapper_ptr;
     uint64_t         picture_number;
+#if OPT_REPLACE_DEP_CNT
+#if OPT_PD_REF_QUEUE
+    bool is_valid;
+#else
+    uint8_t refresh_frame_mask;
+#endif
+    uint64_t decode_order;
+#else
     uint32_t         dependent_count;
+#endif
+#if !OPT_REPLACE_DEP_CNT_CL
     ReferenceList   *list0_ptr;
     ReferenceList   *list1_ptr;
     uint32_t         dep_list0_count;
     uint32_t         dep_list1_count;
     DependentList    list0;
     DependentList    list1;
+#endif
     uint8_t          is_alt_ref;
 } PaReferenceQueueEntry;
 

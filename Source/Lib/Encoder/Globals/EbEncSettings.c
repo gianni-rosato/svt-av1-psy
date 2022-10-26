@@ -545,6 +545,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             config->tune);
         return_error = EB_ErrorBadParameter;
     }
+#if !REMOVE_MANUAL_PRED
     // prediction structure
     if (config->enable_manual_pred_struct) {
         if (config->manual_pred_struct_entry_num > (1 << (MAX_HIERARCHICAL_LEVEL - 1))) {
@@ -614,6 +615,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             }
         }
     }
+#endif
 
     if (config->superres_mode > SUPERRES_AUTO) {
         SVT_ERROR("Instance %u: invalid superres-mode %d, should be in the range [%d - %d]\n",
@@ -985,9 +987,11 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv                  = DEFAULT;
     config_ptr->fast_decode                  = 0;
+#if !REMOVE_MANUAL_PRED
     memset(config_ptr->pred_struct, 0, sizeof(config_ptr->pred_struct));
     config_ptr->enable_manual_pred_struct    = FALSE;
     config_ptr->manual_pred_struct_entry_num = 0;
+#endif
     config_ptr->encoder_color_format         = EB_YUV420;
     // Rate control options
     // Set the default value toward more flexible rate allocation

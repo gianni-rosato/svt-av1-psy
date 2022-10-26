@@ -552,9 +552,14 @@ EbErrorType load_default_buffer_configuration_settings(
         uint32_t eos_delay = 1;
 
         //Minimum input pictures needed in the pipeline
+#if OPT_REPLACE_DEP_CNT_CL
+        const uint16_t lad_mg_pictures = (mg_size + overlay) * scs_ptr->lad_mg;
+        return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay; //Unit= 1(provision for a potential delayI) + prediction struct + potential overlay
+#else
         uint16_t lad_mg_pictures = (1 + mg_size + overlay) * scs_ptr->lad_mg; //Unit= 1(provision for a potential delayI) + prediction struct + potential overlay        return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1)  + scs_ptr->scd_delay + eos_delay;
         return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
         //scs_ptr->input_buffer_fifo_init_count = return_ppcs;
+#endif
         min_input = return_ppcs;
 
         if (scs_ptr->static_config.enable_overlays)
@@ -575,6 +580,12 @@ EbErrorType load_default_buffer_configuration_settings(
             4,
             scs_ptr->static_config.hierarchical_levels);
 
+#if OPT_REPLACE_DEP_CNT_CL
+        const uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(pred_struct_ptr) + 1; //+1: to accomodate one for a delayed-I
+        const uint16_t num_ref_lad_mgs = num_ref_from_cur_mg * scs_ptr->lad_mg;
+        const uint8_t dpb_frames = 8; // up to dpb_frame refs from prev MGs can be used (AV1 spec allows holding up to 8 frames for references)
+        min_ref = num_ref_from_cur_mg + num_ref_lad_mgs + dpb_frames;
+#else
         uint16_t num_ref_from_past_mgs = tot_past_refs[scs_ptr->static_config.hierarchical_levels];
         uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(pred_struct_ptr) + 1 ;//+1: to accomodate one for a delayed-I
 
@@ -582,6 +593,7 @@ EbErrorType load_default_buffer_configuration_settings(
 
         uint16_t num_ref_lad_mgs = num_ref_from_cur_mg * scs_ptr->lad_mg;
         min_ref = num_ref_from_past_mgs + num_ref_from_cur_mg + num_ref_lad_mgs;
+#endif
         if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
             min_me = min_parent;
         else if (scs_ptr->tpl_level) {
@@ -593,12 +605,23 @@ EbErrorType load_default_buffer_configuration_settings(
         else
             min_me = 1;
 
+#if OPT_REPLACE_DEP_CNT_CL
+        //PA REF
+        const uint16_t num_pa_ref_from_cur_mg = mg_size; //ref+nref; nRef PA buffers are processed in PicAnalysis and used in TF
+        min_paref = num_pa_ref_from_cur_mg + lad_mg_pictures + scs_ptr->scd_delay + eos_delay + dpb_frames;
+#else
         //PA REF
         uint16_t num_pa_ref_from_past_mgs = tot_past_refs[scs_ptr->static_config.hierarchical_levels];
         //printf("TOT_PAST_REFs:%i \n", num_pa_ref_from_past_mgs);
         uint16_t num_pa_ref_from_cur_mg = mg_size; //ref+nref; nRef PA buffers are processed in PicAnalysis and used in TF
         uint16_t num_pa_ref_for_cur_mg = num_pa_ref_from_past_mgs + num_pa_ref_from_cur_mg;
+#if OPT_REPLACE_DEP_CNT
+        const uint8_t dpb_frames = 8;
+        min_paref = num_pa_ref_for_cur_mg + 1 + lad_mg_pictures + scs_ptr->scd_delay + eos_delay + dpb_frames;
+#else
         min_paref = num_pa_ref_for_cur_mg + 1 + lad_mg_pictures + scs_ptr->scd_delay + eos_delay ;
+#endif
+#endif
         if (scs_ptr->static_config.enable_overlays) {
             // the additional paref count for overlay is mg_size + scs_ptr->scd_delay.
             // in resource_coordination, allocate 1 additional paref for each potential overlay picture in minigop. (line 1259)
@@ -616,9 +639,15 @@ EbErrorType load_default_buffer_configuration_settings(
         {
             min_input = min_parent = 1 + scs_ptr->scd_delay + eos_delay;
             min_child = 1;
+#if OPT_REPLACE_DEP_CNT_CL
+            min_ref = dpb_frames + num_ref_from_cur_mg;
+            min_me = 1;
+            min_paref = dpb_frames + num_pa_ref_from_cur_mg + scs_ptr->scd_delay + eos_delay;
+#else
             min_ref = num_ref_from_past_mgs + num_ref_from_cur_mg;
             min_me = 1;
             min_paref = num_pa_ref_for_cur_mg + scs_ptr->scd_delay + eos_delay;
+#endif
             uint32_t low_delay_tf_frames = scs_ptr->tf_params_per_type[1].max_num_past_pics;
             min_input  += low_delay_tf_frames;
             min_parent += low_delay_tf_frames;
@@ -1419,6 +1448,25 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
             &(eb_ref_obj_ect_desc_init_data_structure),
             NULL);
 
+#if OPT_PM_REF_QUEUE
+    // Create reference list for Picture Manager
+    // When decode-order is not enforced at pic mgr, each reference picture must have an allocated reference buffer (for at least one mini-gop) so the
+    // list can be enough to hold only the reference buffers.  When decode-order is enforced, only 9 reference buffers are used, so the list must be at least 1 mini-gop
+    // otherwise ref_buffer_available_semaphore will block all required pics from being passed to pic mgr.
+#if OPT_TPL_REF_BUFFERS
+    const uint32_t reference_picture_list_length = scs_ptr->enable_dec_order ? scs_ptr->pa_reference_picture_buffer_init_count : scs_ptr->reference_picture_buffer_init_count;
+#else
+    const uint32_t reference_picture_list_length = scs_ptr->pa_reference_picture_buffer_init_count;
+#endif
+    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_list_length = reference_picture_list_length;
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_list,
+        reference_picture_list_length);
+
+    for (uint32_t idx = 0; idx < reference_picture_list_length; ++idx) {
+        EB_NEW(enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_list[idx],
+            reference_queue_entry_ctor);
+    }
+#endif
     enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr =
         svt_system_resource_get_producer_fifo(enc_handle_ptr->reference_picture_pool_ptr_array[instance_index], 0);
 
@@ -4096,6 +4144,7 @@ void copy_api_from_app(
     scs_ptr->static_config.resize_denom = config_struct->resize_denom;
     scs_ptr->static_config.resize_kf_denom = config_struct->resize_kf_denom;
 
+#if !REMOVE_MANUAL_PRED
     // Prediction Structure
     scs_ptr->static_config.enable_manual_pred_struct    = config_struct->enable_manual_pred_struct;
     if(scs_ptr->static_config.enable_manual_pred_struct){
@@ -4125,6 +4174,7 @@ void copy_api_from_app(
                 break;
         }
     }
+#endif
 
     // Color description
     scs_ptr->static_config.color_description_present_flag = config_struct->color_description_present_flag;

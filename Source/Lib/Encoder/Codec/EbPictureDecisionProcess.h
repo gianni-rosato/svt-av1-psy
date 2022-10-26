@@ -106,11 +106,13 @@ typedef struct PictureDecisionContext {
     uint32_t                 tf_pic_arr_cnt;
     PictureParentControlSet *tf_pic_array[1 << MAX_TEMPORAL_LAYERS];
     PictureParentControlSet *mg_pictures_array[1 << MAX_TEMPORAL_LAYERS];
+#if !OPT_REPLACE_DEP_CNT_CL
     DepCntPicInfo            updated_links_arr
         [UPDATED_LINKS]; //if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
     //this array will store all others pictures needing a dep-cnt clean up.
     uint32_t
         other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
+#endif
     PictureParentControlSet *prev_delayed_intra; //Key frame or I of LDP short MG
     uint32_t                 mg_size; //number of active pictures in above array
     PictureParentControlSet *mg_pictures_array_disp_order[1 << MAX_TEMPORAL_LAYERS];

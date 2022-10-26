@@ -29,7 +29,9 @@ struct ReferenceQueueEntry; // empty struct definition
 typedef struct InputQueueEntry {
     EbDctor          dctor;
     EbObjectWrapper *input_object_ptr;
+#if !OPT_REPLACE_DEP_CNT_CL
     uint32_t         dependent_count;
+#endif
     ReferenceList   *list0_ptr;
     ReferenceList   *list1_ptr;
     uint32_t         use_count;
@@ -48,13 +50,17 @@ typedef struct ReferenceQueueEntry {
     uint64_t         decode_order;
     EbObjectWrapper *reference_object_ptr;
     EbObjectWrapper *ref_wraper;
+#if !OPT_REPLACE_DEP_CNT_CL
     uint32_t         dependent_count;
+#endif
     Bool             release_enable;
     Bool             reference_available;
+#if !OPT_REPLACE_DEP_CNT_CL
     uint32_t         dep_list0_count;
     uint32_t         dep_list1_count;
     DependentList    list0;
     DependentList    list1;
+#endif
     Bool             is_used_as_reference_flag;
     uint64_t         rc_group_index;
     Bool             is_alt_ref;
@@ -62,8 +68,16 @@ typedef struct ReferenceQueueEntry {
     SliceType        slice_type;
     uint8_t          temporal_layer_index;
     Bool             frame_context_updated;
+#if OPT_REPLACE_DEP_CNT_CL
+    uint8_t refresh_frame_mask;
+    uint64_t dec_order_of_last_ref; // decode order of the last frame to use the current entry as a reference
+#endif
+#if OPT_PM_REF_QUEUE
+    bool is_valid;
+#endif
 } ReferenceQueueEntry;
 
+#if !OPT_REPLACE_DEP_CNT_CL
 typedef struct PicQueueEntry {
     EbDctor dctor;
 
@@ -72,11 +86,13 @@ typedef struct PicQueueEntry {
         dep_cnt_diff; //increase(e.g 4L->5L) or decrease of dep cnt . not including the run-time decrease
     uint8_t is_done;
 } PicQueueEntry;
-
+#endif
 extern EbErrorType input_queue_entry_ctor(InputQueueEntry *entry_ptr);
 
 extern EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr);
+#if !OPT_REPLACE_DEP_CNT_CL
 extern EbErrorType dep_cnt_queue_entry_ctor(PicQueueEntry *entry_ptr);
+#endif
 
 #ifdef __cplusplus
 }

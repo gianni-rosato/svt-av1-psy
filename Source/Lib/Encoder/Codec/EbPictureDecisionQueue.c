@@ -13,15 +13,24 @@
 #include "EbPictureDecisionQueue.h"
 
 static void pa_reference_queue_entry_dctor(EbPtr p) {
+#if OPT_REPLACE_DEP_CNT_CL
+    UNUSED(p);
+#else
     PaReferenceQueueEntry* obj = (PaReferenceQueueEntry*)p;
     EB_FREE_ARRAY(obj->list0.list);
     EB_FREE_ARRAY(obj->list1.list);
+#endif
 }
 
 EbErrorType pa_reference_queue_entry_ctor(PaReferenceQueueEntry* entry_ptr) {
     entry_ptr->dctor = pa_reference_queue_entry_dctor;
+#if OPT_PD_REF_QUEUE
+    entry_ptr->is_valid = 0;
+#endif
+#if !OPT_REPLACE_DEP_CNT_CL
     EB_MALLOC_ARRAY(entry_ptr->list0.list, (1 << MAX_TEMPORAL_LAYERS));
     EB_MALLOC_ARRAY(entry_ptr->list1.list, (1 << MAX_TEMPORAL_LAYERS));
+#endif
 
     return EB_ErrorNone;
 }

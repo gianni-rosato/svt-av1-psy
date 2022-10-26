@@ -715,6 +715,7 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t superres_kf_qthres;
     uint8_t superres_auto_search_type;
 
+#if !REMOVE_MANUAL_PRED
     /**
      * @brief API signal containing the manual prediction structure parameters.
      * Only used when enable_manual_pred_struct is enabled. This list is copied
@@ -738,7 +739,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0.
      */
     int32_t manual_pred_struct_entry_num;
-
+#endif
     /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).
     * 0: No decoder speed optimization
     * 1: Decoder speed optimization enabled (fast decode)

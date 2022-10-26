@@ -703,6 +703,10 @@ typedef struct PictureParentControlSet {
     uint8_t   pred_struct_index;
     uint8_t   temporal_layer_index;
     uint64_t  decode_order;
+#if OPT_REPLACE_DEP_CNT_CL
+    uint64_t released_pics[8];
+    uint8_t released_pics_count;
+#endif
     Bool      is_used_as_reference_flag;
     uint8_t   reference_released; // status of PA reference 0: Not release; 1: Released
     uint8_t   ref_list0_count;
@@ -780,6 +784,7 @@ typedef struct PictureParentControlSet {
     uint8_t             hierarchical_levels;
     Bool                init_pred_struct_position_flag;
     int8_t              hierarchical_layers_diff;
+#if !OPT_REPLACE_DEP_CNT_CL
     //Dep-Cnt Clean up is done using 2 mechanism
     //1: a triggering picture that will clean up all previous pictures;
     //2: a picture does a self clean up
@@ -791,6 +796,7 @@ typedef struct PictureParentControlSet {
     //this array will store all others pictures needing a dep-cnt clean up.
     uint32_t
         other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
+#endif
     // HME Flags
     Bool enable_hme_flag;
     Bool enable_hme_level0_flag;

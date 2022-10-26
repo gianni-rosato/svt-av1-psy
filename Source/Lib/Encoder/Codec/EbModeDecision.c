@@ -150,6 +150,7 @@ const uint32_t parent_index[85] = {
     0,  0,  23, 23, 23, 23, 0,  28, 28, 28, 28, 0,  33, 33, 33, 33, 0,  38, 38, 38, 38, 0,
     0,  44, 44, 44, 44, 0,  49, 49, 49, 49, 0,  54, 54, 54, 54, 0,  59, 59, 59, 59, 0,  0,
     65, 65, 65, 65, 0,  70, 70, 70, 70, 0,  75, 75, 75, 75, 0,  80, 80, 80, 80};
+#if !OPT_REPLACE_DEP_CNT
 /*
   NORMAL ORDER
   |-------------------------------------------------------------|
@@ -164,6 +165,7 @@ uint8_t          ref_type_to_list_idx[REFS_PER_FRAME + 1] = {0, 0, 0, 0, 0, 1, 1
 uint8_t          get_list_idx(uint8_t ref_type) { return ref_type_to_list_idx[ref_type]; }
 uint8_t          ref_type_to_ref_idx[REFS_PER_FRAME + 1] = {0, 0, 1, 2, 3, 0, 1, 2};
 uint8_t          get_ref_frame_idx(uint8_t ref_type) { return ref_type_to_ref_idx[ref_type]; };
+#endif
 MvReferenceFrame to_ref_frame[2][4] = {{LAST_FRAME, LAST2_FRAME, LAST3_FRAME, GOLDEN_FRAME},
                                        {BWDREF_FRAME, ALTREF2_FRAME, ALTREF_FRAME, INVALID_REF}};
 
