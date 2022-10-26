@@ -556,14 +556,10 @@ EbErrorType load_default_buffer_configuration_settings(
         uint32_t eos_delay = 1;
 
         //Minimum input pictures needed in the pipeline
-#if OPT_REPLACE_DEP_CNT_CL
-        const uint16_t lad_mg_pictures = (mg_size + overlay) * scs_ptr->lad_mg;
-        return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay; //Unit= 1(provision for a potential delayI) + prediction struct + potential overlay
-#else
         uint16_t lad_mg_pictures = (1 + mg_size + overlay) * scs_ptr->lad_mg; //Unit= 1(provision for a potential delayI) + prediction struct + potential overlay        return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1)  + scs_ptr->scd_delay + eos_delay;
         return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
         //scs_ptr->input_buffer_fifo_init_count = return_ppcs;
-#endif
+
         min_input = return_ppcs;
 
         if (scs_ptr->static_config.enable_overlays)
@@ -4167,8 +4163,8 @@ void copy_api_from_app(
     scs_ptr->static_config.hierarchical_levels =
         scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B && (scs_ptr->static_config.pass == ENC_SINGLE_PASS || scs_ptr->static_config.hierarchical_levels == 0)
             ? 3
-            : scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR 
-                ? 4 
+            : scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR
+                ? 4
                 : 5;
 #else
     // set the default hierarchical levels depending on the pred structure

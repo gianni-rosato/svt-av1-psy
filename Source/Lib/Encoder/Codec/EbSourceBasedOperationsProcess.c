@@ -2075,7 +2075,7 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             if (tpl_on)
                 tpl_mc_flow_synthesizer(pcs_ptr->tpl_group, frame_idx, frames_in_sw);
         }
-#if !TUNE_TPL_QPM_LAMBDA 
+#if !TUNE_TPL_QPM_LAMBDA
         // generate tpl stats
         generate_r0beta(pcs_ptr);
 #endif
@@ -2312,7 +2312,7 @@ static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
     SequenceControlSet *scs = pcs->scs_ptr;
     // NB: overlay frames should be non-ref
     // Before sending pics out to pic mgr, ensure that pic mgr can handle them
-    if (pcs->is_used_as_reference_flag)
+    if (pcs->is_used_as_reference_flag && !superres_recode)
         svt_block_on_semaphore(scs->ref_buffer_available_semaphore);
 #endif
 

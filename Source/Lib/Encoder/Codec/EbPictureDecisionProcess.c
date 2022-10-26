@@ -7437,9 +7437,15 @@ static void store_mg_picture_arrays(PictureDecisionContext* ctx) {
 static void assign_and_release_pa_refs(EncodeContext* encode_ctx, PictureParentControlSet* pcs, PictureDecisionContext* ctx) {
 
     const unsigned int mg_size = ctx->mg_size;
+#if OPT_TPL_REF_BUFFERS
+    bool eos_reached = false;
+#endif
     for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
 
         pcs = (PictureParentControlSet*)ctx->mg_pictures_array[pic_i];
+#if OPT_TPL_REF_BUFFERS
+        eos_reached |= pcs->end_of_sequence_flag;
+#endif
 
         if ((pcs->slice_type == P_SLICE) || (pcs->slice_type == B_SLICE)) {
             uint8_t max_ref_count = (pcs->slice_type == B_SLICE) ? ALT + 1 : BWD; // no list1 refs for P_SLICE
@@ -7479,7 +7485,49 @@ static void assign_and_release_pa_refs(EncodeContext* encode_ctx, PictureParentC
         }
 
         uint8_t released_pics_idx = 0;
+#if OPT_TPL_REF_BUFFERS
+        // At the end of the sequence release all the refs (needed for MacOS CI tests)
+        if (eos_reached && pic_i == (mg_size - 1)) {
+            for (uint8_t i = 0; i < 8; i++) {
+                // Get the current entry at that spot in the DPB
+                PaReferenceQueueEntry* input_entry_ptr = encode_ctx->picture_decision_pa_reference_list[i];
 
+                // If DPB entry is occupied, release the current entry
+                if (input_entry_ptr->is_valid) {
+                    bool still_in_dpb = 0;
+                    for (uint8_t j = 0; j < 8; j++) {
+                        if (j == i) continue;
+                        if (encode_ctx->picture_decision_pa_reference_list[j]->is_valid &&
+                            encode_ctx->picture_decision_pa_reference_list[j]->picture_number == input_entry_ptr->picture_number)
+                            still_in_dpb = 1;
+                    }
+                    if (!still_in_dpb) {
+                        pcs->released_pics[released_pics_idx++] = input_entry_ptr->decode_order;
+                    }
+
+                    // Release the entry at that DPB spot
+                    // Release the nominal live_count value
+                    svt_release_object(input_entry_ptr->input_object_ptr);
+
+                    if (input_entry_ptr->eb_y8b_wrapper_ptr) {
+                        //y8b needs to get decremented at the same time of pa ref
+                        svt_release_object(input_entry_ptr->eb_y8b_wrapper_ptr);
+                    }
+
+                    input_entry_ptr->input_object_ptr = (EbObjectWrapper*)NULL;
+                    input_entry_ptr->is_valid = false;
+                }
+            }
+            // If pic will be added to the ref buffer list in pic mgr, release itself
+            if (pcs->is_used_as_reference_flag) {
+                pcs->released_pics[released_pics_idx++] = pcs->decode_order;
+            }
+            pcs->released_pics_count = released_pics_idx;
+            // Don't add current pic to pa ref list and don't increment its live_count
+            // because it will not be referenced by any other pics
+            return;
+        }
+#endif
         // If the pic is added to DPB, add to ref list until all frames that use it have had a chance to reference it
         if (pcs->av1_ref_signal.refresh_frame_mask) {
             //assert(!pcs->is_overlay); // is this true?
@@ -7497,7 +7545,8 @@ static void assign_and_release_pa_refs(EncodeContext* encode_ctx, PictureParentC
                         bool still_in_dpb = 0;
                         for (uint8_t j = 0; j < 8; j++) {
                             if (j == i) continue;
-                            if (encode_ctx->picture_decision_pa_reference_list[j]->picture_number == input_entry_ptr->picture_number)
+                            if (encode_ctx->picture_decision_pa_reference_list[j]->is_valid &&
+                                encode_ctx->picture_decision_pa_reference_list[j]->picture_number == input_entry_ptr->picture_number)
                                 still_in_dpb = 1;
                         }
                         if (!still_in_dpb) {
@@ -7520,7 +7569,7 @@ static void assign_and_release_pa_refs(EncodeContext* encode_ctx, PictureParentC
                     // Place Picture in Picture Decision PA Reference Queue
                     input_entry_ptr->input_object_ptr = pcs->pa_reference_picture_wrapper_ptr;
                     input_entry_ptr->picture_number = pcs->picture_number;
-                    input_entry_ptr->is_valid = 1;
+                    input_entry_ptr->is_valid = true;
                     input_entry_ptr->decode_order = pcs->decode_order;
                     input_entry_ptr->is_alt_ref = pcs->is_alt_ref;
                     input_entry_ptr->eb_y8b_wrapper_ptr = pcs->eb_y8b_wrapper_ptr;

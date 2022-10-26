@@ -897,7 +897,7 @@ static int crf_qindex_calc(PictureControlSet* pcs, RATE_CONTROL* rc, int qindex)
 
     const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
 
-    // Set qindex calc method; r0-based using qstep or ref-frame based 
+    // Set qindex calc method; r0-based using qstep or ref-frame based
     bool use_qstep_based_q_calc = ppcs->r0_based_qps_qpm;
 
     // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.

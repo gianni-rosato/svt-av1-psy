@@ -710,7 +710,11 @@ typedef struct PictureParentControlSet {
     uint8_t   temporal_layer_index;
     uint64_t  decode_order;
 #if OPT_REPLACE_DEP_CNT_CL
+#if OPT_TPL_REF_BUFFERS
+    uint64_t released_pics[9];
+#else
     uint64_t released_pics[8];
+#endif
     uint8_t released_pics_count;
 #endif
     Bool      is_used_as_reference_flag;
