@@ -1139,7 +1139,7 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
             tpl_ctrls->r0_adjust_factor = is_islice ? 0 : 0.1;
         }
     }
-#if !FIX_CRF_Q_INDEX_CALC
+#if !TUNE_TPL_QPM_LAMBDA
     // Calculated qindex based on r0 using qstep calculation
     tpl_ctrls->qstep_based_q_calc = 1;
 #endif
@@ -2418,7 +2418,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     //TPL level should not be modified outside of this function
     set_tpl_extended_controls(pcs_ptr, scs_ptr->tpl_level);
-#if CLN_R0_CTRL
+#if TUNE_TPL_QPM_LAMBDA
     pcs_ptr->r0_based_qps_qpm = pcs_ptr->tpl_ctrls.enable &&
                                 (pcs_ptr->temporal_layer_index == 0 ||
                                 (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF && pcs_ptr->hierarchical_levels == 5 && pcs_ptr->temporal_layer_index == 1));

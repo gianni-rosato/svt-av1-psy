@@ -55,12 +55,10 @@ extern "C" {
 
 #define OPT_6L_TF                  1 // Increase the tf window size if 6L
 #define FIX_INTRA_SELECTION        1 // Fixed the intra-percentage at reference frame(s) calculation; do not consider the stats if the reference frame is INTRA
-#define FIX_CRF_Q_INDEX_CALC       1 // Remove useless operations at crf_qindex_calc()
-#define OPT_TPL_L1_HIGHER          1 // Use intra-selection at ref for QPS of L1&higher
-#define FTR_R0_L1                  1 // Generate/use r0 for L1 of 6L
-#define FTR_QPM_R0_L1              1 // r0-based q modulation for L1 of 6L
-#define FIX_LAMBDA_MODULATION      1 // Tune lambda modulation
-#define CLN_R0_CTRL                1 // Use a signal to control r0-based QPS and QPM 
+#define TUNE_TPL_QPM_LAMBDA        1 // Use intra-selection at ref for QPS of L1&higher
+                                     // Generate/use r0 for L1 of 6L
+                                     // r0-based q modulation for L1 of 6L
+                                     // Tune lambda modulation
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

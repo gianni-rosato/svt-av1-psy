@@ -37,10 +37,10 @@
 
 #include "EbPictureDecisionResults.h"
 #include "EbResize.h"
-#if FTR_R0_L1
+#if TUNE_TPL_QPM_LAMBDA
 #include "EbSourceBasedOperationsProcess.h"
 #endif
-#if OPT_TPL_L1_HIGHER
+#if TUNE_TPL_QPM_LAMBDA
 // Specifies the weights of the ref frame in calculating qindex of non base layer frames
 static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = { 100, 100, 100, 100, 100, 100 };
 // Specifies the weights of the worst quality in calculating qindex of non base layer frames
@@ -52,13 +52,13 @@ static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 
 static const int    non_base_qindex_weight_wq[EB_MAX_TEMPORAL_LAYERS]    = {1, 1, 3, 1, 1, 1};
 #endif
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 2, 1, 1, 0.7};
-#if FIX_CRF_Q_INDEX_CALC
+#if TUNE_TPL_QPM_LAMBDA
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 3, 2, 1, 1};
 #else
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 3, 2, 1, 0.5};
 #endif
 #define KB 400
-#if OPT_TPL_L1_HIGHER
+#if TUNE_TPL_QPM_LAMBDA
 // intra_perc will be set to the % of intra area in two nearest ref frames
 static void get_ref_intra_percentage(PictureControlSet* pcs, uint8_t* intra_perc) {
     assert(intra_perc != NULL);
@@ -860,7 +860,7 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
     }
     return qindex;
 }
-#if FTR_R0_L1
+#if TUNE_TPL_QPM_LAMBDA
 static const double r0_weight[3] = { 0.75, 0.9, 1 };
 #else
 static const double r0_weight[2 /* VBR/CRF */][2 /* BASE/ISLICE */] = {
@@ -874,7 +874,7 @@ static const double r0_weight[2 /* VBR/CRF */][2 /* BASE/ISLICE */] = {
  * Assign the q_index per frame.
  * Used in the one pass encoding with tpl stats
  ******************************************************/
-#if FIX_CRF_Q_INDEX_CALC
+#if TUNE_TPL_QPM_LAMBDA
 static int crf_qindex_calc(PictureControlSet* pcs, RATE_CONTROL* rc, int qindex) {
 
     PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
@@ -898,40 +898,7 @@ static int crf_qindex_calc(PictureControlSet* pcs, RATE_CONTROL* rc, int qindex)
     const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
 
     // Set qindex calc method; r0-based using qstep or ref-frame based 
-#if FTR_R0_L1
-#if FTR_ADAPT_R0_L1
-    double r0_ref;
-    uint64_t tot_me_8x8_dis = 0;
-    if (temporal_layer == 1) {
-        EbReferenceObject* ref_obj_l0 =
-            (EbReferenceObject*)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-        EbReferenceObject* ref_obj_l1 = NULL;
-        if (pcs->slice_type == B_SLICE)
-            ref_obj_l1 =
-            (EbReferenceObject*)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
-
-        r0_ref = ref_obj_l0->r0;
-        if (pcs->slice_type == B_SLICE)
-            r0_ref = MAX(r0_ref, ref_obj_l1->r0);
-
-
-        for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
-            tot_me_8x8_dis += ppcs->me_8x8_distortion[b64_idx];
-        }
-    }
-    bool use_qstep_based_q_calc = temporal_layer == 0 || (hierarchical_levels == 5 && temporal_layer == 1
-        && r0_ref > 0.05
-        && (tot_me_8x8_dis > ((1400 * ppcs->aligned_width * ppcs->aligned_height) / cq_level)));
-#else
-#if CLN_R0_CTRL
     bool use_qstep_based_q_calc = ppcs->r0_based_qps_qpm;
-#else
-    bool use_qstep_based_q_calc = temporal_layer == 0 || (hierarchical_levels == 5 && temporal_layer == 1);
-#endif
-#endif
-#else
-    bool use_qstep_based_q_calc = temporal_layer == 0;
-#endif
 
     // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.
     // So, for each frame, arf_q is updated based on the qp of its references.
@@ -948,11 +915,7 @@ static int crf_qindex_calc(PictureControlSet* pcs, RATE_CONTROL* rc, int qindex)
             ppcs->r0 = ppcs->r0 / div_factor;
         }
         // Scale r0 based on the GOP structure
-#if FIX_LAYER_SIGNAL
-        ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[hierarchical_levels];
-#else
         ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[scs_ptr->max_heirachical_level];
-#endif
     }
     else {
 
@@ -963,23 +926,14 @@ static int crf_qindex_calc(PictureControlSet* pcs, RATE_CONTROL* rc, int qindex)
                     ppcs->tpl_ctrls.r0_adjust_factor;
                 ppcs->r0 = ppcs->r0 / div_factor;
                 // Scale r0 based on the GOP structure
-#if FIX_LAYER_SIGNAL
-                ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[hierarchical_levels];
-#else
                 ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs_ptr->max_heirachical_level];
-#endif
             }
         }
     }
 
     q = active_worst_quality;
     if (!frame_is_intra_only(ppcs)) {
-        // non ref frame or repeated frames with re-encode
-#if FTR_R0_L1
         if ((!refresh_alt_ref_frame && !is_intrl_arf_boost) || leaf_frame || use_qstep_based_q_calc) {
-#else
-        if ((!refresh_alt_ref_frame && !is_intrl_arf_boost) || leaf_frame) {
-#endif
             active_best_quality = cq_level;
         }
         else {
@@ -999,42 +953,23 @@ static int crf_qindex_calc(PictureControlSet* pcs, RATE_CONTROL* rc, int qindex)
                 active_best_quality = rc->arf_q;
                 int8_t tmp_layer_delta = (int8_t)temporal_layer - (int8_t)ref_tmp_layer;
                 if (rf_level == GF_ARF_LOW) {
-#if EN_HL2
 
-#if OPT_TPL_L1_HIGHER
-#if FIX_LAYER_SIGNAL
-                    int w1 = non_base_qindex_weight_ref[hierarchical_levels];
-                    int w2 = non_base_qindex_weight_wq[hierarchical_levels];
-#else
                     int w1 = non_base_qindex_weight_ref[scs_ptr->max_heirachical_level];
                     int w2 = non_base_qindex_weight_wq[scs_ptr->max_heirachical_level];
-#endif
+
                     if (temporal_layer > 0 && pcs->parent_pcs_ptr->hierarchical_levels == 5) {
                         w1 += pcs->ref_intra_percentage;
                     }
-#else
-                    int w1 = non_base_qindex_weight_ref[scs_ptr->max_heirachical_level];
-                    int w2 = non_base_qindex_weight_wq[scs_ptr->max_heirachical_level];
-#endif
+
                     while (tmp_layer_delta--)
                         active_best_quality = (w1 * active_best_quality + (w2 * cq_level) + ((w1 + w2) / 2)) / (w1 + w2);
-#else
-                    while (tmp_layer_delta--)
-                        active_best_quality = (active_best_quality + cq_level + 1) / 2;
-#endif
                 }
             }
         }
-        }
-
+    }
 
     if (use_qstep_based_q_calc) {
-
-#if FTR_R0_L1
         double weight = r0_weight[!frame_is_intra_only(ppcs) + temporal_layer];
-#else               
-        double weight = r0_weight[1 /* CRF */][frame_is_intra_only(ppcs)];
-#endif
         // adjust the weight for base layer frames with shorter minigops
         if (scs_ptr->lad_mg && !frame_is_intra_only(ppcs) &&
             (ppcs->tpl_group_size < (uint32_t)(2 << scs_ptr->max_heirachical_level)))
@@ -1047,21 +982,6 @@ static int crf_qindex_calc(PictureControlSet* pcs, RATE_CONTROL* rc, int qindex)
         if (!frame_is_intra_only(ppcs))
             rc->arf_q = qindex_from_qstep_ratio;
         active_best_quality = clamp(qindex_from_qstep_ratio, rc->best_quality, qindex);
-
-#if FTR_LIMIT_BASE_DIST
-        if (temporal_layer == 0) {
-            uint64_t tot_me_8x8_dis = 0;
-            for (uint32_t b64_idx = 0; b64_idx < pcs->b64_total_count; b64_idx++) {
-                tot_me_8x8_dis += ppcs->me_8x8_distortion[b64_idx];
-            }
-            int cnt = 0;
-            while (cnt < 5 && (tot_me_8x8_dis / active_best_quality) < (ppcs->aligned_width * ppcs->aligned_height / (16 * cq_level))) {
-                active_best_quality--;
-                cnt++;
-            }
-        }
-#endif
-
         active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
     }
 
@@ -1397,7 +1317,7 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
     if (pcs->scs_ptr->stats_based_sb_lambda_modulation) {
-#if FIX_LAMBDA_MODULATION // Fix 1
+#if TUNE_TPL_QPM_LAMBDA // Fix 1
         if (pcs->temporal_layer_index > 0) {
             if (pcs->ref_intra_percentage < 15)
                 rdmult = (rdmult * 148) >> 7;
@@ -1620,12 +1540,8 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
     SequenceControlSet      *scs_ptr  = pcs_ptr->parent_pcs_ptr->scs_ptr;
     SuperBlock              *sb_ptr;
     uint32_t                 sb_addr;
-#if FTR_QPM_R0_L1
-#if CLN_R0_CTRL
+#if TUNE_TPL_QPM_LAMBDA
     if (ppcs_ptr->r0_based_qps_qpm)
-#else
-    if (pcs_ptr->temporal_layer_index == 0 || (ppcs_ptr->hierarchical_levels == 5 && pcs_ptr->temporal_layer_index == 1))
-#endif
 #else
     if (pcs_ptr->temporal_layer_index == 0)
 #endif
@@ -2402,13 +2318,13 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     int                 q;
     int is_intrl_arf_boost = pcs_ptr->parent_pcs_ptr->update_type == INTNL_ARF_UPDATE;
     // Calculated qindex based on r0 using qstep calculation
-#if FIX_CRF_Q_INDEX_CALC
+#if TUNE_TPL_QPM_LAMBDA
     if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
 #else
     if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.qstep_based_q_calc &&
         pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
 #endif
-#if FTR_R0_L1
+#if TUNE_TPL_QPM_LAMBDA
         double weight = r0_weight[!frame_is_intra_only(pcs_ptr->parent_pcs_ptr) + pcs_ptr->parent_pcs_ptr->temporal_layer_index];
 #else
         const double weight = r0_weight[0 /* VBR */][frame_is_intra_only(pcs_ptr->parent_pcs_ptr)];
@@ -3508,17 +3424,11 @@ void *rate_control_kernel(void *input_ptr) {
         case RC_INPUT:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
             scs_ptr = pcs_ptr->scs_ptr;
-#if FTR_R0_L1 // move r0 derivation 
-            // generate tpl stats
-#if CLN_R0_CTRL
+#if TUNE_TPL_QPM_LAMBDA
+            // Get r0
             if (pcs_ptr->parent_pcs_ptr->r0_based_qps_qpm) {
-#else
-            if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable) {
-#endif
                 generate_r0beta(pcs_ptr->parent_pcs_ptr);
             }
-#endif
-#if OPT_TPL_L1_HIGHER
             // Get intra % in ref frame
             get_ref_intra_percentage(pcs_ptr, &pcs_ptr->ref_intra_percentage);
             // Get skip % in ref frame

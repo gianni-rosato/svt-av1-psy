@@ -192,9 +192,8 @@ void tpl_prep_info(PictureParentControlSet *pcs);
 #endif
 
 // Generate lambda factor to tune lambda based on TPL stats
-#if FTR_R0_L1
-void generate_lambda_scaling_factor(PictureParentControlSet* pcs_ptr,
-    int64_t mc_dep_cost_base) {
+#if TUNE_TPL_QPM_LAMBDA
+void generate_lambda_scaling_factor(PictureParentControlSet* pcs_ptr, int64_t mc_dep_cost_base) {
 #else
 static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                                            int64_t                  mc_dep_cost_base) {
@@ -1703,7 +1702,7 @@ void tpl_mc_flow_synthesizer(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], 
     }
     return;
 }
-#if FTR_R0_L1
+#if TUNE_TPL_QPM_LAMBDA
 void generate_r0beta(PictureParentControlSet* pcs_ptr) {
 #else
 static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
@@ -2076,7 +2075,7 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             if (tpl_on)
                 tpl_mc_flow_synthesizer(pcs_ptr->tpl_group, frame_idx, frames_in_sw);
         }
-#if !FTR_R0_L1 
+#if !TUNE_TPL_QPM_LAMBDA 
         // generate tpl stats
         generate_r0beta(pcs_ptr);
 #endif
@@ -2353,7 +2352,7 @@ void *source_based_operations_kernel(void *input_ptr) {
         SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
 
         if (in_results_ptr->superres_recode) {
-#if !FTR_R0_L1 // move r0 derivation 
+#if !TUNE_TPL_QPM_LAMBDA
             if (pcs_ptr->tpl_ctrls.enable) {
                 // regenerate r0 and tpl_beta since they are frame size dependency
                 generate_r0beta(pcs_ptr);
