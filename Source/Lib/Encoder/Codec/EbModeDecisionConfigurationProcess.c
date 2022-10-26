@@ -1443,6 +1443,7 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
         motion_field_projection(cm, pcs_ptr, LAST2_FRAME, 2);
 }
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
+#if !OPT_TPL_L1_HIGHER
 // intra_perc will be set to the % of intra area in two nearest ref frames
 void get_ref_intra_percentage(PictureControlSet *pcs_ptr, uint8_t *intra_perc) {
     assert(intra_perc != NULL);
@@ -1491,6 +1492,7 @@ void get_ref_skip_percentage(PictureControlSet *pcs_ptr, uint8_t *skip_area) {
 
     *skip_area = skip_perc;
 }
+#endif
 void *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 
 // Use me_8x8_distortion and QP to predict the coeff level per frame
@@ -1588,11 +1590,13 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         }
 
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if !OPT_TPL_L1_HIGHER
         // Get intra % in ref frame
         get_ref_intra_percentage(pcs_ptr, &pcs_ptr->ref_intra_percentage);
 
         // Get skip % in ref frame
         get_ref_skip_percentage(pcs_ptr, &pcs_ptr->ref_skip_percentage);
+#endif
         // Mode Decision Configuration Kernel Signal(s) derivation
         if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr);

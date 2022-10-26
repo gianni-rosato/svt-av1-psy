@@ -2692,9 +2692,17 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
     case 1:
         // I_SLICE TF Params
         scs_ptr->tf_params_per_type[0].enabled = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[0].num_future_pics = 24;
+#else
         scs_ptr->tf_params_per_type[0].num_future_pics = 16;
+#endif
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 32);
+#else
         scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+#endif
         scs_ptr->tf_params_per_type[0].hme_me_level = 0;
         scs_ptr->tf_params_per_type[0].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -2715,12 +2723,22 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].subpel_early_exit = 0;
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].enabled = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[1].num_past_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 3 : 6;
+        scs_ptr->tf_params_per_type[1].num_future_pics = 6;
+#else
         scs_ptr->tf_params_per_type[1].num_past_pics = 3;
         scs_ptr->tf_params_per_type[1].num_future_pics = 6;
+#endif
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), (scs_ptr->static_config.hierarchical_levels < 5) ? 3 : 6);
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#else
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#endif
         scs_ptr->tf_params_per_type[1].hme_me_level = 0;
         scs_ptr->tf_params_per_type[1].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -2741,12 +2759,22 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].subpel_early_exit = 0;
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[2].num_past_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2;
+        scs_ptr->tf_params_per_type[2].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2;
+#else
         scs_ptr->tf_params_per_type[2].num_past_pics = 1;
         scs_ptr->tf_params_per_type[2].num_future_pics = 1;
+#endif
         scs_ptr->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2);
+        scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2);
+#else
         scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+#endif
         scs_ptr->tf_params_per_type[2].hme_me_level = 0;
         scs_ptr->tf_params_per_type[2].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -2770,9 +2798,17 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
     case 2:
         // I_SLICE TF Params
         scs_ptr->tf_params_per_type[0].enabled = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[0].num_future_pics = 24;
+#else
         scs_ptr->tf_params_per_type[0].num_future_pics = 16;
+#endif
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 32);
+#else
         scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+#endif
         scs_ptr->tf_params_per_type[0].hme_me_level = 1;
         scs_ptr->tf_params_per_type[0].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -2793,12 +2829,22 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].subpel_early_exit = 0;
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].enabled = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[1].num_past_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 3 : 6;
+        scs_ptr->tf_params_per_type[1].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 3 : 6;
+#else
         scs_ptr->tf_params_per_type[1].num_past_pics = 3;
         scs_ptr->tf_params_per_type[1].num_future_pics = 3;
+#endif
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), (scs_ptr->static_config.hierarchical_levels < 5) ? 3 : 6);
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#else
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#endif
         scs_ptr->tf_params_per_type[1].hme_me_level = 1;
         scs_ptr->tf_params_per_type[1].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -2819,12 +2865,22 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].subpel_early_exit = 0;
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 1;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[2].num_past_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2;
+        scs_ptr->tf_params_per_type[2].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2;
+#else
         scs_ptr->tf_params_per_type[2].num_past_pics = 1;
         scs_ptr->tf_params_per_type[2].num_future_pics = 1;
+#endif
         scs_ptr->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+#if OPT_6L_TF
+        scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2);
+        scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2);
+#else
         scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+#endif
         scs_ptr->tf_params_per_type[2].hme_me_level = 1;
         scs_ptr->tf_params_per_type[2].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -4106,6 +4162,15 @@ void copy_api_from_app(
     scs_ptr->static_config.tune = config_struct->tune;
     scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
 
+#if FIX_DEFAULT_PRED_STRUCT
+    // Set the default hierarchical levels
+    scs_ptr->static_config.hierarchical_levels =
+        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B && (scs_ptr->static_config.pass == ENC_SINGLE_PASS || scs_ptr->static_config.hierarchical_levels == 0)
+            ? 3
+            : scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR 
+                ? 4 
+                : 5;
+#else
     // set the default hierarchical levels depending on the pred structure
     if (scs_ptr->static_config.hierarchical_levels == 0){
         scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ?
@@ -4117,6 +4182,7 @@ void copy_api_from_app(
             SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 3\n");
         }
     }
+#endif
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
     scs_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_denominator;

@@ -51,6 +51,17 @@ extern "C" {
 #define FTR_USE_3L_AT_MG_END       1 // Use 3L for incomplete minigops
 #define FTR_USE_3_BASE_REF         1 // Use 3 base pics as ref in 6L
 
+#define FIX_DEFAULT_PRED_STRUCT    1 // Fix the default hierarchical levels
+
+#define OPT_6L_TF                  1 // Increase the tf window size if 6L
+#define FIX_INTRA_SELECTION        1 // Fixed the intra-percentage at reference frame(s) calculation; do not consider the stats if the reference frame is INTRA
+#define FIX_CRF_Q_INDEX_CALC       1 // Remove useless operations at crf_qindex_calc()
+#define OPT_TPL_L1_HIGHER          1 // Use intra-selection at ref for QPS of L1&higher
+#define FTR_R0_L1                  1 // Generate/use r0 for L1 of 6L
+#define FTR_QPM_R0_L1              1 // r0-based q modulation for L1 of 6L
+#define FIX_LAMBDA_MODULATION      1 // Tune lambda modulation
+#define CLN_R0_CTRL                1 // Use a signal to control r0-based QPS and QPM 
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

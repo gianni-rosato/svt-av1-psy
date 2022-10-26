@@ -554,8 +554,10 @@ typedef struct TplControls {
     uint8_t
         synth_blk_size; //syntheszier block size, support 8x8 and 16x16 for now. NOTE: this field must be
     //modified inside the get_ function, as it is linked to memory allocation at init time
+#if !FIX_CRF_Q_INDEX_CALC
     // Calculated qindex based on r0 using qstep calculation
     bool qstep_based_q_calc; // 0: OFF; 1: ON
+#endif
     SUBPEL_FORCE_STOP
     subpel_depth; // max subpel depth to search for TPL; FULL_PEL corresponds to subpel off in TPL, QUARTER_PEL is the max precision for TPL subpel
 } TplControls;
@@ -1083,7 +1085,9 @@ typedef struct PictureParentControlSet {
     int8_t   tf_motion_direction; //motion direction in TF   -1:invalid   0:horz  1:vert
     uint8_t  adjust_under_shoot_gf;
     int32_t  is_noise_level;
-
+#if CLN_R0_CTRL
+    bool r0_based_qps_qpm;
+#endif
     uint32_t dpb_order_hint[REF_FRAMES]; // spec 6.8.2. ref_order_hint[]
 } PictureParentControlSet;
 

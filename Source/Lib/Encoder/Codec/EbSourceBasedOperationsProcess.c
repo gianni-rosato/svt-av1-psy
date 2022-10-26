@@ -192,8 +192,13 @@ void tpl_prep_info(PictureParentControlSet *pcs);
 #endif
 
 // Generate lambda factor to tune lambda based on TPL stats
+#if FTR_R0_L1
+void generate_lambda_scaling_factor(PictureParentControlSet* pcs_ptr,
+    int64_t mc_dep_cost_base) {
+#else
 static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                                            int64_t                  mc_dep_cost_base) {
+#endif
     Av1Common   *cm                    = pcs_ptr->av1_cm;
     uint8_t      tpl_synth_size_offset = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
              : pcs_ptr->tpl_ctrls.synth_blk_size == 16                          ? 2
@@ -1698,8 +1703,11 @@ void tpl_mc_flow_synthesizer(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], 
     }
     return;
 }
-
+#if FTR_R0_L1
+void generate_r0beta(PictureParentControlSet* pcs_ptr) {
+#else
 static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
+#endif
     Av1Common          *cm                    = pcs_ptr->av1_cm;
     SequenceControlSet *scs_ptr               = pcs_ptr->scs_ptr;
     int64_t             recrf_dist_base_sum   = 0;
@@ -2068,10 +2076,10 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             if (tpl_on)
                 tpl_mc_flow_synthesizer(pcs_ptr->tpl_group, frame_idx, frames_in_sw);
         }
-
+#if !FTR_R0_L1 
         // generate tpl stats
         generate_r0beta(pcs_ptr);
-
+#endif
 #if DEBUG_TPL
 
         for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
@@ -2345,10 +2353,12 @@ void *source_based_operations_kernel(void *input_ptr) {
         SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
 
         if (in_results_ptr->superres_recode) {
+#if !FTR_R0_L1 // move r0 derivation 
             if (pcs_ptr->tpl_ctrls.enable) {
                 // regenerate r0 and tpl_beta since they are frame size dependency
                 generate_r0beta(pcs_ptr);
             }
+#endif
             sbo_send_picture_out(context_ptr, pcs_ptr, TRUE);
 
             // Release the Input Results
