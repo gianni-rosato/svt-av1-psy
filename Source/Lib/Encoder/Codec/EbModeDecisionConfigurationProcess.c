@@ -509,7 +509,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 if (hierarchical_levels <= 3)
                     pcs_ptr->wm_level = is_base ? 1 : 0;
                 else
+#if FTR_USE_3_BASE_REF
+                    pcs_ptr->wm_level = 1;
+#else
                     pcs_ptr->wm_level = is_ref ? 1 : 0;
+#endif
             } else if (enc_mode <= ENC_M7) {
                 pcs_ptr->wm_level = is_base ? 1 : 0;
             } else if (enc_mode <= ENC_M10) {

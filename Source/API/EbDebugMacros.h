@@ -48,6 +48,8 @@ extern "C" {
 #define CLN_PIC_DEC_PROC           1 // Cleanup picture_decision_kernel
 #define CLN_PIC_MGR_PROC           1 // Cleanup picture_manager_kernel
 #define FIX_REF_SIGN_BIAS          1 // Fix ref_frame_sign_bias derivation
+#define FTR_USE_3L_AT_MG_END       1 // Use 3L for incomplete minigops
+#define FTR_USE_3_BASE_REF         1 // Use 3 base pics as ref in 6L
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
