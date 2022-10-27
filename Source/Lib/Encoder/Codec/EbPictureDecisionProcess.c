@@ -1775,8 +1775,10 @@ uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_
     uint8_t wn_filter_lvl = 0;
     if (enc_mode <= ENC_M4)
         wn_filter_lvl = 1;
+#if !TUNE_6L_M5
     else if (enc_mode <= ENC_M5)
         wn_filter_lvl = 2;
+#endif
     else if (enc_mode <= ENC_M9)
         wn_filter_lvl = is_ref ? 5 : 0;
     else
@@ -1793,12 +1795,18 @@ uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_
 uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_base) {
     uint8_t sg_filter_lvl = 0;
     if (fast_decode == 0) {
+#if TUNE_6L_M3
+        if (enc_mode <= ENC_M2)
+#else
         if (enc_mode <= ENC_M3)
+#endif
             sg_filter_lvl = 1;
         else if (enc_mode <= ENC_M4)
             sg_filter_lvl = is_base ? 1 : 4;
+#if !TUNE_6L_M5
         else if (enc_mode <= ENC_M5)
             sg_filter_lvl = is_base ? 1 : 0;
+#endif
         else
             sg_filter_lvl = 0;
     }
@@ -2206,15 +2214,32 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     // Set the Multi-Pass PD level
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_ON;
+#if OPT_NSQ
+    pcs_ptr->disallow_nsq = svt_aom_get_disallow_nsq(enc_mode, is_base); // Change signals at other locations later
+#else
     pcs_ptr->disallow_nsq = svt_aom_get_disallow_nsq(enc_mode, is_islice);
+#endif
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
 
-
+#if OPT_NSQ
+    if (enc_mode <= ENC_M3)
+        pcs_ptr->disallow_all_nsq_blocks_below_8x8 = FALSE;
+    else
+        pcs_ptr->disallow_all_nsq_blocks_below_8x8 = TRUE;
+#else
     pcs_ptr->disallow_all_nsq_blocks_below_8x8 = FALSE;
+#endif
 
 
     // Set disallow_all_nsq_blocks_below_16x16: 16x8, 8x16, 16x4, 4x16
+#if OPT_NSQ
+    if (enc_mode <= ENC_M4)
+        pcs_ptr->disallow_all_nsq_blocks_below_16x16 = FALSE;
+    else
+        pcs_ptr->disallow_all_nsq_blocks_below_16x16 = TRUE;
+#else
     pcs_ptr->disallow_all_nsq_blocks_below_16x16 = FALSE;
+#endif
 
     pcs_ptr->disallow_all_nsq_blocks_below_64x64 = FALSE;
     pcs_ptr->disallow_all_nsq_blocks_below_32x32 = FALSE;
@@ -2233,8 +2258,15 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set if H4/V4 blocks should considered
     if (enc_mode <= ENC_M3)
         pcs_ptr->disallow_HV4 = FALSE;
+#if OPT_NSQ
+    else if (enc_mode <= ENC_M4)
+        pcs_ptr->disallow_HV4 = is_base ? FALSE : TRUE;
+    else
+        pcs_ptr->disallow_HV4 = TRUE;
+#else
     else
         pcs_ptr->disallow_HV4 = is_base ? FALSE : TRUE;
+#endif
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
     pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16 = FALSE;
@@ -2305,7 +2337,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = 1;
             else if (enc_mode <= ENC_M4)
                 pcs_ptr->cdef_level = 2;
+#if TUNE_NSQ
+            else if (enc_mode <= ENC_M6)
+#else
             else if (enc_mode <= ENC_M5)
+#endif
                 pcs_ptr->cdef_level = 4;
             else if (enc_mode <= ENC_M10)
                 pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;

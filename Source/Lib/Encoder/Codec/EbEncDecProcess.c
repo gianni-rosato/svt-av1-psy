@@ -6303,7 +6303,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         intra_level = 5;
     } else if (enc_mode <= ENC_M0)
         intra_level = 1;
+#if TUNE_NSQ
+    else if (enc_mode <= ENC_M1)
+#else
     else if (enc_mode <= ENC_M2)
+#endif
         intra_level = is_base ? 1 : 2;
     else if (enc_mode <= ENC_M4)
         intra_level = is_base ? 1 : 3;

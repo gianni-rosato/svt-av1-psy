@@ -60,6 +60,15 @@ extern "C" {
                                      // r0-based q modulation for L1 of 6L
                                      // Tune lambda modulation
 
+#define OPT_NSQ                    1 // Optimize nsq for M1-M5
+#define TUNE_NSQ                   1 // Tune M1, M2, M5, M6 for nsq optimization
+#define FIX_RECON_NSQ              1 // Fix recon in nsq
+
+#define TUNE_6L_M5                 1 // Tune M5 for 6L
+#define TUNE_6L_M4                 1 // Tune M4 for 6L
+#define TUNE_6L_M1                 1 // Tune M1 for 6L
+#define TUNE_6L_M3                 1 // Tune M3 for 6L
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

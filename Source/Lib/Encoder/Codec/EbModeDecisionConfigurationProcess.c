@@ -373,7 +373,11 @@ uint8_t get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_b
     uint8_t update_cdf_level = 0;
     if (enc_mode <= ENC_M2)
         update_cdf_level = 1;
+#if TUNE_NSQ
+    else if (enc_mode <= ENC_M5)
+#else
     else if (enc_mode <= ENC_M6)
+#endif
         update_cdf_level = is_base ? 1 : 3;
     else if (enc_mode <= ENC_M10)
         update_cdf_level = is_islice ? 1 : 0;
@@ -482,7 +486,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
 
     if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
+#if TUNE_6L_M5
+        if (pcs_ptr->enc_mode <= ENC_M5)
+#else
         if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else
             pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
@@ -561,7 +569,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //       > 1        | Faster level subject to possible constraints
     if (scs_ptr->obmc_level == DEFAULT) {
         if (fast_decode == 0 || input_resolution <= INPUT_SIZE_360p_RANGE) {
+#if TUNE_6L_M3
+            if (ppcs->enc_mode <= ENC_M2)
+#else
             if (ppcs->enc_mode <= ENC_M3)
+#endif
                 ppcs->pic_obmc_level = 1;
             else if (ppcs->enc_mode <= ENC_M5)
                 ppcs->pic_obmc_level = 2;
@@ -693,7 +705,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cfl_level = 1;
         else
             pcs_ptr->cfl_level = is_base ? 2 : 0;
-    } else if (enc_mode <= ENC_M5)
+    }
+#if TUNE_NSQ
+    else if (enc_mode <= ENC_M4)
+#else
+    else if (enc_mode <= ENC_M5)
+#endif
         pcs_ptr->cfl_level = 1;
     else if (enc_mode <= ENC_M9)
         pcs_ptr->cfl_level = is_base ? 2 : 0;
@@ -716,7 +733,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->new_nearest_near_comb_injection = scs_ptr->new_nearest_comb_inject;
 
     // Set the level for unipred3x3 injection
+#if TUNE_NSQ
+    if (enc_mode <= ENC_M0)
+#else
     if (enc_mode <= ENC_M1)
+#endif
         pcs_ptr->unipred3x3_injection = 1;
     else
         pcs_ptr->unipred3x3_injection = 0;
@@ -738,9 +759,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (scs_ptr->compound_level == DEFAULT) {
             if (enc_mode <= ENC_MR)
                 pcs_ptr->inter_compound_mode = 1;
+#if TUNE_NSQ
+            else if (enc_mode <= ENC_M1)
+#else
             else if (enc_mode <= ENC_M2)
+#endif
                 pcs_ptr->inter_compound_mode = 3;
+#if TUNE_NSQ
+            else if (enc_mode <= ENC_M4)
+#else
             else if (enc_mode <= ENC_M5)
+#endif
                 pcs_ptr->inter_compound_mode = 4;
             else
                 pcs_ptr->inter_compound_mode = 0;
@@ -758,7 +787,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->dist_based_ref_pruning = 1;
         else if (enc_mode <= ENC_M0)
             pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 2;
+#if TUNE_NSQ
+        else if (enc_mode <= ENC_M1)
+#else
         else if (enc_mode <= ENC_M2)
+#endif
             pcs_ptr->dist_based_ref_pruning = is_base ? 1 : 4;
         else if (enc_mode <= ENC_M4)
             pcs_ptr->dist_based_ref_pruning = is_base ? 2 : 5;
@@ -795,6 +828,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 1;
     else if (enc_mode <= ENC_M0)
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0 : 2;
+
+#if OPT_NSQ
+    // todo: rename of parent_sq_coeff_area_based_cycles_reduction_level to coeff_nsq_lvl later
+    else if (enc_mode <= ENC_M3)
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_base ? 2 : 4;
+    else if (enc_mode <= ENC_M4)
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_base ? 5 : 7;
+    else
+        pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = 7;
+#else
     else if (enc_mode <= ENC_M3)
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0
             : is_base                                                          ? 2
@@ -802,6 +845,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                                                                                : 7;
     else
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 5 : is_ref ? 6 : 7;
+#endif
     // Weighting (expressed as a percentage) applied to
     // square shape costs for determining if a and b
     // shapes should be skipped. Namely:
@@ -811,6 +855,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->sq_weight = (uint32_t)~0;
     else if (enc_mode <= ENC_M0)
         pcs_ptr->sq_weight = 105;
+#if OPT_NSQ
+    else if (enc_mode <= ENC_M2)
+        pcs_ptr->sq_weight = 100;
+#endif
     else
         pcs_ptr->sq_weight = 95;
 
@@ -819,6 +867,24 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // (2) skip the V_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 3rd quadrant) and the Parent-SQ src-to-recon distortion of (2nd quadrant + 4th quadrant) is less than TH.
     if (enc_mode <= ENC_M3)
         pcs_ptr->max_part0_to_part1_dev = 0;
+#if OPT_NSQ
+    // rename max_part0_to_part1_dev to rec_dist_nsq_dev later
+    else if (enc_mode <= ENC_M4) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 0;
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 60;
+        else // regular
+            pcs_ptr->max_part0_to_part1_dev = 40;
+    } else {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 160;
+        else if (pcs_ptr->coeff_lvl == HIGH_LVL)
+            pcs_ptr->max_part0_to_part1_dev = 220;
+        else // regular
+            pcs_ptr->max_part0_to_part1_dev = 200;
+    }
+#else
     else if (enc_mode <= ENC_M4) {
         if (pcs_ptr->coeff_lvl == LOW_LVL)
             pcs_ptr->max_part0_to_part1_dev = 0;
@@ -834,6 +900,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else // regular
             pcs_ptr->max_part0_to_part1_dev = 120;
     }
+#endif
     if (enc_mode <= ENC_M2)
         pcs_ptr->skip_hv4_on_best_part = 0;
     else
@@ -865,8 +932,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txs_level = 2;
     else if (enc_mode <= ENC_M3)
         pcs_ptr->txs_level = is_base ? 2 : 3;
+#if !TUNE_NSQ
     else if (enc_mode <= ENC_M5)
         pcs_ptr->txs_level = is_base ? 2 : 4;
+#endif
     else if (enc_mode <= ENC_M7)
         pcs_ptr->txs_level = is_base ? 2 : 0;
     else if (enc_mode <= ENC_M9)
@@ -884,7 +953,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // Set the level for nic
     pcs_ptr->nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels);
     // Set the level for SQ me-search
+#if TUNE_6L_M1
+    if (enc_mode <= ENC_M0)
+#else
+#if TUNE_NSQ
+    if (enc_mode <= ENC_M1)
+#else
     if (enc_mode <= ENC_M2)
+#endif
+#endif
         pcs_ptr->md_sq_mv_search_level = 1;
     else
         pcs_ptr->md_sq_mv_search_level = 0;
@@ -946,7 +1023,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     */
     if (enc_mode <= ENC_M3)
         pcs_ptr->pic_lpd0_lvl = 0;
+#if TUNE_NSQ
+    else if (enc_mode <= ENC_M5)
+#else
     else if (enc_mode <= ENC_M6)
+#endif
         pcs_ptr->pic_lpd0_lvl = 1;
     else if (enc_mode <= ENC_M9) {
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
@@ -1115,6 +1196,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M3)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+#if TUNE_6L_M5
+    else if (enc_mode <= ENC_M5) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
+        else
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 4;
+#else
     else if (enc_mode <= ENC_M4) {
         if (pcs_ptr->coeff_lvl == LOW_LVL)
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
@@ -1125,6 +1213,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 3;
         else
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 4;
+#endif
     } else if (enc_mode <= ENC_M7) {
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 3;

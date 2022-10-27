@@ -9027,9 +9027,19 @@ void calc_scr_to_recon_dist_per_quadrant(ModeDecisionContext         *context_pt
                                          ModeDecisionCandidateBuffer *candidate_buffer,
                                          const uint32_t               blk_origin_index,
                                          const uint32_t               blk_chroma_origin_index) {
+#if FIX_RECON_NSQ
+    // do this for all non-4x4 parent squares
+    const uint8_t is_parent_sq =
+        (context_ptr->blk_geom->shape == PART_N) ||
+        (context_ptr->blk_geom->shape == PART_HA && context_ptr->blk_geom->redund) ||
+        (context_ptr->blk_geom->shape == PART_VA && context_ptr->blk_geom->redund);
+    if (is_parent_sq && context_ptr->blk_geom->bsize != BLOCK_4X4) {
+        const int32_t size = context_ptr->blk_geom->bwidth;
+#else
     // if a non-4x4 SQ
     if ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) &&
         context_ptr->blk_geom->sq_size > 4) {
+#endif
         EbPictureBufferDesc *recon_ptr = candidate_buffer->recon_ptr;
 
         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
@@ -9037,7 +9047,11 @@ void calc_scr_to_recon_dist_per_quadrant(ModeDecisionContext         *context_pt
             : svt_spatial_full_distortion_kernel;
 
         uint8_t r, c;
+#if FIX_RECON_NSQ
+        const int32_t quadrant_size = size >> 1;
+#else
         int32_t quadrant_size = context_ptr->blk_geom->sq_size >> 1;
+#endif
 
         for (r = 0; r < 2; r++) {
             for (c = 0; c < 2; c++) {
