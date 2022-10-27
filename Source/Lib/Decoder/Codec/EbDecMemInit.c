@@ -305,7 +305,7 @@ static EbErrorType init_main_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
     frame_mi_map->sb_cols = sb_cols;
     frame_mi_map->sb_rows = sb_rows;
     frame_mi_map->mi_cols_algnsb = sb_cols * (1 << (sb_size_log2 - MI_SIZE_LOG2));
-    frame_mi_map->mi_rows_algnsb = sb_cols * (1 << (sb_size_log2 - MI_SIZE_LOG2));
+    frame_mi_map->mi_rows_algnsb = sb_rows * (1 << (sb_size_log2 - MI_SIZE_LOG2));
     /* SBInfo pointers for entire frame */
     EB_MALLOC_DEC(SBInfo**, frame_mi_map->pps_sb_info,
         sb_rows * sb_cols * sizeof(SBInfo *), EB_N_PTR);
