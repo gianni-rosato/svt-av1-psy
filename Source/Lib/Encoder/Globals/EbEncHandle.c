@@ -4160,12 +4160,19 @@ void copy_api_from_app(
 
 #if FIX_DEFAULT_PRED_STRUCT
     // Set the default hierarchical levels
-    scs_ptr->static_config.hierarchical_levels =
-        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B && (scs_ptr->static_config.pass == ENC_SINGLE_PASS || scs_ptr->static_config.hierarchical_levels == 0)
-            ? 3
-            : scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR
+    if (scs_ptr->static_config.hierarchical_levels == 0) {
+        scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ?
+            3 :
+            scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR || !(scs_ptr->static_config.enc_mode <= ENC_M6)
                 ? 4
                 : 5;
+    }
+    if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+        if (scs_ptr->static_config.hierarchical_levels != 3) {
+            scs_ptr->static_config.hierarchical_levels = 3;
+            SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 3\n");
+        }
+    }
 #else
     // set the default hierarchical levels depending on the pred structure
     if (scs_ptr->static_config.hierarchical_levels == 0){
