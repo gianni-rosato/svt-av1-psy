@@ -562,13 +562,23 @@ EbErrorType load_default_buffer_configuration_settings(
 
         min_input = return_ppcs;
 
-        if (scs_ptr->static_config.enable_overlays)
+#if FIX_OVERLAY_LA_BUFFS
+        min_parent = return_ppcs;
+
+        // If overlay frames are used, each input will be assigned 2 ppcs: one for the regular frame, and one for the potential alt-ref frame
+        if (scs_ptr->static_config.enable_overlays) {
+            min_parent *= 2;
+        }
+#else
+        if (scs_ptr->static_config.enable_overlays) {
             //scs_ptr->picture_control_set_pool_init_count =
             min_parent = (mg_size + eos_delay + scs_ptr->scd_delay) * 2 + //min to get a mini-gop in PD - release all and keep one.
-                         mg_size + 1 + // minigop in PM (+ 1 for key frame in the first minigop)
-                         overlay;      // overlay frame of minigop in PM
+                mg_size + 1 + // minigop in PM (+ 1 for key frame in the first minigop)
+                overlay;      // overlay frame of minigop in PM
+        }
         else
             min_parent = return_ppcs;
+#endif
 
         //Pic-Manager will inject one child at a time.
         min_child = 1;
@@ -628,15 +638,25 @@ EbErrorType load_default_buffer_configuration_settings(
 #endif
 #endif
         if (scs_ptr->static_config.enable_overlays) {
+#if FIX_OVERLAY_LA_BUFFS
+            // Need an extra PA ref buffer for each overlay picture. Overlay pics use the same DPB as
+            // regular pics, so no need to allocate an extra dpb_frames buffers for the ref pics
+            min_paref += num_pa_ref_from_cur_mg + lad_mg_pictures + scs_ptr->scd_delay + eos_delay;
+#else
             // the additional paref count for overlay is mg_size + scs_ptr->scd_delay.
             // in resource_coordination, allocate 1 additional paref for each potential overlay picture in minigop. (line 1259)
             // in picture_decision, for each minigop, keep 1 paref for the real overlay picture and release others. (line 5109)
             min_paref += mg_size + scs_ptr->scd_delay; // min_paref *= 2;
+#endif
         }
         //Overlays
+#if FIX_OVERLAY_LA_BUFFS
+        // Each input pic will assign a ppcs and for each potential overlay, will assign a buffer to store the unfiltered input picture
+        min_overlay = scs_ptr->static_config.enable_overlays ? return_ppcs : 0;
+#else
         min_overlay = scs_ptr->static_config.enable_overlays ?
               mg_size + eos_delay + scs_ptr->scd_delay : 1;
-
+#endif
         min_recon = min_ref;
 
         if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P ||
@@ -3670,6 +3690,17 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
      {
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
         uint32_t mg_size = 1 << scs_ptr->static_config.hierarchical_levels;
+#if CLN_TPL_LAD_MG_SET
+        // If the lookahead is specified to be less than one mini-gop, then use only the current mini-gop for TPL (the current MG is always required to encode).
+        // Otherwise, set tpl_lad_mg to 1 when TPL is used, regardless of teh specified lookahead, because TPL has been optimized to use 1 MG lookahead. Using
+        // more lookahead MGs may result in disadvantageous trade-offs (speed/BDR/memory).
+        if (scs_ptr->static_config.look_ahead_distance < mg_size)
+            tpl_lad_mg = 0;
+        else if (scs_ptr->tpl_level)
+            tpl_lad_mg = 1;
+        else
+            tpl_lad_mg = 0;
+#else
         if (scs_ptr->static_config.look_ahead_distance < mg_size)
             tpl_lad_mg = 0;
         else
@@ -3677,6 +3708,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 tpl_lad_mg = 1;
             else
                 tpl_lad_mg = 0;
+#endif
 
         // special conditions for higher resolutions in order to decrease memory usage for tpl_lad_mg
 #if !REMOVE_LP1_LPN_DIFF
@@ -3685,7 +3717,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         }
         else
 #endif
-       if (scs_ptr->input_resolution >= INPUT_SIZE_8K_RANGE && scs_ptr->static_config.hierarchical_levels >= 4) {
+        if (scs_ptr->input_resolution >= INPUT_SIZE_8K_RANGE && scs_ptr->static_config.hierarchical_levels >= 4) {
             tpl_lad_mg = 0;
         }
         scs_ptr->tpl_lad_mg = MIN(2, tpl_lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops

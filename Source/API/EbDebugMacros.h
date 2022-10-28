@@ -50,6 +50,8 @@ extern "C" {
 #define FIX_REF_SIGN_BIAS          1 // Fix ref_frame_sign_bias derivation
 #define FTR_USE_3L_AT_MG_END       1 // Use 3L for incomplete minigops
 #define FTR_USE_3_BASE_REF         1 // Use 3 base pics as ref in 6L
+#define FIX_OVERLAY_LA_BUFFS       1 // Make the overlay buffers dependent on the lookahead
+#define CLN_TPL_LAD_MG_SET         1 // Add comment to clarify tpl_lad_mg settings
 
 #define FIX_DEFAULT_PRED_STRUCT    1 // Fix the default hierarchical levels
 
