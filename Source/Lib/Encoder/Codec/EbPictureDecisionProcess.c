@@ -2121,12 +2121,20 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
         scs_ptr->static_config.resize_mode == RESIZE_NONE) {
         if (pcs_ptr->enc_mode <= ENC_MRS)
             gm_level = 2;
+#if TUNE_M2
+        else if (pcs_ptr->enc_mode <= ENC_M1)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
             gm_level = 3;
 #if FTR_USE_3_BASE_REF
         else if (enc_mode <= ENC_M3)
             gm_level = 4;
+#if TUNE_M5
+        else if (enc_mode <= ENC_M4)
+#else
         else if (enc_mode <= ENC_M5)
+#endif
             gm_level = 5;
 #else
         else if (enc_mode <= ENC_M3)
@@ -2333,7 +2341,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
+#if TUNE_M1
+            if (enc_mode <= ENC_M0)
+#else
             if (enc_mode <= ENC_M1)
+#endif
                 pcs_ptr->cdef_level = 1;
             else if (enc_mode <= ENC_M4)
                 pcs_ptr->cdef_level = 2;

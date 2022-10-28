@@ -534,9 +534,17 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     } else {
         if (enc_mode <= ENC_MRS)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#if TUNE_M1
+        else if (enc_mode <= ENC_M0)
+#else
         else if (enc_mode <= ENC_M1)
+#endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+#if TUNE_M2
+        else if (enc_mode <= ENC_M1) {
+#else
         else if (enc_mode <= ENC_M2) {
+#endif
             if (pcs_ptr->temporal_layer_index == 0)
                 set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
             else
@@ -559,7 +567,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 5);
     else if (enc_mode <= ENC_MRS)
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+#if TUNE_M4
+    else if (enc_mode <= ENC_M3)
+#else
     else if (enc_mode <= ENC_M4)
+#endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 1);
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);

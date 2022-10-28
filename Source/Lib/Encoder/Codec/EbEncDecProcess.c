@@ -3910,9 +3910,17 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
         nic_level = 0;
     else if (enc_mode <= ENC_MR)
         nic_level = 1;
+#if TUNE_M1
+    else if (enc_mode <= ENC_M0)
+#else
     else if (enc_mode <= ENC_M1)
+#endif
         nic_level = is_base ? 2 : 4;
+#if TUNE_M2
+    else if (enc_mode <= ENC_M1)
+#else
     else if (enc_mode <= ENC_M2)
+#endif
         nic_level = is_base ? 7 : 8;
     else if (enc_mode <= ENC_M3) {
         if (hierarchical_levels <= 3)
@@ -4895,7 +4903,12 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
             depth_level = 3;
         else
             depth_level = pcs_ptr->slice_type == I_SLICE ? 3 : 0;
-    } else if (enc_mode <= ENC_M1)
+    }
+#if TUNE_M1
+    else if (enc_mode <= ENC_M0)
+#else
+    else if (enc_mode <= ENC_M1)
+#endif
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
     else if (enc_mode <= ENC_M4)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
@@ -6249,7 +6262,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     md_pme_search_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_pme_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M5 ? 3 : 0;
+#if TUNE_M1
+    else if (enc_mode <= ENC_M0)
+#else
     else if (enc_mode <= ENC_M1)
+#endif
         context_ptr->md_subpel_me_level = 1;
     else if (enc_mode <= ENC_M6)
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
@@ -6267,7 +6284,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M0 ? 3 : 0;
+#if TUNE_M1
+    else if (enc_mode <= ENC_M0)
+#else
     else if (enc_mode <= ENC_M1)
+#endif
         context_ptr->md_subpel_pme_level = 1;
     else
         context_ptr->md_subpel_pme_level = 2;
