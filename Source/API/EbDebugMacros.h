@@ -76,6 +76,7 @@ extern "C" {
 #define TUNE_M3                    1 // Adjust M3 position
 #define TUNE_M4                    1 // Adjust M4 position
 #define TUNE_M5                    1 // Adjust M5 position
+#define TUNE_M6_M7                 1 // Adjust M6/M7 position
 
 #define FIX_BYPASS_ENCDEC          1 // Fix encdec condition
 

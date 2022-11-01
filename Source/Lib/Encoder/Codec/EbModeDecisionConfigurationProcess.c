@@ -399,8 +399,10 @@ uint8_t svt_aom_get_chroma_level(EncMode enc_mode) {
         chroma_level = 2;
     else if (enc_mode <= ENC_M6)
         chroma_level = 3;
+#if !TUNE_M6_M7
     else if (enc_mode <= ENC_M7)
         chroma_level = 4;
+#endif
     else
         chroma_level = 5;
 
@@ -1285,12 +1287,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 4;
 #endif
+#if !TUNE_M6_M7
     } else if (enc_mode <= ENC_M7) {
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 3;
         } else { // regular
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 4;
         }
+#endif
     } else {
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 4;

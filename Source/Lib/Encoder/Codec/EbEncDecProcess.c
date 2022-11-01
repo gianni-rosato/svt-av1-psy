@@ -6268,6 +6268,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     else if (enc_mode <= ENC_M1)
 #endif
         context_ptr->md_subpel_me_level = 1;
+#if TUNE_M6_M7
+    else if (enc_mode <= ENC_M5)
+        context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
+#else
     else if (enc_mode <= ENC_M6)
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
     else if (enc_mode <= ENC_M7) {
@@ -6275,7 +6279,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
             context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
         else
             context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
-    } else if (enc_mode <= ENC_M9)
+    }
+#endif
+    else if (enc_mode <= ENC_M9)
         context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
     else
         context_ptr->md_subpel_me_level = is_ref ? 4 : 7;
