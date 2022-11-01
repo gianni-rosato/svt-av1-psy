@@ -1062,12 +1062,20 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // TODO: This signal can only be modified per picture right now, not per SB.  Per SB requires
     // neighbour array updates at EncDec for all SBs, that are currently skipped if EncDec is bypassed.
     // TODO: Bypassing EncDec doesn't work if pcs_ptr->cdf_ctrl.update_coef is enabled for non-ISLICE frames (causes r2r)
+#if FIX_BYPASS_ENCDEC
+    if (((ppcs->disallow_HVA_HVB && ppcs->disallow_HV4 && scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT) || ppcs->disallow_nsq) &&
+        (!pcs_ptr->cdf_ctrl.update_coef || is_islice) &&
+        !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
+        pcs_ptr->pic_bypass_encdec = get_bypass_encdec(
+            enc_mode, ppcs->hbd_mode_decision, scs_ptr->static_config.encoder_bit_depth);
+#else
     if ((ppcs->disallow_HVA_HVB && ppcs->disallow_HV4) &&
         (scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT || ppcs->disallow_nsq) &&
         (!pcs_ptr->cdf_ctrl.update_coef || is_islice) &&
         !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
         pcs_ptr->pic_bypass_encdec = get_bypass_encdec(
             enc_mode, ppcs->hbd_mode_decision, scs_ptr->static_config.encoder_bit_depth);
+#endif
     } else
         pcs_ptr->pic_bypass_encdec = 0;
 
