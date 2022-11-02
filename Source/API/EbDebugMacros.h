@@ -53,6 +53,7 @@ extern "C" {
 #define FIX_OVERLAY_LA_BUFFS       1 // Make the overlay buffers dependent on the lookahead
 #define CLN_TPL_LAD_MG_SET         1 // Add comment to clarify tpl_lad_mg settings
 #define FIX_ME_PRUNING_R2R         1 // Prune r2r when using prune_me_candidates_th
+#define FIX_SOME_CHECKS            1 // Fix some problematic if checks
 
 #define FIX_DEFAULT_PRED_STRUCT    1 // Fix the default hierarchical levels
 

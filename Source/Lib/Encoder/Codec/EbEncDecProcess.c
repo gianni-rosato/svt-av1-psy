@@ -4504,13 +4504,7 @@ uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level) {
 }
 #if CLN_NSQ
 /*
-* Set the NSQ controls.
-*
-* This function is used in MD to set the NSQ controls and is also used at memory allocation
-* to allocate the candidate buffers.
-*
-* When called at memory allocation, there is no context (it is passed as NULL) so the signals
-* are not set.
+* This function is used in MD to set the NSQ controls.
 */
 void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
 
@@ -4524,8 +4518,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 1: // Original MRS level
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 0;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 1;
 
@@ -4539,8 +4532,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 2:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 0;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 1;
 
@@ -4554,8 +4546,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 3:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 0;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 1;
 
@@ -4569,8 +4560,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 4:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 0;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 1;
 
@@ -4584,8 +4574,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 5:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 0;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4599,8 +4588,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 6:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 0;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4614,8 +4602,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 7:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 0;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4629,8 +4616,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 8:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 0;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4644,8 +4630,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 9:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 8;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4659,8 +4644,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 10:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 8;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4674,8 +4658,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 11:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 8;
         nsq_ctrls->allow_HV4 = 1;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4689,8 +4672,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 12:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 8;
         nsq_ctrls->allow_HV4 = 0;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4704,8 +4686,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 13:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 8;
         nsq_ctrls->allow_HV4 = 0;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4719,8 +4700,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 14:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->min_nsq_block_size = 8;
         nsq_ctrls->allow_HV4 = 0;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4734,8 +4714,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 15:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 1;
+        nsq_ctrls->min_nsq_block_size = 16;
         nsq_ctrls->allow_HV4 = 0;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4749,8 +4728,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 16:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 1;
+        nsq_ctrls->min_nsq_block_size = 16;
         nsq_ctrls->allow_HV4 = 0;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -4764,8 +4742,7 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     case 17:
         nsq_ctrls->enabled = 1;
 
-        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
-        nsq_ctrls->allow_nsq_blocks_above_16x16 = 1;
+        nsq_ctrls->min_nsq_block_size = 16;
         nsq_ctrls->allow_HV4 = 0;
         nsq_ctrls->allow_HVA_HVB = 0;
 
@@ -6114,7 +6091,13 @@ void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet *scs, Pict
     set_pf_controls(ctx, 1);
 
     uint8_t subres_level;
+#if FIX_SOME_CHECKS
+    // LPD0 was designed assuming 4x4 blocks were disallowed. Since LPD0 is now used in some presets where 4x4 is on
+    // check that subres is not used when 4x4 blocks are enabled.
+    if (pd0_level <= LPD0_LVL_0 || !ctx->disallow_4x4) {
+#else
     if (pd0_level <= LPD0_LVL_0) {
+#endif
         subres_level = 0;
     } else {
         subres_level = 0;
@@ -6837,8 +6820,7 @@ uint32_t get_tot_1d_blks(struct ModeDecisionContext *context_ptr, const int32_t 
     uint32_t tot_d1_blocks;
 
     tot_d1_blocks = (disallow_nsq) ||
-        (sq_size <= 8 && context_ptr->nsq_ctrls.allow_nsq_blocks_above_8x8) ||
-        (sq_size <= 16 && context_ptr->nsq_ctrls.allow_nsq_blocks_above_16x16)
+        (sq_size <= context_ptr->nsq_ctrls.min_nsq_block_size)
         ? 1
         : sq_size == 128                                                      ? 17
         : sq_size > 8                                                         ? 25

@@ -3217,17 +3217,25 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                            .this_mv.as_mv.row +
                        4) &
                         ~0x07;
+#if FIX_SOME_CHECKS
+                if (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) {
+                    if (context_ptr->md_nsq_motion_search_ctrls.enabled) {
+#else
                 if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) &&
                     context_ptr->md_nsq_motion_search_ctrls.enabled) {
-                    md_nsq_motion_search(pcs_ptr,
-                                         context_ptr,
-                                         input_picture_ptr,
-                                         input_origin_index,
-                                         list_idx,
-                                         ref_idx,
-                                         me_results,
-                                         &me_mv_x,
-                                         &me_mv_y);
+#endif
+                        md_nsq_motion_search(pcs_ptr,
+                            context_ptr,
+                            input_picture_ptr,
+                            input_origin_index,
+                            list_idx,
+                            ref_idx,
+                            me_results,
+                            &me_mv_x,
+                            &me_mv_y);
+#if FIX_SOME_CHECKS
+                    }
+#endif
                 } else if (context_ptr->md_sq_me_ctrls.enabled) {
                     md_sq_motion_search(pcs_ptr,
                                         context_ptr,

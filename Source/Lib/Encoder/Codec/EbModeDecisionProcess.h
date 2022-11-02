@@ -424,8 +424,7 @@ typedef struct CandEliminationCtlrs {
 #if CLN_NSQ
 typedef struct NsqCtrls {
     uint8_t  enabled; // Enable or disable nsq signal. 0: disabled, 1: enabled
-    uint8_t  allow_nsq_blocks_above_8x8; // Disables all nsq blocks for below 8x8 blocks. 0: OFF, 1: ON
-    uint8_t  allow_nsq_blocks_above_16x16; // Disables all nsq blocks for below 16x16 blocks. 0: OFF, 1: ON
+    uint8_t  min_nsq_block_size; // Disables all nsq blocks for below a specified size. e.g. 8 = 8x8, 16 = 16x16
     uint8_t  allow_HV4; // Disallow H4/V4 when off. 0: OFF, 1: ON
     uint8_t  allow_HVA_HVB; // Disallow HA/HB/VA/VB NSQ blocks when off. 0: OFF, 1: ON
     uint8_t  parent_sq_coeff_area_based_cycles_reduction_level; // Set the level for coeff-based NSQ accuracy reduction
