@@ -2342,8 +2342,13 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     }
 }
 uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
+#if FIX_ME_PRUNING_R2R
+uint8_t is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset, const MeSbResults *me_results,
+    uint8_t list_idx, uint8_t ref_idx);
+#else
 uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbResults *me_results,
                            uint8_t list_idx, uint8_t ref_idx);
+#endif
 // Derive me_sb_addr and me_block_offset used to access ME_MV
 void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                        ModeDecisionContext *context_ptr) {
@@ -2438,7 +2443,12 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 ((pu_search_index_map[block_index][1] >=
                   (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)) &&
                  (pu_search_index_map[block_index][1] < context_ptr->blk_geom->bheight +
+#if FIX_ME_PRUNING_R2R
+                 (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y))) &&
+                is_me_data_present(block_index, block_index * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand, me_results, list_idx, ref_idx)) {
+#else
                       (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)))) {
+#endif
                 if (list_idx == 0) {
                     mvc_x_array[mvc_count] =
                         (me_results->me_mv_array[block_index * max_refs + ref_idx].x_mv) << 1;
@@ -2960,7 +2970,11 @@ void read_refine_me_mvs_light_pd1(PictureControlSet   *pcs_ptr,
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
 
+#if FIX_ME_PRUNING_R2R
+            if (is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, list_idx, ref_idx)) {
+#else
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
+#endif
                 EbPictureBufferDesc *ref_pic = get_ref_pic_buffer(pcs_ptr, 0, list_idx, ref_idx);
                 EbReferenceObject   *ref_obj =
                     (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
@@ -3098,7 +3112,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#if FIX_ME_PRUNING_R2R
+            if (is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, list_idx, ref_idx)) {
+#else
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
+#endif
                 int16_t me_mv_x;
                 int16_t me_mv_y;
                 if (context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds] &&
@@ -3452,7 +3470,11 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
             uint32_t pa_me_distortion = (uint32_t)~0; //any non zero value
+#if FIX_ME_PRUNING_R2R
+            if (is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, list_idx, ref_idx)) {
+#else
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
+#endif
                 int16_t me_mv_x;
                 int16_t me_mv_y;
                 if (list_idx == 0) {
@@ -3690,7 +3712,11 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             const MeSbResults *me_results =
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
 
+#if FIX_ME_PRUNING_R2R
+            uint8_t me_data_present = is_me_data_present(ctx->me_block_offset, ctx->me_cand_offset, me_results, list_idx, ref_idx);
+#else
             uint8_t me_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
+#endif
 
             if (me_data_present) {
                 // Early MVP vs. ME_MV check; do not perform PME search for blocks that have a valid ME_MV unless the ME_MV has a different direction than all MVP(s) and the ME_MV mag is higher than MV_TH (not around(0,0))

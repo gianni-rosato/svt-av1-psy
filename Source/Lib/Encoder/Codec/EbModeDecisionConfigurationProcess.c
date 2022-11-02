@@ -1029,7 +1029,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->md_nsq_mv_search_level = 2;
     else
         pcs_ptr->md_nsq_mv_search_level = 4;
-
     // Set the level for PME search
     if (enc_mode <= ENC_MR)
         pcs_ptr->md_pme_level = 1;

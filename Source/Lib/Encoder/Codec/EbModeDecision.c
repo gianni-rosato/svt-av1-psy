@@ -73,6 +73,27 @@ int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, Pre
 }
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
+#if FIX_ME_PRUNING_R2R
+uint8_t is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset, const MeSbResults *me_results,
+    uint8_t list_idx, uint8_t ref_idx) {
+    uint8_t total_me_cnt = me_results->total_me_candidate_index[me_block_offset];
+    const MeCandidate *me_block_results =
+        &me_results->me_candidate_array[me_cand_offset];
+    for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i) {
+        const MeCandidate *me_cand = &me_block_results[me_cand_i];
+        assert(me_cand->direction <= 2);
+        if (me_cand->direction == 0 || me_cand->direction == 2) {
+            if (list_idx == me_cand->ref0_list && ref_idx == me_cand->ref_idx_l0)
+                return 1;
+        }
+        if (me_cand->direction == 1 || me_cand->direction == 2) {
+            if (list_idx == me_cand->ref1_list && ref_idx == me_cand->ref_idx_l1)
+                return 1;
+        }
+    }
+    return 0;
+}
+#else
 uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbResults *me_results,
                            uint8_t list_idx, uint8_t ref_idx) {
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
@@ -92,6 +113,7 @@ uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbRe
     }
     return 0;
 }
+#endif
 /********************************************
 * Constants
 ********************************************/
@@ -2284,7 +2306,11 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                             : 1;
                     inj_mv              = inj_mv && inside_tile;
                     inj_mv              = inj_mv &&
+#if FIX_ME_PRUNING_R2R
+                        is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, get_list_idx(rf[1]), ref_idx_1);
+#else
                         is_me_data_present(context_ptr, me_results, get_list_idx(rf[1]), ref_idx_1);
+#endif
                     if (inj_mv) {
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2378,7 +2404,11 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                                     context_ptr->blk_geom->bsize)
                             : 1;
                     inj_mv              = inj_mv && inside_tile;
+#if FIX_ME_PRUNING_R2R
+                    inj_mv = inj_mv && is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, 0, ref_idx_0);
+#else
                     inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, 0, ref_idx_0);
+#endif
                     if (inj_mv) {
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2465,7 +2495,11 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                               context_ptr, to_inj_mv0, to_inj_mv1, ref_pair) ==
                                               FALSE);
                         inj_mv             = inj_mv &&
+#if FIX_ME_PRUNING_R2R
+                        is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, 0, ref_idx_0);
+#else
                             is_me_data_present(context_ptr, me_results, 0, ref_idx_0);
+#endif
                         if (inj_mv) {
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2546,8 +2580,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                               context_ptr, to_inj_mv0, to_inj_mv1, ref_pair) ==
                                               FALSE);
                         inj_mv             = inj_mv &&
+#if FIX_ME_PRUNING_R2R
+                            is_me_data_present(
+                                context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, get_list_idx(rf[1]), ref_idx_1);
+#else
                             is_me_data_present(
                                      context_ptr, me_results, get_list_idx(rf[1]), ref_idx_1);
+#endif
                         if (inj_mv) {
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;

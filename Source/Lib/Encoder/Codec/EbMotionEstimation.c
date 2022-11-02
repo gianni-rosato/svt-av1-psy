@@ -2558,7 +2558,7 @@ void construct_me_candidate_array(PictureParentControlSet *pcs_ptr, MeContext *c
         uint8_t  blk_do_ref[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
         uint32_t current_to_best_dist_distance;
         const uint32_t me_prune_th = context_ptr->prune_me_candidates_th; //to change to 32bit
-        uint32_t best_me_dist = ~0;
+        uint32_t best_me_dist = (uint32_t)~0;
 
         //add a fast path for 2 references at the end
 
