@@ -2222,11 +2222,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     // Set the Multi-Pass PD level
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_ON;
+#if !ADD_NSQ_ENABLE
 #if OPT_NSQ
     pcs_ptr->disallow_nsq = svt_aom_get_disallow_nsq(enc_mode, is_base); // Change signals at other locations later
 #else
     pcs_ptr->disallow_nsq = svt_aom_get_disallow_nsq(enc_mode, is_islice);
 #endif
+#endif
+#if !CLN_NSQ
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
 
 #if OPT_NSQ
@@ -2281,6 +2284,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     // Set disallow_all_h4_v4_blocks_below_16x16
     pcs_ptr->disallow_all_h4_v4_blocks_below_16x16 = FALSE;
+#endif
     // Loop filter Level                            Settings
     // 0                                            OFF
     // 1                                            CU-BASED

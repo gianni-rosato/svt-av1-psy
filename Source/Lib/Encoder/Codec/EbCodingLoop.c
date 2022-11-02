@@ -31,9 +31,13 @@
 
 void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 int  svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
-
+#if CLN_NSQ
+uint32_t get_tot_1d_blks(struct ModeDecisionContext *context_ptr, const int32_t sq_size,
+                         const uint8_t disallow_nsq);
+#else
 uint32_t get_tot_1d_blks(struct PictureParentControlSet *ppcs, const int32_t sq_size,
                          const uint8_t disallow_nsq);
+#endif
 
 EbPictureBufferDesc *get_ref_pic_buffer(PictureControlSet *pcs_ptr, uint8_t is_highbd,
                                         uint8_t list_idx, uint8_t ref_idx);
@@ -3124,10 +3128,18 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
             const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
             if (pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_inside_md_scan[blk_index]) {
+#if ADD_NSQ_ENABLE
+                const uint32_t tot_d1_blocks = !md_ctx->nsq_ctrls.enabled
+#else
                 const uint32_t tot_d1_blocks = pcs->parent_pcs_ptr->disallow_nsq
+#endif
                     ? 1
                     : get_tot_1d_blks(
+#if CLN_NSQ
+                          md_ctx, blk_geom->sq_size, md_ctx->md_disallow_nsq);
+#else
                           pcs->parent_pcs_ptr, blk_geom->sq_size, md_ctx->md_disallow_nsq);
+#endif
 
                 for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
                     if (md_ctx->md_blk_arr_nsq[idx].palette_mem) {

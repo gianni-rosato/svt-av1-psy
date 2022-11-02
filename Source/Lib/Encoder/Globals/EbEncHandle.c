@@ -3763,8 +3763,15 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         SVT_WARN("Fwd key frame is only supported for hierarchical levels 4 at this point. Hierarchical levels are set to 4\n");
     }
     bool disallow_nsq = true;
+#if CLN_NSQ
+    for (uint8_t is_base = 0; is_base <= 1; is_base++)
+        for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
+            for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
+                disallow_nsq = MIN(disallow_nsq, (get_nsq_level(scs_ptr->static_config.enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+#else
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
         disallow_nsq = MIN(disallow_nsq, svt_aom_get_disallow_nsq(scs_ptr->static_config.enc_mode, is_islice));
+#endif
     bool disallow_4x4 = true;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs_ptr->static_config.enc_mode, slice_type));

@@ -79,6 +79,10 @@ extern "C" {
 #define TUNE_M6_M7                 1 // Adjust M6/M7 position
 
 #define FIX_BYPASS_ENCDEC          1 // Fix encdec condition
+#define CLN_NSQ                    1 // Reorganize NSQ signals into 1 control
+#if CLN_NSQ
+#define ADD_NSQ_ENABLE             1 // Replace disallow_nsq
+#endif
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

@@ -4502,6 +4502,292 @@ uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level) {
 
     return nic_scaling_level;
 }
+#if CLN_NSQ
+/*
+* Set the NSQ controls.
+*
+* This function is used in MD to set the NSQ controls and is also used at memory allocation
+* to allocate the candidate buffers.
+*
+* When called at memory allocation, there is no context (it is passed as NULL) so the signals
+* are not set.
+*/
+void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
+
+    NsqCtrls *nsq_ctrls = &mdctxt->nsq_ctrls;
+
+    switch (nsq_level) {
+    case 0:
+        nsq_ctrls->enabled = 0;
+        break;
+
+    case 1: // Original MRS level
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 1;
+
+        nsq_ctrls->sq_weight = (uint32_t)~0;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 0;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 0;
+
+        break;
+
+    case 2:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 1;
+
+        nsq_ctrls->sq_weight = 105;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 0;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 0;
+
+        break;
+
+    case 3:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 1;
+
+        nsq_ctrls->sq_weight = 105;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 1;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 0;
+
+        break;
+
+    case 4:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 1;
+
+        nsq_ctrls->sq_weight = 105;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 2;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 0;
+
+        break;
+
+    case 5:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 100;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 2;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 0;
+
+        break;
+
+    case 6:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 100;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 4;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 0;
+
+        break;
+
+    case 7:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 2;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 8:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 4;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 9:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 5;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 10:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 5;
+        nsq_ctrls->max_part0_to_part1_dev = 40;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 11:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 1;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 5;
+        nsq_ctrls->max_part0_to_part1_dev = 60;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 12:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 0;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 13:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 0;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
+        nsq_ctrls->max_part0_to_part1_dev = 40;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 14:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 1;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 0;
+        nsq_ctrls->allow_HV4 = 0;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
+        nsq_ctrls->max_part0_to_part1_dev = 60;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 15:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 1;
+        nsq_ctrls->allow_HV4 = 0;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
+        nsq_ctrls->max_part0_to_part1_dev = 160;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 16:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 1;
+        nsq_ctrls->allow_HV4 = 0;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
+        nsq_ctrls->max_part0_to_part1_dev = 200;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    case 17:
+        nsq_ctrls->enabled = 1;
+
+        nsq_ctrls->allow_nsq_blocks_above_8x8 = 0;
+        nsq_ctrls->allow_nsq_blocks_above_16x16 = 1;
+        nsq_ctrls->allow_HV4 = 0;
+        nsq_ctrls->allow_HVA_HVB = 0;
+
+        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
+        nsq_ctrls->max_part0_to_part1_dev = 220;
+        nsq_ctrls->skip_hv4_on_best_part = 1;
+
+        break;
+
+    default: assert(0); break;
+    }
+    if (mdctxt->pd_pass == PD_PASS_0) {
+        nsq_ctrls->sq_weight = (uint32_t)~0;
+        nsq_ctrls->max_part0_to_part1_dev = 0;
+        nsq_ctrls->skip_hv4_on_best_part = 0;
+    }
+    // Bypassing EncDec doesn't work if HVA_HVB_HV4 are enabled (for all bit depths; causes non-conformant bitstreams)
+    if (nsq_ctrls->allow_HV4 || nsq_ctrls->allow_HVA_HVB)
+        mdctxt->bypass_encdec = 0;
+}
+#endif
 void set_inter_intra_ctrls(ModeDecisionContext *mdctxt, uint8_t inter_intra_level) {
     InterIntraCompCtrls *ii_ctrls = &mdctxt->inter_intra_comp_ctrls;
 
@@ -4979,6 +5265,10 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
                        ? MIN(pcs_ptr->pic_lpd1_lvl, ctx->detect_high_freq_ctrls.max_pic_lpd1_lvl)
                        : pcs_ptr->pic_lpd1_lvl);
 
+#if CLN_NSQ
+    // 1st call to avoid using invalid settings at the construction of the block(s) queue of PD1 when regular PD0 is not called
+    set_nsq_ctrls(ctx, pcs_ptr->nsq_level);
+#endif
     return return_error;
 }
 /*
@@ -6082,7 +6372,11 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     context_ptr->uv_ctrls.uv_mode           = CHROMA_MODE_1;
     context_ptr->uv_ctrls.nd_uv_serach_mode = 0;
     set_cfl_ctrls(context_ptr, 0);
+#if ADD_NSQ_ENABLE
+    context_ptr->md_disallow_nsq                            = !context_ptr->nsq_ctrls.enabled;
+#else
     context_ptr->md_disallow_nsq                            = pcs_ptr->parent_pcs_ptr->disallow_nsq;
+#endif
     context_ptr->new_nearest_injection                      = 1;
     context_ptr->inject_inter_candidates                    = 1;
     context_ptr->blk_skip_decision                          = TRUE;
@@ -6124,6 +6418,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     uint32_t                 me_64x64_distortion  = (uint32_t)~0;
     uint8_t                  l0_was_skip = 0, l1_was_skip = 0;
     uint8_t                  ref_skip_perc = pcs_ptr->ref_skip_percentage;
+
+
+#if CLN_NSQ
+    // 2nd call as set_nsq_ctrls() has a PD_PASS check
+    set_nsq_ctrls(context_ptr, pcs_ptr->nsq_level);
+#endif
+
     set_cand_reduction_ctrls(pcs_ptr,
                              context_ptr,
                              pd_pass == PD_PASS_0 ? 0 : pcs_ptr->cand_reduction_level,
@@ -6152,12 +6453,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     svt_aom_set_chroma_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->chroma_level);
 
     set_cfl_ctrls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->cfl_level);
+#if ADD_NSQ_ENABLE
+    if (pd_pass == PD_PASS_0)
+        context_ptr->md_disallow_nsq = enc_mode <= ENC_M0 ? !context_ptr->nsq_ctrls.enabled : 1;
+    else {
+        // Update nsq settings based on the sb_class
+        context_ptr->md_disallow_nsq = !context_ptr->nsq_ctrls.enabled;
+    }
+#else
     if (pd_pass == PD_PASS_0)
         context_ptr->md_disallow_nsq = enc_mode <= ENC_M0 ? ppcs->disallow_nsq : 1;
     else {
         // Update nsq settings based on the sb_class
         context_ptr->md_disallow_nsq = ppcs->disallow_nsq;
     }
+#endif
 
     if (pd_pass == PD_PASS_0)
         context_ptr->global_mv_injection = 0;
@@ -6202,7 +6512,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         context_ptr->redundant_blk = FALSE;
     else
         context_ptr->redundant_blk = TRUE;
-
+#if CLN_NSQ
+    set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
+        context_ptr,
+        input_resolution,
+        pd_pass == PD_PASS_0 ? 0 : context_ptr->nsq_ctrls.parent_sq_coeff_area_based_cycles_reduction_level);
+#else
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
         context_ptr,
         input_resolution,
@@ -6212,6 +6527,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     context_ptr->max_part0_to_part1_dev = pd_pass == PD_PASS_0 ? 0
                                                                : pcs_ptr->max_part0_to_part1_dev;
     context_ptr->skip_hv4_on_best_part  = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->skip_hv4_on_best_part;
+#endif
     context_ptr->md_depth_early_exit_th = (pd_pass == PD_PASS_0) ? 0
                                                                  : pcs_ptr->pic_depth_early_exit_th;
     // Set pic_obmc_level @ MD
@@ -6413,7 +6729,9 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         return;
     if (blk_geom->sq_size > 4) {
         DepthCtrls              *depth_ctrls = &context_ptr->depth_ctrls;
+#if !CLN_NSQ
         PictureParentControlSet *ppcs        = pcs_ptr->parent_pcs_ptr;
+#endif
 
         // Set parent depth's split flag to be true
         for (uint32_t block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
@@ -6426,11 +6744,17 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         // All child blocks are same sq_size, so will share the same tot_d1_blocks
         const unsigned int child_default_tot_d1_blocks = get_default_tot_d1_blocks(
             child1_blk_geom->sq_size);
+#if ADD_NSQ_ENABLE
+        const unsigned int child_tot_d1_blocks = (!context_ptr->nsq_ctrls.enabled ||
+            !depth_ctrls->allow_nsq_in_child_depths)
+            ? 1
+            : child_default_tot_d1_blocks;
+#else
         const unsigned int child_tot_d1_blocks = (ppcs->disallow_nsq ||
                                                   !depth_ctrls->allow_nsq_in_child_depths)
             ? 1
             : child_default_tot_d1_blocks;
-
+#endif
         for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
             results_ptr->consider_block[child_block_idx_1 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_1 + block_1d_idx] = FALSE;
@@ -6507,6 +6831,28 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
                                        depth_step > 1 ? depth_step - 1 : 1);
     }
 }
+#if CLN_NSQ
+uint32_t get_tot_1d_blks(struct ModeDecisionContext *context_ptr, const int32_t sq_size,
+    const uint8_t disallow_nsq) {
+    uint32_t tot_d1_blocks;
+
+    tot_d1_blocks = (disallow_nsq) ||
+        (sq_size <= 8 && context_ptr->nsq_ctrls.allow_nsq_blocks_above_8x8) ||
+        (sq_size <= 16 && context_ptr->nsq_ctrls.allow_nsq_blocks_above_16x16)
+        ? 1
+        : sq_size == 128                                                      ? 17
+        : sq_size > 8                                                         ? 25
+        : sq_size == 8                                                        ? 5
+        : 1;
+
+    if (!context_ptr->nsq_ctrls.allow_HVA_HVB && !context_ptr->nsq_ctrls.allow_HV4)
+        tot_d1_blocks = MIN(5, tot_d1_blocks);
+    else if (!context_ptr->nsq_ctrls.allow_HV4)
+        tot_d1_blocks = MIN(17, tot_d1_blocks);
+
+    return tot_d1_blocks;
+}
+#else
 uint32_t get_tot_1d_blks(struct PictureParentControlSet *ppcs, const int32_t sq_size,
                          const uint8_t disallow_nsq) {
     uint32_t tot_d1_blocks;
@@ -6534,6 +6880,7 @@ uint32_t get_tot_1d_blks(struct PictureParentControlSet *ppcs, const int32_t sq_
 
     return tot_d1_blocks;
 }
+#endif
 
 EbErrorType rtime_alloc_palette_info(BlkStruct *md_blk_arr_nsq) {
     EB_MALLOC_ARRAY(md_blk_arr_nsq->palette_info, 1);
@@ -6592,10 +6939,18 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_block_tagged) {
+#if ADD_NSQ_ENABLE
+            uint32_t tot_d1_blocks = !context_ptr->nsq_ctrls.enabled
+#else
             uint32_t tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq
+#endif
                 ? 1
                 : get_tot_1d_blks(
+#if CLN_NSQ
+                      context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
+#else
                       pcs_ptr->parent_pcs_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
+#endif
 
             // If have NSQ shapes but tagged as not considered, set tot_d1_blocks to 1
             if (tot_d1_blocks > 1 && !results_ptr->consider_block[blk_index + 1])
@@ -6604,12 +6959,20 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
+#if CLN_NSQ
+            const uint32_t to_test_d1_blocks = (context_ptr->nsq_ctrls.allow_HVA_HVB == 0)
+#else
             const uint32_t to_test_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB
+#endif
                 ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
                 : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
+#if CLN_NSQ
+                if (context_ptr->nsq_ctrls.allow_HVA_HVB == 0) {
+#else
                 if (pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB) {
+#endif
                     // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
                     // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
                     // by 1 (as part of the for loop).
@@ -6756,8 +7119,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
          (pcs_ptr->slice_type != I_SLICE &&
           pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[context_ptr->sb_index] <
               VQ_STABILITY_ME_VAR_TH));
-
+#if ADD_NSQ_ENABLE
+    if (!context_ptr->nsq_ctrls.enabled) {
+#else
     if (pcs_ptr->parent_pcs_ptr->disallow_nsq) {
+#endif
         if (context_ptr->disallow_4x4) {
             memset(results_ptr->consider_block, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
             memset(results_ptr->split_flag, 1, sizeof(uint8_t) * scs_ptr->max_block_cnt);
@@ -6789,7 +7155,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
+#if ADD_NSQ_ENABLE
+        const unsigned   tot_d1_blocks = !context_ptr->nsq_ctrls.enabled ? 1
+#else
         const unsigned   tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
+#endif
               : blk_geom->sq_size == 128                                       ? 17
               : blk_geom->sq_size > 8                                          ? 25
               : blk_geom->sq_size == 8                                         ? 5
@@ -6913,7 +7283,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                                         scs_ptr->seq_header.sb_size,
                                                         (int8_t)blk_geom->depth,
                                                         sq_size_idx,
+#if ADD_NSQ_ENABLE
+                                                        !context_ptr->nsq_ctrls.enabled,
+#else
                                                         pcs_ptr->parent_pcs_ptr->disallow_nsq,
+#endif
                                                         s_depth);
 
                         if (e_depth != 0 && add_sub_depth)
@@ -6977,21 +7351,37 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_block_tagged) {
+#if ADD_NSQ_ENABLE
+            const uint32_t tot_d1_blocks = !context_ptr->nsq_ctrls.enabled
+#else
             const uint32_t tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq
+#endif
                 ? 1
                 : get_tot_1d_blks(
+#if CLN_NSQ
+                      context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
+#else
                       pcs_ptr->parent_pcs_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
+#endif
 
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
+#if CLN_NSQ
+            const uint32_t to_test_d1_blocks = (context_ptr->nsq_ctrls.allow_HVA_HVB == 0)
+#else
             const uint32_t to_test_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB
+#endif
                 ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
                 : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
                 if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[idx]) {
+#if CLN_NSQ
+                    if (context_ptr->nsq_ctrls.allow_HVA_HVB == 0) {
+#else
                     if (pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB) {
+#endif
                         // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
                         // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
                         // by 1 (as part of the for loop).
@@ -7866,7 +8256,11 @@ void *mode_decision_kernel(void *input_ptr) {
 
                         // Can only use light-PD1 under the following conditions
                         if (!(md_ctx->hbd_mode_decision == 0 && md_ctx->pred_depth_only &&
+#if ADD_NSQ_ENABLE
+                            !md_ctx->nsq_ctrls.enabled && md_ctx->disallow_4x4 == TRUE &&
+#else
                               ppcs->disallow_nsq == TRUE && md_ctx->disallow_4x4 == TRUE &&
+#endif
                               scs_ptr->super_block_size == 64)) {
                             md_ctx->lpd1_ctrls.pd1_level = REGULAR_PD1;
                         }

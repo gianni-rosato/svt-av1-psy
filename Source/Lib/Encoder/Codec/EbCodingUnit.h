@@ -431,7 +431,12 @@ extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, 
                                             struct PictureControlSet *picture_control_set);
 
 bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
+#if !CLN_NSQ
 bool svt_aom_get_disallow_nsq(EncMode enc_mode, bool is_islice);
+#endif
+#if CLN_NSQ
+uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base, InputCoeffLvl coeff_lvl);
+#endif
 #ifdef __cplusplus
 }
 #endif

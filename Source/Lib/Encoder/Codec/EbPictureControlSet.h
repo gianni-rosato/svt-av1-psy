@@ -389,6 +389,9 @@ typedef struct PictureControlSet {
              disallow_4x4_all_frames; // true if 4x4 blocks are disallowed for all frames, and NSQ is disabled (since granularity is needed for 8x8 NSQ blocks).  Used to compute the offset for mip.
     uint8_t  wm_level; //warped motion level
     uint8_t  cand_reduction_level;
+#if CLN_NSQ
+    uint8_t  nsq_level;
+#endif
     uint8_t  txt_level;
     uint8_t  tx_shortcut_level;
     uint8_t  interpolation_search_level;
@@ -825,7 +828,10 @@ typedef struct PictureParentControlSet {
     EncMode enc_mode;
     // Multi-modes signal(s)
     MultiPassPdLevel multi_pass_pd_level;
+#if !ADD_NSQ_ENABLE
     Bool             disallow_nsq;
+#endif
+#if !CLN_NSQ
     Bool             disallow_all_nsq_blocks_below_8x8;
     Bool             disallow_all_nsq_blocks_below_16x16;
     Bool             disallow_all_non_hv_nsq_blocks_below_16x16;
@@ -838,6 +844,7 @@ typedef struct PictureParentControlSet {
     Bool     disallow_all_nsq_blocks_above_16x16; //disallow nsq in 16x16 and above
     Bool     disallow_HV4; //disallow H4/V4
     Bool     disallow_HVA_HVB; // Disallow HA/HB/VA/VB NSQ blocks
+#endif
     DlfCtrls dlf_ctrls;
     uint8_t  intra_pred_mode;
     uint8_t  frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON

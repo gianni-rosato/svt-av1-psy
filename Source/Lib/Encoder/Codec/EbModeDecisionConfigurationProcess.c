@@ -857,7 +857,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->spatial_sse_full_loop_level = 0;
     else
         pcs_ptr->spatial_sse_full_loop_level = scs_ptr->spatial_sse_full_loop_level;
-
+#if CLN_NSQ
+    //set the nsq_level
+    pcs_ptr->nsq_level = get_nsq_level(enc_mode, is_islice, is_base, pcs_ptr->coeff_lvl);
+#else
     // Set the level for coeff-based NSQ accuracy reduction
     pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = 0;
     if (enc_mode <= ENC_MRS)
@@ -952,7 +955,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->skip_hv4_on_best_part = 0;
     else
         pcs_ptr->skip_hv4_on_best_part = 1;
-
+#endif
     // Set the level for enable_inter_intra
     // Block level switch, has to follow the picture level
     // inter intra pred                      Settings
@@ -1059,6 +1062,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
        Bypassing EncDec
     */
 
+#if CLN_NSQ
+    // TODO: Bypassing EncDec doesn't work if NSQ is enabled for 10bit content (causes r2r).
+    // TODO: This signal can only be modified per picture right now, not per SB.  Per SB requires
+    // neighbour array updates at EncDec for all SBs, that are currently skipped if EncDec is bypassed.
+    // TODO: Bypassing EncDec doesn't work if pcs_ptr->cdf_ctrl.update_coef is enabled for non-ISLICE frames (causes r2r)
+    if ((scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT || !pcs_ptr->nsq_level) &&
+        (!pcs_ptr->cdf_ctrl.update_coef || is_islice) &&
+        !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
+        pcs_ptr->pic_bypass_encdec = get_bypass_encdec(
+            enc_mode, ppcs->hbd_mode_decision, scs_ptr->static_config.encoder_bit_depth);
+#else
     // TODO: Bypassing EncDec doesn't work if HVA_HVB_HV4 are enabled (for all bit depths; causes non-conformant bitstreams),
     // or if NSQ is enabled for 10bit content (causes r2r).
     // TODO: This signal can only be modified per picture right now, not per SB.  Per SB requires
@@ -1077,6 +1091,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
         pcs_ptr->pic_bypass_encdec = get_bypass_encdec(
             enc_mode, ppcs->hbd_mode_decision, scs_ptr->static_config.encoder_bit_depth);
+#endif
 #endif
     } else
         pcs_ptr->pic_bypass_encdec = 0;
@@ -1368,7 +1383,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // There is another check before PD1 is called; pred_depth_only is not checked here, because some modes
     // may force pred_depth_only at the light-pd1 detector
     if (pcs_ptr->pic_lpd1_lvl &&
+#if ADD_NSQ_ENABLE
+        !(ppcs->hbd_mode_decision == 0 && !pcs_ptr->nsq_level &&
+#else
         !(ppcs->hbd_mode_decision == 0 && ppcs->disallow_nsq == TRUE &&
+#endif
           pcs_ptr->pic_disallow_4x4 == TRUE && scs_ptr->super_block_size == 64)) {
         pcs_ptr->pic_lpd1_lvl = 0;
     }

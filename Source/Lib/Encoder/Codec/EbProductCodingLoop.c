@@ -10571,8 +10571,13 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     if (perform_md_recon)
         av1_perform_inverse_transform_recon(
             pcs_ptr, context_ptr, candidate_buffer, context_ptr->blk_geom);
+#if CLN_NSQ
+    if ((!context_ptr->md_disallow_nsq && context_ptr->nsq_ctrls.max_part0_to_part1_dev) ||
+        (!context_ptr->disallow_4x4 && context_ptr->blk_geom->bsize == BLOCK_8X8))
+#else
     if ((!context_ptr->md_disallow_nsq && context_ptr->max_part0_to_part1_dev) ||
         (!context_ptr->disallow_4x4 && context_ptr->blk_geom->bsize == BLOCK_8X8))
+#endif
         calc_scr_to_recon_dist_per_quadrant(context_ptr,
                                             input_picture_ptr,
                                             input_origin_index,
@@ -10595,7 +10600,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 }
 Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
     Bool             skip_nsq               = 0;
+#if CLN_NSQ
+    uint32_t         max_part0_to_part1_dev = ctx->nsq_ctrls.max_part0_to_part1_dev;
+#else
     uint32_t         max_part0_to_part1_dev = ctx->max_part0_to_part1_dev;
+#endif
     const BlockGeom *blk_geom               = ctx->blk_geom;
 
     // return immediately if SQ, or NSQ but Parent not available, or max_part0_to_part1_dev is off
@@ -10720,8 +10729,11 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
     const BlockGeom *blk_geom = ctx->blk_geom;
     const uint16_t   sqi      = blk_geom->sqi_mds;
     const Part       shape    = blk_geom->shape;
-
+#if CLN_NSQ
+    if (ctx->nsq_ctrls.skip_hv4_on_best_part) {
+#else
     if (ctx->skip_hv4_on_best_part) {
+#endif
         // Skip H4/V4 shapes when best partition so far is not H/V
         if (shape == PART_H4) {
             if (ctx->md_blk_arr_nsq[sqi].part != PARTITION_HORZ)
@@ -10733,7 +10745,11 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
     }
 
     uint8_t  skip_nsq  = 0;
+#if CLN_NSQ
+    uint32_t sq_weight = ctx->nsq_ctrls.sq_weight;
+#else
     uint32_t sq_weight = ctx->sq_weight;
+#endif
 
     // return immediately if the skip nsq threshold is infinite
     if (sq_weight == (uint32_t)~0)
