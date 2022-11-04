@@ -423,6 +423,24 @@ if(NOT HAVE_STRCPY_S OR NOT HAVE_STRNCPY_S OR NOT HAVE_STRNLEN_S)
         $<$<NOT:$<BOOL:${HAVE_STRCPY_S}>>:third_party/safestringlib/strcpy_s.c>)
 endif()
 
+# Try to find valgrind.h for the RUNNING_ON_VALGRIND macro
+# needed for now for svt_dav1d_inv_txfm_add_dct_dct_32x16_8bpc_avx2
+# due to the later crashing libVEX when running on valgrind
+# TODO: remove this once the issue is fixed
+include(CheckIncludeFile)
+check_include_file("valgrind/valgrind.h" HAVE_VALGRIND_H)
+if(HAVE_VALGRIND_H)
+    set_property(DIRECTORY .
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS
+            HAVE_VALGRIND_H=1)
+else()
+    set_property(DIRECTORY .
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS
+            HAVE_VALGRIND_H=0)
+endif()
+
 # try to see if __builtin_expect is available
 check_c_source_compiles("
     int main() {
