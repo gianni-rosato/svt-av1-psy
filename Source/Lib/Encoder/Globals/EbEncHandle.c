@@ -2326,14 +2326,16 @@ EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component) {
 
     EbEncHandle *handle = svt_enc_component->p_component_private;
 
-    if (!handle->eos_received) {
-        SVT_ERROR("deinit called without sending EOS!\n");
-        svt_av1_enc_send_picture(svt_enc_component, &(EbBufferHeaderType){.flags = EB_BUFFERFLAG_EOS});
-    }
+    if (handle->input_y8b_buffer_producer_fifo_ptr) {
+        if (!handle->eos_received) {
+            SVT_ERROR("deinit called without sending EOS!\n");
+            svt_av1_enc_send_picture(svt_enc_component, &(EbBufferHeaderType){.flags = EB_BUFFERFLAG_EOS});
+        }
 
-    EbErrorType return_error = enc_drain_queue(svt_enc_component);
-    if (return_error != EB_ErrorNone)
-        return return_error;
+        EbErrorType return_error = enc_drain_queue(svt_enc_component);
+        if (return_error != EB_ErrorNone)
+            return return_error;
+    }
 
     svt_shutdown_process(handle->input_buffer_resource_ptr);
     svt_shutdown_process(handle->input_cmd_resource_ptr);
