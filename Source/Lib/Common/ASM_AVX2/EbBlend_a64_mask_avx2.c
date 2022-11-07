@@ -492,7 +492,7 @@ void svt_aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_
     assert(IS_POWER_OF_TWO(h));
     assert(IS_POWER_OF_TWO(w));
 
-    if (UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
+    if (EB_UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
         svt_aom_blend_a64_mask_c(dst,
                                  dst_stride,
                                  src0,

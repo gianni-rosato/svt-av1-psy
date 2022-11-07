@@ -388,7 +388,7 @@ void svt_aom_blend_a64_mask_sse4_1(uint8_t *dst, uint32_t dst_stride, const uint
     assert(IS_POWER_OF_TWO(h));
     assert(IS_POWER_OF_TWO(w));
 
-    if (UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
+    if (EB_UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
         svt_aom_blend_a64_mask_c(dst,
                                  dst_stride,
                                  src0,
@@ -906,7 +906,7 @@ void svt_aom_highbd_blend_a64_mask_8bit_sse4_1(uint8_t *dst_8, uint32_t dst_stri
     assert(IS_POWER_OF_TWO(w));
 
     assert(bd == 8 || bd == 10 || bd == 12);
-    if (UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
+    if (EB_UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
         svt_aom_highbd_blend_a64_mask_c(dst_8,
                                         dst_stride,
                                         src0_8,
@@ -1167,7 +1167,7 @@ void svt_aom_highbd_blend_a64_vmask_8bit_sse4_1(uint8_t *dst_8, uint32_t dst_str
 
     assert(bd == 8 || bd == 10 || bd == 12);
 
-    if (UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
+    if (EB_UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
         svt_aom_highbd_blend_a64_vmask_8bit_c(
             dst_8, dst_stride, src0_8, src0_stride, src1_8, src1_stride, mask, w, h, bd);
     } else {
@@ -1235,7 +1235,7 @@ void svt_aom_highbd_blend_a64_mask_16bit_sse4_1(uint16_t *dst, uint32_t dst_stri
     assert(IS_POWER_OF_TWO(w));
 
     assert(bd == 8 || bd == 10 || bd == 12);
-    if (UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
+    if (EB_UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
         svt_aom_highbd_blend_a64_mask_c((uint8_t *)dst,
                                         dst_stride,
                                         (uint8_t *)src0,
@@ -1305,7 +1305,7 @@ void svt_aom_highbd_blend_a64_vmask_16bit_sse4_1(uint16_t *dst, uint32_t dst_str
 
     assert(bd == 8 || bd == 10 || bd == 12);
 
-    if (UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
+    if (EB_UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
         svt_aom_highbd_blend_a64_vmask_16bit_c(
             dst, dst_stride, src0, src0_stride, src1, src1_stride, mask, w, h, bd);
     } else {

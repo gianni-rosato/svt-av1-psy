@@ -423,6 +423,26 @@ if(NOT HAVE_STRCPY_S OR NOT HAVE_STRNCPY_S OR NOT HAVE_STRNLEN_S)
         $<$<NOT:$<BOOL:${HAVE_STRCPY_S}>>:third_party/safestringlib/strcpy_s.c>)
 endif()
 
+# try to see if __builtin_expect is available
+check_c_source_compiles("
+    int main() {
+        if (__builtin_expect(1, 0)) {
+            return 1;
+        }
+        return 0;
+    }" HAVE_BUILTIN_EXPECT)
+if(HAVE_BUILTIN_EXPECT)
+    set_property(DIRECTORY .
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS
+            HAVE_BUILTIN_EXPECT=1)
+else()
+    set_property(DIRECTORY .
+        APPEND
+        PROPERTY COMPILE_DEFINITIONS
+            HAVE_BUILTIN_EXPECT=0)
+endif()
+
 include_directories(.)
 
 # Find out if we have threading available

@@ -451,6 +451,16 @@ extern void RunEmms();
 #define EB_ALIGN(n)
 #endif
 
+#ifndef EB_LIKELY
+#if HAVE_BUILTIN_EXPECT
+#define EB_LIKELY(x) __builtin_expect(!!(x), 1)
+#define EB_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define EB_LIKELY(x) (x)
+#define EB_UNLIKELY(x) (x)
+#endif
+#endif
+
 #ifdef _MSC_VER
 #define AOM_FORCE_INLINE __forceinline
 #define AOM_INLINE __inline

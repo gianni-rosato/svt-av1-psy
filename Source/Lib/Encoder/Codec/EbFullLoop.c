@@ -15,13 +15,6 @@
 #include "EbRateDistortionCost.h"
 #include "aom_dsp_rtcd.h"
 
-#ifdef __GNUC__
-#define LIKELY(v) __builtin_expect(v, 1)
-#define UNLIKELY(v) __builtin_expect(v, 0)
-#else
-#define LIKELY(v) (v)
-#define UNLIKELY(v) (v)
-#endif
 void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *pred,
                      uint32_t pred_offset, uint32_t pred_stride, int16_t *residual,
                      uint32_t residual_offset, uint32_t residual_stride, Bool hbd,

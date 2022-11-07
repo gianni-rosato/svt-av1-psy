@@ -381,7 +381,7 @@ static INLINE void quantize_qm(const __m256i *thr, const __m256i *qp, __m256i *c
 
     const int nzflag = _mm256_movemask_epi8(mask);
 
-    if (LIKELY(~nzflag)) {
+    if (EB_LIKELY(~nzflag)) {
         // q*tmp would overflow 32-bit
         const __m256i tmp    = _mm256_mullo_epi32(qm, qp[1]);
         const __m256i tmp_hi = _mm256_srli_epi64(tmp, 32);

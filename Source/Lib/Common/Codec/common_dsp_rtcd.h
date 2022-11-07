@@ -44,15 +44,6 @@
 #define RTCD_EXTERN extern         //CHKN run time externing the fucntion pointers.
 #endif
 
-#ifdef __GNUC__
-#define LIKELY(v) __builtin_expect(v, 1)
-#define UNLIKELY(v) __builtin_expect(v, 0)
-#else
-#define LIKELY(v) (v)
-#define UNLIKELY(v) (v)
-#endif
-
-
  /**************************************
  * Instruction Set Support
  **************************************/

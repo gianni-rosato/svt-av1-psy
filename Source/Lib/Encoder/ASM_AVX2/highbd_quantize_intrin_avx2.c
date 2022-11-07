@@ -77,7 +77,7 @@ static INLINE void quantize(const __m256i *qp, __m256i c, const int16_t *iscan_p
     const __m256i flag1  = _mm256_cmpgt_epi32(qp[0], abs);
     const int32_t nzflag = _mm256_movemask_epi8(flag1);
 
-    if (LIKELY(~nzflag)) {
+    if (EB_LIKELY(~nzflag)) {
         __m256i q = _mm256_add_epi32(abs, qp[1]);
         clamp_epi32(&q, min, max);
         __m256i tmp;
@@ -119,7 +119,7 @@ static INLINE void quantize_qm(const __m256i *qp, __m256i c, const int16_t *isca
     const __m256i flag1  = _mm256_cmpgt_epi32(qp[0], abs_qm);
     const int32_t nzflag = _mm256_movemask_epi8(flag1);
 
-    if (LIKELY(~nzflag)) {
+    if (EB_LIKELY(~nzflag)) {
         __m256i q = _mm256_add_epi32(abs, qp[1]);
         clamp_epi32(&q, min, max);
 
@@ -273,7 +273,7 @@ static INLINE void quantize_highbd_qm(const __m256i *qp, __m256i c, const int16_
     const __m256i flag1  = _mm256_cmpgt_epi32(qp[0], abs_wt);
     const int32_t nzflag = _mm256_movemask_epi8(flag1);
 
-    if (LIKELY(~nzflag)) {
+    if (EB_LIKELY(~nzflag)) {
         __m256i q = _mm256_add_epi32(abs, qp[1]);
         q         = _mm256_mullo_epi32(q, wt);
         __m256i tmp;
@@ -368,7 +368,7 @@ static INLINE void quantize_highbd(const __m256i *qp, __m256i c, const int16_t *
     const __m256i flag1  = _mm256_cmpgt_epi32(qp[0], abs);
     const int32_t nzflag = _mm256_movemask_epi8(flag1);
 
-    if (LIKELY(~nzflag)) {
+    if (EB_LIKELY(~nzflag)) {
         __m256i q = _mm256_add_epi32(abs, qp[1]);
         __m256i tmp;
         mm256_mul_shift_epi32(&q, &qp[2], &tmp, 16);

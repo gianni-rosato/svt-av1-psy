@@ -251,7 +251,7 @@ static INLINE void quantize_128(const __m128i *qp, __m128i c, const int16_t *isc
     const __m128i flag1  = _mm_cmpgt_epi32(qp[0], abs);
     const int32_t nzflag = _mm_movemask_epi8(flag1);
 
-    if (LIKELY(~nzflag)) {
+    if (EB_LIKELY(~nzflag)) {
         __m128i q = _mm_add_epi32(abs, qp[1]);
         clamp_epi32(&q, min, max);
         __m128i tmp;
@@ -521,7 +521,7 @@ static INLINE void quantize_hbd_128(const __m128i *qp, __m128i c, const int16_t 
     const __m128i flag1  = _mm_cmpgt_epi32(qp[0], abs);
     const int32_t nzflag = _mm_movemask_epi8(flag1);
 
-    if (LIKELY(~nzflag)) {
+    if (EB_LIKELY(~nzflag)) {
         __m128i q = _mm_add_epi32(abs, qp[1]);
         __m128i tmp;
         mm_mul_shift_epi32(&q, &qp[2], &tmp, 16);
