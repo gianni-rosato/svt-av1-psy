@@ -2199,38 +2199,42 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
     return return_error;
 }
 
+static const char *TOKEN_READ_MARKER = "THIS_TOKEN_HAS_BEEN_READ";
+
 /******************************************
  * Find Token for multiple inputs
+ * returns true if found, else false
  ******************************************/
-int32_t find_token_multiple_inputs(int32_t argc, char *const argv[], const char *token,
-                                   char **configStr) {
-    int32_t return_error = -1;
-    int32_t done         = 0;
-    while ((argc > 0) && (return_error != 0)) {
-        return_error = strcmp(argv[--argc], token);
-        if (return_error == 0) {
-            for (unsigned count = 0; count < MAX_CHANNEL_NUMBER; ++count) {
-                if (done == 0) {
-                    if (argv[argc + count + 1]) {
-                        if (strtoul(argv[argc + count + 1], NULL, 0) != 0 ||
-                            strcmp(argv[argc + count + 1], "0") == 0) {
-                            strcpy_s(
-                                configStr[count], COMMAND_LINE_MAX_SIZE, argv[argc + count + 1]);
-                        } else if (argv[argc + count + 1][0] != '-') {
-                            strcpy_s(
-                                configStr[count], COMMAND_LINE_MAX_SIZE, argv[argc + count + 1]);
-                        } else {
-                            strcpy_s(configStr[count], COMMAND_LINE_MAX_SIZE, " ");
-                            done = 1;
-                        }
-                    } else {
-                        strcpy_s(configStr[count], COMMAND_LINE_MAX_SIZE, " ");
-                        done = 1;
-                        //return return_error;
-                    }
-                } else
-                    strcpy_s(configStr[count], COMMAND_LINE_MAX_SIZE, " ");
+static bool find_token_multiple_inputs(unsigned nch, int argc, char *const argv[],
+                                       const char *token, char **configStr,
+                                       const char *cmd_copy[MAX_NUM_TOKENS],
+                                       const char *arg_copy[MAX_NUM_TOKENS]) {
+    bool return_error    = false;
+    bool printed_warning = false;
+    for (int i = 0; i < argc; ++i) {
+        if (strcmp(argv[i], token))
+            continue;
+        if (return_error && !printed_warning) {
+            fprintf(
+                stderr,
+                "\n[SVT-Warning]: Duplicate option %s specified, only the last one will apply\n\n",
+                token);
+            printed_warning = true;
+        }
+        return_error = true;
+        if (i + 1 >= argc) { // if the token is at the end of the command line without arguments
+            strcpy_s(configStr[0], COMMAND_LINE_MAX_SIZE, " ");
+            return return_error;
+        }
+        cmd_copy[i] = TOKEN_READ_MARKER;
+        for (unsigned count = 0; count < nch; ++count) {
+            const int j = i + 1 + count;
+            if (j >= argc || cmd_copy[j]) {
+                strcpy_s(configStr[count], COMMAND_LINE_MAX_SIZE, " ");
+                continue;
             }
+            strcpy_s(configStr[count], COMMAND_LINE_MAX_SIZE, argv[j]);
+            arg_copy[j] = TOKEN_READ_MARKER;
         }
     }
 
@@ -2612,14 +2616,6 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     return passes;
 }
 
-void mark_token_as_read(const char *token, char *cmd_copy[], int32_t *cmd_token_cnt) {
-    int32_t cmd_copy_index;
-    for (cmd_copy_index = 0; cmd_copy_index < *(cmd_token_cnt); ++cmd_copy_index) {
-        if (!strcmp(cmd_copy[cmd_copy_index], token))
-            cmd_copy[cmd_copy_index] = cmd_copy[--(*cmd_token_cnt)];
-    }
-}
-
 static Bool is_negative_number(const char *string) {
     char *end;
     return strtol(string, &end, 10) < 0 && *end == '\0';
@@ -2850,6 +2846,10 @@ static Bool warn_legacy_token(const char *const token) {
     return FALSE;
 }
 
+static void free_config_strings(unsigned nch, char *config_strings[MAX_CHANNEL_NUMBER]) {
+    for (unsigned i = 0; i < nch; ++i) free(config_strings[i]);
+}
+
 /******************************************
 * Read Command Line
 ******************************************/
@@ -2858,56 +2858,60 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     EbErrorType return_error = EB_ErrorNone;
     char        config_string[COMMAND_LINE_MAX_SIZE]; // for one input options
     char       *config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
-    char       *cmd_copy[MAX_NUM_TOKENS]; // keep track of extra tokens
-    char       *arg_copy[MAX_NUM_TOKENS]; // keep track of extra arguments
-    uint32_t    index         = 0;
-    int32_t     cmd_token_cnt = 0; // total number of tokens
-    int32_t     cmd_arg_cnt   = 0; // total number of arguments
+    const char *cmd_copy[MAX_NUM_TOKENS]; // keep track of extra tokens
+    const char *arg_copy[MAX_NUM_TOKENS]; // keep track of extra arguments
+    uint32_t    index = 0;
     int32_t     ret_y4m;
 
-    for (index = 0; index < MAX_CHANNEL_NUMBER; ++index)
+    for (index = 0; index < num_channels; ++index)
         config_strings[index] = (char *)malloc(sizeof(char) * COMMAND_LINE_MAX_SIZE);
+    for (int i = 0; i < MAX_NUM_TOKENS; ++i) {
+        cmd_copy[i] = NULL;
+        arg_copy[i] = NULL;
+    }
+
     // Copy tokens (except for CHANNEL_NUMBER_TOKEN and PASSES_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
     size_t len                = COMMAND_LINE_MAX_SIZE;
-    Bool   process_prev_token = 1;
+    bool   process_prev_token = true;
     for (int32_t token_index = 0; token_index < argc; ++token_index) {
         if (strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
             strncmp(argv[token_index], PASSES_TOKEN, len)) {
             if (!is_negative_number(argv[token_index]) && process_prev_token) {
-                if (argv[token_index][0] == '-')
-                    cmd_copy[cmd_token_cnt++] = argv[token_index];
+                if (argv[token_index][0] == '-' && argv[token_index][1] != '\0')
+                    cmd_copy[token_index] = argv[token_index];
                 else if (token_index)
-                    arg_copy[cmd_arg_cnt++] = argv[token_index];
+                    arg_copy[token_index] = argv[token_index];
             } else {
-                process_prev_token = 1;
+                process_prev_token = true;
             }
         } else {
-            process_prev_token = 0;
+            process_prev_token = false;
         }
     }
 
     /***************************************************************************************************/
     /****************  Find configuration files tokens and call respective functions  ******************/
     /***************************************************************************************************/
-
     // Find the Config File Path in the command line
-    if (find_token_multiple_inputs(argc, argv, CONFIG_FILE_TOKEN, config_strings) == 0) {
-        mark_token_as_read(CONFIG_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
+    if (find_token_multiple_inputs(
+            num_channels, argc, argv, CONFIG_FILE_TOKEN, config_strings, cmd_copy, arg_copy)) {
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
-            EncChannel *c = channels + index;
-            mark_token_as_read(config_strings[index], arg_copy, &cmd_arg_cnt);
+            EncChannel *c   = channels + index;
             c->return_error = (EbErrorType)read_config_file(
                 c->config, config_strings[index], index);
             return_error = (EbErrorType)(return_error & c->return_error);
         }
-    } else if (find_token_multiple_inputs(argc, argv, CONFIG_FILE_LONG_TOKEN, config_strings) ==
-               0) {
-        mark_token_as_read(CONFIG_FILE_LONG_TOKEN, cmd_copy, &cmd_token_cnt);
+    } else if (find_token_multiple_inputs(num_channels,
+                                          argc,
+                                          argv,
+                                          CONFIG_FILE_LONG_TOKEN,
+                                          config_strings,
+                                          cmd_copy,
+                                          arg_copy)) {
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
-            EncChannel *c = channels + index;
-            mark_token_as_read(config_strings[index], arg_copy, &cmd_arg_cnt);
+            EncChannel *c   = channels + index;
             c->return_error = (EbErrorType)read_config_file(
                 c->config, config_strings[index], index);
             return_error = (EbErrorType)(return_error & c->return_error);
@@ -2915,9 +2919,10 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     } else {
         if (find_token(argc, argv, CONFIG_FILE_TOKEN, config_string) == 0) {
             fprintf(stderr, "Error: Config File Token Not Found\n");
+            free_config_strings(num_channels, config_strings);
             return EB_ErrorBadParameter;
-        } else
-            return_error = EB_ErrorNone;
+        }
+        return_error = EB_ErrorNone;
     }
 
     /********************************************************************************************************/
@@ -2938,11 +2943,14 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
                 continue;
             }
             // Check removed tokens
-            if (warn_legacy_token(*indx))
+            if (warn_legacy_token(*indx)) {
+                free_config_strings(num_channels, config_strings);
                 return EB_ErrorBadParameter;
+            }
             // exclude single letter tokens
             if ((*indx)[0] == '-' && (*indx)[1] != '-' && (*indx)[2] != '\0') {
                 fprintf(stderr, "[SVT-Error]: single dash long tokens have been removed!\n");
+                free_config_strings(num_channels, config_strings);
                 return EB_ErrorBadParameter;
             }
             next_is_value = true;
@@ -2953,16 +2961,15 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     for (ConfigEntry *entry = config_entry; entry->token; ++entry) {
         if (entry->type != SINGLE_INPUT)
             continue;
-        if (find_token_multiple_inputs(argc, argv, entry->token, config_strings))
+        if (!find_token_multiple_inputs(
+                num_channels, argc, argv, entry->token, config_strings, cmd_copy, arg_copy))
             continue;
         // When a token is found mark it as found in the temp token buffer
-        mark_token_as_read(entry->token, cmd_copy, &cmd_token_cnt);
         // Fill up the values corresponding to each channel
         for (uint32_t chan = 0; chan < num_channels; ++chan) {
             if (!strcmp(config_strings[chan], " "))
                 break;
             // Mark the value as found in the temp argument buffer
-            mark_token_as_read(config_strings[chan], arg_copy, &cmd_arg_cnt);
             (entry->scf)(config_strings[chan], channels[chan].config);
         }
     }
@@ -2978,6 +2985,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             ret_y4m = read_y4m_header(c->config);
             if (ret_y4m == EB_ErrorBadParameter) {
                 fprintf(stderr, "Error found when reading the y4m file parameters.\n");
+                free_config_strings(num_channels, config_strings);
                 return EB_ErrorBadParameter;
             }
         }
@@ -3036,30 +3044,39 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         }
     }
 
-    // Print message for unprocessed tokens
-    if (cmd_token_cnt > 0) {
-        int32_t cmd_copy_index;
-        fprintf(stderr, "Unprocessed tokens: ");
-        for (cmd_copy_index = 0; cmd_copy_index < cmd_token_cnt; ++cmd_copy_index)
-            fprintf(stderr, " %s ", cmd_copy[cmd_copy_index]);
-        fprintf(stderr, "\n\n");
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (cmd_arg_cnt > 0) {
-        int32_t arg_copy_index, maybe_token = 0;
-        fprintf(stderr, "Unprocessed arguments: ");
-        for (arg_copy_index = 0; arg_copy_index < cmd_arg_cnt; ++arg_copy_index) {
-            maybe_token |= !!strchr(arg_copy[arg_copy_index], '-');
-            fprintf(stderr, " %s ", arg_copy[arg_copy_index]);
+    bool has_cmd_notread = false;
+    for (int i = 0; i < argc; ++i) {
+        if (cmd_copy[i] && strcmp(TOKEN_READ_MARKER, cmd_copy[i])) {
+            if (!has_cmd_notread)
+                fprintf(stderr, "Unprocessed tokens: ");
+            fprintf(stderr, "%s ", argv[i]);
+            has_cmd_notread = true;
         }
-        if (maybe_token)
-            fprintf(stderr, "\nMissing spacing between tokens");
+    }
+    if (has_cmd_notread) {
+        fprintf(stderr, "\n\n");
+        return_error = EB_ErrorBadParameter;
+    }
+    bool has_arg_notread = false;
+    bool maybe_token     = false;
+    for (int i = 0; i < argc; ++i) {
+        if (arg_copy[i] && strcmp(TOKEN_READ_MARKER, arg_copy[i])) {
+            if (!has_arg_notread)
+                fprintf(stderr, "Unprocessed arguments: ");
+            fprintf(stderr, "%s ", argv[i]);
+            maybe_token |= !!strchr(arg_copy[i], '-');
+            has_arg_notread = true;
+        }
+    }
+    if (maybe_token) {
+        fprintf(stderr, "\nMaybe missing spacing between tokens");
+    }
+    if (has_arg_notread) {
         fprintf(stderr, "\n\n");
         return_error = EB_ErrorBadParameter;
     }
 
-    for (index = 0; index < MAX_CHANNEL_NUMBER; ++index) free(config_strings[index]);
+    for (index = 0; index < num_channels; ++index) free(config_strings[index]);
 
     return return_error;
 }
