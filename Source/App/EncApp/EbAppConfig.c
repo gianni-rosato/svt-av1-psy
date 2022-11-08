@@ -2201,16 +2201,26 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
 
 static const char *TOKEN_READ_MARKER = "THIS_TOKEN_HAS_BEEN_READ";
 
-/******************************************
- * Find Token for multiple inputs
- * returns true if found, else false
- ******************************************/
+/**
+ * @brief Finds the arguments for a specific token
+ *
+ * @param nch number of channels (number of arguemnts to find for a token)
+ * @param argc argc from main()
+ * @param argv argv from main()
+ * @param token token to find
+ * @param configStr array of pointers to store the arguments into
+ * @param cmd_copy array of tokens based on splitting argv
+ * @param arg_copy array of arguments based on splitting argv
+ * @return true token was found and configStr was populated
+ * @return false token was not found and configStr was not populated
+ */
 static bool find_token_multiple_inputs(unsigned nch, int argc, char *const argv[],
-                                       const char *token, char **configStr,
+                                       const char *token, char *configStr[MAX_CHANNEL_NUMBER],
                                        const char *cmd_copy[MAX_NUM_TOKENS],
                                        const char *arg_copy[MAX_NUM_TOKENS]) {
     bool return_error    = false;
-    bool printed_warning = false;
+    bool printed_warning = false; // used to limit the printing once per token
+    // Loop over all the arguments
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i], token))
             continue;
@@ -2222,14 +2232,18 @@ static bool find_token_multiple_inputs(unsigned nch, int argc, char *const argv[
             printed_warning = true;
         }
         return_error = true;
-        if (i + 1 >= argc) { // if the token is at the end of the command line without arguments
+        if (i + 1 >= argc) {
+            // if the token is at the end of the command line without arguments
+            // set sentinel value
             strcpy_s(configStr[0], COMMAND_LINE_MAX_SIZE, " ");
             return return_error;
         }
-        cmd_copy[i] = TOKEN_READ_MARKER;
+        cmd_copy[i] = TOKEN_READ_MARKER; // mark token as read
+        // consume arguments
         for (unsigned count = 0; count < nch; ++count) {
             const int j = i + 1 + count;
             if (j >= argc || cmd_copy[j]) {
+                // stop if we ran out of arguments or if we hit a token
                 strcpy_s(configStr[count], COMMAND_LINE_MAX_SIZE, " ");
                 continue;
             }
