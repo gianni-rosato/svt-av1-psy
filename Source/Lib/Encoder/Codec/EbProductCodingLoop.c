@@ -2343,8 +2343,8 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
 }
 uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
 #if FIX_ME_PRUNING_R2R
-uint8_t is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset, const MeSbResults *me_results,
-    uint8_t list_idx, uint8_t ref_idx);
+uint8_t is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
+                           const MeSbResults *me_results, uint8_t list_idx, uint8_t ref_idx);
 #else
 uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbResults *me_results,
                            uint8_t list_idx, uint8_t ref_idx);
@@ -2444,8 +2444,12 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                   (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)) &&
                  (pu_search_index_map[block_index][1] < context_ptr->blk_geom->bheight +
 #if FIX_ME_PRUNING_R2R
-                 (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y))) &&
-                is_me_data_present(block_index, block_index * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand, me_results, list_idx, ref_idx)) {
+                      (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y))) &&
+                is_me_data_present(block_index,
+                                   block_index * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand,
+                                   me_results,
+                                   list_idx,
+                                   ref_idx)) {
 #else
                       (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)))) {
 #endif
@@ -2971,7 +2975,11 @@ void read_refine_me_mvs_light_pd1(PictureControlSet   *pcs_ptr,
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
 
 #if FIX_ME_PRUNING_R2R
-            if (is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, list_idx, ref_idx)) {
+            if (is_me_data_present(context_ptr->me_block_offset,
+                                   context_ptr->me_cand_offset,
+                                   me_results,
+                                   list_idx,
+                                   ref_idx)) {
 #else
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
 #endif
@@ -3113,7 +3121,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
 #if FIX_ME_PRUNING_R2R
-            if (is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, list_idx, ref_idx)) {
+            if (is_me_data_present(context_ptr->me_block_offset,
+                                   context_ptr->me_cand_offset,
+                                   me_results,
+                                   list_idx,
+                                   ref_idx)) {
 #else
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
 #endif
@@ -3225,14 +3237,14 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     context_ptr->md_nsq_motion_search_ctrls.enabled) {
 #endif
                         md_nsq_motion_search(pcs_ptr,
-                            context_ptr,
-                            input_picture_ptr,
-                            input_origin_index,
-                            list_idx,
-                            ref_idx,
-                            me_results,
-                            &me_mv_x,
-                            &me_mv_y);
+                                             context_ptr,
+                                             input_picture_ptr,
+                                             input_origin_index,
+                                             list_idx,
+                                             ref_idx,
+                                             me_results,
+                                             &me_mv_x,
+                                             &me_mv_y);
 #if FIX_SOME_CHECKS
                     }
 #endif
@@ -3479,7 +3491,11 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
             uint32_t pa_me_distortion = (uint32_t)~0; //any non zero value
 #if FIX_ME_PRUNING_R2R
-            if (is_me_data_present(context_ptr->me_block_offset, context_ptr->me_cand_offset, me_results, list_idx, ref_idx)) {
+            if (is_me_data_present(context_ptr->me_block_offset,
+                                   context_ptr->me_cand_offset,
+                                   me_results,
+                                   list_idx,
+                                   ref_idx)) {
 #else
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
 #endif
@@ -3721,9 +3737,10 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
 
 #if FIX_ME_PRUNING_R2R
-            uint8_t me_data_present = is_me_data_present(ctx->me_block_offset, ctx->me_cand_offset, me_results, list_idx, ref_idx);
+            uint8_t me_data_present = is_me_data_present(
+                ctx->me_block_offset, ctx->me_cand_offset, me_results, list_idx, ref_idx);
 #else
-            uint8_t me_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
+            uint8_tme_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
 #endif
 
             if (me_data_present) {
@@ -10633,13 +10650,13 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     context_ptr->avail_blk_flag[blk_ptr->mds_idx] = TRUE;
 }
 Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
-    Bool             skip_nsq               = 0;
+    Bool skip_nsq = 0;
 #if CLN_NSQ
-    uint32_t         max_part0_to_part1_dev = ctx->nsq_ctrls.max_part0_to_part1_dev;
+    uint32_t max_part0_to_part1_dev = ctx->nsq_ctrls.max_part0_to_part1_dev;
 #else
-    uint32_t         max_part0_to_part1_dev = ctx->max_part0_to_part1_dev;
+    uint32_t max_part0_to_part1_dev = ctx->max_part0_to_part1_dev;
 #endif
-    const BlockGeom *blk_geom               = ctx->blk_geom;
+    const BlockGeom *blk_geom = ctx->blk_geom;
 
     // return immediately if SQ, or NSQ but Parent not available, or max_part0_to_part1_dev is off
     if (blk_geom->shape == PART_N || ctx->avail_blk_flag[blk_geom->sqi_mds] == FALSE ||
@@ -10778,7 +10795,7 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
         }
     }
 
-    uint8_t  skip_nsq  = 0;
+    uint8_t skip_nsq = 0;
 #if CLN_NSQ
     uint32_t sq_weight = ctx->nsq_ctrls.sq_weight;
 #else

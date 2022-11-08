@@ -417,7 +417,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const uint8_t            is_ref              = ppcs->is_used_as_reference_flag;
     const uint8_t            is_base             = ppcs->temporal_layer_index == 0;
 #if OPT_WM
-    const uint8_t            is_layer1           = ppcs->temporal_layer_index == 1;
+    const uint8_t is_layer1 = ppcs->temporal_layer_index == 1;
 #endif
     const EbInputResolution  input_resolution    = ppcs->input_resolution;
     const uint8_t            is_islice           = pcs_ptr->slice_type == I_SLICE;
@@ -760,7 +760,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->new_nearest_near_comb_injection = scs_ptr->new_nearest_comb_inject;
 
-    // Set the level for unipred3x3 injection
+        // Set the level for unipred3x3 injection
 #if TUNE_NSQ
     if (enc_mode <= ENC_M0)
 #else
@@ -881,9 +881,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #else
     else if (enc_mode <= ENC_M3)
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 0
-            : is_base                                                          ? 2
-            : is_ref                                                           ? 4
-                                                                               : 7;
+            : is_base ? 2
+            : is_ref ? 4
+                     : 7;
     else
         pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = is_islice ? 5 : is_ref ? 6 : 7;
 #endif
@@ -1078,7 +1078,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // neighbour array updates at EncDec for all SBs, that are currently skipped if EncDec is bypassed.
     // TODO: Bypassing EncDec doesn't work if pcs_ptr->cdf_ctrl.update_coef is enabled for non-ISLICE frames (causes r2r)
 #if FIX_BYPASS_ENCDEC
-    if (((ppcs->disallow_HVA_HVB && ppcs->disallow_HV4 && scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT) || ppcs->disallow_nsq) &&
+    if (((ppcs->disallow_HVA_HVB && ppcs->disallow_HV4 &&
+          scs_ptr->static_config.encoder_bit_depth == EB_EIGHT_BIT) ||
+         ppcs->disallow_nsq) &&
         (!pcs_ptr->cdf_ctrl.update_coef || is_islice) &&
         !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
         pcs_ptr->pic_bypass_encdec = get_bypass_encdec(
@@ -1095,7 +1097,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->pic_bypass_encdec = 0;
 
-    /*
+        /*
         set lpd0_level
     */
 #if TUNE_M3

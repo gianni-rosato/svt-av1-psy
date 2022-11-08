@@ -6863,20 +6863,30 @@ EbErrorType derive_tf_window_params(
     return EB_ErrorNone;
 }
 #endif
-
+#if CLN_PD_REF_Q
+PaReferenceEntry * search_ref_in_ref_queue_pa(
+#else
 PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
+#endif
     EncodeContext *encode_context_ptr,
     uint64_t ref_poc)
 {
+#if CLN_PD_REF_Q
+    PaReferenceEntry* ref_entry_ptr = NULL;
+#else
     PaReferenceQueueEntry * ref_entry_ptr = NULL;
+#endif
 #if OPT_PD_REF_QUEUE
-    for (uint8_t i = 0; i < 8; i++) {
+    for (uint8_t i = 0; i < REF_FRAMES; i++) {
+#if CLN_PD_REF_Q
+        ref_entry_ptr = encode_context_ptr->pd_dpb[i];
+#else
         ref_entry_ptr =
             encode_context_ptr->picture_decision_pa_reference_list[i];
-        //if (ref_entry_ptr) {
-        if (ref_entry_ptr->picture_number == ref_poc)
+#endif
+
+        if (ref_entry_ptr && ref_entry_ptr->picture_number == ref_poc)
             return ref_entry_ptr;
-        //}
     }
 #else
     uint32_t ref_queue_i = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
@@ -7512,7 +7522,11 @@ static void assign_and_release_pa_refs(EncodeContext* encode_ctx, PictureParentC
                     (list_idx == 1 && ref_idx >= pcs->ref_list1_count))
                     continue;
 
+#if CLN_PD_REF_Q
+                PaReferenceEntry* pa_ref_entry = search_ref_in_ref_queue_pa(encode_ctx, ref_poc);
+#else
                 PaReferenceQueueEntry* pa_ref_entry = search_ref_in_ref_queue_pa(encode_ctx, ref_poc);
+#endif
                 assert(pa_ref_entry != NULL);
                 CHECK_REPORT_ERROR((pa_ref_entry),
                     encode_ctx->app_callback_ptr,
@@ -7540,17 +7554,26 @@ static void assign_and_release_pa_refs(EncodeContext* encode_ctx, PictureParentC
 #if OPT_TPL_REF_BUFFERS
         // At the end of the sequence release all the refs (needed for MacOS CI tests)
         if (eos_reached && pic_i == (mg_size - 1)) {
-            for (uint8_t i = 0; i < 8; i++) {
+            for (uint8_t i = 0; i < REF_FRAMES; i++) {
                 // Get the current entry at that spot in the DPB
+#if CLN_PD_REF_Q
+                PaReferenceEntry* input_entry_ptr = encode_ctx->pd_dpb[i];
+#else
                 PaReferenceQueueEntry* input_entry_ptr = encode_ctx->picture_decision_pa_reference_list[i];
+#endif
 
                 // If DPB entry is occupied, release the current entry
                 if (input_entry_ptr->is_valid) {
                     bool still_in_dpb = 0;
-                    for (uint8_t j = 0; j < 8; j++) {
+                    for (uint8_t j = 0; j < REF_FRAMES; j++) {
                         if (j == i) continue;
+#if CLN_PD_REF_Q
+                        if (encode_ctx->pd_dpb[j]->is_valid &&
+                            encode_ctx->pd_dpb[j]->picture_number == input_entry_ptr->picture_number)
+#else
                         if (encode_ctx->picture_decision_pa_reference_list[j]->is_valid &&
                             encode_ctx->picture_decision_pa_reference_list[j]->picture_number == input_entry_ptr->picture_number)
+#endif
                             still_in_dpb = 1;
                     }
                     if (!still_in_dpb) {
@@ -7584,21 +7607,31 @@ static void assign_and_release_pa_refs(EncodeContext* encode_ctx, PictureParentC
         if (pcs->av1_ref_signal.refresh_frame_mask) {
             //assert(!pcs->is_overlay); // is this true?
             //Update the DPB
-            for (uint8_t i = 0; i < 8; i++) {
+            for (uint8_t i = 0; i < REF_FRAMES; i++) {
                 if ((pcs->av1_ref_signal.refresh_frame_mask >> i) & 1) {
+#if CLN_PD_REF_Q
+                    // Get the current entry at that spot in the DPB
+                    PaReferenceEntry* input_entry_ptr = encode_ctx->pd_dpb[i];
+#else
                     //ctx->dpb_dec_order[i] = queue_entry_ptr->picture_number;
                     //ctx->dpb_disp_order[i] = queue_entry_ptr->poc;
 
                     // Get the current entry at that spot in the DPB
                     PaReferenceQueueEntry* input_entry_ptr = encode_ctx->picture_decision_pa_reference_list[i];
+#endif
 
                     // If DPB entry is occupied, release the current entry
                     if (input_entry_ptr->is_valid) {
                         bool still_in_dpb = 0;
-                        for (uint8_t j = 0; j < 8; j++) {
+                        for (uint8_t j = 0; j < REF_FRAMES; j++) {
                             if (j == i) continue;
+#if CLN_PD_REF_Q
+                            if (encode_ctx->pd_dpb[j]->is_valid &&
+                                encode_ctx->pd_dpb[j]->picture_number == input_entry_ptr->picture_number)
+#else
                             if (encode_ctx->picture_decision_pa_reference_list[j]->is_valid &&
                                 encode_ctx->picture_decision_pa_reference_list[j]->picture_number == input_entry_ptr->picture_number)
+#endif
                                 still_in_dpb = 1;
                         }
                         if (!still_in_dpb) {

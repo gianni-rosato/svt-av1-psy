@@ -92,9 +92,9 @@ typedef struct PredictionStructureEntry {
     DependentList dep_list0;
     DependentList dep_list1;
 #endif
-    uint32_t      temporal_layer_index;
-    uint32_t      decode_order;
-    Bool          is_referenced;
+    uint32_t temporal_layer_index;
+    uint32_t decode_order;
+    Bool     is_referenced;
 } PredictionStructureEntry;
 
 /************************************************
@@ -112,7 +112,9 @@ typedef struct PredictionStructure {
     uint32_t                   maximum_extent;
 
     // Section Indices
+#if !CLN_REMOVE_LEAD_PIC
     uint32_t leading_pic_index;
+#endif
     uint32_t init_pic_index;
     uint32_t steady_state_index;
 } PredictionStructure;

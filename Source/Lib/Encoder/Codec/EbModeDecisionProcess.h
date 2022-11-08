@@ -423,16 +423,18 @@ typedef struct CandEliminationCtlrs {
 } CandEliminationCtlrs;
 #if CLN_NSQ
 typedef struct NsqCtrls {
-    uint8_t  enabled; // Enable or disable nsq signal. 0: disabled, 1: enabled
-    uint8_t  min_nsq_block_size; // Disables all nsq blocks for below a specified size. e.g. 8 = 8x8, 16 = 16x16
-    uint8_t  allow_HV4; // Disallow H4/V4 when off. 0: OFF, 1: ON
-    uint8_t  allow_HVA_HVB; // Disallow HA/HB/VA/VB NSQ blocks when off. 0: OFF, 1: ON
-    uint8_t  parent_sq_coeff_area_based_cycles_reduction_level; // Set the level for coeff-based NSQ accuracy reduction
-                                                                // Weighting (expressed as a percentage) applied to
-                                                                // square shape costs for determining if a and b
-                                                                // shapes should be skipped. Namely:
-                                                                // skip HA, HB, and H4 if h_cost > (weighted sq_cost)
-                                                                // skip VA, VB, and V4 if v_cost > (weighted sq_cost)
+    uint8_t enabled; // Enable or disable nsq signal. 0: disabled, 1: enabled
+    uint8_t
+        min_nsq_block_size; // Disables all nsq blocks for below a specified size. e.g. 8 = 8x8, 16 = 16x16
+    uint8_t allow_HV4; // Disallow H4/V4 when off. 0: OFF, 1: ON
+    uint8_t allow_HVA_HVB; // Disallow HA/HB/VA/VB NSQ blocks when off. 0: OFF, 1: ON
+    uint8_t
+        parent_sq_coeff_area_based_cycles_reduction_level; // Set the level for coeff-based NSQ accuracy reduction
+    // Weighting (expressed as a percentage) applied to
+    // square shape costs for determining if a and b
+    // shapes should be skipped. Namely:
+    // skip HA, HB, and H4 if h_cost > (weighted sq_cost)
+    // skip VA, VB, and V4 if v_cost > (weighted sq_cost)
     uint32_t sq_weight;
     // max_part0_to_part1_dev is used to:
     // (1) skip the H_Path if the deviation between the Parent-SQ src-to-recon distortion of (1st quadrant + 2nd quadrant) and the Parent-SQ src-to-recon distortion of (3rd quadrant + 4th quadrant) is less than TH,
@@ -846,7 +848,7 @@ typedef struct ModeDecisionContext {
     TxtControls                                txt_ctrls;
     CandReductionCtrls                         cand_reduction_ctrls;
 #if CLN_NSQ
-    NsqCtrls                                   nsq_ctrls;
+    NsqCtrls nsq_ctrls;
 #endif
     RdoqCtrls                                  rdoq_ctrls;
     uint8_t                                    disallow_4x4;

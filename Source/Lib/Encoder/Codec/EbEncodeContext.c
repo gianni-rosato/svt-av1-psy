@@ -75,7 +75,11 @@ static void encode_context_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->dep_cnt_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
 #endif
 #if OPT_PD_REF_QUEUE
-    EB_DELETE_PTR_ARRAY(obj->picture_decision_pa_reference_list, 8);
+#if CLN_PD_REF_Q
+    EB_DELETE_PTR_ARRAY(obj->pd_dpb, REF_FRAMES);
+#else
+    EB_DELETE_PTR_ARRAY(obj->picture_decision_pa_reference_list, REF_FRAMES);
+#endif
 #else
     EB_DELETE_PTR_ARRAY(obj->picture_decision_pa_reference_queue,
                         PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
@@ -130,11 +134,18 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
 #endif
 
 #if OPT_PD_REF_QUEUE
-    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_pa_reference_list, 8);
+#if CLN_PD_REF_Q
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->pd_dpb, REF_FRAMES);
+    for (picture_index = 0; picture_index < REF_FRAMES; ++picture_index) {
+        EB_NEW(encode_context_ptr->pd_dpb[picture_index], pa_reference_queue_entry_ctor);
+    }
+#else
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_pa_reference_list, REF_FRAMES);
     for (picture_index = 0; picture_index < 8; ++picture_index) {
         EB_NEW(encode_context_ptr->picture_decision_pa_reference_list[picture_index],
-            pa_reference_queue_entry_ctor);
+               pa_reference_queue_entry_ctor);
     }
+#endif
 #else
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_pa_reference_queue,
                        PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
@@ -183,13 +194,13 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
 #endif
 
     EB_CREATE_MUTEX(encode_context_ptr->sc_buffer_mutex);
-    encode_context_ptr->enc_mode                      = SPEED_CONTROL_INIT_MOD;
+    encode_context_ptr->enc_mode = SPEED_CONTROL_INIT_MOD;
 #if !CLN_ENC_CTX
     encode_context_ptr->previous_selected_ref_qp      = 32;
     encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
 #endif
-    encode_context_ptr->recode_tolerance              = 25;
-    encode_context_ptr->rc_cfg.min_cr                 = 0;
+    encode_context_ptr->recode_tolerance = 25;
+    encode_context_ptr->rc_cfg.min_cr    = 0;
 #if !CLN_ENC_CTX
     EB_CREATE_MUTEX(encode_context_ptr->shared_reference_mutex);
 #endif

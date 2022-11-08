@@ -82,11 +82,11 @@ typedef struct BlockGeom {
     uint16_t blkidx_mds; // block index in md scan
     int32_t  has_uv;
 #if OPT_NSQ
-    int32_t  sq_size; // size of parent square
+    int32_t sq_size; // size of parent square
 #else
-    int32_t  sq_size;
+    int32_t sq_size;
 #endif
-    int32_t  is_last_quadrant; // only for square bloks, is this the fourth quadrant block?
+    int32_t is_last_quadrant; // only for square bloks, is this the fourth quadrant block?
 } BlockGeom;
 
 static const BlockSize ss_size_lookup[BlockSizeS_ALL][2][2] = {

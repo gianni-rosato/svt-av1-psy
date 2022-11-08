@@ -197,10 +197,10 @@ typedef struct EbConfig {
     FILE       *input_stat_file;
     FILE       *output_stat_file;
 #if !REMOVE_MANUAL_PRED
-    char       *input_pred_struct_filename;
+    char *input_pred_struct_filename;
 #endif
-    Bool        y4m_input;
-    char        y4m_buf[9];
+    Bool y4m_input;
+    char y4m_buf[9];
 
     uint8_t progress; // 0 = no progress output, 1 = normal, 2 = aomenc style verbose progress
     /****************************************

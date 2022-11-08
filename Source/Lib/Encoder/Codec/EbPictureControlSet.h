@@ -386,11 +386,11 @@ typedef struct PictureControlSet {
 
     int32_t mi_stride;
     uint8_t
-             disallow_4x4_all_frames; // true if 4x4 blocks are disallowed for all frames, and NSQ is disabled (since granularity is needed for 8x8 NSQ blocks).  Used to compute the offset for mip.
-    uint8_t  wm_level; //warped motion level
-    uint8_t  cand_reduction_level;
+            disallow_4x4_all_frames; // true if 4x4 blocks are disallowed for all frames, and NSQ is disabled (since granularity is needed for 8x8 NSQ blocks).  Used to compute the offset for mip.
+    uint8_t wm_level; //warped motion level
+    uint8_t cand_reduction_level;
 #if CLN_NSQ
-    uint8_t  nsq_level;
+    uint8_t nsq_level;
 #endif
     uint8_t  txt_level;
     uint8_t  tx_shortcut_level;
@@ -424,10 +424,12 @@ typedef struct PictureControlSet {
     uint8_t
         pic_depth_early_exit_th; // Skip testing remaining blocks at the current depth if (curr_cost * 100 > pic_depth_early_exit_th * parent_cost);
     // [0-100], 0 is OFF, lower percentage is more aggressive
-    uint8_t          pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
-    uint8_t          pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
-    Bool             pic_bypass_encdec;
-    RefList          colocated_pu_ref_list;
+    uint8_t pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
+    uint8_t pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
+    Bool    pic_bypass_encdec;
+#if !CLN_PIC_MGR_PROC
+    RefList colocated_pu_ref_list;
+#endif
     EncMode          enc_mode;
     InputCoeffLvl    coeff_lvl;
     int32_t          cdef_preset[MAX_TILE_CNTS][4];
@@ -704,9 +706,9 @@ typedef struct PictureParentControlSet {
     uint64_t  picture_number;
     uint32_t  cur_order_hint;
 #if CLN_PIC_DEC_PROC
-    uint32_t  ref_order_hint[INTER_REFS_PER_FRAME];
+    uint32_t ref_order_hint[INTER_REFS_PER_FRAME];
 #else
-    uint32_t  ref_order_hint[7];
+    uint32_t ref_order_hint[7];
 #endif
     SliceType slice_type;
     uint8_t   pred_struct_index;
@@ -714,9 +716,13 @@ typedef struct PictureParentControlSet {
     uint64_t  decode_order;
 #if OPT_REPLACE_DEP_CNT_CL
 #if OPT_TPL_REF_BUFFERS
-    uint64_t released_pics[9];
+    uint64_t released_pics
+        [REF_FRAMES +
+         1]; // Each picture can release up to 8 references from the DPB (8 is the max number
+        // of entries in the DPB). Each frame may also release itself at EOS, which
+        // is only done in the encoder to satisfy CI unit tests for MacOS.
 #else
-    uint64_t released_pics[8];
+    uint64_t released_pics[REF_FRAMES];
 #endif
     uint8_t released_pics_count;
 #endif
@@ -759,7 +765,7 @@ typedef struct PictureParentControlSet {
     uint32_t         pre_assignment_buffer_count;
     uint16_t         pic_avg_variance;
 #if !CLN_PIC_DEC_PROC
-    Bool             scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
+    Bool scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
 #endif
 
     uint32_t ***picture_histogram;
@@ -829,7 +835,7 @@ typedef struct PictureParentControlSet {
     // Multi-modes signal(s)
     MultiPassPdLevel multi_pass_pd_level;
 #if !ADD_NSQ_ENABLE
-    Bool             disallow_nsq;
+    Bool disallow_nsq;
 #endif
 #if !CLN_NSQ
     Bool             disallow_all_nsq_blocks_below_8x8;
@@ -853,11 +859,11 @@ typedef struct PictureParentControlSet {
     Bool       has_show_existing;
     int32_t    ref_frame_map[REF_FRAMES]; /* maps fb_idx to reference slot */
 #if CLN_PIC_DEC_PROC
-    uint32_t   pic_idx_in_mg; //index of picture in the mg
+    uint32_t pic_idx_in_mg; //index of picture in the mg
 #else
-    int32_t    is_skip_mode_allowed;
-    int32_t    skip_mode_flag;
-    uint32_t   pic_index; //index of picture in the mg
+    int32_t  is_skip_mode_allowed;
+    int32_t  skip_mode_flag;
+    uint32_t pic_index; //index of picture in the mg
 #endif
     // Flag for a frame used as a reference - not written to the Bitstream
     int32_t is_reference_frame;

@@ -992,7 +992,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_manual_pred_struct    = FALSE;
     config_ptr->manual_pred_struct_entry_num = 0;
 #endif
-    config_ptr->encoder_color_format         = EB_YUV420;
+    config_ptr->encoder_color_format = EB_YUV420;
     // Rate control options
     // Set the default value toward more flexible rate allocation
     config_ptr->vbr_bias_pct             = 100;

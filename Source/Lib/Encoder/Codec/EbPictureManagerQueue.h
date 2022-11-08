@@ -30,11 +30,11 @@ typedef struct InputQueueEntry {
     EbDctor          dctor;
     EbObjectWrapper *input_object_ptr;
 #if !OPT_REPLACE_DEP_CNT_CL
-    uint32_t         dependent_count;
+    uint32_t dependent_count;
 #endif
 #if !CLN_PIC_MGR_PROC
-    ReferenceList   *list0_ptr;
-    ReferenceList   *list1_ptr;
+    ReferenceList *list0_ptr;
+    ReferenceList *list1_ptr;
 #endif
     uint32_t         use_count;
     Bool             memory_mgmt_loop_done;
@@ -55,15 +55,15 @@ typedef struct ReferenceQueueEntry {
     EbObjectWrapper *ref_wraper;
 #endif
 #if !OPT_REPLACE_DEP_CNT_CL
-    uint32_t         dependent_count;
+    uint32_t dependent_count;
 #endif
-    Bool             release_enable;
-    Bool             reference_available;
+    Bool release_enable;
+    Bool reference_available;
 #if !OPT_REPLACE_DEP_CNT_CL
-    uint32_t         dep_list0_count;
-    uint32_t         dep_list1_count;
-    DependentList    list0;
-    DependentList    list1;
+    uint32_t      dep_list0_count;
+    uint32_t      dep_list1_count;
+    DependentList list0;
+    DependentList list1;
 #endif
     Bool             is_used_as_reference_flag;
     uint64_t         rc_group_index;
@@ -74,10 +74,12 @@ typedef struct ReferenceQueueEntry {
     Bool             frame_context_updated;
 #if OPT_REPLACE_DEP_CNT_CL
     uint8_t refresh_frame_mask;
-    uint64_t dec_order_of_last_ref; // decode order of the last frame to use the current entry as a reference
+    uint64_t
+        dec_order_of_last_ref; // decode order of the last frame to use the current entry as a reference
 #endif
 #if OPT_TPL_REF_BUFFERS
-    bool frame_end_cdf_update_required; // True if frame_end_cdf_update_mode is enabled for this frame
+    bool
+        frame_end_cdf_update_required; // True if frame_end_cdf_update_mode is enabled for this frame
 #endif
 #if OPT_PM_REF_QUEUE
     bool is_valid;

@@ -22,7 +22,11 @@ static void pa_reference_queue_entry_dctor(EbPtr p) {
 #endif
 }
 
+#if CLN_PD_REF_Q
+EbErrorType pa_reference_queue_entry_ctor(PaReferenceEntry* entry_ptr) {
+#else
 EbErrorType pa_reference_queue_entry_ctor(PaReferenceQueueEntry* entry_ptr) {
+#endif
     entry_ptr->dctor = pa_reference_queue_entry_dctor;
 #if OPT_PD_REF_QUEUE
     entry_ptr->is_valid = 0;

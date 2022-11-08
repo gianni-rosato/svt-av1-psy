@@ -941,7 +941,8 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
         pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.seg_id_pre_skip;
 
 #if CLN_PIC_DEC_PROC
-    if (pcs_ptr->parent_pcs_ptr->frm_hdr.skip_mode_params.skip_mode_flag && !seg_ref_active && is_comp_ref_allowed(bsize)) {
+    if (pcs_ptr->parent_pcs_ptr->frm_hdr.skip_mode_params.skip_mode_flag && !seg_ref_active &&
+        is_comp_ref_allowed(bsize)) {
 #else
     if (pcs_ptr->parent_pcs_ptr->skip_mode_flag && !seg_ref_active && is_comp_ref_allowed(bsize)) {
 #endif

@@ -413,9 +413,11 @@ typedef struct SuperBlock {
     //for memory free only
     MacroBlockD   *av1xd;
     PartitionType *cu_partition_array;
-    unsigned       picture_left_edge_flag : 1;
-    unsigned       picture_top_edge_flag : 1;
-    unsigned       picture_right_edge_flag : 1;
+#if !CLN_PIC_MGR_PROC
+    unsigned picture_left_edge_flag : 1;
+    unsigned picture_top_edge_flag : 1;
+    unsigned picture_right_edge_flag : 1;
+#endif
     unsigned       index : 32;
     unsigned       origin_x : 32;
     unsigned       origin_y : 32;
@@ -435,7 +437,8 @@ bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 bool svt_aom_get_disallow_nsq(EncMode enc_mode, bool is_islice);
 #endif
 #if CLN_NSQ
-uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base, InputCoeffLvl coeff_lvl);
+uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base,
+                      InputCoeffLvl coeff_lvl);
 #endif
 #ifdef __cplusplus
 }

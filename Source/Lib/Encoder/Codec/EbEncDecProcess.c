@@ -4507,25 +4507,22 @@ uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level) {
 * This function is used in MD to set the NSQ controls.
 */
 void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
-
     NsqCtrls *nsq_ctrls = &mdctxt->nsq_ctrls;
 
     switch (nsq_level) {
-    case 0:
-        nsq_ctrls->enabled = 0;
-        break;
+    case 0: nsq_ctrls->enabled = 0; break;
 
     case 1: // Original MRS level
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 0;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 1;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 1;
 
-        nsq_ctrls->sq_weight = (uint32_t)~0;
+        nsq_ctrls->sq_weight                                         = (uint32_t)~0;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 0;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 0;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 0;
 
         break;
 
@@ -4533,13 +4530,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 0;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 1;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 1;
 
-        nsq_ctrls->sq_weight = 105;
+        nsq_ctrls->sq_weight                                         = 105;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 0;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 0;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 0;
 
         break;
 
@@ -4547,13 +4544,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 0;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 1;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 1;
 
-        nsq_ctrls->sq_weight = 105;
+        nsq_ctrls->sq_weight                                         = 105;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 1;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 0;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 0;
 
         break;
 
@@ -4561,13 +4558,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 0;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 1;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 1;
 
-        nsq_ctrls->sq_weight = 105;
+        nsq_ctrls->sq_weight                                         = 105;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 2;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 0;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 0;
 
         break;
 
@@ -4575,13 +4572,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 0;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 100;
+        nsq_ctrls->sq_weight                                         = 100;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 2;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 0;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 0;
 
         break;
 
@@ -4589,13 +4586,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 0;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 100;
+        nsq_ctrls->sq_weight                                         = 100;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 4;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 0;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 0;
 
         break;
 
@@ -4603,13 +4600,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 0;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 2;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4617,13 +4614,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 0;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 4;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4631,13 +4628,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 8;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 5;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4645,13 +4642,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 8;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 5;
-        nsq_ctrls->max_part0_to_part1_dev = 40;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 40;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4659,13 +4656,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 8;
-        nsq_ctrls->allow_HV4 = 1;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 1;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 5;
-        nsq_ctrls->max_part0_to_part1_dev = 60;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 60;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4673,13 +4670,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 8;
-        nsq_ctrls->allow_HV4 = 0;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 0;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
-        nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 0;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4687,13 +4684,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 8;
-        nsq_ctrls->allow_HV4 = 0;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 0;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
-        nsq_ctrls->max_part0_to_part1_dev = 40;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 40;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4701,13 +4698,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 8;
-        nsq_ctrls->allow_HV4 = 0;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 0;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
-        nsq_ctrls->max_part0_to_part1_dev = 60;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 60;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4715,13 +4712,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 16;
-        nsq_ctrls->allow_HV4 = 0;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 0;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
-        nsq_ctrls->max_part0_to_part1_dev = 160;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 160;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4729,13 +4726,13 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 16;
-        nsq_ctrls->allow_HV4 = 0;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 0;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
-        nsq_ctrls->max_part0_to_part1_dev = 200;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 200;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
@@ -4743,22 +4740,22 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
         nsq_ctrls->enabled = 1;
 
         nsq_ctrls->min_nsq_block_size = 16;
-        nsq_ctrls->allow_HV4 = 0;
-        nsq_ctrls->allow_HVA_HVB = 0;
+        nsq_ctrls->allow_HV4          = 0;
+        nsq_ctrls->allow_HVA_HVB      = 0;
 
-        nsq_ctrls->sq_weight = 95;
+        nsq_ctrls->sq_weight                                         = 95;
         nsq_ctrls->parent_sq_coeff_area_based_cycles_reduction_level = 7;
-        nsq_ctrls->max_part0_to_part1_dev = 220;
-        nsq_ctrls->skip_hv4_on_best_part = 1;
+        nsq_ctrls->max_part0_to_part1_dev                            = 220;
+        nsq_ctrls->skip_hv4_on_best_part                             = 1;
 
         break;
 
     default: assert(0); break;
     }
     if (mdctxt->pd_pass == PD_PASS_0) {
-        nsq_ctrls->sq_weight = (uint32_t)~0;
+        nsq_ctrls->sq_weight              = (uint32_t)~0;
         nsq_ctrls->max_part0_to_part1_dev = 0;
-        nsq_ctrls->skip_hv4_on_best_part = 0;
+        nsq_ctrls->skip_hv4_on_best_part  = 0;
     }
     // Bypassing EncDec doesn't work if HVA_HVB_HV4 are enabled (for all bit depths; causes non-conformant bitstreams)
     if (nsq_ctrls->allow_HV4 || nsq_ctrls->allow_HVA_HVB)
@@ -6356,9 +6353,9 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     context_ptr->uv_ctrls.nd_uv_serach_mode = 0;
     set_cfl_ctrls(context_ptr, 0);
 #if ADD_NSQ_ENABLE
-    context_ptr->md_disallow_nsq                            = !context_ptr->nsq_ctrls.enabled;
+    context_ptr->md_disallow_nsq = !context_ptr->nsq_ctrls.enabled;
 #else
-    context_ptr->md_disallow_nsq                            = pcs_ptr->parent_pcs_ptr->disallow_nsq;
+    context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
 #endif
     context_ptr->new_nearest_injection                      = 1;
     context_ptr->inject_inter_candidates                    = 1;
@@ -6401,7 +6398,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     uint32_t                 me_64x64_distortion  = (uint32_t)~0;
     uint8_t                  l0_was_skip = 0, l1_was_skip = 0;
     uint8_t                  ref_skip_perc = pcs_ptr->ref_skip_percentage;
-
 
 #if CLN_NSQ
     // 2nd call as set_nsq_ctrls() has a PD_PASS check
@@ -6499,7 +6495,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
         context_ptr,
         input_resolution,
-        pd_pass == PD_PASS_0 ? 0 : context_ptr->nsq_ctrls.parent_sq_coeff_area_based_cycles_reduction_level);
+        pd_pass == PD_PASS_0
+            ? 0
+            : context_ptr->nsq_ctrls.parent_sq_coeff_area_based_cycles_reduction_level);
 #else
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
         context_ptr,
@@ -6509,7 +6507,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
 
     context_ptr->max_part0_to_part1_dev = pd_pass == PD_PASS_0 ? 0
                                                                : pcs_ptr->max_part0_to_part1_dev;
-    context_ptr->skip_hv4_on_best_part  = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->skip_hv4_on_best_part;
+    context_ptr->skip_hv4_on_best_part = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->skip_hv4_on_best_part;
 #endif
     context_ptr->md_depth_early_exit_th = (pd_pass == PD_PASS_0) ? 0
                                                                  : pcs_ptr->pic_depth_early_exit_th;
@@ -6711,9 +6709,9 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
     if (blk_geom->sq_size == 8 && context_ptr->disallow_4x4)
         return;
     if (blk_geom->sq_size > 4) {
-        DepthCtrls              *depth_ctrls = &context_ptr->depth_ctrls;
+        DepthCtrls *depth_ctrls = &context_ptr->depth_ctrls;
 #if !CLN_NSQ
-        PictureParentControlSet *ppcs        = pcs_ptr->parent_pcs_ptr;
+        PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
 #endif
 
         // Set parent depth's split flag to be true
@@ -6729,7 +6727,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
             child1_blk_geom->sq_size);
 #if ADD_NSQ_ENABLE
         const unsigned int child_tot_d1_blocks = (!context_ptr->nsq_ctrls.enabled ||
-            !depth_ctrls->allow_nsq_in_child_depths)
+                                                  !depth_ctrls->allow_nsq_in_child_depths)
             ? 1
             : child_default_tot_d1_blocks;
 #else
@@ -6816,16 +6814,14 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
 }
 #if CLN_NSQ
 uint32_t get_tot_1d_blks(struct ModeDecisionContext *context_ptr, const int32_t sq_size,
-    const uint8_t disallow_nsq) {
+                         const uint8_t disallow_nsq) {
     uint32_t tot_d1_blocks;
 
-    tot_d1_blocks = (disallow_nsq) ||
-        (sq_size <= context_ptr->nsq_ctrls.min_nsq_block_size)
-        ? 1
-        : sq_size == 128                                                      ? 17
-        : sq_size > 8                                                         ? 25
-        : sq_size == 8                                                        ? 5
-        : 1;
+    tot_d1_blocks = (disallow_nsq) || (sq_size <= context_ptr->nsq_ctrls.min_nsq_block_size) ? 1
+        : sq_size == 128                                                                     ? 17
+        : sq_size > 8                                                                        ? 25
+        : sq_size == 8                                                                       ? 5
+                                                                                             : 1;
 
     if (!context_ptr->nsq_ctrls.allow_HVA_HVB && !context_ptr->nsq_ctrls.allow_HV4)
         tot_d1_blocks = MIN(5, tot_d1_blocks);
@@ -6938,9 +6934,9 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
             if (tot_d1_blocks > 1 && !results_ptr->consider_block[blk_index + 1])
                 tot_d1_blocks = 1;
 
-            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
-            // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
-            // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
+                // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
+                // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
+                // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
 #if CLN_NSQ
             const uint32_t to_test_d1_blocks = (context_ptr->nsq_ctrls.allow_HVA_HVB == 0)
 #else
@@ -7136,16 +7132,16 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
     Bool pred_depth_only    = 1;
 
     while (blk_index < scs_ptr->max_block_cnt) {
-        const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
+        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 #if ADD_NSQ_ENABLE
-        const unsigned   tot_d1_blocks = !context_ptr->nsq_ctrls.enabled ? 1
+        const unsigned tot_d1_blocks = !context_ptr->nsq_ctrls.enabled ? 1
 #else
-        const unsigned   tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
+        const unsigned tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
 #endif
-              : blk_geom->sq_size == 128                                       ? 17
-              : blk_geom->sq_size > 8                                          ? 25
-              : blk_geom->sq_size == 8                                         ? 5
-                                                                               : 1;
+            : blk_geom->sq_size == 128 ? 17
+            : blk_geom->sq_size > 8    ? 25
+            : blk_geom->sq_size == 8   ? 5
+                                       : 1;
 
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1
@@ -8239,7 +8235,7 @@ void *mode_decision_kernel(void *input_ptr) {
                         // Can only use light-PD1 under the following conditions
                         if (!(md_ctx->hbd_mode_decision == 0 && md_ctx->pred_depth_only &&
 #if ADD_NSQ_ENABLE
-                            !md_ctx->nsq_ctrls.enabled && md_ctx->disallow_4x4 == TRUE &&
+                              !md_ctx->nsq_ctrls.enabled && md_ctx->disallow_4x4 == TRUE &&
 #else
                               ppcs->disallow_nsq == TRUE && md_ctx->disallow_4x4 == TRUE &&
 #endif

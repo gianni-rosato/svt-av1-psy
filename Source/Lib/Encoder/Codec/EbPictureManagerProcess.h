@@ -32,8 +32,8 @@ typedef struct PictureManagerContext {
 #if OPT_REPLACE_DEP_CNT_CL
     uint64_t consecutive_dec_order;
     uint64_t started_pics_dec_order[REFERENCE_QUEUE_MAX_DEPTH]; // TODO: shorten this
-    int started_pics_dec_order_head_idx;
-    int started_pics_dec_order_tail_idx;
+    int      started_pics_dec_order_head_idx;
+    int      started_pics_dec_order_tail_idx;
 #endif
 } PictureManagerContext;
 /***************************************

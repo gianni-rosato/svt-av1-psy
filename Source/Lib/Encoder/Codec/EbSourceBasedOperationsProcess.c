@@ -116,42 +116,40 @@ EbErrorType tpl_disp_context_ctor(EbThreadContext   *thread_context_ptr,
 
 #if CLN_PIC_DEC_PROC
 /* this function sets up ME refs for a regular pic*/
-static void tpl_regular_setup_me_refs(
-    PictureParentControlSet         *base_pcs,
-    PictureParentControlSet         *cur_pcs)
-{
-
+static void tpl_regular_setup_me_refs(PictureParentControlSet *base_pcs,
+                                      PictureParentControlSet *cur_pcs) {
     for (uint8_t list_index = REF_LIST_0; list_index < TOTAL_NUM_OF_REF_LISTS; list_index++) {
-
-        uint8_t  ref_list_count = (list_index == REF_LIST_0) ?
-            cur_pcs->ref_list0_count_try :
-            cur_pcs->ref_list1_count_try;
+        uint8_t ref_list_count = (list_index == REF_LIST_0) ? cur_pcs->ref_list0_count_try
+                                                            : cur_pcs->ref_list1_count_try;
 
         if (list_index == REF_LIST_0)
             cur_pcs->tpl_data.tpl_ref0_count = ref_list_count;
         else
             cur_pcs->tpl_data.tpl_ref1_count = ref_list_count;
 
-
         for (uint8_t ref_idx = 0; ref_idx < ref_list_count; ref_idx++) {
-
             uint64_t ref_poc = cur_pcs->ref_pic_poc_array[list_index][ref_idx];
 
             cur_pcs->tpl_data.ref_tpl_group_idx[list_index][ref_idx] = -1;
             for (uint32_t j = 0; j < base_pcs->tpl_group_size; j++) {
                 if (ref_poc == base_pcs->tpl_group[j]->picture_number) {
                     cur_pcs->tpl_data.ref_in_slide_window[list_index][ref_idx] = TRUE;
-                    cur_pcs->tpl_data.ref_tpl_group_idx[list_index][ref_idx] = j;
+                    cur_pcs->tpl_data.ref_tpl_group_idx[list_index][ref_idx]   = j;
                     break;
                 }
             }
 
-            EbPaReferenceObject *ref_obj = (EbPaReferenceObject *)cur_pcs->ref_pa_pic_ptr_array[list_index][ref_idx]->object_ptr;
+            EbPaReferenceObject *ref_obj = (EbPaReferenceObject *)cur_pcs
+                                               ->ref_pa_pic_ptr_array[list_index][ref_idx]
+                                               ->object_ptr;
 
-            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_number = ref_obj->picture_number;
-            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_ptr = ref_obj->input_padded_picture_ptr;
+            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_number =
+                ref_obj->picture_number;
+            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_ptr =
+                ref_obj->input_padded_picture_ptr;
             //not needed for TPL but could be linked.
-            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].sixteenth_picture_ptr = NULL;
+            cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].sixteenth_picture_ptr =
+                NULL;
             cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].quarter_picture_ptr = NULL;
         }
     }
@@ -160,40 +158,41 @@ static void tpl_regular_setup_me_refs(
 /*
   prepare TPL data fields
 */
-static void tpl_prep_info(PictureParentControlSet* pcs) {
-
+static void tpl_prep_info(PictureParentControlSet *pcs) {
     for (uint32_t pic_i = 0; pic_i < pcs->tpl_group_size; ++pic_i) {
-
-        PictureParentControlSet* pcs_tpl = pcs->tpl_group[pic_i];
+        PictureParentControlSet *pcs_tpl = pcs->tpl_group[pic_i];
 
         pcs_tpl->tpl_data.tpl_ref0_count = 0;
         pcs_tpl->tpl_data.tpl_ref1_count = 0;
-        EB_MEMSET(pcs_tpl->tpl_data.ref_in_slide_window, 0, MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH * sizeof(Bool));
-        EB_MEMSET(pcs_tpl->tpl_data.tpl_ref_ds_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
-        EB_MEMSET(pcs_tpl->tpl_data.tpl_ref_ds_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
+        EB_MEMSET(pcs_tpl->tpl_data.ref_in_slide_window,
+                  0,
+                  MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH * sizeof(Bool));
+        EB_MEMSET(pcs_tpl->tpl_data.tpl_ref_ds_ptr_array[REF_LIST_0],
+                  0,
+                  REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
+        EB_MEMSET(pcs_tpl->tpl_data.tpl_ref_ds_ptr_array[REF_LIST_1],
+                  0,
+                  REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
 
-        pcs_tpl->tpl_data.tpl_slice_type = pcs_tpl->slice_type;
-        pcs_tpl->tpl_data.tpl_temporal_layer_index = pcs_tpl->temporal_layer_index;
+        pcs_tpl->tpl_data.tpl_slice_type            = pcs_tpl->slice_type;
+        pcs_tpl->tpl_data.tpl_temporal_layer_index  = pcs_tpl->temporal_layer_index;
         pcs_tpl->tpl_data.is_used_as_reference_flag = pcs_tpl->is_used_as_reference_flag;
-        pcs_tpl->tpl_data.tpl_decode_order = pcs_tpl->decode_order;
+        pcs_tpl->tpl_data.tpl_decode_order          = pcs_tpl->decode_order;
 
         pcs_tpl->tpl_data.base_pcs = pcs;
 
         if (pcs_tpl->tpl_data.tpl_slice_type != I_SLICE) {
-            tpl_regular_setup_me_refs(
-                pcs,
-                pcs_tpl);
-
+            tpl_regular_setup_me_refs(pcs, pcs_tpl);
         }
     }
 }
 #else
-void tpl_prep_info(PictureParentControlSet *pcs);
+void        tpl_prep_info(PictureParentControlSet *pcs);
 #endif
 
 // Generate lambda factor to tune lambda based on TPL stats
 #if TUNE_TPL_QPM_LAMBDA
-void generate_lambda_scaling_factor(PictureParentControlSet* pcs_ptr, int64_t mc_dep_cost_base) {
+void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr, int64_t mc_dep_cost_base) {
 #else
 static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                                            int64_t                  mc_dep_cost_base) {
@@ -1703,7 +1702,7 @@ void tpl_mc_flow_synthesizer(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], 
     return;
 }
 #if TUNE_TPL_QPM_LAMBDA
-void generate_r0beta(PictureParentControlSet* pcs_ptr) {
+void generate_r0beta(PictureParentControlSet *pcs_ptr) {
 #else
 static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
 #endif
@@ -1951,10 +1950,10 @@ void init_tpl_segments(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
 
 #if OPT_TPL_REF_BUFFERS
 typedef struct TplRefList {
-    EbObjectWrapper* ref;
-    int32_t frame_idx;
-    uint8_t refresh_frame_mask;
-    bool is_valid;
+    EbObjectWrapper *ref;
+    int32_t          frame_idx;
+    uint8_t          refresh_frame_mask;
+    bool             is_valid;
 } TplRefList;
 #endif
 /************************************************
@@ -1986,8 +1985,8 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #endif
 
 #if OPT_TPL_REF_BUFFERS
-    TplRefList tpl_ref_list[9];
-    memset(tpl_ref_list, 0, sizeof(tpl_ref_list[0]) * 9);
+    TplRefList tpl_ref_list[REF_FRAMES + 1]; // Buffer for each ref pic and current pic
+    memset(tpl_ref_list, 0, sizeof(tpl_ref_list[0]) * (REF_FRAMES + 1));
 #endif
     if (pcs_ptr->tpl_group[0]->tpl_data.tpl_temporal_layer_index == 0) {
         // no Tiles path
@@ -2001,32 +2000,26 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
                 pcs_ptr->tpl_group[frame_idx]->picture_number;
 #if OPT_TPL_REF_BUFFERS
             // NREF need recon buffer for intra pred
-            //if (pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag) {
-            EbObjectWrapper* reference_picture_wrapper;
+            EbObjectWrapper *reference_picture_wrapper;
             // Get Empty Reference Picture Object
-            svt_get_empty_object(
-                scs_ptr->encode_context_ptr->tpl_reference_picture_pool_fifo_ptr,
-                &reference_picture_wrapper);
-            //pcs_ptr->tpl_group[frame_idx]->reference_picture_wrapper_ptr = reference_picture_wrapper;
-            // reset reference object in case of its members are altered by superres tool
-            //EbTplReferenceObject* ref =
-            //    (EbTplReferenceObject*)reference_picture_wrapper->object_ptr;
-            //svt_reference_object_reset(ref, scs_ptr);
+            svt_get_empty_object(scs_ptr->encode_context_ptr->tpl_reference_picture_pool_fifo_ptr,
+                                 &reference_picture_wrapper);
             // Give the new Reference a nominal live_count of 1
             svt_object_inc_live_count(reference_picture_wrapper, 1);
-            //}else {
-            //    pcs_ptr->tpl_group[frame_idx]->reference_picture_wrapper_ptr = NULL;
-            //}
-            for (int i = 0; i < 9; i++) {
+
+            for (int i = 0; i < (REF_FRAMES + 1); i++) {
                 // Get empty list entry
                 if (!tpl_ref_list[i].is_valid) {
                     tpl_ref_list[i].ref = reference_picture_wrapper;
-                    tpl_ref_list[i].refresh_frame_mask = pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag ? pcs_ptr->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask : 0;
+                    tpl_ref_list[i].refresh_frame_mask =
+                        pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag
+                        ? pcs_ptr->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask
+                        : 0;
                     tpl_ref_list[i].frame_idx = frame_idx;
-                    tpl_ref_list[i].is_valid = true;
+                    tpl_ref_list[i].is_valid  = true;
                     encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] =
                         ((EbTplReferenceObject *)reference_picture_wrapper->object_ptr)
-                        ->ref_picture_ptr;
+                            ->ref_picture_ptr;
                     break;
                 }
             }
@@ -2052,17 +2045,21 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
 #if OPT_TPL_REF_BUFFERS
             // Release references
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < (REF_FRAMES + 1); i++) {
                 // Get empty list entry
-                if (tpl_ref_list[i].is_valid && (frame_idx != tpl_ref_list[i].frame_idx || tpl_ref_list[i].refresh_frame_mask == 0)) {
-                    tpl_ref_list[i].refresh_frame_mask &= ~(pcs_ptr->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask);
+                if (tpl_ref_list[i].is_valid &&
+                    (frame_idx != tpl_ref_list[i].frame_idx ||
+                     tpl_ref_list[i].refresh_frame_mask == 0)) {
+                    tpl_ref_list[i].refresh_frame_mask &= ~(
+                        pcs_ptr->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask);
                     if (tpl_ref_list[i].refresh_frame_mask == 0) {
                         svt_release_object(tpl_ref_list[i].ref);
                         tpl_ref_list[i].ref = NULL;
-                        encode_context_ptr->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] = NULL;
-                        tpl_ref_list[i].frame_idx = -1;
+                        encode_context_ptr->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] =
+                            NULL;
+                        tpl_ref_list[i].frame_idx          = -1;
                         tpl_ref_list[i].refresh_frame_mask = 0;
-                        tpl_ref_list[i].is_valid = false;
+                        tpl_ref_list[i].is_valid           = false;
                     }
                 }
             }
@@ -2129,18 +2126,15 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
 #if OPT_TPL_REF_BUFFERS
     // Release un-released tpl references
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < (REF_FRAMES + 1); i++) {
         // Get empty list entry
-        if (tpl_ref_list[i].is_valid /*&& (frame_idx != tpl_ref_list[i].frame_idx || tpl_ref_list[i].refresh_frame_mask == 0)*/) {
-            //tpl_ref_list[i].refresh_frame_mask &= ~(pcs_ptr->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask);
-            //if (tpl_ref_list[i].refresh_frame_mask == 0) {
+        if (tpl_ref_list[i].is_valid) {
             svt_release_object(tpl_ref_list[i].ref);
-            tpl_ref_list[i].ref = NULL;
+            tpl_ref_list[i].ref                                                       = NULL;
             encode_context_ptr->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] = NULL;
-            tpl_ref_list[i].frame_idx = -1;
-            tpl_ref_list[i].refresh_frame_mask = 0;
-            tpl_ref_list[i].is_valid = false;
-            //}
+            tpl_ref_list[i].frame_idx                                                 = -1;
+            tpl_ref_list[i].refresh_frame_mask                                        = 0;
+            tpl_ref_list[i].is_valid                                                  = false;
         }
     }
 #else

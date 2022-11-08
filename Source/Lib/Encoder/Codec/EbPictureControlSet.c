@@ -1185,7 +1185,11 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
-                disallow_4x4 = MIN(disallow_4x4, (get_nsq_level(init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+                disallow_4x4 = MIN(
+                    disallow_4x4,
+                    (get_nsq_level(init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0
+                         ? 1
+                         : 0));
 #else
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
         disallow_4x4 = MIN(disallow_4x4,

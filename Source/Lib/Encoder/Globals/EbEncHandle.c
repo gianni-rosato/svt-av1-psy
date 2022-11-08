@@ -593,7 +593,7 @@ EbErrorType load_default_buffer_configuration_settings(
 #if OPT_REPLACE_DEP_CNT_CL
         const uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(pred_struct_ptr) + 1; //+1: to accomodate one for a delayed-I
         const uint16_t num_ref_lad_mgs = num_ref_from_cur_mg * scs_ptr->lad_mg;
-        const uint8_t dpb_frames = 8; // up to dpb_frame refs from prev MGs can be used (AV1 spec allows holding up to 8 frames for references)
+        const uint8_t dpb_frames = REF_FRAMES; // up to dpb_frame refs from prev MGs can be used (AV1 spec allows holding up to 8 frames for references)
 #if OPT_TPL_REF_BUFFERS
         min_ref = (scs_ptr->enable_dec_order) ? dpb_frames + 1 : num_ref_from_cur_mg + num_ref_lad_mgs + dpb_frames;
         min_tpl_ref = dpb_frames + 1; // TPL pictures are processed in decode order
@@ -631,7 +631,7 @@ EbErrorType load_default_buffer_configuration_settings(
         uint16_t num_pa_ref_from_cur_mg = mg_size; //ref+nref; nRef PA buffers are processed in PicAnalysis and used in TF
         uint16_t num_pa_ref_for_cur_mg = num_pa_ref_from_past_mgs + num_pa_ref_from_cur_mg;
 #if OPT_REPLACE_DEP_CNT
-        const uint8_t dpb_frames = 8;
+        const uint8_t dpb_frames = REF_FRAMES;
         min_paref = num_pa_ref_for_cur_mg + 1 + lad_mg_pictures + scs_ptr->scd_delay + eos_delay + dpb_frames;
 #else
         min_paref = num_pa_ref_for_cur_mg + 1 + lad_mg_pictures + scs_ptr->scd_delay + eos_delay ;
@@ -922,10 +922,6 @@ EbErrorType load_default_buffer_configuration_settings(
         }
     }
 
-#if OPT_TPL_REF_BUFFERS
-    // TPL in each thread is performed in decode order; therefore, each thread requires the same number of TPL refs
-    scs_ptr->tpl_reference_picture_buffer_init_count *= scs_ptr->source_based_operations_process_init_count;
-#endif
     scs_ptr->total_process_init_count += 6; // single processes count
     if (scs_ptr->static_config.pass == 0 || scs_ptr->static_config.pass == 3){
         SVT_INFO("Number of logical cores available: %u\n", core_count);

@@ -201,7 +201,10 @@ typedef struct SequenceControlSet {
     uint32_t pa_reference_picture_buffer_init_count;
 #if OPT_TPL_REF_BUFFERS
     uint32_t tpl_reference_picture_buffer_init_count;
-    EbHandle ref_buffer_available_semaphore; // needed so that all REF pictures sent to PM will have an available ref buffer
+    /* ref_buffer_available_semaphore is needed so that all REF pictures
+    sent to PM will have an available ref buffer. If ref buffers are
+    not available in PM, it will result in a deadlock.*/
+    EbHandle ref_buffer_available_semaphore;
 #endif
     uint32_t reference_picture_buffer_init_count;
     uint32_t input_buffer_fifo_init_count;

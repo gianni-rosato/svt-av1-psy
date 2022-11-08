@@ -316,7 +316,7 @@ EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_
 
 #if OPT_TPL_REF_BUFFERS
 EbErrorType svt_tpl_reference_object_ctor(EbTplReferenceObject *tpl_ref_obj_,
-    EbPtr                object_init_data_ptr) {
+                                          EbPtr                 object_init_data_ptr) {
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr = (EbPictureBufferDescInitData *)
         object_init_data_ptr;
 
@@ -324,8 +324,8 @@ EbErrorType svt_tpl_reference_object_ctor(EbTplReferenceObject *tpl_ref_obj_,
 
     // Reference picture constructor
     EB_NEW(tpl_ref_obj_->ref_picture_ptr,
-        svt_picture_buffer_desc_ctor,
-        (EbPtr)picture_buffer_desc_init_data_ptr);
+           svt_picture_buffer_desc_ctor,
+           (EbPtr)picture_buffer_desc_init_data_ptr);
 
     return EB_ErrorNone;
 }

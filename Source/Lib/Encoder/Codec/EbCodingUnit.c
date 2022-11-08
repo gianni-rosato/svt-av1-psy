@@ -50,7 +50,8 @@ bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type) {
 }
 #if CLN_NSQ
 // Get the nsq_level used for each preset (to be passed to setting function: set_nsq_ctrls())
-uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base, InputCoeffLvl coeff_lvl) {
+uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base,
+                      InputCoeffLvl coeff_lvl) {
     uint8_t nsq_level;
     //set the nsq_level
     if (enc_mode <= ENC_MRS)
@@ -70,16 +71,14 @@ uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base, Inpu
             nsq_level = is_base ? 11 : 14;
         else // regular
             nsq_level = is_base ? 10 : 13;
-    }
-    else if (enc_mode <= ENC_M5) {
+    } else if (enc_mode <= ENC_M5) {
         if (coeff_lvl == LOW_LVL)
             nsq_level = is_base ? 15 : 0;
         else if (coeff_lvl == HIGH_LVL)
             nsq_level = is_base ? 17 : 0;
         else // regular
             nsq_level = is_base ? 16 : 0;
-    }
-    else
+    } else
         nsq_level = 0;
 
     return nsq_level;
@@ -117,7 +116,9 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
-                disallow_nsq = MIN(disallow_nsq, (get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+                disallow_nsq = MIN(
+                    disallow_nsq,
+                    (get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
 #else
     for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
         disallow_nsq = MIN(disallow_nsq, svt_aom_get_disallow_nsq(enc_mode, is_islice));

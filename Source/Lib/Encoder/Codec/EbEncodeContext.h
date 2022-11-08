@@ -124,11 +124,11 @@ typedef struct EncodeContext {
     EbObjectWrapper *picture_decision_undisplayed_queue[UNDISP_QUEUE_SIZE];
     uint32_t         picture_decision_undisplayed_queue_count;
     // Picture Manager Pre-Assignment Buffer
-    uint32_t          pre_assignment_buffer_intra_count;
-    uint32_t          pre_assignment_buffer_idr_count;
+    uint32_t pre_assignment_buffer_intra_count;
+    uint32_t pre_assignment_buffer_idr_count;
 #if !CLN_ENC_CTX
-    uint32_t          pre_assignment_buffer_scene_change_count;
-    uint32_t          pre_assignment_buffer_scene_change_index;
+    uint32_t pre_assignment_buffer_scene_change_count;
+    uint32_t pre_assignment_buffer_scene_change_index;
 #endif
     uint32_t          pre_assignment_buffer_eos_flag;
     uint64_t          decode_base_number;
@@ -136,8 +136,13 @@ typedef struct EncodeContext {
     uint32_t          pre_assignment_buffer_count;
 
 #if OPT_PD_REF_QUEUE
+#if CLN_PD_REF_Q
+    // Picture Decision decoded picture buffer - used to track PA refs
+    PaReferenceEntry **pd_dpb;
+#else
     // Picture Decision PA ref list
     PaReferenceQueueEntry **picture_decision_pa_reference_list;
+#endif
 #else
     // Picture Decision Circular Queues
     PaReferenceQueueEntry **picture_decision_pa_reference_queue;
@@ -146,25 +151,25 @@ typedef struct EncodeContext {
 #endif
 
     // Picture Manager Circular Queues
-    InputQueueEntry     **input_picture_queue;
-    uint32_t              input_picture_queue_head_index;
-    uint32_t              input_picture_queue_tail_index;
+    InputQueueEntry **input_picture_queue;
+    uint32_t          input_picture_queue_head_index;
+    uint32_t          input_picture_queue_tail_index;
 #if OPT_PM_REF_QUEUE
     // Picture Manager List
     ReferenceQueueEntry **reference_picture_list;
     uint32_t              reference_picture_list_length;
 #else
-    ReferenceQueueEntry **reference_picture_queue;
-    uint32_t              reference_picture_queue_head_index;
-    uint32_t              reference_picture_queue_tail_index;
+    ReferenceQueueEntry   **reference_picture_queue;
+    uint32_t                reference_picture_queue_head_index;
+    uint32_t                reference_picture_queue_tail_index;
 #endif
 
     // Initial Rate Control Reorder Queue
     InitialRateControlReorderEntry **initial_rate_control_reorder_queue;
     uint32_t                         initial_rate_control_reorder_queue_head_index;
 #if !OPT_REPLACE_DEP_CNT_CL
-    uint32_t                         dep_q_head;
-    uint32_t                         dep_q_tail;
+    uint32_t dep_q_head;
+    uint32_t dep_q_tail;
     PicQueueEntry **
         dep_cnt_picture_queue; //buffer to sotre all pictures needing dependent-count clean-up in PicMgr
 #endif
@@ -211,21 +216,21 @@ typedef struct EncodeContext {
     uint32_t         previous_mini_gop_hierarchical_levels;
     EbObjectWrapper *previous_picture_control_set_wrapper_ptr;
 #if !CLN_ENC_CTX
-    EbHandle         shared_reference_mutex;
+    EbHandle shared_reference_mutex;
 #endif
     uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames
 
     EbHandle stat_file_mutex;
 
 #if REMOVE_MANUAL_PRED
-    Bool                 is_mini_gop_changed;
+    Bool is_mini_gop_changed;
 #else
     //DPB list management
-    DPBInfo              dpb_list[REF_FRAMES];
-    uint64_t             display_picture_number;
-    Bool                 is_mini_gop_changed;
-    Bool                 is_i_slice_in_last_mini_gop;
-    uint64_t             i_slice_picture_number_in_last_mini_gop;
+    DPBInfo  dpb_list[REF_FRAMES];
+    uint64_t display_picture_number;
+    Bool     is_mini_gop_changed;
+    Bool     is_i_slice_in_last_mini_gop;
+    uint64_t i_slice_picture_number_in_last_mini_gop;
 #endif
     uint64_t             poc_map_idx[MAX_TPL_LA_SW];
     EbPictureBufferDesc *mc_flow_rec_picture_buffer[MAX_TPL_LA_SW];

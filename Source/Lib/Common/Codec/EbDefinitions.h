@@ -1316,6 +1316,9 @@ enum {
     SINGLE_REFS = FWD_REFS + BWD_REFS,
 };
 
+#if OPT_REPLACE_DEP_CNT
+#define REF_FRAMES_LOG2 3
+#endif
 #define REFS_PER_FRAME 7
 
 #define FWD_RF_OFFSET(ref) (ref - LAST_FRAME)
@@ -1367,8 +1370,10 @@ typedef enum ATTRIBUTE_PACKED {
 // onyxc_int.h
 #define CDEF_MAX_STRENGTHS 16
 
+#if !OPT_REPLACE_DEP_CNT
 #define REF_FRAMES_LOG2 3
 #define REF_FRAMES (1 << REF_FRAMES_LOG2)
+#endif
 
 #define UNDISP_QUEUE_SIZE (REF_FRAMES * 10)
 // 4 scratch frames for the new frames to support a maximum of 4 cores decoding

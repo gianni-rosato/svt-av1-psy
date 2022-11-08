@@ -51,7 +51,7 @@ extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 #endif
 
 void largest_coding_unit_dctor(EbPtr p);
-
+#if !CLN_PIC_MGR_PROC
 /************************************************
   * Configure Picture edges
   ************************************************/
@@ -80,6 +80,7 @@ static void configure_picture_edges(SequenceControlSet *scs_ptr, PictureControlS
 
     return;
 }
+#endif
 void write_stat_to_file(SequenceControlSet *scs_ptr, StatStruct stat_struct, uint64_t ref_poc);
 
 static void picture_manager_context_dctor(EbPtr p) {
@@ -108,7 +109,7 @@ EbErrorType picture_manager_context_ctor(EbThreadContext   *thread_context_ptr,
         enc_handle_ptr->enc_dec_pool_ptr_array[0], 0); //The Child PCS Pool here
 
 #if OPT_REPLACE_DEP_CNT_CL
-    context_ptr->consecutive_dec_order = 0;
+    context_ptr->consecutive_dec_order           = 0;
     context_ptr->started_pics_dec_order_head_idx = 0;
     context_ptr->started_pics_dec_order_tail_idx = 0;
 #endif
@@ -458,22 +459,22 @@ void *picture_manager_kernel(void *input_ptr) {
 #if !CLN_PIC_MGR_PROC
     PredictionStructureEntry *pred_position_ptr;
 #endif
-    InputQueueEntry          *input_entry_ptr;
-    uint32_t                  input_queue_index;
+    InputQueueEntry *input_entry_ptr;
+    uint32_t         input_queue_index;
 #if OPT_PM_REF_QUEUE
-    ReferenceQueueEntry      *reference_entry_ptr = NULL;
+    ReferenceQueueEntry *reference_entry_ptr = NULL;
 #else
-    ReferenceQueueEntry      *reference_entry_ptr;
-    uint32_t                  reference_queue_index;
+    ReferenceQueueEntry *reference_entry_ptr;
+    uint32_t             reference_queue_index;
 #endif
 #if !CLN_PIC_MGR_PROC
-    uint64_t                  ref_poc;
+    uint64_t ref_poc;
 #endif
 #if !OPT_REPLACE_DEP_CNT_CL
-    uint32_t                  dep_idx;
+    uint32_t dep_idx;
 #endif
-    PictureParentControlSet  *entry_pcs_ptr;
-    SequenceControlSet       *entry_scs_ptr;
+    PictureParentControlSet *entry_pcs_ptr;
+    SequenceControlSet      *entry_scs_ptr;
 
     // Initialization
     uint16_t pic_width_in_sb;
@@ -574,14 +575,13 @@ void *picture_manager_kernel(void *input_ptr) {
                 for (uint32_t i = 0; i < encode_context_ptr->reference_picture_list_length; i++) {
                     reference_entry_ptr = encode_context_ptr->reference_picture_list[i];
                     if (!reference_entry_ptr->is_valid) {
-                        // Create Reference List Entry even if picture will not be referenced
                         reference_entry_ptr->is_valid = 1;
                         break;
                     }
                     // Check if the reference list is full
                     CHECK_REPORT_ERROR(i != encode_context_ptr->reference_picture_list_length - 1,
-                        encode_context_ptr->app_callback_ptr,
-                        EB_ENC_PM_ERROR5);
+                                       encode_context_ptr->app_callback_ptr,
+                                       EB_ENC_PM_ERROR5);
                 }
 #else
                 // Check if the ReferencePictureQueue is full.
@@ -616,11 +616,15 @@ void *picture_manager_kernel(void *input_ptr) {
                 reference_entry_ptr->is_used_as_reference_flag = pcs_ptr->is_used_as_reference_flag;
 #if OPT_REPLACE_DEP_CNT_CL
                 reference_entry_ptr->decode_order = pcs_ptr->decode_order;
-                reference_entry_ptr->refresh_frame_mask = pcs_ptr->av1_ref_signal.refresh_frame_mask;
-                reference_entry_ptr->dec_order_of_last_ref = pcs_ptr->is_used_as_reference_flag ? UINT64_MAX : 0;
+                reference_entry_ptr->refresh_frame_mask =
+                    pcs_ptr->av1_ref_signal.refresh_frame_mask;
+                reference_entry_ptr->dec_order_of_last_ref = pcs_ptr->is_used_as_reference_flag
+                    ? UINT64_MAX
+                    : 0;
 #endif
 #if OPT_TPL_REF_BUFFERS
-                reference_entry_ptr->frame_end_cdf_update_required = pcs_ptr->frame_end_cdf_update_mode;
+                reference_entry_ptr->frame_end_cdf_update_required =
+                    pcs_ptr->frame_end_cdf_update_mode;
 #endif
 #if !OPT_PM_REF_QUEUE
                 encode_context_ptr->reference_picture_queue_tail_index =
@@ -678,7 +682,8 @@ void *picture_manager_kernel(void *input_ptr) {
             for (uint32_t i = 0; i < encode_context_ptr->reference_picture_list_length; i++) {
                 reference_entry_ptr = encode_context_ptr->reference_picture_list[i];
                 if (reference_entry_ptr->is_valid &&
-                    reference_entry_ptr->picture_number == input_picture_demux_ptr->picture_number) {
+                    reference_entry_ptr->picture_number ==
+                        input_picture_demux_ptr->picture_number) {
                     // Assign the reference object if there is a match
                     reference_entry_ptr->reference_object_ptr =
                         input_picture_demux_ptr->reference_picture_wrapper_ptr;
@@ -689,8 +694,8 @@ void *picture_manager_kernel(void *input_ptr) {
                 }
                 // Check if the reference list is full
                 CHECK_REPORT_ERROR(i != encode_context_ptr->reference_picture_list_length - 1,
-                    encode_context_ptr->app_callback_ptr,
-                    EB_ENC_PM_ERROR5);
+                                   encode_context_ptr->app_callback_ptr,
+                                   EB_ENC_PM_ERROR5);
             }
 #else
             // Check if Reference Queue is full
@@ -740,9 +745,10 @@ void *picture_manager_kernel(void *input_ptr) {
             for (uint32_t i = 0; i < encode_context_ptr->reference_picture_list_length; i++) {
                 reference_entry_ptr = encode_context_ptr->reference_picture_list[i];
                 if (reference_entry_ptr->is_valid &&
-                    reference_entry_ptr->picture_number == input_picture_demux_ptr->picture_number) {
+                    reference_entry_ptr->picture_number ==
+                        input_picture_demux_ptr->picture_number) {
                     // Set the feedback arrived
-                    reference_entry_ptr->feedback_arrived = TRUE;
+                    reference_entry_ptr->feedback_arrived      = TRUE;
                     reference_entry_ptr->frame_context_updated = TRUE;
                     break;
                 }
@@ -813,45 +819,51 @@ void *picture_manager_kernel(void *input_ptr) {
                     // Only start pictures that can be reached with the given number of reference buffers.
                     // PA may have more ref buffers than PM, so can send pictures faster, but PM can't start those
                     // pictures until it has sufficient buffers to reach it.
-                    if (entry_pcs_ptr->decode_order > (context_ptr->consecutive_dec_order + scs_ptr->reference_picture_buffer_init_count - 8 /*- 1*/))
+                    if (entry_pcs_ptr->decode_order >
+                        (context_ptr->consecutive_dec_order +
+                         scs_ptr->reference_picture_buffer_init_count - REF_FRAMES))
                         availability_flag = FALSE;
 #endif
 #if CLN_PIC_MGR_PROC
-                    if ((entry_pcs_ptr->slice_type == P_SLICE) || (entry_pcs_ptr->slice_type == B_SLICE)) {
-                        uint8_t max_ref_count = (entry_pcs_ptr->slice_type == B_SLICE) ? ALT + 1 : BWD; // no list1 refs for P_SLICE
+                    if ((entry_pcs_ptr->slice_type == P_SLICE) ||
+                        (entry_pcs_ptr->slice_type == B_SLICE)) {
+                        uint8_t max_ref_count = (entry_pcs_ptr->slice_type == B_SLICE)
+                            ? ALT + 1
+                            : BWD; // no list1 refs for P_SLICE
                         for (REF_FRAME_MINUS1 ref = LAST; ref < max_ref_count; ref++) {
                             // hardcode the reference for the overlay frame
-                            uint64_t ref_poc = entry_pcs_ptr->is_overlay ? entry_pcs_ptr->picture_number : entry_pcs_ptr->av1_ref_signal.ref_poc_array[ref];
+                            uint64_t ref_poc = entry_pcs_ptr->is_overlay
+                                ? entry_pcs_ptr->picture_number
+                                : entry_pcs_ptr->av1_ref_signal.ref_poc_array[ref];
 
                             uint8_t list_idx = get_list_idx(ref + 1);
-                            uint8_t ref_idx = get_ref_frame_idx(ref + 1);
+                            uint8_t ref_idx  = get_ref_frame_idx(ref + 1);
                             assert(IMPLIES(entry_pcs_ptr->is_overlay, list_idx == 0));
                             if ((list_idx == 0 && ref_idx >= entry_pcs_ptr->ref_list0_count) ||
                                 (list_idx == 1 && ref_idx >= entry_pcs_ptr->ref_list1_count))
                                 continue;
 
                             reference_entry_ptr = search_ref_in_ref_queue(encode_context_ptr,
-                                ref_poc);
+                                                                          ref_poc);
 
                             if (reference_entry_ptr != NULL) {
                                 availability_flag = (availability_flag == FALSE)
                                     ? FALSE
                                     : // Don't update if already False
                                     (scs_ptr->static_config.rate_control_mode &&
-                                        entry_pcs_ptr->slice_type != I_SLICE &&
-                                        entry_pcs_ptr->temporal_layer_index == 0 &&
-                                        !reference_entry_ptr->feedback_arrived &&
-                                        !encode_context_ptr->terminating_sequence_flag_received)
+                                     entry_pcs_ptr->slice_type != I_SLICE &&
+                                     entry_pcs_ptr->temporal_layer_index == 0 &&
+                                     !reference_entry_ptr->feedback_arrived &&
+                                     !encode_context_ptr->terminating_sequence_flag_received)
                                     ? FALSE
                                     : (entry_pcs_ptr->frame_end_cdf_update_mode &&
-                                        !reference_entry_ptr->frame_context_updated)
+                                       !reference_entry_ptr->frame_context_updated)
                                     ? FALSE
                                     : (reference_entry_ptr->reference_available)
                                     ? TRUE
                                     : // The Reference has been completed
                                     FALSE; // The Reference has not been completed
-                            }
-                            else {
+                            } else {
                                 availability_flag = FALSE;
                             }
                         }
@@ -941,23 +953,24 @@ void *picture_manager_kernel(void *input_ptr) {
                     if (availability_flag == TRUE) {
 #if OPT_TPL_REF_BUFFERS
                         if (entry_pcs_ptr->is_used_as_reference_flag) {
-                            EbObjectWrapper* reference_picture_wrapper;
+                            EbObjectWrapper *reference_picture_wrapper;
                             // Get Empty Reference Picture Object
                             svt_get_empty_object(
                                 scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
                                 &reference_picture_wrapper);
-                            entry_pcs_ptr->reference_picture_wrapper_ptr = reference_picture_wrapper;
+                            entry_pcs_ptr->reference_picture_wrapper_ptr =
+                                reference_picture_wrapper;
                             // reset reference object in case of its members are altered by superres tool
-                            EbReferenceObject* ref =
-                                (EbReferenceObject*)reference_picture_wrapper->object_ptr;
+                            EbReferenceObject *ref = (EbReferenceObject *)
+                                                         reference_picture_wrapper->object_ptr;
                             svt_reference_object_reset(ref, scs_ptr);
                             // Give the new Reference a nominal live_count of 1
-                            svt_object_inc_live_count(entry_pcs_ptr->reference_picture_wrapper_ptr, 1);
+                            svt_object_inc_live_count(entry_pcs_ptr->reference_picture_wrapper_ptr,
+                                                      1);
 #if SRM_REPORT
                             pcs->reference_picture_wrapper_ptr->pic_number = pcs->picture_number;
 #endif
-                        }
-                        else {
+                        } else {
                             entry_pcs_ptr->reference_picture_wrapper_ptr = NULL;
                         }
 #endif
@@ -1021,39 +1034,43 @@ void *picture_manager_kernel(void *input_ptr) {
                         if (entry_pcs_ptr->decode_order == context_ptr->consecutive_dec_order + 1) {
                             context_ptr->consecutive_dec_order++;
 
-                            if (context_ptr->started_pics_dec_order_head_idx != context_ptr->started_pics_dec_order_tail_idx) {
-
-                                for (int idx = context_ptr->started_pics_dec_order_head_idx; idx != context_ptr->started_pics_dec_order_tail_idx;) {
-                                    if (context_ptr->started_pics_dec_order[idx] == context_ptr->consecutive_dec_order + 1) {
+                            if (context_ptr->started_pics_dec_order_head_idx !=
+                                context_ptr->started_pics_dec_order_tail_idx) {
+                                for (int idx = context_ptr->started_pics_dec_order_head_idx;
+                                     idx != context_ptr->started_pics_dec_order_tail_idx;) {
+                                    if (context_ptr->started_pics_dec_order[idx] ==
+                                        context_ptr->consecutive_dec_order + 1) {
                                         context_ptr->consecutive_dec_order++;
                                         idx = context_ptr->started_pics_dec_order_head_idx;
-                                    }
-                                    else {
-                                        idx = (idx == REFERENCE_QUEUE_MAX_DEPTH - 1)
-                                            ? 0
-                                            : idx + 1;
+                                    } else {
+                                        idx = (idx == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : idx + 1;
                                     }
                                 }
 
-                                while (context_ptr->started_pics_dec_order_head_idx != context_ptr->started_pics_dec_order_tail_idx &&
-                                    context_ptr->started_pics_dec_order[context_ptr->started_pics_dec_order_head_idx] <= context_ptr->consecutive_dec_order) {
+                                while (context_ptr->started_pics_dec_order_head_idx !=
+                                           context_ptr->started_pics_dec_order_tail_idx &&
+                                       context_ptr->started_pics_dec_order
+                                               [context_ptr->started_pics_dec_order_head_idx] <=
+                                           context_ptr->consecutive_dec_order) {
                                     context_ptr->started_pics_dec_order_head_idx =
-                                        (context_ptr->started_pics_dec_order_head_idx == REFERENCE_QUEUE_MAX_DEPTH - 1)
+                                        (context_ptr->started_pics_dec_order_head_idx ==
+                                         REFERENCE_QUEUE_MAX_DEPTH - 1)
                                         ? 0
                                         : context_ptr->started_pics_dec_order_head_idx + 1;
                                 }
                             }
-                        }
-                        else if (entry_pcs_ptr->decode_order > 0) {
-                            context_ptr->started_pics_dec_order[context_ptr->started_pics_dec_order_tail_idx] = entry_pcs_ptr->decode_order;
+                        } else if (entry_pcs_ptr->decode_order > 0) {
+                            context_ptr->started_pics_dec_order
+                                [context_ptr->started_pics_dec_order_tail_idx] =
+                                entry_pcs_ptr->decode_order;
                             context_ptr->started_pics_dec_order_tail_idx =
-                                (context_ptr->started_pics_dec_order_tail_idx == REFERENCE_QUEUE_MAX_DEPTH - 1)
+                                (context_ptr->started_pics_dec_order_tail_idx ==
+                                 REFERENCE_QUEUE_MAX_DEPTH - 1)
                                 ? 0
                                 : context_ptr->started_pics_dec_order_tail_idx + 1;
                         }
 #endif
                         //3.make all  init for ChildPCS
-
                         pic_width_in_sb = (entry_pcs_ptr->aligned_width + entry_scs_ptr->sb_size -
                                            1) /
                             entry_scs_ptr->sb_size;
@@ -1169,10 +1186,12 @@ void *picture_manager_kernel(void *input_ptr) {
                             }
                         }
                         cm->mi_stride = child_pcs_ptr->mi_stride;
+#if !CLN_PIC_MGR_PROC
                         // Picture edges
                         configure_picture_edges(entry_scs_ptr, child_pcs_ptr);
                         // Error resilience related
                         child_pcs_ptr->colocated_pu_ref_list = REF_LIST_0; // to be modified
+#endif
                         // Reset the Reference Lists
                         EB_MEMSET(child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0],
                                   0,
@@ -1200,43 +1219,52 @@ void *picture_manager_kernel(void *input_ptr) {
                                   REF_LIST_MAX_DEPTH * sizeof(double));
 #if CLN_PIC_MGR_PROC
                         int8_t ref_index = 0;
-                        if ((entry_pcs_ptr->slice_type == P_SLICE) || (entry_pcs_ptr->slice_type == B_SLICE)) {
-                            int8_t max_temporal_index = -1;
-                            uint8_t max_ref_count = (entry_pcs_ptr->slice_type == B_SLICE) ? ALT + 1 : BWD; // no list1 refs for P_SLICE
+                        if ((entry_pcs_ptr->slice_type == P_SLICE) ||
+                            (entry_pcs_ptr->slice_type == B_SLICE)) {
+                            int8_t  max_temporal_index = -1;
+                            uint8_t max_ref_count      = (entry_pcs_ptr->slice_type == B_SLICE)
+                                     ? ALT + 1
+                                     : BWD; // no list1 refs for P_SLICE
                             for (REF_FRAME_MINUS1 ref = LAST; ref < max_ref_count; ref++) {
                                 // hardcode the reference for the overlay frame
-                                uint64_t ref_poc = entry_pcs_ptr->is_overlay ? entry_pcs_ptr->picture_number : entry_pcs_ptr->av1_ref_signal.ref_poc_array[ref];
+                                uint64_t ref_poc = entry_pcs_ptr->is_overlay
+                                    ? entry_pcs_ptr->picture_number
+                                    : entry_pcs_ptr->av1_ref_signal.ref_poc_array[ref];
 
                                 uint8_t list_idx = get_list_idx(ref + 1);
-                                uint8_t ref_idx = get_ref_frame_idx(ref + 1);
+                                uint8_t ref_idx  = get_ref_frame_idx(ref + 1);
                                 assert(IMPLIES(entry_pcs_ptr->is_overlay, list_idx == 0));
                                 if ((list_idx == 0 && ref_idx >= entry_pcs_ptr->ref_list0_count) ||
                                     (list_idx == 1 && ref_idx >= entry_pcs_ptr->ref_list1_count))
                                     continue;
 
                                 reference_entry_ptr = search_ref_in_ref_queue(encode_context_ptr,
-                                    ref_poc);
+                                                                              ref_poc);
                                 assert(reference_entry_ptr != 0);
                                 CHECK_REPORT_ERROR((reference_entry_ptr),
-                                    encode_context_ptr->app_callback_ptr,
-                                    EB_ENC_PM_ERROR10);
+                                                   encode_context_ptr->app_callback_ptr,
+                                                   EB_ENC_PM_ERROR10);
 
                                 if (entry_pcs_ptr->frame_end_cdf_update_mode) {
-                                    child_pcs_ptr->ref_frame_context[svt_get_ref_frame_type(list_idx, ref_idx) - LAST_FRAME] =
-                                        ((EbReferenceObject *)reference_entry_ptr
-                                            ->reference_object_ptr->object_ptr)
-                                        ->frame_context;
+                                    child_pcs_ptr->ref_frame_context[svt_get_ref_frame_type(
+                                                                         list_idx, ref_idx) -
+                                                                     LAST_FRAME] =
+                                        ((EbReferenceObject *)
+                                             reference_entry_ptr->reference_object_ptr->object_ptr)
+                                            ->frame_context;
                                     if (max_temporal_index <
-                                        (int8_t)reference_entry_ptr->temporal_layer_index &&
+                                            (int8_t)reference_entry_ptr->temporal_layer_index &&
                                         (int8_t)reference_entry_ptr->temporal_layer_index <=
-                                        child_pcs_ptr->temporal_layer_index) {
+                                            child_pcs_ptr->temporal_layer_index) {
                                         max_temporal_index =
                                             (int8_t)reference_entry_ptr->temporal_layer_index;
-                                        ref_index = svt_get_ref_frame_type(list_idx, ref_idx) - LAST_FRAME;
-                                        for (int frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame) {
+                                        ref_index = svt_get_ref_frame_type(list_idx, ref_idx) -
+                                            LAST_FRAME;
+                                        for (int frame = LAST_FRAME; frame <= ALTREF_FRAME;
+                                             ++frame) {
                                             EbReferenceObject *ref_obj =
                                                 (EbReferenceObject *)reference_entry_ptr
-                                                ->reference_object_ptr->object_ptr;
+                                                    ->reference_object_ptr->object_ptr;
 
                                             child_pcs_ptr->ref_global_motion[frame] =
                                                 ref_obj->slice_type != I_SLICE
@@ -1250,55 +1278,56 @@ void *picture_manager_kernel(void *input_ptr) {
                                     reference_entry_ptr->reference_object_ptr;
                                 child_pcs_ptr->ref_pic_qp_array[list_idx][ref_idx] =
                                     (uint8_t)((EbReferenceObject *)reference_entry_ptr
-                                        ->reference_object_ptr->object_ptr)
-                                    ->qp;
+                                                  ->reference_object_ptr->object_ptr)
+                                        ->qp;
                                 child_pcs_ptr->ref_slice_type_array[list_idx][ref_idx] =
                                     ((EbReferenceObject *)
-                                        reference_entry_ptr->reference_object_ptr->object_ptr)
-                                    ->slice_type;
+                                         reference_entry_ptr->reference_object_ptr->object_ptr)
+                                        ->slice_type;
                                 child_pcs_ptr->ref_pic_r0[list_idx][ref_idx] =
                                     ((EbReferenceObject *)
-                                        reference_entry_ptr->reference_object_ptr->object_ptr)
-                                    ->r0;
+                                         reference_entry_ptr->reference_object_ptr->object_ptr)
+                                        ->r0;
                                 // Increment the Reference's liveCount by the number of tiles in the input picture
-                                svt_object_inc_live_count(
-                                    reference_entry_ptr->reference_object_ptr, 1);
+                                svt_object_inc_live_count(reference_entry_ptr->reference_object_ptr,
+                                                          1);
 
 #if DEBUG_SFRAME
                                 if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
                                     fprintf(stderr,
-                                        "\nframe %d, layer %d, ref-list-0 count %u, ref "
-                                        "frame %d, ref frame remain dep count %d\n",
-                                        (int)child_pcs_ptr->picture_number,
-                                        entry_pcs_ptr->temporal_layer_index,
-                                        entry_pcs_ptr->ref_list0_count,
-                                        (int)child_pcs_ptr->parent_pcs_ptr
-                                        ->ref_pic_poc_array[REF_LIST_0][ref_idx],
-                                        reference_entry_ptr->dependent_count);
+                                            "\nframe %d, layer %d, ref-list-0 count %u, ref "
+                                            "frame %d, ref frame remain dep count %d\n",
+                                            (int)child_pcs_ptr->picture_number,
+                                            entry_pcs_ptr->temporal_layer_index,
+                                            entry_pcs_ptr->ref_list0_count,
+                                            (int)child_pcs_ptr->parent_pcs_ptr
+                                                ->ref_pic_poc_array[REF_LIST_0][ref_idx],
+                                            reference_entry_ptr->dependent_count);
                                 }
 #endif
                             }
 
                             //fill the non used spots to be used in MFMV.
                             for (uint8_t ref_idx = entry_pcs_ptr->ref_list0_count; ref_idx < 4;
-                                ++ref_idx)
+                                 ++ref_idx)
                                 child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][ref_idx] =
-                                child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0];
+                                    child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0];
 
                             if (entry_pcs_ptr->ref_list1_count == 0) {
                                 for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count; ref_idx < 3;
-                                    ++ref_idx)
+                                     ++ref_idx)
                                     child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx] =
-                                    child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0];
+                                        child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0];
                             }
 
                             if (entry_pcs_ptr->slice_type == B_SLICE) {
                                 //fill the non used spots to be used in MFMV.
                                 if (entry_pcs_ptr->ref_list1_count) {
-                                    for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count; ref_idx < 3;
-                                        ++ref_idx)
+                                    for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count;
+                                         ref_idx < 3;
+                                         ++ref_idx)
                                         child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx] =
-                                        child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0];
+                                            child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0];
                                 }
                             }
                         }
@@ -1379,7 +1408,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                     if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
                                         fprintf(stderr,
                                                 "\nframe %d, layer %d, ref-list-0 count %u, ref "
-                                                "frame %d, ref frame remain dep count %d\n",
+                                                            "frame %d, ref frame remain dep count %d\n",
                                                 (int)child_pcs_ptr->picture_number,
                                                 entry_pcs_ptr->temporal_layer_index,
                                                 entry_pcs_ptr->ref_list0_count,
@@ -1483,7 +1512,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                     if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
                                         fprintf(stderr,
                                                 "\nframe %d, layer %d, ref-list-1 count %u, ref "
-                                                "frame %d, ref frame remain dep count %d\n",
+                                                            "frame %d, ref frame remain dep count %d\n",
                                                 (int)child_pcs_ptr->picture_number,
                                                 entry_pcs_ptr->temporal_layer_index,
                                                 entry_pcs_ptr->ref_list1_count,
@@ -1546,47 +1575,54 @@ void *picture_manager_kernel(void *input_ptr) {
                         // Remove the Input Entry from the Input Queue
                         input_entry_ptr->input_object_ptr = (EbObjectWrapper *)NULL;
 #if OPT_PM_REF_QUEUE
-                        for (uint32_t i = 0; i < encode_context_ptr->reference_picture_list_length; i++) {
+                        for (uint32_t i = 0; i < encode_context_ptr->reference_picture_list_length;
+                             i++) {
                             reference_entry_ptr = encode_context_ptr->reference_picture_list[i];
                             if (reference_entry_ptr->is_valid) {
-                                for (uint8_t idx = 0; idx < entry_pcs_ptr->released_pics_count; idx++) {
-                                    if (reference_entry_ptr->decode_order == entry_pcs_ptr->released_pics[idx]) {
-                                        reference_entry_ptr->dec_order_of_last_ref = entry_pcs_ptr->decode_order;
+                                for (uint8_t idx = 0; idx < entry_pcs_ptr->released_pics_count;
+                                     idx++) {
+                                    if (reference_entry_ptr->decode_order ==
+                                        entry_pcs_ptr->released_pics[idx]) {
+                                        reference_entry_ptr->dec_order_of_last_ref =
+                                            entry_pcs_ptr->decode_order;
                                     }
                                 }
 #if !OPT_TPL_REF_BUFFERS
                                 // Remove the entry & release the reference if there are no remaining references
-                                if (reference_entry_ptr->dec_order_of_last_ref <= context_ptr->consecutive_dec_order &&
+                                if (reference_entry_ptr->dec_order_of_last_ref <=
+                                        context_ptr->consecutive_dec_order &&
                                     reference_entry_ptr->release_enable &&
                                     reference_entry_ptr->reference_available &&
                                     reference_entry_ptr->reference_object_ptr) {
                                     // Release the nominal live_count value
                                     svt_release_object(reference_entry_ptr->reference_object_ptr);
-                                    reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)NULL;
-                                    reference_entry_ptr->reference_available = FALSE;
+                                    reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)
+                                        NULL;
+                                    reference_entry_ptr->reference_available       = FALSE;
                                     reference_entry_ptr->is_used_as_reference_flag = FALSE;
-                                    reference_entry_ptr->is_valid = false;
-                                }
-                                else if (reference_entry_ptr->dec_order_of_last_ref <= context_ptr->consecutive_dec_order &&
-                                    reference_entry_ptr->release_enable &&
-                                    !reference_entry_ptr->is_used_as_reference_flag) {
-
+                                    reference_entry_ptr->is_valid                  = false;
+                                } else if (reference_entry_ptr->dec_order_of_last_ref <=
+                                               context_ptr->consecutive_dec_order &&
+                                           reference_entry_ptr->release_enable &&
+                                           !reference_entry_ptr->is_used_as_reference_flag) {
                                     // If entry is not used as a reference, there is no ref object to release, but
                                     // we still need to clear the entry in the ref list for other frames to use
                                     // TODO: Why are non-ref pics added to the queue at all?
-                                    reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)NULL;
-                                    reference_entry_ptr->reference_available = FALSE;
+                                    reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)
+                                        NULL;
+                                    reference_entry_ptr->reference_available       = FALSE;
                                     reference_entry_ptr->is_used_as_reference_flag = FALSE;
-                                    reference_entry_ptr->is_valid = false;
+                                    reference_entry_ptr->is_valid                  = false;
                                 }
 #endif
                             }
                         }
 #elif OPT_REPLACE_DEP_CNT_CL
                         // Walk the reference queue and remove entries that have been completely referenced.
-                        reference_queue_index = encode_context_ptr->reference_picture_queue_head_index;
+                        reference_queue_index =
+                            encode_context_ptr->reference_picture_queue_head_index;
                         while (reference_queue_index !=
-                            encode_context_ptr->reference_picture_queue_tail_index) {
+                               encode_context_ptr->reference_picture_queue_tail_index) {
                             reference_entry_ptr =
                                 encode_context_ptr->reference_picture_queue[reference_queue_index];
 #if 0
@@ -1597,15 +1633,19 @@ void *picture_manager_kernel(void *input_ptr) {
                                 reference_entry_ptr->dec_order_of_last_ref = MAX(reference_entry_ptr->dec_order_of_last_ref, entry_pcs_ptr->decode_order);
                             }
 #endif
-                            assert(IMPLIES(entry_pcs_ptr->is_overlay, entry_pcs_ptr->released_pics_count == 0));
+                            assert(IMPLIES(entry_pcs_ptr->is_overlay,
+                                           entry_pcs_ptr->released_pics_count == 0));
                             for (uint8_t idx = 0; idx < entry_pcs_ptr->released_pics_count; idx++) {
-                                if (reference_entry_ptr->decode_order == entry_pcs_ptr->released_pics[idx])
-                                    reference_entry_ptr->dec_order_of_last_ref = entry_pcs_ptr->decode_order;
+                                if (reference_entry_ptr->decode_order ==
+                                    entry_pcs_ptr->released_pics[idx])
+                                    reference_entry_ptr->dec_order_of_last_ref =
+                                        entry_pcs_ptr->decode_order;
                             }
 #if 1
                             // Remove the entry & release the reference if there are no remaining references
-                            if (//(reference_entry_ptr->refresh_frame_mask == 0) &&
-                                reference_entry_ptr->dec_order_of_last_ref <= context_ptr->consecutive_dec_order &&
+                            if ( //(reference_entry_ptr->refresh_frame_mask == 0) &&
+                                reference_entry_ptr->dec_order_of_last_ref <=
+                                    context_ptr->consecutive_dec_order &&
 #else
                             if ((reference_entry_ptr->dependent_count == 0) &&
 #endif
@@ -1615,54 +1655,57 @@ void *picture_manager_kernel(void *input_ptr) {
 
                                 // Release the nominal live_count value
                                 svt_release_object(reference_entry_ptr->reference_object_ptr);
-                                    reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)NULL;
-                                reference_entry_ptr->reference_available = FALSE;
+                                reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)NULL;
+                                reference_entry_ptr->reference_available       = FALSE;
                                 reference_entry_ptr->is_used_as_reference_flag = FALSE;
                             }
 
                             // Increment the head_index if the head is empty
                             encode_context_ptr->reference_picture_queue_head_index =
                                 (encode_context_ptr
-                                    ->reference_picture_queue[encode_context_ptr
-                                    ->reference_picture_queue_head_index]
-                                    ->release_enable == FALSE)
-                                ? encode_context_ptr->reference_picture_queue_head_index
-                                : (encode_context_ptr
-                                    ->reference_picture_queue[encode_context_ptr
-                                    ->reference_picture_queue_head_index]
-                                    ->reference_available == FALSE &&
-                                    encode_context_ptr
-                                    ->reference_picture_queue[encode_context_ptr
-                                    ->reference_picture_queue_head_index]
-                                    ->is_used_as_reference_flag == TRUE)
-                                ? encode_context_ptr->reference_picture_queue_head_index
-                                :
+                                     ->reference_picture_queue
+                                         [encode_context_ptr->reference_picture_queue_head_index]
+                                     ->release_enable == FALSE)
+                                            ? encode_context_ptr->reference_picture_queue_head_index
+                                            : (encode_context_ptr
+                                           ->reference_picture_queue
+                                               [encode_context_ptr
+                                                    ->reference_picture_queue_head_index]
+                                           ->reference_available == FALSE &&
+                                   encode_context_ptr
+                                           ->reference_picture_queue
+                                               [encode_context_ptr
+                                                    ->reference_picture_queue_head_index]
+                                           ->is_used_as_reference_flag == TRUE)
+                                            ? encode_context_ptr->reference_picture_queue_head_index
+                                            :
 #if OPT_REPLACE_DEP_CNT_CL
-                                // Don't use greater than check because dec_order_of_last_ref is init'd to UINT64_MAX
+                                            // Don't use greater than check because dec_order_of_last_ref is init'd to UINT64_MAX
                                 !(encode_context_ptr
-                                    ->reference_picture_queue[encode_context_ptr
-                                    ->reference_picture_queue_head_index]
-                                    ->dec_order_of_last_ref <= context_ptr->consecutive_dec_order)
-                                //(encode_context_ptr
-                                //    ->reference_picture_queue[encode_context_ptr
-                                //    ->reference_picture_queue_head_index]
-                                //    ->refresh_frame_mask)
+                                      ->reference_picture_queue
+                                          [encode_context_ptr->reference_picture_queue_head_index]
+                                      ->dec_order_of_last_ref <= context_ptr->consecutive_dec_order)
+                            //(encode_context_ptr
+                            //    ->reference_picture_queue[encode_context_ptr
+                            //    ->reference_picture_queue_head_index]
+                            //    ->refresh_frame_mask)
 #else
                                 (encode_context_ptr
-                                    ->reference_picture_queue[encode_context_ptr
-                                    ->reference_picture_queue_head_index]
-                                    ->dependent_count > 0)
+                                     ->reference_picture_queue
+                                         [encode_context_ptr->reference_picture_queue_head_index]
+                                     ->dependent_count > 0)
 #endif
-                                ? encode_context_ptr->reference_picture_queue_head_index
-                                : (encode_context_ptr->reference_picture_queue_head_index ==
-                                    REFERENCE_QUEUE_MAX_DEPTH - 1)
-                                ? 0
-                                : encode_context_ptr->reference_picture_queue_head_index + 1;
+                                            ? encode_context_ptr->reference_picture_queue_head_index
+                                            : (encode_context_ptr->reference_picture_queue_head_index ==
+                                   REFERENCE_QUEUE_MAX_DEPTH - 1)
+                                                ? 0
+                                                : encode_context_ptr->reference_picture_queue_head_index + 1;
 
                             // Increment the reference_queue_index Iterator
-                            reference_queue_index = (reference_queue_index == REFERENCE_QUEUE_MAX_DEPTH - 1)
-                                ? 0
-                                : reference_queue_index + 1;
+                            reference_queue_index = (reference_queue_index ==
+                                                     REFERENCE_QUEUE_MAX_DEPTH - 1)
+                                            ? 0
+                                            : reference_queue_index + 1;
                         }
 #endif
                     }
@@ -1688,32 +1731,32 @@ void *picture_manager_kernel(void *input_ptr) {
             for (uint32_t i = 0; i < encode_context_ptr->reference_picture_list_length; i++) {
                 reference_entry_ptr = encode_context_ptr->reference_picture_list[i];
                 if (reference_entry_ptr->is_valid) {
-
                     // Remove the entry & release the reference if there are no remaining references
-                    if (reference_entry_ptr->dec_order_of_last_ref <= context_ptr->consecutive_dec_order &&
+                    if (reference_entry_ptr->dec_order_of_last_ref <=
+                            context_ptr->consecutive_dec_order &&
                         reference_entry_ptr->release_enable &&
                         reference_entry_ptr->reference_available &&
 #if OPT_TPL_REF_BUFFERS // why wasn't this a condition previously?
                         reference_entry_ptr->reference_object_ptr &&
                         (!reference_entry_ptr->frame_end_cdf_update_required ||
-                            reference_entry_ptr->frame_context_updated)) {
+                         reference_entry_ptr->frame_context_updated)) {
 #else
                         reference_entry_ptr->reference_object_ptr) {
 #endif
-                            // Release the nominal live_count value
-                            svt_release_object(reference_entry_ptr->reference_object_ptr);
-                            reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)NULL;
-                            reference_entry_ptr->reference_available = FALSE;
-                            reference_entry_ptr->is_used_as_reference_flag = FALSE;
-                            reference_entry_ptr->is_valid = false;
+                        // Release the nominal live_count value
+                        svt_release_object(reference_entry_ptr->reference_object_ptr);
+                        reference_entry_ptr->reference_object_ptr      = (EbObjectWrapper *)NULL;
+                        reference_entry_ptr->reference_available       = FALSE;
+                        reference_entry_ptr->is_used_as_reference_flag = FALSE;
+                        reference_entry_ptr->is_valid                  = false;
 #if OPT_TPL_REF_BUFFERS
-                            reference_entry_ptr->frame_context_updated = FALSE;
-                            reference_entry_ptr->feedback_arrived = FALSE;
-                            svt_post_semaphore(scs_ptr->ref_buffer_available_semaphore);
+                        reference_entry_ptr->frame_context_updated = FALSE;
+                        reference_entry_ptr->feedback_arrived      = FALSE;
+                        svt_post_semaphore(scs_ptr->ref_buffer_available_semaphore);
 #endif
-                        }
                     }
                 }
+            }
 #endif
 #if !OPT_REPLACE_DEP_CNT_CL
             // Walk the reference queue and remove entries that have been completely referenced.

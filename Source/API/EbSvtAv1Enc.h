@@ -715,7 +715,18 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t superres_kf_qthres;
     uint8_t superres_auto_search_type;
 
-#if !REMOVE_MANUAL_PRED
+#if REMOVE_MANUAL_PRED
+#if !SVT_AV1_CHECK_VERSION(1, 5, 0)
+    /* DEPRECATED: to be removed in 1.5.0. */
+    PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
+
+    /* DEPRECATED: to be removed in 1.5.0. */
+    Bool enable_manual_pred_struct;
+
+    /* DEPRECATED: to be removed in 1.5.0. */
+    int32_t manual_pred_struct_entry_num;
+#endif
+#else
     /**
      * @brief API signal containing the manual prediction structure parameters.
      * Only used when enable_manual_pred_struct is enabled. This list is copied

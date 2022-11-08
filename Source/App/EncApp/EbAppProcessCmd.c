@@ -110,7 +110,7 @@ void log_error_output(FILE *error_log_file, uint32_t error_code) {
 #if !OPT_PD_REF_QUEUE
     case EB_ENC_PD_ERROR4:
         fprintf(error_log_file,
-            "Error: PictureDecisionProcess: Picture Decision PA Reference Queue is full\n");
+                "Error: PictureDecisionProcess: Picture Decision PA Reference Queue is full\n");
         break;
 #endif
     case EB_ENC_PD_ERROR8:

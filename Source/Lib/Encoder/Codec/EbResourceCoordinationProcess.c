@@ -436,10 +436,10 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
 #if CLN_PIC_DEC_PROC
 // Film grain (assigning the random-seed)
 static void assign_film_grain_random_seed(PictureParentControlSet *pcs) {
-    uint16_t *fgn_random_seed_ptr = &pcs->scs_ptr->film_grain_random_seed;
+    uint16_t *fgn_random_seed_ptr              = &pcs->scs_ptr->film_grain_random_seed;
     pcs->frm_hdr.film_grain_params.random_seed = *fgn_random_seed_ptr;
-    *fgn_random_seed_ptr += 3381;  // Changing random seed for film grain
-    if (!(*fgn_random_seed_ptr))     // Random seed should not be zero
+    *fgn_random_seed_ptr += 3381; // Changing random seed for film grain
+    if (!(*fgn_random_seed_ptr)) // Random seed should not be zero
         *fgn_random_seed_ptr += 7391;
 }
 #endif
@@ -449,17 +449,17 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 
     pcs_ptr->gf_interval = 0;
 
-    pcs_ptr->reference_released   = 0;
+    pcs_ptr->reference_released = 0;
 #if CLN_PIC_DEC_PROC
     frm_hdr->skip_mode_params.skip_mode_allowed = 0;
-    frm_hdr->skip_mode_params.skip_mode_flag = 0;
+    frm_hdr->skip_mode_params.skip_mode_flag    = 0;
 #else
     pcs_ptr->is_skip_mode_allowed = 0;
     pcs_ptr->skip_mode_flag       = 0;
 #endif
-    frm_hdr->frame_type           = KEY_FRAME;
-    frm_hdr->show_frame           = 1;
-    frm_hdr->showable_frame       = 1; // frame can be used as show existing frame in future
+    frm_hdr->frame_type     = KEY_FRAME;
+    frm_hdr->show_frame     = 1;
+    frm_hdr->showable_frame = 1; // frame can be used as show existing frame in future
     // Flag for a frame used as a reference - not written to the Bitstream
     pcs_ptr->is_reference_frame = 0;
     // Flag signaling that the frame is encoded using only INTRA modes.

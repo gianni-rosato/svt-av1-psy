@@ -85,6 +85,8 @@ extern "C" {
 #if CLN_NSQ
 #define ADD_NSQ_ENABLE             1 // Replace disallow_nsq
 #endif
+#define CLN_PD_REF_Q               1 // Rename PD PA reference list to DPB to clarify how it's used
+#define CLN_REMOVE_LEAD_PIC        1 // Remove leading picture derivations from prediction_structure_ctor
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
