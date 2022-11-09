@@ -2218,19 +2218,14 @@ static bool find_token_multiple_inputs(unsigned nch, int argc, char *const argv[
                                        const char *token, char *configStr[MAX_CHANNEL_NUMBER],
                                        const char *cmd_copy[MAX_NUM_TOKENS],
                                        const char *arg_copy[MAX_NUM_TOKENS]) {
-    bool return_error    = false;
-    bool printed_warning = false; // used to limit the printing once per token
+    bool return_error   = false;
+    bool has_duplicates = false;
     // Loop over all the arguments
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i], token))
             continue;
-        if (return_error && !printed_warning) {
-            fprintf(
-                stderr,
-                "\n[SVT-Warning]: Duplicate option %s specified, only the last one will apply\n\n",
-                token);
-            printed_warning = true;
-        }
+        if (return_error)
+            has_duplicates = true;
         return_error = true;
         if (i + 1 >= argc) {
             // if the token is at the end of the command line without arguments
@@ -2250,6 +2245,12 @@ static bool find_token_multiple_inputs(unsigned nch, int argc, char *const argv[
             strcpy_s(configStr[count], COMMAND_LINE_MAX_SIZE, argv[j]);
             arg_copy[j] = TOKEN_READ_MARKER;
         }
+    }
+
+    if (has_duplicates) {
+        fprintf(stderr, "\n[SVT-Warning]: Duplicate option %s specified, only `%s", token, token);
+        for (unsigned count = 0; count < nch; ++count) fprintf(stderr, " %s", configStr[count]);
+        fprintf(stderr, "` will apply\n\n");
     }
 
     return return_error;
