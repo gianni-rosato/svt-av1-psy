@@ -2903,6 +2903,11 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         }
     }
 
+    // First handle --nch and --passes as a single argument options
+    find_token_multiple_inputs(
+        1, argc, argv, CHANNEL_NUMBER_TOKEN, config_strings, cmd_copy, arg_copy);
+    find_token_multiple_inputs(1, argc, argv, PASSES_TOKEN, config_strings, cmd_copy, arg_copy);
+
     /***************************************************************************************************/
     /****************  Find configuration files tokens and call respective functions  ******************/
     /***************************************************************************************************/
