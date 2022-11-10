@@ -2199,7 +2199,8 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
     return return_error;
 }
 
-static const char *TOKEN_READ_MARKER = "THIS_TOKEN_HAS_BEEN_READ";
+static const char *TOKEN_READ_MARKER  = "THIS_TOKEN_HAS_BEEN_READ";
+static const char *TOKEN_ERROR_MARKER = "THIS_TOKEN_HAS_ERROR";
 
 /**
  * @brief Finds the arguments for a specific token
@@ -2245,6 +2246,13 @@ static bool find_token_multiple_inputs(unsigned nch, int argc, char *const argv[
             strcpy_s(configStr[count], COMMAND_LINE_MAX_SIZE, argv[j]);
             arg_copy[j] = TOKEN_READ_MARKER;
         }
+    }
+
+    if (return_error && !strcmp(configStr[0], " ")) {
+        // if no argument was found, print an error message
+        // we don't support flip switches, so this will need to be changed if we ever do.
+        fprintf(stderr, "[SVT-Error]: No argument found for token `%s`\n", token);
+        strcpy_s(configStr[0], COMMAND_LINE_MAX_SIZE, TOKEN_ERROR_MARKER);
     }
 
     if (has_duplicates) {
@@ -2885,22 +2893,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         arg_copy[i] = NULL;
     }
 
-    // Copy tokens (except for CHANNEL_NUMBER_TOKEN and PASSES_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
-    size_t len                = COMMAND_LINE_MAX_SIZE;
-    bool   process_prev_token = true;
+    // Copy tokens into a temp token buffer hosting all tokens that are passed through the command line
     for (int32_t token_index = 0; token_index < argc; ++token_index) {
-        if (strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
-            strncmp(argv[token_index], PASSES_TOKEN, len)) {
-            if (!is_negative_number(argv[token_index]) && process_prev_token) {
-                if (argv[token_index][0] == '-' && argv[token_index][1] != '\0')
-                    cmd_copy[token_index] = argv[token_index];
-                else if (token_index)
-                    arg_copy[token_index] = argv[token_index];
-            } else {
-                process_prev_token = true;
-            }
-        } else {
-            process_prev_token = false;
+        if (!is_negative_number(argv[token_index])) {
+            if (argv[token_index][0] == '-' && argv[token_index][1] != '\0')
+                cmd_copy[token_index] = argv[token_index];
+            else if (token_index)
+                arg_copy[token_index] = argv[token_index];
         }
     }
 
@@ -2979,6 +2978,10 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         if (!find_token_multiple_inputs(
                 num_channels, argc, argv, entry->token, config_strings, cmd_copy, arg_copy))
             continue;
+        if (!strcmp(TOKEN_ERROR_MARKER, config_strings[0])) {
+            free_config_strings(num_channels, config_strings);
+            return EB_ErrorBadParameter;
+        }
         // When a token is found mark it as found in the temp token buffer
         // Fill up the values corresponding to each channel
         for (uint32_t chan = 0; chan < num_channels; ++chan) {
