@@ -177,7 +177,7 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     // Validate by setting a high bitrate and MinQpAllowed, push the encoder to producing
     // small partitions.
     {"IncompleteSbTest2",
-     {{"RateControlMode", "2"}, {"TargetBitRate", "1000000"}, {"MixQpAllowed", "10"}},
+     {{"RateControlMode", "2"}, {"TargetBitRate", "1000000"}, {"MinQpAllowed", "10"}},
      parkjoy},
 
     // test pallete mode
