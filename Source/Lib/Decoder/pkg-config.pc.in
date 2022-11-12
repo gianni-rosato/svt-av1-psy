@@ -6,6 +6,7 @@ libdir=@SVT_AV1_LIBDIR@
 Name: SvtAv1Dec
 Description: SVT (Scalable Video Technology) for AV1 decoder library
 Version: @DEC_VERSION_MAJOR@.@DEC_VERSION_MINOR@.@DEC_VERSION_PATCH@
-Libs: -L${libdir} -lSvtAv1Dec @LIBS_PRIVATE@
+Libs: -L${libdir} -lSvtAv1Dec
+Libs.private: @LIBS_PRIVATE@
 Cflags: -I${includedir}/svt-av1@DEC_PKG_CONFIG_EXTRA_CFLAGS@
 Cflags.private: -UEB_DLL
