@@ -273,7 +273,7 @@ static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
         fclose(cfg->bitstream_file);
     }
 
-    if (!strcmp(value, "stdout")) {
+    if (!strcmp(value, "stdout") || !strcmp(value, "-")) {
         cfg->bitstream_file = stdout;
     } else {
         FOPEN(cfg->bitstream_file, value, "wb");
