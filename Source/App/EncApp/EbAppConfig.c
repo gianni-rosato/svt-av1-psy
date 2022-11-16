@@ -231,7 +231,7 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
         return;
     }
 
-    if (!strcmp(filename, "stdin")) {
+    if (!strcmp(filename, "stdin") || !strcmp(filename, "-")) {
         cfg->input_file         = stdin;
         cfg->input_file_is_fifo = TRUE;
     } else
