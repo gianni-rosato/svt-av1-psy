@@ -17,8 +17,8 @@ The encoder parameters are listed in this table below along with their
 | ---------------------------------- | -------------------- | ------------ | ------------- | ----------------------------------------------------------------------------------------------------------------- |
 |                                    | --help               |              |               | Shows the command line options currently available                                                                |
 |                                    | --version            |              |               | Shows the version of the library that's linked to the library                                                     |
-| **InputFile**                      | -i                   | any string   | None          | Input raw video (y4m and yuv) file path, use `stdin` to read from pipe                                            |
-| **StreamFile**                     | -b                   | any string   | None          | Output compressed (ivf) file path, use `stdout` to write to pipe                                                  |
+| **InputFile**                      | -i                   | any string   | None          | Input raw video (y4m and yuv) file path, use `stdin` or `-` to read from pipe                                     |
+| **StreamFile**                     | -b                   | any string   | None          | Output compressed (ivf) file path, use `stdout` or `-` to write to pipe                                           |
 |                                    | -c                   | any string   | None          | Configuration file path                                                                                           |
 | **ErrorFile**                      | --errlog             | any string   | `stderr`      | Error file path                                                                                                   |
 | **ReconFile**                      | -o                   | any string   | None          | Reconstructed yuv file path                                                                                       |
