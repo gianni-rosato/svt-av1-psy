@@ -1756,8 +1756,11 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         const char *name;
         uint32_t   *out;
     } uint_opts[] = {
+        {"w", &config_struct->source_width},
         {"width", &config_struct->source_width},
+        {"h", &config_struct->source_height},
         {"height", &config_struct->source_height},
+        {"q", &config_struct->qp},
         {"qp", &config_struct->qp},
         {"film-grain", &config_struct->film_grain_denoise_strength},
         {"hierarchical-levels", &config_struct->hierarchical_levels},

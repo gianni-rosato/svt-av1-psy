@@ -552,6 +552,8 @@ static EbErrorType set_injector_frame_rate(EbConfig *cfg, const char *token, con
 static EbErrorType set_cfg_generic_token(EbConfig *cfg, const char *token, const char *value) {
     if (!strncmp(token, "--", 2))
         token += 2;
+    if (!strncmp(token, "-", 1))
+        token += 1;
     EbErrorType err = svt_av1_enc_parse_parameter(&cfg->config, token, value);
     switch (err) {
     case EB_ErrorNone: return EB_ErrorNone;
