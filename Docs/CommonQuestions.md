@@ -27,7 +27,7 @@ The features enabled or changed by each preset are as follows
 
 | **Category**                | **Feature**                                 | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8** | **9** | **10** | **11** | **12** |
 | --------------------------- | ------------------------------------------  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | -----  | -----  | -----  |
-| Prediction structure & RC   | Hierarchical levels                         | 5L    | 5L    | 5L    | 5L    | 5L    | 5L    | 5L    | 5L    | 5L    | 5L    | 5L     | 5L     | 5L     |
+| Prediction structure & RC   | Hierarchical levels                         | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 5L    | 5L    | 5L    | 5L     | 5L     | 5L     |
 |                             | aq-mode                                     | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
 |                             | max reference frame count                   | 7     | 7     | 7     | 7     | 7     | 7     | 4     | 4     | 4     | 4     | 4      | 4      | 4      |
 | Motion Estimation           | Full pel Motion Estimation                  | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
@@ -41,7 +41,7 @@ The features enabled or changed by each preset are as follows
 |                             | Directional Angular modes                   | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
 |                             | Paeth                                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | OFF    | OFF    | OFF    |
 |                             | Chroma from Luma (CfL)                      | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Filter intra                                | ON    | ON    | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
+|                             | Filter intra                                | ON    | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
 |                             | Intra block copy (IBC) (SC)                 | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | OFF    | OFF    |
 |                             | Palette prediction (SC)                     | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
 |                             | Single-reference prediction                 | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
@@ -61,7 +61,7 @@ The features enabled or changed by each preset are as follows
 | AV1 inloop filters          | Deblocking Filter                           | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
 |                             | CDEF                                        | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
 |                             | Restoration Filter - Wiener Filter          | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | OFF    | OFF    | OFF    |
-|                             | Restoration Filter - SG Filter              | ON    | ON    | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
+|                             | Restoration Filter - SG Filter              | ON    | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
 
 
 # Scene Change Detection
