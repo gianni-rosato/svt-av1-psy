@@ -98,7 +98,9 @@ typedef struct PictureDecisionContext {
     uint32_t mini_gop_group_faded_out_pictures_count[MINI_GOP_MAX_COUNT];
     uint8_t  lay0_toggle; //3 way toggle 0->1->2
     uint8_t  lay1_toggle; //2 way toggle 0->1
+#if !OPT_4L_LAY2_MRP
     uint8_t  lay2_toggle; //2 way toggle 0->1
+#endif
     Bool mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t                  last_i_picture_sc_class0;
     uint8_t                  last_i_picture_sc_class1;
