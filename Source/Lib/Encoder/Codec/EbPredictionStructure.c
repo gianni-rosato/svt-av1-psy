@@ -184,8 +184,13 @@ PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
     {
         0, // GOP Index 0 - Temporal Layer
         0, // GOP Index 0 - Decode Order
+#if OPT_4L_BASE_MRP
+        {8, 24, 0, 0}, // GOP Index 0 - Ref List 0
+        {8, 16, 0, 0} // GOP Index 0 - Ref List 1
+#else
         {8, 16, 0, 0}, // GOP Index 0 - Ref List 0
         {8, 0, 0, 0} // GOP Index 0 - Ref List 1
+#endif
     },
     {
         3, // GOP Index 1 - Temporal Layer

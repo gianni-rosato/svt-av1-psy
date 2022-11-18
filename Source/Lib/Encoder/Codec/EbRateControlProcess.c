@@ -910,17 +910,27 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
     // As a result, we defined a factor to adjust r0 (to compensate for TPL not using all available frames).
     if (frame_is_intra_only(ppcs)) {
         if (ppcs->tpl_ctrls.r0_adjust_factor) {
+#if FIX_LAYER1_R0_ADJUST
+            ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
+#else
             const double div_factor = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
             ppcs->r0                = ppcs->r0 / div_factor;
+#endif
         }
         // Scale r0 based on the GOP structure
         ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[scs_ptr->max_heirachical_level];
     } else {
+#if FIX_LAYER1_R0_ADJUST
+        if (use_qstep_based_q_calc) {
+            if (ppcs->tpl_ctrls.r0_adjust_factor) {
+                ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
+#else
         if (temporal_layer == 0) {
             if (ppcs->tpl_ctrls.r0_adjust_factor) {
                 const double div_factor = ppcs->used_tpl_frame_num *
                     ppcs->tpl_ctrls.r0_adjust_factor;
                 ppcs->r0 = ppcs->r0 / div_factor;
+#endif
                 // Scale r0 based on the GOP structure
                 ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs_ptr->max_heirachical_level];
             }
@@ -935,7 +945,11 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
         // adjust the weight for base layer frames with shorter minigops
         if (scs_ptr->lad_mg && !frame_is_intra_only(ppcs) &&
             (ppcs->tpl_group_size < (uint32_t)(2 << scs_ptr->max_heirachical_level)))
+#if FIX_LAYER1_R0_ADJUST
+            weight = MIN(weight + 0.1, 1);
+#else
             weight += 0.05;
+#endif
 
         const double qstep_ratio             = sqrt(ppcs->r0) * weight;
         const int    qindex_from_qstep_ratio = svt_av1_get_q_index_from_qstep_ratio(
@@ -1702,8 +1716,12 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
     // As a results, we defined a factor to adjust r0
     if (!frame_is_intra_only(ppcs)) {
         if (ppcs->tpl_ctrls.r0_adjust_factor) {
+#if FIX_LAYER1_R0_ADJUST
+            ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
+#else
             double div_factor = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
             ppcs->r0          = ppcs->r0 / div_factor;
+#endif
             // Further scale r0 based on the GOP structure
             ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs->max_heirachical_level];
         }
@@ -1713,8 +1731,12 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
 
     if (ppcs->frm_hdr.frame_type == KEY_FRAME) {
         if (ppcs->tpl_ctrls.r0_adjust_factor) {
+#if FIX_LAYER1_R0_ADJUST
+            ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
+#else
             const double div_factor = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
             ppcs->r0                = ppcs->r0 / div_factor;
+#endif
         }
         // Scale r0 based on the GOP structure
         ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[scs->max_heirachical_level];

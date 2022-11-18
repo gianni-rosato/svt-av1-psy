@@ -1030,7 +1030,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
         tpl_ctrls->intra_mode_end = DC_PRED;
+#if FIX_LAYER1_R0_ADJUST
+        tpl_ctrls->reduced_tpl_group = is_islice ? -1 : (pcs->hierarchical_levels == 5 ? 4 : 3);
+#else
         tpl_ctrls->reduced_tpl_group = is_islice ? -1 : 3;
+#endif
         tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
@@ -1109,6 +1113,23 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         default:
             tpl_ctrls->r0_adjust_factor = 0;
             break;
+#if FIX_LAYER1_R0_ADJUST
+        case 1:
+            tpl_ctrls->r0_adjust_factor = pcs->hierarchical_levels <= 2 ? 0.4 : pcs->hierarchical_levels <= 3 ? 0.8 : 1.6;
+            break;
+        case 2:
+            tpl_ctrls->r0_adjust_factor = pcs->hierarchical_levels <= 2 ? 0.6 : pcs->hierarchical_levels <= 3 ? 1.2 : 2.4;
+            break;
+        case 3:
+            tpl_ctrls->r0_adjust_factor = pcs->hierarchical_levels <= 3 ? 1.4 : 2.8;
+            break;
+        case 4:
+            tpl_ctrls->r0_adjust_factor = 4.0;
+            break;
+        case 5:
+            tpl_ctrls->r0_adjust_factor = 6.0;
+            break;
+#else
         case 1:
             tpl_ctrls->r0_adjust_factor = 0.1;
             break;
@@ -1124,11 +1145,16 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         case 5:
             tpl_ctrls->r0_adjust_factor = 3.0;
             break;
+#endif
         }
 
         // Adjust r0 scaling factor based on GOP structure and lookahead
         if (!scs->tpl_lad_mg)
+#if FIX_LAYER1_R0_ADJUST
+            tpl_ctrls->r0_adjust_factor *= 1.5;
+#else
             tpl_ctrls->r0_adjust_factor *= 3;
+#endif
     }
     else {
         // No r0 adjustment when all frames are used
@@ -1136,7 +1162,11 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
 
         // If no lookahead, apply r0 scaling
         if (!scs->tpl_lad_mg) {
+#if FIX_LAYER1_R0_ADJUST
+            tpl_ctrls->r0_adjust_factor = is_islice ? 0 : pcs->hierarchical_levels <= 2 ? 0.4 : pcs->hierarchical_levels <= 3 ? 0.8 : 1.6;
+#else
             tpl_ctrls->r0_adjust_factor = is_islice ? 0 : 0.1;
+#endif
         }
     }
 #if !TUNE_TPL_QPM_LAMBDA
@@ -3133,16 +3163,28 @@ static void  av1_generate_rps_info(
 
         switch (pcs_ptr->temporal_layer_index) {
         case 0:
-
+#if OPT_4L_BASE_MRP
+            //{8, 24, 0, 0},  // GOP Index 0 - Ref List 0
+            //{ 8, 16, 0, 0 } // GOP Index 0 - Ref List 1
+#else
             //{8, 0, 0, 0},     // GOP Index 0 - Ref List 0
             //{8, 0,  0, 0}      // GOP Index 0 - Ref List 1
+#endif
             av1_rps->ref_dpb_index[LAST] = base1_idx;
+#if OPT_4L_BASE_MRP
+            av1_rps->ref_dpb_index[LAST2] = base2_idx;
+#else
             av1_rps->ref_dpb_index[LAST2] = base0_idx;
+#endif
             av1_rps->ref_dpb_index[LAST3] = av1_rps->ref_dpb_index[LAST];
             av1_rps->ref_dpb_index[GOLD] = av1_rps->ref_dpb_index[LAST];
 
             av1_rps->ref_dpb_index[BWD] = base1_idx;
+#if OPT_4L_BASE_MRP
+            av1_rps->ref_dpb_index[ALT2] = base0_idx;
+#else
             av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
+#endif
             av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
             gop_i = 0;
             av1_rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list0[0]);
@@ -3151,7 +3193,11 @@ static void  av1_generate_rps_info(
             av1_rps->ref_poc_array[GOLD] = av1_rps->ref_poc_array[LAST];
 
             av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
+#if OPT_4L_BASE_MRP
+            av1_rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[1]);
+#else
             av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[BWD];
+#endif
             av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
 
             av1_rps->refresh_frame_mask = 1 << context_ptr->lay0_toggle;

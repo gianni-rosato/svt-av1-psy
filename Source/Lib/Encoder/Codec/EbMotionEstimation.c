@@ -2466,10 +2466,21 @@ void construct_me_candidate_array_mrp_off(PictureParentControlSet *pcs_ptr, MeCo
                      ->me_candidate_array[pu_index * pcs_ptr->pa_me_data->max_cand];
         uint8_t  blk_do_ref[MAX_NUM_OF_REF_PIC_LIST] = {blk_do_ref_org[REF_LIST_0],
                                                        blk_do_ref_org[REF_LIST_1]};
+#if FIX_USE_BEST_ME_DIST
+        const uint32_t best_me_dist =
+            blk_do_ref_org[REF_LIST_0] && blk_do_ref_org[REF_LIST_1]
+            ? MIN(context_ptr->p_sb_best_sad[REF_LIST_0][ref_pic_idx][n_idx], context_ptr->p_sb_best_sad[REF_LIST_1][ref_pic_idx][n_idx])
+            : blk_do_ref_org[REF_LIST_0]
+            ? context_ptr->p_sb_best_sad[REF_LIST_0][ref_pic_idx][n_idx]
+            : context_ptr->p_sb_best_sad[REF_LIST_1][ref_pic_idx][n_idx];
+
+        context_ptr->me_distortion[pu_index] = best_me_dist;
+#else
         uint32_t best_me_dist                        = (me_prune_th > 0)
                                    ? MIN(context_ptr->p_sb_best_sad[REF_LIST_0][ref_pic_idx][n_idx],
                   context_ptr->p_sb_best_sad[REF_LIST_1][ref_pic_idx][n_idx])
                                    : (uint32_t)~0;
+#endif
         int8_t min_dist_list = -1;
         // If both refs have a candidate, use only the best one for unipred
         if (context_ptr->use_best_unipred_cand_only && blk_do_ref[REF_LIST_0] &&
@@ -2505,10 +2516,11 @@ void construct_me_candidate_array_mrp_off(PictureParentControlSet *pcs_ptr, MeCo
                         .as_int = context_ptr->p_sb_best_mv[list_index][ref_pic_idx][n_idx];
                 continue;
             }
+#if !FIX_USE_BEST_ME_DIST
             if (me_cand_offset == 0)
                 context_ptr->me_distortion[pu_index] =
                     context_ptr->p_sb_best_sad[list_index][ref_pic_idx][n_idx];
-
+#endif
             if (use_me_pu) {
                 me_candidate_array[me_cand_offset].direction  = list_index;
                 me_candidate_array[me_cand_offset].ref_idx_l0 = ref_pic_idx;
@@ -2560,6 +2572,22 @@ void construct_me_candidate_array(PictureParentControlSet *pcs_ptr, MeContext *c
         const uint32_t me_prune_th = context_ptr->prune_me_candidates_th; //to change to 32bit
         uint32_t best_me_dist = (uint32_t)~0;
 
+#if FIX_USE_BEST_ME_DIST
+        // Determine the best ME distortion
+        for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; list_index++) {
+            const uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
+            for (uint32_t ref_pic = 0; ref_pic < num_of_ref_pic_to_search; ref_pic++) {
+                blk_do_ref[list_index][ref_pic] = context_ptr->search_results[list_index][ref_pic].do_ref;
+                if (blk_do_ref[list_index][ref_pic] == 0)
+                    continue;
+
+                best_me_dist = context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] < best_me_dist
+                    ? context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] : best_me_dist;
+            }
+        }
+
+        context_ptr->me_distortion[pu_index] = best_me_dist;
+#else
         //add a fast path for 2 references at the end
 
         // Determine the best me distortion
@@ -2577,7 +2605,7 @@ void construct_me_candidate_array(PictureParentControlSet *pcs_ptr, MeContext *c
                 }
             }
         }
-
+#endif
         // Unipred candidates
         for (uint32_t list_index = REF_LIST_0;
              list_index < num_of_list_to_search && (use_me_pu || me_cand_offset == 0);
@@ -2586,11 +2614,17 @@ void construct_me_candidate_array(PictureParentControlSet *pcs_ptr, MeContext *c
                 context_ptr->num_of_ref_pic_to_search[list_index];
 
             for (uint32_t ref_pic_index = 0; (ref_pic_index < num_of_ref_pic_to_search) && (use_me_pu || (me_cand_offset == 0)); ++ref_pic_index) {
+#if FIX_USE_BEST_ME_DIST
+                //ME was skipped, so do not add this Unipred candidate
+                if (blk_do_ref[list_index][ref_pic_index] == 0)
+                    continue;
+#else
                 blk_do_ref[list_index][ref_pic_index] = context_ptr->search_results[list_index][ref_pic_index].do_ref;
 
                 //ME was skipped, so do not add this Unipred candidate
                 if (context_ptr->search_results[list_index][ref_pic_index].do_ref == 0)
                     continue;
+#endif
 
                 if (me_prune_th > 0) {
                     current_to_best_dist_distance =
@@ -2602,10 +2636,11 @@ void construct_me_candidate_array(PictureParentControlSet *pcs_ptr, MeContext *c
                         continue;
                     }
                 }
-
+#if !FIX_USE_BEST_ME_DIST
                 if (me_cand_offset == 0)
                     context_ptr->me_distortion[pu_index] =
                         context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx];
+#endif
                 if (use_me_pu) {
                     me_candidate_array[me_cand_offset].direction  = list_index;
                     me_candidate_array[me_cand_offset].ref_idx_l0 = ref_pic_index;

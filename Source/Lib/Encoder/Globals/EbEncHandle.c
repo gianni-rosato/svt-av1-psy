@@ -4198,7 +4198,11 @@ void copy_api_from_app(
     if (scs_ptr->static_config.hierarchical_levels == 0) {
         scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ?
             3 :
+#if FIX_LAYER1_R0_ADJUST
+            scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR || !(scs_ptr->static_config.enc_mode <= ENC_M12)
+#else
             scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR || !(scs_ptr->static_config.enc_mode <= ENC_M6)
+#endif
                 ? 4
                 : 5;
     }

@@ -88,6 +88,10 @@ extern "C" {
 #define CLN_PD_REF_Q               1 // Rename PD PA reference list to DPB to clarify how it's used
 #define CLN_REMOVE_LEAD_PIC        1 // Remove leading picture derivations from prediction_structure_ctor
 
+#define FIX_LAYER1_R0_ADJUST       1 // Fix r0 adjustment for layer 1 when reduced_tpl_group is used
+#define FIX_USE_BEST_ME_DIST       1 // Save the best distortion in ME, not just the one from the first reference
+#define OPT_4L_BASE_MRP            1 // Optimize MRP for 4L base pictures
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
