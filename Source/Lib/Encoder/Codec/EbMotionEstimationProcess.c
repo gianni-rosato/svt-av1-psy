@@ -514,12 +514,14 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     {
         if (enc_mode <= ENC_M10)
             prehme_level = 1;
+#if !OPT_M10_M11_M12
         else if (enc_mode <= ENC_M11) {
             if (hierarchical_levels <= 3)
                 prehme_level = 3;
             else
                 prehme_level = 1;
         }
+#endif
         else
             prehme_level = 3;
     }

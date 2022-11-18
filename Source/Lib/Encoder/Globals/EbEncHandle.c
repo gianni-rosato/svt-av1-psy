@@ -3016,8 +3016,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].subpel_early_exit = 1;
         // BASE TF Params
         scs_ptr->tf_params_per_type[1].enabled = 1;
+#if OPT_M7_M8_M9
+        scs_ptr->tf_params_per_type[1].num_past_pics = 2;
+        scs_ptr->tf_params_per_type[1].num_future_pics = 2;
+#else
         scs_ptr->tf_params_per_type[1].num_past_pics = 1;
         scs_ptr->tf_params_per_type[1].num_future_pics = 1;
+#endif
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
@@ -3026,12 +3031,22 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].half_pel_mode = 2;
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 3;
         scs_ptr->tf_params_per_type[1].eight_pel_mode = 0;
+#if OPT_M7_M8_M9
+        scs_ptr->tf_params_per_type[1].do_chroma = 1;
+        scs_ptr->tf_params_per_type[1].pred_error_32x32_th = 20 * 32 * 32;
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift = 0;
+#else
         scs_ptr->tf_params_per_type[1].do_chroma = 0;
         scs_ptr->tf_params_per_type[1].pred_error_32x32_th = (uint64_t)~0;
         scs_ptr->tf_params_per_type[1].sub_sampling_shift = 1;
+#endif
         scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
         scs_ptr->tf_params_per_type[1].use_medium_filter = 1;
+#if OPT_M7_M8_M9
+        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
+#else
         scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 1;
+#endif
         scs_ptr->tf_params_per_type[1].use_2tap = 1;
         scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 1;
         scs_ptr->tf_params_per_type[1].use_8bit_subpel = 1;
@@ -3432,8 +3447,15 @@ uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pre
         tpl_level = 5;
     else if (enc_mode <= ENC_M10)
         tpl_level = 6;
+#if OPT_M10_M11_M12
+    else if (enc_mode <= ENC_M11)
+        tpl_level = 7;
+    else
+        tpl_level = 8;
+#else
     else
         tpl_level = 7;
+#endif
 
     return tpl_level;
 }

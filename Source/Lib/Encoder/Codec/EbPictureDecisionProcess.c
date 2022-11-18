@@ -1078,6 +1078,40 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->subsample_tx = 1;
         tpl_ctrls->subpel_depth = FULL_PEL;
         break;
+#if OPT_M10_M11_M12
+    case 7:
+        tpl_ctrls->enable = 1;
+        tpl_ctrls->compute_rate = 0;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->intra_mode_end = DC_PRED;
+        tpl_ctrls->reduced_tpl_group = pcs->hierarchical_levels == 5
+            ? is_islice ? 4 : (resolution <= INPUT_SIZE_480p_RANGE ? 3 : 2)
+            : is_islice ? 3 : (resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
+        tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->dispenser_search_level = 1;
+        tpl_ctrls->subsample_tx = 2;
+        tpl_ctrls->subpel_depth = FULL_PEL;
+        break;
+    case 8:
+        tpl_ctrls->enable = 1;
+        tpl_ctrls->compute_rate = 0;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->intra_mode_end = DC_PRED;
+        tpl_ctrls->reduced_tpl_group = pcs->hierarchical_levels == 5
+            ? is_islice ? 4 : (resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1)
+            : is_islice ? 3 : (resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
+        tpl_ctrls->pf_shape = resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->dispenser_search_level = 1;
+        tpl_ctrls->subsample_tx = 2;
+        tpl_ctrls->subpel_depth = FULL_PEL;
+        break;
+#else
     case 7:
         tpl_ctrls->enable = 1;
         tpl_ctrls->compute_rate = 0;
@@ -1094,6 +1128,7 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
         tpl_ctrls->subsample_tx = 2;
         tpl_ctrls->subpel_depth = FULL_PEL;
         break;
+#endif
     }
 
     // Check user-defined settings for MAX intra mode
@@ -2401,6 +2436,10 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (enc_mode <= ENC_M5)
 #endif
                 pcs_ptr->cdef_level = 4;
+#if OPT_M7_M8_M9
+            else if (enc_mode <= ENC_M7)
+                pcs_ptr->cdef_level = is_ref ? 8 : 10;
+#endif
             else if (enc_mode <= ENC_M10)
                 pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
             else if (enc_mode <= ENC_M11)
@@ -2474,12 +2513,14 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             list0_only_base = 0;
     }
+#if !OPT_M7_M8_M9
     else if (enc_mode <= ENC_M8) {
         if (hierarchical_levels <= 3)
             list0_only_base = 2;
         else
             list0_only_base = 0;
     }
+#endif
     else  if (enc_mode <= ENC_M9) {
         if (hierarchical_levels <= 3)
             list0_only_base = 2;

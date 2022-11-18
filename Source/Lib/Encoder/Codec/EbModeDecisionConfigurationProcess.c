@@ -1231,6 +1231,20 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                         else
                             pcs_ptr->pic_depth_removal_level = 2;
                     }
+#if OPT_M7_M8_M9
+                } else if (enc_mode <= ENC_M8) {
+                    if (pcs_ptr->coeff_lvl == LOW_LVL) {
+                        if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 1;
+                        else
+                            pcs_ptr->pic_depth_removal_level = 2;
+                } else {
+                    if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                            pcs_ptr->pic_depth_removal_level = 1;
+                    else
+                            pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
+                }
+#endif
                 } else if (enc_mode <= ENC_M9) {
                     if (pcs_ptr->coeff_lvl == LOW_LVL) {
                         if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -1247,7 +1261,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     }
                 } else if (enc_mode <= ENC_M11) {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
+#if OPT_M10_M11_M12
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
+#else
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 4;
+#endif
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
                     else if (input_resolution <= INPUT_SIZE_720p_RANGE)
@@ -1258,7 +1276,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                         pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
                 } else {
                     if (input_resolution <= INPUT_SIZE_360p_RANGE)
+#if OPT_M10_M11_M12
+                        pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
+#else
                         pcs_ptr->pic_depth_removal_level = 7;
+#endif
                     else if (input_resolution <= INPUT_SIZE_480p_RANGE)
                         pcs_ptr->pic_depth_removal_level = is_base ? 9 : 11;
                     else

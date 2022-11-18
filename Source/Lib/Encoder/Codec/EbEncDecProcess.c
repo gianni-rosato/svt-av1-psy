@@ -6713,7 +6713,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         intra_level = is_base ? 1 : 3;
     else if (enc_mode <= ENC_M5)
         intra_level = is_base ? 1 : 4;
+#if OPT_M7_M8_M9
+    else if (enc_mode <= ENC_M8)
+#else
     else if (enc_mode <= ENC_M7)
+#endif
         intra_level = (is_islice || ppcs->transition_present == 1) ? 1 : is_base ? 2 : 4;
     else if (enc_mode <= ENC_M9)
         intra_level = (is_islice || ppcs->transition_present == 1) ? 1 : 4;
