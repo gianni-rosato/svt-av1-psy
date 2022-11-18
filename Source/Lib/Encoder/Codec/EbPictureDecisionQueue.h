@@ -27,7 +27,11 @@ typedef struct PaReferenceEntry {
     uint64_t         picture_number;
 #if OPT_REPLACE_DEP_CNT
 #if OPT_PD_REF_QUEUE
-    bool is_valid; // The entry will be valid when it represents a usable picture in the DPB
+    /* clang-format off */
+    bool is_valid; // The entry will be valid when it represents a valid DPB entry.
+                   // This is used in case the DPB is accessed before being populated,
+                   // and for when the DPB is cleared at EOS.
+    /* clang-format on */
 #else
     uint8_t refresh_frame_mask;
 #endif

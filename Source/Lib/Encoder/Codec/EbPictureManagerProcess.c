@@ -1047,17 +1047,15 @@ void *picture_manager_kernel(void *input_ptr) {
                                     }
                                 }
 
-                                while (context_ptr->started_pics_dec_order_head_idx !=
-                                           context_ptr->started_pics_dec_order_tail_idx &&
-                                       context_ptr->started_pics_dec_order
-                                               [context_ptr->started_pics_dec_order_head_idx] <=
-                                           context_ptr->consecutive_dec_order) {
+                                /* clang-format off */
+                                while (context_ptr->started_pics_dec_order_head_idx != context_ptr->started_pics_dec_order_tail_idx &&
+                                       context_ptr->started_pics_dec_order[context_ptr->started_pics_dec_order_head_idx] <= context_ptr->consecutive_dec_order) {
                                     context_ptr->started_pics_dec_order_head_idx =
-                                        (context_ptr->started_pics_dec_order_head_idx ==
-                                         REFERENCE_QUEUE_MAX_DEPTH - 1)
+                                        (context_ptr->started_pics_dec_order_head_idx == REFERENCE_QUEUE_MAX_DEPTH - 1)
                                         ? 0
                                         : context_ptr->started_pics_dec_order_head_idx + 1;
                                 }
+                                /* clang-format on */
                             }
                         } else if (entry_pcs_ptr->decode_order > 0) {
                             context_ptr->started_pics_dec_order
@@ -1245,26 +1243,17 @@ void *picture_manager_kernel(void *input_ptr) {
                                                    encode_context_ptr->app_callback_ptr,
                                                    EB_ENC_PM_ERROR10);
 
+                                /* clang-format off */
                                 if (entry_pcs_ptr->frame_end_cdf_update_mode) {
-                                    child_pcs_ptr->ref_frame_context[svt_get_ref_frame_type(
-                                                                         list_idx, ref_idx) -
-                                                                     LAST_FRAME] =
-                                        ((EbReferenceObject *)
-                                             reference_entry_ptr->reference_object_ptr->object_ptr)
-                                            ->frame_context;
-                                    if (max_temporal_index <
-                                            (int8_t)reference_entry_ptr->temporal_layer_index &&
-                                        (int8_t)reference_entry_ptr->temporal_layer_index <=
-                                            child_pcs_ptr->temporal_layer_index) {
-                                        max_temporal_index =
-                                            (int8_t)reference_entry_ptr->temporal_layer_index;
-                                        ref_index = svt_get_ref_frame_type(list_idx, ref_idx) -
-                                            LAST_FRAME;
-                                        for (int frame = LAST_FRAME; frame <= ALTREF_FRAME;
-                                             ++frame) {
+                                    child_pcs_ptr->ref_frame_context[svt_get_ref_frame_type(list_idx, ref_idx) - LAST_FRAME] =
+                                        ((EbReferenceObject*)reference_entry_ptr->reference_object_ptr->object_ptr)->frame_context;
+                                    if (max_temporal_index < (int8_t)reference_entry_ptr->temporal_layer_index &&
+                                        (int8_t)reference_entry_ptr->temporal_layer_index <= child_pcs_ptr->temporal_layer_index) {
+                                        max_temporal_index = (int8_t)reference_entry_ptr->temporal_layer_index;
+                                        ref_index = svt_get_ref_frame_type(list_idx, ref_idx) - LAST_FRAME;
+                                        for (int frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame) {
                                             EbReferenceObject *ref_obj =
-                                                (EbReferenceObject *)reference_entry_ptr
-                                                    ->reference_object_ptr->object_ptr;
+                                                (EbReferenceObject *)reference_entry_ptr->reference_object_ptr->object_ptr;
 
                                             child_pcs_ptr->ref_global_motion[frame] =
                                                 ref_obj->slice_type != I_SLICE
@@ -1273,6 +1262,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                         }
                                     }
                                 }
+                                /* clang-format on */
                                 // Set the Reference Object
                                 child_pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx] =
                                     reference_entry_ptr->reference_object_ptr;
@@ -1307,15 +1297,14 @@ void *picture_manager_kernel(void *input_ptr) {
 #endif
                             }
 
+                            /* clang-format off */
                             //fill the non used spots to be used in MFMV.
-                            for (uint8_t ref_idx = entry_pcs_ptr->ref_list0_count; ref_idx < 4;
-                                 ++ref_idx)
+                            for (uint8_t ref_idx = entry_pcs_ptr->ref_list0_count; ref_idx < 4; ++ref_idx)
                                 child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][ref_idx] =
                                     child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0];
 
                             if (entry_pcs_ptr->ref_list1_count == 0) {
-                                for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count; ref_idx < 3;
-                                     ++ref_idx)
+                                for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count; ref_idx < 3; ++ref_idx)
                                     child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx] =
                                         child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0];
                             }
@@ -1323,13 +1312,12 @@ void *picture_manager_kernel(void *input_ptr) {
                             if (entry_pcs_ptr->slice_type == B_SLICE) {
                                 //fill the non used spots to be used in MFMV.
                                 if (entry_pcs_ptr->ref_list1_count) {
-                                    for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count;
-                                         ref_idx < 3;
-                                         ++ref_idx)
+                                    for (uint8_t ref_idx = entry_pcs_ptr->ref_list1_count; ref_idx < 3; ++ref_idx)
                                         child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx] =
                                             child_pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0];
                                 }
                             }
+                            /* clang-format on */
                         }
 #else
                         int8_t max_temporal_index = -1, ref_index = 0;

@@ -716,11 +716,11 @@ typedef struct PictureParentControlSet {
     uint64_t  decode_order;
 #if OPT_REPLACE_DEP_CNT_CL
 #if OPT_TPL_REF_BUFFERS
-    uint64_t released_pics
-        [REF_FRAMES +
-         1]; // Each picture can release up to 8 references from the DPB (8 is the max number
-        // of entries in the DPB). Each frame may also release itself at EOS, which
-        // is only done in the encoder to satisfy CI unit tests for MacOS.
+    /* clang-format off */
+    uint64_t released_pics[REF_FRAMES +  1]; // Each picture can release up to 8 references from the DPB (8 is the max number
+                                             // of entries in the DPB). Each frame may also release itself at EOS, which
+                                             // is only done in the encoder to satisfy CI unit tests for MacOS.
+    /* clang-format on */
 #else
     uint64_t released_pics[REF_FRAMES];
 #endif
