@@ -3178,7 +3178,11 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (enc_mode <= ENC_MR) {
         tf_level = 1;
     }
+#if TUNE_M3_M5_M6
+    else if (enc_mode <= ENC_M5) {
+#else
     else if (enc_mode <= ENC_M6) {
+#endif
         tf_level = 2;
     }
     else if (enc_mode <= ENC_M7) {
@@ -3252,7 +3256,26 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
         break;
+
+#if TUNE_M3_M5_M6
     case 4:
+        mrp_ctrl->referencing_scheme          = 1;
+        mrp_ctrl->sc_base_ref_list0_count     = 2;
+        mrp_ctrl->sc_base_ref_list1_count     = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count        = 3;
+        mrp_ctrl->base_ref_list1_count        = 2;
+        mrp_ctrl->non_base_ref_list0_count    = 3;
+        mrp_ctrl->non_base_ref_list1_count    = 2;
+        break;
+#endif
+
+#if TUNE_M3_M5_M6
+    case 5:
+#else
+    case 4:
+#endif
         mrp_ctrl->referencing_scheme          = 0;
         mrp_ctrl->sc_base_ref_list0_count     = 2;
         mrp_ctrl->sc_base_ref_list1_count     = 2;
@@ -3264,7 +3287,11 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list1_count    = 2;
         break;
 
+#if TUNE_M3_M5_M6
+    case 6:
+#else
     case 5:
+#endif
         mrp_ctrl->referencing_scheme          = 0;
         mrp_ctrl->sc_base_ref_list0_count     = 2;
         mrp_ctrl->sc_base_ref_list1_count     = 2;
@@ -3276,7 +3303,11 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list1_count    = 2;
         break;
 
+#if TUNE_M3_M5_M6
+    case 7:
+#else
     case 6:
+#endif
         mrp_ctrl->referencing_scheme          = 0;
         mrp_ctrl->sc_base_ref_list0_count     = 2;
         mrp_ctrl->sc_base_ref_list1_count     = 2;
@@ -3890,6 +3921,30 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else if (scs_ptr->static_config.enc_mode <= ENC_M1) {
         mrp_level = 2;
     }
+#if TUNE_M3_M5_M6
+    else if (scs_ptr->static_config.enc_mode <= ENC_M4) {
+        mrp_level = 3;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
+        mrp_level = 4;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
+        mrp_level = 5;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            mrp_level = 6;
+        else
+#if TUNE_M7_M9
+            mrp_level = 5;
+#else
+            mrp_level = 7;
+#endif
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
+        mrp_level = 7;
+    }
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
         mrp_level = 3;
     }
@@ -3905,6 +3960,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
         mrp_level = 6;
     }
+#endif
     else {
         mrp_level = 0;
     }

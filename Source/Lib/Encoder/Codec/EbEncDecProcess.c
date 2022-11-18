@@ -3613,8 +3613,47 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
         cand_reduction_ctrls->reduce_unipred_candidates = 0;
 
         break;
-
+#if TUNE_M3_M5_M6
     case 2:
+
+        // angular reduction at mds0
+        cand_reduction_ctrls->mds0_reduce_intra = 1;
+
+        // merge_inter_classes
+        cand_reduction_ctrls->merge_inter_classes = 1;
+
+        // redundant_cand_level
+        cand_reduction_ctrls->redundant_cand_ctrls.score_th = 0;
+
+        // use_neighbouring_mode
+        cand_reduction_ctrls->use_neighbouring_mode_ctrls.enabled = 0;
+
+        // near_count_ctrls
+        cand_reduction_ctrls->near_count_ctrls.enabled         = 1;
+        cand_reduction_ctrls->near_count_ctrls.near_count      = 3;
+        cand_reduction_ctrls->near_count_ctrls.near_near_count = 3;
+
+        // lpd1_mvp_best_me_list (LPD1 only signal)
+        cand_reduction_ctrls->lpd1_mvp_best_me_list = 0;
+
+        // cand_elimination_ctrls
+        cand_reduction_ctrls->cand_elimination_ctrls.enabled         = 1;
+        cand_reduction_ctrls->cand_elimination_ctrls.dc_only         = 0;
+        cand_reduction_ctrls->cand_elimination_ctrls.inject_new_me   = 1;
+        cand_reduction_ctrls->cand_elimination_ctrls.inject_new_pme  = 0;
+        cand_reduction_ctrls->cand_elimination_ctrls.inject_new_warp = 0;
+        cand_reduction_ctrls->cand_elimination_ctrls.th_multiplier   = 1;
+
+        // reduce_unipred_candidates
+        cand_reduction_ctrls->reduce_unipred_candidates = 0;
+
+        break;
+#endif
+#if TUNE_M3_M5_M6
+    case 3:
+#else
+    case 2:
+#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3649,7 +3688,11 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         break;
 
+#if TUNE_M3_M5_M6
+    case 4:
+#else
     case 3:
+#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3684,7 +3727,11 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         break;
 
+#if TUNE_M3_M5_M6
+    case 5:
+#else
     case 4:
+#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3720,7 +3767,11 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         break;
 
+#if TUNE_M3_M5_M6
+    case 6:
+#else
     case 5:
+#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3762,7 +3813,11 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         break;
 
+#if TUNE_M3_M5_M6
+    case 7:
+#else
     case 6:
+#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3928,8 +3983,16 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
         else
             nic_level = 11;
     } else if (enc_mode <= ENC_M5)
+#if TUNE_M3_M5_M6
+        nic_level = 12;
+#else
         nic_level = is_base ? 12 : 13;
+#endif
+#if TUNE_M7_M9
+    else if (enc_mode <= ENC_M6) {
+#else
     else if (enc_mode <= ENC_M7) {
+#endif
         if (hierarchical_levels <= 3)
             nic_level = 15;
         else
@@ -6197,6 +6260,18 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     uint8_t cand_reduction_level = 0;
     if (is_islice)
         cand_reduction_level = 0;
+#if TUNE_M3_M5_M6
+    else if (lpd1_level <= LPD1_LVL_0)
+        cand_reduction_level = 4;
+    else if (lpd1_level <= LPD1_LVL_2)
+        cand_reduction_level = 5;
+    else if (lpd1_level <= LPD1_LVL_3)
+        cand_reduction_level = 6;
+    else
+        cand_reduction_level = 7;
+    if (ppcs->scs_ptr->rc_stat_gen_pass_mode)
+        cand_reduction_level = 7;
+#else
     else if (lpd1_level <= LPD1_LVL_0)
         cand_reduction_level = 3;
     else if (lpd1_level <= LPD1_LVL_2)
@@ -6207,6 +6282,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
         cand_reduction_level = 6;
     if (ppcs->scs_ptr->rc_stat_gen_pass_mode)
         cand_reduction_level = 6;
+#endif
     set_cand_reduction_ctrls(pcs_ptr,
                              context_ptr,
                              cand_reduction_level,

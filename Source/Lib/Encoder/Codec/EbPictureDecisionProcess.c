@@ -1809,7 +1809,11 @@ uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_
     else if (enc_mode <= ENC_M5)
         wn_filter_lvl = 2;
 #endif
+#if TUNE_M7_M9
+    else if (enc_mode <= ENC_M8)
+#else
     else if (enc_mode <= ENC_M9)
+#endif
         wn_filter_lvl = is_ref ? 5 : 0;
     else
         wn_filter_lvl = 0;
@@ -1899,7 +1903,11 @@ static uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag
         dlf_level = 1;
         else if (enc_mode <= ENC_M7)
             dlf_level = 2;
+#if TUNE_M7_M9
+        else if (enc_mode <= ENC_M9)
+#else
         else if (enc_mode <= ENC_M8)
+#endif
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 2 : 4);
         else if (enc_mode <= ENC_M11)
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 3 : 0);
@@ -2393,7 +2401,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = is_base ? 8 : is_ref ? 9 : 10;
             else if (enc_mode <= ENC_M11)
                 pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
+#if TUNE_M11_M13
+            else if (enc_mode <= ENC_M13) {
+#else
             else if (enc_mode <= ENC_M12) {
+#endif
                 if (input_resolution <= INPUT_SIZE_1080p_RANGE)
                     pcs_ptr->cdef_level = is_base ? 15 : is_ref ? 16 : 17;
                 else
@@ -2492,8 +2504,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->hbd_mode_decision = scs_ptr->enable_hbd_mode_decision;
 
     pcs_ptr->max_can_count = get_max_can_count(enc_mode);
-
+#if TUNE_M7_M9
+    if (enc_mode <= ENC_M6)
+#else
     if (enc_mode <= ENC_M7)
+#endif
         pcs_ptr->use_best_me_unipred_cand_only = 0;
     else
         pcs_ptr->use_best_me_unipred_cand_only = 1;

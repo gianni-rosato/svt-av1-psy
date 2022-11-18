@@ -92,6 +92,10 @@ extern "C" {
 #define FIX_USE_BEST_ME_DIST       1 // Save the best distortion in ME, not just the one from the first reference
 #define OPT_4L_BASE_MRP            1 // Optimize MRP for 4L base pictures
 
+#define TUNE_M3_M5_M6              1 // Optimize m3 m5 m6 features
+#define TUNE_M7_M9                 1 // Optimize m7 m9 features
+#define TUNE_M11_M13               1 // Optimize m11 m13 features
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

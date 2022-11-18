@@ -645,6 +645,23 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->cand_reduction_level = 0;
     else if (enc_mode <= ENC_M5)
         pcs_ptr->cand_reduction_level = 1;
+#if TUNE_M3_M5_M6
+    else if (enc_mode <= ENC_M6) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->cand_reduction_level = 1;
+        else
+            pcs_ptr->cand_reduction_level = 2;
+    }
+    else if (enc_mode <= ENC_M9) {
+        if (pcs_ptr->coeff_lvl == LOW_LVL)
+            pcs_ptr->cand_reduction_level = 1;
+        else
+            pcs_ptr->cand_reduction_level = 3;
+    } else
+        pcs_ptr->cand_reduction_level = 3;
+    if (scs_ptr->rc_stat_gen_pass_mode)
+        pcs_ptr->cand_reduction_level = 7;
+#else
     else if (enc_mode <= ENC_M9) {
         if (pcs_ptr->coeff_lvl == LOW_LVL)
             pcs_ptr->cand_reduction_level = 1;
@@ -654,6 +671,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->cand_reduction_level = 2;
     if (scs_ptr->rc_stat_gen_pass_mode)
         pcs_ptr->cand_reduction_level = 6;
+#endif
     // Set the level for the txt search
     pcs_ptr->txt_level = 0;
     if (enc_mode <= ENC_MR)
@@ -704,6 +722,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     pcs_ptr->tx_shortcut_level = 0;
     if (enc_mode <= ENC_M4)
         pcs_ptr->tx_shortcut_level = 0;
+#if TUNE_M3_M5_M6
+    else if (enc_mode <= ENC_M5)
+        pcs_ptr->tx_shortcut_level = is_base ? 0 : 1;
+#endif
     else if (enc_mode <= ENC_M10)
         pcs_ptr->tx_shortcut_level = is_islice ? 0 : 1;
     else
@@ -851,7 +873,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (scs_ptr->spatial_sse_full_loop_level == DEFAULT)
         if (pcs_ptr->parent_pcs_ptr->sc_class1)
             pcs_ptr->spatial_sse_full_loop_level = 1;
+#if TUNE_M11_M13
+        else if (enc_mode <= ENC_M11)
+#else
         else if (enc_mode <= ENC_M10)
+#endif
             pcs_ptr->spatial_sse_full_loop_level = 1;
         else
             pcs_ptr->spatial_sse_full_loop_level = 0;
@@ -1039,7 +1065,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->md_pme_level = 6;
         else
             pcs_ptr->md_pme_level = 3;
-    } else
+    }
+#if TUNE_M7_M9
+    else if (enc_mode <= ENC_M7)
+        pcs_ptr->md_pme_level = 5;
+#else
+#if TUNE_M3_M5_M6
+    else if (enc_mode <= ENC_M6)
+        pcs_ptr->md_pme_level = 5;
+#endif
+#endif
+    else
         pcs_ptr->md_pme_level = 6;
 
     // Set the level for mds0
