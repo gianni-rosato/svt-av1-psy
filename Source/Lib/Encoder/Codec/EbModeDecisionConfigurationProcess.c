@@ -680,7 +680,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = 2;
     else if (enc_mode <= ENC_M2)
         pcs_ptr->txt_level = 3;
+#if TUNE_M6
+    else if (enc_mode <= ENC_M6) {
+#else
     else if (enc_mode <= ENC_M5) {
+#endif
         if (pcs_ptr->coeff_lvl == LOW_LVL) {
             pcs_ptr->txt_level = 4;
         } else if (pcs_ptr->coeff_lvl == HIGH_LVL) {

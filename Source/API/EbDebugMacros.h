@@ -98,6 +98,8 @@ extern "C" {
 #define FIX_INCOMP_MG              1 // Use 3L for incomplete MGs for all cases
 #define OPT_M7_M8_M9               1 // Optimize m7, m8, m9 features
 #define OPT_M10_M11_M12            1 // Optimize m10, m11, m12 features
+#define OPT_TF_M6_M9               1 // Optimize TF parameters to take advantage of 6L pictures for M6-M9
+#define TUNE_M6                    1 // Tune M6 features
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

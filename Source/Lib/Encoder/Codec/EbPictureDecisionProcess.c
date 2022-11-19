@@ -2430,10 +2430,14 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = 1;
             else if (enc_mode <= ENC_M4)
                 pcs_ptr->cdef_level = 2;
+#if TUNE_M6
+            else if (enc_mode <= ENC_M5)
+#else
 #if TUNE_NSQ
             else if (enc_mode <= ENC_M6)
 #else
             else if (enc_mode <= ENC_M5)
+#endif
 #endif
                 pcs_ptr->cdef_level = 4;
 #if OPT_M7_M8_M9
