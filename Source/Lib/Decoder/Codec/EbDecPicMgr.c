@@ -58,7 +58,7 @@ EbErrorType dec_pic_mgr_init(EbDecHandle *dec_handle_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     int32_t     i;
 
-    EB_MALLOC_DEC(void *, *pps_pic_mgr, sizeof(EbDecPicMgr), EB_N_PTR);
+    EB_MALLOC_DEC(void *, *pps_pic_mgr, sizeof(EbDecPicMgr));
 
     EbDecPicMgr *ps_pic_mgr = *pps_pic_mgr;
 
@@ -68,8 +68,7 @@ EbErrorType dec_pic_mgr_init(EbDecHandle *dec_handle_ptr) {
         ps_pic_mgr->as_dec_pic[i].size       = 0;
         ps_pic_mgr->as_dec_pic[i].ref_count  = 0;
         ps_pic_mgr->as_dec_pic[i].mvs        = NULL;
-        EB_MALLOC_DEC(
-            uint8_t *, ps_pic_mgr->as_dec_pic[i].segment_maps, size * sizeof(uint8_t), EB_N_PTR);
+        EB_MALLOC_DEC(uint8_t *, ps_pic_mgr->as_dec_pic[i].segment_maps, size * sizeof(uint8_t));
         memset(ps_pic_mgr->as_dec_pic[i].segment_maps, 0, size);
     }
 
@@ -83,7 +82,7 @@ static INLINE EbErrorType mvs_8x8_memory_alloc(TemporalMvRef **mvs, FrameHeader 
     const int frame_mvs_rows   = ROUND_POWER_OF_TWO(frame_info->mi_rows, 1);
     const int mvs_buff_size    = frame_mvs_stride * frame_mvs_rows;
 
-    EB_MALLOC_DEC(TemporalMvRef *, *mvs, mvs_buff_size * sizeof(TemporalMvRef), EB_N_PTR);
+    EB_MALLOC_DEC(TemporalMvRef *, *mvs, mvs_buff_size * sizeof(TemporalMvRef));
 
     return EB_ErrorNone;
 }

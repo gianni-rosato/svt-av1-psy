@@ -83,26 +83,20 @@ EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_picture_sr
 
     // Allocate the Picture Buffers (luma & chroma)
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-        EB_ALLIGN_MALLOC_DEC(EbByte,
-                             recon_picture_dst->buffer_y,
-                             recon_picture_dst->luma_size * bytes_per_pixel,
-                             EB_A_PTR);
+        EB_ALLIGN_MALLOC_DEC(
+            EbByte, recon_picture_dst->buffer_y, recon_picture_dst->luma_size * bytes_per_pixel);
         memset(recon_picture_dst->buffer_y, 0, recon_picture_dst->luma_size * bytes_per_pixel);
     } else
         recon_picture_dst->buffer_y = 0;
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-        EB_ALLIGN_MALLOC_DEC(EbByte,
-                             recon_picture_dst->buffer_cb,
-                             recon_picture_dst->chroma_size * bytes_per_pixel,
-                             EB_A_PTR);
+        EB_ALLIGN_MALLOC_DEC(
+            EbByte, recon_picture_dst->buffer_cb, recon_picture_dst->chroma_size * bytes_per_pixel);
         memset(recon_picture_dst->buffer_cb, 0, recon_picture_dst->chroma_size * bytes_per_pixel);
     } else
         recon_picture_dst->buffer_cb = 0;
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-        EB_ALLIGN_MALLOC_DEC(EbByte,
-                             recon_picture_dst->buffer_cr,
-                             recon_picture_dst->chroma_size * bytes_per_pixel,
-                             EB_A_PTR);
+        EB_ALLIGN_MALLOC_DEC(
+            EbByte, recon_picture_dst->buffer_cr, recon_picture_dst->chroma_size * bytes_per_pixel);
         memset(recon_picture_dst->buffer_cr, 0, recon_picture_dst->chroma_size * bytes_per_pixel);
     } else
         recon_picture_dst->buffer_cr = 0;

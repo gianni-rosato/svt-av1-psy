@@ -1551,17 +1551,14 @@ static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle   *dec_han
     /* TO-DO this memory will be freed at the end of decode.
        Can be optimized by reallocating the memory when
        the number of tiles changes within a sequence. */
-    EB_MALLOC_DEC(
-        ParseCtxt *, main_parse_ctx->tile_parse_ctxt, sizeof(ParseCtxt) * num_ctx, EB_N_PTR);
+    EB_MALLOC_DEC(ParseCtxt *, main_parse_ctx->tile_parse_ctxt, sizeof(ParseCtxt) * num_ctx);
 
     EB_MALLOC_DEC(ParseAboveNbr4x4Ctxt *,
                   main_parse_ctx->parse_above_nbr4x4_ctxt,
-                  sizeof(ParseAboveNbr4x4Ctxt) * num_ctx,
-                  EB_N_PTR);
+                  sizeof(ParseAboveNbr4x4Ctxt) * num_ctx);
     EB_MALLOC_DEC(ParseLeftNbr4x4Ctxt *,
                   main_parse_ctx->parse_left_nbr4x4_ctxt,
-                  sizeof(ParseLeftNbr4x4Ctxt) * num_ctx,
-                  EB_N_PTR);
+                  sizeof(ParseLeftNbr4x4Ctxt) * num_ctx);
     int total_rows = num_instances == 1 ? 1 : tiles_info.tile_rows;
     int total_cols = num_instances == 1 ? 1 : tiles_info.tile_cols;
     for (int row = 0; row < total_rows; row++) {
@@ -1573,36 +1570,26 @@ static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle   *dec_han
             num_mi_wide         = ALIGN_POWER_OF_TWO(num_mi_wide, sb_size_log2 - MI_SIZE_LOG2);
             ParseAboveNbr4x4Ctxt *above_ctx = &main_parse_ctx->parse_above_nbr4x4_ctxt[instance];
             ParseLeftNbr4x4Ctxt  *left_ctx  = &main_parse_ctx->parse_left_nbr4x4_ctxt[instance];
-            EB_MALLOC_DEC(
-                uint8_t *, above_ctx->above_tx_wd, num_mi_wide * sizeof(uint8_t), EB_N_PTR);
-            EB_MALLOC_DEC(
-                uint8_t *, above_ctx->above_part_wd, num_mi_wide * sizeof(uint8_t), EB_N_PTR);
-            EB_MALLOC_DEC(uint8_t *, left_ctx->left_tx_ht, num_mi_sb * sizeof(uint8_t), EB_N_PTR);
-            EB_MALLOC_DEC(uint8_t *, left_ctx->left_part_ht, num_mi_sb * sizeof(uint8_t), EB_N_PTR);
+            EB_MALLOC_DEC(uint8_t *, above_ctx->above_tx_wd, num_mi_wide * sizeof(uint8_t));
+            EB_MALLOC_DEC(uint8_t *, above_ctx->above_part_wd, num_mi_wide * sizeof(uint8_t));
+            EB_MALLOC_DEC(uint8_t *, left_ctx->left_tx_ht, num_mi_sb * sizeof(uint8_t));
+            EB_MALLOC_DEC(uint8_t *, left_ctx->left_part_ht, num_mi_sb * sizeof(uint8_t));
             /* TODO : Optimize the size for Chroma */
             for (int i = 0; i < num_planes; i++) {
-                EB_MALLOC_DEC(
-                    uint8_t *, above_ctx->above_ctx[i], num_mi_wide * sizeof(uint8_t), EB_N_PTR);
+                EB_MALLOC_DEC(uint8_t *, above_ctx->above_ctx[i], num_mi_wide * sizeof(uint8_t));
                 EB_MALLOC_DEC(uint16_t *,
                               above_ctx->above_palette_colors[i],
-                              num_mi_64x64 * PALETTE_MAX_SIZE * sizeof(uint16_t),
-                              EB_N_PTR);
+                              num_mi_64x64 * PALETTE_MAX_SIZE * sizeof(uint16_t));
 
-                EB_MALLOC_DEC(
-                    uint8_t *, left_ctx->left_ctx[i], num_mi_sb * sizeof(uint8_t), EB_N_PTR);
+                EB_MALLOC_DEC(uint8_t *, left_ctx->left_ctx[i], num_mi_sb * sizeof(uint8_t));
                 EB_MALLOC_DEC(uint16_t *,
                               left_ctx->left_palette_colors[i],
-                              num_mi_sb * PALETTE_MAX_SIZE * sizeof(uint16_t),
-                              EB_N_PTR);
+                              num_mi_sb * PALETTE_MAX_SIZE * sizeof(uint16_t));
             }
-            EB_MALLOC_DEC(
-                int8_t *, above_ctx->above_comp_grp_idx, num_mi_wide * sizeof(int8_t), EB_N_PTR);
-            EB_MALLOC_DEC(
-                uint8_t *, above_ctx->above_seg_pred_ctx, num_mi_wide * sizeof(uint8_t), EB_N_PTR);
-            EB_MALLOC_DEC(
-                int8_t *, left_ctx->left_comp_grp_idx, num_mi_sb * sizeof(int8_t), EB_N_PTR);
-            EB_MALLOC_DEC(
-                uint8_t *, left_ctx->left_seg_pred_ctx, num_mi_sb * sizeof(uint8_t), EB_N_PTR);
+            EB_MALLOC_DEC(int8_t *, above_ctx->above_comp_grp_idx, num_mi_wide * sizeof(int8_t));
+            EB_MALLOC_DEC(uint8_t *, above_ctx->above_seg_pred_ctx, num_mi_wide * sizeof(uint8_t));
+            EB_MALLOC_DEC(int8_t *, left_ctx->left_comp_grp_idx, num_mi_sb * sizeof(int8_t));
+            EB_MALLOC_DEC(uint8_t *, left_ctx->left_seg_pred_ctx, num_mi_sb * sizeof(uint8_t));
         }
     }
     return EB_ErrorNone;
@@ -1613,10 +1600,8 @@ static INLINE EbErrorType reallocate_parse_tile_data(MainParseCtxt *main_parse_c
     /* TO-DO this memory will be freed at the end of decode.
        Can be optimized by reallocating the memory when
        the number of tiles changes within a sequence. */
-    EB_MALLOC_DEC(ParseTileData *,
-                  main_parse_ctx->parse_tile_data,
-                  sizeof(ParseTileData) * num_tiles,
-                  EB_N_PTR);
+    EB_MALLOC_DEC(
+        ParseTileData *, main_parse_ctx->parse_tile_data, sizeof(ParseTileData) * num_tiles);
     return EB_ErrorNone;
 }
 

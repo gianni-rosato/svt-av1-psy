@@ -25,7 +25,7 @@ extern EbMemoryMapEntry *memory_map_start_address;
 extern EbMemoryMapEntry *memory_map_end_address;
 
 #ifdef _WIN32
-#define EB_ALLIGN_MALLOC_DEC(type, pointer, n_elements, pointer_class)                \
+#define EB_ALLIGN_MALLOC_DEC(type, pointer, n_elements)                               \
     do {                                                                              \
         pointer = (type)_aligned_malloc(n_elements, ALVALUE);                         \
         if (pointer == NULL)                                                          \
@@ -35,7 +35,7 @@ extern EbMemoryMapEntry *memory_map_end_address;
             _aligned_free(pointer);                                                   \
             return EB_ErrorInsufficientResources;                                     \
         }                                                                             \
-        node->ptr_type     = pointer_class;                                           \
+        node->ptr_type     = EB_A_PTR;                                                \
         node->ptr          = pointer;                                                 \
         node->prev_entry   = svt_dec_memory_map;                                      \
         svt_dec_memory_map = node;                                                    \
@@ -48,7 +48,7 @@ extern EbMemoryMapEntry *memory_map_end_address;
         svt_dec_lib_malloc_count++;                                                   \
     } while (0)
 #else
-#define EB_ALLIGN_MALLOC_DEC(type, pointer, n_elements, pointer_class)                \
+#define EB_ALLIGN_MALLOC_DEC(type, pointer, n_elements)                               \
     do {                                                                              \
         if (posix_memalign((void **)&(pointer), ALVALUE, n_elements) != 0)            \
             return EB_ErrorInsufficientResources;                                     \
@@ -57,7 +57,7 @@ extern EbMemoryMapEntry *memory_map_end_address;
             free(pointer);                                                            \
             return EB_ErrorInsufficientResources;                                     \
         }                                                                             \
-        node->ptr_type     = pointer_class;                                           \
+        node->ptr_type     = EB_A_PTR;                                                \
         node->ptr          = pointer;                                                 \
         node->prev_entry   = svt_dec_memory_map;                                      \
         svt_dec_memory_map = node;                                                    \
@@ -70,7 +70,7 @@ extern EbMemoryMapEntry *memory_map_end_address;
         svt_dec_lib_malloc_count++;                                                   \
     } while (0)
 #endif
-#define EB_MALLOC_DEC(type, pointer, n_elements, pointer_class)                       \
+#define EB_MALLOC_DEC(type, pointer, n_elements)                                      \
     do {                                                                              \
         pointer = malloc(n_elements);                                                 \
         if (pointer == NULL)                                                          \
@@ -80,7 +80,7 @@ extern EbMemoryMapEntry *memory_map_end_address;
             free(pointer);                                                            \
             return EB_ErrorInsufficientResources;                                     \
         }                                                                             \
-        node->ptr_type     = pointer_class;                                           \
+        node->ptr_type     = EB_N_PTR;                                                \
         node->ptr          = pointer;                                                 \
         node->prev_entry   = svt_dec_memory_map;                                      \
         svt_dec_memory_map = node;                                                    \

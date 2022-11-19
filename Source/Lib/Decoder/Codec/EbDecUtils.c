@@ -34,8 +34,7 @@ EbErrorType check_add_tplmv_buf(EbDecHandle *dec_handle_ptr) {
         /*TODO: Add free now itself */
         EB_MALLOC_DEC(TemporalMvRef *,
                       dec_handle_ptr->main_frame_buf.tpl_mvs,
-                      tpl_size * sizeof(*dec_handle_ptr->main_frame_buf.tpl_mvs),
-                      EB_N_PTR);
+                      tpl_size * sizeof(*dec_handle_ptr->main_frame_buf.tpl_mvs));
         dec_handle_ptr->main_frame_buf.tpl_mvs_size = tpl_size;
     }
     return EB_ErrorNone;

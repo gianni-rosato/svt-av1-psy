@@ -167,8 +167,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     /* Recon */
     EB_MALLOC_DEC(uint32_t *,
                   dec_mt_frame_data->sb_recon_row_map,
-                  picture_height_in_sb * tiles_info->tile_cols * sizeof(uint32_t),
-                  EB_N_PTR);
+                  picture_height_in_sb * tiles_info->tile_cols * sizeof(uint32_t));
 
     DecMtRowInfo *recon_tile_info = &dec_mt_frame_data->recon_tile_info;
     EB_CREATE_MUTEX(recon_tile_info->sbrow_mutex);
@@ -183,8 +182,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 
         EB_MALLOC_DEC(DecMtParseReconTileInfo *,
                       dec_mt_frame_data->parse_recon_tile_info_array,
-                      num_tiles * sizeof(DecMtParseReconTileInfo),
-                      EB_N_PTR);
+                      num_tiles * sizeof(DecMtParseReconTileInfo));
 
         for (tiles_ctr = 0; tiles_ctr < num_tiles; tiles_ctr++) {
             int32_t   tile_row = tiles_ctr / tiles_info->tile_cols;
@@ -209,20 +207,17 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
             EB_MALLOC_DEC(
                 uint32_t *,
                 dec_mt_frame_data->parse_recon_tile_info_array[tiles_ctr].sb_recon_row_parsed,
-                tile_num_sb_rows * sizeof(uint32_t),
-                EB_N_PTR);
+                tile_num_sb_rows * sizeof(uint32_t));
 
             EB_MALLOC_DEC(
                 uint32_t *,
                 dec_mt_frame_data->parse_recon_tile_info_array[tiles_ctr].sb_recon_completed_in_row,
-                tile_num_sb_rows * sizeof(uint32_t),
-                EB_N_PTR);
+                tile_num_sb_rows * sizeof(uint32_t));
 
             EB_MALLOC_DEC(
                 uint32_t *,
                 dec_mt_frame_data->parse_recon_tile_info_array[tiles_ctr].sb_recon_row_started,
-                tile_num_sb_rows * sizeof(uint32_t),
-                EB_N_PTR);
+                tile_num_sb_rows * sizeof(uint32_t));
 
             EB_CREATE_MUTEX(
                 dec_mt_frame_data->parse_recon_tile_info_array[tiles_ctr].tile_sbrow_mutex);
@@ -245,13 +240,10 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     /* LF */
     EB_MALLOC_DEC(int32_t *,
                   dec_mt_frame_data->lf_frame_info.sb_lf_completed_in_row,
-                  picture_height_in_sb * sizeof(int32_t),
-                  EB_N_PTR);
+                  picture_height_in_sb * sizeof(int32_t));
 
-    EB_MALLOC_DEC(uint32_t *,
-                  dec_mt_frame_data->lf_row_map,
-                  picture_height_in_sb * sizeof(uint32_t),
-                  EB_N_PTR);
+    EB_MALLOC_DEC(
+        uint32_t *, dec_mt_frame_data->lf_row_map, picture_height_in_sb * sizeof(uint32_t));
 
     DecMtRowInfo *lf_sb_row_info = &dec_mt_frame_data->lf_frame_info.lf_sb_row_info;
 
@@ -273,18 +265,14 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 
     /*ToDo: Linebuff memory we can allocate min(sb_rows , threads)*/
     /*Currently we r allocating for every (64x64 +1 )rows*/
-    EB_MALLOC_DEC(
-        uint16_t ***, dec_mt_frame_data->cdef_linebuf, (nvfb + 1) * sizeof(uint16_t **), EB_N_PTR);
+    EB_MALLOC_DEC(uint16_t ***, dec_mt_frame_data->cdef_linebuf, (nvfb + 1) * sizeof(uint16_t **));
     for (int32_t sb_row = 0; sb_row < (nvfb + 1); sb_row++) {
         uint16_t **p_linebuf;
-        EB_MALLOC_DEC(uint16_t **,
-                      dec_mt_frame_data->cdef_linebuf[sb_row],
-                      num_planes * sizeof(uint16_t **),
-                      EB_N_PTR);
+        EB_MALLOC_DEC(
+            uint16_t **, dec_mt_frame_data->cdef_linebuf[sb_row], num_planes * sizeof(uint16_t **));
         p_linebuf = dec_mt_frame_data->cdef_linebuf[sb_row];
         for (int32_t pli = 0; pli < num_planes; pli++) {
-            EB_MALLOC_DEC(
-                uint16_t *, p_linebuf[pli], sizeof(uint16_t) * CDEF_VBORDER * stride, EB_N_PTR);
+            EB_MALLOC_DEC(uint16_t *, p_linebuf[pli], sizeof(uint16_t) * CDEF_VBORDER * stride);
         }
     }
 
@@ -293,16 +281,13 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     to avoid to pointing junck memory, we allocate nvfb+1 64x64 blocks*/
     EB_MALLOC_DEC(uint8_t *,
                   dec_mt_frame_data->row_cdef_map,
-                  (nvfb + 1) * dec_mt_frame_data->cdef_map_stride * sizeof(uint8_t),
-                  EB_N_PTR);
+                  (nvfb + 1) * dec_mt_frame_data->cdef_map_stride * sizeof(uint8_t));
     memset(dec_mt_frame_data->row_cdef_map,
            1,
            (nvfb + 1) * dec_mt_frame_data->cdef_map_stride * sizeof(uint8_t));
 
-    EB_MALLOC_DEC(uint32_t *,
-                  dec_mt_frame_data->cdef_completed_in_row,
-                  (nvfb + 2) * sizeof(uint32_t),
-                  EB_N_PTR);
+    EB_MALLOC_DEC(
+        uint32_t *, dec_mt_frame_data->cdef_completed_in_row, (nvfb + 2) * sizeof(uint32_t));
 
     memset(dec_mt_frame_data->cdef_completed_in_row,
            0,
@@ -311,8 +296,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 
     EB_MALLOC_DEC(uint32_t *,
                   dec_mt_frame_data->cdef_completed_for_row_map,
-                  picture_height_in_sb * sizeof(uint32_t),
-                  EB_N_PTR);
+                  picture_height_in_sb * sizeof(uint32_t));
 
     DecMtRowInfo *cdef_sb_row_info = &dec_mt_frame_data->cdef_sb_row_info;
 
@@ -323,13 +307,10 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     /* LR */
     EB_MALLOC_DEC(int32_t *,
                   dec_mt_frame_data->sb_lr_completed_in_row,
-                  picture_height_in_sb * sizeof(int32_t),
-                  EB_N_PTR);
+                  picture_height_in_sb * sizeof(int32_t));
 
-    EB_MALLOC_DEC(uint32_t *,
-                  dec_mt_frame_data->lr_row_map,
-                  picture_height_in_sb * sizeof(uint32_t),
-                  EB_N_PTR);
+    EB_MALLOC_DEC(
+        uint32_t *, dec_mt_frame_data->lr_row_map, picture_height_in_sb * sizeof(uint32_t));
 
     DecMtRowInfo *lr_sb_row_info = &dec_mt_frame_data->lr_sb_row_info;
 
@@ -360,8 +341,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
        init_dec_mod_ctxt reallocated when required */
 
     DecModCtxt **dec_mod_ctxt_arr;
-    EB_MALLOC_DEC(
-        DecModCtxt **, dec_mod_ctxt_arr, num_lib_threads * sizeof(DecModCtxt *), EB_N_PTR);
+    EB_MALLOC_DEC(DecModCtxt **, dec_mod_ctxt_arr, num_lib_threads * sizeof(DecModCtxt *));
 
     for (uint32_t i = 0; i < num_lib_threads; i++) {
         init_dec_mod_ctxt(dec_handle_ptr, (void **)&dec_mod_ctxt_arr[i]);
@@ -375,8 +355,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 
         if (num_lib_threads > 0) {
             DecThreadCtxt *thread_ctxt_pa;
-            EB_MALLOC_DEC(
-                DecThreadCtxt *, thread_ctxt_pa, num_lib_threads * sizeof(DecThreadCtxt), EB_N_PTR);
+            EB_MALLOC_DEC(DecThreadCtxt *, thread_ctxt_pa, num_lib_threads * sizeof(DecThreadCtxt));
             dec_handle_ptr->thread_ctxt_pa = thread_ctxt_pa;
             EB_CREATE_SEMAPHORE(dec_handle_ptr->thread_semaphore, 0, 100000);
 
@@ -391,8 +370,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
                 EB_MALLOC_DEC(uint8_t *,
                               thread_ctxt_pa[i].dst,
                               (MAX_SB_SIZE + 8) * RESTORATION_PROC_UNIT_SIZE * sizeof(uint8_t)
-                                  << use_highbd,
-                              EB_N_PTR);
+                                  << use_highbd);
             }
             EB_CREATE_THREAD_ARRAY(dec_handle_ptr->decode_thread_handle_array,
                                    num_lib_threads,
