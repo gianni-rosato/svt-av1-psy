@@ -493,6 +493,16 @@ if(COVERAGE)
     add_clike_and_ld_flags(--coverage)
 endif()
 
+set(SVT_AV1_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+set(SVT_AV1_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+
+if(NOT IS_ABSOLUTE "${SVT_AV1_INCLUDEDIR}")
+    string(PREPEND SVT_AV1_INCLUDEDIR "\${prefix}/")
+endif()
+if(NOT IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+    string(PREPEND SVT_AV1_LIBDIR "\${exec_prefix}/")
+endif()
+
 # Add Subdirectories
 add_subdirectory(Source/Lib/Common)
 if(BUILD_ENC)
