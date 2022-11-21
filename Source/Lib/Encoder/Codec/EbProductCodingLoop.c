@@ -6968,10 +6968,12 @@ uint8_t do_md_recon(PictureParentControlSet *pcs, ModeDecisionContext *ctxt) {
         !pcs->cdef_ctrls.use_reference_cdef_fs; // CDEF search levels needing the recon samples
     uint8_t need_md_rec_for_restoration_search =
         pcs->enable_restoration; // any resoration search level
-
+    uint8_t need_md_rec_for_stat_report = pcs->scs_ptr->static_config.stat_report &&
+        (ctxt->pd_pass == PD_PASS_1); // stat report needs recon samples for metrics
     uint8_t do_recon;
     if (need_md_rec_for_intra_pred || need_md_rec_for_ref || need_md_rec_for_dlf_search ||
-        need_md_rec_for_cdef_search || need_md_rec_for_restoration_search)
+        need_md_rec_for_cdef_search || need_md_rec_for_restoration_search ||
+        need_md_rec_for_stat_report)
         do_recon = 1;
     else
         do_recon = 0;

@@ -390,6 +390,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             return_error = EB_ErrorBadParameter;
         }
     }
+
+    if (config->stat_report == 1) {
+        SVT_WARN("Instances %u: Enabling StatReport can decrease encoding speed\n",
+                 channel_number + 1);
+    }
+
     if (config->stat_report > 1) {
         SVT_ERROR("Instance %u : Invalid StatReport. StatReport must be [0 - 1]\n",
                   channel_number + 1);
