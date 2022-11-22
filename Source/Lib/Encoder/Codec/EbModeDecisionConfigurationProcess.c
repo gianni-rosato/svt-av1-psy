@@ -651,8 +651,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cand_reduction_level = 1;
         else
             pcs_ptr->cand_reduction_level = 2;
-    }
-    else if (enc_mode <= ENC_M9) {
+    } else if (enc_mode <= ENC_M9) {
         if (pcs_ptr->coeff_lvl == LOW_LVL)
             pcs_ptr->cand_reduction_level = 1;
         else
@@ -1242,12 +1241,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                             pcs_ptr->pic_depth_removal_level = 1;
                         else
                             pcs_ptr->pic_depth_removal_level = 2;
-                } else {
-                    if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                    } else {
+                        if (input_resolution <= INPUT_SIZE_480p_RANGE)
                             pcs_ptr->pic_depth_removal_level = 1;
-                    else
+                        else
                             pcs_ptr->pic_depth_removal_level = is_base ? 2 : 6;
-                }
+                    }
 #endif
                 } else if (enc_mode <= ENC_M9) {
                     if (pcs_ptr->coeff_lvl == LOW_LVL) {

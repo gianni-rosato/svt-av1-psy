@@ -1719,8 +1719,8 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
 #if FIX_LAYER1_R0_ADJUST
             ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
 #else
-            double div_factor = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
-            ppcs->r0          = ppcs->r0 / div_factor;
+            double div_factor       = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
+            ppcs->r0                = ppcs->r0 / div_factor;
 #endif
             // Further scale r0 based on the GOP structure
             ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs->max_heirachical_level];

@@ -2584,7 +2584,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_stru
 
         {
 #if OPT_4L_LAY2_MRP
-            int32_t ref_list0_tmp[] = { 1, 5, 2, 0 }; // GOP Index 1 - Ref List 0
+            int32_t ref_list0_tmp[] = {1, 5, 2, 0}; // GOP Index 1 - Ref List 0
 #else
             int32_t ref_list0_tmp[] = {1, 3, 5, 2}; // GOP Index 1 - Ref List 0
 #endif
@@ -2594,7 +2594,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_stru
         }
         {
 #if OPT_4L_LAY2_MRP
-            int32_t ref_list0_tmp[] = { 1, 5, 2, 0 }; // GOP Index 5 - Ref List 0
+            int32_t ref_list0_tmp[] = {1, 5, 2, 0}; // GOP Index 5 - Ref List 0
 #else
             int32_t ref_list0_tmp[] = {1, 3, 5, 2}; // GOP Index 5 - Ref List 0
 #endif
@@ -2604,7 +2604,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_stru
         }
         {
 #if OPT_4L_LAY2_MRP
-            int32_t ref_list0_tmp[] = { 1, 3, 2, 0 }; // GOP Index 7 - Ref List 0
+            int32_t ref_list0_tmp[] = {1, 3, 2, 0}; // GOP Index 7 - Ref List 0
 #else
             int32_t ref_list0_tmp[] = {1, 3, 5, 2}; // GOP Index 7 - Ref List 0
 #endif
