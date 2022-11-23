@@ -1239,7 +1239,7 @@ ConfigEntry config_entry_intra_refresh[] = {
      set_look_ahead_distance},
     {SINGLE_INPUT,
      HIERARCHICAL_LEVELS_TOKEN,
-     "Set hierarchical levels beyond the base layer, default is <=M6: 5, else: 4 [2: 3 temporal "
+     "Set hierarchical levels beyond the base layer, default is <=M12: 5, else: 4 [2: 3 temporal "
      "layers, 3: 4 "
      "temporal layers, 4: 5 "
      "layers, 5: 6 layers]",

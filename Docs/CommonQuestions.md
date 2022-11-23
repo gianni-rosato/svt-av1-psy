@@ -27,7 +27,7 @@ The features enabled or changed by each preset are as follows
 
 | **Category**                | **Feature**                                 | **0** | **1** | **2** | **3** | **4** | **5** | **6** | **7** | **8** | **9** | **10** | **11** | **12** |
 | --------------------------- | ------------------------------------------  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | ----  | -----  | -----  | -----  |
-| Prediction structure & RC   | Hierarchical levels                         | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 5L    | 5L    | 5L    | 5L     | 5L     | 5L     |
+| Prediction structure & RC   | Hierarchical levels                         | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L    | 6L     | 6L     | 6L     |
 |                             | aq-mode                                     | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
 |                             | max reference frame count                   | 7     | 7     | 7     | 7     | 7     | 7     | 4     | 4     | 4     | 4     | 4      | 4      | 4      |
 | Motion Estimation           | Full pel Motion Estimation                  | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
@@ -60,7 +60,7 @@ The features enabled or changed by each preset are as follows
 |                             | Transform Size search                       | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
 | AV1 inloop filters          | Deblocking Filter                           | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
 |                             | CDEF                                        | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON     | ON     | ON     |
-|                             | Restoration Filter - Wiener Filter          | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | OFF    | OFF    | OFF    |
+|                             | Restoration Filter - Wiener Filter          | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | ON    | OFF   | OFF    | OFF    | OFF    |
 |                             | Restoration Filter - SG Filter              | ON    | ON    | ON    | ON    | ON    | OFF   | OFF   | OFF   | OFF   | OFF   | OFF    | OFF    | OFF    |
 
 
