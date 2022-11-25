@@ -416,6 +416,7 @@ Linux Gstreamer (Static):
     CFLAGS: -pipe
     CXXFLAGS: -pipe
     LDFLAGS: -pipe
+    PKG_CONFIG: pkg-config --static
     PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
     GIT_DEPTH: 0
   script:
