@@ -2347,7 +2347,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                                     context_ptr->blk_geom->bsize)
                             : 1;
                     inj_mv              = inj_mv && inside_tile;
-                    inj_mv = inj_mv &&
+                    inj_mv              = inj_mv &&
                         is_me_data_present(context_ptr->me_block_offset,
                                            context_ptr->me_cand_offset,
                                            me_results,

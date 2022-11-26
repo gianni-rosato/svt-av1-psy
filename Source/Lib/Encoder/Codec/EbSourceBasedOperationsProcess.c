@@ -2221,7 +2221,7 @@ void *tpl_disp_kernel(void *input_ptr) {
 
 static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
                                  PictureParentControlSet *pcs, Bool superres_recode) {
-    EbObjectWrapper *out_results_wrapper_ptr;
+    EbObjectWrapper    *out_results_wrapper_ptr;
     SequenceControlSet *scs = pcs->scs_ptr;
     // NB: overlay frames should be non-ref
     // Before sending pics out to pic mgr, ensure that pic mgr can handle them

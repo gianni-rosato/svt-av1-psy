@@ -43,7 +43,7 @@ static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {
     100, 100, 100, 100, 100, 100};
 // Specifies the weights of the worst quality in calculating qindex of non base layer frames
 static const int non_base_qindex_weight_wq[EB_MAX_TEMPORAL_LAYERS] = {100, 100, 300, 100, 100, 100};
-static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 2, 1, 1, 0.7};
+static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS]     = {1, 1, 2, 1, 1, 0.7};
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 3, 2, 1, 1};
 #define KB 400
 // intra_perc will be set to the % of intra area in two nearest ref frames
@@ -54,8 +54,8 @@ static void get_ref_intra_percentage(PictureControlSet *pcs, uint8_t *intra_perc
         return;
     }
 
-    uint8_t iperc = 0;
-    uint8_t ref_cnt = 0;
+    uint8_t            iperc   = 0;
+    uint8_t            ref_cnt = 0;
     EbReferenceObject *ref_obj_l0 =
         (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
 
@@ -2090,7 +2090,7 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
         const unsigned int r0_weight_idx = !frame_is_intra_only(pcs_ptr->parent_pcs_ptr) +
             !!pcs_ptr->parent_pcs_ptr->temporal_layer_index;
         assert(r0_weight_idx <= 2);
-        double weight = r0_weight[r0_weight_idx];
+        double       weight                  = r0_weight[r0_weight_idx];
         const double qstep_ratio             = sqrt(pcs_ptr->parent_pcs_ptr->r0) * weight;
         int          qindex_from_qstep_ratio = svt_av1_get_q_index_from_qstep_ratio(
             rc->active_worst_quality, qstep_ratio, scs_ptr->static_config.encoder_bit_depth);

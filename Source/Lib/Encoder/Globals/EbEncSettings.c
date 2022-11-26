@@ -922,7 +922,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv                  = DEFAULT;
     config_ptr->fast_decode                  = 0;
-    config_ptr->encoder_color_format = EB_YUV420;
+    config_ptr->encoder_color_format         = EB_YUV420;
     // Rate control options
     // Set the default value toward more flexible rate allocation
     config_ptr->vbr_bias_pct             = 100;

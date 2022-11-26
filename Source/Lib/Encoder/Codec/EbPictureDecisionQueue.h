@@ -30,7 +30,7 @@ typedef struct PaReferenceEntry {
                    // and for when the DPB is cleared at EOS.
     /* clang-format on */
     uint64_t decode_order;
-    uint8_t is_alt_ref;
+    uint8_t  is_alt_ref;
 } PaReferenceEntry;
 
 extern EbErrorType pa_reference_queue_entry_ctor(PaReferenceEntry *entry_ptr);

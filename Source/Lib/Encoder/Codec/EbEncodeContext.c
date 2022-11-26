@@ -105,7 +105,6 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
         EB_NEW(encode_context_ptr->input_picture_queue[picture_index], input_queue_entry_ctor);
     }
 
-
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->pd_dpb, REF_FRAMES);
     for (picture_index = 0; picture_index < REF_FRAMES; ++picture_index) {
         EB_NEW(encode_context_ptr->pd_dpb[picture_index], pa_reference_queue_entry_ctor);
@@ -135,9 +134,8 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     // Sequence Termination Flags
     encode_context_ptr->terminating_picture_number = ~0u;
 
-
     EB_CREATE_MUTEX(encode_context_ptr->sc_buffer_mutex);
-    encode_context_ptr->enc_mode = SPEED_CONTROL_INIT_MOD;
+    encode_context_ptr->enc_mode         = SPEED_CONTROL_INIT_MOD;
     encode_context_ptr->recode_tolerance = 25;
     encode_context_ptr->rc_cfg.min_cr    = 0;
     EB_CREATE_MUTEX(encode_context_ptr->stat_file_mutex);

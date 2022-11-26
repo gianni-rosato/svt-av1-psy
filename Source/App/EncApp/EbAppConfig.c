@@ -256,7 +256,6 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
     cfg->y4m_input = check_if_y4m(cfg);
 };
 
-
 static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
     if (cfg->bitstream_file && cfg->bitstream_file != stdout) {
         fclose(cfg->bitstream_file);
@@ -293,7 +292,7 @@ static void set_two_pass_stats(const char *value, EbConfig *cfg) {
 #ifndef _WIN32
     cfg->stats = strdup(value);
 #else
-    cfg->stats                      = _strdup(value);
+    cfg->stats     = _strdup(value);
 #endif
 }
 
@@ -1672,7 +1671,6 @@ void svt_config_dtor(EbConfig *config_ptr) {
         config_ptr->recon_file = (FILE *)NULL;
     }
 
-
     if (config_ptr->error_log_file && config_ptr->error_log_file != stderr) {
         fclose(config_ptr->error_log_file);
         config_ptr->error_log_file = (FILE *)NULL;
@@ -1950,7 +1948,7 @@ Bool load_twopass_stats_in(EbConfig *cfg) {
     struct _stat file_stat;
     int          ret = _fstat(fd, &file_stat);
 #else
-    int         fd                  = fileno(cfg->input_stat_file);
+    int         fd = fileno(cfg->input_stat_file);
     struct stat file_stat;
     int         ret         = fstat(fd, &file_stat);
 #endif
@@ -2655,7 +2653,6 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
 
     return frame_count;
 }
-
 
 static Bool warn_legacy_token(const char *const token) {
     static struct warn_set {

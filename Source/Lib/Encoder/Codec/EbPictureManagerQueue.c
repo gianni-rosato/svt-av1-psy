@@ -17,13 +17,11 @@ EbErrorType input_queue_entry_ctor(InputQueueEntry *entry_ptr) {
     return EB_ErrorNone;
 }
 
-static void reference_queue_entry_dctor(EbPtr p) {
-    UNUSED(p);
-}
+static void reference_queue_entry_dctor(EbPtr p) { UNUSED(p); }
 
 EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr) {
     entry_ptr->dctor          = reference_queue_entry_dctor;
     entry_ptr->picture_number = ~0u;
-    entry_ptr->is_valid = 0;
+    entry_ptr->is_valid       = 0;
     return EB_ErrorNone;
 }

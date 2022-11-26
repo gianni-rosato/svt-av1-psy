@@ -331,9 +331,9 @@ void *picture_manager_kernel(void *input_ptr) {
 
     Bool availability_flag;
 
-    InputQueueEntry *input_entry_ptr;
-    uint32_t         input_queue_index;
-    ReferenceQueueEntry *reference_entry_ptr = NULL;
+    InputQueueEntry         *input_entry_ptr;
+    uint32_t                 input_queue_index;
+    ReferenceQueueEntry     *reference_entry_ptr = NULL;
     PictureParentControlSet *entry_pcs_ptr;
     SequenceControlSet      *entry_scs_ptr;
 
@@ -422,8 +422,8 @@ void *picture_manager_kernel(void *input_ptr) {
                                        encode_context_ptr->app_callback_ptr,
                                        EB_ENC_PM_ERROR5);
                 }
-                reference_entry_ptr->picture_number       = pcs_ptr->picture_number;
-                reference_entry_ptr->reference_object_ptr = (EbObjectWrapper *)NULL;
+                reference_entry_ptr->picture_number            = pcs_ptr->picture_number;
+                reference_entry_ptr->reference_object_ptr      = (EbObjectWrapper *)NULL;
                 reference_entry_ptr->release_enable            = TRUE;
                 reference_entry_ptr->reference_available       = FALSE;
                 reference_entry_ptr->slice_type                = pcs_ptr->slice_type;
@@ -432,7 +432,7 @@ void *picture_manager_kernel(void *input_ptr) {
                 reference_entry_ptr->is_alt_ref                = pcs_ptr->is_alt_ref;
                 reference_entry_ptr->feedback_arrived          = FALSE;
                 reference_entry_ptr->is_used_as_reference_flag = pcs_ptr->is_used_as_reference_flag;
-                reference_entry_ptr->decode_order = pcs_ptr->decode_order;
+                reference_entry_ptr->decode_order              = pcs_ptr->decode_order;
                 reference_entry_ptr->refresh_frame_mask =
                     pcs_ptr->av1_ref_signal.refresh_frame_mask;
                 reference_entry_ptr->dec_order_of_last_ref = pcs_ptr->is_used_as_reference_flag
@@ -1032,8 +1032,8 @@ void *picture_manager_kernel(void *input_ptr) {
                         reference_entry_ptr->reference_available       = FALSE;
                         reference_entry_ptr->is_used_as_reference_flag = FALSE;
                         reference_entry_ptr->is_valid                  = false;
-                        reference_entry_ptr->frame_context_updated = FALSE;
-                        reference_entry_ptr->feedback_arrived      = FALSE;
+                        reference_entry_ptr->frame_context_updated     = FALSE;
+                        reference_entry_ptr->feedback_arrived          = FALSE;
                         svt_post_semaphore(scs_ptr->ref_buffer_available_semaphore);
                     }
                 }

@@ -46,7 +46,6 @@
 // Instead of using x % y, we use x && (y-1)
 #define PARALLEL_GOP_MAX_NUMBER 256
 
-
 typedef struct FirstPassStatsOut {
     FIRSTPASS_STATS *stat;
     size_t           size;
@@ -103,8 +102,8 @@ typedef struct EncodeContext {
     EbObjectWrapper *picture_decision_undisplayed_queue[UNDISP_QUEUE_SIZE];
     uint32_t         picture_decision_undisplayed_queue_count;
     // Picture Manager Pre-Assignment Buffer
-    uint32_t pre_assignment_buffer_intra_count;
-    uint32_t pre_assignment_buffer_idr_count;
+    uint32_t          pre_assignment_buffer_intra_count;
+    uint32_t          pre_assignment_buffer_idr_count;
     uint32_t          pre_assignment_buffer_eos_flag;
     uint64_t          decode_base_number;
     EbObjectWrapper **pre_assignment_buffer;
@@ -141,7 +140,6 @@ typedef struct EncodeContext {
     uint64_t terminating_picture_number;
     Bool     terminating_sequence_flag_received;
 
-
     // Prediction Structure
     PredictionStructureGroup *prediction_structure_group_ptr;
 
@@ -152,7 +150,6 @@ typedef struct EncodeContext {
     EbHandle sc_buffer_mutex;
     EncMode  enc_mode;
 
-
     // Dynamic GOP
     uint32_t         previous_mini_gop_hierarchical_levels;
     EbObjectWrapper *previous_picture_control_set_wrapper_ptr;
@@ -160,7 +157,7 @@ typedef struct EncodeContext {
 
     EbHandle stat_file_mutex;
 
-    Bool is_mini_gop_changed;
+    Bool                 is_mini_gop_changed;
     uint64_t             poc_map_idx[MAX_TPL_LA_SW];
     EbPictureBufferDesc *mc_flow_rec_picture_buffer[MAX_TPL_LA_SW];
     EbPictureBufferDesc *mc_flow_rec_picture_buffer_noref;

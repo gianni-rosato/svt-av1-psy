@@ -65,11 +65,11 @@ typedef struct PredictionStructureConfig {
 typedef struct PredictionStructureEntry {
     ReferenceList ref_list0;
     ReferenceList ref_list1;
-    uint32_t dep_list0_count;
-    uint32_t dep_list1_count;
-    uint32_t temporal_layer_index;
-    uint32_t decode_order;
-    Bool     is_referenced;
+    uint32_t      dep_list0_count;
+    uint32_t      dep_list1_count;
+    uint32_t      temporal_layer_index;
+    uint32_t      decode_order;
+    Bool          is_referenced;
 } PredictionStructureEntry;
 
 /************************************************

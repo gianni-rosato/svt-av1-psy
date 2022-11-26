@@ -447,11 +447,11 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 
     pcs_ptr->gf_interval = 0;
 
-    pcs_ptr->reference_released = 0;
+    pcs_ptr->reference_released                 = 0;
     frm_hdr->skip_mode_params.skip_mode_allowed = 0;
     frm_hdr->skip_mode_params.skip_mode_flag    = 0;
-    frm_hdr->frame_type     = KEY_FRAME;
-    frm_hdr->show_frame     = 1;
+    frm_hdr->frame_type                         = KEY_FRAME;
+    frm_hdr->show_frame                         = 1;
     frm_hdr->showable_frame = 1; // frame can be used as show existing frame in future
     // Flag for a frame used as a reference - not written to the Bitstream
     pcs_ptr->is_reference_frame = 0;

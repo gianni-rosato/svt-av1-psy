@@ -53,10 +53,10 @@ void svt_aom_set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_leve
  * Context
  **************************************/
 typedef struct PictureDecisionContext {
-    EbDctor  dctor;
-    EbFifo  *picture_analysis_results_input_fifo_ptr;
-    EbFifo  *picture_decision_results_output_fifo_ptr;
-    EbFifo  *me_fifo_ptr;
+    EbDctor dctor;
+    EbFifo *picture_analysis_results_input_fifo_ptr;
+    EbFifo *picture_decision_results_output_fifo_ptr;
+    EbFifo *me_fifo_ptr;
 
     Bool        reset_running_avg;
     int8_t      tf_motion_direction; // -1: invalid   0: horz  1: vert

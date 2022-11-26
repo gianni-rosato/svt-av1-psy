@@ -10615,9 +10615,9 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     context_ptr->avail_blk_flag[blk_ptr->mds_idx] = TRUE;
 }
 Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
-    Bool skip_nsq = 0;
-    uint32_t max_part0_to_part1_dev = ctx->nsq_ctrls.max_part0_to_part1_dev;
-    const BlockGeom *blk_geom = ctx->blk_geom;
+    Bool             skip_nsq               = 0;
+    uint32_t         max_part0_to_part1_dev = ctx->nsq_ctrls.max_part0_to_part1_dev;
+    const BlockGeom *blk_geom               = ctx->blk_geom;
 
     // return immediately if SQ, or NSQ but Parent not available, or max_part0_to_part1_dev is off
     if (blk_geom->shape == PART_N || ctx->avail_blk_flag[blk_geom->sqi_mds] == FALSE ||
@@ -10752,7 +10752,7 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
         }
     }
 
-    uint8_t skip_nsq = 0;
+    uint8_t  skip_nsq  = 0;
     uint32_t sq_weight = ctx->nsq_ctrls.sq_weight;
 
     // return immediately if the skip nsq threshold is infinite

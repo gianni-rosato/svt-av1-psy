@@ -911,7 +911,7 @@ static EbErrorType prediction_structure_ctor(PredictionStructure             *pr
         pred_struct->pred_struct_entry_count = init_pic_count + steady_state_pic_count;
 
         // Set the Section Indices
-        pred_struct->init_pic_index = 0;
+        pred_struct->init_pic_index     = 0;
         pred_struct->steady_state_index = pred_struct->init_pic_index + init_pic_count;
     }
 
@@ -1360,11 +1360,11 @@ static void prediction_structure_group_dctor(EbPtr p) {
  *************************************************/
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_struct_group_ptr,
                                             struct SequenceControlSet *scs_ptr) {
-    uint32_t                  pred_struct_index = 0;
-    uint32_t                  ref_idx;
-    uint32_t                  hierarchical_level_idx;
-    uint32_t                  pred_type_idx;
-    uint32_t                  number_of_references;
+    uint32_t pred_struct_index = 0;
+    uint32_t ref_idx;
+    uint32_t hierarchical_level_idx;
+    uint32_t pred_type_idx;
+    uint32_t number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
     MrpCtrls *mrp_ctrl           = &(scs_ptr->mrp_ctrls);
@@ -1456,7 +1456,6 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_stru
 
     PredictionStructureConfig *prediction_structure_config_array =
         config_array->prediction_structure_config_array;
-
 
     if (ref_count_used < MAX_REF_IDX) {
         for (int gop_i = 0; gop_i < 1; ++gop_i) {

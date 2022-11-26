@@ -404,7 +404,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const EncMode            enc_mode            = pcs_ptr->enc_mode;
     const uint8_t            is_ref              = ppcs->is_used_as_reference_flag;
     const uint8_t            is_base             = ppcs->temporal_layer_index == 0;
-    const uint8_t is_layer1 = ppcs->temporal_layer_index == 1;
+    const uint8_t            is_layer1           = ppcs->temporal_layer_index == 1;
     const EbInputResolution  input_resolution    = ppcs->input_resolution;
     const uint8_t            is_islice           = pcs_ptr->slice_type == I_SLICE;
     const SliceType          slice_type          = pcs_ptr->slice_type;
@@ -698,8 +698,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cfl_level = 1;
         else
             pcs_ptr->cfl_level = is_base ? 2 : 0;
-    }
-    else if (enc_mode <= ENC_M4)
+    } else if (enc_mode <= ENC_M4)
         pcs_ptr->cfl_level = 1;
     else if (enc_mode <= ENC_M9)
         pcs_ptr->cfl_level = is_base ? 2 : 0;
@@ -721,7 +720,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->new_nearest_near_comb_injection = scs_ptr->new_nearest_comb_inject;
 
-        // Set the level for unipred3x3 injection
+    // Set the level for unipred3x3 injection
     if (enc_mode <= ENC_M0)
         pcs_ptr->unipred3x3_injection = 1;
     else
@@ -855,8 +854,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->md_pme_level = 6;
         else
             pcs_ptr->md_pme_level = 3;
-    }
-    else if (enc_mode <= ENC_M7)
+    } else if (enc_mode <= ENC_M7)
         pcs_ptr->md_pme_level = 5;
     else
         pcs_ptr->md_pme_level = 6;
@@ -892,7 +890,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->pic_bypass_encdec = 0;
 
-        /*
+    /*
         set lpd0_level
     */
     if (enc_mode <= ENC_M2)
@@ -1393,7 +1391,7 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
         motion_field_projection(cm, pcs_ptr, LAST2_FRAME, 2);
 }
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
-void *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
+void       *rtime_alloc_block_hash_block_is_same(size_t size) { return malloc(size); }
 
 // Use me_8x8_distortion and QP to predict the coeff level per frame
 static void predict_frame_coeff_lvl(struct PictureControlSet *pcs) {

@@ -193,7 +193,7 @@ struct CodingLoopContext_s;
     */
 #define INVALID_REF 0xF
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
-int svt_aom_get_sad_per_bit(int qidx, EbBitDepth is_hbd);
+int                     svt_aom_get_sad_per_bit(int qidx, EbBitDepth is_hbd);
 #ifdef __cplusplus
 }
 #endif

@@ -1368,7 +1368,6 @@ typedef enum ATTRIBUTE_PACKED {
 // onyxc_int.h
 #define CDEF_MAX_STRENGTHS 16
 
-
 #define UNDISP_QUEUE_SIZE (REF_FRAMES * 10)
 // 4 scratch frames for the new frames to support a maximum of 4 cores decoding
 // in parallel, 3 for scaled references on the encoder.

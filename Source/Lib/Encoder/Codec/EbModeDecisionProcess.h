@@ -845,7 +845,7 @@ typedef struct ModeDecisionContext {
     TxsControls                                txs_ctrls;
     TxtControls                                txt_ctrls;
     CandReductionCtrls                         cand_reduction_ctrls;
-    NsqCtrls nsq_ctrls;
+    NsqCtrls                                   nsq_ctrls;
     RdoqCtrls                                  rdoq_ctrls;
     uint8_t                                    disallow_4x4;
     uint8_t                                    md_disallow_nsq;

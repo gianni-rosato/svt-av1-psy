@@ -44,8 +44,8 @@ typedef struct ReferenceQueueEntry {
     uint64_t         picture_number;
     uint64_t         decode_order;
     EbObjectWrapper *reference_object_ptr;
-    Bool release_enable;
-    Bool reference_available;
+    Bool             release_enable;
+    Bool             reference_available;
     Bool             is_used_as_reference_flag;
     uint64_t         rc_group_index;
     Bool             is_alt_ref;
@@ -53,7 +53,7 @@ typedef struct ReferenceQueueEntry {
     SliceType        slice_type;
     uint8_t          temporal_layer_index;
     Bool             frame_context_updated;
-    uint8_t refresh_frame_mask;
+    uint8_t          refresh_frame_mask;
     uint64_t
         dec_order_of_last_ref; // decode order of the last frame to use the current entry as a reference
     bool

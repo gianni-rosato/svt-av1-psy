@@ -29,8 +29,8 @@
 #include "EbFullLoop.h"
 #include "EbPackUnPack_C.h"
 
-void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
-int  svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
+void     get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+int      svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 uint32_t get_tot_1d_blks(struct ModeDecisionContext *context_ptr, const int32_t sq_size,
                          const uint8_t disallow_nsq);
 
@@ -3125,8 +3125,7 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
             if (pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_inside_md_scan[blk_index]) {
                 const uint32_t tot_d1_blocks = !md_ctx->nsq_ctrls.enabled
                     ? 1
-                    : get_tot_1d_blks(
-                          md_ctx, blk_geom->sq_size, md_ctx->md_disallow_nsq);
+                    : get_tot_1d_blks(md_ctx, blk_geom->sq_size, md_ctx->md_disallow_nsq);
 
                 for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
                     if (md_ctx->md_blk_arr_nsq[idx].palette_mem) {

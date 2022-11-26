@@ -5186,8 +5186,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
             depth_level = 3;
         else
             depth_level = pcs_ptr->slice_type == I_SLICE ? 3 : 0;
-    }
-    else if (enc_mode <= ENC_M0)
+    } else if (enc_mode <= ENC_M0)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
     else if (enc_mode <= ENC_M4)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
@@ -6365,7 +6364,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     context_ptr->uv_ctrls.uv_mode           = CHROMA_MODE_1;
     context_ptr->uv_ctrls.nd_uv_serach_mode = 0;
     set_cfl_ctrls(context_ptr, 0);
-    context_ptr->md_disallow_nsq = !context_ptr->nsq_ctrls.enabled;
+    context_ptr->md_disallow_nsq                            = !context_ptr->nsq_ctrls.enabled;
     context_ptr->new_nearest_injection                      = 1;
     context_ptr->inject_inter_candidates                    = 1;
     context_ptr->blk_skip_decision                          = TRUE;
@@ -6842,16 +6841,15 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
             is_block_tagged) {
             uint32_t tot_d1_blocks = !context_ptr->nsq_ctrls.enabled
                 ? 1
-                : get_tot_1d_blks(
-                      context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
+                : get_tot_1d_blks(context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
 
             // If have NSQ shapes but tagged as not considered, set tot_d1_blocks to 1
             if (tot_d1_blocks > 1 && !results_ptr->consider_block[blk_index + 1])
                 tot_d1_blocks = 1;
 
-                // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
-                // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
-                // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
+            // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
+            // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
+            // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
             const uint32_t to_test_d1_blocks = (context_ptr->nsq_ctrls.allow_HVA_HVB == 0)
                 ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
                 : tot_d1_blocks;
@@ -7035,12 +7033,12 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
     Bool pred_depth_only    = 1;
 
     while (blk_index < scs_ptr->max_block_cnt) {
-        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-        const unsigned tot_d1_blocks = !context_ptr->nsq_ctrls.enabled ? 1
-            : blk_geom->sq_size == 128 ? 17
-            : blk_geom->sq_size > 8    ? 25
-            : blk_geom->sq_size == 8   ? 5
-                                       : 1;
+        const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
+        const unsigned   tot_d1_blocks = !context_ptr->nsq_ctrls.enabled ? 1
+              : blk_geom->sq_size == 128                                 ? 17
+              : blk_geom->sq_size > 8                                    ? 25
+              : blk_geom->sq_size == 8                                   ? 5
+                                                                         : 1;
 
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1
@@ -7226,8 +7224,7 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
             is_block_tagged) {
             const uint32_t tot_d1_blocks = !context_ptr->nsq_ctrls.enabled
                 ? 1
-                : get_tot_1d_blks(
-                      context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
+                : get_tot_1d_blks(context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
 
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
