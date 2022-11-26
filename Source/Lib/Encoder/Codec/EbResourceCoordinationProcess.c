@@ -433,7 +433,6 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
     svt_release_mutex(scs_ptr->encode_context_ptr->sc_buffer_mutex);
     context_ptr->prev_enc_mod = scs_ptr->encode_context_ptr->enc_mode;
 }
-#if CLN_PIC_DEC_PROC
 // Film grain (assigning the random-seed)
 static void assign_film_grain_random_seed(PictureParentControlSet *pcs) {
     uint16_t *fgn_random_seed_ptr              = &pcs->scs_ptr->film_grain_random_seed;
@@ -442,7 +441,6 @@ static void assign_film_grain_random_seed(PictureParentControlSet *pcs) {
     if (!(*fgn_random_seed_ptr)) // Random seed should not be zero
         *fgn_random_seed_ptr += 7391;
 }
-#endif
 static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     Av1Common   *cm      = pcs_ptr->av1_cm;
@@ -450,13 +448,8 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     pcs_ptr->gf_interval = 0;
 
     pcs_ptr->reference_released = 0;
-#if CLN_PIC_DEC_PROC
     frm_hdr->skip_mode_params.skip_mode_allowed = 0;
     frm_hdr->skip_mode_params.skip_mode_flag    = 0;
-#else
-    pcs_ptr->is_skip_mode_allowed = 0;
-    pcs_ptr->skip_mode_flag       = 0;
-#endif
     frm_hdr->frame_type     = KEY_FRAME;
     frm_hdr->show_frame     = 1;
     frm_hdr->showable_frame = 1; // frame can be used as show existing frame in future
@@ -582,10 +575,8 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     pcs_ptr->tpl_src_data_ready  = 0;
     pcs_ptr->tf_motion_direction = -1;
 
-#if CLN_PIC_DEC_PROC
     // Assign the film-grain random-seed
     assign_film_grain_random_seed(pcs_ptr);
-#endif
 
     return EB_ErrorNone;
 }
@@ -1053,24 +1044,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             EbPictureBufferDesc *input_padded_picture_ptr =
                 (EbPictureBufferDesc *)pa_ref_obj->input_padded_picture_ptr;
             input_padded_picture_ptr->buffer_y = buff_y8b;
-#if OPT_PD_REF_QUEUE
             svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
             if (pcs_ptr->eb_y8b_wrapper_ptr) {
                 // y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
                 svt_object_inc_live_count(pcs_ptr->eb_y8b_wrapper_ptr, 1);
             }
-#else
-            // Since overlay pictures are not added to PA_Reference queue in PD and not released there, the life count is only set to 1
-            if (pcs_ptr->is_overlay)
-                // Give the new Reference a nominal live_count of 1
-                svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
-            else
-                svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 2);
-            if (pcs_ptr->eb_y8b_wrapper_ptr) {
-                // y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
-                svt_object_inc_live_count(pcs_ptr->eb_y8b_wrapper_ptr, 2);
-            }
-#endif
             if (scs_ptr->static_config.restricted_motion_vector) {
                 struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
                 Av1Common *const                cm       = ppcs_ptr->av1_cm;

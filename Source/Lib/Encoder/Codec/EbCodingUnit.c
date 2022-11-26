@@ -22,21 +22,6 @@ void largest_coding_unit_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->final_blk_arr);
     EB_FREE_ARRAY(obj->cu_partition_array);
 }
-#if !CLN_NSQ
-/*
-* return the NSQ level
-  Used by signal_derivation_multi_processes_oq and memory allocation
-*/
-bool svt_aom_get_disallow_nsq(EncMode enc_mode, bool is_islice) {
-    // Set disallow_nsq
-    if (enc_mode <= ENC_M4)
-        return false;
-    else if (enc_mode <= ENC_M5)
-        return (is_islice ? false : true);
-    else
-        return true;
-}
-#endif
 /*
 * return the 4x4 level
 Used by signal_derivation_enc_dec_kernel_oq and memory allocation
@@ -48,7 +33,6 @@ bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type) {
     else
         return true;
 }
-#if CLN_NSQ
 // Get the nsq_level used for each preset (to be passed to setting function: set_nsq_ctrls())
 uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base,
                       InputCoeffLvl coeff_lvl) {
@@ -83,7 +67,6 @@ uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base,
 
     return nsq_level;
 }
-#endif
 /*
 Tasks & Questions
     -Need a GetEmptyChain function for testing sub partitions.  Tie it to an Itr?
@@ -112,17 +95,12 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
 
     larget_coding_unit_ptr->index = sb_index;
     bool disallow_nsq             = true;
-#if CLN_NSQ
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
                 disallow_nsq = MIN(
                     disallow_nsq,
                     (get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
-#else
-    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
-        disallow_nsq = MIN(disallow_nsq, svt_aom_get_disallow_nsq(enc_mode, is_islice));
-#endif
     bool disallow_4x4 = true;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, slice_type));

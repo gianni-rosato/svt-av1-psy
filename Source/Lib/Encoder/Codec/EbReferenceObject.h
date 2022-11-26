@@ -98,7 +98,6 @@ typedef struct EbPaReferenceObjectDescInitData {
     EbPictureBufferDescInitData sixteenth_picture_desc_init_data;
 } EbPaReferenceObjectDescInitData;
 
-#if OPT_TPL_REF_BUFFERS
 typedef struct EbTplReferenceObject {
     EbDctor              dctor;
     EbPictureBufferDesc *ref_picture_ptr;
@@ -107,7 +106,6 @@ typedef struct EbTplReferenceObject {
 typedef struct EbTplReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
 } EbTplReferenceObjectDescInitData;
-#endif
 
 /**************************************
  * Extern Function Declarations
@@ -117,10 +115,8 @@ extern EbErrorType svt_reference_object_reset(EbReferenceObject *obj, SequenceCo
 
 extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr,
                                                    EbPtr  object_init_data_ptr);
-#if OPT_TPL_REF_BUFFERS
 extern EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr,
                                                     EbPtr  object_init_data_ptr);
-#endif
 void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 
 #endif //EbReferenceObject_h

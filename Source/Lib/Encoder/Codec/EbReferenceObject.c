@@ -256,12 +256,10 @@ static void svt_pa_reference_object_dctor(EbPtr p) {
     }
 }
 
-#if OPT_TPL_REF_BUFFERS
 static void svt_tpl_reference_object_dctor(EbPtr p) {
     EbTplReferenceObject *obj = (EbTplReferenceObject *)p;
     EB_DELETE(obj->ref_picture_ptr);
 }
-#endif
 
 /*****************************************
  * svt_pa_reference_object_ctor
@@ -314,7 +312,6 @@ EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_
     return EB_ErrorNone;
 }
 
-#if OPT_TPL_REF_BUFFERS
 EbErrorType svt_tpl_reference_object_ctor(EbTplReferenceObject *tpl_ref_obj_,
                                           EbPtr                 object_init_data_ptr) {
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr = (EbPictureBufferDescInitData *)
@@ -338,7 +335,6 @@ EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object
 
     return EB_ErrorNone;
 }
-#endif
 
 /************************************************
 * Release Pa Reference Objects

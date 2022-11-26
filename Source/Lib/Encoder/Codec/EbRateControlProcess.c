@@ -37,29 +37,15 @@
 
 #include "EbPictureDecisionResults.h"
 #include "EbResize.h"
-#if TUNE_TPL_QPM_LAMBDA
 #include "EbSourceBasedOperationsProcess.h"
-#endif
-#if TUNE_TPL_QPM_LAMBDA
 // Specifies the weights of the ref frame in calculating qindex of non base layer frames
 static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {
     100, 100, 100, 100, 100, 100};
 // Specifies the weights of the worst quality in calculating qindex of non base layer frames
 static const int non_base_qindex_weight_wq[EB_MAX_TEMPORAL_LAYERS] = {100, 100, 300, 100, 100, 100};
-#else
-// Specifies the weights of the ref frame in calculating qindex of non base layer frames
-static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 1, 1, 1, 1};
-// Specifies the weights of the worst quality in calculating qindex of non base layer frames
-static const int    non_base_qindex_weight_wq[EB_MAX_TEMPORAL_LAYERS]    = {1, 1, 3, 1, 1, 1};
-#endif
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 2, 1, 1, 0.7};
-#if TUNE_TPL_QPM_LAMBDA
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 3, 2, 1, 1};
-#else
-static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = {1, 1, 3, 2, 1, 0.5};
-#endif
 #define KB 400
-#if TUNE_TPL_QPM_LAMBDA
 // intra_perc will be set to the % of intra area in two nearest ref frames
 static void get_ref_intra_percentage(PictureControlSet *pcs, uint8_t *intra_perc) {
     assert(intra_perc != NULL);
@@ -69,43 +55,26 @@ static void get_ref_intra_percentage(PictureControlSet *pcs, uint8_t *intra_perc
     }
 
     uint8_t iperc = 0;
-#if FIX_INTRA_SELECTION
     uint8_t ref_cnt = 0;
-#endif
     EbReferenceObject *ref_obj_l0 =
         (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
 
-#if FIX_INTRA_SELECTION
     if (ref_obj_l0->slice_type != I_SLICE) {
         iperc = ref_obj_l0->intra_coded_area;
         ref_cnt++;
     }
-#else
-    iperc = ref_obj_l0->intra_coded_area;
-#endif
     if (pcs->slice_type == B_SLICE) {
         EbReferenceObject *ref_obj_l1 =
             (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
-#if FIX_INTRA_SELECTION
         if (ref_obj_l1->slice_type != I_SLICE) {
             iperc += ref_obj_l1->intra_coded_area;
             ref_cnt++;
         }
-#else
-        iperc += ref_obj_l1->intra_coded_area;
-
-        // if have two frames, divide the iperc by 2 to get the avg skip area
-        iperc >>= 1;
-#endif
     }
-#if FIX_INTRA_SELECTION
     if (ref_cnt)
         *intra_perc = iperc / ref_cnt;
     else
         *intra_perc = 0;
-#else
-    *intra_perc = iperc;
-#endif
 }
 
 // skip_area will be set to the % of skipped area in two nearest ref frames
@@ -131,7 +100,6 @@ static void get_ref_skip_percentage(PictureControlSet *pcs, uint8_t *skip_area) 
 
     *skip_area = skip_perc;
 }
-#endif
 static void free_private_data_list(EbBufferHeaderType *p) {
     EbPrivDataNode *p_node = (EbPrivDataNode *)p->p_app_private;
     while (p_node) {
@@ -861,21 +829,12 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
     }
     return qindex;
 }
-#if TUNE_TPL_QPM_LAMBDA
 static const double r0_weight[3] = {0.75 /* I_SLICE */, 0.9 /* BASE */, 1 /* NON-BASE */};
-#else
-static const double r0_weight[2 /* VBR/CRF */][2 /* BASE/ISLICE */]      = {
-    // {BASE, ISLICE}
-    {0.85, 0.75}, // VBR
-    {0.9, 0.75} // CRF
-};
-#endif
 /******************************************************
  * crf_qindex_calc
  * Assign the q_index per frame.
  * Used in the one pass encoding with tpl stats
  ******************************************************/
-#if TUNE_TPL_QPM_LAMBDA
 static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex) {
     PictureParentControlSet *ppcs                 = pcs->parent_pcs_ptr;
     SequenceControlSet      *scs_ptr              = ppcs->scs_ptr;
@@ -910,27 +869,14 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
     // As a result, we defined a factor to adjust r0 (to compensate for TPL not using all available frames).
     if (frame_is_intra_only(ppcs)) {
         if (ppcs->tpl_ctrls.r0_adjust_factor) {
-#if FIX_LAYER1_R0_ADJUST
             ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
-#else
-            const double div_factor = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
-            ppcs->r0                = ppcs->r0 / div_factor;
-#endif
         }
         // Scale r0 based on the GOP structure
         ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[scs_ptr->max_heirachical_level];
     } else {
-#if FIX_LAYER1_R0_ADJUST
         if (use_qstep_based_q_calc) {
             if (ppcs->tpl_ctrls.r0_adjust_factor) {
                 ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
-#else
-        if (temporal_layer == 0) {
-            if (ppcs->tpl_ctrls.r0_adjust_factor) {
-                const double div_factor = ppcs->used_tpl_frame_num *
-                    ppcs->tpl_ctrls.r0_adjust_factor;
-                ppcs->r0 = ppcs->r0 / div_factor;
-#endif
                 // Scale r0 based on the GOP structure
                 ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs_ptr->max_heirachical_level];
             }
@@ -945,11 +891,7 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
         // adjust the weight for base layer frames with shorter minigops
         if (scs_ptr->lad_mg && !frame_is_intra_only(ppcs) &&
             (ppcs->tpl_group_size < (uint32_t)(2 << scs_ptr->max_heirachical_level)))
-#if FIX_LAYER1_R0_ADJUST
             weight = MIN(weight + 0.1, 1);
-#else
-            weight += 0.05;
-#endif
 
         const double qstep_ratio             = sqrt(ppcs->r0) * weight;
         const int    qindex_from_qstep_ratio = svt_av1_get_q_index_from_qstep_ratio(
@@ -1002,168 +944,6 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
     assert(ppcs->bottom_index <= rc->worst_quality && ppcs->bottom_index >= rc->best_quality);
     return q;
 }
-#else
-static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex) {
-    PictureParentControlSet *ppcs                 = pcs->parent_pcs_ptr;
-    SequenceControlSet      *scs_ptr              = ppcs->scs_ptr;
-    const int                cq_level             = qindex;
-    int                      active_best_quality  = 0;
-    int                      active_worst_quality = qindex;
-    rc->arf_q                                     = 0;
-    int           q;
-    const uint8_t is_ref                = ppcs->is_used_as_reference_flag;
-    const uint8_t temporal_layer        = ppcs->temporal_layer_index;
-    const uint8_t hierarchical_levels   = ppcs->hierarchical_levels;
-    const int     refresh_golden_frame  = frame_is_intra_only(ppcs);
-    const int     refresh_alt_ref_frame = (temporal_layer == 0);
-    const int     is_intrl_arf_boost    = (temporal_layer > 0 && is_ref);
-    const int     leaf_frame            = temporal_layer < hierarchical_levels ? 0 : 1;
-    const int     rf_level              = (frame_is_intra_only(ppcs)) ? KF_STD
-                         : (temporal_layer == 0)                      ? GF_ARF_STD
-                         : is_ref                                     ? GF_ARF_LOW
-                                                                      : INTER_NORMAL;
-
-    const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
-    // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.
-    // So, for each frame, arf_q is updated based on the qp of its references.
-    rc->arf_q = MAX(rc->arf_q, ((pcs->ref_pic_qp_array[0][0] << 2) + 2));
-    if (pcs->slice_type == B_SLICE)
-        rc->arf_q = MAX(rc->arf_q, ((pcs->ref_pic_qp_array[1][0] << 2) + 2));
-
-    if (frame_is_intra_only(ppcs)) {
-        // Not forced keyframe.
-        double q_adj_factor = 1.0;
-        double q_val;
-        rc->worst_quality = MAXQ;
-        rc->best_quality  = MINQ;
-
-        // TPL may only look at a subset of available pictures in tpl group, which may affect the r0 calcuation.
-        // As a result, we defined a factor to adjust r0 (to compensate for TPL not using all available frames).
-        if (ppcs->tpl_ctrls.r0_adjust_factor) {
-            const double div_factor = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
-            ppcs->r0                = ppcs->r0 / div_factor;
-        }
-        // Scale r0 based on the GOP structure
-        ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[scs_ptr->max_heirachical_level];
-
-        // when frames_to_key not available, i.e. in 1 pass encoding
-        rc->kf_boost  = get_cqp_kf_boost_from_r0(ppcs->r0, -1, scs_ptr->input_resolution);
-        int max_boost = ppcs->used_tpl_frame_num * KB;
-        rc->kf_boost  = AOMMIN(rc->kf_boost, max_boost);
-        // Baseline value derived from cpi->active_worst_quality and kf boost.
-        active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
-        // Allow somewhat lower kf minq with small image formats.
-        if (ppcs->input_resolution == INPUT_SIZE_240p_RANGE)
-            q_adj_factor -= (ppcs->tune_tpl_for_chroma) ? 0.2 : 0.15;
-        // Make a further adjustment based on the kf zero motion measure.
-
-        // Convert the adjustment factor to a qindex delta
-        // on active_best_quality.
-        q_val = svt_av1_convert_qindex_to_q(active_best_quality, bit_depth);
-        active_best_quality += svt_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
-    } else if (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame) {
-        double min_boost_factor = (int32_t)1 << (hierarchical_levels >> 1);
-        if (hierarchical_levels & 1) {
-            min_boost_factor *= CONST_SQRT2;
-        }
-
-        // TPL may only look at a subset of available pictures in tpl group, which may affect the r0 calcuation.
-        // As a result, we defined a factor to adjust r0 (to compensate for TPL not using all available frames).
-        if (temporal_layer == 0) {
-            if (ppcs->tpl_ctrls.r0_adjust_factor) {
-                const double div_factor = ppcs->used_tpl_frame_num *
-                    ppcs->tpl_ctrls.r0_adjust_factor;
-                ppcs->r0 = ppcs->r0 / div_factor;
-
-                // Further scale r0 based on the GOP structure
-                ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs_ptr->max_heirachical_level];
-            }
-        }
-
-        int num_stats_required_for_gfu_boost = ppcs->tpl_group_size + (1 << hierarchical_levels);
-
-        rc->gfu_boost = get_gfu_boost_from_r0_lap(
-            min_boost_factor, MAX_GFUBOOST_FACTOR, ppcs->r0, num_stats_required_for_gfu_boost);
-        rc->arf_boost_factor = (pcs->ref_slice_type_array[0][0] == I_SLICE &&
-                                pcs->ref_pic_r0[0][0] - ppcs->r0 >= 0.08)
-            ? (float_t)1.3
-            : (float_t)1;
-        q                    = active_worst_quality;
-
-        // non ref frame or repeated frames with re-encode
-        if ((!refresh_alt_ref_frame && !is_intrl_arf_boost) || leaf_frame) {
-            active_best_quality = cq_level;
-        } else {
-            if (!is_intrl_arf_boost) {
-                active_best_quality = get_gf_active_quality_tpl_la(rc, q, bit_depth);
-                rc->arf_q           = active_best_quality;
-                const int min_boost = get_gf_high_motion_quality(q, bit_depth);
-                const int boost     = min_boost - active_best_quality;
-                active_best_quality = min_boost - (int)(boost * rc->arf_boost_factor);
-            } else {
-                EbReferenceObject *ref_obj_l0 =
-                    (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-                EbReferenceObject *ref_obj_l1 = NULL;
-                if (pcs->slice_type == B_SLICE)
-                    ref_obj_l1 =
-                        (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
-
-                uint8_t ref_tmp_layer = ref_obj_l0->tmp_layer_idx;
-                if (pcs->slice_type == B_SLICE)
-                    ref_tmp_layer = MAX(ref_tmp_layer, ref_obj_l1->tmp_layer_idx);
-                active_best_quality    = rc->arf_q;
-                int8_t tmp_layer_delta = (int8_t)ppcs->temporal_layer_index - (int8_t)ref_tmp_layer;
-                // active_best_quality is updated with the q index of the reference
-                if (rf_level == GF_ARF_LOW) {
-                    int w1 = non_base_qindex_weight_ref[scs_ptr->max_heirachical_level];
-                    int w2 = non_base_qindex_weight_wq[scs_ptr->max_heirachical_level];
-                    while (tmp_layer_delta--)
-                        active_best_quality = (w1 * active_best_quality + (w2 * cq_level) +
-                                               ((w1 + w2) / 2)) /
-                            (w1 + w2);
-                }
-            }
-            // For alt_ref and GF frames (including internal arf frames) adjust the
-            // worst allowed quality as well. This insures that even on hard
-            // sections we dont clamp the Q at the same value for arf frames and
-            // leaf (non arf) frames. This is important to the TPL model which assumes
-            // Q drops with each arf level.
-            active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
-        }
-    } else
-        active_best_quality = cq_level;
-
-    // Calculated qindex based on r0 using qstep calculation
-    if (ppcs->tpl_ctrls.qstep_based_q_calc && temporal_layer == 0) {
-        double weight = r0_weight[1 /* CRF */][frame_is_intra_only(ppcs)];
-
-        // adjust the weight for base layer frames with shorter minigops
-        if (scs_ptr->lad_mg && !frame_is_intra_only(ppcs) &&
-            (ppcs->tpl_group_size < (uint32_t)(2 << scs_ptr->max_heirachical_level)))
-            weight += 0.05;
-        const double qstep_ratio             = sqrt(ppcs->r0) * weight;
-        const int    qindex_from_qstep_ratio = svt_av1_get_q_index_from_qstep_ratio(
-            qindex, qstep_ratio, bit_depth);
-
-        if (!frame_is_intra_only(ppcs))
-            rc->arf_q = qindex_from_qstep_ratio;
-        active_best_quality  = clamp(qindex_from_qstep_ratio, rc->best_quality, qindex);
-        active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
-    }
-
-    if (ppcs->temporal_layer_index)
-        active_best_quality = MAX(active_best_quality, rc->arf_q);
-    adjust_active_best_and_worst_quality(
-        pcs, rc, rf_level, &active_worst_quality, &active_best_quality);
-    q = active_best_quality;
-    clamp(q, active_best_quality, active_worst_quality);
-    ppcs->top_index    = active_worst_quality;
-    ppcs->bottom_index = active_best_quality;
-    assert(ppcs->top_index <= rc->worst_quality && ppcs->top_index >= rc->best_quality);
-    assert(ppcs->bottom_index <= rc->worst_quality && ppcs->bottom_index >= rc->best_quality);
-    return q;
-}
-#endif
 /******************************************************
  * non_base_boost
  * Compute a non-base frame boost.
@@ -1322,7 +1102,6 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
     if (pcs->scs_ptr->stats_based_sb_lambda_modulation) {
-#if TUNE_TPL_QPM_LAMBDA // Fix 1
         if (pcs->temporal_layer_index > 0) {
             if (pcs->ref_intra_percentage < 15)
                 rdmult = (rdmult * 148) >> 7;
@@ -1331,16 +1110,6 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
             else
                 rdmult = (rdmult * 138) >> 7;
         }
-#else
-        if (pcs->temporal_layer_index > 0) {
-            if (pcs->ref_intra_percentage < 5)
-                rdmult = (rdmult * 148) >> 7;
-            else if (pcs->ref_intra_percentage > 50)
-                rdmult = (rdmult * 118) >> 7;
-            else
-                rdmult = (rdmult * 138) >> 7;
-        }
-#endif
         int factor = 128;
         if (pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
             int qdiff = q_index - pcs->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
@@ -1545,11 +1314,7 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
     SequenceControlSet      *scs_ptr  = pcs_ptr->parent_pcs_ptr->scs_ptr;
     SuperBlock              *sb_ptr;
     uint32_t                 sb_addr;
-#if TUNE_TPL_QPM_LAMBDA
     if (ppcs_ptr->r0_based_qps_qpm)
-#else
-    if (pcs_ptr->temporal_layer_index == 0)
-#endif
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 1;
     else
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
@@ -1716,12 +1481,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
     // As a results, we defined a factor to adjust r0
     if (!frame_is_intra_only(ppcs)) {
         if (ppcs->tpl_ctrls.r0_adjust_factor) {
-#if FIX_LAYER1_R0_ADJUST
             ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
-#else
-            double div_factor       = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
-            ppcs->r0                = ppcs->r0 / div_factor;
-#endif
             // Further scale r0 based on the GOP structure
             ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs->max_heirachical_level];
         }
@@ -1731,12 +1491,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
 
     if (ppcs->frm_hdr.frame_type == KEY_FRAME) {
         if (ppcs->tpl_ctrls.r0_adjust_factor) {
-#if FIX_LAYER1_R0_ADJUST
             ppcs->r0 /= ppcs->tpl_ctrls.r0_adjust_factor;
-#else
-            const double div_factor = ppcs->used_tpl_frame_num * ppcs->tpl_ctrls.r0_adjust_factor;
-            ppcs->r0                = ppcs->r0 / div_factor;
-#endif
         }
         // Scale r0 based on the GOP structure
         ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[scs->max_heirachical_level];
@@ -2331,20 +2086,11 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     int                 q;
     int is_intrl_arf_boost = pcs_ptr->parent_pcs_ptr->update_type == INTNL_ARF_UPDATE;
     // Calculated qindex based on r0 using qstep calculation
-#if TUNE_TPL_QPM_LAMBDA
     if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
-#else
-    if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.qstep_based_q_calc &&
-        pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
-#endif
-#if TUNE_TPL_QPM_LAMBDA
         const unsigned int r0_weight_idx = !frame_is_intra_only(pcs_ptr->parent_pcs_ptr) +
             !!pcs_ptr->parent_pcs_ptr->temporal_layer_index;
         assert(r0_weight_idx <= 2);
         double weight = r0_weight[r0_weight_idx];
-#else
-        const double weight = r0_weight[0 /* VBR */][frame_is_intra_only(pcs_ptr->parent_pcs_ptr)];
-#endif
         const double qstep_ratio             = sqrt(pcs_ptr->parent_pcs_ptr->r0) * weight;
         int          qindex_from_qstep_ratio = svt_av1_get_q_index_from_qstep_ratio(
             rc->active_worst_quality, qstep_ratio, scs_ptr->static_config.encoder_bit_depth);
@@ -3440,7 +3186,6 @@ void *rate_control_kernel(void *input_ptr) {
         case RC_INPUT:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
             scs_ptr = pcs_ptr->scs_ptr;
-#if TUNE_TPL_QPM_LAMBDA
             // Get r0
             if (pcs_ptr->parent_pcs_ptr->r0_based_qps_qpm) {
                 generate_r0beta(pcs_ptr->parent_pcs_ptr);
@@ -3449,7 +3194,6 @@ void *rate_control_kernel(void *input_ptr) {
             get_ref_intra_percentage(pcs_ptr, &pcs_ptr->ref_intra_percentage);
             // Get skip % in ref frame
             get_ref_skip_percentage(pcs_ptr, &pcs_ptr->ref_skip_percentage);
-#endif
             FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
             rc                   = &scs_ptr->encode_context_ptr->rc;
             if (scs_ptr->passes > 1 && scs_ptr->static_config.max_bit_rate)

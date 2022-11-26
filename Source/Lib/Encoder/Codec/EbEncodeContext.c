@@ -56,9 +56,6 @@ static void encode_context_dctor(EbPtr p) {
     EncodeContext *obj = (EncodeContext *)p;
     EB_DESTROY_MUTEX(obj->total_number_of_recon_frame_mutex);
     EB_DESTROY_MUTEX(obj->sc_buffer_mutex);
-#if !CLN_ENC_CTX
-    EB_DESTROY_MUTEX(obj->shared_reference_mutex);
-#endif
     EB_DESTROY_MUTEX(obj->stat_file_mutex);
     EB_DESTROY_MUTEX(obj->frame_updated_mutex);
     EB_DELETE(obj->prediction_structure_group_ptr);
@@ -66,24 +63,8 @@ static void encode_context_dctor(EbPtr p) {
                         PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
     EB_FREE(obj->pre_assignment_buffer);
     EB_DELETE_PTR_ARRAY(obj->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
-#if OPT_PM_REF_QUEUE
     EB_DELETE_PTR_ARRAY(obj->reference_picture_list, obj->reference_picture_list_length);
-#else
-    EB_DELETE_PTR_ARRAY(obj->reference_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
-#endif
-#if !OPT_REPLACE_DEP_CNT_CL
-    EB_DELETE_PTR_ARRAY(obj->dep_cnt_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
-#endif
-#if OPT_PD_REF_QUEUE
-#if CLN_PD_REF_Q
     EB_DELETE_PTR_ARRAY(obj->pd_dpb, REF_FRAMES);
-#else
-    EB_DELETE_PTR_ARRAY(obj->picture_decision_pa_reference_list, REF_FRAMES);
-#endif
-#else
-    EB_DELETE_PTR_ARRAY(obj->picture_decision_pa_reference_queue,
-                        PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
-#endif
     EB_DELETE_PTR_ARRAY(obj->initial_rate_control_reorder_queue,
                         INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
@@ -124,45 +105,11 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
         EB_NEW(encode_context_ptr->input_picture_queue[picture_index], input_queue_entry_ctor);
     }
 
-#if !OPT_PM_REF_QUEUE
-    EB_ALLOC_PTR_ARRAY(encode_context_ptr->reference_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
 
-    for (picture_index = 0; picture_index < REFERENCE_QUEUE_MAX_DEPTH; ++picture_index) {
-        EB_NEW(encode_context_ptr->reference_picture_queue[picture_index],
-               reference_queue_entry_ctor);
-    }
-#endif
-
-#if OPT_PD_REF_QUEUE
-#if CLN_PD_REF_Q
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->pd_dpb, REF_FRAMES);
     for (picture_index = 0; picture_index < REF_FRAMES; ++picture_index) {
         EB_NEW(encode_context_ptr->pd_dpb[picture_index], pa_reference_queue_entry_ctor);
     }
-#else
-    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_pa_reference_list, REF_FRAMES);
-    for (picture_index = 0; picture_index < 8; ++picture_index) {
-        EB_NEW(encode_context_ptr->picture_decision_pa_reference_list[picture_index],
-               pa_reference_queue_entry_ctor);
-    }
-#endif
-#else
-    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_pa_reference_queue,
-                       PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
-
-#if !OPT_REPLACE_DEP_CNT_CL
-    EB_ALLOC_PTR_ARRAY(encode_context_ptr->dep_cnt_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
-    for (picture_index = 0; picture_index < REFERENCE_QUEUE_MAX_DEPTH; ++picture_index) {
-        EB_NEW(encode_context_ptr->dep_cnt_picture_queue[picture_index], dep_cnt_queue_entry_ctor);
-    }
-    encode_context_ptr->dep_q_head = encode_context_ptr->dep_q_tail = 0;
-#endif
-    for (picture_index = 0; picture_index < PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
-         ++picture_index) {
-        EB_NEW(encode_context_ptr->picture_decision_pa_reference_queue[picture_index],
-               pa_reference_queue_entry_ctor);
-    }
-#endif
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->initial_rate_control_reorder_queue,
                        INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
 
@@ -188,22 +135,11 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     // Sequence Termination Flags
     encode_context_ptr->terminating_picture_number = ~0u;
 
-#if !CLN_ENC_CTX
-    // Signalling the need for a td structure to be written in the Bitstream - on when the sequence starts
-    encode_context_ptr->td_needed = TRUE;
-#endif
 
     EB_CREATE_MUTEX(encode_context_ptr->sc_buffer_mutex);
     encode_context_ptr->enc_mode = SPEED_CONTROL_INIT_MOD;
-#if !CLN_ENC_CTX
-    encode_context_ptr->previous_selected_ref_qp      = 32;
-    encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
-#endif
     encode_context_ptr->recode_tolerance = 25;
     encode_context_ptr->rc_cfg.min_cr    = 0;
-#if !CLN_ENC_CTX
-    EB_CREATE_MUTEX(encode_context_ptr->shared_reference_mutex);
-#endif
     EB_CREATE_MUTEX(encode_context_ptr->stat_file_mutex);
     encode_context_ptr->num_lap_buffers = 0; //lap not supported for now
     int *num_lap_buffers                = &encode_context_ptr->num_lap_buffers;

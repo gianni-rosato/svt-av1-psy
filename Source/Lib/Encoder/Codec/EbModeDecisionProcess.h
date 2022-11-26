@@ -421,7 +421,6 @@ typedef struct CandEliminationCtlrs {
     uint8_t  inject_new_warp;
     uint8_t  th_multiplier; // factor to scale base TH by for distortion check
 } CandEliminationCtlrs;
-#if CLN_NSQ
 typedef struct NsqCtrls {
     uint8_t enabled; // Enable or disable nsq signal. 0: disabled, 1: enabled
     uint8_t
@@ -442,7 +441,6 @@ typedef struct NsqCtrls {
     uint32_t max_part0_to_part1_dev;
     uint32_t skip_hv4_on_best_part;
 } NsqCtrls;
-#endif
 typedef struct TxsControls {
     uint8_t  enabled;
     uint8_t  prev_depth_coeff_exit; // Skip current depth if previous depth has no coeff
@@ -847,9 +845,7 @@ typedef struct ModeDecisionContext {
     TxsControls                                txs_ctrls;
     TxtControls                                txt_ctrls;
     CandReductionCtrls                         cand_reduction_ctrls;
-#if CLN_NSQ
     NsqCtrls nsq_ctrls;
-#endif
     RdoqCtrls                                  rdoq_ctrls;
     uint8_t                                    disallow_4x4;
     uint8_t                                    md_disallow_nsq;

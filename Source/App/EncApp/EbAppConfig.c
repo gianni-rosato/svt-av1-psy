@@ -52,9 +52,6 @@
 #define TWO_PASS_STATS_TOKEN "--stats"
 #define PASSES_TOKEN "--passes"
 #define STAT_FILE_TOKEN "--stat-file"
-#if !REMOVE_MANUAL_PRED
-#define INPUT_PREDSTRUCT_FILE_TOKEN "--pred-struct-file"
-#endif
 #define WIDTH_TOKEN "-w"
 #define HEIGHT_TOKEN "-h"
 #define NUMBER_OF_PICTURES_TOKEN "-n"
@@ -259,18 +256,6 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
     cfg->y4m_input = check_if_y4m(cfg);
 };
 
-#if !REMOVE_MANUAL_PRED
-static void set_pred_struct_file(const char *value, EbConfig *cfg) {
-    if (cfg->input_pred_struct_filename)
-        free(cfg->input_pred_struct_filename);
-#ifndef _WIN32
-    cfg->input_pred_struct_filename = strdup(value);
-#else
-    cfg->input_pred_struct_filename = _strdup(value);
-#endif
-    cfg->config.enable_manual_pred_struct = TRUE;
-}
-#endif
 
 static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
     if (cfg->bitstream_file && cfg->bitstream_file != stdout) {
@@ -893,12 +878,6 @@ ConfigEntry config_entry_options[] = {
      "PSNR / SSIM per picture stat output file path, requires `--enable-stat-report 1`",
      set_cfg_stat_file},
 
-#if !REMOVE_MANUAL_PRED
-    {SINGLE_INPUT,
-     INPUT_PREDSTRUCT_FILE_TOKEN,
-     "Manual prediction structure file path",
-     set_pred_struct_file},
-#endif
     {SINGLE_INPUT,
      PROGRESS_TOKEN,
      "Verbosity of the output, default is 1 [0: no progress is printed, 2: aomenc style output]",
@@ -1443,9 +1422,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", set_cfg_recon_file},
     {SINGLE_INPUT, OUTPUT_RECON_LONG_TOKEN, "ReconFile", set_cfg_recon_file},
     {SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", set_cfg_stat_file},
-#if !REMOVE_MANUAL_PRED
-    {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "PredStructFile", set_pred_struct_file},
-#endif
     {SINGLE_INPUT, PROGRESS_TOKEN, "Progress", set_progress},
     {SINGLE_INPUT, NO_PROGRESS_TOKEN, "NoProgress", set_no_progress},
     {SINGLE_INPUT, PRESET_TOKEN, "EncoderMode", set_enc_mode},
@@ -1696,12 +1672,6 @@ void svt_config_dtor(EbConfig *config_ptr) {
         config_ptr->recon_file = (FILE *)NULL;
     }
 
-#if !REMOVE_MANUAL_PRED
-    if (config_ptr->input_pred_struct_filename) {
-        free(config_ptr->input_pred_struct_filename);
-        config_ptr->input_pred_struct_filename = NULL;
-    }
-#endif
 
     if (config_ptr->error_log_file && config_ptr->error_log_file != stderr) {
         fclose(config_ptr->error_log_file);
@@ -2594,11 +2564,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     }
     // Determine the number of passes in CRF mode
     if (rc_mode == 0) {
-#if FIX_SHORT_KEYINT_WARN
         if (ip > -1 && ip < 16 && passes != 1) {
-#else
-        if (ip > -1 && ip < 16) {
-#endif
             passes = 1;
             fprintf(
                 stderr,
@@ -2690,172 +2656,6 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
     return frame_count;
 }
 
-#if !REMOVE_MANUAL_PRED
-/**********************************
-* Parse Pred Struct File
-**********************************/
-static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t size) {
-    uint32_t argc;
-    char    *argv[CONFIG_FILE_MAX_ARG_COUNT];
-    uint32_t arg_len[CONFIG_FILE_MAX_ARG_COUNT];
-
-    char var_name[CONFIG_FILE_MAX_VAR_LEN];
-    char var_value[CONFIG_FILE_MAX_ARG_COUNT][CONFIG_FILE_MAX_VAR_LEN];
-
-    uint32_t value_index;
-
-    uint32_t                  comment_section_flag = 0;
-    uint32_t                  new_line_flag        = 0;
-    int32_t                   entry_num            = 0;
-    int32_t                   display_order = 0, num_ref_list0 = 0, num_ref_list1 = 0;
-    int32_t                   idx_ref_list0 = 0, idx_ref_list1 = 0;
-    EbSvtAv1EncConfiguration *cfg = &config->config;
-    // Keep looping until we process the entire file
-    while (size--) {
-        comment_section_flag = ((*buffer == CONFIG_FILE_COMMENT_CHAR) ||
-                                (comment_section_flag != 0))
-            ? 1
-            : comment_section_flag;
-
-        // At the beginning of each line
-        if ((new_line_flag == 1) && (comment_section_flag == 0)) {
-            // Do an argc/argv split for the line
-            line_split(&argc, argv, arg_len, buffer);
-
-            if ((argc > 2) && (*argv[1] == CONFIG_FILE_VALUE_SPLIT)) {
-                // ***NOTE - We're assuming that the variable name is the first arg and
-                // the variable value is the third arg.
-
-                // Cap the length of the variable name
-                arg_len[0] = (arg_len[0] > CONFIG_FILE_MAX_VAR_LEN - 1)
-                    ? CONFIG_FILE_MAX_VAR_LEN - 1
-                    : arg_len[0];
-                // Copy the variable name
-                strncpy_s(var_name, CONFIG_FILE_MAX_VAR_LEN, argv[0], arg_len[0]);
-                // Null terminate the variable name
-                var_name[arg_len[0]] = CONFIG_FILE_NULL_CHAR;
-                if (strcmp(var_name, "PredStructEntry")) {
-                    continue;
-                }
-
-                ++entry_num;
-                idx_ref_list0 = idx_ref_list1 = num_ref_list0 = num_ref_list1 = 0;
-
-                for (value_index = 0;
-                     (value_index < CONFIG_FILE_MAX_ARG_COUNT - 2) && (value_index < (argc - 2));
-                     ++value_index) {
-                    // Cap the length of the variable
-                    arg_len[value_index + 2] = (arg_len[value_index + 2] >
-                                                CONFIG_FILE_MAX_VAR_LEN - 1)
-                        ? CONFIG_FILE_MAX_VAR_LEN - 1
-                        : arg_len[value_index + 2];
-                    // Copy the variable name
-                    strncpy_s(var_value[value_index],
-                              CONFIG_FILE_MAX_VAR_LEN,
-                              argv[value_index + 2],
-                              arg_len[value_index + 2]);
-                    // Null terminate the variable name
-                    var_value[value_index][arg_len[value_index + 2]] = CONFIG_FILE_NULL_CHAR;
-
-                    switch (value_index) {
-                    case 0:
-                        display_order = strtoul(var_value[value_index], NULL, 0);
-                        if (display_order >= (1 << (MAX_HIERARCHICAL_LEVEL - 1))) {
-                            return -1;
-                        }
-                        break;
-                    case 1:
-                        cfg->pred_struct[display_order].decode_order = strtoul(
-                            var_value[value_index], NULL, 0);
-                        if (cfg->pred_struct[display_order].decode_order >=
-                            (1 << (MAX_HIERARCHICAL_LEVEL - 1))) {
-                            return -1;
-                        }
-                        break;
-                    case 2:
-                        cfg->pred_struct[display_order].temporal_layer_index = strtoul(
-                            var_value[value_index], NULL, 0);
-                        break;
-                    case 3: num_ref_list0 = strtoul(var_value[value_index], NULL, 0); break;
-                    case 4: num_ref_list1 = strtoul(var_value[value_index], NULL, 0); break;
-                    default:
-                        if (idx_ref_list0 < num_ref_list0) {
-                            if (idx_ref_list0 < REF_LIST_MAX_DEPTH) {
-                                cfg->pred_struct[display_order].ref_list0[idx_ref_list0] = strtoul(
-                                    var_value[value_index], NULL, 0);
-                            }
-                            ++idx_ref_list0;
-                        } else if (idx_ref_list1 < num_ref_list1) {
-                            if (idx_ref_list1 < REF_LIST_MAX_DEPTH - 1) {
-                                cfg->pred_struct[display_order].ref_list1[idx_ref_list1] = strtoul(
-                                    var_value[value_index], NULL, 0);
-                            }
-                            ++idx_ref_list1;
-                        }
-                        break;
-                    }
-                }
-                for (; num_ref_list0 < REF_LIST_MAX_DEPTH; ++num_ref_list0) {
-                    cfg->pred_struct[display_order].ref_list0[num_ref_list0] = 0;
-                }
-                for (; num_ref_list1 < REF_LIST_MAX_DEPTH - 1; ++num_ref_list1) {
-                    cfg->pred_struct[display_order].ref_list1[num_ref_list1] = 0;
-                }
-            }
-        }
-
-        comment_section_flag = (*buffer == CONFIG_FILE_NEWLINE_CHAR) ? 0 : comment_section_flag;
-        new_line_flag        = (*buffer == CONFIG_FILE_NEWLINE_CHAR) ? 1 : 0;
-        ++buffer;
-    }
-    cfg->manual_pred_struct_entry_num = entry_num;
-
-    return 0;
-}
-
-/**********************************
-* Read Prediction Structure File
-**********************************/
-static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
-                                     uint32_t instance_idx) {
-    int32_t return_error = 0;
-
-    FILE *input_pred_struct_file;
-
-    FOPEN(input_pred_struct_file, PredStructPath, "rb");
-
-    if (input_pred_struct_file) {
-        int32_t config_file_size   = find_file_size(input_pred_struct_file);
-        char   *config_file_buffer = (char *)malloc(config_file_size);
-
-        if (config_file_buffer) {
-            int32_t result_size = (int32_t)fread(
-                config_file_buffer, 1, config_file_size, input_pred_struct_file);
-
-            if (result_size == config_file_size) {
-                parse_pred_struct_file(config, config_file_buffer, config_file_size);
-            } else {
-                fprintf(stderr, "Error channel %u: File Read Failed\n", instance_idx + 1);
-                return_error = -1;
-            }
-        } else {
-            fprintf(stderr, "Error channel %u: Memory Allocation Failed\n", instance_idx + 1);
-            return_error = -1;
-        }
-
-        free(config_file_buffer);
-        fclose(input_pred_struct_file);
-    } else {
-        fprintf(stderr,
-                "Error channel %u: Couldn't open Manual Prediction Structure File: %s\n",
-                instance_idx + 1,
-                PredStructPath);
-        return_error = -1;
-    }
-
-    return return_error;
-}
-#endif
 
 static Bool warn_legacy_token(const char *const token) {
     static struct warn_set {
@@ -3029,20 +2829,6 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             }
         }
     }
-#if !REMOVE_MANUAL_PRED
-    /***************************************************************************************************/
-    /*******************************   Parse manual prediction structure  ******************************/
-    /***************************************************************************************************/
-    for (index = 0; index < num_channels; ++index) {
-        EncChannel *c      = channels + index;
-        EbConfig   *config = c->config;
-        if (config->config.enable_manual_pred_struct == TRUE) {
-            c->return_error = (EbErrorType)read_pred_struct_file(
-                config, config->input_pred_struct_filename, index);
-            return_error = (EbErrorType)(return_error & c->return_error);
-        }
-    }
-#endif
     /***************************************************************************************************/
     /**************************************   Verify configuration parameters   ************************/
     /***************************************************************************************************/

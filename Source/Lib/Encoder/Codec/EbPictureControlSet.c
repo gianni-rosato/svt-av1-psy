@@ -1181,7 +1181,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     // If NSQ is allowed, then need a 4x4 MI grid because 8x8 NSQ shapes will require 4x4 granularity
     bool disallow_4x4 = true;
-#if CLN_NSQ
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
@@ -1190,11 +1189,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     (get_nsq_level(init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0
                          ? 1
                          : 0));
-#else
-    for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
-        disallow_4x4 = MIN(disallow_4x4,
-                           svt_aom_get_disallow_nsq(init_data_ptr->enc_mode, is_islice));
-#endif
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4,
                            svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, slice_type));

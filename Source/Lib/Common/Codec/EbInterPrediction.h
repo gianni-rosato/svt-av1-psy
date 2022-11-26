@@ -551,7 +551,6 @@ static INLINE void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type
         // assert(ref_frame_type > NONE_FRAME); AMIR
     }
 }
-#if OPT_REPLACE_DEP_CNT
 /*
       |----------------------------------------------------------------|
       | ref_idx          0            1           2            3       |
@@ -563,11 +562,7 @@ static uint8_t        ref_type_to_list_idx[REFS_PER_FRAME + 1] = {0, 0, 0, 0, 0,
 static INLINE uint8_t get_list_idx(uint8_t ref_type) { return ref_type_to_list_idx[ref_type]; }
 static uint8_t        ref_type_to_ref_idx[REFS_PER_FRAME + 1] = {0, 0, 1, 2, 3, 0, 1, 2};
 static INLINE uint8_t get_ref_frame_idx(uint8_t ref_type) { return ref_type_to_ref_idx[ref_type]; };
-#endif
 static INLINE PredDirection av1_get_pred_dir(int8_t ref_frame_type) {
-#if !OPT_REPLACE_DEP_CNT
-    static uint8_t ref_type_to_list_idx[REFS_PER_FRAME + 1] = {0, 0, 0, 0, 0, 1, 1, 1};
-#endif
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_frame_type);
     return (rf[1] == NONE_FRAME) ? (PredDirection)ref_type_to_list_idx[rf[0]] : BI_PRED;

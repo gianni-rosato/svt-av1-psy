@@ -57,9 +57,6 @@ typedef struct PictureDecisionContext {
     EbFifo  *picture_analysis_results_input_fifo_ptr;
     EbFifo  *picture_decision_results_output_fifo_ptr;
     EbFifo  *me_fifo_ptr;
-#if !CLN_PIC_DEC_PROC
-    uint64_t last_solid_color_frame_poc;
-#endif
 
     Bool        reset_running_avg;
     int8_t      tf_motion_direction; // -1: invalid   0: horz  1: vert
@@ -98,9 +95,6 @@ typedef struct PictureDecisionContext {
     uint32_t mini_gop_group_faded_out_pictures_count[MINI_GOP_MAX_COUNT];
     uint8_t  lay0_toggle; //3 way toggle 0->1->2
     uint8_t  lay1_toggle; //2 way toggle 0->1
-#if !OPT_4L_LAY2_MRP
-    uint8_t lay2_toggle; //2 way toggle 0->1
-#endif
     Bool mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t                  last_i_picture_sc_class0;
     uint8_t                  last_i_picture_sc_class1;
@@ -110,13 +104,6 @@ typedef struct PictureDecisionContext {
     uint32_t                 tf_pic_arr_cnt;
     PictureParentControlSet *tf_pic_array[1 << MAX_TEMPORAL_LAYERS];
     PictureParentControlSet *mg_pictures_array[1 << MAX_TEMPORAL_LAYERS];
-#if !OPT_REPLACE_DEP_CNT_CL
-    DepCntPicInfo updated_links_arr
-        [UPDATED_LINKS]; //if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
-    //this array will store all others pictures needing a dep-cnt clean up.
-    uint32_t
-        other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
-#endif
     PictureParentControlSet *prev_delayed_intra; //Key frame or I of LDP short MG
     uint32_t                 mg_size; //number of active pictures in above array
     PictureParentControlSet *mg_pictures_array_disp_order[1 << MAX_TEMPORAL_LAYERS];

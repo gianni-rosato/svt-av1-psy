@@ -524,32 +524,8 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_OFF;
 
     // Set disallow_nsq
-#if !ADD_NSQ_ENABLE
-    pcs_ptr->disallow_nsq = TRUE;
-#endif
 
     pcs_ptr->max_number_of_pus_per_sb          = SQUARE_PU_COUNT;
-#if !CLN_NSQ
-    pcs_ptr->disallow_all_nsq_blocks_below_8x8 = TRUE;
-
-    // Set disallow_all_nsq_blocks_below_16x16: 16x8, 8x16, 16x4, 4x16
-    pcs_ptr->disallow_all_nsq_blocks_below_16x16 = TRUE;
-
-    pcs_ptr->disallow_all_nsq_blocks_below_64x64 = TRUE;
-    pcs_ptr->disallow_all_nsq_blocks_below_32x32 = TRUE;
-    pcs_ptr->disallow_all_nsq_blocks_above_64x64 = TRUE;
-    pcs_ptr->disallow_all_nsq_blocks_above_32x32 = TRUE;
-    // disallow_all_nsq_blocks_above_16x16
-    pcs_ptr->disallow_all_nsq_blocks_above_16x16 = TRUE;
-    pcs_ptr->disallow_HVA_HVB = TRUE;
-    pcs_ptr->disallow_HV4 = TRUE;
-
-    // Set disallow_all_non_hv_nsq_blocks_below_16x16
-    pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16 = TRUE;
-
-    // Set disallow_all_h4_v4_blocks_below_16x16
-    pcs_ptr->disallow_all_h4_v4_blocks_below_16x16 = TRUE;
-#endif
     frm_hdr->allow_screen_content_tools = 0;
     frm_hdr->allow_intrabc              = 0;
     pcs_ptr->palette_level = 0;

@@ -3613,7 +3613,6 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
         cand_reduction_ctrls->reduce_unipred_candidates = 0;
 
         break;
-#if TUNE_M3_M5_M6
     case 2:
 
         // angular reduction at mds0
@@ -3648,12 +3647,7 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
         cand_reduction_ctrls->reduce_unipred_candidates = 0;
 
         break;
-#endif
-#if TUNE_M3_M5_M6
     case 3:
-#else
-    case 2:
-#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3688,11 +3682,7 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         break;
 
-#if TUNE_M3_M5_M6
     case 4:
-#else
-    case 3:
-#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3727,11 +3717,7 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         break;
 
-#if TUNE_M3_M5_M6
     case 5:
-#else
-    case 4:
-#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3767,11 +3753,7 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         break;
 
-#if TUNE_M3_M5_M6
     case 6:
-#else
-    case 5:
-#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3813,11 +3795,7 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         break;
 
-#if TUNE_M3_M5_M6
     case 7:
-#else
-    case 6:
-#endif
 
         // angular reduction at mds0
         cand_reduction_ctrls->mds0_reduce_intra = 1;
@@ -3965,17 +3943,9 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
         nic_level = 0;
     else if (enc_mode <= ENC_MR)
         nic_level = 1;
-#if TUNE_M1
     else if (enc_mode <= ENC_M0)
-#else
-    else if (enc_mode <= ENC_M1)
-#endif
         nic_level = is_base ? 2 : 4;
-#if TUNE_M2
     else if (enc_mode <= ENC_M1)
-#else
-    else if (enc_mode <= ENC_M2)
-#endif
         nic_level = is_base ? 7 : 8;
     else if (enc_mode <= ENC_M3) {
         if (hierarchical_levels <= 3)
@@ -3983,16 +3953,8 @@ uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_le
         else
             nic_level = 11;
     } else if (enc_mode <= ENC_M5)
-#if TUNE_M3_M5_M6
         nic_level = 12;
-#else
-        nic_level = is_base ? 12 : 13;
-#endif
-#if TUNE_M7_M9
     else if (enc_mode <= ENC_M6) {
-#else
-    else if (enc_mode <= ENC_M7) {
-#endif
         if (hierarchical_levels <= 3)
             nic_level = 15;
         else
@@ -4565,7 +4527,6 @@ uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level) {
 
     return nic_scaling_level;
 }
-#if CLN_NSQ
 /*
 * This function is used in MD to set the NSQ controls.
 */
@@ -4824,7 +4785,6 @@ void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     if (nsq_ctrls->allow_HV4 || nsq_ctrls->allow_HVA_HVB)
         mdctxt->bypass_encdec = 0;
 }
-#endif
 void set_inter_intra_ctrls(ModeDecisionContext *mdctxt, uint8_t inter_intra_level) {
     InterIntraCompCtrls *ii_ctrls = &mdctxt->inter_intra_comp_ctrls;
 
@@ -5227,11 +5187,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs_ptr
         else
             depth_level = pcs_ptr->slice_type == I_SLICE ? 3 : 0;
     }
-#if TUNE_M1
     else if (enc_mode <= ENC_M0)
-#else
-    else if (enc_mode <= ENC_M1)
-#endif
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
     else if (enc_mode <= ENC_M4)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
@@ -5302,10 +5258,8 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
                        ? MIN(pcs_ptr->pic_lpd1_lvl, ctx->detect_high_freq_ctrls.max_pic_lpd1_lvl)
                        : pcs_ptr->pic_lpd1_lvl);
 
-#if CLN_NSQ
     // 1st call to avoid using invalid settings at the construction of the block(s) queue of PD1 when regular PD0 is not called
     set_nsq_ctrls(ctx, pcs_ptr->nsq_level);
-#endif
     return return_error;
 }
 /*
@@ -6151,13 +6105,9 @@ void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet *scs, Pict
     set_pf_controls(ctx, 1);
 
     uint8_t subres_level;
-#if FIX_SOME_CHECKS
     // LPD0 was designed assuming 4x4 blocks were disallowed. Since LPD0 is now used in some presets where 4x4 is on
     // check that subres is not used when 4x4 blocks are enabled.
     if (pd0_level <= LPD0_LVL_0 || !ctx->disallow_4x4) {
-#else
-    if (pd0_level <= LPD0_LVL_0) {
-#endif
         subres_level = 0;
     } else {
         subres_level = 0;
@@ -6260,7 +6210,6 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     uint8_t cand_reduction_level = 0;
     if (is_islice)
         cand_reduction_level = 0;
-#if TUNE_M3_M5_M6
     else if (lpd1_level <= LPD1_LVL_0)
         cand_reduction_level = 4;
     else if (lpd1_level <= LPD1_LVL_2)
@@ -6271,18 +6220,6 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
         cand_reduction_level = 7;
     if (ppcs->scs_ptr->rc_stat_gen_pass_mode)
         cand_reduction_level = 7;
-#else
-    else if (lpd1_level <= LPD1_LVL_0)
-        cand_reduction_level = 3;
-    else if (lpd1_level <= LPD1_LVL_2)
-        cand_reduction_level = 4;
-    else if (lpd1_level <= LPD1_LVL_3)
-        cand_reduction_level = 5;
-    else
-        cand_reduction_level = 6;
-    if (ppcs->scs_ptr->rc_stat_gen_pass_mode)
-        cand_reduction_level = 6;
-#endif
     set_cand_reduction_ctrls(pcs_ptr,
                              context_ptr,
                              cand_reduction_level,
@@ -6428,11 +6365,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs_ptr,
     context_ptr->uv_ctrls.uv_mode           = CHROMA_MODE_1;
     context_ptr->uv_ctrls.nd_uv_serach_mode = 0;
     set_cfl_ctrls(context_ptr, 0);
-#if ADD_NSQ_ENABLE
     context_ptr->md_disallow_nsq = !context_ptr->nsq_ctrls.enabled;
-#else
-    context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
-#endif
     context_ptr->new_nearest_injection                      = 1;
     context_ptr->inject_inter_candidates                    = 1;
     context_ptr->blk_skip_decision                          = TRUE;
@@ -6475,10 +6408,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     uint8_t                  l0_was_skip = 0, l1_was_skip = 0;
     uint8_t                  ref_skip_perc = pcs_ptr->ref_skip_percentage;
 
-#if CLN_NSQ
     // 2nd call as set_nsq_ctrls() has a PD_PASS check
     set_nsq_ctrls(context_ptr, pcs_ptr->nsq_level);
-#endif
 
     set_cand_reduction_ctrls(pcs_ptr,
                              context_ptr,
@@ -6508,21 +6439,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     svt_aom_set_chroma_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->chroma_level);
 
     set_cfl_ctrls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->cfl_level);
-#if ADD_NSQ_ENABLE
     if (pd_pass == PD_PASS_0)
         context_ptr->md_disallow_nsq = enc_mode <= ENC_M0 ? !context_ptr->nsq_ctrls.enabled : 1;
     else {
         // Update nsq settings based on the sb_class
         context_ptr->md_disallow_nsq = !context_ptr->nsq_ctrls.enabled;
     }
-#else
-    if (pd_pass == PD_PASS_0)
-        context_ptr->md_disallow_nsq = enc_mode <= ENC_M0 ? ppcs->disallow_nsq : 1;
-    else {
-        // Update nsq settings based on the sb_class
-        context_ptr->md_disallow_nsq = ppcs->disallow_nsq;
-    }
-#endif
 
     if (pd_pass == PD_PASS_0)
         context_ptr->global_mv_injection = 0;
@@ -6567,24 +6489,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         context_ptr->redundant_blk = FALSE;
     else
         context_ptr->redundant_blk = TRUE;
-#if CLN_NSQ
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
         context_ptr,
         input_resolution,
         pd_pass == PD_PASS_0
             ? 0
             : context_ptr->nsq_ctrls.parent_sq_coeff_area_based_cycles_reduction_level);
-#else
-    set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
-        context_ptr,
-        input_resolution,
-        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level);
-    context_ptr->sq_weight = pd_pass == PD_PASS_0 ? (uint32_t)~0 : pcs_ptr->sq_weight;
-
-    context_ptr->max_part0_to_part1_dev = pd_pass == PD_PASS_0 ? 0
-                                                               : pcs_ptr->max_part0_to_part1_dev;
-    context_ptr->skip_hv4_on_best_part = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->skip_hv4_on_best_part;
-#endif
     context_ptr->md_depth_early_exit_th = (pd_pass == PD_PASS_0) ? 0
                                                                  : pcs_ptr->pic_depth_early_exit_th;
     // Set pic_obmc_level @ MD
@@ -6635,25 +6545,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     md_pme_search_controls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_pme_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M5 ? 3 : 0;
-#if TUNE_M1
     else if (enc_mode <= ENC_M0)
-#else
-    else if (enc_mode <= ENC_M1)
-#endif
         context_ptr->md_subpel_me_level = 1;
-#if TUNE_M6_M7
     else if (enc_mode <= ENC_M5)
         context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
-#else
-    else if (enc_mode <= ENC_M6)
-        context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
-    else if (enc_mode <= ENC_M7) {
-        if (hierarchical_levels <= 3)
-            context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
-        else
-            context_ptr->md_subpel_me_level = input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
-    }
-#endif
     else if (enc_mode <= ENC_M9)
         context_ptr->md_subpel_me_level = is_base ? 2 : (is_ref ? 4 : 7);
     else
@@ -6663,11 +6558,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M0 ? 3 : 0;
-#if TUNE_M1
     else if (enc_mode <= ENC_M0)
-#else
-    else if (enc_mode <= ENC_M1)
-#endif
         context_ptr->md_subpel_pme_level = 1;
     else
         context_ptr->md_subpel_pme_level = 2;
@@ -6703,21 +6594,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *scs, Picture
         intra_level = 5;
     } else if (enc_mode <= ENC_M0)
         intra_level = 1;
-#if TUNE_NSQ
     else if (enc_mode <= ENC_M1)
-#else
-    else if (enc_mode <= ENC_M2)
-#endif
         intra_level = is_base ? 1 : 2;
     else if (enc_mode <= ENC_M4)
         intra_level = is_base ? 1 : 3;
     else if (enc_mode <= ENC_M5)
         intra_level = is_base ? 1 : 4;
-#if OPT_M7_M8_M9
     else if (enc_mode <= ENC_M8)
-#else
-    else if (enc_mode <= ENC_M7)
-#endif
         intra_level = (is_islice || ppcs->transition_present == 1) ? 1 : is_base ? 2 : 4;
     else if (enc_mode <= ENC_M9)
         intra_level = (is_islice || ppcs->transition_present == 1) ? 1 : 4;
@@ -6790,9 +6673,6 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         return;
     if (blk_geom->sq_size > 4) {
         DepthCtrls *depth_ctrls = &context_ptr->depth_ctrls;
-#if !CLN_NSQ
-        PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
-#endif
 
         // Set parent depth's split flag to be true
         for (uint32_t block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
@@ -6805,17 +6685,10 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         // All child blocks are same sq_size, so will share the same tot_d1_blocks
         const unsigned int child_default_tot_d1_blocks = get_default_tot_d1_blocks(
             child1_blk_geom->sq_size);
-#if ADD_NSQ_ENABLE
         const unsigned int child_tot_d1_blocks = (!context_ptr->nsq_ctrls.enabled ||
                                                   !depth_ctrls->allow_nsq_in_child_depths)
             ? 1
             : child_default_tot_d1_blocks;
-#else
-        const unsigned int child_tot_d1_blocks = (ppcs->disallow_nsq ||
-                                                  !depth_ctrls->allow_nsq_in_child_depths)
-            ? 1
-            : child_default_tot_d1_blocks;
-#endif
         for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
             results_ptr->consider_block[child_block_idx_1 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_1 + block_1d_idx] = FALSE;
@@ -6892,7 +6765,6 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
                                        depth_step > 1 ? depth_step - 1 : 1);
     }
 }
-#if CLN_NSQ
 uint32_t get_tot_1d_blks(struct ModeDecisionContext *context_ptr, const int32_t sq_size,
                          const uint8_t disallow_nsq) {
     uint32_t tot_d1_blocks;
@@ -6910,35 +6782,6 @@ uint32_t get_tot_1d_blks(struct ModeDecisionContext *context_ptr, const int32_t 
 
     return tot_d1_blocks;
 }
-#else
-uint32_t get_tot_1d_blks(struct PictureParentControlSet *ppcs, const int32_t sq_size,
-                         const uint8_t disallow_nsq) {
-    uint32_t tot_d1_blocks;
-
-    tot_d1_blocks = (disallow_nsq) ||
-            (sq_size >= 64 && ppcs->disallow_all_nsq_blocks_above_64x64) ||
-            (sq_size >= 32 && ppcs->disallow_all_nsq_blocks_above_32x32) ||
-            (sq_size >= 16 && ppcs->disallow_all_nsq_blocks_above_16x16) ||
-            (sq_size <= 64 && ppcs->disallow_all_nsq_blocks_below_64x64) ||
-            (sq_size <= 32 && ppcs->disallow_all_nsq_blocks_below_32x32) ||
-            (sq_size <= 8 && ppcs->disallow_all_nsq_blocks_below_8x8) ||
-            (sq_size <= 16 && ppcs->disallow_all_nsq_blocks_below_16x16)
-        ? 1
-        : (sq_size == 16 && ppcs->disallow_all_non_hv_nsq_blocks_below_16x16) ? 5
-        : (sq_size == 16 && ppcs->disallow_all_h4_v4_blocks_below_16x16)      ? 17
-        : sq_size == 128                                                      ? 17
-        : sq_size > 8                                                         ? 25
-        : sq_size == 8                                                        ? 5
-                                                                              : 1;
-
-    if (ppcs->disallow_HVA_HVB && ppcs->disallow_HV4)
-        tot_d1_blocks = MIN(5, tot_d1_blocks);
-    else if (ppcs->disallow_HV4)
-        tot_d1_blocks = MIN(17, tot_d1_blocks);
-
-    return tot_d1_blocks;
-}
-#endif
 
 EbErrorType rtime_alloc_palette_info(BlkStruct *md_blk_arr_nsq) {
     EB_MALLOC_ARRAY(md_blk_arr_nsq->palette_info, 1);
@@ -6997,18 +6840,10 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_block_tagged) {
-#if ADD_NSQ_ENABLE
             uint32_t tot_d1_blocks = !context_ptr->nsq_ctrls.enabled
-#else
-            uint32_t tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq
-#endif
                 ? 1
                 : get_tot_1d_blks(
-#if CLN_NSQ
                       context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
-#else
-                      pcs_ptr->parent_pcs_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
-#endif
 
             // If have NSQ shapes but tagged as not considered, set tot_d1_blocks to 1
             if (tot_d1_blocks > 1 && !results_ptr->consider_block[blk_index + 1])
@@ -7017,20 +6852,12 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
                 // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
                 // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
                 // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
-#if CLN_NSQ
             const uint32_t to_test_d1_blocks = (context_ptr->nsq_ctrls.allow_HVA_HVB == 0)
-#else
-            const uint32_t to_test_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB
-#endif
                 ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
                 : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-#if CLN_NSQ
                 if (context_ptr->nsq_ctrls.allow_HVA_HVB == 0) {
-#else
-                if (pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB) {
-#endif
                     // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
                     // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
                     // by 1 (as part of the for loop).
@@ -7177,11 +7004,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
          (pcs_ptr->slice_type != I_SLICE &&
           pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[context_ptr->sb_index] <
               VQ_STABILITY_ME_VAR_TH));
-#if ADD_NSQ_ENABLE
     if (!context_ptr->nsq_ctrls.enabled) {
-#else
-    if (pcs_ptr->parent_pcs_ptr->disallow_nsq) {
-#endif
         if (context_ptr->disallow_4x4) {
             memset(results_ptr->consider_block, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
             memset(results_ptr->split_flag, 1, sizeof(uint8_t) * scs_ptr->max_block_cnt);
@@ -7213,11 +7036,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-#if ADD_NSQ_ENABLE
         const unsigned tot_d1_blocks = !context_ptr->nsq_ctrls.enabled ? 1
-#else
-        const unsigned tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1
-#endif
             : blk_geom->sq_size == 128 ? 17
             : blk_geom->sq_size > 8    ? 25
             : blk_geom->sq_size == 8   ? 5
@@ -7341,11 +7160,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                                         scs_ptr->seq_header.sb_size,
                                                         (int8_t)blk_geom->depth,
                                                         sq_size_idx,
-#if ADD_NSQ_ENABLE
                                                         !context_ptr->nsq_ctrls.enabled,
-#else
-                                                        pcs_ptr->parent_pcs_ptr->disallow_nsq,
-#endif
                                                         s_depth);
 
                         if (e_depth != 0 && add_sub_depth)
@@ -7409,37 +7224,21 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_block_tagged) {
-#if ADD_NSQ_ENABLE
             const uint32_t tot_d1_blocks = !context_ptr->nsq_ctrls.enabled
-#else
-            const uint32_t tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq
-#endif
                 ? 1
                 : get_tot_1d_blks(
-#if CLN_NSQ
                       context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
-#else
-                      pcs_ptr->parent_pcs_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
-#endif
 
             // If HA/HB/VA/VB and H4/V4 are disallowed, tot_d1_blocks will be
             // capped at 5 in get_tot_1d_blks().  Therefore, if the condition MIN(13, tot_d1_blocks) is
             // hit, tot_d1_blocks will be 5 OR H4/V4 will be enabled.  Either case is valid.
-#if CLN_NSQ
             const uint32_t to_test_d1_blocks = (context_ptr->nsq_ctrls.allow_HVA_HVB == 0)
-#else
-            const uint32_t to_test_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB
-#endif
                 ? (blk_geom->sq_size == 128 ? MIN(5, tot_d1_blocks) : MIN(13, tot_d1_blocks))
                 : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
                 if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[idx]) {
-#if CLN_NSQ
                     if (context_ptr->nsq_ctrls.allow_HVA_HVB == 0) {
-#else
-                    if (pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB) {
-#endif
                         // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
                         // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
                         // by 1 (as part of the for loop).
@@ -8314,11 +8113,7 @@ void *mode_decision_kernel(void *input_ptr) {
 
                         // Can only use light-PD1 under the following conditions
                         if (!(md_ctx->hbd_mode_decision == 0 && md_ctx->pred_depth_only &&
-#if ADD_NSQ_ENABLE
                               !md_ctx->nsq_ctrls.enabled && md_ctx->disallow_4x4 == TRUE &&
-#else
-                              ppcs->disallow_nsq == TRUE && md_ctx->disallow_4x4 == TRUE &&
-#endif
                               scs_ptr->super_block_size == 64)) {
                             md_ctx->lpd1_ctrls.pd1_level = REGULAR_PD1;
                         }

@@ -18,31 +18,12 @@ EbErrorType input_queue_entry_ctor(InputQueueEntry *entry_ptr) {
 }
 
 static void reference_queue_entry_dctor(EbPtr p) {
-#if OPT_REPLACE_DEP_CNT_CL
     UNUSED(p);
-#else
-    ReferenceQueueEntry *obj = (ReferenceQueueEntry *)p;
-    EB_FREE_ARRAY(obj->list0.list);
-    EB_FREE_ARRAY(obj->list1.list);
-#endif
 }
 
 EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr) {
     entry_ptr->dctor          = reference_queue_entry_dctor;
     entry_ptr->picture_number = ~0u;
-#if !OPT_REPLACE_DEP_CNT_CL
-    EB_MALLOC_ARRAY(entry_ptr->list0.list, (1 << MAX_TEMPORAL_LAYERS));
-    EB_MALLOC_ARRAY(entry_ptr->list1.list, (1 << MAX_TEMPORAL_LAYERS));
-#endif
-#if OPT_PM_REF_QUEUE
     entry_ptr->is_valid = 0;
-#endif
     return EB_ErrorNone;
 }
-#if !OPT_REPLACE_DEP_CNT_CL
-EbErrorType dep_cnt_queue_entry_ctor(PicQueueEntry *entry_ptr) {
-    entry_ptr->pic_num = ~0u;
-    entry_ptr->is_done = 1;
-    return EB_ErrorNone;
-}
-#endif

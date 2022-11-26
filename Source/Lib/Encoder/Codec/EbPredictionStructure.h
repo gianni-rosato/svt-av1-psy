@@ -46,26 +46,6 @@ typedef struct ReferenceList {
     uint32_t reference_list_count;
 } ReferenceList;
 
-#if !REMOVE_DEP_PIC_LIST
-/************************************************
-     * Dependent List
-     *
-     *   list_count - Contains count of how
-     *     deep into list should be used
-     *     depending on how many references are
-     *     being used in the prediction structure.
-     *
-     *   list - Contains the deltaPOCs of
-     *     pictures that reference the current picture.
-     *     The dependent list pictures must be grouped
-     *     by the referenceCount group in ascending
-     *     order.  The grouping is not display order!
-     ************************************************/
-typedef struct DependentList {
-    int32_t *list;
-    uint32_t list_count;
-} DependentList;
-#endif
 /************************************************
      * Prediction Structure Config
      *   Contains a collection of basic control data
@@ -85,13 +65,8 @@ typedef struct PredictionStructureConfig {
 typedef struct PredictionStructureEntry {
     ReferenceList ref_list0;
     ReferenceList ref_list1;
-#if REMOVE_DEP_PIC_LIST
     uint32_t dep_list0_count;
     uint32_t dep_list1_count;
-#else
-    DependentList dep_list0;
-    DependentList dep_list1;
-#endif
     uint32_t temporal_layer_index;
     uint32_t decode_order;
     Bool     is_referenced;
@@ -112,9 +87,6 @@ typedef struct PredictionStructure {
     uint32_t                   maximum_extent;
 
     // Section Indices
-#if !CLN_REMOVE_LEAD_PIC
-    uint32_t leading_pic_index;
-#endif
     uint32_t init_pic_index;
     uint32_t steady_state_index;
 } PredictionStructure;

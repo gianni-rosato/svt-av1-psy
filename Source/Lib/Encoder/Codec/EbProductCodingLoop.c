@@ -2342,13 +2342,8 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     }
 }
 uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
-#if FIX_ME_PRUNING_R2R
 uint8_t is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
                            const MeSbResults *me_results, uint8_t list_idx, uint8_t ref_idx);
-#else
-uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbResults *me_results,
-                           uint8_t list_idx, uint8_t ref_idx);
-#endif
 // Derive me_sb_addr and me_block_offset used to access ME_MV
 void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                        ModeDecisionContext *context_ptr) {
@@ -2443,16 +2438,12 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                 ((pu_search_index_map[block_index][1] >=
                   (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)) &&
                  (pu_search_index_map[block_index][1] < context_ptr->blk_geom->bheight +
-#if FIX_ME_PRUNING_R2R
                       (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y))) &&
                 is_me_data_present(block_index,
                                    block_index * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand,
                                    me_results,
                                    list_idx,
                                    ref_idx)) {
-#else
-                      (context_ptr->blk_geom->origin_y - context_ptr->geom_offset_y)))) {
-#endif
                 if (list_idx == 0) {
                     mvc_x_array[mvc_count] =
                         (me_results->me_mv_array[block_index * max_refs + ref_idx].x_mv) << 1;
@@ -2974,15 +2965,11 @@ void read_refine_me_mvs_light_pd1(PictureControlSet   *pcs_ptr,
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
 
-#if FIX_ME_PRUNING_R2R
             if (is_me_data_present(context_ptr->me_block_offset,
                                    context_ptr->me_cand_offset,
                                    me_results,
                                    list_idx,
                                    ref_idx)) {
-#else
-            if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
-#endif
                 EbPictureBufferDesc *ref_pic = get_ref_pic_buffer(pcs_ptr, 0, list_idx, ref_idx);
                 EbReferenceObject   *ref_obj =
                     (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
@@ -3120,15 +3107,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
-#if FIX_ME_PRUNING_R2R
             if (is_me_data_present(context_ptr->me_block_offset,
                                    context_ptr->me_cand_offset,
                                    me_results,
                                    list_idx,
                                    ref_idx)) {
-#else
-            if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
-#endif
                 int16_t me_mv_x;
                 int16_t me_mv_y;
                 if (context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds] &&
@@ -3229,13 +3212,8 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                            .this_mv.as_mv.row +
                        4) &
                         ~0x07;
-#if FIX_SOME_CHECKS
                 if (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) {
                     if (context_ptr->md_nsq_motion_search_ctrls.enabled) {
-#else
-                if ((context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight) &&
-                    context_ptr->md_nsq_motion_search_ctrls.enabled) {
-#endif
                         md_nsq_motion_search(pcs_ptr,
                                              context_ptr,
                                              input_picture_ptr,
@@ -3245,9 +3223,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                              me_results,
                                              &me_mv_x,
                                              &me_mv_y);
-#if FIX_SOME_CHECKS
                     }
-#endif
                 } else if (context_ptr->md_sq_me_ctrls.enabled) {
                     md_sq_motion_search(pcs_ptr,
                                         context_ptr,
@@ -3490,15 +3466,11 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
             uint32_t pa_me_distortion = (uint32_t)~0; //any non zero value
-#if FIX_ME_PRUNING_R2R
             if (is_me_data_present(context_ptr->me_block_offset,
                                    context_ptr->me_cand_offset,
                                    me_results,
                                    list_idx,
                                    ref_idx)) {
-#else
-            if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
-#endif
                 int16_t me_mv_x;
                 int16_t me_mv_y;
                 if (list_idx == 0) {
@@ -3736,12 +3708,8 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             const MeSbResults *me_results =
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
 
-#if FIX_ME_PRUNING_R2R
             uint8_t me_data_present = is_me_data_present(
                 ctx->me_block_offset, ctx->me_cand_offset, me_results, list_idx, ref_idx);
-#else
-            uint8_tme_data_present = is_me_data_present(ctx, me_results, list_idx, ref_idx);
-#endif
 
             if (me_data_present) {
                 // Early MVP vs. ME_MV check; do not perform PME search for blocks that have a valid ME_MV unless the ME_MV has a different direction than all MVP(s) and the ME_MV mag is higher than MV_TH (not around(0,0))
@@ -10624,13 +10592,8 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     if (perform_md_recon)
         av1_perform_inverse_transform_recon(
             pcs_ptr, context_ptr, candidate_buffer, context_ptr->blk_geom);
-#if CLN_NSQ
     if ((!context_ptr->md_disallow_nsq && context_ptr->nsq_ctrls.max_part0_to_part1_dev) ||
         (!context_ptr->disallow_4x4 && context_ptr->blk_geom->bsize == BLOCK_8X8))
-#else
-    if ((!context_ptr->md_disallow_nsq && context_ptr->max_part0_to_part1_dev) ||
-        (!context_ptr->disallow_4x4 && context_ptr->blk_geom->bsize == BLOCK_8X8))
-#endif
         calc_scr_to_recon_dist_per_quadrant(context_ptr,
                                             input_picture_ptr,
                                             input_origin_index,
@@ -10653,11 +10616,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 }
 Bool update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *ctx) {
     Bool skip_nsq = 0;
-#if CLN_NSQ
     uint32_t max_part0_to_part1_dev = ctx->nsq_ctrls.max_part0_to_part1_dev;
-#else
-    uint32_t max_part0_to_part1_dev = ctx->max_part0_to_part1_dev;
-#endif
     const BlockGeom *blk_geom = ctx->blk_geom;
 
     // return immediately if SQ, or NSQ but Parent not available, or max_part0_to_part1_dev is off
@@ -10782,11 +10741,7 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
     const BlockGeom *blk_geom = ctx->blk_geom;
     const uint16_t   sqi      = blk_geom->sqi_mds;
     const Part       shape    = blk_geom->shape;
-#if CLN_NSQ
     if (ctx->nsq_ctrls.skip_hv4_on_best_part) {
-#else
-    if (ctx->skip_hv4_on_best_part) {
-#endif
         // Skip H4/V4 shapes when best partition so far is not H/V
         if (shape == PART_H4) {
             if (ctx->md_blk_arr_nsq[sqi].part != PARTITION_HORZ)
@@ -10798,11 +10753,7 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
     }
 
     uint8_t skip_nsq = 0;
-#if CLN_NSQ
     uint32_t sq_weight = ctx->nsq_ctrls.sq_weight;
-#else
-    uint32_t sq_weight = ctx->sq_weight;
-#endif
 
     // return immediately if the skip nsq threshold is infinite
     if (sq_weight == (uint32_t)~0)

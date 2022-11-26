@@ -715,7 +715,6 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t superres_kf_qthres;
     uint8_t superres_auto_search_type;
 
-#if REMOVE_MANUAL_PRED
 #if !SVT_AV1_CHECK_VERSION(1, 5, 0)
     /* DEPRECATED: to be removed in 1.5.0. */
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
@@ -724,31 +723,6 @@ typedef struct EbSvtAv1EncConfiguration {
     Bool enable_manual_pred_struct;
 
     /* DEPRECATED: to be removed in 1.5.0. */
-    int32_t manual_pred_struct_entry_num;
-#endif
-#else
-    /**
-     * @brief API signal containing the manual prediction structure parameters.
-     * Only used when enable_manual_pred_struct is enabled. This list is copied
-     * into internal buffers after svt_av1_enc_set_parameter().
-     */
-    PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
-
-    /**
-     * @brief API signal to overwrite the encoder's default prediction structure.
-     *
-     * Default is false.
-     */
-    Bool enable_manual_pred_struct;
-
-    /**
-     * @brief API signal specifying the size (number of entries) of the manual prediction structure buffer.
-     * Only checked and used when enable_manual_pred_struct is enabled.
-     *
-     * Min is 1.
-     * Max is 32.
-     * Default is 0.
-     */
     int32_t manual_pred_struct_entry_num;
 #endif
     /* Decoder-speed-targeted encoder optimization level (produce bitstreams that can be decoded faster).

@@ -114,7 +114,6 @@ EbErrorType tpl_disp_context_ctor(EbThreadContext   *thread_context_ptr,
     return EB_ErrorNone;
 }
 
-#if CLN_PIC_DEC_PROC
 /* this function sets up ME refs for a regular pic*/
 static void tpl_regular_setup_me_refs(PictureParentControlSet *base_pcs,
                                       PictureParentControlSet *cur_pcs) {
@@ -186,17 +185,9 @@ static void tpl_prep_info(PictureParentControlSet *pcs) {
         }
     }
 }
-#else
-void        tpl_prep_info(PictureParentControlSet *pcs);
-#endif
 
 // Generate lambda factor to tune lambda based on TPL stats
-#if TUNE_TPL_QPM_LAMBDA
 void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr, int64_t mc_dep_cost_base) {
-#else
-static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
-                                           int64_t                  mc_dep_cost_base) {
-#endif
     Av1Common   *cm                    = pcs_ptr->av1_cm;
     uint8_t      tpl_synth_size_offset = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
              : pcs_ptr->tpl_ctrls.synth_blk_size == 16                          ? 2
@@ -1701,11 +1692,7 @@ void tpl_mc_flow_synthesizer(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], 
     }
     return;
 }
-#if TUNE_TPL_QPM_LAMBDA
 void generate_r0beta(PictureParentControlSet *pcs_ptr) {
-#else
-static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
-#endif
     Av1Common          *cm                    = pcs_ptr->av1_cm;
     SequenceControlSet *scs_ptr               = pcs_ptr->scs_ptr;
     int64_t             recrf_dist_base_sum   = 0;
@@ -1799,61 +1786,14 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
     return;
 }
 
-#if !OPT_TPL_REF_BUFFERS
-EbErrorType rtime_alloc_mc_flow_rec_picture_buffer_noref(
-    EncodeContext *encode_context_ptr, EbPictureBufferDescInitData *picture_buffer_desc_init_data) {
-    EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer_noref,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)picture_buffer_desc_init_data);
-    return EB_ErrorNone;
-}
-#endif
 /************************************************
 * Allocate and initialize buffers needed for tpl
 ************************************************/
-#if OPT_TPL_REF_BUFFERS
 EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr) {
     for (int frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
-#else
-EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr, PictureParentControlSet *pcs_ptr) {
-    int32_t frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
-    int32_t frame_idx;
-
-    for (frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
-#endif
         encode_context_ptr->poc_map_idx[frame_idx]                = -1;
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
     }
-#if !OPT_TPL_REF_BUFFERS
-    EbPictureBufferDescInitData picture_buffer_desc_init_data;
-    picture_buffer_desc_init_data.max_width          = pcs_ptr->enhanced_picture_ptr->max_width;
-    picture_buffer_desc_init_data.max_height         = pcs_ptr->enhanced_picture_ptr->max_height;
-    picture_buffer_desc_init_data.bit_depth          = EB_EIGHT_BIT;
-    picture_buffer_desc_init_data.color_format       = pcs_ptr->enhanced_picture_ptr->color_format;
-    picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
-    picture_buffer_desc_init_data.left_padding       = TPL_PADX;
-    picture_buffer_desc_init_data.right_padding      = TPL_PADX;
-    picture_buffer_desc_init_data.top_padding        = TPL_PADY;
-    picture_buffer_desc_init_data.bot_padding        = TPL_PADY;
-    picture_buffer_desc_init_data.split_mode         = FALSE;
-
-    rtime_alloc_mc_flow_rec_picture_buffer_noref(encode_context_ptr,
-                                                 &picture_buffer_desc_init_data);
-
-    for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
-        // printf("TPL Base:%lld   Picture:%lld  valid:%i \n", pcs_ptr->picture_number, pcs_ptr->tpl_group[frame_idx]->picture_number, pcs_ptr->tpl_valid_pic[frame_idx]);
-        // If REF pic, re-use previously assigned recon buffer
-        if (pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag) {
-            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] =
-                ((EbReferenceObject *)pcs_ptr->tpl_group[frame_idx]
-                     ->reference_picture_wrapper_ptr->object_ptr)
-                    ->reference_picture;
-        } else {
-            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] =
-                encode_context_ptr->mc_flow_rec_picture_buffer_noref;
-        }
-    }
-#endif
     return EB_ErrorNone;
 }
 
@@ -1948,14 +1888,12 @@ void init_tpl_segments(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
     }
 }
 
-#if OPT_TPL_REF_BUFFERS
 typedef struct TplRefList {
     EbObjectWrapper *ref;
     int32_t          frame_idx;
     uint8_t          refresh_frame_mask;
     bool             is_valid;
 } TplRefList;
-#endif
 /************************************************
 * Genrate TPL MC Flow Based on frames in the tpl group
 ************************************************/
@@ -1978,16 +1916,10 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
         svt_wait_cond_var(&pcs_ptr->tpl_group[i]->me_ready, 0);
     }
     pcs_ptr->tpl_is_valid = 0;
-#if OPT_TPL_REF_BUFFERS
     init_tpl_buffers(encode_context_ptr);
-#else
-    init_tpl_buffers(encode_context_ptr, pcs_ptr);
-#endif
 
-#if OPT_TPL_REF_BUFFERS
     TplRefList tpl_ref_list[REF_FRAMES + 1]; // Buffer for each ref pic and current pic
     memset(tpl_ref_list, 0, sizeof(tpl_ref_list[0]) * (REF_FRAMES + 1));
-#endif
     if (pcs_ptr->tpl_group[0]->tpl_data.tpl_temporal_layer_index == 0) {
         // no Tiles path
         if (scs_ptr->static_config.tile_rows == 0 && scs_ptr->static_config.tile_columns == 0)
@@ -1998,7 +1930,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
         for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
             encode_context_ptr->poc_map_idx[frame_idx] =
                 pcs_ptr->tpl_group[frame_idx]->picture_number;
-#if OPT_TPL_REF_BUFFERS
             // NREF need recon buffer for intra pred
             EbObjectWrapper *reference_picture_wrapper;
             // Get Empty Reference Picture Object
@@ -2023,7 +1954,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
                     break;
                 }
             }
-#endif
             for (uint32_t blky = 0; blky < (picture_height_in_mb); blky++) {
                 memset(pcs_ptr->tpl_group[frame_idx]
                            ->pa_me_data->tpl_stats[blky * (picture_width_in_mb)],
@@ -2043,7 +1973,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
                 if (tpl_on)
                     pcs_ptr->tpl_group[frame_idx]->tpl_src_data_ready = 1;
 
-#if OPT_TPL_REF_BUFFERS
             // Release references
             for (int i = 0; i < (REF_FRAMES + 1); i++) {
                 // Get empty list entry
@@ -2063,7 +1992,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
                     }
                 }
             }
-#endif
         }
 
         // synthesizer
@@ -2072,10 +2000,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             if (tpl_on)
                 tpl_mc_flow_synthesizer(pcs_ptr->tpl_group, frame_idx, frames_in_sw);
         }
-#if !TUNE_TPL_QPM_LAMBDA
-        // generate tpl stats
-        generate_r0beta(pcs_ptr);
-#endif
 #if DEBUG_TPL
 
         for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
@@ -2124,7 +2048,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
     }
 #endif
 
-#if OPT_TPL_REF_BUFFERS
     // Release un-released tpl references
     for (int i = 0; i < (REF_FRAMES + 1); i++) {
         // Get empty list entry
@@ -2137,9 +2060,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             tpl_ref_list[i].is_valid                                                  = false;
         }
     }
-#else
-    EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
-#endif
 
     // When super-res recode is actived, don't release pa_ref_objs until final loop is finished
     // Although tpl-la won't be enabled in super-res FIXED or RANDOM mode, here we use the condition to align with that in initial rate control process
@@ -2302,13 +2222,11 @@ void *tpl_disp_kernel(void *input_ptr) {
 static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
                                  PictureParentControlSet *pcs, Bool superres_recode) {
     EbObjectWrapper *out_results_wrapper_ptr;
-#if OPT_TPL_REF_BUFFERS
     SequenceControlSet *scs = pcs->scs_ptr;
     // NB: overlay frames should be non-ref
     // Before sending pics out to pic mgr, ensure that pic mgr can handle them
     if (pcs->is_used_as_reference_flag && !superres_recode)
         svt_block_on_semaphore(scs->ref_buffer_available_semaphore);
-#endif
 
     // Get Empty Results Object
     svt_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr,
@@ -2346,12 +2264,6 @@ void *source_based_operations_kernel(void *input_ptr) {
         SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
 
         if (in_results_ptr->superres_recode) {
-#if !TUNE_TPL_QPM_LAMBDA
-            if (pcs_ptr->tpl_ctrls.enable) {
-                // regenerate r0 and tpl_beta since they are frame size dependency
-                generate_r0beta(pcs_ptr);
-            }
-#endif
             sbo_send_picture_out(context_ptr, pcs_ptr, TRUE);
 
             // Release the Input Results

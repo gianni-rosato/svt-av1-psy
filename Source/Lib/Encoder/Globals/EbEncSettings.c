@@ -551,77 +551,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             config->tune);
         return_error = EB_ErrorBadParameter;
     }
-#if !REMOVE_MANUAL_PRED
-    // prediction structure
-    if (config->enable_manual_pred_struct) {
-        if (config->manual_pred_struct_entry_num > (1 << (MAX_HIERARCHICAL_LEVEL - 1))) {
-            SVT_ERROR(
-                "Instance %u: Invalid manual prediction structure entry number [1 - 32], your "
-                "input: %d\n",
-                channel_number + 1,
-                config->manual_pred_struct_entry_num);
-            return_error = EB_ErrorBadParameter;
-        } else {
-            for (int32_t i = 0; i < config->manual_pred_struct_entry_num; i++) {
-                config->pred_struct[i].ref_list1[REF_LIST_MAX_DEPTH - 1] = 0;
-                if (config->pred_struct[i].decode_order >= (1 << (MAX_HIERARCHICAL_LEVEL - 1))) {
-                    SVT_ERROR(
-                        "Instance %u: Invalid decode order for manual prediction structure [0 - "
-                        "31], your input: %d\n",
-                        channel_number + 1,
-                        config->pred_struct[i].decode_order);
-                    return_error = EB_ErrorBadParameter;
-                }
-                if (config->pred_struct[i].temporal_layer_index >=
-                    (1 << (MAX_HIERARCHICAL_LEVEL - 1))) {
-                    SVT_ERROR(
-                        "Instance %u: Invalid temporal layer index for manual prediction structure "
-                        "[0 - 31], your input: %d\n",
-                        channel_number + 1,
-                        config->pred_struct[i].temporal_layer_index);
-                    return_error = EB_ErrorBadParameter;
-                }
-                Bool    have_ref_frame_within_minigop_in_list0 = FALSE;
-                int32_t entry_idx                              = i + 1;
-                for (int32_t j = 0; j < REF_LIST_MAX_DEPTH; j++) {
-                    if ((entry_idx - config->pred_struct[i].ref_list1[j] >
-                         config->manual_pred_struct_entry_num)) {
-                        SVT_ERROR(
-                            "Instance %u: Invalid ref frame %d in list1 entry%d for manual "
-                            "prediction structure, all ref frames in list1 should not exceed "
-                            "minigop end\n",
-                            channel_number + 1,
-                            config->pred_struct[i].ref_list1[j],
-                            i);
-                        return_error = EB_ErrorBadParameter;
-                    }
-                    if (config->pred_struct[i].ref_list0[j] < 0) {
-                        SVT_ERROR(
-                            "Instance %u: Invalid ref frame %d in list0 entry%d for manual "
-                            "prediction structure, only forward frames can be in list0\n",
-                            channel_number + 1,
-                            config->pred_struct[i].ref_list0[j],
-                            i);
-                        return_error = EB_ErrorBadParameter;
-                    }
-                    if (!have_ref_frame_within_minigop_in_list0 &&
-                        config->pred_struct[i].ref_list0[j] &&
-                        entry_idx - config->pred_struct[i].ref_list0[j] >= 0) {
-                        have_ref_frame_within_minigop_in_list0 = TRUE;
-                    }
-                }
-                if (!have_ref_frame_within_minigop_in_list0) {
-                    SVT_ERROR(
-                        "Instance %u: Invalid ref frame in list0 entry%d for manual prediction "
-                        "structure,there should be at least one frame within minigop \n",
-                        channel_number + 1,
-                        i);
-                    return_error = EB_ErrorBadParameter;
-                }
-            }
-        }
-    }
-#endif
 
     if (config->superres_mode > SUPERRES_AUTO) {
         SVT_ERROR("Instance %u: invalid superres-mode %d, should be in the range [%d - %d]\n",
@@ -993,11 +922,6 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv                  = DEFAULT;
     config_ptr->fast_decode                  = 0;
-#if !REMOVE_MANUAL_PRED
-    memset(config_ptr->pred_struct, 0, sizeof(config_ptr->pred_struct));
-    config_ptr->enable_manual_pred_struct    = FALSE;
-    config_ptr->manual_pred_struct_entry_num = 0;
-#endif
     config_ptr->encoder_color_format = EB_YUV420;
     // Rate control options
     // Set the default value toward more flexible rate allocation

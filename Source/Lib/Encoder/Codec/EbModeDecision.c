@@ -73,7 +73,6 @@ int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, Pre
 }
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
-#if FIX_ME_PRUNING_R2R
 uint8_t is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
                            const MeSbResults *me_results, uint8_t list_idx, uint8_t ref_idx) {
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[me_block_offset];
@@ -92,27 +91,6 @@ uint8_t is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
     }
     return 0;
 }
-#else
-uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbResults *me_results,
-                           uint8_t list_idx, uint8_t ref_idx) {
-    uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
-    const MeCandidate *me_block_results =
-        &me_results->me_candidate_array[context_ptr->me_cand_offset];
-    for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i) {
-        const MeCandidate *me_cand = &me_block_results[me_cand_i];
-        assert(me_cand->direction <= 2);
-        if (me_cand->direction == 0 || me_cand->direction == 2) {
-            if (list_idx == me_cand->ref0_list && ref_idx == me_cand->ref_idx_l0)
-                return 1;
-        }
-        if (me_cand->direction == 1 || me_cand->direction == 2) {
-            if (list_idx == me_cand->ref1_list && ref_idx == me_cand->ref_idx_l1)
-                return 1;
-        }
-    }
-    return 0;
-}
-#endif
 /********************************************
 * Constants
 ********************************************/
@@ -171,22 +149,6 @@ const uint32_t parent_index[85] = {
     0,  0,  23, 23, 23, 23, 0,  28, 28, 28, 28, 0,  33, 33, 33, 33, 0,  38, 38, 38, 38, 0,
     0,  44, 44, 44, 44, 0,  49, 49, 49, 49, 0,  54, 54, 54, 54, 0,  59, 59, 59, 59, 0,  0,
     65, 65, 65, 65, 0,  70, 70, 70, 70, 0,  75, 75, 75, 75, 0,  80, 80, 80, 80};
-#if !OPT_REPLACE_DEP_CNT
-/*
-  NORMAL ORDER
-  |-------------------------------------------------------------|
-  | ref_idx          0            1           2            3       |
-  | List0            LAST        LAST2        LAST3        GOLD    |
-  | List1            BWD            ALT2        ALT                 |
-  |-------------------------------------------------------------|
-*/
-#define INVALID_REF 0xF
-
-uint8_t          ref_type_to_list_idx[REFS_PER_FRAME + 1] = {0, 0, 0, 0, 0, 1, 1, 1};
-uint8_t          get_list_idx(uint8_t ref_type) { return ref_type_to_list_idx[ref_type]; }
-uint8_t          ref_type_to_ref_idx[REFS_PER_FRAME + 1] = {0, 0, 1, 2, 3, 0, 1, 2};
-uint8_t          get_ref_frame_idx(uint8_t ref_type) { return ref_type_to_ref_idx[ref_type]; };
-#endif
 MvReferenceFrame to_ref_frame[2][4] = {{LAST_FRAME, LAST2_FRAME, LAST3_FRAME, GOLDEN_FRAME},
                                        {BWDREF_FRAME, ALTREF2_FRAME, ALTREF_FRAME, INVALID_REF}};
 
@@ -1652,17 +1614,9 @@ void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionCont
                                             .ed_ref_mv_stack[ref_pair][0]
                                             .comp_mv.as_mv.row;
 
-#if CLN_PIC_DEC_PROC
             const bool is_skip_mode = frm_hdr->skip_mode_params.skip_mode_flag &&
                 (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0) &&
                 (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1);
-#else
-            Bool is_skip_mode = pcs->parent_pcs_ptr->is_skip_mode_allowed &&
-                    (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0 + 1) &&
-                    (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1 + 1)
-                ? TRUE
-                : FALSE;
-#endif
 
             cand_array[cand_idx].pred_mode         = NEAREST_NEARESTMV;
             cand_array[cand_idx].motion_mode       = SIMPLE_TRANSLATION;
@@ -2076,17 +2030,9 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                 }
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
-#if CLN_PIC_DEC_PROC
                     const bool is_skip_mode = frm_hdr->skip_mode_params.skip_mode_flag &&
                         (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0) &&
                         (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1);
-#else
-                    Bool is_skip_mode = pcs_ptr->parent_pcs_ptr->is_skip_mode_allowed &&
-                            (rf[0] == frm_hdr->skip_mode_params.ref_frame_idx_0 + 1) &&
-                            (rf[1] == frm_hdr->skip_mode_params.ref_frame_idx_1 + 1)
-                        ? TRUE
-                        : FALSE;
-#endif
                     Bool mask_done = 0;
                     for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                          cur_type++) {
@@ -2303,15 +2249,11 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                             : 1;
                     inj_mv              = inj_mv && inside_tile;
                     inj_mv              = inj_mv &&
-#if FIX_ME_PRUNING_R2R
                         is_me_data_present(context_ptr->me_block_offset,
                                            context_ptr->me_cand_offset,
                                            me_results,
                                            get_list_idx(rf[1]),
                                            ref_idx_1);
-#else
-                        is_me_data_present(context_ptr, me_results, get_list_idx(rf[1]), ref_idx_1);
-#endif
                     if (inj_mv) {
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2405,16 +2347,12 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                                     context_ptr->blk_geom->bsize)
                             : 1;
                     inj_mv              = inj_mv && inside_tile;
-#if FIX_ME_PRUNING_R2R
                     inj_mv = inj_mv &&
                         is_me_data_present(context_ptr->me_block_offset,
                                            context_ptr->me_cand_offset,
                                            me_results,
                                            0,
                                            ref_idx_0);
-#else
-                    inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, 0, ref_idx_0);
-#endif
                     if (inj_mv) {
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2501,15 +2439,11 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                               context_ptr, to_inj_mv0, to_inj_mv1, ref_pair) ==
                                               FALSE);
                         inj_mv             = inj_mv &&
-#if FIX_ME_PRUNING_R2R
                             is_me_data_present(context_ptr->me_block_offset,
                                                context_ptr->me_cand_offset,
                                                me_results,
                                                0,
                                                ref_idx_0);
-#else
-                            is_me_data_present(context_ptr, me_results, 0, ref_idx_0);
-#endif
                         if (inj_mv) {
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2590,16 +2524,11 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                               context_ptr, to_inj_mv0, to_inj_mv1, ref_pair) ==
                                               FALSE);
                         inj_mv             = inj_mv &&
-#if FIX_ME_PRUNING_R2R
                             is_me_data_present(context_ptr->me_block_offset,
                                                context_ptr->me_cand_offset,
                                                me_results,
                                                get_list_idx(rf[1]),
                                                ref_idx_1);
-#else
-                            is_me_data_present(
-                                     context_ptr, me_results, get_list_idx(rf[1]), ref_idx_1);
-#endif
                         if (inj_mv) {
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
