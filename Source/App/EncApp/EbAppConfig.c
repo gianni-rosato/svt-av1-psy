@@ -123,7 +123,6 @@
 #define BUFFER_OPTIMAL_SIZE_TOKEN "--buf-optimal-sz"
 #define RECODE_LOOP_TOKEN "--recode-loop"
 #define ENABLE_TPL_LA_TOKEN "--enable-tpl-la"
-#define SUPER_BLOCK_SIZE_TOKEN "--sb-size"
 #define TILE_ROW_TOKEN "--tile-rows"
 #define TILE_COL_TOKEN "--tile-columns"
 
