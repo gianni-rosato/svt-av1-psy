@@ -1929,10 +1929,10 @@ cglobal iidentity_4x16_internal_12bpc, 0, 7, 14, dst, stride, c, eob, tx2
     vpbroadcastw         m0, xm0
 .end:
     pxor                 m3, m3
-    mova                xm1, [dstq+strideq*0]
+    movu                xm1, [dstq+strideq*0]
     vinserti128          m1, m1, [dstq+strideq*1], 1
     lea                  r6, [dstq+strideq*2]
-    mova                xm2, [r6  +strideq*0]
+    movu                xm2, [r6  +strideq*0]
     vinserti128          m2, m2, [r6  +strideq*1], 1
     paddw                m1, m0
     paddw                m2, m0
@@ -1940,9 +1940,9 @@ cglobal iidentity_4x16_internal_12bpc, 0, 7, 14, dst, stride, c, eob, tx2
     pmaxsw               m2, m3
     pminsw               m1, m4
     pminsw               m2, m4
-    mova         [dstq+strideq*0], xm1
+    movu         [dstq+strideq*0], xm1
     vextracti128 [dstq+strideq*1], m1, 1
-    mova         [r6  +strideq*0], xm2
+    movu         [r6  +strideq*0], xm2
     vextracti128 [r6  +strideq*1], m2, 1
     RET
 %else
@@ -2042,10 +2042,10 @@ cglobal iadst_8x4_internal_10bpc, 0, 7, 10, dst, stride, c, eob, tx2
     pmulhrsw             m1, m2
     vpbroadcastd         m5, [pixel_10bpc_max]
 .end2:
-    mova                xm2, [dstq+strideq*0]
+    movu                xm2, [dstq+strideq*0]
     vinserti128          m2, m2, [dstq+strideq*1], 1
     lea                  r6, [dstq+strideq*2]
-    mova                xm3, [r6  +strideq*0]
+    movu                xm3, [r6  +strideq*0]
     vinserti128          m3, m3, [r6  +strideq*1], 1
     pxor                 m4, m4
     REPX {mova [cq+32*x], m4}, 0, 1, 2, 3
@@ -2055,9 +2055,9 @@ cglobal iadst_8x4_internal_10bpc, 0, 7, 10, dst, stride, c, eob, tx2
     pmaxsw               m1, m4
     pminsw               m0, m5
     pminsw               m1, m5
-    mova         [dstq+strideq*0], xm0
+    movu         [dstq+strideq*0], xm0
     vextracti128 [dstq+strideq*1], m0, 1
-    mova         [r6  +strideq*0], xm1
+    movu         [r6  +strideq*0], xm1
     vextracti128 [r6  +strideq*1], m1, 1
     RET
 ALIGN function_align
@@ -2336,12 +2336,12 @@ cglobal iidentity_8x4_internal_12bpc, 0, 7, 10, dst, stride, c, eob, tx2
     vpbroadcastw         m0, xm0
     pxor                 m2, m2
 .dconly_loop:
-    mova                xm1, [dstq+strideq*0]
+    movu                xm1, [dstq+strideq*0]
     vinserti128          m1, m1, [dstq+strideq*1], 1
     paddw                m1, m0
     pmaxsw               m1, m2
     pminsw               m1, m3
-    mova         [dstq+strideq*0], xm1
+    movu         [dstq+strideq*0], xm1
     vextracti128 [dstq+strideq*1], m1, 1
     lea                dstq, [dstq+strideq*2]
     sub                 r3d, 2
@@ -2430,9 +2430,9 @@ ALIGN function_align
     lea                  r6, [strideq*3]
     pxor                m10, m10
 .write_8x4:
-    mova                xm8, [dstq+strideq*0]
+    movu                xm8, [dstq+strideq*0]
     vinserti128          m8, m8, [dstq+strideq*1], 1
-    mova                xm9, [dstq+strideq*2]
+    movu                xm9, [dstq+strideq*2]
     vinserti128          m9, m9, [dstq+r6       ], 1
     mova          [cq+32*0], m10
     mova          [cq+32*1], m10
@@ -2445,9 +2445,9 @@ ALIGN function_align
     pmaxsw               m1, m10
     pminsw               m0, m11
     pminsw               m1, m11
-    mova         [dstq+strideq*0], xm0
+    movu         [dstq+strideq*0], xm0
     vextracti128 [dstq+strideq*1], m0, 1
-    mova         [dstq+strideq*2], xm1
+    movu         [dstq+strideq*2], xm1
     vextracti128 [dstq+r6       ], m1, 1
     lea                dstq, [dstq+strideq*4]
     ret
@@ -6074,27 +6074,27 @@ ALIGN function_align
     punpcklqdq           m0, m2
     punpcklqdq           m2, m3, m4
     punpckhqdq           m3, m4
-    mova                xm4, [dstq+strideq*0]
+    movu                xm4, [dstq+strideq*0]
     vinserti128          m4, m4, [dstq+strideq*4], 1
     paddw                m0, m4
-    mova                xm4, [dstq+strideq*1]
+    movu                xm4, [dstq+strideq*1]
     vinserti128          m4, m4, [dstq+r5       ], 1
     paddw                m1, m4
-    mova                xm4, [dstq+strideq*2]
+    movu                xm4, [dstq+strideq*2]
     vinserti128          m4, m4, [dstq+r6*2     ], 1
     paddw                m2, m4
-    mova                xm4, [dstq+r6       ]
+    movu                xm4, [dstq+r6       ]
     vinserti128          m4, m4, [dstq+r4       ], 1
     paddw                m3, m4
     REPX     {pmaxsw x, m6}, m0, m1, m2, m3
     REPX     {pminsw x, m7}, m0, m1, m2, m3
-    mova         [dstq+strideq*0], xm0
+    movu         [dstq+strideq*0], xm0
     vextracti128 [dstq+strideq*4], m0, 1
-    mova         [dstq+strideq*1], xm1
+    movu         [dstq+strideq*1], xm1
     vextracti128 [dstq+r5       ], m1, 1
-    mova         [dstq+strideq*2], xm2
+    movu         [dstq+strideq*2], xm2
     vextracti128 [dstq+r6*2     ], m2, 1
-    mova         [dstq+r6       ], xm3
+    movu         [dstq+r6       ], xm3
     vextracti128 [dstq+r4       ], m3, 1
     ret
 
