@@ -3,9 +3,9 @@
 ## [1.4.0] - 2022-11-30
 
 Encoder
-- Adopted of the 6L / 32-picture mini-GOP configuraion as default and adjusted MD feature levels accordingly
+- Adopted the 6L / 32-picture mini-GOP configuraion as default and adjusted MD feature levels accordingly yielding higher compression efficiency gains
 - Update the TPL model to account for the larger mini-gop size
-- Re-tune all preset using the additional coding efficiency for improved quality vs cycles tradeoffs
+- Re-tune presets M0-M12 using the gained coding efficiency for improved quality vs cycles tradeoffs
 - Allow duplicate commandline parameters to be parsed and take into consideration the latter to allow AWCY integration
 
 Build, Cleanup and Documentation
