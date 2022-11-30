@@ -235,10 +235,11 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 1. */
     SvtAv1IntraRefreshType intra_refresh_type;
+
     /* Number of hierarchical layers used to construct GOP.
      * Minigop size = 2^HierarchicalLevels.
      *
-     * Default is 3. */
+     * Default is 5 upt to M12 4, for M13. */
     uint32_t hierarchical_levels;
 
     /* Prediction structure used to construct GOP. There are two main structures
