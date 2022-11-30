@@ -14,7 +14,7 @@ Notes:
 
 ### n5.0 - [svt-av1/n5.0](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n5.0)
 
-#### Using SVT-AV1 v1.0?
+#### Using SVT-AV1 v1.0 with n5.0?
 
 - [c33b404885](https://gitlab.com/1480c1/FFmpeg/-/commit/c33b404885): Backport `-svtav1-params:v`
 - [1dddb930aa](https://gitlab.com/1480c1/FFmpeg/-/commit/1dddb930aa): Backport `-crf:v`, remove `-rc:v` and instead use `-b:v`, `-maxrate:v`, `-crf:v`, and `-qp:v` to set rc mode
@@ -25,7 +25,7 @@ Notes:
 - [70887d44ff](https://gitlab.com/1480c1/FFmpeg/-/commit/70887d44ff): Backport patch for not setting tbr if it's not needed
 - [fe100bc556](https://gitlab.com/1480c1/FFmpeg/-/commit/fe100bc556): Backport patch for passing bitrate properties through cpb side data
 
-#### Using SVT-AV1 v1.1?
+#### Using SVT-AV1 v1.1 with n5.0?
 
 - [6fd1533057](https://gitlab.com/1480c1/FFmpeg/-/commit/6fd1533057): Backport patch for passing pict_type to libsvtav1 (for force key frame feature)
 
@@ -33,7 +33,7 @@ Notes:
 
 ### n4.4 - [svt-av1/n4.4](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n4.4)
 
-#### Using SVT-AV1 v1.0?
+#### Using SVT-AV1 v1.0 with n4.4?
 
 - [04b89e8ae3](https://gitlab.com/1480c1/FFmpeg/-/commit/04b89e8ae3): Backport fix for caps_internal
 - [64e2fb3f9d](https://gitlab.com/1480c1/FFmpeg/-/commit/64e2fb3f9d): Backport change for gop type
@@ -48,7 +48,7 @@ Notes:
 - [70887d44ff](https://gitlab.com/1480c1/FFmpeg/-/commit/70887d44ff): Backport patch for not setting tbr if it's not needed
 - [fe100bc556](https://gitlab.com/1480c1/FFmpeg/-/commit/fe100bc556): Backport patch for passing bitrate properties through cpb side data
 
-#### Using SVT-AV1 v1.1?
+#### Using SVT-AV1 v1.1 with n4.4?
 
 - [6fd1533057](https://gitlab.com/1480c1/FFmpeg/-/commit/6fd1533057): Backport patch for passing pict_type to libsvtav1 (for force key frame feature)
 
