@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0] - 2022-11-30
+
+Encoder
+- Adopted of the 6L / 32-picture mini-GOP configuraion as default and adjusted MD feature levels accordingly
+- Update the TPL model to account for the larger mini-gop size
+- Re-tune all preset using the additional coding efficiency for improved quality vs cycles tradeoffs
+- Allow duplicate commandline parameters to be parsed and take into consideration the latter to allow AWCY integration
+
+Build, Cleanup and Documentation
+- Make include and lib paths friendly to abs and rel paths
+- Update preset and API documentation
+- Various functional bug fixes
+- Remove manual prediction structure support
+
 ## [1.3.0] - 2022-10-18
 
 Encoder
