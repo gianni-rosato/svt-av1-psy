@@ -24,10 +24,17 @@ Notes:
 - [ded0334d21](https://gitlab.com/1480c1/FFmpeg/-/commit/ded0334d21): Backport patch for choma-sample-location
 - [70887d44ff](https://gitlab.com/1480c1/FFmpeg/-/commit/70887d44ff): Backport patch for not setting tbr if it's not needed
 - [fe100bc556](https://gitlab.com/1480c1/FFmpeg/-/commit/fe100bc556): Backport patch for passing bitrate properties through cpb side data
+- [fb70e0611b](https://gitlab.com/1480c1/FFmpeg/-/commit/fb70e0611b): Backport patch for fixing segfault on copying metadata from the EOS signal
 
 #### Using SVT-AV1 v1.1 with n5.0?
 
 - [6fd1533057](https://gitlab.com/1480c1/FFmpeg/-/commit/6fd1533057): Backport patch for passing pict_type to libsvtav1 (for force key frame feature)
+
+#### Using SVT-AV1 v1.4 with n5.0?
+
+- [031f1561cd](https://gitlab.com/1480c1/FFmpeg/-/commit/031f1561cd): Backport patch removing compressed_ten_bit_format
+- [1c6fd7d756](https://gitlab.com/1480c1/FFmpeg/-/commit/1c6fd7d756): Backport patch removing vbv_bufsize
+- [96748ac54f](https://gitlab.com/1480c1/FFmpeg/-/commit/96748ac54f): Backport patch fixing setting of max_buf_sz
 
 ---
 
@@ -47,10 +54,17 @@ Notes:
 - [ded0334d21](https://gitlab.com/1480c1/FFmpeg/-/commit/ded0334d21): Backport patch for choma-sample-location
 - [70887d44ff](https://gitlab.com/1480c1/FFmpeg/-/commit/70887d44ff): Backport patch for not setting tbr if it's not needed
 - [fe100bc556](https://gitlab.com/1480c1/FFmpeg/-/commit/fe100bc556): Backport patch for passing bitrate properties through cpb side data
+- [fb70e0611b](https://gitlab.com/1480c1/FFmpeg/-/commit/fb70e0611b): Backport patch for fixing segfault on copying metadata from the EOS signal
 
 #### Using SVT-AV1 v1.1 with n4.4?
 
 - [6fd1533057](https://gitlab.com/1480c1/FFmpeg/-/commit/6fd1533057): Backport patch for passing pict_type to libsvtav1 (for force key frame feature)
+
+#### Using SVT-AV1 v1.4 with n4.4?
+
+- [031f1561cd](https://gitlab.com/1480c1/FFmpeg/-/commit/031f1561cd): Backport patch removing compressed_ten_bit_format
+- [1c6fd7d756](https://gitlab.com/1480c1/FFmpeg/-/commit/1c6fd7d756): Backport patch removing vbv_bufsize
+- [96748ac54f](https://gitlab.com/1480c1/FFmpeg/-/commit/96748ac54f): Backport patch fixing setting of max_buf_sz
 
 ## How to build
 

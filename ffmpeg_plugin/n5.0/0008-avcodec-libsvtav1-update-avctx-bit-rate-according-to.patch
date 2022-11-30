@@ -1,8 +1,8 @@
 From 09400412776e25151cb82909ee65479ee9010f7c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jan=20Ekstr=C3=B6m?= <jeebjp@gmail.com>
 Date: Mon, 9 May 2022 21:21:33 +0300
-Subject: [PATCH 8/9] avcodec/libsvtav1: update avctx bit rate according to RC
- mode
+Subject: [PATCH 08/13] avcodec/libsvtav1: update avctx bit rate according to
+ RC mode
 
 This way we can filter out the default value for this member, which
 is nonzero. Bases on the current affairs that bit rate based rate
@@ -26,5 +26,5 @@ index 8eb3d07843..691bc27133 100644
      return 0;
  }
 -- 
-2.36.1
+2.38.1
 

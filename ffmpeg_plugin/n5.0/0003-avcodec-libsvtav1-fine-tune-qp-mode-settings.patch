@@ -1,7 +1,7 @@
 From 50e1556c45f6e2f8347d66157d8e729b50b6e190 Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Sun, 13 Mar 2022 15:17:40 -0300
-Subject: [PATCH 3/9] avcodec/libsvtav1: fine tune qp mode settings
+Subject: [PATCH 03/13] avcodec/libsvtav1: fine tune qp mode settings
 
 As requested in https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/1829
 
@@ -28,5 +28,5 @@ index fecb9f4aaa..826a3c084b 100644
      param->scene_change_detection   = svt_enc->scd;
  
 -- 
-2.36.1
+2.38.1
 

@@ -1,8 +1,8 @@
 From f579c1aca11da1664c4cebc9e2baa84722725681 Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Sun, 27 Mar 2022 20:06:51 -0300
-Subject: [PATCH 5/9] avcodec/libsvtav1: give svtav1-params priority over avctx
- values
+Subject: [PATCH 05/13] avcodec/libsvtav1: give svtav1-params priority over
+ avctx values
 
 If the svt equivalent option to an avctx AVOption is passed by the user
 then it should have priority. The exception are fields like dimensions, bitdepth
@@ -125,5 +125,5 @@ index 49d3178fab..dc2da06e80 100644
      return 0;
  }
 -- 
-2.36.1
+2.38.1
 
