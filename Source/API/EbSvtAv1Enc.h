@@ -434,8 +434,8 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0. */
     uint32_t max_bit_rate;
 
-#if !SVT_AV1_CHECK_VERSION(1, 4, 0)
-    /* DEPRECATED: to be removed in 1.4.0. */
+#if !SVT_AV1_CHECK_VERSION(1, 5, 0)
+    /* DEPRECATED: to be removed in 1.5.0. */
     uint32_t vbv_bufsize;
 #endif
 
