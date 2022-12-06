@@ -873,6 +873,12 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
         }
         // Scale r0 based on the GOP structure
         ppcs->r0 = ppcs->r0 / tpl_hl_islice_div_factor[scs_ptr->max_heirachical_level];
+
+        // when frames_to_key not available, i.e. in 1 pass encoding
+        rc->kf_boost  = get_cqp_kf_boost_from_r0(ppcs->r0, -1, scs_ptr->input_resolution);
+        int max_boost = ppcs->used_tpl_frame_num * KB;
+        rc->kf_boost  = AOMMIN(rc->kf_boost, max_boost);
+
     } else {
         if (use_qstep_based_q_calc) {
             if (ppcs->tpl_ctrls.r0_adjust_factor) {
@@ -881,6 +887,13 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
                 ppcs->r0 = ppcs->r0 / tpl_hl_base_frame_div_factor[scs_ptr->max_heirachical_level];
             }
         }
+        int    num_stats_required_for_gfu_boost = ppcs->tpl_group_size + (1 << hierarchical_levels);
+        double min_boost_factor                 = (int32_t)1 << (hierarchical_levels >> 1);
+        if (hierarchical_levels & 1) {
+            min_boost_factor *= CONST_SQRT2;
+        }
+        rc->gfu_boost = get_gfu_boost_from_r0_lap(
+            min_boost_factor, MAX_GFUBOOST_FACTOR, ppcs->r0, num_stats_required_for_gfu_boost);
     }
 
     q = active_worst_quality;
