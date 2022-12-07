@@ -1120,15 +1120,9 @@ ConfigEntry config_entry_rc[] = {
      set_cfg_chroma_v_ac_qindex_offset},
     {SINGLE_INPUT,
      LAMBDA_SCALE_FACTORS_TOKEN,
-     "list of scale factor for lambda values used for different frame types, separated by `,` with each scale factor as integer. \
-      0 : KF_UPDATE, \
-      1 : LF_UPDATE, \
-      2 : GF_UPDATE, \
-      3 : ARF_UPDATE, \
-      4 : OVERLAY_UPDATE, \
-      5 : INTNL_OVERLAY_UPDATE, // Internal Overlay Frame \
-      6 : INTNL_ARF_UPDATE, // Internal Altref Frame \
-     value divided by 128 is the actual scale factor in float, default is `128,128,..,128`",
+     "list of scale factor for lambda values used for different frame types defined by SvtAv1FrameUpdateType, separated by `,` \
+      with each scale factor as integer. \
+      value divided by 128 is the actual scale factor in float, default is `128,128,..,128`",
      set_cfg_lambda_scale_factors},
     {SINGLE_INPUT,
      UNDER_SHOOT_PCT_TOKEN,

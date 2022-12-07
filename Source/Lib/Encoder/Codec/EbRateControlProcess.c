@@ -1061,7 +1061,7 @@ static double def_arf_rd_multiplier(int qindex) { return 3.25 + (0.0035 * (doubl
 // a previous Vizer run
 static double def_kf_rd_multiplier(int qindex) { return 3.3 + (0.0035 * (double)qindex); }
 
-int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type,
+int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpdateType update_type,
                                             int qindex) {
     const int q      = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
     int64_t   rdmult = q * q;
