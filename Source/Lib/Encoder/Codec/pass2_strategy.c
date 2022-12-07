@@ -641,17 +641,17 @@ static void   allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL 
     // non standard group length.
     int max_arf_layer = pcs->hierarchical_levels;
     for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
-        if ((pcs->gf_group[idx]->update_type == ARF_UPDATE) ||
-            (pcs->gf_group[idx]->update_type == INTNL_ARF_UPDATE)) {
+        if ((pcs->gf_group[idx]->update_type == SVT_AV1_ARF_UPDATE) ||
+            (pcs->gf_group[idx]->update_type == SVT_AV1_INTNL_ARF_UPDATE)) {
             layer_frames[pcs->gf_group[idx]->layer_depth]++;
         }
     }
     if (rc->baseline_gf_interval < (gf_interval >> 1)) {
         for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
-            if (pcs->gf_group[idx]->update_type == ARF_UPDATE) {
+            if (pcs->gf_group[idx]->update_type == SVT_AV1_ARF_UPDATE) {
                 layer_frames[pcs->gf_group[idx]->layer_depth] += 1;
             }
-            if (pcs->gf_group[idx]->update_type == INTNL_ARF_UPDATE) {
+            if (pcs->gf_group[idx]->update_type == SVT_AV1_INTNL_ARF_UPDATE) {
                 layer_frames[pcs->gf_group[idx]->layer_depth] += 2;
             }
         }
@@ -670,13 +670,13 @@ static void   allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL 
     int arf_extra_bits;
     for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
         switch (pcs->gf_group[idx]->update_type) {
-        case ARF_UPDATE:
-        case INTNL_ARF_UPDATE:
+        case SVT_AV1_ARF_UPDATE:
+        case SVT_AV1_INTNL_ARF_UPDATE:
             arf_extra_bits = layer_extra_bits[pcs->gf_group[idx]->layer_depth];
             pcs->gf_group[idx]->base_frame_target = base_frame_bits + arf_extra_bits;
             break;
-        case INTNL_OVERLAY_UPDATE:
-        case OVERLAY_UPDATE: pcs->gf_group[idx]->base_frame_target = 0; break;
+        case SVT_AV1_INTNL_OVERLAY_UPDATE:
+        case SVT_AV1_OVERLAY_UPDATE: pcs->gf_group[idx]->base_frame_target = 0; break;
         default: pcs->gf_group[idx]->base_frame_target = base_frame_bits; break;
         }
     }
@@ -740,7 +740,7 @@ static int av1_calc_pframe_target_size_one_pass_cbr(PictureParentControlSet *pcs
 
     if (rc_cfg->gf_cbr_boost_pct) {
         const int af_ratio_pct = rc_cfg->gf_cbr_boost_pct + 100;
-        if (frame_update_type == GF_UPDATE || frame_update_type == OVERLAY_UPDATE) {
+        if (frame_update_type == SVT_AV1_GF_UPDATE || frame_update_type == SVT_AV1_OVERLAY_UPDATE) {
             target = (rc->avg_frame_bandwidth * rc->baseline_gf_interval * af_ratio_pct) /
                 (rc->baseline_gf_interval * 100 + af_ratio_pct - 100);
         } else {
@@ -1959,8 +1959,8 @@ void find_init_qp_middle_pass(SequenceControlSet *scs_ptr, PictureParentControlS
     }
 }
 int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
-    return frame_is_intra_only(ppcs_ptr) || ppcs_ptr->update_type == ARF_UPDATE ||
-        ppcs_ptr->update_type == GF_UPDATE;
+    return frame_is_intra_only(ppcs_ptr) || ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE ||
+        ppcs_ptr->update_type == SVT_AV1_GF_UPDATE;
 }
 /*********************************************************************************************
 * Update the internal RC and TWO_PASS struct stats based on the received feedback

@@ -3955,7 +3955,7 @@ void copy_api_from_app(
       MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_v_ac_qindex_offset, 63));
 
     memcpy(scs_ptr->static_config.lambda_scale_factors, config_struct->lambda_scale_factors,
-        FRAME_UPDATE_TYPES * sizeof(int32_t));
+        SVT_AV1_FRAME_UPDATE_TYPES * sizeof(int32_t));
 
     scs_ptr->static_config.rc_stats_buffer = ((EbSvtAv1EncConfiguration*)config_struct)->rc_stats_buffer;
     scs_ptr->static_config.pass = ((EbSvtAv1EncConfiguration*)config_struct)->pass;

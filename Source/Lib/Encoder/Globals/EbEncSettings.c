@@ -901,7 +901,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->chroma_v_dc_qindex_offset = 0;
     config_ptr->chroma_v_ac_qindex_offset = 0;
 
-    for (int i = 0; i < FRAME_UPDATE_TYPES; i++)
+    for (int i = 0; i < SVT_AV1_FRAME_UPDATE_TYPES; i++)
         config_ptr->lambda_scale_factors[i] = 128;
 
     config_ptr->scene_change_detection = 0;
@@ -1722,7 +1722,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         return parse_list(value, config_struct->chroma_qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
 
     if (!strcmp(name, "lambda-scale-factors"))
-        return parse_list(value, config_struct->lambda_scale_factors, FRAME_UPDATE_TYPES);
+        return parse_list(value, config_struct->lambda_scale_factors, SVT_AV1_FRAME_UPDATE_TYPES);
 
     // uint32_t fields
     const struct {
