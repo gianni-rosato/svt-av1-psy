@@ -5164,24 +5164,24 @@ static void set_layer_depth(PictureParentControlSet *ppcs) {
 static void set_frame_update_type(PictureParentControlSet *ppcs) {
     SequenceControlSet *scs = ppcs->scs_ptr;
     if (ppcs->frm_hdr.frame_type == KEY_FRAME) {
-        ppcs->update_type = KF_UPDATE;
+        ppcs->update_type = SVT_AV1_KF_UPDATE;
     }
     else if (scs->max_temporal_layers > 0 && ppcs->pred_structure != SVT_AV1_PRED_LOW_DELAY_B) {
         if (ppcs->temporal_layer_index == 0) {
-            ppcs->update_type = ARF_UPDATE;
+            ppcs->update_type = SVT_AV1_ARF_UPDATE;
         }
         else if (ppcs->temporal_layer_index == ppcs->hierarchical_levels) {
-            ppcs->update_type = LF_UPDATE;
+            ppcs->update_type = SVT_AV1_LF_UPDATE;
         }
         else {
-            ppcs->update_type = INTNL_ARF_UPDATE;
+            ppcs->update_type = SVT_AV1_INTNL_ARF_UPDATE;
         }
     }
     else if (ppcs->pred_structure == SVT_AV1_PRED_LOW_DELAY_B && (ppcs->frame_offset % MAX_GF_INTERVAL) == 0) {
-        ppcs->update_type = GF_UPDATE;
+        ppcs->update_type = SVT_AV1_GF_UPDATE;
     }
     else {
-        ppcs->update_type = LF_UPDATE;
+        ppcs->update_type = SVT_AV1_LF_UPDATE;
     }
 }
 static void set_gf_group_param(PictureParentControlSet *ppcs) {

@@ -5478,8 +5478,8 @@ EbErrorType svt_av1_init_temporal_filtering(
         Bool   superres_recode_enabled = (superres_mode == SUPERRES_AUTO) &&
             ((search_type == SUPERRES_AUTO_DUAL) ||
              (search_type == SUPERRES_AUTO_ALL)) // auto-dual or auto-all
-            && ((frame_update_type == KF_UPDATE) ||
-                (frame_update_type == ARF_UPDATE)); // recode only applies to key and arf
+            && ((frame_update_type == SVT_AV1_KF_UPDATE) ||
+                (frame_update_type == SVT_AV1_ARF_UPDATE)); // recode only applies to key and arf
         if (picture_control_set_ptr_central->scs_ptr->static_config.stat_report ||
             superres_recode_enabled) {
             save_src_pic_buffers(picture_control_set_ptr_central, ss_y, is_highbd);
