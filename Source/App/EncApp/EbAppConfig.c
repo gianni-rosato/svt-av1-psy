@@ -579,7 +579,7 @@ static void set_cfg_chroma_qindex_offsets(const char *value, EbConfig *cfg) {
 }
 
 static void set_cfg_lambda_scale_factors(const char *value, EbConfig *cfg) {
-    arg_parse_list(value, cfg->config.lambda_scale_factors, 7);
+    arg_parse_list(value, cfg->config.lambda_scale_factors, SVT_AV1_FRAME_UPDATE_TYPES);
 }
 
 static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
