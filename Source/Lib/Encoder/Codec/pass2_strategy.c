@@ -1525,7 +1525,8 @@ void reset_update_frame_target(PictureParentControlSet *ppcs_ptr) {
     RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
     rc->buffer_level                       = rc->optimal_buffer_level;
     rc->bits_off_target                    = rc->optimal_buffer_level;
-    ppcs_ptr->this_frame_target = av1_calc_pframe_target_size_one_pass_cbr(ppcs_ptr, INTER_FRAME);
+    ppcs_ptr->this_frame_target            = av1_calc_pframe_target_size_one_pass_cbr(ppcs_ptr,
+                                                                           SVT_AV1_LF_UPDATE);
 }
 
 extern void svt_av1_resize_reset_rc(PictureParentControlSet *ppcs_ptr, int32_t resize_width,

@@ -579,7 +579,7 @@ static void set_cfg_chroma_qindex_offsets(const char *value, EbConfig *cfg) {
 }
 
 static void set_cfg_lambda_scale_factors(const char *value, EbConfig *cfg) {
-    arg_parse_list(value, cfg->config.lambda_scale_factors, 7);
+    arg_parse_list(value, cfg->config.lambda_scale_factors, SVT_AV1_FRAME_UPDATE_TYPES);
 }
 
 static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
@@ -1548,10 +1548,7 @@ ConfigEntry config_entry[] = {
      CHROMA_V_AC_QINDEX_OFFSET_TOKEN,
      "ChromaVACQindexOffset",
      set_cfg_chroma_v_ac_qindex_offset},
-    {SINGLE_INPUT,
-     LAMBDA_SCALE_FACTORS_TOKEN,
-     "LambdaScaleFactors",
-     set_cfg_lambda_scale_factors},
+    {SINGLE_INPUT, LAMBDA_SCALE_FACTORS_TOKEN, "LambdaScaleFactors", set_cfg_lambda_scale_factors},
     {SINGLE_INPUT, UNDER_SHOOT_PCT_TOKEN, "UnderShootPct", set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "OverShootPct", set_over_shoot_pct},
     {SINGLE_INPUT, MBR_OVER_SHOOT_PCT_TOKEN, "MbrOverShootPct", set_mbr_over_shoot_pct},

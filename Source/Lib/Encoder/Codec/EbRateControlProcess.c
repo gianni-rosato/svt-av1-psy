@@ -2393,8 +2393,7 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
         svt_release_mutex(encode_context_ptr->frame_updated_mutex);
         if ((!ppcs_ptr->is_overlay &&
              !(ppcs_ptr->update_type == SVT_AV1_GF_UPDATE ||
-               ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE ||
-               is_intrnl_arf))) {
+               ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE || is_intrnl_arf))) {
             rc->avg_frame_qindex[INTER_FRAME] = ROUND_POWER_OF_TWO(
                 3 * rc->avg_frame_qindex[INTER_FRAME] + qindex, 2);
             rc->last_q[INTER_FRAME] = (int32_t)svt_av1_convert_qindex_to_q(

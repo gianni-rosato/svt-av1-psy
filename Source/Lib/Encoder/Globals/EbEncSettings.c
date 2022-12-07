@@ -901,8 +901,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->chroma_v_dc_qindex_offset = 0;
     config_ptr->chroma_v_ac_qindex_offset = 0;
 
-    for (int i = 0; i < SVT_AV1_FRAME_UPDATE_TYPES; i++)
-        config_ptr->lambda_scale_factors[i] = 128;
+    for (int i = 0; i < SVT_AV1_FRAME_UPDATE_TYPES; i++) config_ptr->lambda_scale_factors[i] = 128;
 
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode      = SVT_AV1_RC_MODE_CQP_OR_CRF;

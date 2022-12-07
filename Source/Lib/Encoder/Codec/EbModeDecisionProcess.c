@@ -574,9 +574,10 @@ void av1_lambda_assign(PictureControlSet *pcs_ptr, uint32_t *fast_lambda, uint32
 
     // NM: To be done: tune lambda based on the picture type and layer.
     SequenceControlSet *scs = pcs_ptr->scs_ptr;
-    uint32_t scale_factor = scs->static_config.lambda_scale_factors[pcs_ptr->parent_pcs_ptr->update_type];
-    *full_lambda                     = (*full_lambda * scale_factor) >> 7;
-    *fast_lambda                     = (*fast_lambda * scale_factor) >> 7;
+    uint32_t            scale_factor =
+        scs->static_config.lambda_scale_factors[pcs_ptr->parent_pcs_ptr->update_type];
+    *full_lambda = (*full_lambda * scale_factor) >> 7;
+    *fast_lambda = (*fast_lambda * scale_factor) >> 7;
 }
 
 const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4] = {

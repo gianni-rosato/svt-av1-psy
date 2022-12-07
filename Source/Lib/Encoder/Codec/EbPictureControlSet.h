@@ -1013,8 +1013,8 @@ typedef struct PictureParentControlSet {
     // the offsets for stats_in
     uint64_t stats_in_offset;
     //GF_GROUP parameters store in PCS
-    int update_type;
-    int layer_depth;
+    SvtAv1FrameUpdateType update_type;
+    int                   layer_depth;
     //RATE_CONTROL parameters store in PCS
     int base_frame_target; // A baseline frame target before adjustment.
     int this_frame_target; // Actual frame target after rc adjustment.
