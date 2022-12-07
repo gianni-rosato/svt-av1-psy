@@ -50,17 +50,6 @@
 #define MAX_GF_LENGTH_LAP 16
 #define MAX_ARF_LAYERS 6
 
-enum {
-    KF_UPDATE,
-    LF_UPDATE,
-    GF_UPDATE,
-    ARF_UPDATE,
-    OVERLAY_UPDATE,
-    INTNL_OVERLAY_UPDATE, // Internal Overlay Frame
-    INTNL_ARF_UPDATE, // Internal Altref Frame
-    FRAME_UPDATE_TYPES
-} UENUM1BYTE(FRAME_UPDATE_TYPE);
-
 typedef enum rate_factor_level {
     INTER_NORMAL       = 0,
     INTER_LOW          = 1,
@@ -237,7 +226,7 @@ EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr, int me_port_index);
 
 extern void *rate_control_kernel(void *input_ptr);
-int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type,
+int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpdateType update_type,
                                             int qindex);
 struct PictureControlSet;
 int svt_aom_compute_rd_mult(struct PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index,

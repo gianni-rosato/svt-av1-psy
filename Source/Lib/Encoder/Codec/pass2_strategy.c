@@ -728,7 +728,7 @@ static int av1_rc_clamp_iframe_target_size(PictureParentControlSet *pcs_ptr, int
 }
 
 static int av1_calc_pframe_target_size_one_pass_cbr(PictureParentControlSet *pcs_ptr,
-                                                    FRAME_UPDATE_TYPE        frame_update_type) {
+                                                    SvtAv1FrameUpdateType    frame_update_type) {
     SequenceControlSet         *scs_ptr            = pcs_ptr->scs_ptr;
     EncodeContext              *encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL *const         rc                 = &encode_context_ptr->rc;

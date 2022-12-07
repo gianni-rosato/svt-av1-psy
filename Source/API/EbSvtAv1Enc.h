@@ -198,6 +198,17 @@ typedef enum SvtAv1RcMode {
     SVT_AV1_RC_MODE_CBR        = 2, // constant bit rate
 } SvtAv1RcMode;
 
+typedef enum SvtAv1FrameUpdateType {
+    KF_UPDATE,
+    LF_UPDATE,
+    GF_UPDATE,
+    ARF_UPDATE,
+    OVERLAY_UPDATE,
+    INTNL_OVERLAY_UPDATE, // Internal Overlay Frame
+    INTNL_ARF_UPDATE, // Internal Altref Frame
+    FRAME_UPDATE_TYPES
+} SvtAv1FrameUpdateType;
+
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
@@ -873,6 +884,12 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0.
      */
     Bool gop_constraint_rc;
+
+    /** 
+     * @brief scale factors for lambda value for different frame update types
+     * factor >> 7 (/ 128) is the actual value in float
+     */
+    int32_t lambda_scale_factors[FRAME_UPDATE_TYPES];
 } EbSvtAv1EncConfiguration;
 
 /**
