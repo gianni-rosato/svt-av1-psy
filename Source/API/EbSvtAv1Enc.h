@@ -601,7 +601,7 @@ typedef struct EbSvtAv1EncConfiguration {
     int32_t chroma_v_dc_qindex_offset;
     int32_t chroma_v_ac_qindex_offset;
 
-    /** 
+    /* 
      * scale factors for lambda value for different frame types
      * 0: KF_UPDATE,
      * 1: LF_UPDATE,
@@ -613,7 +613,7 @@ typedef struct EbSvtAv1EncConfiguration {
 
      * factor >> 7 (/ 128) is the actual value in float
      */
-    uint32_t lambda_scale_factors[7];
+    int32_t lambda_scale_factors[7];
 
     /**
      * @brief Deblocking loop filter control
