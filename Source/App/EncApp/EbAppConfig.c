@@ -2518,13 +2518,19 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
 
     if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
         find_token(argc, argv, KEYINT_TOKEN, config_string) == 0) {
-        ip = strtol(config_string, NULL, 0);
-        if (find_token(argc, argv, KEYINT_TOKEN, NULL) == 0) {
-            fprintf(stderr, "[SVT-Warning]: --keyint is now intra-period + 1!\n");
-            ip = ip < 0 ? ip : ip - 1;
-        } else
-            fprintf(stderr, "[SVT-Warning]: --intra-period is deprecated for --keyint\n");
-        if ((ip < -2 || ip > 2 * ((1 << 30) - 1)) && rc_mode == 0) {
+        const bool               is_keyint  = find_token(argc, argv, KEYINT_TOKEN, NULL) == 0;
+        const int                max_keyint = 2 * ((1 << 30) - 1);
+        EbSvtAv1EncConfiguration c;
+        c.multiply_keyint = false;
+
+        svt_av1_enc_parse_parameter(&c, is_keyint ? "keyint" : "intra-period", config_string);
+        // temporarily set intraperiod to the max if we are using seconds based keyint
+        // we don't know the fps at this point, so we can't get the actual keyint at this point
+        ip = c.multiply_keyint && c.intra_period_length > 0 ? max_keyint : c.intra_period_length;
+        fputs(is_keyint ? "[SVT-Warning]: --keyint is now intra-period + 1!\n"
+                        : "[SVT-Warning]: --intra-period is deprecated for --keyint\n",
+              stderr);
+        if ((ip < -2 || ip > max_keyint) && rc_mode == 0) {
             fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2], input %d\n", ip);
             return 0;
         }
