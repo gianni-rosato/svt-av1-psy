@@ -2527,9 +2527,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         // temporarily set intraperiod to the max if we are using seconds based keyint
         // we don't know the fps at this point, so we can't get the actual keyint at this point
         ip = c.multiply_keyint && c.intra_period_length > 0 ? max_keyint : c.intra_period_length;
-        fputs(is_keyint ? "[SVT-Warning]: --keyint is now intra-period + 1!\n"
-                        : "[SVT-Warning]: --intra-period is deprecated for --keyint\n",
-              stderr);
+        if (!is_keyint)
+            fputs("[SVT-Warning]: --intra-period is deprecated for --keyint\n", stderr);
         if ((ip < -2 || ip > max_keyint) && rc_mode == 0) {
             fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2], input %d\n", ip);
             return 0;
