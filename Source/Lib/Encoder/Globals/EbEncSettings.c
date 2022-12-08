@@ -1268,7 +1268,10 @@ static EbErrorType str_to_keyint(const char *nptr, int32_t *out, Bool *multi) {
         *multi = TRUE;
         *out   = keyint;
         break;
-    case '\0': *out = keyint < 0 ? keyint : keyint - 1; break;
+    case '\0':
+        *multi = FALSE;
+        *out   = keyint < 0 ? keyint : keyint - 1;
+        break;
     default:
         // else leave as default, we have an invalid keyint
         SVT_WARN("Invalid keyint value: %s\n", nptr);
