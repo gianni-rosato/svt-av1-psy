@@ -885,7 +885,7 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     Bool gop_constraint_rc;
 
-    /** 
+    /**
      * @brief scale factors for lambda value for different frame update types
      * factor >> 7 (/ 128) is the actual value in float
      */
