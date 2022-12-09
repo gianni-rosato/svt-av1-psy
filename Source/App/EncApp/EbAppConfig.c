@@ -73,9 +73,6 @@
 #define CHROMA_V_DC_QINDEX_OFFSET_TOKEN "--chroma-v-dc-qindex-offset"
 #define CHROMA_V_AC_QINDEX_OFFSET_TOKEN "--chroma-v-ac-qindex-offset"
 
-// scale factors for lambda value for different frame types
-#define LAMBDA_SCALE_FACTORS_TOKEN "--lambda-scale-factors"
-
 #define FRAME_RATE_TOKEN "--fps"
 #define FRAME_RATE_NUMERATOR_TOKEN "--fps-num"
 #define FRAME_RATE_DENOMINATOR_TOKEN "--fps-denom"
@@ -576,10 +573,6 @@ static void set_cfg_qindex_offsets(const char *value, EbConfig *cfg) {
 
 static void set_cfg_chroma_qindex_offsets(const char *value, EbConfig *cfg) {
     arg_parse_list(value, cfg->config.chroma_qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
-}
-
-static void set_cfg_lambda_scale_factors(const char *value, EbConfig *cfg) {
-    arg_parse_list(value, cfg->config.lambda_scale_factors, SVT_AV1_FRAME_UPDATE_TYPES);
 }
 
 static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
@@ -1119,12 +1112,6 @@ ConfigEntry config_entry_rc[] = {
      "Chroma V AC Qindex Offset",
      set_cfg_chroma_v_ac_qindex_offset},
     {SINGLE_INPUT,
-     LAMBDA_SCALE_FACTORS_TOKEN,
-     "list of scale factor for lambda values used for different frame types defined by SvtAv1FrameUpdateType, separated by `,` \
-      with each scale factor as integer. \
-      value divided by 128 is the actual scale factor in float, default is `128,128,..,128`",
-     set_cfg_lambda_scale_factors},
-    {SINGLE_INPUT,
      UNDER_SHOOT_PCT_TOKEN,
      "Only for VBR and CBR, allowable datarate undershoot (min) target (percentage), default is "
      "25, but can change based on rate control [0-100]",
@@ -1548,10 +1535,6 @@ ConfigEntry config_entry[] = {
      CHROMA_V_AC_QINDEX_OFFSET_TOKEN,
      "ChromaVACQindexOffset",
      set_cfg_chroma_v_ac_qindex_offset},
-    {SINGLE_INPUT,
-     LAMBDA_SCALE_FACTORS_TOKEN,
-     "LambdaScaleFactors",
-     set_cfg_lambda_scale_factors},
     {SINGLE_INPUT, UNDER_SHOOT_PCT_TOKEN, "UnderShootPct", set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "OverShootPct", set_over_shoot_pct},
     {SINGLE_INPUT, MBR_OVER_SHOOT_PCT_TOKEN, "MbrOverShootPct", set_mbr_over_shoot_pct},

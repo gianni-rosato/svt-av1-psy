@@ -1225,9 +1225,9 @@ static void analyze_hor_freq(PictureParentControlSet *pcs_ptr, double *energy) {
 static double get_energy_by_q2_thresh(const RATE_CONTROL *rc, int frame_update_type) {
     // TODO(now): Return keyframe thresh * factor based on frame type / pyramid
     // level.
-    if (frame_update_type == SVT_AV1_ARF_UPDATE) {
+    if (frame_update_type == ARF_UPDATE) {
         return SUPERRES_ENERGY_BY_Q2_THRESH_ARFFRAME;
-    } else if (frame_update_type == SVT_AV1_KF_UPDATE) {
+    } else if (frame_update_type == KF_UPDATE) {
         if (rc->frames_to_key <= 1)
             return SUPERRES_ENERGY_BY_Q2_THRESH_KEYFRAME_SOLO;
         else
@@ -1266,19 +1266,19 @@ int32_t get_frame_update_type(SequenceControlSet *scs_ptr, PictureParentControlS
     //   1. It is valid only in 2nd pass of 2-pass encoding or lap_rc is true. E.g. It's invalid in 1-pass CQP mode.
     //   2. It is set in RC process, so can't use it in processes before RC.
     if (pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
-        return SVT_AV1_KF_UPDATE;
+        return KF_UPDATE;
     }
 
     if (scs_ptr->max_temporal_layers > 0) {
         if (pcs_ptr->temporal_layer_index == 0) {
-            return SVT_AV1_ARF_UPDATE;
+            return ARF_UPDATE;
         } else if (pcs_ptr->temporal_layer_index == pcs_ptr->hierarchical_levels) {
-            return SVT_AV1_LF_UPDATE;
+            return LF_UPDATE;
         } else {
-            return SVT_AV1_INTNL_ARF_UPDATE;
+            return INTNL_ARF_UPDATE;
         }
     } else {
-        return SVT_AV1_LF_UPDATE;
+        return LF_UPDATE;
     }
 }
 
@@ -1287,13 +1287,13 @@ static uint8_t get_superres_denom_for_qindex(SequenceControlSet      *scs_ptr,
                                              int sr_kf, int sr_arf) {
     // Use superres for Key-frames and Alt-ref frames only.
     int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
-    if (update_type != SVT_AV1_KF_UPDATE && update_type != SVT_AV1_ARF_UPDATE) {
+    if (update_type != KF_UPDATE && update_type != ARF_UPDATE) {
         return SCALE_NUMERATOR;
     }
-    if (update_type == SVT_AV1_KF_UPDATE && !sr_kf) {
+    if (update_type == KF_UPDATE && !sr_kf) {
         return SCALE_NUMERATOR;
     }
-    if (update_type == SVT_AV1_ARF_UPDATE && !sr_arf) {
+    if (update_type == ARF_UPDATE && !sr_arf) {
         return SCALE_NUMERATOR;
     }
 
@@ -1393,7 +1393,7 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
             } else { // SUPERRES_AUTO_ALL
                 assert(sr_search_type == SUPERRES_AUTO_ALL);
                 int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
-                if (update_type == SVT_AV1_KF_UPDATE || update_type == SVT_AV1_ARF_UPDATE) {
+                if (update_type == KF_UPDATE || update_type == ARF_UPDATE) {
                     for (int i = 0; i < NUM_SR_SCALES + 1; i++) {
                         if (i < SCALE_NUMERATOR) {
                             pcs_ptr->superres_denom_array[i] = SCALE_NUMERATOR + 1 + i;

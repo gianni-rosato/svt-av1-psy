@@ -28,7 +28,7 @@ extern "C" {
  * has been modified, and reset anytime the major API version has
  * been changed. Used to keep track if a field has been added or not.
  */
-#define SVT_AV1_ENC_ABI_VERSION 7
+#define SVT_AV1_ENC_ABI_VERSION 6
 
 //***HME***
 
@@ -197,17 +197,6 @@ typedef enum SvtAv1RcMode {
     SVT_AV1_RC_MODE_VBR        = 1, // variable bit rate
     SVT_AV1_RC_MODE_CBR        = 2, // constant bit rate
 } SvtAv1RcMode;
-
-typedef enum SvtAv1FrameUpdateType {
-    SVT_AV1_KF_UPDATE,
-    SVT_AV1_LF_UPDATE,
-    SVT_AV1_GF_UPDATE,
-    SVT_AV1_ARF_UPDATE,
-    SVT_AV1_OVERLAY_UPDATE,
-    SVT_AV1_INTNL_OVERLAY_UPDATE, // Internal Overlay Frame
-    SVT_AV1_INTNL_ARF_UPDATE, // Internal Altref Frame
-    SVT_AV1_FRAME_UPDATE_TYPES
-} SvtAv1FrameUpdateType;
 
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
@@ -884,12 +873,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0.
      */
     Bool gop_constraint_rc;
-
-    /**
-     * @brief scale factors for lambda value for different frame update types
-     * factor >> 7 (/ 128) is the actual value in float
-     */
-    int32_t lambda_scale_factors[SVT_AV1_FRAME_UPDATE_TYPES];
 } EbSvtAv1EncConfiguration;
 
 /**

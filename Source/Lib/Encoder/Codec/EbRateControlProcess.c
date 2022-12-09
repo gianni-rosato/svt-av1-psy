@@ -733,7 +733,7 @@ int svt_av1_frame_type_qdelta(RATE_CONTROL *rc, int rf_level, int q, const int b
         rc, frame_type, q, rate_factor, bit_depth, sc_content_detected);
 }
 
-static const rate_factor_level rate_factor_levels[SVT_AV1_FRAME_UPDATE_TYPES] = {
+static const rate_factor_level rate_factor_levels[FRAME_UPDATE_TYPES] = {
     KF_STD, // KF_UPDATE
     INTER_NORMAL, // LF_UPDATE
     GF_ARF_STD, // GF_UPDATE
@@ -1061,17 +1061,17 @@ static double def_arf_rd_multiplier(int qindex) { return 3.25 + (0.0035 * (doubl
 // a previous Vizer run
 static double def_kf_rd_multiplier(int qindex) { return 3.3 + (0.0035 * (double)qindex); }
 
-int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpdateType update_type,
+int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, FRAME_UPDATE_TYPE update_type,
                                             int qindex) {
     const int q      = svt_aom_dc_quant_qtx(qindex, 0, bit_depth);
     int64_t   rdmult = q * q;
 
     // Scale rdmult based on frame type (previously scaled with the following formula for all frame types:
     // rdmult = rdmult * 3 + (rdmult * 2 / 3);
-    if (update_type == SVT_AV1_KF_UPDATE) {
+    if (update_type == KF_UPDATE) {
         double def_rd_q_mult = def_kf_rd_multiplier(qindex);
         rdmult               = (int64_t)((double)rdmult * def_rd_q_mult);
-    } else if ((update_type == SVT_AV1_GF_UPDATE) || (update_type == SVT_AV1_ARF_UPDATE)) {
+    } else if ((update_type == GF_UPDATE) || (update_type == ARF_UPDATE)) {
         double def_rd_q_mult = def_arf_rd_multiplier(qindex);
         rdmult               = (int64_t)((double)rdmult * def_rd_q_mult);
     } else {
@@ -1094,8 +1094,7 @@ int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpd
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
 //                                                               128, 144, 144,
 //                                                               128 };
-static const int rd_frame_type_factor[SVT_AV1_FRAME_UPDATE_TYPES] = {
-    128, 164, 128, 128, 164, 164, 128};
+static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = {128, 164, 128, 128, 164, 164, 128};
 /*
  * Set the sse lambda based on the bit_depth, then update based on frame position.
  */
@@ -1110,9 +1109,9 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
         bit_depth, pcs->parent_pcs_ptr->update_type, q_index);
     // Update rdmult based on the frame's position in the miniGOP
     if (frame_type != KEY_FRAME) {
-        uint8_t gf_update_type = temporal_layer_index == 0 ? SVT_AV1_ARF_UPDATE
-            : temporal_layer_index < max_temporal_layer    ? SVT_AV1_INTNL_ARF_UPDATE
-                                                           : SVT_AV1_LF_UPDATE;
+        uint8_t gf_update_type = temporal_layer_index == 0 ? ARF_UPDATE
+            : temporal_layer_index < max_temporal_layer    ? INTNL_ARF_UPDATE
+                                                           : LF_UPDATE;
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
     if (pcs->scs_ptr->stats_based_sb_lambda_modulation) {
@@ -1575,12 +1574,12 @@ static int get_active_best_quality(PictureControlSet *pcs_ptr, const int active_
     RATE_CONTROL          *rc                 = &encode_context_ptr->rc;
     const enum aom_rc_mode rc_mode            = encode_context_ptr->rc_cfg.mode;
     const int              bit_depth          = scs_ptr->static_config.encoder_bit_depth;
-    const int is_intrl_arf_boost = pcs_ptr->parent_pcs_ptr->update_type == SVT_AV1_INTNL_ARF_UPDATE;
+    const int is_intrl_arf_boost = pcs_ptr->parent_pcs_ptr->update_type == INTNL_ARF_UPDATE;
     int      *inter_minq;
     ASSIGN_MINQ_TABLE(bit_depth, inter_minq);
     int       active_best_quality = 0;
-    const int is_leaf_frame       = !(pcs_ptr->parent_pcs_ptr->update_type == SVT_AV1_GF_UPDATE ||
-                                pcs_ptr->parent_pcs_ptr->update_type == SVT_AV1_ARF_UPDATE ||
+    const int is_leaf_frame       = !(pcs_ptr->parent_pcs_ptr->update_type == GF_UPDATE ||
+                                pcs_ptr->parent_pcs_ptr->update_type == ARF_UPDATE ||
                                 is_intrl_arf_boost);
     const int is_overlay_frame    = pcs_ptr->parent_pcs_ptr->is_overlay;
 
@@ -1630,8 +1629,7 @@ static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr, int 
     } else {
         if (ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
             rcf = rc->rate_correction_factors[KF_STD];
-        } else if ((ppcs_ptr->update_type == SVT_AV1_GF_UPDATE ||
-                    ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE) &&
+        } else if ((ppcs_ptr->update_type == GF_UPDATE || ppcs_ptr->update_type == ARF_UPDATE) &&
                    !ppcs_ptr->is_overlay &&
                    (encode_context_ptr->rc_cfg.mode != AOM_CBR ||
                     encode_context_ptr->rc_cfg.gf_cbr_boost_pct > 20))
@@ -1668,8 +1666,7 @@ static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double
     } else {
         if (ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
             rc->rate_correction_factors[KF_STD] = factor;
-        } else if ((ppcs_ptr->update_type == SVT_AV1_GF_UPDATE ||
-                    ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE) &&
+        } else if ((ppcs_ptr->update_type == GF_UPDATE || ppcs_ptr->update_type == ARF_UPDATE) &&
                    !ppcs_ptr->is_overlay &&
                    (encode_context_ptr->rc_cfg.mode != AOM_CBR ||
                     encode_context_ptr->rc_cfg.gf_cbr_boost_pct > 20))
@@ -1761,8 +1758,7 @@ static int adjust_q_cbr(PictureParentControlSet *ppcs_ptr, int q) {
     if (ppcs_ptr->frm_hdr.frame_type != KEY_FRAME && /*!cpi->use_svc &&*/
         rc->frames_since_key > 1 && !change_target_bits_mb &&
         (!encode_context_ptr->rc_cfg.gf_cbr_boost_pct ||
-         !(ppcs_ptr->update_type == SVT_AV1_GF_UPDATE ||
-           ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE))) {
+         !(ppcs_ptr->update_type == GF_UPDATE || ppcs_ptr->update_type == ARF_UPDATE))) {
         // Make sure q is between oscillating Qs to prevent resonance.
         // Limit the decrease in Q from previous frame.
         if (rc->q_1_frame - q > max_delta)
@@ -2063,7 +2059,7 @@ static int rc_pick_q_and_bounds_no_stats_cbr(PictureControlSet *pcs_ptr) {
     assert(pcs_ptr->parent_pcs_ptr->bottom_index <= rc->worst_quality &&
            pcs_ptr->parent_pcs_ptr->bottom_index >= rc->best_quality);
     assert(q <= rc->worst_quality && q >= rc->best_quality);
-    if (pcs_ptr->parent_pcs_ptr->update_type == SVT_AV1_ARF_UPDATE)
+    if (pcs_ptr->parent_pcs_ptr->update_type == ARF_UPDATE)
         rc->arf_q = q;
     const int ip = pcs_ptr->scs_ptr->static_config.intra_period_length;
     // if short intra refresh
@@ -2101,7 +2097,7 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     int                 active_best_quality  = 0;
     int                 active_worst_quality = rc->active_worst_quality;
     int                 q;
-    int is_intrl_arf_boost = pcs_ptr->parent_pcs_ptr->update_type == SVT_AV1_INTNL_ARF_UPDATE;
+    int is_intrl_arf_boost = pcs_ptr->parent_pcs_ptr->update_type == INTNL_ARF_UPDATE;
     // Calculated qindex based on r0 using qstep calculation
     if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
         const unsigned int r0_weight_idx = !frame_is_intra_only(pcs_ptr->parent_pcs_ptr) +
@@ -2142,8 +2138,8 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
         // leaf (non arf) frames. This is important to the TPL model which assumes
         // Q drops with each arf level.
         if (!(pcs_ptr->parent_pcs_ptr->is_overlay) &&
-            (pcs_ptr->parent_pcs_ptr->update_type == SVT_AV1_GF_UPDATE ||
-             pcs_ptr->parent_pcs_ptr->update_type == SVT_AV1_ARF_UPDATE || is_intrl_arf_boost)) {
+            (pcs_ptr->parent_pcs_ptr->update_type == GF_UPDATE ||
+             pcs_ptr->parent_pcs_ptr->update_type == ARF_UPDATE || is_intrl_arf_boost)) {
             active_worst_quality = (active_best_quality + (3 * active_worst_quality) + 2) / 4;
         }
     }
@@ -2165,7 +2161,7 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
            pcs_ptr->parent_pcs_ptr->bottom_index >= rc->best_quality);
 
     assert(q <= rc->worst_quality && q >= rc->best_quality);
-    if (pcs_ptr->parent_pcs_ptr->update_type == SVT_AV1_ARF_UPDATE)
+    if (pcs_ptr->parent_pcs_ptr->update_type == ARF_UPDATE)
         rc->arf_q = q;
 
     return q;
@@ -2300,7 +2296,7 @@ static void av1_rc_postencode_update_gop_const(PictureParentControlSet *ppcs) {
     RateControlIntervalParamContext *rc_param_ptr  = ppcs->rate_control_param_ptr;
     const int                        width         = ppcs->av1_cm->frm_size.frame_width;
     const int                        height        = ppcs->av1_cm->frm_size.frame_height;
-    const int                        is_intrnl_arf = ppcs->update_type == SVT_AV1_INTNL_ARF_UPDATE;
+    const int                        is_intrnl_arf = ppcs->update_type == INTNL_ARF_UPDATE;
 
     const int qindex = frm_hdr->quantization_params.base_q_idx;
 
@@ -2323,7 +2319,7 @@ static void av1_rc_postencode_update_gop_const(PictureParentControlSet *ppcs) {
         enc_cont->frame_updated++;
         svt_release_mutex(enc_cont->frame_updated_mutex);
         if ((!ppcs->is_overlay &&
-             !(ppcs->update_type == SVT_AV1_GF_UPDATE || ppcs->update_type == SVT_AV1_ARF_UPDATE ||
+             !(ppcs->update_type == GF_UPDATE || ppcs->update_type == ARF_UPDATE ||
                is_intrnl_arf))) {
             rc->avg_frame_qindex[INTER_FRAME] = ROUND_POWER_OF_TWO(
                 3 * rc->avg_frame_qindex[INTER_FRAME] + qindex, 2);
@@ -2339,8 +2335,8 @@ static void av1_rc_postencode_update_gop_const(PictureParentControlSet *ppcs) {
     // This is used to help set quality in forced key frames to reduce popping
     if ((qindex < rc->last_boosted_qindex) || (frm_hdr->frame_type == KEY_FRAME) ||
         (!rc->constrained_gf_group &&
-         (ppcs->update_type == SVT_AV1_ARF_UPDATE || is_intrnl_arf ||
-          (ppcs->update_type == SVT_AV1_GF_UPDATE && !ppcs->is_overlay)))) {
+         (ppcs->update_type == ARF_UPDATE || is_intrnl_arf ||
+          (ppcs->update_type == GF_UPDATE && !ppcs->is_overlay)))) {
         rc->last_boosted_qindex = qindex;
     }
     update_buffer_level(ppcs, ppcs->projected_frame_size);
@@ -2369,7 +2365,7 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
     FrameHeader        *frm_hdr            = &ppcs_ptr->frm_hdr;
     const int           width              = ppcs_ptr->av1_cm->frm_size.frame_width;
     const int           height             = ppcs_ptr->av1_cm->frm_size.frame_height;
-    const int           is_intrnl_arf      = ppcs_ptr->update_type == SVT_AV1_INTNL_ARF_UPDATE;
+    const int           is_intrnl_arf      = ppcs_ptr->update_type == INTNL_ARF_UPDATE;
 
     const int qindex = frm_hdr->quantization_params.base_q_idx;
 
@@ -2392,8 +2388,7 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
         encode_context_ptr->frame_updated++;
         svt_release_mutex(encode_context_ptr->frame_updated_mutex);
         if ((!ppcs_ptr->is_overlay &&
-             !(ppcs_ptr->update_type == SVT_AV1_GF_UPDATE ||
-               ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE ||
+             !(ppcs_ptr->update_type == GF_UPDATE || ppcs_ptr->update_type == ARF_UPDATE ||
                is_intrnl_arf))) {
             rc->avg_frame_qindex[INTER_FRAME] = ROUND_POWER_OF_TWO(
                 3 * rc->avg_frame_qindex[INTER_FRAME] + qindex, 2);
@@ -2409,8 +2404,8 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
     // This is used to help set quality in forced key frames to reduce popping
     if ((qindex < rc->last_boosted_qindex) || (frm_hdr->frame_type == KEY_FRAME) ||
         (!rc->constrained_gf_group &&
-         (ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE || is_intrnl_arf ||
-          (ppcs_ptr->update_type == SVT_AV1_GF_UPDATE && !ppcs_ptr->is_overlay)))) {
+         (ppcs_ptr->update_type == ARF_UPDATE || is_intrnl_arf ||
+          (ppcs_ptr->update_type == GF_UPDATE && !ppcs_ptr->is_overlay)))) {
         rc->last_boosted_qindex = qindex;
     }
     update_buffer_level(ppcs_ptr, ppcs_ptr->projected_frame_size);
@@ -3355,8 +3350,8 @@ void *rate_control_kernel(void *input_ptr) {
                     int32_t update_type = pcs_ptr->parent_pcs_ptr->update_type;
                     if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable &&
                         pcs_ptr->parent_pcs_ptr->r0 != 0 &&
-                        (update_type == SVT_AV1_KF_UPDATE || update_type == SVT_AV1_GF_UPDATE ||
-                         update_type == SVT_AV1_ARF_UPDATE)) {
+                        (update_type == KF_UPDATE || update_type == GF_UPDATE ||
+                         update_type == ARF_UPDATE)) {
                         process_tpl_stats_frame_kf_gfu_boost(pcs_ptr);
                     }
                     // Qindex calculating
