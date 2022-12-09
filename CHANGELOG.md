@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1] - 2022-12-12
+
+Bugfixes:
+- Fix CRF with maxrate bug causing bitrate to be significantly limited for CRF encodings
+- Fix command line parsing forcing 1-pass in a 2-pass encoding mode when the --keyint=`x`s format is used
+- Fix decoder segfault due to assuming aligned buffers in the inverse transform assembly
+
 ## [1.4.0] - 2022-11-30
 
 Encoder
