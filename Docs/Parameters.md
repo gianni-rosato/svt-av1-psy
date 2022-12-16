@@ -117,7 +117,7 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **EnableQM**                     | --enable-qm                      | [0-1]      | 0           | Enable quantisation matrices                                                                                                                         |
 | **MinQmLevel**                   | --qm-min                         | [0-15]     | 8           | Min quant matrix flatness                                                                                                                            |
 | **MaxQmLevel**                   | --qm-max                         | [0-15]     | 15          | Max quant matrix flatness                                                                                                                            |
-| **LambdaScaleFactors**           | --lambda-scale-factors           | [0- ]      | '64,...,64' | list of scale factors for lambda values used for different SvtAv1FrameUpdateType, separated by `,` divide by 128 is the actual scale factor in float |
+| **LambdaScaleFactors**           | --lambda-scale-factors           | [0- ]      | '128,.,128' | list of scale factors for lambda values used for different SvtAv1FrameUpdateType, separated by `,` divide by 128 is the actual scale factor in float |
 
 ### **UseFixedQIndexOffsets** and more information
 
