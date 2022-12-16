@@ -1210,6 +1210,151 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
 }
 #define QPM_MAX_BETA 1.7
 #define QPM_MIN_BETA 0.8
+#if OPT_LD_QPM
+/******************************************************************************
+* compute_deltaq
+* Compute delta-q based on the q, bitdepth and cyclic refresh parameters
+*******************************************************************************/
+static int compute_deltaq(struct PictureParentControlSet *ppcs, RATE_CONTROL *rc, int q,
+                          const int bit_depth) {
+    const rate_factor_level rf_lvl     = rate_factor_levels[ppcs->update_type];
+    const FrameType         frame_type = (rf_lvl == KF_STD) ? KEY_FRAME : INTER_FRAME;
+
+    int deltaq = svt_av1_compute_qdelta_by_rate(
+        rc, frame_type, q, ppcs->cyclic_refresh.rate_ratio_qdelta, bit_depth, ppcs->sc_class1);
+    if ((-deltaq) > ppcs->cyclic_refresh.max_qdelta_perc * q / 100) {
+        deltaq = -ppcs->cyclic_refresh.max_qdelta_perc * q / 100;
+    }
+    // RA uses a scale factor of 4 for the deltaQ range. Found it beneficial for low delay to have a larger deltaQ range, so we scale by 8
+    deltaq = AOMMIN(deltaq, ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 8 - 1);
+    deltaq = AOMMAX(deltaq, -ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 8 + 1);
+    return deltaq;
+}
+static int av1_estimate_bits_at_q(FrameType frame_type, int q, int mbs, double correction_factor,
+                                  EbBitDepth bit_depth, uint8_t sc_content_detected,
+                                  int onepass_cbr_mode);
+/******************************************************************************
+* svt_av1_cyclic_refresh_rc_bits_per_mb
+* Compute bits per mb for cyclic refresh mode
+*******************************************************************************/
+int svt_av1_cyclic_refresh_rc_bits_per_mb(PictureParentControlSet *ppcs, double correction_factor,
+                                          int q) {
+    int    bits_per_mb;
+    double weight_segment = (double)ppcs->cyclic_refresh.percent_refresh / 100;
+
+    SequenceControlSet *scs       = ppcs->scs_ptr;
+    RATE_CONTROL       *rc        = &scs->encode_context_ptr->rc;
+    const int           bit_depth = scs->static_config.encoder_bit_depth;
+    // Compute delta-q corresponding to qindex i.
+    int deltaq = compute_deltaq(ppcs, rc, q, bit_depth);
+
+    // Take segment weighted average for bits per mb.
+    bits_per_mb = (int)((1.0 - weight_segment) *
+                            svt_av1_rc_bits_per_mb(ppcs->frm_hdr.frame_type,
+                                                   q,
+                                                   correction_factor,
+                                                   scs->static_config.encoder_bit_depth,
+                                                   ppcs->sc_class1,
+                                                   scs->encode_context_ptr->rc.onepass_cbr_mode) +
+                        weight_segment *
+                            svt_av1_rc_bits_per_mb(ppcs->frm_hdr.frame_type,
+                                                   q + deltaq,
+                                                   correction_factor,
+                                                   scs->static_config.encoder_bit_depth,
+                                                   ppcs->sc_class1,
+                                                   scs->encode_context_ptr->rc.onepass_cbr_mode));
+    return bits_per_mb;
+}
+/******************************************************
+ * cyclic_sb_qp_derivation
+ * Calculates the QP per SB based on the ME statistics
+ * used in one pass encoding
+ * only works for sb size  = 64
+ ******************************************************/
+static void cyclic_sb_qp_derivation(PictureControlSet *pcs) {
+    PictureParentControlSet *ppcs = pcs->parent_pcs_ptr;
+    SequenceControlSet      *scs  = pcs->parent_pcs_ptr->scs_ptr;
+    CyclicRefresh           *cr   = &ppcs->cyclic_refresh;
+    SuperBlock              *sb;
+    uint32_t                 b64_idx;
+
+    if (cr->apply_cyclic_refresh)
+        ppcs->frm_hdr.delta_q_params.delta_q_present = 1;
+    else
+        ppcs->frm_hdr.delta_q_params.delta_q_present = 0;
+
+    // This function assume sb size = 64 and sb total count is equal to b64 total count
+    assert(scs->sb_total_count == ppcs->b64_total_count);
+
+    if (ppcs->frm_hdr.delta_q_params.delta_q_present) {
+        uint64_t avg_me_dist = 0;
+        for (b64_idx = 0; b64_idx < ppcs->b64_total_count; ++b64_idx) {
+            avg_me_dist += ppcs->me_8x8_distortion[b64_idx];
+        }
+        avg_me_dist /= ppcs->b64_total_count;
+
+        RATE_CONTROL *rc        = &scs->encode_context_ptr->rc;
+        const int     bit_depth = scs->static_config.encoder_bit_depth;
+        int           delta     = compute_deltaq(
+            ppcs, rc, ppcs->frm_hdr.quantization_params.base_q_idx, bit_depth);
+        for (b64_idx = 0; b64_idx < ppcs->b64_total_count; ++b64_idx) {
+            int diff_dist = (int)(ppcs->me_8x8_distortion[b64_idx] - avg_me_dist);
+            sb            = pcs->sb_ptr_array[b64_idx];
+            int offset    = 0;
+            if (b64_idx >= cr->sb_start && b64_idx < cr->sb_end && diff_dist <= 0) {
+                offset = delta;
+            } else if (b64_idx >= cr->sb_start && b64_idx < cr->sb_end) {
+                offset = delta / 2;
+            }
+            sb->qindex = CLIP3(
+                ppcs->frm_hdr.delta_q_params.delta_q_res,
+                255 - ppcs->frm_hdr.delta_q_params.delta_q_res,
+                ((int16_t)ppcs->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
+        }
+    } else {
+        for (b64_idx = 0; b64_idx < ppcs->b64_total_count; ++b64_idx) {
+            sb         = pcs->sb_ptr_array[b64_idx];
+            sb->qindex = quantizer_to_qindex[pcs->picture_qp];
+        }
+    }
+}
+
+/******************************************************
+ *  svt_aom_cyclic_refresh_init
+ * Initial cyclic refresh parameters
+ ******************************************************/
+void svt_aom_cyclic_refresh_init(PictureParentControlSet *ppcs) {
+    SequenceControlSet *scs = ppcs->scs_ptr;
+    CyclicRefresh      *cr  = &ppcs->cyclic_refresh;
+
+    if ((ppcs->slice_type != I_SLICE) && (ppcs->temporal_layer_index == 0))
+        cr->apply_cyclic_refresh = 1;
+    else
+        cr->apply_cyclic_refresh = 0;
+
+    uint16_t sb_cnt     = scs->sb_total_count;
+    cr->percent_refresh = 20;
+    if (ppcs->picture_number > (uint64_t)(4 * (1 << scs->max_heirachical_level) * 100 / 20))
+        cr->percent_refresh = 15;
+
+    if (cr->apply_cyclic_refresh) {
+        cr->sb_start                       = scs->encode_context_ptr->cr_sb_end;
+        cr->sb_end                         = cr->sb_start + sb_cnt * cr->percent_refresh / 100;
+        scs->encode_context_ptr->cr_sb_end = cr->sb_end >= sb_cnt ? 0 : cr->sb_end;
+    } else {
+        cr->sb_start = 0;
+        cr->sb_end   = 0;
+    }
+    // Use larger delta - qp(increase rate_ratio_qdelta) for first few(~4)
+    // periods of the refresh cycle, after a key frame.
+    cr->max_qdelta_perc = 60;
+    if (ppcs->picture_number >
+        (uint64_t)(4 * (1 << scs->max_heirachical_level) * 100 / cr->percent_refresh))
+        cr->rate_ratio_qdelta = 2;
+    else
+        cr->rate_ratio_qdelta = 3;
+}
+#else
 /******************************************************
  * sb_qp_derivation
  * Calculates the QP per SB based on the ME statistics
@@ -1217,9 +1362,9 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
  ******************************************************/
 static void sb_qp_derivation(PictureControlSet *pcs) {
     PictureParentControlSet *ppcs = pcs->parent_pcs_ptr;
-    SequenceControlSet      *scs  = pcs->parent_pcs_ptr->scs_ptr;
-    SuperBlock              *sb;
-    uint32_t                 sb_addr;
+    SequenceControlSet *scs = pcs->parent_pcs_ptr->scs_ptr;
+    SuperBlock *sb;
+    uint32_t sb_addr;
     if ((ppcs->slice_type != I_SLICE) && (ppcs->is_used_as_reference_flag))
         pcs->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 1;
     else
@@ -1263,7 +1408,7 @@ static void sb_qp_derivation(PictureControlSet *pcs) {
         }
     }
 }
-
+#endif
 /*
 * Derives a qindex per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)
 */
@@ -1391,6 +1536,7 @@ static int find_fp_qindex(aom_bit_depth_t bit_depth) {
 #endif
     return av1_find_qindex(FIRST_PASS_Q, bit_depth, 0, QINDEX_RANGE - 1);
 }
+#if !OPT_LD_QPM
 int svt_av1_rc_get_default_min_gf_interval(int width, int height, double framerate) {
     // Assume we do not need any constraint lower than 4K 20 fps
     static const double factor_safe = 3840 * 2160 * 20.0;
@@ -1406,6 +1552,7 @@ int svt_av1_rc_get_default_min_gf_interval(int width, int height, double framera
     // 4K30: 6
     // 4K60: 12
 }
+#endif
 void set_rc_buffer_sizes(SequenceControlSet *scs_ptr) {
     EncodeContext        *encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL         *rc                 = &encode_context_ptr->rc;
@@ -1419,14 +1566,14 @@ void set_rc_buffer_sizes(SequenceControlSet *scs_ptr) {
     rc->optimal_buffer_level  = (optimal == 0) ? bandwidth / 8 : optimal * bandwidth / 1000;
     rc->maximum_buffer_size   = (maximum == 0) ? bandwidth / 8 : maximum * bandwidth / 1000;
 }
-
+#if !OPT_LD_QPM
 int svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval) {
     int interval = AOMMIN(MAX_GF_INTERVAL, (int)(framerate * 0.75));
     interval += (interval & 0x01); // Round to even value
     interval = AOMMAX(MAX_GF_INTERVAL, interval);
     return AOMMAX(interval, min_gf_interval);
 }
-
+#endif
 //#define INT_MAX 0x7fffffff
 #define BPER_MB_NORMBITS 9
 #define FRAME_OVERHEAD_BITS 200
@@ -1685,7 +1832,11 @@ static int get_bits_per_mb(PictureParentControlSet *ppcs_ptr, int use_cyclic_ref
                            double correction_factor, int q) {
     SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
     return use_cyclic_refresh
+#if OPT_LD_QPM
+        ? svt_av1_cyclic_refresh_rc_bits_per_mb(ppcs_ptr, correction_factor, q)
+#else
         ? 0 /*av1_cyclic_refresh_rc_bits_per_mb(cpi, q, correction_factor)*/
+#endif
         : svt_av1_rc_bits_per_mb(ppcs_ptr->frm_hdr.frame_type,
                                  q,
                                  correction_factor,
@@ -1768,7 +1919,6 @@ static int adjust_q_cbr(PictureParentControlSet *ppcs_ptr, int q) {
         if (rc->q_1_frame - q > max_delta)
             q = rc->q_1_frame - max_delta;
     }
-
     return AOMMAX(AOMMIN(q, rc->worst_quality), rc->best_quality);
 }
 
@@ -2001,7 +2151,7 @@ void svt_av1_resize_reset_rc(PictureParentControlSet *ppcs_ptr, int32_t resize_w
             rc->rate_correction_factors[INTER_NORMAL] *= 2.0;
     }
 }
-#define QFACTOR 1.4
+#define QFACTOR 1.1
 static int rc_pick_q_and_bounds_no_stats_cbr(PictureControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr            = pcs_ptr->parent_pcs_ptr->scs_ptr;
     EncodeContext      *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -2202,17 +2352,14 @@ static void av1_rc_update_rate_correction_factors(PictureParentControlSet *ppcs_
     // Work out how big we would have expected the frame to be at this Q given
     // the current correction factor.
     // Stay in double to avoid int overflow when values are large
-
-    {
-        projected_size_based_on_q = av1_estimate_bits_at_q(
-            ppcs_ptr->frm_hdr.frame_type,
-            ppcs_ptr->frm_hdr.quantization_params.base_q_idx /*cm->quant_params.base_qindex*/,
-            MBs,
-            rate_correction_factor,
-            scs_ptr->static_config.encoder_bit_depth,
-            ppcs_ptr->sc_class1,
-            rc->onepass_cbr_mode);
-    }
+    projected_size_based_on_q = av1_estimate_bits_at_q(
+        ppcs_ptr->frm_hdr.frame_type,
+        ppcs_ptr->frm_hdr.quantization_params.base_q_idx /*cm->quant_params.base_qindex*/,
+        MBs,
+        rate_correction_factor,
+        scs_ptr->static_config.encoder_bit_depth,
+        ppcs_ptr->sc_class1,
+        rc->onepass_cbr_mode);
     // Work out a size correction factor.
     if (projected_size_based_on_q > FRAME_OVERHEAD_BITS)
         correction_factor = (int)((100 * (int64_t)ppcs_ptr->projected_frame_size) /
@@ -2236,7 +2383,6 @@ static void av1_rc_update_rate_correction_factors(PictureParentControlSet *ppcs_
         rc->rc_1_frame = 1;
     else
         rc->rc_1_frame = 0;
-
     if (correction_factor > 102) {
         // We are not already at the worst allowable quality
         correction_factor      = (int)(100 + ((correction_factor - 100) * adjustment_limit));
@@ -3397,6 +3543,22 @@ void *rate_control_kernel(void *input_ptr) {
                             }
                         }
                     }
+#if OPT_CBR
+                    else if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR) {
+                        uint32_t ref_qp = 0;
+                        if (pcs_ptr->ref_slice_type_array[0][0] != I_SLICE)
+                            ref_qp = pcs_ptr->ref_pic_qp_array[0][0];
+                        if ((pcs_ptr->slice_type == B_SLICE) &&
+                            (pcs_ptr->ref_slice_type_array[1][0] != I_SLICE))
+                            ref_qp = MAX(ref_qp, pcs_ptr->ref_pic_qp_array[1][0]);
+                        if (ref_qp > 4 && pcs_ptr->picture_qp < ref_qp) {
+                            pcs_ptr->picture_qp = (uint8_t)CLIP3(
+                                scs_ptr->static_config.min_qp_allowed,
+                                scs_ptr->static_config.max_qp_allowed,
+                                (uint8_t)(ref_qp - 4));
+                        }
+                    }
+#endif
                     frm_hdr->quantization_params.base_q_idx =
                         quantizer_to_qindex[pcs_ptr->picture_qp];
                 }
@@ -3507,7 +3669,11 @@ void *rate_control_kernel(void *input_ptr) {
                 sb_qp_derivation_tpl_la(pcs_ptr);
             } else if (scs_ptr->static_config.enable_adaptive_quantization &&
                        scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR) {
+#if OPT_LD_QPM
+                cyclic_sb_qp_derivation(pcs_ptr);
+#else
                 sb_qp_derivation(pcs_ptr);
+#endif
             } else {
                 pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
                 for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count; ++sb_addr) {

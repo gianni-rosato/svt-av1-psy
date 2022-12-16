@@ -96,9 +96,12 @@ typedef struct PictureDecisionContext {
     uint8_t  lay0_toggle; //3 way toggle 0->1->2
     uint8_t  lay1_toggle; //2 way toggle 0->1
     Bool mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
-    uint8_t                  last_i_picture_sc_class0;
-    uint8_t                  last_i_picture_sc_class1;
-    uint8_t                  last_i_picture_sc_class2;
+    uint8_t last_i_picture_sc_class0;
+    uint8_t last_i_picture_sc_class1;
+    uint8_t last_i_picture_sc_class2;
+#if OPT_LD_MRP2
+    uint64_t last_long_base_pic;
+#endif
     uint64_t                 key_poc;
     uint8_t                  tf_level;
     uint32_t                 tf_pic_arr_cnt;

@@ -259,7 +259,27 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
         me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
         me_context_ptr->me_sa.sa_max = (SearchArea){8, 3};
     }
-
+#if OPT_LD_M9
+    const bool               rtc_tune = (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true : false;
+    if (rtc_tune && pcs_ptr->enc_mode > ENC_M8) {
+        if (input_resolution < INPUT_SIZE_720p_RANGE) {
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 3 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 16, 9 };
+        }
+        else if (input_resolution < INPUT_SIZE_1080p_RANGE) {
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 1 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 16, 7 };
+        }
+        else if (input_resolution < INPUT_SIZE_4K_RANGE) {
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 1 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 7 };
+        }
+        else {
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 1 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 1 };
+        }
+    }
+#endif
     // Scale up the MIN ME area if low frame rate
     bool low_frame_rate_flag = (scs_ptr->frame_rate >> 16);
     if (low_frame_rate_flag) {
@@ -635,6 +655,18 @@ void tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet 
         me_context_ptr->me_sa.sa_min     = (SearchArea){8, 4};
         me_context_ptr->me_sa.sa_max     = (SearchArea){16, 8};
         break;
+#if OPT_LD_TF
+    case 3:
+        me_context_ptr->num_hme_sa_w = 2;
+        me_context_ptr->num_hme_sa_h = 2;
+        me_context_ptr->hme_l0_sa.sa_min = (SearchArea) { 4, 4 };
+        me_context_ptr->hme_l0_sa.sa_max = (SearchArea) { 4, 4 };
+        me_context_ptr->hme_l1_sa = (SearchArea) { 8, 8 };
+        me_context_ptr->hme_l2_sa = (SearchArea) { 8, 8 };
+        me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 8 };
+        me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 8 };
+        break;
+#endif
 
     default: assert(0); break;
     }

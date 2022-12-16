@@ -22,6 +22,7 @@ typedef struct EbAppContext_ EbAppContext;
 #define fseeko _fseeki64
 #define ftello _ftelli64
 #endif
+
 // Define Cross-Platform 64-bit fseek() and ftell()
 /** The AppExitConditionType type is used to define the App main loop exit
 conditions.
@@ -137,7 +138,6 @@ typedef struct EbPerformanceContext {
 
     uint64_t total_latency;
     uint32_t max_latency;
-
     uint64_t starts_time;
     uint64_t startu_time;
     uint64_t frame_count;

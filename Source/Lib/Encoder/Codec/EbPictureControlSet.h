@@ -648,6 +648,38 @@ typedef struct PaletteCtrls {
     // block involves 7 colors, then only 3 candidates with palettes based on the most dominant 7, 5 and 3 colors are tested. Range: [1 (test all), 7 (test one)]
 } PaletteCtrls;
 
+#if OPT_LD_QPM
+/*!
+ * \brief The stucture of Cyclic_Refresh.
+ * \ingroup cyclic_refresh
+ */
+typedef struct CyclicRefresh {
+    /*!
+     * Percentage of blocks per frame that are targeted as candidates
+     * for cyclic refresh.
+     */
+    int percent_refresh;
+    /*!
+     * Maximum q-delta as percentage of base q.
+     */
+    int max_qdelta_perc;
+    /*!
+     *Superblock starting index for cycling through the frame.
+     */
+    uint32_t sb_start;
+    /*!
+     *Superblock end index for cycling through the frame.
+     */
+    uint32_t sb_end;
+    /*!
+     * Rate target ratio to set q delta.
+     */
+    double rate_ratio_qdelta;
+
+    int apply_cyclic_refresh;
+
+} CyclicRefresh;
+#endif
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
@@ -1030,6 +1062,9 @@ typedef struct PictureParentControlSet {
     uint8_t                         is_new_gf_group;
     struct PictureParentControlSet *gf_group[MAX_TPL_GROUP_SIZE];
     StatStruct                      stat_struct;
+#if OPT_LD_QPM
+    CyclicRefresh cyclic_refresh;
+#endif
     uint8_t                         partition_contexts;
     uint8_t                         bypass_cost_table_gen;
     uint16_t                        max_can_count;
@@ -1126,6 +1161,9 @@ typedef struct PictureControlSetInitData {
     uint8_t input_resolution;
     uint8_t calculate_variance;
     Bool    is_scale;
+#if OPT_LD_M13
+    bool rtc_tune;
+#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

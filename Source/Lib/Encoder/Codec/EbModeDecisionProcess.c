@@ -87,7 +87,12 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->temp_residual_ptr);
     EB_DELETE(obj->temp_recon_ptr);
 }
+#if OPT_LD_M11
+uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels,
+                      bool rtc_tune);
+#else
 uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
+#endif
 uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
 void    set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
                  uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL],
@@ -136,6 +141,9 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                                        EbFifo  *mode_decision_configuration_input_fifo_ptr,
                                        EbFifo  *mode_decision_output_fifo_ptr,
                                        uint8_t enable_hbd_mode_decision, uint8_t cfg_palette,
+#if OPT_LD_M11
+                                       bool rtc_tune,
+#endif
                                        uint32_t hierarchical_levels) {
     uint32_t buffer_index;
     uint32_t cand_index;
@@ -159,7 +167,11 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
     for (uint8_t is_base = 0; is_base < 2; is_base++) {
-        uint8_t nic_level         = get_nic_level(enc_mode, is_base, hierarchical_levels);
+#if OPT_LD_M11
+        uint8_t nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels, rtc_tune);
+#else
+        uint8_t nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels);
+#endif
         uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
         min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
     }

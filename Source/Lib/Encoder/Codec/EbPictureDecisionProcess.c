@@ -246,6 +246,9 @@ EbErrorType picture_decision_context_ctor(
     context_ptr->transition_detected = -1;
     context_ptr->sframe_poc = 0;
     context_ptr->sframe_due = 0;
+#if OPT_LD_MRP2
+    context_ptr->last_long_base_pic = 0;
+#endif
     return EB_ErrorNone;
 }
 static Bool scene_transition_detector(
@@ -1486,7 +1489,11 @@ void set_list0_only_base(PictureParentControlSet* pcs_ptr, uint8_t list0_only_ba
 * 2 -- SB-Based DLF
 * 3 -- SB-Based DLF + skip DLF if SB has 0 coeffs
 */
+#if OPT_LD_M9
+static uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, Bool fast_decode, EbInputResolution resolution, bool rtc_tune) {
+#else
 static uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, Bool fast_decode, EbInputResolution resolution) {
+#endif
 
     uint8_t dlf_level;
     // Don't disable DLF for low resolutions when fast-decode is used
@@ -1495,11 +1502,19 @@ static uint8_t get_dlf_level(EncMode enc_mode, uint8_t is_used_as_reference_flag
         dlf_level = 1;
         else if (enc_mode <= ENC_M7)
             dlf_level = 2;
-        else if (enc_mode <= ENC_M9)
+#if OPT_LD_M10
+        else if ((enc_mode <= ENC_M8) || (rtc_tune && (enc_mode <= ENC_M10)))
+#else
+        else if (enc_mode <= ENC_M8)
+#endif
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 2 : 4);
         else if (enc_mode <= ENC_M11)
             dlf_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : (is_used_as_reference_flag ? 3 : 0);
+#if OPT_LD_M13
+        else if (enc_mode <= ENC_M12 || rtc_tune)
+#else
         else if (enc_mode <= ENC_M12)
+#endif
             dlf_level = is_used_as_reference_flag ? 4 : 0;
         else
             dlf_level = (is_16bit && is_used_as_reference_flag) ? 4 : 0;
@@ -1788,7 +1803,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     const uint32_t           bit_depth = scs_ptr->static_config.encoder_bit_depth;
     const Bool               fast_decode = scs_ptr->static_config.fast_decode;
     const uint32_t           hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
-
+#if OPT_LD_M13
+    const bool               rtc_tune = (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true : false;
+#endif
     // If enabled here, the hme enable flags should also be enabled in ResourceCoordinationProcess
     // to ensure that resources are allocated for the downsampled pictures used in HME
     pcs_ptr->enable_hme_flag        = 1;
@@ -1821,6 +1838,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         break;
 
     case 2:
+#if OPT_LD_TF
+    case 3:
+#endif
         pcs_ptr->tf_enable_hme_flag       =  1;
         pcs_ptr->tf_enable_hme_level0_flag = 1;
         pcs_ptr->tf_enable_hme_level1_flag = 0;
@@ -1886,7 +1906,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     set_palette_level(pcs_ptr, pcs_ptr->palette_level);
     uint8_t dlf_level = 0;
     if (pcs_ptr->scs_ptr->static_config.enable_dlf_flag && frm_hdr->allow_intrabc == 0) {
+#if OPT_LD_M9
+        dlf_level = get_dlf_level(enc_mode, is_ref, bit_depth > EB_EIGHT_BIT, fast_decode, input_resolution, rtc_tune);
+#else
         dlf_level = get_dlf_level(enc_mode, is_ref, bit_depth > EB_EIGHT_BIT, fast_decode, input_resolution);
+#endif
     }
     svt_aom_set_dlf_controls(pcs_ptr, dlf_level, bit_depth);
 
@@ -2424,7 +2448,11 @@ static void  av1_generate_rps_info(
             set_key_frame_rps(pcs_ptr, context_ptr);
             return;
         }
+#if OPT_LD_MRP2
+        // Slot 0,1,2 for base layer, 3,4 for layer 1, 5 for layer2. slot 7 is used for long reference in base
+#else
         // Slot 0,1,2 for base layer, 3,4 for layer 1, 5 for layer2
+#endif
         const uint8_t  base0_idx = context_ptr->lay0_toggle == 0 ? 1 : context_ptr->lay0_toggle == 1 ? 2 : 0;
         const uint8_t  base1_idx = context_ptr->lay0_toggle == 0 ? 2 : context_ptr->lay0_toggle == 1 ? 0 : 1;
         const uint8_t  base2_idx = context_ptr->lay0_toggle == 0 ? 0 : context_ptr->lay0_toggle == 1 ? 1 : 2;
@@ -2432,14 +2460,24 @@ static void  av1_generate_rps_info(
         const uint8_t  lay1_0_idx = context_ptr->lay1_toggle == 0 ? LAY1_OFF + 1 : LAY1_OFF + 0;
         const uint8_t  lay1_1_idx = context_ptr->lay1_toggle == 0 ? LAY1_OFF + 0 : LAY1_OFF + 1;
         const uint8_t  lay2_idx = LAY2_OFF;
-
+#if OPT_LD_MRP2
+        const uint8_t  long_base_idx = 7;
+        const uint16_t long_base_pic = 128;
+#endif
         switch (pcs_ptr->temporal_layer_index) {
         case 0:
             //{4, 12, 0, 0},     // GOP Index 0 - Ref List 0
             //{ 4, 8, 0, 0 }      // GOP Index 0 - Ref List 1
             av1_rps->ref_dpb_index[LAST] = base1_idx;
             av1_rps->ref_dpb_index[LAST2] = base2_idx;
+#if OPT_LD_MRP2
+            if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
+                av1_rps->ref_dpb_index[LAST3] = long_base_idx;
+            else
+                av1_rps->ref_dpb_index[LAST3] = av1_rps->ref_dpb_index[LAST];
+#else
             av1_rps->ref_dpb_index[LAST3] = av1_rps->ref_dpb_index[LAST];
+#endif
             av1_rps->ref_dpb_index[GOLD] = av1_rps->ref_dpb_index[LAST];
 
             av1_rps->ref_dpb_index[BWD] = base1_idx;
@@ -2448,7 +2486,15 @@ static void  av1_generate_rps_info(
             gop_i = 0;
             av1_rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, pcs_ptr->picture_number, three_level_hierarchical_pred_struct[gop_i].ref_list0[0]);
             av1_rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, three_level_hierarchical_pred_struct[gop_i].ref_list0[1]);
+#if OPT_LD_MRP2
+            if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+                av1_rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, pcs_ptr->picture_number, (int32_t) (pcs_ptr->picture_number - context_ptr->last_long_base_pic));
+            }
+            else
+                av1_rps->ref_poc_array[LAST3] = av1_rps->ref_poc_array[LAST];
+#else
             av1_rps->ref_poc_array[LAST3] = av1_rps->ref_poc_array[LAST];
+#endif
             av1_rps->ref_poc_array[GOLD] = av1_rps->ref_poc_array[LAST];
 
             av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, three_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
@@ -2554,13 +2600,21 @@ static void  av1_generate_rps_info(
                 av1_rps->refresh_frame_mask = 1 << (lay2_idx);
             else
                 av1_rps->refresh_frame_mask = 0;
+
             break;
 
         default:
             SVT_ERROR("unexpected picture mini Gop number\n");
             break;
         }
-
+#if OPT_LD_MRP2
+        // to make sure the long base reference is in base layer
+        if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B && (pcs_ptr->picture_number - context_ptr->last_long_base_pic) >= long_base_pic &&
+            pcs_ptr->temporal_layer_index == 0) {
+            av1_rps->refresh_frame_mask |= (1 << long_base_idx);
+            context_ptr->last_long_base_pic = pcs_ptr->picture_number;
+        }
+#endif
         prune_refs(pred_position_ptr, av1_rps);
 
         if (!set_frame_display_params(pcs_ptr, context_ptr, mini_gop_index)) {
@@ -2629,6 +2683,7 @@ static void  av1_generate_rps_info(
         const uint8_t  lay1_1_idx = context_ptr->lay1_toggle == 0 ? LAY1_OFF + 0 : LAY1_OFF + 1;   //the newest L1 picture in the DPB
         const uint8_t  lay2_idx = LAY2_OFF;   //the newest L2 picture in the DPB
         const uint8_t  lay3_idx = LAY3_OFF;   //the newest L3 picture in the DPB
+
         switch (pcs_ptr->temporal_layer_index) {
         case 0:
             //{8, 24, 0, 0},  // GOP Index 0 - Ref List 0
@@ -5056,7 +5111,6 @@ void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_pt
             pcs_ptr->tf_ctrls = scs_ptr->tf_params_per_type[1];
         else
             pcs_ptr->tf_ctrls.enabled = 0;
-
         return;
    }
     if (is_delayed_intra(pcs_ptr))
@@ -5481,12 +5535,15 @@ static uint32_t get_pic_idx_in_mg(SequenceControlSet* scs, PictureParentControlS
 }
 
 static void set_ref_frame_sign_bias(SequenceControlSet* scs, PictureParentControlSet* pcs) {
-    //Jing: For low delay B/P case, don't alter the bias
     memset(pcs->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
 
+#if OPT_LD_MRP
+    if (scs->seq_header.order_hint_info.enable_order_hint) {
+#else
     if (scs->seq_header.order_hint_info.enable_order_hint &&
         pcs->frm_hdr.reference_mode == REFERENCE_MODE_SELECT &&
         scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
+#endif
         for (MvReferenceFrame ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ++ref_frame) {
             pcs->av1_cm->ref_frame_sign_bias[ref_frame] =
                 (get_relative_dist(&scs->seq_header.order_hint_info, pcs->ref_order_hint[ref_frame - 1],
@@ -5812,7 +5869,9 @@ static void process_pics(SequenceControlSet* scs, PictureDecisionContext* ctx) {
             send_picture_out(scs, pcs, ctx);
         }
     }
+
     ctx->mg_progress_id++;
+
 }
 
 /* Picture Decision Kernel */
@@ -6244,6 +6303,11 @@ void* picture_decision_kernel(void *input_ptr) {
                             // Increment the Decode Base Number
                             encode_ctx->decode_base_number += ctx->mini_gop_length[mini_gop_index] + has_overlay;
                         }
+#if OPT_LD_QPM
+                        if (scs->static_config.enable_adaptive_quantization &&
+                            scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR)
+                            svt_aom_cyclic_refresh_init(pcs);
+#endif
                     }
 
                     ctx->mg_size = ctx->mini_gop_end_index[mini_gop_index] + has_overlay - ctx->mini_gop_start_index[mini_gop_index] + 1;

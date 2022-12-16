@@ -176,6 +176,10 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
         encode_context_ptr->rc_param_queue[interval_index]->extend_minq_fast    = 0;
     }
     encode_context_ptr->rc_param_queue_head_index = 0;
+#if OPT_LD_QPM
+    encode_context_ptr->cr_sb_end = 0;
+#endif
+
     EB_CREATE_MUTEX(encode_context_ptr->rc_param_queue_mutex);
 
     return EB_ErrorNone;

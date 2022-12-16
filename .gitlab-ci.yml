@@ -44,6 +44,7 @@ Style check:
     - if: $NIGHTLY == null && $WEEKEND == null
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  cache: []
   script:
     - ./test/stylecheck.sh
     - git fetch ${CI_MERGE_REQUEST_PROJECT_URL:-https://gitlab.com/AOMediaCodec/SVT-AV1.git} "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-HEAD}"

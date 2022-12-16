@@ -1348,7 +1348,11 @@ void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *candidate_buffer,
     }
     // If distortion cost is greater than the best cost, exit early. This candidate will never be
     // selected b/c only one candidate is sent to MDS3
+#if OPT_LD_M12_13
+    if (context_ptr->mds0_best_cost != (uint64_t)~0) {
+#else
     if (context_ptr->mds0_best_cost != (uint32_t)~0) {
+#endif
         const uint64_t distortion_cost = RDCOST(fast_lambda, 0, luma_fast_distortion);
         if (distortion_cost > context_ptr->mds0_best_cost) {
             *(candidate_buffer->fast_cost_ptr) = MAX_MODE_COST;

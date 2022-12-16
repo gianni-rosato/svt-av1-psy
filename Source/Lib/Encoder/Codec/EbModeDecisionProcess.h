@@ -511,8 +511,14 @@ typedef struct Lpd0Ctrls {
 } Lpd0Ctrls;
 
 typedef struct Lpd1Ctrls {
+#if OPT_LD_P2
+    Pd1Level
+        pd1_level; // Whether light-PD1 is set to be used for an SB (the detector may change this)
+#else
     int8_t
-         pd1_level; // Whether light-PD1 is set to be used for an SB (the detector may change this)
+        pd1_level; // Whether light-PD1 is set to be used for an SB (the detector may change this)
+#endif
+
     Bool use_lpd1_detector
         [LPD1_LEVELS]; // Whether to use a detector; if use_light_pd1 is set to 1, the detector will protect tough SBs
     Bool use_ref_info
@@ -944,11 +950,19 @@ typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast
 /**************************************
      * Extern Function Declarations
      **************************************/
-extern EbErrorType mode_decision_context_ctor(
-    ModeDecisionContext *context_ptr, EbColorFormat color_format, uint8_t sb_size, uint8_t enc_mode,
-    uint16_t max_block_cnt, uint32_t encoder_bit_depth,
-    EbFifo *mode_decision_configuration_input_fifo_ptr, EbFifo *mode_decision_output_fifo_ptr,
-    uint8_t enable_hbd_mode_decision, uint8_t cfg_palette, uint32_t hierarchical_levels);
+extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr,
+                                              EbColorFormat color_format, uint8_t sb_size,
+                                              uint8_t enc_mode, uint16_t max_block_cnt,
+                                              uint32_t encoder_bit_depth,
+                                              EbFifo  *mode_decision_configuration_input_fifo_ptr,
+                                              EbFifo  *mode_decision_output_fifo_ptr,
+#if OPT_LD_M11
+                                              uint8_t enable_hbd_mode_decision, uint8_t cfg_palette,
+                                              bool rtc_tune, uint32_t hierarchical_levels);
+#else
+                                              uint8_t enable_hbd_mode_decision, uint8_t cfg_palette,
+                                              uint32_t hierarchical_levels);
+#endif
 
 extern const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4];
 

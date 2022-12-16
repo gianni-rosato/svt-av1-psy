@@ -426,6 +426,10 @@ typedef struct SequenceControlSet {
     bool stats_based_sb_lambda_modulation;
     // Desired dimensions for an externally triggered resize
     ResizePendingParams resize_pending_params;
+#if OPT_LD_LATENCY_MD
+    // Enable low latency KF coding for RTC
+    bool low_latency_kf;
+#endif
 } SequenceControlSet;
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;

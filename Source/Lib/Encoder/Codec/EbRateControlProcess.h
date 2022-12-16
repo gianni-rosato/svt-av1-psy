@@ -217,10 +217,12 @@ typedef struct PicMgrPorts {
  **************************************/
 int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, EbBitDepth bit_depth);
 double  svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
-int     svt_av1_rc_get_default_min_gf_interval(int width, int height, double framerate);
-int     svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval);
-double  svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
-                                                int frame_count);
+#if !OPT_LD_QPM
+int svt_av1_rc_get_default_min_gf_interval(int width, int height, double framerate);
+int svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval);
+#endif
+double svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
+                                               int frame_count);
 
 EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr, int me_port_index);
@@ -231,4 +233,10 @@ int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpd
 struct PictureControlSet;
 int svt_aom_compute_rd_mult(struct PictureControlSet *pcs, uint8_t q_index, uint8_t me_q_index,
                             uint8_t bit_depth);
+
+#if OPT_LD_QPM
+struct PictureParentControlSet;
+void svt_aom_cyclic_refresh_init(struct PictureParentControlSet *ppcs);
+#endif
+
 #endif // EbRateControl_h

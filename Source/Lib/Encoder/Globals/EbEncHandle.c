@@ -1584,6 +1584,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
         input_data.is_scale = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.superres_mode > SUPERRES_NONE ||
                               enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.resize_mode > RESIZE_NONE;
+#if OPT_LD_M13
+        input_data.rtc_tune = (enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true : false;
+#endif
 
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
@@ -2598,6 +2601,100 @@ void set_tf_64x64_params(
 /*
  * Control TF
  */
+#if OPT_LD_TF
+/******************************************************************************
+* tf_ld_controls
+* TF control functions for low delay mode
+*******************************************************************************/
+static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
+
+    switch (tf_level)
+    {
+    case 0:
+        // I_SLICE TF Params
+        scs->tf_params_per_type[0].enabled = 0;
+
+        // BASE TF Params
+        scs->tf_params_per_type[1].enabled = 0;
+
+        // L1 TF Params
+        scs->tf_params_per_type[2].enabled = 0;
+        break;
+
+    case 1:
+        // I_SLICE TF Params
+        scs->tf_params_per_type[0].enabled = 1;
+        // BASE TF Params
+        scs->tf_params_per_type[1].enabled = 1;
+        scs->tf_params_per_type[1].num_past_pics = 2;
+        scs->tf_params_per_type[1].num_future_pics = 0;
+        scs->tf_params_per_type[1].noise_adjust_past_pics = 0;
+        scs->tf_params_per_type[1].noise_adjust_future_pics = 0;
+        scs->tf_params_per_type[1].max_num_past_pics = 1;
+        scs->tf_params_per_type[1].max_num_future_pics = 0;
+        scs->tf_params_per_type[1].hme_me_level = 3;
+        scs->tf_params_per_type[1].half_pel_mode = 0;
+        scs->tf_params_per_type[1].quarter_pel_mode = 0;
+        scs->tf_params_per_type[1].eight_pel_mode = 0;
+        scs->tf_params_per_type[1].do_chroma = 1;
+        scs->tf_params_per_type[1].pred_error_32x32_th = 20 * 32 * 32;
+        scs->tf_params_per_type[1].sub_sampling_shift = 0;
+        scs->tf_params_per_type[1].use_fast_filter = 0;
+        scs->tf_params_per_type[1].use_medium_filter = 1;
+        scs->tf_params_per_type[1].avoid_2d_qpel = 0;
+        scs->tf_params_per_type[1].use_2tap = 0;
+        scs->tf_params_per_type[1].use_intra_for_noise_est = 0;
+        scs->tf_params_per_type[1].use_8bit_subpel = 0;
+        set_tf_64x64_params(
+            scs->tf_params_per_type[1].use_fast_filter,
+            &scs->tf_params_per_type[1].use_pred_64x64_only_th,
+            &scs->tf_params_per_type[1].me_exit_th, 0, 0);
+        scs->tf_params_per_type[1].subpel_early_exit = 1;
+        // L1 TF Params
+        scs->tf_params_per_type[2].enabled = 0;
+        break;
+    case 2:
+        // I_SLICE TF Params
+        scs->tf_params_per_type[0].enabled = 0;
+        // BASE TF Params
+        scs->tf_params_per_type[1].enabled = 1;
+        scs->tf_params_per_type[1].num_past_pics = 1;
+        scs->tf_params_per_type[1].num_future_pics = 0;
+        scs->tf_params_per_type[1].noise_adjust_past_pics = 0;
+        scs->tf_params_per_type[1].noise_adjust_future_pics = 0;
+        scs->tf_params_per_type[1].max_num_past_pics = 1;
+        scs->tf_params_per_type[1].max_num_future_pics = 0;
+        scs->tf_params_per_type[1].hme_me_level = 3;
+        scs->tf_params_per_type[1].half_pel_mode = 0;
+        scs->tf_params_per_type[1].quarter_pel_mode = 0;
+        scs->tf_params_per_type[1].eight_pel_mode = 0;
+        scs->tf_params_per_type[1].do_chroma = 1;
+        scs->tf_params_per_type[1].pred_error_32x32_th =  (uint64_t)~0;
+        scs->tf_params_per_type[1].sub_sampling_shift = 0;
+        scs->tf_params_per_type[1].use_fast_filter = 0;
+        scs->tf_params_per_type[1].use_medium_filter = 1;
+        scs->tf_params_per_type[1].avoid_2d_qpel = 0;
+        scs->tf_params_per_type[1].use_2tap = 0;
+        scs->tf_params_per_type[1].use_intra_for_noise_est = 0;
+        scs->tf_params_per_type[1].use_8bit_subpel = 0;
+        set_tf_64x64_params(
+            scs->tf_params_per_type[1].use_fast_filter,
+            &scs->tf_params_per_type[1].use_pred_64x64_only_th,
+            &scs->tf_params_per_type[1].me_exit_th, 0, 0);
+        scs->tf_params_per_type[1].subpel_early_exit = 0;
+        // L1 TF Params
+        scs->tf_params_per_type[2].enabled = 0;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+    scs->tf_params_per_type[0].use_fixed_point = 1;
+    scs->tf_params_per_type[1].use_fixed_point = 1;
+    scs->tf_params_per_type[2].use_fixed_point = 1;
+}
+#endif
 void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
 
     switch (tf_level)
@@ -3028,6 +3125,17 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     const EncMode enc_mode = scs_ptr->static_config.enc_mode;
     const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
     uint8_t tf_level = 0;
+#if OPT_LD_TF
+    if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P || scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+        if (do_tf == 0)
+            tf_level = 0;
+        else
+            tf_level = enc_mode <= ENC_M10 ? 1 : enc_mode <= ENC_M12 && (scs_ptr->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
+
+        tf_ld_controls(scs_ptr, tf_level);
+        return;
+    }
+#endif
     if (do_tf == 0) {
         tf_level = 0;
     }
@@ -3132,14 +3240,50 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list0_count    = 3;
         mrp_ctrl->non_base_ref_list1_count    = 2;
         break;
+#if OPT_LD_MRP2
+    case 6:
+        mrp_ctrl->referencing_scheme = 0;
+        mrp_ctrl->sc_base_ref_list0_count = 2;
+        mrp_ctrl->sc_base_ref_list1_count = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count = 3;
+        mrp_ctrl->base_ref_list1_count = 2;
+        mrp_ctrl->non_base_ref_list0_count = 2;
+        mrp_ctrl->non_base_ref_list1_count = 2;
+        break;
 
+    case 7:
+        mrp_ctrl->referencing_scheme = 0;
+        mrp_ctrl->sc_base_ref_list0_count = 2;
+        mrp_ctrl->sc_base_ref_list1_count = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count = 2;
+        mrp_ctrl->base_ref_list1_count = 2;
+        mrp_ctrl->non_base_ref_list0_count = 2;
+        mrp_ctrl->non_base_ref_list1_count = 2;
+        break;
+
+    case 8:
+        mrp_ctrl->referencing_scheme = 0;
+        mrp_ctrl->sc_base_ref_list0_count = 2;
+        mrp_ctrl->sc_base_ref_list1_count = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count = 2;
+        mrp_ctrl->base_ref_list1_count = 2;
+        mrp_ctrl->non_base_ref_list0_count = 1;
+        mrp_ctrl->non_base_ref_list1_count = 1;
+        break;
+#else
     case 6:
         mrp_ctrl->referencing_scheme          = 0;
         mrp_ctrl->sc_base_ref_list0_count     = 2;
         mrp_ctrl->sc_base_ref_list1_count     = 2;
         mrp_ctrl->sc_non_base_ref_list0_count = 1;
         mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count        = 2;
+        mrp_ctrl->base_ref_list0_count = 2;
         mrp_ctrl->base_ref_list1_count        = 2;
         mrp_ctrl->non_base_ref_list0_count    = 2;
         mrp_ctrl->non_base_ref_list1_count    = 2;
@@ -3156,10 +3300,20 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         mrp_ctrl->non_base_ref_list0_count    = 1;
         mrp_ctrl->non_base_ref_list1_count    = 1;
         break;
+#endif
     default:
         assert(0);
         break;
     }
+#if OPT_LD_MRP
+    // For low delay mode, list1 references are not used
+    if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+        mrp_ctrl->sc_base_ref_list1_count = 0;
+        mrp_ctrl->sc_non_base_ref_list1_count = 0;
+        mrp_ctrl->base_ref_list1_count = 0;
+        mrp_ctrl->non_base_ref_list1_count = 0;
+    }
+#endif
 }
 
 void set_ipp_pass_ctrls(
@@ -3492,9 +3646,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         }
     }
     // Set initial qp for single pass vbr
-    if ((scs_ptr->static_config.rate_control_mode) && (scs_ptr->static_config.pass == ENC_SINGLE_PASS)){
+    if ((scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR) && (scs_ptr->static_config.pass == ENC_SINGLE_PASS)){
         if (scs_ptr->static_config.qp != DEFAULT_QP) {
-            SVT_WARN("The input q vlaue is ignored in vbr mode %d", scs_ptr->static_config.qp);
+            SVT_WARN("The input q value is ignored in vbr mode %d\n", scs_ptr->static_config.qp);
         }
         const uint8_t tbr_bands[6] = { 1,2,4,6,8,10 };
         const uint64_t src_samples = (uint64_t)(scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
@@ -3584,10 +3738,19 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             // update the look ahead size
             update_look_ahead(scs_ptr);
     }
+#if OPT_LD
+    // In low delay mode, sb size is set to 64
+    // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
+    // in 240P resolution, sb size is set to 64
+    if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ||
+        scs_ptr->static_config.pass == ENC_FIRST_PASS ||
+        (scs_ptr->tpl_level && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
+#else
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
     if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
         (scs_ptr->tpl_level && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
+#endif
         scs_ptr->super_block_size = 64;
     else
         if (scs_ptr->static_config.enc_mode <= ENC_M2)
@@ -3709,7 +3872,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.enable_mfmv == DEFAULT) {
         if (scs_ptr->static_config.enc_mode <= ENC_M5)
             scs_ptr->mfmv_enabled = 1;
+#if OPT_LD_M11
+        else if (scs_ptr->static_config.enc_mode <= ENC_M10 ||
+                (scs_ptr->static_config.pred_structure != SVT_AV1_PRED_LOW_DELAY_B &&
+                scs_ptr->static_config.enc_mode <= ENC_M11)) {
+#else
         else if (scs_ptr->static_config.enc_mode <= ENC_M11) {
+#endif
             if (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
                 scs_ptr->mfmv_enabled = 1;
             else
@@ -3745,7 +3914,25 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
         mrp_level = 5;
     }
+#if OPT_LD_MRP2
+    else if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B && scs_ptr->static_config.enc_mode <= ENC_M12) {
+        mrp_level = 6;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M7 || scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+        if (scs_ptr->static_config.hierarchical_levels <= 3)
+            mrp_level = 7;
+        else
+            mrp_level = 5;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
+        mrp_level = 8;
+    }
+#else
+#if OPT_LD_MRP
+    else if (scs_ptr->static_config.enc_mode <= ENC_M7 || scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
+#endif
         if (scs_ptr->static_config.hierarchical_levels <= 3)
             mrp_level = 6;
         else
@@ -3754,6 +3941,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
         mrp_level = 7;
     }
+#endif
     else {
         mrp_level = 0;
     }
@@ -3777,6 +3965,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                                                 scs_ptr->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR
         ? 1
         : 0;
+#if OPT_LD_LATENCY_MD
+    scs_ptr->low_latency_kf = ((scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P
+         || scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
+        scs_ptr->static_config.enc_mode <= ENC_M10)
+        ? 1
+        : 0;
+#endif
 }
 /******************************************************
  * Read Stat from File
@@ -3925,10 +4120,17 @@ void copy_api_from_app(
     derive_input_resolution(
         &input_resolution,
         scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height);
+#if OPT_LD_M13
+    if (scs_ptr->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS && scs_ptr->static_config.enc_mode > ENC_M12 && input_resolution <= INPUT_SIZE_360p_RANGE) {
+        scs_ptr->static_config.enc_mode = ENC_M12;
+        SVT_WARN("Setting preset to M12 as it is the highest supported preset for 360p and lower resolutions in Random Access mode\n");
+    }
+#else
     if (scs_ptr->static_config.enc_mode > ENC_M12 && input_resolution <= INPUT_SIZE_360p_RANGE) {
         scs_ptr->static_config.enc_mode = ENC_M12;
         SVT_WARN("Setting preset to M12 as it is the highest supported preset for 360p and lower resolutions\n");
     }
+#endif
     scs_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
     scs_ptr->static_config.use_fixed_qindex_offsets = ((EbSvtAv1EncConfiguration*)config_struct)->use_fixed_qindex_offsets;
     scs_ptr->static_config.key_frame_chroma_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_chroma_qindex_offset;
@@ -4048,16 +4250,27 @@ void copy_api_from_app(
     // Set the default hierarchical levels
     if (scs_ptr->static_config.hierarchical_levels == 0) {
         scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ?
+#if OPT_LD
+            2 :
+#else
             3 :
+#endif
             scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR || !(scs_ptr->static_config.enc_mode <= ENC_M12)
                 ? 4
                 : 5;
     }
     if (scs_ptr->static_config.pass == ENC_SINGLE_PASS && scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+#if OPT_LD
+        if (scs_ptr->static_config.hierarchical_levels != 2) {
+            scs_ptr->static_config.hierarchical_levels = 2;
+            SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 2\n");
+        }
+#else
         if (scs_ptr->static_config.hierarchical_levels != 3) {
             scs_ptr->static_config.hierarchical_levels = 3;
             SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 3\n");
         }
+#endif
     }
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;

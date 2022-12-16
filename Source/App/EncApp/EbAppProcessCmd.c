@@ -362,7 +362,11 @@ static void injector(uint64_t processed_frame_count, uint32_t injector_frame_rat
             start_timesu_seconds,
             current_times_seconds,
             current_timesu_seconds);
-        const int    buffer_frames     = 1; // How far ahead of time should we let it get
+#if OPT_LD_LATENCY
+        const int buffer_frames = 0; // How far ahead of time should we let it get
+#else
+        const int buffer_frames = 1; // How far ahead of time should we let it get
+#endif
         const double injector_interval = (double)(1 << 16) /
             injector_frame_rate; // 1.0 / injector frame rate (in this
         // case, 1.0/encodRate)
@@ -408,7 +412,11 @@ void process_input_buffer(EncChannel *channel) {
 
     if (channel->exit_cond_input != APP_ExitConditionNone)
         return;
+#if OPT_LD_LATENCY
+    if (config->injector)
+#else
     if (config->injector && config->processed_frame_count)
+#endif
         injector(config->processed_frame_count, config->injector_frame_rate);
     total_bytes_to_process_count = (frames_to_be_encoded < 0)
         ? -1
@@ -442,6 +450,7 @@ void process_input_buffer(EncChannel *channel) {
             header_ptr->pic_type = is_forced_keyframe(config, header_ptr->pts)
                 ? EB_AV1_KEY_PICTURE
                 : EB_AV1_INVALID_PICTURE;
+
             header_ptr->flags    = 0;
             header_ptr->metadata = NULL;
             // Send the picture
@@ -450,7 +459,6 @@ void process_input_buffer(EncChannel *channel) {
             if (config->mmap.enable)
                 release_memory_mapped_file(config, is_16bit, header_ptr);
         }
-
         if ((config->processed_frame_count == (uint64_t)config->frames_to_be_encoded) ||
             config->stop_encoder) {
             header_ptr->n_alloc_len   = 0;
@@ -463,7 +471,6 @@ void process_input_buffer(EncChannel *channel) {
             header_ptr->metadata      = NULL;
             svt_av1_enc_send_picture(component_handle, header_ptr);
         }
-
         return_value = (header_ptr->flags == EB_BUFFERFLAG_EOS) ? APP_ExitConditionFinished
                                                                 : return_value;
     }
@@ -600,7 +607,6 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
             *total_latency += (uint64_t)header_ptr->n_tick_count;
             *max_latency = (header_ptr->n_tick_count > *max_latency) ? header_ptr->n_tick_count
                                                                      : *max_latency;
-
             app_svt_av1_get_time(&finish_s_time, &finish_u_time);
 
             // total execution time, inc init time
@@ -678,6 +684,7 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
                 }
             }
             ++*frame_count;
+
             const double fps = (double)*frame_count / config->performance_context.total_encode_time;
             const double frame_rate = (double)config->config.frame_rate_numerator /
                 (double)config->config.frame_rate_denominator;

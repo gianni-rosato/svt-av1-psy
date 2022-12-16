@@ -248,6 +248,7 @@ static void print_summary(const EncContext* const enc_context) {
 #if LOG_ENC_DONE
             tot_frames_done = (int)config->performance_context.frame_count;
 #endif
+
             uint64_t frame_count    = (uint32_t)config->performance_context.frame_count;
             uint32_t max_luma_value = (config->config.encoder_bit_depth == 8) ? 255 : 1023;
             double   max_luma_sse   = (double)max_luma_value * max_luma_value *
