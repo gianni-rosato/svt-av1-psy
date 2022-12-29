@@ -1240,6 +1240,10 @@ static EbErrorType str_to_uint(const char *nptr, uint32_t *out) {
     char    *endptr;
     uint32_t val;
 
+    if (strtol(nptr, NULL, 0) < 0) {
+        return EB_ErrorBadParameter;
+    }
+
     val = strtoul(nptr, &endptr, 0);
 
     if (endptr == nptr || *endptr)
@@ -1300,8 +1304,9 @@ static EbErrorType str_to_keyint(const char *nptr, int32_t *out, Bool *multi) {
         *out   = keyint < 0 ? keyint : keyint - 1;
         break;
     default:
-        // else leave as default, we have an invalid keyint
-        SVT_WARN("Invalid keyint value: %s\n", nptr);
+        // else leave as untouched, we have an invalid keyint
+        SVT_ERROR("Invalid keyint value: %s\n", nptr);
+        return EB_ErrorBadParameter;
     }
 
     return EB_ErrorNone;
@@ -1312,7 +1317,7 @@ static EbErrorType str_to_bitrate(const char *nptr, uint32_t *out) {
     const double bitrate = strtod(nptr, &suff);
 
     if (bitrate < 0 || bitrate > UINT32_MAX) {
-        SVT_WARN("Invalid bitrate value: %s\n", nptr);
+        SVT_ERROR("Invalid bitrate value: %s\n", nptr);
         return EB_ErrorBadParameter;
     }
 
@@ -1326,8 +1331,10 @@ static EbErrorType str_to_bitrate(const char *nptr, uint32_t *out) {
     case 'M': *out = (uint32_t)(1000000 * bitrate); break;
     default: return EB_ErrorBadParameter;
     }
-    if (*out > 100000000)
+    if (*out > 100000000) {
         *out = 100000000;
+        SVT_WARN("Bitrate value: %s has been set to 100000000\n", nptr);
+    }
     return EB_ErrorNone;
 }
 
@@ -1654,7 +1661,7 @@ static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_m
         *out            = SVT_AV1_RC_MODE_CBR;
         *pred_structure = SVT_AV1_PRED_LOW_DELAY_B;
         break;
-    default: SVT_WARN("Invalid rc mode: %s\n", nptr); return EB_ErrorBadParameter;
+    default: SVT_ERROR("Invalid rc mode: %s\n", nptr); return EB_ErrorBadParameter;
     }
     return EB_ErrorNone;
 }

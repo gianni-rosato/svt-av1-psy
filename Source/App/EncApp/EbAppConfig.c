@@ -194,41 +194,59 @@
 #define MIN_QM_LEVEL_TOKEN "--qm-min"
 #define MAX_QM_LEVEL_TOKEN "--qm-max"
 
+static EbErrorType validate_error(EbErrorType err, const char *token, const char *value) {
+    switch (err) {
+    case EB_ErrorNone: return EB_ErrorNone;
+    default:
+        fprintf(stderr, "Error: Invalid parameter '%s' with value '%s'\n", token, value);
+        return err;
+    }
+}
+
 /* copied from EbEncSettings.c */
-static EbErrorType str_to_int64(const char *nptr, int64_t *out) {
+static EbErrorType str_to_int64(const char *token, const char *nptr, int64_t *out) {
     char   *endptr;
     int64_t val;
 
     val = strtoll(nptr, &endptr, 0);
 
     if (endptr == nptr || *endptr)
-        return EB_ErrorBadParameter;
+        return validate_error(EB_ErrorBadParameter, token, nptr);
 
     *out = val;
     return EB_ErrorNone;
 }
 
-static EbErrorType str_to_int(const char *nptr, int32_t *out) {
+static EbErrorType str_to_int(const char *token, const char *nptr, int32_t *out) {
     char   *endptr;
     int32_t val;
 
     val = strtol(nptr, &endptr, 0);
 
     if (endptr == nptr || *endptr)
-        return EB_ErrorBadParameter;
+        return validate_error(EB_ErrorBadParameter, token, nptr);
 
     *out = val;
     return EB_ErrorNone;
 }
 
-static EbErrorType str_to_uint(const char *nptr, uint32_t *out) {
+static EbErrorType str_to_uint(const char *token, const char *nptr, uint32_t *out) {
     char    *endptr;
     uint32_t val;
+
+    if (strtol(nptr, NULL, 0) < 0) {
+        fprintf(stderr,
+                "Error: Invalid parameter '%s' with value '%s'. Token unable to accept negative "
+                "values\n",
+                token,
+                nptr);
+        return EB_ErrorBadParameter;
+    }
 
     val = strtoul(nptr, &endptr, 0);
 
     if (endptr == nptr || *endptr)
-        return EB_ErrorBadParameter;
+        return validate_error(EB_ErrorBadParameter, token, nptr);
 
     *out = val;
     return EB_ErrorNone;
@@ -243,10 +261,10 @@ static EbErrorType str_to_str(const char *nptr, char **out, const char *token) {
     const size_t len = strlen(nptr) + 1;
     char        *buf = (char *)malloc(len);
     if (!buf)
-        return EB_ErrorInsufficientResources;
+        return validate_error(EB_ErrorInsufficientResources, token, nptr);
     if (strcpy_s(buf, len, nptr)) {
         free(buf);
-        return EB_ErrorInsufficientResources;
+        return validate_error(EB_ErrorInsufficientResources, token, nptr);
     }
     *out = buf;
     return EB_ErrorNone;
@@ -280,10 +298,9 @@ static Bool fopen_and_lock(FILE **file, const char *name, Bool write) {
     return FALSE;
 }
 
-static EbErrorType open_file(FILE **file, const char *name, const char *mode, const char *token) {
-    (void)token;
+static EbErrorType open_file(FILE **file, const char *token, const char *name, const char *mode) {
     if (!file || !name)
-        return EB_ErrorBadParameter;
+        return validate_error(EB_ErrorBadParameter, token, "");
 
     if (*file) {
         fclose(*file);
@@ -293,7 +310,7 @@ static EbErrorType open_file(FILE **file, const char *name, const char *mode, co
     FILE *f;
     FOPEN(f, name, mode);
     if (!f)
-        return EB_ErrorBadParameter;
+        return validate_error(EB_ErrorBadParameter, token, name);
 
     *file = f;
     return EB_ErrorNone;
@@ -310,7 +327,7 @@ static EbErrorType set_cfg_input_file(EbConfig *cfg, const char *token, const ch
 
     if (!value) {
         cfg->input_file = NULL;
-        return EB_ErrorBadParameter;
+        return validate_error(EB_ErrorBadParameter, token, "");
     }
 
     if (!strcmp(value, "stdin") || !strcmp(value, "-")) {
@@ -320,13 +337,13 @@ static EbErrorType set_cfg_input_file(EbConfig *cfg, const char *token, const ch
         FOPEN(cfg->input_file, value, "rb");
 
     if (cfg->input_file == NULL) {
-        return EB_ErrorBadParameter;
+        return validate_error(EB_ErrorBadParameter, token, value);
     }
     if (cfg->input_file != stdin) {
 #ifdef _WIN32
         HANDLE handle = (HANDLE)_get_osfhandle(_fileno(cfg->input_file));
         if (handle == INVALID_HANDLE_VALUE)
-            return EB_ErrorBadParameter;
+            return validate_error(EB_ErrorBadParameter, token, value);
         cfg->input_file_is_fifo = GetFileType(handle) == FILE_TYPE_PIPE;
 #else
         int         fd = fileno(cfg->input_file);
@@ -347,7 +364,7 @@ static EbErrorType set_cfg_stream_file(EbConfig *cfg, const char *token, const c
         cfg->bitstream_file = stdout;
         return EB_ErrorNone;
     }
-    return open_file(&cfg->bitstream_file, value, "wb", token);
+    return open_file(&cfg->bitstream_file, token, value, "wb");
 }
 static EbErrorType set_cfg_error_file(EbConfig *cfg, const char *token, const char *value) {
     if (!strcmp(value, "stderr")) {
@@ -357,16 +374,16 @@ static EbErrorType set_cfg_error_file(EbConfig *cfg, const char *token, const ch
         cfg->error_log_file = stderr;
         return EB_ErrorNone;
     }
-    return open_file(&cfg->error_log_file, value, "w+", token);
+    return open_file(&cfg->error_log_file, token, value, "w+");
 }
 static EbErrorType set_cfg_recon_file(EbConfig *cfg, const char *token, const char *value) {
-    return open_file(&cfg->recon_file, value, "wb", token);
+    return open_file(&cfg->recon_file, token, value, "wb");
 }
 static EbErrorType set_cfg_qp_file(EbConfig *cfg, const char *token, const char *value) {
-    return open_file(&cfg->qp_file, value, "r", token);
+    return open_file(&cfg->qp_file, token, value, "r");
 }
 static EbErrorType set_cfg_stat_file(EbConfig *cfg, const char *token, const char *value) {
-    return open_file(&cfg->stat_file, value, "wb", token);
+    return open_file(&cfg->stat_file, token, value, "wb");
 }
 
 static EbErrorType set_two_pass_stats(EbConfig *cfg, const char *token, const char *value) {
@@ -383,12 +400,10 @@ static EbErrorType set_passes(EbConfig *cfg, const char *token, const char *valu
 
 static EbErrorType set_cfg_frames_to_be_encoded(EbConfig *cfg, const char *token,
                                                 const char *value) {
-    (void)token;
-    return str_to_int64(value, &cfg->frames_to_be_encoded);
+    return str_to_int64(token, value, &cfg->frames_to_be_encoded);
 }
 static EbErrorType set_buffered_input(EbConfig *cfg, const char *token, const char *value) {
-    (void)token;
-    return str_to_int(value, &cfg->buffered_input);
+    return str_to_int(token, value, &cfg->buffered_input);
 }
 static EbErrorType set_cfg_force_key_frames(EbConfig *cfg, const char *token, const char *value) {
     (void)token;
@@ -526,7 +541,7 @@ static EbErrorType set_cdef_enable(EbConfig *cfg, const char *token, const char 
     (void)token;
     // Set CDEF to either DEFAULT or 0
     int32_t     cdef_enable = DEFAULT;
-    EbErrorType err         = str_to_int(value, &cdef_enable);
+    EbErrorType err         = str_to_int(token, value, &cdef_enable);
     cfg->config.cdef_level  = (cdef_enable == 0) ? 0 : DEFAULT;
     return err;
 };
@@ -540,13 +555,11 @@ static EbErrorType set_level(EbConfig *cfg, const char *token, const char *value
     return EB_ErrorNone;
 };
 static EbErrorType set_injector(EbConfig *cfg, const char *token, const char *value) {
-    (void)token;
-    return str_to_uint(value, &cfg->injector);
+    return str_to_uint(token, value, &cfg->injector);
 }
 
 static EbErrorType set_injector_frame_rate(EbConfig *cfg, const char *token, const char *value) {
-    (void)token;
-    return str_to_uint(value, &cfg->injector_frame_rate);
+    return str_to_uint(token, value, &cfg->injector_frame_rate);
 }
 
 static EbErrorType set_cfg_generic_token(EbConfig *cfg, const char *token, const char *value) {
@@ -554,14 +567,7 @@ static EbErrorType set_cfg_generic_token(EbConfig *cfg, const char *token, const
         token += 2;
     if (!strncmp(token, "-", 1))
         token += 1;
-    EbErrorType err = svt_av1_enc_parse_parameter(&cfg->config, token, value);
-    switch (err) {
-    case EB_ErrorNone: return EB_ErrorNone;
-    default:
-        fprintf(stderr, "Error: Invalid parameter '%s' with value '%s'\n", token, value);
-        break;
-    }
-    return err;
+    return validate_error(svt_av1_enc_parse_parameter(&cfg->config, token, value), token, value);
 }
 
 enum CfgType {
