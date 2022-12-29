@@ -75,10 +75,11 @@
 #include "aom_dsp_rtcd.h"
 #include "common_dsp_rtcd.h"
 
-
+#if !OPT_RPS_CONSTR_3
  EbErrorType prediction_structure_group_ctor(
      PredictionStructureGroup* pred_struct_group_ptr,
      struct SequenceControlSet* scs_ptr);
+#endif
 
  /**************************************
   * Defines
@@ -120,8 +121,28 @@ typedef struct logicalProcessorGroup {
 static processorGroup           *lp_group = NULL;
 #endif
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
+#if OPT_RPS_CONSTR_2
+/* count number of refs in a steady state MG*/
+static uint16_t get_num_refs_in_one_mg(uint32_t hierarchical_levels, uint32_t referencing_scheme) {
+
+    if (hierarchical_levels == 0)
+        return 1;
+
+    // All internal layer pics will be used as references.  Only top layer pics can be
+    // not used as refs.
+    uint16_t tot_refs = 1 << (hierarchical_levels - 1);
+
+    // Top layer pics start at pic_idx 0 and every second pic is a top layer pic
+    for (uint16_t pic_idx = 0; pic_idx < (uint32_t)(1 << hierarchical_levels); pic_idx += 2) {
+        tot_refs += svt_aom_is_pic_used_as_ref(hierarchical_levels, hierarchical_levels, pic_idx, referencing_scheme, 0);
+    }
+
+    return tot_refs;
+}
+#else
 extern uint32_t tot_past_refs[];
 uint32_t  get_num_refs_in_one_mg(PredictionStructure *pred_struct_ptr);
+#endif
 
 static const char *get_asm_level_name_str(EbCpuFlags cpu_flags) {
 
@@ -387,9 +408,14 @@ uint32_t get_max_wavefronts(uint32_t width, uint32_t height, uint32_t blk_size) 
 Bool is_pic_width_single_sb(uint32_t sb_size, uint16_t pic_width) {
     return ((pic_width + (sb_size >> 1)) / sb_size) == 1;
 }
+#if OPT_RPS_CONSTR_2
+EbErrorType load_default_buffer_configuration_settings(
+    SequenceControlSet       *scs_ptr) {
+#else
 EbErrorType load_default_buffer_configuration_settings(
     EbEncHandle        *enc_handle,
     SequenceControlSet       *scs_ptr){
+#endif
     EbErrorType           return_error = EB_ErrorNone;
     unsigned int lp_count   = get_num_processors();
     unsigned int core_count = lp_count;
@@ -567,14 +593,19 @@ EbErrorType load_default_buffer_configuration_settings(
         //Pic-Manager will inject one child at a time.
         min_child = 1;
 
+#if !OPT_RPS_CONSTR_2
         //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
         PredictionStructure*pred_struct_ptr = get_prediction_structure(
             enc_handle->scs_instance_array[0]->encode_context_ptr->prediction_structure_group_ptr,
             enc_handle->scs_instance_array[0]->scs_ptr->static_config.pred_structure,
             4,
             scs_ptr->static_config.hierarchical_levels);
-
+#endif
+#if OPT_RPS_CONSTR_2
+        const uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(scs_ptr->static_config.hierarchical_levels, scs_ptr->mrp_ctrls.referencing_scheme) + 1; //+1: to accomodate one for a delayed-I
+#else
         const uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(pred_struct_ptr) + 1; //+1: to accomodate one for a delayed-I
+#endif
         const uint16_t num_ref_lad_mgs = num_ref_from_cur_mg * scs_ptr->lad_mg;
         const uint8_t dpb_frames = REF_FRAMES; // up to dpb_frame refs from prev MGs can be used (AV1 spec allows holding up to 8 frames for references)
         min_ref = (scs_ptr->enable_dec_order) ? dpb_frames + 1 : num_ref_from_cur_mg + num_ref_lad_mgs + dpb_frames;
@@ -2601,6 +2632,25 @@ void set_tf_64x64_params(
 /*
  * Control TF
  */
+#if FIX_LAYER_SIGNAL
+uint8_t svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels, uint8_t type /*I_SLICE, BASE, L1*/, bool direction /*Past, Future*/) {
+    uint8_t max_ref_per;
+    if (type == 0) // I_SLICE
+        max_ref_per = 1 << hierarchical_levels;
+    else if (type == 1) // BASE
+        max_ref_per = direction
+        ? 6
+        : (hierarchical_levels < 5)
+        ? 3
+        : 6;
+    else // L1
+        max_ref_per = hierarchical_levels < 5
+        ? 1
+        : 2;
+
+    return max_ref_per;
+}
+#endif
 #if OPT_LD_TF
 /******************************************************************************
 * tf_ld_controls
@@ -2715,7 +2765,11 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics = 24;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 0, 1));
+#else
         scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 32);
+#endif
         scs_ptr->tf_params_per_type[0].hme_me_level = 0;
         scs_ptr->tf_params_per_type[0].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -2740,8 +2794,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics = 6;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 0));
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 1));
+#else
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), (scs_ptr->static_config.hierarchical_levels < 5) ? 3 : 6);
         scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#endif
         scs_ptr->tf_params_per_type[1].hme_me_level = 0;
         scs_ptr->tf_params_per_type[1].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -2766,8 +2825,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[2].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2;
         scs_ptr->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 2, 0));
+        scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 2, 1));
+#else
         scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2);
         scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2);
+#endif
         scs_ptr->tf_params_per_type[2].hme_me_level = 0;
         scs_ptr->tf_params_per_type[2].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -2793,7 +2857,11 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics = 24;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 0, 1));
+#else
         scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 32);
+#endif
         scs_ptr->tf_params_per_type[0].hme_me_level = 1;
         scs_ptr->tf_params_per_type[0].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -2818,8 +2886,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 3 : 6;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 0));
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 1));
+#else
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), (scs_ptr->static_config.hierarchical_levels < 5) ? 3 : 6);
         scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#endif
         scs_ptr->tf_params_per_type[1].hme_me_level = 1;
         scs_ptr->tf_params_per_type[1].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -2844,8 +2917,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[2].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2;
         scs_ptr->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 2, 0));
+        scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 2, 1));
+#else
         scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2);
         scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2);
+#endif
         scs_ptr->tf_params_per_type[2].hme_me_level = 1;
         scs_ptr->tf_params_per_type[2].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -2870,7 +2948,11 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 8 : 16;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 0, 1));
+#else
         scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+#endif
         scs_ptr->tf_params_per_type[0].hme_me_level = 2;
         scs_ptr->tf_params_per_type[0].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -2895,8 +2977,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 2 : 3;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 0));
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 1));
+#else
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#endif
         scs_ptr->tf_params_per_type[1].hme_me_level = 2;
         scs_ptr->tf_params_per_type[1].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -2921,8 +3008,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[2].num_future_pics = 1;
         scs_ptr->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 2, 0));
+        scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 2, 1));
+#else
         scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+#endif
         scs_ptr->tf_params_per_type[2].hme_me_level = 2;
         scs_ptr->tf_params_per_type[2].half_pel_mode = 1;
         scs_ptr->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -2948,7 +3040,11 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 8 : 16;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 0, 1));
+#else
         scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+#endif
         scs_ptr->tf_params_per_type[0].hme_me_level = 2;
         scs_ptr->tf_params_per_type[0].half_pel_mode = 2;
         scs_ptr->tf_params_per_type[0].quarter_pel_mode = 3;
@@ -2973,8 +3069,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics = (scs_ptr->static_config.hierarchical_levels < 5) ? 1 : 2;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 0));
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 1));
+#else
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#endif
         scs_ptr->tf_params_per_type[1].hme_me_level = 2;
         scs_ptr->tf_params_per_type[1].half_pel_mode = 2;
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 3;
@@ -3003,7 +3104,11 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics = 8;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 0, 1));
+#else
         scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+#endif
         scs_ptr->tf_params_per_type[0].hme_me_level = 2;
         scs_ptr->tf_params_per_type[0].half_pel_mode = 2;
         scs_ptr->tf_params_per_type[0].quarter_pel_mode = 3;
@@ -3028,8 +3133,13 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+#if FIX_LAYER_SIGNAL
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 0));
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs_ptr->static_config.hierarchical_levels, 1, 1));
+#else
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+#endif
         scs_ptr->tf_params_per_type[1].hme_me_level = 2;
         scs_ptr->tf_params_per_type[1].half_pel_mode = 2;
         scs_ptr->tf_params_per_type[1].quarter_pel_mode = 3;
@@ -3230,7 +3340,11 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         break;
 
     case 5:
+#if OPT_RPS_CONSTR_2
+        mrp_ctrl->referencing_scheme          = 2;
+#else
         mrp_ctrl->referencing_scheme          = 0;
+#endif
         mrp_ctrl->sc_base_ref_list0_count     = 2;
         mrp_ctrl->sc_base_ref_list1_count     = 2;
         mrp_ctrl->sc_non_base_ref_list0_count = 1;
@@ -3242,7 +3356,11 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         break;
 #if OPT_LD_MRP2
     case 6:
+#if OPT_RPS_CONSTR_2
+        mrp_ctrl->referencing_scheme = 2;
+#else
         mrp_ctrl->referencing_scheme = 0;
+#endif
         mrp_ctrl->sc_base_ref_list0_count = 2;
         mrp_ctrl->sc_base_ref_list1_count = 2;
         mrp_ctrl->sc_non_base_ref_list0_count = 1;
@@ -3254,7 +3372,11 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         break;
 
     case 7:
+#if OPT_RPS_CONSTR_2
+        mrp_ctrl->referencing_scheme = 2;
+#else
         mrp_ctrl->referencing_scheme = 0;
+#endif
         mrp_ctrl->sc_base_ref_list0_count = 2;
         mrp_ctrl->sc_base_ref_list1_count = 2;
         mrp_ctrl->sc_non_base_ref_list0_count = 1;
@@ -3278,7 +3400,11 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
         break;
 #else
     case 6:
+#if OPT_RPS_CONSTR_2
+        mrp_ctrl->referencing_scheme          = 2;
+#else
         mrp_ctrl->referencing_scheme          = 0;
+#endif
         mrp_ctrl->sc_base_ref_list0_count     = 2;
         mrp_ctrl->sc_base_ref_list1_count     = 2;
         mrp_ctrl->sc_non_base_ref_list0_count = 1;
@@ -3888,6 +4014,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     } else
         scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
 
+    if (scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs_ptr->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ||
+        scs_ptr->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B || scs_ptr->static_config.pass != ENC_SINGLE_PASS || scs_ptr->static_config.enc_mode >= ENC_M10)
+        scs_ptr->enable_dg = 0;
+    else
+        scs_ptr->enable_dg = scs_ptr->static_config.enable_dg;
+
+
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->enable_hbd_mode_decision = 0;
@@ -4076,8 +4209,10 @@ void copy_api_from_app(
         ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la = 0;
     }
     scs_ptr->enable_qp_scaling_flag = 1;
+#if !CLN_REMOVE_REF_CNT
     scs_ptr->max_ref_count = 1;
     scs_ptr->reference_count = 4;
+#endif
 
     // Set Picture Parameters for statistics gathering
     scs_ptr->picture_analysis_number_of_regions_per_width =
@@ -4169,8 +4304,12 @@ void copy_api_from_app(
 
     // Restoration filtering
     scs_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
+
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
+
+    // Dynamic GoP
+    scs_ptr->static_config.enable_dg = ((EbSvtAv1EncConfiguration*)config_struct)->enable_dg;
 
     // Decoder Optimization Flag
     scs_ptr->static_config.fast_decode = ((EbSvtAv1EncConfiguration*)config_struct)->fast_decode;
@@ -4465,23 +4604,35 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         set_max_mini_gop_size(
             enc_handle->scs_instance_array[instance_index]->scs_ptr, mgs_ctls);
     // Initialize the Prediction Structure Group
+#if OPT_RPS_CONSTR_3
+    EB_NO_THROW_NEW(
+        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        svt_aom_prediction_structure_group_ctor);
+#else
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
+#endif
     if (!enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
         return EB_ErrorInsufficientResources;
     }
+#if !OPT_RPS_CONSTR_3
     // Set the Prediction Structure
     enc_handle->scs_instance_array[instance_index]->scs_ptr->pred_struct_ptr = get_prediction_structure(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.pred_structure,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->max_ref_count,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->max_temporal_layers);
-
+#endif
+#if OPT_RPS_CONSTR_2
+    return_error = load_default_buffer_configuration_settings(
+        enc_handle->scs_instance_array[instance_index]->scs_ptr);
+#else
     return_error = load_default_buffer_configuration_settings(
         enc_handle,
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
+#endif
 
     svt_av1_print_lib_params(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);

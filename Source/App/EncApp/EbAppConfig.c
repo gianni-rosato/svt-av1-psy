@@ -163,6 +163,7 @@
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define ENABLE_RESTORATION_TOKEN "--enable-restoration"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
+#define DG_ENABLE_NEW_TOKEN "--enable-dg"
 #define FAST_DECODE_TOKEN "--fast-decode"
 #define HDR_INPUT_NEW_TOKEN "--enable-hdr"
 #define ADAPTIVE_QP_ENABLE_NEW_TOKEN "--aq-mode"
@@ -601,6 +602,9 @@ static void set_enable_restoration_flag(const char *value, EbConfig *cfg) {
 };
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_mfmv = strtol(value, NULL, 0);
+};
+static void set_enable_dg_flag(const char *value, EbConfig *cfg) {
+    cfg->config.enable_dg = (uint8_t)strtol(value, NULL, 0);
 };
 static void set_fast_decode_flag(const char *value, EbConfig *cfg) {
     cfg->config.fast_decode = (Bool)strtol(value, NULL, 0);
@@ -1283,6 +1287,10 @@ ConfigEntry config_entry_specific[] = {
      "Motion Field Motion Vector control, default is -1 [-1: auto, 0-1]",
      set_enable_mfmv_flag},
     {SINGLE_INPUT,
+     DG_ENABLE_NEW_TOKEN,
+     "Dynamic GoP control, default is 1 [0-1]",
+     set_enable_dg_flag},
+    {SINGLE_INPUT,
      FAST_DECODE_TOKEN,
      "Fast Decoder levels, default is 0 [0-1]",
      set_fast_decode_flag},
@@ -1588,6 +1596,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, ENABLE_RESTORATION_TOKEN, "EnableRestoration", set_enable_restoration_flag},
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTPLModel", set_enable_tpl_la},
     {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv", set_enable_mfmv_flag},
+    {SINGLE_INPUT, DG_ENABLE_NEW_TOKEN, "EnableDg", set_enable_dg_flag},
     {SINGLE_INPUT, FAST_DECODE_TOKEN, "FastDecode", set_fast_decode_flag},
     {SINGLE_INPUT, TUNE_TOKEN, "Tune", set_tune},
     //   ALT-REF filtering support
@@ -2479,7 +2488,6 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     };
     const size_t rc_size  = sizeof(rc) / sizeof(rc[0]);
     int          enc_mode = 0;
-    int          ip       = -1;
     // Read required inputs to decide on the number of passes and check the validity of their ranges
     if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0) {
         for (size_t i = 0; i < rc_size; i++) {
@@ -2534,6 +2542,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         find_token(argc, argv, KEYINT_TOKEN, config_string) == 0) {
         const bool               is_keyint  = find_token(argc, argv, KEYINT_TOKEN, NULL) == 0;
         const int                max_keyint = 2 * ((1 << 30) - 1);
+        int                      ip         = -1;
         EbSvtAv1EncConfiguration c;
         c.multiply_keyint = false;
 
@@ -2580,13 +2589,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     }
     // Determine the number of passes in CRF mode
     if (rc_mode == 0) {
-        if (ip > -1 && ip < 16 && passes != 1) {
+        if (passes != 1) {
             passes = 1;
-            fprintf(
-                stderr,
-                "[SVT-Warning]: Multipass CRF is not supported for Intra_period %d. Switching to "
-                "1-pass encoding\n\n",
-                ip);
+            fprintf(stderr,
+                    "[SVT-Warning]: Multipass CRF is not supported. Switching to "
+                    "1-pass encoding\n\n");
         }
         multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
     }

@@ -49,6 +49,27 @@ Bool is_delayed_intra(PictureParentControlSet *pcs);
 void svt_aom_set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level,
                               uint8_t bit_depth);
 
+#if FIX_LAYER_SIGNAL
+uint8_t svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels,
+                                      uint8_t  type /*I_SLICE, BASE, L1*/,
+                                      bool     direction /*Past, Future*/);
+#endif
+#if OPT_RPS_CONSTR_3
+EbErrorType svt_aom_prediction_structure_group_ctor(
+    PredictionStructureGroup *pred_struct_group_ptr);
+#endif
+#if OPT_RPS_CONSTR_2
+bool svt_aom_is_pic_used_as_ref(unsigned hierarchical_levels, unsigned temporal_layer,
+                                unsigned picture_index, unsigned referencing_scheme,
+                                bool is_overlay);
+#endif
+#if OPT_RPS_CONSTR
+typedef struct DpbEntry {
+    uint64_t picture_number;
+    uint64_t decode_order;
+    uint8_t  temporal_layer_index;
+} DpbEntry;
+#endif
 /**************************************
  * Context
  **************************************/
@@ -76,9 +97,10 @@ typedef struct PictureDecisionContext {
         // When transition_present is set to 1, different action(s) will be taken to mimic an I_SLICE (decrease the QP, better INTRA search level,
         // shut depth-removal, ..). The QP action is not applied if a P.
     // Dynamic GOP
+#if !FTR_PRED_STRUCT_CLASSIFIER
     uint32_t ttl_region_activity_cost[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
                                      [MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
-
+#endif
     uint32_t total_number_of_mini_gops;
 
     uint32_t mini_gop_start_index[MINI_GOP_WINDOW_MAX_COUNT];
@@ -95,6 +117,10 @@ typedef struct PictureDecisionContext {
     uint32_t mini_gop_group_faded_out_pictures_count[MINI_GOP_MAX_COUNT];
     uint8_t  lay0_toggle; //3 way toggle 0->1->2
     uint8_t  lay1_toggle; //2 way toggle 0->1
+#if OPT_RPS_CONSTR
+    uint8_t  cut_short_ra_mg;
+    DpbEntry dpb[REF_FRAMES];
+#endif
     Bool mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t last_i_picture_sc_class0;
     uint8_t last_i_picture_sc_class1;
@@ -120,6 +146,16 @@ typedef struct PictureDecisionContext {
     uint32_t ref_order_hint[REF_FRAMES]; // spec 6.8.2
     uint64_t sframe_poc;
     int32_t  sframe_due; // The flag indicates whether the next ARF will be made an s-frame
+#if FTR_PRED_STRUCT_CLASSIFIER
+    uint8_t *sixteenth_b64_buffer;
+    uint32_t sixteenth_b64_buffer_stride;
+    uint64_t norm_dist;
+    uint8_t  perc_cplx;
+    uint8_t  perc_active;
+#if FTR_PRED_STRUCT_CLASSIFIER2
+    int16_t mv_in_out_count;
+#endif
+#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

@@ -1194,11 +1194,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
 #endif
     }
-
+#if FIX_LAYER_SIGNAL
+    if (ppcs->hierarchical_levels == (EB_MAX_TEMPORAL_LAYERS - 1)) {
+        pcs_ptr->pic_block_based_depth_refinement_level = MAX(
+            0, pcs_ptr->pic_block_based_depth_refinement_level - 1);
+    }
+#else
     if (scs_ptr->max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1)) {
         pcs_ptr->pic_block_based_depth_refinement_level = MAX(
             0, pcs_ptr->pic_block_based_depth_refinement_level - 1);
     }
+#endif
     if (enc_mode <= ENC_M1)
         pcs_ptr->pic_depth_early_exit_th = 0;
     else

@@ -143,7 +143,11 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
  ************************************************/
 void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                           MeContext *me_context_ptr, EbInputResolution input_resolution) {
+#if FIX_LAYER_SIGNAL
+    uint32_t hierarchical_levels = pcs_ptr->hierarchical_levels;
+#else
     uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#endif
     // Set the min and max ME search area
     if (pcs_ptr->sc_class1) {
         if (pcs_ptr->enc_mode <= ENC_M2) {
@@ -495,7 +499,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 
     EncMode         enc_mode         = pcs_ptr->enc_mode;
     EbInputResolution input_resolution = scs_ptr->input_resolution;
+#if FIX_LAYER_SIGNAL
+    const uint32_t hierarchical_levels = pcs_ptr->hierarchical_levels;
+#else
     const uint32_t hierarchical_levels = scs_ptr->static_config.hierarchical_levels;
+#endif
     // Set ME search area
     set_me_search_params(scs_ptr, pcs_ptr, context_ptr->me_context_ptr, input_resolution);
 

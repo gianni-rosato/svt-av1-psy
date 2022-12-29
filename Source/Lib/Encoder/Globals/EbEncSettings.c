@@ -535,6 +535,15 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->enable_dg > 1) {
+        SVT_ERROR(
+            "Instance %u: Invalid dynamic GoP flag [0 - 1], your "
+            "input: %d\n",
+            channel_number + 1,
+            config->enable_dg);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->fast_decode > 1) {
         SVT_ERROR(
             "Instance %u: Invalid fast decode flag [0 - 1, 0 for no decoder optimization], your "
@@ -738,6 +747,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             channel_number + 1);
     }
 
+    if (config->pass > 1 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
+        SVT_WARN("Instance %u: CRF does not support Multi-pass. Switching to single pass\n",
+                 channel_number + 1);
+        config->pass = ENC_SINGLE_PASS;
+    }
     // color description
     if (config->color_primaries == 0 || config->color_primaries == 3 ||
         (config->color_primaries >= 13 && config->color_primaries <= 21) ||
@@ -863,6 +877,16 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if EN_WARNING_FOR_MISMATCH
+    if (config->encoder_bit_depth == 10 &&
+        (config->stat_report == 1 || config->recon_enabled == 1) && config->enc_mode >= ENC_M10) {
+        SVT_WARN(
+            "If encoding 10-bit video using any preset greater than M9 there will be a mismatch "
+            "between the encoded files if either --enable-stat-report is 0 or 1 or a recon file "
+            "(-o) "
+            "is or is not specified in the command line\n");
+    }
+#endif
 
     return return_error;
 }
@@ -923,6 +947,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->cdef_level                   = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv                  = DEFAULT;
+    config_ptr->enable_dg                    = 1;
     config_ptr->fast_decode                  = 0;
     config_ptr->encoder_color_format         = EB_YUV420;
     // Rate control options
@@ -1883,6 +1908,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"fast-decode", &config_struct->fast_decode},
         {"enable-force-key-frames", &config_struct->force_key_frames},
         {"enable-qm", &config_struct->enable_qm},
+        {"enable-dg", &config_struct->enable_dg},
     };
     const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
 

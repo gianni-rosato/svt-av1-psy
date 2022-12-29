@@ -62,6 +62,10 @@ uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_mode_decision, uint8_t e
             bypass_encdec = 1;
     } else {
         // 10bit settings
+        // If the preset is changed for this feature, the warning in svt_av1_verify_settings in
+        // EbEncSetting.c must also be changed to reflect the change in preset
+        // This feature causes a mismatch between the files encoded for 10bit when bypass_encdec
+        // is 1 if recon is enabled/disabled or stat-report is enabled/disabled
         if (enc_mode <= ENC_M9)
             bypass_encdec = 0;
         else

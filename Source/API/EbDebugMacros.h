@@ -50,6 +50,20 @@ extern "C" {
 #define OPT_LD_MRP2             1 // Optimize MRP in low delay mode by changing the references
 #define OPT_CBR                 1 // Improve CBR by limiting the QP decrease between two base pictures
 #endif
+#define OPT_RPS_CONSTR             1 // Construct RPS in decode order; implement DPB at PD
+#if OPT_RPS_CONSTR
+#define OPT_RPS_CONSTR_2           1
+#define OPT_RPS_CONSTR_3           1
+#define FIX_INCOMP_MG_2            1 // Use 3L for incomplete MGs for all RA cases
+#define CLN_REMOVE_REF_CNT         1 // Remove scs->reference_count
+#endif
+
+#define FIX_LAYER_SIGNAL           1
+#define FTR_PRED_STRUCT_CLASSIFIER 1
+#define FTR_PRED_STRUCT_CLASSIFIER2 1
+
+#define FIX_2009                   1 // fix for issue 2009, fixes mismatch between recon flag ON/OFF
+#define EN_WARNING_FOR_MISMATCH    1 // create a new warning for mismatch that is expected for recon ON/OFF and stat-report ON/OFF for 10bit path
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

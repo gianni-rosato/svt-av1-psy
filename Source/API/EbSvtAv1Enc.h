@@ -113,8 +113,10 @@ struct EbSvtAv1MasteringDisplayInfo {
 typedef struct PredictionStructureConfigEntry {
     uint32_t temporal_layer_index;
     uint32_t decode_order;
-    int32_t  ref_list0[REF_LIST_MAX_DEPTH];
-    int32_t  ref_list1[REF_LIST_MAX_DEPTH];
+#if !OPT_RPS_CONSTR_3
+    int32_t ref_list0[REF_LIST_MAX_DEPTH];
+    int32_t ref_list1[REF_LIST_MAX_DEPTH];
+#endif
 } PredictionStructureConfigEntry;
 
 // super-res modes
@@ -646,6 +648,7 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int enable_restoration_filtering;
+
     /* motion field motion vector
     *
     *  Default is -1. */
@@ -890,6 +893,13 @@ typedef struct EbSvtAv1EncConfiguration {
      * factor >> 7 (/ 128) is the actual value in float
      */
     int32_t lambda_scale_factors[SVT_AV1_FRAME_UPDATE_TYPES];
+
+    /* Dynamic gop
+    *
+    * 0 = disable Dynamic GoP
+    * 1 = enable Dynamic GoP
+    *  Default is 1. */
+    Bool enable_dg;
 } EbSvtAv1EncConfiguration;
 
 /**

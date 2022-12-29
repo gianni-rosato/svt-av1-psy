@@ -151,7 +151,10 @@ typedef struct EncodeContext {
     EncMode  enc_mode;
 
     // Dynamic GOP
-    uint32_t         previous_mini_gop_hierarchical_levels;
+    uint32_t previous_mini_gop_hierarchical_levels;
+#if FTR_PRED_STRUCT_CLASSIFIER
+    uint64_t mini_gop_cnt_per_gop;
+#endif
     EbObjectWrapper *previous_picture_control_set_wrapper_ptr;
     uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames
 
