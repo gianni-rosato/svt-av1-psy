@@ -21,7 +21,7 @@ echo "Checking for trailing spaces" >&2
 # Test only "new" commits, that is, commits that are not upstream on
 # the default branch.
 if git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git HEAD; then
-    FETCH_HEAD=FETCH_HEAD
+    FETCH_HEAD=$(git rev-parse FETCH_HEAD)
 else
     # in case the fetch failed, maybe internet issues, try to resolve a local default branch's ref, checked-out or not
     FETCH_HEAD=$(git rev-parse refs/remotes/origin/HEAD)
