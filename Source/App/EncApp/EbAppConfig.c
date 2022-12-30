@@ -439,8 +439,12 @@ static EbErrorType set_cfg_force_key_frames(EbConfig *cfg, const char *token, co
     fkf.frames = (uint64_t *)calloc(sizeof(*fkf.frames), fkf.count);
     if (!fkf.frames)
         goto err;
-    cfg->forced_keyframes        = fkf;
-    cfg->config.force_key_frames = true;
+    for (size_t i = 0; i < cfg->forced_keyframes.count; ++i)
+        free(cfg->forced_keyframes.specifiers[i]);
+    free(cfg->forced_keyframes.specifiers);
+    free(cfg->forced_keyframes.frames);
+    cfg->forced_keyframes = fkf;
+    svt_av1_enc_parse_parameter(&cfg->config, "enable-force-key-frames", "true");
     return EB_ErrorNone;
 err:
     fputs("Error parsing forced key frames list\n", stderr);
