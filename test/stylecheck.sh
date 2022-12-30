@@ -9,6 +9,8 @@ if ! type git > /dev/null 2>&1; then
     exit 1
 fi
 
+git config --global --add safe.directory "$REPO_DIR" || true
+
 git -C "$REPO_DIR" fetch --all -pf > /dev/null 2>&1 || true
 
 echo "Checking for tabs" >&2
