@@ -2268,7 +2268,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     }
 
     if (find_token(argc, argv, PASSES_TOKEN, config_string) == 0) {
-        passes = strtol(config_string, NULL, 0);
+        if (str_to_int(PASSES_TOKEN, config_string, &passes))
+            return 0;
         if (passes == 0 || passes > 2) {
             fprintf(stderr,
                     "[SVT-Error]: The number of passes has to be within the range [1,2], 2 being "
