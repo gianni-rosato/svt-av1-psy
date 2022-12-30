@@ -7,7 +7,7 @@ if ! type git > /dev/null 2>&1; then
     exit 1
 fi
 
-git fetch --all -pf || true
+git fetch --all -pf > /dev/null 2>&1 || true
 
 echo "Checking for tabs" >&2
 ! git --no-pager grep -InP "\t" -- . ':!third_party/**/*' || ret=1
@@ -20,7 +20,7 @@ echo "Checking for trailing spaces" >&2
 
 # Test only "new" commits, that is, commits that are not upstream on
 # the default branch.
-if git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git HEAD; then
+if git fetch -q "${CI_MERGE_REQUEST_PROJECT_URL:-https://gitlab.com/AOMediaCodec/SVT-AV1.git}" "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-HEAD}"; then
     FETCH_HEAD=$(git rev-parse FETCH_HEAD)
 else
     # in case the fetch failed, maybe internet issues, try to resolve a local default branch's ref, checked-out or not
@@ -77,4 +77,45 @@ while read -r i; do
 done << EOF
 $(git rev-list HEAD "^$FETCH_HEAD")
 EOF
-exit ${ret:-0}
+
+if ! type python3 > /dev/null 2>&1; then
+    echo "Warning: python3 not found, skipping clang-format-diff check" >&2
+    exit "${ret:-0}"
+fi
+
+MY_DIR=$(cd -P -- "$(dirname -- "$(command -v -- "$0")")" && pwd -P || exit 1)
+CLANG_FORMAT_URL=https://raw.githubusercontent.com/llvm/llvm-project/main/clang/tools/clang-format/clang-format-diff.py
+
+if type /usr/share/clang/clang-format-diff.py > /dev/null 2>&1; then
+    CLANG_FORMAT_DIFF="/usr/share/clang/clang-format-diff.py"
+else
+    if ! type "$MY_DIR/clang-format-diff.py" > /dev/null 2>&1; then
+        curl -ls -o "$MY_DIR/clang-format-diff.py" "$CLANG_FORMAT_URL" ||
+            wget -q -O "$MY_DIR/clang-format-diff.py" "$CLANG_FORMAT_URL"
+    fi
+    CLANG_FORMAT_DIFF="$MY_DIR/clang-format-diff.py"
+fi
+
+if ! type "$CLANG_FORMAT_DIFF" > /dev/null 2>&1; then
+    echo "ERROR: clang-format-diff.py not found, can't continue" >&2
+    exit 1
+fi
+
+diff_output=$(git diff "$FETCH_HEAD" | python3 "$CLANG_FORMAT_DIFF" -p1)
+if [ -n "$diff_output" ]; then
+    cat >&2 << 'FOE'
+clang-format check failed!
+Please run inside a posix compatible shell with git and amend or commit the
+results or pipe the output of this script into `git apply -p0`
+git apply -p0 <<EOF
+FOE
+    cat << FOE
+$diff_output
+FOE
+    cat >&2 << 'FOE'
+EOF
+FOE
+    ret=1
+fi
+
+exit "${ret:-0}"

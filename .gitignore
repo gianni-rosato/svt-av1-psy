@@ -15,6 +15,7 @@
 Bin
 Build
 build
+test/clang-format-diff.py
 test/vectors/
 test/docs/
 !Build/linux/build.sh
