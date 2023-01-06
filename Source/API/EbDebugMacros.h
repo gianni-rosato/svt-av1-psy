@@ -56,6 +56,7 @@ extern "C" {
 #define OPT_RPS_CONSTR_3           1
 #define FIX_INCOMP_MG_2            1 // Use 3L for incomplete MGs for all RA cases
 #define CLN_REMOVE_REF_CNT         1 // Remove scs->reference_count
+#define FIX_OVERLAY                1 // Fix overlay issue when OPT_RPS_CONSTR changes calling sequence
 #endif
 
 #define FIX_LAYER_SIGNAL           1

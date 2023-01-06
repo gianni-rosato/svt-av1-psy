@@ -8155,7 +8155,9 @@ void* picture_decision_kernel(void *input_ptr) {
                             if (pred_position_ptr->temporal_layer_index == 0 && pcs->slice_type != I_SLICE) {
                                 pcs->is_alt_ref = 1;
                                 pcs->frm_hdr.show_frame = 0;
+#if !FIX_OVERLAY
                                 ((PictureParentControlSet*)encode_ctx->pre_assignment_buffer[pic_idx - 1]->object_ptr)->has_show_existing = FALSE;
+#endif
                             }
                             // release the overlay PCS for non alt ref pictures. First picture does not have overlay PCS
                             else if (pcs->picture_number) {
@@ -8360,6 +8362,11 @@ void* picture_decision_kernel(void *input_ptr) {
                         PictureParentControlSet* pcs_1 = ctx->mg_pictures_array_disp_order[pic_i];
                         pcs_1->first_frame_in_minigop = !pic_i;
                         set_gf_group_param(pcs_1);
+#if FIX_OVERLAY
+                        if (pcs_1->is_alt_ref) {
+                            ctx->mg_pictures_array_disp_order[pic_i - 1]->has_show_existing = FALSE;
+                        }
+#endif
                     }
 #endif
 
