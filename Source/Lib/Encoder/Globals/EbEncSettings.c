@@ -380,6 +380,41 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+    if (scs_ptr->luma_y_dc_qindex_offset < -64 || scs_ptr->luma_y_dc_qindex_offset > 63) {
+        SVT_ERROR(
+            "Instance %u : Invalid luma_y_dc_qindex_offset. luma_y_dc_qindex_offset "
+            "must be [-64 - 63]\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (scs_ptr->chroma_u_dc_qindex_offset < -64 || scs_ptr->chroma_u_dc_qindex_offset > 63) {
+        SVT_ERROR(
+            "Instance %u : Invalid chroma_u_dc_qindex_offset. chroma_u_dc_qindex_offset "
+            "must be [-64 - 63]\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (scs_ptr->chroma_u_ac_qindex_offset < -64 || scs_ptr->chroma_u_ac_qindex_offset > 63) {
+        SVT_ERROR(
+            "Instance %u : Invalid chroma_u_ac_qindex_offset. chroma_u_ac_qindex_offset "
+            "must be [-64 - 63]\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (scs_ptr->chroma_v_dc_qindex_offset < -64 || scs_ptr->chroma_v_dc_qindex_offset > 63) {
+        SVT_ERROR(
+            "Instance %u : Invalid chroma_v_dc_qindex_offset. chroma_v_dc_qindex_offset "
+            "must be [-64 - 63]\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (scs_ptr->chroma_v_ac_qindex_offset < -64 || scs_ptr->chroma_v_ac_qindex_offset > 63) {
+        SVT_ERROR(
+            "Instance %u : Invalid chroma_v_ac_qindex_offset. chroma_v_ac_qindex_offset "
+            "must be [-64 - 63]\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
 
     for (uint8_t i = 0; i < config->hierarchical_levels + 1; ++i) {
         if (config->chroma_qindex_offsets[i] < -64 || config->chroma_qindex_offsets[i] > 63) {
