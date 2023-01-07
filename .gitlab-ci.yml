@@ -29,7 +29,6 @@ include:
   - remote: 'https://gitlab.com/AOMediaCodec/aom-testing/-/raw/ci-build-testing/.gitlab/workflows/nightly/.gitlab-ci.yml'
     rules:
       - if: $NIGHTLY != null
-      
   - local: /.gitlab/workflows/common/.gitlab-ci.yml
   - remote: 'https://gitlab.com/AOMediaCodec/aom-testing/-/raw/ci-build-testing/.gitlab/workflows/weekend-testing/.gitlab-ci.yml'
     rules:
