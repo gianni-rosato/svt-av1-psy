@@ -4281,15 +4281,15 @@ void copy_api_from_app(
     memcpy(scs_ptr->static_config.chroma_qindex_offsets, config_struct->chroma_qindex_offsets,
         MAX_TEMPORAL_LAYERS * sizeof(int32_t));
     scs_ptr->static_config.luma_y_dc_qindex_offset =
-      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->luma_y_dc_qindex_offset, 63));
+      ((EbSvtAv1EncConfiguration*)config_struct)->luma_y_dc_qindex_offset;
     scs_ptr->static_config.chroma_u_dc_qindex_offset =
-      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_u_dc_qindex_offset, 63));
+      ((EbSvtAv1EncConfiguration*)config_struct)->chroma_u_dc_qindex_offset;
     scs_ptr->static_config.chroma_u_ac_qindex_offset =
-      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_u_ac_qindex_offset, 63));
+      ((EbSvtAv1EncConfiguration*)config_struct)->chroma_u_ac_qindex_offset;
     scs_ptr->static_config.chroma_v_dc_qindex_offset =
-      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_v_dc_qindex_offset, 63));
+      ((EbSvtAv1EncConfiguration*)config_struct)->chroma_v_dc_qindex_offset;
     scs_ptr->static_config.chroma_v_ac_qindex_offset =
-      MAX(-64, MIN(((EbSvtAv1EncConfiguration*)config_struct)->chroma_v_ac_qindex_offset, 63));
+      ((EbSvtAv1EncConfiguration*)config_struct)->chroma_v_ac_qindex_offset;
 
     memcpy(scs_ptr->static_config.lambda_scale_factors, config_struct->lambda_scale_factors,
         SVT_AV1_FRAME_UPDATE_TYPES * sizeof(int32_t));
