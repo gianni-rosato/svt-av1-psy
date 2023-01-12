@@ -1856,6 +1856,17 @@ static void process_block_lbd_avx2(int h, int w, uint8_t *buff_lbd_start, uint32
     }
 }
 
+static INLINE __m256i __m256i_div_epi32_pd(const __m256i *a, const __m256i *b) {
+    __m256d d_f1 = _mm256_div_pd(_mm256_cvtepi32_pd(_mm256_castsi256_si128(*a)),
+                                 _mm256_cvtepi32_pd(_mm256_castsi256_si128(*b)));
+    __m256d d_f2 = _mm256_div_pd(_mm256_cvtepi32_pd(_mm256_extracti128_si256(*a, 0x1)),
+                                 _mm256_cvtepi32_pd(_mm256_extracti128_si256(*b, 0x1)));
+    __m128i i_f1 = _mm256_cvtpd_epi32(_mm256_floor_pd(d_f1));
+    __m128i i_f2 = _mm256_cvtpd_epi32(_mm256_floor_pd(d_f2));
+
+    return _mm256_insertf128_si256(_mm256_castsi128_si256(i_f1), i_f2, 0x1);
+}
+
 static void process_block_hbd_avx2(int h, int w, uint16_t *buff_hbd_start, uint32_t *accum,
                                    uint16_t *count, uint32_t stride) {
     int i, j, k;
@@ -1874,8 +1885,8 @@ static void process_block_hbd_avx2(int h, int w, uint16_t *buff_hbd_start, uint3
             __m256i tmp_b = _mm256_add_epi32(accum_b, _mm256_srli_epi32(count_b, 1));
 
             //accum[k] + (count[k] >> 1))/ count[k]
-            tmp_a          = __m256i_div_epi32(&tmp_a, &count_a);
-            tmp_b          = __m256i_div_epi32(&tmp_b, &count_b);
+            tmp_a          = __m256i_div_epi32_pd(&tmp_a, &count_a);
+            tmp_b          = __m256i_div_epi32_pd(&tmp_b, &count_b);
             __m256i tmp_ab = _mm256_packs_epi32(tmp_a, tmp_b);
 
             tmp_ab = _mm256_permutevar8x32_epi32(tmp_ab, _mm256_setr_epi32(0, 1, 4, 5, 2, 3, 6, 7));

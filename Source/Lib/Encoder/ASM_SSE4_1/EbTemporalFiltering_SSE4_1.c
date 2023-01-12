@@ -1944,6 +1944,15 @@ static void process_block_lbd_sse4_1(int h, int w, uint8_t *buff_lbd_start, uint
     }
 }
 
+static INLINE __m128i __mm_div_epi32_pd(const __m128i *a, const __m128i *b) {
+    __m128d d_f1 = _mm_div_pd(_mm_cvtepi32_pd(*a), _mm_cvtepi32_pd(*b));
+    __m128d d_f2 = _mm_div_pd(_mm_cvtepi32_pd(_mm_srli_si128(*a, 8)),
+                              _mm_cvtepi32_pd(_mm_srli_si128(*b, 8)));
+    d_f1         = _mm_floor_pd(d_f1);
+    d_f2         = _mm_floor_pd(d_f2);
+    return _mm_unpacklo_epi64(_mm_cvtpd_epi32(d_f1), _mm_cvtpd_epi32(d_f2));
+}
+
 static void process_block_hbd_sse4_1(int h, int w, uint16_t *buff_hbd_start, uint32_t *accum,
                                      uint16_t *count, uint32_t stride) {
     int i, j, k;
@@ -1962,8 +1971,8 @@ static void process_block_hbd_sse4_1(int h, int w, uint16_t *buff_hbd_start, uin
             __m128i tmp_b = _mm_add_epi32(accum_b, _mm_srli_epi32(count_b, 1));
 
             //accum[k] + (count[k] >> 1))/ count[k]
-            tmp_a          = __mm_div_epi32(&tmp_a, &count_a);
-            tmp_b          = __mm_div_epi32(&tmp_b, &count_b);
+            tmp_a          = __mm_div_epi32_pd(&tmp_a, &count_a);
+            tmp_b          = __mm_div_epi32_pd(&tmp_b, &count_b);
             __m128i tmp_ab = _mm_packs_epi32(tmp_a, tmp_b), _mm_setzero_si128();
 
             _mm_storeu_si128((__m128i *)(buff_hbd_start + pos), tmp_ab);
