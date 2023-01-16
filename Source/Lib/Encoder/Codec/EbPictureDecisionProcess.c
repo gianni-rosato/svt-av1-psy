@@ -2644,7 +2644,7 @@ we do not break the GOP.
 /*
  * Return true if a picture is used as a reference, false otherwise.
  *
- * Whether a picture is used as a reference depends on its position in the hierarchical strucutre, and on the referencing_scheme used.
+ * Whether a picture is used as a reference depends on its position in the hierarchical structure, and on the referencing_scheme used.
  * referencing_scheme = 0 means that no top-layer pictures will be used as a reference
  * referencing_scheme = 1 means that all top-layer pictures may be used as a reference
  * referencing_scheme = 2 means that some top-layer pictures will be used as a reference (depending on their position in the MG)
@@ -2681,7 +2681,6 @@ bool svt_aom_is_pic_used_as_ref(uint32_t hierarchical_levels, uint32_t temporal_
 }
 
 static void set_ref_list_counts(PictureParentControlSet* pcs) {
-
     if (pcs->slice_type == I_SLICE) {
         pcs->ref_list0_count = 0;
         pcs->ref_list1_count = 0;
@@ -2716,8 +2715,15 @@ static void set_ref_list_counts(PictureParentControlSet* pcs) {
                 breakout_flag = true;
                 break;
             }
+#if !OPT_RPS_REFS
             list0_count++;
+#endif
         }
+#if OPT_RPS_REFS
+        // if no matching reference were found, increase the count
+        if (!breakout_flag)
+            list0_count++;
+#endif
     }
     pcs->ref_list0_count =
         MIN(list0_count,
@@ -2731,12 +2737,28 @@ static void set_ref_list_counts(PictureParentControlSet* pcs) {
     }
 
     // Get list1 count
+#if OPT_RPS_REFS
+    uint8_t list1_count = 0;
+#else
     uint8_t list1_count = 1;
+#endif
     breakout_flag = false;
-    // When have duplicate refs in same list or get invalid ref, cap the count
+    // When have duplicate refs in both lists or get invalid ref, cap the count
+#if OPT_RPS_REFS
+    for (REF_FRAME_MINUS1 i = BWD; i <= ALT; i++) {
+#else
     for (REF_FRAME_MINUS1 i = ALT2; i <= ALT; i++) {
+#endif
         if (breakout_flag) break;
+#if OPT_RPS_REFS
+        // BWD and LAST are allowed to have matching references, as in base layer
+        for (REF_FRAME_MINUS1 j = (i == BWD) ?  LAST2 : LAST ; j < i; j++) {
+#else
         for (REF_FRAME_MINUS1 j = BWD; j < i; j++) {
+#endif
+
+            if (j <= GOLD && j + 1 > pcs->ref_list0_count)
+                continue;
             /*
             TODO: [PW] Add a check so that if we try accessing a top-layer pic when top-layer pics
             are not allowed (e.g. ref scheme 0) then we breakout.  A check to ensure that the picture
@@ -2753,8 +2775,15 @@ static void set_ref_list_counts(PictureParentControlSet* pcs) {
                 breakout_flag = 1;
                 break;
             }
+#if !OPT_RPS_REFS
             list1_count++;
+#endif
         }
+#if OPT_RPS_REFS
+        // if no matching reference were found, increase the count
+        if (!breakout_flag)
+            list1_count++;
+#endif
     }
     pcs->ref_list1_count =
         MIN(list1_count,

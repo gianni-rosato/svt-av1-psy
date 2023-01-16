@@ -99,7 +99,7 @@ typedef struct VqCtrls {
 typedef struct MrpCtrls {
 #if OPT_RPS_CONSTR_2
     /*
-     * Referencing_scheme [0, 2]
+     * Referencing_scheme [0, 2] used only in 3L-5L
      * referencing_scheme = 0 means that no top - layer pictures will be used as a reference
      * referencing_scheme = 1 means that all top - layer pictures may be used as a reference
      * referencing_scheme = 2 means that some top - layer pictures will be used as a reference(depending on their position in the MG)

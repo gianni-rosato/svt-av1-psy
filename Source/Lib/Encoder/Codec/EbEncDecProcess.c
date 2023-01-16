@@ -2645,18 +2645,20 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt,
         depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 10:
-        depth_refinement_ctrls->enabled                    = 1;
-        depth_refinement_ctrls->parent_to_current_th       = 5;
-        depth_refinement_ctrls->sub_to_current_th          = -50;
-        depth_refinement_ctrls->cost_band_based_modulation = 1;
-        depth_refinement_ctrls->max_cost_multiplier        = 800;
-        depth_refinement_ctrls->max_band_cnt               = 4;
-        depth_refinement_ctrls->decrement_per_band[0]      = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[1]      = MAX_SIGNED_VALUE;
-        depth_refinement_ctrls->decrement_per_band[2]      = 10;
-        depth_refinement_ctrls->decrement_per_band[3]      = 5;
-        depth_refinement_ctrls->up_to_2_depth              = 1;
-        depth_refinement_ctrls->limit_4x4_depth            = 15;
+        depth_refinement_ctrls->enabled                         = 1;
+        depth_refinement_ctrls->parent_to_current_th            = 5;
+        depth_refinement_ctrls->sub_to_current_th               = -50;
+        depth_refinement_ctrls->cost_band_based_modulation      = 1;
+        depth_refinement_ctrls->max_cost_multiplier             = 800;
+        depth_refinement_ctrls->max_band_cnt                    = 4;
+        depth_refinement_ctrls->decrement_per_band[0]           = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[1]           = MAX_SIGNED_VALUE;
+        depth_refinement_ctrls->decrement_per_band[2]           = 10;
+        depth_refinement_ctrls->decrement_per_band[3]           = 5;
+        depth_refinement_ctrls->up_to_2_depth                   = 1;
+        depth_refinement_ctrls->limit_4x4_depth                 = 15;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_th     = 20;
+        depth_refinement_ctrls->sub_to_current_pd0_coeff_offset = 20;
         break;
     case 11:
         depth_refinement_ctrls->enabled                         = 1;
