@@ -1008,7 +1008,7 @@ extern "C" {
     void svt_aom_highbd_paeth_predictor_8x8_c(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int bd);
     RTCD_EXTERN void(*svt_aom_highbd_paeth_predictor_8x8)(uint16_t *dst, ptrdiff_t y_stride, const uint16_t *above, const uint16_t *left, int bd);
     uint64_t svt_aom_sum_squares_i16_c(const int16_t *src, uint32_t N);
-    RTCD_EXTERN uint64_t(*aom_sum_squares_i16)(const int16_t *src, uint32_t N);
+    RTCD_EXTERN uint64_t(*svt_aom_sum_squares_i16)(const int16_t *src, uint32_t N);
 
     uint8_t svt_aom_cdef_find_dir_c(const uint16_t *img, int32_t stride, int32_t *var, int32_t coeff_shift);
     uint8_t svt_aom_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *var, int32_t coeff_shift);

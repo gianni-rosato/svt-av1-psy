@@ -454,8 +454,8 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
         svt_aom_subtract_block(
             bh, bw, residual0, bw, src_buf /*src->buf*/, src_pic->stride_y /*src->stride*/, p0, bw);
     }
-    int64_t sign_limit = ((int64_t)aom_sum_squares_i16(residual0, N) -
-                          (int64_t)aom_sum_squares_i16(residual1, N)) *
+    int64_t sign_limit = ((int64_t)svt_aom_sum_squares_i16(residual0, N) -
+                          (int64_t)svt_aom_sum_squares_i16(residual1, N)) *
         (1 << WEDGE_WEIGHT_BITS) / 2;
     int16_t *ds = residual0;
 
