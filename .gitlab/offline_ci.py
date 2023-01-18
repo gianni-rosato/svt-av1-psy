@@ -21,7 +21,7 @@ from io import IOBase
 from os import environ, getgid, getuid
 from pathlib import Path
 from shlex import quote as shquote
-from sys import platform
+from sys import platform, stderr
 from time import monotonic
 from typing import Any, Dict, List, Set, Tuple, Union
 from urllib import request
@@ -734,6 +734,7 @@ async def main():
                             "If a project name and pipeline ID are provided, "
                             "failed jobs will be pulled from there",
                             epilog="If no arguments are passed, it will run all known jobs")
+    parser.add_argument("--list", action="store_true", help="List all jobs")
     parser.add_argument("--project", default=DEFAULT_PROJECT_NAME, type=str,
                         help="The project name (e.g. AOMediaCodec/SVT-AV1)")
     parser.add_argument("--pipeline", default=0,
@@ -744,6 +745,12 @@ async def main():
                         "overrides --project and --pipeline")
     parser.add_argument("jobs", nargs="*", help="The jobs to run")
     args = parser.parse_args()
+
+    if args.list:
+        print("Known jobs:", file=stderr)
+        for job in JOBS:
+            print(f"{shquote(str(job))}")
+        return 0
 
     job_queue = Queue()
     finished_flag = Event()  # Event to signal that all jobs have been queued
