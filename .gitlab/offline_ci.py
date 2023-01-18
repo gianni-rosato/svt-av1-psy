@@ -51,9 +51,6 @@ FAILED: Set[str] = set()  # list of failed jobs
 FINISHED: Set[str] = set()  # list of finished jobs
 QUEUED: Set[str] = set()  # list of queued jobs
 MAX_RUNNERS: int = 5
-JOBS_QUEUE: Queue = Queue()  # Queue of job names
-
-FINISHED_QUEUEING: Event  # Event to signal that all jobs have been queued
 
 for directory in (FAILED_LOG_DIR, RUNNING_LOG_DIR, FINISHED_LOG_DIR, ARTIFACT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
@@ -82,7 +79,7 @@ class Job(Dict):
         self.event = Event()
         self["dependents"]: Dict[Job] = {}
         self["needs"]: Dict[Job] = {}
-        self["image"] = None
+        self["image"] = ""
         self.artifacts = []
         self["variables"] = {}
         self.target_os: OS = OS.UNKNOWN
@@ -108,10 +105,18 @@ def get_api_url(project_name: str) -> str:
 
 def pull_json(project_name: str) -> dict:
     """Pull the json from the API"""
-    with open("temp.json", "rb") if Path("temp.json").exists() else request.urlopen(
+    json_cache: Path = BASE_DIR / "cache.json"
+    json_cache.parent.mkdir(parents=True, exist_ok=True)
+    # if the cache is older than a day, delete it
+    if json_cache.exists() and \
+            (datetime.now() - datetime.fromtimestamp(json_cache.stat().st_mtime)).days > 1:
+        json_cache.unlink()
+    with json_cache.open("rb") if json_cache.exists() else request.urlopen(
             f"{get_api_url(project_name)}/ci/lint?include_merged_yaml=true&include_jobs=true"
     ) as response:
-        return json.loads(response.read().decode('utf-8'))
+        if not json_cache.exists():
+            json_cache.write_bytes(response.read())
+        return json.loads(json_cache.read_text())
 
 
 async def run_subprocess(prog, *args: List, log: IOBase = None, **kwargs) -> Process:
@@ -218,8 +223,10 @@ def setup_job(job: dict, yml: dict) -> Job:
     ret["dependents"] = {}
     if ret["needs"] is None:
         ret["needs"] = {}
-    ret["image"] = str(yml_job["image"]).removeprefix(
-        DOCKER_REPO + '/') if 'image' in yml_job.keys() else None
+    image = str(yml_job.get("image", ""))
+    if image.startswith(DOCKER_REPO + '/'):
+        image = image[len(DOCKER_REPO + '/'):]
+    ret["image"] = image
     if 'artifacts' in yml_job.keys() and 'paths' in yml_job["artifacts"].keys():
         ret.artifacts.extend(yml_job["artifacts"]["paths"])
 
@@ -229,15 +236,18 @@ def setup_job(job: dict, yml: dict) -> Job:
     for key, value in VAR_OVERRIDES.items():
         if key in ret["variables"]:
             ret["variables"][key] = value
-    if not 'parallel' in yml_job.keys():
+    if not 'parallel' in yml_job.keys() or ':' not in name:
         return ret
 
     # Then, for each of those, try to find a match from matrix_values
     # to get the correct variable names
     yml_matrix: List[Dict[str, Union[List[str, int], str, int]]
                      ] = yml_job["parallel"]["matrix"]
-    matrix_values: List[str] = [splitted.strip() for splitted in name.split(':')[1].strip(
-    ).removeprefix('[').removesuffix(']').split(', ')]
+    vars_str = name.split(':')[1].strip()
+    vars_str = vars_str[1 if vars_str.startswith('[') else 0:
+                        -1 if vars_str.endswith(']') else len(vars_str)]
+    matrix_values: List[str] = [splitted.strip()
+                                for splitted in vars_str.split(', ')]
 
     # First, we need to expand the matrix
     yml_matrix = expand_matrix(yml_matrix)
@@ -320,7 +330,7 @@ def write_script_sh(file: Path, before: List[str], script: List[str], after: Lis
                           ('_after_script', after), ('', base_script)]:
         path = Path(str(file) + suff + '.sh')
         path.write_text("#!/usr/bin/sh\n"
-                        "set -ex\n" + "\n".join(content), encoding="utf-8", newline="\n")
+                        "set -ex\n" + "\n".join(content), encoding="utf-8")
         path.chmod(0o755)
 
 
@@ -331,7 +341,7 @@ def write_script_ps1(file: Path, before: List[str], script: List[str], after: Li
                           ('_after_script', after), ('', base_script)]:
         path = Path(str(file) + suff + '.ps1')
         path.write_text("#!/usr/bin/env pwsh\n" +
-                        "\n".join(content), encoding="utf-8", newline="\n")
+                        "\n".join(content), encoding="utf-8")
         path.chmod(0o755)
 
 
@@ -520,7 +530,10 @@ def extract_proj_name_pipe_id(url: str) -> Tuple[str, int]:
     # e.g. "https://gitlab.com/AOMediaCodec/SVT-AV1/-/pipelines/744815437"
     # -> ("AOMediaCodec/SVT-AV1", 744815437)
     parts = url.split("/-/pipelines/")
-    project_name = parts[0].removeprefix("https://gitlab.com/")
+    project_name = parts[0]
+    if project_name.startswith("https://gitlab.com/"):
+        project_name = project_name[len("https://gitlab.com/"):]
+
     pipeline_id = int(parts[1])
     return (project_name, pipeline_id)
 
@@ -563,10 +576,10 @@ def check_deps(job_name: str) -> DepState:
     return DepState.RUNNING
 
 
-async def start_runner(num: int):
+async def start_runner(job_queue: Queue, num: int):
     """Starts a single runner"""
     while True:
-        job_name = await JOBS_QUEUE.get()
+        job_name = await job_queue.get()
         QUEUED.remove(job_name)
         with SCRIPT_LOG.open("a") as log:
             print(f"Runner {num} got {job_name}", file=log, flush=True)
@@ -583,22 +596,22 @@ async def start_runner(num: int):
                 FAILED.add(failure)
         FINISHED.add(job_name)
         RUNNING.remove(job_name)
-        JOBS_QUEUE.task_done()
+        job_queue.task_done()
 
 
-async def start_runners():
+async def start_runners(job_queue: Queue, finished_flag: Event):
     """Starts all runners"""
     runners = []
     for i in range(MAX_RUNNERS):
-        runner = create_task(start_runner(i), name=f"runner-{i}")
+        runner = create_task(start_runner(job_queue, i), name=f"runner-{i}")
         runners.append(runner)
 
     # wait a bit for the jobs to be submitted
     await sleep(1)
 
     time_start = monotonic()
-    await FINISHED_QUEUEING.wait()
-    await JOBS_QUEUE.join()
+    await finished_flag.wait()
+    await job_queue.join()
     time_end = monotonic()
 
     runner: Task
@@ -615,7 +628,7 @@ async def start_runners():
     print(f"Script finished in {time_end - time_start} seconds")
 
 
-async def submit_job(job_name: str):
+async def submit_job(job_queue: Queue, job_name: str):
     """Submits a job to the queue, submits needs first"""
     if job_name in FINISHED | FAILED | QUEUED:
         return
@@ -623,14 +636,15 @@ async def submit_job(job_name: str):
     if not job["needs"]:
         # no deps, submit directly
         QUEUED.add(job_name)
-        JOBS_QUEUE.put_nowait(job_name)
+        job_queue.put_nowait(job_name)
         print_status()
         return
     deps = frozenset(job["needs"].keys())
     dep_tasks: List[Task] = []
     # submit deps first
     for dep in deps:
-        dep_tasks.append(create_task(submit_job(dep), name=f"submit-{dep}"))
+        dep_tasks.append(create_task(submit_job(
+            job_queue, dep), name=f"submit-{dep}"))
     await asyncio.gather(*dep_tasks, return_exceptions=True)
     # wait for deps to finish
     await asyncio.gather(*[dep.event.wait() for dep in job["needs"].values()])
@@ -638,18 +652,19 @@ async def submit_job(job_name: str):
         return
 
     # submit this job
-    JOBS_QUEUE.put_nowait(job_name)
+    job_queue.put_nowait(job_name)
     QUEUED.add(job_name)
     print_status()
 
 
-async def run_specific_jobs(name_list: Set[str]) -> int:
+async def run_specific_jobs(job_queue: Queue, finished_flag: Event, name_list: Set[str]) -> int:
     """Runs a list of jobs"""
     jobs = []
     for job in set(name_list):
-        jobs.append(create_task(submit_job(job), name=f"submit-{job}"))
+        jobs.append(create_task(submit_job(
+            job_queue, job), name=f"submit-{job}"))
     await asyncio.gather(*jobs, return_exceptions=True)
-    FINISHED_QUEUEING.set()
+    finished_flag.set()
 
     for job in name_list:
         if job in FAILED:
@@ -659,15 +674,17 @@ async def run_specific_jobs(name_list: Set[str]) -> int:
     return 0
 
 
-async def run_all_jobs(project_name: str = DEFAULT_PROJECT_NAME,
-                       pipeline_id: int = 0, scope: str = "failed") -> int:
+async def run_all_jobs(job_queue: Queue, finished_flag: Event,
+                       project_name: str = DEFAULT_PROJECT_NAME, pipeline_id: int = 0,
+                       scope: str = "failed") -> int:
     """Runs all jobs that are either in the pipeline or all known jobs"""
     if pipeline_id != 0:
-        return await run_specific_jobs(retrieve_jobs(project_name, pipeline_id, scope))
+        return await run_specific_jobs(job_queue, finished_flag,
+                                       retrieve_jobs(project_name, pipeline_id, scope))
 
     # If no pipeline, run all known jobs
-    return await run_specific_jobs(
-        (key for key, job in JOBS.items() if len(job["dependents"]) == 0))
+    return await run_specific_jobs(job_queue, finished_flag,
+                                   (key for key, job in JOBS.items() if not job["dependents"]))
 
 
 def get_hash() -> int:
@@ -685,20 +702,24 @@ def format_set_print(in_set: set, num: int = 7, char_limit: int = 31) -> str:
 def print_status():
     """Prints the status of the pipeline"""
     print(f"{datetime.now()}\n"
-          f"Queued  [{JOBS_QUEUE.qsize():02}]: {format_set_print(QUEUED)}\n"
+          f"Queued  [{len(QUEUED):02}]: {format_set_print(QUEUED)}\n"
           f"Running [{len(RUNNING):02}]: {format_set_print(RUNNING)}\n"
           f"Failed  [{len(FAILED):02}]: {format_set_print(FAILED)}\n"
           f"Finished[{len(FINISHED):02}]: {format_set_print(FINISHED, 5, 20)}\n")
 
 
-async def create_submitter(project: str, pipeline: int, jobs: Set[str]) -> Task:
+async def create_submitter(job_queue: Queue, finished_flag: Event, project: str, pipeline: int,
+                           jobs: Set[str]) -> Task:
     """Creates a setter for the jobs"""
     if project and pipeline != 0:
-        submitter = create_task(run_all_jobs(project, pipeline, "failed"))
+        submitter = create_task(run_all_jobs(job_queue,
+                                             finished_flag, project, pipeline, "failed"))
     elif jobs:
-        submitter = create_task(run_specific_jobs(jobs))
+        submitter = create_task(run_specific_jobs(
+            job_queue, finished_flag, jobs))
     else:
-        submitter = create_task(run_all_jobs())
+        submitter = create_task(run_all_jobs(
+            job_queue, finished_flag))
     return submitter
 
 
@@ -724,17 +745,16 @@ async def main():
     parser.add_argument("jobs", nargs="*", help="The jobs to run")
     args = parser.parse_args()
 
-    global JOBS_QUEUE, FINISHED_QUEUEING
-    JOBS_QUEUE = Queue()
-    FINISHED_QUEUEING = Event()
-    runners = create_task(start_runners())
+    job_queue = Queue()
+    finished_flag = Event()  # Event to signal that all jobs have been queued
+    runners = create_task(start_runners(job_queue, finished_flag))
 
     if args.pipeline_url:
         args.project, args.pipeline = extract_proj_name_pipe_id(
             args.pipeline_url)
 
     submitter = create_task(create_submitter(
-        args.project, args.pipeline, args.jobs))
+        job_queue, finished_flag, args.project, args.pipeline, args.jobs))
 
     await submitter
     await runners
