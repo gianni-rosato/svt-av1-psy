@@ -22,7 +22,7 @@ from pathlib import Path
 from shlex import quote as shquote
 from sys import platform
 from time import monotonic
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple, Union
 from urllib import request
 from urllib.parse import quote as urlquote
 
@@ -50,7 +50,7 @@ FAILED: Set[str] = set()  # list of failed jobs
 FINISHED: Set[str] = set()  # list of finished jobs
 QUEUED: Set[str] = set()  # list of queued jobs
 MAX_RUNNERS: int = 5
-JOBS_QUEUE: Queue[str] = Queue()
+JOBS_QUEUE: Queue = Queue()  # Queue of job names
 
 for directory in (FAILED_LOG_DIR, RUNNING_LOG_DIR, FINISHED_LOG_DIR, ARTIFACT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
@@ -139,9 +139,9 @@ def handle_job_keys(job: dict, ret: Job):
         ret[key] = value
 
 
-def expand_dict(input_dict: Dict[str, list | str | int]) -> List[Dict[str, str | int]]:
+def expand_dict(input_dict: Dict[str, Union[list, str, int]]) -> List[Dict[str, Union[str, int]]]:
     """Expand a dict for variables"""
-    ret: List[Dict[str, str | int]] = []
+    ret: List[Dict[str, Union[str, int]]] = []
     num_lists = [isinstance(value, list)
                  for value in input_dict.values()].count(True)
     if num_lists == 0:
@@ -185,9 +185,10 @@ def expand_dict(input_dict: Dict[str, list | str | int]) -> List[Dict[str, str |
     return ret
 
 
-def expand_matrix(matrix: List[Dict[str, list | str | int]]) -> List[Dict[str, str | int]]:
+def expand_matrix(matrix: List[Dict[str, Union[list, str, int]]]
+                  ) -> List[Dict[str, Union[str, int]]]:
     """Expand a matrix"""
-    ret: List[Dict[str, str | int]] = []
+    ret: List[Dict[str, Union[str, int]]] = []
     for item in matrix:
         ret.extend(expand_dict(item))
     return ret
@@ -231,7 +232,7 @@ def setup_job(job: dict, yml: dict) -> Job:
 
     # Then, for each of those, try to find a match from matrix_values
     # to get the correct variable names
-    yml_matrix: List[Dict[str, List[str, int] | str | int]
+    yml_matrix: List[Dict[str, Union[List[str, int], str, int]]
                      ] = yml_job["parallel"]["matrix"]
     matrix_values: List[str] = [splitted.strip() for splitted in name.split(':')[1].strip(
     ).removeprefix('[').removesuffix(']').split(', ')]
@@ -532,7 +533,7 @@ def extract_proj_name_pipe_id(url: str) -> Tuple[str, int]:
     return (project_name, pipeline_id)
 
 
-def retrieve_jobs(project_name: str, pipeline_id: int, scope: str = "") -> list[str]:
+def retrieve_jobs(project_name: str, pipeline_id: int, scope: str = "") -> List[str]:
     """Retrieves the names of all jobs in a pipeline"""
     url = f"{get_api_url(project_name)}/pipelines/{pipeline_id}/jobs?per_page=100"
     if scope:
