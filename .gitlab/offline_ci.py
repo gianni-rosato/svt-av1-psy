@@ -11,6 +11,7 @@ import asyncio
 import json
 import shutil
 import tarfile
+from argparse import ArgumentParser
 from asyncio import (Event, Queue, Task, create_subprocess_exec, create_task,
                      sleep)
 from asyncio.subprocess import DEVNULL, PIPE, STDOUT, Process
@@ -52,6 +53,8 @@ QUEUED: Set[str] = set()  # list of queued jobs
 MAX_RUNNERS: int = 5
 JOBS_QUEUE: Queue = Queue()  # Queue of job names
 
+FINISHED_QUEUEING: Event  # Event to signal that all jobs have been queued
+
 for directory in (FAILED_LOG_DIR, RUNNING_LOG_DIR, FINISHED_LOG_DIR, ARTIFACT_DIR):
     directory.mkdir(parents=True, exist_ok=True)
 
@@ -76,7 +79,6 @@ class Job(Dict):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.state = Job.State.PENDING
         self.event = Event()
         self["dependents"]: Dict[Job] = {}
         self["needs"]: Dict[Job] = {}
@@ -454,19 +456,11 @@ async def run_job_epilog(job: Job, project_dir: Path, safe_name: str, ret: int =
     if ret != 0:
         # if it failed, move the log to the failed log folder
         # but leave the build directory intact for debugging
-        RUNNING.remove(test_name)
-        FAILED.add(test_name)
         running_log_file.replace(failed_log_file)
-        failures = generate_dependentent_set(test_name)
-        for failure in failures:
-            FAILED.add(failure)
-        print_status()
         return ret
     # if it succeeded, move the log to the finished log folder
     # and remove the build directory
-    RUNNING.remove(test_name)
-    FINISHED.add(test_name)
-    print_status()
+    job.event.set()
     running_log_file.replace(finished_log_file)
     pack_artifacts(project_dir, job.artifacts)
     return clear_build(project_dir, ret)
@@ -474,8 +468,6 @@ async def run_job_epilog(job: Job, project_dir: Path, safe_name: str, ret: int =
 
 async def run_job(test_name: str):
     """Runs a single job"""
-    RUNNING.add(test_name)
-    print_status()
     job: dict = JOBS[test_name]
     safe_name: str = urlquote(test_name, safe='')
     project_dir = BASE_DIR / "builds" / safe_name
@@ -578,12 +570,19 @@ async def start_runner(num: int):
         QUEUED.remove(job_name)
         with SCRIPT_LOG.open("a") as log:
             print(f"Runner {num} got {job_name}", file=log, flush=True)
-        print_status()
         with SCRIPT_LOG.open("a") as log:
             print(f"Runner {num} running {job_name}", file=log, flush=True)
+        RUNNING.add(job_name)
+        print_status()
         if await run_job(job_name):
             with SCRIPT_LOG.open("a") as log:
                 print(f"Job {job_name} failed", file=log, flush=True)
+            FAILED.add(job_name)
+            failures = generate_dependentent_set(job_name)
+            for failure in failures:
+                FAILED.add(failure)
+        FINISHED.add(job_name)
+        RUNNING.remove(job_name)
         JOBS_QUEUE.task_done()
 
 
@@ -594,10 +593,11 @@ async def start_runners():
         runner = create_task(start_runner(i), name=f"runner-{i}")
         runners.append(runner)
 
-    # wait 1 seconds for jobs to start being submitted
+    # wait a bit for the jobs to be submitted
     await sleep(1)
 
     time_start = monotonic()
+    await FINISHED_QUEUEING.wait()
     await JOBS_QUEUE.join()
     time_end = monotonic()
 
@@ -605,6 +605,8 @@ async def start_runners():
     for runner in runners:
         runner.cancel()
     await asyncio.gather(*runners, return_exceptions=True)
+
+    print_status()
 
     with SCRIPT_LOG.open("a") as log:
         print(f"Failed jobs: {FAILED}", file=log, flush=True)
@@ -625,19 +627,14 @@ async def submit_job(job_name: str):
         print_status()
         return
     deps = frozenset(job["needs"].keys())
-    dep_tasks = []
+    dep_tasks: List[Task] = []
     # submit deps first
     for dep in deps:
         dep_tasks.append(create_task(submit_job(dep), name=f"submit-{dep}"))
     await asyncio.gather(*dep_tasks, return_exceptions=True)
-    if deps & FAILED:
-        return
     # wait for deps to finish
-    while deps & QUEUED or deps & RUNNING:
-        await sleep(1)
-
-    # second check before submitting
-    if job_name in FINISHED | FAILED | QUEUED:
+    await asyncio.gather(*[dep.event.wait() for dep in job["needs"].values()])
+    if deps & FAILED:
         return
 
     # submit this job
@@ -652,6 +649,7 @@ async def run_specific_jobs(name_list: Set[str]) -> int:
     for job in set(name_list):
         jobs.append(create_task(submit_job(job), name=f"submit-{job}"))
     await asyncio.gather(*jobs, return_exceptions=True)
+    FINISHED_QUEUEING.set()
 
     for job in name_list:
         if job in FAILED:
@@ -693,14 +691,51 @@ def print_status():
           f"Finished[{len(FINISHED):02}]: {format_set_print(FINISHED, 5, 20)}\n")
 
 
+async def create_submitter(project: str, pipeline: int, jobs: Set[str]) -> Task:
+    """Creates a setter for the jobs"""
+    if project and pipeline != 0:
+        submitter = create_task(run_all_jobs(project, pipeline, "failed"))
+    elif jobs:
+        submitter = create_task(run_specific_jobs(jobs))
+    else:
+        submitter = create_task(run_all_jobs())
+    return submitter
+
+
 async def main():
     """Main function"""
     if not read_json():
         print("Invalid yaml")
         return
 
-    submitter = create_task(run_all_jobs())
+    parser = ArgumentParser("offline CI",
+                            description="Runs CI jobs offline." +
+                            "If a project name and pipeline ID are provided, "
+                            "failed jobs will be pulled from there",
+                            epilog="If no arguments are passed, it will run all known jobs")
+    parser.add_argument("--project", default=DEFAULT_PROJECT_NAME, type=str,
+                        help="The project name (e.g. AOMediaCodec/SVT-AV1)")
+    parser.add_argument("--pipeline", default=0,
+                        type=int, help="The pipeline id")
+    parser.add_argument("--pipeline-url", default=None, type=str,
+                        help="The pipeline url "
+                        "(e.g. https://gitlab.com/AOMediaCodec/SVT-AV1/-/pipelines/12345678), "
+                        "overrides --project and --pipeline")
+    parser.add_argument("jobs", nargs="*", help="The jobs to run")
+    args = parser.parse_args()
+
+    global JOBS_QUEUE, FINISHED_QUEUEING
+    JOBS_QUEUE = Queue()
+    FINISHED_QUEUEING = Event()
     runners = create_task(start_runners())
+
+    if args.pipeline_url:
+        args.project, args.pipeline = extract_proj_name_pipe_id(
+            args.pipeline_url)
+
+    submitter = create_task(create_submitter(
+        args.project, args.pipeline, args.jobs))
+
     await submitter
     await runners
     return 0
