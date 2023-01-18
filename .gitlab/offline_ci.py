@@ -18,7 +18,7 @@ from asyncio.subprocess import DEVNULL, PIPE, STDOUT, Process
 from datetime import datetime
 from enum import Enum
 from io import IOBase
-from os import getgid, getuid
+from os import environ, getgid, getuid
 from pathlib import Path
 from shlex import quote as shquote
 from sys import platform
@@ -532,8 +532,8 @@ def retrieve_jobs(project_name: str, pipeline_id: int, scope: str = "") -> List[
         url += f"&scope={scope}"
 
     req = request.Request(url)
-    # if gitlab_token:
-    #     req.add_header('PRIVATE-TOKEN', gitlab_token)
+    if environ.get("CI_JOB_TOKEN", None):
+        req.add_header('PRIVATE-TOKEN', environ.get("CI_JOB_TOKEN", None))
 
     job_names = []
     next_page = "1"
