@@ -73,7 +73,16 @@ endfunction()
 # writes it to $local_path.
 function(download_test_file file_url file_checksum local_path)
     message("Downloading ${file_url} ...")
-    file(DOWNLOAD "${file_url}" "${local_path}" SHOW_PROGRESS
-        EXPECTED_HASH SHA1=${file_checksum})
+    string(CONCAT https_file_url "https://" ${file_url})
+    string(CONCAT http_file_url "http://" ${file_url})
+    file(DOWNLOAD "${https_file_url}" "${local_path}" SHOW_PROGRESS
+        EXPECTED_HASH SHA1=${file_checksum}
+        STATUS download_status)
+    list(GET download_status 0 download_status_code)
+    list(GET download_status 1 download_status_string)
+    if(NOT download_status_code EQUAL 0)
+        file(DOWNLOAD "${http_file_url}" "${local_path}" SHOW_PROGRESS
+            EXPECTED_HASH SHA1=${file_checksum})
+    endif()
     message("Download of ${file_url} complete.")
 endfunction()

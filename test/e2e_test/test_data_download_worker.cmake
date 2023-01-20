@@ -21,7 +21,7 @@ if(NOT SVT_AV1_E2E_ROOT
 endif()
 # cmake-format: on
 
-set(SVT_AV1_TEST_DATA_URL "http://storage.googleapis.com/aom-test-data")
+set(SVT_AV1_TEST_DATA_URL "storage.googleapis.com/aom-test-data")
 
 if(NOT SVT_AV1_STORE_PATH)
     set(SVT_AV1_STORE_PATH "$ENV{SVT_AV1_TEST_VECTOR_PATH}")
