@@ -13,6 +13,7 @@
 #define EbAppConfig_h
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "EbSvtAv1Enc.h"
 
@@ -209,7 +210,10 @@ typedef struct EbConfig {
     uint32_t input_padded_height;
     // -1 indicates unknown (auto-detect at earliest opportunity)
     // auto-detect is performed on load for files and at end of stream for pipes
-    int64_t   frames_to_be_encoded;
+    int64_t frames_to_be_encoded;
+    int64_t frames_to_be_skipped;
+    bool    need_to_skip;
+
     int32_t   frames_encoded;
     int32_t   buffered_input;
     uint8_t **sequence_buffer;
