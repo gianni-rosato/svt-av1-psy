@@ -20,6 +20,7 @@ from io import IOBase
 from os import environ, getgid, getuid
 from pathlib import Path
 from shlex import quote as shquote
+from ast import literal_eval
 from sys import platform, stderr
 from time import monotonic
 from typing import Any, Dict, List, Set, Tuple, Union
@@ -731,10 +732,39 @@ def display_menu():
     """Displays the menu"""
     stderrprint("Menu:")
     stderrprint("\t1. Run all Tests")
-    stderrprint("\t2. Run Specific Test")
+    stderrprint("\t2. Run Specific Test(s)")
     stderrprint("\t3. Run Failed Pipeline Tests")
     stderrprint("\t4. List all Tests")
     stderrprint("\t5. Exit")
+
+
+def shunquote(string: str) -> str:
+    """Reverses the effect of shlex.quote"""
+    if string.find("'") != -1:
+        try:
+            return str(literal_eval(string))
+        except SyntaxError:
+            pass
+    return string
+
+
+def read_tests_from_user() -> Set[str]:
+    """Reads test names from user input"""
+    jobs = set()
+    while True:
+        try:
+            user_input = input("Enter Test Name: ")
+        except EOFError:
+            break
+        if user_input in ('done', ''):
+            break
+        user_input = shunquote(user_input)
+        if user_input not in JOBS:
+            stderrprint(
+                f"Invalid test name '{user_input}' entered, please try again")
+            continue
+        jobs.add(user_input)
+    return jobs
 
 
 async def main():
@@ -749,25 +779,34 @@ async def main():
 
     while True:
         display_menu()
-        choice = input("\nEnter your selection: ")
+        try:
+            choice = input("\nEnter your selection: ")
+        except EOFError:
+            stderrprint("Exiting...")
+            return 0
 
         if choice == "1":
             stderrprint("\nYou selected Option 1.")
             break
         if choice == "2":
             stderrprint("\nYou selected Option 2.")
-            user_input = input("Enter Test Name: ")
-            jobs += [user_input]
+            stderrprint(
+                "Enter test names, one per line. Enter 'done' or control+D when finished.")
+            jobs.extend(read_tests_from_user())
             break
         if choice == "3":
             user_input = input("Enter Pipeline URL: ")
-            project, pipeline = extract_proj_name_pipe_id(user_input)
+            try:
+                project, pipeline = extract_proj_name_pipe_id(user_input)
+            except (ValueError, IndexError):
+                stderrprint("Invalid URL")
+                continue
             break
         if choice == "4":
             stderrprint("Listing all jobs: \n")
             for job in JOBS:
                 print(f"{shquote(str(job))}")
-            break
+            return 0
         if choice == "5":
             stderrprint("Exiting...")
             return 0
