@@ -11,7 +11,6 @@ import asyncio
 import json
 import shutil
 import tarfile
-from argparse import ArgumentParser
 from asyncio import (Event, Queue, Task, create_subprocess_exec, create_task,
                      sleep)
 from asyncio.subprocess import DEVNULL, PIPE, STDOUT, Process
@@ -21,7 +20,7 @@ from io import IOBase
 from os import environ, getgid, getuid
 from pathlib import Path
 from shlex import quote as shquote
-from sys import platform, stderr
+from sys import platform
 from time import monotonic
 from typing import Any, Dict, List, Set, Tuple, Union
 from urllib import request
@@ -723,45 +722,59 @@ async def create_submitter(job_queue: Queue, finished_flag: Event, project: str,
     return submitter
 
 
+def display_menu():
+    """Displays the menu"""
+    print("Menu:")
+    print("\t1. Run all Tests")
+    print("\t2. Run Specific Test")
+    print("\t3. Run Failed Pipeline Tests")
+    print("\t4. List all Tests")
+    print("\t5. Exit")
+
+
 async def main():
     """Main function"""
     if not read_json():
         print("Invalid yaml")
         return
+    user_input = ""
+    pipeline = 0
+    jobs = []
+    project = DEFAULT_PROJECT_NAME
 
-    parser = ArgumentParser("offline CI",
-                            description="Runs CI jobs offline." +
-                            "If a project name and pipeline ID are provided, "
-                            "failed jobs will be pulled from there",
-                            epilog="If no arguments are passed, it will run all known jobs")
-    parser.add_argument("--list", action="store_true", help="List all jobs")
-    parser.add_argument("--project", default=DEFAULT_PROJECT_NAME, type=str,
-                        help="The project name (e.g. AOMediaCodec/SVT-AV1)")
-    parser.add_argument("--pipeline", default=0,
-                        type=int, help="The pipeline id")
-    parser.add_argument("--pipeline-url", default=None, type=str,
-                        help="The pipeline url "
-                        "(e.g. https://gitlab.com/AOMediaCodec/SVT-AV1/-/pipelines/12345678), "
-                        "overrides --project and --pipeline")
-    parser.add_argument("jobs", nargs="*", help="The jobs to run")
-    args = parser.parse_args()
+    while True:
+        display_menu()
+        choice = input("\nEnter your selection: ")
 
-    if args.list:
-        print("Known jobs:", file=stderr)
-        for job in JOBS:
-            print(f"{shquote(str(job))}")
-        return 0
+        if choice == "1":
+            print("\nYou selected Option 1.")
+            break
+        if choice == "2":
+            print("\nYou selected Option 2.")
+            user_input = input("Enter Test Name: ")
+            jobs += [user_input]
+            break
+        if choice == "3":
+            user_input = input("Enter Pipeline URL: ")
+            project, pipeline = extract_proj_name_pipe_id(user_input)
+            break
+        if choice == "4":
+            print("Listing all jobs: \n")
+            for job in JOBS:
+                print(f"{shquote(str(job))}")
+            break
+        if choice == "5":
+            print("Exiting...")
+            return 0
+        print("Invalid selection. Please try again.")
 
     job_queue = Queue()
     finished_flag = Event()  # Event to signal that all jobs have been queued
     runners = create_task(start_runners(job_queue, finished_flag))
 
-    if args.pipeline_url:
-        args.project, args.pipeline = extract_proj_name_pipe_id(
-            args.pipeline_url)
-
+    print(job_queue, finished_flag, project, pipeline, jobs)
     submitter = create_task(create_submitter(
-        job_queue, finished_flag, args.project, args.pipeline, args.jobs))
+        job_queue, finished_flag, project, pipeline, jobs))
 
     await submitter
     await runners
@@ -772,6 +785,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 # TODO: add "clean" option to delete the REPO_DIR / {artifacts,logs,failed_logs}
