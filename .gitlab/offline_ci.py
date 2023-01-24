@@ -20,7 +20,7 @@ from io import IOBase
 from os import environ, getgid, getuid
 from pathlib import Path
 from shlex import quote as shquote
-from sys import platform
+from sys import platform, stderr
 from time import monotonic
 from typing import Any, Dict, List, Set, Tuple, Union
 from urllib import request
@@ -722,20 +722,25 @@ async def create_submitter(job_queue: Queue, finished_flag: Event, project: str,
     return submitter
 
 
+def stderrprint(*args, **kwargs):
+    """Prints to stderr"""
+    print(*args, file=stderr, **kwargs)
+
+
 def display_menu():
     """Displays the menu"""
-    print("Menu:")
-    print("\t1. Run all Tests")
-    print("\t2. Run Specific Test")
-    print("\t3. Run Failed Pipeline Tests")
-    print("\t4. List all Tests")
-    print("\t5. Exit")
+    stderrprint("Menu:")
+    stderrprint("\t1. Run all Tests")
+    stderrprint("\t2. Run Specific Test")
+    stderrprint("\t3. Run Failed Pipeline Tests")
+    stderrprint("\t4. List all Tests")
+    stderrprint("\t5. Exit")
 
 
 async def main():
     """Main function"""
     if not read_json():
-        print("Invalid yaml")
+        stderrprint("Invalid yaml")
         return
     user_input = ""
     pipeline = 0
@@ -747,10 +752,10 @@ async def main():
         choice = input("\nEnter your selection: ")
 
         if choice == "1":
-            print("\nYou selected Option 1.")
+            stderrprint("\nYou selected Option 1.")
             break
         if choice == "2":
-            print("\nYou selected Option 2.")
+            stderrprint("\nYou selected Option 2.")
             user_input = input("Enter Test Name: ")
             jobs += [user_input]
             break
@@ -759,20 +764,20 @@ async def main():
             project, pipeline = extract_proj_name_pipe_id(user_input)
             break
         if choice == "4":
-            print("Listing all jobs: \n")
+            stderrprint("Listing all jobs: \n")
             for job in JOBS:
                 print(f"{shquote(str(job))}")
             break
         if choice == "5":
-            print("Exiting...")
+            stderrprint("Exiting...")
             return 0
-        print("Invalid selection. Please try again.")
+        stderrprint("Invalid selection. Please try again.")
 
     job_queue = Queue()
     finished_flag = Event()  # Event to signal that all jobs have been queued
     runners = create_task(start_runners(job_queue, finished_flag))
 
-    print(job_queue, finished_flag, project, pipeline, jobs)
+    stderrprint(job_queue, finished_flag, project, pipeline, jobs)
     submitter = create_task(create_submitter(
         job_queue, finished_flag, project, pipeline, jobs))
 
