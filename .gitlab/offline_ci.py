@@ -3,7 +3,14 @@
 """
 This script is used to replicate CI jobs locally.
 
-Requires python 3 and docker.
+Requires:
+
+- Python 3.8+
+- python-yaml or python-pyyaml
+- Docker with a working internet connection
+- Git
+
+Check the package manager for your distro for the correct package names.
 """
 
 
