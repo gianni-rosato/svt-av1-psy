@@ -24,10 +24,21 @@ from asyncio.subprocess import DEVNULL, PIPE, STDOUT, Process
 from datetime import datetime
 from enum import Enum
 from io import IOBase
-from os import environ, getgid, getuid
+from os import environ
+
+try:
+    from os import getgid, getuid
+except ImportError:
+    def getgid():
+        """Return 0 on non-linux"""
+        return 0
+
+    def getuid():
+        """Return 0 on non-linux"""
+        return 0
+from ast import literal_eval
 from pathlib import Path
 from shlex import quote as shquote
-from ast import literal_eval
 from sys import platform, stderr
 from time import monotonic
 from typing import Any, Dict, List, Set, Tuple, Union
