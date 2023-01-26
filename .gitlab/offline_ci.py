@@ -118,9 +118,13 @@ def pull_json(project_name: str) -> dict:
     if json_cache.exists() and \
             (datetime.now() - datetime.fromtimestamp(json_cache.stat().st_mtime)).days > 1:
         json_cache.unlink()
-    with json_cache.open("rb") if json_cache.exists() else request.urlopen(
-            f"{get_api_url(project_name)}/ci/lint?include_merged_yaml=true&include_jobs=true"
-    ) as response:
+    req = request.Request(get_api_url(project_name) +
+                          "/ci/lint?include_merged_yaml=true&include_jobs=true")
+    if "HTTP_PROXY" in environ:
+        req.set_proxy(environ["HTTP_PROXY"], "http")
+    if "HTTPS_PROXY" in environ:
+        req.set_proxy(environ["HTTPS_PROXY"], "https")
+    with json_cache.open("rb") if json_cache.exists() else request.urlopen(req) as response:
         if not json_cache.exists():
             json_cache.write_bytes(response.read())
         return json.loads(json_cache.read_text())
@@ -552,8 +556,12 @@ def retrieve_jobs(project_name: str, pipeline_id: int, scope: str = "") -> List[
         url += f"&scope={scope}"
 
     req = request.Request(url)
-    if environ.get("CI_JOB_TOKEN", None):
-        req.add_header('PRIVATE-TOKEN', environ.get("CI_JOB_TOKEN", None))
+    if "CI_JOB_TOKEN" in environ:
+        req.add_header('PRIVATE-TOKEN', environ["CI_JOB_TOKEN"])
+    if "HTTP_PROXY" in environ:
+        req.set_proxy(environ["HTTP_PROXY"], "http")
+    if "HTTPS_PROXY" in environ:
+        req.set_proxy(environ["HTTPS_PROXY"], "https")
 
     job_names = []
     next_page = "1"
