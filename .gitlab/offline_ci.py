@@ -415,13 +415,16 @@ def clear_build(folder: Path, ret: int = 1) -> int:
 async def docker(project_dir: Path, variables: dict, image: str, extra_args: List[str],
                  log: IOBase) -> Process:
     """Runs docker for a job"""
-    inside_path: Path = Path("C:/" if HOST_OS == OS.WINDOWS else "/") / REPO_DIR.name
-    args = ["run", "--rm",
-            "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined",
-            "--workdir", f"{inside_path}", "-v",
-            f"{project_dir}:{inside_path}",
-            "-e", "HTTP_PROXY", "-e", "HTTPS_PROXY",
-            "-e", f"CI_PROJECT_DIR={inside_path}"]
+    inside_path: Path = Path(
+        "C:/" if HOST_OS == OS.WINDOWS else "/") / REPO_DIR.name
+    args = ["run", "--rm"]
+    if HOST_OS == OS.LINUX:
+        args.extend(["--cap-add=SYS_PTRACE",
+                    "--security-opt", "seccomp=unconfined"])
+    args.extend(["--workdir", f"{inside_path}", "-v",
+                 f"{project_dir}:{inside_path}",
+                 "-e", "HTTP_PROXY", "-e", "HTTPS_PROXY",
+                 "-e", f"CI_PROJECT_DIR={inside_path}"])
     for key, value in variables.items():
         args.append("-e")
         args.append(f"{key}={value}")
