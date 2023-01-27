@@ -503,9 +503,8 @@ async def run_job(test_name: str):
     job: dict = JOBS[test_name]
     safe_name: str = urlquote(test_name, safe='')
     project_dir = BASE_DIR / "builds" / safe_name
+    project_dir.parent.mkdir(parents=True, exist_ok=True)
     clear_build(project_dir)
-    project_dir.mkdir(parents=True, exist_ok=True)
-    project_dir.rmdir()
 
     running_log_file = RUNNING_LOG_DIR / f"{safe_name}.log"
     failed_log_file = FAILED_LOG_DIR / f"{safe_name}.log"
