@@ -2596,15 +2596,25 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
                     config->input_padded_height = config->config.source_height;
                 }
 
+                const int32_t input_frame_count = compute_frames_to_be_encoded(config);
+                const bool    n_specified       = config->frames_to_be_encoded != 0;
+
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv
-                if (c->return_error == EB_ErrorNone && config->frames_to_be_encoded == 0)
-                    config->frames_to_be_encoded = compute_frames_to_be_encoded(config);
+                if (c->return_error == EB_ErrorNone && !n_specified)
+                    config->frames_to_be_encoded = input_frame_count - config->frames_to_be_skipped;
 
                 // For pipe input it is fine if we have -1 here (we will update on end of stream)
                 if (config->frames_to_be_encoded == -1 && config->input_file != stdin &&
                     !config->input_file_is_fifo) {
                     fprintf(config->error_log_file,
                             "Error instance %u: Input yuv does not contain enough frames \n",
+                            index + 1);
+                    c->return_error = EB_ErrorBadParameter;
+                }
+                if (input_frame_count != -1 && config->frames_to_be_skipped >= input_frame_count) {
+                    fprintf(config->error_log_file,
+                            "Error instance %u: FramesToBeSkipped is greater than or equal to the "
+                            "number of frames detected\n",
                             index + 1);
                     c->return_error = EB_ErrorBadParameter;
                 }
