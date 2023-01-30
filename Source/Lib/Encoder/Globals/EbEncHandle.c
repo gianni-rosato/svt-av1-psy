@@ -2421,7 +2421,7 @@ EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component) {
 
     EbEncHandle *handle = svt_enc_component->p_component_private;
 
-    if (handle->input_y8b_buffer_producer_fifo_ptr) {
+    if (handle->input_y8b_buffer_producer_fifo_ptr && handle->frame_received) {
         if (!handle->eos_received) {
             SVT_ERROR("deinit called without sending EOS!\n");
             svt_av1_enc_send_picture(svt_enc_component, &(EbBufferHeaderType){.flags = EB_BUFFERFLAG_EOS});
@@ -5137,6 +5137,7 @@ EB_API EbErrorType svt_av1_enc_send_picture(
     EbEncHandle          *enc_handle_ptr = (EbEncHandle*)svt_enc_component->p_component_private;
     EbObjectWrapper      *eb_wrapper_ptr;
     EbBufferHeaderType   *app_hdr = p_buffer;
+    enc_handle_ptr->frame_received = true;
 
     // Get new Luma-8b buffer & a new (Chroma-8b + Luma-Chroma-2bit) buffers; Lib will release once done.
     EbObjectWrapper  *eb_y8b_wrapper_ptr;

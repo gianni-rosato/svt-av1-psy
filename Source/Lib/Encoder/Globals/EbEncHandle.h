@@ -128,6 +128,7 @@ struct _EbEncHandle {
 
     bool eos_received; // used to signal we received the EOS from the app
     bool eos_sent; // used to signal we sent the EOS to the app
+    bool frame_received; // used to signal we received any frame from the app
 };
 
 #endif // EbEncHandle_h
