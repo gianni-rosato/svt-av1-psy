@@ -394,9 +394,23 @@ static Bool has_active_channel(const EncContext* const enc_context) {
     }
     return FALSE;
 }
+bool process_skip(EbConfig* config, EbBufferHeaderType* header_ptr);
 
 static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_context) {
     EbConfig* config = c->config;
+
+    if (config->need_to_skip) {
+        bool skip   = !process_skip(config, c->app_callback->input_buffer_pool);
+        int  next_c = fgetc(config->input_file);
+        if (!skip && next_c == EOF) {
+            fputs("\n[SVT-Error]: Skipped all available frames!\n", stderr);
+            c->exit_cond_input = APP_ExitConditionFinished;
+            c->active          = FALSE;
+            return;
+        }
+        ungetc(next_c, config->input_file);
+    }
+
     process_input_buffer(c);
     process_output_recon_buffer(c);
     process_output_stream_buffer(c, enc_app, &enc_context->total_frames);

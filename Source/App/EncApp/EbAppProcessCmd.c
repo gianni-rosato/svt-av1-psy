@@ -389,6 +389,22 @@ static bool is_forced_keyframe(const EbConfig *config, uint64_t pts) {
     return false;
 }
 
+bool process_skip(EbConfig *config, EbBufferHeaderType *header_ptr) {
+    const bool is_16bit = config->config.encoder_bit_depth > 8;
+    for (int64_t i = 0; i < config->frames_to_be_skipped; i++) {
+        read_input_frames(config, is_16bit, header_ptr);
+        if (header_ptr->n_filled_len) {
+            config->mmap.file_frame_it++;
+            if (config->mmap.enable)
+                release_memory_mapped_file(config, is_16bit, header_ptr);
+        } else {
+            return false;
+        }
+    }
+    config->need_to_skip = false;
+    return true;
+}
+
 //************************************/
 // process_input_buffer
 // Reads yuv frames from file and copy
@@ -427,18 +443,6 @@ void process_input_buffer(EncChannel *channel) {
     remaining_byte_count = (total_bytes_to_process_count < 0)
         ? -1
         : total_bytes_to_process_count - (int64_t)config->processed_byte_count;
-
-    if (config->need_to_skip) {
-        for (int i = 0; i < config->frames_to_be_skipped; i++) {
-            read_input_frames(config, is_16bit, header_ptr);
-            if (header_ptr->n_filled_len) {
-                config->mmap.file_frame_it++;
-                if (config->mmap.enable)
-                    release_memory_mapped_file(config, is_16bit, header_ptr);
-            }
-        }
-        config->need_to_skip = false;
-    }
 
     // If there are bytes left to encode, configure the header
     if (remaining_byte_count != 0 && config->stop_encoder == FALSE) {
