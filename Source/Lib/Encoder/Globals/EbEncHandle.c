@@ -1167,6 +1167,9 @@ static EbErrorType svt_enc_handle_ctor(
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->scs_instance_array, enc_handle_ptr->encode_instance_total_count);
     EB_NEW(enc_handle_ptr->scs_instance_array[0], svt_sequence_control_set_instance_ctor);
 
+    enc_handle_ptr->eos_received = false;
+    enc_handle_ptr->eos_sent = false;
+    enc_handle_ptr->frame_received = false;
     return EB_ErrorNone;
 }
 
