@@ -412,7 +412,7 @@ bool process_skip(EbConfig *config, EbBufferHeaderType *header_ptr) {
 /************************************/
 void process_input_buffer(EncChannel *channel) {
     EbConfig           *config           = channel->config;
-    EbAppContext       *app_call_back    = channel->app_callback;
+    EbAppContext       *app_call_back    = channel->app_ctx;
     uint8_t             is_16bit         = (uint8_t)(config->config.encoder_bit_depth > 8);
     EbBufferHeaderType *header_ptr       = app_call_back->input_buffer_pool;
     EbComponentType    *component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
@@ -583,7 +583,7 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
 
 void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t *frame_count) {
     EbConfig            *config        = channel->config;
-    EbAppContext        *app_call_back = channel->app_callback;
+    EbAppContext        *app_call_back = channel->app_ctx;
     AppPortActiveType   *port_state    = &app_call_back->output_stream_port_active;
     EbBufferHeaderType  *header_ptr;
     EbComponentType     *component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
@@ -739,7 +739,7 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
 }
 void process_output_recon_buffer(EncChannel *channel) {
     EbConfig           *config        = channel->config;
-    EbAppContext       *app_call_back = channel->app_callback;
+    EbAppContext       *app_call_back = channel->app_ctx;
     EbBufferHeaderType *header_ptr =
         app_call_back->recon_buffer; // needs to change for buffered input
     EbComponentType     *component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;

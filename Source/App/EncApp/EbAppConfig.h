@@ -240,7 +240,7 @@ typedef struct EbConfig {
 
 typedef struct EncChannel {
     EbConfig            *config; // Encoder Configuration
-    EbAppContext        *app_callback; // Instances App callback date
+    EbAppContext        *app_ctx; // Instances App callback date
     EbErrorType          return_error; // Error Handling
     AppExitConditionType exit_cond_output; // Processing loop exit condition
     AppExitConditionType exit_cond_recon; // Processing loop exit condition
