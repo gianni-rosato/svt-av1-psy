@@ -114,14 +114,14 @@ void log_error_output(FILE *error_log_file, uint32_t error_code) {
 }
 
 //retunrs the offset from the file start
-int64_t get_mmap_offset(EbConfig *config, uint64_t frame_size) {
+int64_t get_mmap_offset(EbConfig *app_cfg, uint64_t frame_size) {
     int64_t offset;
-    if (config->y4m_input)
-        offset = config->mmap.y4m_seq_hdr +
-            (config->mmap.file_frame_it + 1) * config->mmap.y4m_frm_hdr +
-            config->mmap.file_frame_it * frame_size;
+    if (app_cfg->y4m_input)
+        offset = app_cfg->mmap.y4m_seq_hdr +
+            (app_cfg->mmap.file_frame_it + 1) * app_cfg->mmap.y4m_frm_hdr +
+            app_cfg->mmap.file_frame_it * frame_size;
     else
-        offset = config->mmap.file_frame_it * frame_size;
+        offset = app_cfg->mmap.file_frame_it * frame_size;
 
     return offset;
 }
@@ -153,75 +153,75 @@ void svt_munmap(MemMapFile *h, void *addr, int64_t size) {
 #endif
 }
 /* release  memory mapped file  */
-static void release_memory_mapped_file(EbConfig *config, uint8_t is_16bit,
+static void release_memory_mapped_file(EbConfig *app_cfg, uint8_t is_16bit,
                                        EbBufferHeaderType *header_ptr) {
-    const uint32_t input_padded_width  = config->input_padded_width;
-    const uint32_t input_padded_height = config->input_padded_height;
+    const uint32_t input_padded_width  = app_cfg->input_padded_width;
+    const uint32_t input_padded_height = app_cfg->input_padded_height;
     uint64_t       luma_read_size = (uint64_t)input_padded_width * input_padded_height << is_16bit;
-    const uint8_t  color_format   = config->config.encoder_color_format;
+    const uint8_t  color_format   = app_cfg->config.encoder_color_format;
     EbSvtIOFormat *input_ptr      = (EbSvtIOFormat *)header_ptr->p_buffer;
-    svt_munmap(&config->mmap, input_ptr->luma, luma_read_size);
-    svt_munmap(&config->mmap, input_ptr->cb, luma_read_size >> (3 - color_format));
-    svt_munmap(&config->mmap, input_ptr->cr, luma_read_size >> (3 - color_format));
+    svt_munmap(&app_cfg->mmap, input_ptr->luma, luma_read_size);
+    svt_munmap(&app_cfg->mmap, input_ptr->cb, luma_read_size >> (3 - color_format));
+    svt_munmap(&app_cfg->mmap, input_ptr->cr, luma_read_size >> (3 - color_format));
 }
 
-void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *header_ptr) {
-    const uint32_t input_padded_width  = config->input_padded_width;
-    const uint32_t input_padded_height = config->input_padded_height;
-    FILE          *input_file          = config->input_file;
+void read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBufferHeaderType *header_ptr) {
+    const uint32_t input_padded_width  = app_cfg->input_padded_width;
+    const uint32_t input_padded_height = app_cfg->input_padded_height;
+    FILE          *input_file          = app_cfg->input_file;
     EbSvtIOFormat *input_ptr           = (EbSvtIOFormat *)header_ptr->p_buffer;
 
-    const uint8_t color_format  = config->config.encoder_color_format;
+    const uint8_t color_format  = app_cfg->config.encoder_color_format;
     const uint8_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
 
     input_ptr->y_stride  = input_padded_width;
     input_ptr->cr_stride = input_padded_width >> subsampling_x;
     input_ptr->cb_stride = input_padded_width >> subsampling_x;
 
-    if (config->buffered_input == -1) {
+    if (app_cfg->buffered_input == -1) {
         uint64_t read_size = (uint64_t)SIZE_OF_ONE_FRAME_IN_BYTES(
             input_padded_width, input_padded_height, color_format, is_16bit);
 
         header_ptr->n_filled_len = 0;
 
-        if (config->y4m_input) {
+        if (app_cfg->y4m_input) {
             /* if input is a y4m file, read next line which contains "FRAME" */
-            if (!config->mmap.enable)
-                read_y4m_frame_delimiter(config->input_file, config->error_log_file);
-            else if (config->processed_frame_count == 0 && config->mmap.file_frame_it == 0)
-                config->mmap.y4m_frm_hdr = read_y4m_frame_delimiter(config->input_file,
-                                                                    config->error_log_file);
+            if (!app_cfg->mmap.enable)
+                read_y4m_frame_delimiter(app_cfg->input_file, app_cfg->error_log_file);
+            else if (app_cfg->processed_frame_count == 0 && app_cfg->mmap.file_frame_it == 0)
+                app_cfg->mmap.y4m_frm_hdr = read_y4m_frame_delimiter(app_cfg->input_file,
+                                                                     app_cfg->error_log_file);
         }
         uint64_t luma_read_size   = (uint64_t)input_padded_width * input_padded_height << is_16bit;
         uint32_t chroma_read_size = ((uint32_t)luma_read_size >> (3 - color_format));
         uint8_t *eb_input_ptr     = input_ptr->luma;
-        if (!config->y4m_input && config->processed_frame_count == 0 &&
-            (config->input_file == stdin || config->input_file_is_fifo)) {
+        if (!app_cfg->y4m_input && app_cfg->processed_frame_count == 0 &&
+            (app_cfg->input_file == stdin || app_cfg->input_file_is_fifo)) {
             /* 9 bytes were already buffered during the the YUV4MPEG2 header probe */
-            memcpy(eb_input_ptr, config->y4m_buf, YUV4MPEG2_IND_SIZE);
+            memcpy(eb_input_ptr, app_cfg->y4m_buf, YUV4MPEG2_IND_SIZE);
             header_ptr->n_filled_len += YUV4MPEG2_IND_SIZE;
             eb_input_ptr += YUV4MPEG2_IND_SIZE;
             header_ptr->n_filled_len += (uint32_t)fread(
                 eb_input_ptr, 1, luma_read_size - YUV4MPEG2_IND_SIZE, input_file);
         } else {
-            if (config->mmap.enable) {
-                int64_t offset  = get_mmap_offset(config, read_size);
-                input_ptr->luma = svt_mmap(&config->mmap, offset, luma_read_size);
+            if (app_cfg->mmap.enable) {
+                int64_t offset  = get_mmap_offset(app_cfg, read_size);
+                input_ptr->luma = svt_mmap(&app_cfg->mmap, offset, luma_read_size);
                 header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
             } else
                 header_ptr->n_filled_len += (uint32_t)fread(
                     input_ptr->luma, 1, luma_read_size, input_file);
         }
 
-        if (config->mmap.enable) {
-            int64_t offset = get_mmap_offset(config, read_size);
+        if (app_cfg->mmap.enable) {
+            int64_t offset = get_mmap_offset(app_cfg, read_size);
 
             offset += luma_read_size;
-            input_ptr->cb = svt_mmap(&config->mmap, offset, chroma_read_size);
+            input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
             header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
 
             offset += chroma_read_size;
-            input_ptr->cr = svt_mmap(&config->mmap, offset, chroma_read_size);
+            input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
             header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
         } else {
             header_ptr->n_filled_len += (uint32_t)fread(
@@ -231,25 +231,25 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
         }
 
         if (read_size != header_ptr->n_filled_len) {
-            if (config->mmap.enable) {
-                config->mmap.file_frame_it = 0;
+            if (app_cfg->mmap.enable) {
+                app_cfg->mmap.file_frame_it = 0;
 
-                int64_t offset  = get_mmap_offset(config, read_size);
-                input_ptr->luma = svt_mmap(&config->mmap, offset, luma_read_size);
+                int64_t offset  = get_mmap_offset(app_cfg, read_size);
+                input_ptr->luma = svt_mmap(&app_cfg->mmap, offset, luma_read_size);
                 header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
 
                 offset += luma_read_size;
-                input_ptr->cb = svt_mmap(&config->mmap, offset, chroma_read_size);
+                input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
                 header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
 
                 offset += chroma_read_size;
-                input_ptr->cr = svt_mmap(&config->mmap, offset, chroma_read_size);
+                input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
                 header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
-            } else if (!config->input_file_is_fifo) {
+            } else if (!app_cfg->input_file_is_fifo) {
                 fseek(input_file, 0, SEEK_SET);
-                if (config->y4m_input == TRUE) {
-                    read_and_skip_y4m_header(config->input_file);
-                    read_y4m_frame_delimiter(config->input_file, config->error_log_file);
+                if (app_cfg->y4m_input == TRUE) {
+                    read_and_skip_y4m_header(app_cfg->input_file);
+                    read_y4m_frame_delimiter(app_cfg->input_file, app_cfg->error_log_file);
                 }
                 header_ptr->n_filled_len = (uint32_t)fread(
                     input_ptr->luma, 1, luma_read_size, input_file);
@@ -261,9 +261,9 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
         }
 
         if (feof(input_file) != 0) {
-            if ((input_file == stdin) || (config->input_file_is_fifo)) {
+            if ((input_file == stdin) || (app_cfg->input_file_is_fifo)) {
                 //for a fifo, we only know this when we reach eof
-                config->frames_to_be_encoded = config->frames_encoded;
+                app_cfg->frames_to_be_encoded = app_cfg->frames_encoded;
                 if (header_ptr->n_filled_len != read_size) {
                     // not a completed frame
                     header_ptr->n_filled_len = 0;
@@ -286,12 +286,12 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
         input_ptr->cb_stride = input_padded_width >> subsampling_x;
 
         input_ptr->luma =
-            config->sequence_buffer[config->processed_frame_count % config->buffered_input];
+            app_cfg->sequence_buffer[app_cfg->processed_frame_count % app_cfg->buffered_input];
         input_ptr->cb =
-            config->sequence_buffer[config->processed_frame_count % config->buffered_input] +
+            app_cfg->sequence_buffer[app_cfg->processed_frame_count % app_cfg->buffered_input] +
             luma_size;
         input_ptr->cr =
-            config->sequence_buffer[config->processed_frame_count % config->buffered_input] +
+            app_cfg->sequence_buffer[app_cfg->processed_frame_count % app_cfg->buffered_input] +
             luma_size + chroma_size;
 
         header_ptr->n_filled_len = (uint32_t)(luma_size + 2 * chroma_size);
@@ -377,31 +377,31 @@ static void injector(uint64_t processed_frame_count, uint32_t injector_frame_rat
     }
 }
 
-static bool is_forced_keyframe(const EbConfig *config, uint64_t pts) {
-    if (config->forced_keyframes.frames) {
-        for (size_t i = 0; i < config->forced_keyframes.count; ++i) {
-            if (config->forced_keyframes.frames[i] == pts)
+static bool is_forced_keyframe(const EbConfig *app_cfg, uint64_t pts) {
+    if (app_cfg->forced_keyframes.frames) {
+        for (size_t i = 0; i < app_cfg->forced_keyframes.count; ++i) {
+            if (app_cfg->forced_keyframes.frames[i] == pts)
                 return true;
-            if (config->forced_keyframes.frames[i] > pts)
+            if (app_cfg->forced_keyframes.frames[i] > pts)
                 break;
         }
     }
     return false;
 }
 
-bool process_skip(EbConfig *config, EbBufferHeaderType *header_ptr) {
-    const bool is_16bit = config->config.encoder_bit_depth > 8;
-    for (int64_t i = 0; i < config->frames_to_be_skipped; i++) {
-        read_input_frames(config, is_16bit, header_ptr);
+bool process_skip(EbConfig *app_cfg, EbBufferHeaderType *header_ptr) {
+    const bool is_16bit = app_cfg->config.encoder_bit_depth > 8;
+    for (int64_t i = 0; i < app_cfg->frames_to_be_skipped; i++) {
+        read_input_frames(app_cfg, is_16bit, header_ptr);
         if (header_ptr->n_filled_len) {
-            config->mmap.file_frame_it++;
-            if (config->mmap.enable)
-                release_memory_mapped_file(config, is_16bit, header_ptr);
+            app_cfg->mmap.file_frame_it++;
+            if (app_cfg->mmap.enable)
+                release_memory_mapped_file(app_cfg, is_16bit, header_ptr);
         } else {
             return false;
         }
     }
-    config->need_to_skip = false;
+    app_cfg->need_to_skip = false;
     return true;
 }
 
@@ -411,29 +411,29 @@ bool process_skip(EbConfig *config, EbBufferHeaderType *header_ptr) {
 // them into the input buffer
 /************************************/
 void process_input_buffer(EncChannel *channel) {
-    EbConfig           *config           = channel->config;
+    EbConfig           *app_cfg          = channel->app_cfg;
     EbAppContext       *app_call_back    = channel->app_ctx;
-    uint8_t             is_16bit         = (uint8_t)(config->config.encoder_bit_depth > 8);
+    uint8_t             is_16bit         = (uint8_t)(app_cfg->config.encoder_bit_depth > 8);
     EbBufferHeaderType *header_ptr       = app_call_back->input_buffer_pool;
     EbComponentType    *component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
 
     AppExitConditionType return_value = APP_ExitConditionNone;
 
-    const uint8_t color_format         = config->config.encoder_color_format;
-    const int64_t input_padded_width   = config->input_padded_width;
-    const int64_t input_padded_height  = config->input_padded_height;
-    const int64_t frames_to_be_encoded = config->frames_to_be_encoded;
+    const uint8_t color_format         = app_cfg->config.encoder_color_format;
+    const int64_t input_padded_width   = app_cfg->input_padded_width;
+    const int64_t input_padded_height  = app_cfg->input_padded_height;
+    const int64_t frames_to_be_encoded = app_cfg->frames_to_be_encoded;
     int64_t       total_bytes_to_process_count;
     int64_t       remaining_byte_count;
 
     if (channel->exit_cond_input != APP_ExitConditionNone)
         return;
 #if OPT_LD_LATENCY
-    if (config->injector)
+    if (app_cfg->injector)
 #else
-    if (config->injector && config->processed_frame_count)
+    if (app_cfg->injector && app_cfg->processed_frame_count)
 #endif
-        injector(config->processed_frame_count, config->injector_frame_rate);
+        injector(app_cfg->processed_frame_count, app_cfg->injector_frame_rate);
     total_bytes_to_process_count = (frames_to_be_encoded < 0)
         ? -1
         : frames_to_be_encoded *
@@ -442,28 +442,28 @@ void process_input_buffer(EncChannel *channel) {
 
     remaining_byte_count = (total_bytes_to_process_count < 0)
         ? -1
-        : total_bytes_to_process_count - (int64_t)config->processed_byte_count;
+        : total_bytes_to_process_count - (int64_t)app_cfg->processed_byte_count;
 
     // If there are bytes left to encode, configure the header
-    if (remaining_byte_count != 0 && config->stop_encoder == FALSE) {
-        read_input_frames(config, is_16bit, header_ptr);
+    if (remaining_byte_count != 0 && app_cfg->stop_encoder == FALSE) {
+        read_input_frames(app_cfg, is_16bit, header_ptr);
         if (header_ptr->n_filled_len) {
             // Update the context parameters
-            config->processed_byte_count += header_ptr->n_filled_len;
+            app_cfg->processed_byte_count += header_ptr->n_filled_len;
             header_ptr->p_app_private = (EbPtr)NULL;
 
-            config->mmap.file_frame_it++;
-            config->frames_encoded = (int32_t)(++config->processed_frame_count);
+            app_cfg->mmap.file_frame_it++;
+            app_cfg->frames_encoded = (int32_t)(++app_cfg->processed_frame_count);
 
             // Configuration parameters changed on the fly
-            if (config->config.use_qp_file && config->qp_file)
-                header_ptr->qp = send_qp_on_the_fly(config->qp_file, &config->config.use_qp_file);
+            if (app_cfg->config.use_qp_file && app_cfg->qp_file)
+                header_ptr->qp = send_qp_on_the_fly(app_cfg->qp_file, &app_cfg->config.use_qp_file);
 
-            if (keep_running == 0 && !config->stop_encoder)
-                config->stop_encoder = TRUE;
+            if (keep_running == 0 && !app_cfg->stop_encoder)
+                app_cfg->stop_encoder = TRUE;
             // Fill in Buffers Header control data
-            header_ptr->pts      = config->processed_frame_count - 1;
-            header_ptr->pic_type = is_forced_keyframe(config, header_ptr->pts)
+            header_ptr->pts      = app_cfg->processed_frame_count - 1;
+            header_ptr->pic_type = is_forced_keyframe(app_cfg, header_ptr->pts)
                 ? EB_AV1_KEY_PICTURE
                 : EB_AV1_INVALID_PICTURE;
 
@@ -472,11 +472,11 @@ void process_input_buffer(EncChannel *channel) {
             // Send the picture
             svt_av1_enc_send_picture(component_handle, header_ptr);
 
-            if (config->mmap.enable)
-                release_memory_mapped_file(config, is_16bit, header_ptr);
+            if (app_cfg->mmap.enable)
+                release_memory_mapped_file(app_cfg, is_16bit, header_ptr);
         }
-        if ((config->processed_frame_count == (uint64_t)config->frames_to_be_encoded) ||
-            config->stop_encoder) {
+        if ((app_cfg->processed_frame_count == (uint64_t)app_cfg->frames_to_be_encoded) ||
+            app_cfg->stop_encoder) {
             header_ptr->n_alloc_len   = 0;
             header_ptr->n_filled_len  = 0;
             header_ptr->n_tick_count  = 0;
@@ -515,13 +515,13 @@ double get_psnr(double sse, double max) {
 /***************************************
 * Process Output STATISTICS Buffer
 ***************************************/
-void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *config) {
-    uint32_t max_luma_value = (config->config.encoder_bit_depth == 8) ? 255 : 1023;
+void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *app_cfg) {
+    uint32_t max_luma_value = (app_cfg->config.encoder_bit_depth == 8) ? 255 : 1023;
     uint64_t picture_stream_size, luma_sse, cr_sse, cb_sse, picture_number, picture_qp;
     double   luma_ssim, cr_ssim, cb_ssim;
     double   temp_var, luma_psnr, cb_psnr, cr_psnr;
-    uint32_t source_width  = config->config.source_width;
-    uint32_t source_height = config->config.source_height;
+    uint32_t source_width  = app_cfg->config.source_width;
+    uint32_t source_height = app_cfg->config.source_height;
 
     picture_stream_size = header_ptr->n_filled_len;
     luma_sse            = header_ptr->luma_sse;
@@ -543,22 +543,22 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
 
     cr_psnr = get_psnr((double)cr_sse, temp_var);
 
-    config->performance_context.sum_luma_psnr += luma_psnr;
-    config->performance_context.sum_cr_psnr += cr_psnr;
-    config->performance_context.sum_cb_psnr += cb_psnr;
+    app_cfg->performance_context.sum_luma_psnr += luma_psnr;
+    app_cfg->performance_context.sum_cr_psnr += cr_psnr;
+    app_cfg->performance_context.sum_cb_psnr += cb_psnr;
 
-    config->performance_context.sum_luma_sse += luma_sse;
-    config->performance_context.sum_cr_sse += cr_sse;
-    config->performance_context.sum_cb_sse += cb_sse;
+    app_cfg->performance_context.sum_luma_sse += luma_sse;
+    app_cfg->performance_context.sum_cr_sse += cr_sse;
+    app_cfg->performance_context.sum_cb_sse += cb_sse;
 
-    config->performance_context.sum_qp += picture_qp;
-    config->performance_context.sum_luma_ssim += luma_ssim;
-    config->performance_context.sum_cr_ssim += cr_ssim;
-    config->performance_context.sum_cb_ssim += cb_ssim;
+    app_cfg->performance_context.sum_qp += picture_qp;
+    app_cfg->performance_context.sum_luma_ssim += luma_ssim;
+    app_cfg->performance_context.sum_cr_ssim += cr_ssim;
+    app_cfg->performance_context.sum_cb_ssim += cb_ssim;
 
     // Write statistic Data to file
-    if (config->stat_file) {
-        fprintf(config->stat_file,
+    if (app_cfg->stat_file) {
+        fprintf(app_cfg->stat_file,
                 "Picture Number: %4d\t QP: %4d  [ "
                 "PSNR-Y: %.2f dB,\tPSNR-U: %.2f dB,\tPSNR-V: %.2f "
                 "dB,\tMSE-Y: %.2f,\tMSE-U: %.2f,\tMSE-V: %.2f,\t"
@@ -582,17 +582,17 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
 }
 
 void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t *frame_count) {
-    EbConfig            *config        = channel->config;
+    EbConfig            *app_cfg       = channel->app_cfg;
     EbAppContext        *app_call_back = channel->app_ctx;
     AppPortActiveType   *port_state    = &app_call_back->output_stream_port_active;
     EbBufferHeaderType  *header_ptr;
     EbComponentType     *component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
     AppExitConditionType return_value     = APP_ExitConditionNone;
     // Per channel variables
-    FILE *stream_file = config->bitstream_file;
+    FILE *stream_file = app_cfg->bitstream_file;
 
-    uint64_t *total_latency = &config->performance_context.total_latency;
-    uint32_t *max_latency   = &config->performance_context.max_latency;
+    uint64_t *total_latency = &app_cfg->performance_context.total_latency;
+    uint32_t *max_latency   = &app_cfg->performance_context.max_latency;
 
     // Local variables
     uint64_t finish_s_time = 0;
@@ -612,52 +612,52 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
 
         if (stream_status == EB_ErrorMax) {
             fprintf(stderr, "\n");
-            log_error_output(config->error_log_file, header_ptr->flags);
+            log_error_output(app_cfg->error_log_file, header_ptr->flags);
             channel->exit_cond_output = APP_ExitConditionError;
             return;
         } else if (stream_status != EB_NoErrorEmptyQueue) {
             uint32_t flags = header_ptr->flags;
             is_alt_ref     = (flags & EB_BUFFERFLAG_IS_ALT_REF);
             if (!(flags & EB_BUFFERFLAG_IS_ALT_REF))
-                ++(config->performance_context.frame_count);
+                ++(app_cfg->performance_context.frame_count);
             *total_latency += (uint64_t)header_ptr->n_tick_count;
             *max_latency = (header_ptr->n_tick_count > *max_latency) ? header_ptr->n_tick_count
                                                                      : *max_latency;
             app_svt_av1_get_time(&finish_s_time, &finish_u_time);
 
             // total execution time, inc init time
-            config->performance_context.total_execution_time =
+            app_cfg->performance_context.total_execution_time =
                 app_svt_av1_compute_overall_elapsed_time(
-                    config->performance_context.lib_start_time[0],
-                    config->performance_context.lib_start_time[1],
+                    app_cfg->performance_context.lib_start_time[0],
+                    app_cfg->performance_context.lib_start_time[1],
                     finish_s_time,
                     finish_u_time);
 
             // total encode time
-            config->performance_context.total_encode_time =
+            app_cfg->performance_context.total_encode_time =
                 app_svt_av1_compute_overall_elapsed_time(
-                    config->performance_context.encode_start_time[0],
-                    config->performance_context.encode_start_time[1],
+                    app_cfg->performance_context.encode_start_time[0],
+                    app_cfg->performance_context.encode_start_time[1],
                     finish_s_time,
                     finish_u_time);
 
             // Write Stream Data to file
             if (stream_file) {
-                if (config->performance_context.frame_count == 1 &&
+                if (app_cfg->performance_context.frame_count == 1 &&
                     !(flags & EB_BUFFERFLAG_IS_ALT_REF)) {
-                    write_ivf_stream_header(config,
-                                            config->frames_to_be_encoded == -1
+                    write_ivf_stream_header(app_cfg,
+                                            app_cfg->frames_to_be_encoded == -1
                                                 ? 0
-                                                : (int32_t)config->frames_to_be_encoded);
+                                                : (int32_t)app_cfg->frames_to_be_encoded);
                 }
-                write_ivf_frame_header(config, header_ptr->n_filled_len);
+                write_ivf_frame_header(app_cfg, header_ptr->n_filled_len);
                 fwrite(header_ptr->p_buffer, 1, header_ptr->n_filled_len, stream_file);
             }
 
-            config->performance_context.byte_count += header_ptr->n_filled_len;
+            app_cfg->performance_context.byte_count += header_ptr->n_filled_len;
 
-            if (config->config.stat_report && !(flags & EB_BUFFERFLAG_IS_ALT_REF))
-                process_output_statistics_buffer(header_ptr, config);
+            if (app_cfg->config.stat_report && !(flags & EB_BUFFERFLAG_IS_ALT_REF))
+                process_output_statistics_buffer(header_ptr, app_cfg);
 
             // Update Output Port Activity State
             *port_state  = (flags & EB_BUFFERFLAG_EOS) ? APP_PortInactive : *port_state;
@@ -667,18 +667,18 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
             svt_av1_enc_release_out_buffer(&header_ptr);
 
             if (flags & EB_BUFFERFLAG_EOS) {
-                if (config->config.pass == ENC_FIRST_PASS) {
+                if (app_cfg->config.pass == ENC_FIRST_PASS) {
                     SvtAv1FixedBuf first_pass_stat;
                     EbErrorType    ret = svt_av1_enc_get_stream_info(
                         component_handle,
                         SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT,
                         &first_pass_stat);
                     if (ret == EB_ErrorNone) {
-                        if (config->output_stat_file) {
+                        if (app_cfg->output_stat_file) {
                             fwrite(first_pass_stat.buf,
                                    1,
                                    first_pass_stat.sz,
-                                   config->output_stat_file);
+                                   app_cfg->output_stat_file);
                         }
                         enc_app->rc_twopasses_stats.buf = realloc(enc_app->rc_twopasses_stats.buf,
                                                                   first_pass_stat.sz);
@@ -690,21 +690,22 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
                         }
                     }
                 }
-                if (config->config.pass == ENC_SECOND_PASS) {
-                    if (config->output_stat_file && config->config.rc_stats_buffer.buf) {
-                        fwrite(config->config.rc_stats_buffer.buf,
+                if (app_cfg->config.pass == ENC_SECOND_PASS) {
+                    if (app_cfg->output_stat_file && app_cfg->config.rc_stats_buffer.buf) {
+                        fwrite(app_cfg->config.rc_stats_buffer.buf,
                                1,
-                               config->config.rc_stats_buffer.sz,
-                               config->output_stat_file);
+                               app_cfg->config.rc_stats_buffer.sz,
+                               app_cfg->output_stat_file);
                     }
                 }
             }
             ++*frame_count;
 
-            const double fps = (double)*frame_count / config->performance_context.total_encode_time;
-            const double frame_rate = (double)config->config.frame_rate_numerator /
-                (double)config->config.frame_rate_denominator;
-            switch (config->progress) {
+            const double fps = (double)*frame_count /
+                app_cfg->performance_context.total_encode_time;
+            const double frame_rate = (double)app_cfg->config.frame_rate_numerator /
+                (double)app_cfg->config.frame_rate_denominator;
+            switch (app_cfg->progress) {
             case 0: break;
             case 1:
                 if (!(flags & EB_BUFFERFLAG_IS_ALT_REF))
@@ -714,31 +715,31 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
                 fprintf(stderr,
                         "\rEncoding frame %4d %.2f kbps %.2f fp%c  ",
                         *frame_count,
-                        ((double)(config->performance_context.byte_count << 3) * frame_rate /
-                         (config->frames_encoded * 1000)),
+                        ((double)(app_cfg->performance_context.byte_count << 3) * frame_rate /
+                         (app_cfg->frames_encoded * 1000)),
                         fps >= 1.0 ? fps : fps * 60,
                         fps >= 1.0 ? 's' : 'm');
             default: break;
             }
             fflush(stderr);
 
-            config->performance_context.average_speed =
-                (double)config->performance_context.frame_count /
-                config->performance_context.total_encode_time;
-            config->performance_context.average_latency =
-                (double)config->performance_context.total_latency /
-                config->performance_context.frame_count;
+            app_cfg->performance_context.average_speed =
+                (double)app_cfg->performance_context.frame_count /
+                app_cfg->performance_context.total_encode_time;
+            app_cfg->performance_context.average_latency =
+                (double)app_cfg->performance_context.total_latency /
+                app_cfg->performance_context.frame_count;
 
-            if (config->progress == 1 && !(*frame_count % SPEED_MEASUREMENT_INTERVAL))
+            if (app_cfg->progress == 1 && !(*frame_count % SPEED_MEASUREMENT_INTERVAL))
                 fprintf(stderr,
                         "\nAverage System Encoding Speed:        %.2f\n",
-                        (double)*frame_count / config->performance_context.total_encode_time);
+                        (double)*frame_count / app_cfg->performance_context.total_encode_time);
         }
     }
     channel->exit_cond_output = return_value;
 }
 void process_output_recon_buffer(EncChannel *channel) {
-    EbConfig           *config        = channel->config;
+    EbConfig           *app_cfg       = channel->app_cfg;
     EbAppContext       *app_call_back = channel->app_ctx;
     EbBufferHeaderType *header_ptr =
         app_call_back->recon_buffer; // needs to change for buffered input
@@ -753,15 +754,15 @@ void process_output_recon_buffer(EncChannel *channel) {
 
     if (recon_status == EB_ErrorMax) {
         fprintf(stderr, "\n");
-        log_error_output(config->error_log_file, header_ptr->flags);
+        log_error_output(app_cfg->error_log_file, header_ptr->flags);
         channel->exit_cond_recon = APP_ExitConditionError;
         return;
     } else if (recon_status != EB_NoErrorEmptyQueue) {
         //Sets the File position to the beginning of the file.
-        rewind(config->recon_file);
+        rewind(app_cfg->recon_file);
         uint64_t frame_num = header_ptr->pts;
         while (frame_num > 0) {
-            fseek_return_val = fseeko(config->recon_file, header_ptr->n_filled_len, SEEK_CUR);
+            fseek_return_val = fseeko(app_cfg->recon_file, header_ptr->n_filled_len, SEEK_CUR);
 
             if (fseek_return_val != 0) {
                 fprintf(stderr, "Error in fseeko  returnVal %i\n", fseek_return_val);
@@ -771,7 +772,7 @@ void process_output_recon_buffer(EncChannel *channel) {
             frame_num = frame_num - 1;
         }
 
-        fwrite(header_ptr->p_buffer, 1, header_ptr->n_filled_len, config->recon_file);
+        fwrite(header_ptr->p_buffer, 1, header_ptr->n_filled_len, app_cfg->recon_file);
 
         // Update Output Port Activity State
         return_value = (header_ptr->flags & EB_BUFFERFLAG_EOS) ? APP_ExitConditionFinished

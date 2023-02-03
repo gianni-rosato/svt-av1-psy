@@ -37,7 +37,7 @@ struct EbAppContext_ {
 /********************************
  * External Function
  ********************************/
-extern EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data,
+extern EbErrorType init_encoder(EbConfig *app_cfg, EbAppContext *callback_data,
                                 uint32_t instance_idx);
 
 extern EbErrorType de_init_encoder(EbAppContext *callback_data_ptr, uint32_t instance_index);

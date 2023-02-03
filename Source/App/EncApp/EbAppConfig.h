@@ -239,7 +239,7 @@ typedef struct EbConfig {
 } EbConfig;
 
 typedef struct EncChannel {
-    EbConfig            *config; // Encoder Configuration
+    EbConfig            *app_cfg; // Encoder Configuration
     EbAppContext        *app_ctx; // Instances App callback date
     EbErrorType          return_error; // Error Handling
     AppExitConditionType exit_cond_output; // Processing loop exit condition
@@ -259,7 +259,7 @@ typedef struct EncApp {
     SvtAv1FixedBuf rc_twopasses_stats;
 } EncApp;
 EbConfig *svt_config_ctor();
-void      svt_config_dtor(EbConfig *config_ptr);
+void      svt_config_dtor(EbConfig *app_cfg);
 
 EbErrorType     enc_channel_ctor(EncChannel *c);
 void            enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
@@ -269,6 +269,6 @@ int             get_version(int argc, char *argv[]);
 extern uint32_t get_help(int32_t argc, char *const argv[]);
 extern uint32_t get_number_of_channels(int32_t argc, char *const argv[]);
 uint32_t        get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS]);
-EbErrorType handle_stats_file(EbConfig *config, EncPass pass, const SvtAv1FixedBuf *rc_stats_buffer,
-                              uint32_t channel_number);
+EbErrorType     handle_stats_file(EbConfig *app_cfg, EncPass pass,
+                                  const SvtAv1FixedBuf *rc_stats_buffer, uint32_t channel_number);
 #endif //EbAppConfig_h

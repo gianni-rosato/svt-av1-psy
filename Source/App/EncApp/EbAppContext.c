@@ -65,8 +65,8 @@ void allocate_memory_table(uint32_t instance_idx) {
 **************************************
 **************************************/
 
-static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
-    EbSvtAv1EncConfiguration *cfg                 = &config->config;
+static EbErrorType allocate_frame_buffer(EbConfig *app_cfg, uint8_t *p_buffer) {
+    EbSvtAv1EncConfiguration *cfg                 = &app_cfg->config;
     const int32_t             ten_bit_packed_mode = cfg->encoder_bit_depth > 8;
 
     // Chroma subsampling
@@ -74,7 +74,7 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
     const uint8_t       subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
 
     // Determine size of each plane
-    const size_t luma_8bit_size = config->input_padded_width * config->input_padded_height *
+    const size_t luma_8bit_size = app_cfg->input_padded_width * app_cfg->input_padded_height *
         (1 << ten_bit_packed_mode);
 
     const size_t chroma_8bit_size = luma_8bit_size >> (3 - color_format);
@@ -89,9 +89,9 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
 
     // Determine
     EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)p_buffer;
-    input_ptr->y_stride      = config->input_padded_width;
-    input_ptr->cr_stride     = config->input_padded_width >> subsampling_x;
-    input_ptr->cb_stride     = config->input_padded_width >> subsampling_x;
+    input_ptr->y_stride      = app_cfg->input_padded_width;
+    input_ptr->cr_stride     = app_cfg->input_padded_width >> subsampling_x;
+    input_ptr->cb_stride     = app_cfg->input_padded_width >> subsampling_x;
 
     if (luma_8bit_size) {
         EB_APP_MALLOC(
@@ -147,7 +147,7 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
     return EB_ErrorNone;
 }
 
-EbErrorType allocate_input_buffers(EbConfig *config, EbAppContext *callback_data) {
+EbErrorType allocate_input_buffers(EbConfig *app_cfg, EbAppContext *callback_data) {
     EB_APP_MALLOC(EbBufferHeaderType *,
                   callback_data->input_buffer_pool,
                   sizeof(EbBufferHeaderType),
@@ -164,8 +164,8 @@ EbErrorType allocate_input_buffers(EbConfig *config, EbAppContext *callback_data
                   EB_ErrorInsufficientResources);
 
     // Allocate frame buffer for the p_buffer
-    if (config->buffered_input == -1)
-        allocate_frame_buffer(config, callback_data->input_buffer_pool->p_buffer);
+    if (app_cfg->buffered_input == -1)
+        allocate_frame_buffer(app_cfg, callback_data->input_buffer_pool->p_buffer);
 
     // Assign the variables
     callback_data->input_buffer_pool->p_app_private = NULL;
@@ -174,12 +174,12 @@ EbErrorType allocate_input_buffers(EbConfig *config, EbAppContext *callback_data
     return EB_ErrorNone;
 }
 
-EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callback_data) {
-    const size_t luma_size = config->input_padded_width * config->input_padded_height;
+EbErrorType allocate_output_recon_buffers(EbConfig *app_cfg, EbAppContext *callback_data) {
+    const size_t luma_size = app_cfg->input_padded_width * app_cfg->input_padded_height;
 
     // both u and v
-    const size_t chroma_size = luma_size >> (3 - config->config.encoder_color_format);
-    const size_t ten_bit     = (config->config.encoder_bit_depth > 8);
+    const size_t chroma_size = luma_size >> (3 - app_cfg->config.encoder_color_format);
+    const size_t ten_bit     = (app_cfg->config.encoder_bit_depth > 8);
     const size_t frame_size  = (luma_size + 2 * chroma_size) << ten_bit;
 
     // Recon Port
@@ -192,7 +192,7 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
     // Initialize Header
     callback_data->recon_buffer->size = sizeof(EbBufferHeaderType);
 
-    if (config->config.recon_enabled) {
+    if (app_cfg->config.recon_enabled) {
         EB_APP_MALLOC(uint8_t *,
                       callback_data->recon_buffer->p_buffer,
                       frame_size,
@@ -207,44 +207,44 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
     return EB_ErrorNone;
 }
 
-EbErrorType preload_frames_info_ram(EbConfig *config) {
+EbErrorType preload_frames_info_ram(EbConfig *app_cfg) {
     EbErrorType         return_error        = EB_ErrorNone;
-    int32_t             input_padded_width  = config->input_padded_width;
-    int32_t             input_padded_height = config->input_padded_height;
+    int32_t             input_padded_width  = app_cfg->input_padded_width;
+    int32_t             input_padded_height = app_cfg->input_padded_height;
     size_t              read_size;
     const EbColorFormat color_format =
-        (EbColorFormat)config->config.encoder_color_format; // Chroma subsampling
+        (EbColorFormat)app_cfg->config.encoder_color_format; // Chroma subsampling
 
     read_size = input_padded_width * input_padded_height; //Luma
     read_size += 2 * (read_size >> (3 - color_format)); // Add Chroma
-    if (config->config.encoder_bit_depth > 8)
+    if (app_cfg->config.encoder_bit_depth > 8)
         read_size *= 2; //10 bit
     EB_APP_MALLOC(uint8_t **,
-                  config->sequence_buffer,
-                  sizeof(uint8_t *) * config->buffered_input,
+                  app_cfg->sequence_buffer,
+                  sizeof(uint8_t *) * app_cfg->buffered_input,
                   EB_N_PTR,
                   EB_ErrorInsufficientResources);
 
-    for (int32_t processed_frame_count = 0; processed_frame_count < config->buffered_input;
+    for (int32_t processed_frame_count = 0; processed_frame_count < app_cfg->buffered_input;
          ++processed_frame_count) {
         EB_APP_MALLOC(uint8_t *,
-                      config->sequence_buffer[processed_frame_count],
+                      app_cfg->sequence_buffer[processed_frame_count],
                       read_size,
                       EB_N_PTR,
                       EB_ErrorInsufficientResources);
         // Fill the buffer with a complete frame
         size_t filled_len = fread(
-            config->sequence_buffer[processed_frame_count], 1, read_size, config->input_file);
+            app_cfg->sequence_buffer[processed_frame_count], 1, read_size, app_cfg->input_file);
 
         if (read_size != filled_len) {
-            fseek(config->input_file, 0, SEEK_SET);
+            fseek(app_cfg->input_file, 0, SEEK_SET);
 
             // Fill the buffer with a complete frame
             if (read_size !=
-                fread(config->sequence_buffer[processed_frame_count],
+                fread(app_cfg->sequence_buffer[processed_frame_count],
                       1,
                       read_size,
-                      config->input_file))
+                      app_cfg->input_file))
                 return_error = EB_Corrupt_Frame;
         }
     }
@@ -259,7 +259,7 @@ EbErrorType preload_frames_info_ram(EbConfig *config) {
 /***********************************
  * Initialize Core & Component
  ***********************************/
-EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t instance_idx) {
+EbErrorType init_encoder(EbConfig *app_cfg, EbAppContext *callback_data, uint32_t instance_idx) {
     // Allocate a memory table hosting all allocated pointers
     allocate_memory_table(instance_idx);
 
@@ -270,7 +270,7 @@ EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t
     // Send over all configuration parameters
     // Set the Parameters
     EbErrorType return_error = svt_av1_enc_set_parameter(callback_data->svt_encoder_handle,
-                                                         &config->config);
+                                                         &app_cfg->config);
 
     if (return_error != EB_ErrorNone)
         return return_error;
@@ -286,21 +286,21 @@ EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t
     ///********************** APPLICATION INIT [START] ******************///
 
     // STEP 6: Allocate input buffers carrying the yuv frames in
-    return_error = allocate_input_buffers(config, callback_data);
+    return_error = allocate_input_buffers(app_cfg, callback_data);
 
     if (return_error != EB_ErrorNone)
         return return_error;
     // STEP 7: Allocate output Recon Buffer
-    return_error = allocate_output_recon_buffers(config, callback_data);
+    return_error = allocate_output_recon_buffers(app_cfg, callback_data);
 
     if (return_error != EB_ErrorNone)
         return return_error;
     // Allocate the Sequence Buffer
-    if (config->buffered_input != -1) {
+    if (app_cfg->buffered_input != -1) {
         // Preload frames into the ram for a faster yuv access time
-        preload_frames_info_ram(config);
+        preload_frames_info_ram(app_cfg);
     } else
-        config->sequence_buffer = 0;
+        app_cfg->sequence_buffer = 0;
     ///********************** APPLICATION INIT [END] ******************////////
 
     return return_error;

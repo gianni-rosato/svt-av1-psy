@@ -35,27 +35,27 @@ static __inline void mem_put_le16(void *vmem, int32_t val) {
     mem[1] = (uint8_t)((val >> 8) & 0xff);
 }
 
-void write_ivf_stream_header(EbConfig *config, int32_t length) {
+void write_ivf_stream_header(EbConfig *app_cfg, int32_t length) {
     char header[IVF_STREAM_HEADER_SIZE] = {'D', 'K', 'I', 'F'};
     mem_put_le16(header + 4, 0); // version
     mem_put_le16(header + 6, 32); // header size
     mem_put_le32(header + 8, AV1_FOURCC); // fourcc
-    mem_put_le16(header + 12, config->input_padded_width); // width
-    mem_put_le16(header + 14, config->input_padded_height); // height
-    mem_put_le32(header + 16, config->config.frame_rate_numerator); // rate
-    mem_put_le32(header + 20, config->config.frame_rate_denominator); // scale
+    mem_put_le16(header + 12, app_cfg->input_padded_width); // width
+    mem_put_le16(header + 14, app_cfg->input_padded_height); // height
+    mem_put_le32(header + 16, app_cfg->config.frame_rate_numerator); // rate
+    mem_put_le32(header + 20, app_cfg->config.frame_rate_denominator); // scale
     mem_put_le32(header + 24, length); // length
     mem_put_le32(header + 28, 0); // unused
-    fwrite(header, 1, IVF_STREAM_HEADER_SIZE, config->bitstream_file);
+    fwrite(header, 1, IVF_STREAM_HEADER_SIZE, app_cfg->bitstream_file);
 }
 
-void write_ivf_frame_header(EbConfig *config, uint32_t byte_count) {
+void write_ivf_frame_header(EbConfig *app_cfg, uint32_t byte_count) {
     char header[IVF_FRAME_HEADER_SIZE];
 
     mem_put_le32(&header[0], (int32_t)byte_count);
-    mem_put_le32(&header[4], (int32_t)(config->ivf_count & 0xFFFFFFFF));
-    mem_put_le32(&header[8], (int32_t)(config->ivf_count >> 32));
+    mem_put_le32(&header[4], (int32_t)(app_cfg->ivf_count & 0xFFFFFFFF));
+    mem_put_le32(&header[8], (int32_t)(app_cfg->ivf_count >> 32));
 
-    config->ivf_count++;
-    fwrite(header, 1, IVF_FRAME_HEADER_SIZE, config->bitstream_file);
+    app_cfg->ivf_count++;
+    fwrite(header, 1, IVF_FRAME_HEADER_SIZE, app_cfg->bitstream_file);
 }

@@ -19,8 +19,8 @@ extern "C" {
 }
 
 void set_enc_config(void *config_ptr, const char *name, const char *value) {
-    EbConfig *config = (EbConfig *)config_ptr;
-    set_config_value(config, name, value);
+    EbConfig *app_cfg = (EbConfig *)config_ptr;
+    set_config_value(app_cfg, name, value);
 }
 
 bool set_default_config(EbSvtAv1EncConfiguration *config) {
@@ -34,25 +34,25 @@ bool set_default_config(EbSvtAv1EncConfiguration *config) {
 
 void release_enc_config(void *config_ptr) {
     if (config_ptr) {
-        EbConfig *config = (EbConfig *)config_ptr;
-        svt_config_dtor(config);
+        EbConfig *app_cfg = (EbConfig *)config_ptr;
+        svt_config_dtor(app_cfg);
     }
 }
 
 void *create_enc_config() {
-    EbConfig *config = svt_config_ctor();
-    assert(config != NULL);
-    if (!set_default_config(&config->config)) {
-        release_enc_config(config);
-        config = NULL;
+    EbConfig *app_cfg = svt_config_ctor();
+    assert(app_cfg != NULL);
+    if (!set_default_config(&app_cfg->config)) {
+        release_enc_config(app_cfg);
+        app_cfg = NULL;
     }
-    assert(config != NULL);
-    return config;
+    assert(app_cfg != NULL);
+    return app_cfg;
 }
 
 int copy_enc_param(EbSvtAv1EncConfiguration *dst_enc_config, void *config_ptr) {
-    EbConfig *config = (EbConfig *)config_ptr;
-    memcpy(dst_enc_config, &config->config, sizeof(EbSvtAv1EncConfiguration));
+    EbConfig *app_cfg = (EbConfig *)config_ptr;
+    memcpy(dst_enc_config, &app_cfg->config, sizeof(EbSvtAv1EncConfiguration));
     return 0;
 }
 

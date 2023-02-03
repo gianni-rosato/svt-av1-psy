@@ -1374,73 +1374,73 @@ ConfigEntry config_entry[] = {
  * Constructor
  **********************************/
 EbConfig *svt_config_ctor() {
-    EbConfig *config_ptr = (EbConfig *)calloc(1, sizeof(EbConfig));
-    if (!config_ptr)
+    EbConfig *app_cfg = (EbConfig *)calloc(1, sizeof(EbConfig));
+    if (!app_cfg)
         return NULL;
-    config_ptr->error_log_file      = stderr;
-    config_ptr->buffered_input      = -1;
-    config_ptr->progress            = 1;
-    config_ptr->injector_frame_rate = 60;
+    app_cfg->error_log_file      = stderr;
+    app_cfg->buffered_input      = -1;
+    app_cfg->progress            = 1;
+    app_cfg->injector_frame_rate = 60;
 
-    return config_ptr;
+    return app_cfg;
 }
 
 /**********************************
  * Destructor
  **********************************/
-void svt_config_dtor(EbConfig *config_ptr) {
-    if (!config_ptr)
+void svt_config_dtor(EbConfig *app_cfg) {
+    if (!app_cfg)
         return;
     // Close any files that are open
-    if (config_ptr->input_file) {
-        if (!config_ptr->input_file_is_fifo)
-            fclose(config_ptr->input_file);
-        config_ptr->input_file = (FILE *)NULL;
+    if (app_cfg->input_file) {
+        if (!app_cfg->input_file_is_fifo)
+            fclose(app_cfg->input_file);
+        app_cfg->input_file = (FILE *)NULL;
     }
 
-    if (config_ptr->bitstream_file) {
-        if (!fseek(config_ptr->bitstream_file, 0, SEEK_SET))
-            write_ivf_stream_header(config_ptr, config_ptr->frames_encoded);
-        fclose(config_ptr->bitstream_file);
-        config_ptr->bitstream_file = (FILE *)NULL;
+    if (app_cfg->bitstream_file) {
+        if (!fseek(app_cfg->bitstream_file, 0, SEEK_SET))
+            write_ivf_stream_header(app_cfg, app_cfg->frames_encoded);
+        fclose(app_cfg->bitstream_file);
+        app_cfg->bitstream_file = (FILE *)NULL;
     }
 
-    if (config_ptr->recon_file) {
-        fclose(config_ptr->recon_file);
-        config_ptr->recon_file = (FILE *)NULL;
+    if (app_cfg->recon_file) {
+        fclose(app_cfg->recon_file);
+        app_cfg->recon_file = (FILE *)NULL;
     }
 
-    if (config_ptr->error_log_file && config_ptr->error_log_file != stderr) {
-        fclose(config_ptr->error_log_file);
-        config_ptr->error_log_file = (FILE *)NULL;
+    if (app_cfg->error_log_file && app_cfg->error_log_file != stderr) {
+        fclose(app_cfg->error_log_file);
+        app_cfg->error_log_file = (FILE *)NULL;
     }
 
-    if (config_ptr->qp_file) {
-        fclose(config_ptr->qp_file);
-        config_ptr->qp_file = (FILE *)NULL;
+    if (app_cfg->qp_file) {
+        fclose(app_cfg->qp_file);
+        app_cfg->qp_file = (FILE *)NULL;
     }
 
-    if (config_ptr->stat_file) {
-        fclose(config_ptr->stat_file);
-        config_ptr->stat_file = (FILE *)NULL;
+    if (app_cfg->stat_file) {
+        fclose(app_cfg->stat_file);
+        app_cfg->stat_file = (FILE *)NULL;
     }
 
-    if (config_ptr->output_stat_file) {
-        fclose(config_ptr->output_stat_file);
-        config_ptr->output_stat_file = (FILE *)NULL;
+    if (app_cfg->output_stat_file) {
+        fclose(app_cfg->output_stat_file);
+        app_cfg->output_stat_file = (FILE *)NULL;
     }
 
-    for (size_t i = 0; i < config_ptr->forced_keyframes.count; ++i)
-        free(config_ptr->forced_keyframes.specifiers[i]);
-    free(config_ptr->forced_keyframes.specifiers);
-    free(config_ptr->forced_keyframes.frames);
-    free((void *)config_ptr->stats);
-    free(config_ptr);
+    for (size_t i = 0; i < app_cfg->forced_keyframes.count; ++i)
+        free(app_cfg->forced_keyframes.specifiers[i]);
+    free(app_cfg->forced_keyframes.specifiers);
+    free(app_cfg->forced_keyframes.frames);
+    free((void *)app_cfg->stats);
+    free(app_cfg);
     return;
 }
 EbErrorType enc_channel_ctor(EncChannel *c) {
-    c->config = svt_config_ctor();
-    if (!c->config)
+    c->app_cfg = svt_config_ctor();
+    if (!c->app_cfg)
         return EB_ErrorInsufficientResources;
     c->app_ctx = (EbAppContext *)malloc(sizeof(EbAppContext));
     if (!c->app_ctx)
@@ -1451,7 +1451,8 @@ EbErrorType enc_channel_ctor(EncChannel *c) {
     c->exit_cond_recon  = APP_ExitConditionError;
     c->exit_cond_input  = APP_ExitConditionError;
     c->active           = FALSE;
-    return svt_av1_enc_init_handle(&c->app_ctx->svt_encoder_handle, c->app_ctx, &c->config->config);
+    return svt_av1_enc_init_handle(
+        &c->app_ctx->svt_encoder_handle, c->app_ctx, &c->app_cfg->config);
 }
 
 void enc_channel_dctor(EncChannel *c, uint32_t inst_cnt) {
@@ -1460,7 +1461,7 @@ void enc_channel_dctor(EncChannel *c, uint32_t inst_cnt) {
         svt_av1_enc_deinit(ctx->svt_encoder_handle);
         de_init_encoder(ctx, inst_cnt);
     }
-    svt_config_dtor(c->config);
+    svt_config_dtor(c->app_cfg);
     free(c->app_ctx);
 }
 
@@ -1516,12 +1517,12 @@ static void line_split(uint32_t *argc, char *argv[CONFIG_FILE_MAX_ARG_COUNT],
 /**********************************
 * Set Config value
 **********************************/
-static EbErrorType set_config_value(EbConfig *config, const char *name, const char *value) {
+static EbErrorType set_config_value(EbConfig *app_cfg, const char *name, const char *value) {
     int32_t i = 0;
 
     while (config_entry[i].name != NULL) {
         if (!strcmp(config_entry[i].name, name)) {
-            EbErrorType ret = (*config_entry[i].scf)(config, name, value);
+            EbErrorType ret = (*config_entry[i].scf)(app_cfg, name, value);
             if (ret != EB_ErrorNone)
                 return ret;
         }
@@ -1534,7 +1535,7 @@ static EbErrorType set_config_value(EbConfig *config, const char *name, const ch
 /**********************************
 * Parse Config File
 **********************************/
-static void parse_config_file(EbConfig *config, char *buffer, int32_t size) {
+static void parse_config_file(EbConfig *app_cfg, char *buffer, int32_t size) {
     uint32_t argc;
     char    *argv[CONFIG_FILE_MAX_ARG_COUNT];
     uint32_t arg_len[CONFIG_FILE_MAX_ARG_COUNT];
@@ -1588,7 +1589,7 @@ static void parse_config_file(EbConfig *config, char *buffer, int32_t size) {
                     // Null terminate the variable name
                     var_value[value_index][arg_len[value_index + 2]] = CONFIG_FILE_NULL_CHAR;
 
-                    set_config_value(config, var_name, var_value[value_index]);
+                    set_config_value(app_cfg, var_name, var_value[value_index]);
                 }
             }
         }
@@ -1641,7 +1642,7 @@ static int32_t find_token(int32_t argc, char *const argv[], char const *token, c
 /**********************************
 * Read Config File
 **********************************/
-static int32_t read_config_file(EbConfig *config, char *config_path, uint32_t instance_idx) {
+static int32_t read_config_file(EbConfig *app_cfg, char *config_path, uint32_t instance_idx) {
     int32_t return_error = 0;
 
     FILE *config_file;
@@ -1658,7 +1659,7 @@ static int32_t read_config_file(EbConfig *config, char *config_path, uint32_t in
                 config_file_buffer, 1, config_file_size, config_file);
 
             if (result_size == config_file_size) {
-                parse_config_file(config, config_file_buffer, config_file_size);
+                parse_config_file(app_cfg, config_file_buffer, config_file_size);
             } else {
                 fprintf(stderr, "Error channel %u: File Read Failed\n", instance_idx + 1);
                 return_error = -1;
@@ -1709,14 +1710,14 @@ Bool load_twopass_stats_in(EbConfig *cfg) {
     }
     return config->rc_stats_buffer.buf != NULL;
 }
-EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
+EbErrorType handle_stats_file(EbConfig *app_cfg, EncPass enc_pass,
                               const SvtAv1FixedBuf *rc_stats_buffer, uint32_t channel_number) {
     switch (enc_pass) {
     case ENC_SINGLE_PASS: {
-        const char *stats = config->stats ? config->stats : "svtav1_2pass.log";
-        if (config->config.pass == 1) {
-            if (!fopen_and_lock(&config->output_stat_file, stats, TRUE)) {
-                fprintf(config->error_log_file,
+        const char *stats = app_cfg->stats ? app_cfg->stats : "svtav1_2pass.log";
+        if (app_cfg->config.pass == 1) {
+            if (!fopen_and_lock(&app_cfg->output_stat_file, stats, TRUE)) {
+                fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't open stats file %s for write \n",
                         channel_number + 1,
                         stats);
@@ -1727,31 +1728,31 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
         // Multi pass VBR has 3 passes, and pass = 2 is the middle pass
         // In this pass, data is read from the file, copied to memory, updated and
         // written back to the same file
-        else if (config->config.pass == 2 &&
-                 config->config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
-            if (!fopen_and_lock(&config->input_stat_file, stats, FALSE)) {
-                fprintf(config->error_log_file,
+        else if (app_cfg->config.pass == 2 &&
+                 app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_VBR) {
+            if (!fopen_and_lock(&app_cfg->input_stat_file, stats, FALSE)) {
+                fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
                         channel_number + 1,
                         stats);
                 return EB_ErrorBadParameter;
             }
             // Copy from file to memory
-            if (!load_twopass_stats_in(config)) {
-                fprintf(config->error_log_file,
+            if (!load_twopass_stats_in(app_cfg)) {
+                fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't load file %s\n",
                         channel_number + 1,
                         stats);
                 return EB_ErrorBadParameter;
             }
             // Close the input stat file
-            if (config->input_stat_file) {
-                fclose(config->input_stat_file);
-                config->input_stat_file = (FILE *)NULL;
+            if (app_cfg->input_stat_file) {
+                fclose(app_cfg->input_stat_file);
+                app_cfg->input_stat_file = (FILE *)NULL;
             }
             // Open the file in write mode
-            if (!fopen_and_lock(&config->output_stat_file, stats, TRUE)) {
-                fprintf(config->error_log_file,
+            if (!fopen_and_lock(&app_cfg->output_stat_file, stats, TRUE)) {
+                fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't open stats file %s for write \n",
                         channel_number + 1,
                         stats);
@@ -1759,19 +1760,19 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
             }
         }
         // Final pass: pass = 2 for CRF and pass = 3 for VBR
-        else if ((config->config.pass == 2 &&
-                  config->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
-                 (config->config.pass == 3 &&
-                  config->config.rate_control_mode == SVT_AV1_RC_MODE_VBR)) {
-            if (!fopen_and_lock(&config->input_stat_file, stats, FALSE)) {
-                fprintf(config->error_log_file,
+        else if ((app_cfg->config.pass == 2 &&
+                  app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) ||
+                 (app_cfg->config.pass == 3 &&
+                  app_cfg->config.rate_control_mode == SVT_AV1_RC_MODE_VBR)) {
+            if (!fopen_and_lock(&app_cfg->input_stat_file, stats, FALSE)) {
+                fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
                         channel_number + 1,
                         stats);
                 return EB_ErrorBadParameter;
             }
-            if (!load_twopass_stats_in(config)) {
-                fprintf(config->error_log_file,
+            if (!load_twopass_stats_in(app_cfg)) {
+                fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't load file %s\n",
                         channel_number + 1,
                         stats);
@@ -1784,12 +1785,12 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
     case ENC_FIRST_PASS: {
         // for combined two passes,
         // we only ouptut first pass stats when user explicitly set the --stats
-        if (config->stats) {
-            if (!fopen_and_lock(&config->output_stat_file, config->stats, TRUE)) {
-                fprintf(config->error_log_file,
+        if (app_cfg->stats) {
+            if (!fopen_and_lock(&app_cfg->output_stat_file, app_cfg->stats, TRUE)) {
+                fprintf(app_cfg->error_log_file,
                         "Error instance %u: can't open stats file %s for write \n",
                         channel_number + 1,
-                        config->stats);
+                        app_cfg->stats);
                 return EB_ErrorBadParameter;
             }
         }
@@ -1798,23 +1799,23 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
 
     case ENC_SECOND_PASS: {
         if (!rc_stats_buffer->sz) {
-            fprintf(config->error_log_file,
+            fprintf(app_cfg->error_log_file,
                     "Error instance %u: combined multi passes need stats in for the middle pass \n",
                     channel_number + 1);
             return EB_ErrorBadParameter;
         }
-        config->config.rc_stats_buffer = *rc_stats_buffer;
+        app_cfg->config.rc_stats_buffer = *rc_stats_buffer;
         break;
     }
 
     case ENC_THIRD_PASS: {
         if (!rc_stats_buffer->sz) {
-            fprintf(config->error_log_file,
+            fprintf(app_cfg->error_log_file,
                     "Error instance %u: combined multi passes need stats in for the final pass \n",
                     channel_number + 1);
             return EB_ErrorBadParameter;
         }
-        config->config.rc_stats_buffer = *rc_stats_buffer;
+        app_cfg->config.rc_stats_buffer = *rc_stats_buffer;
         break;
     }
 
@@ -1828,88 +1829,89 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
 /******************************************
 * Verify Settings
 ******************************************/
-static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) {
+static EbErrorType app_verify_config(EbConfig *app_cfg, uint32_t channel_number) {
     EbErrorType return_error = EB_ErrorNone;
 
     // Check Input File
-    if (config->input_file == (FILE *)NULL) {
+    if (app_cfg->input_file == (FILE *)NULL) {
         fprintf(
-            config->error_log_file, "Error instance %u: Invalid Input File\n", channel_number + 1);
+            app_cfg->error_log_file, "Error instance %u: Invalid Input File\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->frames_to_be_encoded <= -1) {
-        fprintf(config->error_log_file,
+    if (app_cfg->frames_to_be_encoded <= -1) {
+        fprintf(app_cfg->error_log_file,
                 "Error instance %u: FrameToBeEncoded must be greater than 0\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->buffered_input == 0) {
-        fprintf(config->error_log_file,
+    if (app_cfg->buffered_input == 0) {
+        fprintf(app_cfg->error_log_file,
                 "Error instance %u: Buffered Input cannot be 0\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->buffered_input < -1) {
-        fprintf(config->error_log_file,
+    if (app_cfg->buffered_input < -1) {
+        fprintf(app_cfg->error_log_file,
                 "Error instance %u: Invalid buffered_input. buffered_input must be -1 or greater "
                 "than or equal to 1\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->buffered_input != -1 && config->y4m_input) {
-        fprintf(config->error_log_file,
+    if (app_cfg->buffered_input != -1 && app_cfg->y4m_input) {
+        fprintf(app_cfg->error_log_file,
                 "Error instance %u: Buffered input is currently not available with y4m inputs\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->buffered_input > config->frames_to_be_encoded) {
-        fprintf(config->error_log_file,
+    if (app_cfg->buffered_input > app_cfg->frames_to_be_encoded) {
+        fprintf(app_cfg->error_log_file,
                 "Error instance %u: Invalid buffered_input. buffered_input must be less or equal "
                 "to the number of frames to be encoded\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->config.use_qp_file == TRUE && config->qp_file == NULL) {
-        fprintf(config->error_log_file,
+    if (app_cfg->config.use_qp_file == TRUE && app_cfg->qp_file == NULL) {
+        fprintf(app_cfg->error_log_file,
                 "Error instance %u: Could not find QP file, UseQpFile is set to 1\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->injector > 1) {
-        fprintf(config->error_log_file,
+    if (app_cfg->injector > 1) {
+        fprintf(app_cfg->error_log_file,
                 "Error Instance %u: Invalid injector [0 - 1]\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->injector_frame_rate > 240 && config->injector) {
-        fprintf(config->error_log_file,
+    if (app_cfg->injector_frame_rate > 240 && app_cfg->injector) {
+        fprintf(app_cfg->error_log_file,
                 "Error Instance %u: The maximum allowed injector_frame_rate is 240 fps\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
     // Check that the injector frame_rate is non-zero
-    if (!config->injector_frame_rate && config->injector) {
-        fprintf(config->error_log_file,
+    if (!app_cfg->injector_frame_rate && app_cfg->injector) {
+        fprintf(app_cfg->error_log_file,
                 "Error Instance %u: The injector frame rate should be greater than 0 fps \n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->config.frame_rate_numerator == 0 || config->config.frame_rate_denominator == 0) {
-        fprintf(config->error_log_file,
+    if (app_cfg->config.frame_rate_numerator == 0 || app_cfg->config.frame_rate_denominator == 0) {
+        fprintf(app_cfg->error_log_file,
                 "Error Instance %u: The frame_rate_numerator and frame_rate_denominator should be "
                 "greater than 0\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
-    } else if (config->config.frame_rate_numerator / config->config.frame_rate_denominator > 240) {
-        fprintf(config->error_log_file,
+    } else if (app_cfg->config.frame_rate_numerator / app_cfg->config.frame_rate_denominator >
+               240) {
+        fprintf(app_cfg->error_log_file,
                 "Error Instance %u: The maximum allowed frame_rate is 240 fps\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2368,25 +2370,25 @@ static Bool is_negative_number(const char *string) {
 }
 
 // Computes the number of frames in the input file
-int32_t compute_frames_to_be_encoded(EbConfig *config) {
+int32_t compute_frames_to_be_encoded(EbConfig *app_cfg) {
     uint64_t file_size   = 0;
     int32_t  frame_count = 0;
     uint32_t frame_size;
 
     // Pipes contain data streams whose end we cannot know before we reach it.
     // For pipes, we leave it up to the eof logic to detect how many frames to eventually encode.
-    if (config->input_file == stdin || config->input_file_is_fifo)
+    if (app_cfg->input_file == stdin || app_cfg->input_file_is_fifo)
         return -1;
 
-    if (config->input_file) {
-        uint64_t curr_loc = ftello(config->input_file); // get current fp location
-        fseeko(config->input_file, 0L, SEEK_END);
-        file_size = ftello(config->input_file);
-        fseeko(config->input_file, curr_loc, SEEK_SET); // seek back to that location
+    if (app_cfg->input_file) {
+        uint64_t curr_loc = ftello(app_cfg->input_file); // get current fp location
+        fseeko(app_cfg->input_file, 0L, SEEK_END);
+        file_size = ftello(app_cfg->input_file);
+        fseeko(app_cfg->input_file, curr_loc, SEEK_SET); // seek back to that location
     }
-    frame_size = config->input_padded_width * config->input_padded_height; // Luma
-    frame_size += 2 * (frame_size >> (3 - config->config.encoder_color_format)); // Add Chroma
-    frame_size = frame_size << ((config->config.encoder_bit_depth == 10) ? 1 : 0);
+    frame_size = app_cfg->input_padded_width * app_cfg->input_padded_height; // Luma
+    frame_size += 2 * (frame_size >> (3 - app_cfg->config.encoder_color_format)); // Add Chroma
+    frame_size = frame_size << ((app_cfg->config.encoder_bit_depth == 10) ? 1 : 0);
 
     if (frame_size == 0)
         return -1;
@@ -2476,7 +2478,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         for (index = 0; index < num_channels; ++index) {
             EncChannel *c   = channels + index;
             c->return_error = (EbErrorType)read_config_file(
-                c->config, config_strings[index], index);
+                c->app_cfg, config_strings[index], index);
             return_error = (EbErrorType)(return_error & c->return_error);
         }
     } else if (find_token_multiple_inputs(num_channels,
@@ -2490,7 +2492,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         for (index = 0; index < num_channels; ++index) {
             EncChannel *c   = channels + index;
             c->return_error = (EbErrorType)read_config_file(
-                c->config, config_strings[index], index);
+                c->app_cfg, config_strings[index], index);
             return_error = (EbErrorType)(return_error & c->return_error);
         }
     } else {
@@ -2552,7 +2554,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
                 break;
             // Mark the value as found in the temp argument buffer
             EbErrorType err = (entry->scf)(
-                channels[chan].config, entry->token, config_strings[chan]);
+                channels[chan].app_cfg, entry->token, config_strings[chan]);
             channels[chan].return_error = (EbErrorType)(channels[chan].return_error | err);
             return_error                = (EbErrorType)(return_error & channels[chan].return_error);
         }
@@ -2565,8 +2567,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
 
     for (index = 0; index < num_channels; ++index) {
         EncChannel *c = channels + index;
-        if (c->config->y4m_input == TRUE) {
-            ret_y4m = read_y4m_header(c->config);
+        if (c->app_cfg->y4m_input == TRUE) {
+            ret_y4m = read_y4m_header(c->app_cfg);
             if (ret_y4m == EB_ErrorBadParameter) {
                 fprintf(stderr, "Error found when reading the y4m file parameters.\n");
                 free_config_strings(num_channels, config_strings);
@@ -2583,35 +2585,36 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
         for (index = 0; index < num_channels; ++index) {
             EncChannel *c = channels + index;
             if (c->return_error == EB_ErrorNone) {
-                EbConfig *config = c->config;
-                c->return_error  = app_verify_config(config, index);
+                EbConfig *app_cfg = c->app_cfg;
+                c->return_error   = app_verify_config(app_cfg, index);
                 // set inj_frame_rate to q16 format
-                if (c->return_error == EB_ErrorNone && config->injector == 1)
-                    config->injector_frame_rate <<= 16;
+                if (c->return_error == EB_ErrorNone && app_cfg->injector == 1)
+                    app_cfg->injector_frame_rate <<= 16;
 
                 // Assuming no errors, add padding to width and height
                 if (c->return_error == EB_ErrorNone) {
-                    config->input_padded_width  = config->config.source_width;
-                    config->input_padded_height = config->config.source_height;
+                    app_cfg->input_padded_width  = app_cfg->config.source_width;
+                    app_cfg->input_padded_height = app_cfg->config.source_height;
                 }
 
-                const int32_t input_frame_count = compute_frames_to_be_encoded(config);
-                const bool    n_specified       = config->frames_to_be_encoded != 0;
+                const int32_t input_frame_count = compute_frames_to_be_encoded(app_cfg);
+                const bool    n_specified       = app_cfg->frames_to_be_encoded != 0;
 
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv
                 if (c->return_error == EB_ErrorNone && !n_specified)
-                    config->frames_to_be_encoded = input_frame_count - config->frames_to_be_skipped;
+                    app_cfg->frames_to_be_encoded = input_frame_count -
+                        app_cfg->frames_to_be_skipped;
 
                 // For pipe input it is fine if we have -1 here (we will update on end of stream)
-                if (config->frames_to_be_encoded == -1 && config->input_file != stdin &&
-                    !config->input_file_is_fifo) {
-                    fprintf(config->error_log_file,
+                if (app_cfg->frames_to_be_encoded == -1 && app_cfg->input_file != stdin &&
+                    !app_cfg->input_file_is_fifo) {
+                    fprintf(app_cfg->error_log_file,
                             "Error instance %u: Input yuv does not contain enough frames \n",
                             index + 1);
                     c->return_error = EB_ErrorBadParameter;
                 }
-                if (input_frame_count != -1 && config->frames_to_be_skipped >= input_frame_count) {
-                    fprintf(config->error_log_file,
+                if (input_frame_count != -1 && app_cfg->frames_to_be_skipped >= input_frame_count) {
+                    fprintf(app_cfg->error_log_file,
                             "Error instance %u: FramesToBeSkipped is greater than or equal to the "
                             "number of frames detected\n",
                             index + 1);
@@ -2619,8 +2622,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
                 }
 
                 // Force the injector latency mode, and injector frame rate when speed control is on
-                if (c->return_error == EB_ErrorNone && config->speed_control_flag == 1)
-                    config->injector = 1;
+                if (c->return_error == EB_ErrorNone && app_cfg->speed_control_flag == 1)
+                    app_cfg->injector = 1;
             }
             return_error = (EbErrorType)(return_error & c->return_error);
         }
