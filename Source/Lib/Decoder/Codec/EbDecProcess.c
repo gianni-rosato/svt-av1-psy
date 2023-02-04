@@ -1173,8 +1173,8 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
     int32_t sb_aligned_height = ALIGN_POWER_OF_TWO(frame_height, sb_size_log2);
     int32_t num_rows          = sb_aligned_height >> sb_size_log2;
 
-    uint32_t pad_width  = recon_picture_buf->origin_x;
-    uint32_t pad_height = recon_picture_buf->origin_y;
+    uint32_t pad_width  = recon_picture_buf->org_x;
+    uint32_t pad_height = recon_picture_buf->org_y;
 
     int32_t shift = 0;
     if ((recon_picture_buf->bit_depth != EB_EIGHT_BIT) || recon_picture_buf->is_16bit_pipeline)

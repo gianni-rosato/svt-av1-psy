@@ -52,8 +52,8 @@ typedef struct EbPictureBufferDesc {
     uint16_t stride_bit_inc_cr; // pointer to the V chroma buffer Bit increment
 
     // Picture Parameters
-    uint16_t      origin_x; // Horizontal padding distance
-    uint16_t      origin_y; // Vertical padding distance
+    uint16_t      org_x; // Horizontal padding distance
+    uint16_t      org_y; // Vertical padding distance
     uint16_t      origin_bot_y; // Vertical bottom padding distance
     uint16_t      width; // Luma picture width which excludes the padding
     uint16_t      height; // Luma picture height which excludes the padding

@@ -232,11 +232,11 @@ void svt_full_distortion_kernel_cbf_zero32_bits_c(int32_t *coeff, uint32_t coeff
 
 void picture_full_distortion32_bits_single(int32_t *coeff, int32_t *recon_coeff, uint32_t stride,
                                            uint32_t bwidth, uint32_t bheight, uint64_t *distortion,
-                                           uint32_t count_non_zero_coeffs) {
+                                           uint32_t cnt_nz_coeff) {
     distortion[0] = 0;
     distortion[1] = 0;
 
-    if (count_non_zero_coeffs) {
+    if (cnt_nz_coeff) {
         svt_full_distortion_kernel32_bits(
             coeff, stride, recon_coeff, stride, distortion, bwidth, bheight);
     } else {

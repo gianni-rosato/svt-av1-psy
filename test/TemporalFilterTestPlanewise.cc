@@ -25,7 +25,7 @@ using svt_av1_test_tool::SVTRandom;
 extern "C" void setup_test_env();
 
 typedef void (*TemporalFilterFunc)(
-    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride,
+    struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride,
     const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src,
     const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -34,7 +34,7 @@ typedef void (*TemporalFilterFunc)(
     uint16_t *v_count);
 
 typedef void (*TemporalFilterFuncHbd)(
-    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride,
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride,
     const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src,
     const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -261,7 +261,7 @@ class TemporalFilterTestPlanewise
 
 void TemporalFilterTestPlanewise::RunTest(int width, int height,
                                           int run_times) {
-    struct MeContext context1, context2, *context_ptr;
+    struct MeContext context1, context2, *me_ctx;
     TemporalFilterFillMeContexts(&context1, &context2);
     context1.tf_ctrls.use_fixed_point = use_fixed_point;
     context2.tf_ctrls.use_fixed_point = use_fixed_point;
@@ -270,20 +270,20 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
         for (int j = 0; j < run_times; j++) {
             GenRandomData(width, height, MAX_STRIDE, MAX_STRIDE);
             if (j % 2 == 0) {
-                context_ptr = &context1;
+                me_ctx = &context1;
             } else {
-                context_ptr = &context2;
+                me_ctx = &context2;
             }
-            context_ptr->tf_decay_factor_fp16[C_Y] =
+            me_ctx->tf_decay_factor_fp16[C_Y] =
                 FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_U] =
+            me_ctx->tf_decay_factor_fp16[C_U] =
                 FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_V] =
+            me_ctx->tf_decay_factor_fp16[C_V] =
                 FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
-            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
-            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
-            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(context_ptr,
+            me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+            ref_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -305,7 +305,7 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
                      accum_ref_ptr[C_V],
                      count_ref_ptr[C_V]);
 
-            tst_func(context_ptr,
+            tst_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -349,20 +349,20 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
         svt_av1_get_time(&ref_timer_seconds, &ref_timer_useconds);
         for (int j = 0; j < run_times; j++) {
             if (j % 2 == 0) {
-                context_ptr = &context1;
+                me_ctx = &context1;
             } else {
-                context_ptr = &context2;
+                me_ctx = &context2;
             }
-            context_ptr->tf_decay_factor_fp16[C_Y] =
+            me_ctx->tf_decay_factor_fp16[C_Y] =
                 FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_U] =
+            me_ctx->tf_decay_factor_fp16[C_U] =
                 FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_V] =
+            me_ctx->tf_decay_factor_fp16[C_V] =
                 FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
-            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
-            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
-            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(context_ptr,
+            me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+            ref_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -388,20 +388,20 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
 
         for (int j = 0; j < run_times; j++) {
             if (j % 2 == 0) {
-                context_ptr = &context1;
+                me_ctx = &context1;
             } else {
-                context_ptr = &context2;
+                me_ctx = &context2;
             }
-            context_ptr->tf_decay_factor_fp16[C_Y] =
+            me_ctx->tf_decay_factor_fp16[C_Y] =
                 FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_U] =
+            me_ctx->tf_decay_factor_fp16[C_U] =
                 FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_V] =
+            me_ctx->tf_decay_factor_fp16[C_V] =
                 FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
-            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
-            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
-            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            tst_func(context_ptr,
+            me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+            tst_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -479,7 +479,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(1)));
 
 void svt_av1_apply_temporal_filter_planewise_fast_c_wraper(
-    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride,
+    struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride,
     const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src,
     const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -498,7 +498,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_c_wraper(
     UNUSED(u_count);
     UNUSED(v_accum);
     UNUSED(v_count);
-    svt_av1_apply_temporal_filter_planewise_fast_c(context_ptr,
+    svt_av1_apply_temporal_filter_planewise_fast_c(me_ctx,
                                                    y_src,
                                                    y_src_stride,
                                                    y_pre,
@@ -510,7 +510,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_c_wraper(
 }
 
 void svt_av1_apply_temporal_filter_planewise_fast_sse4_1_wraper(
-    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride,
+    struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride,
     const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src,
     const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -529,7 +529,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_sse4_1_wraper(
     UNUSED(u_count);
     UNUSED(v_accum);
     UNUSED(v_count);
-    svt_av1_apply_temporal_filter_planewise_fast_sse4_1(context_ptr,
+    svt_av1_apply_temporal_filter_planewise_fast_sse4_1(me_ctx,
                                                         y_src,
                                                         y_src_stride,
                                                         y_pre,
@@ -541,7 +541,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_sse4_1_wraper(
 }
 
 void svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper(
-    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride,
+    struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride,
     const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src,
     const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -560,7 +560,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper(
     UNUSED(u_count);
     UNUSED(v_accum);
     UNUSED(v_count);
-    svt_av1_apply_temporal_filter_planewise_fast_avx2(context_ptr,
+    svt_av1_apply_temporal_filter_planewise_fast_avx2(me_ctx,
                                                       y_src,
                                                       y_src_stride,
                                                       y_pre,
@@ -707,7 +707,7 @@ class TemporalFilterTestPlanewiseHbd
 
 void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                                              int run_times) {
-    struct MeContext context1, context2, *context_ptr;
+    struct MeContext context1, context2, *me_ctx;
     TemporalFilterFillMeContexts(&context1, &context2);
     context1.tf_ctrls.use_fixed_point = use_fixed_point;
     context2.tf_ctrls.use_fixed_point = use_fixed_point;
@@ -716,21 +716,21 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
         for (int j = 0; j < run_times; j++) {
             GenRandomData(width, height, MAX_STRIDE, MAX_STRIDE);
             if (j % 2 == 0) {
-                context_ptr = &context1;
+                me_ctx = &context1;
             } else {
-                context_ptr = &context2;
+                me_ctx = &context2;
             }
             encoder_bit_depth = 10;
-            context_ptr->tf_decay_factor_fp16[C_Y] =
+            me_ctx->tf_decay_factor_fp16[C_Y] =
                 FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_U] =
+            me_ctx->tf_decay_factor_fp16[C_U] =
                 FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_V] =
+            me_ctx->tf_decay_factor_fp16[C_V] =
                 FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
-            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
-            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
-            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(context_ptr,
+            me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+            ref_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -753,7 +753,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      count_ref_ptr[C_V],
                      encoder_bit_depth);
 
-            tst_func(context_ptr,
+            tst_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -789,16 +789,16 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                           0);
             }
             encoder_bit_depth = 12;
-            context_ptr->tf_decay_factor_fp16[C_Y] =
+            me_ctx->tf_decay_factor_fp16[C_Y] =
                 FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_U] =
+            me_ctx->tf_decay_factor_fp16[C_U] =
                 FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_V] =
+            me_ctx->tf_decay_factor_fp16[C_V] =
                 FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
-            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
-            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
-            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(context_ptr,
+            me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+            ref_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -821,7 +821,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      count_ref_ptr[C_V],
                      encoder_bit_depth);
 
-            tst_func(context_ptr,
+            tst_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -867,20 +867,20 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
         svt_av1_get_time(&ref_timer_seconds, &ref_timer_useconds);
         for (int j = 0; j < run_times; j++) {
             if (j % 2 == 0) {
-                context_ptr = &context1;
+                me_ctx = &context1;
             } else {
-                context_ptr = &context2;
+                me_ctx = &context2;
             }
-            context_ptr->tf_decay_factor_fp16[C_Y] =
+            me_ctx->tf_decay_factor_fp16[C_Y] =
                 FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_U] =
+            me_ctx->tf_decay_factor_fp16[C_U] =
                 FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_V] =
+            me_ctx->tf_decay_factor_fp16[C_V] =
                 FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
-            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
-            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
-            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(context_ptr,
+            me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+            ref_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -906,7 +906,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
         svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
 
         for (int j = 0; j < run_times; j++) {
-            tst_func(context_ptr,
+            tst_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -957,20 +957,20 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
         svt_av1_get_time(&ref_timer_seconds, &ref_timer_useconds);
         for (int j = 0; j < run_times; j++) {
             if (j % 2 == 0) {
-                context_ptr = &context1;
+                me_ctx = &context1;
             } else {
-                context_ptr = &context2;
+                me_ctx = &context2;
             }
-            context_ptr->tf_decay_factor_fp16[C_Y] =
+            me_ctx->tf_decay_factor_fp16[C_Y] =
                 FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_U] =
+            me_ctx->tf_decay_factor_fp16[C_U] =
                 FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
-            context_ptr->tf_decay_factor_fp16[C_V] =
+            me_ctx->tf_decay_factor_fp16[C_V] =
                 FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
-            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
-            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
-            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
-            ref_func(context_ptr,
+            me_ctx->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            me_ctx->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            me_ctx->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+            ref_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -996,7 +996,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
         svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
 
         for (int j = 0; j < run_times; j++) {
-            tst_func(context_ptr,
+            tst_func(me_ctx,
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -1075,7 +1075,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(1)));
 
 void svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper(
-    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride,
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride,
     const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src,
     const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -1095,7 +1095,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper(
     UNUSED(v_accum);
     UNUSED(v_count);
 
-    svt_av1_apply_temporal_filter_planewise_fast_hbd_c(context_ptr,
+    svt_av1_apply_temporal_filter_planewise_fast_hbd_c(me_ctx,
                                                        y_src,
                                                        y_src_stride,
                                                        y_pre,
@@ -1107,7 +1107,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper(
                                                        encoder_bit_depth);
 }
 void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper(
-    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride,
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride,
     const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src,
     const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -1126,7 +1126,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper(
     UNUSED(u_count);
     UNUSED(v_accum);
     UNUSED(v_count);
-    svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(context_ptr,
+    svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(me_ctx,
                                                           y_src,
                                                           y_src_stride,
                                                           y_pre,
@@ -1139,7 +1139,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper(
 }
 
 void svt_av1_apply_temporal_filter_planewise_fast_hbd_sse4_1_wraper(
-    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride,
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride,
     const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src,
     const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
@@ -1158,7 +1158,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_sse4_1_wraper(
     UNUSED(u_count);
     UNUSED(v_accum);
     UNUSED(v_count);
-    svt_av1_apply_temporal_filter_planewise_fast_hbd_sse4_1(context_ptr,
+    svt_av1_apply_temporal_filter_planewise_fast_hbd_sse4_1(me_ctx,
                                                             y_src,
                                                             y_src_stride,
                                                             y_pre,
@@ -1181,7 +1181,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(0, 1)));
 
 typedef void (*get_final_filtered_pixels_fn)(
-    struct MeContext *context_ptr, EbByte *src_center_ptr_start,
+    struct MeContext *me_ctx, EbByte *src_center_ptr_start,
     uint16_t **altref_buffer_highbd_start, uint32_t **accum, uint16_t **count,
     const uint32_t *stride, int blk_y_src_offset, int blk_ch_src_offset,
     uint16_t blk_width_ch, uint16_t blk_height_ch, Bool is_highbd);
@@ -1200,7 +1200,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
 
     uint32_t *accum[3];
     uint16_t *count[3];
-    MeContext *context_ptr;
+    MeContext *me_ctx;
 
   public:
     TemporalFilterTestGetFinalFilteredPixels() {
@@ -1208,7 +1208,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
         height = BH;
         src_center_ptr_start_size = height * (width + 5);
         altref_buffer_highbd_start_size = height * (width + 5);
-        context_ptr = (MeContext *)malloc(sizeof(*context_ptr));
+        me_ctx = (MeContext *)malloc(sizeof(*me_ctx));
 
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             width_stride[color_channel] = width + 5;
@@ -1240,7 +1240,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
     }
 
     ~TemporalFilterTestGetFinalFilteredPixels() {
-        free(context_ptr);
+        free(me_ctx);
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             free(org_src_center_ptr_start[color_channel]);
             free(ref_src_center_ptr_start[color_channel]);
@@ -1265,11 +1265,11 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
                 }
                 count[color_channel][i] = rand16;  // Never 0
             }
-            context_ptr->tf_decay_factor[color_channel] = 1;
+            me_ctx->tf_decay_factor[color_channel] = 1;
         }
 
-        memset(context_ptr, 0, sizeof(*context_ptr));
-        context_ptr->tf_chroma = rand() % 2;
+        memset(me_ctx, 0, sizeof(*me_ctx));
+        me_ctx->tf_chroma = rand() % 2;
     }
 
     void RunTest(Bool is_highbd, get_final_filtered_pixels_fn tst_fn) {
@@ -1280,7 +1280,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
 
         SetRandData(is_highbd);
 
-        get_final_filtered_pixels_c(context_ptr,
+        get_final_filtered_pixels_c(me_ctx,
                                     org_src_center_ptr_start,
                                     org_altref_buffer_highbd_start,
                                     accum,
@@ -1292,7 +1292,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
                                     blk_height_ch,
                                     is_highbd);
 
-        tst_fn(context_ptr,
+        tst_fn(me_ctx,
                ref_src_center_ptr_start,
                ref_altref_buffer_highbd_start,
                accum,
@@ -1343,16 +1343,14 @@ TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_avx2) {
 }
 
 typedef void (*apply_filtering_central_fn)(
-    struct MeContext *context_ptr,
-    EbPictureBufferDesc *input_picture_ptr_central, EbByte *src,
-    uint32_t **accum, uint16_t **count, uint16_t blk_width, uint16_t blk_height,
-    uint32_t ss_x, uint32_t ss_y);
+    struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
+    EbByte *src, uint32_t **accum, uint16_t **count, uint16_t blk_width,
+    uint16_t blk_height, uint32_t ss_x, uint32_t ss_y);
 
 typedef void (*apply_filtering_central_highbd_fn)(
-    struct MeContext *context_ptr,
-    EbPictureBufferDesc *input_picture_ptr_central, uint16_t **src_16bit,
-    uint32_t **accum, uint16_t **count, uint16_t blk_width, uint16_t blk_height,
-    uint32_t ss_x, uint32_t ss_y);
+    struct MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
+    uint16_t **src_16bit, uint32_t **accum, uint16_t **count,
+    uint16_t blk_width, uint16_t blk_height, uint32_t ss_x, uint32_t ss_y);
 
 class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
   private:
@@ -1367,7 +1365,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
     uint32_t *ref_accum[3];
     uint16_t *org_count[3];
     uint16_t *ref_count[3];
-    MeContext *context_ptr;
+    MeContext *me_ctx;
     EbPictureBufferDesc input_picture_central;
 
   public:
@@ -1376,7 +1374,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
         height = BH;
         src_size = height * (width + 5);
         src_highbd_size = height * (width + 5);
-        context_ptr = (MeContext *)malloc(sizeof(*context_ptr));
+        me_ctx = (MeContext *)malloc(sizeof(*me_ctx));
 
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             src[color_channel] = (EbByte)malloc(src_size * sizeof(uint8_t));
@@ -1398,7 +1396,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
     }
 
     ~TemporalFilterTestApplyFilteringCentral() {
-        free(context_ptr);
+        free(me_ctx);
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             free(src[color_channel]);
             free(src_highbd[color_channel]);
@@ -1415,11 +1413,11 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
                 src[color_channel][i] = rand();
                 src_highbd[color_channel][i] = rand();
             }
-            context_ptr->tf_decay_factor[color_channel] = 1;
+            me_ctx->tf_decay_factor[color_channel] = 1;
         }
 
-        memset(context_ptr, 0, sizeof(*context_ptr));
-        context_ptr->tf_chroma = rand() % 2;
+        memset(me_ctx, 0, sizeof(*me_ctx));
+        me_ctx->tf_chroma = rand() % 2;
 
         memset(&input_picture_central, 0, sizeof(input_picture_central));
         input_picture_central.stride_y = BW + 5;
@@ -1435,7 +1433,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
 
         if (!is_highbd) {
             assert(lbd_fn_ptr);
-            apply_filtering_central_c(context_ptr,
+            apply_filtering_central_c(me_ctx,
                                       &input_picture_central,
                                       src,
                                       org_accum,
@@ -1444,7 +1442,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
                                       blk_height_ch,
                                       ss_x,
                                       ss_y);
-            lbd_fn_ptr(context_ptr,
+            lbd_fn_ptr(me_ctx,
                        &input_picture_central,
                        src,
                        ref_accum,
@@ -1455,7 +1453,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
                        ss_y);
         } else {
             assert(hbd_fn_ptr);
-            apply_filtering_central_highbd_c(context_ptr,
+            apply_filtering_central_highbd_c(me_ctx,
                                              &input_picture_central,
                                              src_highbd,
                                              org_accum,
@@ -1464,7 +1462,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
                                              blk_height_ch,
                                              ss_x,
                                              ss_y);
-            hbd_fn_ptr(context_ptr,
+            hbd_fn_ptr(me_ctx,
                        &input_picture_central,
                        src_highbd,
                        ref_accum,

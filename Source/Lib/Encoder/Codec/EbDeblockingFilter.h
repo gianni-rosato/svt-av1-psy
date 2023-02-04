@@ -40,34 +40,34 @@ struct AV1Common;
 struct macroblockd;
 struct AV1LfSyncData;
 
-void svt_av1_loop_filter_init(PictureControlSet *pcs_ptr);
+void svt_av1_loop_filter_init(PictureControlSet *pcs);
 
 void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                     //Yv12BufferConfig *frame_buffer,
-                    PictureControlSet *pcs_ptr, int32_t mi_row, int32_t mi_col, int32_t plane_start,
+                    PictureControlSet *pcs, int32_t mi_row, int32_t mi_col, int32_t plane_start,
                     int32_t plane_end, uint8_t last_col);
 
 void svt_av1_loop_filter_frame(
         EbPictureBufferDesc *frame_buffer,//reconpicture,
         //Yv12BufferConfig *frame_buffer,
-        PictureControlSet *pcs_ptr,
+        PictureControlSet *pcs,
         /*MacroBlockD *xd,*/ int32_t plane_start, int32_t plane_end/*,
         int32_t partial_frame*/);
 
 EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source input
-                                      PictureControlSet *pcs_ptr, LpfPickMethod method);
+                                      PictureControlSet *pcs, LpfPickMethod method);
 
-void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, const int32_t plane,
+void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col);
 
-void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, const int32_t plane,
+void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col);
 
 typedef struct LoopFilterWorkerData {
     EbPictureBufferDesc    *frame_buffer; //reconpicture,
-    PictureControlSet      *pcs_ptr;
+    PictureControlSet      *pcs;
     struct MacroblockdPlane planes[MAX_MB_PLANE];
     MacroBlockD            *xd;
 } LFWorkerData;

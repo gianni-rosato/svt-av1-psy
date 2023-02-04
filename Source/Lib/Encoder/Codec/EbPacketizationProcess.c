@@ -53,12 +53,12 @@ typedef struct PacketizationContext {
 } PacketizationContext;
 
 static Bool is_passthrough_data(EbLinkedListNode *data_node) { return data_node->passthrough; }
-void        free_temporal_filtering_buffer(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
-void        recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
-void        init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
-void        pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
+void        free_temporal_filtering_buffer(PictureControlSet *pcs, SequenceControlSet *scs);
+void        recon_output(PictureControlSet *pcs, SequenceControlSet *scs);
+void        init_resize_picture(SequenceControlSet *scs, PictureParentControlSet *pcs);
+void        pad_ref_and_set_flags(PictureControlSet *pcs, SequenceControlSet *scs);
 void        update_rc_counts(PictureParentControlSet *ppcs_ptr);
-void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, Bool free_memory);
+void        ssim_calculations(PictureControlSet *pcs, SequenceControlSet *scs, Bool free_memory);
 
 // Extracts passthrough data from a linked list. The extracted data nodes are removed from the original linked list and
 // returned as a linked list. Does not gaurantee the original order of the nodes.
@@ -445,41 +445,40 @@ void *packetization_kernel(void *input_ptr) {
 
         EntropyCodingResults *entropy_coding_results_ptr =
             (EntropyCodingResults *)entropy_coding_results_wrapper_ptr->object_ptr;
-        PictureControlSet *pcs_ptr = (PictureControlSet *)
-                                         entropy_coding_results_ptr->pcs_wrapper_ptr->object_ptr;
-        SequenceControlSet      *scs_ptr            = pcs_ptr->scs_ptr;
-        EncodeContext           *encode_context_ptr = scs_ptr->encode_context_ptr;
-        FrameHeader             *frm_hdr            = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-        Av1Common *const         cm                 = pcs_ptr->parent_pcs_ptr->av1_cm;
+        PictureControlSet *pcs = (PictureControlSet *)
+                                     entropy_coding_results_ptr->pcs_wrapper_ptr->object_ptr;
+        SequenceControlSet      *scs                = pcs->scs;
+        EncodeContext           *encode_context_ptr = scs->encode_context_ptr;
+        FrameHeader             *frm_hdr            = &pcs->ppcs->frm_hdr;
+        Av1Common *const         cm                 = pcs->ppcs->av1_cm;
         uint16_t                 tile_cnt = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
-        PictureParentControlSet *parent_pcs_ptr = (PictureParentControlSet *)
-                                                      pcs_ptr->parent_pcs_ptr;
+        PictureParentControlSet *ppcs     = (PictureParentControlSet *)pcs->ppcs;
 
-        if (parent_pcs_ptr->superres_total_recode_loop > 0 &&
-            parent_pcs_ptr->superres_recode_loop < parent_pcs_ptr->superres_total_recode_loop) {
+        if (ppcs->superres_total_recode_loop > 0 &&
+            ppcs->superres_recode_loop < ppcs->superres_total_recode_loop) {
             // Reset the Bitstream before writing to it
-            bitstream_reset(pcs_ptr->bitstream_ptr);
-            write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
-            int64_t bits = (int64_t)bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) << 3;
+            bitstream_reset(pcs->bitstream_ptr);
+            write_frame_header_av1(pcs->bitstream_ptr, scs, pcs, 0);
+            int64_t bits = (int64_t)bitstream_get_bytes_count(pcs->bitstream_ptr) << 3;
             int64_t rate = bits << 5; // To match scale.
-            bitstream_reset(pcs_ptr->bitstream_ptr);
-            int64_t sse       = parent_pcs_ptr->luma_sse;
-            uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
-            uint8_t qindex    = parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-            int32_t rdmult    = svt_aom_compute_rd_mult(pcs_ptr, qindex, qindex, bit_depth);
+            bitstream_reset(pcs->bitstream_ptr);
+            int64_t sse       = ppcs->luma_sse;
+            uint8_t bit_depth = pcs->hbd_md ? 10 : 8;
+            uint8_t qindex    = ppcs->frm_hdr.quantization_params.base_q_idx;
+            int32_t rdmult    = svt_aom_compute_rd_mult(pcs, qindex, qindex, bit_depth);
 
             double rdcost = RDCOST_DBL_WITH_NATIVE_BD_DIST(
-                rdmult, rate, sse, scs_ptr->static_config.encoder_bit_depth);
+                rdmult, rate, sse, scs->static_config.encoder_bit_depth);
 
 #if DEBUG_SUPERRES_RECODE
             printf(
                 "\n####### %s - frame %d, loop %d/%d, denom %d, rate %I64d, sse %I64d, rdcost "
                 "%.2f, qindex %d, rdmult %d\n",
                 __FUNCTION__,
-                (int)parent_pcs_ptr->picture_number,
-                parent_pcs_ptr->superres_recode_loop,
-                parent_pcs_ptr->superres_total_recode_loop,
-                parent_pcs_ptr->superres_denom,
+                (int)ppcs->picture_number,
+                ppcs->superres_recode_loop,
+                ppcs->superres_total_recode_loop,
+                ppcs->superres_denom,
                 rate,
                 sse,
                 rdcost,
@@ -487,35 +486,32 @@ void *packetization_kernel(void *input_ptr) {
                 rdmult);
 #endif
 
-            assert(parent_pcs_ptr->superres_total_recode_loop <= SCALE_NUMERATOR + 1);
-            parent_pcs_ptr->superres_rdcost[parent_pcs_ptr->superres_recode_loop] = rdcost;
-            ++parent_pcs_ptr->superres_recode_loop;
+            assert(ppcs->superres_total_recode_loop <= SCALE_NUMERATOR + 1);
+            ppcs->superres_rdcost[ppcs->superres_recode_loop] = rdcost;
+            ++ppcs->superres_recode_loop;
 
-            if (parent_pcs_ptr->superres_recode_loop <=
-                parent_pcs_ptr->superres_total_recode_loop) {
+            if (ppcs->superres_recode_loop <= ppcs->superres_total_recode_loop) {
                 Bool do_recode = FALSE;
-                if (parent_pcs_ptr->superres_recode_loop ==
-                    parent_pcs_ptr->superres_total_recode_loop) {
+                if (ppcs->superres_recode_loop == ppcs->superres_total_recode_loop) {
                     // compare rdcosts to determine whether need to recode again
                     // rdcost is the smaller the better
                     int best_index = 0;
-                    for (int i = 1; i < parent_pcs_ptr->superres_total_recode_loop; ++i) {
-                        double rdcost1 = parent_pcs_ptr->superres_rdcost[best_index];
-                        double rdcost2 = parent_pcs_ptr->superres_rdcost[i];
+                    for (int i = 1; i < ppcs->superres_total_recode_loop; ++i) {
+                        double rdcost1 = ppcs->superres_rdcost[best_index];
+                        double rdcost2 = ppcs->superres_rdcost[i];
                         if (rdcost2 < rdcost1) {
                             best_index = i;
                         }
                     }
 
-                    if (best_index != parent_pcs_ptr->superres_total_recode_loop - 1) {
-                        do_recode = TRUE;
-                        parent_pcs_ptr->superres_denom =
-                            parent_pcs_ptr->superres_denom_array[best_index];
+                    if (best_index != ppcs->superres_total_recode_loop - 1) {
+                        do_recode            = TRUE;
+                        ppcs->superres_denom = ppcs->superres_denom_array[best_index];
 #if DEBUG_SUPERRES_RECODE
                         printf("\n####### %s - frame %d, extra loop, pick denom %d\n",
                                __FUNCTION__,
-                               (int)parent_pcs_ptr->picture_number,
-                               parent_pcs_ptr->superres_denom);
+                               (int)ppcs->picture_number,
+                               ppcs->superres_denom);
 #endif
                     }
                 } else {
@@ -523,30 +519,29 @@ void *packetization_kernel(void *input_ptr) {
                 }
 
                 if (do_recode) {
-                    init_resize_picture(scs_ptr, parent_pcs_ptr);
+                    init_resize_picture(scs, ppcs);
 
                     // reset gm based on super-res on/off
-                    set_gm_controls(parent_pcs_ptr, derive_gm_level(parent_pcs_ptr));
+                    set_gm_controls(ppcs, derive_gm_level(ppcs));
 
                     // Initialize Segments as picture decision process
-                    parent_pcs_ptr->me_segments_completion_count = 0;
-                    parent_pcs_ptr->me_processed_b64_count       = 0;
+                    ppcs->me_segments_completion_count = 0;
+                    ppcs->me_processed_b64_count       = 0;
 
-                    if (parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
+                    if (ppcs->reference_picture_wrapper_ptr != NULL) {
                         // update mi_rows and mi_cols for the reference pic wrapper (used in mfmv for other pictures)
                         EbReferenceObject *reference_object =
-                            parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
-                        svt_reference_object_reset(reference_object, scs_ptr);
+                            ppcs->reference_picture_wrapper_ptr->object_ptr;
+                        svt_reference_object_reset(reference_object, scs);
                     }
 #if DEBUG_SUPERRES_RECODE
                     printf("\n%s - send superres recode task to open loop ME. Frame %d, denom %d\n",
                            __FUNCTION__,
-                           (int)parent_pcs_ptr->picture_number,
-                           parent_pcs_ptr->superres_denom);
+                           (int)ppcs->picture_number,
+                           ppcs->superres_denom);
 #endif
 
-                    for (uint32_t segment_index = 0;
-                         segment_index < parent_pcs_ptr->me_segments_total_count;
+                    for (uint32_t segment_index = 0; segment_index < ppcs->me_segments_total_count;
                          ++segment_index) {
                         // Get Empty Results Object
                         EbObjectWrapper *out_results_wrapper;
@@ -555,7 +550,7 @@ void *packetization_kernel(void *input_ptr) {
 
                         PictureDecisionResults *out_results = (PictureDecisionResults *)
                                                                   out_results_wrapper->object_ptr;
-                        out_results->pcs_wrapper_ptr = parent_pcs_ptr->p_pcs_wrapper_ptr;
+                        out_results->pcs_wrapper_ptr = ppcs->p_pcs_wrapper_ptr;
                         out_results->segment_index   = segment_index;
                         out_results->task_type       = TASK_SUPERRES_RE_ME;
                         //Post the Full Results Object
@@ -569,55 +564,53 @@ void *packetization_kernel(void *input_ptr) {
             }
         }
 
-        if (parent_pcs_ptr->superres_total_recode_loop > 0) {
+        if (ppcs->superres_total_recode_loop > 0) {
             // Release pa_ref_objs
             // Delayed call from Initial Rate Control process / Source Based Operations process
-            if (parent_pcs_ptr->tpl_ctrls.enable) {
-                if (parent_pcs_ptr->temporal_layer_index == 0) {
-                    for (uint32_t i = 0; i < parent_pcs_ptr->tpl_group_size; i++) {
-                        if (parent_pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
-                            if (parent_pcs_ptr->tpl_group[i]->ext_mg_id ==
-                                parent_pcs_ptr->ext_mg_id + 1) {
-                                release_pa_reference_objects(scs_ptr, parent_pcs_ptr->tpl_group[i]);
+            if (ppcs->tpl_ctrls.enable) {
+                if (ppcs->temporal_layer_index == 0) {
+                    for (uint32_t i = 0; i < ppcs->tpl_group_size; i++) {
+                        if (ppcs->tpl_group[i]->slice_type == P_SLICE) {
+                            if (ppcs->tpl_group[i]->ext_mg_id == ppcs->ext_mg_id + 1) {
+                                release_pa_reference_objects(scs, ppcs->tpl_group[i]);
                             }
                         } else {
-                            if (parent_pcs_ptr->tpl_group[i]->ext_mg_id ==
-                                parent_pcs_ptr->ext_mg_id) {
-                                release_pa_reference_objects(scs_ptr, parent_pcs_ptr->tpl_group[i]);
+                            if (ppcs->tpl_group[i]->ext_mg_id == ppcs->ext_mg_id) {
+                                release_pa_reference_objects(scs, ppcs->tpl_group[i]);
                             }
                         }
                     }
                 }
             } else {
-                release_pa_reference_objects(scs_ptr, parent_pcs_ptr);
+                release_pa_reference_objects(scs, ppcs);
             }
 
             // Delayed call from Rate Control process for multiple coding loop frames
-            if (scs_ptr->static_config.rate_control_mode)
-                update_rc_counts(parent_pcs_ptr);
+            if (scs->static_config.rate_control_mode)
+                update_rc_counts(ppcs);
 
             // Release pa me ptr. For non-superres-recode, it's released in mode_decision_kernel
-            assert(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr != NULL);
-            assert(pcs_ptr->parent_pcs_ptr->pa_me_data != NULL);
-            svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
-            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = NULL;
-            pcs_ptr->parent_pcs_ptr->pa_me_data          = NULL;
+            assert(pcs->ppcs->me_data_wrapper_ptr != NULL);
+            assert(pcs->ppcs->pa_me_data != NULL);
+            svt_release_object(pcs->ppcs->me_data_wrapper_ptr);
+            pcs->ppcs->me_data_wrapper_ptr = NULL;
+            pcs->ppcs->pa_me_data          = NULL;
 
             // Delayed call from Rest process
             {
-                if (scs_ptr->static_config.stat_report) {
+                if (scs->static_config.stat_report) {
                     // memory is freed in the ssim_calculations call
-                    ssim_calculations(pcs_ptr, scs_ptr, TRUE);
+                    ssim_calculations(pcs, scs, TRUE);
                 } else {
                     // free memory used by psnr_calculations
-                    free_temporal_filtering_buffer(pcs_ptr, scs_ptr);
+                    free_temporal_filtering_buffer(pcs, scs);
                 }
 
-                if (scs_ptr->static_config.recon_enabled) {
-                    recon_output(pcs_ptr, scs_ptr);
+                if (scs->static_config.recon_enabled) {
+                    recon_output(pcs, scs);
                 }
 
-                if (parent_pcs_ptr->is_used_as_reference_flag) {
+                if (ppcs->is_used_as_reference_flag) {
                     EbObjectWrapper     *picture_demux_results_wrapper_ptr;
                     PictureDemuxResults *picture_demux_results_rtr;
 
@@ -628,9 +621,9 @@ void *packetization_kernel(void *input_ptr) {
                     picture_demux_results_rtr = (PictureDemuxResults *)
                                                     picture_demux_results_wrapper_ptr->object_ptr;
                     picture_demux_results_rtr->reference_picture_wrapper_ptr =
-                        parent_pcs_ptr->reference_picture_wrapper_ptr;
-                    picture_demux_results_rtr->scs_ptr        = parent_pcs_ptr->scs_ptr;
-                    picture_demux_results_rtr->picture_number = parent_pcs_ptr->picture_number;
+                        ppcs->reference_picture_wrapper_ptr;
+                    picture_demux_results_rtr->scs            = ppcs->scs;
+                    picture_demux_results_rtr->picture_number = ppcs->picture_number;
                     picture_demux_results_rtr->picture_type   = EB_PIC_REFERENCE;
 
                     // Post Reference Picture
@@ -641,24 +634,22 @@ void *packetization_kernel(void *input_ptr) {
             // Delayed call from Entropy Coding process
             {
                 // Release the List 0 Reference Pictures
-                for (uint32_t ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
-                     ++ref_idx) {
-                    if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
-                        svt_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
+                for (uint32_t ref_idx = 0; ref_idx < pcs->ppcs->ref_list0_count; ++ref_idx) {
+                    if (pcs->ref_pic_ptr_array[0][ref_idx] != NULL) {
+                        svt_release_object(pcs->ref_pic_ptr_array[0][ref_idx]);
                     }
                 }
 
                 // Release the List 1 Reference Pictures
-                for (uint32_t ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
-                     ++ref_idx) {
-                    if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL) {
-                        svt_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
+                for (uint32_t ref_idx = 0; ref_idx < pcs->ppcs->ref_list1_count; ++ref_idx) {
+                    if (pcs->ref_pic_ptr_array[1][ref_idx] != NULL) {
+                        svt_release_object(pcs->ref_pic_ptr_array[1][ref_idx]);
                     }
                 }
 
                 //free palette data
-                if (pcs_ptr->tile_tok[0][0])
-                    EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
+                if (pcs->tile_tok[0][0])
+                    EB_FREE_ARRAY(pcs->tile_tok[0][0]);
             }
         }
 
@@ -666,55 +657,52 @@ void *packetization_kernel(void *input_ptr) {
         // Input Entropy Results into Reordering Queue
         //****************************************************
         //get a new entry spot
-        int32_t queue_entry_index = pcs_ptr->parent_pcs_ptr->decode_order %
-            PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
+        int32_t queue_entry_index = pcs->ppcs->decode_order % PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
         PacketizationReorderEntry *queue_entry_ptr =
             encode_context_ptr->packetization_reorder_queue[queue_entry_index];
-        queue_entry_ptr->start_time_seconds   = pcs_ptr->parent_pcs_ptr->start_time_seconds;
-        queue_entry_ptr->start_time_u_seconds = pcs_ptr->parent_pcs_ptr->start_time_u_seconds;
-        queue_entry_ptr->is_alt_ref           = pcs_ptr->parent_pcs_ptr->is_alt_ref;
-        svt_get_empty_object(scs_ptr->encode_context_ptr->stream_output_fifo_ptr,
-                             &pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr);
-        EbObjectWrapper *output_stream_wrapper_ptr =
-            pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr;
-        EbBufferHeaderType *output_stream_ptr = (EbBufferHeaderType *)
+        queue_entry_ptr->start_time_seconds   = pcs->ppcs->start_time_seconds;
+        queue_entry_ptr->start_time_u_seconds = pcs->ppcs->start_time_u_seconds;
+        queue_entry_ptr->is_alt_ref           = pcs->ppcs->is_alt_ref;
+        svt_get_empty_object(scs->encode_context_ptr->stream_output_fifo_ptr,
+                             &pcs->ppcs->output_stream_wrapper_ptr);
+        EbObjectWrapper    *output_stream_wrapper_ptr = pcs->ppcs->output_stream_wrapper_ptr;
+        EbBufferHeaderType *output_stream_ptr         = (EbBufferHeaderType *)
                                                     output_stream_wrapper_ptr->object_ptr;
 
         if (frm_hdr->frame_type == KEY_FRAME) {
-            if (scs_ptr->static_config.mastering_display.max_luma)
-                svt_add_metadata(pcs_ptr->parent_pcs_ptr->input_ptr,
+            if (scs->static_config.mastering_display.max_luma)
+                svt_add_metadata(pcs->ppcs->input_ptr,
                                  EB_AV1_METADATA_TYPE_HDR_MDCV,
-                                 (const uint8_t *)&scs_ptr->static_config.mastering_display,
-                                 sizeof(scs_ptr->static_config.mastering_display));
-            if (scs_ptr->static_config.content_light_level.max_cll)
-                svt_add_metadata(pcs_ptr->parent_pcs_ptr->input_ptr,
+                                 (const uint8_t *)&scs->static_config.mastering_display,
+                                 sizeof(scs->static_config.mastering_display));
+            if (scs->static_config.content_light_level.max_cll)
+                svt_add_metadata(pcs->ppcs->input_ptr,
                                  EB_AV1_METADATA_TYPE_HDR_CLL,
-                                 (const uint8_t *)&scs_ptr->static_config.content_light_level,
-                                 sizeof(scs_ptr->static_config.content_light_level));
+                                 (const uint8_t *)&scs->static_config.content_light_level,
+                                 sizeof(scs->static_config.content_light_level));
         }
 
         output_stream_ptr->flags = 0;
-        if (pcs_ptr->parent_pcs_ptr->end_of_sequence_flag) {
+        if (pcs->ppcs->end_of_sequence_flag) {
             output_stream_ptr->flags |= EB_BUFFERFLAG_EOS;
         }
         output_stream_ptr->n_filled_len = 0;
-        output_stream_ptr->pts          = pcs_ptr->parent_pcs_ptr->input_ptr->pts;
+        output_stream_ptr->pts          = pcs->ppcs->input_ptr->pts;
         //we output one temporal unit a time, so dts alwasy equals to pts.
         output_stream_ptr->dts           = output_stream_ptr->pts;
-        output_stream_ptr->pic_type      = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag
-                 ? pcs_ptr->parent_pcs_ptr->idr_flag ? EB_AV1_KEY_PICTURE
-                                                     : (EbAv1PictureType)pcs_ptr->slice_type
+        output_stream_ptr->pic_type      = pcs->ppcs->is_used_as_reference_flag
+                 ? pcs->ppcs->idr_flag ? EB_AV1_KEY_PICTURE : (EbAv1PictureType)pcs->slice_type
                  : EB_AV1_NON_REF_PICTURE;
-        output_stream_ptr->p_app_private = pcs_ptr->parent_pcs_ptr->input_ptr->p_app_private;
-        output_stream_ptr->qp            = pcs_ptr->parent_pcs_ptr->picture_qp;
+        output_stream_ptr->p_app_private = pcs->ppcs->input_ptr->p_app_private;
+        output_stream_ptr->qp            = pcs->ppcs->picture_qp;
 
-        if (scs_ptr->static_config.stat_report) {
-            output_stream_ptr->luma_sse  = pcs_ptr->parent_pcs_ptr->luma_sse;
-            output_stream_ptr->cr_sse    = pcs_ptr->parent_pcs_ptr->cr_sse;
-            output_stream_ptr->cb_sse    = pcs_ptr->parent_pcs_ptr->cb_sse;
-            output_stream_ptr->luma_ssim = pcs_ptr->parent_pcs_ptr->luma_ssim;
-            output_stream_ptr->cr_ssim   = pcs_ptr->parent_pcs_ptr->cr_ssim;
-            output_stream_ptr->cb_ssim   = pcs_ptr->parent_pcs_ptr->cb_ssim;
+        if (scs->static_config.stat_report) {
+            output_stream_ptr->luma_sse  = pcs->ppcs->luma_sse;
+            output_stream_ptr->cr_sse    = pcs->ppcs->cr_sse;
+            output_stream_ptr->cb_sse    = pcs->ppcs->cb_sse;
+            output_stream_ptr->luma_ssim = pcs->ppcs->luma_ssim;
+            output_stream_ptr->cr_ssim   = pcs->ppcs->cr_ssim;
+            output_stream_ptr->cb_ssim   = pcs->ppcs->cb_ssim;
         } else {
             output_stream_ptr->luma_sse  = 0;
             output_stream_ptr->cr_sse    = 0;
@@ -729,23 +717,22 @@ void *packetization_kernel(void *input_ptr) {
                              &rate_control_tasks_wrapper_ptr);
         RateControlTasks *rate_control_tasks_ptr = (RateControlTasks *)
                                                        rate_control_tasks_wrapper_ptr->object_ptr;
-        rate_control_tasks_ptr->pcs_wrapper_ptr = pcs_ptr->picture_parent_control_set_wrapper_ptr;
+        rate_control_tasks_ptr->pcs_wrapper_ptr = pcs->picture_parent_control_set_wrapper_ptr;
         rate_control_tasks_ptr->task_type       = RC_PACKETIZATION_FEEDBACK_RESULT;
-        if (scs_ptr->enable_dec_order ||
-            (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE &&
-             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)) {
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE &&
+        if (scs->enable_dec_order ||
+            (pcs->ppcs->is_used_as_reference_flag == TRUE &&
+             pcs->ppcs->reference_picture_wrapper_ptr)) {
+            if (pcs->ppcs->is_used_as_reference_flag == TRUE &&
                 // Force each frame to update their data so future frames can use it,
                 // even if the current frame did not use it.  This enables REF frames to
                 // have the feature off, while NREF frames can have it on.  Used for multi-threading.
-                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr) {
+                pcs->ppcs->reference_picture_wrapper_ptr) {
                 for (uint16_t tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
                     svt_av1_reset_cdf_symbol_counters(
-                        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc);
-                    ((EbReferenceObject *)
-                         pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                        pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc);
+                    ((EbReferenceObject *)pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
                         ->frame_context =
-                        (*pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc);
+                        (*pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc);
                 }
             }
             // Get Empty Results Object
@@ -754,58 +741,55 @@ void *packetization_kernel(void *input_ptr) {
 
             PictureDemuxResults *picture_manager_results_ptr =
                 (PictureDemuxResults *)picture_manager_results_wrapper_ptr->object_ptr;
-            picture_manager_results_ptr->picture_number = pcs_ptr->picture_number;
+            picture_manager_results_ptr->picture_number = pcs->picture_number;
             picture_manager_results_ptr->picture_type   = EB_PIC_FEEDBACK;
-            picture_manager_results_ptr->decode_order   = pcs_ptr->parent_pcs_ptr->decode_order;
-            picture_manager_results_ptr->scs_ptr        = pcs_ptr->scs_ptr;
+            picture_manager_results_ptr->decode_order   = pcs->ppcs->decode_order;
+            picture_manager_results_ptr->scs            = pcs->scs;
         }
         // Reset the Bitstream before writing to it
-        bitstream_reset(pcs_ptr->bitstream_ptr);
+        bitstream_reset(pcs->bitstream_ptr);
 
         size_t metadata_sz = 0;
 
         // Code the SPS
         if (frm_hdr->frame_type == KEY_FRAME) {
-            encode_sps_av1(pcs_ptr->bitstream_ptr, scs_ptr);
+            encode_sps_av1(pcs->bitstream_ptr, scs);
             // Add CLL and MDCV meta when frame is keyframe and SPS is written
-            write_metadata_av1(pcs_ptr->bitstream_ptr,
-                               pcs_ptr->parent_pcs_ptr->input_ptr->metadata,
-                               EB_AV1_METADATA_TYPE_HDR_CLL);
-            write_metadata_av1(pcs_ptr->bitstream_ptr,
-                               pcs_ptr->parent_pcs_ptr->input_ptr->metadata,
-                               EB_AV1_METADATA_TYPE_HDR_MDCV);
+            write_metadata_av1(
+                pcs->bitstream_ptr, pcs->ppcs->input_ptr->metadata, EB_AV1_METADATA_TYPE_HDR_CLL);
+            write_metadata_av1(
+                pcs->bitstream_ptr, pcs->ppcs->input_ptr->metadata, EB_AV1_METADATA_TYPE_HDR_MDCV);
         }
 
         if (frm_hdr->show_frame) {
             // Add HDR10+ dynamic metadata when show frame flag is enabled
-            write_metadata_av1(pcs_ptr->bitstream_ptr,
-                               pcs_ptr->parent_pcs_ptr->input_ptr->metadata,
-                               EB_AV1_METADATA_TYPE_ITUT_T35);
-            svt_metadata_array_free(&pcs_ptr->parent_pcs_ptr->input_ptr->metadata);
+            write_metadata_av1(
+                pcs->bitstream_ptr, pcs->ppcs->input_ptr->metadata, EB_AV1_METADATA_TYPE_ITUT_T35);
+            svt_metadata_array_free(&pcs->ppcs->input_ptr->metadata);
         } else {
             // Copy metadata pointer to the queue entry related to current frame number
-            uint64_t                   current_picture_number = pcs_ptr->picture_number;
+            uint64_t                   current_picture_number = pcs->picture_number;
             PacketizationReorderEntry *temp_entry =
                 encode_context_ptr
                     ->packetization_reorder_queue[current_picture_number %
                                                   PACKETIZATION_REORDER_QUEUE_MAX_DEPTH];
-            temp_entry->metadata = pcs_ptr->parent_pcs_ptr->input_ptr->metadata;
-            pcs_ptr->parent_pcs_ptr->input_ptr->metadata = NULL;
+            temp_entry->metadata           = pcs->ppcs->input_ptr->metadata;
+            pcs->ppcs->input_ptr->metadata = NULL;
             metadata_sz = svt_metadata_size(temp_entry->metadata, EB_AV1_METADATA_TYPE_ITUT_T35);
         }
 
-        write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
+        write_frame_header_av1(pcs->bitstream_ptr, scs, pcs, 0);
 
-        output_stream_ptr->n_alloc_len =
-            (uint32_t)(bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) + TD_SIZE + metadata_sz);
+        output_stream_ptr->n_alloc_len = (uint32_t)(bitstream_get_bytes_count(pcs->bitstream_ptr) +
+                                                    TD_SIZE + metadata_sz);
         malloc_p_buffer(output_stream_ptr);
 
         assert(output_stream_ptr->p_buffer != NULL && "bit-stream memory allocation failure");
 
-        copy_data_from_bitstream(encode_context_ptr, pcs_ptr->bitstream_ptr, output_stream_ptr);
+        copy_data_from_bitstream(encode_context_ptr, pcs->bitstream_ptr, output_stream_ptr);
 
-        if (pcs_ptr->parent_pcs_ptr->has_show_existing) {
-            uint64_t                   next_picture_number = pcs_ptr->picture_number + 1;
+        if (pcs->ppcs->has_show_existing) {
+            uint64_t                   next_picture_number = pcs->picture_number + 1;
             PacketizationReorderEntry *temp_entry =
                 encode_context_ptr
                     ->packetization_reorder_queue[next_picture_number %
@@ -824,46 +808,43 @@ void *packetization_kernel(void *input_ptr) {
             write_metadata_av1(queue_entry_ptr->bitstream_ptr,
                                temp_entry->metadata,
                                EB_AV1_METADATA_TYPE_ITUT_T35);
-            write_frame_header_av1(queue_entry_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 1);
+            write_frame_header_av1(queue_entry_ptr->bitstream_ptr, scs, pcs, 1);
             svt_metadata_array_free(&temp_entry->metadata);
         }
 
         // Send the number of bytes per frame to RC
-        pcs_ptr->parent_pcs_ptr->total_num_bits = output_stream_ptr->n_filled_len << 3;
-        if (scs_ptr->passes == 3 && scs_ptr->static_config.pass == ENC_MIDDLE_PASS) {
+        pcs->ppcs->total_num_bits = output_stream_ptr->n_filled_len << 3;
+        if (scs->passes == 3 && scs->static_config.pass == ENC_MIDDLE_PASS) {
             StatStruct stat_struct;
-            stat_struct.poc = pcs_ptr->picture_number;
-            if (scs_ptr->mid_pass_ctrls.ds)
-                stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits * DS_SC_FACT /
-                    10;
+            stat_struct.poc = pcs->picture_number;
+            if (scs->mid_pass_ctrls.ds)
+                stat_struct.total_num_bits = pcs->ppcs->total_num_bits * DS_SC_FACT / 10;
             else
-                stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits;
+                stat_struct.total_num_bits = pcs->ppcs->total_num_bits;
             stat_struct.qindex       = frm_hdr->quantization_params.base_q_idx;
-            stat_struct.worst_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
-            if (is_pic_skipped(pcs_ptr->parent_pcs_ptr))
+            stat_struct.worst_qindex = quantizer_to_qindex[(uint8_t)scs->static_config.qp];
+            if (is_pic_skipped(pcs->ppcs))
                 stat_struct.total_num_bits = 0;
-            stat_struct.temporal_layer_index = pcs_ptr->temporal_layer_index;
-            (scs_ptr->twopass.stats_buf_ctx->stats_in_start +
-             pcs_ptr->parent_pcs_ptr->picture_number)
-                ->stat_struct = stat_struct;
+            stat_struct.temporal_layer_index = pcs->temporal_layer_index;
+            (scs->twopass.stats_buf_ctx->stats_in_start + pcs->ppcs->picture_number)->stat_struct =
+                stat_struct;
         }
-        queue_entry_ptr->total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits;
+        queue_entry_ptr->total_num_bits = pcs->ppcs->total_num_bits;
         queue_entry_ptr->frame_type     = frm_hdr->frame_type;
-        queue_entry_ptr->poc            = pcs_ptr->picture_number;
-        svt_memcpy(&queue_entry_ptr->av1_ref_signal,
-                   &pcs_ptr->parent_pcs_ptr->av1_ref_signal,
-                   sizeof(Av1RpsNode));
+        queue_entry_ptr->poc            = pcs->picture_number;
+        svt_memcpy(
+            &queue_entry_ptr->av1_ref_signal, &pcs->ppcs->av1_ref_signal, sizeof(Av1RpsNode));
 
-        queue_entry_ptr->slice_type = pcs_ptr->slice_type;
+        queue_entry_ptr->slice_type = pcs->slice_type;
 #if DETAILED_FRAME_OUTPUT
-        queue_entry_ptr->ref_poc_list0 = pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][0];
-        queue_entry_ptr->ref_poc_list1 = pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][0];
+        queue_entry_ptr->ref_poc_list0 = pcs->ppcs->ref_pic_poc_array[REF_LIST_0][0];
+        queue_entry_ptr->ref_poc_list1 = pcs->ppcs->ref_pic_poc_array[REF_LIST_1][0];
         svt_memcpy(queue_entry_ptr->ref_poc_array,
-                   pcs_ptr->parent_pcs_ptr->av1_ref_signal.ref_poc_array,
+                   pcs->ppcs->av1_ref_signal.ref_poc_array,
                    7 * sizeof(uint64_t));
 #endif
         queue_entry_ptr->show_frame          = frm_hdr->show_frame;
-        queue_entry_ptr->has_show_existing   = pcs_ptr->parent_pcs_ptr->has_show_existing;
+        queue_entry_ptr->has_show_existing   = pcs->ppcs->has_show_existing;
         queue_entry_ptr->show_existing_frame = frm_hdr->show_existing_frame;
 
         //Store the output buffer in the Queue
@@ -873,21 +854,19 @@ void *packetization_kernel(void *input_ptr) {
 
         // collect output meta data
         queue_entry_ptr->out_meta_data = concat_eb_linked_list(
-            extract_passthrough_data(&(pcs_ptr->parent_pcs_ptr->data_ll_head_ptr)),
-            pcs_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr);
-        pcs_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;
+            extract_passthrough_data(&(pcs->ppcs->data_ll_head_ptr)),
+            pcs->ppcs->app_out_data_ll_head_ptr);
+        pcs->ppcs->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;
 
         // Calling callback functions to release the memory allocated for data linked list in the application
-        while (pcs_ptr->parent_pcs_ptr->data_ll_head_ptr != NULL) {
-            EbLinkedListNode *app_data_ll_head_temp_ptr =
-                pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->next;
-            if (pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr != NULL)
-                pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr(
-                    pcs_ptr->parent_pcs_ptr->data_ll_head_ptr);
-            pcs_ptr->parent_pcs_ptr->data_ll_head_ptr = app_data_ll_head_temp_ptr;
+        while (pcs->ppcs->data_ll_head_ptr != NULL) {
+            EbLinkedListNode *app_data_ll_head_temp_ptr = pcs->ppcs->data_ll_head_ptr->next;
+            if (pcs->ppcs->data_ll_head_ptr->release_cb_fnc_ptr != NULL)
+                pcs->ppcs->data_ll_head_ptr->release_cb_fnc_ptr(pcs->ppcs->data_ll_head_ptr);
+            pcs->ppcs->data_ll_head_ptr = app_data_ll_head_temp_ptr;
         }
 
-        if (scs_ptr->speed_control_flag) {
+        if (scs->speed_control_flag) {
             // update speed control variables
             svt_block_on_mutex(encode_context_ptr->sc_buffer_mutex);
             encode_context_ptr->sc_frame_out++;
@@ -896,14 +875,14 @@ void *packetization_kernel(void *input_ptr) {
 
         // Post Rate Control Taks
         svt_post_full_object(rate_control_tasks_wrapper_ptr);
-        if (scs_ptr->enable_dec_order ||
-            (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == TRUE &&
-             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr))
+        if (scs->enable_dec_order ||
+            (pcs->ppcs->is_used_as_reference_flag == TRUE &&
+             pcs->ppcs->reference_picture_wrapper_ptr))
             // Post the Full Results Object
             svt_post_full_object(picture_manager_results_wrapper_ptr);
-        if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
-            svt_av1_hash_table_destroy(&pcs_ptr->hash_table);
-        svt_release_object(pcs_ptr->parent_pcs_ptr->enc_dec_ptr->enc_dec_wrapper_ptr); //Child
+        if (pcs->ppcs->frm_hdr.allow_intrabc)
+            svt_av1_hash_table_destroy(&pcs->hash_table);
+        svt_release_object(pcs->ppcs->enc_dec_ptr->enc_dec_wrapper_ptr); //Child
         //Release the Parent PCS then the Child PCS
         assert(entropy_coding_results_ptr->pcs_wrapper_ptr->live_count == 1);
         svt_release_object(entropy_coding_results_ptr->pcs_wrapper_ptr); //Child

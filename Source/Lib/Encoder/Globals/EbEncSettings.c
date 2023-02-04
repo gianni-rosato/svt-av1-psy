@@ -36,9 +36,9 @@
 /******************************************
 * Verify Settings
 ******************************************/
-EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
+EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     EbErrorType               return_error   = EB_ErrorNone;
-    EbSvtAv1EncConfiguration *config         = &scs_ptr->static_config;
+    EbSvtAv1EncConfiguration *config         = &scs->static_config;
     unsigned int              channel_number = config->channel_id;
     if (config->enc_mode > MAX_ENC_PRESET) {
         SVT_ERROR("Instance %u: EncoderMode must be in the range of [0-%d]\n",
@@ -53,20 +53,20 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             "benchmarking or quality analysis\n",
             MAX_ENC_PRESET);
     }
-    if (scs_ptr->max_input_luma_width < 64) {
+    if (scs->max_input_luma_width < 64) {
         SVT_ERROR("Instance %u: Source Width must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (scs_ptr->max_input_luma_height < 64) {
+    if (scs->max_input_luma_height < 64) {
         SVT_ERROR("Instance %u: Source Height must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (scs_ptr->max_input_luma_width % 2) {
+    if (scs->max_input_luma_width % 2) {
         SVT_ERROR("Error Instance %u: Source Width must be even for YUV_420 colorspace\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (scs_ptr->max_input_luma_height % 2) {
+    if (scs->max_input_luma_height % 2) {
         SVT_ERROR("Error Instance %u: Source Height must be even for YUV_420 colorspace\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -189,39 +189,39 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (scs_ptr->max_input_luma_width > 16384) {
+    if (scs->max_input_luma_width > 16384) {
         SVT_ERROR("Instance %u: Source Width must be less than or equal to 16384\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (scs_ptr->max_input_luma_height > 8704) {
+    if (scs->max_input_luma_height > 8704) {
         SVT_ERROR("Instance %u: Source Height must be less than or equal to 8704)\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (scs_ptr->seq_header.max_frame_width < 64) {
+    if (scs->seq_header.max_frame_width < 64) {
         SVT_ERROR("Instance %u: Forced Max Width must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (scs_ptr->seq_header.max_frame_height < 64) {
+    if (scs->seq_header.max_frame_height < 64) {
         SVT_ERROR("Instance %u: Forced Max Height must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (scs_ptr->seq_header.max_frame_width > 16384) {
+    if (scs->seq_header.max_frame_width > 16384) {
         SVT_ERROR("Instance %u: Forced Max Width must be less than or equal to 16384\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (scs_ptr->seq_header.max_frame_height > 8704) {
+    if (scs->seq_header.max_frame_height > 8704) {
         SVT_ERROR("Instance %u: Forced Max Height must be less than or equal to 8704)\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if ((scs_ptr->max_input_luma_width > scs_ptr->seq_header.max_frame_width) ||
-        (scs_ptr->max_input_luma_height > scs_ptr->seq_header.max_frame_height)) {
+    if ((scs->max_input_luma_width > scs->seq_header.max_frame_width) ||
+        (scs->max_input_luma_height > scs->seq_header.max_frame_height)) {
         SVT_ERROR(
             "Error instance %u: Source Width/Height must be less than or equal to Forced Max "
             "Width/Height\n",
@@ -280,18 +280,18 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 
     // Check if the current input video is conformant with the Level constraint
-    if (scs_ptr->frame_rate > (240 << 16)) {
+    if (scs->frame_rate > (240 << 16)) {
         SVT_ERROR("Instance %u: The maximum allowed frame rate is 240 fps\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
     // Check that the frame_rate is non-zero
-    if (!scs_ptr->frame_rate) {
+    if (!scs->frame_rate) {
         SVT_ERROR("Instance %u: The frame rate should be greater than 0 fps \n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (scs_ptr->static_config.frame_rate_numerator == 0 ||
-        scs_ptr->static_config.frame_rate_denominator == 0) {
+    if (scs->static_config.frame_rate_numerator == 0 ||
+        scs->static_config.frame_rate_denominator == 0) {
         SVT_ERROR(
             "Instance %u: The frame_rate_numerator and frame_rate_denominator must be greater than "
             "0\n",
@@ -452,14 +452,14 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 
     // IntraBC
-    if (scs_ptr->intrabc_mode > 3 || scs_ptr->intrabc_mode < -1) {
+    if (scs->intrabc_mode > 3 || scs->intrabc_mode < -1) {
         SVT_ERROR("Instance %u: Invalid intraBC mode [0-3, -1 for default], your input: %i\n",
                   channel_number + 1,
-                  scs_ptr->intrabc_mode);
+                  scs->intrabc_mode);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (scs_ptr->intrabc_mode > 0 && config->screen_content_mode != 1) {
+    if (scs->intrabc_mode > 0 && config->screen_content_mode != 1) {
         SVT_ERROR(
             "Instance %u: The intra BC feature is only available when screen_content_mode is set "
             "to 1\n",
@@ -467,7 +467,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (scs_ptr->static_config.enable_adaptive_quantization > 2) {
+    if (scs->static_config.enable_adaptive_quantization > 2) {
         SVT_ERROR(
             "Instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must "
             "be [0-2]\n",
@@ -537,10 +537,10 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 
     // HBD mode decision
-    if (scs_ptr->enable_hbd_mode_decision < (int8_t)(-1) || scs_ptr->enable_hbd_mode_decision > 2) {
+    if (scs->enable_hbd_mode_decision < (int8_t)(-1) || scs->enable_hbd_mode_decision > 2) {
         SVT_ERROR("Instance %u: Invalid HBD mode decision flag [-1 - 2], your input: %d\n",
                   channel_number + 1,
-                  scs_ptr->enable_hbd_mode_decision);
+                  scs->enable_hbd_mode_decision);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -696,8 +696,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
     // Limit 8K & 16K configurations ( due to  memory constraints)
-    if ((uint64_t)(scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height) >
-            INPUT_SIZE_4K_TH &&
+    if ((uint64_t)(scs->max_input_luma_width * scs->max_input_luma_height) > INPUT_SIZE_4K_TH &&
         config->enc_mode <= ENC_M7) {
         SVT_ERROR("Instance %u: 8k+ resolution support is limited to M8 and faster presets.\n",
                   channel_number + 1);
@@ -713,7 +712,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->pass > 0 && scs_ptr->static_config.enable_overlays) {
+    if (config->pass > 0 && scs->static_config.enable_overlays) {
         SVT_ERROR(
             "Instance %u: The overlay frames feature is currently not supported with multi-pass "
             "encoding\n",
@@ -854,8 +853,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
     }
 
     // Limit 8K & 16K support
-    if ((uint64_t)(scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height) >
-        INPUT_SIZE_4K_TH) {
+    if ((uint64_t)(scs->max_input_luma_width * scs->max_input_luma_height) > INPUT_SIZE_4K_TH) {
         SVT_WARN(
             "Instance %u: 8K and higher resolution support is currently a work-in-progress "
             "project, and is only available for demos, experimentation, and further development "
@@ -887,8 +885,8 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs_ptr) {
             return_error = EB_ErrorBadParameter;
         }
     }
-    if (scs_ptr->static_config.scene_change_detection) {
-        scs_ptr->static_config.scene_change_detection = 0;
+    if (scs->static_config.scene_change_detection) {
+        scs->static_config.scene_change_detection = 0;
         SVT_WARN(
             "SVT-AV1 has an integrated mode decision mechanism to handle scene changes and will "
             "not insert a key frame at scene changes\n");

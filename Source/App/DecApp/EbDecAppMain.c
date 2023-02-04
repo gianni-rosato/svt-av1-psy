@@ -54,8 +54,8 @@ int init_pic_buffer(EbSvtIOFormat *pic_buffer, CliInput *cli, EbSvtAv1DecConfigu
     pic_buffer->luma_ext  = NULL;
     pic_buffer->cb_ext    = NULL;
     pic_buffer->cr_ext    = NULL;
-    pic_buffer->origin_x  = 0;
-    pic_buffer->origin_y  = 0;
+    pic_buffer->org_x     = 0;
+    pic_buffer->org_y     = 0;
     pic_buffer->bit_depth = config->max_bit_depth;
     return 0;
 }

@@ -49,7 +49,7 @@
 #define STATS_CAPABILITY_INIT 100
 //1.5 times larger than request.
 #define STATS_CAPABILITY_GROW(s) (s * 3 / 2)
-static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStatsOut *out,
+static EbErrorType realloc_stats_out(SequenceControlSet *scs, FirstPassStatsOut *out,
                                      uint64_t frame_number) {
     if (frame_number < out->size)
         return EB_ErrorNone;
@@ -58,22 +58,22 @@ static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStats
         size_t capability = (int64_t)frame_number >= (int64_t)STATS_CAPABILITY_INIT - 1
             ? STATS_CAPABILITY_GROW(frame_number)
             : STATS_CAPABILITY_INIT;
-        if (scs_ptr->lap_rc) {
+        if (scs->lap_rc) {
             //store the data points before re-allocation
             uint64_t stats_in_start_offset = 0;
             uint64_t stats_in_offset       = 0;
             uint64_t stats_in_end_offset   = 0;
             if (frame_number) {
-                stats_in_start_offset = scs_ptr->twopass.stats_buf_ctx->stats_in_start - out->stat;
-                stats_in_offset       = scs_ptr->twopass.stats_in - out->stat;
-                stats_in_end_offset   = scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
+                stats_in_start_offset = scs->twopass.stats_buf_ctx->stats_in_start - out->stat;
+                stats_in_offset       = scs->twopass.stats_in - out->stat;
+                stats_in_end_offset   = scs->twopass.stats_buf_ctx->stats_in_end_write -
                     out->stat;
             }
             EB_REALLOC_ARRAY(out->stat, capability);
             // restore the pointers after re-allocation is done
-            scs_ptr->twopass.stats_buf_ctx->stats_in_start     = out->stat + stats_in_start_offset;
-            scs_ptr->twopass.stats_in                          = out->stat + stats_in_offset;
-            scs_ptr->twopass.stats_buf_ctx->stats_in_end_write = out->stat + stats_in_end_offset;
+            scs->twopass.stats_buf_ctx->stats_in_start     = out->stat + stats_in_start_offset;
+            scs->twopass.stats_in                          = out->stat + stats_in_offset;
+            scs->twopass.stats_buf_ctx->stats_in_end_write = out->stat + stats_in_end_offset;
         } else {
             EB_REALLOC_ARRAY(out->stat, capability);
         }
@@ -83,11 +83,11 @@ static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStats
     return EB_ErrorNone;
 }
 
-static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, const FIRSTPASS_STATS *stats,
+static AOM_INLINE void output_stats(SequenceControlSet *scs, const FIRSTPASS_STATS *stats,
                                     uint64_t frame_number) {
-    FirstPassStatsOut *stats_out = &scs_ptr->encode_context_ptr->stats_out;
-    svt_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-    if (realloc_stats_out(scs_ptr, stats_out, frame_number) != EB_ErrorNone) {
+    FirstPassStatsOut *stats_out = &scs->encode_context_ptr->stats_out;
+    svt_block_on_mutex(scs->encode_context_ptr->stat_file_mutex);
+    if (realloc_stats_out(scs, stats_out, frame_number) != EB_ErrorNone) {
         SVT_ERROR("realloc_stats_out request %d entries failed failed\n", frame_number);
     } else {
         stats_out->stat[frame_number] = *stats;
@@ -130,7 +130,7 @@ static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, const FIRSTPASS
         fclose(fpfile);
     }
 #endif
-    svt_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+    svt_release_mutex(scs->encode_context_ptr->stat_file_mutex);
 }
 void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section) {
     section->frame              = 0.0;
@@ -171,16 +171,16 @@ void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *f
     section->count += frame->count;
     section->duration += frame->duration;
 }
-void svt_av1_end_first_pass(PictureParentControlSet *pcs_ptr) {
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    TWO_PASS *          twopass = &scs_ptr->twopass;
+void svt_av1_end_first_pass(PictureParentControlSet *pcs) {
+    SequenceControlSet *scs = pcs->scs;
+    TWO_PASS *          twopass = &scs->twopass;
 
     if (twopass->stats_buf_ctx->total_stats) {
         // add the total to the end of the file
         svt_block_on_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
 
         FIRSTPASS_STATS total_stats = *twopass->stats_buf_ctx->total_stats;
-        output_stats(scs_ptr, &total_stats, pcs_ptr->picture_number + 1);
+        output_stats(scs, &total_stats, pcs->picture_number + 1);
 
         svt_release_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
     }
@@ -242,15 +242,15 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row
 //   twopass->stats_buf_ctx->stats_in_end: the pointer to the current stats,
 //                                         update its value and its position
 //                                         in the buffer.
-static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME_STATS *const stats,
+static void update_firstpass_stats(PictureParentControlSet *pcs, const FRAME_STATS *const stats,
                                    const int frame_number,
                                    uint8_t skip_frame, uint8_t bypass_blk_step,
                                    const double ts_duration) {
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    TWO_PASS *          twopass = &scs_ptr->twopass;
+    SequenceControlSet *scs = pcs->scs;
+    TWO_PASS *          twopass = &scs->twopass;
 
-    const uint32_t   mb_cols          = (scs_ptr->max_input_luma_width + 16 - 1) / 16;
-    const uint32_t   mb_rows          = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
+    const uint32_t   mb_cols          = (scs->max_input_luma_width + 16 - 1) / 16;
+    const uint32_t   mb_rows          = (scs->max_input_luma_height + 16 - 1) / 16;
 
     svt_block_on_mutex(twopass->stats_buf_ctx->stats_in_write_mutex);
 
@@ -268,7 +268,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     //    : mi_params->MBs;
     const double min_err = 200 * sqrt(num_mbs);
     if (skip_frame) {
-        FirstPassStatsOut *stats_out = &scs_ptr->encode_context_ptr->stats_out;
+        FirstPassStatsOut *stats_out = &scs->encode_context_ptr->stats_out;
         fps       = stats_out->stat[frame_number - 1];
         fps.frame = frame_number;
     } else {
@@ -311,15 +311,15 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     // We will store the stats inside the persistent twopass struct (and NOT the
     // local variable 'fps'), and then cpi->output_pkt_list will point to it.
     *this_frame_stats = fps;
-    output_stats(scs_ptr, &fps, pcs_ptr->picture_number);
+    output_stats(scs, &fps, pcs->picture_number);
     if (twopass->stats_buf_ctx->total_stats != NULL &&
-        scs_ptr->static_config.pass == ENC_FIRST_PASS) {
+        scs->static_config.pass == ENC_FIRST_PASS) {
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end_write++;
-    if (scs_ptr->static_config.pass == ENC_FIRST_PASS &&
+    if (scs->static_config.pass == ENC_FIRST_PASS &&
         (twopass->stats_buf_ctx->stats_in_end_write >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end_write = twopass->stats_buf_ctx->stats_in_start;
     }
@@ -366,14 +366,14 @@ static FRAME_STATS accumulate_frame_stats(FRAME_STATS *mb_stats, int mb_rows, in
  * Reset first pass stat
  **************************************************/
 void setup_firstpass_data_seg(PictureParentControlSet *ppcs_ptr, int32_t segment_index) {
-    SequenceControlSet * scs_ptr           = ppcs_ptr->scs_ptr;
+    SequenceControlSet * scs           = ppcs_ptr->scs;
     FirstPassData *      firstpass_data    = &ppcs_ptr->firstpass_data;
-    const uint32_t       mb_cols           = (scs_ptr->max_input_luma_width + 16 - 1) / 16;
-    const uint32_t       mb_rows           = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
-    EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
+    const uint32_t       mb_cols           = (scs->max_input_luma_width + 16 - 1) / 16;
+    const uint32_t       mb_rows           = (scs->max_input_luma_height + 16 - 1) / 16;
+    EbPictureBufferDesc *input_pic = ppcs_ptr->enhanced_picture_ptr;
 
-    uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
-    uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
+    uint32_t blk_cols = (uint32_t)(input_pic->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
+    uint32_t blk_rows = (uint32_t)(input_pic->height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
 
     uint32_t x_seg_idx;
     uint32_t y_seg_idx;
@@ -402,13 +402,13 @@ void setup_firstpass_data_seg(PictureParentControlSet *ppcs_ptr, int32_t segment
         }
     }
 }
-void first_pass_frame_end(PictureParentControlSet *pcs_ptr, uint8_t skip_frame,
+void first_pass_frame_end(PictureParentControlSet *pcs, uint8_t skip_frame,
                           uint8_t bypass_blk_step, const double ts_duration) {
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    const uint32_t      mb_cols = (scs_ptr->max_input_luma_width + 16 - 1) / 16;
-    const uint32_t      mb_rows = (scs_ptr->max_input_luma_height + 16 - 1) / 16;
+    SequenceControlSet *scs = pcs->scs;
+    const uint32_t      mb_cols = (scs->max_input_luma_width + 16 - 1) / 16;
+    const uint32_t      mb_rows = (scs->max_input_luma_height + 16 - 1) / 16;
 
-    FRAME_STATS *mb_stats = pcs_ptr->firstpass_data.mb_stats;
+    FRAME_STATS *mb_stats = pcs->firstpass_data.mb_stats;
 
     FRAME_STATS stats;
 
@@ -436,9 +436,9 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, uint8_t skip_frame,
         memset(&stats, 0, sizeof(stats));
     }
     update_firstpass_stats(
-        pcs_ptr,
+        pcs,
         &stats,
-        (const int)pcs_ptr->picture_number,
+        (const int)pcs->picture_number,
         skip_frame,
         bypass_blk_step,
         ts_duration);
@@ -449,20 +449,20 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, uint8_t skip_frame,
 Input   : encoder mode and tune
 Output  : Pre-Analysis signal(s)
 ******************************************************/
-extern EbErrorType first_pass_signal_derivation_pre_analysis_pcs(PictureParentControlSet *pcs_ptr) {
+extern EbErrorType first_pass_signal_derivation_pre_analysis_pcs(PictureParentControlSet *pcs) {
     EbErrorType return_error = EB_ErrorNone;
     // Derive HME Flag
-    pcs_ptr->enable_hme_flag        = 1;
-    pcs_ptr->enable_hme_level0_flag = 1;
-    pcs_ptr->enable_hme_level1_flag = 1;
-    pcs_ptr->enable_hme_level2_flag = 1;
+    pcs->enable_hme_flag        = 1;
+    pcs->enable_hme_level0_flag = 1;
+    pcs->enable_hme_level1_flag = 1;
+    pcs->enable_hme_level2_flag = 1;
 
     //// Set here to allocate resources for the downsampled pictures used in HME (generated in PictureAnalysis)
     //// Will be later updated for SC/NSC in PictureDecisionProcess
-    pcs_ptr->tf_enable_hme_flag        = 0;
-    pcs_ptr->tf_enable_hme_level0_flag = 0;
-    pcs_ptr->tf_enable_hme_level1_flag = 0;
-    pcs_ptr->tf_enable_hme_level2_flag = 0;
+    pcs->tf_enable_hme_flag        = 0;
+    pcs->tf_enable_hme_level0_flag = 0;
+    pcs->tf_enable_hme_level1_flag = 0;
+    pcs->tf_enable_hme_level2_flag = 0;
     return return_error;
 }
 
@@ -471,30 +471,30 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_pcs(PictureParentCo
 Input   : encoder mode and tune
 Output  : Pre-Analysis signal(s)
 ******************************************************/
-extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControlSet *scs_ptr) {
+extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControlSet *scs) {
     EbErrorType return_error                       = EB_ErrorNone;
-    scs_ptr->seq_header.enable_intra_edge_filter   = 0;
-    scs_ptr->seq_header.pic_based_rate_est         = 0;
-    scs_ptr->seq_header.enable_restoration         = 0;
-    scs_ptr->seq_header.cdef_level /*enable_cdef*/ = 0;
-    scs_ptr->seq_header.enable_warped_motion       = 0;
+    scs->seq_header.enable_intra_edge_filter   = 0;
+    scs->seq_header.pic_based_rate_est         = 0;
+    scs->seq_header.enable_restoration         = 0;
+    scs->seq_header.cdef_level /*enable_cdef*/ = 0;
+    scs->seq_header.enable_warped_motion       = 0;
 
-    scs_ptr->seq_header.enable_superres                 = 0;
-    scs_ptr->compound_mode                              = 0;
-    scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
-    scs_ptr->seq_header.enable_masked_compound          = 0;
-    scs_ptr->seq_header.filter_intra_level              = 0;
-    scs_ptr->seq_header.enable_interintra_compound      = 0;
+    scs->seq_header.enable_superres                 = 0;
+    scs->compound_mode                              = 0;
+    scs->seq_header.order_hint_info.enable_jnt_comp = 0;
+    scs->seq_header.enable_masked_compound          = 0;
+    scs->seq_header.filter_intra_level              = 0;
+    scs->seq_header.enable_interintra_compound      = 0;
 
     // Set the SCD Mode
-    scs_ptr->scd_mode = scs_ptr->static_config.scene_change_detection == 0 ? SCD_MODE_0 : SCD_MODE_1;
+    scs->scd_mode = scs->static_config.scene_change_detection == 0 ? SCD_MODE_0 : SCD_MODE_1;
 
     return return_error;
 }
 
 #define LOW_MOTION_ERROR_THRESH 25
 #define MOTION_ERROR_THRESH 500
-void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
+void set_tf_controls(PictureParentControlSet *pcs, uint8_t tf_level);
 void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
 void set_sg_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
 
@@ -504,55 +504,55 @@ Input   : encoder mode and tune
 Output  : Multi-Processes signal(s)
 ******************************************************/
 
-EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *     scs_ptr,
-                                                         PictureParentControlSet *pcs_ptr) {
+EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *     scs,
+                                                         PictureParentControlSet *pcs) {
     EbErrorType  return_error = EB_ErrorNone;
-    FrameHeader *frm_hdr      = &pcs_ptr->frm_hdr;
+    FrameHeader *frm_hdr      = &pcs->frm_hdr;
     // If enabled here, the hme enable flags should also be enabled in ResourceCoordinationProcess
     // to ensure that resources are allocated for the downsampled pictures used in HME
-    pcs_ptr->enable_hme_flag        = 1;
-    pcs_ptr->enable_hme_level0_flag = 1;
-    pcs_ptr->enable_hme_level1_flag = 1;
-    pcs_ptr->enable_hme_level2_flag = 1;
+    pcs->enable_hme_flag        = 1;
+    pcs->enable_hme_level0_flag = 1;
+    pcs->enable_hme_level1_flag = 1;
+    pcs->enable_hme_level2_flag = 1;
 
-    pcs_ptr->tf_enable_hme_flag        = 0;
-    pcs_ptr->tf_enable_hme_level0_flag = 0;
-    pcs_ptr->tf_enable_hme_level1_flag = 0;
-    pcs_ptr->tf_enable_hme_level2_flag = 0;
+    pcs->tf_enable_hme_flag        = 0;
+    pcs->tf_enable_hme_level0_flag = 0;
+    pcs->tf_enable_hme_level1_flag = 0;
+    pcs->tf_enable_hme_level2_flag = 0;
 
     // Set the Multi-Pass PD level
-    pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_OFF;
+    pcs->multi_pass_pd_level = MULTI_PASS_PD_OFF;
 
     // Set disallow_nsq
 
-    pcs_ptr->max_number_of_pus_per_sb          = SQUARE_PU_COUNT;
+    pcs->max_number_of_pus_per_sb          = SQUARE_PU_COUNT;
     frm_hdr->allow_screen_content_tools = 0;
     frm_hdr->allow_intrabc              = 0;
-    pcs_ptr->palette_level = 0;
+    pcs->palette_level = 0;
 
-    svt_aom_set_dlf_controls(pcs_ptr, 0, scs_ptr->static_config.encoder_bit_depth);
+    svt_aom_set_dlf_controls(pcs, 0, scs->static_config.encoder_bit_depth);
 
-    pcs_ptr->cdef_level = 0;
+    pcs->cdef_level = 0;
 
-    Av1Common *cm = pcs_ptr->av1_cm;
+    Av1Common *cm = pcs->av1_cm;
     set_wn_filter_ctrls(cm, 0);
     set_sg_filter_ctrls(cm, 0);
-    pcs_ptr->enable_restoration = 0;
+    pcs->enable_restoration = 0;
 
-    pcs_ptr->intra_pred_mode = 3;
+    pcs->intra_pred_mode = 3;
 
     // Set frame end cdf update mode      Settings
     // 0                                  OFF
     // 1                                  ON
-    if (scs_ptr->frame_end_cdf_update == DEFAULT)
-        pcs_ptr->frame_end_cdf_update_mode = 0;
+    if (scs->frame_end_cdf_update == DEFAULT)
+        pcs->frame_end_cdf_update_mode = 0;
     else
-        pcs_ptr->frame_end_cdf_update_mode = scs_ptr->frame_end_cdf_update;
+        pcs->frame_end_cdf_update_mode = scs->frame_end_cdf_update;
 
-    pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+    pcs->frm_hdr.use_ref_frame_mvs = 0;
 
     // GM off
-    set_gm_controls(pcs_ptr, 0);
+    set_gm_controls(pcs, 0);
     return return_error;
 }
 /******************************************************
@@ -560,11 +560,11 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
-EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureControlSet *pcs_ptr) {
+EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureControlSet *pcs) {
     EbErrorType return_error = EB_ErrorNone;
     // CDF
-    pcs_ptr->cdf_ctrl.enabled = pcs_ptr->cdf_ctrl.update_coef = 0;
-    pcs_ptr->cdf_ctrl.update_mv = pcs_ptr->cdf_ctrl.update_se = 0;
+    pcs->cdf_ctrl.enabled = pcs->cdf_ctrl.update_coef = 0;
+    pcs->cdf_ctrl.update_mv = pcs->cdf_ctrl.update_se = 0;
 
     // Filter INTRA
     // pic_filter_intra_level specifies whether filter intra would be active
@@ -572,10 +572,10 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
     // pic_filter_intra_level | Settings
     // 0                      | OFF
     // 1                      | ON
-    pcs_ptr->pic_filter_intra_level = 0;
+    pcs->pic_filter_intra_level = 0;
 
     // High Precision
-    FrameHeader *frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    FrameHeader *frm_hdr             = &pcs->ppcs->frm_hdr;
     frm_hdr->allow_high_precision_mv = 0;
 
     // Warped
@@ -589,103 +589,103 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
     //  pic_obmc_level  | Default Encoder Settings
     //         0        | OFF subject to possible constraints
     //       > 1        | Faster level subject to possible constraints
-    pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
+    pcs->ppcs->pic_obmc_level = 0;
 
     // Switchable Motion Mode
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||
-        pcs_ptr->parent_pcs_ptr->pic_obmc_level;
+        pcs->ppcs->pic_obmc_level;
 
     // HBD Mode
-    pcs_ptr->hbd_mode_decision = EB_8_BIT_MD; //first pass hard coded to 8bit
-    pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
-    pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
-    pcs_ptr->approx_inter_rate = 0;
+    pcs->hbd_md = EB_8_BIT_MD; //first pass hard coded to 8bit
+    pcs->ppcs->partition_contexts = PARTITION_CONTEXTS;
+    pcs->ppcs->bypass_cost_table_gen = 0;
+    pcs->approx_inter_rate = 0;
     return return_error;
 }
 /************************************************
  * Set ME/HME Params for the first pass encoding
  ************************************************/
-void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, SequenceControlSet *scs_ptr,
+void *set_first_pass_me_hme_params_oq(MeContext *me_ctx, SequenceControlSet *scs,
                                       EbInputResolution input_resolution) {
     // HME/ME default settings
-    me_context_ptr->num_hme_sa_w = 2;
-    me_context_ptr->num_hme_sa_h = 2;
-    me_context_ptr->reduce_hme_l0_sr_th_min = 0;
-    me_context_ptr->reduce_hme_l0_sr_th_max = 0;
+    me_ctx->num_hme_sa_w = 2;
+    me_ctx->num_hme_sa_h = 2;
+    me_ctx->reduce_hme_l0_sr_th_min = 0;
+    me_ctx->reduce_hme_l0_sr_th_max = 0;
 
     // Set the minimum ME search area
-    if (!scs_ptr->ipp_pass_ctrls.reduce_me_search) {
-        me_context_ptr->me_sa.sa_min = (SearchArea){8, 8};
-        me_context_ptr->me_sa.sa_max = (SearchArea){8, 8};
+    if (!scs->ipp_pass_ctrls.reduce_me_search) {
+        me_ctx->me_sa.sa_min = (SearchArea){8, 8};
+        me_ctx->me_sa.sa_max = (SearchArea){8, 8};
     } else {
-        me_context_ptr->me_sa.sa_min = (SearchArea){8, 3};
-        me_context_ptr->me_sa.sa_max = (SearchArea){8, 5};
+        me_ctx->me_sa.sa_min = (SearchArea){8, 3};
+        me_ctx->me_sa.sa_max = (SearchArea){8, 5};
     }
     if (input_resolution < INPUT_SIZE_1080p_RANGE) {
-        me_context_ptr->hme_l0_sa.sa_min = (SearchArea){4, 4};
-        me_context_ptr->hme_l0_sa.sa_max = (SearchArea){96, 96};
+        me_ctx->hme_l0_sa.sa_min = (SearchArea){4, 4};
+        me_ctx->hme_l0_sa.sa_max = (SearchArea){96, 96};
     } else {
-        me_context_ptr->hme_l0_sa.sa_min = (SearchArea){8, 8};
-        me_context_ptr->hme_l0_sa.sa_max = (SearchArea){96, 96};
+        me_ctx->hme_l0_sa.sa_min = (SearchArea){8, 8};
+        me_ctx->hme_l0_sa.sa_max = (SearchArea){96, 96};
     }
-    me_context_ptr->hme_l1_sa = (SearchArea){8, 8};
-    me_context_ptr->hme_l2_sa = (SearchArea){8, 8};
+    me_ctx->hme_l1_sa = (SearchArea){8, 8};
+    me_ctx->hme_l2_sa = (SearchArea){8, 8};
     // Scale up the MIN ME area if low frame rate
-    bool low_frame_rate_flag = (scs_ptr->frame_rate >> 16);
+    bool low_frame_rate_flag = (scs->frame_rate >> 16);
     if (low_frame_rate_flag) {
-        me_context_ptr->me_sa.sa_min.width  = (me_context_ptr->me_sa.sa_min.width * 3) >> 1;
-        me_context_ptr->me_sa.sa_min.height = (me_context_ptr->me_sa.sa_min.height * 3) >> 1;
+        me_ctx->me_sa.sa_min.width  = (me_ctx->me_sa.sa_min.width * 3) >> 1;
+        me_ctx->me_sa.sa_min.height = (me_ctx->me_sa.sa_min.height * 3) >> 1;
     }
-    me_context_ptr->me_early_exit_th = 0;
+    me_ctx->me_early_exit_th = 0;
     return NULL;
 };
-void set_me_hme_ref_prune_ctrls(MeContext *context_ptr, uint8_t prune_level);
-void set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_level);
-void set_prehme_ctrls(MeContext *context, uint8_t level);
-void set_skip_frame_in_ipp(PictureParentControlSet *  pcs, MeContext *ctx);
+void set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_level);
+void set_me_sr_adjustment_ctrls(MeContext *me_ctx, uint8_t sr_adjustment_level);
+void set_prehme_ctrls(MeContext *me_ctx, uint8_t level);
+void set_skip_frame_in_ipp(PictureParentControlSet *  pcs, MeContext *me_ctx);
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
   Output  : ME Kernel signal(s)
 ******************************************************/
-EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       scs_ptr,
-                                                   PictureParentControlSet *  pcs_ptr,
-                                                   MotionEstimationContext_t *context_ptr) {
+EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       scs,
+                                                   PictureParentControlSet *  pcs,
+                                                   MotionEstimationContext_t *me_context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     // Set ME/HME search regions
     set_first_pass_me_hme_params_oq(
-        context_ptr->me_context_ptr, scs_ptr, scs_ptr->input_resolution);
+        me_context_ptr->me_ctx, scs, scs->input_resolution);
 
     // Set HME flags
-    context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
-    context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
-    context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
-    context_ptr->me_context_ptr->enable_hme_level2_flag = !scs_ptr->ipp_pass_ctrls.reduce_me_search
-        ? pcs_ptr->enable_hme_level2_flag
+    me_context_ptr->me_ctx->enable_hme_flag        = pcs->enable_hme_flag;
+    me_context_ptr->me_ctx->enable_hme_level0_flag = pcs->enable_hme_level0_flag;
+    me_context_ptr->me_ctx->enable_hme_level1_flag = pcs->enable_hme_level1_flag;
+    me_context_ptr->me_ctx->enable_hme_level2_flag = !scs->ipp_pass_ctrls.reduce_me_search
+        ? pcs->enable_hme_level2_flag
         : 0;
 
     // HME Search Method
-    context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+    me_context_ptr->me_ctx->hme_search_method = SUB_SAD_SEARCH;
 
     // ME Search Method
-    context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+    me_context_ptr->me_ctx->me_search_method = SUB_SAD_SEARCH;
 
     uint8_t gm_level = 0;
-    set_gm_controls(pcs_ptr, gm_level);
+    set_gm_controls(pcs, gm_level);
 
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;
-    set_prehme_ctrls(context_ptr->me_context_ptr, prehme_level);
+    set_prehme_ctrls(me_context_ptr->me_ctx, prehme_level);
 
     // Set hme/me based reference pruning level (0-4)
-    set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+    set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
 
     // Set hme-based me sr adjustment level
-    set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
-    context_ptr->me_context_ptr->prune_me_candidates_th = 0; // No impact on tf
-    context_ptr->me_context_ptr->use_best_unipred_cand_only = 0; // No impact on tf
-    set_prehme_ctrls(context_ptr->me_context_ptr, 0);
-    set_skip_frame_in_ipp(pcs_ptr, context_ptr->me_context_ptr);
+    set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 0);
+    me_context_ptr->me_ctx->prune_me_candidates_th = 0; // No impact on tf
+    me_context_ptr->me_ctx->use_best_unipred_cand_only = 0; // No impact on tf
+    set_prehme_ctrls(me_context_ptr->me_ctx, 0);
+    set_skip_frame_in_ipp(pcs, me_context_ptr->me_ctx);
     return return_error;
 };
 
@@ -703,14 +703,14 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
 *   this_intra_error.
 ***************************************************************************/
 static int open_loop_firstpass_intra_prediction(
-    PictureParentControlSet *ppcs_ptr, int raw_motion_err, uint32_t blk_origin_x,
-    uint32_t blk_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *input_picture_ptr,
+    PictureParentControlSet *ppcs_ptr, int raw_motion_err, uint32_t blk_org_x,
+    uint32_t blk_org_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *input_pic,
     uint32_t input_origin_index, FRAME_STATS *const stats) {
-    int32_t   mb_row      = blk_origin_y >> 4;
-    int32_t   mb_col      = blk_origin_x >> 4;
+    int32_t   mb_row      = blk_org_y >> 4;
+    int32_t   mb_col      = blk_org_x >> 4;
     const int use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
     uint8_t   use8blk     = 0;
-    if (!ppcs_ptr->scs_ptr->ipp_pass_ctrls.use8blk) {
+    if (!ppcs_ptr->scs->ipp_pass_ctrls.use8blk) {
         use8blk = 0;
     } else {
         if (ppcs_ptr->first_pass_ref_count)
@@ -744,8 +744,8 @@ static int open_loop_firstpass_intra_prediction(
                   ? ((bheight == FORCED_BLK_SIZE && bwidth == FORCED_BLK_SIZE) ? TX_16X16 : TX_8X8)
                   : use8blk ? TX_8X8
                             : TX_4X4;
-            sub_blk_origin_x = blk_origin_x + sub_blk_index_x * bwidth / sub_blk_cols;
-            sub_blk_origin_y = blk_origin_y + sub_blk_index_y * bheight / sub_blk_rows;
+            sub_blk_origin_x = blk_org_x + sub_blk_index_x * bwidth / sub_blk_cols;
+            sub_blk_origin_y = blk_org_y + sub_blk_index_y * bheight / sub_blk_rows;
             above_row        = above_data + 16;
             left_col         = left_data + 16;
 
@@ -754,23 +754,23 @@ static int open_loop_firstpass_intra_prediction(
                                                        0, // update_top_neighbor
                                                        above_row - 1,
                                                        left_col - 1,
-                                                       input_picture_ptr,
-                                                       input_picture_ptr->stride_y,
+                                                       input_pic,
+                                                       input_pic->stride_y,
                                                        sub_blk_origin_x,
                                                        sub_blk_origin_y,
                                                        bwidth / sub_blk_cols,
                                                        bheight / sub_blk_rows);
             // point to  top_neighbor at input buffer
             if (sub_blk_origin_y != 0) {
-                (above_row) = ((input_picture_ptr->buffer_y +
-                                (((sub_blk_origin_y + input_picture_ptr->origin_y) *
-                                  input_picture_ptr->stride_y) +
-                                 (sub_blk_origin_x + input_picture_ptr->origin_x))) -
-                               input_picture_ptr->stride_y);
+                (above_row) = ((input_pic->buffer_y +
+                                (((sub_blk_origin_y + input_pic->org_y) *
+                                  input_pic->stride_y) +
+                                 (sub_blk_origin_x + input_pic->org_x))) -
+                               input_pic->stride_y);
             }
             // PRED
-            predictor = &predictor8[(sub_blk_origin_x - blk_origin_x) +
-                                    (sub_blk_origin_y - blk_origin_y) * FORCED_BLK_SIZE];
+            predictor = &predictor8[(sub_blk_origin_x - blk_org_x) +
+                                    (sub_blk_origin_y - blk_org_y) * FORCED_BLK_SIZE];
             intra_prediction_open_loop_mb(0,
                                           DC_PRED,
                                           sub_blk_origin_x,
@@ -784,9 +784,9 @@ static int open_loop_firstpass_intra_prediction(
     }
 
     EbSpatialFullDistType spatial_full_dist_type_fun = svt_spatial_full_distortion_kernel;
-    int this_intra_error = (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+    int this_intra_error = (uint32_t)(spatial_full_dist_type_fun(input_pic->buffer_y,
                                                                  input_origin_index,
-                                                                 input_picture_ptr->stride_y,
+                                                                 input_pic->stride_y,
                                                                  predictor8,
                                                                  0,
                                                                  FORCED_BLK_SIZE,
@@ -805,7 +805,7 @@ static int open_loop_firstpass_intra_prediction(
     else
         stats->intra_factor += 1.0;
 
-    int level_sample = input_picture_ptr->buffer_y[input_origin_index];
+    int level_sample = input_pic->buffer_y[input_origin_index];
 
     //8102 is (exp(9) -1) equivalent to (log1p((double)this_intra_error) < 9.0)
     if ((level_sample < DARK_THRESH) && (this_intra_error < 8102))
@@ -834,15 +834,15 @@ static int open_loop_firstpass_intra_prediction(
 *    this_inter_error
 ***************************************************************************/
 static int open_loop_firstpass_inter_prediction(
-    PictureParentControlSet *ppcs_ptr, uint32_t me_sb_addr, uint32_t blk_origin_x,
-    uint32_t blk_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *input_picture_ptr,
+    PictureParentControlSet *ppcs_ptr, uint32_t me_sb_addr, uint32_t blk_org_x,
+    uint32_t blk_org_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *input_pic,
     uint32_t input_origin_index, const int this_intra_error, MV *last_mv, int raw_motion_err,
     FRAME_STATS *stats, int down_step) {
-    int32_t        mb_row  = blk_origin_y >> 4;
-    int32_t        mb_col  = blk_origin_x >> 4;
-    const uint32_t mb_cols = (ppcs_ptr->scs_ptr->max_input_luma_width + FORCED_BLK_SIZE - 1) /
+    int32_t        mb_row  = blk_org_y >> 4;
+    int32_t        mb_col  = blk_org_x >> 4;
+    const uint32_t mb_cols = (ppcs_ptr->scs->max_input_luma_width + FORCED_BLK_SIZE - 1) /
         FORCED_BLK_SIZE;
-    const uint32_t mb_rows = (ppcs_ptr->scs_ptr->max_input_luma_height + FORCED_BLK_SIZE -
+    const uint32_t mb_rows = (ppcs_ptr->scs->max_input_luma_height + FORCED_BLK_SIZE -
                               1) /
         FORCED_BLK_SIZE;
     int                   this_inter_error           = this_intra_error;
@@ -855,9 +855,9 @@ static int open_loop_firstpass_inter_prediction(
         uint32_t           me_mb_offset = 0;
         BlockGeom          blk_geom;
         const MeSbResults *me_results = ppcs_ptr->pa_me_data->me_results[me_sb_addr];
-        uint32_t           me_sb_size = ppcs_ptr->scs_ptr->b64_size;
-        blk_geom.origin_x             = blk_origin_x - (blk_origin_x / me_sb_size) * me_sb_size;
-        blk_geom.origin_y             = blk_origin_y - (blk_origin_y / me_sb_size) * me_sb_size;
+        uint32_t           me_sb_size = ppcs_ptr->scs->b64_size;
+        blk_geom.org_x             = blk_org_x - (blk_org_x / me_sb_size) * me_sb_size;
+        blk_geom.org_y             = blk_org_y - (blk_org_y / me_sb_size) * me_sb_size;
         blk_geom.bwidth               = FORCED_BLK_SIZE;
         blk_geom.bheight              = FORCED_BLK_SIZE;
         me_mb_offset = get_me_info_index(ppcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
@@ -887,14 +887,14 @@ static int open_loop_firstpass_inter_prediction(
             : NULL;
         int32_t              ref_origin_index;
         if (last_input_picture_ptr != NULL) {
-            ref_origin_index = (int32_t)last_input_picture_ptr->origin_x +
-                ((int32_t)blk_origin_x + mv.col) +
-                ((int32_t)blk_origin_y + mv.row + (int32_t)last_input_picture_ptr->origin_y) *
+            ref_origin_index = (int32_t)last_input_picture_ptr->org_x +
+                ((int32_t)blk_org_x + mv.col) +
+                ((int32_t)blk_org_y + mv.row + (int32_t)last_input_picture_ptr->org_y) *
                     (int32_t)last_input_picture_ptr->stride_y;
             motion_error = (uint32_t)(
-                spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                spatial_full_dist_type_fun(input_pic->buffer_y,
                                            input_origin_index,
-                                           input_picture_ptr->stride_y << down_step,
+                                           input_pic->stride_y << down_step,
                                            last_input_picture_ptr->buffer_y,
                                            ref_origin_index,
                                            last_input_picture_ptr->stride_y << down_step,
@@ -928,14 +928,14 @@ static int open_loop_firstpass_inter_prediction(
 
             EbPictureBufferDesc *golden_input_picture_ptr =
                 ppcs_ptr->first_pass_ref_ppcs_ptr[1]->enhanced_picture_ptr;
-            ref_origin_index = (int32_t)golden_input_picture_ptr->origin_x +
-                ((int32_t)blk_origin_x + gf_mv.col) +
-                ((int32_t)blk_origin_y + gf_mv.row + (int32_t)golden_input_picture_ptr->origin_y) *
+            ref_origin_index = (int32_t)golden_input_picture_ptr->org_x +
+                ((int32_t)blk_org_x + gf_mv.col) +
+                ((int32_t)blk_org_y + gf_mv.row + (int32_t)golden_input_picture_ptr->org_y) *
                     (int32_t)golden_input_picture_ptr->stride_y;
             gf_motion_error = (uint32_t)(
-                spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                spatial_full_dist_type_fun(input_pic->buffer_y,
                                            input_origin_index,
-                                           input_picture_ptr->stride_y << down_step,
+                                           input_pic->stride_y << down_step,
                                            golden_input_picture_ptr->buffer_y,
                                            ref_origin_index,
                                            golden_input_picture_ptr->stride_y << down_step,
@@ -1003,29 +1003,29 @@ static int open_loop_firstpass_inter_prediction(
 ***************************************************************************/
 static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32_t segment_index,
                                         uint8_t bypass_blk_step) {
-    EbPictureBufferDesc *input_picture_ptr      = ppcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_pic      = ppcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count
         ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr
         : NULL;
 
-    const uint32_t blk_cols = (uint32_t)(input_picture_ptr->width + FORCED_BLK_SIZE - 1) /
+    const uint32_t blk_cols = (uint32_t)(input_pic->width + FORCED_BLK_SIZE - 1) /
         FORCED_BLK_SIZE;
-    const uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + FORCED_BLK_SIZE - 1) /
+    const uint32_t blk_rows = (uint32_t)(input_pic->height + FORCED_BLK_SIZE - 1) /
         FORCED_BLK_SIZE;
 
-    uint32_t me_sb_size         = ppcs_ptr->scs_ptr->b64_size;
+    uint32_t me_sb_size         = ppcs_ptr->scs->b64_size;
     uint32_t me_pic_width_in_sb = (ppcs_ptr->aligned_width + me_sb_size - 1) / me_sb_size;
     uint32_t me_sb_x, me_sb_y, me_sb_addr;
 
-    uint32_t blk_width, blk_height, blk_origin_x, blk_origin_y;
+    uint32_t blk_width, blk_height, blk_org_x, blk_org_y;
     MV       first_top_mv = kZeroMv;
     MV       last_mv;
     uint32_t input_origin_index;
 
     uint32_t blks_in_b64          = BLOCK_SIZE_64 / FORCED_BLK_SIZE;
-    uint32_t picture_width_in_b64 = (uint32_t)(input_picture_ptr->width + BLOCK_SIZE_64 - 1) /
+    uint32_t picture_width_in_b64 = (uint32_t)(input_pic->width + BLOCK_SIZE_64 - 1) /
         BLOCK_SIZE_64;
-    uint32_t picture_height_in_b64 = (uint32_t)(input_picture_ptr->height + BLOCK_SIZE_64 - 1) /
+    uint32_t picture_height_in_b64 = (uint32_t)(input_pic->height + BLOCK_SIZE_64 - 1) /
         BLOCK_SIZE_64;
 
     uint32_t x_seg_idx;
@@ -1048,7 +1048,7 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
                           ? blk_cols
                           : (x_b64_end_idx * blks_in_b64);
     EbSpatialFullDistType spatial_full_dist_type_fun = svt_spatial_full_distortion_kernel;
-    int down_step = ppcs_ptr->scs_ptr->ipp_pass_ctrls.dist_ds;
+    int down_step = ppcs_ptr->scs->ipp_pass_ctrls.dist_ds;
     for (uint32_t blk_index_y = (y_b64_start_idx * blks_in_b64); blk_index_y < blk_index_y_end;
          blk_index_y++) {
         for (uint32_t blk_index_x = (x_b64_start_idx * blks_in_b64); blk_index_x < blk_index_x_end;
@@ -1059,34 +1059,34 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
                 if ((sb_index_x % (uint32_t)bypass_blk_step != 0) ||
                     (sb_index_y % (uint32_t)bypass_blk_step != 0))
                     continue;
-            blk_origin_x = blk_index_x * FORCED_BLK_SIZE;
-            blk_origin_y = blk_index_y * FORCED_BLK_SIZE;
-            me_sb_x      = blk_origin_x / me_sb_size;
-            me_sb_y      = blk_origin_y / me_sb_size;
+            blk_org_x = blk_index_x * FORCED_BLK_SIZE;
+            blk_org_y = blk_index_y * FORCED_BLK_SIZE;
+            me_sb_x      = blk_org_x / me_sb_size;
+            me_sb_y      = blk_org_y / me_sb_size;
             me_sb_addr   = me_sb_x + me_sb_y * me_pic_width_in_sb;
 
-            blk_width  = (ppcs_ptr->aligned_width - blk_origin_x) < FORCED_BLK_SIZE
-                 ? ppcs_ptr->aligned_width - blk_origin_x
+            blk_width  = (ppcs_ptr->aligned_width - blk_org_x) < FORCED_BLK_SIZE
+                 ? ppcs_ptr->aligned_width - blk_org_x
                  : FORCED_BLK_SIZE;
-            blk_height = (ppcs_ptr->aligned_height - blk_origin_y) < FORCED_BLK_SIZE
-                ? ppcs_ptr->aligned_height - blk_origin_y
+            blk_height = (ppcs_ptr->aligned_height - blk_org_y) < FORCED_BLK_SIZE
+                ? ppcs_ptr->aligned_height - blk_org_y
                 : FORCED_BLK_SIZE;
 
-            input_origin_index = (input_picture_ptr->origin_y + blk_origin_y) *
-                    input_picture_ptr->stride_y +
-                (input_picture_ptr->origin_x + blk_origin_x);
+            input_origin_index = (input_pic->org_y + blk_org_y) *
+                    input_pic->stride_y +
+                (input_pic->org_x + blk_org_x);
 
             FRAME_STATS *mb_stats = ppcs_ptr->firstpass_data.mb_stats + blk_index_y * blk_cols +
                 blk_index_x;
 
             if (ppcs_ptr->first_pass_ref_count)
                 ppcs_ptr->firstpass_data.raw_motion_err_list[blk_index_y * blk_cols + blk_index_x] =
-                    (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                    (uint32_t)(spatial_full_dist_type_fun(input_pic->buffer_y,
                                                           input_origin_index,
-                                                          input_picture_ptr->stride_y << down_step,
+                                                          input_pic->stride_y << down_step,
                                                           last_input_picture_ptr->buffer_y,
                                                           input_origin_index,
-                                                          input_picture_ptr->stride_y << down_step,
+                                                          input_pic->stride_y << down_step,
                                                           blk_width,
                                                           blk_height >> down_step)
                                << down_step);
@@ -1094,28 +1094,28 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
             int this_intra_error = open_loop_firstpass_intra_prediction(
                 ppcs_ptr,
                 ppcs_ptr->firstpass_data.raw_motion_err_list[blk_index_y * blk_cols + blk_index_x],
-                blk_origin_x,
-                blk_origin_y,
+                blk_org_x,
+                blk_org_y,
                 blk_width,
                 blk_height,
-                input_picture_ptr,
+                input_pic,
                 input_origin_index,
                 mb_stats);
 
             int this_inter_error = this_intra_error;
 
-            if (blk_origin_x == 0)
+            if (blk_org_x == 0)
                 last_mv = first_top_mv;
 
             if (ppcs_ptr->first_pass_ref_count) {
                 this_inter_error = open_loop_firstpass_inter_prediction(
                     ppcs_ptr,
                     me_sb_addr,
-                    blk_origin_x,
-                    blk_origin_y,
+                    blk_org_x,
+                    blk_org_y,
                     blk_width,
                     blk_height,
-                    input_picture_ptr,
+                    input_pic,
                     input_origin_index,
                     this_intra_error,
                     &last_mv,
@@ -1124,7 +1124,7 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
                     mb_stats,
                     down_step);
 
-                if (blk_origin_x == 0)
+                if (blk_org_x == 0)
                     first_top_mv = last_mv;
 
                 mb_stats->coded_error += this_inter_error;
@@ -1140,29 +1140,29 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
 /***************************************************************************
 * Prepare the me context for performing first pass me.
 ***************************************************************************/
-static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
+static void first_pass_setup_me_context(MotionEstimationContext_t *me_context_ptr,
                                         PictureParentControlSet *  ppcs_ptr,
-                                        EbPictureBufferDesc *input_picture_ptr, int blk_row,
+                                        EbPictureBufferDesc *input_pic, int blk_row,
                                         int blk_col, uint32_t ss_x, uint32_t ss_y) {
     // setup the references
-    context_ptr->me_context_ptr->num_of_list_to_search = 1;
-    context_ptr->me_context_ptr->num_of_ref_pic_to_search[0] = 0;
-    context_ptr->me_context_ptr->num_of_ref_pic_to_search[1] = 0;
-    context_ptr->me_context_ptr->temporal_layer_index        = 0;
-    context_ptr->me_context_ptr->is_used_as_reference_flag   = 1;
+    me_context_ptr->me_ctx->num_of_list_to_search = 1;
+    me_context_ptr->me_ctx->num_of_ref_pic_to_search[0] = 0;
+    me_context_ptr->me_ctx->num_of_ref_pic_to_search[1] = 0;
+    me_context_ptr->me_ctx->temporal_layer_index        = 0;
+    me_context_ptr->me_ctx->is_used_as_reference_flag   = 1;
 
     if (ppcs_ptr->first_pass_ref_count) {
-        context_ptr->me_context_ptr->me_ds_ref_array[0][0] =
+        me_context_ptr->me_ctx->me_ds_ref_array[0][0] =
             ppcs_ptr->first_pass_ref_ppcs_ptr[0]->ds_pics;
-        context_ptr->me_context_ptr->num_of_ref_pic_to_search[0]++;
+        me_context_ptr->me_ctx->num_of_ref_pic_to_search[0]++;
     }
     if (ppcs_ptr->first_pass_ref_count > 1) {
-        context_ptr->me_context_ptr->me_ds_ref_array[0][1] =
+        me_context_ptr->me_ctx->me_ds_ref_array[0][1] =
             ppcs_ptr->first_pass_ref_ppcs_ptr[1]->ds_pics;
-        context_ptr->me_context_ptr->num_of_ref_pic_to_search[0]++;
+        me_context_ptr->me_ctx->num_of_ref_pic_to_search[0]++;
     }
 
-    context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;
+    me_context_ptr->me_ctx->me_type = ME_FIRST_PASS;
     // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
     EbPictureBufferDesc *quarter_pic_ptr = ppcs_ptr->ds_pics.quarter_picture_ptr;
 
@@ -1172,59 +1172,59 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     uint32_t b64_origin_y = (uint32_t)(blk_row * BLOCK_SIZE_64);
 
     // Load the SB from the input to the intermediate SB buffer
-    int buffer_index = (input_picture_ptr->origin_y + b64_origin_y) * input_picture_ptr->stride_y +
-        input_picture_ptr->origin_x + b64_origin_x;
+    int buffer_index = (input_pic->org_y + b64_origin_y) * input_pic->stride_y +
+        input_pic->org_x + b64_origin_x;
 
     // set search method
-    context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+    me_context_ptr->me_ctx->hme_search_method = SUB_SAD_SEARCH;
 
 #ifdef ARCH_X86_64
-    uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
+    uint8_t *src_ptr = &(input_pic->buffer_y[buffer_index]);
 
-    uint32_t b64_height = (input_picture_ptr->height - b64_origin_y) < BLOCK_SIZE_64
-        ? input_picture_ptr->height - b64_origin_y
+    uint32_t b64_height = (input_pic->height - b64_origin_y) < BLOCK_SIZE_64
+        ? input_pic->height - b64_origin_y
         : BLOCK_SIZE_64;
     //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
     uint32_t i;
     for (i = 0; i < b64_height; i++) {
-        char const *p = (char const *)(src_ptr + i * input_picture_ptr->stride_y);
+        char const *p = (char const *)(src_ptr + i * input_pic->stride_y);
         _mm_prefetch(p, _MM_HINT_T2);
     }
 #endif
-    context_ptr->me_context_ptr->b64_src_ptr    = &(input_picture_ptr->buffer_y[buffer_index]);
-    context_ptr->me_context_ptr->b64_src_stride = input_picture_ptr->stride_y;
+    me_context_ptr->me_ctx->b64_src_ptr    = &(input_pic->buffer_y[buffer_index]);
+    me_context_ptr->me_ctx->b64_src_stride = input_pic->stride_y;
 
     // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
-    buffer_index = (quarter_pic_ptr->origin_y + (b64_origin_y >> ss_y)) * quarter_pic_ptr->stride_y +
-        quarter_pic_ptr->origin_x + (b64_origin_x >> ss_x);
+    buffer_index = (quarter_pic_ptr->org_y + (b64_origin_y >> ss_y)) * quarter_pic_ptr->stride_y +
+        quarter_pic_ptr->org_x + (b64_origin_x >> ss_x);
 
-    context_ptr->me_context_ptr->quarter_b64_buffer = &quarter_pic_ptr->buffer_y[buffer_index];
-    context_ptr->me_context_ptr->quarter_b64_buffer_stride = quarter_pic_ptr->stride_y;
+    me_context_ptr->me_ctx->quarter_b64_buffer = &quarter_pic_ptr->buffer_y[buffer_index];
+    me_context_ptr->me_ctx->quarter_b64_buffer_stride = quarter_pic_ptr->stride_y;
 
     // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
-    buffer_index = (sixteenth_pic_ptr->origin_y + (b64_origin_y >> 2)) * sixteenth_pic_ptr->stride_y +
-        sixteenth_pic_ptr->origin_x + (b64_origin_x >> 2);
+    buffer_index = (sixteenth_pic_ptr->org_y + (b64_origin_y >> 2)) * sixteenth_pic_ptr->stride_y +
+        sixteenth_pic_ptr->org_x + (b64_origin_x >> 2);
 
-    context_ptr->me_context_ptr->sixteenth_b64_buffer = &sixteenth_pic_ptr->buffer_y[buffer_index];
-    context_ptr->me_context_ptr->sixteenth_b64_buffer_stride = sixteenth_pic_ptr->stride_y;
+    me_context_ptr->me_ctx->sixteenth_b64_buffer = &sixteenth_pic_ptr->buffer_y[buffer_index];
+    me_context_ptr->me_ctx->sixteenth_b64_buffer_stride = sixteenth_pic_ptr->stride_y;
 }
 /***************************************************************************
 * Perform the motion estimation for first pass.
 ***************************************************************************/
 static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
                                  MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
-    EbPictureBufferDesc *input_picture_ptr = ppcs_ptr->enhanced_picture_ptr;
-    uint32_t             ss_x              = ppcs_ptr->scs_ptr->subsampling_x;
-    uint32_t             ss_y              = ppcs_ptr->scs_ptr->subsampling_y;
-    const uint32_t       blk_cols = (uint32_t)(input_picture_ptr->width + FORCED_BLK_SIZE - 1) /
+    EbPictureBufferDesc *input_pic = ppcs_ptr->enhanced_picture_ptr;
+    uint32_t             ss_x              = ppcs_ptr->scs->subsampling_x;
+    uint32_t             ss_y              = ppcs_ptr->scs->subsampling_y;
+    const uint32_t       blk_cols = (uint32_t)(input_pic->width + FORCED_BLK_SIZE - 1) /
         FORCED_BLK_SIZE;
-    const uint32_t blk_rows = (uint32_t)(input_picture_ptr->height + FORCED_BLK_SIZE - 1) /
+    const uint32_t blk_rows = (uint32_t)(input_pic->height + FORCED_BLK_SIZE - 1) /
         FORCED_BLK_SIZE;
-    uint32_t sb_cols     = (uint32_t)(input_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
+    uint32_t sb_cols     = (uint32_t)(input_pic->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
     uint32_t blks_in_b64 = BLOCK_SIZE_64 / FORCED_BLK_SIZE;
-    uint32_t picture_width_in_b64 = (uint32_t)(input_picture_ptr->width + BLOCK_SIZE_64 - 1) /
+    uint32_t picture_width_in_b64 = (uint32_t)(input_pic->width + BLOCK_SIZE_64 - 1) /
         BLOCK_SIZE_64;
-    uint32_t picture_height_in_b64 = (uint32_t)(input_picture_ptr->height + BLOCK_SIZE_64 - 1) /
+    uint32_t picture_height_in_b64 = (uint32_t)(input_pic->height + BLOCK_SIZE_64 - 1) /
         BLOCK_SIZE_64;
 
     uint32_t x_seg_idx;
@@ -1246,7 +1246,7 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
     const uint32_t blk_index_x_end = (x_b64_end_idx * blks_in_b64) > blk_cols
         ? blk_cols
         : (x_b64_end_idx * blks_in_b64);
-    MeContext *    context_ptr     = me_context_ptr->me_context_ptr;
+    MeContext *    me_ctx     = me_context_ptr->me_ctx;
     // assume max 2 references for first pass
     ppcs_ptr->pa_me_data->max_cand = 3;
     ppcs_ptr->pa_me_data->max_refs = 2;
@@ -1256,22 +1256,22 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
             int b64_index_x = blk_index_x / blks_in_b64;
             int b64_index_y = blk_index_y / blks_in_b64;
 
-            uint8_t bypass_blk_step = me_context_ptr->me_context_ptr->bypass_blk_step;
+            uint8_t bypass_blk_step = me_context_ptr->me_ctx->bypass_blk_step;
             if (bypass_blk_step > 1)
                 if ((b64_index_x % (uint32_t)bypass_blk_step != 0) || (b64_index_y % (uint32_t)bypass_blk_step != 0))
                     continue;
 
             // Initialize ME context
-            first_pass_setup_me_context(me_context_ptr, ppcs_ptr, input_picture_ptr, b64_index_y, b64_index_x, ss_x, ss_y);
-            // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
+            first_pass_setup_me_context(me_context_ptr, ppcs_ptr, input_pic, b64_index_y, b64_index_x, ss_x, ss_y);
+            // Perform ME - me_ctx will store the outputs (MVs, buffers, etc)
             // Block-based MC using open-loop HME + refinement
 
             motion_estimation_b64(ppcs_ptr, // source picture control set -> references come from here
                 (uint32_t)b64_index_y * sb_cols + b64_index_x,
                 (uint32_t)b64_index_x * BLOCK_SIZE_64, // x block
                 (uint32_t)b64_index_y * BLOCK_SIZE_64, // y block
-                context_ptr,
-                input_picture_ptr); // source picture
+                me_ctx,
+                input_pic); // source picture
         }
     }
     return EB_ErrorNone;
@@ -1283,32 +1283,32 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
 ************************************************************************************/
 void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
                           MotionEstimationContext_t *me_context_ptr, int32_t segment_index) {
-    me_context_ptr->me_context_ptr->min_frame_size = MIN(ppcs_ptr->aligned_height,
+    me_context_ptr->me_ctx->min_frame_size = MIN(ppcs_ptr->aligned_height,
                                                          ppcs_ptr->aligned_width);
     // Perform the me for the first pass for each segment
 
-    me_context_ptr->me_context_ptr->bypass_blk_step =
-        ppcs_ptr->scs_ptr->ipp_pass_ctrls.bypass_blk_step
+    me_context_ptr->me_ctx->bypass_blk_step =
+        ppcs_ptr->scs->ipp_pass_ctrls.bypass_blk_step
         ?
-        ((ppcs_ptr->scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE) ? 1 : 2)
+        ((ppcs_ptr->scs->input_resolution < INPUT_SIZE_360p_RANGE) ? 1 : 2)
         : 1;
-    if (!me_context_ptr->me_context_ptr->skip_frame)
+    if (!me_context_ptr->me_ctx->skip_frame)
         if (ppcs_ptr->first_pass_ref_count)
             first_pass_me(ppcs_ptr, me_context_ptr, segment_index);
-    if (!me_context_ptr->me_context_ptr->skip_frame) {
+    if (!me_context_ptr->me_ctx->skip_frame) {
         setup_firstpass_data_seg(ppcs_ptr, segment_index);
         // Perform the processing of the segment for each frame after me is done for all blocks
         first_pass_frame_seg(
-            ppcs_ptr, segment_index, me_context_ptr->me_context_ptr->bypass_blk_step);
+            ppcs_ptr, segment_index, me_context_ptr->me_ctx->bypass_blk_step);
     }
     svt_block_on_mutex(ppcs_ptr->first_pass_mutex);
     ppcs_ptr->first_pass_seg_acc++;
     if (ppcs_ptr->first_pass_seg_acc == ppcs_ptr->first_pass_seg_total_count) {
         first_pass_frame_end(ppcs_ptr,
-                             me_context_ptr->me_context_ptr->skip_frame,
-                             me_context_ptr->me_context_ptr->bypass_blk_step,
+                             me_context_ptr->me_ctx->skip_frame,
+                             me_context_ptr->me_ctx->bypass_blk_step,
                              ppcs_ptr->ts_duration);
-        if (ppcs_ptr->end_of_sequence_flag && !ppcs_ptr->scs_ptr->lap_rc)
+        if (ppcs_ptr->end_of_sequence_flag && !ppcs_ptr->scs->lap_rc)
             svt_av1_end_first_pass(ppcs_ptr);
         // Signal that the first pass is done
         svt_post_semaphore(ppcs_ptr->first_pass_done_semaphore);

@@ -28,30 +28,31 @@ extern "C" {
 #endif
 extern uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_update_cdf,
                                         FRAME_CONTEXT                      *ec_ctx,
-                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+                                        struct ModeDecisionCandidateBuffer *cand_bf_ptr,
                                         const TranLow *const qcoeff, uint16_t eob,
                                         PlaneType plane_type, TxSize transform_size,
                                         TxType transform_type, int16_t txb_skip_ctx,
                                         int16_t dc_sign_ctx, Bool reduced_transform_set_flag);
 
-extern void        coding_loop_context_generation(PictureControlSet   *pcs_ptr,
-                                                  ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                                  uint32_t blk_origin_x, uint32_t blk_origin_y,
+extern void        coding_loop_context_generation(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                                  BlkStruct *blk_ptr, uint32_t blk_org_x,
+                                                  uint32_t           blk_org_y,
                                                   NeighborArrayUnit *skip_coeff_neighbor_array,
                                                   NeighborArrayUnit *leaf_partition_neighbor_array);
 extern EbErrorType intra_luma_mode_context(BlkStruct *blk_ptr, uint32_t luma_mode,
                                            int32_t *prediction_index);
-extern EbErrorType intra2_nx2_n_fast_cost_islice(
-    BlkStruct *blk_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t qp,
-    uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
-    PictureControlSet *pcs_ptr);
+extern EbErrorType intra2_nx2_n_fast_cost_islice(BlkStruct                          *blk_ptr,
+                                                 struct ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                                 uint32_t qp, uint64_t luma_distortion,
+                                                 uint64_t chroma_distortion, uint64_t lambda,
+                                                 PictureControlSet *pcs);
 extern EbErrorType merge_skip_full_cost(
     SuperBlock *sb_ptr, BlkStruct *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
-    ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t qp, uint64_t *y_distortion,
+    ModeDecisionCandidateBuffer *cand_bf_ptr, uint32_t qp, uint64_t *y_distortion,
     uint64_t *cb_distortion, uint64_t *cr_distortion, uint64_t lambda, uint64_t lambda_chroma,
     uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
-    uint32_t transform_size, uint32_t transform_chroma_size, PictureControlSet *pcs_ptr);
-extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+    uint32_t transform_size, uint32_t transform_chroma_size, PictureControlSet *pcs);
+extern EbErrorType split_flag_rate(ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                    uint32_t split_flag, uint64_t *split_rate, uint64_t lambda,
                                    MdRateEstimationContext *md_rate_estimation_ptr,
                                    uint32_t                 tb_max_depth);
@@ -62,48 +63,47 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *
     (ROUND_POWER_OF_TWO(((int64_t)(R)) * ((int64_t)(RM)), AV1_PROB_COST_SHIFT) + \
      ((int64_t)(D) * ((int64_t)1 << RDDIV_BITS)))
 
-extern uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs_ptr,
-                                            ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                            PartitionType p, uint64_t lambda,
+extern uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionContext *ctx,
+                                            BlkStruct *blk_ptr, PartitionType p, uint64_t lambda,
                                             MdRateEstimationContext *md_rate_estimation_ptr);
-extern uint64_t av1_intra_fast_cost(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                    ModeDecisionCandidateBuffer *candidate_buffer, uint32_t qp,
+extern uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
+                                    ModeDecisionCandidateBuffer *cand_bf, uint32_t qp,
                                     uint64_t luma_distortion, uint64_t chroma_distortion,
-                                    uint64_t lambda, PictureControlSet *pcs_ptr,
+                                    uint64_t lambda, PictureControlSet *pcs,
                                     CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
                                     uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
-extern uint64_t av1_inter_fast_cost(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                    ModeDecisionCandidateBuffer *candidate_buffer, uint32_t qp,
+extern uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
+                                    ModeDecisionCandidateBuffer *cand_bf, uint32_t qp,
                                     uint64_t luma_distortion, uint64_t chroma_distortion,
-                                    uint64_t lambda, PictureControlSet *pcs_ptr,
+                                    uint64_t lambda, PictureControlSet *pcs,
                                     CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
                                     uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
-EbErrorType        av1_full_cost_light_pd0(ModeDecisionContext                *context_ptr,
-                                           struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+EbErrorType        av1_full_cost_light_pd0(ModeDecisionContext                *ctx,
+                                           struct ModeDecisionCandidateBuffer *cand_bf_ptr,
                                            uint64_t *y_distortion, uint64_t lambda,
                                            uint64_t *y_coeff_bits);
-extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-                                       struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                       struct ModeDecisionCandidateBuffer *cand_bf_ptr,
                                        BlkStruct *blk_ptr, uint64_t *y_distortion,
                                        uint64_t *cb_distortion, uint64_t *cr_distortion,
                                        uint64_t lambda, uint64_t *y_coeff_bits,
                                        uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
                                        BlockSize bsize);
 
-extern EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-                                       struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+extern EbErrorType av1_inter_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                       struct ModeDecisionCandidateBuffer *cand_bf_ptr,
                                        BlkStruct *blk_ptr, uint64_t *y_distortion,
                                        uint64_t *cb_distortion, uint64_t *cr_distortion,
                                        uint64_t lambda, uint64_t *y_coeff_bits,
                                        uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
                                        BlockSize bsize);
 extern uint64_t    get_tx_size_bits(ModeDecisionCandidateBuffer *candidateBuffer,
-                                    ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
-                                    uint8_t tx_depth, Bool block_has_coeff);
+                                    ModeDecisionContext *ctx, PictureControlSet *pcs, uint8_t tx_depth,
+                                    Bool block_has_coeff);
 
 MvJointType svt_av1_get_mv_joint(const MV *mv);
 

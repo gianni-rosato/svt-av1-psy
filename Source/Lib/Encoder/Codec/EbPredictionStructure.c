@@ -1804,7 +1804,7 @@ EbErrorType svt_aom_prediction_structure_group_ctor(
     PredictionStructureGroup *pred_struct_group_ptr) {
 #else
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_struct_group_ptr,
-                                            struct SequenceControlSet *scs_ptr) {
+                                            struct SequenceControlSet *scs) {
 #endif
 #if !OPT_RPS_CONSTR_3
     uint32_t pred_struct_index = 0;
@@ -1815,7 +1815,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup  *pred_stru
 #endif
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
 #if !OPT_RPS_CONSTR_3
-    MrpCtrls *mrp_ctrl = &(scs_ptr->mrp_ctrls);
+    MrpCtrls *mrp_ctrl = &(scs->mrp_ctrls);
     // Derive the max count at BASE
     uint8_t ref_count_used_base = MAX(
         mrp_ctrl->sc_base_ref_list0_count,

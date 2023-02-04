@@ -176,8 +176,8 @@ typedef struct EbSvtIOFormat //former EbSvtEncInput
     uint32_t width;
     uint32_t height;
 
-    uint32_t origin_x;
-    uint32_t origin_y;
+    uint32_t org_x;
+    uint32_t org_y;
 
     EbColorFormat color_fmt;
     EbBitDepth    bit_depth;

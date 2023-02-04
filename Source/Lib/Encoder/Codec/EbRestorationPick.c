@@ -153,7 +153,7 @@ static int64_t try_restoration_unit_seg(const RestSearchCtxt        *rsc,
     // If boundaries are enabled for filtering, recon gets updated using setup/restore
     // processing_stripe_bounadaries.  Many threads doing so will result in race condition.
     // Only use boundaries during the filter search if a copy of recon is made for each
-    // thread (controlled with scs_ptr->seq_header.use_boundaries_in_rest_search).
+    // thread (controlled with scs->seq_header.use_boundaries_in_rest_search).
     svt_av1_loop_restoration_filter_unit(cm->use_boundaries_in_rest_search,
                                          limits,
                                          rui,
@@ -1361,8 +1361,8 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
     rui.restoration_type = RESTORE_WIENER;
     // Check whether you can use the filter coeffs from previous frames; if not, must generate new coeffs
     if (wn_ctrls->use_prev_frame_coeffs &&
-        (cm->child_pcs->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME &&
-         cm->child_pcs->parent_pcs_ptr->frm_hdr.frame_type != INTRA_ONLY_FRAME) &&
+        (cm->child_pcs->ppcs->frm_hdr.frame_type != KEY_FRAME &&
+         cm->child_pcs->ppcs->frm_hdr.frame_type != INTRA_ONLY_FRAME) &&
         cm->child_pcs->rst_info[rsc->plane].unit_info[rest_unit_idx].restoration_type ==
             RESTORE_WIENER) {
         // Copy filter info, stored from previous frame(s)
@@ -1526,9 +1526,9 @@ static double search_rest_type_finish(RestSearchCtxt *rsc, RestorationType rtype
 */
 void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                             const Yv12BufferConfig *src, Yv12BufferConfig *trial_frame_rst,
-                            PictureControlSet *pcs_ptr, uint32_t segment_index) {
-    Av1Common *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
-    Macroblock      *x  = pcs_ptr->parent_pcs_ptr->av1x;
+                            PictureControlSet *pcs, uint32_t segment_index) {
+    Av1Common *const cm = pcs->ppcs->av1_cm;
+    Macroblock      *x  = pcs->ppcs->av1x;
 
     // If the restoration unit dimensions are not multiples of
     // rsi->restoration_unit_size then some elements of the rusi array may be
@@ -1546,15 +1546,15 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
           : AOM_PLANE_Y;
 
     for (int32_t plane = plane_start; plane <= plane_end; ++plane) {
-        RestUnitSearchInfo *rusi = pcs_ptr->rusi_picture[plane];
+        RestUnitSearchInfo *rusi = pcs->rusi_picture[plane];
 
         init_rsc_seg(org_fts, src, cm, x, plane, rusi, trial_frame_rst, &rsc);
 
         rsc_p->tmpbuf = rst_tmpbuf;
 
         const int32_t highbd = rsc.cm->use_highbitdepth;
-        svt_block_on_mutex(pcs_ptr->rest_search_mutex);
-        if (!pcs_ptr->rest_extend_flag[plane]) {
+        svt_block_on_mutex(pcs->rest_search_mutex);
+        if (!pcs->rest_extend_flag[plane]) {
             // Add additional padding to align 16 pixel in width to address uninitialized memory warning in sanitizer.
             // There is a width extension of 16 pixel alignment in wiener_filter_stripe for SIMD, it causes warning of
             // access uninitialized memory reported in "C" code path when pictures are downscaled and are not aligned.
@@ -1572,17 +1572,17 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                              RESTORATION_BORDER + 1 + align16_pad,
                              RESTORATION_BORDER,
                              highbd);
-            pcs_ptr->rest_extend_flag[plane] = TRUE;
+            pcs->rest_extend_flag[plane] = TRUE;
         }
-        svt_release_mutex(pcs_ptr->rest_search_mutex);
+        svt_release_mutex(pcs->rest_search_mutex);
 
         av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
                                            rsc_p->plane,
                                            rsc_on_tile,
                                            search_norestore_seg,
                                            rsc_p,
-                                           pcs_ptr->rest_segments_column_count,
-                                           pcs_ptr->rest_segments_row_count,
+                                           pcs->rest_segments_column_count,
+                                           pcs->rest_segments_row_count,
                                            segment_index);
 
         if (cm->wn_filter_ctrls.enabled && (!plane || cm->wn_filter_ctrls.use_chroma))
@@ -1591,8 +1591,8 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                                rsc_on_tile,
                                                search_wiener_seg,
                                                rsc_p,
-                                               pcs_ptr->rest_segments_column_count,
-                                               pcs_ptr->rest_segments_row_count,
+                                               pcs->rest_segments_column_count,
+                                               pcs->rest_segments_row_count,
                                                segment_index);
 
         if (cm->sg_filter_ctrls.enabled && (!plane || cm->sg_filter_ctrls.use_chroma))
@@ -1601,18 +1601,18 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                                rsc_on_tile,
                                                search_sgrproj_seg,
                                                rsc_p,
-                                               pcs_ptr->rest_segments_column_count,
-                                               pcs_ptr->rest_segments_row_count,
+                                               pcs->rest_segments_column_count,
+                                               pcs->rest_segments_row_count,
                                                segment_index);
     }
 }
 /* Given the best parameters for each type of filter and their associated SSEs,
    decide which filter should be used for each filter block.
 */
-void rest_finish_search(PictureControlSet *pcs_ptr) {
-    Macroblock              *x                    = pcs_ptr->parent_pcs_ptr->av1x;
-    Av1Common *const         cm                   = pcs_ptr->parent_pcs_ptr->av1_cm;
-    PictureParentControlSet *p_pcs_ptr            = pcs_ptr->parent_pcs_ptr;
+void rest_finish_search(PictureControlSet *pcs) {
+    Macroblock              *x                    = pcs->ppcs->av1x;
+    Av1Common *const         cm                   = pcs->ppcs->av1_cm;
+    PictureParentControlSet *p_pcs_ptr            = pcs->ppcs;
     RestorationType          force_restore_type_d = (cm->wn_filter_ctrls.enabled)
                  ? ((cm->sg_filter_ctrls.enabled) ? RESTORE_TYPES : RESTORE_WIENER)
                  : ((cm->sg_filter_ctrls.enabled) ? RESTORE_SGRPROJ : RESTORE_NONE);
@@ -1644,7 +1644,7 @@ void rest_finish_search(PictureControlSet *pcs_ptr) {
         rsc.plane    = plane;
         rsc.rusi     = rusi;
         rsc.pic_num  = (uint32_t)p_pcs_ptr->picture_number;
-        rsc.rusi_pic = pcs_ptr->rusi_picture[plane];
+        rsc.rusi_pic = pcs->rusi_picture[plane];
 
         const int32_t         plane_ntiles = ntiles[plane > 0];
         const RestorationType num_rtypes   = (plane_ntiles > 1) ? RESTORE_TYPES
@@ -1686,8 +1686,8 @@ void rest_finish_search(PictureControlSet *pcs_ptr) {
 
     // if restoration performed for luma only, set chroma to RESTORE_NONE
     if (plane_end == AOM_PLANE_Y) {
-        pcs_ptr->rst_info[1].frame_restoration_type = RESTORE_NONE;
-        pcs_ptr->rst_info[2].frame_restoration_type = RESTORE_NONE;
+        pcs->rst_info[1].frame_restoration_type = RESTORE_NONE;
+        pcs->rst_info[2].frame_restoration_type = RESTORE_NONE;
     }
 
     svt_aom_free(rusi);

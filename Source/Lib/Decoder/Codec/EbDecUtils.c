@@ -46,18 +46,18 @@ void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane, 
     int32_t block_offset;
 
     if (plane == 0) {
-        block_offset = (recon_picture_buf->origin_y + blk_row_px) * recon_picture_buf->stride_y +
-            (recon_picture_buf->origin_x + blk_col_px);
+        block_offset = (recon_picture_buf->org_y + blk_row_px) * recon_picture_buf->stride_y +
+            (recon_picture_buf->org_x + blk_col_px);
         *recon_stride = recon_picture_buf->stride_y;
     } else if (plane == 1) {
-        block_offset = ((recon_picture_buf->origin_y >> sub_y) + blk_row_px) *
+        block_offset = ((recon_picture_buf->org_y >> sub_y) + blk_row_px) *
                 recon_picture_buf->stride_cb +
-            ((recon_picture_buf->origin_x >> sub_x) + blk_col_px);
+            ((recon_picture_buf->org_x >> sub_x) + blk_col_px);
         *recon_stride = recon_picture_buf->stride_cb;
     } else {
-        block_offset = ((recon_picture_buf->origin_y >> sub_y) + blk_row_px) *
+        block_offset = ((recon_picture_buf->org_y >> sub_y) + blk_row_px) *
                 recon_picture_buf->stride_cr +
-            ((recon_picture_buf->origin_x >> sub_x) + blk_col_px);
+            ((recon_picture_buf->org_x >> sub_x) + blk_col_px);
         *recon_stride = recon_picture_buf->stride_cr;
     }
 
@@ -277,8 +277,8 @@ void pad_pic(EbDecHandle *dec_handle_ptr) {
     uint16_t stride_cb = recon_picture_buf->stride_cb << shift;
     uint16_t stride_cr = recon_picture_buf->stride_cr << shift;
 
-    uint32_t pad_width  = recon_picture_buf->origin_x;
-    uint32_t pad_height = recon_picture_buf->origin_y;
+    uint32_t pad_width  = recon_picture_buf->org_x;
+    uint32_t pad_height = recon_picture_buf->org_y;
 
     /* To be adjusted according to the granularity of operation.
        Assuming a superblock row here. */

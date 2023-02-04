@@ -23,7 +23,7 @@
 
 void svt_av1_print_lib_params(SequenceControlSet* scs);
 
-EbErrorType svt_av1_verify_settings(struct SequenceControlSet* scs_ptr);
+EbErrorType svt_av1_verify_settings(struct SequenceControlSet* scs);
 
 EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration* config_ptr);
 

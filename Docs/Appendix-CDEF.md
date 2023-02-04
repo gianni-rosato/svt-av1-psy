@@ -189,7 +189,7 @@ values are set as a function of the base qindex for the picture and are given by
 
 ```c
 pri_damping = 3 + (base_qindex/64);
-sec_damping = 3 + (picture_control_set_ptr->parent_pcs_ptr->base_qindex/64);
+sec_damping = 3 + (pcs->ppcs->base_qindex/64);
 ```
 
 Chroma damping values are always one less than the luma damping values.
@@ -285,8 +285,8 @@ Loop over the 64x64 filter blocks
 The search for the best filter strength pair for each 64x64 block can be
 algorithmically optimized using the features described below. The
 aggressiveness of the CDEF algorithm depends on the CDEF filter mode
-(```picture_control_set_ptr->cdef_level```), which is specified based on the
-encoder preset (```picture_control_set_ptr->enc_mode```).
+(```pcs->cdef_level```), which is specified based on the
+encoder preset (```pcs->enc_mode```).
 
 ### Reducing Number of Filter Strengths Tested
 

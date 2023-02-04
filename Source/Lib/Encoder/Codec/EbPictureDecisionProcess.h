@@ -25,29 +25,26 @@ EbErrorType  picture_decision_context_ctor(EbThreadContext   *thread_context_ptr
                                            uint8_t            scene_change_detection);
 extern void *picture_decision_kernel(void *input_ptr);
 
-void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
+void downsample_decimation_input_picture(PictureParentControlSet *pcs,
                                          EbPictureBufferDesc     *inputPaddedPicturePtr,
                                          EbPictureBufferDesc     *quarterDecimatedPicturePtr,
                                          EbPictureBufferDesc     *sixteenthDecimatedPicturePtr);
 
-void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs_ptr,
-                                                        EbPictureBufferDesc *input_picture_ptr);
-void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(
-    SequenceControlSet *scs_ptr, EbPictureBufferDesc *input_picture_ptr);
-void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
-                                       SequenceControlSet      *scs_ptr);
+void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs,
+                                                        EbPictureBufferDesc *input_pic);
+void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(SequenceControlSet  *scs,
+                                                              EbPictureBufferDesc *input_pic);
+void picture_pre_processing_operations(PictureParentControlSet *pcs, SequenceControlSet *scs);
 void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_picture_ptr);
-void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+void gathering_picture_statistics(SequenceControlSet *scs, PictureParentControlSet *pcs,
                                   EbPictureBufferDesc *input_padded_picture_ptr,
                                   EbPictureBufferDesc *sixteenth_decimated_picture_ptr);
 
-void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
-                        EbPictureBufferDesc *outputPicturePtr);
+void down_sample_chroma(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *outputPicturePtr);
 
 Bool is_delayed_intra(PictureParentControlSet *pcs);
 
-void svt_aom_set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level,
-                              uint8_t bit_depth);
+void svt_aom_set_dlf_controls(PictureParentControlSet *pcs, uint8_t dlf_level, uint8_t bit_depth);
 
 #if FIX_LAYER_SIGNAL
 uint8_t svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels,

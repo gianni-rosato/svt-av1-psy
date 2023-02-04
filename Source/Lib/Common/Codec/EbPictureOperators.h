@@ -21,7 +21,7 @@ extern "C" {
 #endif
 void picture_full_distortion32_bits_single(int32_t *coeff, int32_t *recon_coeff, uint32_t stride,
                                            uint32_t bwidth, uint32_t bheight, uint64_t *distortion,
-                                           uint32_t count_non_zero_coeffs);
+                                           uint32_t cnt_nz_coeff);
 //Residual Data
 
 void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,

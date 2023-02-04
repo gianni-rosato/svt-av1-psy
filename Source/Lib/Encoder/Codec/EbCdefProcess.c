@@ -32,19 +32,19 @@ void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src
 void   *svt_aom_memalign(size_t align, size_t size);
 void    svt_aom_free(void *memblk);
 void   *svt_aom_malloc(size_t size);
-int32_t svt_sb_all_skip(PictureControlSet *pcs_ptr, const Av1Common *const cm, int32_t mi_row,
+int32_t svt_sb_all_skip(PictureControlSet *pcs, const Av1Common *const cm, int32_t mi_row,
                         int32_t mi_col);
-int32_t svt_sb_compute_cdef_list(PictureControlSet *pcs_ptr, const Av1Common *const cm,
-                                 int32_t mi_row, int32_t mi_col, CdefList *dlist, BlockSize bs);
-void    finish_cdef_search(PictureControlSet *pcs_ptr);
+int32_t svt_sb_compute_cdef_list(PictureControlSet *pcs, const Av1Common *const cm, int32_t mi_row,
+                                 int32_t mi_col, CdefList *dlist, BlockSize bs);
+void    finish_cdef_search(PictureControlSet *pcs);
 void    svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs);
 void    svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                      int32_t after_cdef);
-void    svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs_ptr,
-                                       SequenceControlSet *scs_ptr);
-void    set_unscaled_input_16bit(PictureControlSet *pcs_ptr);
+void    svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs,
+                                       SequenceControlSet *scs);
+void    set_unscaled_input_16bit(PictureControlSet *pcs);
 
-void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 
 /**************************************
  * Cdef Context
@@ -65,15 +65,15 @@ static void cdef_context_dctor(EbPtr p) {
  ******************************************************/
 EbErrorType cdef_context_ctor(EbThreadContext   *thread_context_ptr,
                               const EbEncHandle *enc_handle_ptr, int index) {
-    CdefContext *context_ptr;
-    EB_CALLOC_ARRAY(context_ptr, 1);
-    thread_context_ptr->priv  = context_ptr;
+    CdefContext *cdef_ctx;
+    EB_CALLOC_ARRAY(cdef_ctx, 1);
+    thread_context_ptr->priv  = cdef_ctx;
     thread_context_ptr->dctor = cdef_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->cdef_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
+    cdef_ctx->cdef_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->dlf_results_resource_ptr, index);
-    context_ptr->cdef_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+    cdef_ctx->cdef_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->cdef_results_resource_ptr, index);
 
     return EB_ErrorNone;
@@ -117,7 +117,7 @@ static uint64_t compute_cdef_dist(const EbByte dst, int32_t doffset, int32_t dst
 */
 static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                             uint32_t segment_index) {
-    struct PictureParentControlSet *ppcs     = pcs->parent_pcs_ptr;
+    struct PictureParentControlSet *ppcs     = pcs->ppcs;
     FrameHeader                    *frm_hdr  = &ppcs->frm_hdr;
     Av1Common                      *cm       = ppcs->av1_cm;
     const Bool                      is_16bit = scs->is_16bit_pipeline;
@@ -383,8 +383,8 @@ void *cdef_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
     CdefContext        *context_ptr        = (CdefContext *)thread_context_ptr->priv;
-    PictureControlSet  *pcs_ptr;
-    SequenceControlSet *scs_ptr;
+    PictureControlSet  *pcs;
+    SequenceControlSet *scs;
 
     //// Input
     EbObjectWrapper *dlf_results_wrapper_ptr;
@@ -403,42 +403,41 @@ void *cdef_kernel(void *input_ptr) {
         EB_GET_FULL_OBJECT(context_ptr->cdef_input_fifo_ptr, &dlf_results_wrapper_ptr);
 
         dlf_results_ptr = (DlfResults *)dlf_results_wrapper_ptr->object_ptr;
-        pcs_ptr         = (PictureControlSet *)dlf_results_ptr->pcs_wrapper_ptr->object_ptr;
-        PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
-        scs_ptr                       = pcs_ptr->scs_ptr;
+        pcs             = (PictureControlSet *)dlf_results_ptr->pcs_wrapper_ptr->object_ptr;
+        PictureParentControlSet *ppcs = pcs->ppcs;
+        scs                           = pcs->scs;
 
-        Bool       is_16bit      = scs_ptr->is_16bit_pipeline;
-        Av1Common *cm            = pcs_ptr->parent_pcs_ptr->av1_cm;
-        frm_hdr                  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-        CdefControls *cdef_ctrls = &pcs_ptr->parent_pcs_ptr->cdef_ctrls;
+        Bool       is_16bit      = scs->is_16bit_pipeline;
+        Av1Common *cm            = pcs->ppcs->av1_cm;
+        frm_hdr                  = &pcs->ppcs->frm_hdr;
+        CdefControls *cdef_ctrls = &pcs->ppcs->cdef_ctrls;
         if (!cdef_ctrls->use_reference_cdef_fs) {
-            if (scs_ptr->seq_header.cdef_level && pcs_ptr->parent_pcs_ptr->cdef_level) {
-                cdef_seg_search(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
+            if (scs->seq_header.cdef_level && pcs->ppcs->cdef_level) {
+                cdef_seg_search(pcs, scs, dlf_results_ptr->segment_index);
             }
         }
         //all seg based search is done. update total processed segments. if all done, finish the search and perfrom application.
-        svt_block_on_mutex(pcs_ptr->cdef_search_mutex);
+        svt_block_on_mutex(pcs->cdef_search_mutex);
 
-        pcs_ptr->tot_seg_searched_cdef++;
-        if (pcs_ptr->tot_seg_searched_cdef == pcs_ptr->cdef_segments_total_count) {
-            // SVT_LOG("    CDEF all seg here  %i\n", pcs_ptr->picture_number);
-            if (scs_ptr->seq_header.cdef_level && pcs_ptr->parent_pcs_ptr->cdef_level) {
-                finish_cdef_search(pcs_ptr);
-                if (ppcs->enable_restoration ||
-                    pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
-                    scs_ptr->static_config.recon_enabled) {
+        pcs->tot_seg_searched_cdef++;
+        if (pcs->tot_seg_searched_cdef == pcs->cdef_segments_total_count) {
+            // SVT_LOG("    CDEF all seg here  %i\n", pcs->picture_number);
+            if (scs->seq_header.cdef_level && pcs->ppcs->cdef_level) {
+                finish_cdef_search(pcs);
+                if (ppcs->enable_restoration || pcs->ppcs->is_used_as_reference_flag ||
+                    scs->static_config.recon_enabled) {
                     // Do application iff there are non-zero filters
                     if (frm_hdr->cdef_params.cdef_y_strength[0] != 0 ||
                         frm_hdr->cdef_params.cdef_uv_strength[0] != 0 ||
-                        pcs_ptr->parent_pcs_ptr->nb_cdef_strengths != 1) {
-                        svt_av1_cdef_frame(scs_ptr, pcs_ptr);
+                        pcs->ppcs->nb_cdef_strengths != 1) {
+                        svt_av1_cdef_frame(scs, pcs);
                     }
                 }
             } else {
-                frm_hdr->cdef_params.cdef_bits             = 0;
-                frm_hdr->cdef_params.cdef_y_strength[0]    = 0;
-                pcs_ptr->parent_pcs_ptr->nb_cdef_strengths = 1;
-                frm_hdr->cdef_params.cdef_uv_strength[0]   = 0;
+                frm_hdr->cdef_params.cdef_bits           = 0;
+                frm_hdr->cdef_params.cdef_y_strength[0]  = 0;
+                pcs->ppcs->nb_cdef_strengths             = 1;
+                frm_hdr->cdef_params.cdef_uv_strength[0] = 0;
             }
 
             //restoration prep
@@ -446,62 +445,61 @@ void *cdef_kernel(void *input_ptr) {
             if (is_lr) {
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 1);
                 if (is_16bit) {
-                    set_unscaled_input_16bit(pcs_ptr);
+                    set_unscaled_input_16bit(pcs);
                 }
             }
 
             // ------- start: Normative upscaling - super-resolution tool
-            if (frm_hdr->allow_intrabc == 0 && pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
-                svt_av1_superres_upscale_frame(cm, pcs_ptr, scs_ptr);
+            if (frm_hdr->allow_intrabc == 0 && pcs->ppcs->frame_superres_enabled) {
+                svt_av1_superres_upscale_frame(cm, pcs, scs);
             }
-            if (scs_ptr->static_config.resize_mode != RESIZE_NONE) {
+            if (scs->static_config.resize_mode != RESIZE_NONE) {
                 EbPictureBufferDesc *recon = NULL;
-                get_recon_pic(pcs_ptr, &recon, is_16bit);
-                recon->width  = pcs_ptr->parent_pcs_ptr->render_width;
-                recon->height = pcs_ptr->parent_pcs_ptr->render_height;
+                get_recon_pic(pcs, &recon, is_16bit);
+                recon->width  = pcs->ppcs->render_width;
+                recon->height = pcs->ppcs->render_height;
                 if (is_lr) {
-                    EbPictureBufferDesc *input_picture_ptr = is_16bit
-                        ? pcs_ptr->input_frame16bit
-                        : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
+                    EbPictureBufferDesc *input_pic = is_16bit
+                        ? pcs->input_frame16bit
+                        : pcs->ppcs->enhanced_unscaled_picture_ptr;
 
-                    assert_err(pcs_ptr->scaled_input_picture_ptr == NULL,
+                    assert_err(pcs->scaled_input_picture_ptr == NULL,
                                "pcs_ptr->scaled_input_picture_ptr is not desctoried!");
                     EbPictureBufferDesc *scaled_input_picture_ptr = NULL;
                     // downscale input picture if recon is resized
-                    Bool is_resized = recon->width != input_picture_ptr->width ||
-                        recon->height != input_picture_ptr->height;
+                    Bool is_resized = recon->width != input_pic->width ||
+                        recon->height != input_pic->height;
                     if (is_resized) {
                         superres_params_type spr_params = {recon->width, recon->height, 0};
                         downscaled_source_buffer_desc_ctor(
-                            &scaled_input_picture_ptr, input_picture_ptr, spr_params);
-                        av1_resize_frame(input_picture_ptr,
+                            &scaled_input_picture_ptr, input_pic, spr_params);
+                        av1_resize_frame(input_pic,
                                          scaled_input_picture_ptr,
-                                         scs_ptr->static_config.encoder_bit_depth,
-                                         av1_num_planes(&scs_ptr->seq_header.color_config),
-                                         scs_ptr->subsampling_x,
-                                         scs_ptr->subsampling_y,
-                                         input_picture_ptr->packed_flag,
+                                         scs->static_config.encoder_bit_depth,
+                                         av1_num_planes(&scs->seq_header.color_config),
+                                         scs->subsampling_x,
+                                         scs->subsampling_y,
+                                         input_pic->packed_flag,
                                          PICTURE_BUFFER_DESC_FULL_MASK,
                                          0); // is_2bcompress
-                        pcs_ptr->scaled_input_picture_ptr = scaled_input_picture_ptr;
+                        pcs->scaled_input_picture_ptr = scaled_input_picture_ptr;
                     }
                 }
             }
             // ------- end: Normative upscaling - super-resolution tool
 
-            pcs_ptr->rest_segments_column_count = scs_ptr->rest_segment_column_count;
-            pcs_ptr->rest_segments_row_count    = scs_ptr->rest_segment_row_count;
-            pcs_ptr->rest_segments_total_count  = (uint16_t)(pcs_ptr->rest_segments_column_count *
-                                                            pcs_ptr->rest_segments_row_count);
-            pcs_ptr->tot_seg_searched_rest      = 0;
-            pcs_ptr->parent_pcs_ptr->av1_cm->use_boundaries_in_rest_search =
-                scs_ptr->use_boundaries_in_rest_search;
-            pcs_ptr->rest_extend_flag[0] = FALSE;
-            pcs_ptr->rest_extend_flag[1] = FALSE;
-            pcs_ptr->rest_extend_flag[2] = FALSE;
+            pcs->rest_segments_column_count = scs->rest_segment_column_count;
+            pcs->rest_segments_row_count    = scs->rest_segment_row_count;
+            pcs->rest_segments_total_count  = (uint16_t)(pcs->rest_segments_column_count *
+                                                        pcs->rest_segments_row_count);
+            pcs->tot_seg_searched_rest      = 0;
+            pcs->ppcs->av1_cm->use_boundaries_in_rest_search = scs->use_boundaries_in_rest_search;
+            pcs->rest_extend_flag[0]                         = FALSE;
+            pcs->rest_extend_flag[1]                         = FALSE;
+            pcs->rest_extend_flag[2]                         = FALSE;
 
             uint32_t segment_index;
-            for (segment_index = 0; segment_index < pcs_ptr->rest_segments_total_count;
+            for (segment_index = 0; segment_index < pcs->rest_segments_total_count;
                  ++segment_index) {
                 // Get Empty Cdef Results to Rest
                 svt_get_empty_object(context_ptr->cdef_output_fifo_ptr, &cdef_results_wrapper_ptr);
@@ -512,7 +510,7 @@ void *cdef_kernel(void *input_ptr) {
                 svt_post_full_object(cdef_results_wrapper_ptr);
             }
         }
-        svt_release_mutex(pcs_ptr->cdef_search_mutex);
+        svt_release_mutex(pcs->cdef_search_mutex);
 
         // Release Dlf Results
         svt_release_object(dlf_results_wrapper_ptr);

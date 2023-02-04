@@ -329,7 +329,7 @@ Overlay picture will not be used as reference, and Overlay picture will only
 reference the associated ALTREF picture with the same picture number.
 
 In set_frame_display_params function, ```frm_hdr->show_frame = EB_TRUE``` and
-```pcs_ptr->has_show_existing = EB_FALSE``` for Overlay picture, so that the
+```pcs->has_show_existing = EB_FALSE``` for Overlay picture, so that the
 associate ALTREF picture will not be displayed, and the reconstructed Overlay
 picture will be displayed instead.
 

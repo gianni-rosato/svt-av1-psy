@@ -41,7 +41,7 @@ struct ModeDecisionCandidate;
      **************************************/
 struct EntropyCodingContext;
 extern EbErrorType write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
-                            PictureControlSet *pcs_ptr, uint16_t tile_idx,
+                            PictureControlSet *pcs, uint16_t tile_idx,
                             EntropyCoder *entropy_coder_ptr, EbPictureBufferDesc *coeff_ptr);
 
 extern int get_wedge_params_bits(BlockSize sb_type);
@@ -53,43 +53,43 @@ extern EbErrorType reset_entropy_coder(EncodeContext *encode_context_ptr,
                                        SliceType slice_type);
 EbErrorType        av1_txb_estimate_coeff_bits(
            struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
-           PictureControlSet *pcs_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+           PictureControlSet *pcs, struct ModeDecisionCandidateBuffer *cand_bf_ptr,
            uint32_t txb_origin_index, uint32_t txb_chroma_origin_index,
            EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint32_t cb_eob, uint32_t cr_eob,
            uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
            TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
            COMPONENT_TYPE component_type);
 
-EbErrorType av1_txb_estimate_coeff_bits_light_pd0(
-    struct ModeDecisionContext         *md_context,
-    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t txb_origin_index,
-    EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint64_t *y_txb_coeff_bits,
-    TxSize txsize);
+EbErrorType av1_txb_estimate_coeff_bits_light_pd0(struct ModeDecisionContext         *md_context,
+                                                  struct ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                                  uint32_t             txb_origin_index,
+                                                  EbPictureBufferDesc *coeff_buffer_sb,
+                                                  uint32_t y_eob, uint64_t *y_txb_coeff_bits,
+                                                  TxSize txsize);
 //**********************************************************************************************************//
 //onyxc_int.h
-static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs_ptr) {
-    return pcs_ptr->frm_hdr.frame_type == KEY_FRAME ||
-        pcs_ptr->frm_hdr.frame_type == INTRA_ONLY_FRAME;
+static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs) {
+    return pcs->frm_hdr.frame_type == KEY_FRAME || pcs->frm_hdr.frame_type == INTRA_ONLY_FRAME;
 }
 
-static INLINE int32_t frame_is_sframe(const PictureParentControlSet *pcs_ptr) {
-    return pcs_ptr->frm_hdr.frame_type == S_FRAME;
+static INLINE int32_t frame_is_sframe(const PictureParentControlSet *pcs) {
+    return pcs->frm_hdr.frame_type == S_FRAME;
 }
 
 // Returns 1 if this frame might allow mvs from some reference frame.
 
-static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet *pcs_ptr,
-                                                      SequenceControlSet            *scs_ptr) {
-    return !pcs_ptr->frm_hdr.error_resilient_mode &&
-        scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs &&
-        scs_ptr->seq_header.order_hint_info.enable_order_hint && !frame_is_intra_only(pcs_ptr);
+static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet *pcs,
+                                                      SequenceControlSet            *scs) {
+    return !pcs->frm_hdr.error_resilient_mode &&
+        scs->seq_header.order_hint_info.enable_ref_frame_mvs &&
+        scs->seq_header.order_hint_info.enable_order_hint && !frame_is_intra_only(pcs);
 }
 
 // Returns 1 if this frame might use warped_motion
-static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs_ptr,
-                                                      SequenceControlSet            *scs_ptr) {
-    return !pcs_ptr->frm_hdr.error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
-        scs_ptr->enable_warped_motion;
+static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs,
+                                                      SequenceControlSet            *scs) {
+    return !pcs->frm_hdr.error_resilient_mode && !frame_is_intra_only(pcs) &&
+        scs->enable_warped_motion;
 }
 
 static INLINE uint8_t major_minor_to_seq_level_idx(BitstreamLevel bl) {
@@ -99,9 +99,9 @@ static INLINE uint8_t major_minor_to_seq_level_idx(BitstreamLevel bl) {
 
 //**********************************************************************************************************//
 //encoder.h
-static INLINE int32_t get_ref_frame_map_idx(const PictureParentControlSet *pcs_ptr,
+static INLINE int32_t get_ref_frame_map_idx(const PictureParentControlSet *pcs,
                                             MvReferenceFrame               ref_frame) {
-    return pcs_ptr->av1_ref_signal
+    return pcs->av1_ref_signal
         .ref_dpb_index[ref_frame - LAST_FRAME]; //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
 }
 
@@ -123,8 +123,7 @@ void svt_aom_wb_write_inv_signed_literal(struct AomWriteBitBuffer *wb, int32_t d
 // Bitstream.h
 struct AomWriteBitBuffer;
 
-void write_sequence_header(SequenceControlSet       *scs_ptr /*Av1Comp *cpi*/,
-                           struct AomWriteBitBuffer *wb);
+void write_sequence_header(SequenceControlSet *scs /*Av1Comp *cpi*/, struct AomWriteBitBuffer *wb);
 
 uint32_t write_obu_header(ObuType ObuType, int32_t obuExtension, uint8_t *const dst);
 
@@ -133,9 +132,9 @@ int32_t write_uleb_obu_size(uint32_t obu_header_size, uint32_t obu_payload_size,
 //*******************************************************************************************//
 // blockd.h
 
-void get_txb_ctx(PictureControlSet *pcs_ptr, const int32_t plane,
-                 NeighborArrayUnit *dc_sign_level_coeff_neighbor_array, uint32_t blk_origin_x,
-                 uint32_t blk_origin_y, const BlockSize plane_bsize, const TxSize tx_size,
+void get_txb_ctx(PictureControlSet *pcs, const int32_t plane,
+                 NeighborArrayUnit *dc_sign_level_coeff_neighbor_array, uint32_t blk_org_x,
+                 uint32_t blk_org_y, const BlockSize plane_bsize, const TxSize tx_size,
                  int16_t *const txb_skip_ctx, int16_t *const dc_sign_ctx);
 
 extern void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd);
@@ -202,14 +201,14 @@ extern int32_t svt_av1_get_pred_context_single_ref_p6(const MacroBlockD *xd);
  */
 extern EbErrorType write_metadata_av1(Bitstream *bitstream_ptr, SvtMetadataArrayT *metadata,
                                       const EbAv1MetadataType type);
-extern EbErrorType write_frame_header_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs_ptr,
-                                          PictureControlSet *pcs_ptr, uint8_t show_existing);
+extern EbErrorType write_frame_header_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs,
+                                          PictureControlSet *pcs, uint8_t show_existing);
 extern EbErrorType encode_td_av1(uint8_t *bitstream_ptr);
-extern EbErrorType encode_sps_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs_ptr);
+extern EbErrorType encode_sps_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs);
 
 //*******************************************************************************************//
 
-MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct *blk_ptr,
+MotionMode motion_mode_allowed(const PictureControlSet *pcs, const BlkStruct *blk_ptr,
                                const BlockSize bsize, MvReferenceFrame rf0, MvReferenceFrame rf1,
                                PredictionMode mode);
 
@@ -217,6 +216,8 @@ int is_masked_compound_type(COMPOUND_TYPE type);
 
 int32_t svt_aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v);
 int32_t svt_aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t ref, uint16_t v);
+int     get_comp_index_context_enc(PictureParentControlSet *pcs, int cur_frame_index,
+                                   int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
 
 #ifdef __cplusplus
 }

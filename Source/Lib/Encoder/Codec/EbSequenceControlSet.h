@@ -440,7 +440,7 @@ typedef struct SequenceControlSet {
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;
     EncodeContext      *encode_context_ptr;
-    SequenceControlSet *scs_ptr;
+    SequenceControlSet *scs;
 } EbSequenceControlSetInstance;
 
 /**************************************
@@ -448,12 +448,12 @@ typedef struct EbSequenceControlSetInstance {
      **************************************/
 extern EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr);
 
-extern EbErrorType b64_geom_init(SequenceControlSet *scs_ptr);
+extern EbErrorType b64_geom_init(SequenceControlSet *scs);
 
 extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
                                            uint32_t           input_size);
 
-EbErrorType sb_geom_init(SequenceControlSet *scs_ptr);
+EbErrorType sb_geom_init(SequenceControlSet *scs);
 
 #ifdef __cplusplus
 }

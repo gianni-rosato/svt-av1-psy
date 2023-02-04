@@ -81,33 +81,33 @@ typedef struct ModeDecisionCandidate {
 /**************************************
     * Function Ptrs Definitions
     **************************************/
-typedef EbErrorType (*EbPredictionFunc)(uint8_t                             hbd_mode_decision,
-                                        struct ModeDecisionContext         *context_ptr,
-                                        PictureControlSet                  *pcs_ptr,
-                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr);
-typedef uint64_t (*EbFastCostFunc)(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                   struct ModeDecisionCandidateBuffer *candidate_buffer,
-                                   uint32_t qp, uint64_t luma_distortion,
-                                   uint64_t chroma_distortion, uint64_t lambda,
-                                   PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
-                                   const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
-                                   uint8_t enable_inter_intra, uint32_t left_neighbor_mode,
-                                   uint32_t top_neighbor_mode);
-typedef EbErrorType (*EbAv1FullCostFunc)(
-    PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
-    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, BlkStruct *blk_ptr,
-    uint64_t *y_distortion, uint64_t *cb_distortion, uint64_t *cr_distortion, uint64_t lambda,
-    uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits, BlockSize bsize);
+typedef EbErrorType (*EbPredictionFunc)(uint8_t hbd_md, struct ModeDecisionContext *ctx,
+                                        PictureControlSet                  *pcs,
+                                        struct ModeDecisionCandidateBuffer *cand_bf_ptr);
+typedef uint64_t (*EbFastCostFunc)(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
+                                   struct ModeDecisionCandidateBuffer *cand_bf, uint32_t qp,
+                                   uint64_t luma_distortion, uint64_t chroma_distortion,
+                                   uint64_t lambda, PictureControlSet *pcs,
+                                   CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
+                                   uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
+                                   uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
+typedef EbErrorType (*EbAv1FullCostFunc)(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
+                                         struct ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                         BlkStruct *blk_ptr, uint64_t *y_distortion,
+                                         uint64_t *cb_distortion, uint64_t *cr_distortion,
+                                         uint64_t lambda, uint64_t *y_coeff_bits,
+                                         uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
+                                         BlockSize bsize);
 /**************************************
     * Mode Decision Candidate Buffer
     **************************************/
-typedef struct IntraChromacandidate_buffer {
+typedef struct IntraChromacand_bf {
     uint32_t             mode;
     uint64_t             cost;
     uint64_t             distortion;
     EbPictureBufferDesc *prediction_ptr;
     EbPictureBufferDesc *residual_ptr;
-} IntraChromacandidate_buffer;
+} IntraChromacand_bf;
 
 /**************************************
     * Mode Decision Candidate Buffer
@@ -115,26 +115,26 @@ typedef struct IntraChromacandidate_buffer {
 typedef struct ModeDecisionCandidateBuffer {
     EbDctor dctor;
     // Candidate Ptr
-    ModeDecisionCandidate *candidate_ptr;
+    ModeDecisionCandidate *cand;
 
     // Video Buffers
-    EbPictureBufferDesc *prediction_ptr;
-    EbPictureBufferDesc *recon_coeff_ptr;
-    EbPictureBufferDesc *residual_ptr;
-    EbPictureBufferDesc *quant_coeff_ptr;
+    EbPictureBufferDesc *pred;
+    EbPictureBufferDesc *rec_coeff;
+    EbPictureBufferDesc *residual;
+    EbPictureBufferDesc *quant;
 
-    // *Note - We should be able to combine the recon_coeff_ptr & recon_ptr pictures (they aren't needed at the same time)
-    EbPictureBufferDesc *recon_ptr;
+    // *Note - We should be able to combine the rec_coeff & recon_ptr pictures (they aren't needed at the same time)
+    EbPictureBufferDesc *recon;
 
     // Costs
-    uint64_t *fast_cost_ptr;
-    uint64_t *full_cost_ptr;
+    uint64_t *fast_cost;
+    uint64_t *full_cost;
     uint64_t  fast_luma_rate;
     uint64_t  fast_chroma_rate;
     uint64_t  total_rate;
-    uint32_t  luma_fast_distortion;
-    uint32_t  full_distortion;
-    uint16_t  count_non_zero_coeffs;
+    uint32_t  luma_fast_dist;
+    uint32_t  full_dist;
+    uint16_t  cnt_nz_coeff;
     uint16_t  eob[MAX_MB_PLANE][MAX_TXB_COUNT];
     int32_t   quantized_dc[MAX_MB_PLANE][MAX_TXB_COUNT];
     uint8_t   block_has_coeff;
@@ -146,43 +146,45 @@ typedef struct ModeDecisionCandidateBuffer {
 /**************************************
     * Extern Function Declarations
     **************************************/
-extern EbErrorType mode_decision_candidate_buffer_ctor(
-    ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepth max_bitdepth, uint8_t sb_size,
-    uint32_t buffer_mask, EbPictureBufferDesc *temp_residual_ptr,
-    EbPictureBufferDesc *temp_recon_ptr, uint64_t *fast_cost_ptr, uint64_t *full_cost_ptr);
+extern EbErrorType mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
+                                              EbBitDepth max_bitdepth, uint8_t sb_size,
+                                              uint32_t             buffer_mask,
+                                              EbPictureBufferDesc *temp_residual,
+                                              EbPictureBufferDesc *temp_recon_ptr,
+                                              uint64_t *fast_cost, uint64_t *full_cost);
 
-extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
-    ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size, EbBitDepth max_bitdepth);
+extern EbErrorType mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
+                                                      uint8_t sb_size, EbBitDepth max_bitdepth);
 
-uint32_t product_full_mode_decision_light_pd0(struct ModeDecisionContext   *context_ptr,
-                                              BlkStruct                    *blk_ptr,
+uint32_t product_full_mode_decision_light_pd0(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                               ModeDecisionCandidateBuffer **buffer_ptr_array);
-void     product_full_mode_decision_light_pd1(struct ModeDecisionContext *context_ptr,
-                                              BlkStruct *blk_ptr, PictureControlSet *pcs,
-                                              uint32_t                     sb_addr,
-                                              ModeDecisionCandidateBuffer *candidate_buffer);
-uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+void     product_full_mode_decision_light_pd1(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
+                                              PictureControlSet *pcs, uint32_t sb_addr,
+                                              ModeDecisionCandidateBuffer *cand_bf);
+uint32_t product_full_mode_decision(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                     PictureControlSet *pcs, uint32_t sb_addr,
                                     ModeDecisionCandidateBuffer **buffer_ptr_array,
                                     uint32_t                      candidate_total_count,
                                     uint32_t                     *best_candidate_index_array);
-void     set_tuned_blk_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr);
+void     set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs);
 
-typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(
-    struct ModeDecisionContext *context_ptr, uint32_t pu_index,
-    ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint64_t luma_distortion, uint64_t lambda);
+typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(struct ModeDecisionContext  *ctx,
+                                                        uint32_t                     pu_index,
+                                                        ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                                        uint64_t luma_distortion, uint64_t lambda);
 
-typedef EbErrorType (*EB_INTRA_4x4_FULL_LUMA_COST_FUNC)(
-    ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint64_t *y_distortion, uint64_t lambda,
-    uint64_t *y_coeff_bits, uint32_t transform_size);
+typedef EbErrorType (*EB_INTRA_4x4_FULL_LUMA_COST_FUNC)(ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                                        uint64_t *y_distortion, uint64_t lambda,
+                                                        uint64_t *y_coeff_bits,
+                                                        uint32_t  transform_size);
 
-typedef EbErrorType (*EB_FULL_NXN_COST_FUNC)(PictureControlSet           *pcs_ptr,
-                                             ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-                                             uint32_t qp, uint64_t *y_distortion,
-                                             uint64_t *cb_distortion, uint64_t *cr_distortion,
-                                             uint64_t lambda, uint64_t lambda_chroma,
-                                             uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits,
-                                             uint64_t *cr_coeff_bits, uint32_t transform_size);
+typedef EbErrorType (*EB_FULL_NXN_COST_FUNC)(PictureControlSet           *pcs,
+                                             ModeDecisionCandidateBuffer *cand_bf_ptr, uint32_t qp,
+                                             uint64_t *y_distortion, uint64_t *cb_distortion,
+                                             uint64_t *cr_distortion, uint64_t lambda,
+                                             uint64_t lambda_chroma, uint64_t *y_coeff_bits,
+                                             uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
+                                             uint32_t transform_size);
 struct CodingLoopContext_s;
 /*
       |-------------------------------------------------------------|
@@ -194,6 +196,8 @@ struct CodingLoopContext_s;
 #define INVALID_REF 0xF
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 int                     svt_aom_get_sad_per_bit(int qidx, EbBitDepth is_hbd);
+
+int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 #ifdef __cplusplus
 }
 #endif

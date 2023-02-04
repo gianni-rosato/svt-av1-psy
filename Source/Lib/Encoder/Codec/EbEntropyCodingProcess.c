@@ -41,7 +41,7 @@ EbErrorType entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
     thread_context_ptr->dctor = rest_context_dctor;
 
     context_ptr->is_16bit =
-        (Bool)(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.encoder_bit_depth >
+        (Bool)(enc_handle_ptr->scs_instance_array[0]->scs->static_config.encoder_bit_depth >
                EB_EIGHT_BIT);
     ;
 
@@ -59,23 +59,23 @@ EbErrorType entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
 /***********************************************
  * Entropy Coding Reset Neighbor Arrays
  ***********************************************/
-static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t tile_idx) {
-    neighbor_array_unit_reset(pcs_ptr->mode_type_neighbor_array[tile_idx]);
+static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs, uint16_t tile_idx) {
+    neighbor_array_unit_reset(pcs->mode_type_neighbor_array[tile_idx]);
 
-    neighbor_array_unit_reset(pcs_ptr->partition_context_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->partition_context_neighbor_array[tile_idx]);
 
-    neighbor_array_unit_reset(pcs_ptr->skip_flag_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->skip_flag_neighbor_array[tile_idx]);
 
-    neighbor_array_unit_reset(pcs_ptr->skip_coeff_neighbor_array[tile_idx]);
-    neighbor_array_unit_reset(pcs_ptr->luma_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    neighbor_array_unit_reset(pcs_ptr->cb_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    neighbor_array_unit_reset(pcs_ptr->cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    neighbor_array_unit_reset(pcs_ptr->ref_frame_type_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->skip_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->luma_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->cb_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->ref_frame_type_neighbor_array[tile_idx]);
 
-    neighbor_array_unit_reset(pcs_ptr->intra_luma_mode_neighbor_array[tile_idx]);
-    neighbor_array_unit_reset32(pcs_ptr->interpolation_type_neighbor_array[tile_idx]);
-    neighbor_array_unit_reset(pcs_ptr->txfm_context_array[tile_idx]);
-    neighbor_array_unit_reset(pcs_ptr->segmentation_id_pred_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->intra_luma_mode_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset32(pcs->interpolation_type_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->txfm_context_array[tile_idx]);
+    neighbor_array_unit_reset(pcs->segmentation_id_pred_array[tile_idx]);
     return;
 }
 
@@ -163,59 +163,56 @@ void svt_av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2], const Nm
 /**************************************************
  * Reset Entropy Coding Picture
  **************************************************/
-static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
-                                         PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
-    uint16_t tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows *
-        pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
+static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr, PictureControlSet *pcs,
+                                         SequenceControlSet *scs) {
+    uint16_t tile_cnt = pcs->ppcs->av1_cm->tiles_info.tile_rows *
+        pcs->ppcs->av1_cm->tiles_info.tile_cols;
     uint16_t tile_idx = 0;
     uint32_t entropy_coding_qp;
 
-    context_ptr->is_16bit = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
-    FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    context_ptr->is_16bit = (Bool)(scs->static_config.encoder_bit_depth > EB_EIGHT_BIT);
+    FrameHeader *frm_hdr  = &pcs->ppcs->frm_hdr;
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
-    entropy_coding_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+    entropy_coding_qp = pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
 
     for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
-        pcs_ptr->parent_pcs_ptr->prev_qindex[tile_idx] =
-            pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+        pcs->ppcs->prev_qindex[tile_idx] = pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
     }
-    if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
-        assert(pcs_ptr->parent_pcs_ptr->frm_hdr.delta_lf_params.delta_lf_present == 0);
-    if (pcs_ptr->parent_pcs_ptr->frm_hdr.delta_lf_params.delta_lf_present) {
-        pcs_ptr->parent_pcs_ptr->prev_delta_lf_from_base = 0;
-        const int32_t frame_lf_count                     = pcs_ptr->parent_pcs_ptr->monochrome == 0
-                                ? FRAME_LF_COUNT
-                                : FRAME_LF_COUNT - 2;
+    if (pcs->ppcs->frm_hdr.allow_intrabc)
+        assert(pcs->ppcs->frm_hdr.delta_lf_params.delta_lf_present == 0);
+    if (pcs->ppcs->frm_hdr.delta_lf_params.delta_lf_present) {
+        pcs->ppcs->prev_delta_lf_from_base = 0;
+        const int32_t frame_lf_count       = pcs->ppcs->monochrome == 0 ? FRAME_LF_COUNT
+                                                                        : FRAME_LF_COUNT - 2;
         for (int32_t lf_id = 0; lf_id < frame_lf_count; ++lf_id)
-            pcs_ptr->parent_pcs_ptr->prev_delta_lf[lf_id] = 0;
+            pcs->ppcs->prev_delta_lf[lf_id] = 0;
     }
 
     // pass the ent
     for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
         OutputBitstreamUnit *output_bitstream_ptr =
-            (OutputBitstreamUnit *)(pcs_ptr->entropy_coding_info[tile_idx]
+            (OutputBitstreamUnit *)(pcs->entropy_coding_info[tile_idx]
                                         ->entropy_coder_ptr->ec_output_bitstream_ptr);
         //****************************************************************//
-        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
-            !pcs_ptr->parent_pcs_ptr->large_scale_tile;
-        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
-            pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf &&
+        pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
+            !pcs->ppcs->large_scale_tile;
+        pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
+            pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf &&
             !frm_hdr->disable_cdf_update;
-        aom_start_encode(&pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer,
+        aom_start_encode(&pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer,
                          output_bitstream_ptr);
         // ADD Reset here
-        if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
-            svt_memcpy(
-                pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc,
-                &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
-                sizeof(FRAME_CONTEXT));
+        if (pcs->ppcs->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
+            svt_memcpy(pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc,
+                       &pcs->ref_frame_context[pcs->ppcs->frm_hdr.primary_ref_frame],
+                       sizeof(FRAME_CONTEXT));
         else
-            reset_entropy_coder(scs_ptr->encode_context_ptr,
-                                pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr,
+            reset_entropy_coder(scs->encode_context_ptr,
+                                pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr,
                                 entropy_coding_qp,
-                                pcs_ptr->slice_type);
+                                pcs->slice_type);
 
-        entropy_coding_reset_neighbor_arrays(pcs_ptr, tile_idx);
+        entropy_coding_reset_neighbor_arrays(pcs, tile_idx);
     }
     return;
 }
@@ -256,68 +253,65 @@ void *entropy_coding_kernel(void *input_ptr) {
         EB_GET_FULL_OBJECT(context_ptr->enc_dec_input_fifo_ptr, &rest_results_wrapper_ptr);
 
         RestResults       *rest_results_ptr = (RestResults *)rest_results_wrapper_ptr->object_ptr;
-        PictureControlSet *pcs_ptr          = (PictureControlSet *)
-                                         rest_results_ptr->pcs_wrapper_ptr->object_ptr;
-        SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+        PictureControlSet *pcs = (PictureControlSet *)rest_results_ptr->pcs_wrapper_ptr->object_ptr;
+        SequenceControlSet *scs = pcs->scs;
         // SB Constants
 
-        uint8_t sb_size = (uint8_t)scs_ptr->sb_size;
+        uint8_t sb_size = (uint8_t)scs->sb_size;
 
-        uint8_t  sb_size_log2    = (uint8_t)svt_log2f(sb_size);
-        uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_size - 1) >>
-            sb_size_log2;
+        uint8_t          sb_size_log2    = (uint8_t)svt_log2f(sb_size);
+        uint32_t         pic_width_in_sb = (pcs->ppcs->aligned_width + sb_size - 1) >> sb_size_log2;
         uint16_t         tile_idx        = rest_results_ptr->tile_index;
-        Av1Common *const cm              = pcs_ptr->parent_pcs_ptr->av1_cm;
+        Av1Common *const cm              = pcs->ppcs->av1_cm;
         const uint16_t   tile_cnt        = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
         const uint16_t   tile_col        = tile_idx % cm->tiles_info.tile_cols;
         const uint16_t   tile_row        = tile_idx / cm->tiles_info.tile_cols;
         const uint16_t   tile_sb_start_x = cm->tiles_info.tile_col_start_mi[tile_col] >>
-            scs_ptr->seq_header.sb_size_log2;
+            scs->seq_header.sb_size_log2;
         const uint16_t tile_sb_start_y = cm->tiles_info.tile_row_start_mi[tile_row] >>
-            scs_ptr->seq_header.sb_size_log2;
+            scs->seq_header.sb_size_log2;
 
         uint16_t tile_width_in_sb = (cm->tiles_info.tile_col_start_mi[tile_col + 1] -
                                      cm->tiles_info.tile_col_start_mi[tile_col]) >>
-            scs_ptr->seq_header.sb_size_log2;
+            scs->seq_header.sb_size_log2;
         uint16_t tile_height_in_sb = (cm->tiles_info.tile_row_start_mi[tile_row + 1] -
                                       cm->tiles_info.tile_row_start_mi[tile_row]) >>
-            scs_ptr->seq_header.sb_size_log2;
+            scs->seq_header.sb_size_log2;
 
         Bool frame_entropy_done = FALSE;
 
-        svt_block_on_mutex(pcs_ptr->entropy_coding_pic_mutex);
-        if (pcs_ptr->entropy_coding_pic_reset_flag) {
-            pcs_ptr->entropy_coding_pic_reset_flag = FALSE;
+        svt_block_on_mutex(pcs->entropy_coding_pic_mutex);
+        if (pcs->entropy_coding_pic_reset_flag) {
+            pcs->entropy_coding_pic_reset_flag = FALSE;
 
-            reset_entropy_coding_picture(context_ptr, pcs_ptr, scs_ptr);
+            reset_entropy_coding_picture(context_ptr, pcs, scs);
         }
-        svt_release_mutex(pcs_ptr->entropy_coding_pic_mutex);
+        svt_release_mutex(pcs->entropy_coding_pic_mutex);
 
 #if TURN_OFF_EC_FIRST_PASS
-        if (scs_ptr->static_config.pass != ENC_FIRST_PASS &&
-            !is_pic_skipped(pcs_ptr->parent_pcs_ptr)) {
+        if (scs->static_config.pass != ENC_FIRST_PASS && !is_pic_skipped(pcs->ppcs)) {
 #endif
             for (uint32_t y_sb_index = 0; y_sb_index < tile_height_in_sb; ++y_sb_index) {
                 for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
                     uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
                                                    (y_sb_index + tile_sb_start_y) *
                                                        pic_width_in_sb);
-                    SuperBlock *sb_ptr   = pcs_ptr->sb_ptr_array[sb_index];
+                    SuperBlock *sb_ptr   = pcs->sb_ptr_array[sb_index];
 
                     context_ptr->sb_origin_x = (x_sb_index + tile_sb_start_x) << sb_size_log2;
                     context_ptr->sb_origin_y = (y_sb_index + tile_sb_start_y) << sb_size_log2;
                     if (x_sb_index == 0 && y_sb_index == 0) {
-                        svt_av1_reset_loop_restoration(pcs_ptr, tile_idx);
-                        context_ptr->tok = pcs_ptr->tile_tok[tile_row][tile_col];
+                        svt_av1_reset_loop_restoration(pcs, tile_idx);
+                        context_ptr->tok = pcs->tile_tok[tile_row][tile_col];
                     }
 
                     EbPictureBufferDesc *coeff_picture_ptr =
-                        pcs_ptr->parent_pcs_ptr->enc_dec_ptr->quantized_coeff[sb_index];
+                        pcs->ppcs->enc_dec_ptr->quantized_coeff[sb_index];
                     write_sb(context_ptr,
                              sb_ptr,
-                             pcs_ptr,
+                             pcs,
                              tile_idx,
-                             pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr,
+                             pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr,
                              coeff_picture_ptr);
                 }
             }
@@ -327,37 +321,35 @@ void *entropy_coding_kernel(void *input_ptr) {
         Bool pic_ready = TRUE;
 
         // Current tile ready
-        encode_slice_finish(pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr);
+        encode_slice_finish(pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr);
 
-        svt_block_on_mutex(pcs_ptr->entropy_coding_pic_mutex);
-        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_tile_done = TRUE;
+        svt_block_on_mutex(pcs->entropy_coding_pic_mutex);
+        pcs->entropy_coding_info[tile_idx]->entropy_coding_tile_done = TRUE;
         for (uint16_t i = 0; i < tile_cnt; i++) {
-            if (pcs_ptr->entropy_coding_info[i]->entropy_coding_tile_done == FALSE) {
+            if (pcs->entropy_coding_info[i]->entropy_coding_tile_done == FALSE) {
                 pic_ready = FALSE;
                 break;
             }
         }
-        svt_release_mutex(pcs_ptr->entropy_coding_pic_mutex);
+        svt_release_mutex(pcs->entropy_coding_pic_mutex);
         if (pic_ready) {
-            if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop == 0) {
+            if (pcs->ppcs->superres_total_recode_loop == 0) {
                 // Release the List 0 Reference Pictures
-                for (uint32_t ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
-                     ++ref_idx) {
-                    if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
-                        svt_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
+                for (uint32_t ref_idx = 0; ref_idx < pcs->ppcs->ref_list0_count; ++ref_idx) {
+                    if (pcs->ref_pic_ptr_array[0][ref_idx] != NULL) {
+                        svt_release_object(pcs->ref_pic_ptr_array[0][ref_idx]);
                     }
                 }
                 // Release the List 1 Reference Pictures
-                for (uint32_t ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
-                     ++ref_idx) {
-                    if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL) {
-                        svt_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
+                for (uint32_t ref_idx = 0; ref_idx < pcs->ppcs->ref_list1_count; ++ref_idx) {
+                    if (pcs->ref_pic_ptr_array[1][ref_idx] != NULL) {
+                        svt_release_object(pcs->ref_pic_ptr_array[1][ref_idx]);
                     }
                 }
 
                 //free palette data
-                if (pcs_ptr->tile_tok[0][0])
-                    EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
+                if (pcs->tile_tok[0][0])
+                    EB_FREE_ARRAY(pcs->tile_tok[0][0]);
             }
             frame_entropy_done = TRUE;
         }

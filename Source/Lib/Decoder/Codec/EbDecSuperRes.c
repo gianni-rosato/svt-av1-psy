@@ -50,8 +50,8 @@ static void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHe
 
 EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_picture_src,
                        EbPictureBufferDesc *recon_picture_dst, int num_planes) {
-    recon_picture_dst->origin_x     = recon_picture_src->origin_x;
-    recon_picture_dst->origin_y     = recon_picture_src->origin_y;
+    recon_picture_dst->org_x        = recon_picture_src->org_x;
+    recon_picture_dst->org_y        = recon_picture_src->org_y;
     recon_picture_dst->width        = recon_picture_src->width;
     recon_picture_dst->height       = recon_picture_src->height;
     recon_picture_dst->max_width    = recon_picture_src->max_width;

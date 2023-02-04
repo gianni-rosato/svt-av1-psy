@@ -481,15 +481,15 @@ void svt_av1_predict_intra_block(
     uint8_t  *dst;
     int32_t dst_stride;
     if (plane == 0) {
-        dst = recon_buffer->buffer_y + pred_buf_x_offest + recon_buffer->origin_x + (pred_buf_y_offest + recon_buffer->origin_y)*recon_buffer->stride_y;
+        dst = recon_buffer->buffer_y + pred_buf_x_offest + recon_buffer->org_x + (pred_buf_y_offest + recon_buffer->org_y)*recon_buffer->stride_y;
         dst_stride = recon_buffer->stride_y;
     }
     else if (plane == 1) {
-        dst = recon_buffer->buffer_cb + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->stride_cb);
+        dst = recon_buffer->buffer_cb + (pred_buf_x_offest + recon_buffer->org_x / 2 + (pred_buf_y_offest + recon_buffer->org_y / 2)*recon_buffer->stride_cb);
         dst_stride = recon_buffer->stride_cb;
     }
     else {
-        dst = recon_buffer->buffer_cr + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->stride_cr);
+        dst = recon_buffer->buffer_cr + (pred_buf_x_offest + recon_buffer->org_x / 2 + (pred_buf_y_offest + recon_buffer->org_y / 2)*recon_buffer->stride_cr);
         dst_stride = recon_buffer->stride_cr;
     }
 
@@ -628,15 +628,15 @@ void svt_av1_predict_intra_block_16bit(
     uint16_t *dst;
     int32_t dst_stride;
     if (plane == 0) {
-        dst = (uint16_t*)(recon_buffer->buffer_y) + pred_buf_x_offest + recon_buffer->origin_x + (pred_buf_y_offest + recon_buffer->origin_y)*recon_buffer->stride_y;
+        dst = (uint16_t*)(recon_buffer->buffer_y) + pred_buf_x_offest + recon_buffer->org_x + (pred_buf_y_offest + recon_buffer->org_y)*recon_buffer->stride_y;
         dst_stride = recon_buffer->stride_y;
     }
     else if (plane == 1) {
-        dst = (uint16_t*)(recon_buffer->buffer_cb) + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->stride_cb);
+        dst = (uint16_t*)(recon_buffer->buffer_cb) + (pred_buf_x_offest + recon_buffer->org_x / 2 + (pred_buf_y_offest + recon_buffer->org_y / 2)*recon_buffer->stride_cb);
         dst_stride = recon_buffer->stride_cb;
     }
     else {
-        dst = (uint16_t*)(recon_buffer->buffer_cr) + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->stride_cr);
+        dst = (uint16_t*)(recon_buffer->buffer_cr) + (pred_buf_x_offest + recon_buffer->org_x / 2 + (pred_buf_y_offest + recon_buffer->org_y / 2)*recon_buffer->stride_cr);
         dst_stride = recon_buffer->stride_cr;
     }
     //CHKN  const MbModeInfo *const mbmi = xd->mi[0];
@@ -723,127 +723,127 @@ void svt_av1_predict_intra_block_16bit(
 is the main function to compute intra prediction for a PU
 */
 EbErrorType svt_av1_intra_prediction_cl(
-        uint8_t                              hbd_mode_decision,
-        ModeDecisionContext                  *md_context_ptr,
-        PictureControlSet                    *pcs_ptr,
-        ModeDecisionCandidateBuffer           *candidate_buffer_ptr)
+        uint8_t                              hbd_md,
+        ModeDecisionContext                  *ctx,
+        PictureControlSet                    *pcs,
+        ModeDecisionCandidateBuffer           *cand_bf_ptr)
 {
-    (void) hbd_mode_decision;
+    (void) hbd_md;
     EbErrorType return_error = EB_ErrorNone;
 
-    if (!md_context_ptr->shut_fast_rate) {
+    if (!ctx->shut_fast_rate) {
 
-         MacroBlockD *xd = md_context_ptr->blk_ptr->av1xd;
-        md_context_ptr->intra_luma_left_mode = DC_PRED;
-        md_context_ptr->intra_luma_top_mode  = DC_PRED;
+         MacroBlockD *xd = ctx->blk_ptr->av1xd;
+        ctx->intra_luma_left_mode = DC_PRED;
+        ctx->intra_luma_top_mode  = DC_PRED;
         if (xd->left_available)
-            md_context_ptr->intra_luma_left_mode =  xd->mi[-1]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-1]->mbmi.block_mi.mode;
+            ctx->intra_luma_left_mode =  xd->mi[-1]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-1]->mbmi.block_mi.mode;
         if (xd->up_available)
-            md_context_ptr->intra_luma_top_mode = xd->mi[-xd->mi_stride]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
+            ctx->intra_luma_top_mode = xd->mi[-xd->mi_stride]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
     }
-    TxSize  tx_size = md_context_ptr->blk_geom->txsize[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; // Nader - Intra 128x128 not supported
-    TxSize  tx_size_chroma = md_context_ptr->blk_geom->txsize_uv[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; //Nader - Intra 128x128 not supported
-    uint32_t sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size;
-    uint32_t sb_size_chroma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size/2;
+    TxSize  tx_size = ctx->blk_geom->txsize[cand_bf_ptr->cand->tx_depth][0]; // Nader - Intra 128x128 not supported
+    TxSize  tx_size_chroma = ctx->blk_geom->txsize_uv[cand_bf_ptr->cand->tx_depth][0]; //Nader - Intra 128x128 not supported
+    uint32_t sb_size_luma   = pcs->ppcs->scs->sb_size;
+    uint32_t sb_size_chroma   = pcs->ppcs->scs->sb_size/2;
 
-    if(!md_context_ptr->hbd_mode_decision) {
+    if(!ctx->hbd_md) {
         uint8_t    top_neigh_array[64 * 2 + 1];
         uint8_t    left_neigh_array[64 * 2 + 1];
         PredictionMode mode;
         // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
-        int32_t start_plane = (md_context_ptr->uv_intra_comp_only) ? 1 : 0;
-        int32_t end_plane = md_context_ptr->end_plane;
+        int32_t start_plane = (ctx->uv_intra_comp_only) ? 1 : 0;
+        int32_t end_plane = ctx->end_plane;
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             if (plane)
-                mode = (candidate_buffer_ptr->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)candidate_buffer_ptr->candidate_ptr->intra_chroma_mode;
+                mode = (cand_bf_ptr->cand->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)cand_bf_ptr->cand->intra_chroma_mode;
             else
-                mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
+                mode = cand_bf_ptr->cand->pred_mode;
             assert(mode < INTRA_MODES);
-             int ang = plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y];
+             int ang = plane ? cand_bf_ptr->cand->angle_delta[PLANE_TYPE_UV] : cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y];
              if (ang==0 ){
                     IntraSize intra_size = intra_unit[mode];
                     if (plane == 0) {
-                        if (md_context_ptr->blk_origin_y != 0 && intra_size.top)
-                            svt_memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * intra_size.top);
-                        if (md_context_ptr->blk_origin_x != 0 && intra_size.left){
-                            uint16_t multipler = (md_context_ptr->blk_origin_y % sb_size_luma + md_context_ptr->blk_geom->bheight * intra_size.left) > sb_size_luma ? 1 : intra_size.left;
-                            svt_memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * multipler);
+                        if (ctx->blk_org_y != 0 && intra_size.top)
+                            svt_memcpy(top_neigh_array + 1, ctx->recon_neigh_y->top_array + ctx->blk_org_x, ctx->blk_geom->bwidth * intra_size.top);
+                        if (ctx->blk_org_x != 0 && intra_size.left){
+                            uint16_t multipler = (ctx->blk_org_y % sb_size_luma + ctx->blk_geom->bheight * intra_size.left) > sb_size_luma ? 1 : intra_size.left;
+                            svt_memcpy(left_neigh_array + 1, ctx->recon_neigh_y->left_array + ctx->blk_org_y, ctx->blk_geom->bheight * multipler);
                         }
 
 
-                        if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
+                        if (ctx->blk_org_y != 0 && ctx->blk_org_x != 0)
                             top_neigh_array[0] = left_neigh_array[0] =
-                            md_context_ptr->luma_recon_neighbor_array->top_left_array[md_context_ptr->luma_recon_neighbor_array->max_pic_h + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y];
+                            ctx->recon_neigh_y->top_left_array[ctx->recon_neigh_y->max_pic_h + ctx->blk_org_x - ctx->blk_org_y];
                     }
                     else if (plane == 1) {
-                        if (md_context_ptr->round_origin_y != 0 && intra_size.top)
-                            svt_memcpy(top_neigh_array + 1, md_context_ptr->cb_recon_neighbor_array->top_array + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * intra_size.top);
+                        if (ctx->round_origin_y != 0 && intra_size.top)
+                            svt_memcpy(top_neigh_array + 1, ctx->recon_neigh_cb->top_array + ctx->round_origin_x / 2, ctx->blk_geom->bwidth_uv * intra_size.top);
 
-                        if (md_context_ptr->round_origin_x != 0 && intra_size.left){
-                            uint16_t multipler = ((md_context_ptr->round_origin_y / 2) % sb_size_chroma + md_context_ptr->blk_geom->bheight_uv * intra_size.left) > sb_size_chroma ? 1 : intra_size.left;
-                            svt_memcpy(left_neigh_array + 1, md_context_ptr->cb_recon_neighbor_array->left_array + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * multipler);
+                        if (ctx->round_origin_x != 0 && intra_size.left){
+                            uint16_t multipler = ((ctx->round_origin_y / 2) % sb_size_chroma + ctx->blk_geom->bheight_uv * intra_size.left) > sb_size_chroma ? 1 : intra_size.left;
+                            svt_memcpy(left_neigh_array + 1, ctx->recon_neigh_cb->left_array + ctx->round_origin_y / 2, ctx->blk_geom->bheight_uv * multipler);
                         }
 
-                        if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
+                        if (ctx->round_origin_y != 0 && ctx->round_origin_x != 0)
                             top_neigh_array[0] = left_neigh_array[0] =
-                            md_context_ptr->cb_recon_neighbor_array->top_left_array[md_context_ptr->cb_recon_neighbor_array->max_pic_h + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2];
+                            ctx->recon_neigh_cb->top_left_array[ctx->recon_neigh_cb->max_pic_h + ctx->round_origin_x / 2 - ctx->round_origin_y / 2];
                     }
                     else {
-                        if (md_context_ptr->round_origin_y != 0 && intra_size.top)
-                            svt_memcpy(top_neigh_array + 1, md_context_ptr->cr_recon_neighbor_array->top_array + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * intra_size.top);
+                        if (ctx->round_origin_y != 0 && intra_size.top)
+                            svt_memcpy(top_neigh_array + 1, ctx->recon_neigh_cr->top_array + ctx->round_origin_x / 2, ctx->blk_geom->bwidth_uv * intra_size.top);
 
-                        if (md_context_ptr->round_origin_x != 0 && intra_size.left){
-                            uint16_t multipler = ((md_context_ptr->round_origin_y / 2) % sb_size_chroma + md_context_ptr->blk_geom->bheight_uv * intra_size.left) > sb_size_chroma ? 1 : intra_size.left;
-                            svt_memcpy(left_neigh_array + 1, md_context_ptr->cr_recon_neighbor_array->left_array + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * multipler);
+                        if (ctx->round_origin_x != 0 && intra_size.left){
+                            uint16_t multipler = ((ctx->round_origin_y / 2) % sb_size_chroma + ctx->blk_geom->bheight_uv * intra_size.left) > sb_size_chroma ? 1 : intra_size.left;
+                            svt_memcpy(left_neigh_array + 1, ctx->recon_neigh_cr->left_array + ctx->round_origin_y / 2, ctx->blk_geom->bheight_uv * multipler);
                         }
 
-                        if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
+                        if (ctx->round_origin_y != 0 && ctx->round_origin_x != 0)
                             top_neigh_array[0] = left_neigh_array[0] =
-                            md_context_ptr->cr_recon_neighbor_array->top_left_array[md_context_ptr->cr_recon_neighbor_array->max_pic_h + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2];
+                            ctx->recon_neigh_cr->top_left_array[ctx->recon_neigh_cr->max_pic_h + ctx->round_origin_x / 2 - ctx->round_origin_y / 2];
                     }
              }
              else {
 
                  if (plane == 0) {
-                     if (md_context_ptr->blk_origin_y != 0)
-                         svt_memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2);
-                     if (md_context_ptr->blk_origin_x != 0){
-                         uint16_t multipler = (md_context_ptr->blk_origin_y % sb_size_luma + md_context_ptr->blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
-                         svt_memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * multipler);
+                     if (ctx->blk_org_y != 0)
+                         svt_memcpy(top_neigh_array + 1, ctx->recon_neigh_y->top_array + ctx->blk_org_x, ctx->blk_geom->bwidth * 2);
+                     if (ctx->blk_org_x != 0){
+                         uint16_t multipler = (ctx->blk_org_y % sb_size_luma + ctx->blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
+                         svt_memcpy(left_neigh_array + 1, ctx->recon_neigh_y->left_array + ctx->blk_org_y, ctx->blk_geom->bheight * multipler);
                      }
 
-                     if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
+                     if (ctx->blk_org_y != 0 && ctx->blk_org_x != 0)
                          top_neigh_array[0] = left_neigh_array[0] =
-                         md_context_ptr->luma_recon_neighbor_array->top_left_array[md_context_ptr->luma_recon_neighbor_array->max_pic_h + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y];
+                         ctx->recon_neigh_y->top_left_array[ctx->recon_neigh_y->max_pic_h + ctx->blk_org_x - ctx->blk_org_y];
                  }
 
                  else if (plane == 1) {
-                     if (md_context_ptr->round_origin_y != 0)
-                         svt_memcpy(top_neigh_array + 1, md_context_ptr->cb_recon_neighbor_array->top_array + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2);
+                     if (ctx->round_origin_y != 0)
+                         svt_memcpy(top_neigh_array + 1, ctx->recon_neigh_cb->top_array + ctx->round_origin_x / 2, ctx->blk_geom->bwidth_uv * 2);
 
-                     if (md_context_ptr->round_origin_x != 0){
-                         uint16_t multipler = ((md_context_ptr->round_origin_y / 2) % sb_size_chroma + md_context_ptr->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
-                         svt_memcpy(left_neigh_array + 1, md_context_ptr->cb_recon_neighbor_array->left_array + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * multipler);
+                     if (ctx->round_origin_x != 0){
+                         uint16_t multipler = ((ctx->round_origin_y / 2) % sb_size_chroma + ctx->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                         svt_memcpy(left_neigh_array + 1, ctx->recon_neigh_cb->left_array + ctx->round_origin_y / 2, ctx->blk_geom->bheight_uv * multipler);
                      }
 
-                     if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
+                     if (ctx->round_origin_y != 0 && ctx->round_origin_x != 0)
                          top_neigh_array[0] = left_neigh_array[0] =
-                         md_context_ptr->cb_recon_neighbor_array->top_left_array[md_context_ptr->cb_recon_neighbor_array->max_pic_h + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2];
+                         ctx->recon_neigh_cb->top_left_array[ctx->recon_neigh_cb->max_pic_h + ctx->round_origin_x / 2 - ctx->round_origin_y / 2];
 
                  }
                  else {
-                     if (md_context_ptr->round_origin_y != 0)
-                         svt_memcpy(top_neigh_array + 1, md_context_ptr->cr_recon_neighbor_array->top_array + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2);
+                     if (ctx->round_origin_y != 0)
+                         svt_memcpy(top_neigh_array + 1, ctx->recon_neigh_cr->top_array + ctx->round_origin_x / 2, ctx->blk_geom->bwidth_uv * 2);
 
-                     if (md_context_ptr->round_origin_x != 0){
-                         uint16_t multipler = ((md_context_ptr->round_origin_y / 2) % sb_size_chroma + md_context_ptr->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
-                         svt_memcpy(left_neigh_array + 1, md_context_ptr->cr_recon_neighbor_array->left_array + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * multipler);
+                     if (ctx->round_origin_x != 0){
+                         uint16_t multipler = ((ctx->round_origin_y / 2) % sb_size_chroma + ctx->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                         svt_memcpy(left_neigh_array + 1, ctx->recon_neigh_cr->left_array + ctx->round_origin_y / 2, ctx->blk_geom->bheight_uv * multipler);
                      }
 
 
-                     if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
+                     if (ctx->round_origin_y != 0 && ctx->round_origin_x != 0)
                          top_neigh_array[0] = left_neigh_array[0] =
-                         md_context_ptr->cr_recon_neighbor_array->top_left_array[md_context_ptr->cr_recon_neighbor_array->max_pic_h + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2];
+                         ctx->recon_neigh_cr->top_left_array[ctx->recon_neigh_cr->max_pic_h + ctx->round_origin_x / 2 - ctx->round_origin_y / 2];
 
                  }
 
@@ -852,32 +852,32 @@ EbErrorType svt_av1_intra_prediction_cl(
 
             svt_av1_predict_intra_block(
                     !ED_STAGE,
-                    md_context_ptr->blk_geom,
-                    md_context_ptr->blk_ptr->av1xd,
-                    plane ? md_context_ptr->blk_geom->bwidth_uv : md_context_ptr->blk_geom->bwidth,          //int32_t wpx,
-                    plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
+                    ctx->blk_geom,
+                    ctx->blk_ptr->av1xd,
+                    plane ? ctx->blk_geom->bwidth_uv : ctx->blk_geom->bwidth,          //int32_t wpx,
+                    plane ? ctx->blk_geom->bheight_uv : ctx->blk_geom->bheight,          //int32_t hpx,
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
                     mode,                                                                           //PredictionMode mode,
-                    plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-                    plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info ?
-                                    candidate_buffer_ptr->candidate_ptr->palette_size[0]>0 : 0) : 0,
-                    plane==0 ? candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
-                    plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
+                    plane ? cand_bf_ptr->cand->angle_delta[PLANE_TYPE_UV] : cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y],
+                    plane==0 ? (cand_bf_ptr->cand->palette_info ?
+                                    cand_bf_ptr->cand->palette_size[0]>0 : 0) : 0,
+                    plane==0 ? cand_bf_ptr->cand->palette_info : NULL,    //MD
+                    plane ? FILTER_INTRA_MODES : cand_bf_ptr->cand->filter_intra_mode,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
-                    candidate_buffer_ptr->prediction_ptr,                                              //uint8_t *dst,
+                    cand_bf_ptr->pred,                                              //uint8_t *dst,
                     //int32_t dst_stride,
                     0,                                                                              //int32_t col_off,
                     0,                                                                              //int32_t row_off,
                     plane,                                                                          //int32_t plane,
-                    md_context_ptr->blk_geom->bsize,       //uint32_t puSize,
-                    md_context_ptr->blk_origin_x,
-                    md_context_ptr->blk_origin_y,
-                    md_context_ptr->blk_origin_x,                  //uint32_t cuOrgX,
-                    md_context_ptr->blk_origin_y,                  //uint32_t cuOrgY
-                    plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr
-                    plane ? ((md_context_ptr->blk_geom->origin_y >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_y,   //uint32_t cuOrgY used only for prediction Ptr
-                    &pcs_ptr->scs_ptr->seq_header
+                    ctx->blk_geom->bsize,       //uint32_t puSize,
+                    ctx->blk_org_x,
+                    ctx->blk_org_y,
+                    ctx->blk_org_x,                  //uint32_t cuOrgX,
+                    ctx->blk_org_y,                  //uint32_t cuOrgY
+                    plane ? ((ctx->blk_geom->org_x >> 3) << 3) / 2 : ctx->blk_geom->org_x,  //uint32_t cuOrgX used only for prediction Ptr
+                    plane ? ((ctx->blk_geom->org_y >> 3) << 3) / 2 : ctx->blk_geom->org_y,   //uint32_t cuOrgY used only for prediction Ptr
+                    &pcs->scs->seq_header
             );
         }
     } else {
@@ -885,102 +885,102 @@ EbErrorType svt_av1_intra_prediction_cl(
         uint16_t    left_neigh_array[64 * 2 + 1];
         PredictionMode mode;
         // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
-        int32_t start_plane = (md_context_ptr->uv_intra_comp_only) ? 1 : 0;
-        int32_t end_plane =  md_context_ptr->end_plane;
+        int32_t start_plane = (ctx->uv_intra_comp_only) ? 1 : 0;
+        int32_t end_plane =  ctx->end_plane;
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             if (plane)
-                mode = (candidate_buffer_ptr->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)candidate_buffer_ptr->candidate_ptr->intra_chroma_mode;
+                mode = (cand_bf_ptr->cand->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)cand_bf_ptr->cand->intra_chroma_mode;
             else
-                mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
+                mode = cand_bf_ptr->cand->pred_mode;
 
             assert(mode < INTRA_MODES);
-            int ang = plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y];
+            int ang = plane ? cand_bf_ptr->cand->angle_delta[PLANE_TYPE_UV] : cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y];
             if (ang == 0) {
 
                 IntraSize intra_size = intra_unit[mode];
 
                 if (plane == 0) {
-                    if (md_context_ptr->blk_origin_y != 0 && intra_size.top)
-                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_array) + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * intra_size.top * sizeof(uint16_t));
+                    if (ctx->blk_org_y != 0 && intra_size.top)
+                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(ctx->luma_recon_neighbor_array16bit->top_array) + ctx->blk_org_x, ctx->blk_geom->bwidth * intra_size.top * sizeof(uint16_t));
 
-                    if (md_context_ptr->blk_origin_x != 0 && intra_size.left){
-                        uint16_t multipler = (md_context_ptr->blk_origin_y % sb_size_luma + md_context_ptr->blk_geom->bheight * intra_size.left) > sb_size_luma ? 1 : intra_size.left;
-                            svt_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->left_array) + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * multipler * sizeof(uint16_t));
+                    if (ctx->blk_org_x != 0 && intra_size.left){
+                        uint16_t multipler = (ctx->blk_org_y % sb_size_luma + ctx->blk_geom->bheight * intra_size.left) > sb_size_luma ? 1 : intra_size.left;
+                            svt_memcpy(left_neigh_array + 1, (uint16_t*)(ctx->luma_recon_neighbor_array16bit->left_array) + ctx->blk_org_y, ctx->blk_geom->bheight * multipler * sizeof(uint16_t));
                     }
 
-                    if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
+                    if (ctx->blk_org_y != 0 && ctx->blk_org_x != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
-                        ((uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_left_array) + md_context_ptr->luma_recon_neighbor_array16bit->max_pic_h + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y)[0];
+                        ((uint16_t*)(ctx->luma_recon_neighbor_array16bit->top_left_array) + ctx->luma_recon_neighbor_array16bit->max_pic_h + ctx->blk_org_x - ctx->blk_org_y)[0];
                 }
                 else if (plane == 1) {
-                    if (md_context_ptr->round_origin_y != 0 && intra_size.top)
-                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->top_array) + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * intra_size.top * sizeof(uint16_t));
+                    if (ctx->round_origin_y != 0 && intra_size.top)
+                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(ctx->cb_recon_neighbor_array16bit->top_array) + ctx->round_origin_x / 2, ctx->blk_geom->bwidth_uv * intra_size.top * sizeof(uint16_t));
 
-                    if (md_context_ptr->round_origin_x != 0 && intra_size.left){
-                        uint16_t multipler = ((md_context_ptr->round_origin_y / 2) % sb_size_chroma + md_context_ptr->blk_geom->bheight_uv * intra_size.left ) > sb_size_chroma ? 1 : intra_size.left ;
-                        svt_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->left_array) + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
+                    if (ctx->round_origin_x != 0 && intra_size.left){
+                        uint16_t multipler = ((ctx->round_origin_y / 2) % sb_size_chroma + ctx->blk_geom->bheight_uv * intra_size.left ) > sb_size_chroma ? 1 : intra_size.left ;
+                        svt_memcpy(left_neigh_array + 1, (uint16_t*)(ctx->cb_recon_neighbor_array16bit->left_array) + ctx->round_origin_y / 2, ctx->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
                     }
 
-                    if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
+                    if (ctx->round_origin_y != 0 && ctx->round_origin_x != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
-                        ((uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->top_left_array) + md_context_ptr->cb_recon_neighbor_array16bit->max_pic_h + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2)[0];
+                        ((uint16_t*)(ctx->cb_recon_neighbor_array16bit->top_left_array) + ctx->cb_recon_neighbor_array16bit->max_pic_h + ctx->round_origin_x / 2 - ctx->round_origin_y / 2)[0];
 
                 }
                 else {
-                    if (md_context_ptr->round_origin_y != 0 && intra_size.top)
-                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->top_array) + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * intra_size.top * sizeof(uint16_t));
+                    if (ctx->round_origin_y != 0 && intra_size.top)
+                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(ctx->cr_recon_neighbor_array16bit->top_array) + ctx->round_origin_x / 2, ctx->blk_geom->bwidth_uv * intra_size.top * sizeof(uint16_t));
 
-                    if (md_context_ptr->round_origin_x != 0 && intra_size.left){
-                        uint16_t multipler = ((md_context_ptr->round_origin_y / 2) % sb_size_chroma + md_context_ptr->blk_geom->bheight_uv * intra_size.left ) > sb_size_chroma ? 1 : intra_size.left ;
-                        svt_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->left_array) + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
+                    if (ctx->round_origin_x != 0 && intra_size.left){
+                        uint16_t multipler = ((ctx->round_origin_y / 2) % sb_size_chroma + ctx->blk_geom->bheight_uv * intra_size.left ) > sb_size_chroma ? 1 : intra_size.left ;
+                        svt_memcpy(left_neigh_array + 1, (uint16_t*)(ctx->cr_recon_neighbor_array16bit->left_array) + ctx->round_origin_y / 2, ctx->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
                     }
 
-                    if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
+                    if (ctx->round_origin_y != 0 && ctx->round_origin_x != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
-                        ((uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->top_left_array) + md_context_ptr->cr_recon_neighbor_array16bit->max_pic_h + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2)[0];
+                        ((uint16_t*)(ctx->cr_recon_neighbor_array16bit->top_left_array) + ctx->cr_recon_neighbor_array16bit->max_pic_h + ctx->round_origin_x / 2 - ctx->round_origin_y / 2)[0];
                 }
             }
             else {
 
                 if (plane == 0) {
-                    if (md_context_ptr->blk_origin_y != 0)
-                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_array) + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2 * sizeof(uint16_t));
+                    if (ctx->blk_org_y != 0)
+                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(ctx->luma_recon_neighbor_array16bit->top_array) + ctx->blk_org_x, ctx->blk_geom->bwidth * 2 * sizeof(uint16_t));
 
-                    if (md_context_ptr->blk_origin_x != 0){
-                        uint16_t multipler = (md_context_ptr->blk_origin_y % sb_size_luma + md_context_ptr->blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
-                            svt_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->left_array) + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * multipler * sizeof(uint16_t));
+                    if (ctx->blk_org_x != 0){
+                        uint16_t multipler = (ctx->blk_org_y % sb_size_luma + ctx->blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
+                            svt_memcpy(left_neigh_array + 1, (uint16_t*)(ctx->luma_recon_neighbor_array16bit->left_array) + ctx->blk_org_y, ctx->blk_geom->bheight * multipler * sizeof(uint16_t));
                     }
 
-                    if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
+                    if (ctx->blk_org_y != 0 && ctx->blk_org_x != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
-                        ((uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_left_array) + md_context_ptr->luma_recon_neighbor_array16bit->max_pic_h + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y)[0];
+                        ((uint16_t*)(ctx->luma_recon_neighbor_array16bit->top_left_array) + ctx->luma_recon_neighbor_array16bit->max_pic_h + ctx->blk_org_x - ctx->blk_org_y)[0];
                 }
                 else if (plane == 1) {
-                    if (md_context_ptr->round_origin_y != 0)
-                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->top_array) + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
+                    if (ctx->round_origin_y != 0)
+                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(ctx->cb_recon_neighbor_array16bit->top_array) + ctx->round_origin_x / 2, ctx->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
 
-                    if (md_context_ptr->round_origin_x != 0){
-                        uint16_t multipler = ((md_context_ptr->round_origin_y / 2) % sb_size_chroma + md_context_ptr->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
-                            svt_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->left_array) + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
+                    if (ctx->round_origin_x != 0){
+                        uint16_t multipler = ((ctx->round_origin_y / 2) % sb_size_chroma + ctx->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                            svt_memcpy(left_neigh_array + 1, (uint16_t*)(ctx->cb_recon_neighbor_array16bit->left_array) + ctx->round_origin_y / 2, ctx->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
                     }
 
-                    if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
+                    if (ctx->round_origin_y != 0 && ctx->round_origin_x != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
-                        ((uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->top_left_array) + md_context_ptr->cb_recon_neighbor_array16bit->max_pic_h + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2)[0];
+                        ((uint16_t*)(ctx->cb_recon_neighbor_array16bit->top_left_array) + ctx->cb_recon_neighbor_array16bit->max_pic_h + ctx->round_origin_x / 2 - ctx->round_origin_y / 2)[0];
 
                 }
                 else {
-                    if (md_context_ptr->round_origin_y != 0)
-                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->top_array) + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
+                    if (ctx->round_origin_y != 0)
+                        svt_memcpy(top_neigh_array + 1, (uint16_t*)(ctx->cr_recon_neighbor_array16bit->top_array) + ctx->round_origin_x / 2, ctx->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
 
-                    if (md_context_ptr->round_origin_x != 0){
-                        uint16_t multipler = ((md_context_ptr->round_origin_y / 2) % sb_size_chroma + md_context_ptr->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
-                            svt_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->left_array) + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
+                    if (ctx->round_origin_x != 0){
+                        uint16_t multipler = ((ctx->round_origin_y / 2) % sb_size_chroma + ctx->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                            svt_memcpy(left_neigh_array + 1, (uint16_t*)(ctx->cr_recon_neighbor_array16bit->left_array) + ctx->round_origin_y / 2, ctx->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
                     }
 
-                    if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
+                    if (ctx->round_origin_y != 0 && ctx->round_origin_x != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
-                        ((uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->top_left_array) + md_context_ptr->cr_recon_neighbor_array16bit->max_pic_h + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2)[0];
+                        ((uint16_t*)(ctx->cr_recon_neighbor_array16bit->top_left_array) + ctx->cr_recon_neighbor_array16bit->max_pic_h + ctx->round_origin_x / 2 - ctx->round_origin_y / 2)[0];
 
                 }
 
@@ -989,31 +989,31 @@ EbErrorType svt_av1_intra_prediction_cl(
             svt_av1_predict_intra_block_16bit(
                     EB_TEN_BIT,
                     !ED_STAGE,
-                    md_context_ptr->blk_geom,
-                    md_context_ptr->blk_ptr->av1xd,
-                    plane ? md_context_ptr->blk_geom->bwidth_uv : md_context_ptr->blk_geom->bwidth,          //int32_t wpx,
-                    plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
+                    ctx->blk_geom,
+                    ctx->blk_ptr->av1xd,
+                    plane ? ctx->blk_geom->bwidth_uv : ctx->blk_geom->bwidth,          //int32_t wpx,
+                    plane ? ctx->blk_geom->bheight_uv : ctx->blk_geom->bheight,          //int32_t hpx,
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
                     mode,                                                                           //PredictionMode mode,
-                    plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-                    plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info ?
-                                    candidate_buffer_ptr->candidate_ptr->palette_size[0]>0 : 0) : 0,
-                    plane==0 ? candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
-                    plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
+                    plane ? cand_bf_ptr->cand->angle_delta[PLANE_TYPE_UV] : cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y],
+                    plane==0 ? (cand_bf_ptr->cand->palette_info ?
+                                    cand_bf_ptr->cand->palette_size[0]>0 : 0) : 0,
+                    plane==0 ? cand_bf_ptr->cand->palette_info : NULL,    //MD
+                    plane ? FILTER_INTRA_MODES : cand_bf_ptr->cand->filter_intra_mode,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
-                    candidate_buffer_ptr->prediction_ptr,                                              //uint8_t *dst,
+                    cand_bf_ptr->pred,                                              //uint8_t *dst,
                     0,                                                                              //int32_t col_off,
                     0,                                                                              //int32_t row_off,
                     plane,                                                                          //int32_t plane,
-                    md_context_ptr->blk_geom->bsize,       //uint32_t puSize,
-                    md_context_ptr->blk_origin_x,
-                    md_context_ptr->blk_origin_y,
-                    md_context_ptr->blk_origin_x,                  //uint32_t cuOrgX,
-                    md_context_ptr->blk_origin_y,                  //uint32_t cuOrgY
-                    plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr
-                    plane ? ((md_context_ptr->blk_geom->origin_y >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_y,   //uint32_t cuOrgY used only for prediction Ptr
-                    &pcs_ptr->scs_ptr->seq_header
+                    ctx->blk_geom->bsize,       //uint32_t puSize,
+                    ctx->blk_org_x,
+                    ctx->blk_org_y,
+                    ctx->blk_org_x,                  //uint32_t cuOrgX,
+                    ctx->blk_org_y,                  //uint32_t cuOrgY
+                    plane ? ((ctx->blk_geom->org_x >> 3) << 3) / 2 : ctx->blk_geom->org_x,  //uint32_t cuOrgX used only for prediction Ptr
+                    plane ? ((ctx->blk_geom->org_y >> 3) << 3) / 2 : ctx->blk_geom->org_y,   //uint32_t cuOrgY used only for prediction Ptr
+                    &pcs->scs->seq_header
             );
         }
     }
@@ -1022,111 +1022,111 @@ EbErrorType svt_av1_intra_prediction_cl(
 }
 
 EbErrorType  intra_luma_prediction_for_interintra(
-        ModeDecisionContext         *md_context_ptr,
-        PictureControlSet           *pcs_ptr,
+        ModeDecisionContext         *ctx,
+        PictureControlSet           *pcs,
         InterIntraMode              interintra_mode,
         EbPictureBufferDesc         *prediction_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
     uint8_t is_inter = 0; // set to 0 b/c this is an intra path
 
-    if (!md_context_ptr->shut_fast_rate) {
+    if (!ctx->shut_fast_rate) {
 
-        MacroBlockD *xd = md_context_ptr->blk_ptr->av1xd;
-        md_context_ptr->intra_luma_left_mode = DC_PRED;
-        md_context_ptr->intra_luma_top_mode = DC_PRED;
+        MacroBlockD *xd = ctx->blk_ptr->av1xd;
+        ctx->intra_luma_left_mode = DC_PRED;
+        ctx->intra_luma_top_mode = DC_PRED;
         if (xd->left_available)
-            md_context_ptr->intra_luma_left_mode = xd->mi[-1]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-1]->mbmi.block_mi.mode;
+            ctx->intra_luma_left_mode = xd->mi[-1]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-1]->mbmi.block_mi.mode;
         if (xd->up_available)
-            md_context_ptr->intra_luma_top_mode = xd->mi[-xd->mi_stride]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
+            ctx->intra_luma_top_mode = xd->mi[-xd->mi_stride]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
     }
-    TxSize  tx_size = md_context_ptr->blk_geom->txsize[0][0];  //CHKN  TOcheck
+    TxSize  tx_size = ctx->blk_geom->txsize[0][0];  //CHKN  TOcheck
     PredictionMode mode = interintra_to_intra_mode[interintra_mode];
-    uint32_t        sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size;
+    uint32_t        sb_size_luma   = pcs->ppcs->scs->sb_size;
 
-    if (!md_context_ptr->hbd_mode_decision) {
+    if (!ctx->hbd_md) {
         uint8_t    top_neigh_array[64 * 2 + 1];
         uint8_t    left_neigh_array[64 * 2 + 1];
 
-        if (md_context_ptr->blk_origin_y != 0)
-            svt_memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2);
-        if (md_context_ptr->blk_origin_x != 0){
-            uint16_t multipler = (md_context_ptr->blk_origin_y % sb_size_luma + md_context_ptr->blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
-            svt_memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * multipler);
+        if (ctx->blk_org_y != 0)
+            svt_memcpy(top_neigh_array + 1, ctx->recon_neigh_y->top_array + ctx->blk_org_x, ctx->blk_geom->bwidth * 2);
+        if (ctx->blk_org_x != 0){
+            uint16_t multipler = (ctx->blk_org_y % sb_size_luma + ctx->blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
+            svt_memcpy(left_neigh_array + 1, ctx->recon_neigh_y->left_array + ctx->blk_org_y, ctx->blk_geom->bheight * multipler);
         }
 
-        if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
+        if (ctx->blk_org_y != 0 && ctx->blk_org_x != 0)
             top_neigh_array[0] = left_neigh_array[0] =
-            md_context_ptr->luma_recon_neighbor_array->top_left_array[md_context_ptr->luma_recon_neighbor_array->max_pic_h + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y];
+            ctx->recon_neigh_y->top_left_array[ctx->recon_neigh_y->max_pic_h + ctx->blk_org_x - ctx->blk_org_y];
         svt_av1_predict_intra_block(
                 !ED_STAGE,
-                md_context_ptr->blk_geom,
-                md_context_ptr->blk_ptr->av1xd,
-                md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
-                md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
+                ctx->blk_geom,
+                ctx->blk_ptr->av1xd,
+                ctx->blk_geom->bwidth,                       //int32_t wpx,
+                ctx->blk_geom->bheight,                      //int32_t hpx,
                 tx_size,                                                //TxSize tx_size,
                 mode,                                                   //PredictionMode mode,
-                0,                                                      //candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+                0,                                                      //cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y],
                 0,                                                      //int32_t use_palette,
                 NULL,  //Inter-Intra
                 FILTER_INTRA_MODES,                                     //CHKN FilterIntraMode filter_intra_mode,
                 top_neigh_array + 1,
                 left_neigh_array + 1,
                 prediction_ptr,                                         //uint8_t *dst,
-                (md_context_ptr->blk_geom->tx_org_x[is_inter][0][0] - md_context_ptr->blk_geom->origin_x) >> 2,
-                (md_context_ptr->blk_geom->tx_org_y[is_inter][0][0] - md_context_ptr->blk_geom->origin_y) >> 2,
+                (ctx->blk_geom->tx_org_x[is_inter][0][0] - ctx->blk_geom->org_x) >> 2,
+                (ctx->blk_geom->tx_org_y[is_inter][0][0] - ctx->blk_geom->org_y) >> 2,
                 PLANE_TYPE_Y,                                           //int32_t plane,
-                md_context_ptr->blk_geom->bsize,                        //uint32_t puSize,
-                md_context_ptr->blk_origin_x,
-                md_context_ptr->blk_origin_y,
-                md_context_ptr->blk_origin_x,                            //uint32_t cuOrgX,
-                md_context_ptr->blk_origin_y,                            //uint32_t cuOrgY
+                ctx->blk_geom->bsize,                        //uint32_t puSize,
+                ctx->blk_org_x,
+                ctx->blk_org_y,
+                ctx->blk_org_x,                            //uint32_t cuOrgX,
+                ctx->blk_org_y,                            //uint32_t cuOrgY
                 0,                                                      //cuOrgX used only for prediction Ptr
                 0,                                                       //cuOrgY used only for prediction Ptr
-                &pcs_ptr->scs_ptr->seq_header
+                &pcs->scs->seq_header
         );
     } else {
         uint16_t top_neigh_array[64 * 2 + 1];
         uint16_t left_neigh_array[64 * 2 + 1];
 
-        if (md_context_ptr->blk_origin_y != 0)
-            svt_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_array) + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2 * sizeof(uint16_t));
-        if (md_context_ptr->blk_origin_x != 0){
-            uint16_t multipler = (md_context_ptr->blk_origin_y % sb_size_luma + md_context_ptr->blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
-            svt_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->left_array) + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * multipler * sizeof(uint16_t));
+        if (ctx->blk_org_y != 0)
+            svt_memcpy(top_neigh_array + 1, (uint16_t*)(ctx->luma_recon_neighbor_array16bit->top_array) + ctx->blk_org_x, ctx->blk_geom->bwidth * 2 * sizeof(uint16_t));
+        if (ctx->blk_org_x != 0){
+            uint16_t multipler = (ctx->blk_org_y % sb_size_luma + ctx->blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
+            svt_memcpy(left_neigh_array + 1, (uint16_t*)(ctx->luma_recon_neighbor_array16bit->left_array) + ctx->blk_org_y, ctx->blk_geom->bheight * multipler * sizeof(uint16_t));
         }
 
-        if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
+        if (ctx->blk_org_y != 0 && ctx->blk_org_x != 0)
             top_neigh_array[0] = left_neigh_array[0] =
-            ((uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_left_array) + md_context_ptr->luma_recon_neighbor_array16bit->max_pic_h + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y)[0];
+            ((uint16_t*)(ctx->luma_recon_neighbor_array16bit->top_left_array) + ctx->luma_recon_neighbor_array16bit->max_pic_h + ctx->blk_org_x - ctx->blk_org_y)[0];
 
         svt_av1_predict_intra_block_16bit(
                 EB_TEN_BIT,
                 !ED_STAGE,
-                md_context_ptr->blk_geom,
-                md_context_ptr->blk_ptr->av1xd,
-                md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
-                md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
+                ctx->blk_geom,
+                ctx->blk_ptr->av1xd,
+                ctx->blk_geom->bwidth,                       //int32_t wpx,
+                ctx->blk_geom->bheight,                      //int32_t hpx,
                 tx_size,                                                //TxSize tx_size,
                 mode,                                                   //PredictionMode mode,
-                0,                                                      //candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+                0,                                                      //cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y],
                 0,                                                      //int32_t use_palette,
                 NULL,  //Inter-Intra
                 FILTER_INTRA_MODES,                                     //CHKN FilterIntraMode filter_intra_mode,
                 top_neigh_array + 1,
                 left_neigh_array + 1,
                 prediction_ptr,                                         //uint8_t *dst,
-                (md_context_ptr->blk_geom->tx_org_x[is_inter][0][0] - md_context_ptr->blk_geom->origin_x) >> 2,
-                (md_context_ptr->blk_geom->tx_org_y[is_inter][0][0] - md_context_ptr->blk_geom->origin_y) >> 2,
+                (ctx->blk_geom->tx_org_x[is_inter][0][0] - ctx->blk_geom->org_x) >> 2,
+                (ctx->blk_geom->tx_org_y[is_inter][0][0] - ctx->blk_geom->org_y) >> 2,
                 PLANE_TYPE_Y,                                           //int32_t plane,
-                md_context_ptr->blk_geom->bsize,                        //uint32_t puSize,
-                md_context_ptr->blk_origin_x,
-                md_context_ptr->blk_origin_y,
-                md_context_ptr->blk_origin_x,                            //uint32_t cuOrgX,
-                md_context_ptr->blk_origin_y,                            //uint32_t cuOrgY
+                ctx->blk_geom->bsize,                        //uint32_t puSize,
+                ctx->blk_org_x,
+                ctx->blk_org_y,
+                ctx->blk_org_x,                            //uint32_t cuOrgX,
+                ctx->blk_org_y,                            //uint32_t cuOrgY
                 0,                                                      //cuOrgX used only for prediction Ptr
                 0,                                                      //cuOrgY used only for prediction Ptr
-                &pcs_ptr->scs_ptr->seq_header
+                &pcs->scs->seq_header
         );
     }
 
@@ -1158,7 +1158,7 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
     uint32_t block_width_neigh = use_top_righ_bottom_left ? bwidth << 1 : bwidth;
     uint32_t block_height_neigh = use_top_righ_bottom_left ? bheight << 1 : bheight;
     // Adjust the Source ptr to start at the origin of the block being updated
-    src_ptr = input_ptr->buffer_y + (((src_origin_y + input_ptr->origin_y) * stride) + (src_origin_x + input_ptr->origin_x));
+    src_ptr = input_ptr->buffer_y + (((src_origin_y + input_ptr->org_y) * stride) + (src_origin_x + input_ptr->org_x));
 
     //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
     EB_MEMSET(above_ref, 127, block_width_neigh + 1);

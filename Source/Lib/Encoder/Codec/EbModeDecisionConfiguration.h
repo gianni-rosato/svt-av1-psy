@@ -23,7 +23,7 @@ extern "C" {
  * early_mode_decision_sb
  *   predicts candidates (SB)
  *******************************************/
-extern EbErrorType early_mode_decision_sb(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+extern EbErrorType early_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs,
                                           SuperBlock *sb_ptr, uint32_t sb_index,
                                           ModeDecisionConfigurationContext *context_ptr);
 
@@ -32,12 +32,12 @@ extern EbErrorType early_mode_decision_sb(SequenceControlSet *scs_ptr, PictureCo
 *   Derive Sb For Each Leaf (SB)
 *******************************************/
 extern EbErrorType derive_delta_qp_for_each_leaf_sb(
-    SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, uint32_t sb_index,
+    SequenceControlSet *scs, PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_index,
     int32_t intra_min_distance, int32_t intra_max_distance, int32_t inter_min_distance,
     int32_t inter_max_distance, ModeDecisionConfigurationContext *context_ptr);
 
 void qpm_derive_delta_qp_map_weights(ModeDecisionConfigurationContext *context_ptr,
-                                     PictureControlSet                *pcs_ptr);
+                                     PictureControlSet                *pcs);
 /**************************************
 * Function Ptrs Definitions
 **************************************/

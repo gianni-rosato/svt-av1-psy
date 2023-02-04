@@ -122,7 +122,7 @@ typedef struct PredictionStructureGroup {
 #if !OPT_RPS_CONSTR_3
 //EbErrorType prediction_structure_group_ctor(
 //   PredictionStructureGroup* pred_struct_group_ptr,
-//   struct SequenceControlSet* scs_ptr);
+//   struct SequenceControlSet* scs);
 #endif
 #if CLN_REMOVE_REF_CNT
 extern PredictionStructure *get_prediction_structure(

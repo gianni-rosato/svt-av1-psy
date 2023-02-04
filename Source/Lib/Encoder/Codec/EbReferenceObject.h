@@ -68,7 +68,7 @@ typedef struct EbReferenceObject {
 
 typedef struct EbReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
-    int8_t                      hbd_mode_decision;
+    int8_t                      hbd_md;
 } EbReferenceObjectDescInitData;
 
 typedef struct EbPaReferenceObject {
@@ -111,12 +111,12 @@ typedef struct EbTplReferenceObjectDescInitData {
  * Extern Function Declarations
  **************************************/
 extern EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
-extern EbErrorType svt_reference_object_reset(EbReferenceObject *obj, SequenceControlSet *scs_ptr);
+extern EbErrorType svt_reference_object_reset(EbReferenceObject *obj, SequenceControlSet *scs);
 
 extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr,
                                                    EbPtr  object_init_data_ptr);
 extern EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr,
                                                     EbPtr  object_init_data_ptr);
-void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
+void release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs);
 
 #endif //EbReferenceObject_h

@@ -327,10 +327,12 @@ typedef void (*RestTileStartVisitor)(int32_t tile_row, int32_t tile_col, void *p
 // indices given by [*rcol0, *rcol1) x [*rrow0, *rrow1) are relative
 // to the current tile, whose starting index is returned as
 // *tile_tl_idx.
-//int32_t svt_av1_loop_restoration_corners_in_sb(const struct AV1Common *cm, int32_t plane,
-//                                       int32_t mi_row, int32_t mi_col, BlockSize bsize,
-//                                       int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
-//                                       int32_t *rrow1, int32_t *tile_tl_idx);
+struct Av1Common;
+int32_t svt_av1_loop_restoration_corners_in_sb(struct Av1Common *cm, SeqHeader *seq_header_p,
+                                               int32_t plane, int32_t mi_row, int32_t mi_col,
+                                               BlockSize bsize, int32_t *rcol0, int32_t *rcol1,
+                                               int32_t *rrow0, int32_t *rrow1,
+                                               int32_t *tile_tl_idx);
 
 //void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
 //                                                  struct AV1Common *cm,

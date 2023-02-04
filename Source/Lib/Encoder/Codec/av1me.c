@@ -889,15 +889,15 @@ static int obmc_refining_search_sad(const IntraBcContext *x, const int32_t *wsrc
     return best_sad;
 }
 
-int svt_av1_obmc_full_pixel_search(ModeDecisionContext *context_ptr, IntraBcContext *x,
-                                   MV *mvp_full, int sadpb, const AomVarianceFnPtr *fn_ptr,
-                                   const MV *ref_mv, MV *dst_mv, int is_second) {
+int svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x, MV *mvp_full,
+                                   int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
+                                   MV *dst_mv, int is_second) {
     // obmc_full_pixel_diamond does not provide BDR gain on 360p
-    const int32_t *wsrc         = context_ptr->wsrc_buf;
-    const int32_t *mask         = context_ptr->mask_buf;
+    const int32_t *wsrc         = ctx->wsrc_buf;
+    const int32_t *mask         = ctx->mask_buf;
     const int      search_range = 8;
     *dst_mv                     = *mvp_full;
-    x->approx_inter_rate        = context_ptr->approx_inter_rate;
+    x->approx_inter_rate        = ctx->approx_inter_rate;
     clamp_mv(dst_mv,
              x->mv_limits.col_min,
              x->mv_limits.col_max,
@@ -1136,15 +1136,15 @@ static INLINE const uint8_t *pre(const uint8_t *buf, int stride, int r, int c) {
     return buf + offset;
 }
 
-int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, IntraBcContext *x,
+int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *ctx, IntraBcContext *x,
                                              const AV1_COMMON *const cm, int mi_row, int mi_col,
                                              MV *bestmv, const MV *ref_mv, int allow_hp,
                                              int error_per_bit, const AomVarianceFnPtr *vfp,
                                              int forced_stop, int iters_per_step, int *mvjcost,
                                              int *mvcost[2], int *distortion, unsigned int *sse1,
                                              int is_second, int use_accurate_subpel_search) {
-    const int32_t                 *wsrc        = context_ptr->wsrc_buf;
-    const int32_t                 *mask        = context_ptr->mask_buf;
+    const int32_t                 *wsrc        = ctx->wsrc_buf;
+    const int32_t                 *mask        = ctx->mask_buf;
     const int *const               z           = wsrc;
     const int *const               src_address = z;
     MacroBlockD                   *xd          = x->xd;
@@ -1161,9 +1161,9 @@ int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, I
     const MV                      *search_step = search_step_table;
     int                            best_idx    = -1;
     unsigned int                   cost_array[5];
-    const int                      w  = block_size_wide[context_ptr->blk_geom->bsize];
-    const int                      h  = block_size_high[context_ptr->blk_geom->bsize];
-    const uint8_t                  lp = context_ptr->approx_inter_rate;
+    const int                      w  = block_size_wide[ctx->blk_geom->bsize];
+    const int                      h  = block_size_high[ctx->blk_geom->bsize];
+    const uint8_t                  lp = ctx->approx_inter_rate;
     int                            minc, maxc, minr, maxr;
 
     set_subpel_mv_search_range(&x->mv_limits, &minc, &maxc, &minr, &maxr, ref_mv);
@@ -1340,7 +1340,7 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
 
     int32_t ibc_shift = 0;
     //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
-    ibc_shift = pcs->parent_pcs_ptr->intraBC_ctrls.ibc_shift;
+    ibc_shift = pcs->ppcs->intraBC_ctrls.ibc_shift;
 
     SpeedFeatures *sf              = &pcs->sf;
     sf->exhaustive_searches_thresh = (1 << 25);
@@ -1427,7 +1427,7 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
         const int block_height = block_size_high[bsize];
         const int block_width  = block_size_wide[bsize];
         if (block_height == block_width && x_pos >= 0 && y_pos >= 0 &&
-            block_width <= pcs->parent_pcs_ptr->intraBC_ctrls.max_block_size_hash) {
+            block_width <= pcs->ppcs->intraBC_ctrls.max_block_size_hash) {
             if (block_width == 4 || block_width == 8 || block_width == 16 || block_width == 32 ||
                 block_width == 64 || block_width == 128) {
                 uint8_t  *what        = x->plane[0].src.buf;
@@ -1454,15 +1454,15 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
                         if (intra) {
                             const int mi_col = x_pos / MI_SIZE;
                             const int mi_row = y_pos / MI_SIZE;
-                            const MV  dv     = {8 * (ref_block_hash.y - y_pos),
-                                                8 * (ref_block_hash.x - x_pos)};
-                            if (!av1_is_dv_valid(
-                                    dv,
-                                    x->xd,
-                                    mi_row,
-                                    mi_col,
-                                    bsize,
-                                    pcs->parent_pcs_ptr->scs_ptr->seq_header.sb_size_log2))
+
+                            const MV dv = {8 * (ref_block_hash.y - y_pos),
+                                           8 * (ref_block_hash.x - x_pos)};
+                            if (!av1_is_dv_valid(dv,
+                                                 x->xd,
+                                                 mi_row,
+                                                 mi_col,
+                                                 bsize,
+                                                 pcs->ppcs->scs->seq_header.sb_size_log2))
                                 continue;
                         }
                         MV hash_mv;

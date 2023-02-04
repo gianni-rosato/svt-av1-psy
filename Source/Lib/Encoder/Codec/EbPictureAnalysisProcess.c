@@ -87,9 +87,8 @@ EbErrorType picture_analysis_context_ctor(EbThreadContext   *thread_context_ptr,
         enc_handle_ptr->picture_analysis_results_resource_ptr, index);
     return EB_ErrorNone;
 }
-void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
-                        EbPictureBufferDesc *outputPicturePtr) {
-    uint32_t       input_color_format  = input_picture_ptr->color_format;
+void down_sample_chroma(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *outputPicturePtr) {
+    uint32_t       input_color_format  = input_pic->color_format;
     const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t input_subsampling_y = (input_color_format >= EB_YUV422 ? 1 : 2) - 1;
 
@@ -107,14 +106,14 @@ void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
 
     //Cb
     {
-        stride_in          = input_picture_ptr->stride_cb;
-        input_origin_index = (input_picture_ptr->origin_x >> input_subsampling_x) +
-            (input_picture_ptr->origin_y >> input_subsampling_y) * input_picture_ptr->stride_cb;
-        ptr_in = &(input_picture_ptr->buffer_cb[input_origin_index]);
+        stride_in          = input_pic->stride_cb;
+        input_origin_index = (input_pic->org_x >> input_subsampling_x) +
+            (input_pic->org_y >> input_subsampling_y) * input_pic->stride_cb;
+        ptr_in = &(input_pic->buffer_cb[input_origin_index]);
 
         stride_out          = outputPicturePtr->stride_cb;
-        output_origin_index = (outputPicturePtr->origin_x >> output_subsampling_x) +
-            (outputPicturePtr->origin_y >> output_subsampling_y) * outputPicturePtr->stride_cb;
+        output_origin_index = (outputPicturePtr->org_x >> output_subsampling_x) +
+            (outputPicturePtr->org_y >> output_subsampling_y) * outputPicturePtr->stride_cb;
         ptr_out = &(outputPicturePtr->buffer_cb[output_origin_index]);
 
         for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
@@ -128,14 +127,14 @@ void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
 
     //Cr
     {
-        stride_in          = input_picture_ptr->stride_cr;
-        input_origin_index = (input_picture_ptr->origin_x >> input_subsampling_x) +
-            (input_picture_ptr->origin_y >> input_subsampling_y) * input_picture_ptr->stride_cr;
-        ptr_in = &(input_picture_ptr->buffer_cr[input_origin_index]);
+        stride_in          = input_pic->stride_cr;
+        input_origin_index = (input_pic->org_x >> input_subsampling_x) +
+            (input_pic->org_y >> input_subsampling_y) * input_pic->stride_cr;
+        ptr_in = &(input_pic->buffer_cr[input_origin_index]);
 
         stride_out          = outputPicturePtr->stride_cr;
-        output_origin_index = (outputPicturePtr->origin_x >> output_subsampling_x) +
-            (outputPicturePtr->origin_y >> output_subsampling_y) * outputPicturePtr->stride_cr;
+        output_origin_index = (outputPicturePtr->org_x >> output_subsampling_x) +
+            (outputPicturePtr->org_y >> output_subsampling_y) * outputPicturePtr->stride_cr;
         ptr_out = &(outputPicturePtr->buffer_cr[output_origin_index]);
 
         for (jj = 0; jj < (uint32_t)(outputPicturePtr->height >> output_subsampling_y); jj++) {
@@ -371,8 +370,8 @@ void svt_compute_interm_var_four8x8_c(uint8_t *input_samples, uint16_t input_str
 *   computes the variance and the block mean of all CUs inside the tree block
 *******************************************/
 EbErrorType compute_block_mean_compute_variance(
-    SequenceControlSet      *scs_ptr,
-    PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
+    SequenceControlSet      *scs,
+    PictureParentControlSet *pcs, // input parameter, Picture Control Set Ptr
     EbPictureBufferDesc     *input_padded_picture_ptr, // input parameter, Input Padded Picture
     uint32_t                 sb_index, // input parameter, SB address
     uint32_t
@@ -396,7 +395,7 @@ EbErrorType compute_block_mean_compute_variance(
 
     // (0,0)
     block_index = input_luma_origin_index;
-    if (scs_ptr->block_mean_calc_prec == BLOCK_MEAN_PREC_FULL) {
+    if (scs->block_mean_calc_prec == BLOCK_MEAN_PREC_FULL) {
         mean_of8x8_blocks[0] = svt_compute_mean_8x8(
             &(input_padded_picture_ptr->buffer_y[block_index]),
             input_padded_picture_ptr->stride_y,
@@ -1562,350 +1561,350 @@ EbErrorType compute_block_mean_compute_variance(
                                           mean_of32x32_squared_values_blocks[3]) >>
         2;
     // 8x8 variances
-    if (scs_ptr->static_config.enable_adaptive_quantization == 1) {
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_0] =
+    if (scs->static_config.enable_adaptive_quantization == 1) {
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_0] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[0] -
                         (mean_of8x8_blocks[0] * mean_of8x8_blocks[0])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_1] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_1] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[1] -
                         (mean_of8x8_blocks[1] * mean_of8x8_blocks[1])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_2] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_2] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[2] -
                         (mean_of8x8_blocks[2] * mean_of8x8_blocks[2])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_3] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_3] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[3] -
                         (mean_of8x8_blocks[3] * mean_of8x8_blocks[3])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_4] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_4] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[4] -
                         (mean_of8x8_blocks[4] * mean_of8x8_blocks[4])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_5] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_5] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[5] -
                         (mean_of8x8_blocks[5] * mean_of8x8_blocks[5])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_6] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_6] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[6] -
                         (mean_of8x8_blocks[6] * mean_of8x8_blocks[6])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_7] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_7] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[7] -
                         (mean_of8x8_blocks[7] * mean_of8x8_blocks[7])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_8] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_8] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[8] -
                         (mean_of8x8_blocks[8] * mean_of8x8_blocks[8])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_9] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_9] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[9] -
                         (mean_of8x8_blocks[9] * mean_of8x8_blocks[9])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_10] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_10] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[10] -
                         (mean_of8x8_blocks[10] * mean_of8x8_blocks[10])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_11] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_11] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[11] -
                         (mean_of8x8_blocks[11] * mean_of8x8_blocks[11])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_12] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_12] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[12] -
                         (mean_of8x8_blocks[12] * mean_of8x8_blocks[12])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_13] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_13] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[13] -
                         (mean_of8x8_blocks[13] * mean_of8x8_blocks[13])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_14] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_14] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[14] -
                         (mean_of8x8_blocks[14] * mean_of8x8_blocks[14])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_15] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_15] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[15] -
                         (mean_of8x8_blocks[15] * mean_of8x8_blocks[15])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_16] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_16] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[16] -
                         (mean_of8x8_blocks[16] * mean_of8x8_blocks[16])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_17] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_17] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[17] -
                         (mean_of8x8_blocks[17] * mean_of8x8_blocks[17])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_18] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_18] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[18] -
                         (mean_of8x8_blocks[18] * mean_of8x8_blocks[18])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_19] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_19] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[19] -
                         (mean_of8x8_blocks[19] * mean_of8x8_blocks[19])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_20] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_20] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[20] -
                         (mean_of8x8_blocks[20] * mean_of8x8_blocks[20])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_21] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_21] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[21] -
                         (mean_of8x8_blocks[21] * mean_of8x8_blocks[21])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_22] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_22] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[22] -
                         (mean_of8x8_blocks[22] * mean_of8x8_blocks[22])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_23] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_23] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[23] -
                         (mean_of8x8_blocks[23] * mean_of8x8_blocks[23])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_24] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_24] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[24] -
                         (mean_of8x8_blocks[24] * mean_of8x8_blocks[24])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_25] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_25] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[25] -
                         (mean_of8x8_blocks[25] * mean_of8x8_blocks[25])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_26] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_26] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[26] -
                         (mean_of8x8_blocks[26] * mean_of8x8_blocks[26])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_27] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_27] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[27] -
                         (mean_of8x8_blocks[27] * mean_of8x8_blocks[27])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_28] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_28] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[28] -
                         (mean_of8x8_blocks[28] * mean_of8x8_blocks[28])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_29] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_29] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[29] -
                         (mean_of8x8_blocks[29] * mean_of8x8_blocks[29])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_30] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_30] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[30] -
                         (mean_of8x8_blocks[30] * mean_of8x8_blocks[30])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_31] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_31] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[31] -
                         (mean_of8x8_blocks[31] * mean_of8x8_blocks[31])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_32] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_32] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[32] -
                         (mean_of8x8_blocks[32] * mean_of8x8_blocks[32])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_33] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_33] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[33] -
                         (mean_of8x8_blocks[33] * mean_of8x8_blocks[33])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_34] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_34] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[34] -
                         (mean_of8x8_blocks[34] * mean_of8x8_blocks[34])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_35] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_35] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[35] -
                         (mean_of8x8_blocks[35] * mean_of8x8_blocks[35])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_36] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_36] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[36] -
                         (mean_of8x8_blocks[36] * mean_of8x8_blocks[36])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_37] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_37] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[37] -
                         (mean_of8x8_blocks[37] * mean_of8x8_blocks[37])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_38] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_38] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[38] -
                         (mean_of8x8_blocks[38] * mean_of8x8_blocks[38])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_39] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_39] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[39] -
                         (mean_of8x8_blocks[39] * mean_of8x8_blocks[39])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_40] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_40] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[40] -
                         (mean_of8x8_blocks[40] * mean_of8x8_blocks[40])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_41] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_41] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[41] -
                         (mean_of8x8_blocks[41] * mean_of8x8_blocks[41])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_42] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_42] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[42] -
                         (mean_of8x8_blocks[42] * mean_of8x8_blocks[42])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_43] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_43] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[43] -
                         (mean_of8x8_blocks[43] * mean_of8x8_blocks[43])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_44] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_44] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[44] -
                         (mean_of8x8_blocks[44] * mean_of8x8_blocks[44])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_45] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_45] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[45] -
                         (mean_of8x8_blocks[45] * mean_of8x8_blocks[45])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_46] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_46] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[46] -
                         (mean_of8x8_blocks[46] * mean_of8x8_blocks[46])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_47] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_47] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[47] -
                         (mean_of8x8_blocks[47] * mean_of8x8_blocks[47])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_48] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_48] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[48] -
                         (mean_of8x8_blocks[48] * mean_of8x8_blocks[48])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_49] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_49] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[49] -
                         (mean_of8x8_blocks[49] * mean_of8x8_blocks[49])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_50] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_50] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[50] -
                         (mean_of8x8_blocks[50] * mean_of8x8_blocks[50])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_51] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_51] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[51] -
                         (mean_of8x8_blocks[51] * mean_of8x8_blocks[51])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_52] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_52] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[52] -
                         (mean_of8x8_blocks[52] * mean_of8x8_blocks[52])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_53] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_53] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[53] -
                         (mean_of8x8_blocks[53] * mean_of8x8_blocks[53])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_54] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_54] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[54] -
                         (mean_of8x8_blocks[54] * mean_of8x8_blocks[54])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_55] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_55] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[55] -
                         (mean_of8x8_blocks[55] * mean_of8x8_blocks[55])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_56] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_56] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[56] -
                         (mean_of8x8_blocks[56] * mean_of8x8_blocks[56])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_57] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_57] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[57] -
                         (mean_of8x8_blocks[57] * mean_of8x8_blocks[57])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_58] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_58] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[58] -
                         (mean_of8x8_blocks[58] * mean_of8x8_blocks[58])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_59] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_59] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[59] -
                         (mean_of8x8_blocks[59] * mean_of8x8_blocks[59])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_60] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_60] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[60] -
                         (mean_of8x8_blocks[60] * mean_of8x8_blocks[60])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_61] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_61] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[61] -
                         (mean_of8x8_blocks[61] * mean_of8x8_blocks[61])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_62] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_62] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[62] -
                         (mean_of8x8_blocks[62] * mean_of8x8_blocks[62])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_63] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_8x8_63] =
             (uint16_t)((mean_of_8x8_squared_values_blocks[63] -
                         (mean_of8x8_blocks[63] * mean_of8x8_blocks[63])) >>
                        VARIANCE_PRECISION);
 
         // 16x16 variances
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_0] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_0] =
             (uint16_t)((mean_of16x16_squared_values_blocks[0] -
                         (mean_of_16x16_blocks[0] * mean_of_16x16_blocks[0])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_1] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_1] =
             (uint16_t)((mean_of16x16_squared_values_blocks[1] -
                         (mean_of_16x16_blocks[1] * mean_of_16x16_blocks[1])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_2] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_2] =
             (uint16_t)((mean_of16x16_squared_values_blocks[2] -
                         (mean_of_16x16_blocks[2] * mean_of_16x16_blocks[2])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_3] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_3] =
             (uint16_t)((mean_of16x16_squared_values_blocks[3] -
                         (mean_of_16x16_blocks[3] * mean_of_16x16_blocks[3])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_4] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_4] =
             (uint16_t)((mean_of16x16_squared_values_blocks[4] -
                         (mean_of_16x16_blocks[4] * mean_of_16x16_blocks[4])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_5] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_5] =
             (uint16_t)((mean_of16x16_squared_values_blocks[5] -
                         (mean_of_16x16_blocks[5] * mean_of_16x16_blocks[5])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_6] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_6] =
             (uint16_t)((mean_of16x16_squared_values_blocks[6] -
                         (mean_of_16x16_blocks[6] * mean_of_16x16_blocks[6])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_7] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_7] =
             (uint16_t)((mean_of16x16_squared_values_blocks[7] -
                         (mean_of_16x16_blocks[7] * mean_of_16x16_blocks[7])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_8] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_8] =
             (uint16_t)((mean_of16x16_squared_values_blocks[8] -
                         (mean_of_16x16_blocks[8] * mean_of_16x16_blocks[8])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_9] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_9] =
             (uint16_t)((mean_of16x16_squared_values_blocks[9] -
                         (mean_of_16x16_blocks[9] * mean_of_16x16_blocks[9])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_10] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_10] =
             (uint16_t)((mean_of16x16_squared_values_blocks[10] -
                         (mean_of_16x16_blocks[10] * mean_of_16x16_blocks[10])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_11] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_11] =
             (uint16_t)((mean_of16x16_squared_values_blocks[11] -
                         (mean_of_16x16_blocks[11] * mean_of_16x16_blocks[11])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_12] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_12] =
             (uint16_t)((mean_of16x16_squared_values_blocks[12] -
                         (mean_of_16x16_blocks[12] * mean_of_16x16_blocks[12])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_13] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_13] =
             (uint16_t)((mean_of16x16_squared_values_blocks[13] -
                         (mean_of_16x16_blocks[13] * mean_of_16x16_blocks[13])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_14] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_14] =
             (uint16_t)((mean_of16x16_squared_values_blocks[14] -
                         (mean_of_16x16_blocks[14] * mean_of_16x16_blocks[14])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_16x16_15] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_16x16_15] =
             (uint16_t)((mean_of16x16_squared_values_blocks[15] -
                         (mean_of_16x16_blocks[15] * mean_of_16x16_blocks[15])) >>
                        VARIANCE_PRECISION);
 
         // 32x32 variances
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_0] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_32x32_0] =
             (uint16_t)((mean_of32x32_squared_values_blocks[0] -
                         (mean_of_32x32_blocks[0] * mean_of_32x32_blocks[0])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_1] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_32x32_1] =
             (uint16_t)((mean_of32x32_squared_values_blocks[1] -
                         (mean_of_32x32_blocks[1] * mean_of_32x32_blocks[1])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_2] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_32x32_2] =
             (uint16_t)((mean_of32x32_squared_values_blocks[2] -
                         (mean_of_32x32_blocks[2] * mean_of_32x32_blocks[2])) >>
                        VARIANCE_PRECISION);
-        pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_32x32_3] =
+        pcs->variance[sb_index][ME_TIER_ZERO_PU_32x32_3] =
             (uint16_t)((mean_of32x32_squared_values_blocks[3] -
                         (mean_of_32x32_blocks[3] * mean_of_32x32_blocks[3])) >>
                        VARIANCE_PRECISION);
     }
     // 64x64 variance
-    pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] =
+    pcs->variance[sb_index][ME_TIER_ZERO_PU_64x64] =
         (uint16_t)((mean_of64x64_squared_values_blocks -
                     (mean_of_64x64_blocks * mean_of_64x64_blocks)) >>
                    VARIANCE_PRECISION);
@@ -1913,42 +1912,41 @@ EbErrorType compute_block_mean_compute_variance(
     return return_error;
 }
 
-static int32_t apply_denoise_2d(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+static int32_t apply_denoise_2d(SequenceControlSet *scs, PictureParentControlSet *pcs,
                                 EbPictureBufferDesc *inputPicturePointer) {
     AomDenoiseAndModel     *denoise_and_model;
     DenoiseAndModelInitData fg_init_data;
-    fg_init_data.encoder_bit_depth    = pcs_ptr->enhanced_picture_ptr->bit_depth;
-    fg_init_data.encoder_color_format = pcs_ptr->enhanced_picture_ptr->color_format;
-    fg_init_data.noise_level          = scs_ptr->static_config.film_grain_denoise_strength;
-    fg_init_data.width                = pcs_ptr->enhanced_picture_ptr->width;
-    fg_init_data.height               = pcs_ptr->enhanced_picture_ptr->height;
-    fg_init_data.stride_y             = pcs_ptr->enhanced_picture_ptr->stride_y;
-    fg_init_data.stride_cb            = pcs_ptr->enhanced_picture_ptr->stride_cb;
-    fg_init_data.stride_cr            = pcs_ptr->enhanced_picture_ptr->stride_cr;
-    fg_init_data.denoise_apply        = scs_ptr->static_config.film_grain_denoise_apply;
+    fg_init_data.encoder_bit_depth    = pcs->enhanced_picture_ptr->bit_depth;
+    fg_init_data.encoder_color_format = pcs->enhanced_picture_ptr->color_format;
+    fg_init_data.noise_level          = scs->static_config.film_grain_denoise_strength;
+    fg_init_data.width                = pcs->enhanced_picture_ptr->width;
+    fg_init_data.height               = pcs->enhanced_picture_ptr->height;
+    fg_init_data.stride_y             = pcs->enhanced_picture_ptr->stride_y;
+    fg_init_data.stride_cb            = pcs->enhanced_picture_ptr->stride_cb;
+    fg_init_data.stride_cr            = pcs->enhanced_picture_ptr->stride_cr;
+    fg_init_data.denoise_apply        = scs->static_config.film_grain_denoise_apply;
     EB_NEW(denoise_and_model, denoise_and_model_ctor, (EbPtr)&fg_init_data);
 
     if (svt_aom_denoise_and_model_run(denoise_and_model,
                                       inputPicturePointer,
-                                      &pcs_ptr->frm_hdr.film_grain_params,
-                                      scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT)) {}
+                                      &pcs->frm_hdr.film_grain_params,
+                                      scs->static_config.encoder_bit_depth > EB_EIGHT_BIT)) {}
 
     EB_DELETE(denoise_and_model);
 
     return 0;
 }
 
-EbErrorType denoise_estimate_film_grain(SequenceControlSet      *scs_ptr,
-                                        PictureParentControlSet *pcs_ptr) {
+EbErrorType denoise_estimate_film_grain(SequenceControlSet *scs, PictureParentControlSet *pcs) {
     EbErrorType return_error = EB_ErrorNone;
 
-    FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
+    FrameHeader *frm_hdr = &pcs->frm_hdr;
 
-    EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_pic         = pcs->enhanced_picture_ptr;
     frm_hdr->film_grain_params.apply_grain = 0;
 
-    if (scs_ptr->static_config.film_grain_denoise_strength) {
-        if (apply_denoise_2d(scs_ptr, pcs_ptr, input_picture_ptr) < 0)
+    if (scs->static_config.film_grain_denoise_strength) {
+        if (apply_denoise_2d(scs, pcs, input_pic) < 0)
             return 1;
     }
 
@@ -1963,74 +1961,69 @@ EbErrorType denoise_estimate_film_grain(SequenceControlSet      *scs_ptr,
  ***** Borders preprocessing
  ***** Denoising
  ************************************************/
-void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
-                                       SequenceControlSet      *scs_ptr) {
-    if (scs_ptr->static_config.film_grain_denoise_strength)
-        denoise_estimate_film_grain(scs_ptr, pcs_ptr);
+void picture_pre_processing_operations(PictureParentControlSet *pcs, SequenceControlSet *scs) {
+    if (scs->static_config.film_grain_denoise_strength)
+        denoise_estimate_film_grain(scs, pcs);
     return;
 }
 
 static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
-    SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-    EbPictureBufferDesc *input_picture_ptr, uint64_t *sum_avg_intensity_ttl_regions_luma) {
-    uint32_t region_width = input_picture_ptr->width /
-        scs_ptr->picture_analysis_number_of_regions_per_width;
-    uint32_t region_height = input_picture_ptr->height /
-        scs_ptr->picture_analysis_number_of_regions_per_height;
+    SequenceControlSet *scs, PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic,
+    uint64_t *sum_avg_intensity_ttl_regions_luma) {
+    uint32_t region_width  = input_pic->width / scs->picture_analysis_number_of_regions_per_width;
+    uint32_t region_height = input_pic->height / scs->picture_analysis_number_of_regions_per_height;
 
     // Loop over regions inside the picture
     for (uint32_t region_in_picture_width_index = 0;
-         region_in_picture_width_index < scs_ptr->picture_analysis_number_of_regions_per_width;
+         region_in_picture_width_index < scs->picture_analysis_number_of_regions_per_width;
          region_in_picture_width_index++) { // loop over horizontal regions
-        for (uint32_t region_in_picture_height_index = 0; region_in_picture_height_index <
-             scs_ptr->picture_analysis_number_of_regions_per_height;
+        for (uint32_t region_in_picture_height_index = 0;
+             region_in_picture_height_index < scs->picture_analysis_number_of_regions_per_height;
              region_in_picture_height_index++) { // loop over vertical regions
 
             uint64_t sum = 0;
 
             // Initialize bins to 1
-            svt_initialize_buffer_32bits(pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                                                   [region_in_picture_height_index],
+            svt_initialize_buffer_32bits(pcs->picture_histogram[region_in_picture_width_index]
+                                                               [region_in_picture_height_index],
                                          64,
                                          0,
                                          1);
 
             uint32_t region_width_offset = (region_in_picture_width_index ==
-                                            scs_ptr->picture_analysis_number_of_regions_per_width -
-                                                1)
-                ? input_picture_ptr->width -
-                    (scs_ptr->picture_analysis_number_of_regions_per_width * region_width)
+                                            scs->picture_analysis_number_of_regions_per_width - 1)
+                ? input_pic->width -
+                    (scs->picture_analysis_number_of_regions_per_width * region_width)
                 : 0;
 
-            uint32_t region_height_offset =
-                (region_in_picture_height_index ==
-                 scs_ptr->picture_analysis_number_of_regions_per_height - 1)
-                ? input_picture_ptr->height -
-                    (scs_ptr->picture_analysis_number_of_regions_per_height * region_height)
+            uint32_t region_height_offset = (region_in_picture_height_index ==
+                                             scs->picture_analysis_number_of_regions_per_height - 1)
+                ? input_pic->height -
+                    (scs->picture_analysis_number_of_regions_per_height * region_height)
                 : 0;
 
-            uint8_t decim_step = scs_ptr->static_config.scene_change_detection
+            uint8_t decim_step = scs->static_config.scene_change_detection
                 ? 1
-                : 4; // scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition
+                : 4; // scs->vq_ctrls.sharpness_ctrls.scene_transition
 
             // Y Histogram
             calculate_histogram(
-                &input_picture_ptr->buffer_y[(input_picture_ptr->origin_x +
-                                              region_in_picture_width_index * region_width) +
-                                             ((input_picture_ptr->origin_y +
-                                               region_in_picture_height_index * region_height) *
-                                              input_picture_ptr->stride_y)],
+                &input_pic
+                     ->buffer_y[(input_pic->org_x + region_in_picture_width_index * region_width) +
+                                ((input_pic->org_y +
+                                  region_in_picture_height_index * region_height) *
+                                 input_pic->stride_y)],
                 region_width + region_width_offset,
                 region_height + region_height_offset,
-                input_picture_ptr->stride_y,
+                input_pic->stride_y,
                 decim_step,
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index],
+                pcs->picture_histogram[region_in_picture_width_index]
+                                      [region_in_picture_height_index],
                 &sum);
             sum = (sum * decim_step * decim_step);
 
-            pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
-                                                 [region_in_picture_height_index] =
+            pcs->average_intensity_per_region[region_in_picture_width_index]
+                                             [region_in_picture_height_index] =
                 (uint8_t)((sum +
                            (((region_width + region_width_offset) *
                              (region_height + region_height_offset)) >>
@@ -2041,10 +2034,10 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
             (*sum_avg_intensity_ttl_regions_luma) += (sum << 4);
             for (uint32_t histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
                  histogram_bin++) { // Loop over the histogram bins
-                pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                          [region_in_picture_height_index][histogram_bin] =
-                    pcs_ptr->picture_histogram[region_in_picture_width_index]
-                                              [region_in_picture_height_index][histogram_bin] *
+                pcs->picture_histogram[region_in_picture_width_index]
+                                      [region_in_picture_height_index][histogram_bin] =
+                    pcs->picture_histogram[region_in_picture_width_index]
+                                          [region_in_picture_height_index][histogram_bin] *
                     4 * 4 * decim_step * decim_step;
             }
         }
@@ -2058,28 +2051,27 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
  ** Compute Picture Variance
  ** Compute Block Mean for all blocks in the picture
  ************************************************/
-void compute_picture_spatial_statistics(SequenceControlSet      *scs_ptr,
-                                        PictureParentControlSet *pcs_ptr,
-                                        EbPictureBufferDesc     *input_padded_picture_ptr) {
+void compute_picture_spatial_statistics(SequenceControlSet *scs, PictureParentControlSet *pcs,
+                                        EbPictureBufferDesc *input_padded_picture_ptr) {
     // Variance
     uint64_t pic_tot_variance = 0;
-    uint16_t b64_total_count  = pcs_ptr->b64_total_count;
+    uint16_t b64_total_count  = pcs->b64_total_count;
 
     for (uint16_t b64_idx = 0; b64_idx < b64_total_count; ++b64_idx) {
-        B64Geom *b64_geom = &pcs_ptr->b64_geom[b64_idx];
+        B64Geom *b64_geom = &pcs->b64_geom[b64_idx];
 
-        uint16_t b64_origin_x            = b64_geom->origin_x; // to avoid using child PCS
-        uint16_t b64_origin_y            = b64_geom->origin_y;
-        uint32_t input_luma_origin_index = (input_padded_picture_ptr->origin_y + b64_origin_y) *
+        uint16_t b64_origin_x            = b64_geom->org_x; // to avoid using child PCS
+        uint16_t b64_origin_y            = b64_geom->org_y;
+        uint32_t input_luma_origin_index = (input_padded_picture_ptr->org_y + b64_origin_y) *
                 input_padded_picture_ptr->stride_y +
-            input_padded_picture_ptr->origin_x + b64_origin_x;
+            input_padded_picture_ptr->org_x + b64_origin_x;
 
         compute_block_mean_compute_variance(
-            scs_ptr, pcs_ptr, input_padded_picture_ptr, b64_idx, input_luma_origin_index);
-        pic_tot_variance += (pcs_ptr->variance[b64_idx][RASTER_SCAN_CU_INDEX_64x64]);
+            scs, pcs, input_padded_picture_ptr, b64_idx, input_luma_origin_index);
+        pic_tot_variance += (pcs->variance[b64_idx][RASTER_SCAN_CU_INDEX_64x64]);
     }
 
-    pcs_ptr->pic_avg_variance = (uint16_t)(pic_tot_variance / b64_total_count);
+    pcs->pic_avg_variance = (uint16_t)(pic_tot_variance / b64_total_count);
 
     return;
 }
@@ -2089,23 +2081,23 @@ void compute_picture_spatial_statistics(SequenceControlSet      *scs_ptr,
  ** Calculating the pixel intensity histogram bins per picture needed for SCD
  ** Computing Picture Variance
  ************************************************/
-void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+void gathering_picture_statistics(SequenceControlSet *scs, PictureParentControlSet *pcs,
                                   EbPictureBufferDesc *input_padded_picture_ptr,
                                   EbPictureBufferDesc *sixteenth_decimated_picture_ptr) {
     uint64_t sum_avg_intensity_ttl_regions_luma = 0;
     // Histogram bins
-    if (scs_ptr->static_config.scene_change_detection ||
-        scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
+    if (scs->static_config.scene_change_detection ||
+        scs->vq_ctrls.sharpness_ctrls.scene_transition) {
         // Use 1/16 Luma for Histogram generation
         // 1/16 input ready
         sub_sample_luma_generate_pixel_intensity_histogram_bins(
-            scs_ptr, pcs_ptr, sixteenth_decimated_picture_ptr, &sum_avg_intensity_ttl_regions_luma);
+            scs, pcs, sixteenth_decimated_picture_ptr, &sum_avg_intensity_ttl_regions_luma);
     }
 
-    if (scs_ptr->calculate_variance)
-        compute_picture_spatial_statistics(scs_ptr, pcs_ptr, input_padded_picture_ptr);
+    if (scs->calculate_variance)
+        compute_picture_spatial_statistics(scs, pcs, input_padded_picture_ptr);
     else
-        pcs_ptr->pic_avg_variance = 0;
+        pcs->pic_avg_variance = 0;
 
     return;
 }
@@ -2190,81 +2182,76 @@ void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_stride,
  * Pad Picture at the right and bottom sides
  ** To match a multiple of min CU size in width and height
  ************************************************/
-void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs_ptr,
-                                                        EbPictureBufferDesc *input_picture_ptr) {
-    Bool is16_bit_input = (Bool)(scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
+void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs,
+                                                        EbPictureBufferDesc *input_pic) {
+    Bool is16_bit_input = (Bool)(scs->static_config.encoder_bit_depth > EB_EIGHT_BIT);
 
-    uint32_t       color_format  = input_picture_ptr->color_format;
+    uint32_t       color_format  = input_pic->color_format;
     const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     // Input Picture Padding
     pad_input_picture(
-        &input_picture_ptr->buffer_y[input_picture_ptr->origin_x +
-                                     (input_picture_ptr->origin_y * input_picture_ptr->stride_y)],
-        input_picture_ptr->stride_y,
-        (input_picture_ptr->width - scs_ptr->pad_right),
-        (input_picture_ptr->height - scs_ptr->pad_bottom),
-        scs_ptr->pad_right,
-        scs_ptr->pad_bottom);
+        &input_pic->buffer_y[input_pic->org_x + (input_pic->org_y * input_pic->stride_y)],
+        input_pic->stride_y,
+        (input_pic->width - scs->pad_right),
+        (input_pic->height - scs->pad_bottom),
+        scs->pad_right,
+        scs->pad_bottom);
 
-    if (input_picture_ptr->buffer_cb)
+    if (input_pic->buffer_cb)
         pad_input_picture(
-            &input_picture_ptr->buffer_cb[(input_picture_ptr->origin_x >> subsampling_x) +
-                                          ((input_picture_ptr->origin_y >> subsampling_y) *
-                                           input_picture_ptr->stride_cb)],
-            input_picture_ptr->stride_cb,
-            (input_picture_ptr->width + subsampling_x - scs_ptr->pad_right) >> subsampling_x,
-            (input_picture_ptr->height + subsampling_y - scs_ptr->pad_bottom) >> subsampling_y,
-            scs_ptr->pad_right >> subsampling_x,
-            scs_ptr->pad_bottom >> subsampling_y);
+            &input_pic->buffer_cb[(input_pic->org_x >> subsampling_x) +
+                                  ((input_pic->org_y >> subsampling_y) * input_pic->stride_cb)],
+            input_pic->stride_cb,
+            (input_pic->width + subsampling_x - scs->pad_right) >> subsampling_x,
+            (input_pic->height + subsampling_y - scs->pad_bottom) >> subsampling_y,
+            scs->pad_right >> subsampling_x,
+            scs->pad_bottom >> subsampling_y);
 
-    if (input_picture_ptr->buffer_cr)
+    if (input_pic->buffer_cr)
         pad_input_picture(
-            &input_picture_ptr->buffer_cr[(input_picture_ptr->origin_x >> subsampling_x) +
-                                          ((input_picture_ptr->origin_y >> subsampling_y) *
-                                           input_picture_ptr->stride_cb)],
-            input_picture_ptr->stride_cr,
-            (input_picture_ptr->width + subsampling_x - scs_ptr->pad_right) >> subsampling_x,
-            (input_picture_ptr->height + subsampling_y - scs_ptr->pad_bottom) >> subsampling_y,
-            scs_ptr->pad_right >> subsampling_x,
-            scs_ptr->pad_bottom >> subsampling_y);
+            &input_pic->buffer_cr[(input_pic->org_x >> subsampling_x) +
+                                  ((input_pic->org_y >> subsampling_y) * input_pic->stride_cb)],
+            input_pic->stride_cr,
+            (input_pic->width + subsampling_x - scs->pad_right) >> subsampling_x,
+            (input_pic->height + subsampling_y - scs->pad_bottom) >> subsampling_y,
+            scs->pad_right >> subsampling_x,
+            scs->pad_bottom >> subsampling_y);
 
     if (is16_bit_input) {
-        uint32_t comp_stride_y           = input_picture_ptr->stride_y / 4;
-        uint32_t comp_luma_buffer_offset = comp_stride_y * input_picture_ptr->origin_y +
-            input_picture_ptr->origin_x / 4;
+        uint32_t comp_stride_y           = input_pic->stride_y / 4;
+        uint32_t comp_luma_buffer_offset = comp_stride_y * input_pic->org_y + input_pic->org_x / 4;
 
-        uint32_t comp_stride_uv            = input_picture_ptr->stride_cb / 4;
-        uint32_t comp_chroma_buffer_offset = comp_stride_uv * (input_picture_ptr->origin_y / 2) +
-            input_picture_ptr->origin_x / 2 / 4;
+        uint32_t comp_stride_uv            = input_pic->stride_cb / 4;
+        uint32_t comp_chroma_buffer_offset = comp_stride_uv * (input_pic->org_y / 2) +
+            input_pic->org_x / 2 / 4;
 
-        if (input_picture_ptr->buffer_bit_inc_y)
+        if (input_pic->buffer_bit_inc_y)
+            pad_2b_compressed_input_picture(&input_pic->buffer_bit_inc_y[comp_luma_buffer_offset],
+                                            comp_stride_y,
+                                            (input_pic->width - scs->pad_right),
+                                            (input_pic->height - scs->pad_bottom),
+                                            scs->pad_right,
+                                            scs->pad_bottom);
+
+        if (input_pic->buffer_bit_inc_cb)
             pad_2b_compressed_input_picture(
-                &input_picture_ptr->buffer_bit_inc_y[comp_luma_buffer_offset],
-                comp_stride_y,
-                (input_picture_ptr->width - scs_ptr->pad_right),
-                (input_picture_ptr->height - scs_ptr->pad_bottom),
-                scs_ptr->pad_right,
-                scs_ptr->pad_bottom);
-
-        if (input_picture_ptr->buffer_bit_inc_cb)
-            pad_2b_compressed_input_picture(
-                &input_picture_ptr->buffer_bit_inc_cb[comp_chroma_buffer_offset],
+                &input_pic->buffer_bit_inc_cb[comp_chroma_buffer_offset],
                 comp_stride_uv,
-                (input_picture_ptr->width + subsampling_x - scs_ptr->pad_right) >> subsampling_x,
-                (input_picture_ptr->height + subsampling_y - scs_ptr->pad_bottom) >> subsampling_y,
-                scs_ptr->pad_right >> subsampling_x,
-                scs_ptr->pad_bottom >> subsampling_y);
+                (input_pic->width + subsampling_x - scs->pad_right) >> subsampling_x,
+                (input_pic->height + subsampling_y - scs->pad_bottom) >> subsampling_y,
+                scs->pad_right >> subsampling_x,
+                scs->pad_bottom >> subsampling_y);
 
-        if (input_picture_ptr->buffer_bit_inc_cr)
+        if (input_pic->buffer_bit_inc_cr)
             pad_2b_compressed_input_picture(
-                &input_picture_ptr->buffer_bit_inc_cr[comp_chroma_buffer_offset],
+                &input_pic->buffer_bit_inc_cr[comp_chroma_buffer_offset],
                 comp_stride_uv,
-                (input_picture_ptr->width + subsampling_x - scs_ptr->pad_right) >> subsampling_x,
-                (input_picture_ptr->height + subsampling_y - scs_ptr->pad_bottom) >> subsampling_y,
-                scs_ptr->pad_right >> subsampling_x,
-                scs_ptr->pad_bottom >> subsampling_y);
+                (input_pic->width + subsampling_x - scs->pad_right) >> subsampling_x,
+                (input_pic->height + subsampling_y - scs->pad_bottom) >> subsampling_y,
+                scs->pad_right >> subsampling_x,
+                scs->pad_bottom >> subsampling_y);
     }
 
     return;
@@ -2275,43 +2262,41 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs
  ** To match a multiple of min CU size in width and height
  ** In the function, pixels are stored in short_ptr
  ************************************************/
-void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(
-    SequenceControlSet *scs_ptr, EbPictureBufferDesc *input_picture_ptr) {
-    assert(scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT);
+void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(SequenceControlSet  *scs,
+                                                              EbPictureBufferDesc *input_pic) {
+    assert(scs->static_config.encoder_bit_depth > EB_EIGHT_BIT);
 
-    uint32_t       color_format  = input_picture_ptr->color_format;
+    uint32_t       color_format  = input_pic->color_format;
     const uint16_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t subsampling_y = (color_format >= EB_YUV422 ? 1 : 2) - 1;
 
     // Input Picture Padding
-    uint16_t *buffer_y = (uint16_t *)(input_picture_ptr->buffer_y) + input_picture_ptr->origin_x +
-        input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+    uint16_t *buffer_y = (uint16_t *)(input_pic->buffer_y) + input_pic->org_x +
+        input_pic->org_y * input_pic->stride_y;
     pad_input_picture_16bit(buffer_y,
-                            input_picture_ptr->stride_y,
-                            (input_picture_ptr->width - scs_ptr->pad_right),
-                            (input_picture_ptr->height - scs_ptr->pad_bottom),
-                            scs_ptr->pad_right,
-                            scs_ptr->pad_bottom);
+                            input_pic->stride_y,
+                            (input_pic->width - scs->pad_right),
+                            (input_pic->height - scs->pad_bottom),
+                            scs->pad_right,
+                            scs->pad_bottom);
 
-    uint16_t *buffer_cb = (uint16_t *)(input_picture_ptr->buffer_cb) +
-        (input_picture_ptr->origin_x >> subsampling_x) +
-        (input_picture_ptr->origin_y >> subsampling_y) * input_picture_ptr->stride_cb;
+    uint16_t *buffer_cb = (uint16_t *)(input_pic->buffer_cb) + (input_pic->org_x >> subsampling_x) +
+        (input_pic->org_y >> subsampling_y) * input_pic->stride_cb;
     pad_input_picture_16bit(buffer_cb,
-                            input_picture_ptr->stride_cb,
-                            (input_picture_ptr->width - scs_ptr->pad_right) >> subsampling_x,
-                            (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
-                            scs_ptr->pad_right >> subsampling_x,
-                            scs_ptr->pad_bottom >> subsampling_y);
+                            input_pic->stride_cb,
+                            (input_pic->width - scs->pad_right) >> subsampling_x,
+                            (input_pic->height - scs->pad_bottom) >> subsampling_y,
+                            scs->pad_right >> subsampling_x,
+                            scs->pad_bottom >> subsampling_y);
 
-    uint16_t *buffer_cr = (uint16_t *)(input_picture_ptr->buffer_cr) +
-        (input_picture_ptr->origin_x >> subsampling_x) +
-        (input_picture_ptr->origin_y >> subsampling_y) * input_picture_ptr->stride_cr;
+    uint16_t *buffer_cr = (uint16_t *)(input_pic->buffer_cr) + (input_pic->org_x >> subsampling_x) +
+        (input_pic->org_y >> subsampling_y) * input_pic->stride_cr;
     pad_input_picture_16bit(buffer_cr,
-                            input_picture_ptr->stride_cr,
-                            (input_picture_ptr->width - scs_ptr->pad_right) >> subsampling_x,
-                            (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
-                            scs_ptr->pad_right >> subsampling_x,
-                            scs_ptr->pad_bottom >> subsampling_y);
+                            input_pic->stride_cr,
+                            (input_pic->width - scs->pad_right) >> subsampling_x,
+                            (input_pic->height - scs->pad_bottom) >> subsampling_y,
+                            scs->pad_right >> subsampling_x,
+                            scs->pad_bottom >> subsampling_y);
 
     return;
 }
@@ -2326,8 +2311,8 @@ void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_
                      input_padded_picture_ptr->stride_y,
                      input_padded_picture_ptr->width,
                      input_padded_picture_ptr->height,
-                     input_padded_picture_ptr->origin_x,
-                     input_padded_picture_ptr->origin_y);
+                     input_padded_picture_ptr->org_x,
+                     input_padded_picture_ptr->org_y);
 
     return;
 }
@@ -2335,23 +2320,23 @@ void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_
 /************************************************
 * 1/4 & 1/16 input picture decimation
 ************************************************/
-void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
+void downsample_decimation_input_picture(PictureParentControlSet *pcs,
                                          EbPictureBufferDesc     *input_padded_picture_ptr,
                                          EbPictureBufferDesc     *quarter_decimated_picture_ptr,
                                          EbPictureBufferDesc     *sixteenth_decimated_picture_ptr) {
     // Decimate input picture for HME L0 and L1
-    if (pcs_ptr->enable_hme_flag || pcs_ptr->tf_enable_hme_flag) {
-        if (pcs_ptr->enable_hme_level1_flag || pcs_ptr->tf_enable_hme_level1_flag) {
+    if (pcs->enable_hme_flag || pcs->tf_enable_hme_flag) {
+        if (pcs->enable_hme_level1_flag || pcs->tf_enable_hme_level1_flag) {
             decimation_2d(
-                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x +
-                                                    input_padded_picture_ptr->origin_y *
+                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->org_x +
+                                                    input_padded_picture_ptr->org_y *
                                                         input_padded_picture_ptr->stride_y],
                 input_padded_picture_ptr->stride_y,
                 input_padded_picture_ptr->width,
                 input_padded_picture_ptr->height,
                 &quarter_decimated_picture_ptr
-                     ->buffer_y[quarter_decimated_picture_ptr->origin_x +
-                                quarter_decimated_picture_ptr->origin_x *
+                     ->buffer_y[quarter_decimated_picture_ptr->org_x +
+                                quarter_decimated_picture_ptr->org_x *
                                     quarter_decimated_picture_ptr->stride_y],
                 quarter_decimated_picture_ptr->stride_y,
                 2);
@@ -2359,8 +2344,8 @@ void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
                              quarter_decimated_picture_ptr->stride_y,
                              quarter_decimated_picture_ptr->width,
                              quarter_decimated_picture_ptr->height,
-                             quarter_decimated_picture_ptr->origin_x,
-                             quarter_decimated_picture_ptr->origin_y);
+                             quarter_decimated_picture_ptr->org_x,
+                             quarter_decimated_picture_ptr->org_y);
         }
     }
 
@@ -2368,13 +2353,13 @@ void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
     // Sixteenth Input Picture Decimation
     decimation_2d(
         &input_padded_picture_ptr
-             ->buffer_y[input_padded_picture_ptr->origin_x +
-                        input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y],
+             ->buffer_y[input_padded_picture_ptr->org_x +
+                        input_padded_picture_ptr->org_y * input_padded_picture_ptr->stride_y],
         input_padded_picture_ptr->stride_y,
         input_padded_picture_ptr->width,
         input_padded_picture_ptr->height,
-        &sixteenth_decimated_picture_ptr->buffer_y[sixteenth_decimated_picture_ptr->origin_x +
-                                                   sixteenth_decimated_picture_ptr->origin_x *
+        &sixteenth_decimated_picture_ptr->buffer_y[sixteenth_decimated_picture_ptr->org_x +
+                                                   sixteenth_decimated_picture_ptr->org_x *
                                                        sixteenth_decimated_picture_ptr->stride_y],
         sixteenth_decimated_picture_ptr->stride_y,
         4);
@@ -2383,8 +2368,8 @@ void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
                      sixteenth_decimated_picture_ptr->stride_y,
                      sixteenth_decimated_picture_ptr->width,
                      sixteenth_decimated_picture_ptr->height,
-                     sixteenth_decimated_picture_ptr->origin_x,
-                     sixteenth_decimated_picture_ptr->origin_y);
+                     sixteenth_decimated_picture_ptr->org_x,
+                     sixteenth_decimated_picture_ptr->org_y);
 }
 
 int svt_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth,
@@ -2477,7 +2462,7 @@ Bool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int co
 
 // Estimate if the source frame is screen content, based on the portion of
 // blocks that have no more than 4 (experimentally selected) luma colors.
-void is_screen_content(PictureParentControlSet *pcs_ptr) {
+void is_screen_content(PictureParentControlSet *pcs) {
     const int blk_w = 16;
     const int blk_h = 16;
     // These threshold values are selected experimentally.
@@ -2489,21 +2474,20 @@ void is_screen_content(PictureParentControlSet *pcs_ptr) {
     // than var_thresh.
     int counts_2 = 0;
 
-    const AomVarianceFnPtr *fn_ptr            = &mefn_ptr[BLOCK_16X16];
-    EbPictureBufferDesc    *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+    const AomVarianceFnPtr *fn_ptr    = &mefn_ptr[BLOCK_16X16];
+    EbPictureBufferDesc    *input_pic = pcs->enhanced_picture_ptr;
 
-    for (int r = 0; r + blk_h <= input_picture_ptr->height; r += blk_h) {
-        for (int c = 0; c + blk_w <= input_picture_ptr->width; c += blk_w) {
+    for (int r = 0; r + blk_h <= input_pic->height; r += blk_h) {
+        for (int c = 0; c + blk_w <= input_pic->width; c += blk_w) {
             {
-                uint8_t *src = input_picture_ptr->buffer_y +
-                    (input_picture_ptr->origin_y + r) * input_picture_ptr->stride_y +
-                    input_picture_ptr->origin_x + c;
+                uint8_t *src = input_pic->buffer_y + (input_pic->org_y + r) * input_pic->stride_y +
+                    input_pic->org_x + c;
 
                 if (is_valid_palette_nb_colors(
-                        src, input_picture_ptr->stride_y, blk_w, blk_h, color_thresh)) {
+                        src, input_pic->stride_y, blk_w, blk_h, color_thresh)) {
                     ++counts_1;
                     int var = svt_av1_get_sby_perpixel_variance(
-                        fn_ptr, src, input_picture_ptr->stride_y, BLOCK_16X16);
+                        fn_ptr, src, input_pic->stride_y, BLOCK_16X16);
                     if (var > var_thresh)
                         ++counts_2;
                 }
@@ -2512,75 +2496,74 @@ void is_screen_content(PictureParentControlSet *pcs_ptr) {
     }
 
     // The threshold values are selected experimentally.
-    pcs_ptr->sc_class0 = (counts_1 * blk_h * blk_w * 10 >
-                          input_picture_ptr->width * input_picture_ptr->height);
+    pcs->sc_class0 = (counts_1 * blk_h * blk_w * 10 > input_pic->width * input_pic->height);
 
     // IntraBC would force loop filters off, so we use more strict rules that also
     // requires that the block has high variance.
-    pcs_ptr->sc_class1 = pcs_ptr->sc_class0 &&
-        (counts_2 * blk_h * blk_w * 12 > input_picture_ptr->width * input_picture_ptr->height);
+    pcs->sc_class1 = pcs->sc_class0 &&
+        (counts_2 * blk_h * blk_w * 12 > input_pic->width * input_pic->height);
 
-    pcs_ptr->sc_class2 = pcs_ptr->sc_class1 ||
-        (counts_1 * blk_h * blk_w * 10 > input_picture_ptr->width * input_picture_ptr->height * 4 &&
-         counts_2 * blk_h * blk_w * 30 > input_picture_ptr->width * input_picture_ptr->height);
+    pcs->sc_class2 = pcs->sc_class1 ||
+        (counts_1 * blk_h * blk_w * 10 > input_pic->width * input_pic->height * 4 &&
+         counts_2 * blk_h * blk_w * 30 > input_pic->width * input_pic->height);
 }
 
 /************************************************
  * 1/4 & 1/16 input picture downsampling (filtering)
  ************************************************/
-void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
+void downsample_filtering_input_picture(PictureParentControlSet *pcs,
                                         EbPictureBufferDesc     *input_padded_picture_ptr,
                                         EbPictureBufferDesc     *quarter_picture_ptr,
                                         EbPictureBufferDesc     *sixteenth_picture_ptr) {
     // Downsample input picture for HME L0 and L1
-    if (pcs_ptr->enable_hme_flag || pcs_ptr->tf_enable_hme_flag) {
-        if (pcs_ptr->enable_hme_level1_flag || pcs_ptr->tf_enable_hme_level1_flag) {
+    if (pcs->enable_hme_flag || pcs->tf_enable_hme_flag) {
+        if (pcs->enable_hme_level1_flag || pcs->tf_enable_hme_level1_flag) {
             downsample_2d(
-                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x +
-                                                    input_padded_picture_ptr->origin_y *
+                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->org_x +
+                                                    input_padded_picture_ptr->org_y *
                                                         input_padded_picture_ptr->stride_y],
                 input_padded_picture_ptr->stride_y,
                 input_padded_picture_ptr->width,
                 input_padded_picture_ptr->height,
                 &quarter_picture_ptr
-                     ->buffer_y[quarter_picture_ptr->origin_x +
-                                quarter_picture_ptr->origin_x * quarter_picture_ptr->stride_y],
+                     ->buffer_y[quarter_picture_ptr->org_x +
+                                quarter_picture_ptr->org_x * quarter_picture_ptr->stride_y],
                 quarter_picture_ptr->stride_y,
                 2);
             generate_padding(&quarter_picture_ptr->buffer_y[0],
                              quarter_picture_ptr->stride_y,
                              quarter_picture_ptr->width,
                              quarter_picture_ptr->height,
-                             quarter_picture_ptr->origin_x,
-                             quarter_picture_ptr->origin_y);
+                             quarter_picture_ptr->org_x,
+                             quarter_picture_ptr->org_y);
         }
 
-        if (pcs_ptr->enable_hme_level0_flag || pcs_ptr->tf_enable_hme_level0_flag) {
+        if (pcs->enable_hme_level0_flag || pcs->tf_enable_hme_level0_flag) {
             // Sixteenth Input Picture Downsampling
-            if (pcs_ptr->enable_hme_level1_flag || pcs_ptr->tf_enable_hme_level1_flag)
+            if (pcs->enable_hme_level1_flag || pcs->tf_enable_hme_level1_flag)
                 downsample_2d(
                     &quarter_picture_ptr
-                         ->buffer_y[quarter_picture_ptr->origin_x +
-                                    quarter_picture_ptr->origin_y * quarter_picture_ptr->stride_y],
+                         ->buffer_y[quarter_picture_ptr->org_x +
+                                    quarter_picture_ptr->org_y * quarter_picture_ptr->stride_y],
                     quarter_picture_ptr->stride_y,
                     quarter_picture_ptr->width,
                     quarter_picture_ptr->height,
-                    &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x +
-                                                     sixteenth_picture_ptr->origin_x *
-                                                         sixteenth_picture_ptr->stride_y],
+                    &sixteenth_picture_ptr
+                         ->buffer_y[sixteenth_picture_ptr->org_x +
+                                    sixteenth_picture_ptr->org_x * sixteenth_picture_ptr->stride_y],
                     sixteenth_picture_ptr->stride_y,
                     2);
             else
                 downsample_2d(
-                    &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x +
-                                                        input_padded_picture_ptr->origin_y *
+                    &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->org_x +
+                                                        input_padded_picture_ptr->org_y *
                                                             input_padded_picture_ptr->stride_y],
                     input_padded_picture_ptr->stride_y,
                     input_padded_picture_ptr->width,
                     input_padded_picture_ptr->height,
-                    &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x +
-                                                     sixteenth_picture_ptr->origin_x *
-                                                         sixteenth_picture_ptr->stride_y],
+                    &sixteenth_picture_ptr
+                         ->buffer_y[sixteenth_picture_ptr->org_x +
+                                    sixteenth_picture_ptr->org_x * sixteenth_picture_ptr->stride_y],
                     sixteenth_picture_ptr->stride_y,
                     4);
 
@@ -2588,71 +2571,69 @@ void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
                              sixteenth_picture_ptr->stride_y,
                              sixteenth_picture_ptr->width,
                              sixteenth_picture_ptr->height,
-                             sixteenth_picture_ptr->origin_x,
-                             sixteenth_picture_ptr->origin_y);
+                             sixteenth_picture_ptr->org_x,
+                             sixteenth_picture_ptr->org_y);
         }
     }
 }
 
-void pad_input_pictures(SequenceControlSet *scs_ptr, EbPictureBufferDesc *input_picture_ptr) {
+void pad_input_pictures(SequenceControlSet *scs, EbPictureBufferDesc *input_pic) {
     // Pad pictures to multiple min cu size
     // For non-8 aligned case, like 426x240, padding to 432x240 first
-    pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, input_picture_ptr);
+    pad_picture_to_multiple_of_min_blk_size_dimensions(scs, input_pic);
 
-    generate_padding(input_picture_ptr->buffer_y,
-                     input_picture_ptr->stride_y,
-                     input_picture_ptr->width,
-                     input_picture_ptr->height,
-                     input_picture_ptr->origin_x,
-                     input_picture_ptr->origin_y);
+    generate_padding(input_pic->buffer_y,
+                     input_pic->stride_y,
+                     input_pic->width,
+                     input_pic->height,
+                     input_pic->org_x,
+                     input_pic->org_y);
 
-    uint32_t comp_stride_y  = input_picture_ptr->stride_y / 4;
-    uint32_t comp_stride_uv = input_picture_ptr->stride_cb / 4;
+    uint32_t comp_stride_y  = input_pic->stride_y / 4;
+    uint32_t comp_stride_uv = input_pic->stride_cb / 4;
 
-    if (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT)
-        if (input_picture_ptr->buffer_bit_inc_y)
-            generate_padding_compressed_10bit(input_picture_ptr->buffer_bit_inc_y,
+    if (scs->static_config.encoder_bit_depth > EB_EIGHT_BIT)
+        if (input_pic->buffer_bit_inc_y)
+            generate_padding_compressed_10bit(input_pic->buffer_bit_inc_y,
                                               comp_stride_y,
-                                              input_picture_ptr->width,
-                                              input_picture_ptr->height,
-                                              input_picture_ptr->origin_x,
-                                              input_picture_ptr->origin_y);
+                                              input_pic->width,
+                                              input_pic->height,
+                                              input_pic->org_x,
+                                              input_pic->org_y);
 
-    if (input_picture_ptr->buffer_cb)
-        generate_padding(input_picture_ptr->buffer_cb,
-                         input_picture_ptr->stride_cb,
-                         input_picture_ptr->width >> scs_ptr->subsampling_x,
-                         input_picture_ptr->height >> scs_ptr->subsampling_y,
-                         input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
-                         input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+    if (input_pic->buffer_cb)
+        generate_padding(input_pic->buffer_cb,
+                         input_pic->stride_cb,
+                         input_pic->width >> scs->subsampling_x,
+                         input_pic->height >> scs->subsampling_y,
+                         input_pic->org_x >> scs->subsampling_x,
+                         input_pic->org_y >> scs->subsampling_y);
 
-    if (input_picture_ptr->buffer_cr)
-        generate_padding(input_picture_ptr->buffer_cr,
-                         input_picture_ptr->stride_cr,
-                         input_picture_ptr->width >> scs_ptr->subsampling_x,
-                         input_picture_ptr->height >> scs_ptr->subsampling_y,
-                         input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
-                         input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+    if (input_pic->buffer_cr)
+        generate_padding(input_pic->buffer_cr,
+                         input_pic->stride_cr,
+                         input_pic->width >> scs->subsampling_x,
+                         input_pic->height >> scs->subsampling_y,
+                         input_pic->org_x >> scs->subsampling_x,
+                         input_pic->org_y >> scs->subsampling_y);
 
     // PAD the bit inc buffer in 10bit
-    if (scs_ptr->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
-        if (input_picture_ptr->buffer_bit_inc_cb)
-            generate_padding_compressed_10bit(
-                input_picture_ptr->buffer_bit_inc_cb,
-                comp_stride_uv,
-                input_picture_ptr->width >> scs_ptr->subsampling_x,
-                input_picture_ptr->height >> scs_ptr->subsampling_y,
-                input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
-                input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+    if (scs->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
+        if (input_pic->buffer_bit_inc_cb)
+            generate_padding_compressed_10bit(input_pic->buffer_bit_inc_cb,
+                                              comp_stride_uv,
+                                              input_pic->width >> scs->subsampling_x,
+                                              input_pic->height >> scs->subsampling_y,
+                                              input_pic->org_x >> scs->subsampling_x,
+                                              input_pic->org_y >> scs->subsampling_y);
 
-        if (input_picture_ptr->buffer_bit_inc_cr)
-            generate_padding_compressed_10bit(
-                input_picture_ptr->buffer_bit_inc_cr,
-                comp_stride_uv,
-                input_picture_ptr->width >> scs_ptr->subsampling_x,
-                input_picture_ptr->height >> scs_ptr->subsampling_y,
-                input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
-                input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+        if (input_pic->buffer_bit_inc_cr)
+            generate_padding_compressed_10bit(input_pic->buffer_bit_inc_cr,
+                                              comp_stride_uv,
+                                              input_pic->width >> scs->subsampling_x,
+                                              input_pic->height >> scs->subsampling_y,
+                                              input_pic->org_x >> scs->subsampling_x,
+                                              input_pic->org_y >> scs->subsampling_y);
     }
 }
 
@@ -2682,8 +2663,8 @@ void pad_input_pictures(SequenceControlSet *scs_ptr, EbPictureBufferDesc *input_
 void *picture_analysis_kernel(void *input_ptr) {
     EbThreadContext         *thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureAnalysisContext  *context_ptr = (PictureAnalysisContext *)thread_context_ptr->priv;
-    PictureParentControlSet *pcs_ptr;
-    SequenceControlSet      *scs_ptr;
+    PictureParentControlSet *pcs;
+    SequenceControlSet      *scs;
 
     EbObjectWrapper             *in_results_wrapper_ptr;
     ResourceCoordinationResults *in_results_ptr;
@@ -2691,7 +2672,7 @@ void *picture_analysis_kernel(void *input_ptr) {
     EbPaReferenceObject         *pa_ref_obj_;
 
     EbPictureBufferDesc *input_padded_picture_ptr;
-    EbPictureBufferDesc *input_picture_ptr;
+    EbPictureBufferDesc *input_pic;
 
     for (;;) {
         // Get Input Full Object
@@ -2699,98 +2680,94 @@ void *picture_analysis_kernel(void *input_ptr) {
                            &in_results_wrapper_ptr);
 
         in_results_ptr = (ResourceCoordinationResults *)in_results_wrapper_ptr->object_ptr;
-        pcs_ptr        = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr        = pcs_ptr->scs_ptr;
+        pcs            = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
+        scs            = pcs->scs;
 
         // Mariana : save enhanced picture ptr, move this from here
-        pcs_ptr->enhanced_unscaled_picture_ptr                    = pcs_ptr->enhanced_picture_ptr;
-        pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
+        pcs->enhanced_unscaled_picture_ptr                    = pcs->enhanced_picture_ptr;
+        pcs->enhanced_unscaled_picture_ptr->is_16bit_pipeline = scs->is_16bit_pipeline;
 
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
-        if (!pcs_ptr->is_overlay) {
-            input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-            int copy_frame    = 1;
-            if (pcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 1)
-                copy_frame = (((pcs_ptr->picture_number % 8) == 0) ||
-                              ((pcs_ptr->picture_number % 8) == 6) ||
-                              ((pcs_ptr->picture_number % 8) == 7));
-            else if (pcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 2)
-                copy_frame = ((pcs_ptr->picture_number < 7) ||
-                              ((pcs_ptr->picture_number % 8) == 0) ||
-                              ((pcs_ptr->picture_number % 8) == 6) ||
-                              ((pcs_ptr->picture_number % 8) == 7));
+        if (!pcs->is_overlay) {
+            input_pic      = pcs->enhanced_picture_ptr;
+            int copy_frame = 1;
+            if (pcs->scs->ipp_pass_ctrls.skip_frame_first_pass == 1)
+                copy_frame = (((pcs->picture_number % 8) == 0) ||
+                              ((pcs->picture_number % 8) == 6) || ((pcs->picture_number % 8) == 7));
+            else if (pcs->scs->ipp_pass_ctrls.skip_frame_first_pass == 2)
+                copy_frame = ((pcs->picture_number < 7) || ((pcs->picture_number % 8) == 0) ||
+                              ((pcs->picture_number % 8) == 6) || ((pcs->picture_number % 8) == 7));
             // Bypass copy for the unecessary picture in IPPP pass
-            if (scs_ptr->static_config.pass != ENC_FIRST_PASS || copy_frame) {
+            if (scs->static_config.pass != ENC_FIRST_PASS || copy_frame) {
                 // Padding for input pictures
-                pad_input_pictures(scs_ptr, input_picture_ptr);
+                pad_input_pictures(scs, input_pic);
 
                 // Pre processing operations performed on the input picture
-                picture_pre_processing_operations(pcs_ptr, scs_ptr);
+                picture_pre_processing_operations(pcs, scs);
 
-                if (input_picture_ptr->color_format >= EB_YUV422) {
+                if (input_pic->color_format >= EB_YUV422) {
                     // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
                     //       Reuse the Y, only add cb/cr in the newly created buffer desc
                     //       NOTE: since denoise may change the src, so this part is after picture_pre_processing_operations()
-                    pcs_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
-                    down_sample_chroma(input_picture_ptr, pcs_ptr->chroma_downsampled_picture_ptr);
+                    pcs->chroma_downsampled_picture_ptr->buffer_y = input_pic->buffer_y;
+                    down_sample_chroma(input_pic, pcs->chroma_downsampled_picture_ptr);
                 } else
-                    pcs_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
+                    pcs->chroma_downsampled_picture_ptr = input_pic;
 
                 //not passing through the DS pool, so 1/4 and 1/16 are not used
-                pcs_ptr->ds_pics.picture_ptr           = input_picture_ptr;
-                pcs_ptr->ds_pics.quarter_picture_ptr   = NULL;
-                pcs_ptr->ds_pics.sixteenth_picture_ptr = NULL;
-                pcs_ptr->ds_pics.picture_number        = pcs_ptr->picture_number;
+                pcs->ds_pics.picture_ptr           = input_pic;
+                pcs->ds_pics.quarter_picture_ptr   = NULL;
+                pcs->ds_pics.sixteenth_picture_ptr = NULL;
+                pcs->ds_pics.picture_number        = pcs->picture_number;
 
                 // Original path
                 // Get PA ref, copy 8bit luma to pa_ref->input_padded_picture_ptr
                 pa_ref_obj_ = (EbPaReferenceObject *)
-                                  pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-                pa_ref_obj_->picture_number = pcs_ptr->picture_number;
+                                  pcs->pa_reference_picture_wrapper_ptr->object_ptr;
+                pa_ref_obj_->picture_number = pcs->picture_number;
                 input_padded_picture_ptr    = (EbPictureBufferDesc *)
                                                pa_ref_obj_->input_padded_picture_ptr;
 
                 // 1/4 & 1/16 input picture downsampling through filtering
-                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
                     downsample_filtering_input_picture(
-                        pcs_ptr,
+                        pcs,
                         input_padded_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
                 } else {
                     downsample_decimation_input_picture(
-                        pcs_ptr,
+                        pcs,
                         input_padded_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
                 }
 
-                pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_downsampled_picture_ptr;
-                pcs_ptr->ds_pics.sixteenth_picture_ptr =
-                    pa_ref_obj_->sixteenth_downsampled_picture_ptr;
+                pcs->ds_pics.quarter_picture_ptr   = pa_ref_obj_->quarter_downsampled_picture_ptr;
+                pcs->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_downsampled_picture_ptr;
             }
             // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
-            if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
+            if (scs->static_config.pass != ENC_FIRST_PASS)
                 gathering_picture_statistics(
-                    scs_ptr,
-                    pcs_ptr,
+                    scs,
+                    pcs,
                     input_padded_picture_ptr,
                     (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
 
             // If running multi-threaded mode, perform SC detection in picture_analysis_kernel, else in picture_decision_kernel
-            if (scs_ptr->static_config.logical_processors != 1) {
-                if ((scs_ptr->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {
-                    pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
-                } else if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
+            if (scs->static_config.logical_processors != 1) {
+                if ((scs->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {
+                    pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
+                } else if (scs->static_config.screen_content_mode == 2) { // auto detect
                     // SC Detection is OFF for 4K and higher
-                    if (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
-                        is_screen_content(pcs_ptr);
+                    if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        is_screen_content(pcs);
                     else
-                        pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
+                        pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
 
                 } else // off / on
-                    pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 =
-                        scs_ptr->static_config.screen_content_mode;
+                    pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 =
+                        scs->static_config.screen_content_mode;
             }
         }
         // Get Empty Results Object

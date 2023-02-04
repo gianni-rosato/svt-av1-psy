@@ -47,7 +47,7 @@ extern "C" {
 // BDP OFF
 #define MD_NEIGHBOR_ARRAY_INDEX 0
 #define MULTI_STAGE_PD_NEIGHBOR_ARRAY_INDEX 4
-#define NEIGHBOR_ARRAY_TOTAL_COUNT 5
+#define NA_TOT_CNT 5
 #define AOM_QM_BITS 5
 
 typedef struct DepCntPicInfo {
@@ -229,7 +229,7 @@ typedef struct EncDecSet {
     EbPictureBufferDesc            *recon_picture16bit_ptr;
     EbPictureBufferDesc           **quantized_coeff;
     EbObjectWrapper                *enc_dec_wrapper_ptr;
-    struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
+    struct PictureParentControlSet *ppcs; //The parent of this PCS.
     EbObjectWrapper                *picture_parent_control_set_wrapper_ptr;
     uint16_t                        b64_total_count;
 } EncDecSet;
@@ -245,10 +245,10 @@ typedef struct PicVqCtrls {
 typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor                    dctor;
-    struct SequenceControlSet *scs_ptr;
+    struct SequenceControlSet *scs;
     EbPictureBufferDesc       *input_frame16bit;
 
-    struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
+    struct PictureParentControlSet *ppcs; //The parent of this PCS.
     EbObjectWrapper                *picture_parent_control_set_wrapper_ptr;
     // Packetization (used to encode SPS, PPS, etc)
     Bitstream *bitstream_ptr;
@@ -313,33 +313,32 @@ typedef struct PictureControlSet {
     uint8_t *
         b64_me_qindex; // qindex per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)
     // Mode Decision Neighbor Arrays
-    NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_skip_flag_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_mode_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_tx_depth_1_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_tx_depth_2_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_cb_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_cr_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+    NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_skip_flag_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_mode_type_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_luma_recon_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_tx_depth_1_luma_recon_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_tx_depth_2_luma_recon_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_cb_recon_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_cr_recon_neighbor_array[NA_TOT_CNT];
 
-    uint8_t             hbd_mode_decision;
-    NeighborArrayUnit **md_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_tx_depth_1_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_tx_depth_2_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_cb_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_cr_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *
-        *md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_cb_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_cr_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_txfm_context_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_skip_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit **md_ref_frame_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+    uint8_t             hbd_md;
+    NeighborArrayUnit **md_luma_recon_neighbor_array16bit[NA_TOT_CNT];
+    NeighborArrayUnit **md_tx_depth_1_luma_recon_neighbor_array16bit[NA_TOT_CNT];
+    NeighborArrayUnit **md_tx_depth_2_luma_recon_neighbor_array16bit[NA_TOT_CNT];
+    NeighborArrayUnit **md_cb_recon_neighbor_array16bit[NA_TOT_CNT];
+    NeighborArrayUnit **md_cr_recon_neighbor_array16bit[NA_TOT_CNT];
+    NeighborArrayUnit **md_y_dcs_na[NA_TOT_CNT];
+    NeighborArrayUnit **md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_cb_dc_sign_level_coeff_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_cr_dc_sign_level_coeff_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_txfm_context_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_skip_coeff_neighbor_array[NA_TOT_CNT];
+    NeighborArrayUnit **md_ref_frame_type_neighbor_array[NA_TOT_CNT];
 
-    NeighborArrayUnit32 **md_interpolation_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+    NeighborArrayUnit32 **md_interpolation_type_neighbor_array[NA_TOT_CNT];
 
-    NeighborArrayUnit **mdleaf_partition_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+    NeighborArrayUnit **mdleaf_partition_neighbor_array[NA_TOT_CNT];
 
     // Encode Pass Neighbor Arrays
     NeighborArrayUnit **ep_intra_luma_mode_neighbor_array;
@@ -401,7 +400,7 @@ typedef struct PictureControlSet {
     uint8_t  inter_compound_mode;
     uint8_t  dist_based_ref_pruning;
     uint8_t  spatial_sse_full_loop_level;
-    uint8_t  parent_sq_coeff_area_based_cycles_reduction_level;
+    uint8_t  psq_cplx_lvl;
     uint32_t sq_weight;
     uint32_t max_part0_to_part1_dev;
     uint32_t
@@ -480,8 +479,8 @@ typedef struct PictureControlSet {
 typedef struct B64Geom {
     uint8_t  horizontal_index;
     uint8_t  vertical_index;
-    uint16_t origin_x;
-    uint16_t origin_y;
+    uint16_t org_x;
+    uint16_t org_y;
     uint8_t  width;
     uint8_t  height;
     uint8_t  is_complete_b64;
@@ -496,8 +495,8 @@ typedef struct B64Geom {
 typedef struct SbGeom {
     uint16_t horizontal_index;
     uint16_t vertical_index;
-    uint16_t origin_x;
-    uint16_t origin_y;
+    uint16_t org_x;
+    uint16_t org_y;
     uint8_t  width;
     uint8_t  height;
     uint8_t  is_complete_sb;
@@ -701,13 +700,13 @@ typedef struct PictureParentControlSet {
         *chroma_downsampled_picture_ptr; //if 422/444 input, down sample to 420 for MD
     Bool is_chroma_downsampled_picture_ptr_owner;
     PredictionStructure       *pred_struct_ptr; // need to check
-    struct SequenceControlSet *scs_ptr;
+    struct SequenceControlSet *scs;
     EbObjectWrapper           *p_pcs_wrapper_ptr;
     EbObjectWrapper           *previous_picture_control_set_wrapper_ptr;
     EbObjectWrapper           *output_stream_wrapper_ptr;
     Av1Common                 *av1_cm;
 
-    uint8_t hbd_mode_decision;
+    uint8_t hbd_md;
     // Data attached to the picture. This includes data passed from the application, or other data the encoder attaches
     // to the picture.
     EbLinkedListNode *data_ll_head_ptr;
@@ -1093,7 +1092,7 @@ typedef struct TplDispResults {
     uint32_t                 input_type;
     int16_t                  enc_dec_segment_row;
     uint16_t                 tile_group_index;
-    PictureParentControlSet *pcs_ptr;
+    PictureParentControlSet *pcs;
     int32_t                  qIndex;
 
 } TplDispResults;
@@ -1121,7 +1120,7 @@ typedef struct PictureControlSetInitData {
     EncMode                  enc_mode;
     EbSvtAv1EncConfiguration static_config;
     uint8_t                  speed_control;
-    int8_t                   hbd_mode_decision;
+    int8_t                   hbd_md;
     uint8_t                  cdf_mode;
     uint8_t                  over_boundary_block_mode;
     uint8_t                  mfmv;
@@ -1186,8 +1185,8 @@ extern EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr)
 extern EbErrorType me_sb_results_ctor(MeSbResults               *obj_ptr,
                                       PictureControlSetInitData *init_data_ptr);
 
-extern void    set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
-extern uint8_t derive_gm_level(PictureParentControlSet *pcs_ptr);
+extern void    set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
+extern uint8_t derive_gm_level(PictureParentControlSet *pcs);
 
 extern Bool is_pic_skipped(PictureParentControlSet *pcs);
 

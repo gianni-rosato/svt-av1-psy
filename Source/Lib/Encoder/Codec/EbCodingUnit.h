@@ -407,15 +407,15 @@ typedef struct TplSrcStats {
 } TplSrcStats;
 typedef struct SuperBlock {
     EbDctor                   dctor;
-    struct PictureControlSet *pcs_ptr;
+    struct PictureControlSet *pcs;
 
     BlkStruct *final_blk_arr;
     //for memory free only
     MacroBlockD   *av1xd;
     PartitionType *cu_partition_array;
     unsigned       index : 32;
-    unsigned       origin_x : 32;
-    unsigned       origin_y : 32;
+    unsigned       org_x : 32;
+    unsigned       org_y : 32;
     uint8_t        qindex;
     TileInfo       tile_info;
     uint16_t       final_blk_cnt; // number of block(s) posted from EncDec to EC

@@ -124,51 +124,48 @@ void lr_pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr,
 
     if (recon_picture_buf->bit_depth == EB_EIGHT_BIT && (!recon_picture_buf->is_16bit_pipeline)) {
         // Y samples
-        lr_generate_padding(recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
-                                recon_picture_buf->stride_y * recon_picture_buf->origin_y,
+        lr_generate_padding(recon_picture_buf->buffer_y + recon_picture_buf->org_x +
+                                recon_picture_buf->stride_y * recon_picture_buf->org_y,
                             recon_picture_buf->stride_y,
                             frame_size->superres_upscaled_width,
                             frame_size->frame_height);
 
         if (recon_picture_buf->color_format != EB_YUV400) {
             // Cb samples
-            lr_generate_padding(
-                recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
-                    recon_picture_buf->stride_cb * (recon_picture_buf->origin_y >> sy),
-                recon_picture_buf->stride_cb,
-                (frame_size->superres_upscaled_width + sx) >> sx,
-                (frame_size->frame_height + sy) >> sy);
+            lr_generate_padding(recon_picture_buf->buffer_cb + (recon_picture_buf->org_x >> sx) +
+                                    recon_picture_buf->stride_cb * (recon_picture_buf->org_y >> sy),
+                                recon_picture_buf->stride_cb,
+                                (frame_size->superres_upscaled_width + sx) >> sx,
+                                (frame_size->frame_height + sy) >> sy);
 
             // Cr samples
-            lr_generate_padding(
-                recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
-                    recon_picture_buf->stride_cr * (recon_picture_buf->origin_y >> sy),
-                recon_picture_buf->stride_cr,
-                (frame_size->superres_upscaled_width + sx) >> sx,
-                (frame_size->frame_height + sy) >> sy);
+            lr_generate_padding(recon_picture_buf->buffer_cr + (recon_picture_buf->org_x >> sx) +
+                                    recon_picture_buf->stride_cr * (recon_picture_buf->org_y >> sy),
+                                recon_picture_buf->stride_cr,
+                                (frame_size->superres_upscaled_width + sx) >> sx,
+                                (frame_size->frame_height + sy) >> sy);
         }
     } else {
         // Y samples
-        lr_generate_padding16_bit(
-            recon_picture_buf->buffer_y + (recon_picture_buf->origin_x << 1) +
-                (recon_picture_buf->stride_y << 1) * recon_picture_buf->origin_y,
-            recon_picture_buf->stride_y << 1,
-            frame_size->superres_upscaled_width << 1,
-            frame_size->frame_height);
+        lr_generate_padding16_bit(recon_picture_buf->buffer_y + (recon_picture_buf->org_x << 1) +
+                                      (recon_picture_buf->stride_y << 1) * recon_picture_buf->org_y,
+                                  recon_picture_buf->stride_y << 1,
+                                  frame_size->superres_upscaled_width << 1,
+                                  frame_size->frame_height);
 
         if (recon_picture_buf->color_format != EB_YUV400) {
             // Cb samples
             lr_generate_padding16_bit(
-                recon_picture_buf->buffer_cb + ((recon_picture_buf->origin_x >> sx) << 1) +
-                    (recon_picture_buf->stride_cb << 1) * (recon_picture_buf->origin_y >> sy),
+                recon_picture_buf->buffer_cb + ((recon_picture_buf->org_x >> sx) << 1) +
+                    (recon_picture_buf->stride_cb << 1) * (recon_picture_buf->org_y >> sy),
                 recon_picture_buf->stride_cb << 1,
                 ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
                 (frame_size->frame_height + sy) >> sy);
 
             // Cr samples
             lr_generate_padding16_bit(
-                recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx << 1) +
-                    (recon_picture_buf->stride_cr << 1) * (recon_picture_buf->origin_y >> sy),
+                recon_picture_buf->buffer_cr + (recon_picture_buf->org_x >> sx << 1) +
+                    (recon_picture_buf->stride_cr << 1) * (recon_picture_buf->org_y >> sy),
                 recon_picture_buf->stride_cr << 1,
                 ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
                 (frame_size->frame_height + sy) >> sy);

@@ -74,8 +74,8 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
     uint32_t height_y = (picture_buffer_desc_init_data_ptr->max_height + picture_buffer_desc_init_data_ptr->top_padding
         + picture_buffer_desc_init_data_ptr->bot_padding);
 
-    picture_buffer_desc_ptr->origin_x = picture_buffer_desc_init_data_ptr->left_padding;
-    picture_buffer_desc_ptr->origin_y = picture_buffer_desc_init_data_ptr->top_padding;
+    picture_buffer_desc_ptr->org_x = picture_buffer_desc_init_data_ptr->left_padding;
+    picture_buffer_desc_ptr->org_y = picture_buffer_desc_init_data_ptr->top_padding;
     picture_buffer_desc_ptr->origin_bot_y = picture_buffer_desc_init_data_ptr->bot_padding;
 
     picture_buffer_desc_ptr->luma_size = (picture_buffer_desc_ptr->stride_y) * height_y;

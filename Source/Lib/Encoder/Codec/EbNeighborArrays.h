@@ -136,12 +136,11 @@ void update_recon_neighbor_array16bit(NeighborArrayUnit *na_unit_ptr, uint16_t *
                                       uint32_t pic_origin_y, uint32_t block_width,
                                       uint32_t block_height);
 
-void copy_neigh_arr(NeighborArrayUnit *na_src, NeighborArrayUnit *na_dst, uint32_t origin_x,
-                    uint32_t origin_y, uint32_t bw, uint32_t bh, uint32_t neighbor_array_type_mask);
+void copy_neigh_arr(NeighborArrayUnit *na_src, NeighborArrayUnit *na_dst, uint32_t org_x,
+                    uint32_t org_y, uint32_t bw, uint32_t bh, uint32_t neighbor_array_type_mask);
 
-void copy_neigh_arr_32(NeighborArrayUnit32 *na_src, NeighborArrayUnit32 *na_dst, uint32_t origin_x,
-                       uint32_t origin_y, uint32_t bw, uint32_t bh,
-                       uint32_t neighbor_array_type_mask);
+void copy_neigh_arr_32(NeighborArrayUnit32 *na_src, NeighborArrayUnit32 *na_dst, uint32_t org_x,
+                       uint32_t org_y, uint32_t bw, uint32_t bh, uint32_t neighbor_array_type_mask);
 
 extern void neighbor_array_unit16bit_sample_write(NeighborArrayUnit *na_unit_ptr, uint16_t *src_ptr,
                                                   uint32_t stride, uint32_t src_origin_x,
@@ -151,13 +150,13 @@ extern void neighbor_array_unit16bit_sample_write(NeighborArrayUnit *na_unit_ptr
                                                   uint32_t neighbor_array_type_mask);
 
 extern void neighbor_array_unit_mode_write32(NeighborArrayUnit32 *na_unit_ptr, uint32_t value,
-                                             uint32_t origin_x, uint32_t origin_y,
-                                             uint32_t block_width, uint32_t block_height,
+                                             uint32_t org_x, uint32_t org_y, uint32_t block_width,
+                                             uint32_t block_height,
                                              uint32_t neighbor_array_type_mask);
 
 extern void neighbor_array_unit_mode_write(NeighborArrayUnit *na_unit_ptr, uint8_t *value,
-                                           uint32_t origin_x, uint32_t origin_y,
-                                           uint32_t block_width, uint32_t block_height,
+                                           uint32_t org_x, uint32_t org_y, uint32_t block_width,
+                                           uint32_t block_height,
                                            uint32_t neighbor_array_type_mask);
 #ifdef __cplusplus
 }

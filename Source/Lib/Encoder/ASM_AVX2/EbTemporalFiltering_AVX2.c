@@ -217,7 +217,7 @@ static AOM_FORCE_INLINE __m256 exp_256_ps(__m256 _x) {
     return r;
 }
 
-static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const uint8_t *frame1,
+static void apply_temporal_filter_planewise(struct MeContext *me_ctx, const uint8_t *frame1,
                                             const unsigned int stride, const uint8_t *frame2,
                                             const unsigned int stride2, const int block_width,
                                             const int block_height, unsigned int *accumulator,
@@ -282,13 +282,13 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
         }
     }
 
-    int32_t  idx_32x32      = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
+    int32_t  idx_32x32      = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
     uint32_t num_ref_pixels = TF_PLANEWISE_FILTER_WINDOW_LENGTH * TF_PLANEWISE_FILTER_WINDOW_LENGTH;
 
     if (plane != PLANE_TYPE_Y) {
         num_ref_pixels += (1 << ss_y_shift) * (1 << ss_x_shift);
 
-        if (context_ptr->tf_ctrls.use_fixed_point && (ss_x_shift == 1) && (ss_y_shift == 1)) {
+        if (me_ctx->tf_ctrls.use_fixed_point && (ss_x_shift == 1) && (ss_y_shift == 1)) {
             for (int i = 0; i < block_height; i++) {
                 int yy = (i << 1);
                 for (int j = 0; j < block_width; j += 4) {
@@ -339,15 +339,15 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
     __m256d blk_errors[4];
     __m256d d_factor_mul_n_decay_qr_invs[4];
 
-    if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+    if (me_ctx->tf_32x32_block_split_flag[idx_32x32]) {
         for (int i = 0; i < 4; i++) {
-            if (context_ptr->tf_ctrls.use_fixed_point) {
+            if (me_ctx->tf_ctrls.use_fixed_point) {
                 uint32_t block_error_fp8 = (uint32_t)
-                                               context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i];
-                int32_t  col          = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + i];
-                int32_t  row          = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + i];
+                                               me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i];
+                int32_t  col          = me_ctx->tf_16x16_mv_x[idx_32x32 * 4 + i];
+                int32_t  row          = me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + i];
                 uint32_t distance_fp4 = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
-                uint32_t distance_threshold_fp16 = AOMMAX((context_ptr->min_frame_size << 16) / 10,
+                uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->min_frame_size << 16) / 10,
                                                           1 << 16);
 
                 int32_t d_factor_fp12 = AOMMAX(
@@ -359,12 +359,12 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
                     (int32_t)((((int64_t)d_factor_fp12) *
                                ((block_error_fp8 + ((TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1) / 2)) /
                                 (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1))) /
-                              ((context_ptr->tf_decay_factor_fp16[plane])));
+                              ((me_ctx->tf_decay_factor_fp16[plane])));
 
                 int32_t scaled_diff_A1_factor_fp14 =
                     (int32_t)(((((int64_t)d_factor_fp12) << 16) * TF_WINDOW_BLOCK_BALANCE_WEIGHT +
-                               (context_ptr->tf_decay_factor_fp16[plane] >> 3)) /
-                              (context_ptr->tf_decay_factor_fp16[plane] >> 2));
+                               (me_ctx->tf_decay_factor_fp16[plane] >> 3)) /
+                              (me_ctx->tf_decay_factor_fp16[plane] >> 2));
 
                 int32_t scaled_diff_A2_factor_fp10 =
                     ((1 << 10) + ((TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1) * num_ref_pixels) / 2) /
@@ -391,29 +391,27 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
                 move_arr[i]                       = move;
             } else {
                 blk_errors[i] = _mm256_set1_pd(
-                    (double)context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] / 256.0);
+                    (double)me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] / 256.0);
 
-                int16_t col      = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + i];
-                int16_t row      = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + i];
+                int16_t col      = me_ctx->tf_16x16_mv_x[idx_32x32 * 4 + i];
+                int16_t row      = me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + i];
                 float   distance = sqrtf((float)(row * row + col * col));
                 double  d_factor = AOMMAX(
                     distance *
                         (1.0 /
-                         (double)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD,
-                                        1)),
+                         (double)AOMMAX(me_ctx->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1)),
                     1);
                 d_factor_mul_n_decay_qr_invs[i] = _mm256_set1_pd(
-                    d_factor * (1.0 / context_ptr->tf_decay_factor[plane]));
+                    d_factor * (1.0 / me_ctx->tf_decay_factor[plane]));
             }
         }
     } else {
-        if (context_ptr->tf_ctrls.use_fixed_point) {
-            uint32_t block_error_fp8 = (uint32_t)context_ptr->tf_32x32_block_error[idx_32x32] >> 2;
-            int32_t  col             = context_ptr->tf_32x32_mv_x[idx_32x32];
-            int32_t  row             = context_ptr->tf_32x32_mv_y[idx_32x32];
+        if (me_ctx->tf_ctrls.use_fixed_point) {
+            uint32_t block_error_fp8 = (uint32_t)me_ctx->tf_32x32_block_error[idx_32x32] >> 2;
+            int32_t  col             = me_ctx->tf_32x32_mv_x[idx_32x32];
+            int32_t  row             = me_ctx->tf_32x32_mv_y[idx_32x32];
             uint32_t distance_fp4    = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
-            uint32_t distance_threshold_fp16 = AOMMAX((context_ptr->min_frame_size << 16) / 10,
-                                                      1 << 16);
+            uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->min_frame_size << 16) / 10, 1 << 16);
 
             int32_t d_factor_fp12 = AOMMAX(
                 (int32_t)(((((int64_t)distance_fp4) << 24) + (distance_threshold_fp16 >> 1)) /
@@ -424,12 +422,12 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
                                                    ((block_error_fp8 +
                                                      ((TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1) / 2)) /
                                                     (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1))) /
-                                                  ((context_ptr->tf_decay_factor_fp16[plane])));
+                                                  ((me_ctx->tf_decay_factor_fp16[plane])));
 
             int32_t scaled_diff_A1_factor_fp14 =
                 (int32_t)(((((int64_t)d_factor_fp12) << 16) * TF_WINDOW_BLOCK_BALANCE_WEIGHT +
-                           (context_ptr->tf_decay_factor_fp16[plane] >> 3)) /
-                          (context_ptr->tf_decay_factor_fp16[plane] >> 2));
+                           (me_ctx->tf_decay_factor_fp16[plane] >> 3)) /
+                          (me_ctx->tf_decay_factor_fp16[plane] >> 2));
 
             int32_t scaled_diff_A2_factor_fp10 =
                 ((1 << 10) + ((TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1) * num_ref_pixels) / 2) /
@@ -457,18 +455,18 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
                 move_arr[i]                       = move;
             }
         } else {
-            double      block_error = (double)context_ptr->tf_32x32_block_error[idx_32x32] / 1024.0;
-            int16_t     col         = context_ptr->tf_32x32_mv_x[idx_32x32];
-            int16_t     row         = context_ptr->tf_32x32_mv_y[idx_32x32];
-            const float distance    = sqrtf((float)(row * row + col * col));
-            const double d_factor   = AOMMAX(
+            double       block_error = (double)me_ctx->tf_32x32_block_error[idx_32x32] / 1024.0;
+            int16_t      col         = me_ctx->tf_32x32_mv_x[idx_32x32];
+            int16_t      row         = me_ctx->tf_32x32_mv_y[idx_32x32];
+            const float  distance    = sqrtf((float)(row * row + col * col));
+            const double d_factor    = AOMMAX(
                 distance *
                     (1.0 /
-                     (double)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1)),
+                     (double)AOMMAX(me_ctx->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1)),
                 1);
 
             const double d_factor_mul_n_decay_qr_inv = d_factor *
-                (1.0 / context_ptr->tf_decay_factor[plane]);
+                (1.0 / me_ctx->tf_decay_factor[plane]);
 
             for (int i = 0; i < 4; i++) {
                 blk_errors[i]                   = _mm256_set1_pd(block_error);
@@ -481,7 +479,7 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
         const int subblock_idx_h = (i >= block_height / 2) * 2;
         for (int j = 0; j < block_width; j += 8) {
             __m256i adjusted_weight1;
-            if (context_ptr->tf_ctrls.use_fixed_point) {
+            if (me_ctx->tf_ctrls.use_fixed_point) {
                 const int subblock_idx = subblock_idx_h + (j >= block_width / 2);
 
                 __m256i diff_sse = _mm256_loadu_si256((__m256i *)(acc_5x5_sse[i] + j));
@@ -589,7 +587,7 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
 }
 
 void svt_av1_apply_temporal_filter_planewise_avx2(
-    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+    struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
     const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count,
@@ -600,7 +598,7 @@ void svt_av1_apply_temporal_filter_planewise_avx2(
     assert(block_width % 16 == 0 && "block width must be multiple of 16");
     assert(block_height % 2 == 0 && "block height must be even");
     assert((ss_x == 0 || ss_x == 1) && (ss_y == 0 || ss_y == 1) && "invalid chroma subsampling");
-    const int num_planes = context_ptr->tf_chroma ? 3 : 1;
+    const int num_planes = me_ctx->tf_chroma ? 3 : 1;
     uint16_t  luma_sq_error[SSE_STRIDE * BH];
     uint16_t  chroma_sq_error[SSE_STRIDE * BH];
 
@@ -618,7 +616,7 @@ void svt_av1_apply_temporal_filter_planewise_avx2(
         uint32_t *accum = plane == 0 ? y_accum : plane == 1 ? u_accum : v_accum;
         uint16_t *count = plane == 0 ? y_count : plane == 1 ? u_count : v_count;
 
-        apply_temporal_filter_planewise(context_ptr,
+        apply_temporal_filter_planewise(me_ctx,
                                         ref,
                                         src_stride,
                                         pred,
@@ -737,13 +735,13 @@ static AOM_FORCE_INLINE __m256i xx_load_and_pad_hbd(uint32_t *src, int col, int 
     return v256tmp;
 }
 
-static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
-                                                const uint16_t *frame1, const unsigned int stride,
-                                                const uint16_t *frame2, const unsigned int stride2,
-                                                const int block_width, const int block_height,
-                                                unsigned int *accumulator, uint16_t *count,
-                                                uint32_t *luma_sq_error, uint32_t *chroma_sq_error,
-                                                int plane, int ss_x_shift, int ss_y_shift,
+static void apply_temporal_filter_planewise_hbd(struct MeContext *me_ctx, const uint16_t *frame1,
+                                                const unsigned int stride, const uint16_t *frame2,
+                                                const unsigned int stride2, const int block_width,
+                                                const int block_height, unsigned int *accumulator,
+                                                uint16_t *count, uint32_t *luma_sq_error,
+                                                uint32_t *chroma_sq_error, int plane,
+                                                int ss_x_shift, int ss_y_shift,
                                                 uint32_t encoder_bit_depth) {
     assert(TF_PLANEWISE_FILTER_WINDOW_LENGTH == 5);
     assert(((block_width == 32) && (block_height == 32)) ||
@@ -802,14 +800,14 @@ static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
         }
     }
 
-    int32_t  idx_32x32      = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
+    int32_t  idx_32x32      = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
     uint32_t num_ref_pixels = TF_PLANEWISE_FILTER_WINDOW_LENGTH * TF_PLANEWISE_FILTER_WINDOW_LENGTH;
     int      shift_factor   = ((encoder_bit_depth - 8) * 2);
 
     if (plane != PLANE_TYPE_Y) {
         num_ref_pixels += (1 << ss_y_shift) * (1 << ss_x_shift);
 
-        if (context_ptr->tf_ctrls.use_fixed_point && (ss_x_shift == 1) && (ss_y_shift == 1)) {
+        if (me_ctx->tf_ctrls.use_fixed_point && (ss_x_shift == 1) && (ss_y_shift == 1)) {
             for (int i = 0; i < block_height; i++) {
                 int yy = (i << 1);
                 for (int j = 0; j < block_width; j += 4) {
@@ -860,15 +858,15 @@ static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
     __m256d blk_errors[4];
     __m256d d_factor_mul_n_decay_qr_invs[4];
 
-    if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+    if (me_ctx->tf_32x32_block_split_flag[idx_32x32]) {
         for (int i = 0; i < 4; i++) {
-            if (context_ptr->tf_ctrls.use_fixed_point) {
+            if (me_ctx->tf_ctrls.use_fixed_point) {
                 uint32_t block_error_fp8 =
-                    (uint32_t)(context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] >> 4);
-                int32_t  col          = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + i];
-                int32_t  row          = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + i];
+                    (uint32_t)(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] >> 4);
+                int32_t  col          = me_ctx->tf_16x16_mv_x[idx_32x32 * 4 + i];
+                int32_t  row          = me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + i];
                 uint32_t distance_fp4 = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
-                uint32_t distance_threshold_fp16 = AOMMAX((context_ptr->min_frame_size << 16) / 10,
+                uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->min_frame_size << 16) / 10,
                                                           1 << 16);
 
                 int32_t d_factor_fp12 = AOMMAX(
@@ -880,12 +878,12 @@ static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
                     (int32_t)((((int64_t)d_factor_fp12) *
                                ((block_error_fp8 + ((TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1) / 2)) /
                                 (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1))) /
-                              ((context_ptr->tf_decay_factor_fp16[plane])));
+                              ((me_ctx->tf_decay_factor_fp16[plane])));
 
                 int32_t scaled_diff_A1_factor_fp14 =
                     (int32_t)(((((int64_t)d_factor_fp12) << 16) * TF_WINDOW_BLOCK_BALANCE_WEIGHT +
-                               (context_ptr->tf_decay_factor_fp16[plane] >> 3)) /
-                              (context_ptr->tf_decay_factor_fp16[plane] >> 2));
+                               (me_ctx->tf_decay_factor_fp16[plane] >> 3)) /
+                              (me_ctx->tf_decay_factor_fp16[plane] >> 2));
 
                 int32_t scaled_diff_A2_factor_fp10 =
                     ((1 << 10) + ((TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1) * num_ref_pixels) / 2) /
@@ -912,30 +910,27 @@ static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
                 move_arr[i]                       = move;
             } else {
                 blk_errors[i] = _mm256_set1_pd(
-                    (double)(context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] >> 4) / 256.0);
+                    (double)(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] >> 4) / 256.0);
 
-                int16_t col      = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + i];
-                int16_t row      = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + i];
+                int16_t col      = me_ctx->tf_16x16_mv_x[idx_32x32 * 4 + i];
+                int16_t row      = me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + i];
                 float   distance = sqrtf((float)(row * row + col * col));
                 double  d_factor = AOMMAX(
                     distance *
                         (1.0 /
-                         (double)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD,
-                                        1)),
+                         (double)AOMMAX(me_ctx->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1)),
                     1);
                 d_factor_mul_n_decay_qr_invs[i] = _mm256_set1_pd(
-                    d_factor * (1.0 / context_ptr->tf_decay_factor[plane]));
+                    d_factor * (1.0 / me_ctx->tf_decay_factor[plane]));
             }
         }
     } else {
-        if (context_ptr->tf_ctrls.use_fixed_point) {
-            uint32_t block_error_fp8 = (uint32_t)(context_ptr->tf_32x32_block_error[idx_32x32] >>
-                                                  6);
-            int32_t  col             = context_ptr->tf_32x32_mv_x[idx_32x32];
-            int32_t  row             = context_ptr->tf_32x32_mv_y[idx_32x32];
+        if (me_ctx->tf_ctrls.use_fixed_point) {
+            uint32_t block_error_fp8 = (uint32_t)(me_ctx->tf_32x32_block_error[idx_32x32] >> 6);
+            int32_t  col             = me_ctx->tf_32x32_mv_x[idx_32x32];
+            int32_t  row             = me_ctx->tf_32x32_mv_y[idx_32x32];
             uint32_t distance_fp4    = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
-            uint32_t distance_threshold_fp16 = AOMMAX((context_ptr->min_frame_size << 16) / 10,
-                                                      1 << 16);
+            uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->min_frame_size << 16) / 10, 1 << 16);
 
             int32_t d_factor_fp12 = AOMMAX(
                 (int32_t)(((((int64_t)distance_fp4) << 24) + (distance_threshold_fp16 >> 1)) /
@@ -946,12 +941,12 @@ static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
                                                    ((block_error_fp8 +
                                                      ((TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1) / 2)) /
                                                     (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1))) /
-                                                  ((context_ptr->tf_decay_factor_fp16[plane])));
+                                                  ((me_ctx->tf_decay_factor_fp16[plane])));
 
             int32_t scaled_diff_A1_factor_fp14 =
                 (int32_t)(((((int64_t)d_factor_fp12) << 16) * TF_WINDOW_BLOCK_BALANCE_WEIGHT +
-                           (context_ptr->tf_decay_factor_fp16[plane] >> 3)) /
-                          (context_ptr->tf_decay_factor_fp16[plane] >> 2));
+                           (me_ctx->tf_decay_factor_fp16[plane] >> 3)) /
+                          (me_ctx->tf_decay_factor_fp16[plane] >> 2));
 
             int32_t scaled_diff_A2_factor_fp10 =
                 ((1 << 10) + ((TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1) * num_ref_pixels) / 2) /
@@ -979,19 +974,18 @@ static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
                 move_arr[i]                       = move;
             }
         } else {
-            double block_error = (double)(context_ptr->tf_32x32_block_error[idx_32x32] >> 4) /
-                1024.0;
-            int16_t     col      = context_ptr->tf_32x32_mv_x[idx_32x32];
-            int16_t     row      = context_ptr->tf_32x32_mv_y[idx_32x32];
+            double  block_error  = (double)(me_ctx->tf_32x32_block_error[idx_32x32] >> 4) / 1024.0;
+            int16_t col          = me_ctx->tf_32x32_mv_x[idx_32x32];
+            int16_t row          = me_ctx->tf_32x32_mv_y[idx_32x32];
             const float distance = sqrtf((float)(row * row + col * col));
             double      d_factor = AOMMAX(
                 distance *
                     (1.0 /
-                     (double)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1)),
+                     (double)AOMMAX(me_ctx->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1)),
                 1);
 
             const double d_factor_mul_n_decay_qr_inv = d_factor *
-                (1.0 / context_ptr->tf_decay_factor[plane]);
+                (1.0 / me_ctx->tf_decay_factor[plane]);
 
             for (int i = 0; i < 4; i++) {
                 blk_errors[i]                   = _mm256_set1_pd(block_error);
@@ -1005,7 +999,7 @@ static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
         for (int j = 0; j < block_width; j += 8) {
             //int diff_sse = acc_5x5_sse[i][j];
             __m256i adjusted_weight1;
-            if (context_ptr->tf_ctrls.use_fixed_point) {
+            if (me_ctx->tf_ctrls.use_fixed_point) {
                 const int subblock_idx = subblock_idx_h + (j >= block_width / 2);
 
                 __m256i diff_sse = _mm256_loadu_si256((__m256i *)(acc_5x5_sse[i] + j));
@@ -1117,7 +1111,7 @@ static void apply_temporal_filter_planewise_hbd(struct MeContext *context_ptr,
 }
 
 void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
-    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count,
@@ -1130,7 +1124,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
     assert(block_height % 2 == 0 && "block height must be even");
     assert((ss_x == 0 || ss_x == 1) && (ss_y == 0 || ss_y == 1) && "invalid chroma subsampling");
 
-    const int num_planes = context_ptr->tf_chroma ? 3 : 1;
+    const int num_planes = me_ctx->tf_chroma ? 3 : 1;
     uint32_t  luma_sq_error[SSE_STRIDE * BH];
     uint32_t  chroma_sq_error[SSE_STRIDE * BH];
 
@@ -1147,7 +1141,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
 
         uint32_t *accum = plane == 0 ? y_accum : plane == 1 ? u_accum : v_accum;
         uint16_t *count = plane == 0 ? y_count : plane == 1 ? u_count : v_count;
-        apply_temporal_filter_planewise_hbd(context_ptr,
+        apply_temporal_filter_planewise_hbd(me_ctx,
                                             ref,
                                             src_stride,
                                             pred,
@@ -1231,7 +1225,7 @@ static double expf_tab[] = {1,        0.904837, 0.818731, 0.740818, 0.67032,  0.
 
 };
 
-void svt_av1_apply_temporal_filter_planewise_fast_avx2(struct MeContext *context_ptr,
+void svt_av1_apply_temporal_filter_planewise_fast_avx2(struct MeContext *me_ctx,
                                                        const uint8_t *y_src, int y_src_stride,
                                                        const uint8_t *y_pre, int y_pre_stride,
                                                        unsigned int block_width,
@@ -1243,13 +1237,13 @@ void svt_av1_apply_temporal_filter_planewise_fast_avx2(struct MeContext *context
         (block_width * block_height);
 
     int adjusted_weight;
-    if (context_ptr->tf_ctrls.use_fixed_point) {
-        //16*avg_err/context_ptr->tf_decay_factor[0];
+    if (me_ctx->tf_ctrls.use_fixed_point) {
+        //16*avg_err/me_ctx->tf_decay_factor[0];
         uint32_t scaled_diff_fp4 = AOMMIN(
-            (avg_err << 10) / (AOMMAX(context_ptr->tf_decay_factor_fp16[0] >> 10, 1)), 7 * 16);
+            (avg_err << 10) / (AOMMAX(me_ctx->tf_decay_factor_fp16[0] >> 10, 1)), 7 * 16);
         adjusted_weight = (expf_tab_fp16[scaled_diff_fp4] * TF_WEIGHT_SCALE) >> 16;
     } else {
-        double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
+        double scaled_diff = AOMMIN(avg_err / me_ctx->tf_decay_factor[0], 7);
         adjusted_weight    = (int)(expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
     }
     const __m128i adjusted_weight_int16 = _mm_set1_epi16((int16_t)(adjusted_weight));
@@ -1280,7 +1274,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_avx2(struct MeContext *context
 }
 
 void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(
-    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, unsigned int block_width, unsigned int block_height, uint32_t *y_accum,
     uint16_t *y_count, uint32_t encoder_bit_depth) {
     int shift_factor = ((encoder_bit_depth - 8) * 2);
@@ -1291,13 +1285,13 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(
         (block_width * block_height);
 
     int adjusted_weight;
-    if (context_ptr->tf_ctrls.use_fixed_point) {
-        //16*avg_err/context_ptr->tf_decay_factor[0];
+    if (me_ctx->tf_ctrls.use_fixed_point) {
+        //16*avg_err/me_ctx->tf_decay_factor[0];
         uint32_t scaled_diff_fp4 = AOMMIN(
-            (avg_err << 10) / (AOMMAX(context_ptr->tf_decay_factor_fp16[0] >> 10, 1)), 7 * 16);
+            (avg_err << 10) / (AOMMAX(me_ctx->tf_decay_factor_fp16[0] >> 10, 1)), 7 * 16);
         adjusted_weight = (expf_tab_fp16[scaled_diff_fp4] * TF_WEIGHT_SCALE) >> 16;
     } else {
-        double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
+        double scaled_diff = AOMMIN(avg_err / me_ctx->tf_decay_factor[0], 7);
         adjusted_weight    = (int)(expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
     }
     if (adjusted_weight) {
@@ -1426,14 +1420,14 @@ void calculate_squared_errors_sum_2x8xh_no_div_highbd_avx2(const uint16_t *s, in
 }
 
 static void svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(
-    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+    struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, unsigned int block_width, unsigned int block_height, uint32_t *y_accum,
     uint16_t *y_count, const uint32_t tf_decay_factor, uint32_t luma_window_error_quad_fp8[4],
     int is_chroma) {
     unsigned int i, j, k, subblock_idx;
 
-    int32_t  idx_32x32               = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
-    uint32_t distance_threshold_fp16 = AOMMAX((context_ptr->min_frame_size << 16) / 10, 1 << 16);
+    int32_t  idx_32x32               = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
+    uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->min_frame_size << 16) / 10, 1 << 16);
 
     //Calculation for every quarter
     uint32_t  d_factor_fp8[4];
@@ -1442,29 +1436,29 @@ static void svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(
     uint32_t *window_error_quad_fp8 = is_chroma ? chroma_window_error_quad_fp8
                                                 : luma_window_error_quad_fp8;
 
-    if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+    if (me_ctx->tf_32x32_block_split_flag[idx_32x32]) {
         for (i = 0; i < 4; ++i) {
-            int32_t col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + i];
-            int32_t row = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + i];
+            int32_t col = me_ctx->tf_16x16_mv_x[idx_32x32 * 4 + i];
+            int32_t row = me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + i];
             //const float  distance = sqrtf((float)col*col + row*row);
             uint32_t distance_fp4 = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
             d_factor_fp8[i] = AOMMAX((distance_fp4 << 12) / (distance_threshold_fp16 >> 8), 1 << 8);
-            FP_ASSERT(context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] < ((uint64_t)1 << 31));
-            //block_error[i] = (double)context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] / 256;
-            block_error_fp8[i] = (uint32_t)(context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i]);
+            FP_ASSERT(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] < ((uint64_t)1 << 31));
+            //block_error[i] = (double)me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] / 256;
+            block_error_fp8[i] = (uint32_t)(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i]);
         }
     } else {
-        int32_t col = context_ptr->tf_32x32_mv_x[idx_32x32];
-        int32_t row = context_ptr->tf_32x32_mv_y[idx_32x32];
+        int32_t col = me_ctx->tf_32x32_mv_x[idx_32x32];
+        int32_t row = me_ctx->tf_32x32_mv_y[idx_32x32];
 
         uint32_t distance_fp4 = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
         //d_factor[0] = d_factor[1] = d_factor[2] = d_factor[3] = AOMMAX(distance / distance_threshold, 1);
         d_factor_fp8[0] = d_factor_fp8[1] = d_factor_fp8[2] = d_factor_fp8[3] = AOMMAX(
             (distance_fp4 << 12) / (distance_threshold_fp16 >> 8), 1 << 8);
-        FP_ASSERT(context_ptr->tf_32x32_block_error[idx_32x32] < ((uint64_t)1 << 30));
-        //block_error[0] = block_error[1] = block_error[2] = block_error[3] = (double)context_ptr->tf_32x32_block_error[idx_32x32] / 1024;
+        FP_ASSERT(me_ctx->tf_32x32_block_error[idx_32x32] < ((uint64_t)1 << 30));
+        //block_error[0] = block_error[1] = block_error[2] = block_error[3] = (double)me_ctx->tf_32x32_block_error[idx_32x32] / 1024;
         block_error_fp8[0] = block_error_fp8[1] = block_error_fp8[2] = block_error_fp8[3] =
-            (uint32_t)(context_ptr->tf_32x32_block_error[idx_32x32] >> 2);
+            (uint32_t)(me_ctx->tf_32x32_block_error[idx_32x32] >> 2);
     }
 
     if (block_width == 32) {
@@ -1564,30 +1558,29 @@ static void svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(
 }
 
 void svt_av1_apply_temporal_filter_planewise_medium_avx2(
-    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+    struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
     const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count,
     uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
     uint32_t luma_window_error_quad_fp8[4];
 
-    svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(
-        context_ptr,
-        y_src,
-        y_src_stride,
-        y_pre,
-        y_pre_stride,
-        (unsigned int)block_width,
-        (unsigned int)block_height,
-        y_accum,
-        y_count,
-        context_ptr->tf_decay_factor_fp16[C_Y],
-        luma_window_error_quad_fp8,
-        0);
+    svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(me_ctx,
+                                                                y_src,
+                                                                y_src_stride,
+                                                                y_pre,
+                                                                y_pre_stride,
+                                                                (unsigned int)block_width,
+                                                                (unsigned int)block_height,
+                                                                y_accum,
+                                                                y_count,
+                                                                me_ctx->tf_decay_factor_fp16[C_Y],
+                                                                luma_window_error_quad_fp8,
+                                                                0);
 
-    if (context_ptr->tf_chroma) {
+    if (me_ctx->tf_chroma) {
         svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(
-            context_ptr,
+            me_ctx,
             u_src,
             uv_src_stride,
             u_pre,
@@ -1596,12 +1589,12 @@ void svt_av1_apply_temporal_filter_planewise_medium_avx2(
             (unsigned int)block_height >> ss_y,
             u_accum,
             u_count,
-            context_ptr->tf_decay_factor_fp16[C_U],
+            me_ctx->tf_decay_factor_fp16[C_U],
             luma_window_error_quad_fp8,
             1);
 
         svt_av1_apply_temporal_filter_planewise_medium_partial_avx2(
-            context_ptr,
+            me_ctx,
             v_src,
             uv_src_stride,
             v_pre,
@@ -1610,22 +1603,22 @@ void svt_av1_apply_temporal_filter_planewise_medium_avx2(
             (unsigned int)block_height >> ss_y,
             v_accum,
             v_count,
-            context_ptr->tf_decay_factor_fp16[C_V],
+            me_ctx->tf_decay_factor_fp16[C_V],
             luma_window_error_quad_fp8,
             1);
     }
 }
 
 static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_avx2(
-    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, unsigned int block_width, unsigned int block_height, uint32_t *y_accum,
     uint16_t *y_count, const uint32_t tf_decay_factor, uint32_t luma_window_error_quad_fp8[4],
     int is_chroma, uint32_t encoder_bit_depth) {
     unsigned int i, j, k, subblock_idx;
 
-    int32_t  idx_32x32               = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
+    int32_t  idx_32x32               = me_ctx->tf_block_col + me_ctx->tf_block_row * 2;
     int      shift_factor            = ((encoder_bit_depth - 8) * 2);
-    uint32_t distance_threshold_fp16 = AOMMAX((context_ptr->min_frame_size << 16) / 10,
+    uint32_t distance_threshold_fp16 = AOMMAX((me_ctx->min_frame_size << 16) / 10,
                                               1 << 16); //TODO Change to FP8
 
     //Calculation for every quarter
@@ -1635,30 +1628,29 @@ static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_avx2(
     uint32_t *window_error_quad_fp8 = is_chroma ? chroma_window_error_quad_fp8
                                                 : luma_window_error_quad_fp8;
 
-    if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+    if (me_ctx->tf_32x32_block_split_flag[idx_32x32]) {
         for (i = 0; i < 4; ++i) {
-            int32_t col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + i];
-            int32_t row = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + i];
+            int32_t col = me_ctx->tf_16x16_mv_x[idx_32x32 * 4 + i];
+            int32_t row = me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + i];
             //const float  distance = sqrtf((float)col*col + row*row);
             uint32_t distance_fp4 = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
             d_factor_fp8[i] = AOMMAX((distance_fp4 << 12) / (distance_threshold_fp16 >> 8), 1 << 8);
-            FP_ASSERT(context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] < ((uint64_t)1 << 35));
-            //block_error[i] = (double)context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] / 256;
-            block_error_fp8[i] = (uint32_t)(context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] >>
-                                            4);
+            FP_ASSERT(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] < ((uint64_t)1 << 35));
+            //block_error[i] = (double)me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] / 256;
+            block_error_fp8[i] = (uint32_t)(me_ctx->tf_16x16_block_error[idx_32x32 * 4 + i] >> 4);
         }
     } else {
-        int32_t col = context_ptr->tf_32x32_mv_x[idx_32x32];
-        int32_t row = context_ptr->tf_32x32_mv_y[idx_32x32];
+        int32_t col = me_ctx->tf_32x32_mv_x[idx_32x32];
+        int32_t row = me_ctx->tf_32x32_mv_y[idx_32x32];
 
         uint32_t distance_fp4 = sqrt_fast(((uint32_t)(col * col + row * row)) << 8);
         //d_factor[0] = d_factor[1] = d_factor[2] = d_factor[3] = AOMMAX(distance / distance_threshold, 1);
         d_factor_fp8[0] = d_factor_fp8[1] = d_factor_fp8[2] = d_factor_fp8[3] = AOMMAX(
             (distance_fp4 << 12) / (distance_threshold_fp16 >> 8), 1 << 8);
-        FP_ASSERT(context_ptr->tf_32x32_block_error[idx_32x32] < ((uint64_t)1 << 35));
-        //block_error[0] = block_error[1] = block_error[2] = block_error[3] = (double)context_ptr->tf_32x32_block_error[idx_32x32] / 1024;
+        FP_ASSERT(me_ctx->tf_32x32_block_error[idx_32x32] < ((uint64_t)1 << 35));
+        //block_error[0] = block_error[1] = block_error[2] = block_error[3] = (double)me_ctx->tf_32x32_block_error[idx_32x32] / 1024;
         block_error_fp8[0] = block_error_fp8[1] = block_error_fp8[2] = block_error_fp8[3] =
-            (uint32_t)(context_ptr->tf_32x32_block_error[idx_32x32] >> 6);
+            (uint32_t)(me_ctx->tf_32x32_block_error[idx_32x32] >> 6);
     }
 
     if (block_width == 32) {
@@ -1761,7 +1753,7 @@ static void svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_avx2(
 }
 
 void svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2(
-    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count,
@@ -1770,7 +1762,7 @@ void svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2(
     uint32_t luma_window_error_quad_fp8[4];
 
     svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_avx2(
-        context_ptr,
+        me_ctx,
         y_src,
         y_src_stride,
         y_pre,
@@ -1779,13 +1771,13 @@ void svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2(
         (unsigned int)block_height,
         y_accum,
         y_count,
-        context_ptr->tf_decay_factor_fp16[C_Y],
+        me_ctx->tf_decay_factor_fp16[C_Y],
         luma_window_error_quad_fp8,
         0,
         encoder_bit_depth);
-    if (context_ptr->tf_chroma) {
+    if (me_ctx->tf_chroma) {
         svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_avx2(
-            context_ptr,
+            me_ctx,
             u_src,
             uv_src_stride,
             u_pre,
@@ -1794,13 +1786,13 @@ void svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2(
             (unsigned int)block_height >> ss_y,
             u_accum,
             u_count,
-            context_ptr->tf_decay_factor_fp16[C_U],
+            me_ctx->tf_decay_factor_fp16[C_U],
             luma_window_error_quad_fp8,
             1,
             encoder_bit_depth);
 
         svt_av1_apply_temporal_filter_planewise_medium_hbd_partial_avx2(
-            context_ptr,
+            me_ctx,
             v_src,
             uv_src_stride,
             v_pre,
@@ -1809,7 +1801,7 @@ void svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2(
             (unsigned int)block_height >> ss_y,
             v_accum,
             v_count,
-            context_ptr->tf_decay_factor_fp16[C_V],
+            me_ctx->tf_decay_factor_fp16[C_V],
             luma_window_error_quad_fp8,
             1,
             encoder_bit_depth);
@@ -1899,7 +1891,7 @@ static void process_block_hbd_avx2(int h, int w, uint16_t *buff_hbd_start, uint3
     }
 }
 
-void get_final_filtered_pixels_avx2(MeContext *context_ptr, EbByte *src_center_ptr_start,
+void get_final_filtered_pixels_avx2(MeContext *me_ctx, EbByte *src_center_ptr_start,
                                     uint16_t **altref_buffer_highbd_start, uint32_t **accum,
                                     uint16_t **count, const uint32_t *stride, int blk_y_src_offset,
                                     int blk_ch_src_offset, uint16_t blk_width_ch,
@@ -1916,7 +1908,7 @@ void get_final_filtered_pixels_avx2(MeContext *context_ptr, EbByte *src_center_p
                                count[C_Y],
                                stride[C_Y] - BW);
         // Process chroma
-        if (context_ptr->tf_chroma) {
+        if (me_ctx->tf_chroma) {
             process_block_lbd_avx2(blk_height_ch,
                                    blk_width_ch,
                                    &src_center_ptr_start[C_U][blk_ch_src_offset],
@@ -1939,7 +1931,7 @@ void get_final_filtered_pixels_avx2(MeContext *context_ptr, EbByte *src_center_p
                                count[C_Y],
                                stride[C_Y] - BW);
         // Process chroma
-        if (context_ptr->tf_chroma) {
+        if (me_ctx->tf_chroma) {
             process_block_hbd_avx2(blk_height_ch,
                                    blk_width_ch,
                                    &altref_buffer_highbd_start[C_U][blk_ch_src_offset],
@@ -1995,10 +1987,10 @@ static void apply_filtering_central_loop_hbd(uint16_t w, uint16_t h, uint16_t *s
 }
 
 // Apply filtering to the central picture
-void apply_filtering_central_avx2(MeContext           *context_ptr,
-                                  EbPictureBufferDesc *input_picture_ptr_central, EbByte *src,
-                                  uint32_t **accum, uint16_t **count, uint16_t blk_width,
-                                  uint16_t blk_height, uint32_t ss_x, uint32_t ss_y) {
+void apply_filtering_central_avx2(MeContext *me_ctx, EbPictureBufferDesc *input_picture_ptr_central,
+                                  EbByte *src, uint32_t **accum, uint16_t **count,
+                                  uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
+                                  uint32_t ss_y) {
     uint16_t src_stride_y = input_picture_ptr_central->stride_y;
 
     // Luma
@@ -2006,7 +1998,7 @@ void apply_filtering_central_avx2(MeContext           *context_ptr,
         blk_width, blk_height, src[C_Y], src_stride_y, accum[C_Y], count[C_Y]);
 
     // Chroma
-    if (context_ptr->tf_chroma) {
+    if (me_ctx->tf_chroma) {
         uint16_t blk_height_ch = blk_height >> ss_y;
         uint16_t blk_width_ch  = blk_width >> ss_x;
         uint16_t src_stride_ch = src_stride_y >> ss_x;
@@ -2018,7 +2010,7 @@ void apply_filtering_central_avx2(MeContext           *context_ptr,
 }
 
 // Apply filtering to the central picture
-void apply_filtering_central_highbd_avx2(MeContext           *context_ptr,
+void apply_filtering_central_highbd_avx2(MeContext           *me_ctx,
                                          EbPictureBufferDesc *input_picture_ptr_central,
                                          uint16_t **src_16bit, uint32_t **accum, uint16_t **count,
                                          uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
@@ -2030,7 +2022,7 @@ void apply_filtering_central_highbd_avx2(MeContext           *context_ptr,
         blk_width, blk_height, src_16bit[C_Y], src_stride_y, accum[C_Y], count[C_Y]);
 
     // Chroma
-    if (context_ptr->tf_chroma) {
+    if (me_ctx->tf_chroma) {
         uint16_t blk_height_ch = blk_height >> ss_y;
         uint16_t blk_width_ch  = blk_width >> ss_x;
         uint16_t src_stride_ch = src_stride_y >> ss_x;

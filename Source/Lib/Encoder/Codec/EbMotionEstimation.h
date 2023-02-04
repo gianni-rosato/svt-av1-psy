@@ -28,11 +28,11 @@ extern "C" {
 #endif
 
     extern EbErrorType motion_estimation_b64(
-        PictureParentControlSet      *pcs_ptr,
+        PictureParentControlSet      *pcs,
         uint32_t                       b64_index,
         uint32_t                       b64_origin_x,
         uint32_t                       b64_origin_y,
-        MeContext                 *context_ptr,
+        MeContext                 *me_ctx,
         EbPictureBufferDesc       *input_ptr);
 
     extern void decimation_2d(
@@ -54,18 +54,18 @@ extern "C" {
         uint32_t                   decim_step);
 
     extern EbErrorType open_loop_intra_search_sb(
-        PictureParentControlSet   *pcs_ptr,
+        PictureParentControlSet   *pcs,
         uint32_t                       sb_index,
-        MotionEstimationContext_t   *context_ptr,
+        MotionEstimationContext_t   *me_context_ptr,
         EbPictureBufferDesc       *input_ptr);
 
 
     extern EbErrorType av1_open_loop_intra_search(
-        PictureParentControlSet   *picture_control_set_ptr,
-        MotionEstimationContext_t *context_ptr,
+        PictureParentControlSet   *pcs,
+        MotionEstimationContext_t *me_context_ptr,
         EbPictureBufferDesc       *input_ptr);
     extern EbErrorType open_loop_intra_search_mb(
-        PictureParentControlSet *pcs_ptr,
+        PictureParentControlSet *pcs,
         uint32_t                   b64_index,
         EbPictureBufferDesc       *input_ptr);
 #define a_b_c  0

@@ -39,11 +39,11 @@ typedef struct BlockGeom {
     GeomIndex geom_idx; //type of geom this block belongs
     uint8_t   depth; // depth of the block
     Part      shape; // P_N..P_V4 . P_S is not used.
-    uint8_t   origin_x; // orgin x from topleft of sb
-    uint8_t   origin_y; // orgin x from topleft of sb
+    uint8_t   org_x; // orgin x from topleft of sb
+    uint8_t   org_y; // orgin x from topleft of sb
 
-    uint8_t
-             d1i; // index of the block in d1 dimension 0..24  (0 is parent square, 1 top half of H , ...., 24:last quarter of V4)
+    // index of the block in d1 dimension 0..24  (0 is parent square, 1 top half of H , ...., 24:last quarter of V4)
+    uint8_t  d1i;
     uint16_t sqi_mds; // index of the parent square in md  scan.
     uint16_t parent_depth_idx_mds; // index of the parent block of a given depth
     uint16_t d1_depth_offset; // offset to the next d1 sq block
@@ -153,8 +153,8 @@ typedef struct CodedBlockStats {
     uint8_t depth;
     uint8_t size;
     uint8_t size_log2;
-    uint8_t origin_x;
-    uint8_t origin_y;
+    uint8_t org_x;
+    uint8_t org_y;
     uint8_t cu_num_in_depth;
     uint8_t parent32x32_index;
 } CodedBlockStats;

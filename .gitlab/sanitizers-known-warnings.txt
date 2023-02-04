@@ -5,18 +5,18 @@
 #Race warnings (data races and use-after-free reports):
 #1]
 race:mode_decision_kernel
-#mode_decision_kernel() is run two times with that same pcs_ptr in separated tasks,
+#mode_decision_kernel() is run two times with that same pcs in separated tasks,
 #when: enc_dec_tasks_ptr->input_type is ENCDEC_TASKS_MDC_INPUT or ENCDEC_TASKS_ENCDEC_INPUT.
 #Some calculation are done double on that same memory.
 #Example for one of the warnings is to change in mode_decision_kernel:
 #((EbReferenceObject *)
-#     pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-#    ->average_intensity = pcs_ptr->parent_pcs_ptr->average_intensity[0];
+#     pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
+#    ->average_intensity = pcs->ppcs->average_intensity[0];
 #to:
 #if (ENCDEC_TASKS_MDC_INPUT == input_type) {
 #    ((EbReferenceObject *)
-#         pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-#        ->average_intensity = pcs_ptr->parent_pcs_ptr->average_intensity[0];
+#         pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
+#        ->average_intensity = pcs->ppcs->average_intensity[0];
 #}
 
 #End of file

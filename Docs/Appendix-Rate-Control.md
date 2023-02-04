@@ -589,7 +589,7 @@ Picture arriving from Motions Estimation kernel:
 
 | Main Functions                         | Descriptions                                                                                              |
 | -------------                          | ------------------------------                                                                            |
-| if (pcs_ptr->picture_number == 0) {    |                                                                                                           |
+| if (pcs->picture_number == 0) {    |                                                                                                           |
 | set_rc_buffer_sizes();                 | Buffers initialization at the beginning                                                                   |
 | av1_rc_init()                          | RC initialization at the beginning                                                                        |
 | }                                      |                                                                                                           |
@@ -614,7 +614,7 @@ More details for some of the main functions:
 | process_first_pass_stats()            | Performed on a frame basis. Parts of it are for initialization at POC0, the rest is per frame. |
 | if (key_frame)                        |                                                                                                |
 | kf_group_rate_assingment();                | Rate assignment for the next kf group                                           |
-| if (pcs_ptr->is_new_GF_group)         |                                                                                                |
+| if (pcs->is_new_GF_group)         |                                                                                                |
 | gf_group_rate_assingment () }         | Define the GF_group (mini-GoP) bits and assign bits per frame based on the target rate         |
 
 | rc_pick_q_and_bounds() { {                 | Descriptions                                                                                                  |

@@ -568,6 +568,7 @@ static INLINE PredDirection av1_get_pred_dir(int8_t ref_frame_type) {
     return (rf[1] == NONE_FRAME) ? (PredDirection)ref_type_to_list_idx[rf[0]] : BI_PRED;
 }
 int svt_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y);
+int get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint);
 
 #ifdef __cplusplus
 }

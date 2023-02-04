@@ -25,24 +25,22 @@
 #define GMV_ME_SAD_TH_1 5
 #define GMV_ME_SAD_TH_2 10
 #define GMV_PIC_VAR_TH 750
-void global_motion_estimation(PictureParentControlSet *pcs_ptr,
-                              EbPictureBufferDesc     *input_picture_ptr) {
+void global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic) {
     // Get downsampled pictures with a downsampling factor of 2 in each dimension
     EbPaReferenceObject *pa_reference_object;
     EbPictureBufferDesc *quarter_ref_pic_ptr;
     EbPictureBufferDesc *quarter_picture_ptr;
     EbPictureBufferDesc *sixteenth_ref_pic_ptr;
     EbPictureBufferDesc *sixteenth_picture_ptr;
-    pa_reference_object = (EbPaReferenceObject *)
-                              pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+    pa_reference_object = (EbPaReferenceObject *)pcs->pa_reference_picture_wrapper_ptr->object_ptr;
     quarter_picture_ptr = (EbPictureBufferDesc *)
                               pa_reference_object->quarter_downsampled_picture_ptr;
     sixteenth_picture_ptr = (EbPictureBufferDesc *)
                                 pa_reference_object->sixteenth_downsampled_picture_ptr;
     uint32_t num_of_list_to_search =
-        (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+        (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
     // Initilize global motion to be OFF for all references frames.
-    memset(pcs_ptr->is_global_motion, FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+    memset(pcs->is_global_motion, FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
     // Initilize wmtype to be IDENTITY for all references frames
     // Ref List Loop
     for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
@@ -50,19 +48,19 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
         // Ref Picture Loop
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
              ++ref_pic_index) {
-            pcs_ptr->global_motion_estimation[list_index][ref_pic_index].wmtype = IDENTITY;
+            pcs->global_motion_estimation[list_index][ref_pic_index].wmtype = IDENTITY;
         }
     }
     // Derive total_me_sad
     uint32_t total_me_sad        = 0;
     uint32_t total_stationary_sb = 0;
     uint32_t total_gm_sbs        = 0;
-    for (uint16_t b64_index = 0; b64_index < pcs_ptr->b64_total_count; ++b64_index) {
-        total_me_sad += pcs_ptr->rc_me_distortion[b64_index];
-        total_stationary_sb += pcs_ptr->stationary_block_present_sb[b64_index];
-        total_gm_sbs += pcs_ptr->rc_me_allow_gm[b64_index];
+    for (uint16_t b64_index = 0; b64_index < pcs->b64_total_count; ++b64_index) {
+        total_me_sad += pcs->rc_me_distortion[b64_index];
+        total_stationary_sb += pcs->stationary_block_present_sb[b64_index];
+        total_gm_sbs += pcs->rc_me_allow_gm[b64_index];
     }
-    uint32_t average_me_sad = total_me_sad / (input_picture_ptr->width * input_picture_ptr->height);
+    uint32_t average_me_sad = total_me_sad / (input_pic->width * input_pic->height);
     // Derive global_motion_estimation level
 
     uint8_t global_motion_estimation_level;
@@ -78,33 +76,33 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
         global_motion_estimation_level = 2;
     else
         global_motion_estimation_level = 3;
-    if (pcs_ptr->gm_ctrls.downsample_level == GM_ADAPT_0) {
-        pcs_ptr->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_1) ? GM_DOWN : GM_FULL;
-    } else if (pcs_ptr->gm_ctrls.downsample_level == GM_ADAPT_1) {
-        SequenceControlSet *scs = pcs_ptr->scs_ptr;
+    if (pcs->gm_ctrls.downsample_level == GM_ADAPT_0) {
+        pcs->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_1) ? GM_DOWN : GM_FULL;
+    } else if (pcs->gm_ctrls.downsample_level == GM_ADAPT_1) {
+        SequenceControlSet *scs = pcs->scs;
 
-        pcs_ptr->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_2 &&
-                                        (!scs->calculate_variance ||
-                                         (pcs_ptr->pic_avg_variance < GMV_PIC_VAR_TH)))
+        pcs->gm_downsample_level = (average_me_sad < GMV_ME_SAD_TH_2 &&
+                                    (!scs->calculate_variance ||
+                                     (pcs->pic_avg_variance < GMV_PIC_VAR_TH)))
             ? GM_DOWN16
             : GM_DOWN;
     } else {
-        pcs_ptr->gm_downsample_level = pcs_ptr->gm_ctrls.downsample_level;
+        pcs->gm_downsample_level = pcs->gm_ctrls.downsample_level;
     }
-    if (pcs_ptr->gm_ctrls.bypass_based_on_me) {
-        if ((total_gm_sbs < (uint32_t)(pcs_ptr->b64_total_count >> 1)) ||
-            (pcs_ptr->gm_ctrls.use_stationary_block &&
+    if (pcs->gm_ctrls.bypass_based_on_me) {
+        if ((total_gm_sbs < (uint32_t)(pcs->b64_total_count >> 1)) ||
+            (pcs->gm_ctrls.use_stationary_block &&
              (total_stationary_sb >
-              (uint32_t)((pcs_ptr->b64_total_count * 5) /
+              (uint32_t)((pcs->b64_total_count * 5) /
                          100)))) // if more than 5% of SB(s) have stationary block(s) then shut gm
             global_motion_estimation_level = 0;
     }
     if (global_motion_estimation_level)
         for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
             uint32_t num_of_ref_pic_to_search;
-            num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE ? pcs_ptr->ref_list0_count_try
-                : list_index == REF_LIST_0                            ? pcs_ptr->ref_list0_count_try
-                                           : pcs_ptr->ref_list1_count_try;
+            num_of_ref_pic_to_search = pcs->slice_type == P_SLICE ? pcs->ref_list0_count_try
+                : list_index == REF_LIST_0                        ? pcs->ref_list0_count_try
+                                                                  : pcs->ref_list1_count_try;
             if (global_motion_estimation_level == 1)
                 num_of_ref_pic_to_search = MIN(num_of_ref_pic_to_search, 1);
             else if (global_motion_estimation_level == 2)
@@ -114,59 +112,58 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
                  ++ref_pic_index) {
                 EbPaReferenceObject *reference_object;
                 EbPictureBufferDesc *ref_picture_ptr;
-                reference_object = (EbPaReferenceObject *)pcs_ptr
+                reference_object = (EbPaReferenceObject *)pcs
                                        ->ref_pa_pic_ptr_array[list_index][ref_pic_index]
                                        ->object_ptr;
 
                 // Set the source and the reference picture to be used by the global motion search
                 // based on the input search mode
-                if (pcs_ptr->gm_downsample_level == GM_DOWN16) {
+                if (pcs->gm_downsample_level == GM_DOWN16) {
                     sixteenth_ref_pic_ptr = (EbPictureBufferDesc *)
                                                 reference_object->sixteenth_downsampled_picture_ptr;
-                    ref_picture_ptr   = sixteenth_ref_pic_ptr;
-                    input_picture_ptr = sixteenth_picture_ptr;
-                } else if (pcs_ptr->gm_downsample_level == GM_DOWN) {
+                    ref_picture_ptr = sixteenth_ref_pic_ptr;
+                    input_pic       = sixteenth_picture_ptr;
+                } else if (pcs->gm_downsample_level == GM_DOWN) {
                     quarter_ref_pic_ptr = (EbPictureBufferDesc *)
                                               reference_object->quarter_downsampled_picture_ptr;
-                    ref_picture_ptr   = quarter_ref_pic_ptr;
-                    input_picture_ptr = quarter_picture_ptr;
+                    ref_picture_ptr = quarter_ref_pic_ptr;
+                    input_pic       = quarter_picture_ptr;
                 } else {
                     ref_picture_ptr = (EbPictureBufferDesc *)
                                           reference_object->input_padded_picture_ptr;
                 }
 
-                compute_global_motion(pcs_ptr,
-                                      input_picture_ptr,
+                compute_global_motion(pcs,
+                                      input_pic,
                                       ref_picture_ptr,
-                                      &pcs_ptr->global_motion_estimation[list_index][ref_pic_index],
-                                      pcs_ptr->frm_hdr.allow_high_precision_mv);
+                                      &pcs->global_motion_estimation[list_index][ref_pic_index],
+                                      pcs->frm_hdr.allow_high_precision_mv);
             }
 
-            if (pcs_ptr->gm_ctrls.identiy_exit) {
+            if (pcs->gm_ctrls.identiy_exit) {
                 if (list_index == 0) {
-                    if (pcs_ptr->global_motion_estimation[0][0].wmtype == IDENTITY) {
+                    if (pcs->global_motion_estimation[0][0].wmtype == IDENTITY) {
                         break;
                     }
                 }
             }
         }
     for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
-        uint32_t num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE
-            ? pcs_ptr->ref_list0_count
-            : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count
-                                       : pcs_ptr->ref_list1_count;
+        uint32_t num_of_ref_pic_to_search = pcs->slice_type == P_SLICE ? pcs->ref_list0_count
+            : list_index == REF_LIST_0                                 ? pcs->ref_list0_count
+                                                                       : pcs->ref_list1_count;
 
         // Ref Picture Loop
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
              ++ref_pic_index) {
-            pcs_ptr->is_global_motion[list_index][ref_pic_index] = FALSE;
-            if (pcs_ptr->global_motion_estimation[list_index][ref_pic_index].wmtype > TRANSLATION)
-                pcs_ptr->is_global_motion[list_index][ref_pic_index] = TRUE;
+            pcs->is_global_motion[list_index][ref_pic_index] = FALSE;
+            if (pcs->global_motion_estimation[list_index][ref_pic_index].wmtype > TRANSLATION)
+                pcs->is_global_motion[list_index][ref_pic_index] = TRUE;
         }
     }
 }
 
-void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc *input_pic,
+void compute_global_motion(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic,
                            EbPictureBufferDesc *ref_pic, EbWarpedMotionParams *bestWarpedMotion,
                            int allow_high_precision_mv) {
     MotionModel params_by_motion[RANSAC_NUM_MOTIONS];
@@ -182,13 +179,13 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
     };
     // clang-format on
 
-    unsigned char *frm_buffer = input_pic->buffer_y + input_pic->origin_x +
-        input_pic->origin_y * input_pic->stride_y;
-    unsigned char *ref_buffer = ref_pic->buffer_y + ref_pic->origin_x +
-        ref_pic->origin_y * ref_pic->stride_y;
+    unsigned char *frm_buffer = input_pic->buffer_y + input_pic->org_x +
+        input_pic->org_y * input_pic->stride_y;
+    unsigned char *ref_buffer = ref_pic->buffer_y + ref_pic->org_x +
+        ref_pic->org_y * ref_pic->stride_y;
 
-    unsigned char *ref_buffer_2b = ref_pic->buffer_bit_inc_y + ref_pic->origin_x +
-        ref_pic->origin_y * ref_pic->stride_bit_inc_y;
+    unsigned char *ref_buffer_2b = ref_pic->buffer_bit_inc_y + ref_pic->org_x +
+        ref_pic->org_y * ref_pic->stride_bit_inc_y;
     EbWarpedMotionParams global_motion = default_warp_params;
 
     // TODO: check ref_params
@@ -210,7 +207,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
 
         const GlobalMotionEstimationType gm_estimation_type = GLOBAL_MOTION_FEATURE_BASED;
         for (model = ROTZOOM;
-             model <= (pcs_ptr->gm_ctrls.rotzoom_model_only ? ROTZOOM : GLOBAL_TRANS_TYPES_ENC);
+             model <= (pcs->gm_ctrls.rotzoom_model_only ? ROTZOOM : GLOBAL_TRANS_TYPES_ENC);
              ++model) {
             int64_t best_warp_error = INT64_MAX;
             // Initially set all params to identity.
@@ -256,7 +253,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                         input_pic->width,
                         input_pic->height,
                         input_pic->stride_y,
-                        pcs_ptr->gm_ctrls.params_refinement_steps,
+                        pcs->gm_ctrls.params_refinement_steps,
                         best_warp_error);
                     if (warp_error < best_warp_error) {
                         best_warp_error = warp_error;

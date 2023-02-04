@@ -227,9 +227,9 @@ EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_ini
 }
 
 EbErrorType svt_reference_object_reset(EbReferenceObject  *reference_object,
-                                       SequenceControlSet *scs_ptr) {
-    reference_object->mi_rows = scs_ptr->max_input_luma_height >> MI_SIZE_LOG2;
-    reference_object->mi_cols = scs_ptr->max_input_luma_width >> MI_SIZE_LOG2;
+                                       SequenceControlSet *scs) {
+    reference_object->mi_rows = scs->max_input_luma_height >> MI_SIZE_LOG2;
+    reference_object->mi_cols = scs->max_input_luma_width >> MI_SIZE_LOG2;
 
     return EB_ErrorNone;
 }
@@ -341,58 +341,56 @@ EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object
 ** Check if reference pictures are needed
 ** release them when appropriate
 ************************************************/
-void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
-    (void)scs_ptr;
+void release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs) {
+    (void)scs;
     // PA Reference Pictures
-    if (pcs_ptr->slice_type != I_SLICE) {
+    if (pcs->slice_type != I_SLICE) {
 #if CLN_REMOVE_REF_CNT
         const uint32_t num_of_list_to_search =
-            (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+            (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 #else
         uint32_t num_of_list_to_search =
-            (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+            (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 #endif
 
         // List Loop
         for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
             // Release PA Reference Pictures
 #if CLN_REMOVE_REF_CNT
-            uint8_t num_of_ref_pic_to_search = (list_index == REF_LIST_0)
-                ? pcs_ptr->ref_list0_count
-                : pcs_ptr->ref_list1_count;
+            uint8_t num_of_ref_pic_to_search = (list_index == REF_LIST_0) ? pcs->ref_list0_count
+                                                                          : pcs->ref_list1_count;
 #else
-            uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
-                ? MIN(pcs_ptr->ref_list0_count, scs_ptr->reference_count)
-                : (list_index == REF_LIST_0)
-                ? MIN(pcs_ptr->ref_list0_count, scs_ptr->reference_count)
-                : MIN(pcs_ptr->ref_list1_count, scs_ptr->reference_count);
+            uint8_t num_of_ref_pic_to_search = (pcs->slice_type == P_SLICE)
+                ? MIN(pcs->ref_list0_count, scs->reference_count)
+                : (list_index == REF_LIST_0) ? MIN(pcs->ref_list0_count, scs->reference_count)
+                                             : MIN(pcs->ref_list1_count, scs->reference_count);
 #endif
 
             for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
                  ++ref_pic_index) {
-                if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
-                    //assert((int32_t)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->live_count > 0);
-                    svt_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
+                if (pcs->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
+                    //assert((int32_t)pcs->ref_pa_pic_ptr_array[list_index][ref_pic_index]->live_count > 0);
+                    svt_release_object(pcs->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
 
-                    if (pcs_ptr->ref_y8b_array[list_index][ref_pic_index]) {
+                    if (pcs->ref_y8b_array[list_index][ref_pic_index]) {
                         //y8b  needs to get decremented at the same time of pa ref
-                        svt_release_object(pcs_ptr->ref_y8b_array[list_index][ref_pic_index]);
+                        svt_release_object(pcs->ref_y8b_array[list_index][ref_pic_index]);
                     }
                 }
             }
         }
     }
 
-    if (pcs_ptr->pa_reference_picture_wrapper_ptr != NULL) {
-        //assert((int32_t)pcs_ptr->pa_reference_picture_wrapper_ptr->live_count > 0);
-        svt_release_object(pcs_ptr->pa_reference_picture_wrapper_ptr);
+    if (pcs->pa_reference_picture_wrapper_ptr != NULL) {
+        //assert((int32_t)pcs->pa_reference_picture_wrapper_ptr->live_count > 0);
+        svt_release_object(pcs->pa_reference_picture_wrapper_ptr);
 
-        if (pcs_ptr->eb_y8b_wrapper_ptr) {
+        if (pcs->eb_y8b_wrapper_ptr) {
             //y8b needs to get decremented at the same time of pa ref
-            svt_release_object(pcs_ptr->eb_y8b_wrapper_ptr);
+            svt_release_object(pcs->eb_y8b_wrapper_ptr);
         }
     }
     // Mark that the PCS released PA references
-    pcs_ptr->reference_released = 1;
+    pcs->reference_released = 1;
     return;
 }
