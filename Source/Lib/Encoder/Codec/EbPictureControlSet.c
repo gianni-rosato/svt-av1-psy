@@ -1739,14 +1739,16 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSe
                       encoding_height))
                     ? TRUE
                     : FALSE;
-
+#if !FIX_2042
                 if (blk_geom->shape != PART_N)
                     blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
+
                 pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
                     ((pcs_ptr->sb_geom[sb_index].origin_x >= encoding_width) ||
                      (pcs_ptr->sb_geom[sb_index].origin_y >= encoding_height))
                     ? FALSE
                     : TRUE;
+#endif
             } else {
                 if (blk_geom->shape != PART_N)
                     blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
@@ -1758,7 +1760,7 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSe
                       encoding_height))
                     ? FALSE
                     : TRUE;
-
+#if !FIX_2042
                 pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
                     ((pcs_ptr->sb_geom[sb_index].origin_x + blk_geom->origin_x + blk_geom->bwidth >
                       encoding_width) ||
@@ -1766,6 +1768,7 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSe
                       encoding_height))
                     ? FALSE
                     : TRUE;
+#endif
             }
         }
     }

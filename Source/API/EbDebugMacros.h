@@ -66,6 +66,7 @@ extern "C" {
 
 #define FIX_2009                   1 // fix for issue 2009, fixes mismatch between recon flag ON/OFF
 #define EN_WARNING_FOR_MISMATCH    1 // create a new warning for mismatch that is expected for recon ON/OFF and stat-report ON/OFF for 10bit path
+#define FIX_2042                   1 // fix for issue 2042, fixes corrupted bitstream when over boundary blocks are disabled
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

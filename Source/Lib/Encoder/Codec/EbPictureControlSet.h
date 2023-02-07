@@ -501,8 +501,10 @@ typedef struct SbGeom {
     uint8_t  width;
     uint8_t  height;
     uint8_t  is_complete_sb;
-    Bool     block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
-    Bool     block_is_allowed[BLOCK_MAX_COUNT_SB_128];
+#if !FIX_2042
+    Bool block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
+#endif
+    Bool block_is_allowed[BLOCK_MAX_COUNT_SB_128];
 } SbGeom;
 
 typedef struct TileGroupInfo {

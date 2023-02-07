@@ -6925,7 +6925,10 @@ EbErrorType rtime_alloc_palette_info(BlkStruct *md_blk_arr_nsq) {
 // Initialize structures used to indicate which blocks will be tested at MD.
 // MD data structures should be updated in init_block_data(), not here.
 static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                                   ModeDecisionContext *context_ptr, uint32_t sb_index,
+                                   ModeDecisionContext *context_ptr,
+#if !FIX_2042
+                                   uint32_t sb_index,
+#endif
                                    Bool is_complete_sb) {
     memset(context_ptr->tested_blk_flag, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
     memset(context_ptr->avail_blk_flag, FALSE, sizeof(uint8_t) * scs_ptr->max_block_cnt);
@@ -6970,9 +6973,13 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
                 ? 0
                 : is_block_tagged;
 
-        // SQ/NSQ block(s) filter based on the block validity
+            // SQ/NSQ block(s) filter based on the block validity
+#if FIX_2042
+        if (is_block_tagged) {
+#else
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_block_tagged) {
+#endif
             uint32_t tot_d1_blocks = !context_ptr->nsq_ctrls.enabled
                 ? 1
                 : get_tot_1d_blks(context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
@@ -7182,8 +7189,12 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
         // derive split_flag
         Bool split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
 
+#if FIX_2042
+        if (is_blk_allowed) {
+#else
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_blk_allowed) {
+#endif
             if (blk_geom->shape == PART_N) {
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == FALSE) {
                     // Add current pred depth block(s)
@@ -7318,7 +7329,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 // Initialize structures used to indicate which blocks will be tested at MD.
 // MD data structures should be updated in init_block_data(), not here.
 EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+#if FIX_2042
+                                            ModeDecisionContext *context_ptr) {
+#else
                                             ModeDecisionContext *context_ptr, uint32_t sb_index) {
+#endif
     memset(context_ptr->tested_blk_flag, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
     memset(context_ptr->avail_blk_flag, FALSE, sizeof(uint8_t) * scs_ptr->max_block_cnt);
     memset(context_ptr->do_not_process_blk, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
@@ -7353,9 +7368,13 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                 ? 0
                 : is_block_tagged;
 
-        // SQ/NSQ block(s) filter based on the block validity
+            // SQ/NSQ block(s) filter based on the block validity
+#if FIX_2042
+        if (is_block_tagged) {
+#else
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_block_tagged) {
+#endif
             const uint32_t tot_d1_blocks = !context_ptr->nsq_ctrls.enabled
                 ? 1
                 : get_tot_1d_blks(context_ptr, blk_geom->sq_size, context_ptr->md_disallow_nsq);
@@ -7368,7 +7387,9 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                 : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
+#if !FIX_2042
                 if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[idx]) {
+#endif
                     if (context_ptr->nsq_ctrls.allow_HVA_HVB == 0) {
                         // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
                         // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
@@ -7396,7 +7417,9 @@ EbErrorType build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                                                                           min_sq_size)
                         ? TRUE
                         : FALSE;
+#if !FIX_2042
                 }
+#endif
             }
             blk_index += blk_geom->d1_depth_offset;
         } else {
@@ -8184,7 +8207,11 @@ void *mode_decision_kernel(void *input_ptr) {
 
                                 // Build the t=0 cand_block_array
                                 build_starting_cand_block_array(
+#if FIX_2042
+                                    scs_ptr, pcs_ptr, context_ptr->md_context);
+#else
                                     scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
                                 mode_decision_sb_light_pd0(scs_ptr,
                                                            pcs_ptr,
                                                            mdc_ptr,
@@ -8220,7 +8247,11 @@ void *mode_decision_kernel(void *input_ptr) {
 
                                 // Build the t=0 cand_block_array
                                 build_starting_cand_block_array(
+#if FIX_2042
+                                    scs_ptr, pcs_ptr, context_ptr->md_context);
+#else
                                     scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
                                 // PD0 MD Tool(s) : ME_MV(s) as INTER candidate(s), DC as INTRA candidate, luma only, Frequency domain SSE,
                                 // no fast rate (no MVP table generation), MDS0 then MDS3, reduced NIC(s), 1 ref per list,..
                                 mode_decision_sb(scs_ptr,
@@ -8282,12 +8313,18 @@ void *mode_decision_kernel(void *input_ptr) {
                                 scs_ptr,
                                 pcs_ptr,
                                 context_ptr->md_context,
+#if !FIX_2042
                                 sb_index,
+#endif
                                 pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].is_complete_sb);
                         else
                             // Build the t=0 cand_block_array
                             build_starting_cand_block_array(
+#if FIX_2042
+                                scs_ptr, pcs_ptr, context_ptr->md_context);
+#else
                                 scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
                         // [PD_PASS_1] Mode Decision - Obtain the final partitioning decision using more accurate info
                         // than previous stages.  Reduce the total number of partitions to 1.
                         // Input : mdc_blk_ptr built @ PD0 refinement
