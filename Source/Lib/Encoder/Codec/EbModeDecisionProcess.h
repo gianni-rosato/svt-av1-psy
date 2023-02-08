@@ -503,8 +503,8 @@ typedef struct Lpd0Ctrls {
          pd0_level; // Whether light-PD0 is set to be used for an SB (the detector may change this)
     Bool use_lpd0_detector
         [LPD0_LEVELS]; // Whether to use a detector; if use_light_pd0 is set to 1, the detector will protect tough SBs
-    Bool use_ref_info
-        [LPD0_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector
+    uint8_t use_ref_info
+        [LPD0_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector. [0,2] - 0 is off, 2 is most aggressive
     uint32_t me_8x8_cost_variance_th
         [LPD0_LEVELS]; // me_8x8_cost_variance_th beyond which the PD0 is used (instead of light-PD0)
 } Lpd0Ctrls;
@@ -520,8 +520,8 @@ typedef struct Lpd1Ctrls {
 
     Bool use_lpd1_detector
         [LPD1_LEVELS]; // Whether to use a detector; if use_light_pd1 is set to 1, the detector will protect tough SBs
-    Bool use_ref_info
-        [LPD1_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector
+    uint8_t use_ref_info
+        [LPD1_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector. [0,1] - 0 is off, 1 is on
     uint32_t cost_th_dist[LPD1_LEVELS]; // Distortion value used in cost TH for detector
     uint32_t coeff_th[LPD1_LEVELS]; // Num non-zero coeffs used in detector
     uint16_t max_mv_length
