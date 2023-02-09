@@ -404,6 +404,49 @@ bool process_skip(EbConfig *app_cfg, EbBufferHeaderType *header_ptr) {
     return true;
 }
 
+static void *prepare_private_data_list(const EbConfig *app_cfg) {
+    EbPrivDataNode *node = NULL;
+
+    // REF_FRAME_SCALING_EVENT
+    for (size_t i = 0; i < app_cfg->frame_scale_evts.evt_num; i++) {
+        if (app_cfg->frame_scale_evts.start_frame_nums &&
+            (uint64_t)app_cfg->frame_scale_evts.start_frame_nums[i] ==
+                app_cfg->processed_frame_count) {
+            EbPrivDataNode  *new_node = (EbPrivDataNode *)malloc(sizeof(EbPrivDataNode));
+            EbRefFrameScale *data     = (EbRefFrameScale *)malloc(sizeof(EbRefFrameScale));
+            data->scale_mode          = RESIZE_FIXED;
+            data->scale_denom         = app_cfg->frame_scale_evts.resize_denoms
+                        ? app_cfg->frame_scale_evts.resize_denoms[i]
+                        : 8;
+            data->scale_kf_denom      = app_cfg->frame_scale_evts.resize_kf_denoms
+                     ? app_cfg->frame_scale_evts.resize_kf_denoms[i]
+                     : 8;
+            new_node->size            = sizeof(EbRefFrameScale);
+            new_node->node_type       = REF_FRAME_SCALING_EVENT;
+            new_node->data            = data;
+            new_node->next            = node;
+            node                      = new_node;
+            break;
+        }
+    }
+
+    // other private data...
+
+    return node;
+}
+
+static void free_private_data_list(void *node_head) {
+    while (node_head) {
+        EbPrivDataNode *node = (EbPrivDataNode *)node_head;
+        node_head            = node->next;
+        if (node->data) {
+            free(node->data);
+            node->data = NULL;
+        }
+        free(node);
+    };
+}
+
 //************************************/
 // process_input_buffer
 // Reads yuv frames from file and copy
@@ -449,7 +492,7 @@ void process_input_buffer(EncChannel *channel) {
         if (header_ptr->n_filled_len) {
             // Update the context parameters
             app_cfg->processed_byte_count += header_ptr->n_filled_len;
-            header_ptr->p_app_private = (EbPtr)NULL;
+            header_ptr->p_app_private = prepare_private_data_list(app_cfg);
 
             app_cfg->mmap.file_frame_it++;
             app_cfg->frames_encoded = (int32_t)(++app_cfg->processed_frame_count);
@@ -473,6 +516,9 @@ void process_input_buffer(EncChannel *channel) {
 
             if (app_cfg->mmap.enable)
                 release_memory_mapped_file(app_cfg, is_16bit, header_ptr);
+
+            free_private_data_list(header_ptr->p_app_private);
+            header_ptr->p_app_private = (EbPtr *)NULL;
         }
         if ((app_cfg->processed_frame_count == (uint64_t)app_cfg->frames_to_be_encoded) ||
             app_cfg->stop_encoder) {

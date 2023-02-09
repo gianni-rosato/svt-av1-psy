@@ -230,6 +230,8 @@ typedef struct EbConfig {
     uint64_t ivf_count;
 
     struct forced_key_frames forced_keyframes;
+
+    SvtAv1FrameScaleEvts frame_scale_evts;
     /****************************************
      * On-the-fly Testing
      ****************************************/

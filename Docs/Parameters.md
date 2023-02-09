@@ -255,6 +255,9 @@ SvtAv1EncApp -i in.y4m -b out.ivf --keyint -1 --enable-qm 1 --qm-min 0 --qm-max 
 | **ResizeMode**                     | --resize-mode          | [0-4]            | 0             | Enable reference scaling mode                                                                                                                                           |
 | **ResizeDenom**                    | --resize-denom         | [8-16]           | 8             | Reference scaling denominator, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                                                                          |
 | **ResizeKfDenom**                  | --resize-kf-denom      | [8-16]           | 8             | Reference scaling denominator for key frames, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                                                           |
+| **ResizeFrameEvents**              | --frame-resz-events    | any string       | None          | Frame scale events, in a list separated by ',', scaling process starts from the given frame number (0 based) with new denominators, only applicable for mode == 4       |
+| **ResizeFrameKfDenoms**            | --frame-resz-kf-denoms | [8-16]           | 8             | Frame scale denominator for key frames in event, in a list separated by ',', only applicable for mode == 4                                                              |
+| **ResizeFrameDenoms**              | --frame-resz-denoms    | [8-16]           | 8             | Frame scale denominator in event, in a list separated by ',', only applicable for mode == 4                                                                             |
 
 #### **Super-Resolution**
 
@@ -296,8 +299,9 @@ resolution, scaling ratio applys on both horizontally and vertically.
 Example CLI of reference scaling dynamic mode:
 > -i input.yuv -b output.ivf --resize-mode 3 --rc 2 --pred-struct 1 --tbr 1000
 
-TODO: Random access mode is not available until scaling event parameter is
-supported. An example will be added here to guide using random access mode.
+Example CLI of reference scaling random access mode:
+> -i input.yuv -b output.ivf --resize-mode 4 --frame-resz-events 5,10,15,20,25,30 --frame-resz-kf-denoms 8,9,10,11,12,13 --frame-resz-denoms 16,15,14,13,12,11
+`--frame-resz-events`, `--frame-resz-kf-denoms` and `--frame-resz-denoms` shall be all set in same amount of parameters in list
 
 ### Color Description Options
 

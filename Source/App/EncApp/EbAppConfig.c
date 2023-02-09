@@ -108,6 +108,9 @@
 #define RESIZE_MODE_INPUT "--resize-mode"
 #define RESIZE_DENOM "--resize-denom"
 #define RESIZE_KF_DENOM "--resize-kf-denom"
+#define RESIZE_FRAME_EVTS "--frame-resz-events"
+#define RESIZE_FRAME_KF_DENOMS "--frame-resz-kf-denoms"
+#define RESIZE_FRAME_DENOMS "--frame-resz-denoms"
 // --- end: REFERENCE SCALING SUPPORT
 #define RATE_CONTROL_ENABLE_TOKEN "--rc"
 #define TARGET_BIT_RATE_TOKEN "--tbr"
@@ -585,6 +588,39 @@ static EbErrorType set_cfg_generic_token(EbConfig *cfg, const char *token, const
     if (!strncmp(token, "-", 1))
         token += 1;
     return validate_error(svt_av1_enc_parse_parameter(&cfg->config, token, value), token, value);
+}
+
+static EbErrorType set_resize_events(EbConfig *cfg, const char *token, const char *value) {
+    EbErrorType err = set_cfg_generic_token(cfg, token, value);
+    if (err != EB_ErrorNone)
+        return err;
+    if (cfg->frame_scale_evts.evt_num != 0 &&
+        cfg->frame_scale_evts.evt_num != cfg->config.frame_scale_evts.evt_num) {
+        return EB_ErrorBadParameter;
+    }
+
+    // move the allocated array from setting to app configuration, they will be free at svt_config_dtor()
+    // resize_kf_denoms and resize_denoms will be sent to encoder with frame at start_frame_nums
+    if (!strcmp(token, "--frame-resz-events")) {
+        cfg->frame_scale_evts.evt_num          = cfg->config.frame_scale_evts.evt_num;
+        cfg->frame_scale_evts.start_frame_nums = cfg->config.frame_scale_evts.start_frame_nums;
+        cfg->config.frame_scale_evts.start_frame_nums = NULL;
+        cfg->config.frame_scale_evts.evt_num          = 0;
+    }
+    if (!strcmp(token, "--frame-resz-kf-denoms")) {
+        cfg->frame_scale_evts.evt_num          = cfg->config.frame_scale_evts.evt_num;
+        cfg->frame_scale_evts.resize_kf_denoms = cfg->config.frame_scale_evts.resize_kf_denoms;
+        cfg->config.frame_scale_evts.resize_kf_denoms = NULL;
+        cfg->config.frame_scale_evts.evt_num          = 0;
+    }
+    if (!strcmp(token, "--frame-resz-denoms")) {
+        cfg->frame_scale_evts.evt_num              = cfg->config.frame_scale_evts.evt_num;
+        cfg->frame_scale_evts.resize_denoms        = cfg->config.frame_scale_evts.resize_denoms;
+        cfg->config.frame_scale_evts.resize_denoms = NULL;
+        cfg->config.frame_scale_evts.evt_num       = 0;
+    }
+
+    return EB_ErrorNone;
 }
 
 enum CfgType {
@@ -1160,6 +1196,20 @@ ConfigEntry config_entry_specific[] = {
      RESIZE_KF_DENOM,
      "Resize denominator for key frames, only applicable for mode == 1 [8-16]",
      set_cfg_generic_token},
+    {SINGLE_INPUT,
+     RESIZE_FRAME_EVTS,
+     "Resize frame events, in a list separated by ',', a reference scaling process starts from the "
+     "given frame number with new denominators, only applicable for mode == 4",
+     set_resize_events},
+    {SINGLE_INPUT,
+     RESIZE_FRAME_KF_DENOMS,
+     "Resize denominator for key frames in event, in a list separated by ',', only applicable for "
+     "mode == 4",
+     set_resize_events},
+    {SINGLE_INPUT,
+     RESIZE_FRAME_DENOMS,
+     "Resize denominator in event, in a list separated by ',', only applicable for mode == 4",
+     set_resize_events},
     // --- end: REFERENCE SCALING SUPPORT
 
     // Termination
@@ -1365,6 +1415,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, RESIZE_MODE_INPUT, "ResizeMode", set_cfg_generic_token},
     {SINGLE_INPUT, RESIZE_DENOM, "ResizeDenom", set_cfg_generic_token},
     {SINGLE_INPUT, RESIZE_KF_DENOM, "ResizeKfDenom", set_cfg_generic_token},
+    {SINGLE_INPUT, RESIZE_FRAME_EVTS, "ResizeFrameEvts", set_resize_events},
+    {SINGLE_INPUT, RESIZE_FRAME_KF_DENOMS, "ResizeFrameKFDenoms", set_resize_events},
+    {SINGLE_INPUT, RESIZE_FRAME_DENOMS, "ResizeFrameDenoms", set_resize_events},
 
     // Color Description Options
     {SINGLE_INPUT, COLOR_PRIMARIES_NEW_TOKEN, "ColorPrimaries", set_cfg_generic_token},
@@ -1449,6 +1502,15 @@ void svt_config_dtor(EbConfig *app_cfg) {
         free(app_cfg->forced_keyframes.specifiers[i]);
     free(app_cfg->forced_keyframes.specifiers);
     free(app_cfg->forced_keyframes.frames);
+
+    if (app_cfg->frame_scale_evts.start_frame_nums)
+        free(app_cfg->frame_scale_evts.start_frame_nums);
+    if (app_cfg->frame_scale_evts.resize_kf_denoms)
+        free(app_cfg->frame_scale_evts.resize_kf_denoms);
+    if (app_cfg->frame_scale_evts.resize_denoms)
+        free(app_cfg->frame_scale_evts.resize_denoms);
+    app_cfg->frame_scale_evts.evt_num = 0;
+
     free((void *)app_cfg->stats);
     free(app_cfg);
     return;

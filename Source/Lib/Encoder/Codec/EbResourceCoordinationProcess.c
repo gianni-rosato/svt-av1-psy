@@ -728,7 +728,28 @@ static EbErrorType realloc_sb_param(SequenceControlSet *scs, PictureParentContro
     return EB_ErrorNone;
 }
 
-static void update_frame_event(PictureParentControlSet *pcs) {
+static void retrieve_resize_event(PictureParentControlSet *pcs, uint64_t pic_num) {
+    SequenceControlSet *scs = pcs->scs;
+    if (scs->static_config.resize_mode != RESIZE_RANDOM_ACCESS)
+        return;
+    const SvtAv1FrameScaleEvts *events = &scs->static_config.frame_scale_evts;
+    for (uint32_t i = 0; i < events->evt_num; i++) {
+        if (events->start_frame_nums && ((int64_t)pic_num == events->start_frame_nums[i])) {
+            // update scaling event for future pictures
+            scs->encode_context_ptr->resize_evt.scale_mode     = RESIZE_FIXED;
+            scs->encode_context_ptr->resize_evt.scale_denom    = events->resize_denoms
+                   ? events->resize_denoms[i]
+                   : 8;
+            scs->encode_context_ptr->resize_evt.scale_kf_denom = events->resize_kf_denoms
+                ? events->resize_kf_denoms[i]
+                : 8;
+            // set reset flag of rate control
+            pcs->rc_reset_flag = TRUE;
+        }
+    }
+}
+
+static void update_frame_event(PictureParentControlSet *pcs, uint64_t pic_num) {
     SequenceControlSet *scs  = pcs->scs;
     EbPrivDataNode     *node = (EbPrivDataNode *)pcs->input_ptr->p_app_private;
     while (node) {
@@ -743,6 +764,7 @@ static void update_frame_event(PictureParentControlSet *pcs) {
         }
         node = node->next;
     }
+    retrieve_resize_event(pcs, pic_num);
     // update current picture scaling event
     pcs->resize_evt = scs->encode_context_ptr->resize_evt;
 }
@@ -935,7 +957,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs->eb_y8b_wrapper_ptr   = eb_y8b_wrapper_ptr;
             pcs->end_of_sequence_flag = end_of_sequence_flag;
             pcs->rc_reset_flag        = FALSE;
-            update_frame_event(pcs);
+            update_frame_event(pcs, context_ptr->picture_number_array[instance_index]);
             pcs->is_not_scaled = (scs->static_config.superres_mode == SUPERRES_NONE) &&
                 scs->static_config.resize_mode == RESIZE_NONE;
             if (loop_index == 1) {

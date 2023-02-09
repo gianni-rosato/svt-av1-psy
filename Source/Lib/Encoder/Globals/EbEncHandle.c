@@ -4533,7 +4533,19 @@ static void copy_api_from_app(
     scs->static_config.resize_mode = config_struct->resize_mode;
     scs->static_config.resize_denom = config_struct->resize_denom;
     scs->static_config.resize_kf_denom = config_struct->resize_kf_denom;
-
+    if (config_struct->frame_scale_evts.start_frame_nums) {
+        EB_NO_THROW_MALLOC(scs->static_config.frame_scale_evts.start_frame_nums, sizeof(int64_t) * config_struct->frame_scale_evts.evt_num);
+        memcpy(scs->static_config.frame_scale_evts.start_frame_nums, config_struct->frame_scale_evts.start_frame_nums, sizeof(int64_t) * config_struct->frame_scale_evts.evt_num);
+    }
+    if (config_struct->frame_scale_evts.resize_kf_denoms) {
+        EB_NO_THROW_MALLOC(scs->static_config.frame_scale_evts.resize_kf_denoms, sizeof(int32_t) * config_struct->frame_scale_evts.evt_num);
+        memcpy(scs->static_config.frame_scale_evts.resize_kf_denoms, config_struct->frame_scale_evts.resize_kf_denoms, sizeof(int32_t) * config_struct->frame_scale_evts.evt_num);
+    }
+    if (config_struct->frame_scale_evts.resize_denoms) {
+        EB_NO_THROW_MALLOC(scs->static_config.frame_scale_evts.resize_denoms, sizeof(int32_t) * config_struct->frame_scale_evts.evt_num);
+        memcpy(scs->static_config.frame_scale_evts.resize_denoms, config_struct->frame_scale_evts.resize_denoms, sizeof(int32_t) * config_struct->frame_scale_evts.evt_num);
+    }
+    scs->static_config.frame_scale_evts.evt_num = config_struct->frame_scale_evts.evt_num;
 
     // Color description
     scs->static_config.color_description_present_flag = config_struct->color_description_present_flag;
@@ -4639,6 +4651,12 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
 
     svt_av1_print_lib_params(
         enc_handle->scs_instance_array[instance_index]->scs);
+
+    // free frame scale events after copy to encoder
+    if (config_struct->frame_scale_evts.resize_denoms) free(config_struct->frame_scale_evts.resize_denoms);
+    if (config_struct->frame_scale_evts.resize_kf_denoms) free(config_struct->frame_scale_evts.resize_kf_denoms);
+    if (config_struct->frame_scale_evts.start_frame_nums) free(config_struct->frame_scale_evts.start_frame_nums);
+    memset(&config_struct->frame_scale_evts, 0, sizeof(SvtAv1FrameScaleEvts));
 
     return return_error;
 }

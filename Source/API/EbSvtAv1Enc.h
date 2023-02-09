@@ -28,7 +28,7 @@ extern "C" {
  * has been modified, and reset anytime the major API version has
  * been changed. Used to keep track if a field has been added or not.
  */
-#define SVT_AV1_ENC_ABI_VERSION 7
+#define SVT_AV1_ENC_ABI_VERSION 8
 
 //***HME***
 
@@ -210,6 +210,13 @@ typedef enum SvtAv1FrameUpdateType {
     SVT_AV1_INTNL_ARF_UPDATE, // Internal Altref Frame
     SVT_AV1_FRAME_UPDATE_TYPES
 } SvtAv1FrameUpdateType;
+
+typedef struct SvtAv1FrameScaleEvts {
+    uint32_t evt_num;
+    int64_t *start_frame_nums;
+    int32_t *resize_kf_denoms;
+    int32_t *resize_denoms;
+} SvtAv1FrameScaleEvts;
 
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
@@ -916,6 +923,15 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint8_t startup_mg_size;
 #endif
+
+    /* @brief reference scaling events for random access mode (reize-mode = 4)
+     *
+     * evt_num:          total count of events
+     * start_frame_nums: array of scaling start frame numbers
+     * resize_kf_denoms: array of scaling denominators of key-frame
+     * resize_denoms:    array of scaling denominators of non-key-frame
+     */
+    SvtAv1FrameScaleEvts frame_scale_evts;
 } EbSvtAv1EncConfiguration;
 
 /**
