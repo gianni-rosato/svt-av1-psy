@@ -3337,8 +3337,6 @@ void *rate_control_kernel(void *input_ptr) {
     EbObjectWrapper    *rate_control_results_wrapper_ptr;
     RateControlResults *rate_control_results_ptr;
 
-    uint64_t total_number_of_fb_frames = 0;
-
     RateControlTaskTypes task_type;
     RATE_CONTROL        *rc;
     for (;;) {
@@ -3723,7 +3721,6 @@ void *rate_control_kernel(void *input_ptr) {
             // Queue variables
             if (scs->static_config.max_bit_rate)
                 coded_frames_stat_calc(ppcs);
-            total_number_of_fb_frames++;
             // Release the ParentPictureControlSet
 
             if (ppcs->eb_y8b_wrapper_ptr) {

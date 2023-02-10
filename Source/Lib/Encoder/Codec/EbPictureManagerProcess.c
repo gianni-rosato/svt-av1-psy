@@ -329,8 +329,6 @@ void *picture_manager_kernel(void *input_ptr) {
     uint16_t pic_width_in_sb;
     uint16_t picture_height_in_sb;
     uint64_t decode_order = 0;
-    // Debug
-    uint32_t loop_count = 0;
 
     for (;;) {
         // Get Input Full Object
@@ -341,7 +339,6 @@ void *picture_manager_kernel(void *input_ptr) {
 
         // *Note - This should be overhauled and/or replaced when we
         //   need hierarchical support.
-        loop_count++;
 
         switch (input_picture_demux_ptr->picture_type) {
         case EB_PIC_SUPERRES_INPUT: {

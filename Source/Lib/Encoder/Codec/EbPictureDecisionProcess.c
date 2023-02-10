@@ -495,9 +495,6 @@ static void early_hme(
 
     uint64_t tot_dist = 0;
 
-    uint32_t tot_norm_mvx = 0;
-    uint32_t tot_norm_mvy = 0;
-
     uint32_t tot_cplx = 0;
     uint32_t tot_active = 0;
 
@@ -544,8 +541,6 @@ static void early_hme(
                 &y_hme_level0_search_center);
 
             tot_dist += hme_level0_sad;
-            tot_norm_mvx += abs(x_hme_level0_search_center);
-            tot_norm_mvy += abs(y_hme_level0_search_center);
 
             tot_cplx += (hme_level0_sad > (16 * 16 * 30));
             tot_active += ((abs(x_hme_level0_search_center) > 0) || (abs(y_hme_level0_search_center) > 0));
