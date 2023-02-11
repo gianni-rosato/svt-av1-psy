@@ -569,6 +569,8 @@ static INLINE PredDirection av1_get_pred_dir(int8_t ref_frame_type) {
 }
 int svt_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y);
 int get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint);
+int16_t svt_aom_mode_context_analyzer(const int16_t *const          mode_context,
+                                      const MvReferenceFrame *const rf);
 
 #ifdef __cplusplus
 }

@@ -24,12 +24,6 @@ typedef AomCdfProb (*MapCdf)[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS];
 // Negative values are invalid
 extern int palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH + 1];
 
-static uint16_t compound_mode_ctx_map[3][COMP_NEWMV_CTXS] = {
-    {0, 1, 1, 1, 1},
-    {1, 2, 3, 4, 4},
-    {4, 4, 5, 6, 7},
-};
-
 static INLINE void svt_collect_neighbors_ref_counts(PartitionInfo *pi) {
     ZERO_ARRAY(&pi->neighbors_ref_counts[0], sizeof(pi->neighbors_ref_counts[0]) * REF_FRAMES);
 
@@ -1206,21 +1200,6 @@ static void dec_setup_ref_mv_list(EbDecHandle *dec_handle, ParseCtxt *parse_ctx,
     }
 }
 
-static INLINE int16_t svt_mode_context_analyzer(const int16_t *const          mode_context,
-                                                const MvReferenceFrame *const rf) {
-    const int8_t ref_frame = av1_ref_frame_type(rf);
-
-    if (rf[1] <= INTRA_FRAME)
-        return mode_context[ref_frame];
-
-    const int16_t newmv_ctx = mode_context[ref_frame] & NEWMV_CTX_MASK;
-    const int16_t refmv_ctx = (mode_context[ref_frame] >> REFMV_OFFSET) & REFMV_CTX_MASK;
-
-    const int16_t comp_ctx =
-        compound_mode_ctx_map[refmv_ctx >> 1][AOMMIN(newmv_ctx, COMP_NEWMV_CTXS - 1)];
-    return comp_ctx;
-}
-
 void svt_av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo *pi, ParseCtxt *parse_ctx,
                           MvReferenceFrame ref_frame,
                           CandidateMv      ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
@@ -2107,7 +2086,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Parti
     }
 #endif
 
-    int mode_ctx     = svt_mode_context_analyzer(inter_mode_ctx, mbmi->ref_frame);
+    int mode_ctx     = svt_aom_mode_context_analyzer(inter_mode_ctx, mbmi->ref_frame);
     mbmi->ref_mv_idx = 0;
 
     if (mbmi->skip_mode) {

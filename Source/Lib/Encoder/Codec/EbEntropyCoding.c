@@ -1469,26 +1469,6 @@ static void write_motion_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer
     return;
 }
 //****************************************************************************************************//
-uint16_t compound_mode_ctx_map[3][COMP_NEWMV_CTXS] = {
-    {0, 1, 1, 1, 1},
-    {1, 2, 3, 4, 4},
-    {4, 4, 5, 6, 7},
-};
-
-static int16_t av1_mode_context_analyzer(const int16_t *const          mode_context,
-                                         const MvReferenceFrame *const rf) {
-    const int8_t ref_frame = av1_ref_frame_type(rf);
-
-    if (rf[1] <= INTRA_FRAME)
-        return mode_context[ref_frame];
-
-    const int16_t newmv_ctx = mode_context[ref_frame] & NEWMV_CTX_MASK;
-    const int16_t refmv_ctx = (mode_context[ref_frame] >> REFMV_OFFSET) & REFMV_CTX_MASK;
-    assert((refmv_ctx >> 1) < 3);
-    const int16_t comp_ctx =
-        compound_mode_ctx_map[refmv_ctx >> 1][AOMMIN(newmv_ctx, COMP_NEWMV_CTXS - 1)];
-    return comp_ctx;
-}
 
 EbErrorType encode_slice_finish(EntropyCoder *entropy_coder_ptr) {
     EbErrorType return_error = EB_ErrorNone;
@@ -5678,7 +5658,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs, EntropyCodingContext *context_
 
                 MvReferenceFrame rf[2];
                 av1_set_ref_frame(rf, blk_ptr->prediction_unit_array[0].ref_frame_type);
-                int16_t        mode_ctx   = av1_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
+                int16_t mode_ctx = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
                 PredictionMode inter_mode = (PredictionMode)blk_ptr->pred_mode;
                 const int32_t  is_compound =
                     (blk_ptr->prediction_unit_array[0].inter_pred_direction_index == BI_PRED);

@@ -674,25 +674,7 @@ int svt_av1_get_intra_inter_context(const MacroBlockD *xd) {
         return 0;
     }
 }
-uint16_t compound_mode_ctx_map_[3][COMP_NEWMV_CTXS] = {
-    {0, 1, 1, 1, 1},
-    {1, 2, 3, 4, 4},
-    {4, 4, 5, 6, 7},
-};
-static int16_t av1_mode_context_analyzer(const int16_t *const          mode_context,
-                                         const MvReferenceFrame *const rf) {
-    const int8_t ref_frame = av1_ref_frame_type(rf);
 
-    if (rf[1] <= INTRA_FRAME)
-        return mode_context[ref_frame];
-
-    const int16_t newmv_ctx = mode_context[ref_frame] & NEWMV_CTX_MASK;
-    const int16_t refmv_ctx = (mode_context[ref_frame] >> REFMV_OFFSET) & REFMV_CTX_MASK;
-    assert((refmv_ctx >> 1) < 3);
-    const int16_t comp_ctx =
-        compound_mode_ctx_map_[refmv_ctx >> 1][AOMMIN(newmv_ctx, COMP_NEWMV_CTXS - 1)];
-    return comp_ctx;
-}
 int32_t    partition_cdf_length(BlockSize bsize);
 static int av1_get_pred_context_switchable_interp(const MacroBlockD *xd, int dir) {
     const MbModeInfo *const mbmi = &xd->mi[0]->mbmi;
@@ -1113,7 +1095,7 @@ void update_stats(PictureControlSet *pcs, BlkStruct *blk_ptr, int mi_row, int mi
         const PredictionMode mode = mbmi->block_mi.mode;
         MvReferenceFrame     rf[2];
         av1_set_ref_frame(rf, blk_ptr->prediction_unit_array[0].ref_frame_type);
-        const int16_t mode_ctx = av1_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
+        const int16_t mode_ctx = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
         if (has_second_ref(mbmi)) {
             update_cdf(fc->inter_compound_mode_cdf[mode_ctx],
                        INTER_COMPOUND_OFFSET(mode),

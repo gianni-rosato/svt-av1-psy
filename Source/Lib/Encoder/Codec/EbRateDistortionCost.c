@@ -964,27 +964,6 @@ uint64_t estimate_ref_frame_type_bits(struct ModeDecisionContext *ctx, BlkStruct
     }
     return ref_rate_bits;
 }
-//extern INLINE int16_t av1_mode_context_analyzer(const int16_t *const mode_context, const MvReferenceFrame *const rf);
-
-uint16_t compound_mode_ctx_map_2[3][COMP_NEWMV_CTXS] = {
-    {0, 1, 1, 1, 1},
-    {1, 2, 3, 4, 4},
-    {4, 4, 5, 6, 7},
-};
-static INLINE int16_t av1_mode_context_analyzer(const int16_t *const          mode_context,
-                                                const MvReferenceFrame *const rf) {
-    const int8_t ref_frame = av1_ref_frame_type(rf);
-
-    if (rf[1] <= INTRA_FRAME)
-        return mode_context[ref_frame];
-
-    const int16_t newmv_ctx = mode_context[ref_frame] & NEWMV_CTX_MASK;
-    const int16_t refmv_ctx = (mode_context[ref_frame] >> REFMV_OFFSET) & REFMV_CTX_MASK;
-    assert((refmv_ctx >> 1) < 3);
-    const int16_t comp_ctx =
-        compound_mode_ctx_map_2[refmv_ctx >> 1][AOMMIN(newmv_ctx, COMP_NEWMV_CTXS - 1)];
-    return comp_ctx;
-}
 
 int                    get_comp_group_idx_context_enc(const MacroBlockD *xd);
 int                    is_any_masked_compound_used(BlockSize sb_type);
@@ -1084,7 +1063,7 @@ uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkStruct *b
     MvReferenceFrame     rf[2];
     av1_set_ref_frame(rf, cand->ref_frame_type);
     const uint8_t  is_compound  = is_inter_compound_mode(cand->pred_mode);
-    const uint32_t mode_context = av1_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
+    const uint32_t mode_context = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
     uint64_t       reference_picture_bits_num = 0;
     reference_picture_bits_num = ctx->estimate_ref_frames_num_bits[cand->ref_frame_type];
     if (is_compound) {
@@ -1272,7 +1251,7 @@ uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, cand->ref_frame_type);
     const uint8_t is_compound  = is_inter_compound_mode(cand->pred_mode);
-    uint32_t      mode_context = av1_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
+    uint32_t      mode_context = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
     uint64_t      reference_picture_bits_num = 0;
 
     //Reference Type and Mode Bit estimation
