@@ -48,25 +48,6 @@ static const int8_t inv_cos_bit_row[MAX_TXWH_IDX][MAX_TXWH_IDX] = {
     {INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT},
     {0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT},
     {0, 0, INV_COS_BIT, INV_COS_BIT, INV_COS_BIT}};
-static const int8_t inv_shift_4x4[2]   = {0, -4};
-static const int8_t inv_shift_8x8[2]   = {-1, -4};
-static const int8_t inv_shift_16x16[2] = {-2, -4};
-static const int8_t inv_shift_32x32[2] = {-2, -4};
-static const int8_t inv_shift_64x64[2] = {-2, -4};
-static const int8_t inv_shift_4x8[2]   = {0, -4};
-static const int8_t inv_shift_8x4[2]   = {0, -4};
-static const int8_t inv_shift_8x16[2]  = {-1, -4};
-static const int8_t inv_shift_16x8[2]  = {-1, -4};
-static const int8_t inv_shift_16x32[2] = {-1, -4};
-static const int8_t inv_shift_32x16[2] = {-1, -4};
-static const int8_t inv_shift_32x64[2] = {-1, -4};
-static const int8_t inv_shift_64x32[2] = {-1, -4};
-static const int8_t inv_shift_4x16[2]  = {-1, -4};
-static const int8_t inv_shift_16x4[2]  = {-1, -4};
-static const int8_t inv_shift_8x32[2]  = {-2, -4};
-static const int8_t inv_shift_32x8[2]  = {-2, -4};
-static const int8_t inv_shift_16x64[2] = {-2, -4};
-static const int8_t inv_shift_64x16[2] = {-2, -4};
 
 static const TxType1D vtx_tab[TX_TYPES] = {
     DCT_1D,
@@ -261,7 +242,7 @@ static const int8_t inv_start_range[TX_SIZES_ALL] = {
 
 extern const int32_t eb_av1_cospi_arr_data[7][64];
 extern const int32_t eb_av1_sinpi_arr_data[7][5];
-extern const int8_t *eb_inv_txfm_shift_ls[TX_SIZES_ALL];
+extern const int8_t *svt_aom_inv_txfm_shift_ls[TX_SIZES_ALL];
 
 static const int32_t cos_bit_min = 10;
 

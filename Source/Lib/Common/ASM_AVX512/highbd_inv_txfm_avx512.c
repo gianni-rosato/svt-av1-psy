@@ -20,7 +20,7 @@
 #include "synonyms_avx512.h"
 #include "transpose_avx512.h"
 
-extern const int8_t *eb_inv_txfm_shift_ls[];
+extern const int8_t *svt_aom_inv_txfm_shift_ls[];
 const int32_t       *cospi_arr(int32_t n);
 const int32_t       *sinpi_arr(int32_t n);
 
@@ -1049,7 +1049,7 @@ void svt_av1_inv_txfm2d_add_16x16_avx512(const int32_t *coeff, uint16_t *output_
                                          uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                          int32_t bd) {
     __m512i       in[16], out[16];
-    const int8_t *shift   = eb_inv_txfm_shift_ls[TX_16X16];
+    const int8_t *shift   = svt_aom_inv_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
     const int32_t txh_idx = get_txh_idx(TX_16X16);
 
@@ -1728,7 +1728,7 @@ void svt_av1_inv_txfm2d_add_32x32_avx512(const int32_t *coeff, uint16_t *output_
                                          uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                          int32_t bd) {
     __m512i       in_avx512[64], out_avx512[128];
-    const int8_t *shift     = eb_inv_txfm_shift_ls[TX_32X32];
+    const int8_t *shift     = svt_aom_inv_txfm_shift_ls[TX_32X32];
     const int32_t txw_idx   = get_txw_idx(TX_32X32);
     const int32_t txh_idx   = get_txh_idx(TX_32X32);
     const int32_t txfm_size = 32;
@@ -1807,7 +1807,7 @@ void svt_av1_inv_txfm2d_add_64x64_avx512(const int32_t *coeff, uint16_t *output_
                                          uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                          int32_t bd) {
     __m512i       in[64 * 64 / 16], out[64 * 64 / 16];
-    const int8_t *shift   = eb_inv_txfm_shift_ls[TX_64X64];
+    const int8_t *shift   = svt_aom_inv_txfm_shift_ls[TX_64X64];
     const int32_t txw_idx = tx_size_wide_log2[TX_64X64] - tx_size_wide_log2[0];
     const int32_t txh_idx = tx_size_high_log2[TX_64X64] - tx_size_high_log2[0];
 
@@ -2609,7 +2609,7 @@ void svt_av1_inv_txfm2d_add_16x64_avx512(const int32_t *coeff, uint16_t *output_
     (void)tx_type;
     (void)eob;
     __m512i       in[64], out[64];
-    const int8_t *shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t txw_idx       = tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     const int32_t txh_idx       = tx_size_high_log2[tx_size] - tx_size_high_log2[0];
     const int32_t txfm_size_col = tx_size_wide[tx_size];
@@ -2640,7 +2640,7 @@ void svt_av1_inv_txfm2d_add_64x16_avx512(const int32_t *coeff, uint16_t *output_
     (void)tx_type;
     (void)eob;
     __m512i       in[64], out[64];
-    const int8_t *shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t txw_idx       = tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     const int32_t txh_idx       = tx_size_high_log2[tx_size] - tx_size_high_log2[0];
     const int32_t txfm_size_col = tx_size_wide[tx_size];
@@ -2668,7 +2668,7 @@ void svt_av1_inv_txfm2d_add_32x64_avx512(const int32_t *coeff, uint16_t *output_
     (void)tx_type;
     (void)eob;
     __m512i       in[128], out[128];
-    const int8_t *shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t txw_idx       = tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     const int32_t txh_idx       = tx_size_high_log2[tx_size] - tx_size_high_log2[0];
     const int32_t txfm_size_col = tx_size_wide[tx_size];
@@ -2698,7 +2698,7 @@ void svt_av1_inv_txfm2d_add_64x32_avx512(const int32_t *coeff, uint16_t *output_
     (void)tx_type;
     (void)eob;
     __m512i       in[128], out[128];
-    const int8_t *shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t txw_idx       = tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     const int32_t txh_idx       = tx_size_high_log2[tx_size] - tx_size_high_log2[0];
     const int32_t txfm_size_col = tx_size_wide[tx_size];
@@ -2767,7 +2767,7 @@ void svt_av1_inv_txfm2d_add_16x32_avx512(const int32_t *coeff, uint16_t *output_
                                          TxSize tx_size, int32_t eob, int32_t bd) {
     (void)eob;
     __m512i                       in[32], out[32];
-    const int8_t                 *shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t                 *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t                 txw_idx       = tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     const int32_t                 txh_idx       = tx_size_high_log2[tx_size] - tx_size_high_log2[0];
     const int32_t                 txfm_size_col = tx_size_wide[tx_size];
@@ -2798,7 +2798,7 @@ void svt_av1_inv_txfm2d_add_32x16_avx512(const int32_t *coeff, uint16_t *output_
                                          TxSize tx_size, int32_t eob, int32_t bd) {
     (void)eob;
     __m512i                       in[32], out[32];
-    const int8_t                 *shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t                 *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t                 txw_idx       = tx_size_wide_log2[tx_size] - tx_size_wide_log2[0];
     const int32_t                 txh_idx       = tx_size_high_log2[tx_size] - tx_size_high_log2[0];
     const int32_t                 txfm_size_col = tx_size_wide[tx_size];

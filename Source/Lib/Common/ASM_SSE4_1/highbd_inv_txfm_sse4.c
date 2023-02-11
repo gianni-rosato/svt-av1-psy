@@ -366,7 +366,7 @@ void svt_av1_inv_txfm2d_add_4x4_sse4_1(const int32_t *input, uint16_t *output_r,
                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                        int32_t bd) {
     __m128i       in[4];
-    const int8_t *shift   = eb_inv_txfm_shift_ls[TX_4X4];
+    const int8_t *shift   = svt_aom_inv_txfm_shift_ls[TX_4X4];
     const int32_t txw_idx = get_txw_idx(TX_4X4);
     const int32_t txh_idx = get_txh_idx(TX_4X4);
 
@@ -948,7 +948,7 @@ void svt_av1_inv_txfm2d_add_8x8_sse4_1(const int32_t *input, uint16_t *output_r,
                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                        int32_t bd) {
     __m128i       in[16], out[16];
-    const int8_t *shift   = eb_inv_txfm_shift_ls[TX_8X8];
+    const int8_t *shift   = svt_aom_inv_txfm_shift_ls[TX_8X8];
     const int32_t txw_idx = get_txw_idx(TX_8X8);
     const int32_t txh_idx = get_txh_idx(TX_8X8);
 
@@ -1767,7 +1767,7 @@ void svt_av1_inv_txfm2d_add_16x16_sse4_1(const int32_t *input, uint16_t *output_
                                          uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                          int32_t bd) {
     __m128i       in[64], out[64];
-    const int8_t *shift   = eb_inv_txfm_shift_ls[TX_16X16];
+    const int8_t *shift   = svt_aom_inv_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
     const int32_t txh_idx = get_txh_idx(TX_16X16);
 
@@ -2522,7 +2522,7 @@ void svt_av1_inv_txfm2d_add_64x64_sse4_1(const int32_t *input, uint16_t *output_
                                          uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                          int32_t bd) {
     __m128i       in[64 * 64 / 4], out[64 * 64 / 4];
-    const int8_t *shift   = eb_inv_txfm_shift_ls[TX_64X64];
+    const int8_t *shift   = svt_aom_inv_txfm_shift_ls[TX_64X64];
     const int32_t txw_idx = tx_size_wide_log2[TX_64X64] - tx_size_wide_log2[0];
     const int32_t txh_idx = tx_size_high_log2[TX_64X64] - tx_size_high_log2[0];
 
@@ -6892,7 +6892,7 @@ void svt_av1_inv_txfm2d_add_4x8_sse4_1(const int32_t *input, uint16_t *output_r,
                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                        TxSize tx_size, int32_t bd) {
     __m128i                buf1[8];
-    const int8_t          *shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t          *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t          txw_idx       = get_txw_idx(tx_size);
     const int32_t          txh_idx       = get_txh_idx(tx_size);
     const int32_t          txfm_size_col = tx_size_wide[tx_size];
@@ -6975,7 +6975,7 @@ void svt_av1_inv_txfm2d_add_8x4_sse4_1(const int32_t *input, uint16_t *output_r,
                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                        TxSize tx_size, int32_t bd) {
     __m128i                buf1[8];
-    const int8_t          *shift         = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t          *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t          txw_idx       = get_txw_idx(tx_size);
     const int32_t          txh_idx       = get_txh_idx(tx_size);
     const int32_t          txfm_size_col = tx_size_wide[tx_size];
@@ -7027,7 +7027,7 @@ void svt_av1_inv_txfm2d_add_4x16_sse4_1(const int32_t *input, uint16_t *output_r
                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                         TxSize tx_size, int32_t bd) {
     __m128i                buf1[16];
-    const int8_t          *shift           = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t          *shift           = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t          txw_idx         = get_txw_idx(tx_size);
     const int32_t          txh_idx         = get_txh_idx(tx_size);
     const int32_t          txfm_size_col   = tx_size_wide[tx_size];
@@ -7093,7 +7093,7 @@ void svt_av1_inv_txfm2d_add_16x4_sse4_1(const int32_t *input, uint16_t *output_r
                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                         TxSize tx_size, int32_t bd) {
     __m128i                buf1[16];
-    const int8_t          *shift           = eb_inv_txfm_shift_ls[tx_size];
+    const int8_t          *shift           = svt_aom_inv_txfm_shift_ls[tx_size];
     const int32_t          txw_idx         = get_txw_idx(tx_size);
     const int32_t          txh_idx         = get_txh_idx(tx_size);
     const int32_t          txfm_size_col   = tx_size_wide[tx_size];
@@ -7156,13 +7156,6 @@ void svt_av1_inv_txfm2d_add_16x4_sse4_1(const int32_t *input, uint16_t *output_r
     }
 }
 
-const int8_t *svt_av1_inv_txfm_shift_ls[TX_SIZES_ALL] = {
-    inv_shift_4x4,   inv_shift_8x8,   inv_shift_16x16, inv_shift_32x32, inv_shift_64x64,
-    inv_shift_4x8,   inv_shift_8x4,   inv_shift_8x16,  inv_shift_16x8,  inv_shift_16x32,
-    inv_shift_32x16, inv_shift_32x64, inv_shift_64x32, inv_shift_4x16,  inv_shift_16x4,
-    inv_shift_8x32,  inv_shift_32x8,  inv_shift_16x64, inv_shift_64x16,
-};
-
 typedef void (*transform_1d_sse4_1)(__m128i *in, __m128i *out, int bit, int do_cols, int bd,
                                     int out_shift);
 
@@ -7174,7 +7167,7 @@ static void svt_highbd_inv_txfm2d_add_no_identity_sse41(const int32_t *input, ui
     __m128i buf1[64 * 16];
     int     eobx, eoby;
     get_eobx_eoby_scan_default(&eobx, &eoby, tx_size, eob);
-    const int8_t *shift                   = svt_av1_inv_txfm_shift_ls[tx_size];
+    const int8_t *shift                   = svt_aom_inv_txfm_shift_ls[tx_size];
     const int     txw_idx                 = get_txw_idx(tx_size);
     const int     txh_idx                 = get_txh_idx(tx_size);
     const int     txfm_size_col           = tx_size_wide[tx_size];
@@ -7279,7 +7272,7 @@ static void svt_highbd_inv_txfm2d_add_v_identity_ssse41(const int32_t *input, ui
     __m128i buf1[64];
     int     eobx, eoby;
     get_eobx_eoby_scan_v_identity(&eobx, &eoby, tx_size, eob);
-    const int8_t             *shift           = svt_av1_inv_txfm_shift_ls[tx_size];
+    const int8_t             *shift           = svt_aom_inv_txfm_shift_ls[tx_size];
     const int                 txw_idx         = get_txw_idx(tx_size);
     const int                 txh_idx         = get_txh_idx(tx_size);
     const int                 txfm_size_col   = tx_size_wide[tx_size];
@@ -7350,7 +7343,7 @@ static void svt_highbd_inv_txfm2d_add_h_identity_ssse41(const int32_t *input, ui
     __m128i buf1[64];
     int     eobx, eoby;
     get_eobx_eoby_scan_h_identity(&eobx, &eoby, tx_size, eob);
-    const int8_t             *shift                   = svt_av1_inv_txfm_shift_ls[tx_size];
+    const int8_t             *shift                   = svt_aom_inv_txfm_shift_ls[tx_size];
     const int                 txw_idx                 = get_txw_idx(tx_size);
     const int                 txh_idx                 = get_txh_idx(tx_size);
     const int                 txfm_size_col           = tx_size_wide[tx_size];
@@ -7448,7 +7441,7 @@ static void svt_highbd_inv_txfm2d_add_idtx_ssse41(const int32_t *input, uint16_t
                                                   int32_t eob, const int8_t bd) {
     (void)eob;
     __m128i                   buf1[64 * 4];
-    const int8_t             *shift         = svt_av1_inv_txfm_shift_ls[tx_size];
+    const int8_t             *shift         = svt_aom_inv_txfm_shift_ls[tx_size];
     const int                 txw_idx       = get_txw_idx(tx_size);
     const int                 txh_idx       = get_txh_idx(tx_size);
     const int                 txfm_size_col = tx_size_wide[tx_size];
@@ -7584,7 +7577,7 @@ void svt_av1_inv_txfm2d_add_32x32_sse4_1(const int32_t *input, uint16_t *output_
                                          uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                          int32_t bd) {
     __m128i       in[256], out[256];
-    const int8_t *shift   = eb_inv_txfm_shift_ls[TX_32X32];
+    const int8_t *shift   = svt_aom_inv_txfm_shift_ls[TX_32X32];
     const int32_t txw_idx = get_txw_idx(TX_32X32);
     const int32_t txh_idx = get_txh_idx(TX_32X32);
 
