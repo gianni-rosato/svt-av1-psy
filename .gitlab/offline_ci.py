@@ -39,13 +39,17 @@ except ImportError:
 from ast import literal_eval
 from pathlib import Path
 from shlex import quote as shquote
-from sys import platform, stderr
+from sys import platform, stderr, version_info
 from time import monotonic
 from typing import Any, Dict, List, Set, Tuple, Union
 from urllib import request
 from urllib.parse import quote as urlquote
 
-import yaml
+try:
+    import yaml
+except ImportError:
+    print("Please install python-yaml or python-pyyaml", file=stderr)
+    exit(1)
 
 # Global Variables
 DEFAULT_PROJECT_NAME: str = "AOMediaCodec/SVT-AV1"
@@ -114,6 +118,22 @@ JOBS: dict = {}
 
 HOST_OS: OS = OS.WINDOWS if platform.startswith(
     "win") else OS.MACOS if platform.startswith("darwin") else OS.LINUX
+
+
+def dependency_checks():
+    """Check for dependencies"""
+    failed: bool = False
+    if version_info < (3, 8):
+        print("Please use Python 3.8+", file=stderr)
+        failed = True
+    if HOST_OS in (OS.WINDOWS, OS.LINUX) and shutil.which("docker") is None:
+        print("Please install docker", file=stderr)
+        failed = True
+    if shutil.which("git") is None:
+        print("Please install git", file=stderr)
+        failed = True
+    if failed:
+        exit(1)
 
 
 def get_api_url(project_name: str) -> str:
@@ -856,6 +876,7 @@ async def main():
     # "https://gitlab.com/svt-team/svt-team-p/SVT-AV1/-/pipelines/744695861"))
 
 if __name__ == "__main__":
+    dependency_checks()
     asyncio.run(main())
 
 # TODO: add "clean" option to delete the REPO_DIR / {artifacts,logs,failed_logs}
