@@ -1189,11 +1189,6 @@ void asm_set_convolve_asm_table(void) {
     convolve[1][1][1] = svt_av1_jnt_convolve_2d;
 }
 
-InterpFilterParams av1RegularFilter = {
-    (const int16_t *)sub_pel_filters_8, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR};
-InterpFilterParams av1RegularFilterW4 = {
-    (const int16_t *)sub_pel_filters_4, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR};
-
 DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_8sharp[SUBPEL_SHIFTS]) = {
     {0, 0, 0, 128, 0, 0, 0, 0},
     {-2, 2, -6, 126, 8, -2, 2, 0},

@@ -373,9 +373,6 @@ extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode,
 uint8_t tpl_blk_idx_tab[2][21] = {
     /*CU index*/ {0, 1, 22, 43, 64, 2, 7, 12, 17, 23, 28, 33, 38, 44, 49, 54, 59, 65, 70, 75, 80},
     /*ME index*/ {0, 1, 2, 3, 4, 5, 6, 9, 10, 7, 8, 11, 12, 13, 14, 17, 18, 15, 16, 19, 20}};
-uint8_t cu16x16_idx_tab[2][16] = {
-    /*CU index*/ {2, 7, 12, 17, 23, 28, 33, 38, 44, 49, 54, 59, 65, 70, 75, 80},
-    /*ME index*/ {5, 6, 9, 10, 7, 8, 11, 12, 13, 14, 17, 18, 15, 16, 19, 20}};
 
 /*
 neigh array for DC prediction and avail references
