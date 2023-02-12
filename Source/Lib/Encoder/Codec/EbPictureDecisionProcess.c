@@ -52,20 +52,6 @@ extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
 void  get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
 void init_resize_picture(SequenceControlSet* scs, PictureParentControlSet* pcs);
-uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
-{
-    uint64_t ref_poc;
-    uint64_t boundary_poc = MAX(context->key_poc, context->sframe_poc);
-    if ((int64_t)curr_picture_number - (int64_t)delta_poc < (int64_t)boundary_poc) {
-        ref_poc = boundary_poc;
-    }
-    else {
-        ref_poc = (int64_t)curr_picture_number - (int64_t)delta_poc;
-    }
-
-    return ref_poc;
-}
-
 MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
@@ -839,24 +825,6 @@ EbErrorType handle_incomplete_picture_window_map(
     context_ptr->mini_gop_idr_count[context_ptr->total_number_of_mini_gops - 1] = encode_context_ptr->pre_assignment_buffer_idr_count;
 
     return return_error;
-}
-/*
-   This function searches if the target input picture
-   is still in the pre-assign buffer, if yes it returns
-   its ppcs, else it returns Null
-*/
-PictureParentControlSet * is_pic_still_in_pre_assign_buffer(
-    EncodeContext                 *encode_context_ptr,
-    PictureDecisionContext        *context_ptr,
-    uint32_t                       mini_gop_index,
-    uint64_t                       target_pic)
-{
-    for (uint32_t pic_i = context_ptr->mini_gop_start_index[mini_gop_index]; pic_i <= context_ptr->mini_gop_end_index[mini_gop_index]; ++pic_i) {
-        PictureParentControlSet*pcs_i = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i]->object_ptr;
-        if (pcs_i->picture_number == target_pic)
-            return pcs_i;
-    }
-    return NULL;
 }
 /*
    This function tells if a picture is part of a short

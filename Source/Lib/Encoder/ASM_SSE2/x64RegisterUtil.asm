@@ -33,34 +33,4 @@ cglobal RunEmms
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal SaveRegister
-%ifdef WIN64
-    movdqa          [r0],           xmm6
-    movdqa          [r0+0x10],      xmm7
-    movdqa          [r0+0x20],      xmm8
-    movdqa          [r0+0x30],      xmm9
-    movdqa          [r0+0x40],      xmm10
-    movdqa          [r0+0x50],      xmm11
-    movdqa          [r0+0x60],      xmm12
-    movdqa          [r0+0x70],      xmm13
-    movdqa          [r0+0x80],      xmm14
-    movdqa          [r0+0x90],      xmm15
-%endif
-    ret
 
-; ----------------------------------------------------------------------------------------
-
-cglobal RestoreRegister
-%ifdef WIN64
-    movdqa          xmm6,           [r0]
-    movdqa          xmm7,           [r0+0x10]
-    movdqa          xmm8,           [r0+0x20]
-    movdqa          xmm9,           [r0+0x30]
-    movdqa          xmm10,          [r0+0x40]
-    movdqa          xmm11,          [r0+0x50]
-    movdqa          xmm12,          [r0+0x60]
-    movdqa          xmm13,          [r0+0x70]
-    movdqa          xmm14,          [r0+0x80]
-    movdqa          xmm15,          [r0+0x90]
-%endif
-    ret

@@ -17,37 +17,6 @@
 #include "EbPictureBufferDesc.h"
 #include "EbUtility.h"
 
-// TODO: is this just padding with zeros? Is this needed?
-void initialize_samples_neighboring_reference_picture16_bit(EbByte   recon_samples_buffer_ptr,
-                                                            uint16_t stride, uint16_t recon_width,
-                                                            uint16_t recon_height,
-                                                            uint16_t left_padding,
-                                                            uint16_t top_padding) {
-    uint16_t *recon_samples_ptr;
-    uint16_t  sample_count;
-
-    // 1. zero out the top row
-    recon_samples_ptr = (uint16_t *)recon_samples_buffer_ptr + (top_padding - 1) * stride +
-        left_padding - 1;
-    EB_MEMSET((uint8_t *)recon_samples_ptr, 0, sizeof(uint16_t) * (1 + recon_width + 1));
-
-    // 2. zero out the bottom row
-    recon_samples_ptr = (uint16_t *)recon_samples_buffer_ptr +
-        (top_padding + recon_height) * stride + left_padding - 1;
-    EB_MEMSET((uint8_t *)recon_samples_ptr, 0, sizeof(uint16_t) * (1 + recon_width + 1));
-
-    // 3. zero out the left column
-    recon_samples_ptr = (uint16_t *)recon_samples_buffer_ptr + top_padding * stride + left_padding -
-        1;
-    for (sample_count = 0; sample_count < recon_height; sample_count++)
-        recon_samples_ptr[sample_count * stride] = 0;
-    // 4. zero out the right column
-    recon_samples_ptr = (uint16_t *)recon_samples_buffer_ptr + top_padding * stride + left_padding +
-        recon_width;
-    for (sample_count = 0; sample_count < recon_height; sample_count++)
-        recon_samples_ptr[sample_count * stride] = 0;
-}
-
 void initialize_samples_neighboring_reference_picture_8bit(EbByte   recon_samples_buffer_ptr,
                                                            uint16_t stride, uint16_t recon_width,
                                                            uint16_t recon_height,

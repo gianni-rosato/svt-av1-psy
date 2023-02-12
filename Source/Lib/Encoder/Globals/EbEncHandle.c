@@ -4713,43 +4713,6 @@ EB_API EbErrorType svt_av1_enc_stream_header_release(
 from the sample application to the library buffers
 */
 /********************************************
- * downsample_2d_c_16_zero2bit
- *      downsample the input by getting the average and zero out the two LSB bit
- ********************************************/
-void downsample_2d_c_16_zero2bit(uint16_t *input_samples, // input parameter, input samples Ptr
-    uint32_t input_stride, // input parameter, input stride
-    uint32_t input_area_width, // input parameter, input area width
-    uint32_t input_area_height, // input parameter, input area height
-    uint8_t *decim_8b_samples, // output parameter, decimated samples Ptr
-    uint32_t decim_stride, // input parameter, output stride
-    uint32_t decim_step) // input parameter, decimation amount in pixels
-{
-    uint32_t       horizontal_index;
-    uint32_t       vertical_index;
-    uint32_t       input_stripe_stride = input_stride * decim_step;
-    uint32_t       decim_horizontal_index;
-    const uint32_t half_decim_step = decim_step >> 1;
-    for (input_samples += half_decim_step * input_stride, vertical_index = half_decim_step;
-        vertical_index < input_area_height;
-        vertical_index += decim_step) {
-        uint16_t *prev_input_line = input_samples - input_stride;
-        for (horizontal_index = half_decim_step, decim_horizontal_index = 0;
-            horizontal_index < input_area_width;
-            horizontal_index += decim_step, decim_horizontal_index++) {
-                uint32_t sum = (uint32_t)prev_input_line[horizontal_index - 1] +
-                    (uint32_t)prev_input_line[horizontal_index] +
-                    (uint32_t)input_samples[horizontal_index - 1] +
-                    (uint32_t)input_samples[horizontal_index];
-                decim_8b_samples[decim_horizontal_index] = (uint8_t)(((sum + 2) >> 2) >> 2);
-
-        }
-        input_samples += input_stripe_stride;
-        decim_8b_samples += decim_stride;
-    }
-
-    return;
-}
-/********************************************
  * downsample_2d_c_16_zero2bit_skipall
  *      downsample the input by skipping three pixels and zero out the two LSB bit
  ********************************************/

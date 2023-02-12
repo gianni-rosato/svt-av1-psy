@@ -8,22 +8,22 @@
 #include <cpuinfo/log.h>
 #include <cpuinfo/common.h>
 
-
-struct cpuinfo_x86_isa cpuinfo_isa = { 0 };
-CPUINFO_INTERNAL uint32_t cpuinfo_x86_clflush_size = 0;
+struct cpuinfo_x86_isa cpuinfo_isa = {0};
 
 void cpuinfo_x86_init_processor(struct cpuinfo_x86_processor* processor) {
-    const struct cpuid_regs leaf0 = cpuid(0);
-    const uint32_t max_base_index = leaf0.eax;
-    const enum cpuinfo_vendor vendor = processor->vendor =
-        cpuinfo_x86_decode_vendor(leaf0.ebx, leaf0.ecx, leaf0.edx);
+    const struct cpuid_regs   leaf0          = cpuid(0);
+    const uint32_t            max_base_index = leaf0.eax;
+    const enum cpuinfo_vendor vendor = processor->vendor = cpuinfo_x86_decode_vendor(
+        leaf0.ebx, leaf0.ecx, leaf0.edx);
 
-    const struct cpuid_regs leaf0x80000000 = cpuid(UINT32_C(0x80000000));
-    const uint32_t max_extended_index =
-        leaf0x80000000.eax >= UINT32_C(0x80000000) ? leaf0x80000000.eax : 0;
+    const struct cpuid_regs leaf0x80000000     = cpuid(UINT32_C(0x80000000));
+    const uint32_t          max_extended_index = leaf0x80000000.eax >= UINT32_C(0x80000000)
+                 ? leaf0x80000000.eax
+                 : 0;
 
-    const struct cpuid_regs leaf0x80000001 = max_extended_index >= UINT32_C(0x80000001) ?
-        cpuid(UINT32_C(0x80000001)) : (struct cpuid_regs) { 0, 0, 0, 0 };
+    const struct cpuid_regs leaf0x80000001 = max_extended_index >= UINT32_C(0x80000001)
+        ? cpuid(UINT32_C(0x80000001))
+        : (struct cpuid_regs){0, 0, 0, 0};
 
     if (max_base_index >= 1) {
         const struct cpuid_regs leaf1 = cpuid(1);

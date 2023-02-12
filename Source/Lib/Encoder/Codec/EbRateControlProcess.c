@@ -757,12 +757,6 @@ static int av1_frame_type_qdelta_org(struct PictureParentControlSet *ppcs, RATE_
         rc, frame_type, q, rate_factor, bit_depth, ppcs->sc_class1);
 }
 
-int intra_period_factor(struct PictureParentControlSet *ppcs_ptr) {
-    int ip = ppcs_ptr->scs->static_config.intra_period_length;
-    if (ppcs_ptr->picture_number == 0 || ip == -1)
-        return 1;
-    return 10;
-}
 static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs, RATE_CONTROL *rc,
                                                      int *active_worst, int *active_best) {
     int                 active_best_quality  = *active_best;

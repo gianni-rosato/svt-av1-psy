@@ -219,52 +219,6 @@ void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
             (height + ss_y) >> ss_y);
 }
 
-void generate_padding_pic(EbPictureBufferDesc *pic_ptr, uint32_t ss_x, uint32_t ss_y,
-                          Bool is_highbd) {
-    if (!is_highbd) {
-        generate_padding(pic_ptr->buffer_cb,
-                         pic_ptr->stride_cb,
-                         pic_ptr->width >> ss_x,
-                         pic_ptr->height >> ss_y,
-                         pic_ptr->org_x >> ss_x,
-                         pic_ptr->org_y >> ss_y);
-
-        generate_padding(pic_ptr->buffer_cr,
-                         pic_ptr->stride_cr,
-                         pic_ptr->width >> ss_x,
-                         pic_ptr->height >> ss_y,
-                         pic_ptr->org_x >> ss_x,
-                         pic_ptr->org_y >> ss_y);
-    } else {
-        generate_padding(pic_ptr->buffer_cb,
-                         pic_ptr->stride_cb,
-                         pic_ptr->width >> ss_x,
-                         pic_ptr->height >> ss_y,
-                         pic_ptr->org_x >> ss_x,
-                         pic_ptr->org_y >> ss_y);
-
-        generate_padding(pic_ptr->buffer_cr,
-                         pic_ptr->stride_cr,
-                         pic_ptr->width >> ss_x,
-                         pic_ptr->height >> ss_y,
-                         pic_ptr->org_x >> ss_x,
-                         pic_ptr->org_y >> ss_y);
-
-        generate_padding_compressed_10bit(pic_ptr->buffer_bit_inc_cb,
-                                          pic_ptr->stride_cr / 4,
-                                          pic_ptr->width >> ss_x,
-                                          pic_ptr->height >> ss_y,
-                                          pic_ptr->org_x >> ss_x,
-                                          pic_ptr->org_y >> ss_y);
-
-        generate_padding_compressed_10bit(pic_ptr->buffer_bit_inc_cr,
-                                          pic_ptr->stride_cr / 4,
-                                          pic_ptr->width >> ss_x,
-                                          pic_ptr->height >> ss_y,
-                                          pic_ptr->org_x >> ss_x,
-                                          pic_ptr->org_y >> ss_y);
-    }
-}
 static void derive_tf_32x32_block_split_flag(MeContext *me_ctx) {
     int      subblock_errors[4];
     uint32_t idx_32x32   = me_ctx->idx_32x32;

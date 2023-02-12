@@ -94,19 +94,6 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
                              Quants *const quants, Dequants *const deq);
 
-/*
- get size  of the  lad queue
-*/
-uint32_t get_lad_q_size(InitialRateControlContext *ctx) {
-    uint32_t       size        = 0;
-    uint32_t       idx         = ctx->lad_queue->head;
-    LadQueueEntry *queue_entry = ctx->lad_queue->cir_buf[idx];
-    while (queue_entry->pcs != NULL) {
-        queue_entry = ctx->lad_queue->cir_buf[++idx];
-        size++;
-    }
-    return size;
-}
 #if LAD_MG_PRINT
 /*
  dump the content of the  queue for debug purpose
