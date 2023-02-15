@@ -79,14 +79,6 @@ static EbErrorType allocate_frame_buffer(EbConfig *app_cfg, uint8_t *p_buffer) {
 
     const size_t chroma_8bit_size = luma_8bit_size >> (3 - color_format);
 
-    const size_t luma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
-        ? luma_8bit_size >> 2
-        : 0;
-
-    const size_t chroma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
-        ? chroma_8bit_size >> 2
-        : 0;
-
     // Determine
     EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)p_buffer;
     input_ptr->y_stride      = app_cfg->input_padded_width;
@@ -112,36 +104,6 @@ static EbErrorType allocate_frame_buffer(EbConfig *app_cfg, uint8_t *p_buffer) {
             uint8_t *, input_ptr->cr, chroma_8bit_size, EB_N_PTR, EB_ErrorInsufficientResources);
     } else {
         input_ptr->cr = 0;
-    }
-
-    if (luma_10bit_size) {
-        EB_APP_MALLOC(uint8_t *,
-                      input_ptr->luma_ext,
-                      luma_10bit_size,
-                      EB_N_PTR,
-                      EB_ErrorInsufficientResources);
-    } else {
-        input_ptr->luma_ext = 0;
-    }
-
-    if (chroma_10bit_size) {
-        EB_APP_MALLOC(uint8_t *,
-                      input_ptr->cb_ext,
-                      chroma_10bit_size,
-                      EB_N_PTR,
-                      EB_ErrorInsufficientResources);
-    } else {
-        input_ptr->cb_ext = 0;
-    }
-
-    if (chroma_10bit_size) {
-        EB_APP_MALLOC(uint8_t *,
-                      input_ptr->cr_ext,
-                      chroma_10bit_size,
-                      EB_N_PTR,
-                      EB_ErrorInsufficientResources);
-    } else {
-        input_ptr->cr_ext = 0;
     }
 
     return EB_ErrorNone;

@@ -102,18 +102,7 @@ void VideoSource::deinit_frame_buffer() {
         free(frame_buffer_->cr);
         frame_buffer_->cr = nullptr;
     }
-    if (frame_buffer_->luma_ext != nullptr) {
-        free(frame_buffer_->luma_ext);
-        frame_buffer_->luma_ext = nullptr;
-    }
-    if (frame_buffer_->cb_ext != nullptr) {
-        free(frame_buffer_->cb_ext);
-        frame_buffer_->cb_ext = nullptr;
-    }
-    if (frame_buffer_->cr_ext != nullptr) {
-        free(frame_buffer_->cr_ext);
-        frame_buffer_->cr_ext = nullptr;
-    }
+
     free(frame_buffer_);
     frame_buffer_ = nullptr;
 }
@@ -164,40 +153,6 @@ EbErrorType VideoSource::init_frame_buffer() {
         return EB_ErrorInsufficientResources;
     }
     memset(frame_buffer_->cr, 0, chroma_size);
-
-    if (is_10bit_mode() && svt_compressed_2bit_plane_) {
-        // packed 10-bit YUV put extended 2-bits in group of 4 samples
-        const int ext_luma_size = luma_size / 4;
-        const int ext_chroma_size = chroma_size / 4;
-
-        // Y Ext
-        frame_buffer_->luma_ext = (uint8_t *)malloc(ext_luma_size);
-        if (frame_buffer_->luma_ext == nullptr) {
-            deinit_frame_buffer();
-            return EB_ErrorInsufficientResources;
-        }
-        memset(frame_buffer_->luma_ext, 0, ext_luma_size);
-
-        // Cb Ext
-        frame_buffer_->cb_ext = (uint8_t *)malloc(ext_chroma_size);
-        if (frame_buffer_->cb_ext == nullptr) {
-            deinit_frame_buffer();
-            return EB_ErrorInsufficientResources;
-        }
-        memset(frame_buffer_->cb_ext, 0, ext_chroma_size);
-
-        // Cr Ext
-        frame_buffer_->cr_ext = (uint8_t *)malloc(ext_chroma_size);
-        if (frame_buffer_->cr_ext == nullptr) {
-            deinit_frame_buffer();
-            return EB_ErrorInsufficientResources;
-        }
-        memset(frame_buffer_->cr_ext, 0, ext_chroma_size);
-    } else {
-        frame_buffer_->luma_ext = nullptr;
-        frame_buffer_->cb_ext = nullptr;
-        frame_buffer_->cr_ext = nullptr;
-    }
 
     return EB_ErrorNone;
 }
@@ -307,7 +262,7 @@ uint32_t VideoFileSource::read_input_frame() {
         // Y
         uint16_t pix = 0;
         eb_input_ptr = frame_buffer_->luma;
-        eb_ext_input_ptr = frame_buffer_->luma_ext;
+
         for (i = 0; i < height_; ++i) {
             uint32_t j = 0;
             for (j = 0; j < width_; ++j) {
@@ -324,7 +279,7 @@ uint32_t VideoFileSource::read_input_frame() {
         }
         // Cb
         eb_input_ptr = frame_buffer_->cb;
-        eb_ext_input_ptr = frame_buffer_->cb_ext;
+
         for (i = 0; i < (height_ >> height_downsize_); ++i) {
             uint32_t j = 0;
             for (j = 0; j < (width_ >> width_downsize_); ++j) {
@@ -342,7 +297,7 @@ uint32_t VideoFileSource::read_input_frame() {
 
         // Cr
         eb_input_ptr = frame_buffer_->cr;
-        eb_ext_input_ptr = frame_buffer_->cr_ext;
+
         for (i = 0; i < (height_ >> height_downsize_); ++i) {
             uint32_t j = 0;
             for (j = 0; j < (width_ >> width_downsize_); ++j) {
@@ -372,18 +327,6 @@ uint32_t VideoFileSource::read_input_frame() {
                0,
                frame_buffer_->cr_stride * bytes_per_sample_ *
                    (height_ >> height_downsize_));
-        if (frame_buffer_->luma_ext)
-            memset(frame_buffer_->luma_ext,
-                   0,
-                   frame_buffer_->y_stride * bytes_per_sample_ * height_ / 4);
-        if (frame_buffer_->cb_ext)
-            memset(frame_buffer_->cb_ext,
-                   0,
-                   frame_buffer_->cb_stride * bytes_per_sample_ * height_ / 4);
-        if (frame_buffer_->cr_ext)
-            memset(frame_buffer_->cr_ext,
-                   0,
-                   frame_buffer_->cr_stride * bytes_per_sample_ * height_ / 4);
     }
 
     return filled_len;
