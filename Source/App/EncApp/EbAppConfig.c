@@ -1554,7 +1554,7 @@ static EbErrorType set_config_value(EbConfig *app_cfg, const char *name, const c
 
     while (config_entry[i].name != NULL) {
         if (!strcmp(config_entry[i].name, name)) {
-            EbErrorType ret = (*config_entry[i].scf)(app_cfg, name, value);
+            EbErrorType ret = (*config_entry[i].scf)(app_cfg, config_entry[i].token, value);
             if (ret != EB_ErrorNone)
                 return ret;
         }
