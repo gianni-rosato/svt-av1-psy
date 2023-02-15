@@ -33,6 +33,8 @@
 extern "C" {
 #endif // __cplusplus
 
+#define FTR_STARTUP_MG_SIZE     1 // specify another mini-gop configuration for the first mini-gop after the key-frame
+
 #define OPT_LD                  1 // Optimize the performance of low delay mode
 
 #if OPT_LD
@@ -98,6 +100,7 @@ extern "C" {
 #define DEBUG_SFRAME            0
 // Quantization matrices
 #define DEBUG_QM_LEVEL          0
+#define DEBUG_STARTUP_MG_SIZE   0
 
 #ifdef __cplusplus
 }

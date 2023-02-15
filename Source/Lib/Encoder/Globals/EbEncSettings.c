@@ -920,6 +920,25 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             "is or is not specified in the command line\n");
     }
 #endif
+#if FTR_STARTUP_MG_SIZE
+    if (config->startup_mg_size != 0 && config->startup_mg_size != 2 &&
+        config->startup_mg_size != 3 && config->startup_mg_size != 4) {
+        SVT_ERROR("Instance %u: Startup MG size supported [0, 2, 3, 4]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->startup_mg_size >= config->hierarchical_levels) {
+        SVT_ERROR("Instance %u: Startup MG size must less than Hierarchical Levels\n",
+                  channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->startup_mg_size != 0 && config->rate_control_mode != 0) {
+        SVT_ERROR("Instance %u: Startup MG size feature only supports CRF/CQP rate control mode\n",
+                  channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
 
     return return_error;
 }
@@ -1059,6 +1078,10 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->enable_qm    = 0;
     config_ptr->min_qm_level = 8;
     config_ptr->max_qm_level = 15;
+
+#if FTR_STARTUP_MG_SIZE
+    config_ptr->startup_mg_size = 0;
+#endif
     return return_error;
 }
 
@@ -1857,6 +1880,9 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"qm-min", &config_struct->min_qm_level},
         {"qm-max", &config_struct->max_qm_level},
         {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},
+#if FTR_STARTUP_MG_SIZE
+        {"startup-mg-size", &config_struct->startup_mg_size},
+#endif
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

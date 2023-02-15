@@ -235,6 +235,9 @@ EbErrorType picture_decision_context_ctor(
 #if OPT_LD_MRP2
     context_ptr->last_long_base_pic = 0;
 #endif
+#if FTR_STARTUP_MG_SIZE
+    context_ptr->enable_startup_mg = false;
+#endif
     return EB_ErrorNone;
 }
 static Bool scene_transition_detector(
@@ -858,6 +861,17 @@ static void get_pred_struct_for_all_frames(
         for (unsigned int pic_idx = ctx->mini_gop_start_index[mini_gop_index]; pic_idx <= ctx->mini_gop_end_index[mini_gop_index]; pic_idx++) {
             PictureParentControlSet* pcs = (PictureParentControlSet*)encode_ctx->pre_assignment_buffer[pic_idx]->object_ptr;
             SequenceControlSet* scs = pcs->scs;
+#if DEBUG_STARTUP_MG_SIZE
+            if (pcs->idr_flag || pcs->cra_flag) {
+                SVT_LOG("Frame %d, key-frame\n", (int)pcs->picture_number);
+            }
+            if (pic_idx == ctx->mini_gop_start_index[mini_gop_index]) {
+                SVT_LOG("mGOP start %d, mGOP length %d, startup mini-GOP %d\n", (int)pcs->picture_number, ctx->mini_gop_length[mini_gop_index], ctx->enable_startup_mg);
+            }
+            if (pic_idx == ctx->mini_gop_end_index[mini_gop_index]) {
+                SVT_LOG("mGOP end %d, mGOP length %d\n", (int)pcs->picture_number, ctx->mini_gop_length[mini_gop_index]);
+            }
+#endif
             pcs->pred_structure = scs->static_config.pred_structure;
 #if FIX_LAYER_SIGNAL
             pcs->hierarchical_levels = (pcs->idr_flag || pcs->cra_flag) ? scs->static_config.hierarchical_levels : (uint8_t)ctx->mini_gop_hierarchical_levels[mini_gop_index];
@@ -872,6 +886,16 @@ static void get_pred_struct_for_all_frames(
                 scs->reference_count,
 #endif
                 pcs->hierarchical_levels);
+
+#if FTR_STARTUP_MG_SIZE
+           if (scs->static_config.startup_mg_size != 0) {
+               if (pcs->idr_flag || pcs->cra_flag) {
+                   ctx->enable_startup_mg = true;
+               } else if (ctx->enable_startup_mg) {
+                   ctx->enable_startup_mg = false;
+               }
+           }
+#endif
         }
     }
 }
@@ -7272,17 +7296,31 @@ static void copy_histograms(PictureParentControlSet* pcs, PictureDecisionContext
 static void set_mini_gop_structure(SequenceControlSet* scs, EncodeContext* encode_ctx,
     PictureParentControlSet* pcs, PictureDecisionContext* ctx) {
 
+#if FTR_STARTUP_MG_SIZE
+    uint32_t next_mg_hierarchical_levels = scs->static_config.hierarchical_levels;
+    if (ctx->enable_startup_mg) {
+        next_mg_hierarchical_levels = scs->static_config.startup_mg_size;
+    }
+#endif
     // Initialize Picture Block Params
     ctx->mini_gop_start_index[0] = 0;
     ctx->mini_gop_end_index[0] = encode_ctx->pre_assignment_buffer_count - 1;
     ctx->mini_gop_length[0] = encode_ctx->pre_assignment_buffer_count;
 
+#if FTR_STARTUP_MG_SIZE
+    ctx->mini_gop_hierarchical_levels[0] = next_mg_hierarchical_levels;
+#else
     ctx->mini_gop_hierarchical_levels[0] = scs->static_config.hierarchical_levels;
+#endif
     ctx->mini_gop_intra_count[0] = encode_ctx->pre_assignment_buffer_intra_count;
     ctx->mini_gop_idr_count[0] = encode_ctx->pre_assignment_buffer_idr_count;
     ctx->total_number_of_mini_gops = 1;
     encode_ctx->previous_mini_gop_hierarchical_levels = (pcs->picture_number == 0) ?
+#if FTR_STARTUP_MG_SIZE
+        next_mg_hierarchical_levels :
+#else
         scs->static_config.hierarchical_levels :
+#endif
         encode_ctx->previous_mini_gop_hierarchical_levels;
 #if FTR_PRED_STRUCT_CLASSIFIER
     encode_ctx->mini_gop_cnt_per_gop = (encode_ctx->pre_assignment_buffer_idr_count) ?
@@ -7293,7 +7331,11 @@ static void set_mini_gop_structure(SequenceControlSet* scs, EncodeContext* encod
     assert(IMPLIES(encode_ctx->pre_assignment_buffer_intra_count == encode_ctx->pre_assignment_buffer_count, encode_ctx->pre_assignment_buffer_count == 1));
 #endif
     // TODO: Why special case? Why no check on encode_ctx->pre_assignment_buffer_count > 1
+#if FTR_STARTUP_MG_SIZE
+    if (next_mg_hierarchical_levels == 1) {
+#else
     if (scs->static_config.hierarchical_levels == 1) {
+#endif
         //minigop 2 case
         ctx->mini_gop_start_index[ctx->total_number_of_mini_gops] = 0;
         ctx->mini_gop_end_index[ctx->total_number_of_mini_gops] = encode_ctx->pre_assignment_buffer_count - 1;
@@ -7320,7 +7362,11 @@ static void set_mini_gop_structure(SequenceControlSet* scs, EncodeContext* encod
             encode_ctx);
 
         handle_incomplete_picture_window_map(
+#if FTR_STARTUP_MG_SIZE
+            next_mg_hierarchical_levels,
+#else
             scs->static_config.hierarchical_levels,
+#endif
             ctx,
             encode_ctx);
     }
@@ -8093,10 +8139,19 @@ void* picture_decision_kernel(void *input_ptr) {
             print_pre_ass_buffer(encode_ctx, pcs, 1);
 #endif
 
-
+#if FTR_STARTUP_MG_SIZE
+            uint32_t next_mg_hierarchical_levels = scs->static_config.hierarchical_levels;
+            if (ctx->enable_startup_mg) {
+                next_mg_hierarchical_levels = scs->static_config.startup_mg_size;
+            }
+#endif
             // Determine if Pictures can be released from the Pre-Assignment Buffer
             if ((encode_ctx->pre_assignment_buffer_intra_count > 0) ||
+#if FTR_STARTUP_MG_SIZE
+                (encode_ctx->pre_assignment_buffer_count == (uint32_t)(1 << next_mg_hierarchical_levels)) ||
+#else
                 (encode_ctx->pre_assignment_buffer_count == (uint32_t)(1 << scs->static_config.hierarchical_levels)) ||
+#endif
                 (encode_ctx->pre_assignment_buffer_eos_flag == TRUE) ||
                 (pcs->pred_structure == SVT_AV1_PRED_LOW_DELAY_P) ||
                 (pcs->pred_structure == SVT_AV1_PRED_LOW_DELAY_B))

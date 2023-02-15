@@ -4566,6 +4566,10 @@ void copy_api_from_app(
         SVT_WARN("Quantization matrices will be forced off since both min and max quant matrix levels are set to 15\n");
         scs->static_config.enable_qm = 0;
     }
+
+#if FTR_STARTUP_MG_SIZE
+    scs->static_config.startup_mg_size = config_struct->startup_mg_size;
+#endif
     return;
 }
 

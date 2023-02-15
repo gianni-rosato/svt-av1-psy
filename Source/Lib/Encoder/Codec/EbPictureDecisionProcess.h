@@ -153,6 +153,9 @@ typedef struct PictureDecisionContext {
     int16_t mv_in_out_count;
 #endif
 #endif
+#if FTR_STARTUP_MG_SIZE
+    bool enable_startup_mg;
+#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

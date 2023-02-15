@@ -900,6 +900,22 @@ typedef struct EbSvtAv1EncConfiguration {
     * 1 = enable Dynamic GoP
     *  Default is 1. */
     Bool enable_dg;
+
+#if FTR_STARTUP_MG_SIZE
+    /**
+     * @brief startup_mg_size
+     *
+     * When enabled, a MG with specified size will be inserted after the key frame.
+     * The MG size is determined by 2^startup_mg_size.
+     *
+     * 0: off
+     * 2: set hierarchical levels to 2 (MG size 4)
+     * 3: set hierarchical levels to 3 (MG size 8)
+     * 4: set hierarchical levels to 4 (MG size 16)
+     * Default is 0.
+     */
+    uint8_t startup_mg_size;
+#endif
 } EbSvtAv1EncConfiguration;
 
 /**
