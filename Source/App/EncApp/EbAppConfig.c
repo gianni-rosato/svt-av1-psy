@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <sys/stat.h>
 
 #include "EbSvtAv1Metadata.h"
@@ -140,20 +141,6 @@
 #define PIN_TOKEN "--pin"
 #define TARGET_SOCKET "--ss"
 #define RESTRICTED_MOTION_VECTOR "--rmv"
-#define CONFIG_FILE_COMMENT_CHAR '#'
-#define CONFIG_FILE_NEWLINE_CHAR '\n'
-#define CONFIG_FILE_RETURN_CHAR '\r'
-#define CONFIG_FILE_VALUE_SPLIT ':'
-#define CONFIG_FILE_SPACE_CHAR ' '
-#define CONFIG_FILE_ARRAY_SEP_CHAR CONFIG_FILE_SPACE_CHAR
-#define CONFIG_FILE_TAB_CHAR '\t'
-#define CONFIG_FILE_NULL_CHAR '\0'
-#define CONFIG_FILE_MAX_ARG_COUNT 256
-#define CONFIG_FILE_MAX_VAR_LEN 128
-#define EVENT_FILE_MAX_ARG_COUNT 20
-#define EVENT_FILE_MAX_VAR_LEN 256
-#define BUFFER_FILE_MAX_ARG_COUNT 320
-#define BUFFER_FILE_MAX_VAR_LEN 128
 
 //double dash
 #define PRESET_TOKEN "--preset"
@@ -1497,143 +1484,6 @@ void enc_channel_dctor(EncChannel *c, uint32_t inst_cnt) {
     svt_config_dtor(c->app_cfg);
 }
 
-/**********************************
- * File Size
- **********************************/
-static int32_t find_file_size(FILE *const pFile) {
-    int32_t file_size;
-
-    fseek(pFile, 0, SEEK_END);
-    file_size = ftell(pFile);
-    rewind(pFile);
-
-    return file_size;
-}
-
-/**********************************
- * Line Split
- **********************************/
-static void line_split(uint32_t *argc, char *argv[CONFIG_FILE_MAX_ARG_COUNT],
-                       uint32_t arg_len[CONFIG_FILE_MAX_ARG_COUNT], char *linePtr) {
-    uint32_t i = 0;
-    *argc      = 0;
-
-    while ((*linePtr != CONFIG_FILE_NEWLINE_CHAR) && (*linePtr != CONFIG_FILE_RETURN_CHAR) &&
-           (*linePtr != CONFIG_FILE_COMMENT_CHAR) && (*argc < CONFIG_FILE_MAX_ARG_COUNT)) {
-        // Increment past whitespace
-        while ((*linePtr == CONFIG_FILE_SPACE_CHAR || *linePtr == CONFIG_FILE_TAB_CHAR) &&
-               (*linePtr != CONFIG_FILE_NEWLINE_CHAR))
-            ++linePtr;
-        // Set arg
-        if ((*linePtr != CONFIG_FILE_NEWLINE_CHAR) && (*linePtr != CONFIG_FILE_RETURN_CHAR) &&
-            (*linePtr != CONFIG_FILE_COMMENT_CHAR) && (*argc < CONFIG_FILE_MAX_ARG_COUNT)) {
-            argv[*argc] = linePtr;
-
-            // Increment to next whitespace
-            while (*linePtr != CONFIG_FILE_SPACE_CHAR && *linePtr != CONFIG_FILE_TAB_CHAR &&
-                   *linePtr != CONFIG_FILE_NEWLINE_CHAR && *linePtr != CONFIG_FILE_RETURN_CHAR) {
-                ++linePtr;
-                ++i;
-            }
-
-            // Set arg length
-            arg_len[(*argc)++] = i;
-
-            i = 0;
-        }
-    }
-
-    return;
-}
-
-/**********************************
-* Set Config value
-**********************************/
-static EbErrorType set_config_value(EbConfig *app_cfg, const char *name, const char *value) {
-    int32_t i = 0;
-
-    while (config_entry[i].name != NULL) {
-        if (!strcmp(config_entry[i].name, name)) {
-            EbErrorType ret = (*config_entry[i].scf)(app_cfg, config_entry[i].token, value);
-            if (ret != EB_ErrorNone)
-                return ret;
-        }
-        ++i;
-    }
-
-    return EB_ErrorNone;
-}
-
-/**********************************
-* Parse Config File
-**********************************/
-static void parse_config_file(EbConfig *app_cfg, char *buffer, int32_t size) {
-    uint32_t argc;
-    char    *argv[CONFIG_FILE_MAX_ARG_COUNT];
-    uint32_t arg_len[CONFIG_FILE_MAX_ARG_COUNT];
-
-    char var_name[CONFIG_FILE_MAX_VAR_LEN];
-    char var_value[CONFIG_FILE_MAX_ARG_COUNT][CONFIG_FILE_MAX_VAR_LEN];
-
-    uint32_t value_index;
-
-    uint32_t comment_section_flag = 0;
-    uint32_t new_line_flag        = 0;
-
-    // Keep looping until we process the entire file
-    while (size--) {
-        comment_section_flag = ((*buffer == CONFIG_FILE_COMMENT_CHAR) ||
-                                (comment_section_flag != 0))
-            ? 1
-            : comment_section_flag;
-
-        // At the beginning of each line
-        if ((new_line_flag == 1) && (comment_section_flag == 0)) {
-            // Do an argc/argv split for the line
-            line_split(&argc, argv, arg_len, buffer);
-
-            if ((argc > 2) && (*argv[1] == CONFIG_FILE_VALUE_SPLIT)) {
-                // ***NOTE - We're assuming that the variable name is the first arg and
-                // the variable value is the third arg.
-
-                // Cap the length of the variable name
-                arg_len[0] = (arg_len[0] > CONFIG_FILE_MAX_VAR_LEN - 1)
-                    ? CONFIG_FILE_MAX_VAR_LEN - 1
-                    : arg_len[0];
-                // Copy the variable name
-                strncpy_s(var_name, CONFIG_FILE_MAX_VAR_LEN, argv[0], arg_len[0]);
-                // Null terminate the variable name
-                var_name[arg_len[0]] = CONFIG_FILE_NULL_CHAR;
-
-                for (value_index = 0;
-                     (value_index < CONFIG_FILE_MAX_ARG_COUNT - 2) && (value_index < (argc - 2));
-                     ++value_index) {
-                    // Cap the length of the variable
-                    arg_len[value_index + 2] = (arg_len[value_index + 2] >
-                                                CONFIG_FILE_MAX_VAR_LEN - 1)
-                        ? CONFIG_FILE_MAX_VAR_LEN - 1
-                        : arg_len[value_index + 2];
-                    // Copy the variable name
-                    strncpy_s(var_value[value_index],
-                              CONFIG_FILE_MAX_VAR_LEN,
-                              argv[value_index + 2],
-                              arg_len[value_index + 2]);
-                    // Null terminate the variable name
-                    var_value[value_index][arg_len[value_index + 2]] = CONFIG_FILE_NULL_CHAR;
-
-                    set_config_value(app_cfg, var_name, var_value[value_index]);
-                }
-            }
-        }
-
-        comment_section_flag = (*buffer == CONFIG_FILE_NEWLINE_CHAR) ? 0 : comment_section_flag;
-        new_line_flag        = (*buffer == CONFIG_FILE_NEWLINE_CHAR) ? 1 : 0;
-        ++buffer;
-    }
-
-    return;
-}
-
 /**
  * @brief Find token and its argument
  * @param argc      Argument count
@@ -1671,46 +1521,124 @@ static int32_t find_token(int32_t argc, char *const argv[], char const *token, c
     return -1;
 }
 
+/**
+ * @brief Finds the config entry for a given config token
+ *
+ * @param name config token
+ * @return ConfigEntry*
+ */
+static ConfigEntry *find_entry(const char *name) {
+    for (size_t i = 0; config_entry[i].name != NULL; ++i) {
+        if (!strcmp(config_entry[i].name, name))
+            return &config_entry[i];
+    }
+    return NULL;
+}
+
+/**
+ * @brief Reads a word from a file, but skips commented lines, also splits on ':'
+ *
+ * @param fp file to read from
+ * @return char* malloc'd word, or NULL if EOF or error
+ */
+static char *read_word(FILE *fp) {
+    char  *word     = NULL;
+    size_t word_len = 0;
+    int    c;
+    while ((c = fgetc(fp)) != EOF) {
+        if (c == '#') {
+            // skip to end of line
+            while ((c = fgetc(fp)) != EOF && c != '\n')
+                ;
+            if (c == '\n')
+                continue;
+            if (c == EOF)
+                break;
+        } else if (isspace(c)) {
+            // skip whitespace
+            continue;
+        }
+        // read word
+        do {
+            if (c == ':')
+                break;
+            char *temp = (char *)realloc(word, ++word_len + 1);
+            if (!temp) {
+                free(word);
+                return NULL;
+            }
+            word               = temp;
+            word[word_len - 1] = c;
+            word[word_len]     = '\0';
+        } while ((c = fgetc(fp)) != EOF && !isspace(c));
+        if (c == EOF || word)
+            break;
+    }
+    return word;
+}
+
+static EbErrorType set_config_value(EbConfig *app_cfg, const char *word, const char *value,
+                                    unsigned instance_idx) {
+    const ConfigEntry *entry = find_entry(word);
+    if (!entry) {
+        fprintf(stderr,
+                "Error channel %u: Config File contains unknown token %s\n",
+                instance_idx + 1,
+                word);
+        return EB_ErrorBadParameter;
+    }
+    const EbErrorType err = entry->scf(app_cfg, entry->token, value);
+    if (err != EB_ErrorNone) {
+        fprintf(stderr,
+                "Error channel %u: Config File contains invalid value %s for token %s\n",
+                instance_idx + 1,
+                value,
+                word);
+        return EB_ErrorBadParameter;
+    }
+    return EB_ErrorNone;
+}
+
 /**********************************
 * Read Config File
 **********************************/
-static int32_t read_config_file(EbConfig *app_cfg, char *config_path, uint32_t instance_idx) {
-    int32_t return_error = 0;
-
+static EbErrorType read_config_file(EbConfig *app_cfg, const char *config_path,
+                                    uint32_t instance_idx) {
     FILE *config_file;
 
     // Open the config file
     FOPEN(config_file, config_path, "rb");
-
-    if (config_file) {
-        int32_t config_file_size   = find_file_size(config_file);
-        char   *config_file_buffer = (char *)malloc(config_file_size);
-
-        if (config_file_buffer) {
-            int32_t result_size = (int32_t)fread(
-                config_file_buffer, 1, config_file_size, config_file);
-
-            if (result_size == config_file_size) {
-                parse_config_file(app_cfg, config_file_buffer, config_file_size);
-            } else {
-                fprintf(stderr, "Error channel %u: File Read Failed\n", instance_idx + 1);
-                return_error = -1;
-            }
-        } else {
-            fprintf(stderr, "Error channel %u: Memory Allocation Failed\n", instance_idx + 1);
-            return_error = -1;
-        }
-
-        free(config_file_buffer);
-        fclose(config_file);
-    } else {
+    if (!config_file) {
         fprintf(stderr,
                 "Error channel %u: Couldn't open Config File: %s\n",
                 instance_idx + 1,
                 config_path);
-        return_error = -1;
+        return EB_ErrorBadParameter;
     }
 
+    EbErrorType return_error = EB_ErrorNone;
+    char       *word         = NULL;
+    char       *value        = NULL;
+    while (return_error == EB_ErrorNone && (word = read_word(config_file))) {
+        value = read_word(config_file);
+        if (value && !strcmp(value, ":")) {
+            free(value);
+            value = read_word(config_file);
+        }
+        if (!value) {
+            fprintf(stderr,
+                    "Error channel %u: Config File: %s is missing a value for %s\n",
+                    instance_idx + 1,
+                    config_path,
+                    word);
+            return_error = EB_ErrorBadParameter;
+            break;
+        }
+        return_error = set_config_value(app_cfg, word, value, instance_idx);
+    }
+    free(word);
+    free(value);
+    fclose(config_file);
     return return_error;
 }
 
