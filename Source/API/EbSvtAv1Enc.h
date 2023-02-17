@@ -336,11 +336,11 @@ typedef struct EbSvtAv1EncConfiguration {
 #endif
 
     /**
-     * @brief Enable writing of HDR metadata in the bitstream
+     * @brief Currently unused.
      *
-     * Default is false.
+     * Default is 0.
      */
-    Bool high_dynamic_range_input;
+    uint8_t high_dynamic_range_input;
 
     /**
      * @brief Bitstream profile to use.
