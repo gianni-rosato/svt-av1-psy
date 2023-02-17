@@ -34,6 +34,7 @@ extern "C" {
 #endif // __cplusplus
 
 #define FTR_STARTUP_MG_SIZE     1 // specify another mini-gop configuration for the first mini-gop after the key-frame
+#define OPT_STARTUP_MG_SIZE     1 // Optimize startup mini-gop
 
 #define OPT_LD                  1 // Optimize the performance of low delay mode
 

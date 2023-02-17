@@ -6631,7 +6631,15 @@ static EbErrorType derive_tf_window_params(
 
             if (centre_pcs->hierarchical_levels != pcs->temp_filt_pcs_list[0]->hierarchical_levels ||
                 centre_pcs->hierarchical_levels != context_ptr->mg_pictures_array[idx]->hierarchical_levels) {
+#if OPT_STARTUP_MG_SIZE
+                if (scs->static_config.startup_mg_size == 0) {
+                    centre_pcs->hierarchical_levels = pcs->temp_filt_pcs_list[0]->hierarchical_levels = context_ptr->mg_pictures_array[idx]->hierarchical_levels;
+                } else {
+                    pcs->temp_filt_pcs_list[0]->hierarchical_levels = context_ptr->mg_pictures_array[idx]->hierarchical_levels = centre_pcs->hierarchical_levels;
+                }
+#else
                 centre_pcs->hierarchical_levels = pcs->temp_filt_pcs_list[0]->hierarchical_levels = context_ptr->mg_pictures_array[idx]->hierarchical_levels;
+#endif
 
                 // tpl setting are updated if hierarchical level has changed
                 set_tpl_extended_controls(centre_pcs, scs->tpl_level);
