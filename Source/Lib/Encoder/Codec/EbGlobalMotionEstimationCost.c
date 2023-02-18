@@ -21,7 +21,6 @@ static int aom_count_signed_primitive_refsubexpfin(uint16_t n, uint16_t k, int16
     return svt_aom_count_primitive_refsubexpfin(scaled_n, k, ref, v);
 }
 
-#define GLOBAL_TRANS_TYPES_ENC 3 // highest motion model to search
 int gm_get_params_cost(const EbWarpedMotionParams *gm, const EbWarpedMotionParams *ref_gm,
                        int allow_hp) {
     int params_cost = 0;

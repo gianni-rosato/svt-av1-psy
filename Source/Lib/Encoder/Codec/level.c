@@ -11,13 +11,6 @@
 
 #include "level.h"
 
-#define UNDEFINED_LEVEL                                                                    \
-    {                                                                                      \
-        .level = SEQ_LEVEL_MAX, .max_picture_size = 0, .max_h_size = 0, .max_v_size = 0,   \
-        .max_display_rate = 0, .max_decode_rate = 0, .max_header_rate = 0, .main_mbps = 0, \
-        .high_mbps = 0, .main_cr = 0, .high_cr = 0, .max_tiles = 0, .max_tile_cols = 0     \
-    }
-
 typedef enum {
     LUMA_PIC_SIZE_TOO_LARGE,
     LUMA_PIC_H_SIZE_TOO_LARGE,

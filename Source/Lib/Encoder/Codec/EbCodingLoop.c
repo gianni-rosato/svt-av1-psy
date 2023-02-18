@@ -47,11 +47,6 @@ void                 rtime_alloc_palette_info(BlkStruct *md_blk_arr_nsq);
 *
 *******************************************/
 
-#define S32 32 * 32
-#define S16 16 * 16
-#define S8 8 * 8
-#define S4 4 * 4
-
 typedef void (*EbAv1EncodeLoopFuncPtr)(PictureControlSet *pcs, EncDecContext *ed_ctx,
                                        SuperBlock *sb_ptr, uint32_t org_x, uint32_t org_y,
                                        EbPictureBufferDesc *pred_samples, // no basis/offset

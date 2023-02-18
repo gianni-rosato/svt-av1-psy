@@ -13,10 +13,6 @@
 #include <immintrin.h>
 #include <math.h>
 
-#define REDUCED_PRI_STRENGTHS 8
-#define REDUCED_TOTAL_STRENGTHS (REDUCED_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
-#define TOTAL_STRENGTHS (CDEF_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
-
 static INLINE void mse_4x4_16bit_2x_subsampled_sse4_1(const uint16_t **src, const uint16_t *dst,
                                                       const int32_t dstride, __m128i *sum) {
     const __m128i s0 = _mm_loadu_si128((const __m128i *)*src);

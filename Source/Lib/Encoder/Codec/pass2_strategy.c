@@ -24,10 +24,7 @@
 #include "firstpass.h"
 #include "EbSequenceControlSet.h"
 #include "EbEntropyCoding.h"
-//#define INT_MAX 0x7fffffff
 
-#define DEFAULT_KF_BOOST 2300
-#define DEFAULT_GF_BOOST 2000
 static void init_gf_stats(GF_GROUP_STATS *gf_stats);
 
 // Calculate an active area of the image that discounts formatting

@@ -22,7 +22,6 @@
 #include "aom_dsp_rtcd.h"
 
 int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
-#define UNUSED_FUNC
 
 #define MVREF_ROWS 3
 #define MVREF_COLS 3

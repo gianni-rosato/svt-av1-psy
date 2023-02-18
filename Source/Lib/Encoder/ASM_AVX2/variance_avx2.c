@@ -13,15 +13,6 @@
 #include <immintrin.h>
 #include "aom_dsp_rtcd.h"
 
-// Alpha blending with alpha values from the range [0, 256], where 256
-// means use the first input and 0 means use the second input.
-#define AOM_BLEND_A256_ROUND_BITS 8
-#define AOM_BLEND_A256_MAX_ALPHA (1 << AOM_BLEND_A256_ROUND_BITS) // 256
-
-#define AOM_BLEND_A256(a, v0, v1)                                            \
-    ROUND_POWER_OF_TWO((a) * (v0) + (AOM_BLEND_A256_MAX_ALPHA - (a)) * (v1), \
-                       AOM_BLEND_A256_ROUND_BITS)
-
 static INLINE __m128i mm256_add_hi_lo_epi16(const __m256i val) {
     return _mm_add_epi16(_mm256_castsi256_si128(val), _mm256_extractf128_si256(val, 1));
 }

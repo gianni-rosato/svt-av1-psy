@@ -17,10 +17,6 @@
 #include "convolve.h"
 #include "aom_dsp_rtcd.h"
 
-// 2 tap bilinear filters
-#define BIL_SUBPEL_BITS 3
-#define BIL_SUBPEL_SHIFTS (1 << BIL_SUBPEL_BITS)
-
 // Applies a 1-D 2-tap bilinear filter to the source block in either horizontal
 // or vertical direction to produce the filtered output block. Used to implement
 // the first-pass of 2-D separable filter.

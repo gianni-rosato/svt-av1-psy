@@ -20,9 +20,6 @@
 #include "EbUtility.h"
 #include "EbIntraPrediction.h"
 
-#define VARIANCE_PRECISION 16
-#define MEAN_PRECISION (VARIANCE_PRECISION >> 1)
-
 /*********************************
  * Picture Copy
  *********************************/

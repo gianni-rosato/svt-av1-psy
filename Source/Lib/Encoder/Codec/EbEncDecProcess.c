@@ -28,8 +28,6 @@
 #include "EbResize.h"
 void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 int  svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
-#define FC_SKIP_TX_SR_TH025 125 // Fast cost skip tx search threshold.
-#define FC_SKIP_TX_SR_TH010 110 // Fast cost skip tx search threshold.
 void copy_mv_rate(PictureControlSet *pcs, MdRateEstimationContext *dst_rate);
 void svt_av1_cdef_search(EncDecContext *ed_ctx, SequenceControlSet *scs, PictureControlSet *pcs);
 

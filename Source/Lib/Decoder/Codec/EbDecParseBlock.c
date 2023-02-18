@@ -39,9 +39,6 @@ FILE *temp_fp;
 int   enable_dump;
 #endif
 
-#define READ_REF_BIT(pname) svt_read_symbol(r, get_pred_cdf_##pname(pi), 2, ACCT_STR)
-#define SQR_BLOCK_SIZES 6
-
 typedef AomCdfProb (*BaseCdfArr)[CDF_SIZE(4)];
 typedef AomCdfProb (*BrCdfArr)[CDF_SIZE(BR_CDF_SIZE)];
 

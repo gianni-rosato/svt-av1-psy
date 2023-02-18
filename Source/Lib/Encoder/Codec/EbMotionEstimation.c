@@ -52,13 +52,8 @@ Bool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
     return TRUE;
 }
 
-#define MAX_INTRA_IN_MD 9
 #define REFERENCE_PIC_LIST_0 0
 #define REFERENCE_PIC_LIST_1 1
-#define SC_HME_TH_STILL 1000
-#define SC_HME_TH_EASY 100
-#define SC_SR_DENOM_STILL 16
-#define SC_SR_DENOM_EASY 8
 /*******************************************
  * Compute8x4SAD_Default
  *   Unoptimized 8x4 SAD
@@ -1162,10 +1157,6 @@ uint32_t get_me_info_index(uint32_t max_me_block, const BlockGeom *blk_geom, uin
     }
     return me_info_index;
 }
-
-#define NSET_CAND(me_pu_result, num, dist, dir)                      \
-    (me_pu_result)->distortion_direction[(num)].distortion = (dist); \
-    (me_pu_result)->distortion_direction[(num)].direction  = (dir);
 
 uint32_t check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *me_ctx,
                          uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t sb_width,

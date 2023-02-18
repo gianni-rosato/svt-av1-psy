@@ -301,16 +301,6 @@ void svt_av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride, int rows
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
 #endif
 
-#define MACRO_VERTICAL_LUMA_4(A, b, C)                                                     \
-    *(uint32_t *)prediction_ptr = _mm_cvtsi128_si32(_mm_or_si128(_mm_and_si128(A, b), C)); \
-    A                           = _mm_srli_si128(A, 1);                                    \
-    *(uint32_t *)(prediction_ptr +                                                         \
-                  pStride)      = _mm_cvtsi128_si32(_mm_or_si128(_mm_and_si128(A, b), C)); \
-    A                           = _mm_srli_si128(A, 1);
-
-#define _mm256_set_m128i(/* __m128i */ hi, /* __m128i */ lo) \
-    _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
-
 static INLINE void highbd_transpose16x4_8x8_sse2(__m128i *x, __m128i *d) {
     __m128i r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
 
@@ -846,9 +836,6 @@ static inline __m256i _mm256_insert_epi32(__m256i a, int32_t b, const int32_t i)
     return c;
 }
 #endif
-
-#define PERM4x64(c0, c1, c2, c3) c0 + (c1 << 2) + (c2 << 4) + (c3 << 6)
-#define PERM2x128(c0, c1) c0 + (c1 << 4)
 
 // Low bit depth functions
 static DECLARE_ALIGNED(32, uint8_t, base_mask[33][32]) = {

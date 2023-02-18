@@ -361,9 +361,6 @@ static INLINE int is_mv_in(const MvLimits *mv_limits, const MV *mv) {
     return (mv->col >= mv_limits->col_min) && (mv->col <= mv_limits->col_max) &&
         (mv->row >= mv_limits->row_min) && (mv->row <= mv_limits->row_max);
 }
-#define MAX_PATTERN_SCALES 11
-#define MAX_PATTERN_CANDIDATES 8 // max number of canddiates per scale
-#define PATTERN_CANDIDATES_REF 3 // number of refinement candidates
 
 int svt_av1_get_mvpred_var(const IntraBcContext *x, const MV *best_mv, const MV *center_mv,
                            const AomVarianceFnPtr *vfp, int use_mvcost) {

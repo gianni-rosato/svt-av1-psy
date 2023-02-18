@@ -13,8 +13,6 @@
 #include <immintrin.h>
 #include <math.h>
 
-#define REDUCED_PRI_STRENGTHS 8
-#define REDUCED_TOTAL_STRENGTHS (REDUCED_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
 #define TOTAL_STRENGTHS (CDEF_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
 
 #ifndef _mm256_set_m128i

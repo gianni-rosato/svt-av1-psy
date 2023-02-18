@@ -30,11 +30,6 @@
 #include "EbModeDecision.h"
 #include "EbRestoration.h"
 
-#define S32 32 * 32
-#define S16 16 * 16
-#define S8 8 * 8
-#define S4 4 * 4
-
 static void mem_put_varsize(uint8_t *const dst, const int sz, const int val) {
     switch (sz) {
     case 1: dst[0] = (uint8_t)(val & 0xff); break;
@@ -330,7 +325,6 @@ void get_txb_ctx(PictureControlSet *pcs, const int32_t plane,
 
     //printf("blk_org_y = %d, blk_org_x = %d\n", blk_org_y, blk_org_x);
 
-#define MAX_TX_SIZE_UNIT 16
     static const int8_t signs[3] = {0, -1, 1};
     int32_t             txb_w_unit;
     int32_t             txb_h_unit;
@@ -454,7 +448,6 @@ void get_txb_ctx(PictureControlSet *pcs, const int32_t plane,
             : 7;
         *txb_skip_ctx            = (int16_t)(ctx_base + ctx_offset);
     }
-#undef MAX_TX_SIZE_UNIT
 }
 
 static void av1_write_tx_type(PictureParentControlSet *pcs, FRAME_CONTEXT *frame_context,

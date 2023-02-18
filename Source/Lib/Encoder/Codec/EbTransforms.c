@@ -36,26 +36,6 @@ static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {
     fwd_shift_8x32,  fwd_shift_32x8,  fwd_shift_16x64, fwd_shift_64x16,
 };
 
-/*****************************
- * Defines
- *****************************/
-
-#define BETA_P 1
-#define BETA_N 3
-
-/********************************************
-  * Constants
-  ********************************************/
-
-#define ALPHA_0000 0
-#define ALPHA_0050 50
-
-#define ALPHA_0100 100
-#define ALPHA_0200 200
-#define ALPHA_0300 300
-#define ALPHA_0500 500
-#define ALPHA_1000 1000
-
 void svt_av1_gen_fwd_stage_range(int8_t *stage_range_col, int8_t *stage_range_row,
                                  const Txfm2dFlipCfg *cfg, int32_t bd) {
     // Take the shift from the larger dimension in the rectangular case.
@@ -67,10 +47,6 @@ void svt_av1_gen_fwd_stage_range(int8_t *stage_range_col, int8_t *stage_range_ro
     for (int32_t i = 0; i < cfg->stage_num_row && i < MAX_TXFM_STAGE_NUM; ++i)
         stage_range_row[i] = (int8_t)(cfg->stage_range_row[i] + shift[0] + shift[1] + bd + 1);
 }
-
-#define range_check(stage, input, buf, size, bit) \
-    do {                                          \
-    } while (0)
 
 void svt_av1_fdct4_new(const int32_t *input, int32_t *output, int8_t cos_bit,
                        const int8_t *stage_range) {

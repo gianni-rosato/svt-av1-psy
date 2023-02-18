@@ -54,8 +54,6 @@ static const uint8_t sm_weight_arrays[2 * MAX_BLOCK_DIM] = {
         assert(weights_scale - weights_h[bh - 1] < weights_scale);                \
         assert(pred_scale < 31);                                                  \
     } while (0) // ensures no overflow when calculating predictor.
-#define MIDRANGE_VALUE_8BIT    128
-#define MIDRANGE_VALUE_10BIT   512
 
 int is_smooth(const BlockModeInfoEnc *block_mi, int plane)
 {

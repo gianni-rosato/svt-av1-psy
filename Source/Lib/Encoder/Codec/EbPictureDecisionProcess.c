@@ -39,7 +39,6 @@
 /************************************************
  * Defines
  ************************************************/
-#define  LAY0_OFF  0
 #define  LAY1_OFF  3
 #define  LAY2_OFF  5
 #define  LAY3_OFF  6
@@ -161,14 +160,10 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define FLASH_TH                            5
 #define FADE_TH                             3
 #define SCENE_TH                            3000
-#define NOISY_SCENE_TH                      4500    // SCD TH in presence of noise
-#define HIGH_PICTURE_VARIANCE_TH            1500
 #define NUM64x64INPIC(w,h)          ((w*h)>> (svt_log2f(BLOCK_SIZE_64)<<1))
 #define QUEUE_GET_PREVIOUS_SPOT(h)  ((h == 0) ? PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH - 1 : h - 1)
 #define QUEUE_GET_NEXT_SPOT(h,off)  (( (h+off) >= PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH) ? h+off - PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH  : h + off)
 
-#define WTH 64
-#define OTH 64
 static void picture_decision_context_dctor(EbPtr p)
 {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;

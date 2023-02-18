@@ -15,17 +15,6 @@
 #include "common_dsp_rtcd.h"
 #include "EbLog.h"
 
-#if (InternalBitDepthIncrement == 0)
-#define ChromaOffset4 (1 << (Shift4 - 1))
-#else
-#define ChromaOffset4 Offset4
-#endif
-#if (InternalBitDepthIncrement == 0)
-#define ChromaMinusOffset1 0
-#else
-#define ChromaMinusOffset1 MinusOffset1
-#endif
-
 /* Pad padding_width pixels on left for a block of height row_height */
 void generate_padding_l(EbByte src_pic, uint32_t src_stride, uint32_t row_height,
                         uint32_t padding_width) {

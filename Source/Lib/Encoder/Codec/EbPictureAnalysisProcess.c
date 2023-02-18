@@ -43,18 +43,6 @@ void generate_padding_compressed_10bit(
     uint32_t padding_height); //input paramter, the padding height.
 
 #define VARIANCE_PRECISION 16
-#define SB_LOW_VAR_TH 5
-#define PIC_LOW_VAR_PERCENTAGE_TH 60
-#define FLAT_MAX_VAR 50
-#define FLAT_MAX_VAR_DECIM (50 - 00)
-#define NOISE_MIN_LEVEL 70000 //120000
-#define NOISE_MIN_LEVEL_DECIM (70000 + 000000) //(120000+000000)
-#define NOISE_MIN_LEVEL_M6_M7 120000
-#define NOISE_MIN_LEVEL_DECIM_M6_M7 (120000 + 000000)
-#define DENOISER_QP_TH 29
-#define DENOISER_BITRATE_TH 14000000
-#define SAMPLE_THRESHOLD_PRECENT_BORDER_LINE 15
-#define SAMPLE_THRESHOLD_PRECENT_TWO_BORDER_LINES 10
 
 /**************************************
  * Context

@@ -34,46 +34,9 @@ int32_t svt_aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32
                                      AomCodecFrameBuffer *fb, AomGetFrameBufferCbFn cb,
                                      void *cb_priv);
 
-///---filter.h
-#define MAX_FILTER_TAP 8
-
-// With CONFIG_DUAL_FILTER, pack two InterpFilter's into a uint32_t: since
-// there are at most 10 filters, we can use 16 bits for each and have more than
-// enough space. This reduces argument passing and unifies the operation of
-// setting a (pair of) filters.
-//
-// Without CONFIG_DUAL_FILTER,
-typedef uint32_t InterpFilters;
-
-#define LOG_SWITCHABLE_FILTERS 2 /* (1 << LOG_SWITCHABLE_FILTERS) > SWITCHABLE_FILTERS */
-
-#define MAX_SUBPEL_TAPS 12
-#define SWITCHABLE_FILTER_CONTEXTS ((SWITCHABLE_FILTERS + 1) * 4)
-#define INTER_FILTER_COMP_OFFSET (SWITCHABLE_FILTERS + 1)
-#define INTER_FILTER_DIR_OFFSET ((SWITCHABLE_FILTERS + 1) * 2)
 ///---convolve.h
 #define FILTER_BITS 7
-
-//typedef uint16_t ConvBufType;
-//typedef struct ConvolveParams {
-//    int32_t ref;
-//    int32_t do_average;
-//    ConvBufType *dst;
-//    int32_t dst_stride;
-//    int32_t round_0;
-//    int32_t round_1;
-//    int32_t plane;
-//    int32_t is_compound;
-//    int32_t use_jnt_comp_avg;
-//    int32_t fwd_offset;
-//    int32_t bck_offset;
-//} ConvolveParams;
-
-#define ROUND0_BITS 3
-#define COMPOUND_ROUND1_BITS 7
 #define WIENER_ROUND0_BITS 3
-
-#define WIENER_CLAMP_LIMIT(r0, bd) (1 << ((bd) + 1 + FILTER_BITS - r0))
 
 typedef void (*AomConvolveFn)(const uint8_t *src, int32_t src_stride, uint8_t *dst,
                               int32_t dst_stride, int32_t w, int32_t h,

@@ -17,28 +17,11 @@
 #include "common_dsp_rtcd.h"
 #include "EbUtility.h"
 #include "EbPictureOperators.h"
-//#include "EbRateDistortionCost.h"
-
-#define MVBOUNDLOW \
-    36 //  (80-71)<<2 // 80 = ReferencePadding ; minus 71 is derived from the expression -64 + 1 - 8, and plus 7 is derived from expression -1 + 8
-#define MVBOUNDHIGH 348 //  (80+7)<<2
-#define REFPADD_QPEL 320 //  (16+64)<<2
-
-#define AOM_INTERP_EXTEND 4
-
-#define SCALE_NUMERATOR 8
 
 #define SCALE_SUBPEL_BITS 10
 #define SCALE_SUBPEL_SHIFTS (1 << SCALE_SUBPEL_BITS)
 #define SCALE_SUBPEL_MASK (SCALE_SUBPEL_SHIFTS - 1)
 #define SCALE_EXTRA_BITS (SCALE_SUBPEL_BITS - SUBPEL_BITS)
-#define SCALE_EXTRA_OFF ((1 << SCALE_EXTRA_BITS) / 2)
-
-#define BIL_SUBPEL_BITS 3
-#define BIL_SUBPEL_SHIFTS (1 << BIL_SUBPEL_BITS)
-
-#define ROUND0_BITS 3
-#define COMPOUND_ROUND1_BITS 7
 
 extern void pack_block(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                        uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,

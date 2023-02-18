@@ -35,7 +35,6 @@
  ***************************************/
 #define CLIP3(min_val, max_val, a) \
     (((a) < (min_val)) ? (min_val) : (((a) > (max_val)) ? (max_val) : (a)))
-#define FUTURE_WINDOW_WIDTH 4
 #define SIZE_OF_ONE_FRAME_IN_BYTES(width, height, csp, is_16bit) \
     ((((width) * (height)) + 2 * (((width) * (height)) >> (3 - csp))) << is_16bit)
 #define YUV4MPEG2_IND_SIZE 9
@@ -494,13 +493,7 @@ void process_input_buffer(EncChannel *channel) {
     channel->exit_cond_input = return_value;
 }
 
-#define LONG_ENCODE_FRAME_ENCODE 4000
 #define SPEED_MEASUREMENT_INTERVAL 2000
-#define START_STEADY_STATE 1000
-#define OBU_FRAME_HEADER_SIZE 3
-#define TD_SIZE 2
-
-#define MEM_VALUE_T_SZ_BITS (sizeof(MEM_VALUE_T) << 3)
 
 double get_psnr(double sse, double max) {
     double psnr;

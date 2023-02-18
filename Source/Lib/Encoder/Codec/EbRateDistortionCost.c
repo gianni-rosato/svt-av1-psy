@@ -23,7 +23,6 @@
 
 #include <assert.h>
 
-#define FIRST_PASS_COST_PENALTY 20 // The penalty is added in cost calculation of the first pass.
 #define AV1_COST_PRECISION 0
 #define MV_COST_WEIGHT 108
 int av1_get_reference_mode_context_new(const MacroBlockD *xd);

@@ -30,13 +30,13 @@
 // when x->mv_cost_type is set to MV_COST_L1.
 // LOWRES
 #define SSE_LAMBDA_LOWRES 2 // Used by mv_cost_err_fn
-#define SAD_LAMBDA_LOWRES 32 // Used by mvsad_err_cost during full pixel search
+// #define SAD_LAMBDA_LOWRES 32 // Used by mvsad_err_cost during full pixel search
 // MIDRES
 #define SSE_LAMBDA_MIDRES 0 // Used by mv_cost_err_fn
-#define SAD_LAMBDA_MIDRES 15 // Used by mvsad_err_cost during full pixel search
+// #define SAD_LAMBDA_MIDRES 15 // Used by mvsad_err_cost during full pixel search
 // HDRES
 #define SSE_LAMBDA_HDRES 1 // Used by mv_cost_err_fn
-#define SAD_LAMBDA_HDRES 8 // Used by mvsad_err_cost during full pixel search
+// #define SAD_LAMBDA_HDRES 8 // Used by mvsad_err_cost during full pixel search
 
 // Returns the cost of using the current mv during the motion search. This is
 // used when var is used as the error metric.

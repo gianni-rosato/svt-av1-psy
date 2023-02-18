@@ -20,7 +20,6 @@
 #include "EbCabacContextModel.h"
 #include "EbLog.h"
 #include "common_dsp_rtcd.h"
-#define AV1_MIN_TILE_SIZE_BYTES 1
 void svt_av1_reset_loop_restoration(PictureControlSet *piCSetPtr, uint16_t tile_idx);
 
 static void rest_context_dctor(EbPtr p) {

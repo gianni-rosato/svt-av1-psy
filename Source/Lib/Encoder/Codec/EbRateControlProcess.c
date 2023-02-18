@@ -218,31 +218,6 @@ int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_dep
 
     return target_index - start_index;
 }
-#define STATIC_MOTION_THRESH 95
-
-// that are not marked as coded with 0,0 motion in the first pass.
-#define FAST_MOVING_KF_GROUP_THRESH 5
-#define MEDIUM_MOVING_KF_GROUP_THRESH 30
-#define MAX_QPS_COMP_I 150
-#define MAX_QPS_COMP_I_LR 42
-#define MAX_QPS_COMP_NONI 300
-#define HIGH_QPS_COMP_THRESHOLD 80
-#define LOW_QPS_COMP_THRESHOLD 40
-#define HIGH_FILTERED_THRESHOLD (4 << 8) // 8 bit precision
-#define LOW_FILTERED_THRESHOLD (2 << 8) // 8 bit precision
-#define MAX_REF_AREA_I 50 // Max ref area for I slice
-#define MAX_REF_AREA_NONI 50 // Max ref area for Non I slice
-#define MAX_REF_AREA_NONI_LOW_RES 40 // Max ref area for Non I slice in low resolution
-#define REF_AREA_DIF_THRESHOLD 10 // Difference threshold for ref area between two frames
-#define REF_AREA_LOW_THRESHOLD 8 // Low threshold for ref area
-#define REF_AREA_MED_THRESHOLD 16 // Medium threshold for ref area
-#define ME_SAD_LOW_THRESHOLD1 15 // Low sad_ threshold1 for me distortion (very low)
-#define ME_SAD_LOW_THRESHOLD2 25 // Low sad_ threshold2 for me distortion (low)
-#define ME_SAD_HIGH_THRESHOLD 80 // High sad_ threshold2 for me distortion (high)
-
-#define SUPERRES_QADJ_PER_DENOM_KEYFRAME_SOLO 0
-#define SUPERRES_QADJ_PER_DENOM_KEYFRAME 2
-#define SUPERRES_QADJ_PER_DENOM_ARFFRAME 0
 
 #define ASSIGN_MINQ_TABLE(bit_depth, name)                                                     \
     do {                                                                                       \
@@ -1215,8 +1190,6 @@ static void sb_setup_lambda(PictureControlSet *pcs, SuperBlock *sb_ptr) {
     }
     ppcs_ptr->blk_lambda_tuning = TRUE;
 }
-#define QPM_MAX_BETA 1.7
-#define QPM_MIN_BETA 0.8
 #if OPT_LD_QPM
 /******************************************************************************
 * compute_deltaq
@@ -1362,6 +1335,8 @@ void svt_aom_cyclic_refresh_init(PictureParentControlSet *ppcs) {
         cr->rate_ratio_qdelta = 3;
 }
 #else
+#define QPM_MAX_BETA 1.7
+#define QPM_MIN_BETA 0.8
 /******************************************************
  * sb_qp_derivation
  * Calculates the QP per SB based on the ME statistics
@@ -1627,7 +1602,6 @@ static void av1_rc_init(SequenceControlSet *scs) {
 }
 
 #define MIN_BOOST_COMBINE_FACTOR 4.0
-#define MAX_BOOST_COMBINE_FACTOR 12.0
 /******************************************************************************
 * process_tpl_stats_frame_kf_gfu_boost
 * update r0, calculate kf and gfu boosts for VBR

@@ -695,7 +695,6 @@ void md_update_all_neighbour_arrays_multiple(PictureControlSet *pcs, ModeDecisio
     }
 }
 
-#define TOTAL_SQ_BLOCK_COUNT 341
 /************************************************************************************************
 * av1_perform_inverse_transform_recon_luma
 * Apply inverse transform for Luma samples
@@ -5358,8 +5357,6 @@ static INLINE int tx_size_to_depth(TxSize tx_size, BlockSize bsize) {
     }
     return depth;
 }
-
-#define BLOCK_SIZES_ALL 22
 
 int is_inter_block(const BlockModeInfoEnc *bloc_mi);
 

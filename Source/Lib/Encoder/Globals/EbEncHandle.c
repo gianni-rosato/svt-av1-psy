@@ -95,9 +95,6 @@
 #define EB_PacketizationProcessInitCount                1
 
 // Output Buffer Transfer Parameters
-#define EB_OUTPUTSTREAMBUFFERSIZE                                       0x2DC6C0   //0x7D00        // match MTU Size
-#define EB_OUTPUTSTATISTICSBUFFERSIZE                                   0x30            // 6X8 (8 Bytes for Y, U, V, number of bits, picture number, QP)
-#define EOS_NAL_BUFFER_SIZE                                             0x0010 // Bitstream used to code EOS NAL
 #define TPL_INPUT_PORT_SOP                                0
 #define TPL_INPUT_PORT_TPL                                1
 #define TPL_INPUT_PORT_INVALID                           -1
@@ -334,7 +331,6 @@ static void enc_switch_to_real_time(){
 #define CONS_CORE_COUNT         16
 #define LOW_SERVER_CORE_COUNT   48
 #define MED_SERVER_CORE_COUNT   128
-#define HIGH_SERVER_CORE_COUNT  224
 #define PARALLEL_LEVEL_2_RANGE  2
 #define PARALLEL_LEVEL_4_RANGE  6
 #define PARALLEL_LEVEL_8_RANGE  12
