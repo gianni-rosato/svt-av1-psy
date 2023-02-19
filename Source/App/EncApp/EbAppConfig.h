@@ -20,6 +20,8 @@
 typedef struct EbAppContext_ EbAppContext;
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #define fseeko _fseeki64
 #define ftello _ftelli64
 #endif
@@ -164,13 +166,16 @@ typedef struct EbPerformanceContext {
 } EbPerformanceContext;
 
 typedef struct MemMapFile {
-    uint8_t  enable; //enable mem mapped file
-    int64_t  file_size; //size of the input file
-    int32_t  align_mask; //page size alignment mask
-    int32_t  fd; //file descriptor
-    int64_t  y4m_seq_hdr; //y4m seq length
+    bool     enable; //enable mem mapped file
+    size_t   file_size; //size of the input file
+    uint64_t align_mask; //page size alignment mask
+    int      fd; //file descriptor
+    size_t   y4m_seq_hdr; //y4m seq length
     size_t   y4m_frm_hdr; //y4m frame length
     uint64_t file_frame_it; //frame iterator within the input file
+#ifdef _WIN32
+    HANDLE map_handle; //file mapping handle
+#endif
 } MemMapFile;
 
 // list of frames that are forced to be key frames

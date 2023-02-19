@@ -97,31 +97,43 @@ typedef struct EncContext {
 } EncContext;
 
 //initilize memory mapped file handler
-void init_memory_file_map(EbConfig* app_cfg) {
+static void init_memory_file_map(EbConfig* app_cfg) {
+    app_cfg->mmap.enable = app_cfg->buffered_input == -1 && !app_cfg->input_file_is_fifo;
+
+    if (!app_cfg->mmap.enable)
+        return;
+    // app_cfg->mmap.y4m_seq_hdr   = 0; // already initialized to 0 or some value in read_y4m_header()
+    app_cfg->mmap.y4m_frm_hdr   = 0;
+    app_cfg->mmap.file_frame_it = 0;
+    const int64_t curr_loc      = ftello(app_cfg->input_file); // get current fp location
+    fseeko(app_cfg->input_file, 0L, SEEK_END); // seek to end of file
+    app_cfg->mmap.file_size = ftello(app_cfg->input_file); // get file size
+    fseeko(app_cfg->input_file, curr_loc, SEEK_SET); // seek back to that location
 #ifdef _WIN32
-    app_cfg->mmap.enable = 0;
-#else
-    app_cfg->mmap.enable = (app_cfg->buffered_input == -1) ? 1 : 0;
-#endif
-
-    if (app_cfg->input_file == stdin || app_cfg->input_file_is_fifo)
-        app_cfg->mmap.enable = 0;
-
-    if (app_cfg->mmap.enable) {
-        if (app_cfg->input_file) {
-            uint64_t curr_loc = ftello(app_cfg->input_file); // get current fp location
-            fseeko(app_cfg->input_file, 0L, SEEK_END);
-            app_cfg->mmap.file_size = ftello(app_cfg->input_file);
-            fseeko(app_cfg->input_file, curr_loc, SEEK_SET); // seek back to that location
-#ifndef _WIN32
-            app_cfg->mmap.fd = fileno(app_cfg->input_file);
-#endif
-        }
-        app_cfg->mmap.file_frame_it = 0;
-#ifndef _WIN32
-        app_cfg->mmap.align_mask = sysconf(_SC_PAGESIZE) - 1;
-#endif
+    SYSTEM_INFO sys_info;
+    GetSystemInfo(&sys_info);
+    app_cfg->mmap.fd         = _fileno(app_cfg->input_file);
+    app_cfg->mmap.align_mask = sys_info.dwAllocationGranularity > sys_info.dwPageSize
+        ? sys_info.dwAllocationGranularity - 1
+        : sys_info.dwPageSize - 1;
+    HANDLE fhandle           = (HANDLE)_get_osfhandle(app_cfg->mmap.fd);
+    app_cfg->mmap.map_handle = CreateFileMapping(fhandle, NULL, PAGE_READONLY, 0, 0, NULL);
+    if (!app_cfg->mmap.map_handle) {
+        app_cfg->mmap.enable = false;
+        return;
     }
+#else
+    app_cfg->mmap.fd         = fileno(app_cfg->input_file);
+    app_cfg->mmap.align_mask = sysconf(_SC_PAGESIZE) - 1;
+#endif
+}
+
+static void deinit_memory_file_map(EbConfig* app_cfg) {
+    if (!app_cfg->mmap.enable)
+        return;
+#ifdef _WIN32
+    CloseHandle(app_cfg->mmap.map_handle);
+#endif
 }
 
 static int compar_uint64(const void* a, const void* b) {
@@ -228,6 +240,7 @@ static void enc_context_dctor(EncContext* enc_context) {
     // DeInit Encoder
     for (int32_t inst_cnt = enc_context->num_channels - 1; inst_cnt >= 0; --inst_cnt) {
         EncChannel* c = enc_context->channels + inst_cnt;
+        deinit_memory_file_map(c->app_cfg);
         enc_channel_dctor(c, inst_cnt);
     }
 

@@ -24,7 +24,11 @@
 #include "EbAppInputy4m.h"
 #include "EbTime.h"
 
-#ifndef _WIN32
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <io.h>
+#else
 #include <sys/mman.h>
 #endif
 
@@ -113,41 +117,41 @@ void log_error_output(FILE *error_log_file, uint32_t error_code) {
 }
 
 //retunrs the offset from the file start
-int64_t get_mmap_offset(EbConfig *app_cfg, uint64_t frame_size) {
-    int64_t offset;
-    if (app_cfg->y4m_input)
-        offset = app_cfg->mmap.y4m_seq_hdr +
-            (app_cfg->mmap.file_frame_it + 1) * app_cfg->mmap.y4m_frm_hdr +
-            app_cfg->mmap.file_frame_it * frame_size;
-    else
-        offset = app_cfg->mmap.file_frame_it * frame_size;
-
-    return offset;
+static int64_t get_mmap_offset(EbConfig *app_cfg, uint64_t frame_size) {
+    const int64_t offset = app_cfg->mmap.file_frame_it * frame_size;
+    return app_cfg->mmap.y4m_seq_hdr +
+        (app_cfg->mmap.file_frame_it + 1) * app_cfg->mmap.y4m_frm_hdr + offset;
 }
 /* returns a RAM address from a memory mapped file  */
-void *svt_mmap(MemMapFile *h, int64_t offset, int64_t size) {
+static void *svt_mmap(MemMapFile *h, size_t offset, size_t size) {
     if (offset + size > h->file_size)
         return NULL;
 
-    int align = offset & h->align_mask;
+    // align our mapping to the page size
+    const size_t align = offset & h->align_mask;
     offset -= align;
     size += align;
-#ifndef _WIN32
+#ifdef _WIN32
+    // split offset into high and low 32 bits
+    const DWORD offset_high = (DWORD)(offset >> 32);
+    const DWORD offset_low  = (DWORD)(offset & 0xFFFFFFFF);
+    uint8_t    *base = MapViewOfFile(h->map_handle, FILE_MAP_READ, offset_high, offset_low, size);
+    if (base)
+        return base + align;
+#else
     uint8_t *base = mmap(NULL, size, PROT_READ, MAP_PRIVATE, h->fd, offset);
-    //printf(" base=%p \n", base);
     if (base != MAP_FAILED)
         return base + align;
-
-        //else
-        //    printf(" error base=%p \n",base);
 #endif
-
     return NULL;
 }
 /* release  memory mapped file  */
-void svt_munmap(MemMapFile *h, void *addr, int64_t size) {
+static void svt_munmap(MemMapFile *h, void *addr, int64_t size) {
     void *base = (void *)((intptr_t)addr & ~h->align_mask);
-#ifndef _WIN32
+#ifdef _WIN32
+    (void)size;
+    UnmapViewOfFile(base);
+#else
     munmap(base, size + (intptr_t)addr - (intptr_t)base);
 #endif
 }
