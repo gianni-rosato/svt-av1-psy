@@ -627,7 +627,7 @@ static INLINE void highbd_down2_symeven_w8_mid_part_avx2(const uint16_t *const i
 
         // DEBUG: compare with c
         /*{
-            const int16_t *filter = av1_down2_symeven_half_filter;
+            const int16_t *filter = svt_aom_av1_down2_symeven_half_filter;
             const int      filter_len_half = 4;
             const int      bd              = 10;
             uint16_t      *input              = in + 3;
@@ -828,8 +828,8 @@ void svt_av1_interpolate_core_avx2(const uint8_t *const input, int in_length, ui
 }
 
 void svt_av1_down2_symeven_avx2(const uint8_t *const input, int length, uint8_t *output) {
-    const int16_t *filter          = av1_down2_symeven_half_filter;
-    const int      filter_len_half = sizeof(av1_down2_symeven_half_filter) / 2;
+    const int16_t *filter          = svt_aom_av1_down2_symeven_half_filter;
+    const int      filter_len_half = sizeof(svt_aom_av1_down2_symeven_half_filter) / 2;
     const int      steps           = 32;
 
     const __m128i filter_1x = _mm_loadl_epi64((const __m128i *)filter);
@@ -1680,8 +1680,8 @@ static EbErrorType svt_av1_interpolate_core_col_avx2(const uint8_t *const input,
 
 void svt_av1_highbd_down2_symeven_avx2(const uint16_t *const input, int length, uint16_t *output,
                                        int bd) {
-    const int16_t *filter          = av1_down2_symeven_half_filter;
-    const int      filter_len_half = sizeof(av1_down2_symeven_half_filter) / 2;
+    const int16_t *filter          = svt_aom_av1_down2_symeven_half_filter;
+    const int      filter_len_half = sizeof(svt_aom_av1_down2_symeven_half_filter) / 2;
     const int      steps           = 16;
     __m256i        max;
     if (bd == 10) {
@@ -2101,8 +2101,8 @@ static EbErrorType svt_av1_highbd_down2_symeven_col_avx2(const uint16_t *const i
     EbErrorType ret = EB_ErrorNone;
 
     const int      out_height      = in_height / 2;
-    const int16_t *filter          = av1_down2_symeven_half_filter;
-    const int      filter_len_half = sizeof(av1_down2_symeven_half_filter) / 2;
+    const int16_t *filter          = svt_aom_av1_down2_symeven_half_filter;
+    const int      filter_len_half = sizeof(svt_aom_av1_down2_symeven_half_filter) / 2;
     __m256i        max;
     if (bd == 10) {
         max = _mm256_set1_epi32(1023);
@@ -2426,8 +2426,8 @@ static EbErrorType svt_av1_down2_symeven_col_avx2(const uint8_t *const input, in
     EbErrorType ret = EB_ErrorNone;
 
     const int      out_height      = in_height / 2;
-    const int16_t *filter          = av1_down2_symeven_half_filter;
-    const int      filter_len_half = sizeof(av1_down2_symeven_half_filter) / 2;
+    const int16_t *filter          = svt_aom_av1_down2_symeven_half_filter;
+    const int      filter_len_half = sizeof(svt_aom_av1_down2_symeven_half_filter) / 2;
     const __m256i  max             = _mm256_set1_epi32(255);
 
     const __m128i filter_2x_128i = _mm_broadcastq_epi64(_mm_loadl_epi64((const __m128i *)filter));
@@ -2669,13 +2669,13 @@ static const InterpKernel *choose_interp_filter(int in_length, int out_length) {
     if (out_length16 >= in_length * 16)
         return filteredinterp_filters1000;
     else if (out_length16 >= in_length * 13)
-        return av1_filteredinterp_filters875;
+        return svt_aom_av1_filteredinterp_filters875;
     else if (out_length16 >= in_length * 11)
-        return av1_filteredinterp_filters750;
+        return svt_aom_av1_filteredinterp_filters750;
     else if (out_length16 >= in_length * 9)
-        return av1_filteredinterp_filters625;
+        return svt_aom_av1_filteredinterp_filters625;
     else
-        return av1_filteredinterp_filters500;
+        return svt_aom_av1_filteredinterp_filters500;
 }
 
 static EbErrorType highbd_resize_multistep(const uint16_t *const input, int length,

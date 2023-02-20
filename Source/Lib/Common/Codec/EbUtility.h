@@ -36,7 +36,7 @@ typedef enum GeomIndex {
 void build_blk_geom(GeomIndex geom);
 
 typedef struct BlockGeom {
-    GeomIndex geom_idx; //type of geom this block belongs
+    GeomIndex svt_aom_geom_idx; //type of geom this block belongs
     uint8_t   depth; // depth of the block
     Part      shape; // P_N..P_V4 . P_S is not used.
     uint8_t   org_x; // orgin x from topleft of sb
@@ -143,10 +143,10 @@ static const uint32_t ns_depth_offset[GEOM_TOT][6] = {
 static const uint32_t d1_depth_offset[GEOM_TOT][6] = {
 
     {1, 1, 1, 1, 1, NOT_USED_VALUE}, {25, 25, 25, 5, 1, NOT_USED_VALUE}, {17, 25, 25, 25, 5, 1}};
-extern BlockGeom blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
+extern BlockGeom svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
 
 static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) {
-    return &blk_geom_mds[bidx_mds];
+    return &svt_aom_blk_geom_mds[bidx_mds];
 }
 // CU Stats Helper Functions
 typedef struct CodedBlockStats {

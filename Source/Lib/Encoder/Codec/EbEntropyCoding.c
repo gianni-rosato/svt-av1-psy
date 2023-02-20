@@ -2561,15 +2561,15 @@ static void encode_segmentation(PictureParentControlSet *pcsPtr, struct AomWrite
                     svt_aom_wb_write_bit(wb, segmentation_params->feature_enabled[i][j]);
                     if (segmentation_params->feature_enabled[i][j]) {
                         //TODO: add clamping
-                        if (segmentation_feature_signed[j]) {
+                        if (svt_aom_segmentation_feature_signed[j]) {
                             svt_aom_wb_write_inv_signed_literal(
                                 wb,
                                 segmentation_params->feature_data[i][j],
-                                segmentation_feature_bits[j]);
+                                svt_aom_segmentation_feature_bits[j]);
                         } else {
                             svt_aom_wb_write_literal(wb,
                                                      segmentation_params->feature_data[i][j],
-                                                     segmentation_feature_bits[j]);
+                                                     svt_aom_segmentation_feature_bits[j]);
                         }
                     }
                 }
@@ -4356,7 +4356,7 @@ static void write_wiener_filter(int32_t wiener_win, const WienerInfo *wiener_inf
 static void write_sgrproj_filter(const SgrprojInfo *sgrproj_info, SgrprojInfo *ref_sgrproj_info,
                                  AomWriter *wb) {
     aom_write_literal(wb, sgrproj_info->ep, SGRPROJ_PARAMS_BITS);
-    const SgrParamsType *params = &eb_sgr_params[sgrproj_info->ep];
+    const SgrParamsType *params = &svt_aom_eb_sgr_params[sgrproj_info->ep];
 
     if (params->r[0] == 0) {
         assert(sgrproj_info->xqd[0] == 0);

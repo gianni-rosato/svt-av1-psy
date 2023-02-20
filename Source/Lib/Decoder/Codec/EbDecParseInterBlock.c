@@ -22,7 +22,7 @@ typedef AomCdfProb (*MapCdf)[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS];
 #define COLOR_MAP_STRIDE 128 // worst case
 
 // Negative values are invalid
-extern int palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH + 1];
+extern int svt_aom_palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH + 1];
 
 static INLINE void svt_collect_neighbors_ref_counts(PartitionInfo *pi) {
     ZERO_ARRAY(&pi->neighbors_ref_counts[0], sizeof(pi->neighbors_ref_counts[0]) * REF_FRAMES);
@@ -2269,7 +2269,7 @@ static int get_palette_color_context(uint8_t (*color_map)[COLOR_MAP_STRIDE][COLO
     assert(color_index_ctx_hash > 0);
     assert(color_index_ctx_hash <= MAX_COLOR_CONTEXT_HASH);
 
-    const int color_index_ctx = palette_color_index_context_lookup[color_index_ctx_hash];
+    const int color_index_ctx = svt_aom_palette_color_index_context_lookup[color_index_ctx_hash];
     assert(color_index_ctx >= 0);
     assert(color_index_ctx < PALETTE_COLOR_INDEX_CONTEXTS);
     return color_index_ctx;

@@ -49,10 +49,10 @@
 **************************************/
 #ifdef _WIN32
 uint8_t        num_groups = 0;
-GROUP_AFFINITY group_affinity;
+GROUP_AFFINITY svt_aom_group_affinity;
 Bool           alternate_groups = 0;
 #elif defined(__linux__)
-cpu_set_t group_affinity;
+cpu_set_t svt_aom_group_affinity;
 #endif
 
 EbMemoryMapEntry *svt_dec_memory_map;
@@ -62,8 +62,8 @@ uint64_t         *svt_dec_total_lib_memory;
 uint32_t svt_dec_lib_malloc_count = 0;
 
 /* Track address for memory during change in resoultion*/
-EbMemoryMapEntry *memory_map_start_address;
-EbMemoryMapEntry *memory_map_end_address;
+EbMemoryMapEntry *svt_aom_memory_map_start_address;
+EbMemoryMapEntry *svt_aom_memory_map_end_address;
 
 void        asm_set_convolve_asm_table(void);
 void        init_intra_dc_predictors_c_internal(void);
@@ -109,8 +109,8 @@ static EbErrorType svt_dec_handle_ctor(EbDecHandle    **decHandleDblPtr,
     svt_dec_lib_malloc_count = 0;
 
     dec_handle_ptr->start_thread_process = FALSE;
-    memory_map_start_address             = NULL;
-    memory_map_end_address               = NULL;
+    svt_aom_memory_map_start_address     = NULL;
+    svt_aom_memory_map_end_address       = NULL;
 
     return return_error;
 }

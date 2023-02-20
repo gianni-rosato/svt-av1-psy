@@ -268,7 +268,7 @@ static void reset_enc_dec(EncDecContext *ed_ctx, PictureControlSet *pcs, Sequenc
     ed_ctx->is_16bit        = scs->is_16bit_pipeline;
     ed_ctx->bit_depth       = scs->static_config.encoder_bit_depth;
     uint16_t tile_group_idx = ed_ctx->tile_group_index;
-    (*av1_lambda_assignment_function_table[pcs->ppcs->pred_structure])(
+    (*svt_aom_av1_lambda_assignment_function_table[pcs->ppcs->pred_structure])(
         pcs,
         &ed_ctx->pic_fast_lambda[EB_8_BIT_MD],
         &ed_ctx->pic_full_lambda[EB_8_BIT_MD],
@@ -276,7 +276,7 @@ static void reset_enc_dec(EncDecContext *ed_ctx, PictureControlSet *pcs, Sequenc
         pcs->ppcs->frm_hdr.quantization_params.base_q_idx,
         TRUE);
 
-    (*av1_lambda_assignment_function_table[pcs->ppcs->pred_structure])(
+    (*svt_aom_av1_lambda_assignment_function_table[pcs->ppcs->pred_structure])(
         pcs,
         &ed_ctx->pic_fast_lambda[EB_10_BIT_MD],
         &ed_ctx->pic_full_lambda[EB_10_BIT_MD],
@@ -6708,7 +6708,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
     const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
     unsigned int     tot_d1_blocks = get_default_tot_d1_blocks(blk_geom->sq_size);
 
-    if (blk_geom->geom_idx == GEOM_0)
+    if (blk_geom->svt_aom_geom_idx == GEOM_0)
         tot_d1_blocks = 1;
 
     if (blk_geom->sq_size == 8 && ctx->disallow_4x4)
@@ -6748,7 +6748,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                        depth_step > 1 ? depth_step - 1 : 1);
         //Set second child to be considered
         uint32_t child_block_idx_2 = child_block_idx_1 +
-            ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
+            ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
         for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
             results_ptr->consider_block[child_block_idx_2 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_2 + block_1d_idx] = FALSE;
@@ -6766,7 +6766,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                        depth_step > 1 ? depth_step - 1 : 1);
         //Set third child to be considered
         uint32_t child_block_idx_3 = child_block_idx_2 +
-            ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
+            ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
         for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
             results_ptr->consider_block[child_block_idx_3 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_3 + block_1d_idx] = FALSE;
@@ -6785,7 +6785,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                        depth_step > 1 ? depth_step - 1 : 1);
         //Set forth child to be considered
         uint32_t child_block_idx_4 = child_block_idx_3 +
-            ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
+            ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
         for (unsigned block_1d_idx = 0; block_1d_idx < child_tot_d1_blocks; block_1d_idx++) {
             results_ptr->consider_block[child_block_idx_4 + block_1d_idx]     = 1;
             results_ptr->refined_split_flag[child_block_idx_4 + block_1d_idx] = FALSE;
@@ -6990,7 +6990,8 @@ static uint8_t is_child_to_current_deviation_small(SequenceControlSet  *scs,
 
     (void)scs;
     assert(blk_geom->depth < 6);
-    const uint32_t ns_depth_plus1_offset = ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
+    const uint32_t ns_depth_plus1_offset =
+        ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
     const uint32_t child_block_idx_1     = blk_index + ns_d1_offset;
     const uint32_t child_block_idx_2     = child_block_idx_1 + ns_depth_plus1_offset;
     const uint32_t child_block_idx_3     = child_block_idx_2 + ns_depth_plus1_offset;

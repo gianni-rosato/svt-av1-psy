@@ -974,11 +974,11 @@ int32_t intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_t mi_row
     }
 }
 
-IntraPredFn eb_pred[INTRA_MODES][TX_SIZES_ALL];
-IntraPredFn dc_pred[2][2][TX_SIZES_ALL];
+IntraPredFn svt_aom_eb_pred[INTRA_MODES][TX_SIZES_ALL];
+IntraPredFn svt_aom_dc_pred[2][2][TX_SIZES_ALL];
 
-IntraHighPredFn pred_high[INTRA_MODES][TX_SIZES_ALL];
-IntraHighPredFn dc_pred_high[2][2][TX_SIZES_ALL];
+IntraHighPredFn svt_aom_pred_high[INTRA_MODES][TX_SIZES_ALL];
+IntraHighPredFn svt_aom_dc_pred_high[2][2][TX_SIZES_ALL];
 
 static INLINE void dc_128_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
                                     const uint8_t *above, const uint8_t *left) {
@@ -1875,500 +1875,500 @@ void                      init_intra_dc_predictors_c_internal(void) {
 }
 
 /*static*/ void init_intra_predictors_internal(void) {
-    eb_pred[V_PRED][TX_4X4]   = svt_aom_v_predictor_4x4;
-    eb_pred[V_PRED][TX_8X8]   = svt_aom_v_predictor_8x8;
-    eb_pred[V_PRED][TX_16X16] = svt_aom_v_predictor_16x16;
-    eb_pred[V_PRED][TX_32X32] = svt_aom_v_predictor_32x32;
-    eb_pred[V_PRED][TX_64X64] = svt_aom_v_predictor_64x64;
-    eb_pred[V_PRED][TX_4X8]   = svt_aom_v_predictor_4x8;
-    eb_pred[V_PRED][TX_4X16]  = svt_aom_v_predictor_4x16;
-
-    eb_pred[V_PRED][TX_8X4]  = svt_aom_v_predictor_8x4;
-    eb_pred[V_PRED][TX_8X16] = svt_aom_v_predictor_8x16;
-    eb_pred[V_PRED][TX_8X32] = svt_aom_v_predictor_8x32;
-
-    eb_pred[V_PRED][TX_16X4]  = svt_aom_v_predictor_16x4;
-    eb_pred[V_PRED][TX_16X8]  = svt_aom_v_predictor_16x8;
-    eb_pred[V_PRED][TX_16X32] = svt_aom_v_predictor_16x32;
-    eb_pred[V_PRED][TX_16X64] = svt_aom_v_predictor_16x64;
-
-    eb_pred[V_PRED][TX_32X8]  = svt_aom_v_predictor_32x8;
-    eb_pred[V_PRED][TX_32X16] = svt_aom_v_predictor_32x16;
-    eb_pred[V_PRED][TX_32X64] = svt_aom_v_predictor_32x64;
-
-    eb_pred[V_PRED][TX_64X16] = svt_aom_v_predictor_64x16;
-    eb_pred[V_PRED][TX_64X32] = svt_aom_v_predictor_64x32;
-
-    eb_pred[H_PRED][TX_4X4]   = svt_aom_h_predictor_4x4;
-    eb_pred[H_PRED][TX_8X8]   = svt_aom_h_predictor_8x8;
-    eb_pred[H_PRED][TX_16X16] = svt_aom_h_predictor_16x16;
-    eb_pred[H_PRED][TX_32X32] = svt_aom_h_predictor_32x32;
-    eb_pred[H_PRED][TX_64X64] = svt_aom_h_predictor_64x64;
-
-    eb_pred[H_PRED][TX_4X8]  = svt_aom_h_predictor_4x8;
-    eb_pred[H_PRED][TX_4X16] = svt_aom_h_predictor_4x16;
-
-    eb_pred[H_PRED][TX_8X4]  = svt_aom_h_predictor_8x4;
-    eb_pred[H_PRED][TX_8X16] = svt_aom_h_predictor_8x16;
-    eb_pred[H_PRED][TX_8X32] = svt_aom_h_predictor_8x32;
-
-    eb_pred[H_PRED][TX_16X4]  = svt_aom_h_predictor_16x4;
-    eb_pred[H_PRED][TX_16X8]  = svt_aom_h_predictor_16x8;
-    eb_pred[H_PRED][TX_16X32] = svt_aom_h_predictor_16x32;
-    eb_pred[H_PRED][TX_16X64] = svt_aom_h_predictor_16x64;
-
-    eb_pred[H_PRED][TX_32X8]  = svt_aom_h_predictor_32x8;
-    eb_pred[H_PRED][TX_32X16] = svt_aom_h_predictor_32x16;
-    eb_pred[H_PRED][TX_32X64] = svt_aom_h_predictor_32x64;
-
-    eb_pred[H_PRED][TX_64X16] = svt_aom_h_predictor_64x16;
-    eb_pred[H_PRED][TX_64X32] = svt_aom_h_predictor_64x32;
-
-    eb_pred[SMOOTH_PRED][TX_4X4]   = svt_aom_smooth_predictor_4x4;
-    eb_pred[SMOOTH_PRED][TX_8X8]   = svt_aom_smooth_predictor_8x8;
-    eb_pred[SMOOTH_PRED][TX_16X16] = svt_aom_smooth_predictor_16x16;
-    eb_pred[SMOOTH_PRED][TX_32X32] = svt_aom_smooth_predictor_32x32;
-    eb_pred[SMOOTH_PRED][TX_64X64] = svt_aom_smooth_predictor_64x64;
-
-    eb_pred[SMOOTH_PRED][TX_4X8]  = svt_aom_smooth_predictor_4x8;
-    eb_pred[SMOOTH_PRED][TX_4X16] = svt_aom_smooth_predictor_4x16;
-
-    eb_pred[SMOOTH_PRED][TX_8X4]  = svt_aom_smooth_predictor_8x4;
-    eb_pred[SMOOTH_PRED][TX_8X16] = svt_aom_smooth_predictor_8x16;
-    eb_pred[SMOOTH_PRED][TX_8X32] = svt_aom_smooth_predictor_8x32;
-
-    eb_pred[SMOOTH_PRED][TX_16X4]  = svt_aom_smooth_predictor_16x4;
-    eb_pred[SMOOTH_PRED][TX_16X8]  = svt_aom_smooth_predictor_16x8;
-    eb_pred[SMOOTH_PRED][TX_16X32] = svt_aom_smooth_predictor_16x32;
-    eb_pred[SMOOTH_PRED][TX_16X64] = svt_aom_smooth_predictor_16x64;
-
-    eb_pred[SMOOTH_PRED][TX_32X8]  = svt_aom_smooth_predictor_32x8;
-    eb_pred[SMOOTH_PRED][TX_32X16] = svt_aom_smooth_predictor_32x16;
-    eb_pred[SMOOTH_PRED][TX_32X64] = svt_aom_smooth_predictor_32x64;
-
-    eb_pred[SMOOTH_PRED][TX_64X16] = svt_aom_smooth_predictor_64x16;
-    eb_pred[SMOOTH_PRED][TX_64X32] = svt_aom_smooth_predictor_64x32;
-
-    eb_pred[SMOOTH_V_PRED][TX_4X4]   = svt_aom_smooth_v_predictor_4x4;
-    eb_pred[SMOOTH_V_PRED][TX_8X8]   = svt_aom_smooth_v_predictor_8x8;
-    eb_pred[SMOOTH_V_PRED][TX_16X16] = svt_aom_smooth_v_predictor_16x16;
-    eb_pred[SMOOTH_V_PRED][TX_32X32] = svt_aom_smooth_v_predictor_32x32;
-    eb_pred[SMOOTH_V_PRED][TX_64X64] = svt_aom_smooth_v_predictor_64x64;
-
-    eb_pred[SMOOTH_V_PRED][TX_4X8]  = svt_aom_smooth_v_predictor_4x8;
-    eb_pred[SMOOTH_V_PRED][TX_4X16] = svt_aom_smooth_v_predictor_4x16;
-
-    eb_pred[SMOOTH_V_PRED][TX_8X4]  = svt_aom_smooth_v_predictor_8x4;
-    eb_pred[SMOOTH_V_PRED][TX_8X16] = svt_aom_smooth_v_predictor_8x16;
-    eb_pred[SMOOTH_V_PRED][TX_8X32] = svt_aom_smooth_v_predictor_8x32;
-
-    eb_pred[SMOOTH_V_PRED][TX_16X4]  = svt_aom_smooth_v_predictor_16x4;
-    eb_pred[SMOOTH_V_PRED][TX_16X8]  = svt_aom_smooth_v_predictor_16x8;
-    eb_pred[SMOOTH_V_PRED][TX_16X32] = svt_aom_smooth_v_predictor_16x32;
-    eb_pred[SMOOTH_V_PRED][TX_16X64] = svt_aom_smooth_v_predictor_16x64;
-
-    eb_pred[SMOOTH_V_PRED][TX_32X8]  = svt_aom_smooth_v_predictor_32x8;
-    eb_pred[SMOOTH_V_PRED][TX_32X16] = svt_aom_smooth_v_predictor_32x16;
-    eb_pred[SMOOTH_V_PRED][TX_32X64] = svt_aom_smooth_v_predictor_32x64;
-
-    eb_pred[SMOOTH_V_PRED][TX_64X16] = svt_aom_smooth_v_predictor_64x16;
-    eb_pred[SMOOTH_V_PRED][TX_64X32] = svt_aom_smooth_v_predictor_64x32;
-
-    eb_pred[SMOOTH_H_PRED][TX_4X4]   = svt_aom_smooth_h_predictor_4x4;
-    eb_pred[SMOOTH_H_PRED][TX_8X8]   = svt_aom_smooth_h_predictor_8x8;
-    eb_pred[SMOOTH_H_PRED][TX_16X16] = svt_aom_smooth_h_predictor_16x16;
-    eb_pred[SMOOTH_H_PRED][TX_32X32] = svt_aom_smooth_h_predictor_32x32;
-    eb_pred[SMOOTH_H_PRED][TX_64X64] = svt_aom_smooth_h_predictor_64x64;
-
-    eb_pred[SMOOTH_H_PRED][TX_4X8]  = svt_aom_smooth_h_predictor_4x8;
-    eb_pred[SMOOTH_H_PRED][TX_4X16] = svt_aom_smooth_h_predictor_4x16;
-
-    eb_pred[SMOOTH_H_PRED][TX_8X4]  = svt_aom_smooth_h_predictor_8x4;
-    eb_pred[SMOOTH_H_PRED][TX_8X16] = svt_aom_smooth_h_predictor_8x16;
-    eb_pred[SMOOTH_H_PRED][TX_8X32] = svt_aom_smooth_h_predictor_8x32;
-
-    eb_pred[SMOOTH_H_PRED][TX_16X4]  = svt_aom_smooth_h_predictor_16x4;
-    eb_pred[SMOOTH_H_PRED][TX_16X8]  = svt_aom_smooth_h_predictor_16x8;
-    eb_pred[SMOOTH_H_PRED][TX_16X32] = svt_aom_smooth_h_predictor_16x32;
-    eb_pred[SMOOTH_H_PRED][TX_16X64] = svt_aom_smooth_h_predictor_16x64;
-
-    eb_pred[SMOOTH_H_PRED][TX_32X8]  = svt_aom_smooth_h_predictor_32x8;
-    eb_pred[SMOOTH_H_PRED][TX_32X16] = svt_aom_smooth_h_predictor_32x16;
-    eb_pred[SMOOTH_H_PRED][TX_32X64] = svt_aom_smooth_h_predictor_32x64;
-
-    eb_pred[SMOOTH_H_PRED][TX_64X16] = svt_aom_smooth_h_predictor_64x16;
-    eb_pred[SMOOTH_H_PRED][TX_64X32] = svt_aom_smooth_h_predictor_64x32;
-
-    eb_pred[PAETH_PRED][TX_4X4]   = svt_aom_paeth_predictor_4x4;
-    eb_pred[PAETH_PRED][TX_8X8]   = svt_aom_paeth_predictor_8x8;
-    eb_pred[PAETH_PRED][TX_16X16] = svt_aom_paeth_predictor_16x16;
-    eb_pred[PAETH_PRED][TX_32X32] = svt_aom_paeth_predictor_32x32;
-    eb_pred[PAETH_PRED][TX_64X64] = svt_aom_paeth_predictor_64x64;
-
-    eb_pred[PAETH_PRED][TX_4X8]  = svt_aom_paeth_predictor_4x8;
-    eb_pred[PAETH_PRED][TX_4X16] = svt_aom_paeth_predictor_4x16;
-
-    eb_pred[PAETH_PRED][TX_8X4]  = svt_aom_paeth_predictor_8x4;
-    eb_pred[PAETH_PRED][TX_8X16] = svt_aom_paeth_predictor_8x16;
-    eb_pred[PAETH_PRED][TX_8X32] = svt_aom_paeth_predictor_8x32;
-
-    eb_pred[PAETH_PRED][TX_16X4]  = svt_aom_paeth_predictor_16x4;
-    eb_pred[PAETH_PRED][TX_16X8]  = svt_aom_paeth_predictor_16x8;
-    eb_pred[PAETH_PRED][TX_16X32] = svt_aom_paeth_predictor_16x32;
-    eb_pred[PAETH_PRED][TX_16X64] = svt_aom_paeth_predictor_16x64;
-
-    eb_pred[PAETH_PRED][TX_32X8]  = svt_aom_paeth_predictor_32x8;
-    eb_pred[PAETH_PRED][TX_32X16] = svt_aom_paeth_predictor_32x16;
-    eb_pred[PAETH_PRED][TX_32X64] = svt_aom_paeth_predictor_32x64;
-
-    eb_pred[PAETH_PRED][TX_64X16] = svt_aom_paeth_predictor_64x16;
-    eb_pred[PAETH_PRED][TX_64X32] = svt_aom_paeth_predictor_64x32;
-    dc_pred[0][0][TX_4X4]         = svt_aom_dc_128_predictor_4x4;
-    dc_pred[0][0][TX_8X8]         = svt_aom_dc_128_predictor_8x8;
-    dc_pred[0][0][TX_16X16]       = svt_aom_dc_128_predictor_16x16;
-    dc_pred[0][0][TX_32X32]       = svt_aom_dc_128_predictor_32x32;
-    dc_pred[0][0][TX_64X64]       = svt_aom_dc_128_predictor_64x64;
-
-    dc_pred[0][0][TX_4X8]  = svt_aom_dc_128_predictor_4x8;
-    dc_pred[0][0][TX_4X16] = svt_aom_dc_128_predictor_4x16;
-
-    dc_pred[0][0][TX_8X4]  = svt_aom_dc_128_predictor_8x4;
-    dc_pred[0][0][TX_8X16] = svt_aom_dc_128_predictor_8x16;
-    dc_pred[0][0][TX_8X32] = svt_aom_dc_128_predictor_8x32;
-
-    dc_pred[0][0][TX_16X4]  = svt_aom_dc_128_predictor_16x4;
-    dc_pred[0][0][TX_16X8]  = svt_aom_dc_128_predictor_16x8;
-    dc_pred[0][0][TX_16X32] = svt_aom_dc_128_predictor_16x32;
-    dc_pred[0][0][TX_16X64] = svt_aom_dc_128_predictor_16x64;
-
-    dc_pred[0][0][TX_32X8]  = svt_aom_dc_128_predictor_32x8;
-    dc_pred[0][0][TX_32X16] = svt_aom_dc_128_predictor_32x16;
-    dc_pred[0][0][TX_32X64] = svt_aom_dc_128_predictor_32x64;
-
-    dc_pred[0][0][TX_64X16] = svt_aom_dc_128_predictor_64x16;
-    dc_pred[0][0][TX_64X32] = svt_aom_dc_128_predictor_64x32;
-
-    dc_pred[0][1][TX_4X4]   = svt_aom_dc_top_predictor_4x4;
-    dc_pred[0][1][TX_8X8]   = svt_aom_dc_top_predictor_8x8;
-    dc_pred[0][1][TX_16X16] = svt_aom_dc_top_predictor_16x16;
-    dc_pred[0][1][TX_32X32] = svt_aom_dc_top_predictor_32x32;
-    dc_pred[0][1][TX_64X64] = svt_aom_dc_top_predictor_64x64;
-
-    dc_pred[0][1][TX_4X8]  = svt_aom_dc_top_predictor_4x8;
-    dc_pred[0][1][TX_4X16] = svt_aom_dc_top_predictor_4x16;
-
-    dc_pred[0][1][TX_8X4]  = svt_aom_dc_top_predictor_8x4;
-    dc_pred[0][1][TX_8X16] = svt_aom_dc_top_predictor_8x16;
-    dc_pred[0][1][TX_8X32] = svt_aom_dc_top_predictor_8x32;
-
-    dc_pred[0][1][TX_16X4]  = svt_aom_dc_top_predictor_16x4;
-    dc_pred[0][1][TX_16X8]  = svt_aom_dc_top_predictor_16x8;
-    dc_pred[0][1][TX_16X32] = svt_aom_dc_top_predictor_16x32;
-    dc_pred[0][1][TX_16X64] = svt_aom_dc_top_predictor_16x64;
-
-    dc_pred[0][1][TX_32X8]  = svt_aom_dc_top_predictor_32x8;
-    dc_pred[0][1][TX_32X16] = svt_aom_dc_top_predictor_32x16;
-    dc_pred[0][1][TX_32X64] = svt_aom_dc_top_predictor_32x64;
-
-    dc_pred[0][1][TX_64X16] = svt_aom_dc_top_predictor_64x16;
-    dc_pred[0][1][TX_64X32] = svt_aom_dc_top_predictor_64x32;
-
-    dc_pred[1][0][TX_4X4]   = svt_aom_dc_left_predictor_4x4;
-    dc_pred[1][0][TX_8X8]   = svt_aom_dc_left_predictor_8x8;
-    dc_pred[1][0][TX_16X16] = svt_aom_dc_left_predictor_16x16;
-    dc_pred[1][0][TX_32X32] = svt_aom_dc_left_predictor_32x32;
-    dc_pred[1][0][TX_64X64] = svt_aom_dc_left_predictor_64x64;
-    dc_pred[1][0][TX_4X8]   = svt_aom_dc_left_predictor_4x8;
-    dc_pred[1][0][TX_4X16]  = svt_aom_dc_left_predictor_4x16;
-
-    dc_pred[1][0][TX_8X4]  = svt_aom_dc_left_predictor_8x4;
-    dc_pred[1][0][TX_8X16] = svt_aom_dc_left_predictor_8x16;
-    dc_pred[1][0][TX_8X32] = svt_aom_dc_left_predictor_8x32;
-
-    dc_pred[1][0][TX_16X4]  = svt_aom_dc_left_predictor_16x4;
-    dc_pred[1][0][TX_16X8]  = svt_aom_dc_left_predictor_16x8;
-    dc_pred[1][0][TX_16X32] = svt_aom_dc_left_predictor_16x32;
-    dc_pred[1][0][TX_16X64] = svt_aom_dc_left_predictor_16x64;
-
-    dc_pred[1][0][TX_32X8]  = svt_aom_dc_left_predictor_32x8;
-    dc_pred[1][0][TX_32X16] = svt_aom_dc_left_predictor_32x16;
-    dc_pred[1][0][TX_32X64] = svt_aom_dc_left_predictor_32x64;
-
-    dc_pred[1][0][TX_64X16] = svt_aom_dc_left_predictor_64x16;
-    dc_pred[1][0][TX_64X32] = svt_aom_dc_left_predictor_64x32;
-
-    dc_pred[1][1][TX_4X4]   = svt_aom_dc_predictor_4x4;
-    dc_pred[1][1][TX_8X8]   = svt_aom_dc_predictor_8x8;
-    dc_pred[1][1][TX_16X16] = svt_aom_dc_predictor_16x16;
-    dc_pred[1][1][TX_32X32] = svt_aom_dc_predictor_32x32;
-    dc_pred[1][1][TX_64X64] = svt_aom_dc_predictor_64x64;
-    dc_pred[1][1][TX_4X8]   = svt_aom_dc_predictor_4x8;
-    dc_pred[1][1][TX_4X16]  = svt_aom_dc_predictor_4x16;
-
-    dc_pred[1][1][TX_8X4]  = svt_aom_dc_predictor_8x4;
-    dc_pred[1][1][TX_8X16] = svt_aom_dc_predictor_8x16;
-    dc_pred[1][1][TX_8X32] = svt_aom_dc_predictor_8x32;
-
-    dc_pred[1][1][TX_16X4]  = svt_aom_dc_predictor_16x4;
-    dc_pred[1][1][TX_16X8]  = svt_aom_dc_predictor_16x8;
-    dc_pred[1][1][TX_16X32] = svt_aom_dc_predictor_16x32;
-    dc_pred[1][1][TX_16X64] = svt_aom_dc_predictor_16x64;
-
-    dc_pred[1][1][TX_32X8]  = svt_aom_dc_predictor_32x8;
-    dc_pred[1][1][TX_32X16] = svt_aom_dc_predictor_32x16;
-    dc_pred[1][1][TX_32X64] = svt_aom_dc_predictor_32x64;
-
-    dc_pred[1][1][TX_64X16] = svt_aom_dc_predictor_64x16;
-    dc_pred[1][1][TX_64X32] = svt_aom_dc_predictor_64x32;
-
-    pred_high[V_PRED][TX_4X4]   = svt_aom_highbd_v_predictor_4x4;
-    pred_high[V_PRED][TX_8X8]   = svt_aom_highbd_v_predictor_8x8;
-    pred_high[V_PRED][TX_16X16] = svt_aom_highbd_v_predictor_16x16;
-    pred_high[V_PRED][TX_32X32] = svt_aom_highbd_v_predictor_32x32;
-    pred_high[V_PRED][TX_64X64] = svt_aom_highbd_v_predictor_64x64;
-
-    pred_high[V_PRED][TX_4X8]  = svt_aom_highbd_v_predictor_4x8;
-    pred_high[V_PRED][TX_4X16] = svt_aom_highbd_v_predictor_4x16;
-
-    pred_high[V_PRED][TX_8X4]  = svt_aom_highbd_v_predictor_8x4;
-    pred_high[V_PRED][TX_8X16] = svt_aom_highbd_v_predictor_8x16;
-    pred_high[V_PRED][TX_8X32] = svt_aom_highbd_v_predictor_8x32;
-
-    pred_high[V_PRED][TX_16X4]  = svt_aom_highbd_v_predictor_16x4;
-    pred_high[V_PRED][TX_16X8]  = svt_aom_highbd_v_predictor_16x8;
-    pred_high[V_PRED][TX_16X32] = svt_aom_highbd_v_predictor_16x32;
-    pred_high[V_PRED][TX_16X64] = svt_aom_highbd_v_predictor_16x64;
-
-    pred_high[V_PRED][TX_32X8]  = svt_aom_highbd_v_predictor_32x8;
-    pred_high[V_PRED][TX_32X16] = svt_aom_highbd_v_predictor_32x16;
-    pred_high[V_PRED][TX_32X64] = svt_aom_highbd_v_predictor_32x64;
-
-    pred_high[V_PRED][TX_64X16] = svt_aom_highbd_v_predictor_64x16;
-    pred_high[V_PRED][TX_64X32] = svt_aom_highbd_v_predictor_64x32;
-
-    pred_high[H_PRED][TX_4X4]   = svt_aom_highbd_h_predictor_4x4;
-    pred_high[H_PRED][TX_8X8]   = svt_aom_highbd_h_predictor_8x8;
-    pred_high[H_PRED][TX_16X16] = svt_aom_highbd_h_predictor_16x16;
-    pred_high[H_PRED][TX_32X32] = svt_aom_highbd_h_predictor_32x32;
-    pred_high[H_PRED][TX_64X64] = svt_aom_highbd_h_predictor_64x64;
-
-    pred_high[H_PRED][TX_4X8]  = svt_aom_highbd_h_predictor_4x8;
-    pred_high[H_PRED][TX_4X16] = svt_aom_highbd_h_predictor_4x16;
-
-    pred_high[H_PRED][TX_8X4]  = svt_aom_highbd_h_predictor_8x4;
-    pred_high[H_PRED][TX_8X16] = svt_aom_highbd_h_predictor_8x16;
-    pred_high[H_PRED][TX_8X32] = svt_aom_highbd_h_predictor_8x32;
-
-    pred_high[H_PRED][TX_16X4]  = svt_aom_highbd_h_predictor_16x4;
-    pred_high[H_PRED][TX_16X8]  = svt_aom_highbd_h_predictor_16x8;
-    pred_high[H_PRED][TX_16X32] = svt_aom_highbd_h_predictor_16x32;
-    pred_high[H_PRED][TX_16X64] = svt_aom_highbd_h_predictor_16x64;
-
-    pred_high[H_PRED][TX_32X8]  = svt_aom_highbd_h_predictor_32x8;
-    pred_high[H_PRED][TX_32X16] = svt_aom_highbd_h_predictor_32x16;
-    pred_high[H_PRED][TX_32X64] = svt_aom_highbd_h_predictor_32x64;
-
-    pred_high[H_PRED][TX_64X16] = svt_aom_highbd_h_predictor_64x16;
-    pred_high[H_PRED][TX_64X32] = svt_aom_highbd_h_predictor_64x32;
-
-    pred_high[SMOOTH_PRED][TX_4X4]   = svt_aom_highbd_smooth_predictor_4x4;
-    pred_high[SMOOTH_PRED][TX_8X8]   = svt_aom_highbd_smooth_predictor_8x8;
-    pred_high[SMOOTH_PRED][TX_16X16] = svt_aom_highbd_smooth_predictor_16x16;
-    pred_high[SMOOTH_PRED][TX_32X32] = svt_aom_highbd_smooth_predictor_32x32;
-    pred_high[SMOOTH_PRED][TX_64X64] = svt_aom_highbd_smooth_predictor_64x64;
-
-    pred_high[SMOOTH_PRED][TX_4X8]  = svt_aom_highbd_smooth_predictor_4x8;
-    pred_high[SMOOTH_PRED][TX_4X16] = svt_aom_highbd_smooth_predictor_4x16;
-
-    pred_high[SMOOTH_PRED][TX_8X4]  = svt_aom_highbd_smooth_predictor_8x4;
-    pred_high[SMOOTH_PRED][TX_8X16] = svt_aom_highbd_smooth_predictor_8x16;
-    pred_high[SMOOTH_PRED][TX_8X32] = svt_aom_highbd_smooth_predictor_8x32;
-
-    pred_high[SMOOTH_PRED][TX_16X4]  = svt_aom_highbd_smooth_predictor_16x4;
-    pred_high[SMOOTH_PRED][TX_16X8]  = svt_aom_highbd_smooth_predictor_16x8;
-    pred_high[SMOOTH_PRED][TX_16X32] = svt_aom_highbd_smooth_predictor_16x32;
-    pred_high[SMOOTH_PRED][TX_16X64] = svt_aom_highbd_smooth_predictor_16x64;
-
-    pred_high[SMOOTH_PRED][TX_32X8]  = svt_aom_highbd_smooth_predictor_32x8;
-    pred_high[SMOOTH_PRED][TX_32X16] = svt_aom_highbd_smooth_predictor_32x16;
-    pred_high[SMOOTH_PRED][TX_32X64] = svt_aom_highbd_smooth_predictor_32x64;
-
-    pred_high[SMOOTH_PRED][TX_64X16] = svt_aom_highbd_smooth_predictor_64x16;
-    pred_high[SMOOTH_PRED][TX_64X32] = svt_aom_highbd_smooth_predictor_64x32;
-
-    pred_high[SMOOTH_V_PRED][TX_4X4]   = svt_aom_highbd_smooth_v_predictor_4x4;
-    pred_high[SMOOTH_V_PRED][TX_8X8]   = svt_aom_highbd_smooth_v_predictor_8x8;
-    pred_high[SMOOTH_V_PRED][TX_16X16] = svt_aom_highbd_smooth_v_predictor_16x16;
-    pred_high[SMOOTH_V_PRED][TX_32X32] = svt_aom_highbd_smooth_v_predictor_32x32;
-    pred_high[SMOOTH_V_PRED][TX_64X64] = svt_aom_highbd_smooth_v_predictor_64x64;
-
-    pred_high[SMOOTH_V_PRED][TX_4X8]  = svt_aom_highbd_smooth_v_predictor_4x8;
-    pred_high[SMOOTH_V_PRED][TX_4X16] = svt_aom_highbd_smooth_v_predictor_4x16;
-
-    pred_high[SMOOTH_V_PRED][TX_8X4]  = svt_aom_highbd_smooth_v_predictor_8x4;
-    pred_high[SMOOTH_V_PRED][TX_8X16] = svt_aom_highbd_smooth_v_predictor_8x16;
-    pred_high[SMOOTH_V_PRED][TX_8X32] = svt_aom_highbd_smooth_v_predictor_8x32;
-
-    pred_high[SMOOTH_V_PRED][TX_16X4]  = svt_aom_highbd_smooth_v_predictor_16x4;
-    pred_high[SMOOTH_V_PRED][TX_16X8]  = svt_aom_highbd_smooth_v_predictor_16x8;
-    pred_high[SMOOTH_V_PRED][TX_16X32] = svt_aom_highbd_smooth_v_predictor_16x32;
-    pred_high[SMOOTH_V_PRED][TX_16X64] = svt_aom_highbd_smooth_v_predictor_16x64;
-
-    pred_high[SMOOTH_V_PRED][TX_32X8]  = svt_aom_highbd_smooth_v_predictor_32x8;
-    pred_high[SMOOTH_V_PRED][TX_32X16] = svt_aom_highbd_smooth_v_predictor_32x16;
-    pred_high[SMOOTH_V_PRED][TX_32X64] = svt_aom_highbd_smooth_v_predictor_32x64;
-
-    pred_high[SMOOTH_V_PRED][TX_64X16] = svt_aom_highbd_smooth_v_predictor_64x16;
-    pred_high[SMOOTH_V_PRED][TX_64X32] = svt_aom_highbd_smooth_v_predictor_64x32;
-
-    pred_high[SMOOTH_H_PRED][TX_4X4]   = svt_aom_highbd_smooth_h_predictor_4x4;
-    pred_high[SMOOTH_H_PRED][TX_8X8]   = svt_aom_highbd_smooth_h_predictor_8x8;
-    pred_high[SMOOTH_H_PRED][TX_16X16] = svt_aom_highbd_smooth_h_predictor_16x16;
-    pred_high[SMOOTH_H_PRED][TX_32X32] = svt_aom_highbd_smooth_h_predictor_32x32;
-    pred_high[SMOOTH_H_PRED][TX_64X64] = svt_aom_highbd_smooth_h_predictor_64x64;
-
-    pred_high[SMOOTH_H_PRED][TX_4X8]  = svt_aom_highbd_smooth_h_predictor_4x8;
-    pred_high[SMOOTH_H_PRED][TX_4X16] = svt_aom_highbd_smooth_h_predictor_4x16;
-
-    pred_high[SMOOTH_H_PRED][TX_8X4]  = svt_aom_highbd_smooth_h_predictor_8x4;
-    pred_high[SMOOTH_H_PRED][TX_8X16] = svt_aom_highbd_smooth_h_predictor_8x16;
-    pred_high[SMOOTH_H_PRED][TX_8X32] = svt_aom_highbd_smooth_h_predictor_8x32;
-
-    pred_high[SMOOTH_H_PRED][TX_16X4]  = svt_aom_highbd_smooth_h_predictor_16x4;
-    pred_high[SMOOTH_H_PRED][TX_16X8]  = svt_aom_highbd_smooth_h_predictor_16x8;
-    pred_high[SMOOTH_H_PRED][TX_16X32] = svt_aom_highbd_smooth_h_predictor_16x32;
-    pred_high[SMOOTH_H_PRED][TX_16X64] = svt_aom_highbd_smooth_h_predictor_16x64;
-
-    pred_high[SMOOTH_H_PRED][TX_32X8]  = svt_aom_highbd_smooth_h_predictor_32x8;
-    pred_high[SMOOTH_H_PRED][TX_32X16] = svt_aom_highbd_smooth_h_predictor_32x16;
-    pred_high[SMOOTH_H_PRED][TX_32X64] = svt_aom_highbd_smooth_h_predictor_32x64;
-
-    pred_high[SMOOTH_H_PRED][TX_64X16] = svt_aom_highbd_smooth_h_predictor_64x16;
-    pred_high[SMOOTH_H_PRED][TX_64X32] = svt_aom_highbd_smooth_h_predictor_64x32;
-
-    pred_high[PAETH_PRED][TX_4X4]   = svt_aom_highbd_paeth_predictor_4x4;
-    pred_high[PAETH_PRED][TX_8X8]   = svt_aom_highbd_paeth_predictor_8x8;
-    pred_high[PAETH_PRED][TX_16X16] = svt_aom_highbd_paeth_predictor_16x16;
-    pred_high[PAETH_PRED][TX_32X32] = svt_aom_highbd_paeth_predictor_32x32;
-    pred_high[PAETH_PRED][TX_64X64] = svt_aom_highbd_paeth_predictor_64x64;
-
-    pred_high[PAETH_PRED][TX_4X8]  = svt_aom_highbd_paeth_predictor_4x8;
-    pred_high[PAETH_PRED][TX_4X16] = svt_aom_highbd_paeth_predictor_4x16;
-
-    pred_high[PAETH_PRED][TX_8X4]  = svt_aom_highbd_paeth_predictor_8x4;
-    pred_high[PAETH_PRED][TX_8X16] = svt_aom_highbd_paeth_predictor_8x16;
-    pred_high[PAETH_PRED][TX_8X32] = svt_aom_highbd_paeth_predictor_8x32;
-
-    pred_high[PAETH_PRED][TX_16X4]  = svt_aom_highbd_paeth_predictor_16x4;
-    pred_high[PAETH_PRED][TX_16X8]  = svt_aom_highbd_paeth_predictor_16x8;
-    pred_high[PAETH_PRED][TX_16X32] = svt_aom_highbd_paeth_predictor_16x32;
-    pred_high[PAETH_PRED][TX_16X64] = svt_aom_highbd_paeth_predictor_16x64;
-
-    pred_high[PAETH_PRED][TX_32X8]  = svt_aom_highbd_paeth_predictor_32x8;
-    pred_high[PAETH_PRED][TX_32X16] = svt_aom_highbd_paeth_predictor_32x16;
-    pred_high[PAETH_PRED][TX_32X64] = svt_aom_highbd_paeth_predictor_32x64;
-
-    pred_high[PAETH_PRED][TX_64X16] = svt_aom_highbd_paeth_predictor_64x16;
-    pred_high[PAETH_PRED][TX_64X32] = svt_aom_highbd_paeth_predictor_64x32;
-    dc_pred_high[0][0][TX_4X4]      = svt_aom_highbd_dc_128_predictor_4x4;
-    dc_pred_high[0][0][TX_8X8]      = svt_aom_highbd_dc_128_predictor_8x8;
-    dc_pred_high[0][0][TX_16X16]    = svt_aom_highbd_dc_128_predictor_16x16;
-    dc_pred_high[0][0][TX_32X32]    = svt_aom_highbd_dc_128_predictor_32x32;
-    dc_pred_high[0][0][TX_64X64]    = svt_aom_highbd_dc_128_predictor_64x64;
-
-    dc_pred_high[0][0][TX_4X8]  = svt_aom_highbd_dc_128_predictor_4x8;
-    dc_pred_high[0][0][TX_4X16] = svt_aom_highbd_dc_128_predictor_4x16;
-
-    dc_pred_high[0][0][TX_8X4]  = svt_aom_highbd_dc_128_predictor_8x4;
-    dc_pred_high[0][0][TX_8X16] = svt_aom_highbd_dc_128_predictor_8x16;
-    dc_pred_high[0][0][TX_8X32] = svt_aom_highbd_dc_128_predictor_8x32;
-
-    dc_pred_high[0][0][TX_16X4]  = svt_aom_highbd_dc_128_predictor_16x4;
-    dc_pred_high[0][0][TX_16X8]  = svt_aom_highbd_dc_128_predictor_16x8;
-    dc_pred_high[0][0][TX_16X32] = svt_aom_highbd_dc_128_predictor_16x32;
-    dc_pred_high[0][0][TX_16X64] = svt_aom_highbd_dc_128_predictor_16x64;
-
-    dc_pred_high[0][0][TX_32X8]  = svt_aom_highbd_dc_128_predictor_32x8;
-    dc_pred_high[0][0][TX_32X16] = svt_aom_highbd_dc_128_predictor_32x16;
-    dc_pred_high[0][0][TX_32X64] = svt_aom_highbd_dc_128_predictor_32x64;
-
-    dc_pred_high[0][0][TX_64X16] = svt_aom_highbd_dc_128_predictor_64x16;
-    dc_pred_high[0][0][TX_64X32] = svt_aom_highbd_dc_128_predictor_64x32;
-
-    dc_pred_high[0][1][TX_4X4]   = svt_aom_highbd_dc_top_predictor_4x4;
-    dc_pred_high[0][1][TX_8X8]   = svt_aom_highbd_dc_top_predictor_8x8;
-    dc_pred_high[0][1][TX_16X16] = svt_aom_highbd_dc_top_predictor_16x16;
-    dc_pred_high[0][1][TX_32X32] = svt_aom_highbd_dc_top_predictor_32x32;
-    dc_pred_high[0][1][TX_64X64] = svt_aom_highbd_dc_top_predictor_64x64;
-
-    dc_pred_high[0][1][TX_4X8]  = svt_aom_highbd_dc_top_predictor_4x8;
-    dc_pred_high[0][1][TX_4X16] = svt_aom_highbd_dc_top_predictor_4x16;
-
-    dc_pred_high[0][1][TX_8X4]  = svt_aom_highbd_dc_top_predictor_8x4;
-    dc_pred_high[0][1][TX_8X16] = svt_aom_highbd_dc_top_predictor_8x16;
-    dc_pred_high[0][1][TX_8X32] = svt_aom_highbd_dc_top_predictor_8x32;
-
-    dc_pred_high[0][1][TX_16X4]  = svt_aom_highbd_dc_top_predictor_16x4;
-    dc_pred_high[0][1][TX_16X8]  = svt_aom_highbd_dc_top_predictor_16x8;
-    dc_pred_high[0][1][TX_16X32] = svt_aom_highbd_dc_top_predictor_16x32;
-    dc_pred_high[0][1][TX_16X64] = svt_aom_highbd_dc_top_predictor_16x64;
-
-    dc_pred_high[0][1][TX_32X8]  = svt_aom_highbd_dc_top_predictor_32x8;
-    dc_pred_high[0][1][TX_32X16] = svt_aom_highbd_dc_top_predictor_32x16;
-    dc_pred_high[0][1][TX_32X64] = svt_aom_highbd_dc_top_predictor_32x64;
-
-    dc_pred_high[0][1][TX_64X16] = svt_aom_highbd_dc_top_predictor_64x16;
-    dc_pred_high[0][1][TX_64X32] = svt_aom_highbd_dc_top_predictor_64x32;
-
-    dc_pred_high[1][0][TX_4X4]   = svt_aom_highbd_dc_left_predictor_4x4;
-    dc_pred_high[1][0][TX_8X8]   = svt_aom_highbd_dc_left_predictor_8x8;
-    dc_pred_high[1][0][TX_16X16] = svt_aom_highbd_dc_left_predictor_16x16;
-    dc_pred_high[1][0][TX_32X32] = svt_aom_highbd_dc_left_predictor_32x32;
-    dc_pred_high[1][0][TX_64X64] = svt_aom_highbd_dc_left_predictor_64x64;
-
-    dc_pred_high[1][0][TX_4X8]  = svt_aom_highbd_dc_left_predictor_4x8;
-    dc_pred_high[1][0][TX_4X16] = svt_aom_highbd_dc_left_predictor_4x16;
-
-    dc_pred_high[1][0][TX_8X4]  = svt_aom_highbd_dc_left_predictor_8x4;
-    dc_pred_high[1][0][TX_8X16] = svt_aom_highbd_dc_left_predictor_8x16;
-    dc_pred_high[1][0][TX_8X32] = svt_aom_highbd_dc_left_predictor_8x32;
-
-    dc_pred_high[1][0][TX_16X4]  = svt_aom_highbd_dc_left_predictor_16x4;
-    dc_pred_high[1][0][TX_16X8]  = svt_aom_highbd_dc_left_predictor_16x8;
-    dc_pred_high[1][0][TX_16X32] = svt_aom_highbd_dc_left_predictor_16x32;
-    dc_pred_high[1][0][TX_16X64] = svt_aom_highbd_dc_left_predictor_16x64;
-
-    dc_pred_high[1][0][TX_32X8]  = svt_aom_highbd_dc_left_predictor_32x8;
-    dc_pred_high[1][0][TX_32X16] = svt_aom_highbd_dc_left_predictor_32x16;
-    dc_pred_high[1][0][TX_32X64] = svt_aom_highbd_dc_left_predictor_32x64;
-
-    dc_pred_high[1][0][TX_64X16] = svt_aom_highbd_dc_left_predictor_64x16;
-    dc_pred_high[1][0][TX_64X32] = svt_aom_highbd_dc_left_predictor_64x32;
-
-    dc_pred_high[1][1][TX_4X4]   = svt_aom_highbd_dc_predictor_4x4;
-    dc_pred_high[1][1][TX_8X8]   = svt_aom_highbd_dc_predictor_8x8;
-    dc_pred_high[1][1][TX_16X16] = svt_aom_highbd_dc_predictor_16x16;
-    dc_pred_high[1][1][TX_32X32] = svt_aom_highbd_dc_predictor_32x32;
-    dc_pred_high[1][1][TX_64X64] = svt_aom_highbd_dc_predictor_64x64;
-
-    dc_pred_high[1][1][TX_4X8]  = svt_aom_highbd_dc_predictor_4x8;
-    dc_pred_high[1][1][TX_4X16] = svt_aom_highbd_dc_predictor_4x16;
-
-    dc_pred_high[1][1][TX_8X4]  = svt_aom_highbd_dc_predictor_8x4;
-    dc_pred_high[1][1][TX_8X16] = svt_aom_highbd_dc_predictor_8x16;
-    dc_pred_high[1][1][TX_8X32] = svt_aom_highbd_dc_predictor_8x32;
-
-    dc_pred_high[1][1][TX_16X4]  = svt_aom_highbd_dc_predictor_16x4;
-    dc_pred_high[1][1][TX_16X8]  = svt_aom_highbd_dc_predictor_16x8;
-    dc_pred_high[1][1][TX_16X32] = svt_aom_highbd_dc_predictor_16x32;
-    dc_pred_high[1][1][TX_16X64] = svt_aom_highbd_dc_predictor_16x64;
-
-    dc_pred_high[1][1][TX_32X8]  = svt_aom_highbd_dc_predictor_32x8;
-    dc_pred_high[1][1][TX_32X16] = svt_aom_highbd_dc_predictor_32x16;
-    dc_pred_high[1][1][TX_32X64] = svt_aom_highbd_dc_predictor_32x64;
-
-    dc_pred_high[1][1][TX_64X16] = svt_aom_highbd_dc_predictor_64x16;
-    dc_pred_high[1][1][TX_64X32] = svt_aom_highbd_dc_predictor_64x32;
+    svt_aom_eb_pred[V_PRED][TX_4X4]   = svt_aom_v_predictor_4x4;
+    svt_aom_eb_pred[V_PRED][TX_8X8]   = svt_aom_v_predictor_8x8;
+    svt_aom_eb_pred[V_PRED][TX_16X16] = svt_aom_v_predictor_16x16;
+    svt_aom_eb_pred[V_PRED][TX_32X32] = svt_aom_v_predictor_32x32;
+    svt_aom_eb_pred[V_PRED][TX_64X64] = svt_aom_v_predictor_64x64;
+    svt_aom_eb_pred[V_PRED][TX_4X8]   = svt_aom_v_predictor_4x8;
+    svt_aom_eb_pred[V_PRED][TX_4X16]  = svt_aom_v_predictor_4x16;
+
+    svt_aom_eb_pred[V_PRED][TX_8X4]  = svt_aom_v_predictor_8x4;
+    svt_aom_eb_pred[V_PRED][TX_8X16] = svt_aom_v_predictor_8x16;
+    svt_aom_eb_pred[V_PRED][TX_8X32] = svt_aom_v_predictor_8x32;
+
+    svt_aom_eb_pred[V_PRED][TX_16X4]  = svt_aom_v_predictor_16x4;
+    svt_aom_eb_pred[V_PRED][TX_16X8]  = svt_aom_v_predictor_16x8;
+    svt_aom_eb_pred[V_PRED][TX_16X32] = svt_aom_v_predictor_16x32;
+    svt_aom_eb_pred[V_PRED][TX_16X64] = svt_aom_v_predictor_16x64;
+
+    svt_aom_eb_pred[V_PRED][TX_32X8]  = svt_aom_v_predictor_32x8;
+    svt_aom_eb_pred[V_PRED][TX_32X16] = svt_aom_v_predictor_32x16;
+    svt_aom_eb_pred[V_PRED][TX_32X64] = svt_aom_v_predictor_32x64;
+
+    svt_aom_eb_pred[V_PRED][TX_64X16] = svt_aom_v_predictor_64x16;
+    svt_aom_eb_pred[V_PRED][TX_64X32] = svt_aom_v_predictor_64x32;
+
+    svt_aom_eb_pred[H_PRED][TX_4X4]   = svt_aom_h_predictor_4x4;
+    svt_aom_eb_pred[H_PRED][TX_8X8]   = svt_aom_h_predictor_8x8;
+    svt_aom_eb_pred[H_PRED][TX_16X16] = svt_aom_h_predictor_16x16;
+    svt_aom_eb_pred[H_PRED][TX_32X32] = svt_aom_h_predictor_32x32;
+    svt_aom_eb_pred[H_PRED][TX_64X64] = svt_aom_h_predictor_64x64;
+
+    svt_aom_eb_pred[H_PRED][TX_4X8]  = svt_aom_h_predictor_4x8;
+    svt_aom_eb_pred[H_PRED][TX_4X16] = svt_aom_h_predictor_4x16;
+
+    svt_aom_eb_pred[H_PRED][TX_8X4]  = svt_aom_h_predictor_8x4;
+    svt_aom_eb_pred[H_PRED][TX_8X16] = svt_aom_h_predictor_8x16;
+    svt_aom_eb_pred[H_PRED][TX_8X32] = svt_aom_h_predictor_8x32;
+
+    svt_aom_eb_pred[H_PRED][TX_16X4]  = svt_aom_h_predictor_16x4;
+    svt_aom_eb_pred[H_PRED][TX_16X8]  = svt_aom_h_predictor_16x8;
+    svt_aom_eb_pred[H_PRED][TX_16X32] = svt_aom_h_predictor_16x32;
+    svt_aom_eb_pred[H_PRED][TX_16X64] = svt_aom_h_predictor_16x64;
+
+    svt_aom_eb_pred[H_PRED][TX_32X8]  = svt_aom_h_predictor_32x8;
+    svt_aom_eb_pred[H_PRED][TX_32X16] = svt_aom_h_predictor_32x16;
+    svt_aom_eb_pred[H_PRED][TX_32X64] = svt_aom_h_predictor_32x64;
+
+    svt_aom_eb_pred[H_PRED][TX_64X16] = svt_aom_h_predictor_64x16;
+    svt_aom_eb_pred[H_PRED][TX_64X32] = svt_aom_h_predictor_64x32;
+
+    svt_aom_eb_pred[SMOOTH_PRED][TX_4X4]   = svt_aom_smooth_predictor_4x4;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_8X8]   = svt_aom_smooth_predictor_8x8;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_16X16] = svt_aom_smooth_predictor_16x16;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_32X32] = svt_aom_smooth_predictor_32x32;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_64X64] = svt_aom_smooth_predictor_64x64;
+
+    svt_aom_eb_pred[SMOOTH_PRED][TX_4X8]  = svt_aom_smooth_predictor_4x8;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_4X16] = svt_aom_smooth_predictor_4x16;
+
+    svt_aom_eb_pred[SMOOTH_PRED][TX_8X4]  = svt_aom_smooth_predictor_8x4;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_8X16] = svt_aom_smooth_predictor_8x16;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_8X32] = svt_aom_smooth_predictor_8x32;
+
+    svt_aom_eb_pred[SMOOTH_PRED][TX_16X4]  = svt_aom_smooth_predictor_16x4;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_16X8]  = svt_aom_smooth_predictor_16x8;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_16X32] = svt_aom_smooth_predictor_16x32;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_16X64] = svt_aom_smooth_predictor_16x64;
+
+    svt_aom_eb_pred[SMOOTH_PRED][TX_32X8]  = svt_aom_smooth_predictor_32x8;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_32X16] = svt_aom_smooth_predictor_32x16;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_32X64] = svt_aom_smooth_predictor_32x64;
+
+    svt_aom_eb_pred[SMOOTH_PRED][TX_64X16] = svt_aom_smooth_predictor_64x16;
+    svt_aom_eb_pred[SMOOTH_PRED][TX_64X32] = svt_aom_smooth_predictor_64x32;
+
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_4X4]   = svt_aom_smooth_v_predictor_4x4;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_8X8]   = svt_aom_smooth_v_predictor_8x8;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_16X16] = svt_aom_smooth_v_predictor_16x16;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_32X32] = svt_aom_smooth_v_predictor_32x32;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_64X64] = svt_aom_smooth_v_predictor_64x64;
+
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_4X8]  = svt_aom_smooth_v_predictor_4x8;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_4X16] = svt_aom_smooth_v_predictor_4x16;
+
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_8X4]  = svt_aom_smooth_v_predictor_8x4;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_8X16] = svt_aom_smooth_v_predictor_8x16;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_8X32] = svt_aom_smooth_v_predictor_8x32;
+
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_16X4]  = svt_aom_smooth_v_predictor_16x4;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_16X8]  = svt_aom_smooth_v_predictor_16x8;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_16X32] = svt_aom_smooth_v_predictor_16x32;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_16X64] = svt_aom_smooth_v_predictor_16x64;
+
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_32X8]  = svt_aom_smooth_v_predictor_32x8;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_32X16] = svt_aom_smooth_v_predictor_32x16;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_32X64] = svt_aom_smooth_v_predictor_32x64;
+
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_64X16] = svt_aom_smooth_v_predictor_64x16;
+    svt_aom_eb_pred[SMOOTH_V_PRED][TX_64X32] = svt_aom_smooth_v_predictor_64x32;
+
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_4X4]   = svt_aom_smooth_h_predictor_4x4;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_8X8]   = svt_aom_smooth_h_predictor_8x8;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_16X16] = svt_aom_smooth_h_predictor_16x16;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_32X32] = svt_aom_smooth_h_predictor_32x32;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_64X64] = svt_aom_smooth_h_predictor_64x64;
+
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_4X8]  = svt_aom_smooth_h_predictor_4x8;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_4X16] = svt_aom_smooth_h_predictor_4x16;
+
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_8X4]  = svt_aom_smooth_h_predictor_8x4;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_8X16] = svt_aom_smooth_h_predictor_8x16;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_8X32] = svt_aom_smooth_h_predictor_8x32;
+
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_16X4]  = svt_aom_smooth_h_predictor_16x4;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_16X8]  = svt_aom_smooth_h_predictor_16x8;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_16X32] = svt_aom_smooth_h_predictor_16x32;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_16X64] = svt_aom_smooth_h_predictor_16x64;
+
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_32X8]  = svt_aom_smooth_h_predictor_32x8;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_32X16] = svt_aom_smooth_h_predictor_32x16;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_32X64] = svt_aom_smooth_h_predictor_32x64;
+
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_64X16] = svt_aom_smooth_h_predictor_64x16;
+    svt_aom_eb_pred[SMOOTH_H_PRED][TX_64X32] = svt_aom_smooth_h_predictor_64x32;
+
+    svt_aom_eb_pred[PAETH_PRED][TX_4X4]   = svt_aom_paeth_predictor_4x4;
+    svt_aom_eb_pred[PAETH_PRED][TX_8X8]   = svt_aom_paeth_predictor_8x8;
+    svt_aom_eb_pred[PAETH_PRED][TX_16X16] = svt_aom_paeth_predictor_16x16;
+    svt_aom_eb_pred[PAETH_PRED][TX_32X32] = svt_aom_paeth_predictor_32x32;
+    svt_aom_eb_pred[PAETH_PRED][TX_64X64] = svt_aom_paeth_predictor_64x64;
+
+    svt_aom_eb_pred[PAETH_PRED][TX_4X8]  = svt_aom_paeth_predictor_4x8;
+    svt_aom_eb_pred[PAETH_PRED][TX_4X16] = svt_aom_paeth_predictor_4x16;
+
+    svt_aom_eb_pred[PAETH_PRED][TX_8X4]  = svt_aom_paeth_predictor_8x4;
+    svt_aom_eb_pred[PAETH_PRED][TX_8X16] = svt_aom_paeth_predictor_8x16;
+    svt_aom_eb_pred[PAETH_PRED][TX_8X32] = svt_aom_paeth_predictor_8x32;
+
+    svt_aom_eb_pred[PAETH_PRED][TX_16X4]  = svt_aom_paeth_predictor_16x4;
+    svt_aom_eb_pred[PAETH_PRED][TX_16X8]  = svt_aom_paeth_predictor_16x8;
+    svt_aom_eb_pred[PAETH_PRED][TX_16X32] = svt_aom_paeth_predictor_16x32;
+    svt_aom_eb_pred[PAETH_PRED][TX_16X64] = svt_aom_paeth_predictor_16x64;
+
+    svt_aom_eb_pred[PAETH_PRED][TX_32X8]  = svt_aom_paeth_predictor_32x8;
+    svt_aom_eb_pred[PAETH_PRED][TX_32X16] = svt_aom_paeth_predictor_32x16;
+    svt_aom_eb_pred[PAETH_PRED][TX_32X64] = svt_aom_paeth_predictor_32x64;
+
+    svt_aom_eb_pred[PAETH_PRED][TX_64X16] = svt_aom_paeth_predictor_64x16;
+    svt_aom_eb_pred[PAETH_PRED][TX_64X32] = svt_aom_paeth_predictor_64x32;
+    svt_aom_dc_pred[0][0][TX_4X4]         = svt_aom_dc_128_predictor_4x4;
+    svt_aom_dc_pred[0][0][TX_8X8]         = svt_aom_dc_128_predictor_8x8;
+    svt_aom_dc_pred[0][0][TX_16X16]       = svt_aom_dc_128_predictor_16x16;
+    svt_aom_dc_pred[0][0][TX_32X32]       = svt_aom_dc_128_predictor_32x32;
+    svt_aom_dc_pred[0][0][TX_64X64]       = svt_aom_dc_128_predictor_64x64;
+
+    svt_aom_dc_pred[0][0][TX_4X8]  = svt_aom_dc_128_predictor_4x8;
+    svt_aom_dc_pred[0][0][TX_4X16] = svt_aom_dc_128_predictor_4x16;
+
+    svt_aom_dc_pred[0][0][TX_8X4]  = svt_aom_dc_128_predictor_8x4;
+    svt_aom_dc_pred[0][0][TX_8X16] = svt_aom_dc_128_predictor_8x16;
+    svt_aom_dc_pred[0][0][TX_8X32] = svt_aom_dc_128_predictor_8x32;
+
+    svt_aom_dc_pred[0][0][TX_16X4]  = svt_aom_dc_128_predictor_16x4;
+    svt_aom_dc_pred[0][0][TX_16X8]  = svt_aom_dc_128_predictor_16x8;
+    svt_aom_dc_pred[0][0][TX_16X32] = svt_aom_dc_128_predictor_16x32;
+    svt_aom_dc_pred[0][0][TX_16X64] = svt_aom_dc_128_predictor_16x64;
+
+    svt_aom_dc_pred[0][0][TX_32X8]  = svt_aom_dc_128_predictor_32x8;
+    svt_aom_dc_pred[0][0][TX_32X16] = svt_aom_dc_128_predictor_32x16;
+    svt_aom_dc_pred[0][0][TX_32X64] = svt_aom_dc_128_predictor_32x64;
+
+    svt_aom_dc_pred[0][0][TX_64X16] = svt_aom_dc_128_predictor_64x16;
+    svt_aom_dc_pred[0][0][TX_64X32] = svt_aom_dc_128_predictor_64x32;
+
+    svt_aom_dc_pred[0][1][TX_4X4]   = svt_aom_dc_top_predictor_4x4;
+    svt_aom_dc_pred[0][1][TX_8X8]   = svt_aom_dc_top_predictor_8x8;
+    svt_aom_dc_pred[0][1][TX_16X16] = svt_aom_dc_top_predictor_16x16;
+    svt_aom_dc_pred[0][1][TX_32X32] = svt_aom_dc_top_predictor_32x32;
+    svt_aom_dc_pred[0][1][TX_64X64] = svt_aom_dc_top_predictor_64x64;
+
+    svt_aom_dc_pred[0][1][TX_4X8]  = svt_aom_dc_top_predictor_4x8;
+    svt_aom_dc_pred[0][1][TX_4X16] = svt_aom_dc_top_predictor_4x16;
+
+    svt_aom_dc_pred[0][1][TX_8X4]  = svt_aom_dc_top_predictor_8x4;
+    svt_aom_dc_pred[0][1][TX_8X16] = svt_aom_dc_top_predictor_8x16;
+    svt_aom_dc_pred[0][1][TX_8X32] = svt_aom_dc_top_predictor_8x32;
+
+    svt_aom_dc_pred[0][1][TX_16X4]  = svt_aom_dc_top_predictor_16x4;
+    svt_aom_dc_pred[0][1][TX_16X8]  = svt_aom_dc_top_predictor_16x8;
+    svt_aom_dc_pred[0][1][TX_16X32] = svt_aom_dc_top_predictor_16x32;
+    svt_aom_dc_pred[0][1][TX_16X64] = svt_aom_dc_top_predictor_16x64;
+
+    svt_aom_dc_pred[0][1][TX_32X8]  = svt_aom_dc_top_predictor_32x8;
+    svt_aom_dc_pred[0][1][TX_32X16] = svt_aom_dc_top_predictor_32x16;
+    svt_aom_dc_pred[0][1][TX_32X64] = svt_aom_dc_top_predictor_32x64;
+
+    svt_aom_dc_pred[0][1][TX_64X16] = svt_aom_dc_top_predictor_64x16;
+    svt_aom_dc_pred[0][1][TX_64X32] = svt_aom_dc_top_predictor_64x32;
+
+    svt_aom_dc_pred[1][0][TX_4X4]   = svt_aom_dc_left_predictor_4x4;
+    svt_aom_dc_pred[1][0][TX_8X8]   = svt_aom_dc_left_predictor_8x8;
+    svt_aom_dc_pred[1][0][TX_16X16] = svt_aom_dc_left_predictor_16x16;
+    svt_aom_dc_pred[1][0][TX_32X32] = svt_aom_dc_left_predictor_32x32;
+    svt_aom_dc_pred[1][0][TX_64X64] = svt_aom_dc_left_predictor_64x64;
+    svt_aom_dc_pred[1][0][TX_4X8]   = svt_aom_dc_left_predictor_4x8;
+    svt_aom_dc_pred[1][0][TX_4X16]  = svt_aom_dc_left_predictor_4x16;
+
+    svt_aom_dc_pred[1][0][TX_8X4]  = svt_aom_dc_left_predictor_8x4;
+    svt_aom_dc_pred[1][0][TX_8X16] = svt_aom_dc_left_predictor_8x16;
+    svt_aom_dc_pred[1][0][TX_8X32] = svt_aom_dc_left_predictor_8x32;
+
+    svt_aom_dc_pred[1][0][TX_16X4]  = svt_aom_dc_left_predictor_16x4;
+    svt_aom_dc_pred[1][0][TX_16X8]  = svt_aom_dc_left_predictor_16x8;
+    svt_aom_dc_pred[1][0][TX_16X32] = svt_aom_dc_left_predictor_16x32;
+    svt_aom_dc_pred[1][0][TX_16X64] = svt_aom_dc_left_predictor_16x64;
+
+    svt_aom_dc_pred[1][0][TX_32X8]  = svt_aom_dc_left_predictor_32x8;
+    svt_aom_dc_pred[1][0][TX_32X16] = svt_aom_dc_left_predictor_32x16;
+    svt_aom_dc_pred[1][0][TX_32X64] = svt_aom_dc_left_predictor_32x64;
+
+    svt_aom_dc_pred[1][0][TX_64X16] = svt_aom_dc_left_predictor_64x16;
+    svt_aom_dc_pred[1][0][TX_64X32] = svt_aom_dc_left_predictor_64x32;
+
+    svt_aom_dc_pred[1][1][TX_4X4]   = svt_aom_dc_predictor_4x4;
+    svt_aom_dc_pred[1][1][TX_8X8]   = svt_aom_dc_predictor_8x8;
+    svt_aom_dc_pred[1][1][TX_16X16] = svt_aom_dc_predictor_16x16;
+    svt_aom_dc_pred[1][1][TX_32X32] = svt_aom_dc_predictor_32x32;
+    svt_aom_dc_pred[1][1][TX_64X64] = svt_aom_dc_predictor_64x64;
+    svt_aom_dc_pred[1][1][TX_4X8]   = svt_aom_dc_predictor_4x8;
+    svt_aom_dc_pred[1][1][TX_4X16]  = svt_aom_dc_predictor_4x16;
+
+    svt_aom_dc_pred[1][1][TX_8X4]  = svt_aom_dc_predictor_8x4;
+    svt_aom_dc_pred[1][1][TX_8X16] = svt_aom_dc_predictor_8x16;
+    svt_aom_dc_pred[1][1][TX_8X32] = svt_aom_dc_predictor_8x32;
+
+    svt_aom_dc_pred[1][1][TX_16X4]  = svt_aom_dc_predictor_16x4;
+    svt_aom_dc_pred[1][1][TX_16X8]  = svt_aom_dc_predictor_16x8;
+    svt_aom_dc_pred[1][1][TX_16X32] = svt_aom_dc_predictor_16x32;
+    svt_aom_dc_pred[1][1][TX_16X64] = svt_aom_dc_predictor_16x64;
+
+    svt_aom_dc_pred[1][1][TX_32X8]  = svt_aom_dc_predictor_32x8;
+    svt_aom_dc_pred[1][1][TX_32X16] = svt_aom_dc_predictor_32x16;
+    svt_aom_dc_pred[1][1][TX_32X64] = svt_aom_dc_predictor_32x64;
+
+    svt_aom_dc_pred[1][1][TX_64X16] = svt_aom_dc_predictor_64x16;
+    svt_aom_dc_pred[1][1][TX_64X32] = svt_aom_dc_predictor_64x32;
+
+    svt_aom_pred_high[V_PRED][TX_4X4]   = svt_aom_highbd_v_predictor_4x4;
+    svt_aom_pred_high[V_PRED][TX_8X8]   = svt_aom_highbd_v_predictor_8x8;
+    svt_aom_pred_high[V_PRED][TX_16X16] = svt_aom_highbd_v_predictor_16x16;
+    svt_aom_pred_high[V_PRED][TX_32X32] = svt_aom_highbd_v_predictor_32x32;
+    svt_aom_pred_high[V_PRED][TX_64X64] = svt_aom_highbd_v_predictor_64x64;
+
+    svt_aom_pred_high[V_PRED][TX_4X8]  = svt_aom_highbd_v_predictor_4x8;
+    svt_aom_pred_high[V_PRED][TX_4X16] = svt_aom_highbd_v_predictor_4x16;
+
+    svt_aom_pred_high[V_PRED][TX_8X4]  = svt_aom_highbd_v_predictor_8x4;
+    svt_aom_pred_high[V_PRED][TX_8X16] = svt_aom_highbd_v_predictor_8x16;
+    svt_aom_pred_high[V_PRED][TX_8X32] = svt_aom_highbd_v_predictor_8x32;
+
+    svt_aom_pred_high[V_PRED][TX_16X4]  = svt_aom_highbd_v_predictor_16x4;
+    svt_aom_pred_high[V_PRED][TX_16X8]  = svt_aom_highbd_v_predictor_16x8;
+    svt_aom_pred_high[V_PRED][TX_16X32] = svt_aom_highbd_v_predictor_16x32;
+    svt_aom_pred_high[V_PRED][TX_16X64] = svt_aom_highbd_v_predictor_16x64;
+
+    svt_aom_pred_high[V_PRED][TX_32X8]  = svt_aom_highbd_v_predictor_32x8;
+    svt_aom_pred_high[V_PRED][TX_32X16] = svt_aom_highbd_v_predictor_32x16;
+    svt_aom_pred_high[V_PRED][TX_32X64] = svt_aom_highbd_v_predictor_32x64;
+
+    svt_aom_pred_high[V_PRED][TX_64X16] = svt_aom_highbd_v_predictor_64x16;
+    svt_aom_pred_high[V_PRED][TX_64X32] = svt_aom_highbd_v_predictor_64x32;
+
+    svt_aom_pred_high[H_PRED][TX_4X4]   = svt_aom_highbd_h_predictor_4x4;
+    svt_aom_pred_high[H_PRED][TX_8X8]   = svt_aom_highbd_h_predictor_8x8;
+    svt_aom_pred_high[H_PRED][TX_16X16] = svt_aom_highbd_h_predictor_16x16;
+    svt_aom_pred_high[H_PRED][TX_32X32] = svt_aom_highbd_h_predictor_32x32;
+    svt_aom_pred_high[H_PRED][TX_64X64] = svt_aom_highbd_h_predictor_64x64;
+
+    svt_aom_pred_high[H_PRED][TX_4X8]  = svt_aom_highbd_h_predictor_4x8;
+    svt_aom_pred_high[H_PRED][TX_4X16] = svt_aom_highbd_h_predictor_4x16;
+
+    svt_aom_pred_high[H_PRED][TX_8X4]  = svt_aom_highbd_h_predictor_8x4;
+    svt_aom_pred_high[H_PRED][TX_8X16] = svt_aom_highbd_h_predictor_8x16;
+    svt_aom_pred_high[H_PRED][TX_8X32] = svt_aom_highbd_h_predictor_8x32;
+
+    svt_aom_pred_high[H_PRED][TX_16X4]  = svt_aom_highbd_h_predictor_16x4;
+    svt_aom_pred_high[H_PRED][TX_16X8]  = svt_aom_highbd_h_predictor_16x8;
+    svt_aom_pred_high[H_PRED][TX_16X32] = svt_aom_highbd_h_predictor_16x32;
+    svt_aom_pred_high[H_PRED][TX_16X64] = svt_aom_highbd_h_predictor_16x64;
+
+    svt_aom_pred_high[H_PRED][TX_32X8]  = svt_aom_highbd_h_predictor_32x8;
+    svt_aom_pred_high[H_PRED][TX_32X16] = svt_aom_highbd_h_predictor_32x16;
+    svt_aom_pred_high[H_PRED][TX_32X64] = svt_aom_highbd_h_predictor_32x64;
+
+    svt_aom_pred_high[H_PRED][TX_64X16] = svt_aom_highbd_h_predictor_64x16;
+    svt_aom_pred_high[H_PRED][TX_64X32] = svt_aom_highbd_h_predictor_64x32;
+
+    svt_aom_pred_high[SMOOTH_PRED][TX_4X4]   = svt_aom_highbd_smooth_predictor_4x4;
+    svt_aom_pred_high[SMOOTH_PRED][TX_8X8]   = svt_aom_highbd_smooth_predictor_8x8;
+    svt_aom_pred_high[SMOOTH_PRED][TX_16X16] = svt_aom_highbd_smooth_predictor_16x16;
+    svt_aom_pred_high[SMOOTH_PRED][TX_32X32] = svt_aom_highbd_smooth_predictor_32x32;
+    svt_aom_pred_high[SMOOTH_PRED][TX_64X64] = svt_aom_highbd_smooth_predictor_64x64;
+
+    svt_aom_pred_high[SMOOTH_PRED][TX_4X8]  = svt_aom_highbd_smooth_predictor_4x8;
+    svt_aom_pred_high[SMOOTH_PRED][TX_4X16] = svt_aom_highbd_smooth_predictor_4x16;
+
+    svt_aom_pred_high[SMOOTH_PRED][TX_8X4]  = svt_aom_highbd_smooth_predictor_8x4;
+    svt_aom_pred_high[SMOOTH_PRED][TX_8X16] = svt_aom_highbd_smooth_predictor_8x16;
+    svt_aom_pred_high[SMOOTH_PRED][TX_8X32] = svt_aom_highbd_smooth_predictor_8x32;
+
+    svt_aom_pred_high[SMOOTH_PRED][TX_16X4]  = svt_aom_highbd_smooth_predictor_16x4;
+    svt_aom_pred_high[SMOOTH_PRED][TX_16X8]  = svt_aom_highbd_smooth_predictor_16x8;
+    svt_aom_pred_high[SMOOTH_PRED][TX_16X32] = svt_aom_highbd_smooth_predictor_16x32;
+    svt_aom_pred_high[SMOOTH_PRED][TX_16X64] = svt_aom_highbd_smooth_predictor_16x64;
+
+    svt_aom_pred_high[SMOOTH_PRED][TX_32X8]  = svt_aom_highbd_smooth_predictor_32x8;
+    svt_aom_pred_high[SMOOTH_PRED][TX_32X16] = svt_aom_highbd_smooth_predictor_32x16;
+    svt_aom_pred_high[SMOOTH_PRED][TX_32X64] = svt_aom_highbd_smooth_predictor_32x64;
+
+    svt_aom_pred_high[SMOOTH_PRED][TX_64X16] = svt_aom_highbd_smooth_predictor_64x16;
+    svt_aom_pred_high[SMOOTH_PRED][TX_64X32] = svt_aom_highbd_smooth_predictor_64x32;
+
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_4X4]   = svt_aom_highbd_smooth_v_predictor_4x4;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_8X8]   = svt_aom_highbd_smooth_v_predictor_8x8;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_16X16] = svt_aom_highbd_smooth_v_predictor_16x16;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_32X32] = svt_aom_highbd_smooth_v_predictor_32x32;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_64X64] = svt_aom_highbd_smooth_v_predictor_64x64;
+
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_4X8]  = svt_aom_highbd_smooth_v_predictor_4x8;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_4X16] = svt_aom_highbd_smooth_v_predictor_4x16;
+
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_8X4]  = svt_aom_highbd_smooth_v_predictor_8x4;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_8X16] = svt_aom_highbd_smooth_v_predictor_8x16;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_8X32] = svt_aom_highbd_smooth_v_predictor_8x32;
+
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_16X4]  = svt_aom_highbd_smooth_v_predictor_16x4;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_16X8]  = svt_aom_highbd_smooth_v_predictor_16x8;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_16X32] = svt_aom_highbd_smooth_v_predictor_16x32;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_16X64] = svt_aom_highbd_smooth_v_predictor_16x64;
+
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_32X8]  = svt_aom_highbd_smooth_v_predictor_32x8;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_32X16] = svt_aom_highbd_smooth_v_predictor_32x16;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_32X64] = svt_aom_highbd_smooth_v_predictor_32x64;
+
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_64X16] = svt_aom_highbd_smooth_v_predictor_64x16;
+    svt_aom_pred_high[SMOOTH_V_PRED][TX_64X32] = svt_aom_highbd_smooth_v_predictor_64x32;
+
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_4X4]   = svt_aom_highbd_smooth_h_predictor_4x4;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_8X8]   = svt_aom_highbd_smooth_h_predictor_8x8;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_16X16] = svt_aom_highbd_smooth_h_predictor_16x16;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_32X32] = svt_aom_highbd_smooth_h_predictor_32x32;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_64X64] = svt_aom_highbd_smooth_h_predictor_64x64;
+
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_4X8]  = svt_aom_highbd_smooth_h_predictor_4x8;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_4X16] = svt_aom_highbd_smooth_h_predictor_4x16;
+
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_8X4]  = svt_aom_highbd_smooth_h_predictor_8x4;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_8X16] = svt_aom_highbd_smooth_h_predictor_8x16;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_8X32] = svt_aom_highbd_smooth_h_predictor_8x32;
+
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_16X4]  = svt_aom_highbd_smooth_h_predictor_16x4;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_16X8]  = svt_aom_highbd_smooth_h_predictor_16x8;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_16X32] = svt_aom_highbd_smooth_h_predictor_16x32;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_16X64] = svt_aom_highbd_smooth_h_predictor_16x64;
+
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_32X8]  = svt_aom_highbd_smooth_h_predictor_32x8;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_32X16] = svt_aom_highbd_smooth_h_predictor_32x16;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_32X64] = svt_aom_highbd_smooth_h_predictor_32x64;
+
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_64X16] = svt_aom_highbd_smooth_h_predictor_64x16;
+    svt_aom_pred_high[SMOOTH_H_PRED][TX_64X32] = svt_aom_highbd_smooth_h_predictor_64x32;
+
+    svt_aom_pred_high[PAETH_PRED][TX_4X4]   = svt_aom_highbd_paeth_predictor_4x4;
+    svt_aom_pred_high[PAETH_PRED][TX_8X8]   = svt_aom_highbd_paeth_predictor_8x8;
+    svt_aom_pred_high[PAETH_PRED][TX_16X16] = svt_aom_highbd_paeth_predictor_16x16;
+    svt_aom_pred_high[PAETH_PRED][TX_32X32] = svt_aom_highbd_paeth_predictor_32x32;
+    svt_aom_pred_high[PAETH_PRED][TX_64X64] = svt_aom_highbd_paeth_predictor_64x64;
+
+    svt_aom_pred_high[PAETH_PRED][TX_4X8]  = svt_aom_highbd_paeth_predictor_4x8;
+    svt_aom_pred_high[PAETH_PRED][TX_4X16] = svt_aom_highbd_paeth_predictor_4x16;
+
+    svt_aom_pred_high[PAETH_PRED][TX_8X4]  = svt_aom_highbd_paeth_predictor_8x4;
+    svt_aom_pred_high[PAETH_PRED][TX_8X16] = svt_aom_highbd_paeth_predictor_8x16;
+    svt_aom_pred_high[PAETH_PRED][TX_8X32] = svt_aom_highbd_paeth_predictor_8x32;
+
+    svt_aom_pred_high[PAETH_PRED][TX_16X4]  = svt_aom_highbd_paeth_predictor_16x4;
+    svt_aom_pred_high[PAETH_PRED][TX_16X8]  = svt_aom_highbd_paeth_predictor_16x8;
+    svt_aom_pred_high[PAETH_PRED][TX_16X32] = svt_aom_highbd_paeth_predictor_16x32;
+    svt_aom_pred_high[PAETH_PRED][TX_16X64] = svt_aom_highbd_paeth_predictor_16x64;
+
+    svt_aom_pred_high[PAETH_PRED][TX_32X8]  = svt_aom_highbd_paeth_predictor_32x8;
+    svt_aom_pred_high[PAETH_PRED][TX_32X16] = svt_aom_highbd_paeth_predictor_32x16;
+    svt_aom_pred_high[PAETH_PRED][TX_32X64] = svt_aom_highbd_paeth_predictor_32x64;
+
+    svt_aom_pred_high[PAETH_PRED][TX_64X16] = svt_aom_highbd_paeth_predictor_64x16;
+    svt_aom_pred_high[PAETH_PRED][TX_64X32] = svt_aom_highbd_paeth_predictor_64x32;
+    svt_aom_dc_pred_high[0][0][TX_4X4]      = svt_aom_highbd_dc_128_predictor_4x4;
+    svt_aom_dc_pred_high[0][0][TX_8X8]      = svt_aom_highbd_dc_128_predictor_8x8;
+    svt_aom_dc_pred_high[0][0][TX_16X16]    = svt_aom_highbd_dc_128_predictor_16x16;
+    svt_aom_dc_pred_high[0][0][TX_32X32]    = svt_aom_highbd_dc_128_predictor_32x32;
+    svt_aom_dc_pred_high[0][0][TX_64X64]    = svt_aom_highbd_dc_128_predictor_64x64;
+
+    svt_aom_dc_pred_high[0][0][TX_4X8]  = svt_aom_highbd_dc_128_predictor_4x8;
+    svt_aom_dc_pred_high[0][0][TX_4X16] = svt_aom_highbd_dc_128_predictor_4x16;
+
+    svt_aom_dc_pred_high[0][0][TX_8X4]  = svt_aom_highbd_dc_128_predictor_8x4;
+    svt_aom_dc_pred_high[0][0][TX_8X16] = svt_aom_highbd_dc_128_predictor_8x16;
+    svt_aom_dc_pred_high[0][0][TX_8X32] = svt_aom_highbd_dc_128_predictor_8x32;
+
+    svt_aom_dc_pred_high[0][0][TX_16X4]  = svt_aom_highbd_dc_128_predictor_16x4;
+    svt_aom_dc_pred_high[0][0][TX_16X8]  = svt_aom_highbd_dc_128_predictor_16x8;
+    svt_aom_dc_pred_high[0][0][TX_16X32] = svt_aom_highbd_dc_128_predictor_16x32;
+    svt_aom_dc_pred_high[0][0][TX_16X64] = svt_aom_highbd_dc_128_predictor_16x64;
+
+    svt_aom_dc_pred_high[0][0][TX_32X8]  = svt_aom_highbd_dc_128_predictor_32x8;
+    svt_aom_dc_pred_high[0][0][TX_32X16] = svt_aom_highbd_dc_128_predictor_32x16;
+    svt_aom_dc_pred_high[0][0][TX_32X64] = svt_aom_highbd_dc_128_predictor_32x64;
+
+    svt_aom_dc_pred_high[0][0][TX_64X16] = svt_aom_highbd_dc_128_predictor_64x16;
+    svt_aom_dc_pred_high[0][0][TX_64X32] = svt_aom_highbd_dc_128_predictor_64x32;
+
+    svt_aom_dc_pred_high[0][1][TX_4X4]   = svt_aom_highbd_dc_top_predictor_4x4;
+    svt_aom_dc_pred_high[0][1][TX_8X8]   = svt_aom_highbd_dc_top_predictor_8x8;
+    svt_aom_dc_pred_high[0][1][TX_16X16] = svt_aom_highbd_dc_top_predictor_16x16;
+    svt_aom_dc_pred_high[0][1][TX_32X32] = svt_aom_highbd_dc_top_predictor_32x32;
+    svt_aom_dc_pred_high[0][1][TX_64X64] = svt_aom_highbd_dc_top_predictor_64x64;
+
+    svt_aom_dc_pred_high[0][1][TX_4X8]  = svt_aom_highbd_dc_top_predictor_4x8;
+    svt_aom_dc_pred_high[0][1][TX_4X16] = svt_aom_highbd_dc_top_predictor_4x16;
+
+    svt_aom_dc_pred_high[0][1][TX_8X4]  = svt_aom_highbd_dc_top_predictor_8x4;
+    svt_aom_dc_pred_high[0][1][TX_8X16] = svt_aom_highbd_dc_top_predictor_8x16;
+    svt_aom_dc_pred_high[0][1][TX_8X32] = svt_aom_highbd_dc_top_predictor_8x32;
+
+    svt_aom_dc_pred_high[0][1][TX_16X4]  = svt_aom_highbd_dc_top_predictor_16x4;
+    svt_aom_dc_pred_high[0][1][TX_16X8]  = svt_aom_highbd_dc_top_predictor_16x8;
+    svt_aom_dc_pred_high[0][1][TX_16X32] = svt_aom_highbd_dc_top_predictor_16x32;
+    svt_aom_dc_pred_high[0][1][TX_16X64] = svt_aom_highbd_dc_top_predictor_16x64;
+
+    svt_aom_dc_pred_high[0][1][TX_32X8]  = svt_aom_highbd_dc_top_predictor_32x8;
+    svt_aom_dc_pred_high[0][1][TX_32X16] = svt_aom_highbd_dc_top_predictor_32x16;
+    svt_aom_dc_pred_high[0][1][TX_32X64] = svt_aom_highbd_dc_top_predictor_32x64;
+
+    svt_aom_dc_pred_high[0][1][TX_64X16] = svt_aom_highbd_dc_top_predictor_64x16;
+    svt_aom_dc_pred_high[0][1][TX_64X32] = svt_aom_highbd_dc_top_predictor_64x32;
+
+    svt_aom_dc_pred_high[1][0][TX_4X4]   = svt_aom_highbd_dc_left_predictor_4x4;
+    svt_aom_dc_pred_high[1][0][TX_8X8]   = svt_aom_highbd_dc_left_predictor_8x8;
+    svt_aom_dc_pred_high[1][0][TX_16X16] = svt_aom_highbd_dc_left_predictor_16x16;
+    svt_aom_dc_pred_high[1][0][TX_32X32] = svt_aom_highbd_dc_left_predictor_32x32;
+    svt_aom_dc_pred_high[1][0][TX_64X64] = svt_aom_highbd_dc_left_predictor_64x64;
+
+    svt_aom_dc_pred_high[1][0][TX_4X8]  = svt_aom_highbd_dc_left_predictor_4x8;
+    svt_aom_dc_pred_high[1][0][TX_4X16] = svt_aom_highbd_dc_left_predictor_4x16;
+
+    svt_aom_dc_pred_high[1][0][TX_8X4]  = svt_aom_highbd_dc_left_predictor_8x4;
+    svt_aom_dc_pred_high[1][0][TX_8X16] = svt_aom_highbd_dc_left_predictor_8x16;
+    svt_aom_dc_pred_high[1][0][TX_8X32] = svt_aom_highbd_dc_left_predictor_8x32;
+
+    svt_aom_dc_pred_high[1][0][TX_16X4]  = svt_aom_highbd_dc_left_predictor_16x4;
+    svt_aom_dc_pred_high[1][0][TX_16X8]  = svt_aom_highbd_dc_left_predictor_16x8;
+    svt_aom_dc_pred_high[1][0][TX_16X32] = svt_aom_highbd_dc_left_predictor_16x32;
+    svt_aom_dc_pred_high[1][0][TX_16X64] = svt_aom_highbd_dc_left_predictor_16x64;
+
+    svt_aom_dc_pred_high[1][0][TX_32X8]  = svt_aom_highbd_dc_left_predictor_32x8;
+    svt_aom_dc_pred_high[1][0][TX_32X16] = svt_aom_highbd_dc_left_predictor_32x16;
+    svt_aom_dc_pred_high[1][0][TX_32X64] = svt_aom_highbd_dc_left_predictor_32x64;
+
+    svt_aom_dc_pred_high[1][0][TX_64X16] = svt_aom_highbd_dc_left_predictor_64x16;
+    svt_aom_dc_pred_high[1][0][TX_64X32] = svt_aom_highbd_dc_left_predictor_64x32;
+
+    svt_aom_dc_pred_high[1][1][TX_4X4]   = svt_aom_highbd_dc_predictor_4x4;
+    svt_aom_dc_pred_high[1][1][TX_8X8]   = svt_aom_highbd_dc_predictor_8x8;
+    svt_aom_dc_pred_high[1][1][TX_16X16] = svt_aom_highbd_dc_predictor_16x16;
+    svt_aom_dc_pred_high[1][1][TX_32X32] = svt_aom_highbd_dc_predictor_32x32;
+    svt_aom_dc_pred_high[1][1][TX_64X64] = svt_aom_highbd_dc_predictor_64x64;
+
+    svt_aom_dc_pred_high[1][1][TX_4X8]  = svt_aom_highbd_dc_predictor_4x8;
+    svt_aom_dc_pred_high[1][1][TX_4X16] = svt_aom_highbd_dc_predictor_4x16;
+
+    svt_aom_dc_pred_high[1][1][TX_8X4]  = svt_aom_highbd_dc_predictor_8x4;
+    svt_aom_dc_pred_high[1][1][TX_8X16] = svt_aom_highbd_dc_predictor_8x16;
+    svt_aom_dc_pred_high[1][1][TX_8X32] = svt_aom_highbd_dc_predictor_8x32;
+
+    svt_aom_dc_pred_high[1][1][TX_16X4]  = svt_aom_highbd_dc_predictor_16x4;
+    svt_aom_dc_pred_high[1][1][TX_16X8]  = svt_aom_highbd_dc_predictor_16x8;
+    svt_aom_dc_pred_high[1][1][TX_16X32] = svt_aom_highbd_dc_predictor_16x32;
+    svt_aom_dc_pred_high[1][1][TX_16X64] = svt_aom_highbd_dc_predictor_16x64;
+
+    svt_aom_dc_pred_high[1][1][TX_32X8]  = svt_aom_highbd_dc_predictor_32x8;
+    svt_aom_dc_pred_high[1][1][TX_32X16] = svt_aom_highbd_dc_predictor_32x16;
+    svt_aom_dc_pred_high[1][1][TX_32X64] = svt_aom_highbd_dc_predictor_32x64;
+
+    svt_aom_dc_pred_high[1][1][TX_64X16] = svt_aom_highbd_dc_predictor_64x16;
+    svt_aom_dc_pred_high[1][1][TX_64X32] = svt_aom_highbd_dc_predictor_64x32;
 }
 void dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above,
                   const uint8_t *left, int32_t upsample_above, int32_t upsample_left,
@@ -2387,9 +2387,9 @@ void dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t 
     } else if (angle > 180 && angle < 270) {
         svt_av1_dr_prediction_z3(dst, stride, bw, bh, above, left, upsample_left, dx, dy);
     } else if (angle == 90)
-        eb_pred[V_PRED][tx_size](dst, stride, above, left);
+        svt_aom_eb_pred[V_PRED][tx_size](dst, stride, above, left);
     else if (angle == 180)
-        eb_pred[H_PRED][tx_size](dst, stride, above, left);
+        svt_aom_eb_pred[H_PRED][tx_size](dst, stride, above, left);
 }
 
 void filter_intra_edge_corner(uint8_t *p_above, uint8_t *p_left) {
@@ -2491,9 +2491,9 @@ void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size, const 
         svt_av1_highbd_dr_prediction_z3(
             dst, stride, bw, bh, above, left, upsample_left, dx, dy, bd);
     } else if (angle == 90)
-        pred_high[V_PRED][tx_size](dst, stride, above, left, bd);
+        svt_aom_pred_high[V_PRED][tx_size](dst, stride, above, left, bd);
     else if (angle == 180)
-        pred_high[H_PRED][tx_size](dst, stride, above, left, bd);
+        svt_aom_pred_high[H_PRED][tx_size](dst, stride, above, left, bd);
 }
 
 void svt_av1_filter_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t strength) {
@@ -2701,10 +2701,10 @@ EbErrorType intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_intra_mod
     else {
         // predict
         if (mode == DC_PRED) {
-            dc_pred[src_origin_x > 0][src_origin_y > 0][tx_size](
+            svt_aom_dc_pred[src_origin_x > 0][src_origin_y > 0][tx_size](
                 dst, dst_stride, above_row, left_col);
         } else
-            eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
+            svt_aom_eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
     }
     return return_error;
 }

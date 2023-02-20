@@ -42,7 +42,7 @@ extern "C" {
 #define DEFAULT_WMTYPE AFFINE
 
 extern const int16_t eb_warped_filter[WARPEDPIXEL_PREC_SHIFTS * 3 + 1][8];
-extern const int     error_measure_lut[512];
+extern const int     svt_aom_error_measure_lut[512];
 
 EB_ALIGN(16)
 static const uint8_t warp_pad_left[14][16] = {

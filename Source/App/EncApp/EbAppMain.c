@@ -76,10 +76,10 @@ void event_handler(int32_t dummy) {
 void assign_app_thread_group(uint8_t target_socket) {
 #ifdef _WIN32
     if (GetActiveProcessorGroupCount() == 2) {
-        GROUP_AFFINITY group_affinity;
-        GetThreadGroupAffinity(GetCurrentThread(), &group_affinity);
-        group_affinity.Group = target_socket;
-        SetThreadGroupAffinity(GetCurrentThread(), &group_affinity, NULL);
+        GROUP_AFFINITY svt_aom_group_affinity;
+        GetThreadGroupAffinity(GetCurrentThread(), &svt_aom_group_affinity);
+        svt_aom_group_affinity.Group = target_socket;
+        SetThreadGroupAffinity(GetCurrentThread(), &svt_aom_group_affinity, NULL);
     }
 #else
     (void)target_socket;

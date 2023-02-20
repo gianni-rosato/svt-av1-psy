@@ -1111,7 +1111,6 @@ typedef struct PictureControlSetInitData {
     uint32_t
         sb_size; //since we still have lot of code assuming 64x64 SB, we add a new paramter supporting both128x128 and 64x64,
     //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
-    uint32_t max_depth;
     //Bool                             is_16bit;
     uint32_t                 ten_bit_format;
     uint32_t                 compressed_ten_bit_format;

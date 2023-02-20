@@ -24,12 +24,12 @@
 extern "C" {
 #endif
 
-extern const int16_t      av1_down2_symeven_half_filter[4];
+extern const int16_t      svt_aom_av1_down2_symeven_half_filter[4];
 extern const int16_t      av1_down2_symodd_half_filter[4];
-extern const InterpKernel av1_filteredinterp_filters500[(1 << RS_SUBPEL_BITS)];
-extern const InterpKernel av1_filteredinterp_filters625[(1 << RS_SUBPEL_BITS)];
-extern const InterpKernel av1_filteredinterp_filters750[(1 << RS_SUBPEL_BITS)];
-extern const InterpKernel av1_filteredinterp_filters875[(1 << RS_SUBPEL_BITS)];
+extern const InterpKernel svt_aom_av1_filteredinterp_filters500[(1 << RS_SUBPEL_BITS)];
+extern const InterpKernel svt_aom_av1_filteredinterp_filters625[(1 << RS_SUBPEL_BITS)];
+extern const InterpKernel svt_aom_av1_filteredinterp_filters750[(1 << RS_SUBPEL_BITS)];
+extern const InterpKernel svt_aom_av1_filteredinterp_filters875[(1 << RS_SUBPEL_BITS)];
 
 typedef struct {
     uint16_t encoding_width;

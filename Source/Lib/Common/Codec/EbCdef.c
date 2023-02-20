@@ -99,12 +99,12 @@ first index is offset +/-2. This removes the need to constrain the first
 index to the same range using e.g., & 7.
 */
 DECLARE_ALIGNED(16, const int, eb_cdef_directions_padded[12][2]) = {
-    /* Padding: eb_cdef_directions[6] */
+    /* Padding: svt_aom_eb_cdef_directions[6] */
     {1 * CDEF_BSTRIDE + 0, 2 * CDEF_BSTRIDE + 0},
-    /* Padding: eb_cdef_directions[7] */
+    /* Padding: svt_aom_eb_cdef_directions[7] */
     {1 * CDEF_BSTRIDE + 0, 2 * CDEF_BSTRIDE - 1},
 
-    /* Begin eb_cdef_directions */
+    /* Begin svt_aom_eb_cdef_directions */
     {-1 * CDEF_BSTRIDE + 1, -2 * CDEF_BSTRIDE + 2},
     {0 * CDEF_BSTRIDE + 1, -1 * CDEF_BSTRIDE + 2},
     {0 * CDEF_BSTRIDE + 1, 0 * CDEF_BSTRIDE + 2},
@@ -113,15 +113,15 @@ DECLARE_ALIGNED(16, const int, eb_cdef_directions_padded[12][2]) = {
     {1 * CDEF_BSTRIDE + 0, 2 * CDEF_BSTRIDE + 1},
     {1 * CDEF_BSTRIDE + 0, 2 * CDEF_BSTRIDE + 0},
     {1 * CDEF_BSTRIDE + 0, 2 * CDEF_BSTRIDE - 1},
-    /* End eb_cdef_directions */
+    /* End svt_aom_eb_cdef_directions */
 
-    /* Padding: eb_cdef_directions[0] */
+    /* Padding: svt_aom_eb_cdef_directions[0] */
     {-1 * CDEF_BSTRIDE + 1, -2 * CDEF_BSTRIDE + 2},
-    /* Padding: eb_cdef_directions[1] */
+    /* Padding: svt_aom_eb_cdef_directions[1] */
     {0 * CDEF_BSTRIDE + 1, -1 * CDEF_BSTRIDE + 2},
 };
 
-const int (*const eb_cdef_directions)[2] = eb_cdef_directions_padded + 2;
+const int (*const svt_aom_eb_cdef_directions)[2] = eb_cdef_directions_padded + 2;
 
 /* Compute the primary filter strength for an 8x8 block based on the
 directional variance difference. A high variance difference means
@@ -254,8 +254,8 @@ static AOM_INLINE void cdef_find_dir(uint16_t *in, CdefList *dlist,
     }
 }
 
-const int32_t eb_cdef_pri_taps[2][2] = {{4, 2}, {3, 3}};
-const int32_t eb_cdef_sec_taps[2][2] = {{2, 1}, {2, 1}};
+const int32_t svt_aom_eb_cdef_pri_taps[2][2] = {{4, 2}, {3, 3}};
+const int32_t svt_aom_eb_cdef_sec_taps[2][2] = {{2, 1}, {2, 1}};
 
 /* Smooth in the direction detected. */
 void svt_cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride, const uint16_t *in,
@@ -264,8 +264,8 @@ void svt_cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride, co
                              int32_t coeff_shift, uint8_t subsampling_factor) {
     int32_t        i, j, k;
     const int32_t  s        = CDEF_BSTRIDE;
-    const int32_t *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int32_t *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *pri_taps = svt_aom_eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *sec_taps = svt_aom_eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 
     for (i = 0; i < (4 << (int32_t)(bsize == BLOCK_8X8 || bsize == BLOCK_4X8));
          i += subsampling_factor) {
@@ -276,8 +276,8 @@ void svt_cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride, co
             int32_t max = x;
             int32_t min = x;
             for (k = 0; k < 2; k++) {
-                int16_t p0 = in[i * s + j + eb_cdef_directions[dir][k]];
-                int16_t p1 = in[i * s + j - eb_cdef_directions[dir][k]];
+                int16_t p0 = in[i * s + j + svt_aom_eb_cdef_directions[dir][k]];
+                int16_t p1 = in[i * s + j - svt_aom_eb_cdef_directions[dir][k]];
                 sum += (int16_t)(pri_taps[k] * constrain(p0 - x, pri_strength, pri_damping));
                 sum += (int16_t)(pri_taps[k] * constrain(p1 - x, pri_strength, pri_damping));
                 if (p0 != CDEF_VERY_LARGE)
@@ -286,10 +286,10 @@ void svt_cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride, co
                     max = AOMMAX(p1, max);
                 min        = AOMMIN(p0, min);
                 min        = AOMMIN(p1, min);
-                int16_t s0 = in[i * s + j + eb_cdef_directions[(dir + 2)][k]];
-                int16_t s1 = in[i * s + j - eb_cdef_directions[(dir + 2)][k]];
-                int16_t s2 = in[i * s + j + eb_cdef_directions[(dir - 2)][k]];
-                int16_t s3 = in[i * s + j - eb_cdef_directions[(dir - 2)][k]];
+                int16_t s0 = in[i * s + j + svt_aom_eb_cdef_directions[(dir + 2)][k]];
+                int16_t s1 = in[i * s + j - svt_aom_eb_cdef_directions[(dir + 2)][k]];
+                int16_t s2 = in[i * s + j + svt_aom_eb_cdef_directions[(dir - 2)][k]];
+                int16_t s3 = in[i * s + j - svt_aom_eb_cdef_directions[(dir - 2)][k]];
                 if (s0 != CDEF_VERY_LARGE)
                     max = AOMMAX(s0, max);
                 if (s1 != CDEF_VERY_LARGE)

@@ -581,7 +581,7 @@ static void av1_lambda_assign(PictureControlSet *pcs, uint32_t *fast_lambda, uin
     *fast_lambda            = (uint32_t)((*fast_lambda * scale_factor) >> 7);
 }
 
-const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4] = {
+const EbAv1LambdaAssignFunc svt_aom_av1_lambda_assignment_function_table[4] = {
     av1_lambda_assign,
     av1_lambda_assign,
     av1_lambda_assign,

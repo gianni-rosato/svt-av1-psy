@@ -138,15 +138,15 @@ void svt_av1_cdef_filter_block_8xn_8_sse4_1(uint8_t *dst, int dstride, const uin
     __m128i       p0, p1, p2, p3;
     v256          sum, row, res, tap;
     v256          max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    const int32_t po1  = eb_cdef_directions[dir][0];
-    const int32_t po2  = eb_cdef_directions[dir][1];
-    const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
-    const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
-    const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
-    const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
+    const int32_t po1  = svt_aom_eb_cdef_directions[dir][0];
+    const int32_t po2  = svt_aom_eb_cdef_directions[dir][1];
+    const int32_t s1o1 = svt_aom_eb_cdef_directions[(dir + 2)][0];
+    const int32_t s1o2 = svt_aom_eb_cdef_directions[(dir + 2)][1];
+    const int32_t s2o1 = svt_aom_eb_cdef_directions[(dir - 2)][0];
+    const int32_t s2o2 = svt_aom_eb_cdef_directions[(dir - 2)][1];
 
-    const int *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int *sec_taps = eb_cdef_sec_taps[0];
+    const int *pri_taps = svt_aom_eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int *sec_taps = svt_aom_eb_cdef_sec_taps[0];
 
     if (pri_strength)
         pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
@@ -288,15 +288,15 @@ void svt_av1_cdef_filter_block_4xn_8_sse4_1(uint8_t *dst, int dstride, const uin
     __m128i       p0, p1, p2, p3;
     v256          sum, row, tap, res;
     v256          max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    const int32_t po1  = eb_cdef_directions[dir][0];
-    const int32_t po2  = eb_cdef_directions[dir][1];
-    const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
-    const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
-    const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
-    const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
+    const int32_t po1  = svt_aom_eb_cdef_directions[dir][0];
+    const int32_t po2  = svt_aom_eb_cdef_directions[dir][1];
+    const int32_t s1o1 = svt_aom_eb_cdef_directions[(dir + 2)][0];
+    const int32_t s1o2 = svt_aom_eb_cdef_directions[(dir + 2)][1];
+    const int32_t s2o1 = svt_aom_eb_cdef_directions[(dir - 2)][0];
+    const int32_t s2o2 = svt_aom_eb_cdef_directions[(dir - 2)][1];
 
-    const int *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int *pri_taps = svt_aom_eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int *sec_taps = svt_aom_eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 
     if (pri_strength)
         pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
@@ -510,15 +510,15 @@ void svt_av1_cdef_filter_block_8xn_16_sse4_1(uint16_t *dst, int dstride, const u
     int           i;
     v256          sum, p0, p1, p2, p3, row, res;
     v256          max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    const int32_t po1  = eb_cdef_directions[dir][0];
-    const int32_t po2  = eb_cdef_directions[dir][1];
-    const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
-    const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
-    const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
-    const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
+    const int32_t po1  = svt_aom_eb_cdef_directions[dir][0];
+    const int32_t po2  = svt_aom_eb_cdef_directions[dir][1];
+    const int32_t s1o1 = svt_aom_eb_cdef_directions[(dir + 2)][0];
+    const int32_t s1o2 = svt_aom_eb_cdef_directions[(dir + 2)][1];
+    const int32_t s2o1 = svt_aom_eb_cdef_directions[(dir - 2)][0];
+    const int32_t s2o2 = svt_aom_eb_cdef_directions[(dir - 2)][1];
 
-    const int *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int *pri_taps = svt_aom_eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int *sec_taps = svt_aom_eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 
     if (pri_strength)
         pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
@@ -639,15 +639,15 @@ void svt_av1_cdef_filter_block_4xn_16_sse4_1(uint16_t *dst, int dstride, const u
     int           i;
     v256          p0, p1, p2, p3, sum, row, res;
     v256          max, min, large = v256_dup_16(CDEF_VERY_LARGE);
-    const int32_t po1  = eb_cdef_directions[dir][0];
-    const int32_t po2  = eb_cdef_directions[dir][1];
-    const int32_t s1o1 = eb_cdef_directions[(dir + 2)][0];
-    const int32_t s1o2 = eb_cdef_directions[(dir + 2)][1];
-    const int32_t s2o1 = eb_cdef_directions[(dir - 2)][0];
-    const int32_t s2o2 = eb_cdef_directions[(dir - 2)][1];
+    const int32_t po1  = svt_aom_eb_cdef_directions[dir][0];
+    const int32_t po2  = svt_aom_eb_cdef_directions[dir][1];
+    const int32_t s1o1 = svt_aom_eb_cdef_directions[(dir + 2)][0];
+    const int32_t s1o2 = svt_aom_eb_cdef_directions[(dir + 2)][1];
+    const int32_t s2o1 = svt_aom_eb_cdef_directions[(dir - 2)][0];
+    const int32_t s2o2 = svt_aom_eb_cdef_directions[(dir - 2)][1];
 
-    const int *pri_taps = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int *sec_taps = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int *pri_taps = svt_aom_eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int *sec_taps = svt_aom_eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
 
     if (pri_strength)
         pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));

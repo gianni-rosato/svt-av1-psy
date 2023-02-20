@@ -74,8 +74,8 @@ typedef struct {
 
 } SegmentationParams;
 
-extern const int segmentation_feature_bits[SEG_LVL_MAX];
-extern const int segmentation_feature_signed[SEG_LVL_MAX];
-extern const int segmentation_feature_max[SEG_LVL_MAX];
+extern const int svt_aom_segmentation_feature_bits[SEG_LVL_MAX];
+extern const int svt_aom_segmentation_feature_signed[SEG_LVL_MAX];
+extern const int svt_aom_segmentation_feature_max[SEG_LVL_MAX];
 
 #endif //SVT_AV1_EBSEGMENTATIONPARAMS_H

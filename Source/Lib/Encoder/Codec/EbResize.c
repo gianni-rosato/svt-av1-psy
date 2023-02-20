@@ -27,11 +27,11 @@ EbPictureBufferDesc *get_ref_pic_buffer(PictureControlSet *pcs, uint8_t is_highb
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 
 // Filters for factor of 2 downsampling.
-const int16_t av1_down2_symeven_half_filter[] = {56, 12, -3, -1};
-const int16_t av1_down2_symodd_half_filter[]  = {64, 35, 0, -3};
+const int16_t svt_aom_av1_down2_symeven_half_filter[] = {56, 12, -3, -1};
+const int16_t av1_down2_symodd_half_filter[]          = {64, 35, 0, -3};
 
 // Filters for interpolation (0.5-band) - note this also filters integer pels.
-const InterpKernel av1_filteredinterp_filters500[(1 << RS_SUBPEL_BITS)] = {
+const InterpKernel svt_aom_av1_filteredinterp_filters500[(1 << RS_SUBPEL_BITS)] = {
     {-3, 0, 35, 64, 35, 0, -3, 0},    {-3, 0, 34, 64, 36, 0, -3, 0},
     {-3, -1, 34, 64, 36, 1, -3, 0},   {-3, -1, 33, 64, 37, 1, -3, 0},
     {-3, -1, 32, 64, 38, 1, -3, 0},   {-3, -1, 31, 64, 39, 1, -3, 0},
@@ -67,7 +67,7 @@ const InterpKernel av1_filteredinterp_filters500[(1 << RS_SUBPEL_BITS)] = {
 };
 
 // Filters for interpolation (0.625-band) - note this also filters integer pels.
-const InterpKernel av1_filteredinterp_filters625[(1 << RS_SUBPEL_BITS)] = {
+const InterpKernel svt_aom_av1_filteredinterp_filters625[(1 << RS_SUBPEL_BITS)] = {
     {-1, -8, 33, 80, 33, -8, -1, 0}, {-1, -8, 31, 80, 34, -8, -1, 1},
     {-1, -8, 30, 80, 35, -8, -1, 1}, {-1, -8, 29, 80, 36, -7, -2, 1},
     {-1, -8, 28, 80, 37, -7, -2, 1}, {-1, -8, 27, 80, 38, -7, -2, 1},
@@ -103,7 +103,7 @@ const InterpKernel av1_filteredinterp_filters625[(1 << RS_SUBPEL_BITS)] = {
 };
 
 // Filters for interpolation (0.75-band) - note this also filters integer pels.
-const InterpKernel av1_filteredinterp_filters750[(1 << RS_SUBPEL_BITS)] = {
+const InterpKernel svt_aom_av1_filteredinterp_filters750[(1 << RS_SUBPEL_BITS)] = {
     {2, -11, 25, 96, 25, -11, 2, 0}, {2, -11, 24, 96, 26, -11, 2, 0},
     {2, -11, 22, 96, 28, -11, 2, 0}, {2, -10, 21, 96, 29, -12, 2, 0},
     {2, -10, 19, 96, 31, -12, 2, 0}, {2, -10, 18, 95, 32, -11, 2, 0},
@@ -139,7 +139,7 @@ const InterpKernel av1_filteredinterp_filters750[(1 << RS_SUBPEL_BITS)] = {
 };
 
 // Filters for interpolation (0.875-band) - note this also filters integer pels.
-const InterpKernel av1_filteredinterp_filters875[(1 << RS_SUBPEL_BITS)] = {
+const InterpKernel svt_aom_av1_filteredinterp_filters875[(1 << RS_SUBPEL_BITS)] = {
     {3, -8, 13, 112, 13, -8, 3, 0},   {2, -7, 12, 112, 15, -8, 3, -1},
     {3, -7, 10, 112, 17, -9, 3, -1},  {2, -6, 8, 112, 19, -9, 3, -1},
     {2, -6, 7, 112, 21, -10, 3, -1},  {2, -5, 6, 111, 22, -10, 3, -1},
@@ -211,8 +211,8 @@ static int get_down2_steps(int in_length, int out_length) {
 
 void svt_av1_down2_symeven_c(const uint8_t *const input, int length, uint8_t *output) {
     // Actual filter len = 2 * filter_len_half.
-    const int16_t *filter          = av1_down2_symeven_half_filter;
-    const int      filter_len_half = sizeof(av1_down2_symeven_half_filter) / 2;
+    const int16_t *filter          = svt_aom_av1_down2_symeven_half_filter;
+    const int      filter_len_half = sizeof(svt_aom_av1_down2_symeven_half_filter) / 2;
     int            i, j;
     uint8_t       *optr = output;
     int            l1   = filter_len_half;
@@ -318,13 +318,13 @@ static const InterpKernel *choose_interp_filter(int in_length, int out_length) {
     if (out_length16 >= in_length * 16)
         return filteredinterp_filters1000;
     else if (out_length16 >= in_length * 13)
-        return av1_filteredinterp_filters875;
+        return svt_aom_av1_filteredinterp_filters875;
     else if (out_length16 >= in_length * 11)
-        return av1_filteredinterp_filters750;
+        return svt_aom_av1_filteredinterp_filters750;
     else if (out_length16 >= in_length * 9)
-        return av1_filteredinterp_filters625;
+        return svt_aom_av1_filteredinterp_filters625;
     else
-        return av1_filteredinterp_filters500;
+        return svt_aom_av1_filteredinterp_filters500;
 }
 
 void svt_av1_interpolate_core_c(const uint8_t *const input, int in_length, uint8_t *output,
@@ -607,8 +607,8 @@ static void highbd_interpolate(const uint16_t *const input, int in_length, uint1
 void svt_av1_highbd_down2_symeven_c(const uint16_t *const input, int length, uint16_t *output,
                                     int bd) {
     // Actual filter len = 2 * filter_len_half.
-    static const int16_t *filter          = av1_down2_symeven_half_filter;
-    const int             filter_len_half = sizeof(av1_down2_symeven_half_filter) / 2;
+    static const int16_t *filter          = svt_aom_av1_down2_symeven_half_filter;
+    const int             filter_len_half = sizeof(svt_aom_av1_down2_symeven_half_filter) / 2;
     int                   i, j;
     uint16_t             *optr = output;
     int                   l1   = filter_len_half;

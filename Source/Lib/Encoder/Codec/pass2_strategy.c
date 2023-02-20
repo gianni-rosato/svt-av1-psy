@@ -2153,10 +2153,10 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
         }
     }
 }
-int gf_high_tpl_la = 2400;
-int gf_low_tpl_la  = 300;
-int kf_high        = 5000;
-int kf_low         = 400;
+int svt_aom_gf_high_tpl_la = 2400;
+int svt_aom_gf_low_tpl_la  = 300;
+int svt_aom_kf_high        = 5000;
+int svt_aom_kf_low         = 400;
 /******************************************************
  * crf_assign_max_rate
  * Assign the max frame size for capped VBR in base layer frames
@@ -2202,7 +2202,7 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
             ? MIN(frames_in_sw, scs->static_config.intra_period_length + 1)
             : frames_in_sw;
         max_frame_size  = calculate_boost_bits(kf_interval, rc->kf_boost, available_bit_sw);
-        int kf_low_thr  = kf_low + (kf_high - kf_low) / 3;
+        int kf_low_thr  = svt_aom_kf_low + (svt_aom_kf_high - svt_aom_kf_low) / 3;
         if (rc->kf_boost > kf_low_thr)
             max_frame_size = max_frame_size * 14 / 10;
 #if DEBUG_RC_CAP_LOG
@@ -2220,7 +2220,8 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
             (frames_in_sw - coded_frames_num_sw);
         max_frame_size = calculate_boost_bits(
             (1 << ppcs_ptr->hierarchical_levels), rc->gfu_boost, gf_group_bits);
-        int gfu_low_thr = gf_low_tpl_la + (gf_high_tpl_la - gf_low_tpl_la) / 3;
+        int gfu_low_thr = svt_aom_gf_low_tpl_la +
+            (svt_aom_gf_high_tpl_la - svt_aom_gf_low_tpl_la) / 3;
         if (rc->gfu_boost > gfu_low_thr)
             max_frame_size = max_frame_size * 12 / 10;
 #if DEBUG_RC_CAP_LOG

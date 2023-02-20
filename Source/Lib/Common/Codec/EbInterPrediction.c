@@ -1142,19 +1142,19 @@ void svt_av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride, u
     }
 }
 
-aom_highbd_convolve_fn_t convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
+aom_highbd_convolve_fn_t svt_aom_convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
 void asm_set_convolve_hbd_asm_table(void) {
-    convolveHbd[0][0][0] = svt_av1_highbd_convolve_2d_copy_sr;
-    convolveHbd[0][0][1] = svt_av1_highbd_jnt_convolve_2d_copy;
+    svt_aom_convolveHbd[0][0][0] = svt_av1_highbd_convolve_2d_copy_sr;
+    svt_aom_convolveHbd[0][0][1] = svt_av1_highbd_jnt_convolve_2d_copy;
 
-    convolveHbd[0][1][0] = svt_av1_highbd_convolve_y_sr;
-    convolveHbd[0][1][1] = svt_av1_highbd_jnt_convolve_y;
+    svt_aom_convolveHbd[0][1][0] = svt_av1_highbd_convolve_y_sr;
+    svt_aom_convolveHbd[0][1][1] = svt_av1_highbd_jnt_convolve_y;
 
-    convolveHbd[1][0][0] = svt_av1_highbd_convolve_x_sr;
-    convolveHbd[1][0][1] = svt_av1_highbd_jnt_convolve_x;
+    svt_aom_convolveHbd[1][0][0] = svt_av1_highbd_convolve_x_sr;
+    svt_aom_convolveHbd[1][0][1] = svt_av1_highbd_jnt_convolve_x;
 
-    convolveHbd[1][1][0] = svt_av1_highbd_convolve_2d_sr;
-    convolveHbd[1][1][1] = svt_av1_highbd_jnt_convolve_2d;
+    svt_aom_convolveHbd[1][1][0] = svt_av1_highbd_convolve_2d_sr;
+    svt_aom_convolveHbd[1][1][1] = svt_av1_highbd_jnt_convolve_2d;
 }
 
 AomConvolveFn convolve[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
@@ -1431,7 +1431,7 @@ void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int
                                          bd);
     } else {
         UNUSED(subpel_params);
-        convolveHbd[0][0][conv_params->is_compound](
+        svt_aom_convolveHbd[0][0][conv_params->is_compound](
             src_10b, src_stride16, dst16, dst_stride, w, h, 0, 0, 0, 0, conv_params, bd);
     }
 }
@@ -1491,18 +1491,19 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
         } else {
             SubpelParams sp = *subpel_params;
             revert_scale_extra_bits(&sp);
-            convolveHbd[sp.subpel_x != 0][sp.subpel_y != 0][conv_params->is_compound](src_10b,
-                                                                                      src_stride16,
-                                                                                      dst16,
-                                                                                      dst_stride,
-                                                                                      w,
-                                                                                      h,
-                                                                                      filter_x,
-                                                                                      filter_y,
-                                                                                      sp.subpel_x,
-                                                                                      sp.subpel_y,
-                                                                                      conv_params,
-                                                                                      bd);
+            svt_aom_convolveHbd[sp.subpel_x != 0][sp.subpel_y != 0][conv_params->is_compound](
+                src_10b,
+                src_stride16,
+                dst16,
+                dst_stride,
+                w,
+                h,
+                filter_x,
+                filter_y,
+                sp.subpel_x,
+                sp.subpel_y,
+                conv_params,
+                bd);
         }
     } else {
         if (is_scaled) {
@@ -1659,18 +1660,19 @@ void svt_highbd_inter_predictor(const uint16_t *src, int32_t src_stride, uint16_
             return;
         }
 
-        convolveHbd[sp.subpel_x != 0][sp.subpel_y != 0][conv_params->is_compound](src,
-                                                                                  src_stride,
-                                                                                  dst,
-                                                                                  dst_stride,
-                                                                                  w,
-                                                                                  h,
-                                                                                  &filter_params_x,
-                                                                                  &filter_params_y,
-                                                                                  sp.subpel_x,
-                                                                                  sp.subpel_y,
-                                                                                  conv_params,
-                                                                                  bd);
+        svt_aom_convolveHbd[sp.subpel_x != 0][sp.subpel_y != 0][conv_params->is_compound](
+            src,
+            src_stride,
+            dst,
+            dst_stride,
+            w,
+            h,
+            &filter_params_x,
+            &filter_params_y,
+            sp.subpel_x,
+            sp.subpel_y,
+            conv_params,
+            bd);
     }
 }
 
@@ -2709,7 +2711,7 @@ const uint8_t *svt_av1_get_obmc_mask(int length) {
 
 int16_t svt_aom_mode_context_analyzer(const int16_t *const          mode_context,
                                       const MvReferenceFrame *const rf) {
-    static unsigned compound_mode_ctx_map[3][COMP_NEWMV_CTXS] = {
+    static unsigned svt_aom_compound_mode_ctx_map[3][COMP_NEWMV_CTXS] = {
         {0, 1, 1, 1, 1},
         {1, 2, 3, 4, 4},
         {4, 4, 5, 6, 7},
@@ -2723,6 +2725,6 @@ int16_t svt_aom_mode_context_analyzer(const int16_t *const          mode_context
     const unsigned refmv_ctx = (mode_context[ref_frame] >> REFMV_OFFSET) & REFMV_CTX_MASK;
     assert((refmv_ctx >> 1) < 3);
     const unsigned comp_ctx =
-        compound_mode_ctx_map[refmv_ctx >> 1][AOMMIN(newmv_ctx, COMP_NEWMV_CTXS - 1)];
+        svt_aom_compound_mode_ctx_map[refmv_ctx >> 1][AOMMIN(newmv_ctx, COMP_NEWMV_CTXS - 1)];
     return comp_ctx;
 }

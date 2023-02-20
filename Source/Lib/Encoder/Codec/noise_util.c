@@ -113,7 +113,7 @@ void svt_aom_noise_tx_free(struct aom_noise_tx_t *noise_tx) {
 }
 
 #define OD_DIVU_DMAX (1024)
-uint32_t od_divu_small_consts[OD_DIVU_DMAX][2] = {
+uint32_t svt_aom_od_divu_small_consts[OD_DIVU_DMAX][2] = {
     {0xFFFFFFFF, 0xFFFFFFFF}, {0xFFFFFFFF, 0xFFFFFFFF}, {0xAAAAAAAB, 0},
     {0xFFFFFFFF, 0xFFFFFFFF}, {0xCCCCCCCD, 0},          {0xAAAAAAAB, 0},
     {0x92492492, 0x92492492}, {0xFFFFFFFF, 0xFFFFFFFF}, {0xE38E38E4, 0},

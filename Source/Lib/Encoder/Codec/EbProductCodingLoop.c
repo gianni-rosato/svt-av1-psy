@@ -58,7 +58,7 @@ void precompute_intra_pred_for_inter_intra(PictureControlSet *pcs, ModeDecisionC
 int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 
 void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
-extern IntraSize     intra_unit[];
+extern IntraSize     svt_aom_intra_unit[];
 EbPictureBufferDesc *get_ref_pic_buffer(PictureControlSet *pcs, uint8_t is_highbd, uint8_t list_idx,
                                         uint8_t ref_idx);
 const EbPredictionFunc svt_product_prediction_fun_table_light_pd0[2] = {
@@ -1148,14 +1148,14 @@ static void fast_loop_core_light_pd0(ModeDecisionCandidateBuffer *cand_bf, Pictu
             ctx->hbd_md, ctx, pcs, cand_bf);
         if (ctx->mds0_ctrls.mds0_dist_type == MDS0_VAR) {
             if (!ctx->hbd_md) {
-                const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize];
+                const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
                 unsigned int            sse;
                 uint8_t                *pred_y = pred->buffer_y + cu_origin_index;
                 uint8_t                *src_y  = input_pic->buffer_y + input_origin_index;
                 *(cand_bf->fast_cost) =
                     fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >> 2;
             } else {
-                const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize];
+                const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
                 unsigned int            sse;
                 uint16_t               *pred_y = ((uint16_t *)pred->buffer_y) + cu_origin_index;
                 uint16_t *src_y       = ((uint16_t *)input_pic->buffer_y) + input_origin_index;
@@ -1206,7 +1206,7 @@ static void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *cand_bf, Pictu
         0, ctx, pcs, cand_bf);
     // Distortion
     if (ctx->mds0_ctrls.mds0_dist_type == MDS0_VAR) {
-        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize];
+        const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
         unsigned int            sse;
         uint8_t                *pred_y = pred->buffer_y + loc->blk_origin_index;
         uint8_t                *src_y  = input_pic->buffer_y + loc->input_origin_index;
@@ -1300,14 +1300,14 @@ static void fast_loop_core(ModeDecisionCandidateBuffer *cand_bf, PictureControlS
             ctx->blk_geom->bheight));
     } else if (ctx->mds0_ctrls.mds0_dist_type == MDS0_VAR) {
         if (!ctx->hbd_md) {
-            const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize];
+            const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
             unsigned int            sse;
             uint8_t                *pred_y = pred->buffer_y + cu_origin_index;
             uint8_t                *src_y  = input_pic->buffer_y + input_origin_index;
             cand_bf->luma_fast_dist        = luma_fast_dist =
                 fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >> 2;
         } else {
-            const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize];
+            const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
             unsigned int            sse;
             uint16_t               *pred_y = ((uint16_t *)pred->buffer_y) + cu_origin_index;
             uint16_t               *src_y  = ((uint16_t *)input_pic->buffer_y) + input_origin_index;
@@ -2216,7 +2216,7 @@ static void derive_me_offsets(const SequenceControlSet *scs, PictureControlSet *
     } else {
         ctx->me_sb_addr = ctx->sb_ptr->index;
 
-        if (ctx->blk_geom->geom_idx == GEOM_0) {
+        if (ctx->blk_geom->svt_aom_geom_idx == GEOM_0) {
             ctx->me_block_offset = me_idx_85[ctx->blk_geom->blkidx_mds];
             if (!ctx->sb_ptr->pcs->ppcs->enable_me_8x8) {
                 if (ctx->me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8)
@@ -2698,7 +2698,7 @@ static int md_subpel_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                             ctx->full_lambda_md[EB_8_BIT_MD],
                             0); // 10BIT not supported
     // Subpel variance params
-    ms_params->var_params.vfp                = &mefn_ptr[ctx->blk_geom->bsize];
+    ms_params->var_params.vfp                = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
     ms_params->var_params.subpel_search_type = md_subpel_ctrls.subpel_search_type;
     ms_params->var_params.w                  = block_size_wide[ctx->blk_geom->bsize];
     ms_params->var_params.h                  = block_size_high[ctx->blk_geom->bsize];
@@ -4269,7 +4269,7 @@ static EbErrorType av1_intra_luma_prediction(ModeDecisionContext *ctx, PictureCo
 
         mode = cand_bf_ptr->cand->pred_mode;
         if (cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y] == 0) {
-            IntraSize intra_size = intra_unit[mode];
+            IntraSize intra_size = svt_aom_intra_unit[mode];
             if (txb_origin_y != 0 && intra_size.top)
                 svt_memcpy(top_neigh_array + 1,
                            ctx->tx_search_luma_recon_neighbor_array->top_array + txb_origin_x,
@@ -4343,7 +4343,7 @@ static EbErrorType av1_intra_luma_prediction(ModeDecisionContext *ctx, PictureCo
         mode = cand_bf_ptr->cand->pred_mode;
 
         if (cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y] == 0) {
-            IntraSize intra_size = intra_unit[mode];
+            IntraSize intra_size = svt_aom_intra_unit[mode];
 
             if (txb_origin_y != 0 && intra_size.top)
                 svt_memcpy(top_neigh_array + 1,
@@ -6372,7 +6372,7 @@ static uint8_t do_md_recon(PictureParentControlSet *pcs, ModeDecisionContext *ct
 
     return do_recon;
 }
-static const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
+static const uint8_t svt_aom_eb_av1_var_offs[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
@@ -6475,7 +6475,7 @@ void chroma_complexity_check_pred(ModeDecisionContext         *ctx,
     }
 
     if (use_var) {
-        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize_uv];
+        const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize_uv];
         unsigned int            sse;
         unsigned int            var_cb;
         unsigned int            var_cr;
@@ -6495,12 +6495,12 @@ void chroma_complexity_check_pred(ModeDecisionContext         *ctx,
         } else {
             var_cb = fn_ptr->vf(input_pic->buffer_cb + loc->input_cb_origin_in_index,
                                 input_pic->stride_cb,
-                                eb_av1_var_offs,
+                                svt_aom_eb_av1_var_offs,
                                 0,
                                 &sse);
             var_cr = fn_ptr->vf(input_pic->buffer_cr + loc->input_cb_origin_in_index,
                                 input_pic->stride_cr,
-                                eb_av1_var_offs,
+                                svt_aom_eb_av1_var_offs,
                                 0,
                                 &sse);
         }
@@ -6689,7 +6689,7 @@ static COMPONENT_TYPE chroma_complexity_check(PictureControlSet *pcs, ModeDecisi
     /* For INTRA blocks, if the chroma variance of the block is high, perform chroma. Can also use variance check as an additional
     check for INTER blocks. */
     if (is_intra_mode(cand->pred_mode) || ctx->lpd1_tx_ctrls.chroma_detector_level <= 2) {
-        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize_uv];
+        const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize_uv];
         unsigned int            sse;
         unsigned int            var_cb;
         unsigned int            var_cr;
@@ -6709,12 +6709,12 @@ static COMPONENT_TYPE chroma_complexity_check(PictureControlSet *pcs, ModeDecisi
         } else {
             var_cb = fn_ptr->vf(input_pic->buffer_cb + loc->input_cb_origin_in_index,
                                 input_pic->stride_cb,
-                                eb_av1_var_offs,
+                                svt_aom_eb_av1_var_offs,
                                 0,
                                 &sse);
             var_cr = fn_ptr->vf(input_pic->buffer_cr + loc->input_cb_origin_in_index,
                                 input_pic->stride_cr,
-                                eb_av1_var_offs,
+                                svt_aom_eb_av1_var_offs,
                                 0,
                                 &sse);
         }
@@ -7833,7 +7833,7 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
         uint32_t chroma_fast_distortion;
         if (ctx->mds0_ctrls.mds0_dist_type == MDS0_VAR) {
             if (!ctx->hbd_md) {
-                const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize_uv];
+                const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize_uv];
                 unsigned int            sse;
                 uint8_t                *pred_cb = cand_bf->pred->buffer_cb + cu_chroma_origin_index;
                 uint8_t                *src_cb  = input_pic->buffer_cb + input_cb_origin_in_index;
@@ -7850,7 +7850,7 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
                          pred_cr, cand_bf->pred->stride_cr, src_cr, input_pic->stride_cr, &sse) >>
                      2);
             } else {
-                const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize_uv];
+                const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize_uv];
                 unsigned int            sse;
                 uint16_t *pred_cb = ((uint16_t *)cand_bf->pred->buffer_cb) + cu_chroma_origin_index;
                 uint16_t *src_cb  = ((uint16_t *)input_pic->buffer_cb) + input_cb_origin_in_index;
@@ -8441,7 +8441,7 @@ static void md_encode_block_light_pd0(PictureControlSet *pcs, ModeDecisionContex
     }
     if (pcs->slice_type != I_SLICE) {
         ctx->me_sb_addr = ctx->sb_ptr->index;
-        if (ctx->blk_geom->geom_idx == GEOM_0) {
+        if (ctx->blk_geom->svt_aom_geom_idx == GEOM_0) {
             ctx->me_block_offset = me_idx_85[ctx->blk_geom->blkidx_mds];
             if (!pcs->ppcs->enable_me_8x8) {
                 if (ctx->me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8)
@@ -9283,7 +9283,7 @@ static void md_encode_block_light_pd1(PictureControlSet *pcs, ModeDecisionContex
     // need to init xd before product_coding_loop_init_fast_loop()
     init_xd(pcs, ctx);
     ctx->me_sb_addr = ctx->sb_ptr->index;
-    if (ctx->blk_geom->geom_idx == GEOM_0) {
+    if (ctx->blk_geom->svt_aom_geom_idx == GEOM_0) {
         ctx->me_block_offset = me_idx_85[ctx->blk_geom->blkidx_mds];
         if (!pcs->ppcs->enable_me_8x8) {
             if (ctx->me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8)
@@ -10369,7 +10369,7 @@ static void check_curr_to_parent_cost_light_pd0(SequenceControlSet *scs, Picture
                 (parent_depth_cost * th) <= (current_depth_cost * 100)) {
                 *md_early_exit_sq          = 1;
                 *next_non_skip_blk_idx_mds = parent_depth_idx_mds +
-                    ns_depth_offset[blk_geom->geom_idx][blk_geom->depth - 1];
+                    ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth - 1];
             } else {
                 *md_early_exit_sq = 0;
             }
@@ -10412,7 +10412,7 @@ static void check_curr_to_parent_cost(SequenceControlSet *scs, PictureControlSet
             (parent_depth_cost * th) <= (current_depth_cost * 100)) {
             *md_early_exit_sq          = 1;
             *next_non_skip_blk_idx_mds = parent_depth_idx_mds +
-                ns_depth_offset[blk_geom->geom_idx][blk_geom->depth - 1];
+                ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth - 1];
         } else {
             *md_early_exit_sq = 0;
         }
@@ -10840,7 +10840,7 @@ EB_EXTERN EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock
     for (uint32_t blk_idx = 0; blk_idx < 4; blk_idx++) {
         ctx->b32_satd[blk_idx] = (uint32_t)~0;
 
-        uint32_t blk_idx_mds = blk32_idx_tab[scs->geom_idx][blk_idx];
+        uint32_t blk_idx_mds = blk32_idx_tab[scs->svt_aom_geom_idx][blk_idx];
 
         // block position should be calculated from the values in MD context,
         // because sb params are different since frames might be downscaled
@@ -10854,7 +10854,7 @@ EB_EXTERN EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock
 
         ctx->me_sb_addr = ctx->sb_ptr->index;
 
-        ctx->me_block_offset = (ctx->blk_geom->geom_idx == GEOM_0)
+        ctx->me_block_offset = (ctx->blk_geom->svt_aom_geom_idx == GEOM_0)
             ? me_idx_85[ctx->blk_geom->blkidx_mds]
             : me_idx[ctx->blk_geom->blkidx_mds];
 

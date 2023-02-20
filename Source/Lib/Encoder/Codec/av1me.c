@@ -27,15 +27,15 @@ int av1_is_dv_valid(const MV dv, const MacroBlockD *xd, int mi_row, int mi_col, 
 int svt_av1_refining_search_sad(IntraBcContext *x, MV *ref_mv, int error_per_bit, int search_range,
                                 const AomVarianceFnPtr *fn_ptr, const MV *center_mv);
 
-AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+AomVarianceFnPtr svt_aom_mefn_ptr[BlockSizeS_ALL];
 
 void init_fn_ptr(void) {
 #define BFP0(BT, SDF, VF, VF_HBD_10, SVF, SDX4DF) \
-    mefn_ptr[BT].sdf       = SDF;                 \
-    mefn_ptr[BT].vf        = VF;                  \
-    mefn_ptr[BT].vf_hbd_10 = VF_HBD_10;           \
-    mefn_ptr[BT].svf       = SVF;                 \
-    mefn_ptr[BT].sdx4df    = SDX4DF;
+    svt_aom_mefn_ptr[BT].sdf       = SDF;         \
+    svt_aom_mefn_ptr[BT].vf        = VF;          \
+    svt_aom_mefn_ptr[BT].vf_hbd_10 = VF_HBD_10;   \
+    svt_aom_mefn_ptr[BT].svf       = SVF;         \
+    svt_aom_mefn_ptr[BT].sdx4df    = SDX4DF;
 
     BFP0(BLOCK_4X16,
          svt_aom_sad4x16,
@@ -169,10 +169,10 @@ void init_fn_ptr(void) {
          svt_aom_highbd_10_variance4x4,
          svt_aom_sub_pixel_variance4x4,
          svt_aom_sad4x4x4d)
-#define OBFP(BT, OSDF, OVF, OSVF) \
-    mefn_ptr[BT].osdf = OSDF;     \
-    mefn_ptr[BT].ovf  = OVF;      \
-    mefn_ptr[BT].osvf = OSVF;
+#define OBFP(BT, OSDF, OVF, OSVF)     \
+    svt_aom_mefn_ptr[BT].osdf = OSDF; \
+    svt_aom_mefn_ptr[BT].ovf  = OVF;  \
+    svt_aom_mefn_ptr[BT].osvf = OSVF;
     OBFP(BLOCK_128X128,
          svt_aom_obmc_sad128x128,
          svt_aom_obmc_variance128x128,
@@ -1341,7 +1341,7 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
 
     SpeedFeatures *sf              = &pcs->sf;
     sf->exhaustive_searches_thresh = (1 << 25);
-    const AomVarianceFnPtr *fn_ptr = &mefn_ptr[bsize];
+    const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[bsize];
     int                     var    = 0;
 
     if (cost_list) {

@@ -2074,18 +2074,18 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
 
         src_10b = (uint16_t *)packed_buf + offset + (offset * stride);
 
-        convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](src_10b,
-                                                               stride,
-                                                               (uint16_t *)dst_ptr,
-                                                               dst_stride,
-                                                               bwidth,
-                                                               bheight,
-                                                               &filter_params_x,
-                                                               &filter_params_y,
-                                                               subpel_x,
-                                                               subpel_y,
-                                                               &conv_params,
-                                                               bit_depth);
+        svt_aom_convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](src_10b,
+                                                                       stride,
+                                                                       (uint16_t *)dst_ptr,
+                                                                       dst_stride,
+                                                                       bwidth,
+                                                                       bheight,
+                                                                       &filter_params_x,
+                                                                       &filter_params_y,
+                                                                       subpel_x,
+                                                                       subpel_y,
+                                                                       &conv_params,
+                                                                       bit_depth);
     }
 
     //List1-Cb
@@ -2154,7 +2154,7 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
 
             src_10b = (uint16_t *)packed_buf + offset + (offset * stride);
 
-            convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](
+            svt_aom_convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](
                 src_10b,
                 stride,
                 (uint16_t *)dst_ptr,

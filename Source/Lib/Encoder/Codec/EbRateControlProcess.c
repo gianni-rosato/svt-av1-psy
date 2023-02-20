@@ -511,10 +511,10 @@ static int rtc_minq_12[QINDEX_RANGE] = {
     181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 199, 200,
     201, 202, 203, 205, 206, 207, 208, 210, 211, 212, 214, 215, 216, 218, 219, 221, 222, 224, 225,
     227, 229, 230, 232, 234, 235, 237, 239, 241};
-static int gf_high_tpl_la = 2400;
-static int gf_low_tpl_la  = 300;
-static int kf_high        = 5000;
-static int kf_low         = 400;
+static int svt_aom_gf_high_tpl_la = 2400;
+static int svt_aom_gf_low_tpl_la  = 300;
+static int svt_aom_kf_high        = 5000;
+static int svt_aom_kf_low         = 400;
 static int get_active_quality(int q, int gfu_boost, int low, int high, int *low_motion_minq,
                               int *high_motion_minq) {
     if (gfu_boost > high)
@@ -534,8 +534,12 @@ static int get_kf_active_quality_tpl(const RATE_CONTROL *const rc, int q, EbBitD
     int *kf_high_motion_minq;
     ASSIGN_MINQ_TABLE(bit_depth, kf_low_motion_minq_cqp);
     ASSIGN_MINQ_TABLE(bit_depth, kf_high_motion_minq);
-    return get_active_quality(
-        q, rc->kf_boost, kf_low, kf_high, kf_low_motion_minq_cqp, kf_high_motion_minq);
+    return get_active_quality(q,
+                              rc->kf_boost,
+                              svt_aom_kf_low,
+                              svt_aom_kf_high,
+                              kf_low_motion_minq_cqp,
+                              kf_high_motion_minq);
 }
 static int get_gf_active_quality_tpl_la(const RATE_CONTROL *const rc, int q, EbBitDepth bit_depth) {
     int *arfgf_low_motion_minq;
@@ -544,8 +548,8 @@ static int get_gf_active_quality_tpl_la(const RATE_CONTROL *const rc, int q, EbB
     ASSIGN_MINQ_TABLE(bit_depth, arfgf_high_motion_minq);
     return get_active_quality(q,
                               rc->gfu_boost,
-                              gf_low_tpl_la,
-                              gf_high_tpl_la,
+                              svt_aom_gf_low_tpl_la,
+                              svt_aom_gf_high_tpl_la,
                               arfgf_low_motion_minq,
                               arfgf_high_motion_minq);
 }
@@ -2643,17 +2647,25 @@ static int get_kf_q_tpl(const RATE_CONTROL *const rc, int target_active_quality,
     ASSIGN_MINQ_TABLE(bit_depth, kf_low_motion_minq_cqp);
     ASSIGN_MINQ_TABLE(bit_depth, kf_high_motion_minq);
     int q              = rc->active_worst_quality;
-    int active_quality = get_active_quality(
-        q, rc->kf_boost, kf_low, kf_high, kf_low_motion_minq_cqp, kf_high_motion_minq);
-    int prev_dif = abs(target_active_quality - active_quality);
+    int active_quality = get_active_quality(q,
+                                            rc->kf_boost,
+                                            svt_aom_kf_low,
+                                            svt_aom_kf_high,
+                                            kf_low_motion_minq_cqp,
+                                            kf_high_motion_minq);
+    int prev_dif       = abs(target_active_quality - active_quality);
     while (abs(target_active_quality - active_quality) > 4 &&
            abs(target_active_quality - active_quality) <= prev_dif) {
         if (active_quality > target_active_quality)
             q--;
         else
             q++;
-        active_quality = get_active_quality(
-            q, rc->kf_boost, kf_low, kf_high, kf_low_motion_minq_cqp, kf_high_motion_minq);
+        active_quality = get_active_quality(q,
+                                            rc->kf_boost,
+                                            svt_aom_kf_low,
+                                            svt_aom_kf_high,
+                                            kf_low_motion_minq_cqp,
+                                            kf_high_motion_minq);
     }
     return q;
 }
@@ -2670,8 +2682,8 @@ static int get_gfu_q_tpl(const RATE_CONTROL *const rc, int target_active_quality
     int q              = rc->active_worst_quality;
     int active_quality = get_active_quality(q,
                                             rc->gfu_boost,
-                                            gf_low_tpl_la,
-                                            gf_high_tpl_la,
+                                            svt_aom_gf_low_tpl_la,
+                                            svt_aom_gf_high_tpl_la,
                                             arfgf_low_motion_minq,
                                             arfgf_high_motion_minq);
 
@@ -2684,8 +2696,8 @@ static int get_gfu_q_tpl(const RATE_CONTROL *const rc, int target_active_quality
             q++;
         active_quality = get_active_quality(q,
                                             rc->gfu_boost,
-                                            gf_low_tpl_la,
-                                            gf_high_tpl_la,
+                                            svt_aom_gf_low_tpl_la,
+                                            svt_aom_gf_high_tpl_la,
                                             arfgf_low_motion_minq,
                                             arfgf_high_motion_minq);
     }

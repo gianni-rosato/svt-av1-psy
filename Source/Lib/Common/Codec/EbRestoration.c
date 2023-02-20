@@ -86,7 +86,7 @@ void  svt_aom_free(void *memblk);
 // The 's' values are calculated based on original 'r' and 'e' values in the
 // spec using GenSgrprojVtable().
 // Note: Setting r = 0 skips the filter; with corresponding s = -1 (invalid).
-const SgrParamsType eb_sgr_params[SGRPROJ_PARAMS] = {
+const SgrParamsType svt_aom_eb_sgr_params[SGRPROJ_PARAMS] = {
     {{2, 1}, {140, 3236}},
     {{2, 1}, {112, 2158}},
     {{2, 1}, {93, 1618}},
@@ -670,7 +670,7 @@ void svt_decode_xq(const int32_t *xqd, int32_t *xq, const SgrParamsType *params)
     }
 }
 
-const int32_t eb_x_by_xplus1[256] = {
+const int32_t svt_aom_eb_x_by_xplus1[256] = {
     // Special case: Map 0 -> 1 (corresponding to a value of 1/256)
     // instead of 0. See comments in selfguided_restoration_internal() for why
     1,   128, 171, 192, 205, 213, 219, 224, 228, 230, 233, 235, 236, 238, 239, 240, 241, 242, 243,
@@ -689,7 +689,7 @@ const int32_t eb_x_by_xplus1[256] = {
     255, 255, 255, 255, 255, 255, 255, 255, 256,
 };
 
-const int32_t eb_one_by_x[MAX_NELEM] = {
+const int32_t svt_aom_eb_one_by_x[MAX_NELEM] = {
     4096, 2048, 1365, 1024, 819, 683, 585, 512, 455, 410, 372, 341, 315,
     293,  273,  256,  241,  228, 216, 205, 195, 186, 178, 171, 164,
 };
@@ -698,7 +698,7 @@ static void selfguided_restoration_fast_internal(int32_t *dgd, int32_t width, in
                                                  int32_t dgd_stride, int32_t *dst,
                                                  int32_t dst_stride, int32_t bit_depth,
                                                  int32_t sgr_params_idx, int32_t radius_idx) {
-    const SgrParamsType *const params     = &eb_sgr_params[sgr_params_idx];
+    const SgrParamsType *const params     = &svt_aom_eb_sgr_params[sgr_params_idx];
     const int32_t              r          = params->r[radius_idx];
     const int32_t              width_ext  = width + 2 * SGRPROJ_BORDER_HORZ;
     const int32_t              height_ext = height + 2 * SGRPROJ_BORDER_VERT;
@@ -774,7 +774,7 @@ static void selfguided_restoration_fast_internal(int32_t *dgd, int32_t width, in
             // Further, in the calculation of B[k] below, if z == 0 and r == 2,
             // then A[k] "should be" 0. But then we can end up setting B[k] to a value
             // slightly above 2^(8 + bit depth), due to rounding in the value of
-            // eb_one_by_x[25-1].
+            // svt_aom_eb_one_by_x[25-1].
             //
             // Thus we saturate so that, when z == 0, A[k] is set to 1 instead of 0.
             // This fixes the above issues (256 - A[k] fits in a uint8, and we can't
@@ -786,17 +786,17 @@ static void selfguided_restoration_fast_internal(int32_t *dgd, int32_t width, in
             // would be a bad idea, as that corresponds to the case where the image
             // is very variable, when we want to preserve the local pixel value as
             // much as possible.
-            A[k] = eb_x_by_xplus1[AOMMIN(z, 255)]; // in range [1, 256]
+            A[k] = svt_aom_eb_x_by_xplus1[AOMMIN(z, 255)]; // in range [1, 256]
 
             // SGRPROJ_SGR - A[k] < 2^8 (from above), B[k] < 2^(bit_depth) * n,
-            // eb_one_by_x[n - 1] = round(2^12 / n)
+            // svt_aom_eb_one_by_x[n - 1] = round(2^12 / n)
             // => the product here is < 2^(20 + bit_depth) <= 2^32,
             // and B[k] is set to a value < 2^(8 + bit depth)
-            // This holds even with the rounding in eb_one_by_x and in the overall
+            // This holds even with the rounding in svt_aom_eb_one_by_x and in the overall
             // result, as long as SGRPROJ_SGR - A[k] is strictly less than 2^8.
-            B[k] = (int32_t)ROUND_POWER_OF_TWO(
-                (uint32_t)(SGRPROJ_SGR - A[k]) * (uint32_t)B[k] * (uint32_t)eb_one_by_x[n - 1],
-                SGRPROJ_RECIP_BITS);
+            B[k] = (int32_t)ROUND_POWER_OF_TWO((uint32_t)(SGRPROJ_SGR - A[k]) * (uint32_t)B[k] *
+                                                   (uint32_t)svt_aom_eb_one_by_x[n - 1],
+                                               SGRPROJ_RECIP_BITS);
         }
     }
     // Use the A[] and B[] arrays to calculate the filtered image
@@ -838,7 +838,7 @@ static void selfguided_restoration_internal(int32_t *dgd, int32_t width, int32_t
                                             int32_t dgd_stride, int32_t *dst, int32_t dst_stride,
                                             int32_t bit_depth, int32_t sgr_params_idx,
                                             int32_t radius_idx) {
-    const SgrParamsType *const params     = &eb_sgr_params[sgr_params_idx];
+    const SgrParamsType *const params     = &svt_aom_eb_sgr_params[sgr_params_idx];
     const int32_t              r          = params->r[radius_idx];
     const int32_t              width_ext  = width + 2 * SGRPROJ_BORDER_HORZ;
     const int32_t              height_ext = height + 2 * SGRPROJ_BORDER_VERT;
@@ -914,7 +914,7 @@ static void selfguided_restoration_internal(int32_t *dgd, int32_t width, int32_t
             // Further, in the calculation of B[k] below, if z == 0 and r == 2,
             // then A[k] "should be" 0. But then we can end up setting B[k] to a value
             // slightly above 2^(8 + bit depth), due to rounding in the value of
-            // eb_one_by_x[25-1].
+            // svt_aom_eb_one_by_x[25-1].
             //
             // Thus we saturate so that, when z == 0, A[k] is set to 1 instead of 0.
             // This fixes the above issues (256 - A[k] fits in a uint8, and we can't
@@ -926,17 +926,17 @@ static void selfguided_restoration_internal(int32_t *dgd, int32_t width, int32_t
             // would be a bad idea, as that corresponds to the case where the image
             // is very variable, when we want to preserve the local pixel value as
             // much as possible.
-            A[k] = eb_x_by_xplus1[AOMMIN(z, 255)]; // in range [1, 256]
+            A[k] = svt_aom_eb_x_by_xplus1[AOMMIN(z, 255)]; // in range [1, 256]
 
             // SGRPROJ_SGR - A[k] < 2^8 (from above), B[k] < 2^(bit_depth) * n,
-            // eb_one_by_x[n - 1] = round(2^12 / n)
+            // svt_aom_eb_one_by_x[n - 1] = round(2^12 / n)
             // => the product here is < 2^(20 + bit_depth) <= 2^32,
             // and B[k] is set to a value < 2^(8 + bit depth)
-            // This holds even with the rounding in eb_one_by_x and in the overall
+            // This holds even with the rounding in svt_aom_eb_one_by_x and in the overall
             // result, as long as SGRPROJ_SGR - A[k] is strictly less than 2^8.
-            B[k] = (int32_t)ROUND_POWER_OF_TWO(
-                (uint32_t)(SGRPROJ_SGR - A[k]) * (uint32_t)B[k] * (uint32_t)eb_one_by_x[n - 1],
-                SGRPROJ_RECIP_BITS);
+            B[k] = (int32_t)ROUND_POWER_OF_TWO((uint32_t)(SGRPROJ_SGR - A[k]) * (uint32_t)B[k] *
+                                                   (uint32_t)svt_aom_eb_one_by_x[n - 1],
+                                               SGRPROJ_RECIP_BITS);
         }
     }
     // Use the A[] and B[] arrays to calculate the filtered image
@@ -983,7 +983,7 @@ void svt_av1_selfguided_restoration_c(const uint8_t *dgd8, int32_t width, int32_
         }
     }
 
-    const SgrParamsType *const params = &eb_sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &svt_aom_eb_sgr_params[sgr_params_idx];
     // If params->r == 0 we skip the corresponding filter. We only allow one of
     // the radii to be 0, as having both equal to 0 would be equivalent to
     // skipping SGR entirely.
@@ -1007,7 +1007,7 @@ void svt_apply_selfguided_restoration_c(const uint8_t *dat8, int32_t width, int3
 
     svt_av1_selfguided_restoration_c(
         dat8, width, height, stride, flt0, flt1, width, eps, bit_depth, highbd);
-    const SgrParamsType *const params = &eb_sgr_params[eps];
+    const SgrParamsType *const params = &svt_aom_eb_sgr_params[eps];
     int32_t                    xq[2];
     svt_decode_xq(xqd, xq, params);
     for (int32_t i = 0; i < height; ++i) {
@@ -1106,10 +1106,11 @@ void sgrproj_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t stripe
     }
 }
 
-static const StripeFilterFun stripe_filters[NUM_STRIPE_FILTERS] = {wiener_filter_stripe,
-                                                                   sgrproj_filter_stripe,
-                                                                   wiener_filter_stripe_highbd,
-                                                                   sgrproj_filter_stripe_highbd};
+static const StripeFilterFun svt_aom_stripe_filters[NUM_STRIPE_FILTERS] = {
+    wiener_filter_stripe,
+    sgrproj_filter_stripe,
+    wiener_filter_stripe_highbd,
+    sgrproj_filter_stripe_highbd};
 
 // Filter one restoration unit
 void svt_av1_loop_restoration_filter_unit(
@@ -1132,7 +1133,7 @@ void svt_av1_loop_restoration_filter_unit(
 
     const int32_t filter_idx = 2 * highbd + (unit_rtype == RESTORE_SGRPROJ);
     assert(filter_idx < NUM_STRIPE_FILTERS);
-    const StripeFilterFun stripe_filter = stripe_filters[filter_idx];
+    const StripeFilterFun stripe_filter = svt_aom_stripe_filters[filter_idx];
 
     const int32_t procunit_width = RESTORATION_PROC_UNIT_SIZE >> ss_x;
 

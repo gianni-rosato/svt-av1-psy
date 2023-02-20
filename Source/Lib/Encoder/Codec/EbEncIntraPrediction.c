@@ -17,7 +17,7 @@
 #include "EbModeDecisionProcess.h"
 #include "common_dsp_rtcd.h"
 
-IntraSize intra_unit[] =
+IntraSize svt_aom_intra_unit[] =
 {
     /*Note: e.g for V: there are case where we need the first
             pixel from left to pad the ref array */
@@ -232,11 +232,11 @@ static void build_intra_predictors(
 
     // predict
     if (mode == DC_PRED) {
-        dc_pred[n_left_px > 0][n_top_px > 0][tx_size](dst, dst_stride, above_row,
+        svt_aom_dc_pred[n_left_px > 0][n_top_px > 0][tx_size](dst, dst_stride, above_row,
                                                       left_col);
     }
     else
-        eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
+        svt_aom_eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
 }
 static void build_intra_predictors_high(
         const MacroBlockD *xd,
@@ -427,11 +427,11 @@ static void build_intra_predictors_high(
 
     // predict
     if (mode == DC_PRED) {
-        dc_pred_high[n_left_px > 0][n_top_px > 0][tx_size](
+        svt_aom_dc_pred_high[n_left_px > 0][n_top_px > 0][tx_size](
                 dst, dst_stride, above_row, left_col, bd);
     }
     else
-        pred_high[mode][tx_size](dst, dst_stride, above_row, left_col, bd);
+        svt_aom_pred_high[mode][tx_size](dst, dst_stride, above_row, left_col, bd);
 }
 
 
@@ -761,7 +761,7 @@ EbErrorType svt_av1_intra_prediction_cl(
             assert(mode < INTRA_MODES);
              int ang = plane ? cand_bf_ptr->cand->angle_delta[PLANE_TYPE_UV] : cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y];
              if (ang==0 ){
-                    IntraSize intra_size = intra_unit[mode];
+                    IntraSize intra_size = svt_aom_intra_unit[mode];
                     if (plane == 0) {
                         if (ctx->blk_org_y != 0 && intra_size.top)
                             svt_memcpy(top_neigh_array + 1, ctx->recon_neigh_y->top_array + ctx->blk_org_x, ctx->blk_geom->bwidth * intra_size.top);
@@ -897,7 +897,7 @@ EbErrorType svt_av1_intra_prediction_cl(
             int ang = plane ? cand_bf_ptr->cand->angle_delta[PLANE_TYPE_UV] : cand_bf_ptr->cand->angle_delta[PLANE_TYPE_Y];
             if (ang == 0) {
 
-                IntraSize intra_size = intra_unit[mode];
+                IntraSize intra_size = svt_aom_intra_unit[mode];
 
                 if (plane == 0) {
                     if (ctx->blk_org_y != 0 && intra_size.top)

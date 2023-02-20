@@ -881,9 +881,9 @@ static void read_segmentation_params(Bitstrm *bs, EbDecHandle *dec_handle_ptr,
                 seg_params->feature_enabled[i][j] = feature_enabled;
                 int clipped_value                 = 0;
                 if (feature_enabled == 1) {
-                    const int bits_to_read = segmentation_feature_bits[j];
-                    const int limit        = segmentation_feature_max[j];
-                    if (segmentation_feature_signed[j] == 1) {
+                    const int bits_to_read = svt_aom_segmentation_feature_bits[j];
+                    const int limit        = svt_aom_segmentation_feature_max[j];
+                    if (svt_aom_segmentation_feature_signed[j] == 1) {
                         int feature_value = dec_get_bits_su(bs, 1 + bits_to_read);
                         clipped_value     = CLIP3(-limit, limit, feature_value);
                     } else {
@@ -893,10 +893,10 @@ static void read_segmentation_params(Bitstrm *bs, EbDecHandle *dec_handle_ptr,
                     PRINT_FRAME("data", clipped_value)
                 }
                 if (clipped_value < 0) {
-                    assert(segmentation_feature_signed[j]);
-                    assert(-clipped_value <= segmentation_feature_max[j]);
+                    assert(svt_aom_segmentation_feature_signed[j]);
+                    assert(-clipped_value <= svt_aom_segmentation_feature_max[j]);
                 } else
-                    assert(clipped_value <= segmentation_feature_max[j]);
+                    assert(clipped_value <= svt_aom_segmentation_feature_max[j]);
                 seg_params->feature_data[i][j] = clipped_value;
             }
         }
@@ -1684,8 +1684,8 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr) {
     if (do_realloc) {
         EbMemoryMapEntry *memory_entry   = svt_dec_memory_map;
         EbMemoryMapEntry *previous_entry = NULL;
-        if (memory_entry != memory_map_end_address) {
-            while ((EbMemoryMapEntry *)memory_entry->prev_entry != memory_map_end_address) {
+        if (memory_entry != svt_aom_memory_map_end_address) {
+            while ((EbMemoryMapEntry *)memory_entry->prev_entry != svt_aom_memory_map_end_address) {
                 memory_entry = (EbMemoryMapEntry *)memory_entry->prev_entry;
             }
             previous_entry = memory_entry;
@@ -1709,11 +1709,11 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr) {
             EbMemoryMapEntry *tmp_memory_entry = memory_entry;
             memory_entry                       = (EbMemoryMapEntry *)tmp_memory_entry->prev_entry;
             free(tmp_memory_entry);
-        } while (memory_entry != memory_map_start_address && memory_entry);
+        } while (memory_entry != svt_aom_memory_map_start_address && memory_entry);
         if (previous_entry != NULL)
-            previous_entry->prev_entry = memory_map_start_address;
+            previous_entry->prev_entry = svt_aom_memory_map_start_address;
         else
-            svt_dec_memory_map = memory_map_start_address;
+            svt_dec_memory_map = svt_aom_memory_map_start_address;
         dec_system_resource_init(dec_handle_ptr, &tiles_info);
         set_prev_frame_info(dec_handle_ptr);
         realloc_parse_memory(dec_handle_ptr);

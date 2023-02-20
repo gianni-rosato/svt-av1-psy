@@ -109,7 +109,7 @@ typedef struct SequenceControlSet {
     /*!< Down-sampling method @ ME and alt-ref temporal filtering
         (The signal changes per preset; 0: filtering, 1: decimation) Default is 0. */
     uint8_t  down_sampling_method_me_search;
-    uint32_t geom_idx; //geometry type
+    uint32_t svt_aom_geom_idx; //geometry type
 
     /*  1..15    | 17..31  | 33..47  |
               16 |       32|       48|

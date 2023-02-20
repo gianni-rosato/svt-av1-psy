@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-static INLINE int error_measure(int err) { return error_measure_lut[255 + err]; }
+static INLINE int error_measure(int err) { return svt_aom_error_measure_lut[255 + err]; }
 
 // Returns the error between the result of applying motion 'wm' to the frame
 // described by 'ref' and the frame described by 'dst'.

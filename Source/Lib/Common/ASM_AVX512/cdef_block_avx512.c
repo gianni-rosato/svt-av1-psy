@@ -97,14 +97,14 @@ void svt_cdef_filter_block_8xn_16_avx512(const uint16_t *const in, const int32_t
                                          const int32_t coeff_shift, uint16_t *const dst,
                                          const int32_t dstride, uint8_t height,
                                          uint8_t subsampling_factor) {
-    const int32_t  po1              = eb_cdef_directions[dir][0];
-    const int32_t  po2              = eb_cdef_directions[dir][1];
-    const int32_t  s1o1             = eb_cdef_directions[(dir + 2)][0];
-    const int32_t  s1o2             = eb_cdef_directions[(dir + 2)][1];
-    const int32_t  s2o1             = eb_cdef_directions[(dir - 2)][0];
-    const int32_t  s2o2             = eb_cdef_directions[(dir - 2)][1];
-    const int32_t *pri_taps         = eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
-    const int32_t *sec_taps         = eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t  po1              = svt_aom_eb_cdef_directions[dir][0];
+    const int32_t  po2              = svt_aom_eb_cdef_directions[dir][1];
+    const int32_t  s1o1             = svt_aom_eb_cdef_directions[(dir + 2)][0];
+    const int32_t  s1o2             = svt_aom_eb_cdef_directions[(dir + 2)][1];
+    const int32_t  s2o1             = svt_aom_eb_cdef_directions[(dir - 2)][0];
+    const int32_t  s2o2             = svt_aom_eb_cdef_directions[(dir - 2)][1];
+    const int32_t *pri_taps         = svt_aom_eb_cdef_pri_taps[(pri_strength >> coeff_shift) & 1];
+    const int32_t *sec_taps         = svt_aom_eb_cdef_sec_taps[(pri_strength >> coeff_shift) & 1];
     const __m512i  pri_taps_0       = _mm512_set1_epi16(pri_taps[0]);
     const __m512i  pri_taps_1       = _mm512_set1_epi16(pri_taps[1]);
     const __m512i  sec_taps_0       = _mm512_set1_epi16(sec_taps[0]);

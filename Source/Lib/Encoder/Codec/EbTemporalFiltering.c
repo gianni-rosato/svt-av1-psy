@@ -709,7 +709,7 @@ static uint32_t sqrt_fast(uint32_t x) {
     return sqrt_array_fp16[x] >> 16;
 }
 //exp(-x) for x in [0..7]
-double expf_tab[] = {1,        0.904837, 0.818731, 0.740818, 0.67032,  0.606531, 0.548812, 0.496585,
+double svt_aom_expf_tab[] = {1,        0.904837, 0.818731, 0.740818, 0.67032,  0.606531, 0.548812, 0.496585,
                      0.449329, 0.40657,  0.367879, 0.332871, 0.301194, 0.272532, 0.246597, 0.22313,
                      0.201896, 0.182683, 0.165299, 0.149569, 0.135335, 0.122456, 0.110803, 0.100259,
                      0.090718, 0.082085, 0.074274, 0.067206, 0.06081,  0.055023, 0.049787, 0.045049,
@@ -1365,7 +1365,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_c(struct MeContext *me_ctx,
     } else {
         double scaled_diff = AOMMIN(avg_err / me_ctx->tf_decay_factor[0], 7);
 
-        adjusted_weight = (int)(expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
+        adjusted_weight = (int)(svt_aom_expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
     }
 
     if (adjusted_weight) {
@@ -1403,7 +1403,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_c(
         adjusted_weight = (expf_tab_fp16[scaled_diff_fp4] * TF_WEIGHT_SCALE) >> 16;
     } else {
         double scaled_diff = AOMMIN(avg_err / me_ctx->tf_decay_factor[0], 7);
-        adjusted_weight = (int)(expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
+        adjusted_weight = (int)(svt_aom_expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
     }
     if (adjusted_weight) {
         unsigned int i, j, k;
@@ -2147,7 +2147,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
                         bsize * idx_x;
                     uint8_t *src_y_ptr = src[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
 
-                    const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
+                    const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[BLOCK_16X16];
 
                     unsigned int sse;
                     distortion = fn_ptr->vf(
@@ -2215,7 +2215,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
                         uint8_t *src_y_ptr = src[C_Y] + bsize * idx_y * stride_src[C_Y] +
                             bsize * idx_x;
 
-                        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
+                        const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[BLOCK_16X16];
 
                         unsigned int sse;
                         distortion = fn_ptr->vf(
@@ -2287,7 +2287,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
                         uint8_t *src_y_ptr = src[C_Y] + bsize * idx_y * stride_src[C_Y] +
                             bsize * idx_x;
 
-                        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
+                        const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[BLOCK_16X16];
 
                         unsigned int sse;
                         distortion = fn_ptr->vf(
@@ -2361,7 +2361,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
                             uint8_t *src_y_ptr = src[C_Y] + bsize * idx_y * stride_src[C_Y] +
                                 bsize * idx_x;
 
-                            const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
+                            const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[BLOCK_16X16];
 
                             unsigned int sse;
                             distortion = fn_ptr->vf(
@@ -2437,8 +2437,8 @@ uint64_t svt_check_position_64x64(TF_SUBPEL_SEARCH_PARAMS  tf_sp_param,
             tf_sp_param.bsize * tf_sp_param.idx_x;
         uint8_t *src_y_ptr = src[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] +
             tf_sp_param.bsize * tf_sp_param.idx_x;
-        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &mefn_ptr[BLOCK_64X32]
-                                                                       : &mefn_ptr[BLOCK_64X64];
+        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &svt_aom_mefn_ptr[BLOCK_64X32]
+                                                                       : &svt_aom_mefn_ptr[BLOCK_64X64];
         unsigned int            sse;
         distortion = fn_ptr->vf(pred_y_ptr,
                                 stride_pred[C_Y] << tf_sp_param.subsampling_shift,
@@ -2453,8 +2453,8 @@ uint64_t svt_check_position_64x64(TF_SUBPEL_SEARCH_PARAMS  tf_sp_param,
         uint16_t *src_y_ptr = src_16bit[C_Y] +
             tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] +
             tf_sp_param.bsize * tf_sp_param.idx_x;
-        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &mefn_ptr[BLOCK_64X32]
-                                                                       : &mefn_ptr[BLOCK_64X64];
+        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &svt_aom_mefn_ptr[BLOCK_64X32]
+                                                                       : &svt_aom_mefn_ptr[BLOCK_64X64];
 
         unsigned int sse;
 
@@ -2514,8 +2514,8 @@ uint64_t svt_check_position(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentCo
             tf_sp_param.bsize * tf_sp_param.idx_x;
         uint8_t *src_y_ptr = src[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] +
             tf_sp_param.bsize * tf_sp_param.idx_x;
-        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &mefn_ptr[BLOCK_32X16]
-                                                                       : &mefn_ptr[BLOCK_32X32];
+        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &svt_aom_mefn_ptr[BLOCK_32X16]
+                                                                       : &svt_aom_mefn_ptr[BLOCK_32X32];
         unsigned int            sse;
         distortion = fn_ptr->vf(pred_y_ptr,
                                 stride_pred[C_Y] << tf_sp_param.subsampling_shift,
@@ -2530,8 +2530,8 @@ uint64_t svt_check_position(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentCo
         uint16_t *src_y_ptr = src_16bit[C_Y] +
             tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] +
             tf_sp_param.bsize * tf_sp_param.idx_x;
-        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &mefn_ptr[BLOCK_32X16]
-                                                                       : &mefn_ptr[BLOCK_32X32];
+        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &svt_aom_mefn_ptr[BLOCK_32X16]
+                                                                       : &svt_aom_mefn_ptr[BLOCK_32X32];
 
         unsigned int sse;
 
@@ -4943,8 +4943,8 @@ static EbErrorType produce_temporally_filtered_pic(
                                         uint8_t* pred_y_ptr = pred[C_Y] + bsize * block_row * stride_pred[C_Y] +  bsize * block_col;
                                         uint8_t* src_y_ptr = src_center_ptr[C_Y] + bsize * block_row * stride[C_Y] + bsize * block_col;
 
-                                        const AomVarianceFnPtr* fn_ptr = centre_pcs->tf_ctrls.sub_sampling_shift ? &mefn_ptr[BLOCK_32X16]
-                                            : &mefn_ptr[BLOCK_32X32];
+                                        const AomVarianceFnPtr* fn_ptr = centre_pcs->tf_ctrls.sub_sampling_shift ? &svt_aom_mefn_ptr[BLOCK_32X16]
+                                            : &svt_aom_mefn_ptr[BLOCK_32X32];
                                         unsigned int            sse;
                                         distortion = fn_ptr->vf(pred_y_ptr,
                                             stride_pred[C_Y] << centre_pcs->tf_ctrls.sub_sampling_shift,
@@ -4960,8 +4960,8 @@ static EbErrorType produce_temporally_filtered_pic(
                                         uint16_t* src_y_ptr = altref_buffer_highbd_ptr[C_Y] +
                                             bsize * block_row * stride[C_Y] +
                                             bsize * block_col;
-                                        const AomVarianceFnPtr* fn_ptr = centre_pcs->tf_ctrls.sub_sampling_shift ? &mefn_ptr[BLOCK_32X16]
-                                            : &mefn_ptr[BLOCK_32X32];
+                                        const AomVarianceFnPtr* fn_ptr = centre_pcs->tf_ctrls.sub_sampling_shift ? &svt_aom_mefn_ptr[BLOCK_32X16]
+                                            : &svt_aom_mefn_ptr[BLOCK_32X32];
 
                                         unsigned int sse;
 

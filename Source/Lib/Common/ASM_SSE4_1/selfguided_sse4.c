@@ -158,12 +158,12 @@ static __m128i compute_p(__m128i sum1, __m128i sum2, int bit_depth, int n) {
 // on the sides. A, B, C, D point at logical position (0, 0).
 static void calc_ab(int32_t *A, int32_t *B, const int32_t *C, const int32_t *D, int width,
                     int height, int buf_stride, int bit_depth, int sgr_params_idx, int radius_idx) {
-    const SgrParamsType *const params = &eb_sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &svt_aom_eb_sgr_params[sgr_params_idx];
     const int                  r      = params->r[radius_idx];
     const int                  n      = (2 * r + 1) * (2 * r + 1);
     const __m128i              s      = _mm_set1_epi32(params->s[radius_idx]);
     // one_over_n[n-1] is 2^12/n, so easily fits in an int16
-    const __m128i one_over_n = _mm_set1_epi32(eb_one_by_x[n - 1]);
+    const __m128i one_over_n = _mm_set1_epi32(svt_aom_eb_one_by_x[n - 1]);
 
     const __m128i rnd_z   = round_for_shift(SGRPROJ_MTABLE_BITS);
     const __m128i rnd_res = round_for_shift(SGRPROJ_RECIP_BITS);
@@ -203,10 +203,10 @@ static void calc_ab(int32_t *A, int32_t *B, const int32_t *C, const int32_t *D, 
 
             // 'Gather' type instructions are not available pre-AVX2, so synthesize a
             // gather using scalar loads.
-            const __m128i a_res = _mm_set_epi32(eb_x_by_xplus1[_mm_extract_epi32(z, 3)],
-                                                eb_x_by_xplus1[_mm_extract_epi32(z, 2)],
-                                                eb_x_by_xplus1[_mm_extract_epi32(z, 1)],
-                                                eb_x_by_xplus1[_mm_extract_epi32(z, 0)]);
+            const __m128i a_res = _mm_set_epi32(svt_aom_eb_x_by_xplus1[_mm_extract_epi32(z, 3)],
+                                                svt_aom_eb_x_by_xplus1[_mm_extract_epi32(z, 2)],
+                                                svt_aom_eb_x_by_xplus1[_mm_extract_epi32(z, 1)],
+                                                svt_aom_eb_x_by_xplus1[_mm_extract_epi32(z, 0)]);
 
             _mm_storeu_si128((__m128i *)(A + i * buf_stride + j), a_res);
 
@@ -290,12 +290,12 @@ static void final_filter(int32_t *dst, int dst_stride, const int32_t *A, const i
 static void calc_ab_fast(int32_t *A, int32_t *B, const int32_t *C, const int32_t *D, int width,
                          int height, int buf_stride, int bit_depth, int sgr_params_idx,
                          int radius_idx) {
-    const SgrParamsType *const params = &eb_sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &svt_aom_eb_sgr_params[sgr_params_idx];
     const int                  r      = params->r[radius_idx];
     const int                  n      = (2 * r + 1) * (2 * r + 1);
     const __m128i              s      = _mm_set1_epi32(params->s[radius_idx]);
     // one_over_n[n-1] is 2^12/n, so easily fits in an int16
-    const __m128i one_over_n = _mm_set1_epi32(eb_one_by_x[n - 1]);
+    const __m128i one_over_n = _mm_set1_epi32(svt_aom_eb_one_by_x[n - 1]);
 
     const __m128i rnd_z   = round_for_shift(SGRPROJ_MTABLE_BITS);
     const __m128i rnd_res = round_for_shift(SGRPROJ_RECIP_BITS);
@@ -335,10 +335,10 @@ static void calc_ab_fast(int32_t *A, int32_t *B, const int32_t *C, const int32_t
 
             // 'Gather' type instructions are not available pre-AVX2, so synthesize a
             // gather using scalar loads.
-            const __m128i a_res = _mm_set_epi32(eb_x_by_xplus1[_mm_extract_epi32(z, 3)],
-                                                eb_x_by_xplus1[_mm_extract_epi32(z, 2)],
-                                                eb_x_by_xplus1[_mm_extract_epi32(z, 1)],
-                                                eb_x_by_xplus1[_mm_extract_epi32(z, 0)]);
+            const __m128i a_res = _mm_set_epi32(svt_aom_eb_x_by_xplus1[_mm_extract_epi32(z, 3)],
+                                                svt_aom_eb_x_by_xplus1[_mm_extract_epi32(z, 2)],
+                                                svt_aom_eb_x_by_xplus1[_mm_extract_epi32(z, 1)],
+                                                svt_aom_eb_x_by_xplus1[_mm_extract_epi32(z, 0)]);
 
             _mm_storeu_si128((__m128i *)(A + i * buf_stride + j), a_res);
 
@@ -515,7 +515,7 @@ void svt_av1_selfguided_restoration_sse4_1(const uint8_t *dgd8, int32_t width, i
     else
         integral_images(dgd0, dgd_stride, width_ext, height_ext, Ctl, Dtl, buf_stride);
 
-    const SgrParamsType *const params = &eb_sgr_params[sgr_params_idx];
+    const SgrParamsType *const params = &svt_aom_eb_sgr_params[sgr_params_idx];
     // Write to flt0 and flt1
     // If params->r == 0 we skip the corresponding filter. We only allow one of
     // the radii to be 0, as having both equal to 0 would be equivalent to
@@ -546,7 +546,7 @@ void svt_apply_selfguided_restoration_sse4_1(const uint8_t *dat8, int32_t width,
     svt_av1_selfguided_restoration_sse4_1(
         dat8, width, height, stride, flt0, flt1, width, eps, bit_depth, highbd);
 
-    const SgrParamsType *const params = &eb_sgr_params[eps];
+    const SgrParamsType *const params = &svt_aom_eb_sgr_params[eps];
     int                        xq[2];
     svt_decode_xq(xqd, xq, params);
 

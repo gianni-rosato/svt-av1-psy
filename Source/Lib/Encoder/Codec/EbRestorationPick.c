@@ -626,7 +626,7 @@ static SgrprojInfo search_selfguided_restoration(
 #ifdef ARCH_X86_64
         aom_clear_system_state();
 #endif
-        const SgrParamsType *const params = &eb_sgr_params[ep];
+        const SgrParamsType *const params = &svt_aom_eb_sgr_params[ep];
         svt_get_proj_subspace(src8,
                               width,
                               height,
@@ -677,7 +677,7 @@ extern int32_t svt_aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint
 
 static int32_t count_sgrproj_bits(SgrprojInfo *sgrproj_info, SgrprojInfo *ref_sgrproj_info) {
     int32_t              bits   = SGRPROJ_PARAMS_BITS;
-    const SgrParamsType *params = &eb_sgr_params[sgrproj_info->ep];
+    const SgrParamsType *params = &svt_aom_eb_sgr_params[sgrproj_info->ep];
     if (params->r[0] > 0)
         bits += svt_aom_count_primitive_refsubexpfin(
             SGRPROJ_PRJ_MAX0 - SGRPROJ_PRJ_MIN0 + 1,

@@ -20,7 +20,7 @@
 #define WARP_ERROR_BLOCK 32
 
 /* clang-format off */
-const int error_measure_lut[512] = {
+const int svt_aom_error_measure_lut[512] = {
   // pow 0.7
   16384, 16339, 16294, 16249, 16204, 16158, 16113, 16068,
   16022, 15977, 15932, 15886, 15840, 15795, 15749, 15703,
@@ -96,7 +96,8 @@ static INLINE int highbd_error_measure(int err, int bd) {
     err             = abs(err);
     const int e1    = err >> b;
     const int e2    = err & bmask;
-    return error_measure_lut[255 + e1] * (v - e2) + error_measure_lut[256 + e1] * e2;
+    return svt_aom_error_measure_lut[255 + e1] * (v - e2) +
+        svt_aom_error_measure_lut[256 + e1] * e2;
 }
 
 static int64_t highbd_frame_error(const uint16_t *const ref, int stride, const uint16_t *const dst,

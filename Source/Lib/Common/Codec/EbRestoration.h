@@ -264,10 +264,10 @@ typedef struct RestorationTileLimits {
     int32_t h_start, h_end, v_start, v_end;
 } RestorationTileLimits;
 
-extern const SgrParamsType eb_sgr_params[SGRPROJ_PARAMS];
+extern const SgrParamsType svt_aom_eb_sgr_params[SGRPROJ_PARAMS];
 extern int32_t             sgrproj_mtable[SGRPROJ_PARAMS][2];
-extern const int32_t       eb_x_by_xplus1[256];
-extern const int32_t       eb_one_by_x[MAX_NELEM];
+extern const int32_t       svt_aom_eb_x_by_xplus1[256];
+extern const int32_t       svt_aom_eb_one_by_x[MAX_NELEM];
 
 //void svt_av1_alloc_restoration_struct(struct Av1Common *cm, RestorationInfo *rsi,
 //                                      int32_t is_uv);

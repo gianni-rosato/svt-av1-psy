@@ -462,7 +462,7 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
             aom_clear_system_state();
             int32_t xqd_c[2] = {0};
             int32_t xqd_asm[2] = {0};
-            const SgrParamsType *const params = &eb_sgr_params[ep];
+            const SgrParamsType *const params = &svt_aom_eb_sgr_params[ep];
             svt_get_proj_subspace_c(input,
                                     width,
                                     height,
@@ -576,7 +576,7 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTestHbd) {
             aom_clear_system_state();
             int32_t xqd_c[2] = {0};
             int32_t xqd_asm[2] = {0};
-            const SgrParamsType *const params = &eb_sgr_params[ep];
+            const SgrParamsType *const params = &svt_aom_eb_sgr_params[ep];
             svt_get_proj_subspace_c(CONVERT_TO_BYTEPTR(input),
                                     width,
                                     height,

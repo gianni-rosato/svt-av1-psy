@@ -473,9 +473,9 @@ static void decode_build_intra_predictors(PartitionInfo *part_info, uint8_t *top
 
     // predict
     if (mode == DC_PRED) {
-        dc_pred[n_left_px > 0][n_top_px > 0][tx_size](dst, dst_stride, above_row, left_col);
+        svt_aom_dc_pred[n_left_px > 0][n_top_px > 0][tx_size](dst, dst_stride, above_row, left_col);
     } else
-        eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
+        svt_aom_eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
 }
 
 /* TODO : Harmonize with Encoder! */
@@ -666,10 +666,10 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
 
     // predict
     if (mode == DC_PRED) {
-        dc_pred_high[n_left_px > 0][n_top_px > 0][tx_size](
+        svt_aom_dc_pred_high[n_left_px > 0][n_top_px > 0][tx_size](
             dst, dst_stride, above_row, left_col, bd);
     } else
-        pred_high[mode][tx_size](dst, dst_stride, above_row, left_col, bd);
+        svt_aom_pred_high[mode][tx_size](dst, dst_stride, above_row, left_col, bd);
 }
 
 void svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize tx_size, TileInfo *td,

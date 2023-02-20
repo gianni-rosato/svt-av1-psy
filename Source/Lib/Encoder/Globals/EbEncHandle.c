@@ -106,10 +106,10 @@
  **************************************/
 static uint8_t                   num_groups = 0;
 #ifdef _WIN32
-static GROUP_AFFINITY            group_affinity;
+static GROUP_AFFINITY            svt_aom_group_affinity;
 static Bool                    alternate_groups = 0;
 #elif defined(__linux__)
-static cpu_set_t                 group_affinity;
+static cpu_set_t                 svt_aom_group_affinity;
 typedef struct logicalProcessorGroup {
     uint32_t num;
     uint32_t group[1024];
@@ -183,8 +183,8 @@ static uint32_t get_num_processors() {
 
 static EbErrorType init_thread_management_params() {
 #ifdef _WIN32
-    // Initialize group_affinity structure with Current thread info
-    GetThreadGroupAffinity(GetCurrentThread(), &group_affinity);
+    // Initialize svt_aom_group_affinity structure with Current thread info
+    GetThreadGroupAffinity(GetCurrentThread(), &svt_aom_group_affinity);
     num_groups = (uint8_t)GetActiveProcessorGroupCount();
 #elif defined(__linux__)
     memset(lp_group, 0, INITIAL_PROCESSOR_GROUP * sizeof(processorGroup));
@@ -248,12 +248,12 @@ void svt_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
     if (num_groups == 1) {
             const uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
                 config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
-            group_affinity.Mask = get_affinity_mask(lps);
+            svt_aom_group_affinity.Mask = get_affinity_mask(lps);
     }
     else if (num_groups > 1) { // For system with multiple processor group
         if (config_ptr->logical_processors == 0) {
             if (config_ptr->target_socket != -1)
-                group_affinity.Group = config_ptr->target_socket;
+                svt_aom_group_affinity.Group = config_ptr->target_socket;
         }
         else {
             const uint32_t num_lp_per_group = num_logical_processors / num_groups;
@@ -263,48 +263,48 @@ void svt_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
                     SVT_WARN("-lp(logical processors) setting is ignored. Run on both sockets. \n");
                 }
                 else
-                    group_affinity.Mask = get_affinity_mask(config_ptr->logical_processors);
+                    svt_aom_group_affinity.Mask = get_affinity_mask(config_ptr->logical_processors);
             }
             else {
                 const uint32_t lps =
                     config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
-                group_affinity.Mask = get_affinity_mask(lps);
-                group_affinity.Group = config_ptr->target_socket;
+                svt_aom_group_affinity.Mask = get_affinity_mask(lps);
+                svt_aom_group_affinity.Group = config_ptr->target_socket;
             }
         }
     }
 #elif defined(__linux__)
     uint32_t num_logical_processors = get_num_processors();
-    CPU_ZERO(&group_affinity);
+    CPU_ZERO(&svt_aom_group_affinity);
 
     if (num_groups == 1) {
         const uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
             config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
         for (uint32_t i = 0; i < lps; i++)
-            CPU_SET(lp_group[0].group[i], &group_affinity);
+            CPU_SET(lp_group[0].group[i], &svt_aom_group_affinity);
     } else if (num_groups > 1) {
         const uint32_t num_lp_per_group = num_logical_processors / num_groups;
         if (config_ptr->logical_processors == 0) {
             if (config_ptr->target_socket != -1)
                 for (uint32_t i = 0; i < lp_group[config_ptr->target_socket].num; i++)
-                    CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
+                    CPU_SET(lp_group[config_ptr->target_socket].group[i], &svt_aom_group_affinity);
         } else {
             if (config_ptr->target_socket == -1) {
                 const uint32_t lps =
                     config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
                 if (lps > num_lp_per_group) {
                     for (uint32_t i = 0; i < lp_group[0].num; i++)
-                        CPU_SET(lp_group[0].group[i], &group_affinity);
+                        CPU_SET(lp_group[0].group[i], &svt_aom_group_affinity);
                     for (uint32_t i = 0; i < (lps - lp_group[0].num); i++)
-                        CPU_SET(lp_group[1].group[i], &group_affinity);
+                        CPU_SET(lp_group[1].group[i], &svt_aom_group_affinity);
                 } else
                     for (uint32_t i = 0; i < lps; i++)
-                        CPU_SET(lp_group[0].group[i], &group_affinity);
+                        CPU_SET(lp_group[0].group[i], &svt_aom_group_affinity);
             } else {
                 const uint32_t lps =
                     config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
                 for (uint32_t i = 0; i < lps; i++)
-                    CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
+                    CPU_SET(lp_group[config_ptr->target_socket].group[i], &svt_aom_group_affinity);
             }
         }
     }
@@ -1544,7 +1544,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     asm_set_convolve_hbd_asm_table();
 
     init_intra_predictors_internal();
-    build_blk_geom(enc_handle_ptr->scs_instance_array[0]->scs->geom_idx);
+    build_blk_geom(enc_handle_ptr->scs_instance_array[0]->scs->svt_aom_geom_idx);
 
     svt_av1_init_me_luts();
     init_fn_ptr();
@@ -3916,21 +3916,21 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, slice_type));
     if (scs->super_block_size == 128) {
-        scs->geom_idx = GEOM_2;
+        scs->svt_aom_geom_idx = GEOM_2;
         scs->max_block_cnt = 4421;
     }
     else {
         //SB 64x64
         if (disallow_nsq && disallow_4x4) {
-            scs->geom_idx = GEOM_0;
+            scs->svt_aom_geom_idx = GEOM_0;
             scs->max_block_cnt = 85;
         }
         else {
-            scs->geom_idx = GEOM_1;
+            scs->svt_aom_geom_idx = GEOM_1;
             scs->max_block_cnt = 1101;
         }
     }
-    //printf("\n\nGEOM:%i \n", scs->geom_idx);
+    //printf("\n\nGEOM:%i \n", scs->svt_aom_geom_idx);
     // Configure the padding
     scs->left_padding = BLOCK_SIZE_64 + 4;
     scs->top_padding = BLOCK_SIZE_64 + 4;

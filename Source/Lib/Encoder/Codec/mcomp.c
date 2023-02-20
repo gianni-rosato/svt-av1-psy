@@ -677,7 +677,7 @@ static AOM_FORCE_INLINE void two_level_checks_fast(
                                     is_scaled);
         }
 }
-static const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
+static const uint8_t svt_aom_eb_av1_var_offs[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
@@ -723,7 +723,7 @@ int svt_av1_find_best_sub_pixel_tree_pruned(MacroBlockD *xd, const struct AV1Com
     const uint8_t     *ref        = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
     unsigned int       sse;
     const unsigned int var = var_params->vfp->vf(
-        ref, ms_buffers->ref->stride, eb_av1_var_offs, 0, &sse);
+        ref, ms_buffers->ref->stride, svt_aom_eb_av1_var_offs, 0, &sse);
     int block_var = ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bsize]);
 
     if (block_var < ms_params->pred_variance_th)
@@ -794,7 +794,7 @@ int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *co
     const uint8_t     *ref        = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
     unsigned int       sse;
     const unsigned int var = var_params->vfp->vf(
-        ref, ms_buffers->ref->stride, eb_av1_var_offs, 0, &sse);
+        ref, ms_buffers->ref->stride, svt_aom_eb_av1_var_offs, 0, &sse);
     int block_var = ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bsize]);
 
     if (block_var < ms_params->pred_variance_th)

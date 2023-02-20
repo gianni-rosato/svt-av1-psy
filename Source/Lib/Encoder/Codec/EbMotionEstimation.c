@@ -2400,23 +2400,17 @@ static void hme_prune_ref_and_adjust_sr(MeContext *me_ctx) {
     }
 }
 
-const uint8_t z_to_raster[85] = {0,  1,  2,  3,  4,
-
+static const uint8_t z_to_raster[85] = {0,  1,  2,  3,  4,
                                  5,  6,  9,  10, 7,  8,  11, 12, 13,
                                  14, 17, 18, 15, 16, 19, 20,
-
                                  21, 22, 29, 30, 23, 24, 31, 32, 37,
                                  38, 45, 46, 39, 40, 47, 48,
-
                                  25, 26, 33, 34, 27, 28, 35, 36, 41,
                                  42, 49, 50, 43, 44, 51, 52,
-
                                  53, 54, 61, 62, 55, 56, 63, 64, 69,
                                  70, 77, 78, 71, 72, 79, 80,
-
                                  57, 58, 65, 66, 59, 60, 67, 68, 73,
                                  74, 81, 82, 75, 76, 83, 84
-
 };
 static void construct_me_candidate_array_mrp_off(PictureParentControlSet *pcs, MeContext *me_ctx,
                                           uint32_t num_of_list_to_search, uint32_t sb_index) {

@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-extern aom_highbd_convolve_fn_t convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
+extern aom_highbd_convolve_fn_t svt_aom_convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
 
 struct calc_target_weighted_pred_ctxt {
     int32_t       *mask_buf;

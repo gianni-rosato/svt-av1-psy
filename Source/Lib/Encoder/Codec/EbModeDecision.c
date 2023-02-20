@@ -2447,7 +2447,7 @@ static uint8_t wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext 
     EbPictureBufferDesc *input_pic = ppcs->enhanced_picture_ptr; // 10BIT not supported
     uint32_t input_origin_index    = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
         (ctx->blk_org_x + input_pic->org_x);
-    const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize];
+    const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
     unsigned int            sse;
     uint8_t                *pred_y = pred->buffer_y + blk_origin_index;
     uint8_t                *src_y  = input_pic->buffer_y + input_origin_index;
@@ -2670,7 +2670,7 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ct
     switch (cand->motion_mode) {
     case OBMC_CAUSAL:
         bestsme = svt_av1_obmc_full_pixel_search(
-            ctx, x, &mvp_full, sadpb, &mefn_ptr[bsize], ref_mv, &(x->best_mv.as_mv), 0);
+            ctx, x, &mvp_full, sadpb, &svt_aom_mefn_ptr[bsize], ref_mv, &(x->best_mv.as_mv), 0);
         break;
     default: assert(0 && "Invalid motion mode!\n");
     }
@@ -2691,7 +2691,7 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ct
                                                      ref_mv,
                                                      frm_hdr->allow_high_precision_mv,
                                                      x->errorperbit,
-                                                     &mefn_ptr[bsize],
+                                                     &svt_aom_mefn_ptr[bsize],
                                                      0, // mv.subpel_force_stop
                                                      2, //  mv.subpel_iters_per_step
                                                      x->nmv_vec_cost,

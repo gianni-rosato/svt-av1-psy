@@ -240,15 +240,19 @@ static const int8_t inv_start_range[TX_SIZES_ALL] = {
     7, // 64x16 transform
 };
 
-extern const int32_t eb_av1_cospi_arr_data[7][64];
-extern const int32_t eb_av1_sinpi_arr_data[7][5];
+extern const int32_t svt_aom_eb_av1_cospi_arr_data[7][64];
+extern const int32_t svt_aom_eb_av1_sinpi_arr_data[7][5];
 extern const int8_t *svt_aom_inv_txfm_shift_ls[TX_SIZES_ALL];
 
 static const int32_t cos_bit_min = 10;
 
-static INLINE const int32_t *cospi_arr(int32_t n) { return eb_av1_cospi_arr_data[n - cos_bit_min]; }
+static INLINE const int32_t *cospi_arr(int32_t n) {
+    return svt_aom_eb_av1_cospi_arr_data[n - cos_bit_min];
+}
 
-static INLINE const int32_t *sinpi_arr(int32_t n) { return eb_av1_sinpi_arr_data[n - cos_bit_min]; }
+static INLINE const int32_t *sinpi_arr(int32_t n) {
+    return svt_aom_eb_av1_sinpi_arr_data[n - cos_bit_min];
+}
 
 static const int32_t new_sqrt2_bits = 12;
 // 2^12 * sqrt(2)

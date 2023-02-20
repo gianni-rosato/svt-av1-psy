@@ -173,10 +173,11 @@ void lr_pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr,
     }
 }
 
-static const StripeFilterFun stripe_filters[NUM_STRIPE_FILTERS] = {wiener_filter_stripe,
-                                                                   sgrproj_filter_stripe,
-                                                                   wiener_filter_stripe_highbd,
-                                                                   sgrproj_filter_stripe_highbd};
+static const StripeFilterFun svt_aom_stripe_filters[NUM_STRIPE_FILTERS] = {
+    wiener_filter_stripe,
+    sgrproj_filter_stripe,
+    wiener_filter_stripe_highbd,
+    sgrproj_filter_stripe_highbd};
 
 // Filter one restoration unit
 // Duplicated to avoid frame level buffer copy ( frame to block level copy)
@@ -199,7 +200,7 @@ void svt_dec_av1_loop_restoration_filter_unit(
 
     const int32_t filter_idx = 2 * highbd + (unit_rtype == RESTORE_SGRPROJ);
     assert(filter_idx < NUM_STRIPE_FILTERS);
-    const StripeFilterFun stripe_filter = stripe_filters[filter_idx];
+    const StripeFilterFun stripe_filter = svt_aom_stripe_filters[filter_idx];
 
     const int32_t procunit_width = RESTORATION_PROC_UNIT_SIZE >> ss_x;
 

@@ -2756,7 +2756,7 @@ void read_wiener_filter(int wiener_win, WienerInfo *wiener_info, WienerInfo *ref
 static void read_sgrproj_filter(SgrprojInfo *sgrproj_info, SgrprojInfo *ref_sgrproj_info,
                                 SvtReader *reader) {
     sgrproj_info->ep = svt_read_literal(reader, SGRPROJ_PARAMS_BITS, ACCT_STR);
-    int *r           = (int *)&eb_sgr_params[sgrproj_info->ep];
+    int *r           = (int *)&svt_aom_eb_sgr_params[sgrproj_info->ep];
 
     if (r[0] == 0) {
         sgrproj_info->xqd[0] = 0;

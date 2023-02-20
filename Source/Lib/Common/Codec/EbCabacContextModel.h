@@ -694,7 +694,7 @@ typedef enum MvSubpelPrecision {
 // Number of possible contexts for a color index.
 // As can be seen from av1_get_palette_color_index_context(), the possible
 // contexts are (2,0,0), (2,2,1), (3,2,0), (4,1,0), (5,0,0). These are mapped to
-// a value from 0 to 4 using 'palette_color_index_context_lookup' table.
+// a value from 0 to 4 using 'svt_aom_palette_color_index_context_lookup' table.
 #define PALETTE_COLOR_INDEX_CONTEXTS 5
 
 // Palette Y mode context for a block is determined by number of neighboring
@@ -818,8 +818,8 @@ typedef struct FrameContexts {
     int32_t    initialized;
 } FRAME_CONTEXT;
 
-extern const AomCdfProb default_kf_y_mode_cdf[KF_MODE_CONTEXTS][KF_MODE_CONTEXTS]
-                                             [CDF_SIZE(INTRA_MODES)];
+extern const AomCdfProb svt_aom_default_kf_y_mode_cdf[KF_MODE_CONTEXTS][KF_MODE_CONTEXTS]
+                                                     [CDF_SIZE(INTRA_MODES)];
 
 static const int32_t av1_ext_tx_ind[EXT_TX_SET_TYPES][TX_TYPES] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},

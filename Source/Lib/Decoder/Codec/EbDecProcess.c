@@ -43,10 +43,10 @@
 #ifdef _WIN32
 #include <windows.h>
 extern uint8_t        num_groups;
-extern GROUP_AFFINITY group_affinity;
+extern GROUP_AFFINITY svt_aom_group_affinity;
 extern Bool           alternate_groups;
 #elif defined(__linux__)
-extern cpu_set_t group_affinity;
+extern cpu_set_t svt_aom_group_affinity;
 #endif
 static void *dec_all_stage_kernel(void *input_ptr);
 /*ToDo : Remove all these replications */
@@ -132,7 +132,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
-    memory_map_start_address = svt_dec_memory_map;
+    svt_aom_memory_map_start_address = svt_dec_memory_map;
     memset(&dec_mt_frame_data->prev_frame_info, 0, sizeof(PrevFrameMtCheck));
 
     int32_t num_tiles = tiles_info->tile_cols * tiles_info->tile_rows;
@@ -347,7 +347,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
         init_dec_mod_ctxt(dec_handle_ptr, (void **)&dec_mod_ctxt_arr[i]);
     }
 
-    memory_map_end_address = svt_dec_memory_map;
+    svt_aom_memory_map_end_address = svt_dec_memory_map;
 
     if (FALSE == dec_handle_ptr->start_thread_process) {
         dec_mt_frame_data->end_flag           = FALSE;

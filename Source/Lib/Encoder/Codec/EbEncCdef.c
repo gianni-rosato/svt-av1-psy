@@ -882,7 +882,7 @@ void finish_cdef_search(PictureControlSet *pcs) {
     int32_t    nb_strength_bits;
     uint64_t   lambda;
     uint32_t   fast_lambda, full_lambda = 0;
-    (*av1_lambda_assignment_function_table[pcs->ppcs->pred_structure])(
+    (*svt_aom_av1_lambda_assignment_function_table[pcs->ppcs->pred_structure])(
         pcs,
         &fast_lambda,
         &full_lambda,

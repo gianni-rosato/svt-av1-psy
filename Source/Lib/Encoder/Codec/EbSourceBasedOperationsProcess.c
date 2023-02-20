@@ -483,7 +483,7 @@ static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *
                                 0); // 10BIT not supported
 
     // Subpel variance params
-    ms_params->var_params.vfp                = &mefn_ptr[block_size];
+    ms_params->var_params.vfp                = &svt_aom_mefn_ptr[block_size];
     ms_params->var_params.subpel_search_type = USE_4_TAPS;
     ms_params->var_params.w                  = block_size_wide[block_size];
     ms_params->var_params.h                  = block_size_high[block_size];

@@ -3344,7 +3344,7 @@ void svt_av1_inv_txfm_add_c(const TranLow *dqcoeff, uint8_t *dst_r, int32_t stri
 }
 
 // av1_cospi_arr[i][j] = (int32_t)round(cos(M_PI*j/128) * (1<<(cos_bit_min+i)));
-const int32_t eb_av1_cospi_arr_data[7][64] = {
+const int32_t svt_aom_eb_av1_cospi_arr_data[7][64] = {
     {1024, 1024, 1023, 1021, 1019, 1016, 1013, 1009, 1004, 999, 993, 987, 980, 972, 964, 955,
      946,  936,  926,  915,  903,  891,  878,  865,  851,  837, 822, 807, 792, 775, 759, 742,
      724,  706,  688,  669,  650,  630,  610,  590,  569,  548, 526, 505, 483, 460, 438, 415,
@@ -3377,15 +3377,15 @@ const int32_t eb_av1_cospi_arr_data[7][64] = {
      37736, 36410, 35062, 33692, 32303, 30893, 29466, 28020, 26558, 25080, 23586, 22078, 20557,
      19024, 17479, 15924, 14359, 12785, 11204, 9616,  8022,  6424,  4821,  3216,  1608}};
 
-// eb_av1_sinpi_arr_data[i][j] = (int32_t)round((sqrt(2) * sin(j*Pi/9) * 2 / 3) * (1
+// svt_aom_eb_av1_sinpi_arr_data[i][j] = (int32_t)round((sqrt(2) * sin(j*Pi/9) * 2 / 3) * (1
 // << (cos_bit_min + i))) modified so that elements j=1,2 sum to element j=4.
-const int32_t eb_av1_sinpi_arr_data[7][5] = {{0, 330, 621, 836, 951},
-                                             {0, 660, 1241, 1672, 1901},
-                                             {0, 1321, 2482, 3344, 3803},
-                                             {0, 2642, 4964, 6689, 7606},
-                                             {0, 5283, 9929, 13377, 15212},
-                                             {0, 10566, 19858, 26755, 30424},
-                                             {0, 21133, 39716, 53510, 60849}};
+const int32_t svt_aom_eb_av1_sinpi_arr_data[7][5] = {{0, 330, 621, 836, 951},
+                                                     {0, 660, 1241, 1672, 1901},
+                                                     {0, 1321, 2482, 3344, 3803},
+                                                     {0, 2642, 4964, 6689, 7606},
+                                                     {0, 5283, 9929, 13377, 15212},
+                                                     {0, 10566, 19858, 26755, 30424},
+                                                     {0, 21133, 39716, 53510, 60849}};
 // Coefficient scaling and quantization with AV1 TX are tailored to
 // the AV1 TX transforms.  Regardless of the bit-depth of the input,
 // the transform stages scale the coefficient values up by a factor of

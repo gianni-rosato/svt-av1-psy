@@ -2407,7 +2407,7 @@ int svt_av1_count_colors(const uint8_t *src, int stride, int rows, int cols, int
 //  purposes of activity masking.
 // Eventually this should be replaced by custom no-reference routines,
 //  which will be faster.
-const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
+const uint8_t svt_aom_eb_av1_var_offs[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
@@ -2421,8 +2421,8 @@ unsigned int svt_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, c
                                                BlockSize bs) {
     unsigned int       sse;
     const unsigned int var =
-        //cpi->fn_ptr[bs].vf(ref->buf, ref->stride, eb_av1_var_offs, 0, &sse);
-        fn_ptr->vf(src, stride, eb_av1_var_offs, 0, &sse);
+        //cpi->fn_ptr[bs].vf(ref->buf, ref->stride, svt_aom_eb_av1_var_offs, 0, &sse);
+        fn_ptr->vf(src, stride, svt_aom_eb_av1_var_offs, 0, &sse);
     return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
 }
 
@@ -2465,7 +2465,7 @@ void is_screen_content(PictureParentControlSet *pcs) {
     // than var_thresh.
     int counts_2 = 0;
 
-    const AomVarianceFnPtr *fn_ptr    = &mefn_ptr[BLOCK_16X16];
+    const AomVarianceFnPtr *fn_ptr    = &svt_aom_mefn_ptr[BLOCK_16X16];
     EbPictureBufferDesc    *input_pic = pcs->enhanced_picture_ptr;
 
     for (int r = 0; r + blk_h <= input_pic->height; r += blk_h) {

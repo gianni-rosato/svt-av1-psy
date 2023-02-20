@@ -60,14 +60,14 @@ int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
             __m256i diff_4_lo = _mm256_unpacklo_epi16(diff_4, zero);
             __m256i diff_4_hi = _mm256_unpackhi_epi16(diff_4, zero);
 
-            __m256i error_1_lo = _mm256_i32gather_epi32(error_measure_lut, diff_1_lo, 4);
-            __m256i error_1_hi = _mm256_i32gather_epi32(error_measure_lut, diff_1_hi, 4);
-            __m256i error_2_lo = _mm256_i32gather_epi32(error_measure_lut, diff_2_lo, 4);
-            __m256i error_2_hi = _mm256_i32gather_epi32(error_measure_lut, diff_2_hi, 4);
-            __m256i error_3_lo = _mm256_i32gather_epi32(error_measure_lut, diff_3_lo, 4);
-            __m256i error_3_hi = _mm256_i32gather_epi32(error_measure_lut, diff_3_hi, 4);
-            __m256i error_4_lo = _mm256_i32gather_epi32(error_measure_lut, diff_4_lo, 4);
-            __m256i error_4_hi = _mm256_i32gather_epi32(error_measure_lut, diff_4_hi, 4);
+            __m256i error_1_lo = _mm256_i32gather_epi32(svt_aom_error_measure_lut, diff_1_lo, 4);
+            __m256i error_1_hi = _mm256_i32gather_epi32(svt_aom_error_measure_lut, diff_1_hi, 4);
+            __m256i error_2_lo = _mm256_i32gather_epi32(svt_aom_error_measure_lut, diff_2_lo, 4);
+            __m256i error_2_hi = _mm256_i32gather_epi32(svt_aom_error_measure_lut, diff_2_hi, 4);
+            __m256i error_3_lo = _mm256_i32gather_epi32(svt_aom_error_measure_lut, diff_3_lo, 4);
+            __m256i error_3_hi = _mm256_i32gather_epi32(svt_aom_error_measure_lut, diff_3_hi, 4);
+            __m256i error_4_lo = _mm256_i32gather_epi32(svt_aom_error_measure_lut, diff_4_lo, 4);
+            __m256i error_4_hi = _mm256_i32gather_epi32(svt_aom_error_measure_lut, diff_4_hi, 4);
 
             __m256i error_1 = _mm256_add_epi32(error_1_lo, error_1_hi);
             __m256i error_2 = _mm256_add_epi32(error_2_lo, error_2_hi);

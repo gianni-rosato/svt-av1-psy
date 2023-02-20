@@ -962,7 +962,7 @@ extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *ctx, EbColorF
                                               uint32_t hierarchical_levels);
 #endif
 
-extern const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4];
+extern const EbAv1LambdaAssignFunc svt_aom_av1_lambda_assignment_function_table[4];
 
 // Table that converts 0-63 Q-range values passed in outside to the Qindex
 // range used internally.
