@@ -218,10 +218,10 @@ class AomUpsampledPredTest
 
         // Function svt_aom_upsampled_pred_sse2 call inside function pointer
         // which have to be set properly
-        // by setup_common_rtcd_internal(), we want to test intrinsic version of
-        // it, so AVX2 flag is necessary
+        // by svt_aom_setup_common_rtcd_internal(), we want to test intrinsic
+        // version of it, so AVX2 flag is necessary
         uint64_t EbCpuFlags = TEST_GET_PARAM(5);
-        setup_common_rtcd_internal(EbCpuFlags);
+        svt_aom_setup_common_rtcd_internal(EbCpuFlags);
 
         const int run_times = 100;
         for (int i = 0; i < run_times; ++i) {

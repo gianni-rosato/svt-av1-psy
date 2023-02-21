@@ -157,28 +157,28 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_sse4_1_func[TX_SIZES_ALL] = {
 };
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N2_c_func[TX_SIZES_ALL] = {
-    av1_transform_two_d_4x4_N2_c,   av1_transform_two_d_8x8_N2_c,
-    av1_transform_two_d_16x16_N2_c, av1_transform_two_d_32x32_N2_c,
-    av1_transform_two_d_64x64_N2_c, svt_av1_fwd_txfm2d_4x8_N2_c,
-    svt_av1_fwd_txfm2d_8x4_N2_c,    svt_av1_fwd_txfm2d_8x16_N2_c,
-    svt_av1_fwd_txfm2d_16x8_N2_c,   svt_av1_fwd_txfm2d_16x32_N2_c,
-    svt_av1_fwd_txfm2d_32x16_N2_c,  svt_av1_fwd_txfm2d_32x64_N2_c,
-    svt_av1_fwd_txfm2d_64x32_N2_c,  svt_av1_fwd_txfm2d_4x16_N2_c,
-    svt_av1_fwd_txfm2d_16x4_N2_c,   svt_av1_fwd_txfm2d_8x32_N2_c,
-    svt_av1_fwd_txfm2d_32x8_N2_c,   svt_av1_fwd_txfm2d_16x64_N2_c,
+    svt_aom_transform_two_d_4x4_N2_c,   svt_aom_transform_two_d_8x8_N2_c,
+    svt_aom_transform_two_d_16x16_N2_c, svt_aom_transform_two_d_32x32_N2_c,
+    svt_aom_transform_two_d_64x64_N2_c, svt_av1_fwd_txfm2d_4x8_N2_c,
+    svt_av1_fwd_txfm2d_8x4_N2_c,        svt_av1_fwd_txfm2d_8x16_N2_c,
+    svt_av1_fwd_txfm2d_16x8_N2_c,       svt_av1_fwd_txfm2d_16x32_N2_c,
+    svt_av1_fwd_txfm2d_32x16_N2_c,      svt_av1_fwd_txfm2d_32x64_N2_c,
+    svt_av1_fwd_txfm2d_64x32_N2_c,      svt_av1_fwd_txfm2d_4x16_N2_c,
+    svt_av1_fwd_txfm2d_16x4_N2_c,       svt_av1_fwd_txfm2d_8x32_N2_c,
+    svt_av1_fwd_txfm2d_32x8_N2_c,       svt_av1_fwd_txfm2d_16x64_N2_c,
     svt_av1_fwd_txfm2d_64x16_N2_c,
 };
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N4_c_func[TX_SIZES_ALL] = {
-    av1_transform_two_d_4x4_N4_c,   av1_transform_two_d_8x8_N4_c,
-    av1_transform_two_d_16x16_N4_c, av1_transform_two_d_32x32_N4_c,
-    av1_transform_two_d_64x64_N4_c, svt_av1_fwd_txfm2d_4x8_N4_c,
-    svt_av1_fwd_txfm2d_8x4_N4_c,    svt_av1_fwd_txfm2d_8x16_N4_c,
-    svt_av1_fwd_txfm2d_16x8_N4_c,   svt_av1_fwd_txfm2d_16x32_N4_c,
-    svt_av1_fwd_txfm2d_32x16_N4_c,  svt_av1_fwd_txfm2d_32x64_N4_c,
-    svt_av1_fwd_txfm2d_64x32_N4_c,  svt_av1_fwd_txfm2d_4x16_N4_c,
-    svt_av1_fwd_txfm2d_16x4_N4_c,   svt_av1_fwd_txfm2d_8x32_N4_c,
-    svt_av1_fwd_txfm2d_32x8_N4_c,   svt_av1_fwd_txfm2d_16x64_N4_c,
+    svt_aom_transform_two_d_4x4_N4_c,   svt_aom_transform_two_d_8x8_N4_c,
+    svt_aom_transform_two_d_16x16_N4_c, svt_aom_transform_two_d_32x32_N4_c,
+    svt_aom_transform_two_d_64x64_N4_c, svt_av1_fwd_txfm2d_4x8_N4_c,
+    svt_av1_fwd_txfm2d_8x4_N4_c,        svt_av1_fwd_txfm2d_8x16_N4_c,
+    svt_av1_fwd_txfm2d_16x8_N4_c,       svt_av1_fwd_txfm2d_16x32_N4_c,
+    svt_av1_fwd_txfm2d_32x16_N4_c,      svt_av1_fwd_txfm2d_32x64_N4_c,
+    svt_av1_fwd_txfm2d_64x32_N4_c,      svt_av1_fwd_txfm2d_4x16_N4_c,
+    svt_av1_fwd_txfm2d_16x4_N4_c,       svt_av1_fwd_txfm2d_8x32_N4_c,
+    svt_av1_fwd_txfm2d_32x8_N4_c,       svt_av1_fwd_txfm2d_16x64_N4_c,
     svt_av1_fwd_txfm2d_64x16_N4_c,
 };
 
@@ -585,19 +585,19 @@ TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_sse4_1) {
 
 #if EN_AVX512_SUPPORT
 TEST_P(FwdTxfm2dAsmTest, match_test_N2_512) {
-    if (EB_CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
+    if (EB_CPU_FLAGS_AVX512F & svt_aom_get_cpu_flags_to_use()) {
         run_match_test_N2_512();
     }
 }
 
 TEST_P(FwdTxfm2dAsmTest, match_test_N4_512) {
-    if (EB_CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
+    if (EB_CPU_FLAGS_AVX512F & svt_aom_get_cpu_flags_to_use()) {
         run_match_test_N4_512();
     }
 }
 
 TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_512) {
-    if (EB_CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
+    if (EB_CPU_FLAGS_AVX512F & svt_aom_get_cpu_flags_to_use()) {
         speed_test_512();
     }
 }

@@ -65,15 +65,15 @@ uint32_t svt_dec_lib_malloc_count = 0;
 EbMemoryMapEntry *svt_aom_memory_map_start_address;
 EbMemoryMapEntry *svt_aom_memory_map_end_address;
 
-void        asm_set_convolve_asm_table(void);
-void        init_intra_dc_predictors_c_internal(void);
-void        asm_set_convolve_hbd_asm_table(void);
-void        init_intra_predictors_internal(void);
+void        svt_aom_asm_set_convolve_asm_table(void);
+void        svt_aom_init_intra_dc_predictors_c_internal(void);
+void        svt_aom_asm_set_convolve_hbd_asm_table(void);
+void        svt_aom_init_intra_predictors_internal(void);
 extern void svt_av1_init_wedge_masks(void);
 void        dec_sync_all_threads(EbDecHandle *dec_handle_ptr);
 
-EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, size_t data_size,
-                                uint32_t is_annexb);
+EbErrorType svt_aom_decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data,
+                                        size_t data_size, uint32_t is_annexb);
 
 static void dec_switch_to_real_time() {
 #if !defined(_WIN32)
@@ -523,7 +523,7 @@ EB_API EbErrorType svt_av1_dec_init(EbComponentType *svt_dec_component) {
 
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
 #ifdef ARCH_X86_64
-    EbCpuFlags cpu_flags = get_cpu_flags_to_use();
+    EbCpuFlags cpu_flags = svt_aom_get_cpu_flags_to_use();
 #else
     EbCpuFlags cpu_flags = 0;
 #endif
@@ -540,22 +540,22 @@ EB_API EbErrorType svt_av1_dec_init(EbComponentType *svt_dec_component) {
     dec_handle_ptr->showable_frame      = 0;
     dec_handle_ptr->seq_header.sb_size  = 0;
 
-    setup_common_rtcd_internal(cpu_flags);
+    svt_aom_setup_common_rtcd_internal(cpu_flags);
 
-    asm_set_convolve_asm_table();
+    svt_aom_asm_set_convolve_asm_table();
 
-    init_intra_dc_predictors_c_internal();
+    svt_aom_init_intra_dc_predictors_c_internal();
 
-    asm_set_convolve_hbd_asm_table();
+    svt_aom_asm_set_convolve_hbd_asm_table();
 
-    init_intra_predictors_internal();
+    svt_aom_init_intra_predictors_internal();
 
     svt_av1_init_wedge_masks();
 
     /************************************
     * Decoder Memory Init
     ************************************/
-    return_error = dec_mem_init(dec_handle_ptr);
+    return_error = svt_aom_dec_mem_init(dec_handle_ptr);
     if (return_error != EB_ErrorNone)
         return return_error;
 
@@ -580,14 +580,15 @@ EB_API EbErrorType svt_av1_dec_frame(EbComponentType *svt_dec_component, const u
 
         uint64_t frame_size = 0;
         frame_size          = data_end - data_start;
-        return_error = decode_multiple_obu(dec_handle_ptr, &data_start, frame_size, is_annexb);
+        return_error        = svt_aom_decode_multiple_obu(
+            dec_handle_ptr, &data_start, frame_size, is_annexb);
 
         if (return_error != EB_ErrorNone)
             assert(0);
 
-        dec_pic_mgr_update_ref_pic(dec_handle_ptr,
-                                   (EB_ErrorNone == return_error) ? 1 : 0,
-                                   dec_handle_ptr->frame_header.refresh_frame_flags);
+        svt_aom_dec_pic_mgr_update_ref_pic(dec_handle_ptr,
+                                           (EB_ErrorNone == return_error) ? 1 : 0,
+                                           dec_handle_ptr->frame_header.refresh_frame_flags);
 
         // Allow extra zero bytes after the frame end
         while (data < data_end) {

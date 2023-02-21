@@ -310,7 +310,7 @@ EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object
 ** Check if reference pictures are needed
 ** release them when appropriate
 ************************************************/
-void release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs) {
+void svt_aom_release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs) {
     (void)scs;
     // PA Reference Pictures
     if (pcs->slice_type != I_SLICE) {

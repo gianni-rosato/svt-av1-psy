@@ -93,12 +93,13 @@ extern EbMemoryMapEntry *svt_aom_memory_map_end_address;
         svt_dec_lib_malloc_count++;                                                   \
     } while (0)
 
-EbErrorType dec_eb_recon_picture_buffer_desc_ctor(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr,
-                                                  Bool is_16bit_pipeline);
+EbErrorType svt_aom_dec_eb_recon_picture_buffer_desc_ctor(EbPtr *object_dbl_ptr,
+                                                          EbPtr  object_init_data_ptr,
+                                                          Bool   is_16bit_pipeline);
 
-EbErrorType dec_mem_init(EbDecHandle *dec_handle_ptr);
+EbErrorType svt_aom_dec_mem_init(EbDecHandle *dec_handle_ptr);
 
-EbErrorType init_dec_mod_ctxt(EbDecHandle *dec_handle_ptr, void **dec_mod_ctxt);
+EbErrorType svt_aom_init_dec_mod_ctxt(EbDecHandle *dec_handle_ptr, void **dec_mod_ctxt);
 
 #ifdef __cplusplus
 }

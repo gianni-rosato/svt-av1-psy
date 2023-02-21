@@ -21,7 +21,7 @@
 const int32_t *cospi_arr(int32_t n);
 const int32_t *sinpi_arr(int32_t n);
 
-void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
+void svt_aom_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
 
 typedef void (*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, const int8_t bit,
                                         const int32_t num_cols);
@@ -1102,7 +1102,7 @@ static void fidtx32x32_avx512(const __m512i *input, __m512i *output, const int8_
 typedef void (*TxfmFuncAVX512)(const __m512i *input, __m512i *output, const int8_t cos_bit,
                                const int8_t *stage_range);
 
-static INLINE TxfmFuncAVX512 fwd_txfm_type_to_func(TxfmType txfmtype) {
+static INLINE TxfmFuncAVX512 fwd_txfm_type_to_func_avx512(TxfmType txfmtype) {
     switch (txfmtype) {
     case TXFM_TYPE_DCT32: return fdct32x32_avx512; break;
     case TXFM_TYPE_IDENTITY32: return fidtx32x32_avx512; break;
@@ -1151,8 +1151,8 @@ static INLINE void fwd_txfm2d_32x32_avx512(const int16_t *input, int32_t *output
     const int8_t        *stage_range_row = cfg->stage_range_row;
     const int8_t         cos_bit_col     = cfg->cos_bit_col;
     const int8_t         cos_bit_row     = cfg->cos_bit_row;
-    const TxfmFuncAVX512 txfm_func_col   = fwd_txfm_type_to_func(cfg->txfm_type_col);
-    const TxfmFuncAVX512 txfm_func_row   = fwd_txfm_type_to_func(cfg->txfm_type_row);
+    const TxfmFuncAVX512 txfm_func_col   = fwd_txfm_type_to_func_avx512(cfg->txfm_type_col);
+    const TxfmFuncAVX512 txfm_func_row   = fwd_txfm_type_to_func_avx512(cfg->txfm_type_row);
     ASSERT(txfm_func_col);
     ASSERT(txfm_func_row);
     __m512i *buf_512         = (__m512i *)txfm_buf;
@@ -1174,7 +1174,7 @@ void av1_fwd_txfm2d_32x32_avx512(int16_t *input, int32_t *output, uint32_t strid
                                  uint8_t bd) {
     DECLARE_ALIGNED(64, int32_t, txfm_buf[1024]);
     Txfm2dFlipCfg cfg;
-    av1_transform_config(tx_type, TX_32X32, &cfg);
+    svt_aom_transform_config(tx_type, TX_32X32, &cfg);
     (void)bd;
     fwd_txfm2d_32x32_avx512(input, output, stride, &cfg, txfm_buf);
 }
@@ -3559,7 +3559,7 @@ void av1_fwd_txfm2d_32x32_N2_avx512(int16_t *input, int32_t *output, uint32_t st
                                     TxType tx_type, uint8_t bd) {
     DECLARE_ALIGNED(64, int32_t, txfm_buf[1024]);
     Txfm2dFlipCfg cfg;
-    av1_transform_config(tx_type, TX_32X32, &cfg);
+    svt_aom_transform_config(tx_type, TX_32X32, &cfg);
     (void)bd;
     const int32_t txfm_size       = 32;
     const int8_t *shift           = cfg.shift;

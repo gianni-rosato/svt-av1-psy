@@ -40,16 +40,18 @@ extern "C" {
 #define REFMVS_LIMIT ((1 << 12) - 1)
 
 static const MV k_zero_mv = {0, 0};
-void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionInfo *pi);
+void            svt_aom_inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
+                                              PartitionInfo *pi);
 
 void svt_av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo *pi, ParseCtxt *parse_ctx,
                           MvReferenceFrame ref_frame,
                           CandidateMv      ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
                           IntMv mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMv global_mvs[2],
                           int16_t *mode_context, MvCount *mv_cnt);
-void assign_intrabc_mv(ParseCtxt *parse_ctxt, IntMv ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
-                       PartitionInfo *pi);
-void palette_tokens(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, PartitionInfo *pi);
+void svt_aom_assign_intrabc_mv(ParseCtxt     *parse_ctxt,
+                               IntMv          ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
+                               PartitionInfo *pi);
+void svt_aom_palette_tokens(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, PartitionInfo *pi);
 #ifdef __cplusplus
 }
 #endif

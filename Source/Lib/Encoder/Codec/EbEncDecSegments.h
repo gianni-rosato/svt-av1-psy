@@ -80,12 +80,13 @@ typedef struct EncDecSegments {
 /**************************************
      * Extern Function Declarations
      **************************************/
-extern EbErrorType enc_dec_segments_ctor(EncDecSegments *segments_ptr, uint32_t segment_col_count,
-                                         uint32_t segment_row_count);
+extern EbErrorType svt_aom_enc_dec_segments_ctor(EncDecSegments *segments_ptr,
+                                                 uint32_t        segment_col_count,
+                                                 uint32_t        segment_row_count);
 
-extern void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t col_count,
-                                  uint32_t row_count, uint32_t pic_width_sb,
-                                  uint32_t pic_height_sb);
+extern void svt_aom_enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t col_count,
+                                          uint32_t row_count, uint32_t pic_width_sb,
+                                          uint32_t pic_height_sb);
 #ifdef __cplusplus
 }
 #endif

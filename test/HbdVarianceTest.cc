@@ -450,8 +450,8 @@ INSTANTIATE_TEST_CASE_P(Variance, HbdVarianceTest,
 /**
  * @brief Unit test for different implementation of HBD variance with size 16x16
  * and 32x32 functions:
- * - variance_highbd_c
- * - variance_highbd_avx2
+ * - svt_aom_variance_highbd_c
+ * - svt_aom_variance_highbd_avx2
  *
  * Test strategy:
  *  This test case use random source, max source, zero source as test
@@ -533,7 +533,7 @@ class HbdSquareVarianceNoRoundTest
         distortion_tst = tst_func_(
             src_data_, length_, ref_data_, length_, length_, length_, &sse_tst);
 
-        distortion_ref = variance_highbd_c(
+        distortion_ref = svt_aom_variance_highbd_c(
             src_data_, length_, ref_data_, length_, length_, length_, &sse_ref);
         ASSERT_EQ(distortion_tst, distortion_ref)
             << "Error at distortion in variance test";
@@ -557,13 +557,13 @@ class HbdSquareVarianceNoRoundTest
                                        length_,
                                        &sse_tst);
 
-            distortion_ref = variance_highbd_c(src_data_,
-                                               length_,
-                                               ref_data_,
-                                               length_,
-                                               length_,
-                                               length_,
-                                               &sse_ref);
+            distortion_ref = svt_aom_variance_highbd_c(src_data_,
+                                                       length_,
+                                                       ref_data_,
+                                                       length_,
+                                                       length_,
+                                                       length_,
+                                                       &sse_ref);
             ASSERT_EQ(distortion_tst, distortion_ref)
                 << "Error at distortion in variance test";
             ASSERT_EQ(sse_tst, sse_ref)
@@ -595,7 +595,7 @@ TEST_P(HbdSquareVarianceNoRoundTest, MatchTest) {
 INSTANTIATE_TEST_CASE_P(
     Variance, HbdSquareVarianceNoRoundTest,
     ::testing::Combine(::testing::Values(16, 32),
-                       ::testing::Values(variance_highbd_sse4_1,
-                                         variance_highbd_avx2)));
+                       ::testing::Values(svt_aom_variance_highbd_sse4_1,
+                                         svt_aom_variance_highbd_avx2)));
 
 }  // namespace

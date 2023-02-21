@@ -19,7 +19,7 @@
 #include "EbInvTransforms.h"
 #include "EbInterPrediction.h"
 
-int neg_deinterleave(const int diff, int ref, int max) {
+int svt_aom_neg_deinterleave(const int diff, int ref, int max) {
     if (!ref)
         return diff;
     if (ref >= max - 1)
@@ -43,7 +43,8 @@ int neg_deinterleave(const int diff, int ref, int max) {
     }
 }
 
-void set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis, int segment_id) {
+void svt_aom_set_segment_id(EbDecHandle *dec_handle, int mi_offset, int x_mis, int y_mis,
+                            int segment_id) {
     assert(segment_id >= 0 && segment_id < MAX_SEGMENTS);
     FrameHeader *frm_header = &dec_handle->frame_header;
 
@@ -93,8 +94,8 @@ static INLINE TxSize depth_to_tx_size(int depth, BlockSize bsize) {
     return tx_size;
 }
 
-void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize, TxSize tx_size,
-                       int blk_row, int blk_col) {
+void svt_aom_update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize,
+                               TxSize tx_size, int blk_row, int blk_col) {
     int                   mi_row          = pi->mi_row;
     int                   mi_col          = pi->mi_col;
     ParseAboveNbr4x4Ctxt *above_parse_ctx = parse_ctxt->parse_above_nbr4x4_ctxt;
@@ -116,7 +117,7 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize
     memset(left_ctx, tx_high, bh);
 }
 
-TxSize read_selected_tx_size(PartitionInfo *xd, ParseCtxt *parse_ctxt) {
+TxSize svt_aom_read_selected_tx_size(PartitionInfo *xd, ParseCtxt *parse_ctxt) {
     SvtReader      *r            = &parse_ctxt->r;
     const BlockSize bsize        = xd->mi->sb_type;
     const int32_t   tx_size_cat  = bsize_to_tx_size_cat(bsize);
@@ -130,7 +131,7 @@ TxSize read_selected_tx_size(PartitionInfo *xd, ParseCtxt *parse_ctxt) {
     return tx_size;
 }
 
-int get_intra_inter_context(PartitionInfo *xd) {
+int svt_aom_get_intra_inter_context(PartitionInfo *xd) {
     const BlockModeInfo *const above_mbmi = xd->above_mbmi;
     const BlockModeInfo *const left_mbmi  = xd->left_mbmi;
     const int                  has_above  = xd->up_available;
@@ -146,12 +147,12 @@ int get_intra_inter_context(PartitionInfo *xd) {
         return 0;
 }
 
-PredictionMode read_intra_mode(SvtReader *r, AomCdfProb *cdf) {
+PredictionMode svt_aom_read_intra_mode(SvtReader *r, AomCdfProb *cdf) {
     return (PredictionMode)svt_read_symbol(r, cdf, INTRA_MODES, ACCT_STR);
 }
 
-UvPredictionMode read_intra_mode_uv(FRAME_CONTEXT *ec_ctx, SvtReader *r, CflAllowedType cfl_allowed,
-                                    PredictionMode y_mode) {
+UvPredictionMode svt_aom_read_intra_mode_uv(FRAME_CONTEXT *ec_ctx, SvtReader *r,
+                                            CflAllowedType cfl_allowed, PredictionMode y_mode) {
     const UvPredictionMode uv_mode = svt_read_symbol(
         r, ec_ctx->uv_mode_cdf[cfl_allowed][y_mode], UV_INTRA_MODES - !cfl_allowed, ACCT_STR);
     return uv_mode;
@@ -167,8 +168,8 @@ static INLINE int block_center_y(int mi_row, BlockSize bs) {
     return mi_row * MI_SIZE + bh / 2 - 1;
 }
 
-IntMv gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp, BlockSize bsize, int mi_col,
-                           int mi_row, int is_integer) {
+IntMv svt_aom_gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp, BlockSize bsize,
+                                   int mi_col, int mi_row, int is_integer) {
     IntMv res;
 
     if (gm->gm_type == IDENTITY) {
@@ -209,12 +210,12 @@ IntMv gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp, BlockSize
     return res;
 }
 
-static INLINE int has_uni_comp_refs(const BlockModeInfo *mbmi) {
-    return has_second_ref(mbmi) &&
+static INLINE int svt_aom_has_uni_comp_refs(const BlockModeInfo *mbmi) {
+    return svt_aom_has_second_ref(mbmi) &&
         (!((mbmi->ref_frame[0] >= BWDREF_FRAME) ^ (mbmi->ref_frame[1] >= BWDREF_FRAME)));
 }
 
-int get_comp_reference_type_context(const PartitionInfo *xd) {
+int svt_aom_get_comp_reference_type_context(const PartitionInfo *xd) {
     int                        pred_context;
     const BlockModeInfo *const above_mbmi     = xd->above_mbmi;
     const BlockModeInfo *const left_mbmi      = xd->left_mbmi;
@@ -229,13 +230,13 @@ int get_comp_reference_type_context(const PartitionInfo *xd) {
         } else if (above_intra || left_intra) { // intra/inter
             const BlockModeInfo *inter_mbmi = above_intra ? left_mbmi : above_mbmi;
 
-            if (!has_second_ref(inter_mbmi)) // single pred
+            if (!svt_aom_has_second_ref(inter_mbmi)) // single pred
                 pred_context = 2;
             else // comp pred
-                pred_context = 1 + 2 * has_uni_comp_refs(inter_mbmi);
+                pred_context = 1 + 2 * svt_aom_has_uni_comp_refs(inter_mbmi);
         } else { // inter/inter
-            const int              a_sg = !has_second_ref(above_mbmi);
-            const int              l_sg = !has_second_ref(left_mbmi);
+            const int              a_sg = !svt_aom_has_second_ref(above_mbmi);
+            const int              l_sg = !svt_aom_has_second_ref(left_mbmi);
             const MvReferenceFrame frfa = above_mbmi->ref_frame[0];
             const MvReferenceFrame frfl = left_mbmi->ref_frame[0];
 
@@ -243,8 +244,8 @@ int get_comp_reference_type_context(const PartitionInfo *xd) {
                 pred_context = 1 +
                     2 * (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
             } else if (l_sg || a_sg) { // single/comp
-                const int uni_rfc = a_sg ? has_uni_comp_refs(left_mbmi)
-                                         : has_uni_comp_refs(above_mbmi);
+                const int uni_rfc = a_sg ? svt_aom_has_uni_comp_refs(left_mbmi)
+                                         : svt_aom_has_uni_comp_refs(above_mbmi);
 
                 if (!uni_rfc) // comp bidir
                     pred_context = 1;
@@ -252,8 +253,8 @@ int get_comp_reference_type_context(const PartitionInfo *xd) {
                     pred_context = 3 +
                         (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
             } else { // comp/comp
-                const int a_uni_rfc = has_uni_comp_refs(above_mbmi);
-                const int l_uni_rfc = has_uni_comp_refs(left_mbmi);
+                const int a_uni_rfc = svt_aom_has_uni_comp_refs(above_mbmi);
+                const int l_uni_rfc = svt_aom_has_uni_comp_refs(left_mbmi);
 
                 if (!a_uni_rfc && !l_uni_rfc) // bidir/bidir
                     pred_context = 0;
@@ -269,10 +270,10 @@ int get_comp_reference_type_context(const PartitionInfo *xd) {
         if (!is_inter_block_dec(edge_mbmi)) { // intra
             pred_context = 2;
         } else { // inter
-            if (!has_second_ref(edge_mbmi)) // single pred
+            if (!svt_aom_has_second_ref(edge_mbmi)) // single pred
                 pred_context = 2;
             else // comp pred
-                pred_context = 4 * has_uni_comp_refs(edge_mbmi);
+                pred_context = 4 * svt_aom_has_uni_comp_refs(edge_mbmi);
         }
     } else { // no edges available
         pred_context = 2;
@@ -282,6 +283,7 @@ int get_comp_reference_type_context(const PartitionInfo *xd) {
     return pred_context;
 }
 
-int seg_feature_active(SegmentationParams *seg, int segment_id, SEG_LVL_FEATURES feature_id) {
+int svt_aom_seg_feature_active(SegmentationParams *seg, int segment_id,
+                               SEG_LVL_FEATURES feature_id) {
     return seg->segmentation_enabled && seg->feature_enabled[segment_id][feature_id];
 }

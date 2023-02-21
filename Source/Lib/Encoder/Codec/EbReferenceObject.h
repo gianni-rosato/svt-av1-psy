@@ -117,6 +117,6 @@ extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr,
                                                    EbPtr  object_init_data_ptr);
 extern EbErrorType svt_tpl_reference_object_creator(EbPtr *object_dbl_ptr,
                                                     EbPtr  object_init_data_ptr);
-void release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs);
+void svt_aom_release_pa_reference_objects(SequenceControlSet *scs, PictureParentControlSet *pcs);
 
 #endif //EbReferenceObject_h

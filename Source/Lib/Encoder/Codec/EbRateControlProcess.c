@@ -117,8 +117,8 @@ typedef struct RateControlContext {
     EbFifo *rate_control_output_results_fifo_ptr;
     EbFifo *picture_decision_results_output_fifo_ptr;
 } RateControlContext;
-EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
-                                                         uint64_t                  picture_number) {
+EbErrorType svt_aom_rate_control_coded_frames_stats_context_ctor(
+    coded_frames_stats_entry *entry_ptr, uint64_t picture_number) {
     entry_ptr->picture_number         = picture_number;
     entry_ptr->frame_total_bit_actual = -1;
 
@@ -130,8 +130,9 @@ static void rate_control_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj);
 }
 
-EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
-                                      const EbEncHandle *enc_handle_ptr, int me_port_index) {
+EbErrorType svt_aom_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
+                                              const EbEncHandle *enc_handle_ptr,
+                                              int                me_port_index) {
     RateControlContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -1446,11 +1447,11 @@ static void generate_b64_me_qindex_map(PictureControlSet *pcs) {
 }
 
 /******************************************************
- * sb_qp_derivation_tpl_la
+ * svt_aom_sb_qp_derivation_tpl_la
  * Calculates the QP per SB based on the tpl statistics
  * used in one pass and second pass of two pass encoding
  ******************************************************/
-void sb_qp_derivation_tpl_la(PictureControlSet *pcs) {
+void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs) {
     PictureParentControlSet *ppcs_ptr = pcs->ppcs;
     SequenceControlSet      *scs      = pcs->ppcs->scs;
     SuperBlock              *sb_ptr;
@@ -2105,7 +2106,7 @@ void svt_av1_resize_reset_rc(PictureParentControlSet *ppcs_ptr, int32_t resize_w
     double              tot_scale_change = (double)(resize_width * resize_height) /
         (double)(prev_width * prev_height);
     // Reset buffer level to optimal, update target size.
-    reset_update_frame_target(ppcs_ptr);
+    svt_aom_reset_update_frame_target(ppcs_ptr);
     target_bits_per_frame = ppcs_ptr->this_frame_target;
     if (tot_scale_change > 4.0)
         rc->avg_frame_qindex[INTER_FRAME] = rc->worst_quality;
@@ -2564,7 +2565,7 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr) {
     if (frm_hdr->frame_type == KEY_FRAME)
         rc->frames_since_key = 0;
 }
-void update_rc_counts(PictureParentControlSet *ppcs_ptr) {
+void svt_aom_update_rc_counts(PictureParentControlSet *ppcs_ptr) {
     SequenceControlSet *scs                = ppcs_ptr->scs;
     EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
     RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
@@ -2601,7 +2602,8 @@ static void vbr_rate_correction(PictureControlSet *pcs, int *this_frame_target) 
 
     // Fast redistribution of bits arising from massive local undershoot.
     // Dont do it for kf,arf,gf or overlay frames.
-    if (!frame_is_kf_gf_arf(pcs->ppcs) && !pcs->ppcs->is_overlay && rc->vbr_bits_off_target_fast) {
+    if (!svt_aom_frame_is_kf_gf_arf(pcs->ppcs) && !pcs->ppcs->is_overlay &&
+        rc->vbr_bits_off_target_fast) {
         int one_frame_bits = AOMMAX(rc->avg_frame_bandwidth, *this_frame_target);
         int fast_extra_bits;
         fast_extra_bits = (int)AOMMIN(rc->vbr_bits_off_target_fast, one_frame_bits);
@@ -2833,7 +2835,7 @@ static AOM_INLINE int recode_loop_test(PictureParentControlSet *ppcs_ptr, int hi
                                        int low_limit, int q, int maxq, int minq) {
     EncodeContext *const encode_context_ptr = ppcs_ptr->scs->encode_context_ptr;
     RATE_CONTROL *const  rc                 = &(encode_context_ptr->rc);
-    const int            frame_is_kfgfarf   = frame_is_kf_gf_arf(ppcs_ptr);
+    const int            frame_is_kfgfarf   = svt_aom_frame_is_kf_gf_arf(ppcs_ptr);
     int                  force_recode       = 0;
     if ((ppcs_ptr->projected_frame_size >= rc->max_frame_bandwidth) ||
         (encode_context_ptr->recode_loop == ALLOW_RECODE) ||
@@ -3299,7 +3301,7 @@ void reset_rc_param(PictureParentControlSet *ppcs) {
     ppcs->undershoot_seen = 0;
 }
 
-void *rate_control_kernel(void *input_ptr) {
+void *svt_aom_rate_control_kernel(void *input_ptr) {
     // Context
     EbThreadContext         *thread_context_ptr = (EbThreadContext *)input_ptr;
     RateControlContext      *context_ptr        = (RateControlContext *)thread_context_ptr->priv;
@@ -3339,7 +3341,7 @@ void *rate_control_kernel(void *input_ptr) {
             scs = pcs->scs;
             // Get r0
             if (pcs->ppcs->r0_based_qps_qpm) {
-                generate_r0beta(pcs->ppcs);
+                svt_aom_generate_r0beta(pcs->ppcs);
             }
             // Get intra % in ref frame
             get_ref_intra_percentage(pcs, &pcs->ref_intra_percentage);
@@ -3375,9 +3377,9 @@ void *rate_control_kernel(void *input_ptr) {
                         restore_param(pcs->ppcs, pcs->ppcs->rate_control_param_ptr);
 
                         if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR)
-                            one_pass_rt_rate_alloc(pcs->ppcs);
+                            svt_aom_one_pass_rt_rate_alloc(pcs->ppcs);
                         else
-                            process_rc_stat(pcs->ppcs);
+                            svt_aom_process_rc_stat(pcs->ppcs);
 
                         av1_set_target_rate(pcs);
                         store_param(pcs->ppcs, pcs->ppcs->rate_control_param_ptr);
@@ -3469,10 +3471,10 @@ void *rate_control_kernel(void *input_ptr) {
                         // max bit rate is only active for 1 pass CRF
                         if (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF &&
                             scs->static_config.max_bit_rate)
-                            crf_assign_max_rate(pcs->ppcs);
+                            svt_aom_crf_assign_max_rate(pcs->ppcs);
                     }
                     pcs->ppcs->picture_qp = pcs->picture_qp;
-                    setup_segmentation(pcs, scs);
+                    svt_aom_setup_segmentation(pcs, scs);
                 } else {
                     // ***Rate Control***
                     int32_t new_qindex;
@@ -3568,10 +3570,10 @@ void *rate_control_kernel(void *input_ptr) {
                 if (scs->static_config.pass == ENC_SINGLE_PASS) {
                     if (scs->static_config.superres_mode > SUPERRES_RANDOM) {
                         // determine denom and scale down picture by selected denom
-                        init_resize_picture(scs, pcs->ppcs);
+                        svt_aom_init_resize_picture(scs, pcs->ppcs);
                         if (pcs->ppcs->frame_superres_enabled || pcs->ppcs->frame_resize_enabled) {
                             // reset gm based on super-res on/off
-                            set_gm_controls(pcs->ppcs, derive_gm_level(pcs->ppcs));
+                            svt_aom_set_gm_controls(pcs->ppcs, svt_aom_derive_gm_level(pcs->ppcs));
 
                             // Initialize Segments as picture decision process
                             pcs->ppcs->me_segments_completion_count = 0;
@@ -3607,20 +3609,20 @@ void *rate_control_kernel(void *input_ptr) {
                                         if (pcs->ppcs->tpl_group[i]->slice_type == P_SLICE) {
                                             if (pcs->ppcs->tpl_group[i]->ext_mg_id ==
                                                 pcs->ppcs->ext_mg_id + 1) {
-                                                release_pa_reference_objects(
+                                                svt_aom_release_pa_reference_objects(
                                                     scs, pcs->ppcs->tpl_group[i]);
                                             }
                                         } else {
                                             if (pcs->ppcs->tpl_group[i]->ext_mg_id ==
                                                 pcs->ppcs->ext_mg_id) {
-                                                release_pa_reference_objects(
+                                                svt_aom_release_pa_reference_objects(
                                                     scs, pcs->ppcs->tpl_group[i]);
                                             }
                                         }
                                     }
                                 }
                             } else {
-                                release_pa_reference_objects(scs, pcs->ppcs);
+                                svt_aom_release_pa_reference_objects(scs, pcs->ppcs);
                             }
                         }
                     }
@@ -3630,7 +3632,7 @@ void *rate_control_kernel(void *input_ptr) {
             // QPM with tpl_la
             if (scs->static_config.enable_adaptive_quantization == 2 &&
                 pcs->ppcs->tpl_ctrls.enable && pcs->ppcs->r0 != 0) {
-                sb_qp_derivation_tpl_la(pcs);
+                svt_aom_sb_qp_derivation_tpl_la(pcs);
             } else if (scs->static_config.enable_adaptive_quantization &&
                        scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR) {
 #if OPT_LD_QPM
@@ -3646,7 +3648,7 @@ void *rate_control_kernel(void *input_ptr) {
                 }
             }
             if (scs->static_config.rate_control_mode && !is_superres_recode_task) {
-                update_rc_counts(pcs->ppcs);
+                svt_aom_update_rc_counts(pcs->ppcs);
             }
 
             // Derive a QP per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)

@@ -41,25 +41,26 @@ typedef struct RestContext {
     int32_t *rst_tmpbuf;
 } RestContext;
 
-void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
-                     uint32_t ss_y, Bool include_padding);
-void copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr);
-void recon_output(PictureControlSet *pcs, SequenceControlSet *scs);
-void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
-                                           int32_t optimized_lr);
+void        svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3],
+                                    uint32_t ss_x, uint32_t ss_y, Bool include_padding);
+void        svt_aom_copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr);
+void        svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs);
+void        svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
+                                                  int32_t optimized_lr);
 EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, Bool free_memory);
-EbErrorType ssim_calculations(PictureControlSet *pcs, SequenceControlSet *scs, Bool free_memory);
+EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet *scs,
+                                      Bool free_memory);
 void        pad_ref_and_set_flags(PictureControlSet *pcs, SequenceControlSet *scs);
-void        generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
-                             uint32_t original_src_height, uint32_t padding_width,
-                             uint32_t padding_height);
-void        restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
-                                   const Yv12BufferConfig *src, Yv12BufferConfig *trial_frame_rst,
-                                   PictureControlSet *pcs, uint32_t segment_index);
-void        rest_finish_search(PictureControlSet *pcs);
-void        svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
-                                           uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
-                                           Bool is_16bit_pipeline);
+void svt_aom_generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
+                              uint32_t original_src_height, uint32_t padding_width,
+                              uint32_t padding_height);
+void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
+                            const Yv12BufferConfig *src, Yv12BufferConfig *trial_frame_rst,
+                            PictureControlSet *pcs, uint32_t segment_index);
+void rest_finish_search(PictureControlSet *pcs);
+void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
+                                    uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
+                                    Bool is_16bit_pipeline);
 #if DEBUG_UPSCALING
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
                       uint16_t width, uint16_t height, uint16_t stride_y, uint16_t stride_u,
@@ -82,9 +83,9 @@ static void rest_context_dctor(EbPtr p) {
 /******************************************************
  * Rest Context Constructor
  ******************************************************/
-EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
-                              const EbEncHandle *enc_handle_ptr, EbPtr object_init_data_ptr,
-                              int index, int demux_index) {
+EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_context_ptr,
+                                      const EbEncHandle *enc_handle_ptr, EbPtr object_init_data_ptr,
+                                      int index, int demux_index) {
     const SequenceControlSet       *scs           = enc_handle_ptr->scs_instance_array[0]->scs;
     const EbSvtAv1EncConfiguration *config        = &scs->static_config;
     EbColorFormat                   color_format  = config->encoder_color_format;
@@ -105,10 +106,10 @@ EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
 
     Bool is_16bit = scs->is_16bit_pipeline;
 
-    if (get_enable_restoration(init_data_ptr->enc_mode,
-                               config->enable_restoration_filtering,
-                               scs->input_resolution,
-                               scs->static_config.fast_decode)) {
+    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
+                                       config->enable_restoration_filtering,
+                                       scs->input_resolution,
+                                       scs->static_config.fast_decode)) {
         EbPictureBufferDescInitData init_data;
 
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -139,7 +140,8 @@ EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
 
     return EB_ErrorNone;
 }
-extern void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd) {
+extern void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr,
+                                  Bool is_highbd) {
     if (!is_highbd) {
         if (pcs->ppcs->is_used_as_reference_flag == TRUE)
             *recon_ptr = ((EbReferenceObject *)pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
@@ -176,7 +178,7 @@ static EbPictureBufferDesc *get_own_recon(SequenceControlSet *scs, PictureContro
     const uint32_t ss_y = scs->subsampling_y;
 
     EbPictureBufferDesc *recon_picture_ptr;
-    get_recon_pic(pcs, &recon_picture_ptr, is_16bit);
+    svt_aom_get_recon_pic(pcs, &recon_picture_ptr, is_16bit);
     // if boundaries are not used, don't need to copy pic to new buffer, as the
     // search will not modify the pic
     if (!scs->use_boundaries_in_rest_search) {
@@ -311,14 +313,14 @@ void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc *src_8bit, EbPictureBuffe
     dst_16bit->height = src_8bit->height;
 }
 
-extern void pack_2d_pic(EbPictureBufferDesc *input_picture, uint16_t *packed[3]);
+extern void svt_aom_pack_2d_pic(EbPictureBufferDesc *input_picture, uint16_t *packed[3]);
 
 void set_unscaled_input_16bit(PictureControlSet *pcs) {
     EbPictureBufferDesc *input_pic  = pcs->ppcs->enhanced_unscaled_picture_ptr;
     EbPictureBufferDesc *output_pic = pcs->input_frame16bit;
     uint16_t             ss_x       = pcs->ppcs->scs->subsampling_x;
     uint16_t             ss_y       = pcs->ppcs->scs->subsampling_y;
-    copy_buffer_info(input_pic, pcs->input_frame16bit);
+    svt_aom_copy_buffer_info(input_pic, pcs->input_frame16bit);
     if (input_pic->bit_depth == EB_EIGHT_BIT)
         svt_convert_pic_8bit_to_16bit(input_pic, output_pic, ss_x, ss_y);
     else {
@@ -330,7 +332,7 @@ void set_unscaled_input_16bit(PictureControlSet *pcs) {
                                (uint16_t *)output_pic->buffer_cr +
                                    (((output_pic->org_y) >> ss_y) * output_pic->stride_cr) +
                                    ((output_pic->org_x) >> ss_x)};
-        pack_2d_pic(input_pic, planes);
+        svt_aom_pack_2d_pic(input_pic, planes);
     }
 }
 
@@ -475,7 +477,7 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
 
     Bool is_16bit = scs->is_16bit_pipeline;
 
-    get_recon_pic(pcs, &recon_ptr, is_16bit);
+    svt_aom_get_recon_pic(pcs, &recon_ptr, is_16bit);
 
     uint16_t  ss_x       = scs->subsampling_x;
     uint16_t  ss_y       = scs->subsampling_y;
@@ -590,7 +592,7 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs, SequenceContr
 /******************************************************
  * Rest Kernel
  ******************************************************/
-void *rest_kernel(void *input_ptr) {
+void *svt_aom_rest_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
     RestContext        *context_ptr        = (RestContext *)thread_context_ptr->priv;
@@ -648,25 +650,25 @@ void *rest_kernel(void *input_ptr) {
             // but there is no extra padding after input pics are resized for
             // reference scaling
             Yv12BufferConfig cpi_source;
-            link_eb_to_aom_buffer_desc(input_pic,
-                                       &cpi_source,
-                                       is_resized ? 0 : scs->max_input_pad_right,
-                                       is_resized ? 0 : scs->max_input_pad_bottom,
-                                       is_16bit);
+            svt_aom_link_eb_to_aom_buffer_desc(input_pic,
+                                               &cpi_source,
+                                               is_resized ? 0 : scs->max_input_pad_right,
+                                               is_resized ? 0 : scs->max_input_pad_bottom,
+                                               is_16bit);
 
             Yv12BufferConfig trial_frame_rst;
-            link_eb_to_aom_buffer_desc(context_ptr->trial_frame_rst,
-                                       &trial_frame_rst,
-                                       is_resized ? 0 : scs->max_input_pad_right,
-                                       is_resized ? 0 : scs->max_input_pad_bottom,
-                                       is_16bit);
+            svt_aom_link_eb_to_aom_buffer_desc(context_ptr->trial_frame_rst,
+                                               &trial_frame_rst,
+                                               is_resized ? 0 : scs->max_input_pad_right,
+                                               is_resized ? 0 : scs->max_input_pad_bottom,
+                                               is_16bit);
 
             Yv12BufferConfig org_fts;
-            link_eb_to_aom_buffer_desc(recon_picture_ptr,
-                                       &org_fts,
-                                       is_resized ? 0 : scs->max_input_pad_right,
-                                       is_resized ? 0 : scs->max_input_pad_bottom,
-                                       is_16bit);
+            svt_aom_link_eb_to_aom_buffer_desc(recon_picture_ptr,
+                                               &org_fts,
+                                               is_resized ? 0 : scs->max_input_pad_right,
+                                               is_resized ? 0 : scs->max_input_pad_bottom,
+                                               is_16bit);
 
             if (pcs->ppcs->slice_type != I_SLICE && cm->wn_filter_ctrls.enabled &&
                 cm->wn_filter_ctrls.use_prev_frame_coeffs) {
@@ -790,29 +792,32 @@ void *rest_kernel(void *input_ptr) {
                 // Note: if superres recode is actived, memory needs to be freed in packetization process by calling free_temporal_filtering_buffer()
                 EbErrorType return_error = psnr_calculations(pcs, scs, FALSE);
                 if (return_error != EB_ErrorNone) {
-                    assert_err(0,
-                               "Couldn't allocate memory for uncompressed 10bit buffers for PSNR "
-                               "calculations");
+                    svt_aom_assert_err(
+                        0,
+                        "Couldn't allocate memory for uncompressed 10bit buffers for PSNR "
+                        "calculations");
                 }
             } else if (scs->static_config.stat_report) {
                 // Note: if temporal_filtering is used, memory needs to be freed in the last of these calls
                 EbErrorType return_error = psnr_calculations(pcs, scs, FALSE);
                 if (return_error != EB_ErrorNone) {
-                    assert_err(0,
-                               "Couldn't allocate memory for uncompressed 10bit buffers for PSNR "
-                               "calculations");
+                    svt_aom_assert_err(
+                        0,
+                        "Couldn't allocate memory for uncompressed 10bit buffers for PSNR "
+                        "calculations");
                 }
-                return_error = ssim_calculations(pcs, scs, TRUE /* free memory here */);
+                return_error = svt_aom_ssim_calculations(pcs, scs, TRUE /* free memory here */);
                 if (return_error != EB_ErrorNone) {
-                    assert_err(0,
-                               "Couldn't allocate memory for uncompressed 10bit buffers for SSIM "
-                               "calculations");
+                    svt_aom_assert_err(
+                        0,
+                        "Couldn't allocate memory for uncompressed 10bit buffers for SSIM "
+                        "calculations");
                 }
             }
 
             if (!superres_recode) {
                 if (scs->static_config.recon_enabled) {
-                    recon_output(pcs, scs);
+                    svt_aom_recon_output(pcs, scs);
                 }
                 // post reference picture task in packetization process if it's superres_recode
                 if (pcs->ppcs->is_used_as_reference_flag) {

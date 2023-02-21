@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-    extern EbErrorType motion_estimation_b64(
+    extern EbErrorType svt_aom_motion_estimation_b64(
         PictureParentControlSet      *pcs,
         uint32_t                       b64_index,
         uint32_t                       b64_origin_x,
@@ -35,7 +35,7 @@ extern "C" {
         MeContext                 *me_ctx,
         EbPictureBufferDesc       *input_ptr);
 
-    extern void decimation_2d(
+    extern void svt_aom_decimation_2d(
         uint8_t                   *input_samples,
         uint32_t                   input_stride,
         uint32_t                   input_area_width,
@@ -44,7 +44,7 @@ extern "C" {
         uint32_t                   decim_stride,
         uint32_t                   decim_step);
 
-    extern void downsample_2d_c(
+    extern void svt_aom_downsample_2d_c(
         uint8_t                   *input_samples,
         uint32_t                   input_stride,
         uint32_t                   input_area_width,
@@ -64,7 +64,7 @@ extern "C" {
         PictureParentControlSet   *pcs,
         MotionEstimationContext_t *me_context_ptr,
         EbPictureBufferDesc       *input_ptr);
-    extern EbErrorType open_loop_intra_search_mb(
+    extern EbErrorType svt_aom_open_loop_intra_search_mb(
         PictureParentControlSet *pcs,
         uint32_t                   b64_index,
         EbPictureBufferDesc       *input_ptr);
@@ -158,7 +158,7 @@ extern "C" {
 
     static const uint8_t sub_position_type[16] = { 0, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2 };
 
-    extern uint32_t compute8x4_sad_kernel_c(
+    extern uint32_t svt_aom_compute8x4_sad_kernel_c(
         uint8_t  *src,                            // input parameter, source samples Ptr
         uint32_t  src_stride,                      // input parameter, source stride
         uint8_t  *ref,                            // input parameter, reference samples Ptr
@@ -194,19 +194,19 @@ extern "C" {
 
     // Nader - to be replaced by loock-up table
     /*******************************************
-    * get_me_info_index
+    * svt_aom_get_me_info_index
     *   search the correct index of the motion
     *   info that corresponds to the input
     *   md candidate
     *******************************************/
-    extern uint32_t get_me_info_index(
+    extern uint32_t svt_aom_get_me_info_index(
         uint32_t         max_me_block,
         const BlockGeom *blk_geom,
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
 
     // factor to slowdown the ME search region growth to MAX
-    uint16_t get_scaled_picture_distance(uint16_t dist);
+    uint16_t svt_aom_get_scaled_picture_distance(uint16_t dist);
 
 #ifdef __cplusplus
 }

@@ -17,7 +17,7 @@
 
 #include "EbCabacContextModel.h"
 #include "EbFullLoop.h"
-#include "EbMotionEstimation.h" //downsample_2d_c()
+#include "EbMotionEstimation.h" //svt_aom_downsample_2d_c()
 
 void svt_av1_txb_init_levels_sse4_1(const TranLow *const coeff, const int32_t width,
                                     const int32_t height, uint8_t *const levels) {
@@ -144,13 +144,14 @@ static INLINE __m128i compute_sum(__m128i *in, __m128i *prev_in) {
     return _mm_packus_epi16(sum_, zero);
 }
 
-void downsample_2d_sse4_1(uint8_t *input_samples, // input parameter, input samples Ptr
-                          uint32_t input_stride, // input parameter, input stride
-                          uint32_t input_area_width, // input parameter, input area width
-                          uint32_t input_area_height, // input parameter, input area height
-                          uint8_t *decim_samples, // output parameter, decimated samples Ptr
-                          uint32_t decim_stride, // input parameter, output stride
-                          uint32_t decim_step) // input parameter, decimation amount in pixels
+void svt_aom_downsample_2d_sse4_1(
+    uint8_t *input_samples, // input parameter, input samples Ptr
+    uint32_t input_stride, // input parameter, input stride
+    uint32_t input_area_width, // input parameter, input area width
+    uint32_t input_area_height, // input parameter, input area height
+    uint8_t *decim_samples, // output parameter, decimated samples Ptr
+    uint32_t decim_stride, // input parameter, output stride
+    uint32_t decim_step) // input parameter, decimation amount in pixels
 {
     uint32_t input_stripe_stride = input_stride * decim_step;
     uint32_t decim_horizontal_index;
@@ -216,12 +217,12 @@ void downsample_2d_sse4_1(uint8_t *input_samples, // input parameter, input samp
             out_ptr += decim_stride;
         }
     } else {
-        downsample_2d_c(input_samples,
-                        input_stride,
-                        input_area_width,
-                        input_area_height,
-                        decim_samples,
-                        decim_stride,
-                        decim_step);
+        svt_aom_downsample_2d_c(input_samples,
+                                input_stride,
+                                input_area_width,
+                                input_area_height,
+                                decim_samples,
+                                decim_stride,
+                                decim_step);
     }
 }

@@ -20,13 +20,14 @@
 #include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
 #include "aom_dsp_rtcd.h"
-void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                   int32_t after_cdef);
 void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc *src_8bit, EbPictureBufferDesc *dst_16bit,
                                    uint16_t ss_x, uint16_t ss_y);
 
-extern void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+extern void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr,
+                                  Bool is_highbd);
 
 static void dlf_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
@@ -36,8 +37,8 @@ static void dlf_context_dctor(EbPtr p) {
 /******************************************************
  * Dlf Context Constructor
  ******************************************************/
-EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHandle *enc_handle_ptr,
-                             int index) {
+EbErrorType svt_aom_dlf_context_ctor(EbThreadContext   *thread_context_ptr,
+                                     const EbEncHandle *enc_handle_ptr, int index) {
     DlfContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -54,7 +55,7 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
 /******************************************************
  * Dlf Kernel
  ******************************************************/
-void *dlf_kernel(void *input_ptr) {
+void *svt_aom_dlf_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
     DlfContext         *context_ptr        = (DlfContext *)thread_context_ptr->priv;
@@ -89,8 +90,8 @@ void *dlf_kernel(void *input_ptr) {
             if (pcs->pic_bypass_encdec) {
                 EbPictureBufferDesc *recon_picture_ptr;
                 EbPictureBufferDesc *recon_picture_16bit_ptr;
-                get_recon_pic(pcs, &recon_picture_ptr, 0);
-                get_recon_pic(pcs, &recon_picture_16bit_ptr, 1);
+                svt_aom_get_recon_pic(pcs, &recon_picture_ptr, 0);
+                svt_aom_get_recon_pic(pcs, &recon_picture_16bit_ptr, 1);
                 svt_convert_pic_8bit_to_16bit(recon_picture_ptr,
                                               recon_picture_16bit_ptr,
                                               pcs->ppcs->scs->subsampling_x,
@@ -103,7 +104,7 @@ void *dlf_kernel(void *input_ptr) {
         if ((dlf_enable_flag && !pcs->ppcs->dlf_ctrls.sb_based_dlf) ||
             (dlf_enable_flag && pcs->ppcs->dlf_ctrls.sb_based_dlf && tg_count > 1)) {
             EbPictureBufferDesc *recon_buffer;
-            get_recon_pic(pcs, &recon_buffer, is_16bit);
+            svt_aom_get_recon_pic(pcs, &recon_buffer, is_16bit);
             svt_av1_loop_filter_init(pcs);
             svt_av1_pick_filter_level((EbPictureBufferDesc *)pcs->ppcs->enhanced_picture_ptr,
                                       pcs,
@@ -115,15 +116,15 @@ void *dlf_kernel(void *input_ptr) {
         //pre-cdef prep
         {
             EbPictureBufferDesc *recon_pic;
-            get_recon_pic(pcs, &recon_pic, is_16bit);
+            svt_aom_get_recon_pic(pcs, &recon_pic, is_16bit);
 
             Av1Common *cm = pcs->ppcs->av1_cm;
             if (ppcs->enable_restoration) {
-                link_eb_to_aom_buffer_desc(recon_pic,
-                                           cm->frame_to_show,
-                                           scs->max_input_pad_right,
-                                           scs->max_input_pad_bottom,
-                                           is_16bit);
+                svt_aom_link_eb_to_aom_buffer_desc(recon_pic,
+                                                   cm->frame_to_show,
+                                                   scs->max_input_pad_right,
+                                                   scs->max_input_pad_bottom,
+                                                   is_16bit);
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
             }
 

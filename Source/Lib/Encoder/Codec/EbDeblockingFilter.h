@@ -42,10 +42,10 @@ struct AV1LfSyncData;
 
 void svt_av1_loop_filter_init(PictureControlSet *pcs);
 
-void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
-                    //Yv12BufferConfig *frame_buffer,
-                    PictureControlSet *pcs, int32_t mi_row, int32_t mi_col, int32_t plane_start,
-                    int32_t plane_end, uint8_t last_col);
+void svt_aom_loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
+                            //Yv12BufferConfig *frame_buffer,
+                            PictureControlSet *pcs, int32_t mi_row, int32_t mi_col,
+                            int32_t plane_start, int32_t plane_end, uint8_t last_col);
 
 void svt_av1_loop_filter_frame(
         EbPictureBufferDesc *frame_buffer,//reconpicture,

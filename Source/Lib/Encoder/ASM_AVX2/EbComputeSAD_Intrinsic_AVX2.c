@@ -4946,12 +4946,12 @@ sad_kernel_16xm_16bit_avx2(uint16_t *src, // input parameter, source samples Ptr
     return sad_final_8_val_avx2(_sad);
 }
 
-uint32_t sad_16bit_kernel_avx2(uint16_t *src, // input parameter, source samples Ptr
-                               uint32_t  src_stride, // input parameter, source stride
-                               uint16_t *ref, // input parameter, reference samples Ptr
-                               uint32_t  ref_stride, // input parameter, reference stride
-                               uint32_t  height, // input parameter, block height (M)
-                               uint32_t  width) // input parameter, block width (N))
+uint32_t svt_aom_sad_16bit_kernel_avx2(uint16_t *src, // input parameter, source samples Ptr
+                                       uint32_t  src_stride, // input parameter, source stride
+                                       uint16_t *ref, // input parameter, reference samples Ptr
+                                       uint32_t  ref_stride, // input parameter, reference stride
+                                       uint32_t  height, // input parameter, block height (M)
+                                       uint32_t  width) // input parameter, block width (N))
 {
     uint32_t sad          = 0;
     uint32_t width_offset = width & (~15);
@@ -4971,27 +4971,27 @@ uint32_t sad_16bit_kernel_avx2(uint16_t *src, // input parameter, source samples
     }
     return sad;
 }
-int fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
+int svt_aom_fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
 #define UPDATE_BEST_PME_32(s, k, offset)                                \
     tem_sum_1   = _mm_extract_epi32(s, k);                              \
     best_mv.col = mvx + (search_position_start_x + j + offset + k) * 8; \
     best_mv.row = mvy + (search_position_start_y + i) * 8;              \
-    tem_sum_1 += fp_mv_err_cost(&best_mv, mv_cost_params);              \
+    tem_sum_1 += svt_aom_fp_mv_err_cost(&best_mv, mv_cost_params);      \
     if (tem_sum_1 < low_sum) {                                          \
         low_sum = tem_sum_1;                                            \
         x_best  = mvx + (search_position_start_x + j + offset + k) * 8; \
         y_best  = mvy + (search_position_start_y + i) * 8;              \
     }
 
-#define UPDATE_BEST_PME_16(s, k)                               \
-    tem_sum_1   = _mm_extract_epi16(s, k);                     \
-    best_mv.col = mvx + (search_position_start_x + j + k) * 8; \
-    best_mv.row = mvy + (search_position_start_y + i) * 8;     \
-    tem_sum_1 += fp_mv_err_cost(&best_mv, mv_cost_params);     \
-    if (tem_sum_1 < low_sum) {                                 \
-        low_sum = tem_sum_1;                                   \
-        x_best  = mvx + (search_position_start_x + j + k) * 8; \
-        y_best  = mvy + (search_position_start_y + i) * 8;     \
+#define UPDATE_BEST_PME_16(s, k)                                   \
+    tem_sum_1   = _mm_extract_epi16(s, k);                         \
+    best_mv.col = mvx + (search_position_start_x + j + k) * 8;     \
+    best_mv.row = mvy + (search_position_start_y + i) * 8;         \
+    tem_sum_1 += svt_aom_fp_mv_err_cost(&best_mv, mv_cost_params); \
+    if (tem_sum_1 < low_sum) {                                     \
+        low_sum = tem_sum_1;                                       \
+        x_best  = mvx + (search_position_start_x + j + k) * 8;     \
+        y_best  = mvy + (search_position_start_y + i) * 8;         \
     }
 
 void svt_pme_sad_loop_kernel_avx2(const struct svt_mv_cost_param *mv_cost_params,

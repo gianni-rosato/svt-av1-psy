@@ -17,7 +17,7 @@
 #include <immintrin.h>
 #include "txfm_common_avx2.h"
 
-void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
+void svt_aom_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
 
 typedef void (*FwdTransform1dAvx2)(const __m256i *in, __m256i *out, int8_t bit,
                                    const int32_t num_cols);
@@ -4186,7 +4186,7 @@ static void fidtx64x64_avx2(const __m256i *input, __m256i *output) {
     }
 }
 
-static INLINE TxfmFuncAVX2 fwd_txfm_type_to_func(TxfmType txfmtype) {
+static INLINE TxfmFuncAVX2 fwd_txfm_type_to_func_avx2(TxfmType txfmtype) {
     switch (txfmtype) {
     case TXFM_TYPE_DCT32: return fdct32x32_avx2; break;
     case TXFM_TYPE_IDENTITY32: return fidtx32x32_avx2; break;
@@ -4258,8 +4258,8 @@ static INLINE void fwd_txfm2d_32x32_avx2(const int16_t *input, int32_t *output,
     const int8_t      *stage_range_row = cfg->stage_range_row;
     const int8_t       cos_bit_col     = cfg->cos_bit_col;
     const int8_t       cos_bit_row     = cfg->cos_bit_row;
-    const TxfmFuncAVX2 txfm_func_col   = fwd_txfm_type_to_func(cfg->txfm_type_col);
-    const TxfmFuncAVX2 txfm_func_row   = fwd_txfm_type_to_func(cfg->txfm_type_row);
+    const TxfmFuncAVX2 txfm_func_col   = fwd_txfm_type_to_func_avx2(cfg->txfm_type_col);
+    const TxfmFuncAVX2 txfm_func_row   = fwd_txfm_type_to_func_avx2(cfg->txfm_type_row);
     ASSERT(txfm_func_col);
     ASSERT(txfm_func_row);
     __m256i *buf_256         = (__m256i *)txfm_buf;
@@ -4281,7 +4281,7 @@ void svt_av1_fwd_txfm2d_32x32_avx2(int16_t *input, int32_t *output, uint32_t str
                                    uint8_t bd) {
     DECLARE_ALIGNED(32, int32_t, txfm_buf[1024]);
     Txfm2dFlipCfg cfg;
-    av1_transform_config(tx_type, TX_32X32, &cfg);
+    svt_aom_transform_config(tx_type, TX_32X32, &cfg);
     (void)bd;
     fwd_txfm2d_32x32_avx2(input, output, stride, &cfg, txfm_buf);
 }

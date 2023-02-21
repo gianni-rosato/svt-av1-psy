@@ -42,14 +42,14 @@ static int get_filt_type(const MacroBlockD *xd, int plane) {
     if (plane == 0) {
         const MbModeInfo *ab = xd->above_mbmi;
         const MbModeInfo *le = xd->left_mbmi;
-        ab_sm = ab ? is_smooth(&ab->block_mi, plane) : 0;
-        le_sm = le ? is_smooth(&le->block_mi, plane) : 0;
+        ab_sm = ab ? svt_aom_is_smooth(&ab->block_mi, plane) : 0;
+        le_sm = le ? svt_aom_is_smooth(&le->block_mi, plane) : 0;
     }
     else {
         const MbModeInfo *ab = xd->chroma_above_mbmi;
         const MbModeInfo *le = xd->chroma_left_mbmi;
-        ab_sm = ab ? is_smooth(&ab->block_mi, plane) : 0;
-        le_sm = le ? is_smooth(&le->block_mi, plane) : 0;
+        ab_sm = ab ? svt_aom_is_smooth(&ab->block_mi, plane) : 0;
+        le_sm = le ? svt_aom_is_smooth(&le->block_mi, plane) : 0;
     }
 
     return (ab_sm || le_sm) ? 1 : 0;
@@ -201,31 +201,31 @@ static void build_intra_predictors(
                     filter_intra_edge_corner(above_row, left_col);
                 if (need_above && n_top_px > 0) {
                     const int32_t strength =
-                            intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
+                            svt_aom_intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
                     const int32_t n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
                     svt_av1_filter_intra_edge(above_row - ab_le, n_px, strength);
                 }
                 if (need_left && n_left_px > 0) {
-                    const int32_t strength = intra_edge_filter_strength(
+                    const int32_t strength = svt_aom_intra_edge_filter_strength(
                             txhpx, txwpx, p_angle - 180, filt_type);
                     const int32_t n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
                     svt_av1_filter_intra_edge(left_col - ab_le, n_px, strength);
                 }
             }
             upsample_above =
-                    use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
+                    svt_aom_use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
             if (need_above && upsample_above) {
                 const int32_t n_px = txwpx + (need_right ? txhpx : 0);
                 svt_av1_upsample_intra_edge(above_row, n_px);
             }
             upsample_left =
-                    use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
+                    svt_aom_use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
             if (need_left && upsample_left) {
                 const int32_t n_px = txhpx + (need_bottom ? txwpx : 0);
                 svt_av1_upsample_intra_edge(left_col, n_px);
             }
         }
-        dr_predictor(dst, dst_stride, tx_size, above_row, left_col, upsample_above,
+        svt_aom_dr_predictor(dst, dst_stride, tx_size, above_row, left_col, upsample_above,
                      upsample_left, p_angle);
         return;
     }
@@ -375,7 +375,7 @@ static void build_intra_predictors_high(
         left_col[-1] = above_row[-1];
     }
     if (use_filter_intra) {
-        highbd_filter_intra_predictor(dst, dst_stride, tx_size, above_row, left_col,
+        svt_aom_highbd_filter_intra_predictor(dst, dst_stride, tx_size, above_row, left_col,
                                       filter_intra_mode, bd);
         return;
     }
@@ -393,12 +393,12 @@ static void build_intra_predictors_high(
                     filter_intra_edge_corner_high(above_row, left_col);
                 if (need_above && n_top_px > 0) {
                     const int32_t strength =
-                            intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
+                            svt_aom_intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
                     const int32_t n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
                     svt_av1_filter_intra_edge_high(above_row - ab_le, n_px, strength);
                 }
                 if (need_left && n_left_px > 0) {
-                    const int32_t strength = intra_edge_filter_strength(
+                    const int32_t strength = svt_aom_intra_edge_filter_strength(
                             txhpx, txwpx, p_angle - 180, filt_type);
                     const int32_t n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
 
@@ -406,21 +406,21 @@ static void build_intra_predictors_high(
                 }
             }
             upsample_above =
-                    use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
+                    svt_aom_use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
             if (need_above && upsample_above) {
                 const int32_t n_px = txwpx + (need_right ? txhpx : 0);
                 //av1_upsample_intra_edge_high(above_row, n_px, bd);// AMIR : to be replaced by optimized code
                 svt_av1_upsample_intra_edge_high_c(above_row, n_px, bd);
             }
             upsample_left =
-                    use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
+                    svt_aom_use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
             if (need_left && upsample_left) {
                 const int32_t n_px = txhpx + (need_bottom ? txwpx : 0);
                 //av1_upsample_intra_edge_high(left_col, n_px, bd);// AMIR: to be replaced by optimized code
                 svt_av1_upsample_intra_edge_high_c(left_col, n_px, bd);
             }
         }
-        highbd_dr_predictor(dst, dst_stride, tx_size, above_row, left_col,
+        svt_aom_highbd_dr_predictor(dst, dst_stride, tx_size, above_row, left_col,
                             upsample_above, upsample_left, p_angle, bd);
         return;
     }
@@ -545,13 +545,13 @@ void svt_av1_predict_intra_block(
     const PartitionType partition = from_shape_to_part[blk_geom->shape]; //blk_ptr->part;// PARTITION_NONE;//CHKN this is good enough as the avail functions need to know if VERT part is used or not mbmi->partition;
 
     // force 4x4 chroma component block size.
-    bsize = scale_chroma_bsize(bsize, pd->subsampling_x, pd->subsampling_y);
+    bsize = svt_aom_scale_chroma_bsize(bsize, pd->subsampling_x, pd->subsampling_y);
 
-    const int32_t have_top_right = intra_has_top_right(
+    const int32_t have_top_right = svt_aom_intra_has_top_right(
             seq_header_ptr->sb_size, bsize,
             mi_row, mi_col, have_top, right_available, partition, tx_size,
             row_off, col_off, pd->subsampling_x, pd->subsampling_y);
-    const int32_t have_bottom_left = intra_has_bottom_left(
+    const int32_t have_bottom_left = svt_aom_intra_has_bottom_left(
             seq_header_ptr->sb_size, bsize,
             mi_row, mi_col, bottom_available, have_left, partition,
             tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
@@ -692,13 +692,13 @@ void svt_av1_predict_intra_block_16bit(
     const PartitionType partition = from_shape_to_part[blk_geom->shape]; //blk_ptr->part;// PARTITION_NONE;//CHKN this is good enough as the avail functions need to know if VERT part is used or not mbmi->partition;
 
     // force 4x4 chroma component block size.
-    bsize = scale_chroma_bsize(bsize, pd->subsampling_x, pd->subsampling_y);
+    bsize = svt_aom_scale_chroma_bsize(bsize, pd->subsampling_x, pd->subsampling_y);
 
-    const int32_t have_top_right = intra_has_top_right(
+    const int32_t have_top_right = svt_aom_intra_has_top_right(
             seq_header_ptr->sb_size, bsize,
             mi_row, mi_col, have_top, right_available, partition, tx_size,
             row_off, col_off, pd->subsampling_x, pd->subsampling_y);
-    const int32_t have_bottom_left = intra_has_bottom_left(
+    const int32_t have_bottom_left = svt_aom_intra_has_bottom_left(
             seq_header_ptr->sb_size, bsize,
             mi_row, mi_col, bottom_available, have_left, partition,
             tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
@@ -1134,7 +1134,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
 }
 
 
-EbErrorType update_neighbor_samples_array_open_loop_mb(
+EbErrorType svt_aom_update_neighbor_samples_array_open_loop_mb(
         uint8_t                            use_top_righ_bottom_left,
         uint8_t                            update_top_neighbor,
         uint8_t                            *above_ref,
@@ -1221,7 +1221,7 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
     return return_error;
 }
 
-EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
+EbErrorType svt_aom_update_neighbor_samples_array_open_loop_mb_recon(
         uint8_t                            use_top_righ_bottom_left,
         uint8_t                            update_top_neighbor,
     uint8_t *above_ref, uint8_t *left_ref, uint8_t *recon_ptr, uint32_t stride,

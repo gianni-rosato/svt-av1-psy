@@ -60,10 +60,10 @@ static const uint32_t subblock_xy_16x16[N_16X16_BLOCKS][2] = {{0, 0},
 static const uint32_t idx_32x32_to_idx_16x16[4][4]         = {
     {0, 1, 4, 5}, {2, 3, 6, 7}, {8, 9, 12, 13}, {10, 11, 14, 15}};
 
-int32_t get_frame_update_type(SequenceControlSet *scs, PictureParentControlSet *pcs);
+int32_t svt_aom_get_frame_update_type(SequenceControlSet *scs, PictureParentControlSet *pcs);
 int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, EbBitDepth bit_depth);
 int32_t svt_av1_compute_qdelta(double qstart, double qtarget, EbBitDepth bit_depth);
-void generate_padding_compressed_10bit(EbByte src_pic, uint32_t src_stride,
+void svt_aom_generate_padding_compressed_10bit(EbByte src_pic, uint32_t src_stride,
                                        uint32_t original_src_width, uint32_t original_src_height,
                                        uint32_t padding_width, uint32_t padding_height);
 void svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
@@ -137,16 +137,16 @@ void save_YUV_to_file_highbd(char *filename, uint16_t *buffer_y, uint16_t *buffe
     }
 }
 #endif
-void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
+void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
                      uint32_t ss_y, Bool include_padding) {
     uint16_t width  = pic_ptr->stride_y;
     uint16_t height = (uint16_t)(pic_ptr->org_y * 2 + pic_ptr->height);
 
-    assert_err(include_padding == 1, "not supporting OFF");
+    svt_aom_assert_err(include_padding == 1, "not supporting OFF");
 
     uint32_t comp_stride_y = pic_ptr->stride_y / 4;
 
-    compressed_pack_sb(pic_ptr->buffer_y,
+    svt_aom_compressed_pack_sb(pic_ptr->buffer_y,
                        pic_ptr->stride_y,
                        pic_ptr->buffer_bit_inc_y,
                        comp_stride_y,
@@ -157,7 +157,7 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
 
     uint32_t comp_stride_uv = pic_ptr->stride_cb / 4;
     if (buffer_16bit[C_U])
-        compressed_pack_sb(pic_ptr->buffer_cb,
+        svt_aom_compressed_pack_sb(pic_ptr->buffer_cb,
                            pic_ptr->stride_cb,
                            pic_ptr->buffer_bit_inc_cb,
                            comp_stride_uv,
@@ -166,7 +166,7 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
                            (width + ss_x) >> ss_x,
                            (height + ss_y) >> ss_y);
     if (buffer_16bit[C_V])
-        compressed_pack_sb(pic_ptr->buffer_cr,
+        svt_aom_compressed_pack_sb(pic_ptr->buffer_cr,
                            pic_ptr->stride_cr,
                            pic_ptr->buffer_bit_inc_cr,
                            comp_stride_uv,
@@ -176,12 +176,12 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
                            (height + ss_y) >> ss_y);
 }
 
-void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr, uint32_t ss_x,
+void svt_aom_unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr, uint32_t ss_x,
                        uint32_t ss_y, Bool include_padding) {
     uint16_t width  = pic_ptr->stride_y;
     uint16_t height = (uint16_t)(pic_ptr->org_y * 2 + pic_ptr->height);
 
-    assert_err(include_padding == 1, "not supporting OFF");
+    svt_aom_assert_err(include_padding == 1, "not supporting OFF");
 
     uint32_t comp_stride_y  = pic_ptr->stride_y / 4;
     uint32_t comp_stride_uv = pic_ptr->stride_cb / 4;
@@ -342,7 +342,7 @@ static INLINE void calculate_squared_errors_highbd(const uint16_t *s, int s_stri
 }
 
 // Apply filtering to the central picture
-void apply_filtering_central_c(MeContext *          me_ctx,
+void svt_aom_apply_filtering_central_c(MeContext *          me_ctx,
                                EbPictureBufferDesc *input_picture_ptr_central, EbByte *src,
                                uint32_t **accum, uint16_t **count, uint16_t blk_width,
                                uint16_t blk_height, uint32_t ss_x, uint32_t ss_y) {
@@ -379,7 +379,7 @@ void apply_filtering_central_c(MeContext *          me_ctx,
 }
 
 // Apply filtering to the central picture
-void apply_filtering_central_highbd_c(MeContext *          me_ctx,
+void svt_aom_apply_filtering_central_highbd_c(MeContext *          me_ctx,
                                       EbPictureBufferDesc *input_picture_ptr_central,
                                       uint16_t **src_16bit, uint32_t **accum, uint16_t **count,
                                       uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
@@ -645,7 +645,7 @@ static const int32_t log1p_tab_fp16[] = {
     (int32_t)127527,
 };
 
-int32_t noise_log1p_fp16(int32_t noise_level_fp16) {
+int32_t svt_aom_noise_log1p_fp16(int32_t noise_level_fp16) {
     int32_t base_fp16 = (65536 /*1:fp16*/ + noise_level_fp16);
 
     if (base_fp16 <= 0) {
@@ -2109,7 +2109,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
                 mv_unit.mv->x = mv_x;
                 mv_unit.mv->y = mv_y;
 
-                av1_inter_prediction(scs,
+                svt_aom_inter_prediction(scs,
                                      NULL, //pcs,
                                      (uint32_t)interp_filters,
                                      &blk_ptr,
@@ -2176,7 +2176,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
                     mv_unit.mv->x = mv_x + i;
                     mv_unit.mv->y = mv_y + j;
 
-                    av1_inter_prediction(scs,
+                    svt_aom_inter_prediction(scs,
                                          NULL, //pcs,
                                          (uint32_t)interp_filters,
                                          &blk_ptr,
@@ -2248,7 +2248,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
                     mv_unit.mv->x = mv_x + i;
                     mv_unit.mv->y = mv_y + j;
 
-                    av1_inter_prediction(scs,
+                    svt_aom_inter_prediction(scs,
                                          NULL, //pcs,
                                          (uint32_t)interp_filters,
                                          &blk_ptr,
@@ -2322,7 +2322,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs, MeContext *me_
                         mv_unit.mv->x = mv_x + i;
                         mv_unit.mv->y = mv_y + j;
 
-                        av1_inter_prediction(scs,
+                        svt_aom_inter_prediction(scs,
                                              NULL, //pcs,
                                              (uint32_t)interp_filters,
                                              &blk_ptr,
@@ -2413,7 +2413,7 @@ uint64_t svt_check_position_64x64(TF_SUBPEL_SEARCH_PARAMS  tf_sp_param,
     mv_unit.mv->x = tf_sp_param.mv_x + tf_sp_param.xd;
     mv_unit.mv->y = tf_sp_param.mv_y + tf_sp_param.yd;
 
-    av1_simple_luma_unipred(
+    svt_aom_simple_luma_unipred(
         scs,
         scs->sf_identity,
         tf_sp_param.interp_filters,
@@ -2490,7 +2490,7 @@ uint64_t svt_check_position(TF_SUBPEL_SEARCH_PARAMS tf_sp_param, PictureParentCo
     mv_unit.mv->x               = tf_sp_param.mv_x + tf_sp_param.xd;
     mv_unit.mv->y               = tf_sp_param.mv_y + tf_sp_param.yd;
 
-    av1_simple_luma_unipred(
+    svt_aom_simple_luma_unipred(
         scs,
         scs->sf_identity,
         tf_sp_param.interp_filters,
@@ -4142,7 +4142,7 @@ static void tf_64x64_inter_prediction(PictureParentControlSet *pcs, MeContext *m
     mv_unit.mv->x = me_ctx->tf_64x64_mv_x;
     mv_unit.mv->y = me_ctx->tf_64x64_mv_y;
 
-    av1_inter_prediction(
+    svt_aom_inter_prediction(
         scs,
         NULL, //pcs,
         (uint32_t)interp_filters,
@@ -4256,7 +4256,7 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs, MeContext *m
             //AV1 MVs are always in 1/8th pel precision.
             mv_unit.mv->x = me_ctx->tf_16x16_mv_x[idx_32x32 * 4 + idx_16x16];
             mv_unit.mv->y = me_ctx->tf_16x16_mv_y[idx_32x32 * 4 + idx_16x16];
-            av1_inter_prediction(scs,
+            svt_aom_inter_prediction(scs,
                                  NULL, //pcs,
                                  (uint32_t)interp_filters,
                                  &blk_ptr,
@@ -4318,7 +4318,7 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs, MeContext *m
         mv_unit.mv->x = me_ctx->tf_32x32_mv_x[idx_32x32];
         mv_unit.mv->y = me_ctx->tf_32x32_mv_y[idx_32x32];
 
-        av1_inter_prediction(
+        svt_aom_inter_prediction(
             scs,
             NULL, //pcs,
             (uint32_t)interp_filters,
@@ -4353,7 +4353,7 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs, MeContext *m
     }
 }
 
-void get_final_filtered_pixels_c(MeContext *me_ctx, EbByte *src_center_ptr_start,
+void svt_aom_get_final_filtered_pixels_c(MeContext *me_ctx, EbByte *src_center_ptr_start,
                                  uint16_t **altref_buffer_highbd_start, uint32_t **accum,
                                  uint16_t **count, const uint32_t *stride, int blk_y_src_offset,
                                  int blk_ch_src_offset, uint16_t blk_width_ch,
@@ -4734,16 +4734,16 @@ static EbErrorType produce_temporally_filtered_pic(
                 if (frame_index == index_center) {
                     // skip MC (central frame)
                     if (!is_highbd) {
-                        pic_copy_kernel_8bit(
+                        svt_aom_pic_copy_kernel_8bit(
                             src_center_ptr[C_Y], stride[C_Y], pred[C_Y], stride_pred[C_Y], BW, BH);
                         if (ctx->tf_chroma) {
-                            pic_copy_kernel_8bit(src_center_ptr[C_U],
+                            svt_aom_pic_copy_kernel_8bit(src_center_ptr[C_U],
                                                  stride[C_U],
                                                  pred[C_U],
                                                  stride_pred[C_U],
                                                  blk_width_ch,
                                                  blk_height_ch);
-                            pic_copy_kernel_8bit(src_center_ptr[C_V],
+                            svt_aom_pic_copy_kernel_8bit(src_center_ptr[C_V],
                                                  stride[C_V],
                                                  pred[C_V],
                                                  stride_pred[C_V],
@@ -4751,20 +4751,20 @@ static EbErrorType produce_temporally_filtered_pic(
                                                  blk_height_ch);
                         }
                     } else {
-                        pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_Y],
+                        svt_aom_pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_Y],
                                               stride[C_Y],
                                               pred_16bit[C_Y],
                                               stride_pred[C_Y],
                                               BW,
                                               BH);
                         if (ctx->tf_chroma) {
-                            pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_U],
+                            svt_aom_pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_U],
                                                   stride[C_U],
                                                   pred_16bit[C_U],
                                                   stride_pred[C_U],
                                                   blk_width_ch,
                                                   blk_height_ch);
-                            pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_V],
+                            svt_aom_pic_copy_kernel_16bit(altref_buffer_highbd_ptr[C_V],
                                                   stride[C_V],
                                                   pred_16bit[C_V],
                                                   stride_pred[C_V],
@@ -4811,7 +4811,7 @@ static EbErrorType produce_temporally_filtered_pic(
                         centre_pcs->tf_ctrls.subpel_early_exit;
                     // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
                     // Block-based MC using open-loop HME + refinement
-                    motion_estimation_b64(centre_pcs,
+                    svt_aom_motion_estimation_b64(centre_pcs,
                         (uint32_t)blk_row * blk_cols + blk_col,
                         (uint32_t)blk_col * BW, // x block
                         (uint32_t)blk_row * BH, // y block
@@ -5229,10 +5229,10 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *centre_pcs) {
     // Refine the non-8 padding
     if (((input_pic->width - scs->pad_right) % 8 != 0) ||
         ((input_pic->height - scs->pad_bottom) % 8 != 0))
-        pad_picture_to_multiple_of_min_blk_size_dimensions(scs, input_pic);
+        svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions(scs, input_pic);
 
     //Generate padding first, then copy
-    generate_padding(&(input_pic->buffer_y[C_Y]),
+    svt_aom_generate_padding(&(input_pic->buffer_y[C_Y]),
                      input_pic->stride_y,
                      input_pic->width,
                      input_pic->height,
@@ -5240,13 +5240,13 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *centre_pcs) {
                      input_pic->org_y);
     // Padding chroma after altref
     if (centre_pcs->tf_ctrls.do_chroma) {
-        generate_padding(input_pic->buffer_cb,
+        svt_aom_generate_padding(input_pic->buffer_cb,
                          input_pic->stride_cb,
                          input_pic->width >> scs->subsampling_x,
                          input_pic->height >> scs->subsampling_y,
                          input_pic->org_x >> scs->subsampling_x,
                          input_pic->org_y >> scs->subsampling_y);
-        generate_padding(input_pic->buffer_cr,
+        svt_aom_generate_padding(input_pic->buffer_cr,
                          input_pic->stride_cr,
                          input_pic->width >> scs->subsampling_x,
                          input_pic->height >> scs->subsampling_y,
@@ -5256,12 +5256,12 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *centre_pcs) {
 
     // 1/4 & 1/16 input picture downsampling
     if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-        downsample_filtering_input_picture(centre_pcs,
+        svt_aom_downsample_filtering_input_picture(centre_pcs,
                                            input_pic,
                                            src_object->quarter_downsampled_picture_ptr,
                                            src_object->sixteenth_downsampled_picture_ptr);
     } else {
-        downsample_decimation_input_picture(centre_pcs,
+        svt_aom_downsample_decimation_input_picture(centre_pcs,
                                             input_pic,
                                             src_object->quarter_downsampled_picture_ptr,
                                             src_object->sixteenth_downsampled_picture_ptr);
@@ -5306,21 +5306,21 @@ static EbErrorType save_src_pic_buffers(PictureParentControlSet *centre_pcs,
     assert(height_uv * src_pic_ptr->stride_cb == src_pic_ptr->chroma_size);
     assert(height_uv * src_pic_ptr->stride_cr == src_pic_ptr->chroma_size);
 
-    pic_copy_kernel_8bit(src_pic_ptr->buffer_y,
+    svt_aom_pic_copy_kernel_8bit(src_pic_ptr->buffer_y,
                          src_pic_ptr->stride_y,
                          centre_pcs->save_source_picture_ptr[C_Y],
                          src_pic_ptr->stride_y,
                          src_pic_ptr->stride_y,
                          height_y);
 
-    pic_copy_kernel_8bit(src_pic_ptr->buffer_cb,
+    svt_aom_pic_copy_kernel_8bit(src_pic_ptr->buffer_cb,
                          src_pic_ptr->stride_cb,
                          centre_pcs->save_source_picture_ptr[C_U],
                          src_pic_ptr->stride_cb,
                          src_pic_ptr->stride_cb,
                          height_uv);
 
-    pic_copy_kernel_8bit(src_pic_ptr->buffer_cr,
+    svt_aom_pic_copy_kernel_8bit(src_pic_ptr->buffer_cr,
                          src_pic_ptr->stride_cr,
                          centre_pcs->save_source_picture_ptr[C_V],
                          src_pic_ptr->stride_cr,
@@ -5409,7 +5409,7 @@ EbErrorType svt_av1_init_temporal_filtering(
                                     central_picture_ptr->chroma_size);
                 }
                 // pack byte buffers to 16 bit buffer
-                pack_highbd_pic(pic_ptr_ref,
+                svt_aom_pack_highbd_pic(pic_ptr_ref,
                                 pcs_list[i]->altref_buffer_highbd,
                                 ss_x,
                                 ss_y,
@@ -5427,7 +5427,7 @@ EbErrorType svt_av1_init_temporal_filtering(
             centre_pcs->scs->static_config.superres_mode;
         SUPERRES_AUTO_SEARCH_TYPE search_type =
             centre_pcs->scs->static_config.superres_auto_search_type;
-        uint32_t frame_update_type = get_frame_update_type(centre_pcs->scs,
+        uint32_t frame_update_type = svt_aom_get_frame_update_type(centre_pcs->scs,
                                                            centre_pcs);
         Bool   superres_recode_enabled = (superres_mode == SUPERRES_AUTO) &&
             ((search_type == SUPERRES_AUTO_DUAL) ||
@@ -5502,7 +5502,7 @@ EbErrorType svt_av1_init_temporal_filtering(
                                     ss_y);
 #endif
         if (is_highbd) {
-            unpack_highbd_pic(centre_pcs->altref_buffer_highbd,
+            svt_aom_unpack_highbd_pic(centre_pcs->altref_buffer_highbd,
                               central_picture_ptr,
                               ss_x,
                               ss_y,

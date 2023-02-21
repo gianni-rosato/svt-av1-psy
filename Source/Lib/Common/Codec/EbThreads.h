@@ -118,7 +118,7 @@ extern EbErrorType svt_destroy_mutex(EbHandle mutex_handle);
         }                                                                  \
     } while (0)
 
-void atomic_set_u32(AtomicVarU32 *var, uint32_t in);
+void svt_aom_atomic_set_u32(AtomicVarU32 *var, uint32_t in);
 
 /*
  Condition variable

@@ -68,7 +68,7 @@ typedef struct MdBlkStruct {
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
     uint64_t
-                default_cost; // Similar to cost but does not get updated @ d1_non_square_block_decision() and d2_inter_depth_block_decision()
+        default_cost; // Similar to cost but does not get updated @ svt_aom_d1_non_square_block_decision() and svt_aom_d2_inter_depth_block_decision()
     CandidateMv ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
     uint8_t  *neigh_left_recon[3]; //only for MD
@@ -743,7 +743,7 @@ typedef struct ModeDecisionContext {
     uint8_t              nic_level;
     uint8_t              similar_blk_avail;
     uint16_t             similar_blk_mds;
-    uint8_t              inject_inter_candidates;
+    uint8_t              svt_aom_inject_inter_candidates;
     uint8_t             *cfl_temp_luma_recon;
     uint16_t            *cfl_temp_luma_recon16bit;
     Bool                 spatial_sse_full_loop_level;
@@ -890,9 +890,10 @@ typedef struct ModeDecisionContext {
     uint8_t         inject_new_pme;
     uint8_t         inject_new_warp;
     TxShortcutCtrls tx_shortcut_ctrls;
-    uint64_t        estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES]; // [TOTAL_REFS_PER_FRAME + 1]
-    uint32_t        max_nics; // Maximum number of candidates MD can support
-    uint32_t        max_nics_uv; // Maximum number of candidates MD can support
+    uint64_t
+        svt_aom_estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES]; // [TOTAL_REFS_PER_FRAME + 1]
+    uint32_t                 max_nics; // Maximum number of candidates MD can support
+    uint32_t                 max_nics_uv; // Maximum number of candidates MD can support
     InterpolationSearchCtrls ifs_ctrls;
     Bool bypass_encdec; // If enabled, will bypass EncDec and copy recon/quant coeffs from MD
     Bool
@@ -925,7 +926,7 @@ typedef struct ModeDecisionContext {
     uint8_t     enable_psad; // Enable pSad
     uint32_t    inter_depth_bias;
     uint8_t     bipred_available;
-    uint8_t     is_intra_bordered;
+    uint8_t     svt_aom_is_intra_bordered;
     uint8_t     updated_enable_pme;
     Lpd1TxCtrls lpd1_tx_ctrls;
     uint8_t
@@ -949,17 +950,15 @@ typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs, uint32_t *fast_lam
 /**************************************
      * Extern Function Declarations
      **************************************/
-extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *ctx, EbColorFormat color_format,
-                                              uint8_t sb_size, uint8_t enc_mode,
-                                              uint16_t max_block_cnt, uint32_t encoder_bit_depth,
-                                              EbFifo *mode_decision_configuration_input_fifo_ptr,
-                                              EbFifo *mode_decision_output_fifo_ptr,
+extern EbErrorType svt_aom_mode_decision_context_ctor(
+    ModeDecisionContext *ctx, EbColorFormat color_format, uint8_t sb_size, uint8_t enc_mode,
+    uint16_t max_block_cnt, uint32_t encoder_bit_depth,
+    EbFifo *mode_decision_configuration_input_fifo_ptr, EbFifo *mode_decision_output_fifo_ptr,
 #if OPT_LD_M11
-                                              uint8_t enable_hbd_mode_decision, uint8_t cfg_palette,
-                                              bool rtc_tune, uint32_t hierarchical_levels);
+    uint8_t enable_hbd_mode_decision, uint8_t cfg_palette, bool rtc_tune,
+    uint32_t hierarchical_levels);
 #else
-                                              uint8_t enable_hbd_mode_decision, uint8_t cfg_palette,
-                                              uint32_t hierarchical_levels);
+    uint8_t enable_hbd_mode_decision, uint8_t cfg_palette, uint32_t hierarchical_levels);
 #endif
 
 extern const EbAv1LambdaAssignFunc svt_aom_av1_lambda_assignment_function_table[4];
@@ -982,12 +981,12 @@ static const uint8_t uni_psy_bias[] = {
     95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,  95,
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
 };
-extern void reset_mode_decision(SequenceControlSet *scs, ModeDecisionContext *ctx,
-                                PictureControlSet *pcs, uint16_t tile_row_idx,
-                                uint32_t segment_index);
+extern void svt_aom_reset_mode_decision(SequenceControlSet *scs, ModeDecisionContext *ctx,
+                                        PictureControlSet *pcs, uint16_t tile_row_idx,
+                                        uint32_t segment_index);
 
-extern void mode_decision_configure_sb(ModeDecisionContext *ctx, PictureControlSet *pcs,
-                                       uint8_t sb_qp, uint8_t me_sb_qp);
+extern void svt_aom_mode_decision_configure_sb(ModeDecisionContext *ctx, PictureControlSet *pcs,
+                                               uint8_t sb_qp, uint8_t me_sb_qp);
 extern void md_cfl_rd_pick_alpha(PictureControlSet *pcs, ModeDecisionCandidateBuffer *cand_bf,
                                  ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic,
                                  uint32_t input_cb_origin_in_index,

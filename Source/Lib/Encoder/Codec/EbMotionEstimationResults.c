@@ -20,7 +20,8 @@ static EbErrorType motion_estimation_results_ctor(MotionEstimationResults *conte
     return EB_ErrorNone;
 }
 
-EbErrorType motion_estimation_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_motion_estimation_results_creator(EbPtr *object_dbl_ptr,
+                                                      EbPtr  object_init_data_ptr) {
     MotionEstimationResults *obj;
 
     *object_dbl_ptr = NULL;

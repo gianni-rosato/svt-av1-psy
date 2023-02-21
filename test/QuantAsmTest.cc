@@ -131,7 +131,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
 
     /*
      * @brief setup reference and target function ptrs
-     * @see setup_rtcd_internal() in aom_dsp_rtcd.h
+     * @see svt_aom_setup_rtcd_internal() in aom_dsp_rtcd.h
      */
     virtual void setup_func_ptrs() {
         if (bd_ == EB_EIGHT_BIT) {

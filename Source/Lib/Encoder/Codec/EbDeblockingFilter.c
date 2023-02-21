@@ -22,7 +22,7 @@
 #include "EbCommonUtils.h"
 //#include "EbLog.h"
 
-void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 /*************************************************************************************************
  * svt_av1_loop_filter_init
  * Initialize the loop filter limits and thresholds
@@ -36,7 +36,7 @@ void svt_av1_loop_filter_init(PictureControlSet *pcs) {
     lf->combine_vert_horz_lf = 1;
 
     // init limits for given sharpness
-    update_sharpness(lfi, lf->sharpness_level);
+    svt_aom_update_sharpness(lfi, lf->sharpness_level);
 
     // init hev threshold const vectors
     for (lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
@@ -219,13 +219,13 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
             PredictionMode mode = (mbmi->block_mi.mode == INTRA_MODE_4x4) ? DC_PRED
                                                                           : mbmi->block_mi.mode;
             if (frm_hdr->delta_lf_params.delta_lf_present) {
-                curr_level = get_filter_level_delta_lf(frm_hdr,
-                                                       edge_dir,
-                                                       plane,
-                                                       pcs->ppcs->curr_delta_lf,
-                                                       0 /*segment_id*/,
-                                                       mode,
-                                                       mbmi->block_mi.ref_frame[0]);
+                curr_level = svt_aom_get_filter_level_delta_lf(frm_hdr,
+                                                               edge_dir,
+                                                               plane,
+                                                               pcs->ppcs->curr_delta_lf,
+                                                               0 /*segment_id*/,
+                                                               mode,
+                                                               mbmi->block_mi.ref_frame[0]);
             } else {
                 assert(mode < 25);
                 curr_level = lfi_n->lvl[plane][0 /*segment_id*/][edge_dir]
@@ -248,13 +248,13 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                 mode = (mi_prev->block_mi.mode == INTRA_MODE_4x4) ? DC_PRED
                                                                   : mi_prev->block_mi.mode;
                 if (frm_hdr->delta_lf_params.delta_lf_present) {
-                    pv_lvl = get_filter_level_delta_lf(frm_hdr,
-                                                       edge_dir,
-                                                       plane,
-                                                       pcs->ppcs->curr_delta_lf,
-                                                       0 /*segment_id*/,
-                                                       mi_prev->block_mi.mode,
-                                                       mi_prev->block_mi.ref_frame[0]);
+                    pv_lvl = svt_aom_get_filter_level_delta_lf(frm_hdr,
+                                                               edge_dir,
+                                                               plane,
+                                                               pcs->ppcs->curr_delta_lf,
+                                                               0 /*segment_id*/,
+                                                               mi_prev->block_mi.mode,
+                                                               mi_prev->block_mi.ref_frame[0]);
                 } else {
                     assert(mode < 25);
                     pv_lvl = lfi_n->lvl[plane][0 /*segment_id*/][edge_dir]
@@ -570,13 +570,13 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
     }
 }
 /*************************************************************************************************
-* loop_filter_sb
+* svt_aom_loop_filter_sb
 * Loop over all superblocks in the picture and filter each superblock
 *************************************************************************************************/
-void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
-                    //Yv12BufferConfig *frame_buffer,
-                    PictureControlSet *pcs, int32_t mi_row, int32_t mi_col, int32_t plane_start,
-                    int32_t plane_end, uint8_t last_col) {
+void svt_aom_loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
+                            //Yv12BufferConfig *frame_buffer,
+                            PictureControlSet *pcs, int32_t mi_row, int32_t mi_col,
+                            int32_t plane_start, int32_t plane_end, uint8_t last_col) {
     FrameHeader            *frm_hdr = &pcs->ppcs->frm_hdr;
     struct MacroblockdPlane pd[3];
     int32_t                 plane;
@@ -703,13 +703,13 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
             sb_origin_y     = y_sb_index << sb_size_log2;
             end_of_row_flag = (x_sb_index == pic_width_in_sb - 1) ? TRUE : FALSE;
 
-            loop_filter_sb(frame_buffer,
-                           pcs,
-                           sb_origin_y >> 2,
-                           sb_origin_x >> 2,
-                           plane_start,
-                           plane_end,
-                           end_of_row_flag);
+            svt_aom_loop_filter_sb(frame_buffer,
+                                   pcs,
+                                   sb_origin_y >> 2,
+                                   sb_origin_x >> 2,
+                                   plane_start,
+                                   plane_end,
+                                   end_of_row_flag);
         }
     }
 }
@@ -931,7 +931,7 @@ static int64_t try_filter_frame(
 
     Bool                 is_16bit = pcs->ppcs->scs->is_16bit_pipeline;
     EbPictureBufferDesc *recon_buffer;
-    get_recon_pic(pcs, &recon_buffer, is_16bit);
+    svt_aom_get_recon_pic(pcs, &recon_buffer, is_16bit);
 
     // set base filters for use of get_filter_level when in DELTA_Q_LF mode
     switch (plane) {
@@ -986,7 +986,7 @@ static int32_t search_filter_level(
 
     Bool                 is_16bit = pcs->ppcs->scs->is_16bit_pipeline;
     EbPictureBufferDesc *recon_buffer;
-    get_recon_pic(pcs, &recon_buffer, is_16bit);
+    svt_aom_get_recon_pic(pcs, &recon_buffer, is_16bit);
     // Sum squared error at each filter level
     int64_t ss_err[MAX_LOOP_FILTER + 1];
 

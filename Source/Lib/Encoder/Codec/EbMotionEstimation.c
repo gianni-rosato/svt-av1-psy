@@ -58,7 +58,7 @@ Bool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
  * Compute8x4SAD_Default
  *   Unoptimized 8x4 SAD
  *******************************************/
-uint32_t compute8x4_sad_kernel_c(uint8_t *src, // input parameter, source samples Ptr
+uint32_t svt_aom_compute8x4_sad_kernel_c(uint8_t *src, // input parameter, source samples Ptr
                                  uint32_t src_stride, // input parameter, source stride
                                  uint8_t *ref, // input parameter, reference samples Ptr
                                  uint32_t ref_stride) // input parameter, reference stride
@@ -122,22 +122,22 @@ void svt_ext_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint
     uint32_t sad16x16;
 
     if (sub_sad) {
-        p_sad8x8[0] = (compute8x4_sad_kernel_c(src + 0 * src_stride + 0,
+        p_sad8x8[0] = (svt_aom_compute8x4_sad_kernel_c(src + 0 * src_stride + 0,
                                                2 * src_stride,
                                                ref + 0 * ref_stride + 0,
                                                2 * ref_stride))
             << 1;
-        p_sad8x8[1] = (compute8x4_sad_kernel_c(src + 0 * src_stride + 8,
+        p_sad8x8[1] = (svt_aom_compute8x4_sad_kernel_c(src + 0 * src_stride + 8,
                                                2 * src_stride,
                                                ref + 0 * ref_stride + 8,
                                                2 * ref_stride))
             << 1;
-        p_sad8x8[2] = (compute8x4_sad_kernel_c(src + 8 * src_stride + 0,
+        p_sad8x8[2] = (svt_aom_compute8x4_sad_kernel_c(src + 8 * src_stride + 0,
                                                2 * src_stride,
                                                ref + 8 * ref_stride + 0,
                                                2 * ref_stride))
             << 1;
-        p_sad8x8[3] = (compute8x4_sad_kernel_c(src + 8 * src_stride + 8,
+        p_sad8x8[3] = (svt_aom_compute8x4_sad_kernel_c(src + 8 * src_stride + 8,
                                                2 * src_stride,
                                                ref + 8 * ref_stride + 8,
                                                2 * ref_stride))
@@ -245,7 +245,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(
         uint32_t ref_stride_sub = (ref_stride << 1);
         for (int search_index = 0; search_index < 8; search_index++) {
             uint32_t sad8x8_0 =
-                (compute8x4_sad_kernel_c(src, src_stride_sub, ref + search_index, ref_stride_sub))
+                (svt_aom_compute8x4_sad_kernel_c(src, src_stride_sub, ref + search_index, ref_stride_sub))
                 << 1;
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
@@ -254,7 +254,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(
                 p_best_mv8x8[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_1 = (compute8x4_sad_kernel_c(src + 8,
+            uint32_t sad8x8_1 = (svt_aom_compute8x4_sad_kernel_c(src + 8,
                                                          src_stride_sub,
                                                          ref + 8 + search_index,
                                                          ref_stride_sub))
@@ -266,7 +266,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(
                 p_best_mv8x8[1]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_2 = (compute8x4_sad_kernel_c(src + (src_stride << 3),
+            uint32_t sad8x8_2 = (svt_aom_compute8x4_sad_kernel_c(src + (src_stride << 3),
                                                          src_stride_sub,
                                                          ref + (ref_stride << 3) + search_index,
                                                          ref_stride_sub))
@@ -278,7 +278,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(
                 p_best_mv8x8[2]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-            uint32_t sad8x8_3 = (compute8x4_sad_kernel_c(src + (src_stride << 3) + 8,
+            uint32_t sad8x8_3 = (svt_aom_compute8x4_sad_kernel_c(src + (src_stride << 3) + 8,
                                                          src_stride_sub,
                                                          ref + (ref_stride << 3) + 8 + search_index,
                                                          ref_stride_sub))
@@ -1135,12 +1135,12 @@ void hme_level_2(MeContext *          me_ctx, // ME context Ptr, used to get/upd
 }
 // Nader - to be replaced by loock-up table
 /*******************************************
- * get_me_info_index
+ * svt_aom_get_me_info_index
  *   search the correct index of the motion
  *   info that corresponds to the input
  *   md candidate
  *******************************************/
-uint32_t get_me_info_index(uint32_t max_me_block, const BlockGeom *blk_geom, uint32_t geom_offset_x,
+uint32_t svt_aom_get_me_info_index(uint32_t max_me_block, const BlockGeom *blk_geom, uint32_t geom_offset_x,
                            uint32_t geom_offset_y) {
     // search for motion info
     uint32_t block_index;
@@ -1264,7 +1264,7 @@ static EbPictureBufferDesc *get_me_reference(PictureParentControlSet *pcs,
 }
 
 // factor to slowdown the ME search region growth to MAX
-uint16_t get_scaled_picture_distance(uint16_t dist) {
+uint16_t svt_aom_get_scaled_picture_distance(uint16_t dist) {
 
     uint8_t round_up = ((dist % 8) == 0) ? 0 : 1;
     return ((dist * 5) / 8) + round_up;
@@ -1328,7 +1328,7 @@ static void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index,
 
             // factor to slowdown the ME search region growth to MAX
             if (me_ctx->me_type != ME_MCTF) {
-                dist = get_scaled_picture_distance(dist);
+                dist = svt_aom_get_scaled_picture_distance(dist);
             }
             search_area_width  = MIN((search_area_width * dist), me_ctx->me_sa.sa_max.width);
             search_area_height = MIN((search_area_height * dist), me_ctx->me_sa.sa_max.height);
@@ -1776,7 +1776,7 @@ static void prehme_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t or
 
             if (me_ctx->temporal_layer_index > 0 || list_i == 0) {
 
-                uint32_t hme_sr_factor = get_scaled_picture_distance(dist);
+                uint32_t hme_sr_factor = svt_aom_get_scaled_picture_distance(dist);
 
                 for (uint8_t sr_i = 0; sr_i < SEARCH_REGION_COUNT; sr_i++) {
                     if (check_prehme_early_exit(me_ctx, list_i, ref_i, sr_i))
@@ -1868,7 +1868,7 @@ static void get_hme_l0_search_area(MeContext *me_ctx, uint8_t list_index,
             (y_offset + ref_pic_index);
     }
 
-    int32_t hme_sr_factor = get_scaled_picture_distance(dist);
+    int32_t hme_sr_factor = svt_aom_get_scaled_picture_distance(dist);
 
     // Derive the search area width and height, rounding the width up to the nearest sixteenth
     int16_t search_area_width = me_ctx->hme_l0_sa.sa_min.width / me_ctx->num_hme_sa_w;
@@ -2894,7 +2894,7 @@ static INLINE void init_me_hme_data(MeContext *me_ctx) {
 *   performs ME on 64x64 blocks
 *******************************************/
 
-EbErrorType motion_estimation_b64(
+EbErrorType svt_aom_motion_estimation_b64(
     PictureParentControlSet *pcs, // input parameter, Picture Control Set Ptr
     uint32_t                 b64_index, // input parameter, SB Index
     uint32_t                 b64_origin_x, // input parameter, SB Origin X
@@ -2973,7 +2973,7 @@ EbErrorType motion_estimation_b64(
     return return_error;
 }
 
-EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs, uint32_t b64_index,
+EbErrorType svt_aom_open_loop_intra_search_mb(PictureParentControlSet *pcs, uint32_t b64_index,
                                       EbPictureBufferDesc *input_ptr) {
     EbErrorType         return_error = EB_ErrorNone;
     SequenceControlSet *scs      = pcs->scs;
@@ -3001,7 +3001,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs, uint32_t b64
 
     while (pa_blk_index < CU_MAX_COUNT) {
         const CodedBlockStats *blk_stats_ptr;
-        blk_stats_ptr              = get_coded_blk_stats(pa_blk_index);
+        blk_stats_ptr              = svt_aom_get_coded_blk_stats(pa_blk_index);
         uint8_t bsize              = blk_stats_ptr->size;
         Bool  small_boundary_blk = FALSE;
 
@@ -3038,7 +3038,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs, uint32_t b64
                 (pcs->enhanced_picture_ptr->org_y + cu_origin_y) * input_ptr->stride_y;
 
             // Fill Neighbor Arrays
-            update_neighbor_samples_array_open_loop_mb(1, // use_top_righ_bottom_left
+            svt_aom_update_neighbor_samples_array_open_loop_mb(1, // use_top_righ_bottom_left
                                                        1, // update_top_neighbor
                                                        above0_row - 1,
                                                        left0_col - 1,
@@ -3080,7 +3080,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs, uint32_t b64
                     left_col  = left0_col;
                 }
                 // PRED
-                intra_prediction_open_loop_mb(p_angle,
+                svt_aom_intra_prediction_open_loop_mb(p_angle,
                                               ois_intra_mode,
                                               cu_origin_x,
                                               cu_origin_y,
@@ -3117,7 +3117,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs, uint32_t b64
                     intra_cost = svt_aom_satd(coeff, 256 >> pcs->tpl_ctrls.subsample_tx)
                         << pcs->tpl_ctrls.subsample_tx;
                 }
-                // printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
+                // printf("svt_aom_open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
                 if (intra_cost < best_intra_cost) {
                     best_intra_cost = intra_cost;
                     best_mode       = ois_intra_mode;
@@ -3127,7 +3127,7 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs, uint32_t b64
             ois_mb_results_ptr->intra_mode = best_mode;
             ois_mb_results_ptr->intra_cost = best_intra_cost;
             //if(pcs->picture_number == 16 && cu_origin_x <= 15 && cu_origin_y == 0)
-            //    printf("open_loop_intra_search_mb cost0 poc%d b64_index=%d, mb_origin_xy=%d %d, best_mode=%d, best_intra_cost=%d, offset=%d, src[0~3]= %d %d %d %d\n", pcs->picture_number, b64_index, cu_origin_x, cu_origin_y, best_mode, best_intra_cost, (cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4), src[0], src[1], src[2], src[3]);
+            //    printf("svt_aom_open_loop_intra_search_mb cost0 poc%d b64_index=%d, mb_origin_xy=%d %d, best_mode=%d, best_intra_cost=%d, offset=%d, src[0~3]= %d %d %d %d\n", pcs->picture_number, b64_index, cu_origin_x, cu_origin_y, best_mode, best_intra_cost, (cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4), src[0], src[1], src[2], src[3]);
         }
         pa_blk_index++;
     }

@@ -24,33 +24,37 @@ extern "C" {
      * ModeDecisionSb
      *   performs CL (SB)
      *******************************************/
-extern EbErrorType mode_decision_sb_light_pd0(SequenceControlSet *scs, PictureControlSet *pcs,
-                                              const MdcSbData *const mdcResultTbPtr,
-                                              SuperBlock *sb_ptr, uint16_t sb_origin_x,
-                                              uint16_t sb_origin_y, uint32_t sb_addr,
-                                              ModeDecisionContext *ctx);
-extern void        mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureControlSet *pcs,
-                                              const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
-                                              uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
-                                              ModeDecisionContext *ctx);
-extern EbErrorType mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs,
-                                    const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
-                                    uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
-                                    ModeDecisionContext *ctx);
-extern void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs, SuperBlock *sb_ptr,
-                              uint32_t sb_addr, uint32_t sb_origin_x, uint32_t sb_origin_y,
-                              EncDecContext *ed_ctx);
-extern EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs,
-                                     SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_origin_x,
-                                     uint32_t sb_origin_y, EncDecContext *ed_ctx);
+extern EbErrorType svt_aom_mode_decision_sb_light_pd0(SequenceControlSet    *scs,
+                                                      PictureControlSet     *pcs,
+                                                      const MdcSbData *const mdcResultTbPtr,
+                                                      SuperBlock *sb_ptr, uint16_t sb_origin_x,
+                                                      uint16_t sb_origin_y, uint32_t sb_addr,
+                                                      ModeDecisionContext *ctx);
+extern void svt_aom_mode_decision_sb_light_pd1(SequenceControlSet *scs, PictureControlSet *pcs,
+                                               const MdcSbData *const mdcResultTbPtr,
+                                               SuperBlock *sb_ptr, uint16_t sb_origin_x,
+                                               uint16_t sb_origin_y, uint32_t sb_addr,
+                                               ModeDecisionContext *ctx);
+extern EbErrorType svt_aom_mode_decision_sb(SequenceControlSet *scs, PictureControlSet *pcs,
+                                            const MdcSbData *const mdcResultTbPtr,
+                                            SuperBlock *sb_ptr, uint16_t sb_origin_x,
+                                            uint16_t sb_origin_y, uint32_t sb_addr,
+                                            ModeDecisionContext *ctx);
+extern void        svt_aom_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs,
+                                         SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_origin_x,
+                                         uint32_t sb_origin_y, EncDecContext *ed_ctx);
+extern EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs,
+                                         SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_origin_x,
+                                         uint32_t sb_origin_y, EncDecContext *ed_ctx);
 
-void store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer, PictureControlSet *pcs,
-                          uint32_t sb_x, uint32_t sb_y, uint32_t sb_w, uint32_t sb_h);
+void svt_aom_store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer,
+                                  PictureControlSet *pcs, uint32_t sb_x, uint32_t sb_y,
+                                  uint32_t sb_w, uint32_t sb_h);
 
-void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *pred,
-                     uint32_t pred_offset, uint32_t pred_stride, int16_t *residual,
-                     uint32_t residual_offset, uint32_t residual_stride, Bool hbd,
-                     uint32_t area_width, uint32_t area_height);
+void svt_aom_residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride,
+                             uint8_t *pred, uint32_t pred_offset, uint32_t pred_stride,
+                             int16_t *residual, uint32_t residual_offset, uint32_t residual_stride,
+                             Bool hbd, uint32_t area_width, uint32_t area_height);
 
 EB_EXTERN EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock *sb_ptr,
                                               ModeDecisionContext *ctx);
@@ -1103,8 +1107,8 @@ static const int32_t me_idx_128x128[4][BLOCK_MAX_COUNT_SB_128] = {
      20, 83, 84, 75, 83, 20, 20, 76, 84, 20, 20, 20, 20, 20, 20, 20, 20, 75, 75, 75, 75, 75, 75, 75,
      75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84,
      84, 84, 84, 84, 84}};
-EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet *sequence_control_set_ptr,
-                                                PictureControlSet *pcs, ModeDecisionContext *ctx);
+EbErrorType svt_aom_signal_derivation_enc_dec_kernel_oq(
+    SequenceControlSet *sequence_control_set_ptr, PictureControlSet *pcs, ModeDecisionContext *ctx);
 
 void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx,
                         EbPictureBufferDesc *input_pic);

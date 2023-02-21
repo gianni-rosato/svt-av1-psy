@@ -85,11 +85,11 @@ typedef struct EncDecContext {
 /**************************************
      * Extern Function Declarations
      **************************************/
-extern EbErrorType enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
-                                        const EbEncHandle *enc_handle_ptr, int index,
-                                        int tasks_index);
+extern EbErrorType svt_aom_enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
+                                                const EbEncHandle *enc_handle_ptr, int index,
+                                                int tasks_index);
 
-extern void *mode_decision_kernel(void *input_ptr);
+extern void *svt_aom_mode_decision_kernel(void *input_ptr);
 void         svt_aom_set_dist_based_ref_pruning_controls(ModeDecisionContext *ctx,
                                                          uint8_t              dist_based_ref_pruning_level);
 #ifdef __cplusplus

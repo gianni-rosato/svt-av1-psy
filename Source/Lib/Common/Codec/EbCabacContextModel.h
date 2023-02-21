@@ -583,7 +583,7 @@ struct AV1Common;
 struct FrameContexts;
 void svt_av1_reset_cdf_symbol_counters(struct FrameContexts *fc);
 void svt_av1_default_coef_probs(struct FrameContexts *fc, int32_t base_qindex);
-void init_mode_probs(struct FrameContexts *fc);
+void svt_aom_init_mode_probs(struct FrameContexts *fc);
 
 struct FrameContexts;
 
@@ -889,8 +889,8 @@ static INLINE void partition_gather_vert_alike(AomCdfProb *out, const AomCdfProb
 // onyxc_int.h
 
 /**********************************************************************************************************************/
-int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
-                                                  int c, int *color_idx);
+int svt_aom_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
+                                                      int c, int *color_idx);
 /**********************************************************************************************************************/
 /**********************************************************************************************************************/
 

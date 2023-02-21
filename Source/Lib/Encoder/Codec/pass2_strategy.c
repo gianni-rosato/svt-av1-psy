@@ -788,7 +788,7 @@ static int av1_calc_iframe_target_size_one_pass_cbr(PictureParentControlSet *pcs
 static void av1_gop_bit_allocation(PictureParentControlSet *ppcs, RATE_CONTROL *const rc,
                                    int is_key_frame, int gf_interval, int use_arf,
                                    int64_t gf_group_bits);
-int         frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
+int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
 #define MAX_GF_BOOST 5400
 /***********************************************************************************
 * calculate_gf_stats()
@@ -1506,7 +1506,7 @@ static int set_gf_interval_update_onepass_rt(PictureParentControlSet *pcs) {
     return gf_update;
 }
 
-void reset_update_frame_target(PictureParentControlSet *ppcs_ptr) {
+void svt_aom_reset_update_frame_target(PictureParentControlSet *ppcs_ptr) {
     SequenceControlSet *scs                = ppcs_ptr->scs;
     EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
     RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
@@ -1613,7 +1613,7 @@ static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs_ptr) {
     return;
 }
 
-void one_pass_rt_rate_alloc(PictureParentControlSet *pcs) {
+void svt_aom_one_pass_rt_rate_alloc(PictureParentControlSet *pcs) {
     SequenceControlSet *scs                = pcs->scs;
     EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
     RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
@@ -1643,7 +1643,7 @@ void one_pass_rt_rate_alloc(PictureParentControlSet *pcs) {
             else if (rc->resize_state == ONE_HALF)
                 scs->resize_pending_params.resize_denom = SCALE_DENOMINATOR_MAX;
             else
-                assert_err(0, "unknown resize denom");
+                svt_aom_assert_err(0, "unknown resize denom");
             scs->resize_pending_params.resize_state = rc->resize_state;
         }
     } else if (pcs->rc_reset_flag) {
@@ -1667,7 +1667,7 @@ void one_pass_rt_rate_alloc(PictureParentControlSet *pcs) {
     pcs->this_frame_target = target;
     pcs->base_frame_target = target;
 }
-void process_rc_stat(PictureParentControlSet *pcs) {
+void svt_aom_process_rc_stat(PictureParentControlSet *pcs) {
     SequenceControlSet *scs     = pcs->scs;
     TWO_PASS *const     twopass = &scs->twopass;
 #ifdef ARCH_X86_64
@@ -1730,7 +1730,7 @@ void svt_av1_new_framerate(SequenceControlSet *scs, double framerate) {
     av1_rc_update_framerate(
         scs /*, scs->seq_header.max_frame_width, scs->seq_header.max_frame_height*/);
 }
-void set_rc_param(SequenceControlSet *scs) {
+void svt_aom_set_rc_param(SequenceControlSet *scs) {
     EncodeContext *encode_context_ptr = scs->encode_context_ptr;
     FrameInfo     *frame_info         = &encode_context_ptr->frame_info;
 
@@ -1811,7 +1811,7 @@ void svt_av1_init_single_pass_lap(SequenceControlSet *scs) {
     if (!twopass->stats_buf_ctx->stats_in_end)
         return;
 
-    set_rc_param(scs);
+    svt_aom_set_rc_param(scs);
 
     // This variable monitors how far behind the second ref update is lagging.
 
@@ -1854,7 +1854,7 @@ void svt_av1_init_second_pass(SequenceControlSet *scs) {
         }
         twopass->stats_buf_ctx->stats_in_end->stat_struct.total_num_bits = total_num_bits;
     }
-    set_rc_param(scs);
+    svt_aom_set_rc_param(scs);
     stats = twopass->stats_buf_ctx->total_stats;
 
     *stats                                    = *twopass->stats_buf_ctx->stats_in_end;
@@ -1904,7 +1904,7 @@ void svt_av1_init_second_pass(SequenceControlSet *scs) {
 * Find the initial QP to be used in the middle pass based on the target rate
 * and stats from previous pass
 ***********************************************************************************************/
-void find_init_qp_middle_pass(SequenceControlSet *scs, PictureParentControlSet *pcs) {
+void svt_aom_find_init_qp_middle_pass(SequenceControlSet *scs, PictureParentControlSet *pcs) {
     TWO_PASS *const twopass            = &scs->twopass;
     EncodeContext  *encode_context_ptr = scs->encode_context_ptr;
     if (scs->static_config.pass == ENC_MIDDLE_PASS && twopass->stats_buf_ctx->total_stats &&
@@ -1942,7 +1942,7 @@ void find_init_qp_middle_pass(SequenceControlSet *scs, PictureParentControlSet *
         encode_context_ptr->rc_cfg.cq_level = scs->static_config.qp << 2;
     }
 }
-int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
+int svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
     return frame_is_intra_only(ppcs_ptr) || ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE ||
         ppcs_ptr->update_type == SVT_AV1_GF_UPDATE;
 }
@@ -2032,7 +2032,7 @@ void svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs) 
         // bits back in quickly. One situation where this may happen is if a
         // frame is unexpectedly almost perfectly predicted by the ARF or GF
         // but not very well predcited by the previous frame.
-        if (!frame_is_kf_gf_arf(ppcs) && !ppcs->is_overlay) {
+        if (!svt_aom_frame_is_kf_gf_arf(ppcs) && !ppcs->is_overlay) {
             int fast_extra_thresh = ppcs->base_frame_target / HIGH_UNDERSHOOT_RATIO;
             if (ppcs->projected_frame_size < fast_extra_thresh &&
                 rc_param_ptr->rate_error_estimate > 0) {
@@ -2130,7 +2130,7 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
         // bits back in quickly. One situation where this may happen is if a
         // frame is unexpectedly almost perfectly predicted by the ARF or GF
         // but not very well predcited by the previous frame.
-        if (!frame_is_kf_gf_arf(ppcs_ptr) && !ppcs_ptr->is_overlay) {
+        if (!svt_aom_frame_is_kf_gf_arf(ppcs_ptr) && !ppcs_ptr->is_overlay) {
             int fast_extra_thresh = ppcs_ptr->base_frame_target / HIGH_UNDERSHOOT_RATIO;
             if (ppcs_ptr->projected_frame_size < fast_extra_thresh && rc->rate_error_estimate > 0) {
                 rc->vbr_bits_off_target_fast += fast_extra_thresh - ppcs_ptr->projected_frame_size;
@@ -2158,12 +2158,12 @@ int svt_aom_gf_low_tpl_la  = 300;
 int svt_aom_kf_high        = 5000;
 int svt_aom_kf_low         = 400;
 /******************************************************
- * crf_assign_max_rate
+ * svt_aom_crf_assign_max_rate
  * Assign the max frame size for capped VBR in base layer frames
  * Update the qindex and active worse quality based on the already
  *  spent bits in the sliding window
  ******************************************************/
-void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
+void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
     SequenceControlSet *scs                = ppcs_ptr->scs;
     EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
     RATE_CONTROL *const rc                 = &encode_context_ptr->rc;

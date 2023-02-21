@@ -47,7 +47,7 @@ extern "C" {
 #define MIN_LAD_MG 1
 #define RC_DEFAULT_LAD_MG_MT 2 // default look ahead value for rate control in Multi-threaded mode
 #define RC_DEFAULT_LAD_MG_LP1 1 // default look ahead value for rate control in LP 1
-void assert_err(uint32_t condition, char *err_msg);
+void svt_aom_assert_err(uint32_t condition, char *err_msg);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
 #define MAX_TX_WEIGHT 500

@@ -16,7 +16,7 @@
 #include "EbPictureControlSet.h"
 #include "EbUtility.h"
 
-void largest_coding_unit_dctor(EbPtr p) {
+void svt_aom_largest_coding_unit_dctor(EbPtr p) {
     SuperBlock *obj = (SuperBlock *)p;
     EB_FREE_ARRAY(obj->av1xd);
     EB_FREE_ARRAY(obj->final_blk_arr);
@@ -24,7 +24,7 @@ void largest_coding_unit_dctor(EbPtr p) {
 }
 /*
 * return the 4x4 level
-Used by signal_derivation_enc_dec_kernel_oq and memory allocation
+Used by svt_aom_signal_derivation_enc_dec_kernel_oq and memory allocation
 */
 bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type) {
     (void)slice_type;
@@ -34,8 +34,8 @@ bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type) {
         return true;
 }
 // Get the nsq_level used for each preset (to be passed to setting function: set_nsq_ctrls())
-uint8_t get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base,
-                      InputCoeffLvl coeff_lvl) {
+uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base,
+                              InputCoeffLvl coeff_lvl) {
     uint8_t nsq_level;
     //set the nsq_level
     if (enc_mode <= ENC_MRS)
@@ -76,13 +76,14 @@ Tasks & Questions
     -Need a ReconPicture for each candidate.
     -I don't see a way around doing the copies in temp memory and then copying it in...
 */
-EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_size_pix,
-                                     uint16_t sb_origin_x, uint16_t sb_origin_y, uint16_t sb_index,
-                                     uint8_t enc_mode, uint16_t max_block_cnt,
-                                     PictureControlSet *picture_control_set)
+EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
+                                             uint8_t sb_size_pix, uint16_t sb_origin_x,
+                                             uint16_t sb_origin_y, uint16_t sb_index,
+                                             uint8_t enc_mode, uint16_t max_block_cnt,
+                                             PictureControlSet *picture_control_set)
 
 {
-    larget_coding_unit_ptr->dctor = largest_coding_unit_dctor;
+    larget_coding_unit_ptr->dctor = svt_aom_largest_coding_unit_dctor;
 
     // ************ SB ***************
     // Which borderLargestCuSize is not a power of two
@@ -100,7 +101,7 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
                 disallow_nsq = MIN(
                     disallow_nsq,
-                    (get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+                    (svt_aom_get_nsq_level(enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
     bool disallow_4x4 = true;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(enc_mode, slice_type));

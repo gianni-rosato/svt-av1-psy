@@ -1978,12 +1978,12 @@ static void process_block_hbd_sse4_1(int h, int w, uint16_t *buff_hbd_start, uin
     }
 }
 
-void get_final_filtered_pixels_sse4_1(MeContext *me_ctx, EbByte *src_center_ptr_start,
-                                      uint16_t **altref_buffer_highbd_start, uint32_t **accum,
-                                      uint16_t **count, const uint32_t *stride,
-                                      int blk_y_src_offset, int blk_ch_src_offset,
-                                      uint16_t blk_width_ch, uint16_t blk_height_ch,
-                                      Bool is_highbd) {
+void svt_aom_get_final_filtered_pixels_sse4_1(MeContext *me_ctx, EbByte *src_center_ptr_start,
+                                              uint16_t **altref_buffer_highbd_start,
+                                              uint32_t **accum, uint16_t **count,
+                                              const uint32_t *stride, int blk_y_src_offset,
+                                              int blk_ch_src_offset, uint16_t blk_width_ch,
+                                              uint16_t blk_height_ch, Bool is_highbd) {
     assert(blk_width_ch % 16 == 0);
     assert(BW % 16 == 0);
 
@@ -2082,10 +2082,11 @@ static void apply_filtering_central_loop_hbd(uint16_t w, uint16_t h, uint16_t *s
 }
 
 // Apply filtering to the central picture
-void apply_filtering_central_sse4_1(MeContext           *me_ctx,
-                                    EbPictureBufferDesc *input_picture_ptr_central, EbByte *src,
-                                    uint32_t **accum, uint16_t **count, uint16_t blk_width,
-                                    uint16_t blk_height, uint32_t ss_x, uint32_t ss_y) {
+void svt_aom_apply_filtering_central_sse4_1(MeContext           *me_ctx,
+                                            EbPictureBufferDesc *input_picture_ptr_central,
+                                            EbByte *src, uint32_t **accum, uint16_t **count,
+                                            uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
+                                            uint32_t ss_y) {
     uint16_t src_stride_y = input_picture_ptr_central->stride_y;
 
     // Luma
@@ -2105,11 +2106,12 @@ void apply_filtering_central_sse4_1(MeContext           *me_ctx,
 }
 
 // Apply filtering to the central picture
-void apply_filtering_central_highbd_sse4_1(MeContext           *me_ctx,
-                                           EbPictureBufferDesc *input_picture_ptr_central,
-                                           uint16_t **src_16bit, uint32_t **accum, uint16_t **count,
-                                           uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
-                                           uint32_t ss_y) {
+void svt_aom_apply_filtering_central_highbd_sse4_1(MeContext           *me_ctx,
+                                                   EbPictureBufferDesc *input_picture_ptr_central,
+                                                   uint16_t **src_16bit, uint32_t **accum,
+                                                   uint16_t **count, uint16_t blk_width,
+                                                   uint16_t blk_height, uint32_t ss_x,
+                                                   uint32_t ss_y) {
     uint16_t src_stride_y = input_picture_ptr_central->stride_y;
 
     // Luma

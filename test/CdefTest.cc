@@ -17,7 +17,7 @@
  * * svt_aom_cdef_find_dir_avx2
  * * svt_aom_cdef_find_dir_dual_avx2
  * * svt_cdef_filter_block_avx2
- * * compute_cdef_dist_16bit_avx2
+ * * svt_aom_compute_cdef_dist_16bit_avx2
  * * svt_aom_copy_rect8_8bit_to_16bit_avx2
  * * svt_search_one_dual_avx2
  *
@@ -683,7 +683,7 @@ TEST(CdefToolTest, CopyRectMatchTest) {
 }
 
 /**
- * @brief Unit test for compute_cdef_dist_16bit_avx2
+ * @brief Unit test for svt_aom_compute_cdef_dist_16bit_avx2
  *
  * Test strategy:
  * Feed cdef list, src buffer, dst buffer generated randomly to targeted
@@ -740,7 +740,18 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                     // Allowable subsampling values are: 1, 2
                     for (uint8_t subsampling = 1; subsampling <= 2;
                          subsampling <<= 1) {
-                        const uint64_t c_mse = compute_cdef_dist_c(dst_data_,
+                        const uint64_t c_mse =
+                            svt_aom_compute_cdef_dist_c(dst_data_,
+                                                        stride,
+                                                        src_data_,
+                                                        dlist,
+                                                        cdef_count,
+                                                        test_bs[i],
+                                                        coeff_shift,
+                                                        plane,
+                                                        subsampling);
+                        const uint64_t sse_mse =
+                            svt_aom_compute_cdef_dist_16bit_sse4_1(dst_data_,
                                                                    stride,
                                                                    src_data_,
                                                                    dlist,
@@ -749,32 +760,22 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                                                                    coeff_shift,
                                                                    plane,
                                                                    subsampling);
-                        const uint64_t sse_mse =
-                            compute_cdef_dist_16bit_sse4_1(dst_data_,
-                                                           stride,
-                                                           src_data_,
-                                                           dlist,
-                                                           cdef_count,
-                                                           test_bs[i],
-                                                           coeff_shift,
-                                                           plane,
-                                                           subsampling);
                         const uint64_t avx_mse =
-                            compute_cdef_dist_16bit_avx2(dst_data_,
-                                                         stride,
-                                                         src_data_,
-                                                         dlist,
-                                                         cdef_count,
-                                                         test_bs[i],
-                                                         coeff_shift,
-                                                         plane,
-                                                         subsampling);
+                            svt_aom_compute_cdef_dist_16bit_avx2(dst_data_,
+                                                                 stride,
+                                                                 src_data_,
+                                                                 dlist,
+                                                                 cdef_count,
+                                                                 test_bs[i],
+                                                                 coeff_shift,
+                                                                 plane,
+                                                                 subsampling);
                         ASSERT_EQ(c_mse, sse_mse)
-                            << "compute_cdef_dist_16bit_sse4_1 failed "
+                            << "svt_aom_compute_cdef_dist_16bit_sse4_1 failed "
                             << "bitdepth: " << bd << " plane: " << plane
                             << " BlockSize " << test_bs[i] << " loop: " << k;
                         ASSERT_EQ(c_mse, avx_mse)
-                            << "compute_cdef_dist_16bit_avx2 failed "
+                            << "svt_aom_compute_cdef_dist_16bit_avx2 failed "
                             << "bitdepth: " << bd << " plane: " << plane
                             << " BlockSize " << test_bs[i] << " loop: " << k;
                     }
@@ -825,41 +826,41 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
                     for (uint8_t subsampling = 1; subsampling <= 2;
                          subsampling <<= 1) {
                         const uint64_t c_mse =
-                            compute_cdef_dist_8bit_c(dst_data_,
-                                                     stride,
-                                                     src_data_,
-                                                     dlist,
-                                                     cdef_count,
-                                                     test_bs[i],
-                                                     coeff_shift,
-                                                     plane,
-                                                     subsampling);
+                            svt_aom_compute_cdef_dist_8bit_c(dst_data_,
+                                                             stride,
+                                                             src_data_,
+                                                             dlist,
+                                                             cdef_count,
+                                                             test_bs[i],
+                                                             coeff_shift,
+                                                             plane,
+                                                             subsampling);
                         const uint64_t sse_mse =
-                            compute_cdef_dist_8bit_sse4_1(dst_data_,
-                                                          stride,
-                                                          src_data_,
-                                                          dlist,
-                                                          cdef_count,
-                                                          test_bs[i],
-                                                          coeff_shift,
-                                                          plane,
-                                                          subsampling);
+                            svt_aom_compute_cdef_dist_8bit_sse4_1(dst_data_,
+                                                                  stride,
+                                                                  src_data_,
+                                                                  dlist,
+                                                                  cdef_count,
+                                                                  test_bs[i],
+                                                                  coeff_shift,
+                                                                  plane,
+                                                                  subsampling);
                         const uint64_t avx_mse =
-                            compute_cdef_dist_8bit_avx2(dst_data_,
-                                                        stride,
-                                                        src_data_,
-                                                        dlist,
-                                                        cdef_count,
-                                                        test_bs[i],
-                                                        coeff_shift,
-                                                        plane,
-                                                        subsampling);
+                            svt_aom_compute_cdef_dist_8bit_avx2(dst_data_,
+                                                                stride,
+                                                                src_data_,
+                                                                dlist,
+                                                                cdef_count,
+                                                                test_bs[i],
+                                                                coeff_shift,
+                                                                plane,
+                                                                subsampling);
                         ASSERT_EQ(c_mse, sse_mse)
-                            << "compute_cdef_dist_8bit_sse4_1 failed "
+                            << "svt_aom_compute_cdef_dist_8bit_sse4_1 failed "
                             << "bitdepth: " << bd << " plane: " << plane
                             << " BlockSize " << test_bs[i] << " loop: " << k;
                         ASSERT_EQ(c_mse, avx_mse)
-                            << "compute_cdef_dist_8bit_avx2 failed "
+                            << "svt_aom_compute_cdef_dist_8bit_avx2 failed "
                             << "bitdepth: " << bd << " plane: " << plane
                             << " BlockSize " << test_bs[i] << " loop: " << k;
                     }

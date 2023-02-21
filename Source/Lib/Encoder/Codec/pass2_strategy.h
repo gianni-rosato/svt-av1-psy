@@ -41,18 +41,19 @@ typedef struct {
     double this_frame_mv_in_out;
 } GF_GROUP_STATS;
 
-void svt_av1_init_second_pass(struct SequenceControlSet *scs);
-void svt_av1_init_single_pass_lap(struct SequenceControlSet *scs);
-void svt_av1_new_framerate(struct SequenceControlSet *scs, double framerate);
-void find_init_qp_middle_pass(struct SequenceControlSet *scs, struct PictureParentControlSet *pcs);
-void one_pass_rt_rate_alloc(struct PictureParentControlSet *pcs);
-void process_rc_stat(struct PictureParentControlSet *pcs);
-void reset_update_frame_target(struct PictureParentControlSet *ppcs_ptr);
-void svt_av1_twopass_postencode_update(struct PictureParentControlSet *ppcs_ptr);
-void svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs);
-extern void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr);
-extern void set_rc_param(struct SequenceControlSet *scs);
-int         frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
+void        svt_av1_init_second_pass(struct SequenceControlSet *scs);
+void        svt_av1_init_single_pass_lap(struct SequenceControlSet *scs);
+void        svt_av1_new_framerate(struct SequenceControlSet *scs, double framerate);
+void        svt_aom_find_init_qp_middle_pass(struct SequenceControlSet      *scs,
+                                             struct PictureParentControlSet *pcs);
+void        svt_aom_one_pass_rt_rate_alloc(struct PictureParentControlSet *pcs);
+void        svt_aom_process_rc_stat(struct PictureParentControlSet *pcs);
+void        svt_aom_reset_update_frame_target(struct PictureParentControlSet *ppcs_ptr);
+void        svt_av1_twopass_postencode_update(struct PictureParentControlSet *ppcs_ptr);
+void        svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs);
+extern void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr);
+extern void svt_aom_set_rc_param(struct SequenceControlSet *scs);
+int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
 #ifdef __cplusplus
 } // extern "C"
 #endif

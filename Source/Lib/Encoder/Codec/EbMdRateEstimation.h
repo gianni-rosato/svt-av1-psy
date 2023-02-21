@@ -180,9 +180,9 @@ extern "C" {
     };
 
     /***************************************************************************
-    * av1_get_syntax_rate_from_cdf
+    * svt_aom_get_syntax_rate_from_cdf
     ***************************************************************************/
-    extern void av1_get_syntax_rate_from_cdf(
+    extern void svt_aom_get_syntax_rate_from_cdf(
         int32_t                        *costs,
         const AomCdfProb             *cdf,
         const int32_t                  *inv_map);
@@ -190,7 +190,7 @@ extern "C" {
     * Estimate the rate for each syntax elements and for
     * all scenarios based on the frame CDF
     ***************************************************************************/
-    extern void av1_estimate_syntax_rate(
+    extern void svt_aom_estimate_syntax_rate(
         MdRateEstimationContext      *md_rate_estimation_array,
         Bool                          is_i_slice,
         uint8_t pic_filter_intra_level,
@@ -203,15 +203,15 @@ extern "C" {
     * Estimate the rate of the quantised coefficient
     * based on the frame CDF
     ***************************************************************************/
-    extern void av1_estimate_coefficients_rate(
+    extern void svt_aom_estimate_coefficients_rate(
         MdRateEstimationContext  *md_rate_estimation_array,
         FRAME_CONTEXT              *fc);
     /**************************************************************************
-    * av1_estimate_mv_rate()
+    * svt_aom_estimate_mv_rate()
     * Estimate the rate of motion vectors
     * based on the frame CDF
     ***************************************************************************/
-extern void av1_estimate_mv_rate(
+extern void svt_aom_estimate_mv_rate(
         struct PictureControlSet *pcs,
         MdRateEstimationContext  *md_rate_estimation_array,
         FRAME_CONTEXT            *fc);
@@ -395,7 +395,7 @@ static AOM_INLINE void avg_cdf_symbols(FRAME_CONTEXT *ctx_left,
 /*******************************************************************************
  * Updates all the syntax stats/CDF for the current block
  ******************************************************************************/
-void update_stats(
+void svt_aom_update_stats(
     struct PictureControlSet   *pcs,
     struct BlkStruct          *blk_ptr,
     int                         mi_row,
@@ -403,7 +403,7 @@ void update_stats(
 /*******************************************************************************
  * Updates the partition stats/CDF for the current block
  ******************************************************************************/
-void update_part_stats(
+void svt_aom_update_part_stats(
     struct PictureControlSet   *pcs,
     struct BlkStruct          *blk_ptr,
     uint16_t                    tile_idx,

@@ -121,8 +121,8 @@ static void clear_loop_filter_delta(ParseCtxt *parse_ctx) {
     for (int lf_id = 0; lf_id < FRAME_LF_COUNT; ++lf_id) parse_ctx->delta_lf[lf_id] = 0;
 }
 
-EbErrorType start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
-                             TilesInfo *tiles_info, int tile_num, int is_mt) {
+EbErrorType svt_aom_start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
+                                     TilesInfo *tiles_info, int tile_num, int is_mt) {
     MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
     FrameHeader   *frame_header    = &dec_handle_ptr->frame_header;
     ParseTileData *parse_tile_data = &main_parse_ctxt->parse_tile_data[tile_num];
@@ -271,7 +271,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
 
             sb_info->num_block = 0;
             // Bit-stream parsing of the superblock
-            parse_super_block(dec_handle_ptr, parse_ctx, mi_row, mi_col, sb_info);
+            svt_aom_parse_super_block(dec_handle_ptr, parse_ctx, mi_row, mi_col, sb_info);
 
             if (!is_mt) {
                 /* Init DecModCtxt */
@@ -284,7 +284,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
 
                 /* TO DO : Will move later */
                 // decoding of the superblock
-                decode_super_block(dec_mod_ctxt, mi_row, mi_col, sb_info);
+                svt_aom_decode_super_block(dec_mod_ctxt, mi_row, mi_col, sb_info);
             }
         }
         if (is_mt) {

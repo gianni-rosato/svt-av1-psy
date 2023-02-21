@@ -62,7 +62,7 @@ static INLINE __m128i convolve_12tap(const __m128i *s, const __m128i *coeffs) {
     return d;
 }
 
-static INLINE __m128i convolve(const __m128i *const s, const __m128i *const coeffs) {
+static INLINE __m128i svt_aom_convolve(const __m128i *const s, const __m128i *const coeffs) {
     const __m128i res_0 = _mm_madd_epi16(s[0], coeffs[0]);
     const __m128i res_1 = _mm_madd_epi16(s[1], coeffs[1]);
     const __m128i res_2 = _mm_madd_epi16(s[2], coeffs[2]);
@@ -273,20 +273,20 @@ void svt_av1_highbd_convolve_y_sr_ssse3(const uint16_t *src, int32_t src_stride,
                     s[3 + 8] = _mm_unpacklo_epi16(s7, s8);
                     s[7 + 8] = _mm_unpackhi_epi16(s7, s8);
 
-                    const __m128i res_a0 = convolve(s, coeffs_y);
+                    const __m128i res_a0 = svt_aom_convolve(s, coeffs_y);
                     __m128i res_a_round0 = _mm_sra_epi32(_mm_add_epi32(res_a0, round_const_bits),
                                                          round_shift_bits);
 
-                    const __m128i res_a1 = convolve(s + 8, coeffs_y);
+                    const __m128i res_a1 = svt_aom_convolve(s + 8, coeffs_y);
                     __m128i res_a_round1 = _mm_sra_epi32(_mm_add_epi32(res_a1, round_const_bits),
                                                          round_shift_bits);
 
                     if (w - j > 4) {
-                        const __m128i res_b0       = convolve(s + 4, coeffs_y);
+                        const __m128i res_b0       = svt_aom_convolve(s + 4, coeffs_y);
                         __m128i       res_b_round0 = _mm_sra_epi32(
                             _mm_add_epi32(res_b0, round_const_bits), round_shift_bits);
 
-                        const __m128i res_b1       = convolve(s + 4 + 8, coeffs_y);
+                        const __m128i res_b1       = svt_aom_convolve(s + 4 + 8, coeffs_y);
                         __m128i       res_b_round1 = _mm_sra_epi32(
                             _mm_add_epi32(res_b1, round_const_bits), round_shift_bits);
 
@@ -453,7 +453,7 @@ void svt_av1_highbd_convolve_x_sr_ssse3(const uint16_t *src, int32_t src_stride,
                     s[2] = _mm_alignr_epi8(row01, row00, 8);
                     s[3] = _mm_alignr_epi8(row01, row00, 12);
 
-                    __m128i res_even = convolve(s, coeffs_x);
+                    __m128i res_even = svt_aom_convolve(s, coeffs_x);
                     res_even = _mm_sra_epi32(_mm_add_epi32(res_even, round_const_x), round_shift_x);
 
                     // odd pixels
@@ -462,7 +462,7 @@ void svt_av1_highbd_convolve_x_sr_ssse3(const uint16_t *src, int32_t src_stride,
                     s[2] = _mm_alignr_epi8(row01, row00, 10);
                     s[3] = _mm_alignr_epi8(row01, row00, 14);
 
-                    __m128i res_odd = convolve(s, coeffs_x);
+                    __m128i res_odd = svt_aom_convolve(s, coeffs_x);
                     res_odd = _mm_sra_epi32(_mm_add_epi32(res_odd, round_const_x), round_shift_x);
 
                     res_even = _mm_sra_epi32(_mm_add_epi32(res_even, round_const_bits),

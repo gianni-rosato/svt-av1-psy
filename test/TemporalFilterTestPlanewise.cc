@@ -1280,17 +1280,17 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
 
         SetRandData(is_highbd);
 
-        get_final_filtered_pixels_c(me_ctx,
-                                    org_src_center_ptr_start,
-                                    org_altref_buffer_highbd_start,
-                                    accum,
-                                    count,
-                                    width_stride,
-                                    blk_y_src_offset,
-                                    blk_ch_src_offset,
-                                    blk_width_ch,
-                                    blk_height_ch,
-                                    is_highbd);
+        svt_aom_get_final_filtered_pixels_c(me_ctx,
+                                            org_src_center_ptr_start,
+                                            org_altref_buffer_highbd_start,
+                                            accum,
+                                            count,
+                                            width_stride,
+                                            blk_y_src_offset,
+                                            blk_ch_src_offset,
+                                            blk_width_ch,
+                                            blk_height_ch,
+                                            is_highbd);
 
         tst_fn(me_ctx,
                ref_src_center_ptr_start,
@@ -1320,25 +1320,25 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
 
 TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_sse4_1) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(false, get_final_filtered_pixels_sse4_1);
+        RunTest(false, svt_aom_get_final_filtered_pixels_sse4_1);
     }
 }
 
 TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_avx2) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(false, get_final_filtered_pixels_avx2);
+        RunTest(false, svt_aom_get_final_filtered_pixels_avx2);
     }
 }
 
 TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_sse4_1) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(true, get_final_filtered_pixels_sse4_1);
+        RunTest(true, svt_aom_get_final_filtered_pixels_sse4_1);
     }
 }
 
 TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_avx2) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(true, get_final_filtered_pixels_avx2);
+        RunTest(true, svt_aom_get_final_filtered_pixels_avx2);
     }
 }
 
@@ -1433,15 +1433,15 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
 
         if (!is_highbd) {
             assert(lbd_fn_ptr);
-            apply_filtering_central_c(me_ctx,
-                                      &input_picture_central,
-                                      src,
-                                      org_accum,
-                                      org_count,
-                                      blk_width_ch,
-                                      blk_height_ch,
-                                      ss_x,
-                                      ss_y);
+            svt_aom_apply_filtering_central_c(me_ctx,
+                                              &input_picture_central,
+                                              src,
+                                              org_accum,
+                                              org_count,
+                                              blk_width_ch,
+                                              blk_height_ch,
+                                              ss_x,
+                                              ss_y);
             lbd_fn_ptr(me_ctx,
                        &input_picture_central,
                        src,
@@ -1453,15 +1453,15 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
                        ss_y);
         } else {
             assert(hbd_fn_ptr);
-            apply_filtering_central_highbd_c(me_ctx,
-                                             &input_picture_central,
-                                             src_highbd,
-                                             org_accum,
-                                             org_count,
-                                             blk_width_ch,
-                                             blk_height_ch,
-                                             ss_x,
-                                             ss_y);
+            svt_aom_apply_filtering_central_highbd_c(me_ctx,
+                                                     &input_picture_central,
+                                                     src_highbd,
+                                                     org_accum,
+                                                     org_count,
+                                                     blk_width_ch,
+                                                     blk_height_ch,
+                                                     ss_x,
+                                                     ss_y);
             hbd_fn_ptr(me_ctx,
                        &input_picture_central,
                        src_highbd,
@@ -1489,25 +1489,25 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
 
 TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd_sse4_1) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(false, apply_filtering_central_sse4_1, NULL);
+        RunTest(false, svt_aom_apply_filtering_central_sse4_1, NULL);
     }
 }
 
 TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd_avx2) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(false, apply_filtering_central_avx2, NULL);
+        RunTest(false, svt_aom_apply_filtering_central_avx2, NULL);
     }
 }
 
 TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_sse4_1) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(true, NULL, apply_filtering_central_highbd_sse4_1);
+        RunTest(true, NULL, svt_aom_apply_filtering_central_highbd_sse4_1);
     }
 }
 
 TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_avx2) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(true, NULL, apply_filtering_central_highbd_avx2);
+        RunTest(true, NULL, svt_aom_apply_filtering_central_highbd_avx2);
     }
 }
 

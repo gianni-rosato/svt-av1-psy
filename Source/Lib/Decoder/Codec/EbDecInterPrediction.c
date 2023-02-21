@@ -549,22 +549,22 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
 
         const EbWarpedMotionParams *wm_params = mi->motion_mode == WARPED_CAUSAL ? wm_local
                                                                                  : wm_global;
-        dec_svt_av1_warp_plane((EbWarpedMotionParams *)wm_params,
-                               highbd,
-                               bit_depth,
-                               src,
-                               ref_buf->ps_pic_buf->width >> ss_x,
-                               ref_buf->ps_pic_buf->height >> ss_y,
-                               src_stride,
-                               dst_mod,
-                               pre_x,
-                               pre_y,
-                               bw,
-                               bh,
-                               dst_stride,
-                               ss_x,
-                               ss_y,
-                               conv_params);
+        svt_aom_dec_svt_av1_warp_plane((EbWarpedMotionParams *)wm_params,
+                                       highbd,
+                                       bit_depth,
+                                       src,
+                                       ref_buf->ps_pic_buf->width >> ss_x,
+                                       ref_buf->ps_pic_buf->height >> ss_y,
+                                       src_stride,
+                                       dst_mod,
+                                       pre_x,
+                                       pre_y,
+                                       bw,
+                                       bh,
+                                       dst_stride,
+                                       ss_x,
+                                       ss_y,
+                                       conv_params);
     } else if (highbd) {
         uint16_t *src16 = (uint16_t *)src_mod;
 
@@ -653,20 +653,20 @@ void svt_make_masked_inter_predictor(PartitionInfo *part_info, int32_t ref, void
                                                 bit_depth);
     }
 
-    build_masked_compound_no_round((uint8_t *)dst_ptr,
-                                   dst_stride,
-                                   org_dst,
-                                   org_dst_stride,
-                                   tmp_buf16,
-                                   tmp_buf_stride,
-                                   comp_data,
-                                   seg_mask,
-                                   bsize,
-                                   bh,
-                                   bw,
-                                   conv_params,
-                                   (uint8_t)bit_depth,
-                                   is_16bit);
+    svt_aom_build_masked_compound_no_round((uint8_t *)dst_ptr,
+                                           dst_stride,
+                                           org_dst,
+                                           org_dst_stride,
+                                           tmp_buf16,
+                                           tmp_buf_stride,
+                                           comp_data,
+                                           seg_mask,
+                                           bsize,
+                                           bh,
+                                           bw,
+                                           conv_params,
+                                           (uint8_t)bit_depth,
+                                           is_16bit);
 }
 
 static void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, int plane,
@@ -680,35 +680,35 @@ static void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, in
     if (bit_depth > EB_EIGHT_BIT || is_16bit) {
         /*As per spec we r considering interitra_wedge_sign is always "zero"*/
         /*Check buffers, Aom  2nd time inter_pred buffer plane is plane independent */
-        combine_interintra_highbd(mi->interintra_mode_params.interintra_mode,
-                                  mi->interintra_mode_params.wedge_interintra,
-                                  mi->interintra_mode_params.interintra_wedge_index,
-                                  0 /*interintra_wedgesign*/,
-                                  bsize,
-                                  plane_bsize,
-                                  inter_pred,
-                                  inter_stride,
-                                  inter_pred,
-                                  inter_stride,
-                                  intra_pred,
-                                  intra_stride,
-                                  bit_depth);
+        svt_aom_combine_interintra_highbd(mi->interintra_mode_params.interintra_mode,
+                                          mi->interintra_mode_params.wedge_interintra,
+                                          mi->interintra_mode_params.interintra_wedge_index,
+                                          0 /*interintra_wedgesign*/,
+                                          bsize,
+                                          plane_bsize,
+                                          inter_pred,
+                                          inter_stride,
+                                          inter_pred,
+                                          inter_stride,
+                                          intra_pred,
+                                          intra_stride,
+                                          bit_depth);
         return;
     }
 
     /*Check buffers, Aom  2nd time inter_pred buffer plane is plane independent */
-    combine_interintra(mi->interintra_mode_params.interintra_mode,
-                       mi->interintra_mode_params.wedge_interintra,
-                       mi->interintra_mode_params.interintra_wedge_index,
-                       0 /*interintra_wedgesign*/,
-                       bsize,
-                       plane_bsize,
-                       inter_pred,
-                       inter_stride,
-                       inter_pred,
-                       inter_stride,
-                       intra_pred,
-                       intra_stride);
+    svt_aom_combine_interintra(mi->interintra_mode_params.interintra_mode,
+                               mi->interintra_mode_params.wedge_interintra,
+                               mi->interintra_mode_params.interintra_wedge_index,
+                               0 /*interintra_wedgesign*/,
+                               bsize,
+                               plane_bsize,
+                               inter_pred,
+                               inter_stride,
+                               inter_pred,
+                               inter_stride,
+                               intra_pred,
+                               intra_stride);
 }
 
 static void av1_build_intra_predictors_for_interintra(DecModCtxt    *dec_mod_ctxt,
@@ -743,21 +743,21 @@ static void av1_build_intra_predictors_for_interintra(DecModCtxt    *dec_mod_ctx
     }
 
     /*Calling Intra prediction */
-    svtav1_predict_intra_block(part_info,
-                               plane,
-                               max_txsize_rect_lookup[plane_bsize],
-                               &dec_mod_ctxt->cur_tile_info,
-                               (void *)dst,
-                               dst_stride,
-                               pv_top_neighbor_array,
-                               pv_left_neighbor_array,
-                               recon_stride,
-                               dec_mod_ctxt->seq_header,
-                               mode,
-                               0,
-                               0,
-                               bit_depth,
-                               is16b);
+    svt_aom_svtav1_predict_intra_block(part_info,
+                                       plane,
+                                       max_txsize_rect_lookup[plane_bsize],
+                                       &dec_mod_ctxt->cur_tile_info,
+                                       (void *)dst,
+                                       dst_stride,
+                                       pv_top_neighbor_array,
+                                       pv_left_neighbor_array,
+                                       recon_stride,
+                                       dec_mod_ctxt->seq_header,
+                                       mode,
+                                       0,
+                                       0,
+                                       bit_depth,
+                                       is16b);
 }
 
 /* Build interintra_predictors */
@@ -807,15 +807,15 @@ static void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt, PartitionI
     }
 }
 
-void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_hdl,
-                                      PartitionInfo *part_info, int32_t plane,
-                                      int32_t build_for_obmc, int32_t mi_x, int32_t mi_y, void *dst,
-                                      int32_t dst_stride, int32_t some_use_intra,
-                                      int32_t bit_depth) {
+void svt_aom_svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_hdl,
+                                              PartitionInfo *part_info, int32_t plane,
+                                              int32_t build_for_obmc, int32_t mi_x, int32_t mi_y,
+                                              void *dst, int32_t dst_stride, int32_t some_use_intra,
+                                              int32_t bit_depth) {
     const BlockModeInfo *mi          = part_info->mi;
     const FrameHeader   *cur_frm_hdr = dec_mod_ctx->frame_header;
     SeqHeader           *seq_header  = dec_mod_ctx->seq_header;
-    int32_t              is_compound = has_second_ref(mi);
+    int32_t              is_compound = svt_aom_has_second_ref(mi);
     const int32_t        is_intrabc  = is_intrabc_block_dec(mi);
     //temporary buffer for joint compound, move this to context if stack does not hold.
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[128 * 128]);
@@ -868,8 +868,8 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     int bck_frame_index = 0, fwd_frame_index = 0;
     int cur_frame_index = cur_frm_hdr->order_hint;
 
-    EbDecPicBuf *bck_buf = get_ref_frame_buf(dec_hdl, mi->ref_frame[0]);
-    EbDecPicBuf *fwd_buf = get_ref_frame_buf(dec_hdl, mi->ref_frame[1]);
+    EbDecPicBuf *bck_buf = svt_aom_get_ref_frame_buf(dec_hdl, mi->ref_frame[0]);
+    EbDecPicBuf *fwd_buf = svt_aom_get_ref_frame_buf(dec_hdl, mi->ref_frame[1]);
 
     if (bck_buf != NULL)
         bck_frame_index = bck_buf->order_hint;
@@ -895,7 +895,7 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
             &part_info->ps_global_motion[mi->ref_frame[ref]];
 
         EbDecPicBuf         *ref_buf        = is_intrabc ? dec_hdl->cur_pic_buf[0]
-                                                         : get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
+                                                         : svt_aom_get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
         EbPictureBufferDesc *ps_ref_pic_buf = ref_buf->ps_pic_buf;
 
         int32_t do_warp = (bw >= 8 && bh >= 8 && !build_for_obmc &&
@@ -907,16 +907,16 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
         void   *src;
         int32_t src_stride;
 
-        derive_blk_pointers(ps_ref_pic_buf, plane, 0, 0, &src, &src_stride, ss_x, ss_y);
+        svt_aom_derive_blk_pointers(ps_ref_pic_buf, plane, 0, 0, &src, &src_stride, ss_x, ss_y);
 
         conv_params.do_average = ref;
         /*support masked inter prediction based on WEDGE / DIFFWTD compound type */
-        if (is_masked_compound_type(mi->inter_inter_compound.type)) {
+        if (svt_aom_is_masked_compound_type(mi->inter_inter_compound.type)) {
             // masked compound type has its own average mechanism
             conv_params.do_average = 0;
         }
 
-        if (ref && is_masked_compound_type(mi->inter_inter_compound.type)) {
+        if (ref && svt_aom_is_masked_compound_type(mi->inter_inter_compound.type)) {
             svt_make_masked_inter_predictor(part_info,
                                             ref,
                                             src,
@@ -953,9 +953,9 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     }
 }
 
-void svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt, EbDecHandle *dec_hdl,
-                                PartitionInfo *part_info, int32_t mi_row, int32_t mi_col,
-                                int32_t num_planes) {
+void svt_aom_svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt, EbDecHandle *dec_hdl,
+                                        PartitionInfo *part_info, int32_t mi_row, int32_t mi_col,
+                                        int32_t num_planes) {
     void   *blk_recon_buf;
     int32_t recon_stride;
     int32_t sub_x, sub_y;
@@ -980,7 +980,8 @@ void svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt, EbDecHandle *dec_hdl,
 
         for (i = row_start; i <= row_end; i++) {
             for (j = col_start; j <= col_end; j++) {
-                BlockModeInfo *mode_info = get_cur_mode_info(dec_hdl, i, j, part_info->sb_info);
+                BlockModeInfo *mode_info = svt_aom_get_cur_mode_info(
+                    dec_hdl, i, j, part_info->sb_info);
                 if (mode_info->ref_frame[0] == INTRA_FRAME)
                     some_use_intra = 1;
             }
@@ -991,26 +992,26 @@ void svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt, EbDecHandle *dec_hdl,
         sub_x = (plane > 0) ? part_info->subsampling_x : 0;
         sub_y = (plane > 0) ? part_info->subsampling_y : 0;
 
-        derive_blk_pointers(recon_picture_buf,
-                            plane,
-                            mi_col * MI_SIZE >> sub_x,
-                            mi_row * MI_SIZE >> sub_y,
-                            &blk_recon_buf,
-                            &recon_stride,
-                            sub_x,
-                            sub_y);
+        svt_aom_derive_blk_pointers(recon_picture_buf,
+                                    plane,
+                                    mi_col * MI_SIZE >> sub_x,
+                                    mi_row * MI_SIZE >> sub_y,
+                                    &blk_recon_buf,
+                                    &recon_stride,
+                                    sub_x,
+                                    sub_y);
 
-        svtav1_predict_inter_block_plane(dec_mod_ctxt,
-                                         dec_hdl,
-                                         part_info,
-                                         plane,
-                                         0,
-                                         mi_col * MI_SIZE,
-                                         mi_row * MI_SIZE,
-                                         blk_recon_buf,
-                                         recon_stride,
-                                         some_use_intra,
-                                         recon_picture_buf->bit_depth);
+        svt_aom_svtav1_predict_inter_block_plane(dec_mod_ctxt,
+                                                 dec_hdl,
+                                                 part_info,
+                                                 plane,
+                                                 0,
+                                                 mi_col * MI_SIZE,
+                                                 mi_row * MI_SIZE,
+                                                 blk_recon_buf,
+                                                 recon_stride,
+                                                 some_use_intra,
+                                                 recon_picture_buf->bit_depth);
 
         if (is_interintra_pred(part_info->mi)) {
             /*Inter prd is done in above function, In the below function Intra prd happens follwed by interintra blending */
@@ -1025,7 +1026,7 @@ void svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt, EbDecHandle *dec_hdl,
         }
     }
     if (part_info->mi->motion_mode == OBMC_CAUSAL) {
-        dec_build_obmc_inter_predictors_sb(
+        svt_aom_dec_build_obmc_inter_predictors_sb(
             (void *)dec_mod_ctxt, dec_hdl, part_info, mi_row, mi_col);
     }
 

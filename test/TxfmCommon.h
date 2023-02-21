@@ -49,8 +49,6 @@ void svt_av1_fadst8_new(const int32_t *input, int32_t *output, int8_t cos_bit,
                         const int8_t *stage_range);
 void svt_av1_fadst16_new(const int32_t *input, int32_t *output, int8_t cos_bit,
                          const int8_t *stage_range);
-void av1_fadst32_new(const int32_t *input, int32_t *output, int8_t cos_bit,
-                     const int8_t *stage_range);
 void svt_av1_fidentity4_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                           const int8_t *stage_range);
 void svt_av1_fidentity8_c(const int32_t *input, int32_t *output, int8_t cos_bit,
@@ -59,8 +57,6 @@ void svt_av1_fidentity16_c(const int32_t *input, int32_t *output,
                            int8_t cos_bit, const int8_t *stage_range);
 void svt_av1_fidentity32_c(const int32_t *input, int32_t *output,
                            int8_t cos_bit, const int8_t *stage_range);
-void av1_fidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
-                       const int8_t *stage_range);
 
 // export inverse transform functions
 void svt_av1_idct4_new(const int32_t *input, int32_t *output, int8_t cos_bit,
@@ -79,8 +75,6 @@ void svt_av1_iadst8_new(const int32_t *input, int32_t *output, int8_t cos_bit,
                         const int8_t *stage_range);
 void svt_av1_iadst16_new(const int32_t *input, int32_t *output, int8_t cos_bit,
                          const int8_t *stage_range);
-void av1_iadst32_new(const int32_t *input, int32_t *output, int8_t cos_bit,
-                     const int8_t *stage_range);
 void svt_av1_iidentity4_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                           const int8_t *stage_range);
 void svt_av1_iidentity8_c(const int32_t *input, int32_t *output, int8_t cos_bit,
@@ -92,7 +86,8 @@ void svt_av1_iidentity32_c(const int32_t *input, int32_t *output,
 void av1_iidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                        const int8_t *stage_range);
 
-void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
+void svt_aom_transform_config(TxType tx_type, TxSize tx_size,
+                              Txfm2dFlipCfg *cfg);
 
 typedef void (*Txfm1dFunc)(const int32_t *input, int32_t *output,
                            int8_t cos_bit, const int8_t *stage_range);
@@ -100,46 +95,6 @@ typedef void (*Txfm1dFunc)(const int32_t *input, int32_t *output,
 typedef void (*TxfmFwd2dFunc)(int16_t *input, int32_t *output,
                               uint32_t input_stride, TxType transform_type,
                               uint8_t bit_depth);
-
-static INLINE Txfm1dFunc fwd_txfm_type_to_func(TxfmType txfm_type) {
-    switch (txfm_type) {
-    case TXFM_TYPE_DCT4: return svt_av1_fdct4_new;
-    case TXFM_TYPE_DCT8: return svt_av1_fdct8_new;
-    case TXFM_TYPE_DCT16: return svt_av1_fdct16_new;
-    case TXFM_TYPE_DCT32: return svt_av1_fdct32_new;
-    case TXFM_TYPE_DCT64: return svt_av1_fdct64_new;
-    case TXFM_TYPE_ADST4: return svt_av1_fadst4_new;
-    case TXFM_TYPE_ADST8: return svt_av1_fadst8_new;
-    case TXFM_TYPE_ADST16: return svt_av1_fadst16_new;
-    case TXFM_TYPE_ADST32: return av1_fadst32_new;
-    case TXFM_TYPE_IDENTITY4: return svt_av1_fidentity4_c;
-    case TXFM_TYPE_IDENTITY8: return svt_av1_fidentity8_c;
-    case TXFM_TYPE_IDENTITY16: return svt_av1_fidentity16_c;
-    case TXFM_TYPE_IDENTITY32: return svt_av1_fidentity32_c;
-    case TXFM_TYPE_IDENTITY64: return av1_fidentity64_c;
-    default: assert(0); return NULL;
-    }
-}
-
-static INLINE Txfm1dFunc inv_txfm_type_to_func(TxfmType txfm_type) {
-    switch (txfm_type) {
-    case TXFM_TYPE_DCT4: return svt_av1_idct4_new;
-    case TXFM_TYPE_DCT8: return svt_av1_idct8_new;
-    case TXFM_TYPE_DCT16: return svt_av1_idct16_new;
-    case TXFM_TYPE_DCT32: return svt_av1_idct32_new;
-    case TXFM_TYPE_DCT64: return svt_av1_idct64_new;
-    case TXFM_TYPE_ADST4: return svt_av1_iadst4_new;
-    case TXFM_TYPE_ADST8: return svt_av1_iadst8_new;
-    case TXFM_TYPE_ADST16: return svt_av1_iadst16_new;
-    case TXFM_TYPE_ADST32: return av1_iadst32_new;
-    case TXFM_TYPE_IDENTITY4: return svt_av1_iidentity4_c;
-    case TXFM_TYPE_IDENTITY8: return svt_av1_iidentity8_c;
-    case TXFM_TYPE_IDENTITY16: return svt_av1_iidentity16_c;
-    case TXFM_TYPE_IDENTITY32: return svt_av1_iidentity32_c;
-    case TXFM_TYPE_IDENTITY64: return av1_iidentity64_c;
-    default: assert(0); return NULL;
-    }
-}
 
 using FwdTxfm2dFunc = void (*)(int16_t *input, int32_t *output, uint32_t stride,
                                TxType tx_type, uint8_t bd);

@@ -33,8 +33,8 @@ static void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHe
 
         int sub_x = plane ? seq_hdr->color_config.subsampling_x : 0;
         int sub_y = plane ? seq_hdr->color_config.subsampling_y : 0;
-        derive_blk_pointers(src, plane, 0, 0, (void *)&src_buf, &src_stride, sub_x, sub_y);
-        derive_blk_pointers(dst, plane, 0, 0, (void *)&dst_buf, &dst_stride, sub_x, sub_y);
+        svt_aom_derive_blk_pointers(src, plane, 0, 0, (void *)&src_buf, &src_stride, sub_x, sub_y);
+        svt_aom_derive_blk_pointers(dst, plane, 0, 0, (void *)&dst_buf, &dst_stride, sub_x, sub_y);
 
         svt_av1_upscale_normative_rows(cm,
                                        (const uint8_t *)src_buf,
@@ -111,9 +111,9 @@ static EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_pic
         int sub_x = plane ? seq_hdr->color_config.subsampling_x : 0;
         int sub_y = plane ? seq_hdr->color_config.subsampling_y : 0;
 
-        derive_blk_pointers(
+        svt_aom_derive_blk_pointers(
             recon_picture_src, plane, 0, 0, (void *)&src_buf, &src_stride, sub_x, sub_y);
-        derive_blk_pointers(
+        svt_aom_derive_blk_pointers(
             recon_picture_dst, plane, 0, 0, (void *)&dst_buf, &dst_stride, sub_x, sub_y);
 
         int height = (recon_picture_src->height >> sub_y);

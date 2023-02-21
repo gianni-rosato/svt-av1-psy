@@ -12,7 +12,7 @@
 #include <emmintrin.h>
 #include "EbComputeMean_SSE2.h"
 
-uint64_t compute_subd_mean_of_squared_values8x8_sse2_intrin(
+uint64_t svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin(
     uint8_t *input_samples, // input parameter, input samples Ptr
     uint16_t input_stride) // input parameter, input stride
 
@@ -159,27 +159,27 @@ void svt_compute_interm_var_four8x8_helper_sse2(uint8_t *input_samples, uint16_t
     // (0,1)
     mean_of8x8_blocks[0]         = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
                                                                input_stride);
-    mean_of_squared8x8_blocks[0] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
+    mean_of_squared8x8_blocks[0] = svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,2)
     block_index                  = block_index + 8;
     mean_of8x8_blocks[1]         = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
                                                                input_stride);
-    mean_of_squared8x8_blocks[1] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
+    mean_of_squared8x8_blocks[1] = svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,3)
     block_index                  = block_index + 8;
     mean_of8x8_blocks[2]         = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
                                                                input_stride);
-    mean_of_squared8x8_blocks[2] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
+    mean_of_squared8x8_blocks[2] = svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,4)
     block_index                  = block_index + 8;
     mean_of8x8_blocks[3]         = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
                                                                input_stride);
-    mean_of_squared8x8_blocks[3] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
+    mean_of_squared8x8_blocks[3] = svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 }

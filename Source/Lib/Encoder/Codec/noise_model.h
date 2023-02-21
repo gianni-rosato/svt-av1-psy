@@ -246,7 +246,8 @@ typedef struct AomDenoiseAndModel {
 /************************************
      * denoise and model constructor
      ************************************/
-EbErrorType denoise_and_model_ctor(AomDenoiseAndModel *object_ptr, EbPtr object_init_data_ptr);
+EbErrorType svt_aom_denoise_and_model_ctor(AomDenoiseAndModel *object_ptr,
+                                           EbPtr               object_init_data_ptr);
 
 /*!\brief Initializes a noise model with the given parameters.
      *

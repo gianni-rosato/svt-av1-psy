@@ -851,7 +851,7 @@ static const AomCdfProb default_switchable_interp_cdf[SWITCHABLE_FILTER_CONTEXTS
                             {AOM_CDF3(601, 943)},
                             {AOM_CDF3(14969, 21398)}};
 
-void init_mode_probs(FRAME_CONTEXT *fc) {
+void svt_aom_init_mode_probs(FRAME_CONTEXT *fc) {
     svt_memcpy(
         fc->palette_y_size_cdf, default_palette_y_size_cdf, sizeof(default_palette_y_size_cdf));
     svt_memcpy(
@@ -3281,8 +3281,8 @@ int svt_aom_palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH + 1] = {
     -1, -1, 0, -1, -1, 4, 3, 2, 1};
 
 #define NUM_PALETTE_NEIGHBORS 3 // left, top-left and top.
-int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
-                                                  int c, int *color_idx) {
+int svt_aom_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
+                                                      int c, int *color_idx) {
     assert(r > 0 || c > 0);
 
     // This goes in the order of left, top, and top-left. This has the advantage

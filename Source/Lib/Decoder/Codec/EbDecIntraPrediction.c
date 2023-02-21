@@ -32,13 +32,13 @@ static int32_t dec_get_filt_type(const PartitionInfo *part_info, int32_t plane) 
     if (plane == 0) {
         const BlockModeInfo *ab = part_info->above_mbmi;
         const BlockModeInfo *le = part_info->left_mbmi;
-        ab_sm                   = ab ? is_smooth_dec(ab, plane) : 0;
-        le_sm                   = le ? is_smooth_dec(le, plane) : 0;
+        ab_sm                   = ab ? svt_aom_is_smooth_dec(ab, plane) : 0;
+        le_sm                   = le ? svt_aom_is_smooth_dec(le, plane) : 0;
     } else {
         const BlockModeInfo *ab = part_info->chroma_above_mbmi;
         const BlockModeInfo *le = part_info->chroma_left_mbmi;
-        ab_sm                   = ab ? is_smooth_dec(ab, plane) : 0;
-        le_sm                   = le ? is_smooth_dec(le, plane) : 0;
+        ab_sm                   = ab ? svt_aom_is_smooth_dec(ab, plane) : 0;
+        le_sm                   = le ? svt_aom_is_smooth_dec(le, plane) : 0;
     }
     return (ab_sm || le_sm) ? 1 : 0;
 }
@@ -441,32 +441,32 @@ static void decode_build_intra_predictors(PartitionInfo *part_info, uint8_t *top
                 if (need_above && need_left && (txwpx + txhpx >= 24))
                     filter_intra_edge_corner(above_row, left_col);
                 if (need_above && n_top_px > 0) {
-                    const int32_t strength = intra_edge_filter_strength(
+                    const int32_t strength = svt_aom_intra_edge_filter_strength(
                         txwpx, txhpx, p_angle - 90, filt_type);
                     const int32_t n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
                     svt_av1_filter_intra_edge(above_row - ab_le, n_px, strength);
                 }
                 if (need_left && n_left_px > 0) {
-                    const int32_t strength = intra_edge_filter_strength(
+                    const int32_t strength = svt_aom_intra_edge_filter_strength(
                         txhpx, txwpx, p_angle - 180, filt_type);
                     const int32_t n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
                     svt_av1_filter_intra_edge(left_col - ab_le, n_px, strength);
                 }
             }
-            upsample_above = use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
+            upsample_above = svt_aom_use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
             if (need_above && upsample_above) {
                 const int32_t n_px = txwpx + (need_right ? txhpx : 0);
 
                 svt_av1_upsample_intra_edge(above_row, n_px);
             }
-            upsample_left = use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
+            upsample_left = svt_aom_use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
             if (need_left && upsample_left) {
                 const int32_t n_px = txhpx + (need_bottom ? txwpx : 0);
 
                 svt_av1_upsample_intra_edge(left_col, n_px);
             }
         }
-        dr_predictor(
+        svt_aom_dr_predictor(
             dst, dst_stride, tx_size, above_row, left_col, upsample_above, upsample_left, p_angle);
         return;
     }
@@ -609,7 +609,7 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
     }
 
     if (use_filter_intra) {
-        highbd_filter_intra_predictor(
+        svt_aom_highbd_filter_intra_predictor(
             dst, dst_stride, tx_size, above_row, left_col, filter_intra_mode, bd);
         return;
     }
@@ -626,41 +626,41 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
                 if (need_above && need_left && (txwpx + txhpx >= 24))
                     filter_intra_edge_corner_high(above_row, left_col);
                 if (need_above && n_top_px > 0) {
-                    const int32_t strength = intra_edge_filter_strength(
+                    const int32_t strength = svt_aom_intra_edge_filter_strength(
                         txwpx, txhpx, p_angle - 90, filt_type);
                     const int32_t n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
                     svt_av1_filter_intra_edge_high(above_row - ab_le, n_px, strength);
                 }
                 if (need_left && n_left_px > 0) {
-                    const int32_t strength = intra_edge_filter_strength(
+                    const int32_t strength = svt_aom_intra_edge_filter_strength(
                         txhpx, txwpx, p_angle - 180, filt_type);
                     const int32_t n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
 
                     svt_av1_filter_intra_edge_high(left_col - ab_le, n_px, strength);
                 }
             }
-            upsample_above = use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
+            upsample_above = svt_aom_use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
             if (need_above && upsample_above) {
                 const int32_t n_px = txwpx + (need_right ? txhpx : 0);
                 //av1_upsample_intra_edge_high(above_row, n_px, bd);// AMIR : to be replaced by optimized code
                 svt_av1_upsample_intra_edge_high_c(above_row, n_px, bd);
             }
-            upsample_left = use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
+            upsample_left = svt_aom_use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
             if (need_left && upsample_left) {
                 const int32_t n_px = txhpx + (need_bottom ? txwpx : 0);
                 //av1_upsample_intra_edge_high(left_col, n_px, bd);// AMIR: to be replaced by optimized code
                 svt_av1_upsample_intra_edge_high_c(left_col, n_px, bd);
             }
         }
-        highbd_dr_predictor(dst,
-                            dst_stride,
-                            tx_size,
-                            above_row,
-                            left_col,
-                            upsample_above,
-                            upsample_left,
-                            p_angle,
-                            bd);
+        svt_aom_highbd_dr_predictor(dst,
+                                    dst_stride,
+                                    tx_size,
+                                    above_row,
+                                    left_col,
+                                    upsample_above,
+                                    upsample_left,
+                                    p_angle,
+                                    bd);
         return;
     }
 
@@ -672,11 +672,13 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
         svt_aom_pred_high[mode][tx_size](dst, dst_stride, above_row, left_col, bd);
 }
 
-void svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize tx_size, TileInfo *td,
-                                void *pv_pred_buf, int32_t pred_stride, void *top_neigh_array,
-                                void *left_neigh_array, int32_t ref_stride, SeqHeader *seq_header,
-                                const PredictionMode mode, int32_t blk_mi_col_off,
-                                int32_t blk_mi_row_off, EbBitDepth bit_depth, Bool is_16bit) {
+void svt_aom_svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize tx_size,
+                                        TileInfo *td, void *pv_pred_buf, int32_t pred_stride,
+                                        void *top_neigh_array, void *left_neigh_array,
+                                        int32_t ref_stride, SeqHeader *seq_header,
+                                        const PredictionMode mode, int32_t blk_mi_col_off,
+                                        int32_t blk_mi_row_off, EbBitDepth bit_depth,
+                                        Bool is_16bit) {
     //ToDo:are_parameters_computed variable for CFL so that cal part for V plane we can skip,
     //once we compute for U plane, this parameter is block level parameter.
     const EbColorConfig *cc    = &seq_header->color_config;
@@ -725,32 +727,32 @@ void svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize tx_size
     const PartitionType partition = mbmi->partition;
 
     // force 4x4 chroma component block size.
-    bsize = scale_chroma_bsize(bsize, sub_x, sub_y);
+    bsize = svt_aom_scale_chroma_bsize(bsize, sub_x, sub_y);
 
-    const int have_top_right   = intra_has_top_right(seq_header->sb_size,
-                                                   bsize,
-                                                   mi_row,
-                                                   mi_col,
-                                                   have_top,
-                                                   right_available,
-                                                   partition,
-                                                   tx_size,
-                                                   blk_mi_row_off,
-                                                   blk_mi_col_off,
-                                                   sub_x,
-                                                   sub_y);
-    const int have_bottom_left = intra_has_bottom_left(seq_header->sb_size,
-                                                       bsize,
-                                                       mi_row,
-                                                       mi_col,
-                                                       bottom_available,
-                                                       have_left,
-                                                       partition,
-                                                       tx_size,
-                                                       blk_mi_row_off,
-                                                       blk_mi_col_off,
-                                                       sub_x,
-                                                       sub_y);
+    const int have_top_right   = svt_aom_intra_has_top_right(seq_header->sb_size,
+                                                           bsize,
+                                                           mi_row,
+                                                           mi_col,
+                                                           have_top,
+                                                           right_available,
+                                                           partition,
+                                                           tx_size,
+                                                           blk_mi_row_off,
+                                                           blk_mi_col_off,
+                                                           sub_x,
+                                                           sub_y);
+    const int have_bottom_left = svt_aom_intra_has_bottom_left(seq_header->sb_size,
+                                                               bsize,
+                                                               mi_row,
+                                                               mi_col,
+                                                               bottom_available,
+                                                               have_left,
+                                                               partition,
+                                                               tx_size,
+                                                               blk_mi_row_off,
+                                                               blk_mi_col_off,
+                                                               sub_x,
+                                                               sub_y);
 
     const int32_t disable_edge_filter = !seq_header->enable_intra_edge_filter;
 
@@ -815,21 +817,21 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
     }
 
     if (plane != AOM_PLANE_Y && part_info->mi->uv_mode == UV_CFL_PRED) {
-        svtav1_predict_intra_block(part_info,
-                                   plane,
-                                   tx_size,
-                                   td,
-                                   pv_blk_recon_buf,
-                                   recon_stride,
-                                   pv_top_neighbor_array,
-                                   pv_left_neighbor_array,
-                                   recon_stride,
-                                   dec_mod_ctxt->seq_header,
-                                   mode,
-                                   blk_mi_col_off,
-                                   blk_mi_row_off,
-                                   bit_depth,
-                                   is16b);
+        svt_aom_svtav1_predict_intra_block(part_info,
+                                           plane,
+                                           tx_size,
+                                           td,
+                                           pv_blk_recon_buf,
+                                           recon_stride,
+                                           pv_top_neighbor_array,
+                                           pv_left_neighbor_array,
+                                           recon_stride,
+                                           dec_mod_ctxt->seq_header,
+                                           mode,
+                                           blk_mi_col_off,
+                                           blk_mi_row_off,
+                                           bit_depth,
+                                           is16b);
 
         cfl_predict_block(part_info,
                           part_info->pv_cfl_ctxt,
@@ -844,19 +846,19 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
         return;
     }
 
-    svtav1_predict_intra_block(part_info,
-                               plane,
-                               tx_size,
-                               td,
-                               pv_blk_recon_buf,
-                               recon_stride,
-                               pv_top_neighbor_array,
-                               pv_left_neighbor_array,
-                               recon_stride,
-                               dec_mod_ctxt->seq_header,
-                               mode,
-                               blk_mi_col_off,
-                               blk_mi_row_off,
-                               bit_depth,
-                               is16b);
+    svt_aom_svtav1_predict_intra_block(part_info,
+                                       plane,
+                                       tx_size,
+                                       td,
+                                       pv_blk_recon_buf,
+                                       recon_stride,
+                                       pv_top_neighbor_array,
+                                       pv_left_neighbor_array,
+                                       recon_stride,
+                                       dec_mod_ctxt->seq_header,
+                                       mode,
+                                       blk_mi_col_off,
+                                       blk_mi_row_off,
+                                       bit_depth,
+                                       is16b);
 }

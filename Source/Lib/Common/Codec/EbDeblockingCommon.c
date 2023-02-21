@@ -20,8 +20,8 @@ static const SEG_LVL_FEATURES seg_lvl_lf_lut[MAX_MB_PLANE][2] = {
     {SEG_LVL_ALT_LF_U, SEG_LVL_ALT_LF_U},
     {SEG_LVL_ALT_LF_V, SEG_LVL_ALT_LF_V}};
 
-static int seg_feature_active(SegmentationParams *seg, int segment_id,
-                              SEG_LVL_FEATURES feature_id) {
+static int svt_aom_seg_feature_active(SegmentationParams *seg, int segment_id,
+                                      SEG_LVL_FEATURES feature_id) {
     return seg->segmentation_enabled && seg->feature_enabled[segment_id][feature_id];
 }
 
@@ -36,9 +36,9 @@ static INLINE int16_t signed_char_clamp_high(int32_t t, int32_t bd) {
     }
 }
 
-uint8_t get_filter_level_delta_lf(FrameHeader *frm_hdr, const int32_t dir_idx, int32_t plane,
-                                  int32_t *sb_delta_lf, uint8_t seg_id, PredictionMode pred_mode,
-                                  MvReferenceFrame ref_frame_0) {
+uint8_t svt_aom_get_filter_level_delta_lf(FrameHeader *frm_hdr, const int32_t dir_idx,
+                                          int32_t plane, int32_t *sb_delta_lf, uint8_t seg_id,
+                                          PredictionMode pred_mode, MvReferenceFrame ref_frame_0) {
     //printf("ERROR[AN]: delta_lf_present not supported yet\n");
     int32_t delta_lf = -1;
     if (frm_hdr->delta_lf_params.delta_lf_multi) {
@@ -57,7 +57,7 @@ uint8_t get_filter_level_delta_lf(FrameHeader *frm_hdr, const int32_t dir_idx, i
     int32_t lvl_seg = clamp(delta_lf + base_level, 0, MAX_LOOP_FILTER);
     assert(plane >= 0 && plane <= 2);
     const int32_t seg_lf_feature_id = seg_lvl_lf_lut[plane][dir_idx];
-    if (seg_feature_active(&frm_hdr->segmentation_params, seg_id, seg_lf_feature_id)) {
+    if (svt_aom_seg_feature_active(&frm_hdr->segmentation_params, seg_id, seg_lf_feature_id)) {
         const int32_t data = get_segdata(&frm_hdr->segmentation_params, seg_id, seg_lf_feature_id);
         lvl_seg            = clamp(lvl_seg + data, 0, MAX_LOOP_FILTER);
     }
@@ -88,7 +88,7 @@ void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, 
     // const struct segmentation *const seg = &pcs->ppcs->seg;
 
     // update sharpness limits
-    update_sharpness(lfi, lf->sharpness_level);
+    svt_aom_update_sharpness(lfi, lf->sharpness_level);
 
     filt_lvl[0] = frm_hdr->loop_filter_params.filter_level[0];
     filt_lvl[1] = frm_hdr->loop_filter_params.filter_level_u;
@@ -111,7 +111,8 @@ void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, 
                 int32_t lvl_seg = (dir == 0) ? filt_lvl[plane] : filt_lvl_r[plane];
                 assert(plane >= 0 && plane <= 2);
                 const int32_t seg_lf_feature_id = seg_lvl_lf_lut[plane][dir];
-                if (seg_feature_active(&frm_hdr->segmentation_params, seg_id, seg_lf_feature_id)) {
+                if (svt_aom_seg_feature_active(
+                        &frm_hdr->segmentation_params, seg_id, seg_lf_feature_id)) {
                     const int32_t data = get_segdata(
                         &frm_hdr->segmentation_params, seg_id, seg_lf_feature_id);
                     lvl_seg = clamp(lvl_seg + data, 0, MAX_LOOP_FILTER);
@@ -584,7 +585,7 @@ void svt_aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *
 //    { SEG_LVL_ALT_LF_V, SEG_LVL_ALT_LF_V }
 //};
 
-void update_sharpness(LoopFilterInfoN *lfi, int32_t sharpness_lvl) {
+void svt_aom_update_sharpness(LoopFilterInfoN *lfi, int32_t sharpness_lvl) {
     int32_t lvl;
 
     // For each possible value for the loop filter fill out limits

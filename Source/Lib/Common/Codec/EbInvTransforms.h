@@ -121,17 +121,19 @@ typedef struct Txfm2dFlipCfg {
     int32_t       stage_num_row;
 } Txfm2dFlipCfg;
 
-EbErrorType av1_inv_transform_recon(int32_t *coeff_buffer, //1D buffer
-                                    uint8_t *recon_buffer_r, uint32_t recon_stride_r,
-                                    uint8_t *recon_buffer_w, uint32_t recon_stride_w, TxSize txsize,
-                                    uint32_t bit_increment, TxType transform_type,
-                                    PlaneType component_type, uint32_t eob, uint8_t lossless);
-
-EbErrorType av1_inv_transform_recon8bit(int32_t *coeff_buffer, //1D buffer
+EbErrorType svt_aom_inv_transform_recon(int32_t *coeff_buffer, //1D buffer
                                         uint8_t *recon_buffer_r, uint32_t recon_stride_r,
                                         uint8_t *recon_buffer_w, uint32_t recon_stride_w,
-                                        TxSize txsize, TxType transform_type,
-                                        PlaneType component_type, uint32_t eob, uint8_t lossless);
+                                        TxSize txsize, uint32_t bit_increment,
+                                        TxType transform_type, PlaneType component_type,
+                                        uint32_t eob, uint8_t lossless);
+
+EbErrorType svt_aom_inv_transform_recon8bit(int32_t *coeff_buffer, //1D buffer
+                                            uint8_t *recon_buffer_r, uint32_t recon_stride_r,
+                                            uint8_t *recon_buffer_w, uint32_t recon_stride_w,
+                                            TxSize txsize, TxType transform_type,
+                                            PlaneType component_type, uint32_t eob,
+                                            uint8_t lossless);
 
 static INLINE int32_t av1_get_max_eob(TxSize tx_size) {
     if (tx_size == TX_64X64 || tx_size == TX_64X32 || tx_size == TX_32X64)
@@ -358,11 +360,11 @@ static const int8_t txsize_log2_minus4[TX_SIZES_ALL] = {
     5, // TX_64X16
 };
 
-int32_t get_qzbin_factor(int32_t q, EbBitDepth bit_depth);
-void    invert_quant(int16_t *quant, int16_t *shift, int32_t d);
-int16_t svt_aom_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
-int16_t svt_aom_ac_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
-
+int32_t  svt_aom_get_qzbin_factor(int32_t q, EbBitDepth bit_depth);
+void     svt_aom_invert_quant(int16_t *quant, int16_t *shift, int32_t d);
+int16_t  svt_aom_dc_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
+int16_t  svt_aom_ac_quant_qtx(int32_t qindex, int32_t delta, EbBitDepth bit_depth);
+TxfmFunc svt_aom_inv_txfm_type_to_func(TxfmType txfmtype);
 #ifdef __cplusplus
 }
 #endif

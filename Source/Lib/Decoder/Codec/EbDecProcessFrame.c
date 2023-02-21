@@ -35,30 +35,30 @@ static void decode_partition(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t
         return;
 
     EbDecHandle   *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    BlockModeInfo *mode_info  = get_cur_mode_info(dec_handle, mi_row, mi_col, sb_info);
+    BlockModeInfo *mode_info  = svt_aom_get_cur_mode_info(dec_handle, mi_row, mi_col, sb_info);
 
     for (int i = 0; i < sb_info->num_block; i++) {
         int       sub_mi_row = mode_info->mi_row_in_sb;
         int       sub_mi_col = mode_info->mi_col_in_sb;
         BlockSize subsize    = mode_info->sb_type;
-        decode_block(dec_mod_ctxt,
-                     mode_info,
-                     mi_row + sub_mi_row,
-                     mi_col + sub_mi_col,
-                     subsize,
-                     &dec_mod_ctxt->cur_tile_info,
-                     sb_info);
+        svt_aom_decode_block(dec_mod_ctxt,
+                             mode_info,
+                             mi_row + sub_mi_row,
+                             mi_col + sub_mi_col,
+                             subsize,
+                             &dec_mod_ctxt->cur_tile_info,
+                             sb_info);
         mode_info++;
     }
 }
 
 // decoding of the superblock
-void decode_super_block(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_col,
-                        SBInfo *sb_info) {
+void svt_aom_decode_super_block(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_col,
+                                SBInfo *sb_info) {
     dec_mod_ctxt->iquant_cur_ptr = dec_mod_ctxt->sb_iquant_ptr;
 
     /* SB level dequant update */
-    update_dequant(dec_mod_ctxt, sb_info);
+    svt_aom_update_dequant(dec_mod_ctxt, sb_info);
 
     /* Decode partition */
     decode_partition(dec_mod_ctxt, mi_row, mi_col, sb_info);
@@ -116,7 +116,7 @@ static EbErrorType decode_tile_row(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_inf
             //Sleep(5); /* ToDo : Change */
         }
 
-        decode_super_block(dec_mod_ctxt, mi_row, mi_col, sb_info);
+        svt_aom_decode_super_block(dec_mod_ctxt, mi_row, mi_col, sb_info);
         *sb_completed_in_row = (uint32_t)(sb_col + 1);
     }
 
@@ -179,8 +179,8 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
     return status;
 }
 
-EbErrorType start_decode_tile(EbDecHandle *dec_handle_ptr, DecModCtxt *dec_mod_ctxt,
-                              TilesInfo *tiles_info, int32_t tile_num) {
+EbErrorType svt_aom_start_decode_tile(EbDecHandle *dec_handle_ptr, DecModCtxt *dec_mod_ctxt,
+                                      TilesInfo *tiles_info, int32_t tile_num) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 

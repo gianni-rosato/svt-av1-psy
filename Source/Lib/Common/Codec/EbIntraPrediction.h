@@ -110,11 +110,11 @@ extern const int8_t eb_av1_filter_intra_taps[FILTER_INTRA_MODES][8][8];
 /////####.... To make functions common between EbIntraPrediction.c &
 void *svt_aom_memset16(void *dest, int32_t val, size_t length);
 
-int32_t use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t type);
+int32_t svt_aom_use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t type);
 
-BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x, int32_t subsampling_y);
+BlockSize svt_aom_scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x, int32_t subsampling_y);
 
-int32_t intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int32_t type);
+int32_t svt_aom_intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int32_t type);
 
 enum {
     NEED_LEFT       = 1 << 1,
@@ -140,20 +140,21 @@ static const int32_t mode_to_angle_map[] = {
     0,
 };
 
-int                  is_smooth(const BlockModeInfoEnc *mbmi, int plane);
-int                  is_smooth_dec(const BlockModeInfo *mbmi, int plane);
+int                  svt_aom_is_smooth(const BlockModeInfoEnc *mbmi, int plane);
+int                  svt_aom_is_smooth_dec(const BlockModeInfo *mbmi, int plane);
 extern const uint8_t extend_modes[INTRA_MODES];
 
 /* TODO: Need to harmonize with fun from EbAdaptiveMotionVectorPrediction.c */
-int32_t intra_has_top_right(BlockSize sb_size, BlockSize bsize, int32_t mi_row, int32_t mi_col,
-                            int32_t top_available, int32_t right_available, PartitionType partition,
-                            TxSize txsz, int32_t row_off, int32_t col_off, int32_t ss_x,
-                            int32_t ss_y);
+int32_t svt_aom_intra_has_top_right(BlockSize sb_size, BlockSize bsize, int32_t mi_row,
+                                    int32_t mi_col, int32_t top_available, int32_t right_available,
+                                    PartitionType partition, TxSize txsz, int32_t row_off,
+                                    int32_t col_off, int32_t ss_x, int32_t ss_y);
 
-extern int32_t intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_t mi_row,
-                                     int32_t mi_col, int32_t bottom_available,
-                                     int32_t left_available, PartitionType partition, TxSize txsz,
-                                     int32_t row_off, int32_t col_off, int32_t ss_x, int32_t ss_y);
+extern int32_t svt_aom_intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_t mi_row,
+                                             int32_t mi_col, int32_t bottom_available,
+                                             int32_t left_available, PartitionType partition,
+                                             TxSize txsz, int32_t row_off, int32_t col_off,
+                                             int32_t ss_x, int32_t ss_y);
 
 extern IntraPredFn svt_aom_eb_pred[INTRA_MODES][TX_SIZES_ALL];
 extern IntraPredFn svt_aom_dc_pred[2][2][TX_SIZES_ALL];
@@ -161,20 +162,22 @@ extern IntraPredFn svt_aom_dc_pred[2][2][TX_SIZES_ALL];
 extern IntraHighPredFn svt_aom_pred_high[INTRA_MODES][TX_SIZES_ALL];
 extern IntraHighPredFn svt_aom_dc_pred_high[2][2][TX_SIZES_ALL];
 
-void dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above,
-                  const uint8_t *left, int32_t upsample_above, int32_t upsample_left,
-                  int32_t angle);
+void svt_aom_dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above,
+                          const uint8_t *left, int32_t upsample_above, int32_t upsample_left,
+                          int32_t angle);
 
 void filter_intra_edge_corner(uint8_t *p_above, uint8_t *p_left);
 
-void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size, const uint16_t *above,
-                         const uint16_t *left, int32_t upsample_above, int32_t upsample_left,
-                         int32_t angle, int32_t bd);
+void svt_aom_highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
+                                 const uint16_t *above, const uint16_t *left,
+                                 int32_t upsample_above, int32_t upsample_left, int32_t angle,
+                                 int32_t bd);
 
 void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left);
 
-void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
-                                   const uint16_t *above, const uint16_t *left, int mode, int bd);
+void svt_aom_highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
+                                           const uint16_t *above, const uint16_t *left, int mode,
+                                           int bd);
 
 typedef void (*EB_INTRA_NOANG_TYPE)(const uint32_t size, uint8_t *ref_samples,
                                     uint8_t       *prediction_ptr,
@@ -243,11 +246,11 @@ extern void        filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t m
                                      uint16_t max_frame_width, uint16_t max_frame_height, int32_t p_angle,
                                      int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row,
                                      uint8_t *left_col);
-extern EbErrorType intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_intra_mode,
-                                                 uint32_t srcOriginX, uint32_t srcOriginY,
-                                                 TxSize tx_size, uint8_t *above_row,
-                                                 uint8_t *left_col, uint8_t *dst,
-                                                 uint32_t dst_stride);
+extern EbErrorType svt_aom_intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_intra_mode,
+                                                         uint32_t srcOriginX, uint32_t srcOriginY,
+                                                         TxSize tx_size, uint8_t *above_row,
+                                                         uint8_t *left_col, uint8_t *dst,
+                                                         uint32_t dst_stride);
 /* Function pointers return by CfL functions */
 typedef void (*CflSubtractAverageFn)(int16_t *dst);
 

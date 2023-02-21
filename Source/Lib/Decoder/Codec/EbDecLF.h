@@ -31,14 +31,15 @@ typedef struct LfCtxt {
     int32_t         delta_lf_stride;
 } LfCtxt;
 
-void fill_4x4_lf_param(LfCtxt *lf_ctxt, int32_t tu_x, int32_t tu_y, int32_t stride, TxSize tx_size,
-                       int32_t sub_x, int32_t sub_y, int plane);
+void svt_aom_fill_4x4_lf_param(LfCtxt *lf_ctxt, int32_t tu_x, int32_t tu_y, int32_t stride,
+                               TxSize tx_size, int32_t sub_x, int32_t sub_y, int plane);
 
-void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon_picture_buf,
-                               LfCtxt *lf_ctxt, int32_t plane_start, int32_t plane_end,
-                               int32_t is_mt, int enable_flag);
+void svt_aom_dec_av1_loop_filter_frame(EbDecHandle         *dec_handle_ptr,
+                                       EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
+                                       int32_t plane_start, int32_t plane_end, int32_t is_mt,
+                                       int enable_flag);
 
-void set_lbd_lf_filter_tap_functions(void);
-void set_hbd_lf_filter_tap_functions(void);
+void svt_aom_set_lbd_lf_filter_tap_functions(void);
+void svt_aom_set_hbd_lf_filter_tap_functions(void);
 
 #endif // EbDecLF_h

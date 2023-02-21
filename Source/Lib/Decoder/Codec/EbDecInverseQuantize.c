@@ -31,7 +31,7 @@ static INLINE int16_t get_ac_quant(int32_t qindex, int32_t delta, EbBitDepth bit
 }
 
 // Called in read_frame_header_obu() -> av1_decode_frame_headers_and_setup() -> read_uncompressed_header()
-void setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt) {
+void svt_aom_setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt) {
     SeqHeader   *seq_header = dec_mod_ctxt->seq_header;
     FrameHeader *frame_info = dec_mod_ctxt->frame_header;
     int          bit_depth  = seq_header->color_config.bit_depth;
@@ -39,7 +39,7 @@ void setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt) {
         MAX_SEGMENTS : 1;*/
     int32_t dc_delta_q, ac_delta_q;
     for (int i = 0; i < MAX_SEGMENTS; i++) {
-        const int qindex = get_qindex(
+        const int qindex = svt_aom_get_qindex(
             &frame_info->segmentation_params, i, frame_info->quantization_params.base_q_idx);
 
         for (int plane = 0; plane < MAX_MB_PLANE; plane++) {
@@ -54,7 +54,7 @@ void setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt) {
     }
 }
 
-void av1_inverse_qm_init(DecModCtxt *dec_mod_ctxt, SeqHeader *seq_header) {
+void svt_aom_inverse_qm_init(DecModCtxt *dec_mod_ctxt, SeqHeader *seq_header) {
     const int num_planes = av1_num_planes(&seq_header->color_config);
     int       q, c;
     uint8_t   t;
@@ -90,7 +90,7 @@ void av1_init_sb(FrameHeader *frame)
 
 // Called in parse_decode_block()
 // Update de-quantization parameter based on delta qp param
-void update_dequant(DecModCtxt *dec_mod_ctxt, SBInfo *sb_info) {
+void svt_aom_update_dequant(DecModCtxt *dec_mod_ctxt, SBInfo *sb_info) {
     SeqHeader   *seq_header = dec_mod_ctxt->seq_header;
     FrameHeader *frame      = dec_mod_ctxt->frame_header;
 
@@ -98,7 +98,7 @@ void update_dequant(DecModCtxt *dec_mod_ctxt, SBInfo *sb_info) {
     dec_mod_ctxt->dequants_delta_q = &dec_mod_ctxt->dequants;
     if (frame->delta_q_params.delta_q_present) {
         for (int i = 0; i < MAX_SEGMENTS; i++) {
-            const int current_qindex = get_qindex(
+            const int current_qindex = svt_aom_get_qindex(
                 &frame->segmentation_params, i, sb_info->sb_delta_q[0]);
 
             for (int plane = 0; plane < MAX_MB_PLANE; plane++) {
@@ -121,9 +121,9 @@ static INLINE int get_dqv(const int16_t dequant, int coeff_idx, const QmVal *iqm
     return dqv;
 }
 
-int32_t inverse_quantize(DecModCtxt *dec_mod_ctxt, PartitionInfo *part, BlockModeInfo *mode,
-                         int32_t *level, int32_t *qcoeffs, TxType tx_type, TxSize tx_size,
-                         int plane) {
+int32_t svt_aom_inverse_quantize(DecModCtxt *dec_mod_ctxt, PartitionInfo *part, BlockModeInfo *mode,
+                                 int32_t *level, int32_t *qcoeffs, TxType tx_type, TxSize tx_size,
+                                 int plane) {
     (void)part;
     SeqHeader             *seq   = dec_mod_ctxt->seq_header;
     FrameHeader           *frame = dec_mod_ctxt->frame_header;

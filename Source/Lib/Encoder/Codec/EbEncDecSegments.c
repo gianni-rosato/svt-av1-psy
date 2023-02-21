@@ -33,8 +33,8 @@ static void enc_dec_segments_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->x_start_array);
 }
 
-EbErrorType enc_dec_segments_ctor(EncDecSegments *segments_ptr, uint32_t segment_col_count,
-                                  uint32_t segment_row_count) {
+EbErrorType svt_aom_enc_dec_segments_ctor(EncDecSegments *segments_ptr, uint32_t segment_col_count,
+                                          uint32_t segment_row_count) {
     uint32_t row_index;
 
     segments_ptr->dctor = enc_dec_segments_dctor;
@@ -69,8 +69,9 @@ EbErrorType enc_dec_segments_ctor(EncDecSegments *segments_ptr, uint32_t segment
     return EB_ErrorNone;
 }
 
-void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t segColCount, uint32_t segRowCount,
-                           uint32_t pic_width_sb, uint32_t pic_height_sb) {
+void svt_aom_enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t segColCount,
+                                   uint32_t segRowCount, uint32_t pic_width_sb,
+                                   uint32_t pic_height_sb) {
     segColCount = (segColCount < pic_width_sb) ? segColCount : pic_width_sb;
     segRowCount = (segRowCount < pic_height_sb) ? segRowCount : pic_height_sb;
     segRowCount = (segRowCount < segments_ptr->segment_max_row_count)

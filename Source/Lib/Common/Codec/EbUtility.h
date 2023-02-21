@@ -33,7 +33,7 @@ typedef enum GeomIndex {
     GEOM_TOT
 } GeomIndex;
 
-void build_blk_geom(GeomIndex geom);
+void svt_aom_build_blk_geom(GeomIndex geom);
 
 typedef struct BlockGeom {
     GeomIndex svt_aom_geom_idx; //type of geom this block belongs
@@ -163,7 +163,7 @@ extern void*                  svt_aom_memalign(size_t align, size_t size);
 extern void*                  svt_aom_malloc(size_t size);
 extern void                   svt_aom_free(void* memblk);
 extern void*                  svt_aom_memset16(void* dest, int32_t val, size_t length);
-extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
+extern const CodedBlockStats* svt_aom_get_coded_blk_stats(const uint32_t cu_idx);
 
 #define PU_ORIGIN_ADJUST(cu_origin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cu_origin))
 #define PU_SIZE_ADJUST(cu_size, puSize) (((cu_size) * (puSize)) >> 2)
@@ -265,14 +265,14 @@ extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
 // Helper functions for EbLinkedListNode.
 
 // concatenate two linked list, and return the pointer to the new concatenated list
-EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b);
+EbLinkedListNode* svt_aom_concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b);
 
 // split a linked list into two. return the pointer to a linked list whose nodes meets the condition
 // predicate_func(node) == TRUE, the rest of the nodes will be collected into another linked list to which (*restLL) is
 // set. Does not gaurantee the original order of the nodes.
 
-EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL,
-                                       Bool (*predicate_func)(EbLinkedListNode*));
+EbLinkedListNode* svt_aom_split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL,
+                                               Bool (*predicate_func)(EbLinkedListNode*));
 
 #define MINI_GOP_MAX_COUNT 15
 #define MINI_GOP_WINDOW_MAX_COUNT 8 // widow subdivision: 8 x 3L
@@ -286,7 +286,7 @@ typedef struct MiniGopStats {
     uint32_t end_index;
     uint32_t lenght;
 } MiniGopStats;
-extern const MiniGopStats* get_mini_gop_stats(const uint32_t mini_gop_index);
+extern const MiniGopStats* svt_aom_get_mini_gop_stats(const uint32_t mini_gop_index);
 typedef enum MinigopIndex {
     L6_INDEX   = 0,
     L5_0_INDEX = 1,

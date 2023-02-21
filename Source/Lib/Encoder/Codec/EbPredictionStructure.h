@@ -125,11 +125,11 @@ typedef struct PredictionStructureGroup {
 //   struct SequenceControlSet* scs);
 #endif
 #if CLN_REMOVE_REF_CNT
-extern PredictionStructure *get_prediction_structure(
+extern PredictionStructure *svt_aom_get_prediction_structure(
     PredictionStructureGroup *prediction_structure_group_ptr, SvtAv1PredStructure pred_structure,
     uint32_t levels_of_hierarchy);
 #else
-extern PredictionStructure *get_prediction_structure(
+extern PredictionStructure *svt_aom_get_prediction_structure(
     PredictionStructureGroup *prediction_structure_group_ptr, SvtAv1PredStructure pred_structure,
     uint32_t number_of_references, uint32_t levels_of_hierarchy);
 #endif

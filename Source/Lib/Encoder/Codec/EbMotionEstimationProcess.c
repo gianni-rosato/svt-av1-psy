@@ -291,7 +291,7 @@ void set_me_search_params(SequenceControlSet *scs, PictureParentControlSet *pcs,
         me_ctx->me_sa.sa_min.height = (me_ctx->me_sa.sa_min.height * 3) >> 1;
     }
 }
-void set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_level) {
+void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_level) {
     MeHmeRefPruneCtrls *me_hme_prune_ctrls = &me_ctx->me_hme_prune_ctrls;
 
     switch (prune_level) {
@@ -340,7 +340,7 @@ void set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_level) {
     }
 }
 
-void set_me_sr_adjustment_ctrls(MeContext *me_ctx, uint8_t sr_adjustment_level) {
+void svt_aom_set_me_sr_adjustment_ctrls(MeContext *me_ctx, uint8_t sr_adjustment_level) {
     MeSrCtrls *me_sr_adjustment_ctrls = &me_ctx->me_sr_adjustment_ctrls;
 
     switch (sr_adjustment_level) {
@@ -447,7 +447,7 @@ void set_skip_frame_in_ipp(PictureParentControlSet * pcs,MeContext *me_ctx) {
     }
 }
 /*configure PreHme control*/
-void set_prehme_ctrls(MeContext *me_ctx, uint8_t level) {
+void svt_aom_set_prehme_ctrls(MeContext *me_ctx, uint8_t level) {
     PreHmeCtrls *ctrl = &me_ctx->prehme_ctrl;
 
     switch (level) {
@@ -492,7 +492,7 @@ void set_prehme_ctrls(MeContext *me_ctx, uint8_t level) {
   Input   : encoder mode and tune
   Output  : ME Kernel signal(s)
 ******************************************************/
-EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs,
+EbErrorType svt_aom_signal_derivation_me_kernel_oq(SequenceControlSet *       scs,
                                            PictureParentControlSet *  pcs,
                                            MotionEstimationContext_t *me_context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
@@ -546,50 +546,50 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs,
     if (pcs->enable_hme_level1_flag == 0)
         prehme_level = 0;
 
-    set_prehme_ctrls(me_context_ptr->me_ctx, prehme_level);
+    svt_aom_set_prehme_ctrls(me_context_ptr->me_ctx, prehme_level);
 
     // Set hme/me based reference pruning level (0-4)
     if (pcs->sc_class1) {
         if (enc_mode <= ENC_MRS)
-            set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
+            svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
         else if (enc_mode <= ENC_M1)
-            set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 2);
+            svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 2);
         else if (enc_mode <= ENC_M9)
-            set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 5);
+            svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 5);
         else
-            set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 6);
+            svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 6);
     } else {
         if (enc_mode <= ENC_MRS)
-            set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
+            svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
         else if (enc_mode <= ENC_M0)
-            set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 2);
+            svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 2);
         else if (enc_mode <= ENC_M1) {
             if (pcs->temporal_layer_index == 0)
-                set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 2);
+                svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 2);
             else
-                set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 4);
+                svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 4);
         }
         else if (enc_mode <= ENC_M7) {
             if (pcs->temporal_layer_index == 0)
-                set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 2);
+                svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 2);
             else
-                set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 5);
+                svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 5);
         }
         else
-            set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 5);
+            svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 5);
     }
     // Set hme-based me sr adjustment level
     if (pcs->sc_class1)
         if (enc_mode <= ENC_M9)
-            set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 4);
+            svt_aom_set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 4);
         else
-            set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 5);
+            svt_aom_set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 5);
     else if (enc_mode <= ENC_MRS)
-        set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 0);
+        svt_aom_set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 0);
     else if (enc_mode <= ENC_M2)
-        set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 1);
+        svt_aom_set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 1);
     else
-        set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 3);
+        svt_aom_set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 3);
     if (enc_mode <= ENC_M2)
         me_context_ptr->me_ctx->prune_me_candidates_th = 0;
     else
@@ -700,15 +700,15 @@ EbErrorType tf_signal_derivation_me_kernel_oq(PictureParentControlSet *  pcs,
     me_context_ptr->me_ctx->me_search_method = SUB_SAD_SEARCH;
 
     uint8_t prehme_level = 0;
-    set_prehme_ctrls(me_context_ptr->me_ctx, prehme_level);
+    svt_aom_set_prehme_ctrls(me_context_ptr->me_ctx, prehme_level);
 
     // Set hme/me based reference pruning level (0-4)
     // Ref pruning is disallowed for TF in motion_estimate_sb()
-    set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
+    svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
 
     // Set hme-based me sr adjustment level
     // ME SR adjustment is disallowed for TF in motion_estimate_sb()
-    set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 0);
+    svt_aom_set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 0);
 
     me_context_ptr->me_ctx->me_early_exit_th = 0;
     me_context_ptr->me_ctx->reduce_hme_l0_sr_th_min = 0;
@@ -727,7 +727,7 @@ static void motion_estimation_context_dctor(EbPtr p) {
 /************************************************
  * Motion Analysis Context Constructor
  ************************************************/
-EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType svt_aom_motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr,
                                            const EbEncHandle *enc_handle_ptr, int index) {
     MotionEstimationContext_t *me_context_ptr;
 
@@ -738,7 +738,7 @@ EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr
         enc_handle_ptr->picture_decision_results_resource_ptr, index);
     me_context_ptr->motion_estimation_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->motion_estimation_results_resource_ptr, index);
-    EB_NEW(me_context_ptr->me_ctx, me_context_ctor);
+    EB_NEW(me_context_ptr->me_ctx, svt_aom_me_context_ctor);
     return EB_ErrorNone;
 }
 /************************************************
@@ -749,7 +749,7 @@ EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr
  * to the prediction structure pattern.  The Motion Analysis process is multithreaded,
  * so pictures can be processed out of order as long as all inputs are available.
  ************************************************/
-void *motion_estimation_kernel(void *input_ptr) {
+void *svt_aom_motion_estimation_kernel(void *input_ptr) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)input_ptr;
     MotionEstimationContext_t *me_context_ptr = (MotionEstimationContext_t *)thread_context_ptr->priv;
     EbObjectWrapper *          in_results_wrapper_ptr;
@@ -776,7 +776,7 @@ void *motion_estimation_kernel(void *input_ptr) {
             if (scs->static_config.pass == ENC_FIRST_PASS)
                 first_pass_signal_derivation_me_kernel(scs, pcs, me_context_ptr);
             else
-                signal_derivation_me_kernel_oq(scs, pcs, me_context_ptr);
+                svt_aom_signal_derivation_me_kernel_oq(scs, pcs, me_context_ptr);
 
         else if (in_results_ptr->task_type == TASK_TFME)
             tf_signal_derivation_me_kernel_oq(pcs, me_context_ptr);
@@ -818,13 +818,13 @@ void *motion_estimation_kernel(void *input_ptr) {
 
             Bool skip_me = FALSE;
             if (scs->static_config.pass == ENC_FIRST_PASS ||
-                is_pic_skipped(pcs))
+                svt_aom_is_pic_skipped(pcs))
                 skip_me = TRUE;
             // skip me for the first pass. ME is already performed
             if (!skip_me) {
                 if (pcs->slice_type != I_SLICE) {
                     // Use scaled source references if resolution of the reference is different that of the input
-                    use_scaled_source_refs_if_needed(pcs,
+                    svt_aom_use_scaled_source_refs_if_needed(pcs,
                                                      input_pic,
                                                      pa_ref_obj_,
                                                      &input_padded_picture_ptr,
@@ -891,8 +891,8 @@ void *motion_estimation_kernel(void *input_ptr) {
                                     for (int i = 0;  i < me_context_ptr->me_ctx->num_of_list_to_search; i++) {
                                         for (int j = 0; j < me_context_ptr->me_ctx->num_of_ref_pic_to_search[i]; j++) {
                                             //assert((int)pcs->ref_pa_pic_ptr_array[i][j]->live_count > 0);
-                                            uint8_t sr_denom_idx = get_denom_idx(pcs->superres_denom);
-                                            uint8_t resize_denom_idx = get_denom_idx(pcs->resize_denom);
+                                            uint8_t sr_denom_idx = svt_aom_get_denom_idx(pcs->superres_denom);
+                                            uint8_t resize_denom_idx = svt_aom_get_denom_idx(pcs->resize_denom);
                                             EbPaReferenceObject *reference_object =
                                                 (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[i][j]->object_ptr;
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].picture_ptr =
@@ -924,7 +924,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 }
                             }
 
-                            motion_estimation_b64(pcs,
+                            svt_aom_motion_estimation_b64(pcs,
                                 b64_index,
                                 b64_origin_x,
                                 b64_origin_y,
@@ -937,7 +937,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 // We need to finish ME for all SBs to do GM
                                 if (pcs->me_processed_b64_count == pcs->b64_total_count) {
                                     if (pcs->gm_ctrls.enabled)
-                                        global_motion_estimation(pcs, input_pic);
+                                        svt_aom_global_motion_estimation(pcs, input_pic);
                                     else
                                         // Initilize global motion to be OFF when GM is OFF
                                         memset(pcs->is_global_motion, FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
@@ -953,7 +953,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     for (uint32_t y_b64_index = y_b64_start_index; y_b64_index < y_b64_end_index; ++y_b64_index)
                         for (uint32_t x_b64_index = x_b64_start_index; x_b64_index < x_b64_end_index; ++x_b64_index) {
                             uint32_t b64_index = (uint16_t)(x_b64_index + y_b64_index * pic_width_in_b64);
-                            open_loop_intra_search_mb(pcs, b64_index, input_pic);
+                            svt_aom_open_loop_intra_search_mb(pcs, b64_index, input_pic);
                         }
             }
             // Get Empty Results Object

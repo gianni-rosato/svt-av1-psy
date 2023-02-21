@@ -26,8 +26,9 @@
 #include "EbPictureControlSet.h"
 #include "EbResize.h"
 
-void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
-                 int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize, Bool is_16bit);
+void svt_aom_copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
+                         int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize,
+                         Bool is_16bit);
 
 void   *svt_aom_memalign(size_t align, size_t size);
 void    svt_aom_free(void *memblk);
@@ -44,7 +45,7 @@ void    svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *
                                        SequenceControlSet *scs);
 void    set_unscaled_input_16bit(PictureControlSet *pcs);
 
-void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 
 /**************************************
  * Cdef Context
@@ -63,8 +64,8 @@ static void cdef_context_dctor(EbPtr p) {
 /******************************************************
  * Cdef Context Constructor
  ******************************************************/
-EbErrorType cdef_context_ctor(EbThreadContext   *thread_context_ptr,
-                              const EbEncHandle *enc_handle_ptr, int index) {
+EbErrorType svt_aom_cdef_context_ctor(EbThreadContext   *thread_context_ptr,
+                                      const EbEncHandle *enc_handle_ptr, int index) {
     CdefContext *cdef_ctx;
     EB_CALLOC_ARRAY(cdef_ctx, 1);
     thread_context_ptr->priv  = cdef_ctx;
@@ -166,7 +167,7 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
 
     EbPictureBufferDesc *input_pic = is_16bit ? pcs->input_frame16bit : ppcs->enhanced_picture_ptr;
     EbPictureBufferDesc *recon_pic;
-    get_recon_pic(pcs, &recon_pic, is_16bit);
+    svt_aom_get_recon_pic(pcs, &recon_pic, is_16bit);
 
     for (int pli = 0; pli < num_planes; pli++) {
         const int subsampling_x = (pli == 0) ? 0 : 1;
@@ -238,15 +239,15 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                 int32_t xsize = (nhb << mi_wide_l2[pli]) +
                     CDEF_HBORDER * ((int32_t)fbc + hb_step < nhfb) + xoff;
 
-                copy_sb8_16(&in[(-yoff * CDEF_BSTRIDE - xoff)],
-                            CDEF_BSTRIDE,
-                            src[pli],
-                            (lr << mi_high_l2[pli]) - yoff,
-                            (lc << mi_wide_l2[pli]) - xoff,
-                            stride_src[pli],
-                            ysize,
-                            xsize,
-                            is_16bit);
+                svt_aom_copy_sb8_16(&in[(-yoff * CDEF_BSTRIDE - xoff)],
+                                    CDEF_BSTRIDE,
+                                    src[pli],
+                                    (lr << mi_high_l2[pli]) - yoff,
+                                    (lc << mi_wide_l2[pli]) - xoff,
+                                    stride_src[pli],
+                                    ysize,
+                                    xsize,
+                                    is_16bit);
 
                 uint8_t subsampling_factor = cdef_ctrls->subsampling_factor;
                 /*
@@ -379,7 +380,7 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
 /******************************************************
  * CDEF Kernel
  ******************************************************/
-void *cdef_kernel(void *input_ptr) {
+void *svt_aom_cdef_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
     CdefContext        *context_ptr        = (CdefContext *)thread_context_ptr->priv;
@@ -455,7 +456,7 @@ void *cdef_kernel(void *input_ptr) {
             }
             if (scs->static_config.resize_mode != RESIZE_NONE) {
                 EbPictureBufferDesc *recon = NULL;
-                get_recon_pic(pcs, &recon, is_16bit);
+                svt_aom_get_recon_pic(pcs, &recon, is_16bit);
                 recon->width  = pcs->ppcs->render_width;
                 recon->height = pcs->ppcs->render_height;
                 if (is_lr) {
@@ -463,25 +464,25 @@ void *cdef_kernel(void *input_ptr) {
                         ? pcs->input_frame16bit
                         : pcs->ppcs->enhanced_unscaled_picture_ptr;
 
-                    assert_err(pcs->scaled_input_picture_ptr == NULL,
-                               "pcs_ptr->scaled_input_picture_ptr is not desctoried!");
+                    svt_aom_assert_err(pcs->scaled_input_picture_ptr == NULL,
+                                       "pcs_ptr->scaled_input_picture_ptr is not desctoried!");
                     EbPictureBufferDesc *scaled_input_picture_ptr = NULL;
                     // downscale input picture if recon is resized
                     Bool is_resized = recon->width != input_pic->width ||
                         recon->height != input_pic->height;
                     if (is_resized) {
                         superres_params_type spr_params = {recon->width, recon->height, 0};
-                        downscaled_source_buffer_desc_ctor(
+                        svt_aom_downscaled_source_buffer_desc_ctor(
                             &scaled_input_picture_ptr, input_pic, spr_params);
-                        av1_resize_frame(input_pic,
-                                         scaled_input_picture_ptr,
-                                         scs->static_config.encoder_bit_depth,
-                                         av1_num_planes(&scs->seq_header.color_config),
-                                         scs->subsampling_x,
-                                         scs->subsampling_y,
-                                         input_pic->packed_flag,
-                                         PICTURE_BUFFER_DESC_FULL_MASK,
-                                         0); // is_2bcompress
+                        svt_aom_resize_frame(input_pic,
+                                             scaled_input_picture_ptr,
+                                             scs->static_config.encoder_bit_depth,
+                                             av1_num_planes(&scs->seq_header.color_config),
+                                             scs->subsampling_x,
+                                             scs->subsampling_y,
+                                             input_pic->packed_flag,
+                                             PICTURE_BUFFER_DESC_FULL_MASK,
+                                             0); // is_2bcompress
                         pcs->scaled_input_picture_ptr = scaled_input_picture_ptr;
                     }
                 }

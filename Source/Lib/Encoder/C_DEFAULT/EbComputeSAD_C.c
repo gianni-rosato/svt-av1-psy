@@ -36,12 +36,12 @@ uint32_t svt_fast_loop_nxm_sad_kernel(const uint8_t *src, // input parameter, so
     return sad;
 }
 
-uint32_t sad_16b_kernel_c(uint16_t *src, // input parameter, source samples Ptr
-                          uint32_t  src_stride, // input parameter, source stride
-                          uint16_t *ref, // input parameter, reference samples Ptr
-                          uint32_t  ref_stride, // input parameter, reference stride
-                          uint32_t  height, // input parameter, block height (M)
-                          uint32_t  width) // input parameter, block width (N)
+uint32_t svt_aom_sad_16b_kernel_c(uint16_t *src, // input parameter, source samples Ptr
+                                  uint32_t  src_stride, // input parameter, source stride
+                                  uint16_t *ref, // input parameter, reference samples Ptr
+                                  uint32_t  ref_stride, // input parameter, reference stride
+                                  uint32_t  height, // input parameter, block height (M)
+                                  uint32_t  width) // input parameter, block width (N)
 {
     uint32_t x, y;
     uint32_t sad = 0;

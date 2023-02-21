@@ -1124,8 +1124,8 @@ void svt_av1_iadst16_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     bf1[14] = bf0[9];
     bf1[15] = -bf0[1];
 }
-void av1_iadst32_new(const int32_t *input, int32_t *output, int8_t cos_bit,
-                     const int8_t *stage_range) {
+static void av1_iadst32_new(const int32_t *input, int32_t *output, int8_t cos_bit,
+                            const int8_t *stage_range) {
     const int32_t  size = 32;
     const int32_t *cospi;
 
@@ -2377,7 +2377,7 @@ void av1_iidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
         output[i] = round_shift((int64_t)new_sqrt2 * 4 * input[i], new_sqrt2_bits);
     assert(stage_range[0] + new_sqrt2_bits <= 32);
 }
-static INLINE TxfmFunc inv_txfm_type_to_func(TxfmType txfmtype) {
+TxfmFunc svt_aom_inv_txfm_type_to_func(TxfmType txfmtype) {
     switch (txfmtype) {
     case TXFM_TYPE_DCT4: return svt_av1_idct4_new;
     case TXFM_TYPE_DCT8: return svt_av1_idct8_new;
@@ -2495,8 +2495,8 @@ static INLINE void inv_txfm2d_add_c(const int32_t *input, uint16_t *output_r, in
 
     const int8_t   cos_bit_col   = cfg->cos_bit_col;
     const int8_t   cos_bit_row   = cfg->cos_bit_row;
-    const TxfmFunc txfm_func_col = inv_txfm_type_to_func(cfg->txfm_type_col);
-    const TxfmFunc txfm_func_row = inv_txfm_type_to_func(cfg->txfm_type_row);
+    const TxfmFunc txfm_func_col = svt_aom_inv_txfm_type_to_func(cfg->txfm_type_col);
+    const TxfmFunc txfm_func_row = svt_aom_inv_txfm_type_to_func(cfg->txfm_type_row);
     ASSERT(txfm_func_col);
     ASSERT(txfm_func_row);
     // txfm_buf's length is  txfm_size_row * txfm_size_col + 2 *
@@ -3185,11 +3185,12 @@ static void highbd_inv_txfm_add_64x16(const TranLow *input, uint8_t *dest_r, int
                                  txfm_param->bd);
 }
 
-EbErrorType av1_inv_transform_recon8bit(int32_t *coeff_buffer, //1D buffer
-                                        uint8_t *recon_buffer_r, uint32_t recon_stride_r,
-                                        uint8_t *recon_buffer_w, uint32_t recon_stride_w,
-                                        TxSize txsize, TxType transform_type,
-                                        PlaneType component_type, uint32_t eob, uint8_t lossless) {
+EbErrorType svt_aom_inv_transform_recon8bit(int32_t *coeff_buffer, //1D buffer
+                                            uint8_t *recon_buffer_r, uint32_t recon_stride_r,
+                                            uint8_t *recon_buffer_w, uint32_t recon_stride_w,
+                                            TxSize txsize, TxType transform_type,
+                                            PlaneType component_type, uint32_t eob,
+                                            uint8_t lossless) {
     UNUSED(component_type);
     EbErrorType return_error = EB_ErrorNone;
     TxfmParam   txfm_param;
@@ -3287,11 +3288,11 @@ static void highbd_inv_txfm_add(const TranLow *input, uint8_t *dest_r, int32_t s
     }
 }
 
-EbErrorType av1_inv_transform_recon(int32_t *coeff_buffer, //1D buffer
-                                    uint8_t *recon_buffer_r, uint32_t recon_stride_r,
-                                    uint8_t *recon_buffer_w, uint32_t recon_stride_w, TxSize txsize,
-                                    uint32_t bit_depth, TxType transform_type,
-                                    PlaneType component_type, uint32_t eob, uint8_t lossless) {
+EbErrorType svt_aom_inv_transform_recon(int32_t *coeff_buffer, //1D buffer
+                                        uint8_t *recon_buffer_r, uint32_t recon_stride_r,
+                                        uint8_t *recon_buffer_w, uint32_t recon_stride_w,
+                                        TxSize txsize, uint32_t bit_depth, TxType transform_type,
+                                        PlaneType component_type, uint32_t eob, uint8_t lossless) {
     UNUSED(component_type);
     EbErrorType return_error = EB_ErrorNone;
     TxfmParam   txfm_param;
@@ -3561,7 +3562,7 @@ int16_t svt_aom_ac_quant_qtx(int qindex, int delta, EbBitDepth bit_depth) {
     }
 }
 
-int32_t get_qzbin_factor(int32_t q, EbBitDepth bit_depth) {
+int32_t svt_aom_get_qzbin_factor(int32_t q, EbBitDepth bit_depth) {
     const int32_t quant = svt_aom_dc_quant_qtx(q, 0, bit_depth);
     switch (bit_depth) {
     case EB_EIGHT_BIT: return q == 0 ? 64 : (quant < 148 ? 84 : 80);
@@ -3573,7 +3574,7 @@ int32_t get_qzbin_factor(int32_t q, EbBitDepth bit_depth) {
     }
 }
 
-void invert_quant(int16_t *quant, int16_t *shift, int32_t d) {
+void svt_aom_invert_quant(int16_t *quant, int16_t *shift, int32_t d) {
     uint32_t t;
     int32_t  l, m;
     t = d;

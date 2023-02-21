@@ -315,15 +315,15 @@ void svt_cdef_filter_block_c(uint8_t *dst8, uint16_t *dst16, int32_t dstride, co
         }
     }
 }
-void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h, uint16_t x) {
+void svt_aom_fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h, uint16_t x) {
     for (int32_t i = 0; i < v; i++) {
         for (int32_t j = 0; j < h; j++) dst[i * dstride + j] = x;
     }
 }
 
-void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
-                 int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize,
-                 Bool is_16bit) {
+void svt_aom_copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
+                         int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize,
+                         Bool is_16bit) {
     if (is_16bit) {
         const uint16_t *base = ((uint16_t *)src) + (src_voffset * sstride + src_hoffset);
         for (int r = 0; r < vsize; r++) {
@@ -337,8 +337,8 @@ void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src
     }
 }
 
-void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstride, int32_t v,
-               int32_t h) {
+void svt_aom_copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstride,
+                       int32_t v, int32_t h) {
     for (int32_t i = 0; i < v; i++) {
         svt_memcpy(dst, src, sizeof(dst[0]) * h);
         dst += dstride;

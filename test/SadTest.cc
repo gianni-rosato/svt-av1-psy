@@ -1435,8 +1435,8 @@ class SADTestBase16bit : public ::testing::Test {
 
 /**
  * @brief Unit test for SAD sub smaple functions include:
- *  - sad_16b_kernel_c
- *  - sad_16bit_kernel_avx2
+ *  - svt_aom_sad_16b_kernel_c
+ *  - svt_aom_sad_16bit_kernel_avx2
  *
  * Test strategy:
  *  This test case combine different width{4-64} x height{4-64} and different
@@ -1449,8 +1449,8 @@ class SADTestBase16bit : public ::testing::Test {
  * equal.
  *
  * Test coverage:
- *  All functions inside sad_16b_kernel_c and
- * sad_16bit_kernel_avx2.
+ *  All functions inside svt_aom_sad_16b_kernel_c and
+ * svt_aom_sad_16bit_kernel_avx2.
  *
  * Test cases:
  *  Width {4, 8, 16, 24, 32, 48, 64, 128} x height{ 4, 8, 16, 24, 32, 48, 64,
@@ -1476,15 +1476,16 @@ class SADTestSubSample16bit : public ::testing::WithParamInterface<TestPattern>,
 
             prepare_data();
 
-            sad_c = sad_16b_kernel_c(
+            sad_c = svt_aom_sad_16b_kernel_c(
                 src_, src_stride_, ref_, ref_stride_, height, width);
 
-            sad_avx2 = sad_16bit_kernel_avx2(
+            sad_avx2 = svt_aom_sad_16bit_kernel_avx2(
                 src_, src_stride_, ref_, ref_stride_, height, width);
 
             EXPECT_EQ(sad_c, sad_avx2)
                 << "Size: " << width << "x" << height << " " << std::endl
-                << "compare sad_16b_kernel_c and sad_16bit_kernel_avx2 error, "
+                << "compare svt_aom_sad_16b_kernel_c and "
+                   "svt_aom_sad_16bit_kernel_avx2 error, "
                    "repeat: "
                 << i;
         }
@@ -1507,14 +1508,14 @@ class SADTestSubSample16bit : public ::testing::WithParamInterface<TestPattern>,
             svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
             for (int i = 0; i < num_loops; ++i) {
-                sad_c = sad_16b_kernel_c(
+                sad_c = svt_aom_sad_16b_kernel_c(
                     src_, src_stride_, ref_, ref_stride_, height, width);
             }
 
             svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
             for (int i = 0; i < num_loops; ++i) {
-                sad_avx2 = sad_16bit_kernel_avx2(
+                sad_avx2 = svt_aom_sad_16bit_kernel_avx2(
                     src_, src_stride_, ref_, ref_stride_, height, width);
             }
             svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
@@ -1532,12 +1533,12 @@ class SADTestSubSample16bit : public ::testing::WithParamInterface<TestPattern>,
                                                         finish_time_seconds,
                                                         finish_time_useconds);
             printf("Average Nanoseconds per Function Call\n");
-            printf("    sad_16b_kernel_c  (%dx%d) : %6.2f\n",
+            printf("    svt_aom_sad_16b_kernel_c  (%dx%d) : %6.2f\n",
                    area_width,
                    area_height,
                    1000000 * time_c / num_loops);
             printf(
-                "    sad_16bit_kernel_avx2(%dx%d) : %6.2f   "
+                "    svt_aom_sad_16bit_kernel_avx2(%dx%d) : %6.2f   "
                 "(Comparison: %5.2fx)\n",
                 area_width,
                 area_height,

@@ -32,7 +32,7 @@
 #include "EbResize.h"
 #include "av1me.h"
 
-void generate_padding_compressed_10bit(
+void svt_aom_generate_padding_compressed_10bit(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t
@@ -61,8 +61,8 @@ static void picture_analysis_context_dctor(EbPtr p) {
 /************************************************
 * Picture Analysis Context Constructor
 ************************************************/
-EbErrorType picture_analysis_context_ctor(EbThreadContext   *thread_context_ptr,
-                                          const EbEncHandle *enc_handle_ptr, int index) {
+EbErrorType svt_aom_picture_analysis_context_ctor(EbThreadContext   *thread_context_ptr,
+                                                  const EbEncHandle *enc_handle_ptr, int index) {
     PictureAnalysisContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -75,7 +75,8 @@ EbErrorType picture_analysis_context_ctor(EbThreadContext   *thread_context_ptr,
         enc_handle_ptr->picture_analysis_results_resource_ptr, index);
     return EB_ErrorNone;
 }
-void down_sample_chroma(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *outputPicturePtr) {
+void svt_aom_down_sample_chroma(EbPictureBufferDesc *input_pic,
+                                EbPictureBufferDesc *outputPicturePtr) {
     uint32_t       input_color_format  = input_pic->color_format;
     const uint16_t input_subsampling_x = (input_color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t input_subsampling_y = (input_color_format >= EB_YUV422 ? 1 : 2) - 1;
@@ -139,16 +140,16 @@ void down_sample_chroma(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *out
  * Picture Analysis Context Destructor
  ************************************************/
 /********************************************
-    * decimation_2d
+    * svt_aom_decimation_2d
     *      decimates the input
     ********************************************/
-void decimation_2d(uint8_t *input_samples, // input parameter, input samples Ptr
-                   uint32_t input_stride, // input parameter, input stride
-                   uint32_t input_area_width, // input parameter, input area width
-                   uint32_t input_area_height, // input parameter, input area height
-                   uint8_t *decim_samples, // output parameter, decimated samples Ptr
-                   uint32_t decim_stride, // input parameter, output stride
-                   uint32_t decim_step) // input parameter, decimation amount in pixels
+void svt_aom_decimation_2d(uint8_t *input_samples, // input parameter, input samples Ptr
+                           uint32_t input_stride, // input parameter, input stride
+                           uint32_t input_area_width, // input parameter, input area width
+                           uint32_t input_area_height, // input parameter, input area height
+                           uint8_t *decim_samples, // output parameter, decimated samples Ptr
+                           uint32_t decim_stride, // input parameter, output stride
+                           uint32_t decim_step) // input parameter, decimation amount in pixels
 {
     uint32_t horizontal_index;
     uint32_t vertical_index;
@@ -170,15 +171,15 @@ void decimation_2d(uint8_t *input_samples, // input parameter, input samples Ptr
 /********************************************
  * downsample_2d
  *      downsamples the input
- * Alternative implementation to decimation_2d that performs filtering (2x2, 0-phase)
+ * Alternative implementation to svt_aom_decimation_2d that performs filtering (2x2, 0-phase)
  ********************************************/
-void downsample_2d_c(uint8_t *input_samples, // input parameter, input samples Ptr
-                     uint32_t input_stride, // input parameter, input stride
-                     uint32_t input_area_width, // input parameter, input area width
-                     uint32_t input_area_height, // input parameter, input area height
-                     uint8_t *decim_samples, // output parameter, decimated samples Ptr
-                     uint32_t decim_stride, // input parameter, output stride
-                     uint32_t decim_step) // input parameter, decimation amount in pixels
+void svt_aom_downsample_2d_c(uint8_t *input_samples, // input parameter, input samples Ptr
+                             uint32_t input_stride, // input parameter, input stride
+                             uint32_t input_area_width, // input parameter, input area width
+                             uint32_t input_area_height, // input parameter, input area height
+                             uint8_t *decim_samples, // output parameter, decimated samples Ptr
+                             uint32_t decim_stride, // input parameter, output stride
+                             uint32_t decim_step) // input parameter, decimation amount in pixels
 {
     uint32_t       horizontal_index;
     uint32_t       vertical_index;
@@ -301,7 +302,7 @@ uint64_t svt_compute_sub_mean_8x8_c(
     return block_mean;
 }
 
-uint64_t compute_sub_mean_squared_values_c(
+uint64_t svt_aom_compute_sub_mean_squared_values_c(
     uint8_t *input_samples, /**< input parameter, input samples Ptr */
     uint32_t input_stride, /**< input parameter, input stride */
     uint32_t input_area_width, /**< input parameter, input area width */
@@ -331,25 +332,25 @@ void svt_compute_interm_var_four8x8_c(uint8_t *input_samples, uint16_t input_str
     uint32_t block_index = 0;
     // (0,1)
     mean_of8x8_blocks[0] = svt_compute_sub_mean_8x8_c(input_samples + block_index, input_stride);
-    mean_of_squared8x8_blocks[0] = compute_sub_mean_squared_values_c(
+    mean_of_squared8x8_blocks[0] = svt_aom_compute_sub_mean_squared_values_c(
         input_samples + block_index, input_stride, 8, 8);
 
     // (0,2)
     block_index          = block_index + 8;
     mean_of8x8_blocks[1] = svt_compute_sub_mean_8x8_c(input_samples + block_index, input_stride);
-    mean_of_squared8x8_blocks[1] = compute_sub_mean_squared_values_c(
+    mean_of_squared8x8_blocks[1] = svt_aom_compute_sub_mean_squared_values_c(
         input_samples + block_index, input_stride, 8, 8);
 
     // (0,3)
     block_index          = block_index + 8;
     mean_of8x8_blocks[2] = svt_compute_sub_mean_8x8_c(input_samples + block_index, input_stride);
-    mean_of_squared8x8_blocks[2] = compute_sub_mean_squared_values_c(
+    mean_of_squared8x8_blocks[2] = svt_aom_compute_sub_mean_squared_values_c(
         input_samples + block_index, input_stride, 8, 8);
 
     // (0,4)
     block_index          = block_index + 8;
     mean_of8x8_blocks[3] = svt_compute_sub_mean_8x8_c(input_samples + block_index, input_stride);
-    mean_of_squared8x8_blocks[3] = compute_sub_mean_squared_values_c(
+    mean_of_squared8x8_blocks[3] = svt_aom_compute_sub_mean_squared_values_c(
         input_samples + block_index, input_stride, 8, 8);
 }
 
@@ -1913,7 +1914,7 @@ static int32_t apply_denoise_2d(SequenceControlSet *scs, PictureParentControlSet
     fg_init_data.stride_cb            = pcs->enhanced_picture_ptr->stride_cb;
     fg_init_data.stride_cr            = pcs->enhanced_picture_ptr->stride_cr;
     fg_init_data.denoise_apply        = scs->static_config.film_grain_denoise_apply;
-    EB_NEW(denoise_and_model, denoise_and_model_ctor, (EbPtr)&fg_init_data);
+    EB_NEW(denoise_and_model, svt_aom_denoise_and_model_ctor, (EbPtr)&fg_init_data);
 
     if (svt_aom_denoise_and_model_run(denoise_and_model,
                                       inputPicturePointer,
@@ -1950,7 +1951,8 @@ static EbErrorType denoise_estimate_film_grain(SequenceControlSet      *scs,
  ***** Borders preprocessing
  ***** Denoising
  ************************************************/
-void picture_pre_processing_operations(PictureParentControlSet *pcs, SequenceControlSet *scs) {
+void svt_aom_picture_pre_processing_operations(PictureParentControlSet *pcs,
+                                               SequenceControlSet      *scs) {
     if (scs->static_config.film_grain_denoise_strength)
         denoise_estimate_film_grain(scs, pcs);
     return;
@@ -2071,9 +2073,9 @@ static void compute_picture_spatial_statistics(SequenceControlSet      *scs,
  ** Calculating the pixel intensity histogram bins per picture needed for SCD
  ** Computing Picture Variance
  ************************************************/
-void gathering_picture_statistics(SequenceControlSet *scs, PictureParentControlSet *pcs,
-                                  EbPictureBufferDesc *input_padded_picture_ptr,
-                                  EbPictureBufferDesc *sixteenth_decimated_picture_ptr) {
+void svt_aom_gathering_picture_statistics(SequenceControlSet *scs, PictureParentControlSet *pcs,
+                                          EbPictureBufferDesc *input_padded_picture_ptr,
+                                          EbPictureBufferDesc *sixteenth_decimated_picture_ptr) {
     uint64_t sum_avg_intensity_ttl_regions_luma = 0;
     // Histogram bins
     if (scs->static_config.scene_change_detection ||
@@ -2156,7 +2158,7 @@ static void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_strid
                 src_pic[last_col + row * src_stride] = new_byte;
             }
         } else {
-            assert_err(0, "wrong pad value");
+            svt_aom_assert_err(0, "wrong pad value");
         }
     }
 
@@ -2173,8 +2175,8 @@ static void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_strid
  * Pad Picture at the right and bottom sides
  ** To match a multiple of min CU size in width and height
  ************************************************/
-void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs,
-                                                        EbPictureBufferDesc *input_pic) {
+void svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs,
+                                                                EbPictureBufferDesc *input_pic) {
     Bool is16_bit_input = (Bool)(scs->static_config.encoder_bit_depth > EB_EIGHT_BIT);
 
     uint32_t       color_format  = input_pic->color_format;
@@ -2253,8 +2255,8 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet  *scs
  ** To match a multiple of min CU size in width and height
  ** In the function, pixels are stored in short_ptr
  ************************************************/
-void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(SequenceControlSet  *scs,
-                                                              EbPictureBufferDesc *input_pic) {
+void svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(
+    SequenceControlSet *scs, EbPictureBufferDesc *input_pic) {
     assert(scs->static_config.encoder_bit_depth > EB_EIGHT_BIT);
 
     uint32_t       color_format  = input_pic->color_format;
@@ -2264,30 +2266,30 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(SequenceControlSet
     // Input Picture Padding
     uint16_t *buffer_y = (uint16_t *)(input_pic->buffer_y) + input_pic->org_x +
         input_pic->org_y * input_pic->stride_y;
-    pad_input_picture_16bit(buffer_y,
-                            input_pic->stride_y,
-                            (input_pic->width - scs->pad_right),
-                            (input_pic->height - scs->pad_bottom),
-                            scs->pad_right,
-                            scs->pad_bottom);
+    svt_aom_pad_input_picture_16bit(buffer_y,
+                                    input_pic->stride_y,
+                                    (input_pic->width - scs->pad_right),
+                                    (input_pic->height - scs->pad_bottom),
+                                    scs->pad_right,
+                                    scs->pad_bottom);
 
     uint16_t *buffer_cb = (uint16_t *)(input_pic->buffer_cb) + (input_pic->org_x >> subsampling_x) +
         (input_pic->org_y >> subsampling_y) * input_pic->stride_cb;
-    pad_input_picture_16bit(buffer_cb,
-                            input_pic->stride_cb,
-                            (input_pic->width - scs->pad_right) >> subsampling_x,
-                            (input_pic->height - scs->pad_bottom) >> subsampling_y,
-                            scs->pad_right >> subsampling_x,
-                            scs->pad_bottom >> subsampling_y);
+    svt_aom_pad_input_picture_16bit(buffer_cb,
+                                    input_pic->stride_cb,
+                                    (input_pic->width - scs->pad_right) >> subsampling_x,
+                                    (input_pic->height - scs->pad_bottom) >> subsampling_y,
+                                    scs->pad_right >> subsampling_x,
+                                    scs->pad_bottom >> subsampling_y);
 
     uint16_t *buffer_cr = (uint16_t *)(input_pic->buffer_cr) + (input_pic->org_x >> subsampling_x) +
         (input_pic->org_y >> subsampling_y) * input_pic->stride_cr;
-    pad_input_picture_16bit(buffer_cr,
-                            input_pic->stride_cr,
-                            (input_pic->width - scs->pad_right) >> subsampling_x,
-                            (input_pic->height - scs->pad_bottom) >> subsampling_y,
-                            scs->pad_right >> subsampling_x,
-                            scs->pad_bottom >> subsampling_y);
+    svt_aom_pad_input_picture_16bit(buffer_cr,
+                                    input_pic->stride_cr,
+                                    (input_pic->width - scs->pad_right) >> subsampling_x,
+                                    (input_pic->height - scs->pad_bottom) >> subsampling_y,
+                                    scs->pad_right >> subsampling_x,
+                                    scs->pad_bottom >> subsampling_y);
 
     return;
 }
@@ -2296,14 +2298,15 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(SequenceControlSet
  * Pad Picture at the right and bottom sides
  ** To complete border SB smaller than SB size
  ************************************************/
-void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_picture_ptr) {
+void svt_aom_pad_picture_to_multiple_of_sb_dimensions(
+    EbPictureBufferDesc *input_padded_picture_ptr) {
     // Generate Padding
-    generate_padding(&input_padded_picture_ptr->buffer_y[0],
-                     input_padded_picture_ptr->stride_y,
-                     input_padded_picture_ptr->width,
-                     input_padded_picture_ptr->height,
-                     input_padded_picture_ptr->org_x,
-                     input_padded_picture_ptr->org_y);
+    svt_aom_generate_padding(&input_padded_picture_ptr->buffer_y[0],
+                             input_padded_picture_ptr->stride_y,
+                             input_padded_picture_ptr->width,
+                             input_padded_picture_ptr->height,
+                             input_padded_picture_ptr->org_x,
+                             input_padded_picture_ptr->org_y);
 
     return;
 }
@@ -2311,14 +2314,14 @@ void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_
 /************************************************
 * 1/4 & 1/16 input picture decimation
 ************************************************/
-void downsample_decimation_input_picture(PictureParentControlSet *pcs,
-                                         EbPictureBufferDesc     *input_padded_picture_ptr,
-                                         EbPictureBufferDesc     *quarter_decimated_picture_ptr,
-                                         EbPictureBufferDesc     *sixteenth_decimated_picture_ptr) {
+void svt_aom_downsample_decimation_input_picture(
+    PictureParentControlSet *pcs, EbPictureBufferDesc *input_padded_picture_ptr,
+    EbPictureBufferDesc *quarter_decimated_picture_ptr,
+    EbPictureBufferDesc *sixteenth_decimated_picture_ptr) {
     // Decimate input picture for HME L0 and L1
     if (pcs->enable_hme_flag || pcs->tf_enable_hme_flag) {
         if (pcs->enable_hme_level1_flag || pcs->tf_enable_hme_level1_flag) {
-            decimation_2d(
+            svt_aom_decimation_2d(
                 &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->org_x +
                                                     input_padded_picture_ptr->org_y *
                                                         input_padded_picture_ptr->stride_y],
@@ -2331,18 +2334,18 @@ void downsample_decimation_input_picture(PictureParentControlSet *pcs,
                                     quarter_decimated_picture_ptr->stride_y],
                 quarter_decimated_picture_ptr->stride_y,
                 2);
-            generate_padding(&quarter_decimated_picture_ptr->buffer_y[0],
-                             quarter_decimated_picture_ptr->stride_y,
-                             quarter_decimated_picture_ptr->width,
-                             quarter_decimated_picture_ptr->height,
-                             quarter_decimated_picture_ptr->org_x,
-                             quarter_decimated_picture_ptr->org_y);
+            svt_aom_generate_padding(&quarter_decimated_picture_ptr->buffer_y[0],
+                                     quarter_decimated_picture_ptr->stride_y,
+                                     quarter_decimated_picture_ptr->width,
+                                     quarter_decimated_picture_ptr->height,
+                                     quarter_decimated_picture_ptr->org_x,
+                                     quarter_decimated_picture_ptr->org_y);
         }
     }
 
     // Always perform 1/16th decimation as
     // Sixteenth Input Picture Decimation
-    decimation_2d(
+    svt_aom_decimation_2d(
         &input_padded_picture_ptr
              ->buffer_y[input_padded_picture_ptr->org_x +
                         input_padded_picture_ptr->org_y * input_padded_picture_ptr->stride_y],
@@ -2355,12 +2358,12 @@ void downsample_decimation_input_picture(PictureParentControlSet *pcs,
         sixteenth_decimated_picture_ptr->stride_y,
         4);
 
-    generate_padding(&sixteenth_decimated_picture_ptr->buffer_y[0],
-                     sixteenth_decimated_picture_ptr->stride_y,
-                     sixteenth_decimated_picture_ptr->width,
-                     sixteenth_decimated_picture_ptr->height,
-                     sixteenth_decimated_picture_ptr->org_x,
-                     sixteenth_decimated_picture_ptr->org_y);
+    svt_aom_generate_padding(&sixteenth_decimated_picture_ptr->buffer_y[0],
+                             sixteenth_decimated_picture_ptr->stride_y,
+                             sixteenth_decimated_picture_ptr->width,
+                             sixteenth_decimated_picture_ptr->height,
+                             sixteenth_decimated_picture_ptr->org_x,
+                             sixteenth_decimated_picture_ptr->org_y);
 }
 
 int svt_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth,
@@ -2453,7 +2456,7 @@ static Bool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows,
 
 // Estimate if the source frame is screen content, based on the portion of
 // blocks that have no more than 4 (experimentally selected) luma colors.
-void is_screen_content(PictureParentControlSet *pcs) {
+void svt_aom_is_screen_content(PictureParentControlSet *pcs) {
     const int blk_w = 16;
     const int blk_h = 16;
     // These threshold values are selected experimentally.
@@ -2502,10 +2505,10 @@ void is_screen_content(PictureParentControlSet *pcs) {
 /************************************************
  * 1/4 & 1/16 input picture downsampling (filtering)
  ************************************************/
-void downsample_filtering_input_picture(PictureParentControlSet *pcs,
-                                        EbPictureBufferDesc     *input_padded_picture_ptr,
-                                        EbPictureBufferDesc     *quarter_picture_ptr,
-                                        EbPictureBufferDesc     *sixteenth_picture_ptr) {
+void svt_aom_downsample_filtering_input_picture(PictureParentControlSet *pcs,
+                                                EbPictureBufferDesc     *input_padded_picture_ptr,
+                                                EbPictureBufferDesc     *quarter_picture_ptr,
+                                                EbPictureBufferDesc     *sixteenth_picture_ptr) {
     // Downsample input picture for HME L0 and L1
     if (pcs->enable_hme_flag || pcs->tf_enable_hme_flag) {
         if (pcs->enable_hme_level1_flag || pcs->tf_enable_hme_level1_flag) {
@@ -2521,12 +2524,12 @@ void downsample_filtering_input_picture(PictureParentControlSet *pcs,
                                 quarter_picture_ptr->org_x * quarter_picture_ptr->stride_y],
                 quarter_picture_ptr->stride_y,
                 2);
-            generate_padding(&quarter_picture_ptr->buffer_y[0],
-                             quarter_picture_ptr->stride_y,
-                             quarter_picture_ptr->width,
-                             quarter_picture_ptr->height,
-                             quarter_picture_ptr->org_x,
-                             quarter_picture_ptr->org_y);
+            svt_aom_generate_padding(&quarter_picture_ptr->buffer_y[0],
+                                     quarter_picture_ptr->stride_y,
+                                     quarter_picture_ptr->width,
+                                     quarter_picture_ptr->height,
+                                     quarter_picture_ptr->org_x,
+                                     quarter_picture_ptr->org_y);
         }
 
         if (pcs->enable_hme_level0_flag || pcs->tf_enable_hme_level0_flag) {
@@ -2558,73 +2561,73 @@ void downsample_filtering_input_picture(PictureParentControlSet *pcs,
                     sixteenth_picture_ptr->stride_y,
                     4);
 
-            generate_padding(&sixteenth_picture_ptr->buffer_y[0],
-                             sixteenth_picture_ptr->stride_y,
-                             sixteenth_picture_ptr->width,
-                             sixteenth_picture_ptr->height,
-                             sixteenth_picture_ptr->org_x,
-                             sixteenth_picture_ptr->org_y);
+            svt_aom_generate_padding(&sixteenth_picture_ptr->buffer_y[0],
+                                     sixteenth_picture_ptr->stride_y,
+                                     sixteenth_picture_ptr->width,
+                                     sixteenth_picture_ptr->height,
+                                     sixteenth_picture_ptr->org_x,
+                                     sixteenth_picture_ptr->org_y);
         }
     }
 }
 
-void pad_input_pictures(SequenceControlSet *scs, EbPictureBufferDesc *input_pic) {
+void svt_aom_pad_input_pictures(SequenceControlSet *scs, EbPictureBufferDesc *input_pic) {
     // Pad pictures to multiple min cu size
     // For non-8 aligned case, like 426x240, padding to 432x240 first
-    pad_picture_to_multiple_of_min_blk_size_dimensions(scs, input_pic);
+    svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions(scs, input_pic);
 
-    generate_padding(input_pic->buffer_y,
-                     input_pic->stride_y,
-                     input_pic->width,
-                     input_pic->height,
-                     input_pic->org_x,
-                     input_pic->org_y);
+    svt_aom_generate_padding(input_pic->buffer_y,
+                             input_pic->stride_y,
+                             input_pic->width,
+                             input_pic->height,
+                             input_pic->org_x,
+                             input_pic->org_y);
 
     uint32_t comp_stride_y  = input_pic->stride_y / 4;
     uint32_t comp_stride_uv = input_pic->stride_cb / 4;
 
     if (scs->static_config.encoder_bit_depth > EB_EIGHT_BIT)
         if (input_pic->buffer_bit_inc_y)
-            generate_padding_compressed_10bit(input_pic->buffer_bit_inc_y,
-                                              comp_stride_y,
-                                              input_pic->width,
-                                              input_pic->height,
-                                              input_pic->org_x,
-                                              input_pic->org_y);
+            svt_aom_generate_padding_compressed_10bit(input_pic->buffer_bit_inc_y,
+                                                      comp_stride_y,
+                                                      input_pic->width,
+                                                      input_pic->height,
+                                                      input_pic->org_x,
+                                                      input_pic->org_y);
 
     if (input_pic->buffer_cb)
-        generate_padding(input_pic->buffer_cb,
-                         input_pic->stride_cb,
-                         input_pic->width >> scs->subsampling_x,
-                         input_pic->height >> scs->subsampling_y,
-                         input_pic->org_x >> scs->subsampling_x,
-                         input_pic->org_y >> scs->subsampling_y);
+        svt_aom_generate_padding(input_pic->buffer_cb,
+                                 input_pic->stride_cb,
+                                 input_pic->width >> scs->subsampling_x,
+                                 input_pic->height >> scs->subsampling_y,
+                                 input_pic->org_x >> scs->subsampling_x,
+                                 input_pic->org_y >> scs->subsampling_y);
 
     if (input_pic->buffer_cr)
-        generate_padding(input_pic->buffer_cr,
-                         input_pic->stride_cr,
-                         input_pic->width >> scs->subsampling_x,
-                         input_pic->height >> scs->subsampling_y,
-                         input_pic->org_x >> scs->subsampling_x,
-                         input_pic->org_y >> scs->subsampling_y);
+        svt_aom_generate_padding(input_pic->buffer_cr,
+                                 input_pic->stride_cr,
+                                 input_pic->width >> scs->subsampling_x,
+                                 input_pic->height >> scs->subsampling_y,
+                                 input_pic->org_x >> scs->subsampling_x,
+                                 input_pic->org_y >> scs->subsampling_y);
 
     // PAD the bit inc buffer in 10bit
     if (scs->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
         if (input_pic->buffer_bit_inc_cb)
-            generate_padding_compressed_10bit(input_pic->buffer_bit_inc_cb,
-                                              comp_stride_uv,
-                                              input_pic->width >> scs->subsampling_x,
-                                              input_pic->height >> scs->subsampling_y,
-                                              input_pic->org_x >> scs->subsampling_x,
-                                              input_pic->org_y >> scs->subsampling_y);
+            svt_aom_generate_padding_compressed_10bit(input_pic->buffer_bit_inc_cb,
+                                                      comp_stride_uv,
+                                                      input_pic->width >> scs->subsampling_x,
+                                                      input_pic->height >> scs->subsampling_y,
+                                                      input_pic->org_x >> scs->subsampling_x,
+                                                      input_pic->org_y >> scs->subsampling_y);
 
         if (input_pic->buffer_bit_inc_cr)
-            generate_padding_compressed_10bit(input_pic->buffer_bit_inc_cr,
-                                              comp_stride_uv,
-                                              input_pic->width >> scs->subsampling_x,
-                                              input_pic->height >> scs->subsampling_y,
-                                              input_pic->org_x >> scs->subsampling_x,
-                                              input_pic->org_y >> scs->subsampling_y);
+            svt_aom_generate_padding_compressed_10bit(input_pic->buffer_bit_inc_cr,
+                                                      comp_stride_uv,
+                                                      input_pic->width >> scs->subsampling_x,
+                                                      input_pic->height >> scs->subsampling_y,
+                                                      input_pic->org_x >> scs->subsampling_x,
+                                                      input_pic->org_y >> scs->subsampling_y);
     }
 }
 
@@ -2651,7 +2654,7 @@ void pad_input_pictures(SequenceControlSet *scs, EbPictureBufferDesc *input_pic)
 *  n-bin histogram is created to gather 1st and 2nd moment statistics for each 8x8 block which is then used to compute statistics
 *
 ********************************************************************************/
-void *picture_analysis_kernel(void *input_ptr) {
+void *svt_aom_picture_analysis_kernel(void *input_ptr) {
     EbThreadContext         *thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureAnalysisContext  *context_ptr = (PictureAnalysisContext *)thread_context_ptr->priv;
     PictureParentControlSet *pcs;
@@ -2691,17 +2694,17 @@ void *picture_analysis_kernel(void *input_ptr) {
             // Bypass copy for the unecessary picture in IPPP pass
             if (scs->static_config.pass != ENC_FIRST_PASS || copy_frame) {
                 // Padding for input pictures
-                pad_input_pictures(scs, input_pic);
+                svt_aom_pad_input_pictures(scs, input_pic);
 
                 // Pre processing operations performed on the input picture
-                picture_pre_processing_operations(pcs, scs);
+                svt_aom_picture_pre_processing_operations(pcs, scs);
 
                 if (input_pic->color_format >= EB_YUV422) {
                     // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
                     //       Reuse the Y, only add cb/cr in the newly created buffer desc
-                    //       NOTE: since denoise may change the src, so this part is after picture_pre_processing_operations()
+                    //       NOTE: since denoise may change the src, so this part is after svt_aom_picture_pre_processing_operations()
                     pcs->chroma_downsampled_picture_ptr->buffer_y = input_pic->buffer_y;
-                    down_sample_chroma(input_pic, pcs->chroma_downsampled_picture_ptr);
+                    svt_aom_down_sample_chroma(input_pic, pcs->chroma_downsampled_picture_ptr);
                 } else
                     pcs->chroma_downsampled_picture_ptr = input_pic;
 
@@ -2721,13 +2724,13 @@ void *picture_analysis_kernel(void *input_ptr) {
 
                 // 1/4 & 1/16 input picture downsampling through filtering
                 if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-                    downsample_filtering_input_picture(
+                    svt_aom_downsample_filtering_input_picture(
                         pcs,
                         input_padded_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
                 } else {
-                    downsample_decimation_input_picture(
+                    svt_aom_downsample_decimation_input_picture(
                         pcs,
                         input_padded_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
@@ -2739,20 +2742,20 @@ void *picture_analysis_kernel(void *input_ptr) {
             }
             // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
             if (scs->static_config.pass != ENC_FIRST_PASS)
-                gathering_picture_statistics(
+                svt_aom_gathering_picture_statistics(
                     scs,
                     pcs,
                     input_padded_picture_ptr,
                     (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
 
-            // If running multi-threaded mode, perform SC detection in picture_analysis_kernel, else in picture_decision_kernel
+            // If running multi-threaded mode, perform SC detection in svt_aom_picture_analysis_kernel, else in svt_aom_picture_decision_kernel
             if (scs->static_config.logical_processors != 1) {
                 if ((scs->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {
                     pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
                 } else if (scs->static_config.screen_content_mode == 2) { // auto detect
                     // SC Detection is OFF for 4K and higher
                     if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
-                        is_screen_content(pcs);
+                        svt_aom_is_screen_content(pcs);
                     else
                         pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
 

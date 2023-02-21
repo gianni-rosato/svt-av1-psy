@@ -803,7 +803,7 @@ static void add_noise_to_block_hbd(AomFilmGrain *params, uint16_t *luma, uint16_
     }
 }
 
-int32_t film_grain_params_equal(AomFilmGrain *pars_a, AomFilmGrain *pars_b) {
+int32_t svt_aom_film_grain_params_equal(AomFilmGrain *pars_a, AomFilmGrain *pars_b) {
     if (pars_a->apply_grain != pars_b->apply_grain)
         return 0;
     if (pars_a->overlap_flag != pars_b->overlap_flag)
@@ -869,8 +869,8 @@ int32_t film_grain_params_equal(AomFilmGrain *pars_a, AomFilmGrain *pars_b) {
     return 1;
 }
 
-void fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-                   int32_t width, int32_t height, int32_t use_high_bit_depth) {
+void svt_aom_fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
+                           int32_t width, int32_t height, int32_t use_high_bit_depth) {
     int32_t hbd_coeff = use_high_bit_depth ? 2 : 1;
     while (height) {
         svt_memcpy(dst, src, width * sizeof(uint8_t) * hbd_coeff);

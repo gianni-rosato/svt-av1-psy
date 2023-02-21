@@ -61,9 +61,9 @@ typedef struct ReferenceQueueEntry {
     bool is_valid;
 } ReferenceQueueEntry;
 
-extern EbErrorType input_queue_entry_ctor(InputQueueEntry *entry_ptr);
+extern EbErrorType svt_aom_input_queue_entry_ctor(InputQueueEntry *entry_ptr);
 
-extern EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr);
+extern EbErrorType svt_aom_reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr);
 
 #ifdef __cplusplus
 }

@@ -68,9 +68,9 @@ static INLINE int coded_to_superres_mi(int mi_col, int denom) {
 /************************************************
 * Source Based Operation Context Constructor
 ************************************************/
-EbErrorType source_based_operations_context_ctor(EbThreadContext   *thread_context_ptr,
-                                                 const EbEncHandle *enc_handle_ptr, int tpl_index,
-                                                 int index) {
+EbErrorType svt_aom_source_based_operations_context_ctor(EbThreadContext   *thread_context_ptr,
+                                                         const EbEncHandle *enc_handle_ptr,
+                                                         int tpl_index, int index) {
     SourceBasedOperationsContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -97,8 +97,9 @@ static void tpl_disp_context_dctor(EbPtr p) {
 /*
      TPL dispenser context cctor
 */
-EbErrorType tpl_disp_context_ctor(EbThreadContext   *thread_context_ptr,
-                                  const EbEncHandle *enc_handle_ptr, int index, int tasks_index) {
+EbErrorType svt_aom_tpl_disp_context_ctor(EbThreadContext   *thread_context_ptr,
+                                          const EbEncHandle *enc_handle_ptr, int index,
+                                          int tasks_index) {
     TplDispenserContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
 
@@ -596,7 +597,7 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
 
     for (uint32_t blk_index = blk_start; blk_index <= blk_end; blk_index++) {
         uint32_t               z_blk_index   = tpl_blk_idx_tab[0][blk_index];
-        const CodedBlockStats *blk_stats_ptr = get_coded_blk_stats(z_blk_index);
+        const CodedBlockStats *blk_stats_ptr = svt_aom_get_coded_blk_stats(z_blk_index);
         const uint8_t          bsize         = blk_stats_ptr->size;
         const BlockSize        block_size    = bsize == 8 ? BLOCK_8X8
                       : bsize == 16                       ? BLOCK_16X16
@@ -670,19 +671,19 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                             get_neighbor_samples_dc(
                                 src_mb, src_stride, above0_row, left0_col, bsize);
                         else
-                            update_neighbor_samples_array_open_loop_mb(1,
-                                                                       1,
-                                                                       above0_row - 1,
-                                                                       left0_col - 1,
-                                                                       input_pic,
-                                                                       src_stride,
-                                                                       mb_origin_x,
-                                                                       mb_origin_y,
-                                                                       bsize,
-                                                                       bsize);
+                            svt_aom_update_neighbor_samples_array_open_loop_mb(1,
+                                                                               1,
+                                                                               above0_row - 1,
+                                                                               left0_col - 1,
+                                                                               input_pic,
+                                                                               src_stride,
+                                                                               mb_origin_x,
+                                                                               mb_origin_y,
+                                                                               bsize,
+                                                                               bsize);
 
                         //TODO: combine dc prediction+sad into one kernel
-                        intra_prediction_open_loop_mb(
+                        svt_aom_intra_prediction_open_loop_mb(
                             0,
                             DC_PRED,
                             mb_origin_x,
@@ -716,16 +717,16 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                         left_col   = left_data + MAX_TPL_SIZE;
 
                         // Fill Neighbor Arrays
-                        update_neighbor_samples_array_open_loop_mb(1,
-                                                                   1,
-                                                                   above0_row - 1,
-                                                                   left0_col - 1,
-                                                                   input_pic,
-                                                                   input_pic->stride_y,
-                                                                   mb_origin_x,
-                                                                   mb_origin_y,
-                                                                   bsize,
-                                                                   bsize);
+                        svt_aom_update_neighbor_samples_array_open_loop_mb(1,
+                                                                           1,
+                                                                           above0_row - 1,
+                                                                           left0_col - 1,
+                                                                           input_pic,
+                                                                           input_pic->stride_y,
+                                                                           mb_origin_x,
+                                                                           mb_origin_y,
+                                                                           bsize,
+                                                                           bsize);
                         uint8_t intra_mode_end = pcs->tpl_ctrls.intra_mode_end;
 
                         for (uint8_t ois_intra_mode = DC_PRED; ois_intra_mode <= intra_mode_end;
@@ -759,7 +760,7 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                                 left_col  = left0_col;
                             }
                             // PRED
-                            intra_prediction_open_loop_mb(
+                            svt_aom_intra_prediction_open_loop_mb(
                                 p_angle,
                                 ois_intra_mode,
                                 mb_origin_x,
@@ -901,34 +902,35 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                         ConvolveParams conv_params_y = get_conv_params_no_round(
                             0, 0, 0, tmp_dst_y, 128, 0 /*is_compound*/, 8 /*bit_depth*/);
 
-                        enc_make_inter_predictor(scs,
-                                                 ref_pic_ptr->buffer_y + ref_pic_ptr->org_x +
-                                                     (ref_pic_ptr->org_y * ref_pic_ptr->stride_y),
-                                                 NULL, // src_ptr_2b,
-                                                 compensated_blk,
-                                                 (int16_t)mb_origin_y,
-                                                 (int16_t)mb_origin_x,
-                                                 best_mv,
-                                                 &scs->sf_identity,
-                                                 &conv_params_y,
-                                                 0, // interp_filters
-                                                 0, // interinter_comp
-                                                 seg_mask,
-                                                 ref_pic_ptr->width,
-                                                 ref_pic_ptr->height,
-                                                 bsize, // bwidth
-                                                 bsize, // bheight
-                                                 block_size,
-                                                 &xd,
-                                                 ref_pic_ptr->stride_y,
-                                                 size,
-                                                 0,
-                                                 0, // ss_y,
-                                                 0, // ss_x,
-                                                 8, // Always use 8bit for now
-                                                 0, // use_intrabc,
-                                                 0,
-                                                 0); // is16bit
+                        svt_aom_enc_make_inter_predictor(
+                            scs,
+                            ref_pic_ptr->buffer_y + ref_pic_ptr->org_x +
+                                (ref_pic_ptr->org_y * ref_pic_ptr->stride_y),
+                            NULL, // src_ptr_2b,
+                            compensated_blk,
+                            (int16_t)mb_origin_y,
+                            (int16_t)mb_origin_x,
+                            best_mv,
+                            &scs->sf_identity,
+                            &conv_params_y,
+                            0, // interp_filters
+                            0, // interinter_comp
+                            seg_mask,
+                            ref_pic_ptr->width,
+                            ref_pic_ptr->height,
+                            bsize, // bwidth
+                            bsize, // bheight
+                            block_size,
+                            &xd,
+                            ref_pic_ptr->stride_y,
+                            size,
+                            0,
+                            0, // ss_y,
+                            0, // ss_x,
+                            8, // Always use 8bit for now
+                            0, // use_intrabc,
+                            0,
+                            0); // is16bit
                     }
 
                     svt_aom_subtract_block(
@@ -1067,34 +1069,34 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                 ConvolveParams conv_params_y = get_conv_params_no_round(
                     0, 0, 0, tmp_dst_y, 128, 0 /*is_compound*/, 8 /*bit_depth*/);
 
-                enc_make_inter_predictor(scs,
-                                         ref_pic_ptr->buffer_y + ref_pic_ptr->org_x +
-                                             (ref_pic_ptr->org_y * ref_pic_ptr->stride_y),
-                                         NULL, // src_ptr_2b,
-                                         dst_buffer,
-                                         (int16_t)mb_origin_y,
-                                         (int16_t)mb_origin_x,
-                                         final_best_mv,
-                                         &scs->sf_identity,
-                                         &conv_params_y,
-                                         0, // interp_filters
-                                         0, // interinter_comp
-                                         seg_mask,
-                                         ref_pic_ptr->width,
-                                         ref_pic_ptr->height,
-                                         bsize, // bwidth
-                                         bsize, // bheight
-                                         block_size,
-                                         &xd,
-                                         ref_pic_ptr->stride_y,
-                                         dst_buffer_stride,
-                                         0,
-                                         0, // ss_y,
-                                         0, // ss_x,
-                                         8, // Always 8bit,
-                                         0, // use_intrabc,
-                                         0,
-                                         0); // is16bit
+                svt_aom_enc_make_inter_predictor(scs,
+                                                 ref_pic_ptr->buffer_y + ref_pic_ptr->org_x +
+                                                     (ref_pic_ptr->org_y * ref_pic_ptr->stride_y),
+                                                 NULL, // src_ptr_2b,
+                                                 dst_buffer,
+                                                 (int16_t)mb_origin_y,
+                                                 (int16_t)mb_origin_x,
+                                                 final_best_mv,
+                                                 &scs->sf_identity,
+                                                 &conv_params_y,
+                                                 0, // interp_filters
+                                                 0, // interinter_comp
+                                                 seg_mask,
+                                                 ref_pic_ptr->width,
+                                                 ref_pic_ptr->height,
+                                                 bsize, // bwidth
+                                                 bsize, // bheight
+                                                 block_size,
+                                                 &xd,
+                                                 ref_pic_ptr->stride_y,
+                                                 dst_buffer_stride,
+                                                 0,
+                                                 0, // ss_y,
+                                                 0, // ss_x,
+                                                 8, // Always 8bit,
+                                                 0, // use_intrabc,
+                                                 0,
+                                                 0); // is16bit
             }
         } else {
             // intra recon
@@ -1121,20 +1123,21 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                         left_col,
                         bsize);
                 else
-                    update_neighbor_samples_array_open_loop_mb_recon(1, // use_top_righ_bottom_left
-                                                                     1, // update_top_neighbor
-                                                                     above_row - 1,
-                                                                     left_col - 1,
-                                                                     recon_buffer,
-                                                                     dst_buffer_stride,
-                                                                     mb_origin_x,
-                                                                     mb_origin_y,
-                                                                     size,
-                                                                     size,
-                                                                     input_pic->width,
-                                                                     input_pic->height);
+                    svt_aom_update_neighbor_samples_array_open_loop_mb_recon(
+                        1, // use_top_righ_bottom_left
+                        1, // update_top_neighbor
+                        above_row - 1,
+                        left_col - 1,
+                        recon_buffer,
+                        dst_buffer_stride,
+                        mb_origin_x,
+                        mb_origin_y,
+                        size,
+                        size,
+                        input_pic->width,
+                        input_pic->height);
 
-                intra_prediction_open_loop_mb(
+                svt_aom_intra_prediction_open_loop_mb(
                     0,
                     DC_PRED,
                     mb_origin_x,
@@ -1146,18 +1149,19 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                     dst_buffer_stride);
 
             } else {
-                update_neighbor_samples_array_open_loop_mb_recon(1, // use_top_righ_bottom_left
-                                                                 1, // update_top_neighbor
-                                                                 above_row - 1,
-                                                                 left_col - 1,
-                                                                 recon_buffer,
-                                                                 dst_buffer_stride,
-                                                                 mb_origin_x,
-                                                                 mb_origin_y,
-                                                                 size,
-                                                                 size,
-                                                                 input_pic->width,
-                                                                 input_pic->height);
+                svt_aom_update_neighbor_samples_array_open_loop_mb_recon(
+                    1, // use_top_righ_bottom_left
+                    1, // update_top_neighbor
+                    above_row - 1,
+                    left_col - 1,
+                    recon_buffer,
+                    dst_buffer_stride,
+                    mb_origin_x,
+                    mb_origin_y,
+                    size,
+                    size,
+                    input_pic->width,
+                    input_pic->height);
                 uint8_t ois_intra_mode = best_intra_mode;
                 int32_t p_angle        = av1_is_directional_mode((PredictionMode)ois_intra_mode)
                            ? mode_to_angle_map[(PredictionMode)ois_intra_mode]
@@ -1175,7 +1179,7 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                                       left_col);
                 }
                 // PRED
-                intra_prediction_open_loop_mb(
+                svt_aom_intra_prediction_open_loop_mb(
                     p_angle,
                     ois_intra_mode,
                     mb_origin_x,
@@ -1207,16 +1211,16 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
 
         if (!disable_intra_pred || (pcs->tpl_data.is_used_as_reference_flag)) {
             if (eob) {
-                av1_inv_transform_recon8bit((int32_t *)dqcoeff,
-                                            dst_buffer,
-                                            dst_buffer_stride << tpl_ctrls->subsample_tx,
-                                            dst_buffer,
-                                            dst_buffer_stride << tpl_ctrls->subsample_tx,
-                                            tx_size,
-                                            DCT_DCT,
-                                            PLANE_TYPE_Y,
-                                            eob,
-                                            0);
+                svt_aom_inv_transform_recon8bit((int32_t *)dqcoeff,
+                                                dst_buffer,
+                                                dst_buffer_stride << tpl_ctrls->subsample_tx,
+                                                dst_buffer,
+                                                dst_buffer_stride << tpl_ctrls->subsample_tx,
+                                                tx_size,
+                                                DCT_DCT,
+                                                PLANE_TYPE_Y,
+                                                eob,
+                                                0);
 
                 // If subsampling is used for the TX, need to populate the missing rows in recon with a copy of the neighbouring rows
                 if (tpl_ctrls->subsample_tx == 2) {
@@ -1471,12 +1475,12 @@ static void tpl_mc_flow_dispenser(EncodeContext *encode_context_ptr, SequenceCon
     }
 
     // padding current recon picture
-    generate_padding(recon_picture_ptr->buffer_y,
-                     recon_picture_ptr->stride_y,
-                     recon_picture_ptr->width,
-                     recon_picture_ptr->height,
-                     recon_picture_ptr->org_x,
-                     recon_picture_ptr->org_y);
+    svt_aom_generate_padding(recon_picture_ptr->buffer_y,
+                             recon_picture_ptr->stride_y,
+                             recon_picture_ptr->width,
+                             recon_picture_ptr->height,
+                             recon_picture_ptr->org_x,
+                             recon_picture_ptr->org_y);
 
     return;
 }
@@ -1676,7 +1680,7 @@ void tpl_mc_flow_synthesizer(PictureParentControlSet *pcs_array[MAX_TPL_LA_SW], 
     }
     return;
 }
-void generate_r0beta(PictureParentControlSet *pcs) {
+void svt_aom_generate_r0beta(PictureParentControlSet *pcs) {
     Av1Common          *cm                    = pcs->av1_cm;
     SequenceControlSet *scs                   = pcs->scs;
     int64_t             recrf_dist_base_sum   = 0;
@@ -1713,7 +1717,7 @@ void generate_r0beta(PictureParentControlSet *pcs) {
         pcs->tpl_is_valid = 0;
     }
 #if DEBUG_TPL
-    SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.5f\tbase_rdmult=%d\n",
+    SVT_LOG("svt_aom_generate_r0beta ------> poc %ld\t%.0f\t%.5f\tbase_rdmult=%d\n",
             pcs->picture_number,
             (double)mc_dep_cost_base,
             pcs->r0,
@@ -1860,11 +1864,12 @@ static void init_tpl_segments(SequenceControlSet *scs, PictureParentControlSet *
                 tg_info_ptr->tile_group_width_in_sb = tg_info_ptr->tile_group_sb_end_x -
                     tg_info_ptr->tile_group_sb_start_x;
 
-                enc_dec_segments_init(pcs_array[frame_idx]->tpl_disp_segment_ctrl[tile_group_idx],
-                                      enc_dec_seg_col_cnt,
-                                      enc_dec_seg_row_cnt,
-                                      tg_info_ptr->tile_group_width_in_sb,
-                                      tg_info_ptr->tile_group_height_in_sb);
+                svt_aom_enc_dec_segments_init(
+                    pcs_array[frame_idx]->tpl_disp_segment_ctrl[tile_group_idx],
+                    enc_dec_seg_col_cnt,
+                    enc_dec_seg_row_cnt,
+                    tg_info_ptr->tile_group_width_in_sb,
+                    tg_info_ptr->tile_group_height_in_sb);
             }
         }
     }
@@ -2049,10 +2054,10 @@ static EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceContro
         if (release_pa_ref) {
             if (pcs->tpl_group[i]->slice_type == P_SLICE) {
                 if (pcs->tpl_group[i]->ext_mg_id == pcs->ext_mg_id + 1)
-                    release_pa_reference_objects(scs, pcs->tpl_group[i]);
+                    svt_aom_release_pa_reference_objects(scs, pcs->tpl_group[i]);
             } else {
                 if (pcs->tpl_group[i]->ext_mg_id == pcs->ext_mg_id)
-                    release_pa_reference_objects(scs, pcs->tpl_group[i]);
+                    svt_aom_release_pa_reference_objects(scs, pcs->tpl_group[i]);
             }
         }
         if (pcs->tpl_group[i]->non_tf_input)
@@ -2067,7 +2072,7 @@ static EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceContro
    process one picture of TPL group
 */
 
-void *tpl_disp_kernel(void *input_ptr) {
+void *svt_aom_tpl_disp_kernel(void *input_ptr) {
     EbThreadContext     *thread_context_ptr = (EbThreadContext *)input_ptr;
     TplDispenserContext *context_ptr        = (TplDispenserContext *)thread_context_ptr->priv;
     EbObjectWrapper     *in_results_wrapper_ptr;
@@ -2223,7 +2228,7 @@ static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
  * Source-based operations process involves a number of analysis algorithms
  * to identify spatiotemporal characteristics of the input pictures.
  ************************************************/
-void *source_based_operations_kernel(void *input_ptr) {
+void *svt_aom_source_based_operations_kernel(void *input_ptr) {
     EbThreadContext              *thread_context_ptr = (EbThreadContext *)input_ptr;
     SourceBasedOperationsContext *context_ptr        = (SourceBasedOperationsContext *)
                                                     thread_context_ptr->priv;
@@ -2259,7 +2264,7 @@ void *source_based_operations_kernel(void *input_ptr) {
                                                                                         : FALSE;
             // Release Pa Ref if lad_mg is 0 and P slice and not flat struct (not belonging to any TPL group)
             if (release_pa_ref && /*scs->lad_mg == 0 &&*/ pcs->reference_released == 0) {
-                release_pa_reference_objects(scs, pcs);
+                svt_aom_release_pa_reference_objects(scs, pcs);
                 // printf ("\n PIC \t %d\n",pcs->picture_number);
             }
         }

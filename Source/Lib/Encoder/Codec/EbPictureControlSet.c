@@ -20,7 +20,7 @@
 #include "EbResourceCoordinationProcess.h"
 #include "EbModeDecisionConfigurationProcess.h"
 
-void set_tile_info(PictureParentControlSet *pcs);
+void svt_aom_set_tile_info(PictureParentControlSet *pcs);
 
 void *svt_aom_memalign(size_t align, size_t size);
 void  svt_aom_free(void *memblk);
@@ -78,8 +78,8 @@ static void me_sb_results_dctor(EbPtr p) {
 /*
   controls how many references are needed for ME results allocation
 */
-void get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1,
-                               uint8_t *max_ref_to_alloc, uint8_t *max_cand_to_alloc) {
+void svt_aom_get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1,
+                                       uint8_t *max_ref_to_alloc, uint8_t *max_cand_to_alloc) {
     *max_ref_to_alloc  = ref_count_used_list0 + ref_count_used_list1;
     *max_cand_to_alloc = ref_count_used_list0 + ref_count_used_list1 +
         (ref_count_used_list0 * ref_count_used_list1) + (ref_count_used_list0 - 1) +
@@ -113,17 +113,18 @@ uint8_t get_enable_me_16x16(EncMode enc_mode) {
     return enable_me_16x16;
 }
 
-EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *init_data_ptr) {
+EbErrorType svt_aom_me_sb_results_ctor(MeSbResults               *obj_ptr,
+                                       PictureControlSetInitData *init_data_ptr) {
     obj_ptr->dctor = me_sb_results_dctor;
 
     uint8_t max_ref_to_alloc, max_cand_to_alloc;
-    get_max_allocated_me_refs(init_data_ptr->ref_count_used_list0,
-                              init_data_ptr->ref_count_used_list1,
-                              &max_ref_to_alloc,
-                              &max_cand_to_alloc);
+    svt_aom_get_max_allocated_me_refs(init_data_ptr->ref_count_used_list0,
+                                      init_data_ptr->ref_count_used_list1,
+                                      &max_ref_to_alloc,
+                                      &max_cand_to_alloc);
     EbInputResolution resolution;
-    derive_input_resolution(&resolution,
-                            init_data_ptr->picture_width * init_data_ptr->picture_height);
+    svt_aom_derive_input_resolution(&resolution,
+                                    init_data_ptr->picture_width * init_data_ptr->picture_height);
 #if OPT_LD_M13
     uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
         ? get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8
@@ -285,7 +286,7 @@ typedef struct InitData {
 static EbErrorType create_neighbor_array_units(InitData *data, size_t count) {
     for (size_t i = 0; i < count; i++) {
         EB_NEW(*data[i].na_unit_dbl_ptr,
-               neighbor_array_unit_ctor,
+               svt_aom_neighbor_array_unit_ctor,
                data[i].max_picture_width,
                data[i].max_picture_height,
                data[i].unit_size,
@@ -401,7 +402,7 @@ static EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data
 
     return EB_ErrorNone;
 }
-uint32_t get_out_buffer_size(uint32_t picture_width, uint32_t picture_height) {
+uint32_t svt_aom_get_out_buffer_size(uint32_t picture_width, uint32_t picture_height) {
     uint32_t frame_size = picture_width * picture_height * 3 / 2; //assuming 4:2:0;
     if (frame_size > INPUT_SIZE_4K_TH)
         return frame_size;
@@ -436,8 +437,8 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
     uint32_t total_tile_cnt = init_data_ptr->tile_row_count * init_data_ptr->tile_column_count;
     uint32_t tile_idx       = 0;
 
-    uint32_t output_buffer_size   = get_out_buffer_size(init_data_ptr->picture_width,
-                                                      init_data_ptr->picture_height);
+    uint32_t output_buffer_size   = svt_aom_get_out_buffer_size(init_data_ptr->picture_width,
+                                                              init_data_ptr->picture_height);
     object_ptr->tile_row_count    = init_data_ptr->tile_row_count;
     object_ptr->tile_column_count = init_data_ptr->tile_column_count;
 
@@ -464,10 +465,10 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
     object_ptr->temp_lf_recon_picture16bit_ptr    = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_picture_ptr         = (EbPictureBufferDesc *)NULL;
     object_ptr->scaled_input_picture_ptr          = (EbPictureBufferDesc *)NULL;
-    if (get_enable_restoration(init_data_ptr->enc_mode,
-                               init_data_ptr->static_config.enable_restoration_filtering,
-                               init_data_ptr->input_resolution,
-                               init_data_ptr->static_config.fast_decode)) {
+    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
+                                       init_data_ptr->static_config.enable_restoration_filtering,
+                                       init_data_ptr->input_resolution,
+                                       init_data_ptr->static_config.fast_decode)) {
         set_restoration_unit_size(init_data_ptr->picture_width,
                                   init_data_ptr->picture_height,
                                   1,
@@ -494,12 +495,12 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
     EB_ALLOC_PTR_ARRAY(object_ptr->entropy_coding_info, total_tile_cnt);
     for (tile_idx = 0; tile_idx < total_tile_cnt; tile_idx++) {
         EB_NEW(object_ptr->entropy_coding_info[tile_idx],
-               entropy_tile_info_ctor,
+               svt_aom_entropy_tile_info_ctor,
                output_buffer_size / total_tile_cnt);
     }
 
     // Packetization process Bitstream
-    EB_NEW(object_ptr->bitstream_ptr, bitstream_ctor, output_buffer_size);
+    EB_NEW(object_ptr->bitstream_ptr, svt_aom_bitstream_ctor, output_buffer_size);
 
     // GOP
     object_ptr->picture_number       = 0;
@@ -531,7 +532,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
 
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
         EB_NEW(object_ptr->sb_ptr_array[sb_index],
-               largest_coding_unit_ctor,
+               svt_aom_largest_coding_unit_ctor,
                (uint8_t)init_data_ptr->sb_size,
                (uint16_t)(sb_origin_x * max_blk_size),
                (uint16_t)(sb_origin_y * max_blk_size),
@@ -806,7 +807,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
                     return EB_ErrorInsufficientResources;
             }
             EB_NEW(object_ptr->md_interpolation_type_neighbor_array[depth][tile_idx],
-                   neighbor_array_unit_ctor32,
+                   svt_aom_neighbor_array_unit_ctor32,
                    na_max_pic_w,
                    na_max_pic_h,
                    sizeof(uint32_t),
@@ -1146,7 +1147,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
         }
 
         EB_NEW(object_ptr->interpolation_type_neighbor_array[tile_idx],
-               neighbor_array_unit_ctor32,
+               svt_aom_neighbor_array_unit_ctor32,
                na_max_pic_w,
                na_max_pic_h,
                sizeof(uint32_t),
@@ -1166,7 +1167,7 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
 
     for (tile_idx = 0; tile_idx < total_tile_cnt; tile_idx++) {
         EB_NEW(object_ptr->enc_dec_segment_ctrl[tile_idx],
-               enc_dec_segments_ctor,
+               svt_aom_enc_dec_segments_ctor,
                init_data_ptr->enc_dec_segment_col,
                init_data_ptr->enc_dec_segment_row);
     }
@@ -1196,11 +1197,11 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
-                disallow_4x4 = MIN(
-                    disallow_4x4,
-                    (get_nsq_level(init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0
-                         ? 1
-                         : 0));
+                disallow_4x4 = MIN(disallow_4x4,
+                                   (svt_aom_get_nsq_level(
+                                        init_data_ptr->enc_mode, is_islice, is_base, coeff_lvl) == 0
+                                        ? 1
+                                        : 0));
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4,
                            svt_aom_get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
@@ -1239,16 +1240,16 @@ static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
         EB_CALLOC_ALIGNED_ARRAY(object_ptr->tpl_mvs, mem_size);
     }
 
-    if (get_enable_restoration(init_data_ptr->enc_mode,
-                               init_data_ptr->static_config.enable_restoration_filtering,
-                               init_data_ptr->input_resolution,
-                               init_data_ptr->static_config.fast_decode))
+    if (svt_aom_get_enable_restoration(init_data_ptr->enc_mode,
+                                       init_data_ptr->static_config.enable_restoration_filtering,
+                                       init_data_ptr->input_resolution,
+                                       init_data_ptr->static_config.fast_decode))
         EB_MALLOC_ALIGNED(object_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
 
     return EB_ErrorNone;
 }
 
-EbErrorType recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     EncDecSet *obj;
 
     *object_dbl_ptr = NULL;
@@ -1257,7 +1258,7 @@ EbErrorType recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr
 
     return EB_ErrorNone;
 }
-EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     PictureControlSet *obj;
 
     *object_dbl_ptr = NULL;
@@ -1455,7 +1456,7 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     EB_MALLOC_ARRAY(object_ptr->tpl_disp_segment_ctrl, 1);
     for (uint32_t tile_idx = 0; tile_idx < 1; tile_idx++) {
         EB_NEW(object_ptr->tpl_disp_segment_ctrl[tile_idx],
-               enc_dec_segments_ctor,
+               svt_aom_enc_dec_segments_ctor,
                init_data_ptr->enc_dec_segment_col,
                init_data_ptr->enc_dec_segment_row);
     }
@@ -1497,7 +1498,7 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     object_ptr->log2_tile_rows = init_data_ptr->log2_tile_rows;
     object_ptr->log2_tile_cols = init_data_ptr->log2_tile_cols;
     object_ptr->log2_sb_size   = init_data_ptr->log2_sb_size;
-    set_tile_info(object_ptr);
+    svt_aom_set_tile_info(object_ptr);
     EB_MALLOC_ARRAY(
         object_ptr->tile_group_info,
         (object_ptr->av1_cm->tiles_info.tile_rows * object_ptr->av1_cm->tiles_info.tile_cols));
@@ -1526,8 +1527,8 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     object_ptr->low_cr_seen     = 0;
     EB_CREATE_MUTEX(object_ptr->pcs_total_rate_mutex);
     EbInputResolution resolution;
-    derive_input_resolution(&resolution,
-                            init_data_ptr->picture_width * init_data_ptr->picture_height);
+    svt_aom_derive_input_resolution(&resolution,
+                                    init_data_ptr->picture_width * init_data_ptr->picture_height);
 #if OPT_LD_M13
     object_ptr->enable_me_16x16 = get_enable_me_16x16(init_data_ptr->enc_mode,
                                                       init_data_ptr->rtc_tune);
@@ -1576,7 +1577,7 @@ static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_d
     EB_ALLOC_PTR_ARRAY(object_ptr->me_results, sb_total_count);
 
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
-        EB_NEW(object_ptr->me_results[sb_index], me_sb_results_ctor, init_data_ptr);
+        EB_NEW(object_ptr->me_results[sb_index], svt_aom_me_sb_results_ctor, init_data_ptr);
     }
 
     if (init_data_ptr->enable_tpl_la) {
@@ -1771,7 +1772,8 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs, PictureParentControlSet *p
     return 0;
 }
 
-EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
+                                                       EbPtr  object_init_data_ptr) {
     PictureParentControlSet *obj;
 
     *object_dbl_ptr = NULL;
@@ -1780,7 +1782,7 @@ EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr, EbPtr obje
 
     return EB_ErrorNone;
 }
-EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     MotionEstimationData *obj;
 
     *object_dbl_ptr = NULL;

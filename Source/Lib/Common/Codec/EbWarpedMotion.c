@@ -527,7 +527,7 @@ Bool svt_find_projection(int np, int *pts1, int *pts2, BlockSize bsize, int mvy,
 */
 /* A note on hardware implementation:
     The warp filter is intended to be implementable using the same hardware as
-    the high-precision convolve filters from the loop-restoration and
+    the high-precision svt_aom_convolve filters from the loop-restoration and
     convolve-round experiments.
 
     For a single filter stage, considering all of the coefficient sets for the
@@ -730,11 +730,12 @@ void svt_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref, int widt
 /* Note: For an explanation of the warp algorithm, and some notes on bit widths
     for hardware implementations, see the comments above svt_av1_warp_affine_c
 */
-void dec_svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref, int width,
-                                      int height, int stride, uint16_t *pred, int p_col, int p_row,
-                                      int p_width, int p_height, int p_stride, int subsampling_x,
-                                      int subsampling_y, int bd, ConvolveParams *conv_params,
-                                      int16_t alpha, int16_t beta, int16_t gamma, int16_t delta) {
+void svt_aom_dec_svt_av1_highbd_warp_affine_c(const int32_t *mat, const uint16_t *ref, int width,
+                                              int height, int stride, uint16_t *pred, int p_col,
+                                              int p_row, int p_width, int p_height, int p_stride,
+                                              int subsampling_x, int subsampling_y, int bd,
+                                              ConvolveParams *conv_params, int16_t alpha,
+                                              int16_t beta, int16_t gamma, int16_t delta) {
     int32_t   tmp[15 * 8];
     const int reduce_bits_horiz = conv_params->round_0 +
         AOMMAX(bd + FILTER_BITS - conv_params->round_0 - 14, 0);
@@ -1036,11 +1037,13 @@ void svt_highbd_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref8,
                                delta);
 }
 
-void dec_svt_av1_warp_plane(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
+void svt_aom_dec_svt_av1_warp_plane(EbWarpedMotionParams *wm, int use_hbd, int bd,
+                                    const uint8_t *ref,
 
-                            int width, int height, int stride, uint8_t *pred, int p_col, int p_row,
-                            int p_width, int p_height, int p_stride, int subsampling_x,
-                            int subsampling_y, ConvolveParams *conv_params) {
+                                    int width, int height, int stride, uint8_t *pred, int p_col,
+                                    int p_row, int p_width, int p_height, int p_stride,
+                                    int subsampling_x, int subsampling_y,
+                                    ConvolveParams *conv_params) {
     if (use_hbd)
         dec_svt_highbd_warp_plane(wm,
                                   ref,
@@ -1144,7 +1147,7 @@ int svt_get_shear_params(EbWarpedMotionParams *wm) {
 }
 
 // Select samples according to the motion vector difference.
-int select_samples(MV *mv, int *pts, int *pts_inref, int len, BlockSize bsize) {
+int svt_aom_select_samples(MV *mv, int *pts, int *pts_inref, int len, BlockSize bsize) {
     const uint8_t bw                          = block_size_wide[bsize];
     const uint8_t bh                          = block_size_high[bsize];
     const int     thresh                      = clamp(AOMMAX(bw, bh), 16, 112);

@@ -479,7 +479,7 @@ typedef struct MeContext {
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,
                                           uint32_t ref_stride, uint32_t width, uint32_t height);
-extern EbErrorType me_context_ctor(MeContext *object_ptr);
+extern EbErrorType svt_aom_me_context_ctor(MeContext *object_ptr);
 
 #ifdef __cplusplus
 }

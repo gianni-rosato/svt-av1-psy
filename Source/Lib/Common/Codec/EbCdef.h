@@ -46,12 +46,13 @@ extern const int (*const svt_aom_eb_cdef_directions)[2];
 #define REDUCED_TOTAL_STRENGTHS (REDUCED_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
 #define TOTAL_STRENGTHS (CDEF_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
 
-void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h, uint16_t x);
-void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
-                 int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize, Bool is_16bit);
+void svt_aom_fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h, uint16_t x);
+void svt_aom_copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
+                         int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize,
+                         Bool is_16bit);
 
-void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstride, int32_t v,
-               int32_t h);
+void svt_aom_copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstride,
+                       int32_t v, int32_t h);
 void svt_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in, int32_t xdec,
                         int32_t ydec, uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t *dirinit,
                         int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t pli, CdefList *dlist,

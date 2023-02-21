@@ -157,8 +157,8 @@ typedef struct MainParseCtxt {
     ParseTileData *parse_tile_data;
 } MainParseCtxt;
 
-void parse_super_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, uint32_t blk_row,
-                       uint32_t blk_col, SBInfo *sb_info);
+void svt_aom_parse_super_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, uint32_t blk_row,
+                               uint32_t blk_col, SBInfo *sb_info);
 
 void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header, int32_t tile_row,
                    int32_t tile_col);
@@ -177,8 +177,8 @@ static INLINE EbErrorType init_svt_reader(SvtReader *r, const uint8_t *data,
     return EB_ErrorNone;
 }
 
-EbErrorType start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
-                             TilesInfo *tiles_info, int tile_num, int is_mt);
+EbErrorType svt_aom_start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
+                                     TilesInfo *tiles_info, int tile_num, int is_mt);
 
 EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesInfo *tile_info,
                        int tile_num, int32_t tile_row, int32_t tile_col, int32_t is_mt);

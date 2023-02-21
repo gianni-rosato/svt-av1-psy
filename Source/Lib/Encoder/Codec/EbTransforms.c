@@ -1801,8 +1801,8 @@ void svt_av1_fadst16_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     bf1[15] = bf0[0];
 }
 
-void av1_fadst32_new(const int32_t *input, int32_t *output, int8_t cos_bit,
-                     const int8_t *stage_range) {
+static void av1_fadst32_new(const int32_t *input, int32_t *output, int8_t cos_bit,
+                            const int8_t *stage_range) {
     (void)stage_range;
     const int32_t *cospi;
 
@@ -2244,8 +2244,8 @@ void svt_av1_fidentity32_c(const int32_t *input, int32_t *output, int8_t cos_bit
     for (int32_t i = 0; i < 32; ++i) output[i] = input[i] * 4;
 }
 
-void av1_fidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
-                       const int8_t *stage_range) {
+static void av1_fidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
+                              const int8_t *stage_range) {
     (void)stage_range;
     (void)cos_bit;
     for (int32_t i = 0; i < 64; ++i)
@@ -2253,7 +2253,7 @@ void av1_fidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
     assert(stage_range[0] + new_sqrt2_bits <= 32);
 }
 
-static INLINE TxfmFunc fwd_txfm_type_to_func(TxfmType txfmtype) {
+TxfmFunc svt_aom_fwd_txfm_type_to_func(TxfmType txfmtype) {
     switch (txfmtype) {
     case TXFM_TYPE_DCT4: return svt_av1_fdct4_new;
     case TXFM_TYPE_DCT8: return svt_av1_fdct8_new;
@@ -2297,8 +2297,8 @@ static INLINE void av1_tranform_two_d_core_c(int16_t *input, uint32_t input_stri
 
     const int8_t   cos_bit_col   = cfg->cos_bit_col;
     const int8_t   cos_bit_row   = cfg->cos_bit_row;
-    const TxfmFunc txfm_func_col = fwd_txfm_type_to_func(cfg->txfm_type_col);
-    const TxfmFunc txfm_func_row = fwd_txfm_type_to_func(cfg->txfm_type_row);
+    const TxfmFunc txfm_func_col = svt_aom_fwd_txfm_type_to_func(cfg->txfm_type_col);
+    const TxfmFunc txfm_func_row = svt_aom_fwd_txfm_type_to_func(cfg->txfm_type_row);
     ASSERT(txfm_func_col != NULL);
     ASSERT(txfm_func_row != NULL);
     // use output buffer as temp buffer
@@ -2366,7 +2366,7 @@ static INLINE void set_fwd_txfm_non_scale_range(Txfm2dFlipCfg *cfg) {
         }
     }
 }
-void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg) {
+void svt_aom_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg) {
     assert(cfg != NULL);
     cfg->tx_size = tx_size;
     set_flip_cfg(tx_type, cfg);
@@ -2417,7 +2417,7 @@ void svt_av1_transform_two_d_64x64_c(int16_t *input, int32_t *output, uint32_t i
     int32_t       intermediate_transform_buffer[64 * 64];
     Txfm2dFlipCfg cfg;
     //av1_get_fwd_txfm_cfg
-    av1_transform_config(transform_type, TX_64X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X64, &cfg);
     //fwd_txfm2d_c
     av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
@@ -2428,7 +2428,7 @@ void svt_av1_transform_two_d_32x32_c(int16_t *input, int32_t *output, uint32_t i
     int32_t       intermediate_transform_buffer[32 * 32];
     Txfm2dFlipCfg cfg;
 
-    av1_transform_config(transform_type, TX_32X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X32, &cfg);
 
     av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
@@ -2438,7 +2438,7 @@ void svt_av1_transform_two_d_16x16_c(int16_t *input, int32_t *output, uint32_t i
     int32_t       intermediate_transform_buffer[16 * 16];
     Txfm2dFlipCfg cfg;
 
-    av1_transform_config(transform_type, TX_16X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X16, &cfg);
 
     av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
@@ -2449,7 +2449,7 @@ void svt_av1_transform_two_d_8x8_c(int16_t *input, int32_t *output, uint32_t inp
     int32_t       intermediate_transform_buffer[8 * 8];
     Txfm2dFlipCfg cfg;
 
-    av1_transform_config(transform_type, TX_8X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X8, &cfg);
 
     av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
@@ -2460,7 +2460,7 @@ void svt_av1_transform_two_d_4x4_c(int16_t *input, int32_t *output, uint32_t inp
     int32_t       intermediate_transform_buffer[4 * 4];
     Txfm2dFlipCfg cfg;
 
-    av1_transform_config(transform_type, TX_4X4, &cfg);
+    svt_aom_transform_config(transform_type, TX_4X4, &cfg);
 
     av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
@@ -2474,7 +2474,7 @@ void svt_av1_fwd_txfm2d_64x32_c(int16_t *input, int32_t *output, uint32_t input_
     int32_t       intermediate_transform_buffer[64 * 32];
     Txfm2dFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/
-    av1_transform_config(transform_type, TX_64X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X32, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2496,7 +2496,7 @@ void svt_av1_fwd_txfm2d_32x64_c(int16_t *input, int32_t *output, uint32_t input_
 
     Txfm2dFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/
-    av1_transform_config(transform_type, TX_32X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X64, &cfg);
     /*fwd_txfm2d_c*/
     av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
@@ -2513,7 +2513,7 @@ void svt_av1_fwd_txfm2d_64x16_c(int16_t *input, int32_t *output, uint32_t input_
     int32_t       intermediate_transform_buffer[64 * 16];
     Txfm2dFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/
-    av1_transform_config(transform_type, TX_64X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X16, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2535,7 +2535,7 @@ void svt_av1_fwd_txfm2d_16x64_c(int16_t *input, int32_t *output, uint32_t input_
 
     Txfm2dFlipCfg cfg;
     /*av1_get_fwd_txfm_cfg*/
-    av1_transform_config(transform_type, TX_16X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X64, &cfg);
     /*fwd_txfm2d_c*/
     av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
@@ -2584,7 +2584,7 @@ void svt_av1_fwd_txfm2d_32x16_c(int16_t *input, int32_t *output, uint32_t input_
                                 TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 16];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_32X16, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_32X16, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2593,7 +2593,7 @@ void svt_av1_fwd_txfm2d_16x32_c(int16_t *input, int32_t *output, uint32_t input_
                                 TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 32];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_16X32, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_16X32, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2602,7 +2602,7 @@ void svt_av1_fwd_txfm2d_16x8_c(int16_t *input, int32_t *output, uint32_t input_s
                                TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 8];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_16X8, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_16X8, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2611,7 +2611,7 @@ void svt_av1_fwd_txfm2d_8x16_c(int16_t *input, int32_t *output, uint32_t input_s
                                TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 16];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_8X16, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_8X16, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2620,7 +2620,7 @@ void svt_av1_fwd_txfm2d_32x8_c(int16_t *input, int32_t *output, uint32_t input_s
                                TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 8];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_32X8, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_32X8, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2629,7 +2629,7 @@ void svt_av1_fwd_txfm2d_8x32_c(int16_t *input, int32_t *output, uint32_t input_s
                                TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 32];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_8X32, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_8X32, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2638,7 +2638,7 @@ void svt_av1_fwd_txfm2d_16x4_c(int16_t *input, int32_t *output, uint32_t input_s
                                TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 4];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_16X4, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_16X4, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2647,7 +2647,7 @@ void svt_av1_fwd_txfm2d_4x16_c(int16_t *input, int32_t *output, uint32_t input_s
                                TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 16];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_4X16, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_4X16, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2656,7 +2656,7 @@ void svt_av1_fwd_txfm2d_8x4_c(int16_t *input, int32_t *output, uint32_t input_st
                               TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 4];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_8X4, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_8X4, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2665,7 +2665,7 @@ void svt_av1_fwd_txfm2d_4x8_c(int16_t *input, int32_t *output, uint32_t input_st
                               TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 8];
     Txfm2dFlipCfg cfg;
-    /*av1_get_fwd_txfm_cfg*/ av1_transform_config(transform_type, TX_4X8, &cfg);
+    /*av1_get_fwd_txfm_cfg*/ svt_aom_transform_config(transform_type, TX_4X8, &cfg);
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -2811,7 +2811,7 @@ static EbErrorType av1_estimate_transform_N2(int16_t *residual_buffer, uint32_t 
             transform_type == H_ADST || transform_type == V_FLIPADST ||
             transform_type == H_FLIPADST)
             // Tahani: I believe those cases are never hit
-            av1_transform_two_d_32x32_N2_c(
+            svt_aom_transform_two_d_32x32_N2_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
         else {
@@ -2987,7 +2987,7 @@ static EbErrorType av1_estimate_transform_N4(int16_t *residual_buffer, uint32_t 
             transform_type == H_ADST || transform_type == V_FLIPADST ||
             transform_type == H_FLIPADST)
             // Tahani: I believe those cases are never hit
-            av1_transform_two_d_32x32_N4_c(
+            svt_aom_transform_two_d_32x32_N4_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
         else {
@@ -3227,11 +3227,12 @@ static EbErrorType av1_estimate_transform_default(int16_t *residual_buffer,
 *   Note there is an implicit assumption that TU Size <= PU Size,
 *   which is different than the HEVC requirements.
 *********************************************************************/
-EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_stride,
-                                   int32_t *coeff_buffer, uint32_t coeff_stride,
-                                   TxSize transform_size, uint64_t *three_quad_energy,
-                                   uint32_t bit_depth, TxType transform_type,
-                                   PlaneType component_type, EB_TRANS_COEFF_SHAPE trans_coeff_shape)
+EbErrorType svt_aom_estimate_transform(int16_t *residual_buffer, uint32_t residual_stride,
+                                       int32_t *coeff_buffer, uint32_t coeff_stride,
+                                       TxSize transform_size, uint64_t *three_quad_energy,
+                                       uint32_t bit_depth, TxType transform_type,
+                                       PlaneType            component_type,
+                                       EB_TRANS_COEFF_SHAPE trans_coeff_shape)
 
 {
     (void)trans_coeff_shape;
@@ -5423,47 +5424,47 @@ static INLINE void av1_tranform_two_d_core_N2_c(int16_t *input, uint32_t input_s
     }
 }
 
-void av1_transform_two_d_64x64_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                    TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_64x64_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                        TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[64 * 64];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_64X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X64, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_32x32_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                    TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_32x32_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                        TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 32];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_32X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X32, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_16x16_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                    TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_16x16_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                        TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X16, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_8x8_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                  TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_8x8_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                      TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 8];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_8X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X8, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_4x4_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                  TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_4x4_N2_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                      TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 4];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_4X4, &cfg);
+    svt_aom_transform_config(transform_type, TX_4X4, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5472,7 +5473,7 @@ void svt_av1_fwd_txfm2d_64x32_N2_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[64 * 32];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_64X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X32, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5481,7 +5482,7 @@ void svt_av1_fwd_txfm2d_32x64_N2_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 64];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_32X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X64, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5490,7 +5491,7 @@ void svt_av1_fwd_txfm2d_64x16_N2_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[64 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_64X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X16, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5499,7 +5500,7 @@ void svt_av1_fwd_txfm2d_16x64_N2_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 64];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X64, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5508,7 +5509,7 @@ void svt_av1_fwd_txfm2d_32x16_N2_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_32X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X16, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5517,7 +5518,7 @@ void svt_av1_fwd_txfm2d_16x32_N2_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 32];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X32, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5526,7 +5527,7 @@ void svt_av1_fwd_txfm2d_16x8_N2_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 8];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X8, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5535,7 +5536,7 @@ void svt_av1_fwd_txfm2d_8x16_N2_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_8X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X16, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5544,7 +5545,7 @@ void svt_av1_fwd_txfm2d_32x8_N2_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 8];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_32X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X8, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5553,7 +5554,7 @@ void svt_av1_fwd_txfm2d_8x32_N2_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 32];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_8X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X32, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5562,7 +5563,7 @@ void svt_av1_fwd_txfm2d_16x4_N2_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 4];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X4, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X4, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5571,7 +5572,7 @@ void svt_av1_fwd_txfm2d_4x16_N2_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_4X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_4X16, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5580,7 +5581,7 @@ void svt_av1_fwd_txfm2d_8x4_N2_c(int16_t *input, int32_t *output, uint32_t input
                                  TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 4];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_8X4, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X4, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -5589,7 +5590,7 @@ void svt_av1_fwd_txfm2d_4x8_N2_c(int16_t *input, int32_t *output, uint32_t input
                                  TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 8];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_4X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_4X8, &cfg);
     av1_tranform_two_d_core_N2_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7025,47 +7026,47 @@ static INLINE void av1_tranform_two_d_core_N4_c(int16_t *input, uint32_t input_s
             output[i] = 0;
 }
 
-void av1_transform_two_d_64x64_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                    TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_64x64_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                        TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[64 * 64];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_64X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X64, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_32x32_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                    TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_32x32_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                        TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 32];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_32X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X32, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_16x16_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                    TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_16x16_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                        TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X16, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_8x8_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                  TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_8x8_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                      TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 8];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_8X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X8, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_4x4_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                  TxType transform_type, uint8_t bit_depth) {
+void svt_aom_transform_two_d_4x4_N4_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                      TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 4];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_4X4, &cfg);
+    svt_aom_transform_config(transform_type, TX_4X4, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7074,7 +7075,7 @@ void svt_av1_fwd_txfm2d_64x32_N4_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[64 * 32];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_64X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X32, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7083,7 +7084,7 @@ void svt_av1_fwd_txfm2d_32x64_N4_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 64];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_32X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X64, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7092,7 +7093,7 @@ void svt_av1_fwd_txfm2d_64x16_N4_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[64 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_64X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_64X16, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7101,7 +7102,7 @@ void svt_av1_fwd_txfm2d_16x64_N4_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 64];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X64, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X64, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7110,7 +7111,7 @@ void svt_av1_fwd_txfm2d_32x16_N4_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_32X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X16, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7119,7 +7120,7 @@ void svt_av1_fwd_txfm2d_16x32_N4_c(int16_t *input, int32_t *output, uint32_t inp
                                    TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 32];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X32, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7128,7 +7129,7 @@ void svt_av1_fwd_txfm2d_16x8_N4_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 8];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X8, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7137,7 +7138,7 @@ void svt_av1_fwd_txfm2d_8x16_N4_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_8X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X16, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7146,7 +7147,7 @@ void svt_av1_fwd_txfm2d_32x8_N4_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 8];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_32X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_32X8, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7155,7 +7156,7 @@ void svt_av1_fwd_txfm2d_8x32_N4_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 32];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_8X32, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X32, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7164,7 +7165,7 @@ void svt_av1_fwd_txfm2d_16x4_N4_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 4];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_16X4, &cfg);
+    svt_aom_transform_config(transform_type, TX_16X4, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7173,7 +7174,7 @@ void svt_av1_fwd_txfm2d_4x16_N4_c(int16_t *input, int32_t *output, uint32_t inpu
                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 16];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_4X16, &cfg);
+    svt_aom_transform_config(transform_type, TX_4X16, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7182,7 +7183,7 @@ void svt_av1_fwd_txfm2d_8x4_N4_c(int16_t *input, int32_t *output, uint32_t input
                                  TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 4];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_8X4, &cfg);
+    svt_aom_transform_config(transform_type, TX_8X4, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
@@ -7191,7 +7192,7 @@ void svt_av1_fwd_txfm2d_4x8_N4_c(int16_t *input, int32_t *output, uint32_t input
                                  TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 8];
     Txfm2dFlipCfg cfg;
-    av1_transform_config(transform_type, TX_4X8, &cfg);
+    svt_aom_transform_config(transform_type, TX_4X8, &cfg);
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }

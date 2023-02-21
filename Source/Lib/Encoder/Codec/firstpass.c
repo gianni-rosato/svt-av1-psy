@@ -495,8 +495,8 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
 #define LOW_MOTION_ERROR_THRESH 25
 #define MOTION_ERROR_THRESH 500
 void set_tf_controls(PictureParentControlSet *pcs, uint8_t tf_level);
-void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
-void set_sg_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
+void svt_aom_set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
+void svt_aom_set_sg_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
 
 /******************************************************
 * Derive Multi-Processes Settings for first pass
@@ -535,8 +535,8 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs->cdef_level = 0;
 
     Av1Common *cm = pcs->av1_cm;
-    set_wn_filter_ctrls(cm, 0);
-    set_sg_filter_ctrls(cm, 0);
+    svt_aom_set_wn_filter_ctrls(cm, 0);
+    svt_aom_set_sg_filter_ctrls(cm, 0);
     pcs->enable_restoration = 0;
 
     pcs->intra_pred_mode = 3;
@@ -552,7 +552,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs->frm_hdr.use_ref_frame_mvs = 0;
 
     // GM off
-    set_gm_controls(pcs, 0);
+    svt_aom_set_gm_controls(pcs, 0);
     return return_error;
 }
 /******************************************************
@@ -639,9 +639,9 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_ctx, SequenceControlSet *scs
     me_ctx->me_early_exit_th = 0;
     return NULL;
 };
-void set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_level);
-void set_me_sr_adjustment_ctrls(MeContext *me_ctx, uint8_t sr_adjustment_level);
-void set_prehme_ctrls(MeContext *me_ctx, uint8_t level);
+void svt_aom_set_me_hme_ref_prune_ctrls(MeContext *me_ctx, uint8_t prune_level);
+void svt_aom_set_me_sr_adjustment_ctrls(MeContext *me_ctx, uint8_t sr_adjustment_level);
+void svt_aom_set_prehme_ctrls(MeContext *me_ctx, uint8_t level);
 void set_skip_frame_in_ipp(PictureParentControlSet *  pcs, MeContext *me_ctx);
 /******************************************************
 * Derive ME Settings for first pass
@@ -671,20 +671,20 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     me_context_ptr->me_ctx->me_search_method = SUB_SAD_SEARCH;
 
     uint8_t gm_level = 0;
-    set_gm_controls(pcs, gm_level);
+    svt_aom_set_gm_controls(pcs, gm_level);
 
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;
-    set_prehme_ctrls(me_context_ptr->me_ctx, prehme_level);
+    svt_aom_set_prehme_ctrls(me_context_ptr->me_ctx, prehme_level);
 
     // Set hme/me based reference pruning level (0-4)
-    set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
+    svt_aom_set_me_hme_ref_prune_ctrls(me_context_ptr->me_ctx, 0);
 
     // Set hme-based me sr adjustment level
-    set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 0);
+    svt_aom_set_me_sr_adjustment_ctrls(me_context_ptr->me_ctx, 0);
     me_context_ptr->me_ctx->prune_me_candidates_th = 0; // No impact on tf
     me_context_ptr->me_ctx->use_best_unipred_cand_only = 0; // No impact on tf
-    set_prehme_ctrls(me_context_ptr->me_ctx, 0);
+    svt_aom_set_prehme_ctrls(me_context_ptr->me_ctx, 0);
     set_skip_frame_in_ipp(pcs, me_context_ptr->me_ctx);
     return return_error;
 };
@@ -750,7 +750,7 @@ static int open_loop_firstpass_intra_prediction(
             left_col         = left_data + 16;
 
             // Fill Neighbor Arrays
-            update_neighbor_samples_array_open_loop_mb(0, // use_top_righ_bottom_left
+            svt_aom_update_neighbor_samples_array_open_loop_mb(0, // use_top_righ_bottom_left
                                                        0, // update_top_neighbor
                                                        above_row - 1,
                                                        left_col - 1,
@@ -771,7 +771,7 @@ static int open_loop_firstpass_intra_prediction(
             // PRED
             predictor = &predictor8[(sub_blk_origin_x - blk_org_x) +
                                     (sub_blk_origin_y - blk_org_y) * FORCED_BLK_SIZE];
-            intra_prediction_open_loop_mb(0,
+            svt_aom_intra_prediction_open_loop_mb(0,
                                           DC_PRED,
                                           sub_blk_origin_x,
                                           sub_blk_origin_y,
@@ -860,7 +860,7 @@ static int open_loop_firstpass_inter_prediction(
         blk_geom.org_y             = blk_org_y - (blk_org_y / me_sb_size) * me_sb_size;
         blk_geom.bwidth               = FORCED_BLK_SIZE;
         blk_geom.bheight              = FORCED_BLK_SIZE;
-        me_mb_offset = get_me_info_index(ppcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
+        me_mb_offset = svt_aom_get_me_info_index(ppcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
         uint8_t ref_pic_index = 0;
 
         if (!ppcs_ptr->enable_me_8x8) {
@@ -1266,7 +1266,7 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
             // Perform ME - me_ctx will store the outputs (MVs, buffers, etc)
             // Block-based MC using open-loop HME + refinement
 
-            motion_estimation_b64(ppcs_ptr, // source picture control set -> references come from here
+            svt_aom_motion_estimation_b64(ppcs_ptr, // source picture control set -> references come from here
                 (uint32_t)b64_index_y * sb_cols + b64_index_x,
                 (uint32_t)b64_index_x * BLOCK_SIZE_64, // x block
                 (uint32_t)b64_index_y * BLOCK_SIZE_64, // y block

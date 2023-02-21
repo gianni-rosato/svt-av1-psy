@@ -70,16 +70,16 @@ typedef struct {
         }                                                              \
     }
 
-void dec_bits_init(Bitstrm *bs, const uint8_t *data, size_t u4_numbytes);
+void svt_aom_dec_bits_init(Bitstrm *bs, const uint8_t *data, size_t u4_numbytes);
 
-uint32_t dec_get_bits_uvlc(Bitstrm *bs);
-uint32_t dec_get_bits(Bitstrm *bs, uint32_t numbits);
-void     dec_get_bits_leb128(Bitstrm *bs, size_t available, size_t *value, size_t *length);
-uint32_t dec_get_bits_ns(Bitstrm *bs, uint32_t n);
-int32_t  dec_get_bits_su(Bitstrm *bs, uint32_t n);
-uint32_t dec_get_bits_le(Bitstrm *bs, uint32_t n);
+uint32_t svt_aom_dec_get_bits_uvlc(Bitstrm *bs);
+uint32_t svt_aom_dec_get_bits(Bitstrm *bs, uint32_t numbits);
+void     svt_aom_dec_get_bits_leb128(Bitstrm *bs, size_t available, size_t *value, size_t *length);
+uint32_t svt_aom_dec_get_bits_ns(Bitstrm *bs, uint32_t n);
+int32_t  svt_aom_dec_get_bits_su(Bitstrm *bs, uint32_t n);
+uint32_t svt_aom_dec_get_bits_le(Bitstrm *bs, uint32_t n);
 
-uint32_t get_position(Bitstrm *bs);
-uint8_t *get_bitsteam_buf(Bitstrm *bs);
+uint32_t svt_aom_get_position(Bitstrm *bs);
+uint8_t *svt_aom_get_bitsteam_buf(Bitstrm *bs);
 
 #endif // EbDecBitstream_h

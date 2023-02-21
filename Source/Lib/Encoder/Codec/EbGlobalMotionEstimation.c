@@ -25,7 +25,8 @@
 #define GMV_ME_SAD_TH_1 5
 #define GMV_ME_SAD_TH_2 10
 #define GMV_PIC_VAR_TH 750
-void global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic) {
+void svt_aom_global_motion_estimation(PictureParentControlSet *pcs,
+                                      EbPictureBufferDesc     *input_pic) {
     // Get downsampled pictures with a downsampling factor of 2 in each dimension
     EbPaReferenceObject *pa_reference_object;
     EbPictureBufferDesc *quarter_ref_pic_ptr;
@@ -48,7 +49,7 @@ void global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc 
         // Ref Picture Loop
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
              ++ref_pic_index) {
-            pcs->global_motion_estimation[list_index][ref_pic_index].wmtype = IDENTITY;
+            pcs->svt_aom_global_motion_estimation[list_index][ref_pic_index].wmtype = IDENTITY;
         }
     }
     // Derive total_me_sad
@@ -61,7 +62,7 @@ void global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc 
         total_gm_sbs += pcs->rc_me_allow_gm[b64_index];
     }
     uint32_t average_me_sad = total_me_sad / (input_pic->width * input_pic->height);
-    // Derive global_motion_estimation level
+    // Derive svt_aom_global_motion_estimation level
 
     uint8_t global_motion_estimation_level;
     // 0: skip GMV params derivation
@@ -133,16 +134,17 @@ void global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc 
                                           reference_object->input_padded_picture_ptr;
                 }
 
-                compute_global_motion(pcs,
-                                      input_pic,
-                                      ref_picture_ptr,
-                                      &pcs->global_motion_estimation[list_index][ref_pic_index],
-                                      pcs->frm_hdr.allow_high_precision_mv);
+                compute_global_motion(
+                    pcs,
+                    input_pic,
+                    ref_picture_ptr,
+                    &pcs->svt_aom_global_motion_estimation[list_index][ref_pic_index],
+                    pcs->frm_hdr.allow_high_precision_mv);
             }
 
             if (pcs->gm_ctrls.identiy_exit) {
                 if (list_index == 0) {
-                    if (pcs->global_motion_estimation[0][0].wmtype == IDENTITY) {
+                    if (pcs->svt_aom_global_motion_estimation[0][0].wmtype == IDENTITY) {
                         break;
                     }
                 }
@@ -157,7 +159,8 @@ void global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc 
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
              ++ref_pic_index) {
             pcs->is_global_motion[list_index][ref_pic_index] = FALSE;
-            if (pcs->global_motion_estimation[list_index][ref_pic_index].wmtype > TRANSLATION)
+            if (pcs->svt_aom_global_motion_estimation[list_index][ref_pic_index].wmtype >
+                TRANSLATION)
                 pcs->is_global_motion[list_index][ref_pic_index] = TRUE;
         }
     }
@@ -296,7 +299,7 @@ void compute_global_motion(PictureParentControlSet *pcs, EbPictureBufferDesc *in
             // this motion type, revert to IDENTITY.
             if (!svt_av1_is_enough_erroradvantage(
                     (double)best_warp_error / ref_frame_error,
-                    gm_get_params_cost(&global_motion, ref_params, allow_high_precision_mv),
+                    svt_aom_gm_get_params_cost(&global_motion, ref_params, allow_high_precision_mv),
                     GM_ERRORADV_TR_0 /* TODO: check error advantage */)) {
                 global_motion = default_warp_params;
             }

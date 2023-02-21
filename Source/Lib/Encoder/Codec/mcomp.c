@@ -677,14 +677,7 @@ static AOM_FORCE_INLINE void two_level_checks_fast(
                                     is_scaled);
         }
 }
-static const uint8_t svt_aom_eb_av1_var_offs[MAX_SB_SIZE] = {
-    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
-    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
+extern const uint8_t svt_aom_eb_av1_var_offs[MAX_SB_SIZE];
 int svt_av1_find_best_sub_pixel_tree_pruned(MacroBlockD *xd, const struct AV1Common *const cm,
                                             const SUBPEL_MOTION_SEARCH_PARAMS *ms_params,
                                             MV start_mv, MV *bestmv, int *distortion,
@@ -846,6 +839,6 @@ int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *co
 // =============================================================================
 //  SVT Functions
 // =============================================================================
-int fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params) {
+int svt_aom_fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params) {
     return svt_mv_err_cost_(mv, mv_cost_params);
 }

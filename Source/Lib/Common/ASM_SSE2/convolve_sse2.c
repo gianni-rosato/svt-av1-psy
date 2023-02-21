@@ -31,7 +31,7 @@ static INLINE void svt_prepare_coeffs(const InterpFilterParams *const filter_par
     coeffs[3] = _mm_unpackhi_epi64(tmp_1, tmp_1); // coeffs 6 7 6 7 6 7 6 7
 }
 
-static INLINE __m128i convolve(const __m128i *const s, const __m128i *const coeffs) {
+static INLINE __m128i svt_aom_convolve(const __m128i *const s, const __m128i *const coeffs) {
     const __m128i d0 = _mm_madd_epi16(s[0], coeffs[0]);
     const __m128i d1 = _mm_madd_epi16(s[1], coeffs[1]);
     const __m128i d2 = _mm_madd_epi16(s[2], coeffs[2]);
@@ -46,7 +46,7 @@ static INLINE __m128i convolve_lo_x(const __m128i *const s, const __m128i *const
     ss[1] = _mm_unpacklo_epi8(s[1], _mm_setzero_si128());
     ss[2] = _mm_unpacklo_epi8(s[2], _mm_setzero_si128());
     ss[3] = _mm_unpacklo_epi8(s[3], _mm_setzero_si128());
-    return convolve(ss, coeffs);
+    return svt_aom_convolve(ss, coeffs);
 }
 
 static INLINE __m128i convolve_lo_y(const __m128i *const s, const __m128i *const coeffs) {
@@ -55,7 +55,7 @@ static INLINE __m128i convolve_lo_y(const __m128i *const s, const __m128i *const
     ss[1] = _mm_unpacklo_epi8(s[2], _mm_setzero_si128());
     ss[2] = _mm_unpacklo_epi8(s[4], _mm_setzero_si128());
     ss[3] = _mm_unpacklo_epi8(s[6], _mm_setzero_si128());
-    return convolve(ss, coeffs);
+    return svt_aom_convolve(ss, coeffs);
 }
 
 static INLINE __m128i convolve_hi_y(const __m128i *const s, const __m128i *const coeffs) {
@@ -64,7 +64,7 @@ static INLINE __m128i convolve_hi_y(const __m128i *const s, const __m128i *const
     ss[1] = _mm_unpackhi_epi8(s[2], _mm_setzero_si128());
     ss[2] = _mm_unpackhi_epi8(s[4], _mm_setzero_si128());
     ss[3] = _mm_unpackhi_epi8(s[6], _mm_setzero_si128());
-    return convolve(ss, coeffs);
+    return svt_aom_convolve(ss, coeffs);
 }
 
 static INLINE __m128i convolve_12tap(const __m128i *s, const __m128i *coeffs) {

@@ -40,12 +40,13 @@ typedef struct InLoopMeContext {
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType motion_estimation_context_ctor(EbThreadContext   *thread_context_ptr,
-                                           const EbEncHandle *enc_handle_ptr, int index);
+EbErrorType svt_aom_motion_estimation_context_ctor(EbThreadContext   *thread_context_ptr,
+                                                   const EbEncHandle *enc_handle_ptr, int index);
 
-extern void *motion_estimation_kernel(void *input_ptr);
+extern void *svt_aom_motion_estimation_kernel(void *input_ptr);
 
-EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *scs, PictureParentControlSet *pcs,
-                                           MotionEstimationContext_t *me_context_ptr);
+EbErrorType svt_aom_signal_derivation_me_kernel_oq(SequenceControlSet        *scs,
+                                                   PictureParentControlSet   *pcs,
+                                                   MotionEstimationContext_t *me_context_ptr);
 
 #endif // EbMotionEstimationProcess_h

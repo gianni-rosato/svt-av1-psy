@@ -78,8 +78,9 @@ static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *varianc
     return (variance_ptr[index0] + variance_ptr[index1]) >> 1;
 }
 
-void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureControlSet *pcs,
-                                           SuperBlock *sb_ptr, BlkStruct *blk_ptr) {
+void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
+                                                   PictureControlSet *pcs, SuperBlock *sb_ptr,
+                                                   BlkStruct *blk_ptr) {
     uint16_t           *variance_ptr        = pcs->ppcs->variance[sb_ptr->index];
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     uint16_t            variance            = get_variance_for_cu(blk_geom, variance_ptr);
@@ -94,7 +95,7 @@ void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureCon
     blk_ptr->qindex = q_index;
 }
 
-void setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs) {
+void svt_aom_setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs) {
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     segmentation_params->segmentation_enabled =
         (Bool)(scs->static_config.enable_adaptive_quantization == 1);

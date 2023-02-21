@@ -49,7 +49,7 @@
 *******************************************************************************
 */
 
-EbErrorType dec_pic_mgr_init(EbDecHandle *dec_handle_ptr) {
+EbErrorType svt_aom_dec_pic_mgr_init(EbDecHandle *dec_handle_ptr) {
     EbDecPicMgr **pps_pic_mgr = (EbDecPicMgr **)&dec_handle_ptr->pv_pic_mgr;
     uint32_t      mi_cols     = 2 * ((dec_handle_ptr->seq_header.max_frame_width + 7) >> 3);
     uint32_t      mi_rows     = 2 * ((dec_handle_ptr->seq_header.max_frame_height + 7) >> 3);
@@ -106,7 +106,7 @@ static INLINE EbErrorType mvs_8x8_memory_alloc(TemporalMvRef **mvs, FrameHeader 
 *******************************************************************************
 */
 
-EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
+EbDecPicBuf *svt_aom_dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
     EbDecPicMgr  *ps_pic_mgr   = (EbDecPicMgr *)dec_handle_ptr->pv_pic_mgr;
     SeqHeader    *seq_header   = &dec_handle_ptr->seq_header;
     FrameHeader  *frame_info   = &dec_handle_ptr->frame_header;
@@ -155,7 +155,7 @@ EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
 
         input_pic_buf_desc_init_data.split_mode = FALSE;
 
-        EbErrorType return_error = dec_eb_recon_picture_buffer_desc_ctor(
+        EbErrorType return_error = svt_aom_dec_eb_recon_picture_buffer_desc_ctor(
             (EbPtr *)&(ps_pic_mgr->as_dec_pic[i].ps_pic_buf),
             (EbPtr)&input_pic_buf_desc_init_data,
             dec_handle_ptr->is_16bit_pipeline);
@@ -209,8 +209,8 @@ static INLINE void dec_ref_count_and_rel(EbDecPicBuf *ps_pic_buf) {
 *
 *******************************************************************************
 */
-void dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t frame_decoded,
-                                int32_t refresh_frame_flags) {
+void svt_aom_dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t frame_decoded,
+                                        int32_t refresh_frame_flags) {
     int32_t ref_index = 0;
 
     /* TODO: Add lock and unlock for MT */
@@ -256,7 +256,7 @@ void dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t frame_decod
 }
 
 // Generate next_ref_frame_map.
-void generate_next_ref_frame_map(EbDecHandle *dec_handle_ptr) {
+void svt_aom_generate_next_ref_frame_map(EbDecHandle *dec_handle_ptr) {
     /* TODO: Add lock and unlock for MT */
 
     // next_ref_frame_map holds references to frame buffers. After storing a
@@ -292,17 +292,19 @@ static INLINE int32_t get_ref_frame_map_with_idx(EbDecHandle           *dec_hand
         : INVALID_IDX;
 }
 
-EbDecPicBuf *get_ref_frame_buf(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame) {
+EbDecPicBuf *svt_aom_get_ref_frame_buf(EbDecHandle           *dec_handle_ptr,
+                                       const MvReferenceFrame ref_frame) {
     const int32_t map_idx = get_ref_frame_map_with_idx(dec_handle_ptr, ref_frame);
     return (map_idx != INVALID_IDX) ? dec_handle_ptr->ref_frame_map[map_idx] : NULL;
 }
 
-ScaleFactors *get_ref_scale_factors(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame) {
+ScaleFactors *svt_aom_get_ref_scale_factors(EbDecHandle           *dec_handle_ptr,
+                                            const MvReferenceFrame ref_frame) {
     const int map_idx = get_ref_frame_map_with_idx(dec_handle_ptr, ref_frame);
     return (map_idx != INVALID_IDX) ? &dec_handle_ptr->ref_scale_factors[map_idx] : NULL;
 }
 
-EbDecPicBuf *get_primary_ref_frame_buf(EbDecHandle *dec_handle_ptr) {
+EbDecPicBuf *svt_aom_get_primary_ref_frame_buf(EbDecHandle *dec_handle_ptr) {
     int primary_ref_frame = dec_handle_ptr->frame_header.primary_ref_frame;
     if (primary_ref_frame == PRIMARY_REF_NONE)
         return NULL;
@@ -498,7 +500,7 @@ void svt_setup_frame_buf_refs(EbDecHandle *dec_handle_ptr) {
 
     MvReferenceFrame ref_frame;
     for (ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ++ref_frame) {
-        const EbDecPicBuf *const buf = get_ref_frame_buf(dec_handle_ptr, ref_frame);
+        const EbDecPicBuf *const buf = svt_aom_get_ref_frame_buf(dec_handle_ptr, ref_frame);
         if (buf != NULL)
             dec_handle_ptr->cur_pic_buf[0]->ref_order_hints[ref_frame - LAST_FRAME] =
                 buf->order_hint;

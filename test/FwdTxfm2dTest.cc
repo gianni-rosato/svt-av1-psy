@@ -75,7 +75,7 @@ class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
         : max_error_(TEST_GET_PARAM(2)),
           txfm_size_(TEST_GET_PARAM(0)),
           txfm_type_(TEST_GET_PARAM(1)) {
-        av1_transform_config(txfm_type_, txfm_size_, &cfg_);
+        svt_aom_transform_config(txfm_type_, txfm_size_, &cfg_);
     }
 
     void SetUp() override {

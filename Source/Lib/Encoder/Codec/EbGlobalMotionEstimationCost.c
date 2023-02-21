@@ -21,8 +21,8 @@ static int aom_count_signed_primitive_refsubexpfin(uint16_t n, uint16_t k, int16
     return svt_aom_count_primitive_refsubexpfin(scaled_n, k, ref, v);
 }
 
-int gm_get_params_cost(const EbWarpedMotionParams *gm, const EbWarpedMotionParams *ref_gm,
-                       int allow_hp) {
+int svt_aom_gm_get_params_cost(const EbWarpedMotionParams *gm, const EbWarpedMotionParams *ref_gm,
+                               int allow_hp) {
     int params_cost = 0;
     int trans_bits, trans_prec_diff;
     switch (gm->wmtype) {

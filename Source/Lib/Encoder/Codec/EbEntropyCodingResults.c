@@ -21,7 +21,8 @@ static EbErrorType entropy_coding_results_ctor(EntropyCodingResults *context_ptr
     return EB_ErrorNone;
 }
 
-EbErrorType entropy_coding_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_entropy_coding_results_creator(EbPtr *object_dbl_ptr,
+                                                   EbPtr  object_init_data_ptr) {
     EntropyCodingResults *obj;
 
     *object_dbl_ptr = NULL;

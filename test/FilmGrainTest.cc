@@ -188,13 +188,13 @@ static AomFilmGrain film_grain_test_vectors[3] = {
 TEST(FilmGrain, parameters_equality) {
     /* Film grain parameters equality should not depend on random_seed and
      * update_parameters values */
-    EXPECT_EQ(film_grain_params_equal(film_grain_test_vectors,
-                                      film_grain_test_vectors + 1),
+    EXPECT_EQ(svt_aom_film_grain_params_equal(film_grain_test_vectors,
+                                              film_grain_test_vectors + 1),
               1);
 
     /* These two instances of film grain parameters are different */
-    EXPECT_EQ(film_grain_params_equal(film_grain_test_vectors,
-                                      film_grain_test_vectors + 2),
+    EXPECT_EQ(svt_aom_film_grain_params_equal(film_grain_test_vectors,
+                                              film_grain_test_vectors + 2),
               0);
 }
 
@@ -393,8 +393,8 @@ class DenoiseModelRunTest : public ::testing::Test {
             fg_init_data.stride_y >> subsampling_x_;
 
         memset(&noise_model, 0, sizeof(noise_model));
-        err = denoise_and_model_ctor(&noise_model, &fg_init_data);
-        EXPECT_EQ(err, 0) << "denoise_and_model_ctor fail";
+        err = svt_aom_denoise_and_model_ctor(&noise_model, &fg_init_data);
+        EXPECT_EQ(err, 0) << "svt_aom_denoise_and_model_ctor fail";
     }
 
     ~DenoiseModelRunTest() {
@@ -411,11 +411,11 @@ class DenoiseModelRunTest : public ::testing::Test {
         memset(&output_film_grain, 0, sizeof(output_film_grain));
 
 #ifdef ARCH_X86_64
-        EbCpuFlags cpu_flags = get_cpu_flags_to_use();
+        EbCpuFlags cpu_flags = svt_aom_get_cpu_flags_to_use();
 #else
         EbCpuFlags cpu_flags = 0;
 #endif
-        setup_rtcd_internal(cpu_flags);
+        svt_aom_setup_rtcd_internal(cpu_flags);
     }
 
     void init_data() {
@@ -434,9 +434,9 @@ class DenoiseModelRunTest : public ::testing::Test {
     }
 
     void check_filmgrain() {
-        EXPECT_EQ(
-            film_grain_params_equal(&output_film_grain, &expected_film_grain),
-            1);
+        EXPECT_EQ(svt_aom_film_grain_params_equal(&output_film_grain,
+                                                  &expected_film_grain),
+                  1);
     }
 
     void run_test() {

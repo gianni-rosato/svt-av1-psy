@@ -42,10 +42,10 @@ typedef struct OutputBitstreamUnit {
 /**********************************
      * Extern Function Declarations
      **********************************/
-extern EbErrorType output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr,
-                                              uint32_t             buffer_size);
+extern EbErrorType svt_aom_output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr,
+                                                      uint32_t             buffer_size);
 
-extern EbErrorType output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr);
+extern EbErrorType svt_aom_output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr);
 
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/

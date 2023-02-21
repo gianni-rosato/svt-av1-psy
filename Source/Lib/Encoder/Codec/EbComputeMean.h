@@ -35,7 +35,7 @@ uint64_t svt_compute_sub_mean_8x8_c(
     uint8_t* input_samples, /**< input parameter, input samples Ptr */
     uint16_t input_stride); /**< input parameter, input stride */
 
-uint64_t compute_sub_mean_squared_values_c(
+uint64_t svt_aom_compute_sub_mean_squared_values_c(
     uint8_t* input_samples, /**< input parameter, input samples Ptr */
     uint32_t input_stride, /**< input parameter, input stride */
     uint32_t input_area_width, /**< input parameter, input area width */

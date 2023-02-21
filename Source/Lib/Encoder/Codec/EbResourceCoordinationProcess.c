@@ -77,8 +77,8 @@ static void resource_coordination_context_dctor(EbPtr p) {
 /************************************************
  * Resource Coordination Context Constructor
  ************************************************/
-EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_ptr,
-                                               EbEncHandle     *enc_handle_ptr) {
+EbErrorType svt_aom_resource_coordination_context_ctor(EbThreadContext *thread_contxt_ptr,
+                                                       EbEncHandle     *enc_handle_ptr) {
     ResourceCoordinationContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_contxt_ptr->priv  = context_ptr;
@@ -126,28 +126,28 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
     return EB_ErrorNone;
 }
 
-uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_ref);
-uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution,
-                            Bool is_base);
+uint8_t svt_aom_get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_ref);
+uint8_t svt_aom_get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution,
+                                    Bool is_base);
 /*
 * return true if restoration filtering is enabled; false otherwise
   Used by signal_derivation_pre_analysis_oq and memory allocation
 */
-uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-                               uint8_t input_resolution, Bool fast_decode) {
+uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
+                                       uint8_t input_resolution, Bool fast_decode) {
     if (config_enable_restoration != DEFAULT)
         return config_enable_restoration;
 
     uint8_t wn = 0;
     for (int is_ref = 0; is_ref < 2; is_ref++) {
-        wn = get_wn_filter_level(enc_mode, input_resolution, is_ref);
+        wn = svt_aom_get_wn_filter_level(enc_mode, input_resolution, is_ref);
         if (wn)
             break;
     }
 
     uint8_t sg = 0;
     for (int is_base = 0; is_base < 2; is_base++) {
-        sg = get_sg_filter_level(enc_mode, fast_decode, input_resolution, is_base);
+        sg = svt_aom_get_sg_filter_level(enc_mode, fast_decode, input_resolution, is_base);
         if (sg)
             break;
     }
@@ -177,7 +177,7 @@ static EbErrorType signal_derivation_pre_analysis_oq_pcs(PictureParentControlSet
     pcs->tf_enable_hme_level2_flag = 1;
 
     //if (scs->static_config.enable_tpl_la)
-    //assert_err(pcs->is_720p_or_larger == (pcs->tpl_ctrls.synth_blk_size == 16), "TPL Synth Size Error");
+    //svt_aom_assert_err(pcs->is_720p_or_larger == (pcs->tpl_ctrls.synth_blk_size == 16), "TPL Synth Size Error");
 
     return return_error;
 }
@@ -233,7 +233,7 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs) {
         scs->seq_header.pic_based_rate_est = (uint8_t)scs->pic_based_rate_est;
 
     if (scs->static_config.enable_restoration_filtering == DEFAULT) {
-        scs->seq_header.enable_restoration = get_enable_restoration(
+        scs->seq_header.enable_restoration = svt_aom_get_enable_restoration(
             scs->static_config.enc_mode,
             scs->static_config.enable_restoration_filtering,
             scs->input_resolution,
@@ -555,7 +555,7 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs) {
     pcs->ds_pics.sixteenth_picture_ptr   = NULL;
     pcs->max_number_of_pus_per_sb        = SQUARE_PU_COUNT;
 
-    atomic_set_u32(&pcs->pame_done, 0);
+    svt_aom_atomic_set_u32(&pcs->pame_done, 0);
 
     svt_create_cond_var(&pcs->me_ready);
 
@@ -681,12 +681,12 @@ static void copy_input_buffer_overlay(SequenceControlSet *sequenceControlSet,
 /******************************************************
  * Read Stat from File
  ******************************************************/
-void read_stat(SequenceControlSet *scs) {
+void svt_aom_read_stat(SequenceControlSet *scs) {
     EncodeContext *encode_context_ptr = scs->encode_context_ptr;
 
     encode_context_ptr->rc_stats_buffer = scs->static_config.rc_stats_buffer;
 }
-void setup_two_pass(SequenceControlSet *scs) {
+void svt_aom_setup_two_pass(SequenceControlSet *scs) {
     EncodeContext *encode_context_ptr = scs->encode_context_ptr;
     scs->twopass.passes               = scs->passes;
     scs->twopass.stats_buf_ctx        = &encode_context_ptr->stats_buf_context;
@@ -751,8 +751,8 @@ static void update_frame_event(PictureParentControlSet *pcs, uint64_t pic_num) {
     while (node) {
         if (node->node_type == REF_FRAME_SCALING_EVENT) {
             // update resize denominator by input event
-            assert_err(node->size == sizeof(EbRefFrameScale),
-                       "private data size mismatch of REF_FRAME_SCALING_EVENT");
+            svt_aom_assert_err(node->size == sizeof(EbRefFrameScale),
+                               "private data size mismatch of REF_FRAME_SCALING_EVENT");
             // update scaling event for future pictures
             scs->encode_context_ptr->resize_evt = *(EbRefFrameScale *)node->data;
             // set reset flag of rate control
@@ -794,7 +794,7 @@ static void update_frame_event(PictureParentControlSet *pcs, uint64_t pic_num) {
 *  parameters (if it is the initial picture) and other encoding parameters such as QP, Bitrate, picture type ...
 *
 ********************************************************************************/
-void *resource_coordination_kernel(void *input_ptr) {
+void *svt_aom_resource_coordination_kernel(void *input_ptr) {
     EbThreadContext             *enc_contxt_ptr = (EbThreadContext *)input_ptr;
     ResourceCoordinationContext *context_ptr = (ResourceCoordinationContext *)enc_contxt_ptr->priv;
 
@@ -848,10 +848,10 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             // Init SB Params
             const uint32_t input_size = scs->max_input_luma_width * scs->max_input_luma_height;
-            derive_input_resolution(&scs->input_resolution, input_size);
+            svt_aom_derive_input_resolution(&scs->input_resolution, input_size);
 
-            b64_geom_init(scs);
-            sb_geom_init(scs);
+            svt_aom_b64_geom_init(scs);
+            svt_aom_sb_geom_init(scs);
 
             // sf_identity
             svt_av1_setup_scale_factors_for_frame(&scs->sf_identity,
@@ -883,7 +883,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             // - Most of p_pcs_wrapper_ptr in pre-allocated overlay candidates will be released & recycled to empty fifo
             //     by altref candidate's svt_release_object(pcs->overlay_ppcs_ptr->p_pcs_wrapper_ptr) in PictureDecision.
             // - The recycled ppcs may be assigned a new picture_number in ResourceCoordination.
-            // - If the to-be-removed overlay candidate runs in picture_decision_kernel() after above release/recycle/assign,
+            // - If the to-be-removed overlay candidate runs in svt_aom_picture_decision_kernel() after above release/recycle/assign,
             //     picture_decision_reorder_queue will update by the same picture_number (of the same ppcs ptr) twice and CHECK_REPORT_ERROR_NC occur.
             // - So need ppcs live_count + 1 before post ResourceCoordinationResults, and release ppcs before end of PictureDecision,
             //     to avoid recycling overlay candidate's ppcs to empty fifo too early.
@@ -943,7 +943,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             end_of_sequence_flag = (pcs->input_ptr->flags & EB_BUFFERFLAG_EOS) ? TRUE : FALSE;
             // Check whether super-res is previously enabled in this recycled parent pcs and restore to non-scale-down default if so.
             if (pcs->frame_superres_enabled || pcs->frame_resize_enabled)
-                reset_resized_picture(scs, pcs, pcs->enhanced_picture_ptr);
+                svt_aom_reset_resized_picture(scs, pcs, pcs->enhanced_picture_ptr);
             pcs->superres_total_recode_loop = 0;
             pcs->superres_recode_loop       = 0;
             svt_av1_get_time(&pcs->start_time_seconds, &pcs->start_time_u_seconds);
@@ -1007,13 +1007,13 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (pcs->picture_number == 0) {
                 if (scs->static_config.pass == ENC_MIDDLE_PASS ||
                     scs->static_config.pass == ENC_LAST_PASS)
-                    read_stat(scs);
+                    svt_aom_read_stat(scs);
                 if (scs->static_config.pass != ENC_SINGLE_PASS || scs->lap_rc)
-                    setup_two_pass(scs);
+                    svt_aom_setup_two_pass(scs);
                 else
-                    set_rc_param(scs);
+                    svt_aom_set_rc_param(scs);
                 if (scs->static_config.pass == ENC_MIDDLE_PASS)
-                    find_init_qp_middle_pass(scs, pcs);
+                    svt_aom_find_init_qp_middle_pass(scs, pcs);
             }
             if (scs->passes == 3 && !end_of_sequence_flag &&
                 scs->static_config.pass == ENC_LAST_PASS && scs->static_config.rate_control_mode) {
@@ -1112,7 +1112,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 out_results_ptr = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;
 
                 if (scs->static_config.enable_overlays == TRUE) {
-                    // ppcs live_count + 1 for PictureAnalysis & PictureDecision, will svt_release_object(ppcs) at the end of picture_decision_kernel.
+                    // ppcs live_count + 1 for PictureAnalysis & PictureDecision, will svt_release_object(ppcs) at the end of svt_aom_picture_decision_kernel.
                     svt_object_inc_live_count(prev_pcs_wrapper_ptr, 1);
                 }
 

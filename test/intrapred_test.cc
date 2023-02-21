@@ -156,7 +156,7 @@ class HighbdIntraPredTest
     : public AV1IntraPredTest<INTRAPRED_HBD, uint16_t, HBD_PARAMS> {
   protected:
     void Predict() {
-        setup_common_rtcd_internal(get_cpu_flags_to_use());
+        svt_aom_setup_common_rtcd_internal(svt_aom_get_cpu_flags_to_use());
         const int bit_depth = bd_;
         ref_func_(dst_ref_, stride_, above_row_, left_col_, bit_depth);
         tst_func_(dst_tst_, stride_, above_row_, left_col_, bit_depth);

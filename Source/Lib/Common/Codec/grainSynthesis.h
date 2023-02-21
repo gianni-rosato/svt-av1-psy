@@ -82,7 +82,7 @@ typedef struct {
     uint16_t random_seed;
 } AomFilmGrain;
 
-int32_t film_grain_params_equal(AomFilmGrain *pars_a, AomFilmGrain *pars_b);
+int32_t svt_aom_film_grain_params_equal(AomFilmGrain *pars_a, AomFilmGrain *pars_b);
 
 /*!\brief Add film grain
      *
@@ -121,8 +121,8 @@ void svt_av1_add_film_grain_run(AomFilmGrain *grain_params, uint8_t *luma, uint8
 //                                 int32_t monochrome, struct aom_read_bit_buffer *wb,
 //                                 struct aom_internal_error_info *error);
 
-void fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-                   int32_t width, int32_t height, int32_t use_high_bit_depth);
+void svt_aom_fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
+                           int32_t width, int32_t height, int32_t use_high_bit_depth);
 
 #ifdef __cplusplus
 } // extern "C"

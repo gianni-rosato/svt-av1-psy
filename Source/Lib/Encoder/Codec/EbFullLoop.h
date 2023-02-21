@@ -22,14 +22,12 @@
 extern "C" {
 #endif
 
-void full_loop_chroma_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                ModeDecisionCandidateBuffer *cand_bf,
-                                EbPictureBufferDesc *input_pic, uint32_t input_cb_origin_in_index,
-                                uint32_t blk_chroma_origin_index, COMPONENT_TYPE component_type,
-                                uint32_t  chroma_qindex,
-                                uint64_t  cb_full_distortion[DIST_CALC_TOTAL],
-                                uint64_t  cr_full_distortion[DIST_CALC_TOTAL],
-                                uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits);
+void svt_aom_full_loop_chroma_light_pd1(
+    PictureControlSet *pcs, ModeDecisionContext *ctx, ModeDecisionCandidateBuffer *cand_bf,
+    EbPictureBufferDesc *input_pic, uint32_t input_cb_origin_in_index,
+    uint32_t blk_chroma_origin_index, COMPONENT_TYPE component_type, uint32_t chroma_qindex,
+    uint64_t cb_full_distortion[DIST_CALC_TOTAL], uint64_t cr_full_distortion[DIST_CALC_TOTAL],
+    uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits);
 void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx,
                           ModeDecisionCandidateBuffer *cand_bf, EbPictureBufferDesc *input_pic,
                           COMPONENT_TYPE component_type, uint32_t chroma_qindex,
@@ -37,23 +35,28 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx,
                           uint64_t cb_full_distortion[DIST_CALC_TOTAL],
                           uint64_t cr_full_distortion[DIST_CALC_TOTAL], uint64_t *cb_coeff_bits,
                           uint64_t *cr_coeff_bits, Bool is_full_loop);
-void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,
-                                 uint8_t *rec_buffer, uint32_t rec_offset, uint32_t rec_stride,
-                                 int32_t *rec_coeff_buffer, uint32_t coeff_offset, Bool hbd,
-                                 TxSize txsize, TxType transform_type, PlaneType component_type,
-                                 uint32_t eob);
+void svt_aom_inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset,
+                                         uint32_t pred_stride, uint8_t *rec_buffer,
+                                         uint32_t rec_offset, uint32_t rec_stride,
+                                         int32_t *rec_coeff_buffer, uint32_t coeff_offset, Bool hbd,
+                                         TxSize txsize, TxType transform_type,
+                                         PlaneType component_type, uint32_t eob);
 
-extern uint32_t d2_inter_depth_block_decision(SequenceControlSet *scs, PictureControlSet *pcs,
-                                              ModeDecisionContext *ctx, uint32_t blk_mds,
-                                              uint32_t sb_addr);
+extern uint32_t svt_aom_d2_inter_depth_block_decision(SequenceControlSet  *scs,
+                                                      PictureControlSet   *pcs,
+                                                      ModeDecisionContext *ctx, uint32_t blk_mds,
+                                                      uint32_t sb_addr);
 // compute the cost of curr depth, and the depth above
-extern void compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParentControlSet *pcs,
-                                        uint32_t above_depth_mds, uint32_t step,
-                                        uint64_t *above_depth_cost, uint64_t *curr_depth_cost);
-void     compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *ctx, uint32_t above_depth_mds,
-                                               uint32_t step, uint64_t *above_depth_cost,
-                                               uint64_t *curr_depth_cost);
-uint64_t d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_block_itr);
+extern void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext     *ctx,
+                                                PictureParentControlSet *pcs,
+                                                uint32_t above_depth_mds, uint32_t step,
+                                                uint64_t *above_depth_cost,
+                                                uint64_t *curr_depth_cost);
+void        svt_aom_compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *ctx,
+                                                          uint32_t above_depth_mds, uint32_t step,
+                                                          uint64_t *above_depth_cost,
+                                                          uint64_t *curr_depth_cost);
+uint64_t    svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_block_itr);
 
 static const int av1_get_tx_scale_tab[TX_SIZES_ALL] = {
     0, 0, 0, 1, 2, 0, 0, 0, 0, 1, 1, 2, 2, 0, 0, 0, 0, 1, 1};

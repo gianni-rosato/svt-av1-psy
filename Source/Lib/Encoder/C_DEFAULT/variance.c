@@ -286,8 +286,8 @@ static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_s
 
 // Moved from EbComputeVariance_C.c
 // TODO: use or implement a simd version of this
-uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride, int w,
-                           int h, uint32_t *sse) {
+uint32_t svt_aom_variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
+                                   int w, int h, uint32_t *sse) {
     int i, j;
 
     int sad = 0;

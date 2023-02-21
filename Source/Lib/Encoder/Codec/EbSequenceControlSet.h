@@ -448,12 +448,12 @@ typedef struct EbSequenceControlSetInstance {
      **************************************/
 extern EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr);
 
-extern EbErrorType b64_geom_init(SequenceControlSet *scs);
+extern EbErrorType svt_aom_b64_geom_init(SequenceControlSet *scs);
 
-extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
-                                           uint32_t           input_size);
+extern EbErrorType svt_aom_derive_input_resolution(EbInputResolution *input_resolution,
+                                                   uint32_t           input_size);
 
-EbErrorType sb_geom_init(SequenceControlSet *scs);
+EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs);
 
 #ifdef __cplusplus
 }

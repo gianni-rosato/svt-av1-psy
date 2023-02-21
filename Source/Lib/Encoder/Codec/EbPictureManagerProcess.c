@@ -44,7 +44,7 @@ static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size
 void rtime_alloc_palette_tokens(SequenceControlSet *scs, PictureControlSet *child_pcs_ptr);
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 
-void largest_coding_unit_dctor(EbPtr p);
+void svt_aom_largest_coding_unit_dctor(EbPtr p);
 void write_stat_to_file(SequenceControlSet *scs, StatStruct stat_struct, uint64_t ref_poc);
 
 static void picture_manager_context_dctor(EbPtr p) {
@@ -55,9 +55,9 @@ static void picture_manager_context_dctor(EbPtr p) {
 /************************************************
  * Picture Manager Context Constructor
  ************************************************/
-EbErrorType picture_manager_context_ctor(EbThreadContext   *thread_context_ptr,
-                                         const EbEncHandle *enc_handle_ptr,
-                                         int                rate_control_index) {
+EbErrorType svt_aom_picture_manager_context_ctor(EbThreadContext   *thread_context_ptr,
+                                                 const EbEncHandle *enc_handle_ptr,
+                                                 int                rate_control_index) {
     PictureManagerContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -79,7 +79,7 @@ EbErrorType picture_manager_context_ctor(EbThreadContext   *thread_context_ptr,
     return EB_ErrorNone;
 }
 
-void copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr) {
+void svt_aom_copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr) {
     dst_ptr->width             = src_ptr->width;
     dst_ptr->height            = src_ptr->height;
     dst_ptr->max_width         = src_ptr->max_width;
@@ -97,7 +97,7 @@ void copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr
     dst_ptr->chroma_size       = src_ptr->chroma_size;
 }
 
-void set_tile_info(PictureParentControlSet *pcs);
+void svt_aom_set_tile_info(PictureParentControlSet *pcs);
 /*
   walks the ref picture list, and looks for a particular pic
   return NULL if not found.
@@ -114,12 +114,12 @@ ReferenceQueueEntry *search_ref_in_ref_queue(EncodeContext *encode_ctx, uint64_t
     return NULL;
 }
 
-void init_enc_dec_segement(PictureParentControlSet *ppcs) {
+void svt_aom_init_enc_dec_segement(PictureParentControlSet *ppcs) {
     SequenceControlSet *scs = ppcs->scs;
     uint8_t pic_width_in_sb = (uint8_t)((ppcs->aligned_width + scs->sb_size - 1) / scs->sb_size);
     uint8_t picture_height_in_sb = (uint8_t)((ppcs->aligned_height + scs->sb_size - 1) /
                                              scs->sb_size);
-    set_tile_info(ppcs);
+    svt_aom_set_tile_info(ppcs);
     int      sb_size_log2        = scs->seq_header.sb_size_log2;
     uint32_t enc_dec_seg_col_cnt = scs->enc_dec_segment_col_count_array[ppcs->temporal_layer_index];
     uint32_t enc_dec_seg_row_cnt = scs->enc_dec_segment_row_count_array[ppcs->temporal_layer_index];
@@ -184,11 +184,11 @@ void init_enc_dec_segement(PictureParentControlSet *ppcs) {
                 tg_info_ptr->tile_group_sb_start_x;
 
             // Init segments within the tile group
-            enc_dec_segments_init(ppcs->child_pcs->enc_dec_segment_ctrl[tile_group_idx],
-                                  enc_dec_seg_col_cnt,
-                                  enc_dec_seg_row_cnt,
-                                  tg_info_ptr->tile_group_width_in_sb,
-                                  tg_info_ptr->tile_group_height_in_sb);
+            svt_aom_enc_dec_segments_init(ppcs->child_pcs->enc_dec_segment_ctrl[tile_group_idx],
+                                          enc_dec_seg_col_cnt,
+                                          enc_dec_seg_row_cnt,
+                                          tg_info_ptr->tile_group_width_in_sb,
+                                          tg_info_ptr->tile_group_height_in_sb);
             // Enable tile parallelism in Entropy Coding stage
             for (uint16_t s = top_left_tile_row_idx; s < bottom_right_tile_row_idx; s++) {
                 for (uint16_t d = top_left_tile_col_idx; d < bottom_right_tile_col_idx; d++) {
@@ -224,15 +224,15 @@ void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
         uint16_t sb_origin_x = 0;
         uint16_t sb_origin_y = 0;
         for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count; ++sb_index) {
-            largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
-            largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
-                                     (uint8_t)entry_scs_ptr->sb_size,
-                                     (uint16_t)(sb_origin_x * entry_scs_ptr->sb_size),
-                                     (uint16_t)(sb_origin_y * entry_scs_ptr->sb_size),
-                                     (uint16_t)sb_index,
-                                     child_pcs_ptr->enc_mode,
-                                     entry_scs_ptr->max_block_cnt,
-                                     child_pcs_ptr);
+            svt_aom_largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
+            svt_aom_largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
+                                             (uint8_t)entry_scs_ptr->sb_size,
+                                             (uint16_t)(sb_origin_x * entry_scs_ptr->sb_size),
+                                             (uint16_t)(sb_origin_y * entry_scs_ptr->sb_size),
+                                             (uint16_t)sb_index,
+                                             child_pcs_ptr->enc_mode,
+                                             entry_scs_ptr->max_block_cnt,
+                                             child_pcs_ptr);
             // Increment the Order in coding order (Raster Scan Order)
             sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;
             sb_origin_x = (sb_origin_x == pic_width_in_sb - 1) ? 0 : sb_origin_x + 1;
@@ -243,7 +243,7 @@ void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
     child_pcs_ptr->mi_stride = pic_width_in_sb * (entry_scs_ptr->sb_size >> MI_SIZE_LOG2);
 
     // init segment since picture scaled
-    init_enc_dec_segement(entry_pcs_ptr);
+    svt_aom_init_enc_dec_segement(entry_pcs_ptr);
 
     //Tile Loop
     int              sb_size_log2 = entry_scs_ptr->seq_header.sb_size_log2;
@@ -301,7 +301,7 @@ void superres_setup_child_pcs(SequenceControlSet      *entry_scs_ptr,
  *  Picture Control Set with fully available Reference List
  *
  ***************************************************************************************************/
-void *picture_manager_kernel(void *input_ptr) {
+void *svt_aom_picture_manager_kernel(void *input_ptr) {
     EbThreadContext       *thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureManagerContext *context_ptr        = (PictureManagerContext *)thread_context_ptr->priv;
 
@@ -689,7 +689,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                                 entry_scs_ptr->sb_size - 1) /
                             entry_scs_ptr->sb_size;
 
-                        init_enc_dec_segement(entry_pcs_ptr);
+                        svt_aom_init_enc_dec_segement(entry_pcs_ptr);
 
                         int sb_size_log2 = entry_scs_ptr->seq_header.sb_size_log2;
                         struct PictureParentControlSet *ppcs_ptr = child_pcs_ptr->ppcs;
@@ -711,15 +711,17 @@ void *picture_manager_kernel(void *input_ptr) {
                             uint16_t sb_origin_y = 0;
                             for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count;
                                  ++sb_index) {
-                                largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
-                                largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
-                                                         (uint8_t)scs->sb_size,
-                                                         (uint16_t)(sb_origin_x * scs->sb_size),
-                                                         (uint16_t)(sb_origin_y * scs->sb_size),
-                                                         (uint16_t)sb_index,
-                                                         child_pcs_ptr->enc_mode,
-                                                         scs->max_block_cnt,
-                                                         child_pcs_ptr);
+                                svt_aom_largest_coding_unit_dctor(
+                                    child_pcs_ptr->sb_ptr_array[sb_index]);
+                                svt_aom_largest_coding_unit_ctor(
+                                    child_pcs_ptr->sb_ptr_array[sb_index],
+                                    (uint8_t)scs->sb_size,
+                                    (uint16_t)(sb_origin_x * scs->sb_size),
+                                    (uint16_t)(sb_origin_y * scs->sb_size),
+                                    (uint16_t)sb_index,
+                                    child_pcs_ptr->enc_mode,
+                                    scs->max_block_cnt,
+                                    child_pcs_ptr);
                                 // Increment the Order in coding order (Raster Scan Order)
                                 sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1
                                                                                    : sb_origin_y;
@@ -730,8 +732,8 @@ void *picture_manager_kernel(void *input_ptr) {
 
                             // reset input_frame16bit to align with enhanced_picture_ptr
                             if (scs->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
-                                copy_buffer_info(entry_pcs_ptr->enhanced_picture_ptr,
-                                                 child_pcs_ptr->input_frame16bit);
+                                svt_aom_copy_buffer_info(entry_pcs_ptr->enhanced_picture_ptr,
+                                                         child_pcs_ptr->input_frame16bit);
                             }
                         }
 
@@ -742,8 +744,8 @@ void *picture_manager_kernel(void *input_ptr) {
                         if ((entry_pcs_ptr->frame_superres_enabled ||
                              entry_pcs_ptr->frame_resize_enabled) &&
                             scs->static_config.encoder_bit_depth > EB_EIGHT_BIT) {
-                            copy_buffer_info(entry_pcs_ptr->enhanced_downscaled_picture_ptr,
-                                             child_pcs_ptr->input_frame16bit);
+                            svt_aom_copy_buffer_info(entry_pcs_ptr->enhanced_downscaled_picture_ptr,
+                                                     child_pcs_ptr->input_frame16bit);
                         }
 
                         //                        child_pcs_ptr->ppcs->av1_cm->pcs = child_pcs_ptr;

@@ -28,9 +28,9 @@ typedef struct DlfContext {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType dlf_context_ctor(EbThreadContext   *thread_context_ptr,
-                                    const EbEncHandle *enc_handle_ptr, int index);
+extern EbErrorType svt_aom_dlf_context_ctor(EbThreadContext   *thread_context_ptr,
+                                            const EbEncHandle *enc_handle_ptr, int index);
 
-extern void *dlf_kernel(void *input_ptr);
+extern void *svt_aom_dlf_kernel(void *input_ptr);
 
 #endif // EbEntropyCodingProcess_h

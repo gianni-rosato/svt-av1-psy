@@ -20,10 +20,10 @@
 #include "EbPictureOperators.h"
 #include "EbRestoration.h"
 #include "common_dsp_rtcd.h"
-void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride, int32_t src_width,
-                                  int32_t src_height, int32_t use_highbd, int32_t plane,
-                                  Av1Common *cm, int32_t after_cdef,
-                                  RestorationStripeBoundaries *boundaries);
+void svt_aom_save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride, int32_t src_width,
+                                          int32_t src_height, int32_t use_highbd, int32_t plane,
+                                          Av1Common *cm, int32_t after_cdef,
+                                          RestorationStripeBoundaries *boundaries);
 
 static void lr_generate_padding(
     EbByte   src_pic, //output paramter, pointer to the source picture(0,0).
@@ -173,11 +173,7 @@ void lr_pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr,
     }
 }
 
-static const StripeFilterFun svt_aom_stripe_filters[NUM_STRIPE_FILTERS] = {
-    wiener_filter_stripe,
-    sgrproj_filter_stripe,
-    wiener_filter_stripe_highbd,
-    sgrproj_filter_stripe_highbd};
+extern const StripeFilterFun svt_aom_stripe_filters[NUM_STRIPE_FILTERS];
 
 // Filter one restoration unit
 // Duplicated to avoid frame level buffer copy ( frame to block level copy)
@@ -211,7 +207,8 @@ void svt_dec_av1_loop_restoration_filter_unit(
         int32_t copy_above, copy_below;
         remaining_stripes.v_start = limits->v_start + i;
 
-        get_stripe_boundary_info(&remaining_stripes, tile_rect, ss_y, &copy_above, &copy_below);
+        svt_aom_get_stripe_boundary_info(
+            &remaining_stripes, tile_rect, ss_y, &copy_above, &copy_below);
 
         const int32_t full_stripe_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
         const int32_t runit_offset       = RESTORATION_UNIT_OFFSET >> ss_y;
@@ -235,17 +232,17 @@ void svt_dec_av1_loop_restoration_filter_unit(
                                  ((remaining_stripes.v_end - remaining_stripes.v_start) + 1) & ~1);
 
         if (need_bounadaries)
-            setup_processing_stripe_boundary(&remaining_stripes,
-                                             rsb,
-                                             rsb_row,
-                                             highbd,
-                                             h,
-                                             data8,
-                                             stride,
-                                             rlbs,
-                                             copy_above,
-                                             copy_below,
-                                             optimized_lr);
+            svt_aom_setup_processing_stripe_boundary(&remaining_stripes,
+                                                     rsb,
+                                                     rsb_row,
+                                                     highbd,
+                                                     h,
+                                                     data8,
+                                                     stride,
+                                                     rlbs,
+                                                     copy_above,
+                                                     copy_below,
+                                                     optimized_lr);
 
         stripe_filter(rui,
                       unit_w,
@@ -258,26 +255,26 @@ void svt_dec_av1_loop_restoration_filter_unit(
                       tmpbuf,
                       bit_depth);
         if (need_bounadaries)
-            restore_processing_stripe_boundary(&remaining_stripes,
-                                               rlbs,
-                                               highbd,
-                                               h,
-                                               data8,
-                                               stride,
-                                               copy_above,
-                                               copy_below,
-                                               optimized_lr);
+            svt_aom_restore_processing_stripe_boundary(&remaining_stripes,
+                                                       rlbs,
+                                                       highbd,
+                                                       h,
+                                                       data8,
+                                                       stride,
+                                                       copy_above,
+                                                       copy_below,
+                                                       optimized_lr);
 
         i += h;
     }
     // copy block level dst buffer to src buffer
-    copy_tile(unit_w, unit_h, dst8_tl, dst_stride, data8_tl, stride, highbd);
+    svt_aom_copy_tile(unit_w, unit_h, dst8_tl, dst_stride, data8_tl, stride, highbd);
 }
 
-void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row,
-                                         uint8_t **rec_buff, int *rec_stride,
-                                         Av1PixelRect *tile_rect, int optimized_lr, uint8_t *dst,
-                                         int thread_cnt) {
+void svt_aom_dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row,
+                                                 uint8_t **rec_buff, int *rec_stride,
+                                                 Av1PixelRect *tile_rect, int optimized_lr,
+                                                 uint8_t *dst, int thread_cnt) {
     RestorationTileLimits tile_limit;
     RestorationUnitInfo  *lr_unit;
     LrCtxt               *lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
@@ -468,8 +465,8 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
     }
 }
 
-void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimized_lr,
-                                           int enable_flag) {
+void svt_aom_dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimized_lr,
+                                                   int enable_flag) {
     if (!enable_flag)
         return;
 
@@ -492,16 +489,16 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
         int32_t sub_y = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_y;
 
         /*Deriveing  recon pict buffer ptr's*/
-        derive_blk_pointers(recon_picture_ptr,
-                            pli,
-                            0,
-                            0,
-                            (void *)&curr_blk_recon_buf[pli],
-                            &curr_recon_stride[pli],
-                            sub_x,
-                            sub_y);
+        svt_aom_derive_blk_pointers(recon_picture_ptr,
+                                    pli,
+                                    0,
+                                    0,
+                                    (void *)&curr_blk_recon_buf[pli],
+                                    &curr_recon_stride[pli],
+                                    sub_x,
+                                    sub_y);
 
-        tile_rect[pli] = whole_frame_rect(
+        tile_rect[pli] = svt_aom_whole_frame_rect(
             &dec_handle->frame_header.frame_size, sub_x, sub_y, pli > 0);
     }
 
@@ -509,18 +506,18 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
     int sb_size = 1 << dec_handle->seq_header.sb_size_log2;
 
     for (y = 0, sb_row = 0; y < tile_h; y += sb_size, sb_row++) {
-        dec_av1_loop_restoration_filter_row(dec_handle,
-                                            sb_row,
-                                            &curr_blk_recon_buf[AOM_PLANE_Y],
-                                            &curr_recon_stride[AOM_PLANE_Y],
-                                            tile_rect,
-                                            optimized_lr,
-                                            dst,
-                                            0);
+        svt_aom_dec_av1_loop_restoration_filter_row(dec_handle,
+                                                    sb_row,
+                                                    &curr_blk_recon_buf[AOM_PLANE_Y],
+                                                    &curr_recon_stride[AOM_PLANE_Y],
+                                                    tile_rect,
+                                                    optimized_lr,
+                                                    dst,
+                                                    0);
     }
 }
 
-void dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle, int after_cdef) {
+void svt_aom_dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle, int after_cdef) {
     const int num_planes = av1_num_planes(&dec_handle->seq_header.color_config);
     const int use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_EIGHT_BIT ||
                             dec_handle->is_16bit_pipeline);
@@ -539,19 +536,19 @@ void dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle, int a
         int32_t              crop_width  = frame_size->frame_width >> sx;
         int32_t              crop_height = frame_size->frame_height >> sy;
         EbPictureBufferDesc *cur_pic_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
-        derive_blk_pointers(cur_pic_buf, p, 0, 0, (void *)&src, &stride, sx, sy);
+        svt_aom_derive_blk_pointers(cur_pic_buf, p, 0, 0, (void *)&src, &stride, sx, sy);
         uint8_t *src_buf    = REAL_PTR(use_highbd, use_highbd ? CONVERT_TO_BYTEPTR(src) : src);
         int32_t  src_stride = stride;
         RestorationStripeBoundaries *boundaries = &lr_ctxt->boundaries[p];
 
-        save_tile_row_boundary_lines(src_buf,
-                                     src_stride,
-                                     crop_width,
-                                     crop_height,
-                                     use_highbd,
-                                     p,
-                                     &dec_handle->cm,
-                                     after_cdef,
-                                     boundaries);
+        svt_aom_save_tile_row_boundary_lines(src_buf,
+                                             src_stride,
+                                             crop_width,
+                                             crop_height,
+                                             use_highbd,
+                                             p,
+                                             &dec_handle->cm,
+                                             after_cdef,
+                                             boundaries);
     }
 }

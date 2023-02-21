@@ -16,8 +16,8 @@
 #include "EbDecParseFrame.h"
 #include "EbDecNbr.h"
 
-void update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row, int mi_col,
-                       BlockSize subsize) {
+void svt_aom_update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row,
+                               int mi_col, BlockSize subsize) {
     FrameMiMap *frame_mi_map = &dec_handle->main_frame_buf.frame_mi_map;
 
     int32_t offset = parse_ctx->cur_mode_info_cnt;
@@ -36,7 +36,8 @@ void update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row
     }
 }
 /* TODO : Should remove dec_mod_ctxt dependency */
-BlockModeInfo *get_cur_mode_info(void *pv_dec_handle, int mi_row, int mi_col, SBInfo *sb_info) {
+BlockModeInfo *svt_aom_get_cur_mode_info(void *pv_dec_handle, int mi_row, int mi_col,
+                                         SBInfo *sb_info) {
     EbDecHandle *dec_handle   = (EbDecHandle *)pv_dec_handle;
     FrameMiMap  *frame_mi_map = &dec_handle->main_frame_buf.frame_mi_map;
     (void)sb_info;
@@ -49,14 +50,15 @@ BlockModeInfo *get_cur_mode_info(void *pv_dec_handle, int mi_row, int mi_col, SB
 }
 
 /* TODO : Should remove parse_ctx dependency */
-BlockModeInfo *get_left_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col,
-                                  SBInfo *sb_info) {
+BlockModeInfo *svt_aom_get_left_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col,
+                                          SBInfo *sb_info) {
     (void)sb_info;
-    return get_cur_mode_info(dec_handle, mi_row, mi_col - 1, NULL);
+    return svt_aom_get_cur_mode_info(dec_handle, mi_row, mi_col - 1, NULL);
 }
 
 /* TODO : Should remove parse_ctx dependency */
-BlockModeInfo *get_top_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col, SBInfo *sb_info) {
+BlockModeInfo *svt_aom_get_top_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col,
+                                         SBInfo *sb_info) {
     (void)sb_info;
-    return get_cur_mode_info(dec_handle, mi_row - 1, mi_col, NULL);
+    return svt_aom_get_cur_mode_info(dec_handle, mi_row - 1, mi_col, NULL);
 }

@@ -14,13 +14,16 @@
 
 #include "EbObuParse.h"
 #include "EbDecParseFrame.h"
-BlockModeInfo *get_cur_mode_info(void *pv_dec_handle, int mi_row, int mi_col, SBInfo *sb_info);
+BlockModeInfo *svt_aom_get_cur_mode_info(void *pv_dec_handle, int mi_row, int mi_col,
+                                         SBInfo *sb_info);
 
-void update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row, int mi_col,
-                       BlockSize subsize);
+void svt_aom_update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row,
+                               int mi_col, BlockSize subsize);
 
-BlockModeInfo *get_left_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col, SBInfo *sb_info);
+BlockModeInfo *svt_aom_get_left_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col,
+                                          SBInfo *sb_info);
 
-BlockModeInfo *get_top_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col, SBInfo *sb_info);
+BlockModeInfo *svt_aom_get_top_mode_info(EbDecHandle *dec_handle, int mi_row, int mi_col,
+                                         SBInfo *sb_info);
 
 #endif //EbDecNbr_h

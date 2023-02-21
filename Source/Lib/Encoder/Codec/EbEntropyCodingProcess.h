@@ -69,10 +69,10 @@ typedef struct EntropyCodingContext {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
-                                               const EbEncHandle *enc_handle_ptr, int index,
-                                               int rate_control_index);
+extern EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
+                                                       const EbEncHandle *enc_handle_ptr, int index,
+                                                       int rate_control_index);
 
-extern void *entropy_coding_kernel(void *input_ptr);
+extern void *svt_aom_entropy_coding_kernel(void *input_ptr);
 
 #endif // EbEntropyCodingProcess_h

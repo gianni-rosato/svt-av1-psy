@@ -49,8 +49,8 @@ extern PredictionStructureConfigEntry three_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
-void  get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
-void init_resize_picture(SequenceControlSet* scs, PictureParentControlSet* pcs);
+void  svt_aom_get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
+void svt_aom_init_resize_picture(SequenceControlSet* scs, PictureParentControlSet* pcs);
 MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
@@ -189,7 +189,7 @@ static void picture_decision_context_dctor(EbPtr p)
  /************************************************
   * Picture Analysis Context Constructor
   ************************************************/
-EbErrorType picture_decision_context_ctor(
+EbErrorType svt_aom_picture_decision_context_ctor(
     EbThreadContext     *thread_context_ptr,
     const EbEncHandle   *enc_handle_ptr,
     uint8_t scene_change_detection)
@@ -699,7 +699,7 @@ static void initialize_mini_gop_activity_array(PictureParentControlSet *pcs, Enc
 
     // Loop over all mini GOPs to initialize the activity
     for (uint32_t gopindex = 0; gopindex < MINI_GOP_MAX_COUNT; ++gopindex) {
-        ctx->mini_gop_activity_array[gopindex] = get_mini_gop_stats(gopindex)->hierarchical_levels > MIN_HIERARCHICAL_LEVEL;
+        ctx->mini_gop_activity_array[gopindex] = svt_aom_get_mini_gop_stats(gopindex)->hierarchical_levels > MIN_HIERARCHICAL_LEVEL;
     }
 
     // Assign the MGs to be used; if the MG is incomplete, the pre-assignment buffer will hold
@@ -769,13 +769,13 @@ static EbErrorType generate_picture_window_split(
     // Loop over all mini GOPs
     for (uint32_t gopindex = 0; gopindex < MINI_GOP_MAX_COUNT; gopindex += context_ptr->mini_gop_activity_array[gopindex]
         ? 1
-        : mini_gop_offset[get_mini_gop_stats(gopindex)->hierarchical_levels - MIN_HIERARCHICAL_LEVEL]) {
+        : mini_gop_offset[svt_aom_get_mini_gop_stats(gopindex)->hierarchical_levels - MIN_HIERARCHICAL_LEVEL]) {
         // Only for a valid mini GOP
-        if (get_mini_gop_stats(gopindex)->end_index < encode_context_ptr->pre_assignment_buffer_count && !context_ptr->mini_gop_activity_array[gopindex]) {
-            context_ptr->mini_gop_start_index[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(gopindex)->start_index;
-            context_ptr->mini_gop_end_index[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(gopindex)->end_index;
-            context_ptr->mini_gop_length[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(gopindex)->lenght;
-            context_ptr->mini_gop_hierarchical_levels[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(gopindex)->hierarchical_levels;
+        if (svt_aom_get_mini_gop_stats(gopindex)->end_index < encode_context_ptr->pre_assignment_buffer_count && !context_ptr->mini_gop_activity_array[gopindex]) {
+            context_ptr->mini_gop_start_index[context_ptr->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->start_index;
+            context_ptr->mini_gop_end_index[context_ptr->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->end_index;
+            context_ptr->mini_gop_length[context_ptr->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->lenght;
+            context_ptr->mini_gop_hierarchical_levels[context_ptr->total_number_of_mini_gops] = svt_aom_get_mini_gop_stats(gopindex)->hierarchical_levels;
             context_ptr->mini_gop_intra_count[context_ptr->total_number_of_mini_gops] = 0;
             context_ptr->mini_gop_idr_count[context_ptr->total_number_of_mini_gops] = 0;
             context_ptr->total_number_of_mini_gops++;
@@ -874,7 +874,7 @@ static void get_pred_struct_for_all_frames(
             pcs->hierarchical_levels = (uint8_t)ctx->mini_gop_hierarchical_levels[mini_gop_index];
 #endif
 
-            pcs->pred_struct_ptr = get_prediction_structure(
+            pcs->pred_struct_ptr = svt_aom_get_prediction_structure(
                 encode_ctx->prediction_structure_group_ptr,
                 pcs->pred_structure,
 #if !CLN_REMOVE_REF_CNT
@@ -1652,7 +1652,7 @@ void set_cdef_controls(PictureParentControlSet *pcs, uint8_t cdef_level, Bool fa
     }
 }
 
-void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
+void svt_aom_set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
     WnFilterCtrls* ctrls = &cm->wn_filter_ctrls;
 
     switch (wn_filter_lvl) {
@@ -1713,7 +1713,7 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl) {
     }
 }
 
-void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
+void svt_aom_set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
     SgFilterCtrls* ctrls = &cm->sg_filter_ctrls;
 
     switch (sg_filter_lvl) {
@@ -1747,7 +1747,7 @@ void set_sg_filter_ctrls(Av1Common* cm, uint8_t sg_filter_lvl) {
 }
 
 // Returns the level for Wiener restoration filter
-uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_ref) {
+uint8_t svt_aom_get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_ref) {
     uint8_t wn_filter_lvl = 0;
     if (enc_mode <= ENC_M4)
         wn_filter_lvl = 1;
@@ -1764,7 +1764,7 @@ uint8_t get_wn_filter_level(EncMode enc_mode, uint8_t input_resolution, Bool is_
 }
 
 // Returns the level for self-guided restoration filter
-uint8_t get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_base) {
+uint8_t svt_aom_get_sg_filter_level(EncMode enc_mode, Bool fast_decode, uint8_t input_resolution, Bool is_base) {
     uint8_t sg_filter_lvl = 0;
     if (fast_decode == 0) {
         if (enc_mode <= ENC_M2)
@@ -1894,7 +1894,7 @@ void svt_aom_set_dlf_controls(PictureParentControlSet* pcs, uint8_t dlf_level, u
     }
 }
 
-uint16_t  get_max_can_count(EncMode enc_mode );
+uint16_t  svt_aom_get_max_can_count(EncMode enc_mode );
 
 /*
     set controls for intra block copy
@@ -1980,7 +1980,7 @@ void set_palette_level(PictureParentControlSet* pcs, uint8_t palette_level) {
 /******************************************************
 * GM controls
 ******************************************************/
-void set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level)
+void svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level)
 {
     GmControls *gm_ctrls = &pcs->gm_ctrls;
     switch (gm_level)
@@ -2081,7 +2081,7 @@ void set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level)
         break;
     }
 }
-uint8_t derive_gm_level(PictureParentControlSet* pcs) {
+uint8_t svt_aom_derive_gm_level(PictureParentControlSet* pcs) {
     SequenceControlSet* scs = pcs->scs;
     uint8_t gm_level = 0;
     const EncMode enc_mode = pcs->enc_mode;
@@ -2111,7 +2111,7 @@ uint8_t derive_gm_level(PictureParentControlSet* pcs) {
     return gm_level;
 }
 
-Bool is_pic_skipped(PictureParentControlSet *pcs) {
+Bool svt_aom_is_pic_skipped(PictureParentControlSet *pcs) {
     if (!pcs->is_used_as_reference_flag &&
         pcs->scs->rc_stat_gen_pass_mode &&
         !pcs->first_frame_in_minigop)
@@ -2296,13 +2296,13 @@ EbErrorType signal_derivation_multi_processes_oq(
     uint8_t wn = 0, sg = 0;
     // If restoration filtering is enabled at the sequence level, derive the settings used for this frame
     if (scs->seq_header.enable_restoration) {
-        wn = get_wn_filter_level(enc_mode, input_resolution, is_ref);
-        sg = get_sg_filter_level(enc_mode, fast_decode, input_resolution, is_base);
+        wn = svt_aom_get_wn_filter_level(enc_mode, input_resolution, is_ref);
+        sg = svt_aom_get_sg_filter_level(enc_mode, fast_decode, input_resolution, is_base);
     }
 
     Av1Common* cm = pcs->av1_cm;
-    set_wn_filter_ctrls(cm, wn);
-    set_sg_filter_ctrls(cm, sg);
+    svt_aom_set_wn_filter_ctrls(cm, wn);
+    svt_aom_set_sg_filter_ctrls(cm, sg);
 
     // Set whether restoration filtering is enabled for this frame
     pcs->enable_restoration = (wn > 0 || sg > 0);
@@ -2360,7 +2360,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs->hbd_md = scs->enable_hbd_mode_decision;
 
-    pcs->max_can_count = get_max_can_count(enc_mode);
+    pcs->max_can_count = svt_aom_get_max_can_count(enc_mode);
     if (enc_mode <= ENC_M6)
         pcs->use_best_me_unipred_cand_only = 0;
     else
@@ -2553,10 +2553,10 @@ static void set_sframe_type(PictureParentControlSet *ppcs, EncodeContext *encode
     const EbSFrameMode sframe_mode = encode_context_ptr->sf_cfg.sframe_mode;
 
     // s-frame supports low-delay
-    assert_err(scs->static_config.pred_structure == 0 || scs->static_config.pred_structure == 1,
+    svt_aom_assert_err(scs->static_config.pred_structure == 0 || scs->static_config.pred_structure == 1,
         "S-frame supports only low delay");
     // handle multiple hierarchical levels only, no flat IPPP support
-    assert_err(ppcs->hierarchical_levels > 0, "S-frame doesn't support flat IPPP...");
+    svt_aom_assert_err(ppcs->hierarchical_levels > 0, "S-frame doesn't support flat IPPP...");
 
     const int is_arf = ppcs->temporal_layer_index == 0 ? TRUE : FALSE;
     const uint64_t frames_since_key = ppcs->picture_number - context_ptr->key_poc;
@@ -6164,21 +6164,21 @@ static void  av1_generate_rps_info(
         input_padded_picture_ptr = (EbPictureBufferDesc*)pa_ref_obj_->input_padded_picture_ptr;
 
         // Pad pictures to multiple min cu size
-        pad_picture_to_multiple_of_min_blk_size_dimensions(
+        svt_aom_pad_picture_to_multiple_of_min_blk_size_dimensions(
             scs,
             input_pic);
 
         // Pre processing operations performed on the input picture
-        picture_pre_processing_operations(
+        svt_aom_picture_pre_processing_operations(
             pcs,
             scs);
 
         if (input_pic->color_format >= EB_YUV422) {
             // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
             //       Reuse the Y, only add cb/cr in the newly created buffer desc
-            //       NOTE: since denoise may change the src, so this part is after picture_pre_processing_operations()
+            //       NOTE: since denoise may change the src, so this part is after svt_aom_picture_pre_processing_operations()
             pcs->chroma_downsampled_picture_ptr->buffer_y = input_pic->buffer_y;
-            down_sample_chroma(input_pic, pcs->chroma_downsampled_picture_ptr);
+            svt_aom_down_sample_chroma(input_pic, pcs->chroma_downsampled_picture_ptr);
         }
         else
             pcs->chroma_downsampled_picture_ptr = input_pic;
@@ -6194,25 +6194,25 @@ static void  av1_generate_rps_info(
         }
 
         // Pad input picture to complete border SBs
-        pad_picture_to_multiple_of_sb_dimensions(
+        svt_aom_pad_picture_to_multiple_of_sb_dimensions(
             input_padded_picture_ptr);
         // 1/4 & 1/16 input picture downsampling through filtering
         if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-            downsample_filtering_input_picture(
+            svt_aom_downsample_filtering_input_picture(
                 pcs,
                 input_padded_picture_ptr,
                 (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
                 (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
         }
         else {
-            downsample_decimation_input_picture(
+            svt_aom_downsample_decimation_input_picture(
                 pcs,
                 input_padded_picture_ptr,
                 (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
                 (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
         }
         // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
-        gathering_picture_statistics(
+        svt_aom_gathering_picture_statistics(
             scs,
             pcs,
             input_padded_picture_ptr,
@@ -6284,7 +6284,7 @@ int32_t search_this_pic(PictureParentControlSet**buf, uint32_t buf_size, uint64_
 /*
   Tells if an Intra picture should be delayed to get next mini-gop
 */
-Bool is_delayed_intra(PictureParentControlSet *pcs) {
+Bool svt_aom_is_delayed_intra(PictureParentControlSet *pcs) {
 
 
     if ((pcs->idr_flag || pcs->cra_flag) && pcs->pred_structure == SVT_AV1_PRED_RANDOM_ACCESS) {
@@ -6338,7 +6338,7 @@ static void process_first_pass_frame(
     pcs->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
     pcs->pa_me_data = NULL;
 }
-void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
+void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
     uint32_t ss_y, Bool include_padding);
 
 static EbErrorType derive_tf_window_params(
@@ -6375,7 +6375,7 @@ static EbErrorType derive_tf_window_params(
         }
 
         // pack byte buffers to 16 bit buffer
-        pack_highbd_pic(central_picture_ptr,
+        svt_aom_pack_highbd_pic(central_picture_ptr,
             centre_pcs->altref_buffer_highbd,
             ss_x,
             ss_y,
@@ -6411,7 +6411,7 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->height,
                     central_picture_ptr->stride_y,
                     encoder_bit_depth);
-                noise_levels_log1p_fp16[C_Y] = noise_log1p_fp16(noise_level_fp16);
+                noise_levels_log1p_fp16[C_Y] = svt_aom_noise_log1p_fp16(noise_level_fp16);
             }
         }
         else
@@ -6429,14 +6429,14 @@ static EbErrorType derive_tf_window_params(
                     (central_picture_ptr->height >> 1),
                     central_picture_ptr->stride_cb,
                     encoder_bit_depth);
-                noise_levels_log1p_fp16[C_U] = noise_log1p_fp16(noise_level_fp16);
+                noise_levels_log1p_fp16[C_U] = svt_aom_noise_log1p_fp16(noise_level_fp16);
 
                 noise_level_fp16 = svt_estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_V], // V only
                     (central_picture_ptr->width >> 1),
                     (central_picture_ptr->height >> 1),
                     central_picture_ptr->stride_cb,
                     encoder_bit_depth);
-                noise_levels_log1p_fp16[C_V] = noise_log1p_fp16(noise_level_fp16);
+                noise_levels_log1p_fp16[C_V] = svt_aom_noise_log1p_fp16(noise_level_fp16);
             }
             else {
                 noise_levels[1] = svt_estimate_noise_highbd(altref_buffer_highbd_start[C_U], // U only
@@ -6473,7 +6473,7 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->width,
                     central_picture_ptr->height,
                     central_picture_ptr->stride_y);
-                noise_levels_log1p_fp16[C_Y] = noise_log1p_fp16(noise_level_fp16);
+                noise_levels_log1p_fp16[C_Y] = svt_aom_noise_log1p_fp16(noise_level_fp16);
             }
         }
         else
@@ -6488,13 +6488,13 @@ static EbErrorType derive_tf_window_params(
                     (central_picture_ptr->width >> ss_x),
                     (central_picture_ptr->height >> ss_y),
                     central_picture_ptr->stride_cb);
-                noise_levels_log1p_fp16[C_U] = noise_log1p_fp16(noise_level_fp16);
+                noise_levels_log1p_fp16[C_U] = svt_aom_noise_log1p_fp16(noise_level_fp16);
 
                 noise_level_fp16 = svt_estimate_noise_fp16(buffer_v, // V
                     (central_picture_ptr->width >> ss_x),
                     (central_picture_ptr->height >> ss_y),
                     central_picture_ptr->stride_cr);
-                noise_levels_log1p_fp16[C_V] = noise_log1p_fp16(noise_level_fp16);
+                noise_levels_log1p_fp16[C_V] = svt_aom_noise_log1p_fp16(noise_level_fp16);
             }
             else {
                 noise_levels[1] = svt_estimate_noise(buffer_u, // U
@@ -6617,7 +6617,7 @@ static EbErrorType derive_tf_window_params(
         }
     }
     else {
-        if (is_delayed_intra(pcs)) {
+        if (svt_aom_is_delayed_intra(pcs)) {
             //initilize list
             for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
                 pcs->temp_filt_pcs_list[pic_itr] = NULL;
@@ -6916,7 +6916,7 @@ static void send_picture_out(
 
         uint8_t max_ref_to_alloc, max_cand_to_alloc;
 
-        get_max_allocated_me_refs(ref_count_used_list0, ref_count_used_list1, &max_ref_to_alloc, &max_cand_to_alloc);
+        svt_aom_get_max_allocated_me_refs(ref_count_used_list0, ref_count_used_list1, &max_ref_to_alloc, &max_cand_to_alloc);
 
         pcs->pa_me_data->max_cand = max_cand_to_alloc;
         pcs->pa_me_data->max_refs = max_ref_to_alloc;
@@ -6933,12 +6933,12 @@ static void send_picture_out(
         if (scs->static_config.resize_mode > RESIZE_NONE ||
             scs->static_config.superres_mode == SUPERRES_FIXED ||
             scs->static_config.superres_mode == SUPERRES_RANDOM) {
-            init_resize_picture(scs, pcs);
+            svt_aom_init_resize_picture(scs, pcs);
         }
     }
 
-    uint8_t gm_level = derive_gm_level(pcs);
-    set_gm_controls(pcs, gm_level);
+    uint8_t gm_level = svt_aom_derive_gm_level(pcs);
+    svt_aom_set_gm_controls(pcs, gm_level);
     pcs->me_processed_b64_count = 0;
     for (uint32_t segment_index = 0; segment_index < pcs->me_segments_total_count; ++segment_index) {
         // Get Empty Results Object
@@ -6962,8 +6962,8 @@ void store_gf_group(
     PictureParentControlSet *pcs,
     PictureDecisionContext  *ctx,
     uint32_t                 mg_size) {
-    if (pcs->slice_type == I_SLICE || (!is_delayed_intra(pcs) && pcs->temporal_layer_index == 0) || pcs->slice_type == P_SLICE) {
-        if (is_delayed_intra(pcs)) {
+    if (pcs->slice_type == I_SLICE || (!svt_aom_is_delayed_intra(pcs) && pcs->temporal_layer_index == 0) || pcs->slice_type == P_SLICE) {
+        if (svt_aom_is_delayed_intra(pcs)) {
             pcs->gf_group[0] = (void*)pcs;
             EB_MEMCPY(&pcs->gf_group[1], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
             pcs->gf_interval = 1 + mg_size;
@@ -6981,7 +6981,7 @@ void store_gf_group(
         }
 
         for (int pic_i = 0; pic_i < pcs->gf_interval; ++pic_i) {
-            if (pcs->gf_group[pic_i]->slice_type == I_SLICE || (!is_delayed_intra(pcs) && pcs->gf_group[pic_i]->temporal_layer_index == 0) || pcs->gf_group[pic_i]->slice_type == P_SLICE)
+            if (pcs->gf_group[pic_i]->slice_type == I_SLICE || (!svt_aom_is_delayed_intra(pcs) && pcs->gf_group[pic_i]->temporal_layer_index == 0) || pcs->gf_group[pic_i]->slice_type == P_SLICE)
                 pcs->gf_group[pic_i]->gf_update_due = 1;
             else
                 pcs->gf_group[pic_i]->gf_update_due = 0;
@@ -7049,7 +7049,7 @@ static void copy_tf_params(SequenceControlSet *scs, PictureParentControlSet *pcs
             pcs->tf_ctrls.enabled = 0;
         return;
    }
-    if (is_delayed_intra(pcs))
+    if (svt_aom_is_delayed_intra(pcs))
         pcs->tf_ctrls = scs->tf_params_per_type[0];
     else if (pcs->temporal_layer_index == 0)  // BASE
         pcs->tf_ctrls = scs->tf_params_per_type[1];
@@ -7058,7 +7058,7 @@ static void copy_tf_params(SequenceControlSet *scs, PictureParentControlSet *pcs
     else
         pcs->tf_ctrls.enabled = 0;
 }
-void is_screen_content(PictureParentControlSet *pcs);
+void svt_aom_is_screen_content(PictureParentControlSet *pcs);
 /*
 * Update the list0 count try and the list1 count try based on the Enc-Mode, whether BASE or not, whether SC or not
 */
@@ -7125,7 +7125,7 @@ static void update_rc_param_queue(
         // Increament the head index to assign a new spot in the queue for the new gop
         enc_cxt->rc_param_queue_head_index = (enc_cxt->rc_param_queue_head_index == PARALLEL_GOP_MAX_NUMBER - 1) ?
             0 : enc_cxt->rc_param_queue_head_index + 1;
-        assert_err(enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->size == -1, "The head in rc paramqueue is not empty");
+        svt_aom_assert_err(enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->size == -1, "The head in rc paramqueue is not empty");
         enc_cxt->rc_param_queue[enc_cxt->rc_param_queue_head_index]->first_poc = ppcs->picture_number;
         svt_release_mutex(enc_cxt->rc_param_queue_mutex);
 
@@ -7373,7 +7373,7 @@ static void set_mini_gop_structure(SequenceControlSet* scs, EncodeContext* encod
 static void perform_sc_detection(SequenceControlSet* scs, PictureParentControlSet* pcs, PictureDecisionContext* ctx) {
 
     if (pcs->slice_type == I_SLICE) {
-        // If running multi-threaded mode, perform SC detection in picture_analysis_kernel, else in picture_decision_kernel
+        // If running multi-threaded mode, perform SC detection in svt_aom_picture_analysis_kernel, else in svt_aom_picture_decision_kernel
         if (scs->static_config.logical_processors == 1) {
             int copy_frame = 1;
             if (pcs->scs->ipp_pass_ctrls.skip_frame_first_pass)
@@ -7386,7 +7386,7 @@ static void perform_sc_detection(SequenceControlSet* scs, PictureParentControlSe
             {
                 // SC Detection is OFF for 4K and higher
                 if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
-                    is_screen_content(pcs);
+                    svt_aom_is_screen_content(pcs);
                 else
                     pcs->sc_class0 = pcs->sc_class1 = pcs->sc_class2 = 0;
             }
@@ -7424,7 +7424,7 @@ static void update_pred_struct_and_pic_type(SequenceControlSet* scs, EncodeConte
         // Correct the Pred Index before switching structures
         if (pre_assignment_buffer_first_pass_flag == true)
             encode_ctx->pred_struct_position -= pcs->pred_struct_ptr->init_pic_index;
-        pcs->pred_struct_ptr = get_prediction_structure(
+        pcs->pred_struct_ptr = svt_aom_get_prediction_structure(
             encode_ctx->prediction_structure_group_ptr,
             SVT_AV1_PRED_LOW_DELAY_P,
 #if !CLN_REMOVE_REF_CNT
@@ -7807,7 +7807,7 @@ static void process_pics(SequenceControlSet* scs, PictureDecisionContext* ctx) {
     else {
         for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
             pcs = ctx->mg_pictures_array_disp_order[pic_i];
-            if (is_delayed_intra(pcs) == FALSE) {
+            if (svt_aom_is_delayed_intra(pcs) == FALSE) {
                 store_gf_group(pcs, ctx, mg_size);
             }
         }
@@ -7822,7 +7822,7 @@ static void process_pics(SequenceControlSet* scs, PictureDecisionContext* ctx) {
     for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
         pcs = ctx->mg_pictures_array_disp_order[pic_i];
 
-        if (is_delayed_intra(pcs) == FALSE) {
+        if (svt_aom_is_delayed_intra(pcs) == FALSE) {
             mctf_frame(scs, pcs, ctx);
         }
     }
@@ -7839,7 +7839,7 @@ static void process_pics(SequenceControlSet* scs, PictureDecisionContext* ctx) {
     // TODO: does it matter which pcs is used for the pred_type check?
     if (pcs->pred_struct_ptr->pred_type == SVT_AV1_PRED_RANDOM_ACCESS &&
         ctx->mg_pictures_array[0]->slice_type == P_SLICE) {
-        if (is_delayed_intra(ctx->mg_pictures_array[mg_size - 1]))
+        if (svt_aom_is_delayed_intra(ctx->mg_pictures_array[mg_size - 1]))
             ldp_delayi_mg = 1;
         else if (ctx->mg_pictures_array[mg_size - 1]->slice_type == I_SLICE &&
             ctx->mg_pictures_array[mg_size - 1]->end_of_sequence_flag)
@@ -7849,7 +7849,7 @@ static void process_pics(SequenceControlSet* scs, PictureDecisionContext* ctx) {
     for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
 
         pcs = ctx->mg_pictures_array[pic_i];
-        if (is_delayed_intra(pcs)) {
+        if (svt_aom_is_delayed_intra(pcs)) {
             ctx->prev_delayed_intra = pcs;
 
             if (ldp_delayi_mg)
@@ -7996,7 +7996,7 @@ static void update_dpb(PictureParentControlSet* pcs, PictureDecisionContext* ctx
 *     Pictures is used. The intention here is that any combination of Intra Flag and Scene
 *     Change flag can be coded.
 ***************************************************************************************************/
-void* picture_decision_kernel(void *input_ptr) {
+void* svt_aom_picture_decision_kernel(void *input_ptr) {
 
     EbThreadContext               *thread_ctx = (EbThreadContext*)input_ptr;
     PictureDecisionContext        *ctx = (PictureDecisionContext*)thread_ctx->priv;

@@ -21,7 +21,8 @@ static EbErrorType picture_analysis_result_ctor(PictureAnalysisResults *object_p
     return EB_ErrorNone;
 }
 
-EbErrorType picture_analysis_result_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_picture_analysis_result_creator(EbPtr *object_dbl_ptr,
+                                                    EbPtr  object_init_data_ptr) {
     PictureAnalysisResults *obj;
 
     *object_dbl_ptr = NULL;

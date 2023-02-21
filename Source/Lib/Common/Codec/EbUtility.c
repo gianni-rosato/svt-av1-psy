@@ -23,7 +23,7 @@
 #include <math.h>
 
 /* assert a certain condition and report err if condition not met */
-void assert_err(uint32_t condition, char* err_msg) {
+void svt_aom_assert_err(uint32_t condition, char* err_msg) {
     assert(condition);
     if (!condition)
         SVT_ERROR("\n %s \n", err_msg);
@@ -220,7 +220,7 @@ static CodedBlockStats coded_unit_stats_array[] = {
 /**************************************************************
  * Get Coded Unit Statistics
  **************************************************************/
-const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx) {
+const CodedBlockStats* svt_aom_get_coded_blk_stats(const uint32_t cu_idx) {
     return &coded_unit_stats_array[cu_idx];
 }
 
@@ -230,7 +230,7 @@ const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx) {
   *  Leading Zeros (NLZ) algorithm to get
   *  the log2f of a 32-bit number
   *****************************************/
-uint32_t log2f_32(uint32_t x) {
+uint32_t svt_aom_log2f_32(uint32_t x) {
     uint32_t log = 0;
     int32_t  i;
     for (i = 4; i >= 0; --i) {
@@ -244,7 +244,7 @@ uint32_t log2f_32(uint32_t x) {
     return log;
 }
 // concatenate two linked list, and return the pointer to the new concatenated list
-EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b) {
+EbLinkedListNode* svt_aom_concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b) {
     if (a) {
         while (a->next) a = a->next;
         a->next = b;
@@ -254,8 +254,8 @@ EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b
 }
 
 // split a linked list
-EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL,
-                                       Bool (*predicate_func)(EbLinkedListNode*)) {
+EbLinkedListNode* svt_aom_split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL,
+                                               Bool (*predicate_func)(EbLinkedListNode*)) {
     EbLinkedListNode* ll_true_ptr = (EbLinkedListNode*)
         NULL; // list of nodes satifying predicate_func(node) == TRUE
     EbLinkedListNode* ll_rest_ptr = (EbLinkedListNode*)
@@ -265,9 +265,9 @@ EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode
         EbLinkedListNode* next = input->next;
         input->next            = (EbLinkedListNode*)NULL;
         if (predicate_func(input))
-            ll_true_ptr = concat_eb_linked_list(input, ll_true_ptr);
+            ll_true_ptr = svt_aom_concat_eb_linked_list(input, ll_true_ptr);
         else
-            ll_rest_ptr = concat_eb_linked_list(input, ll_rest_ptr);
+            ll_rest_ptr = svt_aom_concat_eb_linked_list(input, ll_rest_ptr);
         input = next;
     }
 
@@ -297,7 +297,7 @@ static const MiniGopStats mini_gop_stats_array[] = {
 /**************************************************************
 * Get Mini GOP Statistics
 **************************************************************/
-const MiniGopStats* get_mini_gop_stats(const uint32_t mini_gop_index) {
+const MiniGopStats* svt_aom_get_mini_gop_stats(const uint32_t mini_gop_index) {
     return &mini_gop_stats_array[mini_gop_index];
 }
 
@@ -1386,7 +1386,7 @@ static void log_redundancy_similarity(uint32_t max_block_count) {
 /*
   Build Block Geometry
 */
-void build_blk_geom(GeomIndex geom) {
+void svt_aom_build_blk_geom(GeomIndex geom) {
     uint32_t max_block_count;
     svt_aom_geom_idx = geom;
     if (geom == GEOM_0) {

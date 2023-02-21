@@ -95,10 +95,10 @@ void generate_padding_r_hbd(EbByte src_pic, uint32_t src_stride, uint32_t row_wi
     }
 }
 
-/** generate_padding()
+/** svt_aom_generate_padding()
         is used to pad the target picture. The horizontal padding happens first and then the vertical padding.
  */
-void generate_padding(
+void svt_aom_generate_padding(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t
@@ -151,7 +151,7 @@ void generate_padding(
 
     return;
 }
-void generate_padding_compressed_10bit(
+void svt_aom_generate_padding_compressed_10bit(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t
@@ -210,11 +210,11 @@ void generate_padding_compressed_10bit(
 
     return;
 }
-/** generate_padding16_bit()
+/** svt_aom_generate_padding16_bit()
 is used to pad the target picture. The horizontal padding happens first and then the vertical padding.
 */
-// TODO: generate_padding() and generate_padding16() functions are not aligned, inputs according to comments are wrong
-void generate_padding16_bit(
+// TODO: svt_aom_generate_padding() and generate_padding16() functions are not aligned, inputs according to comments are wrong
+void svt_aom_generate_padding16_bit(
     uint16_t* src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t  src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t
@@ -315,10 +315,10 @@ void pad_input_picture(
     return;
 }
 
-/** pad_input_picture_16bit()
+/** svt_aom_pad_input_picture_16bit()
 is used to pad the input picture in order to get . The horizontal padding happens first and then the vertical padding.
 */
-void pad_input_picture_16bit(
+void svt_aom_pad_input_picture_16bit(
     uint16_t* src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t  src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t

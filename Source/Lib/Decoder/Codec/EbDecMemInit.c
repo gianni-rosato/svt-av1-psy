@@ -43,7 +43,7 @@
  *  values that are fixed for the life of
  *  the descriptor.
  *****************************************/
-EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
+EbErrorType svt_aom_dec_eb_recon_picture_buffer_desc_ctor(
     EbPtr  *object_dbl_ptr,
     EbPtr   object_init_data_ptr,
     Bool is_16bit_pipeline /* can be removed as an extra argument once
@@ -338,7 +338,7 @@ static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
 }
 
 /*TODO: Move to module files */
-EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
+EbErrorType svt_aom_init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
     void **pp_dec_mod_ctxt)
 {
     EbErrorType return_error = EB_ErrorNone;
@@ -361,7 +361,7 @@ EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
 
     EB_ALLIGN_MALLOC_DEC(int32_t*, p_dec_mod_ctxt->sb_iquant_ptr,
         iq_size * sizeof(int32_t));
-    av1_inverse_qm_init(p_dec_mod_ctxt, seq_header);
+    svt_aom_inverse_qm_init(p_dec_mod_ctxt, seq_header);
 
     EbColorConfig *cc = &dec_handle_ptr->seq_header.color_config;
     uint32_t use_highbd = (cc->bit_depth > EB_EIGHT_BIT ||
@@ -492,18 +492,18 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     return return_error;
 }
 
-EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr) {
+EbErrorType svt_aom_dec_mem_init(EbDecHandle  *dec_handle_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
     if (0 == dec_handle_ptr->seq_header_done)
         return EB_ErrorNone;
 
     /* init module ctxts */
-    return_error |= dec_pic_mgr_init(dec_handle_ptr);
+    return_error |= svt_aom_dec_pic_mgr_init(dec_handle_ptr);
 
     return_error |= init_parse_context(dec_handle_ptr);
 
-    return_error |= init_dec_mod_ctxt(dec_handle_ptr,
+    return_error |= svt_aom_init_dec_mod_ctxt(dec_handle_ptr,
                     &dec_handle_ptr->pv_dec_mod_ctxt);
 
     return_error |= init_lf_ctxt(dec_handle_ptr);

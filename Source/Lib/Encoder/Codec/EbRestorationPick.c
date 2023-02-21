@@ -20,17 +20,19 @@
 #include "EbRestProcess.h"
 #include "EbLog.h"
 
-void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane, RestTileStartVisitor on_tile,
-                                        RestUnitVisitor on_rest_unit, void *priv,
-                                        uint8_t rest_segments_column_count,
-                                        uint8_t rest_segments_row_count, uint32_t segment_index);
+void svt_aom_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
+                                            RestTileStartVisitor on_tile,
+                                            RestUnitVisitor on_rest_unit, void *priv,
+                                            uint8_t  rest_segments_column_count,
+                                            uint8_t  rest_segments_row_count,
+                                            uint32_t segment_index);
 
 void svt_av1_selfguided_restoration_c(const uint8_t *dgd8, int32_t width, int32_t height,
                                       int32_t dgd_stride, int32_t *flt0, int32_t *flt1,
                                       int32_t flt_stride, int32_t sgr_params_idx, int32_t bit_depth,
                                       int32_t highbd);
-void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane, RestTileStartVisitor on_tile,
-                                    RestUnitVisitor on_rest_unit, void *priv);
+void svt_aom_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane, RestTileStartVisitor on_tile,
+                                        RestUnitVisitor on_rest_unit, void *priv);
 
 // When set to RESTORE_WIENER or RESTORE_SGRPROJ only those are allowed.
 // When set to RESTORE_TYPES we allow switchable.
@@ -1515,7 +1517,7 @@ static double search_rest_type_finish(RestSearchCtxt *rsc, RestorationType rtype
 
     reset_rsc(rsc);
 
-    av1_foreach_rest_unit_in_frame(rsc->cm, rsc->plane, rsc_on_tile, funs[rtype], rsc);
+    svt_aom_foreach_rest_unit_in_frame(rsc->cm, rsc->plane, rsc_on_tile, funs[rtype], rsc);
 
     return RDCOST_DBL(rsc->x->rdmult, rsc->bits >> 4, rsc->sse);
 }
@@ -1561,7 +1563,7 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
             // For the unscaled pictures, there will be no additional padding added.
             const int32_t align16_pad = (rsc.plane_width % 16) ? 16 - (rsc.plane_width % 16) : 0;
             // The horizontal padding is increased by 1 to address an uninitialized memory access when
-            // using the "C" code path.  In horz_scalar_product, where the wiener filter is applied to the pixels,
+            // using the "C" code path.  In svt_aom_horz_scalar_product, where the wiener filter is applied to the pixels,
             // the right-edge pixels will need 3 padded pixels to perform a 7-tap filter. However, the filter is applied
             // over 8 (SUBPEL_TAPS) pixels, with the final 8th weight being zero. Therefore, the extra right-most pixel
             // will not affect the result, but will cause a sanitizer failure if not initialized.
@@ -1576,34 +1578,34 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
         }
         svt_release_mutex(pcs->rest_search_mutex);
 
-        av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
-                                           rsc_p->plane,
-                                           rsc_on_tile,
-                                           search_norestore_seg,
-                                           rsc_p,
-                                           pcs->rest_segments_column_count,
-                                           pcs->rest_segments_row_count,
-                                           segment_index);
+        svt_aom_foreach_rest_unit_in_frame_seg(rsc_p->cm,
+                                               rsc_p->plane,
+                                               rsc_on_tile,
+                                               search_norestore_seg,
+                                               rsc_p,
+                                               pcs->rest_segments_column_count,
+                                               pcs->rest_segments_row_count,
+                                               segment_index);
 
         if (cm->wn_filter_ctrls.enabled && (!plane || cm->wn_filter_ctrls.use_chroma))
-            av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
-                                               rsc_p->plane,
-                                               rsc_on_tile,
-                                               search_wiener_seg,
-                                               rsc_p,
-                                               pcs->rest_segments_column_count,
-                                               pcs->rest_segments_row_count,
-                                               segment_index);
+            svt_aom_foreach_rest_unit_in_frame_seg(rsc_p->cm,
+                                                   rsc_p->plane,
+                                                   rsc_on_tile,
+                                                   search_wiener_seg,
+                                                   rsc_p,
+                                                   pcs->rest_segments_column_count,
+                                                   pcs->rest_segments_row_count,
+                                                   segment_index);
 
         if (cm->sg_filter_ctrls.enabled && (!plane || cm->sg_filter_ctrls.use_chroma))
-            av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
-                                               rsc_p->plane,
-                                               rsc_on_tile,
-                                               search_sgrproj_seg,
-                                               rsc_p,
-                                               pcs->rest_segments_column_count,
-                                               pcs->rest_segments_row_count,
-                                               segment_index);
+            svt_aom_foreach_rest_unit_in_frame_seg(rsc_p->cm,
+                                                   rsc_p->plane,
+                                                   rsc_on_tile,
+                                                   search_sgrproj_seg,
+                                                   rsc_p,
+                                                   pcs->rest_segments_column_count,
+                                                   pcs->rest_segments_row_count,
+                                                   segment_index);
     }
 }
 /* Given the best parameters for each type of filter and their associated SSEs,

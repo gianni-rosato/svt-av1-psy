@@ -350,10 +350,11 @@ static INLINE uint64_t sum64(const __m256i src) {
 }
 
 /* Compute MSE only on the blocks we filtered. */
-uint64_t compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstride, const uint16_t *src,
-                                      const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
-                                      int32_t coeff_shift, int32_t pli,
-                                      uint8_t subsampling_factor) {
+uint64_t svt_aom_compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstride,
+                                              const uint16_t *src, const CdefList *dlist,
+                                              int32_t cdef_count, BlockSize bsize,
+                                              int32_t coeff_shift, int32_t pli,
+                                              uint8_t subsampling_factor) {
     uint64_t sum;
     int32_t  bi, bx, by;
 
@@ -432,9 +433,11 @@ uint64_t compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstride, cons
     return sum >> 2 * coeff_shift;
 }
 
-uint64_t compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstride, const uint8_t *src8,
-                                     const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
-                                     int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor) {
+uint64_t svt_aom_compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstride,
+                                             const uint8_t *src8, const CdefList *dlist,
+                                             int32_t cdef_count, BlockSize bsize,
+                                             int32_t coeff_shift, int32_t pli,
+                                             uint8_t subsampling_factor) {
     uint64_t sum;
     int32_t  bi, bx, by;
 

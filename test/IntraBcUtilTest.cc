@@ -14,7 +14,7 @@
  * @file IntraBcUtilTest.cc
  *
  * @brief Unit test of Intra BC utility:
- * - av1_is_dv_valid
+ * - svt_aom_is_dv_valid
  *
  * @author Cidana-Edmond
  *
@@ -127,12 +127,12 @@ class DvValiationTest : public ::testing::TestWithParam<DvValidationParam> {
         xd.plane[2].subsampling_y = 1;
 
         ASSERT_EQ(TEST_GET_PARAM(4),
-                  av1_is_dv_valid(TEST_GET_PARAM(0),
-                                  &xd,
-                                  xd.tile.mi_row_start + TEST_GET_PARAM(1),
-                                  xd.tile.mi_col_start + TEST_GET_PARAM(2),
-                                  TEST_GET_PARAM(3),
-                                  MAX_MIB_SIZE_LOG2));
+                  svt_aom_is_dv_valid(TEST_GET_PARAM(0),
+                                      &xd,
+                                      xd.tile.mi_row_start + TEST_GET_PARAM(1),
+                                      xd.tile.mi_col_start + TEST_GET_PARAM(2),
+                                      TEST_GET_PARAM(3),
+                                      MAX_MIB_SIZE_LOG2));
     }
 };
 

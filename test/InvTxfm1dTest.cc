@@ -105,10 +105,10 @@ class AV1InvTxfm1dTest : public ::testing::TestWithParam<InvTxfm1dParam> {
 
             const int inv_cos_bit = INV_COS_BIT;
             const int fwd_cos_bit = inv_cos_bit;
-            fwd_txfm_type_to_func(txfm_type_)(
+            svt_aom_fwd_txfm_type_to_func(txfm_type_)(
                 input_, output_, fwd_cos_bit, test_txfm_range);
             // calculate in inverse transform functions
-            inv_txfm_type_to_func(txfm_type_)(
+            svt_aom_inv_txfm_type_to_func(txfm_type_)(
                 output_, inv_output_, inv_cos_bit, test_txfm_range);
 
             // compare betwenn input and inversed output

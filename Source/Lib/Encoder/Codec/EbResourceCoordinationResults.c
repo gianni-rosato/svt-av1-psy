@@ -21,8 +21,8 @@ EbErrorType resource_coordination_result_ctor(ResourceCoordinationResults *objec
     return EB_ErrorNone;
 }
 
-EbErrorType resource_coordination_result_creator(EbPtr *object_dbl_ptr,
-                                                 EbPtr  object_init_data_ptr) {
+EbErrorType svt_aom_resource_coordination_result_creator(EbPtr *object_dbl_ptr,
+                                                         EbPtr  object_init_data_ptr) {
     ResourceCoordinationResults *obj;
 
     *object_dbl_ptr = NULL;

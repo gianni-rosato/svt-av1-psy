@@ -15,7 +15,7 @@
 
 #include "EbDefinitions.h"
 
-int gm_get_params_cost(const EbWarpedMotionParams *gm, const EbWarpedMotionParams *ref_gm,
-                       int allow_hp);
+int svt_aom_gm_get_params_cost(const EbWarpedMotionParams *gm, const EbWarpedMotionParams *ref_gm,
+                               int allow_hp);
 
 #endif

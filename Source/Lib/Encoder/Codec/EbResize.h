@@ -40,37 +40,40 @@ typedef struct {
 void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *pcs,
                              EbPictureBufferDesc *input_pic);
 
-void scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *input_pic, uint8_t hbd_md);
+void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *input_pic,
+                                  uint8_t hbd_md);
 
-void use_scaled_rec_refs_if_needed(PictureControlSet *pcs, EbPictureBufferDesc *input_pic,
-                                   EbReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic,
-                                   uint8_t hbd_md);
+void svt_aom_use_scaled_rec_refs_if_needed(PictureControlSet *pcs, EbPictureBufferDesc *input_pic,
+                                           EbReferenceObject    *ref_obj,
+                                           EbPictureBufferDesc **ref_pic, uint8_t hbd_md);
 
-void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic,
-                                      EbPaReferenceObject  *ref_obj,
-                                      EbPictureBufferDesc **ref_pic_ptr,
-                                      EbPictureBufferDesc **quarter_ref_pic_ptr,
-                                      EbPictureBufferDesc **sixteenth_ref_pic_ptr);
+void svt_aom_use_scaled_source_refs_if_needed(PictureParentControlSet *pcs,
+                                              EbPictureBufferDesc     *input_pic,
+                                              EbPaReferenceObject     *ref_obj,
+                                              EbPictureBufferDesc    **ref_pic_ptr,
+                                              EbPictureBufferDesc    **quarter_ref_pic_ptr,
+                                              EbPictureBufferDesc    **sixteenth_ref_pic_ptr);
 
 void scale_pcs_params(SequenceControlSet *scs, PictureParentControlSet *pcs,
                       superres_params_type spr_params, uint16_t source_width,
                       uint16_t source_height);
 
 // resize picture for both super-res and scaling-ref
-void init_resize_picture(SequenceControlSet *scs, PictureParentControlSet *pcs);
+void svt_aom_init_resize_picture(SequenceControlSet *scs, PictureParentControlSet *pcs);
 
-void reset_resized_picture(SequenceControlSet *scs, PictureParentControlSet *pcs,
-                           EbPictureBufferDesc *input_pic);
+void svt_aom_reset_resized_picture(SequenceControlSet *scs, PictureParentControlSet *pcs,
+                                   EbPictureBufferDesc *input_pic);
 
-uint8_t get_denom_idx(uint8_t scale_denom);
+uint8_t svt_aom_get_denom_idx(uint8_t scale_denom);
 
-EbErrorType downscaled_source_buffer_desc_ctor(EbPictureBufferDesc **picture_ptr,
-                                               EbPictureBufferDesc  *picture_ptr_for_reference,
-                                               superres_params_type  spr_params);
+EbErrorType svt_aom_downscaled_source_buffer_desc_ctor(
+    EbPictureBufferDesc **picture_ptr, EbPictureBufferDesc *picture_ptr_for_reference,
+    superres_params_type spr_params);
 
-EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc *dst, int bd,
-                             const int num_planes, const uint32_t ss_x, const uint32_t ss_y,
-                             uint8_t is_packed, uint32_t buffer_enable_mask, uint8_t is_2bcompress);
+EbErrorType svt_aom_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc *dst, int bd,
+                                 const int num_planes, const uint32_t ss_x, const uint32_t ss_y,
+                                 uint8_t is_packed, uint32_t buffer_enable_mask,
+                                 uint8_t is_2bcompress);
 
 static INLINE int coded_to_superres_mi(int mi_col, int denom) {
     return (mi_col * denom + SCALE_NUMERATOR / 2) / SCALE_NUMERATOR;

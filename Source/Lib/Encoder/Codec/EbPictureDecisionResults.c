@@ -21,7 +21,8 @@ static EbErrorType picture_decision_result_ctor(PictureDecisionResults *object_p
     return EB_ErrorNone;
 }
 
-EbErrorType picture_decision_result_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_picture_decision_result_creator(EbPtr *object_dbl_ptr,
+                                                    EbPtr  object_init_data_ptr) {
     PictureDecisionResults *obj;
 
     *object_dbl_ptr = NULL;

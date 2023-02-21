@@ -146,27 +146,28 @@ typedef struct ModeDecisionCandidateBuffer {
 /**************************************
     * Extern Function Declarations
     **************************************/
-extern EbErrorType mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
-                                              EbBitDepth max_bitdepth, uint8_t sb_size,
-                                              uint32_t             buffer_mask,
-                                              EbPictureBufferDesc *temp_residual,
-                                              EbPictureBufferDesc *temp_recon_ptr,
-                                              uint64_t *fast_cost, uint64_t *full_cost);
+extern EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
+                                                      EbBitDepth max_bitdepth, uint8_t sb_size,
+                                                      uint32_t             buffer_mask,
+                                                      EbPictureBufferDesc *temp_residual,
+                                                      EbPictureBufferDesc *temp_recon_ptr,
+                                                      uint64_t *fast_cost, uint64_t *full_cost);
 
-extern EbErrorType mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
-                                                      uint8_t sb_size, EbBitDepth max_bitdepth);
+extern EbErrorType svt_aom_mode_decision_scratch_cand_bf_ctor(
+    ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size, EbBitDepth max_bitdepth);
 
 uint32_t product_full_mode_decision_light_pd0(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                               ModeDecisionCandidateBuffer **buffer_ptr_array);
-void     product_full_mode_decision_light_pd1(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
-                                              PictureControlSet *pcs, uint32_t sb_addr,
-                                              ModeDecisionCandidateBuffer *cand_bf);
-uint32_t product_full_mode_decision(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
-                                    PictureControlSet *pcs, uint32_t sb_addr,
-                                    ModeDecisionCandidateBuffer **buffer_ptr_array,
-                                    uint32_t                      candidate_total_count,
-                                    uint32_t                     *best_candidate_index_array);
-void     set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs);
+void     svt_aom_product_full_mode_decision_light_pd1(struct ModeDecisionContext *ctx,
+                                                      BlkStruct *blk_ptr, PictureControlSet *pcs,
+                                                      uint32_t                     sb_addr,
+                                                      ModeDecisionCandidateBuffer *cand_bf);
+uint32_t svt_aom_product_full_mode_decision(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
+                                            PictureControlSet *pcs, uint32_t sb_addr,
+                                            ModeDecisionCandidateBuffer **buffer_ptr_array,
+                                            uint32_t                      candidate_total_count,
+                                            uint32_t *best_candidate_index_array);
+void     svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs);
 
 typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(struct ModeDecisionContext  *ctx,
                                                         uint32_t                     pu_index,

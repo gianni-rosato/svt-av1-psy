@@ -65,8 +65,8 @@ static void initial_rate_control_context_dctor(EbPtr p) {
 /************************************************
 * Initial Rate Control Context Constructor
 ************************************************/
-EbErrorType initial_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
-                                              const EbEncHandle *enc_handle_ptr) {
+EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
+                                                      const EbEncHandle *enc_handle_ptr) {
     InitialRateControlContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -122,7 +122,7 @@ static void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlCo
     LadQueue      *queue       = ctx->lad_queue;
     uint32_t       entry_idx   = pcs->decode_order % REFERENCE_QUEUE_MAX_DEPTH;
     LadQueueEntry *queue_entry = queue->cir_buf[entry_idx];
-    assert_err(queue_entry->pcs == NULL, "lad queue overflow");
+    svt_aom_assert_err(queue_entry->pcs == NULL, "lad queue overflow");
     if (queue_entry->pcs == NULL)
         queue_entry->pcs = pcs;
     else
@@ -157,7 +157,7 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
     if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number) &&
         // In the middle pass when rc_stat_gen_pass_mode is set, pictures in the highest temporal layer are skipped,
         // except the first one. The condition is added to prevent validating these frames for tpl
-        !is_pic_skipped(pcs->tpl_group[pic_index])) {
+        !svt_aom_is_pic_skipped(pcs->tpl_group[pic_index])) {
         // Discard low important pictures from tpl group
         if (pcs->tpl_ctrls.reduced_tpl_group >= 0) {
             if (pcs->tpl_group[pic_index]->temporal_layer_index <=
@@ -184,7 +184,7 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
 
     while (entry->pcs != NULL) {
         if (entry->pcs->ext_mg_id <= end_mg) {
-            assert_err(pic_i < MAX_TPL_EXT_GROUP_SIZE, "exceeding size of ext group");
+            svt_aom_assert_err(pic_i < MAX_TPL_EXT_GROUP_SIZE, "exceeding size of ext group");
             pcs->ext_group[pic_i++] = queue->cir_buf[q_idx]->pcs;
         }
 
@@ -230,7 +230,7 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
     for (uint32_t i = 0; i < limited_tpl_group_size; i++) {
         PictureParentControlSet *cur_pcs = pcs->ext_group[i];
         if (cur_pcs->slice_type == I_SLICE) {
-            if (is_delayed_intra(cur_pcs)) {
+            if (svt_aom_is_delayed_intra(cur_pcs)) {
                 if (i == 0) {
                     pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
                     validate_pic_for_tpl(pcs, i);
@@ -288,8 +288,8 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
         if (!pass_thru) {
             if (head_pcs->temporal_layer_index == 0) {
                 //delayed Intra can use the whole window relative to the next Base
-                uint8_t target_mgs = is_delayed_intra(head_pcs) ? head_pcs->scs->lad_mg + 1
-                                                                : head_pcs->scs->lad_mg;
+                uint8_t target_mgs = svt_aom_is_delayed_intra(head_pcs) ? head_pcs->scs->lad_mg + 1
+                                                                        : head_pcs->scs->lad_mg;
                 target_mgs++; //add one for the MG including the head
                 {
                     uint8_t num_mgs =
@@ -303,7 +303,8 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
                     while (tmp_entry->pcs != NULL) {
                         PictureParentControlSet *tmp_pcs = tmp_entry->pcs;
 
-                        assert_err(tmp_pcs->ext_mg_id >= head_pcs->ext_mg_id, "err in mg id");
+                        svt_aom_assert_err(tmp_pcs->ext_mg_id >= head_pcs->ext_mg_id,
+                                           "err in mg id");
                         //adjust the lad if we hit an EOS
                         if (tmp_pcs->end_of_sequence_flag)
                             target_mgs = MIN(
@@ -314,8 +315,8 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
                             head_pcs->end_of_sequence_region = TRUE;
                         if (tmp_pcs->ext_mg_id >= cur_mg) {
                             if (tmp_pcs->ext_mg_id > cur_mg)
-                                assert_err(tmp_pcs->ext_mg_id == cur_mg + 1,
-                                           "err continuity in mg id");
+                                svt_aom_assert_err(tmp_pcs->ext_mg_id == cur_mg + 1,
+                                                   "err continuity in mg id");
 
                             tot_acc_frames_in_cur_mg++;
 
@@ -415,7 +416,7 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
 *  In the future we might decide to move it to Motion Analysis Process.
 *
 ********************************************************************************/
-void *initial_rate_control_kernel(void *input_ptr) {
+void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
     EbThreadContext           *thread_context_ptr = (EbThreadContext *)input_ptr;
     InitialRateControlContext *context_ptr = (InitialRateControlContext *)thread_context_ptr->priv;
 
@@ -448,16 +449,18 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             for (uint32_t i = 0; i < pcs->tpl_group_size; i++) {
                                 if (pcs->tpl_group[i]->slice_type == P_SLICE) {
                                     if (pcs->tpl_group[i]->ext_mg_id == pcs->ext_mg_id + 1)
-                                        release_pa_reference_objects(scs, pcs->tpl_group[i]);
+                                        svt_aom_release_pa_reference_objects(scs,
+                                                                             pcs->tpl_group[i]);
                                 } else {
                                     if (pcs->tpl_group[i]->ext_mg_id == pcs->ext_mg_id)
-                                        release_pa_reference_objects(scs, pcs->tpl_group[i]);
+                                        svt_aom_release_pa_reference_objects(scs,
+                                                                             pcs->tpl_group[i]);
                                 }
                                 if (pcs->tpl_group[i]->non_tf_input)
                                     EB_DELETE(pcs->tpl_group[i]->non_tf_input);
                             }
                         } else {
-                            release_pa_reference_objects(scs, pcs);
+                            svt_aom_release_pa_reference_objects(scs, pcs);
                         }
                     }
 
@@ -475,7 +478,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 continue;
             }
             // The quant/dequant params derivation is performaed 1 time per sequence assuming the qindex offset(s) are 0
-            // then adjusted per TU prior of the quantization at av1_quantize_inv_quantize() depending on the qindex offset(s)
+            // then adjusted per TU prior of the quantization at svt_aom_quantize_inv_quantize() depending on the qindex offset(s)
             if (pcs->picture_number == 0) {
                 Quants *const   quants_8bit = &scs->quants_8bit;
                 Dequants *const deq_8bit    = &scs->deq_8bit;
@@ -498,7 +501,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
             //   2. super-res mode is NONE or FIXED or RANDOM.
             //     For other super-res modes, pa_ref_objs are needed in TASK_SUPERRES_RE_ME task
             if (pcs->tpl_ctrls.enable == 0 && scs->static_config.superres_mode <= SUPERRES_RANDOM)
-                release_pa_reference_objects(scs, pcs);
+                svt_aom_release_pa_reference_objects(scs, pcs);
 
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/

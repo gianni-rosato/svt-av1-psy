@@ -96,8 +96,8 @@ typedef struct {
     uint8_t      resize_denom;
 } ResizePendingParams;
 
-extern EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
-                                                                uint64_t picture_number);
+extern EbErrorType svt_aom_rate_control_coded_frames_stats_context_ctor(
+    coded_frames_stats_entry *entry_ptr, uint64_t picture_number);
 typedef struct {
     int     last_boosted_qindex; // Last boosted GF/KF/ARF q
     int     gfu_boost;
@@ -224,10 +224,10 @@ int svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval
 double svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
                                                int frame_count);
 
-EbErrorType rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
-                                      const EbEncHandle *enc_handle_ptr, int me_port_index);
+EbErrorType svt_aom_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
+                                              const EbEncHandle *enc_handle_ptr, int me_port_index);
 
-extern void *rate_control_kernel(void *input_ptr);
+extern void *svt_aom_rate_control_kernel(void *input_ptr);
 int svt_aom_compute_rd_mult_based_on_qindex(EbBitDepth bit_depth, SvtAv1FrameUpdateType update_type,
                                             int qindex);
 struct PictureControlSet;

@@ -60,7 +60,7 @@ static INLINE int32_t dec_sb_compute_cdef_list(EbDecHandle *dec_handle, SBInfo *
     int32_t count = 0;
     for (int32_t r = 0; r < maxr; r += r_step) {
         for (int32_t c = 0; c < maxc; c += c_step) {
-            BlockModeInfo *mbmi = get_cur_mode_info(
+            BlockModeInfo *mbmi = svt_aom_get_cur_mode_info(
                 dec_handle, (mi_row + r), (mi_col + c), sb_info);
             if (!dec_is_8x8_block_skip(mbmi)) {
                 dlist[count].by = (uint8_t)(r >> r_shift);
@@ -199,20 +199,20 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
         if (fbc == nhfb - 1) {
             /* On the last superblock column, fill in the right border with
                CDEF_VERY_LARGE to avoid filtering with the outside. */
-            fill_rect(&src[cend + CDEF_HBORDER],
-                      CDEF_BSTRIDE,
-                      rend + CDEF_VBORDER,
-                      hsize + CDEF_HBORDER - cend,
-                      CDEF_VERY_LARGE);
+            svt_aom_fill_rect(&src[cend + CDEF_HBORDER],
+                              CDEF_BSTRIDE,
+                              rend + CDEF_VBORDER,
+                              hsize + CDEF_HBORDER - cend,
+                              CDEF_VERY_LARGE);
         }
         if (fbr == nvfb - 1) {
             /* On the last superblock row, fill in the bottom border with
                CDEF_VERY_LARGE to avoid filtering with the outside. */
-            fill_rect(&src[(rend + CDEF_VBORDER) * CDEF_BSTRIDE],
-                      CDEF_BSTRIDE,
-                      CDEF_VBORDER,
-                      hsize + 2 * CDEF_HBORDER,
-                      CDEF_VERY_LARGE);
+            svt_aom_fill_rect(&src[(rend + CDEF_VBORDER) * CDEF_BSTRIDE],
+                              CDEF_BSTRIDE,
+                              CDEF_VBORDER,
+                              hsize + 2 * CDEF_HBORDER,
+                              CDEF_VERY_LARGE);
         }
         uint8_t *rec_buff   = 0;
         uint32_t rec_stride = 0;
@@ -232,18 +232,18 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
         }
         /* Copy in the pixels we need from the current superblock for
            deringing.*/
-        copy_sb8_16(&src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER + cstart],
-                    CDEF_BSTRIDE,
-                    rec_buff /*xd->plane[pli].dst.buf*/,
-                    (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr,
-                    coffset + cstart,
-                    rec_stride /*xd->plane[pli].dst.stride*/,
-                    rend,
-                    cend - cstart,
-                    use_highbd);
+        svt_aom_copy_sb8_16(&src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER + cstart],
+                            CDEF_BSTRIDE,
+                            rec_buff /*xd->plane[pli].dst.buf*/,
+                            (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr,
+                            coffset + cstart,
+                            rec_stride /*xd->plane[pli].dst.stride*/,
+                            rend,
+                            cend - cstart,
+                            use_highbd);
 
         if (!prev_row_cdef[fbc]) {
-            copy_sb8_16( //cm,
+            svt_aom_copy_sb8_16( //cm,
                 &src[CDEF_HBORDER],
                 CDEF_BSTRIDE,
                 rec_buff /*xd->plane[pli].dst.buf*/,
@@ -254,18 +254,19 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                 hsize,
                 use_highbd);
         } else if (fbr > 0) {
-            copy_rect(&src[CDEF_HBORDER],
-                      CDEF_BSTRIDE,
-                      &linebuf_above[pli][coffset],
-                      stride,
-                      CDEF_VBORDER,
-                      hsize);
+            svt_aom_copy_rect(&src[CDEF_HBORDER],
+                              CDEF_BSTRIDE,
+                              &linebuf_above[pli][coffset],
+                              stride,
+                              CDEF_VBORDER,
+                              hsize);
         } else {
-            fill_rect(&src[CDEF_HBORDER], CDEF_BSTRIDE, CDEF_VBORDER, hsize, CDEF_VERY_LARGE);
+            svt_aom_fill_rect(
+                &src[CDEF_HBORDER], CDEF_BSTRIDE, CDEF_VBORDER, hsize, CDEF_VERY_LARGE);
         }
 
         if (!prev_row_cdef[fbc - 1]) {
-            copy_sb8_16( //cm,
+            svt_aom_copy_sb8_16( //cm,
                 src,
                 CDEF_BSTRIDE,
                 rec_buff /*xd->plane[pli].dst.buf*/,
@@ -278,18 +279,18 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                 CDEF_HBORDER,
                 use_highbd);
         } else if (fbr > 0 && fbc > 0) {
-            copy_rect(src,
-                      CDEF_BSTRIDE,
-                      &linebuf_above[pli][coffset - CDEF_HBORDER],
-                      stride,
-                      CDEF_VBORDER,
-                      CDEF_HBORDER);
+            svt_aom_copy_rect(src,
+                              CDEF_BSTRIDE,
+                              &linebuf_above[pli][coffset - CDEF_HBORDER],
+                              stride,
+                              CDEF_VBORDER,
+                              CDEF_HBORDER);
         } else {
-            fill_rect(src, CDEF_BSTRIDE, CDEF_VBORDER, CDEF_HBORDER, CDEF_VERY_LARGE);
+            svt_aom_fill_rect(src, CDEF_BSTRIDE, CDEF_VBORDER, CDEF_HBORDER, CDEF_VERY_LARGE);
         }
 
         if (!prev_row_cdef[fbc + 1]) {
-            copy_sb8_16( //cm,
+            svt_aom_copy_sb8_16( //cm,
                 &src[CDEF_HBORDER + (nhb << mi_wide_l2[pli])],
                 CDEF_BSTRIDE,
                 rec_buff /*xd->plane[pli].dst.buf*/,
@@ -300,68 +301,70 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                 CDEF_HBORDER,
                 use_highbd);
         } else if (fbr > 0 && fbc < nhfb - 1) {
-            copy_rect(&src[hsize + CDEF_HBORDER],
-                      CDEF_BSTRIDE,
-                      &linebuf_above[pli][coffset + hsize],
-                      stride,
-                      CDEF_VBORDER,
-                      CDEF_HBORDER);
+            svt_aom_copy_rect(&src[hsize + CDEF_HBORDER],
+                              CDEF_BSTRIDE,
+                              &linebuf_above[pli][coffset + hsize],
+                              stride,
+                              CDEF_VBORDER,
+                              CDEF_HBORDER);
         } else {
-            fill_rect(&src[hsize + CDEF_HBORDER],
-                      CDEF_BSTRIDE,
-                      CDEF_VBORDER,
-                      CDEF_HBORDER,
-                      CDEF_VERY_LARGE);
+            svt_aom_fill_rect(&src[hsize + CDEF_HBORDER],
+                              CDEF_BSTRIDE,
+                              CDEF_VBORDER,
+                              CDEF_HBORDER,
+                              CDEF_VERY_LARGE);
         }
 
         if (*cdef_left) {
             /* If we deringed the superblock on the left
                then we need to copy in saved pixels. */
-            copy_rect(
+            svt_aom_copy_rect(
                 src, CDEF_BSTRIDE, colbuf[pli], CDEF_HBORDER, rend + CDEF_VBORDER, CDEF_HBORDER);
         }
 
         /* Saving pixels in case we need to dering the superblock
             on the right. */
         if (fbc < nhfb - 1)
-            copy_rect(colbuf[pli],
-                      CDEF_HBORDER,
-                      src + hsize,
-                      CDEF_BSTRIDE,
-                      rend + CDEF_VBORDER,
-                      CDEF_HBORDER);
+            svt_aom_copy_rect(colbuf[pli],
+                              CDEF_HBORDER,
+                              src + hsize,
+                              CDEF_BSTRIDE,
+                              rend + CDEF_VBORDER,
+                              CDEF_HBORDER);
 
         if (fbr < nvfb - 1) {
-            copy_sb8_16(&linebuf_curr[pli][coffset],
-                        stride,
-                        rec_buff,
-                        (MI_SIZE_64X64 << mi_high_l2[pli]) * (fbr + 1) - CDEF_VBORDER,
-                        coffset,
-                        rec_stride,
-                        CDEF_VBORDER,
-                        hsize,
-                        use_highbd);
+            svt_aom_copy_sb8_16(&linebuf_curr[pli][coffset],
+                                stride,
+                                rec_buff,
+                                (MI_SIZE_64X64 << mi_high_l2[pli]) * (fbr + 1) - CDEF_VBORDER,
+                                coffset,
+                                rec_stride,
+                                CDEF_VBORDER,
+                                hsize,
+                                use_highbd);
         }
 
         if (frame_top) {
-            fill_rect(src, CDEF_BSTRIDE, CDEF_VBORDER, hsize + 2 * CDEF_HBORDER, CDEF_VERY_LARGE);
+            svt_aom_fill_rect(
+                src, CDEF_BSTRIDE, CDEF_VBORDER, hsize + 2 * CDEF_HBORDER, CDEF_VERY_LARGE);
         }
         if (frame_left) {
-            fill_rect(src, CDEF_BSTRIDE, vsize + 2 * CDEF_VBORDER, CDEF_HBORDER, CDEF_VERY_LARGE);
+            svt_aom_fill_rect(
+                src, CDEF_BSTRIDE, vsize + 2 * CDEF_VBORDER, CDEF_HBORDER, CDEF_VERY_LARGE);
         }
         if (frame_bottom) {
-            fill_rect(&src[(vsize + CDEF_VBORDER) * CDEF_BSTRIDE],
-                      CDEF_BSTRIDE,
-                      CDEF_VBORDER,
-                      hsize + 2 * CDEF_HBORDER,
-                      CDEF_VERY_LARGE);
+            svt_aom_fill_rect(&src[(vsize + CDEF_VBORDER) * CDEF_BSTRIDE],
+                              CDEF_BSTRIDE,
+                              CDEF_VBORDER,
+                              hsize + 2 * CDEF_HBORDER,
+                              CDEF_VERY_LARGE);
         }
         if (frame_right) {
-            fill_rect(&src[hsize + CDEF_HBORDER],
-                      CDEF_BSTRIDE,
-                      vsize + 2 * CDEF_VBORDER,
-                      CDEF_HBORDER,
-                      CDEF_VERY_LARGE);
+            svt_aom_fill_rect(&src[hsize + CDEF_HBORDER],
+                              CDEF_BSTRIDE,
+                              vsize + 2 * CDEF_VBORDER,
+                              CDEF_HBORDER,
+                              CDEF_VERY_LARGE);
         }
         /*Cdef filter calling function for high bit depth */
         if (use_highbd) {
@@ -431,12 +434,13 @@ void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *m
     for (int32_t pli = 0; pli < num_planes; pli++) {
         const int32_t block_height = (MI_SIZE_64X64 << mi_high_l2[pli]) + 2 * CDEF_VBORDER;
         /*Filling the colbuff's with some values.*/
-        fill_rect(colbuf[pli], CDEF_HBORDER, block_height, CDEF_HBORDER, CDEF_VERY_LARGE);
+        svt_aom_fill_rect(colbuf[pli], CDEF_HBORDER, block_height, CDEF_HBORDER, CDEF_VERY_LARGE);
         colbuf_64[0][pli] = colbuf[pli];
         /*For SB SIZE 128x128, we are allocating extra colbuff for
         transversing across 0 - 3 64x64s in SB block */
         if (sb_128) {
-            fill_rect(colbuf[pli + 3], CDEF_HBORDER, block_height, CDEF_HBORDER, CDEF_VERY_LARGE);
+            svt_aom_fill_rect(
+                colbuf[pli + 3], CDEF_HBORDER, block_height, CDEF_HBORDER, CDEF_VERY_LARGE);
             colbuf_64[1][pli] = colbuf[3 + pli];
         }
     }
@@ -575,14 +579,14 @@ void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag) {
         mi_high_l2[pli] = MI_SIZE_LOG2 - sub_y;
 
         /*Deriveing  recon pict buffer ptr's*/
-        derive_blk_pointers(recon_picture_ptr,
-                            pli,
-                            0,
-                            0,
-                            (void *)&curr_blk_recon_buf[pli],
-                            &curr_recon_stride[pli],
-                            sub_x,
-                            sub_y);
+        svt_aom_derive_blk_pointers(recon_picture_ptr,
+                                    pli,
+                                    0,
+                                    0,
+                                    (void *)&curr_blk_recon_buf[pli],
+                                    &curr_recon_stride[pli],
+                                    sub_x,
+                                    sub_y);
         /*Allocating memory for line buffes->to fill from src if needed*/
         linebuf[pli] = (uint16_t *)svt_aom_malloc(sizeof(*linebuf) * CDEF_VBORDER * stride);
         /*Allocating memory for col buffes->to fill from src if needed*/
@@ -596,7 +600,8 @@ void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag) {
         for (int32_t pli = 0; pli < num_planes; pli++) {
             const int32_t block_height = (MI_SIZE_64X64 << mi_high_l2[pli]) + 2 * CDEF_VBORDER;
             /*Filling the colbuff's with some values.*/
-            fill_rect(colbuf[pli], CDEF_HBORDER, block_height, CDEF_HBORDER, CDEF_VERY_LARGE);
+            svt_aom_fill_rect(
+                colbuf[pli], CDEF_HBORDER, block_height, CDEF_HBORDER, CDEF_VERY_LARGE);
         }
 
         uint32_t cdef_left = 1;

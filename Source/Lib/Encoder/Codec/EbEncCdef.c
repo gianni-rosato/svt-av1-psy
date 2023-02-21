@@ -19,7 +19,7 @@
 #include "EbLog.h"
 #include "EbRateDistortionCost.h"
 
-void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
+void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
 static INLINE uint64_t dist_8xn_16bit_c(const uint16_t *src, const uint16_t *dst,
                                         const int32_t dstride, const int32_t coeff_shift,
                                         int8_t height, uint8_t subsampling_factor) {
@@ -132,9 +132,9 @@ static INLINE uint64_t mse_4xn_8bit_c(const uint8_t *src, const uint8_t *dst, co
 }
 
 /* Compute MSE only on the blocks we filtered. */
-uint64_t compute_cdef_dist_c(const uint16_t *dst, int32_t dstride, const uint16_t *src,
-                             const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
-                             int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor) {
+uint64_t svt_aom_compute_cdef_dist_c(const uint16_t *dst, int32_t dstride, const uint16_t *src,
+                                     const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
+                                     int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor) {
     uint64_t sum = 0;
     int32_t  bi, bx, by;
     if (bsize == BLOCK_8X8) {
@@ -190,9 +190,10 @@ uint64_t compute_cdef_dist_c(const uint16_t *dst, int32_t dstride, const uint16_
     return sum >> 2 * coeff_shift;
 }
 
-uint64_t compute_cdef_dist_8bit_c(const uint8_t *dst8, int32_t dstride, const uint8_t *src8,
-                                  const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
-                                  int32_t coeff_shift, int32_t pli, uint8_t subsampling_factor) {
+uint64_t svt_aom_compute_cdef_dist_8bit_c(const uint8_t *dst8, int32_t dstride, const uint8_t *src8,
+                                          const CdefList *dlist, int32_t cdef_count,
+                                          BlockSize bsize, int32_t coeff_shift, int32_t pli,
+                                          uint8_t subsampling_factor) {
     uint64_t sum = 0;
     int32_t  bi, bx, by;
     if (bsize == BLOCK_8X8) {
@@ -320,10 +321,11 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
     Bool                            is_16bit = scs->is_16bit_pipeline;
 
     EbPictureBufferDesc *recon_pic;
-    get_recon_pic(pcs, &recon_pic, is_16bit);
+    svt_aom_get_recon_pic(pcs, &recon_pic, is_16bit);
 
     const uint32_t offset_y       = recon_pic->org_x + recon_pic->org_y * recon_pic->stride_y;
     EbByte         recon_buffer_y = recon_pic->buffer_y + (offset_y << is_16bit);
+
     const uint32_t offset_cb = (recon_pic->org_x + recon_pic->org_y * recon_pic->stride_cb) >> 1;
     EbByte         recon_buffer_cb = recon_pic->buffer_cb + (offset_cb << is_16bit);
     const uint32_t offset_cr = (recon_pic->org_x + recon_pic->org_y * recon_pic->stride_cr) >> 1;
@@ -494,136 +496,138 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
 
                 /* Copy in the pixels we need from the current superblock for
                    deringing.*/
-                copy_sb8_16(&src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER + cstart],
-                            CDEF_BSTRIDE,
-                            rec_buff,
-                            (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr,
-                            coffset + cstart,
-                            rec_stride,
-                            rend,
-                            cend - cstart,
-                            is_16bit);
+                svt_aom_copy_sb8_16(&src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER + cstart],
+                                    CDEF_BSTRIDE,
+                                    rec_buff,
+                                    (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr,
+                                    coffset + cstart,
+                                    rec_stride,
+                                    rend,
+                                    cend - cstart,
+                                    is_16bit);
                 if (!prev_row_cdef[fbc]) {
-                    copy_sb8_16(&src[CDEF_HBORDER],
-                                CDEF_BSTRIDE,
-                                rec_buff,
-                                (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                                coffset,
-                                rec_stride,
-                                CDEF_VBORDER,
-                                hsize,
-                                is_16bit);
+                    svt_aom_copy_sb8_16(&src[CDEF_HBORDER],
+                                        CDEF_BSTRIDE,
+                                        rec_buff,
+                                        (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
+                                        coffset,
+                                        rec_stride,
+                                        CDEF_VBORDER,
+                                        hsize,
+                                        is_16bit);
                 } else if (fbr > 0) {
-                    copy_rect(&src[CDEF_HBORDER],
-                              CDEF_BSTRIDE,
-                              &linebuf[pli][coffset],
-                              stride,
-                              CDEF_VBORDER,
-                              hsize);
+                    svt_aom_copy_rect(&src[CDEF_HBORDER],
+                                      CDEF_BSTRIDE,
+                                      &linebuf[pli][coffset],
+                                      stride,
+                                      CDEF_VBORDER,
+                                      hsize);
                 } else {
-                    fill_rect(
+                    svt_aom_fill_rect(
                         &src[CDEF_HBORDER], CDEF_BSTRIDE, CDEF_VBORDER, hsize, CDEF_VERY_LARGE);
                 }
 
                 if (!prev_row_cdef[fbc - 1]) {
-                    copy_sb8_16(src,
-                                CDEF_BSTRIDE,
-                                rec_buff,
-                                (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                                coffset - CDEF_HBORDER,
-                                rec_stride,
-                                CDEF_VBORDER,
-                                CDEF_HBORDER,
-                                is_16bit);
+                    svt_aom_copy_sb8_16(src,
+                                        CDEF_BSTRIDE,
+                                        rec_buff,
+                                        (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
+                                        coffset - CDEF_HBORDER,
+                                        rec_stride,
+                                        CDEF_VBORDER,
+                                        CDEF_HBORDER,
+                                        is_16bit);
                 } else if (fbr > 0 && fbc > 0) {
-                    copy_rect(src,
-                              CDEF_BSTRIDE,
-                              &linebuf[pli][coffset - CDEF_HBORDER],
-                              stride,
-                              CDEF_VBORDER,
-                              CDEF_HBORDER);
+                    svt_aom_copy_rect(src,
+                                      CDEF_BSTRIDE,
+                                      &linebuf[pli][coffset - CDEF_HBORDER],
+                                      stride,
+                                      CDEF_VBORDER,
+                                      CDEF_HBORDER);
                 } else {
-                    fill_rect(src, CDEF_BSTRIDE, CDEF_VBORDER, CDEF_HBORDER, CDEF_VERY_LARGE);
+                    svt_aom_fill_rect(
+                        src, CDEF_BSTRIDE, CDEF_VBORDER, CDEF_HBORDER, CDEF_VERY_LARGE);
                 }
 
                 if (!prev_row_cdef[fbc + 1]) {
-                    copy_sb8_16(&src[CDEF_HBORDER + (nhb << mi_wide_l2[pli])],
-                                CDEF_BSTRIDE,
-                                rec_buff,
-                                (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
-                                coffset + hsize,
-                                rec_stride,
-                                CDEF_VBORDER,
-                                CDEF_HBORDER,
-                                is_16bit);
+                    svt_aom_copy_sb8_16(&src[CDEF_HBORDER + (nhb << mi_wide_l2[pli])],
+                                        CDEF_BSTRIDE,
+                                        rec_buff,
+                                        (MI_SIZE_64X64 << mi_high_l2[pli]) * fbr - CDEF_VBORDER,
+                                        coffset + hsize,
+                                        rec_stride,
+                                        CDEF_VBORDER,
+                                        CDEF_HBORDER,
+                                        is_16bit);
                 } else if (fbr > 0 && fbc < nhfb - 1) {
-                    copy_rect(&src[hsize + CDEF_HBORDER],
-                              CDEF_BSTRIDE,
-                              &linebuf[pli][coffset + hsize],
-                              stride,
-                              CDEF_VBORDER,
-                              CDEF_HBORDER);
+                    svt_aom_copy_rect(&src[hsize + CDEF_HBORDER],
+                                      CDEF_BSTRIDE,
+                                      &linebuf[pli][coffset + hsize],
+                                      stride,
+                                      CDEF_VBORDER,
+                                      CDEF_HBORDER);
                 } else {
-                    fill_rect(&src[hsize + CDEF_HBORDER],
-                              CDEF_BSTRIDE,
-                              CDEF_VBORDER,
-                              CDEF_HBORDER,
-                              CDEF_VERY_LARGE);
+                    svt_aom_fill_rect(&src[hsize + CDEF_HBORDER],
+                                      CDEF_BSTRIDE,
+                                      CDEF_VBORDER,
+                                      CDEF_HBORDER,
+                                      CDEF_VERY_LARGE);
                 }
 
                 if (cdef_left) {
                     /* If we deringed the superblock on the left then we need to copy in
                        saved pixels. */
-                    copy_rect(src,
-                              CDEF_BSTRIDE,
-                              colbuf[pli],
-                              CDEF_HBORDER,
-                              rend + CDEF_VBORDER,
-                              CDEF_HBORDER);
+                    svt_aom_copy_rect(src,
+                                      CDEF_BSTRIDE,
+                                      colbuf[pli],
+                                      CDEF_HBORDER,
+                                      rend + CDEF_VBORDER,
+                                      CDEF_HBORDER);
                 }
 
                 /* Saving pixels in case we need to dering the superblock on the
                     right. */
                 if (fbc < nhfb - 1)
-                    copy_rect(colbuf[pli],
-                              CDEF_HBORDER,
-                              src + hsize,
-                              CDEF_BSTRIDE,
-                              rend + CDEF_VBORDER,
-                              CDEF_HBORDER);
+                    svt_aom_copy_rect(colbuf[pli],
+                                      CDEF_HBORDER,
+                                      src + hsize,
+                                      CDEF_BSTRIDE,
+                                      rend + CDEF_VBORDER,
+                                      CDEF_HBORDER);
 
                 if (fbr < nvfb - 1)
-                    copy_sb8_16(&linebuf[pli][coffset],
-                                stride,
-                                rec_buff,
-                                (MI_SIZE_64X64 << mi_high_l2[pli]) * (fbr + 1) - CDEF_VBORDER,
-                                coffset,
-                                rec_stride,
-                                CDEF_VBORDER,
-                                hsize,
-                                is_16bit);
+                    svt_aom_copy_sb8_16(
+                        &linebuf[pli][coffset],
+                        stride,
+                        rec_buff,
+                        (MI_SIZE_64X64 << mi_high_l2[pli]) * (fbr + 1) - CDEF_VBORDER,
+                        coffset,
+                        rec_stride,
+                        CDEF_VBORDER,
+                        hsize,
+                        is_16bit);
 
                 if (frame_top) {
-                    fill_rect(
+                    svt_aom_fill_rect(
                         src, CDEF_BSTRIDE, CDEF_VBORDER, hsize + 2 * CDEF_HBORDER, CDEF_VERY_LARGE);
                 }
                 if (frame_left) {
-                    fill_rect(
+                    svt_aom_fill_rect(
                         src, CDEF_BSTRIDE, vsize + 2 * CDEF_VBORDER, CDEF_HBORDER, CDEF_VERY_LARGE);
                 }
                 if (frame_bottom) {
-                    fill_rect(&src[(vsize + CDEF_VBORDER) * CDEF_BSTRIDE],
-                              CDEF_BSTRIDE,
-                              CDEF_VBORDER,
-                              hsize + 2 * CDEF_HBORDER,
-                              CDEF_VERY_LARGE);
+                    svt_aom_fill_rect(&src[(vsize + CDEF_VBORDER) * CDEF_BSTRIDE],
+                                      CDEF_BSTRIDE,
+                                      CDEF_VBORDER,
+                                      hsize + 2 * CDEF_HBORDER,
+                                      CDEF_VERY_LARGE);
                 }
                 if (frame_right) {
-                    fill_rect(&src[hsize + CDEF_HBORDER],
-                              CDEF_BSTRIDE,
-                              vsize + 2 * CDEF_VBORDER,
-                              CDEF_HBORDER,
-                              CDEF_VERY_LARGE);
+                    svt_aom_fill_rect(&src[hsize + CDEF_HBORDER],
+                                      CDEF_BSTRIDE,
+                                      vsize + 2 * CDEF_VBORDER,
+                                      CDEF_HBORDER,
+                                      CDEF_VERY_LARGE);
                 }
                 // if ppcs->cdef_ctrls.use_reference_cdef_fs is true, then search was not performed
                 // Therefore, need to make sure dir and var are initialized

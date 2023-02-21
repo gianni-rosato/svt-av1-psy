@@ -17,10 +17,11 @@
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType rest_context_ctor(EbThreadContext   *thread_context_ptr,
-                                     const EbEncHandle *enc_handle_ptr, EbPtr object_init_data_ptr,
-                                     int index, int demux_index);
+extern EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_context_ptr,
+                                             const EbEncHandle *enc_handle_ptr,
+                                             EbPtr object_init_data_ptr, int index,
+                                             int demux_index);
 
-extern void *rest_kernel(void *input_ptr);
+extern void *svt_aom_rest_kernel(void *input_ptr);
 
 #endif

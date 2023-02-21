@@ -314,10 +314,10 @@ void svt_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
 #endif
 }
 
-void asm_set_convolve_asm_table(void);
-void asm_set_convolve_hbd_asm_table(void);
-void init_intra_dc_predictors_c_internal(void);
-void init_intra_predictors_internal(void);
+void svt_aom_asm_set_convolve_asm_table(void);
+void svt_aom_asm_set_convolve_hbd_asm_table(void);
+void svt_aom_init_intra_dc_predictors_c_internal(void);
+void svt_aom_init_intra_predictors_internal(void);
 void svt_av1_init_me_luts(void);
 
 static void enc_switch_to_real_time(){
@@ -591,7 +591,7 @@ static EbErrorType load_default_buffer_configuration_settings(
 
 #if !OPT_RPS_CONSTR_2
         //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
-        PredictionStructure*pred_struct_ptr = get_prediction_structure(
+        PredictionStructure*pred_struct_ptr = svt_aom_get_prediction_structure(
             enc_handle->scs_instance_array[0]->encode_context_ptr->prediction_structure_group_ptr,
             enc_handle->scs_instance_array[0]->scs->static_config.pred_structure,
             4,
@@ -692,7 +692,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         max_me    = min_me    + (1 + mg_size)       * n_extra_mg;
         max_recon = max_ref;
         // if tpl_la is disabled when super-res fix/random, input speed is much faster than recon output speed,
-        // recon_output_fifo might be full and freeze at recon_output()
+        // recon_output_fifo might be full and freeze at svt_aom_recon_output()
         if (!scs->tpl_level && scs->static_config.recon_enabled)
             max_recon = min_recon = MAX(max_ref, 30);
     }
@@ -886,8 +886,8 @@ static EbErrorType load_default_buffer_configuration_settings(
         * Platform detection, limit cpu flags to hardware available CPU
         ******************************************************************/
 #ifdef ARCH_X86_64
-        const EbCpuFlags cpu_flags = get_cpu_flags();
-        const EbCpuFlags cpu_flags_to_use = get_cpu_flags_to_use();
+        const EbCpuFlags cpu_flags = svt_aom_get_cpu_flags();
+        const EbCpuFlags cpu_flags_to_use = svt_aom_get_cpu_flags_to_use();
         scs->static_config.use_cpu_flags &= cpu_flags_to_use;
         SVT_INFO("[asm level on system : up to %s]\n", get_asm_level_name_str(cpu_flags));
         SVT_INFO("[asm level selected : up to %s]\n", get_asm_level_name_str(scs->static_config.use_cpu_flags));
@@ -1503,7 +1503,7 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
 
     for (uint32_t idx = 0; idx < reference_picture_list_length; ++idx) {
         EB_NEW(enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_list[idx],
-            reference_queue_entry_ctor);
+            svt_aom_reference_queue_entry_ctor);
     }
     EB_CREATE_SEMAPHORE(scs->ref_buffer_available_semaphore,
         reference_picture_list_length,
@@ -1534,17 +1534,17 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     EbColorFormat color_format = enc_handle_ptr->scs_instance_array[0]->scs->static_config.encoder_color_format;
     SequenceControlSet* control_set_ptr;
 
-    setup_common_rtcd_internal(enc_handle_ptr->scs_instance_array[0]->scs->static_config.use_cpu_flags);
-    setup_rtcd_internal(enc_handle_ptr->scs_instance_array[0]->scs->static_config.use_cpu_flags);
+    svt_aom_setup_common_rtcd_internal(enc_handle_ptr->scs_instance_array[0]->scs->static_config.use_cpu_flags);
+    svt_aom_setup_rtcd_internal(enc_handle_ptr->scs_instance_array[0]->scs->static_config.use_cpu_flags);
 
-    asm_set_convolve_asm_table();
+    svt_aom_asm_set_convolve_asm_table();
 
-    init_intra_dc_predictors_c_internal();
+    svt_aom_init_intra_dc_predictors_c_internal();
 
-    asm_set_convolve_hbd_asm_table();
+    svt_aom_asm_set_convolve_hbd_asm_table();
 
-    init_intra_predictors_internal();
-    build_blk_geom(enc_handle_ptr->scs_instance_array[0]->scs->svt_aom_geom_idx);
+    svt_aom_init_intra_predictors_internal();
+    svt_aom_build_blk_geom(enc_handle_ptr->scs_instance_array[0]->scs->svt_aom_geom_idx);
 
     svt_av1_init_me_luts();
     init_fn_ptr();
@@ -1624,7 +1624,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[instance_index]->scs->picture_control_set_pool_init_count,//enc_handle_ptr->pcs_pool_total_count,
             1,
             0,
-            picture_parent_control_set_creator,
+            svt_aom_picture_parent_control_set_creator,
             &input_data,
             NULL);
 #if SRM_REPORT
@@ -1636,7 +1636,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[instance_index]->scs->me_pool_init_count,
             1,
             0,
-            me_creator,
+            svt_aom_me_creator,
             &input_data,
             NULL);
 #if SRM_REPORT
@@ -1696,7 +1696,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
                 enc_handle_ptr->scs_instance_array[instance_index]->scs->enc_dec_pool_init_count, //EB_PictureControlSetPoolInitCountChild,
                 1,
                 0,
-                recon_coef_creator,
+                svt_aom_recon_coef_creator,
                 &input_data,
                 NULL);
         }
@@ -1759,7 +1759,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
                 enc_handle_ptr->scs_instance_array[instance_index]->scs->picture_control_set_pool_init_count_child, //EB_PictureControlSetPoolInitCountChild,
                 1,
                 0,
-                picture_control_set_creator,
+                svt_aom_picture_control_set_creator,
                 &input_data,
                 NULL);
         }
@@ -1903,7 +1903,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->resource_coordination_fifo_init_count,
             EB_ResourceCoordinationProcessInitCount,
             enc_handle_ptr->scs_instance_array[0]->scs->picture_analysis_process_init_count,
-            resource_coordination_result_creator,
+            svt_aom_resource_coordination_result_creator,
             &resource_coordination_result_init_data,
             NULL);
     }
@@ -1918,7 +1918,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->picture_analysis_fifo_init_count,
             enc_handle_ptr->scs_instance_array[0]->scs->picture_analysis_process_init_count,
             EB_PictureDecisionProcessInitCount,
-            picture_analysis_result_creator,
+            svt_aom_picture_analysis_result_creator,
             &picture_analysis_result_init_data,
             NULL);
     }
@@ -1933,7 +1933,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->picture_decision_fifo_init_count,
             EB_PictureDecisionProcessInitCount + 2,  // 1 for rate control, another 1 for packetization when superres recoding is on
             enc_handle_ptr->scs_instance_array[0]->scs->motion_estimation_process_init_count,
-            picture_decision_result_creator,
+            svt_aom_picture_decision_result_creator,
             &picture_decision_result_init_data,
             NULL);
     }
@@ -1948,7 +1948,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->motion_estimation_fifo_init_count,
             enc_handle_ptr->scs_instance_array[0]->scs->motion_estimation_process_init_count,
             EB_InitialRateControlProcessInitCount,
-            motion_estimation_results_creator,
+            svt_aom_motion_estimation_results_creator,
             &motion_estimation_result_init_data,
             NULL);
     }
@@ -1964,7 +1964,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->initial_rate_control_fifo_init_count,
             EB_InitialRateControlProcessInitCount,
             enc_handle_ptr->scs_instance_array[0]->scs->source_based_operations_process_init_count,
-            initial_rate_control_results_creator,
+            svt_aom_initial_rate_control_results_creator,
             &initial_rate_control_result_init_data,
             NULL);
     }
@@ -1978,7 +1978,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->picture_demux_fifo_init_count,
             pic_mgr_port_total_count(),
             EB_PictureManagerProcessInitCount,
-            picture_results_creator,
+            svt_aom_picture_results_creator,
             &picture_result_init_data,
             NULL);
 
@@ -2009,7 +2009,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->rate_control_tasks_fifo_init_count,
             rate_control_port_total_count(),
             EB_RateControlProcessInitCount,
-            rate_control_tasks_creator,
+            svt_aom_rate_control_tasks_creator,
             &rate_control_tasks_init_data,
             NULL);
     }
@@ -2024,7 +2024,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->rate_control_fifo_init_count,
             EB_RateControlProcessInitCount,
             enc_handle_ptr->scs_instance_array[0]->scs->mode_decision_configuration_process_init_count,
-            rate_control_results_creator,
+            svt_aom_rate_control_results_creator,
             &rate_control_result_init_data,
             NULL);
     }
@@ -2047,7 +2047,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->mode_decision_configuration_fifo_init_count,
             enc_dec_port_total_count(),
             enc_handle_ptr->scs_instance_array[0]->scs->enc_dec_process_init_count,
-            enc_dec_tasks_creator,
+            svt_aom_enc_dec_tasks_creator,
             &mode_decision_result_init_data,
             NULL);
     }
@@ -2062,7 +2062,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->enc_dec_fifo_init_count,
             enc_handle_ptr->scs_instance_array[0]->scs->enc_dec_process_init_count,
             enc_handle_ptr->scs_instance_array[0]->scs->dlf_process_init_count,
-            enc_dec_results_creator,
+            svt_aom_enc_dec_results_creator,
             &enc_dec_result_init_data,
             NULL);
     }
@@ -2120,7 +2120,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->scs_instance_array[0]->scs->entropy_coding_fifo_init_count,
             enc_handle_ptr->scs_instance_array[0]->scs->entropy_coding_process_init_count,
             EB_PacketizationProcessInitCount,
-            entropy_coding_results_creator,
+            svt_aom_entropy_coding_results_creator,
             &entropy_coding_results_init_data,
             NULL);
     }
@@ -2145,7 +2145,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     // Resource Coordination Context
     EB_NEW(
         enc_handle_ptr->resource_coordination_context_ptr,
-        resource_coordination_context_ctor,
+        svt_aom_resource_coordination_context_ctor,
         enc_handle_ptr);
 
     // Picture Analysis Context
@@ -2155,7 +2155,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
         EB_NEW(
             enc_handle_ptr->picture_analysis_context_ptr_array[process_index],
-            picture_analysis_context_ctor,
+            svt_aom_picture_analysis_context_ctor,
             enc_handle_ptr,
             process_index);
    }
@@ -2166,7 +2166,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         instance_index = 0;
         EB_NEW(
             enc_handle_ptr->picture_decision_context_ptr,
-            picture_decision_context_ctor,
+            svt_aom_picture_decision_context_ctor,
             enc_handle_ptr,
             enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.scene_change_detection ||
             enc_handle_ptr->scs_instance_array[instance_index]->scs->vq_ctrls.sharpness_ctrls.scene_transition);
@@ -2178,7 +2178,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->motion_estimation_process_init_count; ++process_index) {
         EB_NEW(
             enc_handle_ptr->motion_estimation_context_ptr_array[process_index],
-            motion_estimation_context_ctor,
+            svt_aom_motion_estimation_context_ctor,
             enc_handle_ptr,
             process_index);
     }
@@ -2187,7 +2187,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         // Initial Rate Control Context
         EB_NEW(
             enc_handle_ptr->initial_rate_control_context_ptr,
-            initial_rate_control_context_ctor,
+            svt_aom_initial_rate_control_context_ctor,
             enc_handle_ptr);
         // Source Based Operations Context
         EB_ALLOC_PTR_ARRAY(enc_handle_ptr->source_based_operations_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs->source_based_operations_process_init_count);
@@ -2195,7 +2195,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->source_based_operations_process_init_count; ++process_index) {
             EB_NEW(
                 enc_handle_ptr->source_based_operations_context_ptr_array[process_index],
-                source_based_operations_context_ctor,
+                svt_aom_source_based_operations_context_ctor,
                 enc_handle_ptr,
                 tpl_port_lookup(TPL_INPUT_PORT_SOP, process_index),
                 pic_mgr_port_lookup(PIC_MGR_INPUT_PORT_SOP, process_index));
@@ -2206,7 +2206,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->tpl_disp_process_init_count; ++process_index) {
             EB_NEW(
                 enc_handle_ptr->tpl_disp_context_ptr_array[process_index],
-                tpl_disp_context_ctor,
+                svt_aom_tpl_disp_context_ctor,
                 enc_handle_ptr,
                 process_index,
                 tpl_port_lookup(TPL_INPUT_PORT_TPL, process_index)
@@ -2215,13 +2215,13 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         // Picture Manager Context
         EB_NEW(
             enc_handle_ptr->picture_manager_context_ptr,
-            picture_manager_context_ctor,
+            svt_aom_picture_manager_context_ctor,
             enc_handle_ptr,
             rate_control_port_lookup(RATE_CONTROL_INPUT_PORT_INLME, 0)); //Pic-Mgr uses the first Port
         // Rate Control Context
         EB_NEW(
             enc_handle_ptr->rate_control_context_ptr,
-            rate_control_context_ctor,
+            svt_aom_rate_control_context_ctor,
             enc_handle_ptr,
             EB_PictureDecisionProcessInitCount);  // me_port_index
 
@@ -2233,7 +2233,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->mode_decision_configuration_process_init_count; ++process_index) {
                 EB_NEW(
                     enc_handle_ptr->mode_decision_configuration_context_ptr_array[process_index],
-                    mode_decision_configuration_context_ctor,
+                    svt_aom_mode_decision_configuration_context_ctor,
                     enc_handle_ptr,
                     process_index,
                     enc_dec_port_lookup(ENCDEC_INPUT_PORT_MDC, process_index));
@@ -2251,7 +2251,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->enc_dec_process_init_count; ++process_index) {
             EB_NEW(
                 enc_handle_ptr->enc_dec_context_ptr_array[process_index],
-                enc_dec_context_ctor,
+                svt_aom_enc_dec_context_ctor,
                 enc_handle_ptr,
                 process_index,
                 enc_dec_port_lookup(ENCDEC_INPUT_PORT_ENCDEC, process_index));
@@ -2263,7 +2263,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->dlf_process_init_count; ++process_index) {
             EB_NEW(
                 enc_handle_ptr->dlf_context_ptr_array[process_index],
-                dlf_context_ctor,
+                svt_aom_dlf_context_ctor,
                 enc_handle_ptr,
                 process_index);
         }
@@ -2274,7 +2274,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->cdef_process_init_count; ++process_index) {
             EB_NEW(
                 enc_handle_ptr->cdef_context_ptr_array[process_index],
-                cdef_context_ctor,
+                svt_aom_cdef_context_ctor,
                 enc_handle_ptr,
                 process_index);
         }
@@ -2286,7 +2286,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->rest_process_init_count; ++process_index) {
             EB_NEW(
                 enc_handle_ptr->rest_context_ptr_array[process_index],
-                rest_context_ctor,
+                svt_aom_rest_context_ctor,
                 enc_handle_ptr,
                 &input_data,
                 process_index,
@@ -2299,7 +2299,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs->entropy_coding_process_init_count; ++process_index) {
             EB_NEW(
                 enc_handle_ptr->entropy_coding_context_ptr_array[process_index],
-                entropy_coding_context_ctor,
+                svt_aom_entropy_coding_context_ctor,
                 enc_handle_ptr,
                 process_index,
                 rate_control_port_lookup(RATE_CONTROL_INPUT_PORT_ENTROPY_CODING, process_index));
@@ -2308,7 +2308,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     // Packetization Context
     EB_NEW(
         enc_handle_ptr->packetization_context_ptr,
-        packetization_context_ctor,
+        svt_aom_packetization_context_ctor,
         enc_handle_ptr,
         rate_control_port_lookup(RATE_CONTROL_INPUT_PORT_PACKETIZATION, 0),
         pic_mgr_port_lookup(PIC_MGR_INPUT_PORT_PACKETIZATION, 0),
@@ -2323,69 +2323,69 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     control_set_ptr = enc_handle_ptr->scs_instance_array[0]->scs;
 
     // Resource Coordination
-    EB_CREATE_THREAD(enc_handle_ptr->resource_coordination_thread_handle, resource_coordination_kernel, enc_handle_ptr->resource_coordination_context_ptr);
+    EB_CREATE_THREAD(enc_handle_ptr->resource_coordination_thread_handle, svt_aom_resource_coordination_kernel, enc_handle_ptr->resource_coordination_context_ptr);
     EB_CREATE_THREAD_ARRAY(enc_handle_ptr->picture_analysis_thread_handle_array,control_set_ptr->picture_analysis_process_init_count,
-        picture_analysis_kernel,
+        svt_aom_picture_analysis_kernel,
         enc_handle_ptr->picture_analysis_context_ptr_array);
 
     // Picture Decision
-    EB_CREATE_THREAD(enc_handle_ptr->picture_decision_thread_handle, picture_decision_kernel, enc_handle_ptr->picture_decision_context_ptr);
+    EB_CREATE_THREAD(enc_handle_ptr->picture_decision_thread_handle, svt_aom_picture_decision_kernel, enc_handle_ptr->picture_decision_context_ptr);
 
     // Motion Estimation
     EB_CREATE_THREAD_ARRAY(enc_handle_ptr->motion_estimation_thread_handle_array, control_set_ptr->motion_estimation_process_init_count,
-        motion_estimation_kernel,
+        svt_aom_motion_estimation_kernel,
         enc_handle_ptr->motion_estimation_context_ptr_array);
 
         // Initial Rate Control
-        EB_CREATE_THREAD(enc_handle_ptr->initial_rate_control_thread_handle, initial_rate_control_kernel, enc_handle_ptr->initial_rate_control_context_ptr);
+        EB_CREATE_THREAD(enc_handle_ptr->initial_rate_control_thread_handle, svt_aom_initial_rate_control_kernel, enc_handle_ptr->initial_rate_control_context_ptr);
 
         // Source Based Oprations
         EB_CREATE_THREAD_ARRAY(enc_handle_ptr->source_based_operations_thread_handle_array, control_set_ptr->source_based_operations_process_init_count,
-            source_based_operations_kernel,
+            svt_aom_source_based_operations_kernel,
             enc_handle_ptr->source_based_operations_context_ptr_array);
 
         // TPL dispenser
         EB_CREATE_THREAD_ARRAY(enc_handle_ptr->tpl_disp_thread_handle_array, control_set_ptr->tpl_disp_process_init_count,
-            tpl_disp_kernel,//TODOOMK
+            svt_aom_tpl_disp_kernel,//TODOOMK
             enc_handle_ptr->tpl_disp_context_ptr_array);
         // Picture Manager
-        EB_CREATE_THREAD(enc_handle_ptr->picture_manager_thread_handle, picture_manager_kernel, enc_handle_ptr->picture_manager_context_ptr);
+        EB_CREATE_THREAD(enc_handle_ptr->picture_manager_thread_handle, svt_aom_picture_manager_kernel, enc_handle_ptr->picture_manager_context_ptr);
         // Rate Control
-        EB_CREATE_THREAD(enc_handle_ptr->rate_control_thread_handle, rate_control_kernel, enc_handle_ptr->rate_control_context_ptr);
+        EB_CREATE_THREAD(enc_handle_ptr->rate_control_thread_handle, svt_aom_rate_control_kernel, enc_handle_ptr->rate_control_context_ptr);
 
         // Mode Decision Configuration Process
         EB_CREATE_THREAD_ARRAY(enc_handle_ptr->mode_decision_configuration_thread_handle_array, control_set_ptr->mode_decision_configuration_process_init_count,
-            mode_decision_configuration_kernel,
+            svt_aom_mode_decision_configuration_kernel,
             enc_handle_ptr->mode_decision_configuration_context_ptr_array);
 
 
         // EncDec Process
         EB_CREATE_THREAD_ARRAY(enc_handle_ptr->enc_dec_thread_handle_array, control_set_ptr->enc_dec_process_init_count,
-            mode_decision_kernel,
+            svt_aom_mode_decision_kernel,
             enc_handle_ptr->enc_dec_context_ptr_array);
 
         // Dlf Process
         EB_CREATE_THREAD_ARRAY(enc_handle_ptr->dlf_thread_handle_array, control_set_ptr->dlf_process_init_count,
-            dlf_kernel,
+            svt_aom_dlf_kernel,
             enc_handle_ptr->dlf_context_ptr_array);
 
         // Cdef Process
         EB_CREATE_THREAD_ARRAY(enc_handle_ptr->cdef_thread_handle_array, control_set_ptr->cdef_process_init_count,
-            cdef_kernel,
+            svt_aom_cdef_kernel,
             enc_handle_ptr->cdef_context_ptr_array);
 
         // Rest Process
         EB_CREATE_THREAD_ARRAY(enc_handle_ptr->rest_thread_handle_array, control_set_ptr->rest_process_init_count,
-            rest_kernel,
+            svt_aom_rest_kernel,
             enc_handle_ptr->rest_context_ptr_array);
 
         // Entropy Coding Process
         EB_CREATE_THREAD_ARRAY(enc_handle_ptr->entropy_coding_thread_handle_array, control_set_ptr->entropy_coding_process_init_count,
-            entropy_coding_kernel,
+            svt_aom_entropy_coding_kernel,
             enc_handle_ptr->entropy_coding_context_ptr_array);
 
     // Packetization
-    EB_CREATE_THREAD(enc_handle_ptr->packetization_thread_handle, packetization_kernel, enc_handle_ptr->packetization_context_ptr);
+    EB_CREATE_THREAD(enc_handle_ptr->packetization_thread_handle, svt_aom_packetization_kernel, enc_handle_ptr->packetization_context_ptr);
 
     svt_print_memory_usage();
 
@@ -3793,7 +3793,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         else
             scs->static_config.qp = 20;
     }
-    derive_input_resolution(
+    svt_aom_derive_input_resolution(
         &scs->input_resolution,
         scs->max_input_luma_width *scs->max_input_luma_height);
     // Set tune params
@@ -3911,7 +3911,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
-                disallow_nsq = MIN(disallow_nsq, (get_nsq_level(scs->static_config.enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
+                disallow_nsq = MIN(disallow_nsq, (svt_aom_get_nsq_level(scs->static_config.enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
     bool disallow_4x4 = true;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, slice_type));
@@ -4108,9 +4108,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 /******************************************************
  * Read Stat from File
  ******************************************************/
-extern void read_stat(SequenceControlSet *scs);
+extern void svt_aom_read_stat(SequenceControlSet *scs);
 
-extern void setup_two_pass(SequenceControlSet *scs);
+extern void svt_aom_setup_two_pass(SequenceControlSet *scs);
 static void set_mini_gop_size_controls(MiniGopSizeCtrls *mgs_ctls, uint8_t mg_level,int input_resolution) {
     switch (mg_level) {
     case 0:
@@ -4133,8 +4133,8 @@ static void set_mini_gop_size_controls(MiniGopSizeCtrls *mgs_ctls, uint8_t mg_le
 }
 void set_max_mini_gop_size(SequenceControlSet *scs, MiniGopSizeCtrls *mgs_ctls) {
     if (scs->static_config.pass == ENC_MIDDLE_PASS || scs->static_config.pass == ENC_LAST_PASS) {
-        read_stat(scs);
-        setup_two_pass(scs);
+        svt_aom_read_stat(scs);
+        svt_aom_setup_two_pass(scs);
         const double resolution_offset[2][INPUT_SIZE_COUNT] = { { 0.3,0.1,0.0,0.0,0.0,0.0,0.0 },{ 0.37,0.12,0.05,0.05,0.5,0.5,0.0 } };
         FIRSTPASS_STATS * stat = scs->twopass.stats_buf_ctx->total_stats;
         double low_motion_clip = (stat->pcnt_inter - stat->pcnt_motion) / (stat->count - 1);
@@ -4145,11 +4145,11 @@ void set_max_mini_gop_size(SequenceControlSet *scs, MiniGopSizeCtrls *mgs_ctls) 
         avoid_long_gop = stat->count < (mgs_ctls->short_shot_th * 32) ? 1 : avoid_long_gop;
         EbInputResolution input_resolution;
         if (scs->mid_pass_ctrls.ds)
-            derive_input_resolution(
+            svt_aom_derive_input_resolution(
                 &input_resolution,
                 (scs->max_input_luma_width << 1)*(scs->max_input_luma_height << 1));
         else
-            derive_input_resolution(
+            svt_aom_derive_input_resolution(
                 &input_resolution,
                 scs->max_input_luma_width*scs->max_input_luma_height);
         double lm_th = (0.6 + resolution_offset[scs->ipp_was_ds][input_resolution]);
@@ -4251,7 +4251,7 @@ static void copy_api_from_app(
     scs->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
     EbInputResolution input_resolution;
-    derive_input_resolution(
+    svt_aom_derive_input_resolution(
         &input_resolution,
         scs->max_input_luma_width * scs->max_input_luma_height);
 #if OPT_LD_M13
@@ -4634,7 +4634,7 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
     }
 #if !OPT_RPS_CONSTR_3
     // Set the Prediction Structure
-    enc_handle->scs_instance_array[instance_index]->scs->pred_struct_ptr = get_prediction_structure(
+    enc_handle->scs_instance_array[instance_index]->scs->pred_struct_ptr = svt_aom_get_prediction_structure(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         enc_handle->scs_instance_array[instance_index]->scs->static_config.pred_structure,
         enc_handle->scs_instance_array[instance_index]->scs->max_ref_count,
@@ -4674,7 +4674,7 @@ EB_API EbErrorType svt_av1_enc_stream_header(
     Bitstream                bitstream;
     OutputBitstreamUnit      output_bitstream;
     EbBufferHeaderType      *output_stream_buffer;
-    uint32_t output_buffer_size = get_out_buffer_size(scs->max_input_luma_width, scs->max_input_luma_height);
+    uint32_t output_buffer_size = svt_aom_get_out_buffer_size(scs->max_input_luma_width, scs->max_input_luma_height);
     memset(&bitstream, 0, sizeof(Bitstream));
     memset(&output_bitstream, 0, sizeof(OutputBitstreamUnit));
     bitstream.output_bitstream_ptr = &output_bitstream;
@@ -4696,10 +4696,10 @@ EB_API EbErrorType svt_av1_enc_stream_header(
 
     ((OutputBitstreamUnit *)bitstream.output_bitstream_ptr)->buffer_begin_av1 = output_stream_buffer->p_buffer;
 
-    output_bitstream_reset(bitstream.output_bitstream_ptr);
+    svt_aom_output_bitstream_reset(bitstream.output_bitstream_ptr);
 
     // Code the SPS
-    encode_sps_av1(&bitstream, scs);
+    svt_aom_encode_sps_av1(&bitstream, scs);
 
     output_stream_buffer->n_filled_len = (uint32_t)(((OutputBitstreamUnit *)bitstream.output_bitstream_ptr)->buffer_av1 - ((OutputBitstreamUnit *)bitstream.output_bitstream_ptr)->buffer_begin_av1);
 
@@ -5040,7 +5040,7 @@ static EbErrorType copy_private_data_list(EbBufferHeaderType* dst, EbBufferHeade
         // skip undefined data type and throw an error in debugging
         if (p_src_node->node_type < PRIVATE_DATA ||
             p_src_node->node_type >= PRIVATE_DATA_TYPES) {
-            assert_err(0, "unknown private data types inserted!");
+            svt_aom_assert_err(0, "unknown private data types inserted!");
             continue;
         }
         if (p_first_node == NULL) {

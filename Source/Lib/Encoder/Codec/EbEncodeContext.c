@@ -78,7 +78,8 @@ static void encode_context_dctor(EbPtr p) {
     EB_DESTROY_MUTEX(obj->rc.rc_mutex);
 }
 
-EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_encode_context_ctor(EncodeContext *encode_context_ptr,
+                                        EbPtr          object_init_data_ptr) {
     uint32_t picture_index;
 
     encode_context_ptr->dctor = encode_context_dctor;
@@ -94,7 +95,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     for (picture_index = 0; picture_index < PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH;
          ++picture_index) {
         EB_NEW(encode_context_ptr->picture_decision_reorder_queue[picture_index],
-               picture_decision_reorder_entry_ctor,
+               svt_aom_picture_decision_reorder_entry_ctor,
                picture_index);
     }
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->pre_assignment_buffer, PRE_ASSIGNMENT_MAX_DEPTH);
@@ -102,12 +103,13 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
 
     for (picture_index = 0; picture_index < INPUT_QUEUE_MAX_DEPTH; ++picture_index) {
-        EB_NEW(encode_context_ptr->input_picture_queue[picture_index], input_queue_entry_ctor);
+        EB_NEW(encode_context_ptr->input_picture_queue[picture_index],
+               svt_aom_input_queue_entry_ctor);
     }
 
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->pd_dpb, REF_FRAMES);
     for (picture_index = 0; picture_index < REF_FRAMES; ++picture_index) {
-        EB_NEW(encode_context_ptr->pd_dpb[picture_index], pa_reference_queue_entry_ctor);
+        EB_NEW(encode_context_ptr->pd_dpb[picture_index], svt_aom_pa_reference_queue_entry_ctor);
     }
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->initial_rate_control_reorder_queue,
                        INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
@@ -115,7 +117,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     for (picture_index = 0; picture_index < INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
          ++picture_index) {
         EB_NEW(encode_context_ptr->initial_rate_control_reorder_queue[picture_index],
-               initial_rate_control_reorder_entry_ctor,
+               svt_aom_initial_rate_control_reorder_entry_ctor,
                picture_index);
     }
 
@@ -125,7 +127,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     for (picture_index = 0; picture_index < PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
          ++picture_index) {
         EB_NEW(encode_context_ptr->packetization_reorder_queue[picture_index],
-               packetization_reorder_entry_ctor,
+               svt_aom_packetization_reorder_entry_ctor,
                picture_index);
     }
 
@@ -150,7 +152,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     EB_CREATE_MUTEX(encode_context_ptr->rc.rc_mutex);
     for (picture_index = 0; picture_index < CODED_FRAMES_STAT_QUEUE_MAX_DEPTH; ++picture_index) {
         EB_NEW(encode_context_ptr->rc.coded_frames_stat_queue[picture_index],
-               rate_control_coded_frames_stats_context_ctor,
+               svt_aom_rate_control_coded_frames_stats_context_ctor,
                picture_index);
     }
     encode_context_ptr->rc.min_bit_actual_per_gop = 0xfffffffffffff;

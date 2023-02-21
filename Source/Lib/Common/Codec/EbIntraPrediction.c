@@ -55,7 +55,7 @@ static const uint8_t sm_weight_arrays[2 * MAX_BLOCK_DIM] = {
         assert(pred_scale < 31);                                                  \
     } while (0) // ensures no overflow when calculating predictor.
 
-int is_smooth(const BlockModeInfoEnc *block_mi, int plane)
+int svt_aom_is_smooth(const BlockModeInfoEnc *block_mi, int plane)
 {
     if (plane == 0) {
         const PredictionMode mode = block_mi->mode;
@@ -72,7 +72,7 @@ int is_smooth(const BlockModeInfoEnc *block_mi, int plane)
             uv_mode == UV_SMOOTH_H_PRED);
     }
 }
-int is_smooth_dec(const BlockModeInfo *block_mi, int plane)
+int svt_aom_is_smooth_dec(const BlockModeInfo *block_mi, int plane)
 {
     if (plane == 0) {
         const PredictionMode mode = block_mi->mode;
@@ -90,7 +90,7 @@ int is_smooth_dec(const BlockModeInfo *block_mi, int plane)
     }
 }
 
-int32_t use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t type)
+int32_t svt_aom_use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t type)
 {
     const int32_t d = abs(delta);
     const int32_t blk_wh = bs0 + bs1;
@@ -124,7 +124,7 @@ void svt_av1_filter_intra_edge_c(uint8_t *p, int32_t sz, int32_t strength)
     }
 }
 
-int32_t intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int32_t type)
+int32_t svt_aom_intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int32_t type)
 {
     const int32_t d = abs(delta);
     int32_t strength = 0;
@@ -642,10 +642,10 @@ static const uint8_t *get_has_tr_table(PartitionType partition, BlockSize bsize)
     return ret;
 }
 
-int32_t intra_has_top_right(BlockSize sb_size, BlockSize bsize, int32_t mi_row, int32_t mi_col,
-                            int32_t top_available, int32_t right_available, PartitionType partition,
-                            TxSize txsz, int32_t row_off, int32_t col_off, int32_t ss_x,
-                            int32_t ss_y) {
+int32_t svt_aom_intra_has_top_right(BlockSize sb_size, BlockSize bsize, int32_t mi_row,
+                                    int32_t mi_col, int32_t top_available, int32_t right_available,
+                                    PartitionType partition, TxSize txsz, int32_t row_off,
+                                    int32_t col_off, int32_t ss_x, int32_t ss_y) {
     if (!top_available || !right_available)
         return 0;
 
@@ -903,10 +903,11 @@ static const uint8_t *get_has_bl_table(PartitionType partition, BlockSize bsize)
     return ret;
 }
 
-int32_t intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_t mi_row, int32_t mi_col,
-                              int32_t bottom_available, int32_t left_available,
-                              PartitionType partition, TxSize txsz, int32_t row_off,
-                              int32_t col_off, int32_t ss_x, int32_t ss_y) {
+int32_t svt_aom_intra_has_bottom_left(BlockSize sb_size, BlockSize bsize, int32_t mi_row,
+                                      int32_t mi_col, int32_t bottom_available,
+                                      int32_t left_available, PartitionType partition, TxSize txsz,
+                                      int32_t row_off, int32_t col_off, int32_t ss_x,
+                                      int32_t ss_y) {
     if (!bottom_available || !left_available)
         return 0;
 
@@ -1862,7 +1863,7 @@ intra_pred_highbd_sized(paeth, 64, 32);
 
 static IntraPredFnC       dc_pred_c[2][2];
 static IntraHighBdPredFnC highbd_dc_pred_c[2][2];
-void                      init_intra_dc_predictors_c_internal(void) {
+void                      svt_aom_init_intra_dc_predictors_c_internal(void) {
     dc_pred_c[0][0] = dc_128_predictor;
     dc_pred_c[0][1] = dc_top_predictor;
     dc_pred_c[1][0] = dc_left_predictor;
@@ -1874,7 +1875,7 @@ void                      init_intra_dc_predictors_c_internal(void) {
     highbd_dc_pred_c[1][1] = highbd_dc_predictor;
 }
 
-/*static*/ void init_intra_predictors_internal(void) {
+/*static*/ void svt_aom_init_intra_predictors_internal(void) {
     svt_aom_eb_pred[V_PRED][TX_4X4]   = svt_aom_v_predictor_4x4;
     svt_aom_eb_pred[V_PRED][TX_8X8]   = svt_aom_v_predictor_8x8;
     svt_aom_eb_pred[V_PRED][TX_16X16] = svt_aom_v_predictor_16x16;
@@ -2370,9 +2371,9 @@ void                      init_intra_dc_predictors_c_internal(void) {
     svt_aom_dc_pred_high[1][1][TX_64X16] = svt_aom_highbd_dc_predictor_64x16;
     svt_aom_dc_pred_high[1][1][TX_64X32] = svt_aom_highbd_dc_predictor_64x32;
 }
-void dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above,
-                  const uint8_t *left, int32_t upsample_above, int32_t upsample_left,
-                  int32_t angle) {
+void svt_aom_dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above,
+                          const uint8_t *left, int32_t upsample_above, int32_t upsample_left,
+                          int32_t angle) {
     const int32_t dx = get_dx(angle);
     const int32_t dy = get_dy(angle);
     const int32_t bw = tx_size_wide[tx_size];
@@ -2472,9 +2473,10 @@ void svt_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t 
     }
 }
 
-void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size, const uint16_t *above,
-                         const uint16_t *left, int32_t upsample_above, int32_t upsample_left,
-                         int32_t angle, int32_t bd) {
+void svt_aom_highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
+                                 const uint16_t *above, const uint16_t *left,
+                                 int32_t upsample_above, int32_t upsample_left, int32_t angle,
+                                 int32_t bd) {
     const int32_t dx = get_dx(angle);
     const int32_t dy = get_dy(angle);
     const int32_t bw = tx_size_wide[tx_size];
@@ -2528,8 +2530,8 @@ void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
     p_left[-1]  = (uint16_t)s;
 }
 
-/*static INLINE*/ BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
-                                               int32_t subsampling_y) {
+/*static INLINE*/ BlockSize svt_aom_scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
+                                                       int32_t subsampling_y) {
     BlockSize bs = bsize;
     switch (bsize) {
     case BLOCK_4X4:
@@ -2579,8 +2581,9 @@ void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
 
 ////////////########...........Recurssive intra prediction starting...........#########
 
-void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
-                                   const uint16_t *above, const uint16_t *left, int mode, int bd) {
+void svt_aom_highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
+                                           const uint16_t *above, const uint16_t *left, int mode,
+                                           int bd) {
     uint16_t  buffer[33][33];
     const int bw = tx_size_wide[tx_size];
     const int bh = tx_size_high[tx_size];
@@ -2663,22 +2666,24 @@ void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t 
             filter_intra_edge_corner(above_row, left_col);
         }
         if (need_above && n_top_px > 0) {
-            const int strength = intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
-            const int n_px     = n_top_px + ab_le + (need_right ? txhpx : 0);
+            const int strength = svt_aom_intra_edge_filter_strength(
+                txwpx, txhpx, p_angle - 90, filt_type);
+            const int n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
             svt_av1_filter_intra_edge(above_row - ab_le, n_px, strength);
         }
         if (need_left && n_left_px > 0) {
-            const int strength = intra_edge_filter_strength(txhpx, txwpx, p_angle - 180, filt_type);
-            const int n_px     = n_left_px + ab_le + (need_bottom ? txwpx : 0);
+            const int strength = svt_aom_intra_edge_filter_strength(
+                txhpx, txwpx, p_angle - 180, filt_type);
+            const int n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
             svt_av1_filter_intra_edge(left_col - ab_le, n_px, strength);
         }
     }
-    int upsample_above = use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
+    int upsample_above = svt_aom_use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
     if (need_above && upsample_above) {
         const int n_px = txwpx + (need_right ? txhpx : 0);
         svt_av1_upsample_intra_edge(above_row, n_px);
     }
-    int upsample_left = use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
+    int upsample_left = svt_aom_use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
     if (need_left && upsample_left) {
         const int n_px = txhpx + (need_bottom ? txwpx : 0);
         svt_av1_upsample_intra_edge(left_col, n_px);
@@ -2686,10 +2691,11 @@ void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t 
     return;
 }
 
-EbErrorType intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_intra_mode,
-                                          uint32_t src_origin_x, uint32_t src_origin_y,
-                                          TxSize tx_size, uint8_t *above_row, uint8_t *left_col,
-                                          uint8_t *dst, uint32_t dst_stride)
+EbErrorType svt_aom_intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_intra_mode,
+                                                  uint32_t src_origin_x, uint32_t src_origin_y,
+                                                  TxSize tx_size, uint8_t *above_row,
+                                                  uint8_t *left_col, uint8_t *dst,
+                                                  uint32_t dst_stride)
 
 {
     EbErrorType    return_error = EB_ErrorNone;
@@ -2697,7 +2703,7 @@ EbErrorType intra_prediction_open_loop_mb(int32_t p_angle, uint8_t ois_intra_mod
     const int32_t  is_dr_mode   = av1_is_directional_mode(mode);
 
     if (is_dr_mode)
-        dr_predictor(dst, dst_stride, tx_size, above_row, left_col, 0, 0, p_angle);
+        svt_aom_dr_predictor(dst, dst_stride, tx_size, above_row, left_col, 0, 0, p_angle);
     else {
         // predict
         if (mode == DC_PRED) {

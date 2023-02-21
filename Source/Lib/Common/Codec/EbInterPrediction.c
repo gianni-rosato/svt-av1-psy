@@ -23,21 +23,22 @@
 #define SCALE_SUBPEL_MASK (SCALE_SUBPEL_SHIFTS - 1)
 #define SCALE_EXTRA_BITS (SCALE_SUBPEL_BITS - SUBPEL_BITS)
 
-extern void pack_block(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
-                       uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
-                       uint32_t width, uint32_t height) {
-    pack2d_src(in8_bit_buffer,
-               in8_stride,
-               inn_bit_buffer,
-               inn_stride,
-               out16_bit_buffer,
-               out_stride,
-               width,
-               height);
+extern void svt_aom_pack_block(uint8_t *in8_bit_buffer, uint32_t in8_stride,
+                               uint8_t *inn_bit_buffer, uint32_t inn_stride,
+                               uint16_t *out16_bit_buffer, uint32_t out_stride, uint32_t width,
+                               uint32_t height) {
+    svt_aom_pack2d_src(in8_bit_buffer,
+                       in8_stride,
+                       inn_bit_buffer,
+                       inn_stride,
+                       out16_bit_buffer,
+                       out_stride,
+                       width,
+                       height);
 }
 static WedgeMasksType wedge_masks[BlockSizeS_ALL][2];
 
-int is_masked_compound_type(COMPOUND_TYPE type) {
+int svt_aom_is_masked_compound_type(COMPOUND_TYPE type) {
     return (type == COMPOUND_WEDGE || type == COMPOUND_DIFFWTD);
 }
 
@@ -284,7 +285,7 @@ DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_4[SUBPEL_SHIFTS]) = {
     {0, 0, -2, 8, 126, -4, 0, 0}};
 
 #define MAX_FILTER_TAP 8
-int get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint) {
+int svt_aom_get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint) {
     int diff, m;
     if (!seq_header->order_hint_info.enable_order_hint)
         return 0;
@@ -312,10 +313,10 @@ void svt_av1_dist_wtd_comp_weight_assign(SeqHeader *seq_header, int cur_frame_in
 
     *use_dist_wtd_comp_avg = 1;
 
-    int d0 = clamp(abs(get_relative_dist_enc(seq_header, fwd_frame_index, cur_frame_index)),
+    int d0 = clamp(abs(svt_aom_get_relative_dist_enc(seq_header, fwd_frame_index, cur_frame_index)),
                    0,
                    MAX_FRAME_DISTANCE);
-    int d1 = clamp(abs(get_relative_dist_enc(seq_header, cur_frame_index, bck_frame_index)),
+    int d1 = clamp(abs(svt_aom_get_relative_dist_enc(seq_header, cur_frame_index, bck_frame_index)),
                    0,
                    MAX_FRAME_DISTANCE);
 
@@ -1143,7 +1144,7 @@ void svt_av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride, u
 }
 
 aom_highbd_convolve_fn_t svt_aom_convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
-void asm_set_convolve_hbd_asm_table(void) {
+void svt_aom_asm_set_convolve_hbd_asm_table(void) {
     svt_aom_convolveHbd[0][0][0] = svt_av1_highbd_convolve_2d_copy_sr;
     svt_aom_convolveHbd[0][0][1] = svt_av1_highbd_jnt_convolve_2d_copy;
 
@@ -1157,19 +1158,19 @@ void asm_set_convolve_hbd_asm_table(void) {
     svt_aom_convolveHbd[1][1][1] = svt_av1_highbd_jnt_convolve_2d;
 }
 
-AomConvolveFn convolve[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
-void asm_set_convolve_asm_table(void) {
-    convolve[0][0][0] = svt_av1_convolve_2d_copy_sr;
-    convolve[0][0][1] = svt_av1_jnt_convolve_2d_copy;
+AomConvolveFn svt_aom_convolve[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
+void svt_aom_asm_set_convolve_asm_table(void) {
+    svt_aom_convolve[0][0][0] = svt_av1_convolve_2d_copy_sr;
+    svt_aom_convolve[0][0][1] = svt_av1_jnt_convolve_2d_copy;
 
-    convolve[0][1][0] = svt_av1_convolve_y_sr;
-    convolve[0][1][1] = svt_av1_jnt_convolve_y;
+    svt_aom_convolve[0][1][0] = svt_av1_convolve_y_sr;
+    svt_aom_convolve[0][1][1] = svt_av1_jnt_convolve_y;
 
-    convolve[1][0][0] = svt_av1_convolve_x_sr;
-    convolve[1][0][1] = svt_av1_jnt_convolve_x;
+    svt_aom_convolve[1][0][0] = svt_av1_convolve_x_sr;
+    svt_aom_convolve[1][0][1] = svt_av1_jnt_convolve_x;
 
-    convolve[1][1][0] = svt_av1_convolve_2d_sr;
-    convolve[1][1][1] = svt_av1_jnt_convolve_2d;
+    svt_aom_convolve[1][1][0] = svt_av1_convolve_2d_sr;
+    svt_aom_convolve[1][1][1] = svt_av1_jnt_convolve_2d;
 }
 
 DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_8sharp[SUBPEL_SHIFTS]) = {
@@ -1241,7 +1242,7 @@ DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_4smooth[SUBPEL_SHIFTS])
     {0, 0, 4, 40, 62, 22, 0, 0},
     {0, 0, 4, 36, 62, 26, 0, 0},
     {0, 0, 2, 34, 62, 30, 0, 0}};
-BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x, int32_t subsampling_y);
+BlockSize svt_aom_scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x, int32_t subsampling_y);
 
 void convolve_2d_for_intrabc(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride,
                              int w, int h, int subpel_x_q4, int subpel_y_q4,
@@ -1369,7 +1370,7 @@ void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8
                                   conv_params);
     } else {
         UNUSED(subpel_params);
-        convolve[0][0][conv_params->is_compound](
+        svt_aom_convolve[0][0][conv_params->is_compound](
             src, src_stride, dst, dst_stride, w, h, 0, 0, 0, 0, conv_params);
     }
 }
@@ -1397,14 +1398,14 @@ void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int
     if (src_stride16 % 8)
         src_stride16 = ALIGN_POWER_OF_TWO(src_stride16, 3);
 
-    pack_block(src - offset - (offset * src_stride),
-               src_stride,
-               src_ptr_2b - offset - (offset * src_stride),
-               src_stride,
-               src16,
-               src_stride16,
-               w * width_scale + (offset << 1),
-               h * height_scale + (offset << 1));
+    svt_aom_pack_block(src - offset - (offset * src_stride),
+                       src_stride,
+                       src_ptr_2b - offset - (offset * src_stride),
+                       src_stride,
+                       src16,
+                       src_stride16,
+                       w * width_scale + (offset << 1),
+                       h * height_scale + (offset << 1));
     uint16_t *src_10b = src16 + offset + (offset * src_stride16);
     uint16_t *dst16   = (uint16_t *)dst;
 
@@ -1462,14 +1463,14 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
         if (src_stride16 % 8)
             src_stride16 = ALIGN_POWER_OF_TWO(src_stride16, 3);
 
-        pack_block(src - offset - (offset * src_stride),
-                   src_stride,
-                   src_2b - offset - (offset * src_stride),
-                   src_stride,
-                   src16,
-                   src_stride16,
-                   w * width_scale + (offset << 1),
-                   h * height_scale + (offset << 1));
+        svt_aom_pack_block(src - offset - (offset * src_stride),
+                           src_stride,
+                           src_2b - offset - (offset * src_stride),
+                           src_stride,
+                           src16,
+                           src_stride16,
+                           w * width_scale + (offset << 1),
+                           h * height_scale + (offset << 1));
         uint16_t *src_10b = src16 + offset + (offset * src_stride16);
         uint16_t *dst16   = (uint16_t *)dst;
 
@@ -1523,17 +1524,18 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
         } else {
             SubpelParams sp = *subpel_params;
             revert_scale_extra_bits(&sp);
-            convolve[sp.subpel_x != 0][sp.subpel_y != 0][conv_params->is_compound](src,
-                                                                                   src_stride,
-                                                                                   dst,
-                                                                                   dst_stride,
-                                                                                   w,
-                                                                                   h,
-                                                                                   filter_x,
-                                                                                   filter_y,
-                                                                                   sp.subpel_x,
-                                                                                   sp.subpel_y,
-                                                                                   conv_params);
+            svt_aom_convolve[sp.subpel_x != 0][sp.subpel_y != 0][conv_params->is_compound](
+                src,
+                src_stride,
+                dst,
+                dst_stride,
+                w,
+                h,
+                filter_x,
+                filter_y,
+                sp.subpel_x,
+                sp.subpel_y,
+                conv_params);
         }
     }
 }
@@ -1590,17 +1592,18 @@ void svt_inter_predictor(const uint8_t *src, int32_t src_stride, uint8_t *dst, i
             return;
         }
 
-        convolve[sp.subpel_x != 0][sp.subpel_y != 0][conv_params->is_compound](src,
-                                                                               src_stride,
-                                                                               dst,
-                                                                               dst_stride,
-                                                                               w,
-                                                                               h,
-                                                                               &filter_params_x,
-                                                                               &filter_params_y,
-                                                                               sp.subpel_x,
-                                                                               sp.subpel_y,
-                                                                               conv_params);
+        svt_aom_convolve[sp.subpel_x != 0][sp.subpel_y != 0][conv_params->is_compound](
+            src,
+            src_stride,
+            dst,
+            dst_stride,
+            w,
+            h,
+            &filter_params_x,
+            &filter_params_y,
+            sp.subpel_x,
+            sp.subpel_y,
+            conv_params);
     }
 }
 
@@ -2177,11 +2180,16 @@ static const WedgeParamsType wedge_params_lookup[BlockSizeS_ALL] = {
     {0, NULL, NULL, NULL},
 };
 
-int is_interintra_wedge_used(BlockSize sb_type) { return wedge_params_lookup[sb_type].bits > 0; }
+int svt_aom_is_interintra_wedge_used(BlockSize sb_type) {
+    return wedge_params_lookup[sb_type].bits > 0;
+}
 
-int32_t get_wedge_bits_lookup(BlockSize sb_type) { return wedge_params_lookup[sb_type].bits; }
+int32_t svt_aom_get_wedge_bits_lookup(BlockSize sb_type) {
+    return wedge_params_lookup[sb_type].bits;
+}
 
-const uint8_t *av1_get_contiguous_soft_mask(int wedge_index, int wedge_sign, BlockSize sb_type) {
+const uint8_t *svt_aom_get_contiguous_soft_mask(int wedge_index, int wedge_sign,
+                                                BlockSize sb_type) {
     return wedge_params_lookup[sb_type].masks[wedge_sign][wedge_index];
 }
 
@@ -2211,7 +2219,7 @@ static void shift_copy(const uint8_t *src, uint8_t *dst, int shift, int width) {
     }
 }
 
-int get_wedge_params_bits(BlockSize sb_type) { return wedge_params_lookup[sb_type].bits; }
+int svt_aom_get_wedge_params_bits(BlockSize sb_type) { return wedge_params_lookup[sb_type].bits; }
 
 #endif // USE_PRECOMPUTED_WEDGE_MASK
 
@@ -2325,7 +2333,7 @@ static const uint8_t *get_wedge_mask_inplace(int wedge_index, int neg, BlockSize
     const int bh = block_size_high[sb_type];
     const int bw = block_size_wide[sb_type];
 
-    assert(wedge_index >= 0 && wedge_index < (1 << get_wedge_bits_lookup(sb_type)));
+    assert(wedge_index >= 0 && wedge_index < (1 << svt_aom_get_wedge_bits_lookup(sb_type)));
     const WedgeCodeType *a = wedge_params_lookup[sb_type].codebook + wedge_index;
     int                  woff, hoff;
     const uint8_t        wsignflip = wedge_params_lookup[sb_type].signflip[wedge_index];
@@ -2372,7 +2380,7 @@ void svt_av1_init_wedge_masks(void) {
     init_wedge_masks();
 }
 
-int is_masked_compound_type(COMPOUND_TYPE type);
+int svt_aom_is_masked_compound_type(COMPOUND_TYPE type);
 
 /* clang-format off */
 static const uint8_t ii_weights1d[MAX_SB_SIZE] = {
@@ -2429,17 +2437,17 @@ void build_smooth_interintra_mask(uint8_t *mask, int stride, BlockSize plane_bsi
     }
 }
 
-void combine_interintra_highbd(InterIntraMode mode, uint8_t use_wedge_interintra,
-                               uint8_t wedge_index, uint8_t wedge_sign, BlockSize bsize,
-                               BlockSize plane_bsize, uint8_t *comppred8, int compstride,
-                               const uint8_t *interpred8, int interstride,
-                               const uint8_t *intrapred8, int intrastride, int bd) {
+void svt_aom_combine_interintra_highbd(InterIntraMode mode, uint8_t use_wedge_interintra,
+                                       uint8_t wedge_index, uint8_t wedge_sign, BlockSize bsize,
+                                       BlockSize plane_bsize, uint8_t *comppred8, int compstride,
+                                       const uint8_t *interpred8, int interstride,
+                                       const uint8_t *intrapred8, int intrastride, int bd) {
     const int bw = block_size_wide[plane_bsize];
     const int bh = block_size_high[plane_bsize];
 
     if (use_wedge_interintra) {
-        if (is_interintra_wedge_used(bsize)) {
-            const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
+        if (svt_aom_is_interintra_wedge_used(bsize)) {
+            const uint8_t *mask = svt_aom_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
             const int      subh = 2 * mi_size_high[bsize] == bh;
             const int      subw = 2 * mi_size_wide[bsize] == bw;
             svt_aom_highbd_blend_a64_mask(comppred8,
@@ -2478,21 +2486,24 @@ void combine_interintra_highbd(InterIntraMode mode, uint8_t use_wedge_interintra
 
 static const uint8_t *av1_get_compound_type_mask(const InterInterCompoundData *const comp_data,
                                                  uint8_t *seg_mask, BlockSize sb_type) {
-    assert(is_masked_compound_type(comp_data->type));
+    assert(svt_aom_is_masked_compound_type(comp_data->type));
     (void)sb_type;
     switch (comp_data->type) {
     case COMPOUND_WEDGE:
-        return av1_get_contiguous_soft_mask(comp_data->wedge_index, comp_data->wedge_sign, sb_type);
+        return svt_aom_get_contiguous_soft_mask(
+            comp_data->wedge_index, comp_data->wedge_sign, sb_type);
     case COMPOUND_DIFFWTD: return seg_mask;
     default: assert(0); return NULL;
     }
 }
 
-void build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF_TYPE *src0,
-                                    int src0_stride, const CONV_BUF_TYPE *src1, int src1_stride,
-                                    const InterInterCompoundData *const comp_data,
-                                    uint8_t *seg_mask, BlockSize sb_type, int h, int w,
-                                    ConvolveParams *conv_params, uint8_t bit_depth, Bool is_16bit) {
+void svt_aom_build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF_TYPE *src0,
+                                            int src0_stride, const CONV_BUF_TYPE *src1,
+                                            int                                 src1_stride,
+                                            const InterInterCompoundData *const comp_data,
+                                            uint8_t *seg_mask, BlockSize sb_type, int h, int w,
+                                            ConvolveParams *conv_params, uint8_t bit_depth,
+                                            Bool is_16bit) {
     // Derive subsampling from h and w passed in. May be refactored to
     // pass in subsampling factors directly.
     const int      subh = (2 << mi_size_high_log2[sb_type]) == h;
@@ -2531,8 +2542,8 @@ void build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF
     }
 }
 
-void av1_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile, int mib_size, int mi_row,
-                     int mi_col) {
+void svt_aom_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile, int mib_size, int mi_row,
+                         int mi_col) {
     (void)mi_col;
     if (mi_row - mib_size < tile->mi_row_start) {
         ref_dv->as_mv.row = 0;
@@ -2604,16 +2615,16 @@ uint64_t svt_av1_wedge_sse_from_residuals_c(const int16_t *r1, const int16_t *d,
     return ROUND_POWER_OF_TWO(csse, 2 * WEDGE_WEIGHT_BITS);
 }
 
-void combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
-                        int wedge_sign, BlockSize bsize, BlockSize plane_bsize, uint8_t *comppred,
-                        int compstride, const uint8_t *interpred, int interstride,
-                        const uint8_t *intrapred, int intrastride) {
+void svt_aom_combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
+                                int wedge_sign, BlockSize bsize, BlockSize plane_bsize,
+                                uint8_t *comppred, int compstride, const uint8_t *interpred,
+                                int interstride, const uint8_t *intrapred, int intrastride) {
     const int bw = block_size_wide[plane_bsize];
     const int bh = block_size_high[plane_bsize];
 
     if (use_wedge_interintra) {
-        if (is_interintra_wedge_used(bsize)) {
-            const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
+        if (svt_aom_is_interintra_wedge_used(bsize)) {
+            const uint8_t *mask = svt_aom_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
             const int      subw = 2 * mi_size_wide[bsize] == bw;
             const int      subh = 2 * mi_size_high[bsize] == bh;
             svt_aom_blend_a64_mask(comppred,

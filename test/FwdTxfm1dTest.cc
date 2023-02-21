@@ -113,7 +113,7 @@ class AV1FwdTxfm1dTest : public ::testing::TestWithParam<FwdTxfm1dParam> {
             }
 
             // calculate in forward transform functions
-            fwd_txfm_type_to_func(txfm_type_)(
+            svt_aom_fwd_txfm_type_to_func(txfm_type_)(
                 input_test_, output_test_, cos_bit, test_txfm_range);
             // calculate in reference forward transform functions
             reference_txfm_1d(get_txfm1d_types(txfm_type_),

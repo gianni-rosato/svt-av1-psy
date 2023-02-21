@@ -29,7 +29,8 @@ static void output_bitstream_unit_dctor(EbPtr p) {
 /**********************************
  * Constructor
  **********************************/
-EbErrorType output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr, uint32_t buffer_size) {
+EbErrorType svt_aom_output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr,
+                                               uint32_t             buffer_size) {
     bitstream_ptr->dctor = output_bitstream_unit_dctor;
     if (buffer_size) {
         bitstream_ptr->size = buffer_size;
@@ -47,7 +48,7 @@ EbErrorType output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr, uint3
 /**********************************
  * Reset Bitstream
  **********************************/
-EbErrorType output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr) {
+EbErrorType svt_aom_output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
     // Reset the write ptr to the beginning of the buffer

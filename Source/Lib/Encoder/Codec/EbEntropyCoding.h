@@ -40,18 +40,19 @@ struct ModeDecisionCandidate;
      * Extern Function Declarations
      **************************************/
 struct EntropyCodingContext;
-extern EbErrorType write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
-                            PictureControlSet *pcs, uint16_t tile_idx,
-                            EntropyCoder *entropy_coder_ptr, EbPictureBufferDesc *coeff_ptr);
+extern EbErrorType svt_aom_write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
+                                    PictureControlSet *pcs, uint16_t tile_idx,
+                                    EntropyCoder        *entropy_coder_ptr,
+                                    EbPictureBufferDesc *coeff_ptr);
 
-extern int get_wedge_params_bits(BlockSize sb_type);
+extern int svt_aom_get_wedge_params_bits(BlockSize sb_type);
 
-extern EbErrorType encode_slice_finish(EntropyCoder *entropy_coder_ptr);
+extern EbErrorType svt_aom_encode_slice_finish(EntropyCoder *entropy_coder_ptr);
 
-extern EbErrorType reset_entropy_coder(EncodeContext *encode_context_ptr,
-                                       EntropyCoder *entropy_coder_ptr, uint32_t qp,
-                                       SliceType slice_type);
-EbErrorType        av1_txb_estimate_coeff_bits(
+extern EbErrorType svt_aom_reset_entropy_coder(EncodeContext *encode_context_ptr,
+                                               EntropyCoder *entropy_coder_ptr, uint32_t qp,
+                                               SliceType slice_type);
+EbErrorType        svt_aom_txb_estimate_coeff_bits(
            struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
            PictureControlSet *pcs, struct ModeDecisionCandidateBuffer *cand_bf_ptr,
            uint32_t txb_origin_index, uint32_t txb_chroma_origin_index,
@@ -60,12 +61,10 @@ EbErrorType        av1_txb_estimate_coeff_bits(
            TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
            COMPONENT_TYPE component_type);
 
-EbErrorType av1_txb_estimate_coeff_bits_light_pd0(struct ModeDecisionContext         *md_context,
-                                                  struct ModeDecisionCandidateBuffer *cand_bf_ptr,
-                                                  uint32_t             txb_origin_index,
-                                                  EbPictureBufferDesc *coeff_buffer_sb,
-                                                  uint32_t y_eob, uint64_t *y_txb_coeff_bits,
-                                                  TxSize txsize);
+EbErrorType svt_aom_txb_estimate_coeff_bits_light_pd0(
+    struct ModeDecisionContext *md_context, struct ModeDecisionCandidateBuffer *cand_bf_ptr,
+    uint32_t txb_origin_index, EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob,
+    uint64_t *y_txb_coeff_bits, TxSize txsize);
 //**********************************************************************************************************//
 //onyxc_int.h
 static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs) {
@@ -119,25 +118,16 @@ void svt_aom_wb_write_bit(struct AomWriteBitBuffer *wb, int32_t bit);
 void svt_aom_wb_write_literal(struct AomWriteBitBuffer *wb, int32_t data, int32_t bits);
 
 void svt_aom_wb_write_inv_signed_literal(struct AomWriteBitBuffer *wb, int32_t data, int32_t bits);
-//*******************************************************************************************//
-// Bitstream.h
-struct AomWriteBitBuffer;
-
-void write_sequence_header(SequenceControlSet *scs /*Av1Comp *cpi*/, struct AomWriteBitBuffer *wb);
-
-uint32_t write_obu_header(ObuType ObuType, int32_t obuExtension, uint8_t *const dst);
-
-int32_t write_uleb_obu_size(uint32_t obu_header_size, uint32_t obu_payload_size, uint8_t *dest);
 
 //*******************************************************************************************//
 // blockd.h
 
-void get_txb_ctx(PictureControlSet *pcs, const int32_t plane,
-                 NeighborArrayUnit *dc_sign_level_coeff_neighbor_array, uint32_t blk_org_x,
-                 uint32_t blk_org_y, const BlockSize plane_bsize, const TxSize tx_size,
-                 int16_t *const txb_skip_ctx, int16_t *const dc_sign_ctx);
+void svt_aom_get_txb_ctx(PictureControlSet *pcs, const int32_t plane,
+                         NeighborArrayUnit *dc_sign_level_coeff_neighbor_array, uint32_t blk_org_x,
+                         uint32_t blk_org_y, const BlockSize plane_bsize, const TxSize tx_size,
+                         int16_t *const txb_skip_ctx, int16_t *const dc_sign_ctx);
 
-extern void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd);
+extern void svt_aom_collect_neighbors_ref_counts_new(MacroBlockD *const xd);
 // Obtain contexts to signal a reference frame be either BWDREF/ALTREF2, or
 // ALTREF.
 //extern int32_t get_pred_context_brfarf2_or_arf(const MacroBlockD *xd);
@@ -199,25 +189,26 @@ extern int32_t svt_av1_get_pred_context_single_ref_p6(const MacroBlockD *xd);
  * \param[in]    metadata            Metadata array object
  * \param[in]    type                Metadata type descriptor
  */
-extern EbErrorType write_metadata_av1(Bitstream *bitstream_ptr, SvtMetadataArrayT *metadata,
-                                      const EbAv1MetadataType type);
-extern EbErrorType write_frame_header_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs,
-                                          PictureControlSet *pcs, uint8_t show_existing);
-extern EbErrorType encode_td_av1(uint8_t *bitstream_ptr);
-extern EbErrorType encode_sps_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs);
+extern EbErrorType svt_aom_write_metadata_av1(Bitstream *bitstream_ptr, SvtMetadataArrayT *metadata,
+                                              const EbAv1MetadataType type);
+extern EbErrorType svt_aom_write_frame_header_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs,
+                                                  PictureControlSet *pcs, uint8_t show_existing);
+extern EbErrorType svt_aom_encode_td_av1(uint8_t *bitstream_ptr);
+extern EbErrorType svt_aom_encode_sps_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs);
 
 //*******************************************************************************************//
 
-MotionMode motion_mode_allowed(const PictureControlSet *pcs, const BlkStruct *blk_ptr,
-                               const BlockSize bsize, MvReferenceFrame rf0, MvReferenceFrame rf1,
-                               PredictionMode mode);
+MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, const BlkStruct *blk_ptr,
+                                       const BlockSize bsize, MvReferenceFrame rf0,
+                                       MvReferenceFrame rf1, PredictionMode mode);
 
-int is_masked_compound_type(COMPOUND_TYPE type);
+int svt_aom_is_masked_compound_type(COMPOUND_TYPE type);
 
 int32_t svt_aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v);
 int32_t svt_aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t ref, uint16_t v);
-int     get_comp_index_context_enc(PictureParentControlSet *pcs, int cur_frame_index,
-                                   int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
+int     svt_aom_get_comp_index_context_enc(PictureParentControlSet *pcs, int cur_frame_index,
+                                           int bck_frame_index, int fwd_frame_index,
+                                           const MacroBlockD *xd);
 
 #ifdef __cplusplus
 }

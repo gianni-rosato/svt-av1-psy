@@ -71,10 +71,10 @@ size_t svt_aom_vector_byte_size(const Vector *vector);
 Iterator svt_aom_vector_begin(Vector *vector);
 Iterator svt_aom_vector_iterator(Vector *vector, size_t index);
 
-void *iterator_get(Iterator *iterator);
-#define ITERATOR_GET_AS(type, iterator) *((type *)iterator_get((iterator)))
+void *svt_aom_iterator_get(Iterator *iterator);
+#define ITERATOR_GET_AS(type, iterator) *((type *)svt_aom_iterator_get((iterator)))
 
-void iterator_increment(Iterator *iterator);
+void svt_aom_iterator_increment(Iterator *iterator);
 
 /***** PRIVATE *****/
 

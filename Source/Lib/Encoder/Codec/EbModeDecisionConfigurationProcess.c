@@ -27,7 +27,7 @@
 #include "EbCommonUtils.h"
 #include "EbResize.h"
 #include "EbInvTransforms.h"
-uint8_t get_bypass_encdec(EncMode enc_mode, uint8_t hbd_md, uint8_t encoder_bit_depth);
+uint8_t svt_aom_get_bypass_encdec(EncMode enc_mode, uint8_t hbd_md, uint8_t encoder_bit_depth);
 
 #define MAX_MESH_SPEED 5 // Max speed setting for mesh motion method
 static MeshPattern good_quality_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
@@ -74,7 +74,7 @@ void           set_global_motion_field(PictureControlSet *pcs) {
     PictureParentControlSet *ppcs = pcs->ppcs;
     for (frame_index = INTRA_FRAME; frame_index <= ALTREF_FRAME; ++frame_index) {
         if (ppcs->is_global_motion[get_list_idx(frame_index)][get_ref_frame_idx(frame_index)])
-            ppcs->global_motion[frame_index] = ppcs->global_motion_estimation[get_list_idx(
+            ppcs->global_motion[frame_index] = ppcs->svt_aom_global_motion_estimation[get_list_idx(
                 frame_index)][get_ref_frame_idx(frame_index)];
 
         // Upscale the translation parameters by 2, because the search is done on a down-sampled
@@ -111,14 +111,14 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
     int32_t i, q, quant_qtx;
 
     for (q = 0; q < QINDEX_RANGE; q++) {
-        const int32_t qzbin_factor     = get_qzbin_factor(q, bit_depth);
+        const int32_t qzbin_factor     = svt_aom_get_qzbin_factor(q, bit_depth);
         const int32_t qrounding_factor = q == 0 ? 64 : 48;
 
         for (i = 0; i < 2; ++i) {
             int32_t qrounding_factor_fp = 64;
             quant_qtx                   = i == 0 ? svt_aom_dc_quant_qtx(q, y_dc_delta_q, bit_depth)
                                                  : svt_aom_ac_quant_qtx(q, 0, bit_depth);
-            invert_quant(&quants->y_quant[q][i], &quants->y_quant_shift[q][i], quant_qtx);
+            svt_aom_invert_quant(&quants->y_quant[q][i], &quants->y_quant_shift[q][i], quant_qtx);
             quants->y_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->y_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
             quants->y_zbin[q][i]     = (int16_t)ROUND_POWER_OF_TWO(qzbin_factor * quant_qtx, 7);
@@ -126,7 +126,7 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             deq->y_dequant_qtx[q][i] = (int16_t)quant_qtx;
             quant_qtx                = i == 0 ? svt_aom_dc_quant_qtx(q, u_dc_delta_q, bit_depth)
                                               : svt_aom_ac_quant_qtx(q, u_ac_delta_q, bit_depth);
-            invert_quant(&quants->u_quant[q][i], &quants->u_quant_shift[q][i], quant_qtx);
+            svt_aom_invert_quant(&quants->u_quant[q][i], &quants->u_quant_shift[q][i], quant_qtx);
             quants->u_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->u_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
             quants->u_zbin[q][i]     = (int16_t)ROUND_POWER_OF_TWO(qzbin_factor * quant_qtx, 7);
@@ -134,7 +134,7 @@ void svt_av1_build_quantizer(EbBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             deq->u_dequant_qtx[q][i] = (int16_t)quant_qtx;
             quant_qtx                = i == 0 ? svt_aom_dc_quant_qtx(q, v_dc_delta_q, bit_depth)
                                               : svt_aom_ac_quant_qtx(q, v_ac_delta_q, bit_depth);
-            invert_quant(&quants->v_quant[q][i], &quants->v_quant_shift[q][i], quant_qtx);
+            svt_aom_invert_quant(&quants->v_quant[q][i], &quants->v_quant_shift[q][i], quant_qtx);
             quants->v_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->v_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
             quants->v_zbin[q][i]     = (int16_t)ROUND_POWER_OF_TWO(qzbin_factor * quant_qtx, 7);
@@ -278,21 +278,21 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
                sizeof(FRAME_CONTEXT));
     else {
         svt_av1_default_coef_probs(&pcs->md_frame_context, frm_hdr->quantization_params.base_q_idx);
-        init_mode_probs(&pcs->md_frame_context);
+        svt_aom_init_mode_probs(&pcs->md_frame_context);
     }
     // Initial Rate Estimation of the syntax elements
-    av1_estimate_syntax_rate(md_rate_estimation_array,
-                             pcs->slice_type == I_SLICE ? TRUE : FALSE,
-                             pcs->pic_filter_intra_level,
-                             pcs->ppcs->frm_hdr.allow_screen_content_tools,
-                             pcs->ppcs->enable_restoration,
-                             pcs->ppcs->frm_hdr.allow_intrabc,
-                             pcs->ppcs->partition_contexts,
-                             &pcs->md_frame_context);
+    svt_aom_estimate_syntax_rate(md_rate_estimation_array,
+                                 pcs->slice_type == I_SLICE ? TRUE : FALSE,
+                                 pcs->pic_filter_intra_level,
+                                 pcs->ppcs->frm_hdr.allow_screen_content_tools,
+                                 pcs->ppcs->enable_restoration,
+                                 pcs->ppcs->frm_hdr.allow_intrabc,
+                                 pcs->ppcs->partition_contexts,
+                                 &pcs->md_frame_context);
     // Initial Rate Estimation of the Motion vectors
-    av1_estimate_mv_rate(pcs, md_rate_estimation_array, &pcs->md_frame_context);
+    svt_aom_estimate_mv_rate(pcs, md_rate_estimation_array, &pcs->md_frame_context);
     // Initial Rate Estimation of the quantized coefficients
-    av1_estimate_coefficients_rate(md_rate_estimation_array, &pcs->md_frame_context);
+    svt_aom_estimate_coefficients_rate(md_rate_estimation_array, &pcs->md_frame_context);
 }
 
 /******************************************************
@@ -309,9 +309,9 @@ static void mode_decision_configuration_context_dctor(EbPtr p) {
 /******************************************************
  * Mode Decision Configuration Context Constructor
  ******************************************************/
-EbErrorType mode_decision_configuration_context_ctor(EbThreadContext   *thread_context_ptr,
-                                                     const EbEncHandle *enc_handle_ptr,
-                                                     int input_index, int output_index) {
+EbErrorType svt_aom_mode_decision_configuration_context_ctor(EbThreadContext   *thread_context_ptr,
+                                                             const EbEncHandle *enc_handle_ptr,
+                                                             int input_index, int output_index) {
     ModeDecisionConfigurationContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -365,12 +365,12 @@ EbErrorType rtime_alloc_ec_ctx_array(PictureControlSet *pcs, uint16_t all_sb) {
     return EB_ErrorNone;
 }
 #if OPT_LD_M11
-uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels,
-                      bool rtc_tune);
+uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels,
+                              bool rtc_tune);
 #else
-uint8_t get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
+uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
 #endif
-uint8_t get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base) {
+uint8_t svt_aom_get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base) {
     uint8_t update_cdf_level = 0;
     if (enc_mode <= ENC_M2)
         update_cdf_level = 1;
@@ -455,7 +455,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
     }
 
-    uint8_t update_cdf_level = get_update_cdf_level(enc_mode, is_islice, is_base);
+    uint8_t update_cdf_level = svt_aom_get_update_cdf_level(enc_mode, is_islice, is_base);
     //set the conrols uisng the required level
     set_cdf_controls(pcs, update_cdf_level);
 
@@ -804,7 +804,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs->spatial_sse_full_loop_level = scs->spatial_sse_full_loop_level;
     //set the nsq_level
-    pcs->nsq_level = get_nsq_level(enc_mode, is_islice, is_base, pcs->coeff_lvl);
+    pcs->nsq_level = svt_aom_get_nsq_level(enc_mode, is_islice, is_base, pcs->coeff_lvl);
     // Set the level for enable_inter_intra
     // Block level switch, has to follow the picture level
     // inter intra pred                      Settings
@@ -853,9 +853,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     frm_hdr->tx_mode = (pcs->txs_level) ? TX_MODE_SELECT : TX_MODE_LARGEST;
     // Set the level for nic
 #if OPT_LD_M11
-    pcs->nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels, rtc_tune);
+    pcs->nic_level = svt_aom_get_nic_level(enc_mode, is_base, hierarchical_levels, rtc_tune);
 #else
-    pcs->nic_level = get_nic_level(enc_mode, is_base, hierarchical_levels);
+    pcs->nic_level = svt_aom_get_nic_level(enc_mode, is_base, hierarchical_levels);
 #endif
     // Set the level for SQ me-search
     if (enc_mode <= ENC_M0)
@@ -920,7 +920,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
         (!pcs->cdf_ctrl.update_coef || is_islice) &&
         !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
-        pcs->pic_bypass_encdec = get_bypass_encdec(
+        pcs->pic_bypass_encdec = svt_aom_get_bypass_encdec(
             enc_mode, ppcs->hbd_md, scs->static_config.encoder_bit_depth);
     } else
         pcs->pic_bypass_encdec = 0;
@@ -1574,7 +1574,7 @@ static void predict_frame_coeff_lvl(struct PictureControlSet *pcs) {
 *  Initializations for various flags and variables
 *
 ********************************************************************************/
-void *mode_decision_configuration_kernel(void *input_ptr) {
+void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext                  *thread_context_ptr = (EbThreadContext *)input_ptr;
     ModeDecisionConfigurationContext *context_ptr        = (ModeDecisionConfigurationContext *)
@@ -1619,7 +1619,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 reference_object->mi_cols = pcs->ppcs->aligned_width >> MI_SIZE_LOG2;
             }
 
-            scale_rec_references(pcs, pcs->ppcs->enhanced_picture_ptr, pcs->hbd_md);
+            svt_aom_scale_rec_references(pcs, pcs->ppcs->enhanced_picture_ptr, pcs->hbd_md);
         }
 
         FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
@@ -1656,22 +1656,22 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         else {
             svt_av1_default_coef_probs(&pcs->md_frame_context,
                                        frm_hdr->quantization_params.base_q_idx);
-            init_mode_probs(&pcs->md_frame_context);
+            svt_aom_init_mode_probs(&pcs->md_frame_context);
         }
         // Initial Rate Estimation of the syntax elements
-        av1_estimate_syntax_rate(md_rate_estimation_array,
-                                 pcs->slice_type == I_SLICE ? TRUE : FALSE,
-                                 pcs->pic_filter_intra_level,
-                                 pcs->ppcs->frm_hdr.allow_screen_content_tools,
-                                 pcs->ppcs->enable_restoration,
-                                 pcs->ppcs->frm_hdr.allow_intrabc,
-                                 pcs->ppcs->partition_contexts,
-                                 &pcs->md_frame_context);
+        svt_aom_estimate_syntax_rate(md_rate_estimation_array,
+                                     pcs->slice_type == I_SLICE ? TRUE : FALSE,
+                                     pcs->pic_filter_intra_level,
+                                     pcs->ppcs->frm_hdr.allow_screen_content_tools,
+                                     pcs->ppcs->enable_restoration,
+                                     pcs->ppcs->frm_hdr.allow_intrabc,
+                                     pcs->ppcs->partition_contexts,
+                                     &pcs->md_frame_context);
         // Initial Rate Estimation of the Motion vectors
         if (scs->static_config.pass != ENC_FIRST_PASS) {
-            av1_estimate_mv_rate(pcs, md_rate_estimation_array, &pcs->md_frame_context);
+            svt_aom_estimate_mv_rate(pcs, md_rate_estimation_array, &pcs->md_frame_context);
             // Initial Rate Estimation of the quantized coefficients
-            av1_estimate_coefficients_rate(md_rate_estimation_array, &pcs->md_frame_context);
+            svt_aom_estimate_coefficients_rate(md_rate_estimation_array, &pcs->md_frame_context);
         }
         if (frm_hdr->allow_intrabc) {
             int            i;
@@ -1716,9 +1716,10 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                         is_block_same[k][j] = rtime_alloc_block_hash_block_is_same(
                             sizeof(int8_t) * pic_width * pic_height);
                 }
-                rtime_alloc_svt_av1_hash_table_create(&pcs->hash_table);
+                svt_aom_rtime_alloc_svt_av1_hash_table_create(&pcs->hash_table);
                 Yv12BufferConfig cpi_source;
-                link_eb_to_aom_buffer_desc_8bit(pcs->ppcs->enhanced_picture_ptr, &cpi_source);
+                svt_aom_link_eb_to_aom_buffer_desc_8bit(pcs->ppcs->enhanced_picture_ptr,
+                                                        &cpi_source);
 
                 svt_av1_crc_calculator_init(&pcs->crc_calculator1, 24, 0x5D6DCB);
                 svt_av1_crc_calculator_init(&pcs->crc_calculator2, 24, 0x864CFB);
@@ -1737,7 +1738,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                                       is_block_same[dst_idx],
                                                       pcs);
                     if (size != 4 || pcs->ppcs->intraBC_ctrls.hash_4x4_blocks)
-                        rtime_alloc_svt_av1_add_to_hash_map_by_row_with_precal_data(
+                        svt_aom_rtime_alloc_svt_av1_add_to_hash_map_by_row_with_precal_data(
                             &pcs->hash_table,
                             block_hash_values[dst_idx],
                             is_block_same[dst_idx][2],

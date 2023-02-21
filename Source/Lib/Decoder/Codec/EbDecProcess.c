@@ -52,17 +52,17 @@ static void *dec_all_stage_kernel(void *input_ptr);
 /*ToDo : Remove all these replications */
 void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, int32_t plane_start,
                                     int32_t plane_end);
-void dec_loop_filter_row(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon_picture_buf,
-                         LfCtxt *lf_ctxt, uint32_t y_sb_index, int32_t plane_start,
-                         int32_t plane_end);
-void save_deblock_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_width,
-                                 int32_t src_height, const Av1Common *cm, int32_t plane,
-                                 int32_t row, int32_t stripe, int32_t use_highbd, int32_t is_above,
-                                 RestorationStripeBoundaries *boundaries);
-void save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_width,
-                              const Av1Common *cm, int32_t plane, int32_t row, int32_t stripe,
-                              int32_t use_highbd, int32_t is_above,
-                              RestorationStripeBoundaries *boundaries);
+void svt_aom_dec_loop_filter_row(EbDecHandle         *dec_handle_ptr,
+                                 EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
+                                 uint32_t y_sb_index, int32_t plane_start, int32_t plane_end);
+void svt_aom_save_deblock_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_width,
+                                         int32_t src_height, const Av1Common *cm, int32_t plane,
+                                         int32_t row, int32_t stripe, int32_t use_highbd,
+                                         int32_t is_above, RestorationStripeBoundaries *boundaries);
+void svt_aom_save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_width,
+                                      const Av1Common *cm, int32_t plane, int32_t row,
+                                      int32_t stripe, int32_t use_highbd, int32_t is_above,
+                                      RestorationStripeBoundaries *boundaries);
 
 #if MT_WAIT_PROFILE
 void dec_timer_start(struct EbDecTimer *t) {
@@ -338,13 +338,13 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     uint32_t num_lib_threads = (int32_t)dec_handle_ptr->dec_config.threads - 1;
 
     /* Use a scratch memory so that the memory allocated within
-       init_dec_mod_ctxt reallocated when required */
+       svt_aom_init_dec_mod_ctxt reallocated when required */
 
     DecModCtxt **dec_mod_ctxt_arr;
     EB_MALLOC_DEC(DecModCtxt **, dec_mod_ctxt_arr, num_lib_threads * sizeof(DecModCtxt *));
 
     for (uint32_t i = 0; i < num_lib_threads; i++) {
-        init_dec_mod_ctxt(dec_handle_ptr, (void **)&dec_mod_ctxt_arr[i]);
+        svt_aom_init_dec_mod_ctxt(dec_handle_ptr, (void **)&dec_mod_ctxt_arr[i]);
     }
 
     svt_aom_memory_map_end_address = svt_dec_memory_map;
@@ -397,17 +397,18 @@ void svt_av1_scan_tiles(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info, ObuH
         if (tile_num == tg_end)
             tile_size = obu_header->payload_size;
         else {
-            tile_size = dec_get_bits_le(bs, tiles_info->tile_size_bytes) + 1;
+            tile_size = svt_aom_dec_get_bits_le(bs, tiles_info->tile_size_bytes) + 1;
             obu_header->payload_size -= (tiles_info->tile_size_bytes + tile_size);
         }
         PRINT_FRAME("tile_size", (tile_size));
 
         // Assign to ParseCtxt
-        parse_tile_data[tile_num].data      = get_bitsteam_buf(bs);
+        parse_tile_data[tile_num].data      = svt_aom_get_bitsteam_buf(bs);
         parse_tile_data[tile_num].data_end  = bs->buf_max;
         parse_tile_data[tile_num].tile_size = tile_size;
 
-        dec_bits_init(bs, (get_bitsteam_buf(bs) + tile_size), obu_header->payload_size);
+        svt_aom_dec_bits_init(
+            bs, (svt_aom_get_bitsteam_buf(bs) + tile_size), obu_header->payload_size);
     }
 }
 
@@ -442,12 +443,12 @@ static EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num)
     parse_ctxt->parse_above_nbr4x4_ctxt = &main_parse_ctxt->parse_above_nbr4x4_ctxt[tile_num];
     parse_ctxt->parse_left_nbr4x4_ctxt  = &main_parse_ctxt->parse_left_nbr4x4_ctxt[tile_num];
 
-    start_parse_tile(dec_handle_ptr, parse_ctxt, tiles_info, tile_num, 1);
+    svt_aom_start_parse_tile(dec_handle_ptr, parse_ctxt, tiles_info, tile_num, 1);
 
     return status;
 }
 
-void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
+void svt_aom_parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile Bool *start_parse_frame = &dec_mt_frame_data->start_parse_frame;
@@ -487,11 +488,11 @@ void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 
 static EbErrorType decode_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num,
                                    DecModCtxt *dec_mod_ctxt) {
-    return start_decode_tile(
+    return svt_aom_start_decode_tile(
         dec_handle_ptr, dec_mod_ctxt, &dec_handle_ptr->frame_header.tiles_info, tile_num);
 }
 
-void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
+void svt_aom_decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile Bool *start_decode_frame = &dec_mt_frame_data->start_decode_frame;
@@ -524,7 +525,7 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
 
             /* TODO : Calling this function at a tile level is
                    excessive. Move this call to operate at a frame level.*/
-            setup_segmentation_dequant(thread_ctxt->dec_mod_ctxt);
+            svt_aom_setup_segmentation_dequant(thread_ctxt->dec_mod_ctxt);
         }
 
         if (-1 != tile_num) {
@@ -646,30 +647,30 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle   *dec_handle,
 
             // Save deblocked context where needed.
             if (use_deblock_above) {
-                save_deblock_boundary_lines(src[p],
-                                            stride[p],
-                                            src_width,
-                                            src_height,
-                                            cm,
-                                            p,
-                                            y0 - RESTORATION_CTX_VERT,
-                                            frame_stripe,
-                                            use_highbd,
-                                            1,
-                                            boundaries);
+                svt_aom_save_deblock_boundary_lines(src[p],
+                                                    stride[p],
+                                                    src_width,
+                                                    src_height,
+                                                    cm,
+                                                    p,
+                                                    y0 - RESTORATION_CTX_VERT,
+                                                    frame_stripe,
+                                                    use_highbd,
+                                                    1,
+                                                    boundaries);
             }
             if (use_deblock_below) {
-                save_deblock_boundary_lines(src[p],
-                                            stride[p],
-                                            src_width,
-                                            src_height,
-                                            cm,
-                                            p,
-                                            y1,
-                                            frame_stripe,
-                                            use_highbd,
-                                            0,
-                                            boundaries);
+                svt_aom_save_deblock_boundary_lines(src[p],
+                                                    stride[p],
+                                                    src_width,
+                                                    src_height,
+                                                    cm,
+                                                    p,
+                                                    y1,
+                                                    frame_stripe,
+                                                    use_highbd,
+                                                    0,
+                                                    boundaries);
             }
         }
     }
@@ -711,28 +712,29 @@ static INLINE void dec_save_CDEF_boundary_lines_SB_row(EbDecHandle   *dec_handle
 
         // Save CDEF context where needed.
         if (frame_stripe == 0) {
-            save_cdef_boundary_lines(
+            svt_aom_save_cdef_boundary_lines(
                 src[p], stride[p], src_width, cm, p, y0, frame_stripe, use_highbd, 1, boundaries);
         }
         if (y1 >= plane_height) {
-            save_cdef_boundary_lines(src[p],
-                                     stride[p],
-                                     src_width,
-                                     cm,
-                                     p,
-                                     y1 - 1,
-                                     frame_stripe,
-                                     use_highbd,
-                                     0,
-                                     boundaries);
+            svt_aom_save_cdef_boundary_lines(src[p],
+                                             stride[p],
+                                             src_width,
+                                             cm,
+                                             p,
+                                             y1 - 1,
+                                             frame_stripe,
+                                             use_highbd,
+                                             0,
+                                             boundaries);
         }
     }
 }
 
 /*Frame level function to trigger loop filter for each superblock*/
-void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *recon_picture_buf,
-                                  LfCtxt *lf_ctxt, int32_t plane_start, int32_t plane_end,
-                                  DecThreadCtxt *thread_ctxt) {
+void svt_aom_dec_av1_loop_filter_frame_mt(EbDecHandle         *dec_handle,
+                                          EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
+                                          int32_t plane_start, int32_t plane_end,
+                                          DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data1 =
         &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
@@ -771,8 +773,8 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
     //unlock mutex
     svt_release_mutex(dec_mt_lf_frame_info->lf_sb_row_info.sbrow_mutex);
 
-    set_lbd_lf_filter_tap_functions();
-    set_hbd_lf_filter_tap_functions();
+    svt_aom_set_lbd_lf_filter_tap_functions();
+    svt_aom_set_hbd_lf_filter_tap_functions();
 
     /* For LF boundary store : Can optimize based on CDEF & LR flag */
     // Get the tile rectangle, with height rounded up to the next multiple of 8
@@ -787,9 +789,9 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
         int32_t is_uv  = p ? 1 : 0;
         int32_t sx     = is_uv ? dec_handle->cm.subsampling_x : 0;
         int32_t sy     = is_uv ? dec_handle->cm.subsampling_y : 0;
-        tile_rect[p]   = whole_frame_rect(&dec_handle->cm.frm_size, sx, sy, is_uv);
+        tile_rect[p]   = svt_aom_whole_frame_rect(&dec_handle->cm.frm_size, sx, sy, is_uv);
         tile_rect_p[p] = &tile_rect[p];
-        derive_blk_pointers(cur_pic_buf, p, 0, 0, (void *)&src[p], &stride[p], sx, sy);
+        svt_aom_derive_blk_pointers(cur_pic_buf, p, 0, 0, (void *)&src[p], &stride[p], sx, sy);
     }
 
     DecMtFrameData *dec_mt_frame_data =
@@ -836,7 +838,7 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
             if (!dec_handle->frame_header.allow_intrabc) {
                 if (dec_handle->frame_header.loop_filter_params.filter_level[0] ||
                     dec_handle->frame_header.loop_filter_params.filter_level[1]) {
-                    dec_loop_filter_row(
+                    svt_aom_dec_loop_filter_row(
                         dec_handle, recon_picture_buf, lf_ctxt, sb_row, plane_start, plane_end);
                 }
             }
@@ -928,18 +930,19 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
         mi_wide_l2[pli] = MI_SIZE_LOG2 - sub_x;
         mi_high_l2[pli] = MI_SIZE_LOG2 - sub_y;
 
-        tile_rect[pli]   = whole_frame_rect(&dec_handle_ptr->cm.frm_size, sub_x, sub_y, is_uv);
+        tile_rect[pli] = svt_aom_whole_frame_rect(
+            &dec_handle_ptr->cm.frm_size, sub_x, sub_y, is_uv);
         tile_rect_p[pli] = &tile_rect[pli];
 
         /*Deriveing  recon pict buffer ptr's*/
-        derive_blk_pointers(recon_picture_ptr,
-                            pli,
-                            0,
-                            0,
-                            (void *)&curr_blk_recon_buf[pli],
-                            &curr_recon_stride[pli],
-                            sub_x,
-                            sub_y);
+        svt_aom_derive_blk_pointers(recon_picture_ptr,
+                                    pli,
+                                    0,
+                                    0,
+                                    (void *)&curr_blk_recon_buf[pli],
+                                    &curr_recon_stride[pli],
+                                    sub_x,
+                                    sub_y);
 
         if (dec_handle_ptr->seq_header.sb_size == BLOCK_128X128) {
             /*For SB SIZE 128x128, we need two colbuf because, because we do cdef for
@@ -1065,20 +1068,20 @@ static void pad_pre_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, i
     EbByte src_cr = curr_blk_recon_buf[AOM_PLANE_V] + ((row >> sy) * rec_stride[AOM_PLANE_V]);
 
     /* Directions in which padding needs to be done */
-    PadDir flags = get_neighbour_flags(sb_row, 0, num_rows, 1);
+    PadDir flags = svt_aom_get_neighbour_flags(sb_row, 0, num_rows, 1);
 
     int32_t row_height = MIN(sb_size, (int32_t)(frame_height - row));
-    pad_row(recon_picture_buf,
-            src_y,
-            src_cb,
-            src_cr,
-            frame_width,
-            row_height,
-            LR_PAD_SIDE,
-            LR_PAD_SIDE,
-            sx,
-            sy,
-            flags);
+    svt_aom_pad_row(recon_picture_buf,
+                    src_y,
+                    src_cb,
+                    src_cr,
+                    frame_width,
+                    row_height,
+                    LR_PAD_SIDE,
+                    LR_PAD_SIDE,
+                    sx,
+                    sy,
+                    flags);
 }
 
 static void pad_post_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, int32_t sb_size,
@@ -1109,24 +1112,25 @@ static void pad_post_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, 
 
             int32_t row_height = MIN(sb_size, (int32_t)(frame_height - row));
 
-            PadDir flags = get_neighbour_flags(processing_row, 0, num_rows, 1);
+            PadDir flags = svt_aom_get_neighbour_flags(processing_row, 0, num_rows, 1);
 
-            pad_row(recon_picture_buf,
-                    src_y,
-                    src_cb,
-                    src_cr,
-                    frame_width,
-                    row_height,
-                    pad_width,
-                    pad_height,
-                    sx,
-                    sy,
-                    flags);
+            svt_aom_pad_row(recon_picture_buf,
+                            src_y,
+                            src_cb,
+                            src_cr,
+                            frame_width,
+                            row_height,
+                            pad_width,
+                            pad_height,
+                            sx,
+                            sy,
+                            flags);
         }
     }
 }
 
-void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt) {
+void svt_aom_dec_av1_loop_restoration_filter_frame_mt(EbDecHandle   *dec_handle,
+                                                      DecThreadCtxt *thread_ctxt) {
     uint8_t *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t  curr_recon_stride[MAX_MB_PLANE];
 
@@ -1148,16 +1152,16 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
         int32_t sub_y = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_y;
 
         /*Deriveing  recon pict buffer ptr's*/
-        derive_blk_pointers(recon_picture_ptr,
-                            pli,
-                            0,
-                            0,
-                            (void *)&curr_blk_recon_buf[pli],
-                            &curr_recon_stride[pli],
-                            sub_x,
-                            sub_y);
+        svt_aom_derive_blk_pointers(recon_picture_ptr,
+                                    pli,
+                                    0,
+                                    0,
+                                    (void *)&curr_blk_recon_buf[pli],
+                                    &curr_recon_stride[pli],
+                                    sub_x,
+                                    sub_y);
 
-        tile_rect[pli] = whole_frame_rect(
+        tile_rect[pli] = svt_aom_whole_frame_rect(
             &dec_handle->frame_header.frame_size, sub_x, sub_y, pli > 0);
         tile_rect_p[pli] = &tile_rect[pli];
     }
@@ -1238,14 +1242,14 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
 
             /* Row level LR */
             if (do_lr)
-                dec_av1_loop_restoration_filter_row(dec_handle,
-                                                    sb_row,
-                                                    &curr_blk_recon_buf[AOM_PLANE_Y],
-                                                    &curr_recon_stride[AOM_PLANE_Y],
-                                                    tile_rect,
-                                                    0 /*opt_lr*/,
-                                                    dst,
-                                                    th_cnt);
+                svt_aom_dec_av1_loop_restoration_filter_row(dec_handle,
+                                                            sb_row,
+                                                            &curr_blk_recon_buf[AOM_PLANE_Y],
+                                                            &curr_recon_stride[AOM_PLANE_Y],
+                                                            tile_rect,
+                                                            0 /*opt_lr*/,
+                                                            dst,
+                                                            th_cnt);
 
             /* Pad pixels for the previous row to avoid recon buffer */
             pad_post_lr(recon_picture_buf,
@@ -1299,20 +1303,20 @@ static void *dec_all_stage_kernel(void *input_ptr) {
         /* Motion Field Projection */
         svt_setup_motion_field(dec_handle_ptr, thread_ctxt);
         /* Parse Tiles */
-        parse_frame_tiles(dec_handle_ptr, thread_ctxt);
+        svt_aom_parse_frame_tiles(dec_handle_ptr, thread_ctxt);
         /* Decode Tiles */
-        decode_frame_tiles(dec_handle_ptr, thread_ctxt);
-        dec_av1_loop_filter_frame_mt(dec_handle_ptr,
-                                     dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
-                                     dec_handle_ptr->pv_lf_ctxt,
-                                     AOM_PLANE_Y,
-                                     MAX_MB_PLANE,
-                                     thread_ctxt);
+        svt_aom_decode_frame_tiles(dec_handle_ptr, thread_ctxt);
+        svt_aom_dec_av1_loop_filter_frame_mt(dec_handle_ptr,
+                                             dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
+                                             dec_handle_ptr->pv_lf_ctxt,
+                                             AOM_PLANE_Y,
+                                             MAX_MB_PLANE,
+                                             thread_ctxt);
         /*Frame CDEF*/
         svt_cdef_frame_mt(dec_handle_ptr, thread_ctxt);
 
         /*Frame LR */
-        dec_av1_loop_restoration_filter_frame_mt(dec_handle_ptr, thread_ctxt);
+        svt_aom_dec_av1_loop_restoration_filter_frame_mt(dec_handle_ptr, thread_ctxt);
 
         if (TRUE == dec_mt_frame_data->end_flag) {
             svt_block_on_mutex(dec_mt_frame_data->temp_mutex);

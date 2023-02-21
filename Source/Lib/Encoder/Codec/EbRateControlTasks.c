@@ -21,7 +21,7 @@ static EbErrorType rate_control_tasks_ctor(RateControlTasks *context_ptr,
     return EB_ErrorNone;
 }
 
-EbErrorType rate_control_tasks_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_rate_control_tasks_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     RateControlTasks *obj;
 
     *object_dbl_ptr = NULL;

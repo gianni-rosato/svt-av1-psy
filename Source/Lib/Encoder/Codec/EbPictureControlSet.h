@@ -803,7 +803,8 @@ typedef struct PictureParentControlSet {
     uint32_t *me_8x8_distortion;
     // Global motion estimation results
     Bool                 is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    EbWarpedMotionParams global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    EbWarpedMotionParams svt_aom_global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST]
+                                                         [REF_LIST_MAX_DEPTH];
     uint16_t             me_processed_b64_count;
     EbHandle             me_processed_b64_mutex;
     FirstPassData        firstpass_data;
@@ -1174,20 +1175,21 @@ typedef struct Av1Comp {
      * Extern Function Declarations
      **************************************/
 
-uint32_t get_out_buffer_size(uint32_t picture_width, uint32_t picture_height);
+uint32_t svt_aom_get_out_buffer_size(uint32_t picture_width, uint32_t picture_height);
 
-extern EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
-extern EbErrorType recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
-extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
-                                                      EbPtr  object_init_data_ptr);
-extern EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
-extern EbErrorType me_sb_results_ctor(MeSbResults               *obj_ptr,
-                                      PictureControlSetInitData *init_data_ptr);
+extern EbErrorType svt_aom_picture_control_set_creator(EbPtr *object_dbl_ptr,
+                                                       EbPtr  object_init_data_ptr);
+extern EbErrorType svt_aom_recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
+extern EbErrorType svt_aom_picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
+                                                              EbPtr  object_init_data_ptr);
+extern EbErrorType svt_aom_me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
+extern EbErrorType svt_aom_me_sb_results_ctor(MeSbResults               *obj_ptr,
+                                              PictureControlSetInitData *init_data_ptr);
 
-extern void    set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
-extern uint8_t derive_gm_level(PictureParentControlSet *pcs);
+extern void    svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
+extern uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs);
 
-extern Bool is_pic_skipped(PictureParentControlSet *pcs);
+extern Bool svt_aom_is_pic_skipped(PictureParentControlSet *pcs);
 
 #ifdef __cplusplus
 }

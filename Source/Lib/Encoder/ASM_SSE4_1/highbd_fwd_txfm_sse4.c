@@ -749,7 +749,7 @@ void svt_av1_fwd_txfm2d_4x4_N4_sse4_1(int16_t *input, int32_t *coeff, uint32_t s
     }
     (void)bd;
 }
-void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
+void svt_aom_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
 
 typedef void (*TxfmFuncSSE2)(__m128i *input, __m128i *output, const int8_t cos_bit,
                              const int8_t *stage_range);
@@ -2981,7 +2981,7 @@ static void fadst8x8_sse4_1(__m128i *in, __m128i *out, int bit, const int col_nu
     }
 }
 
-static INLINE TxfmFuncSSE2 fwd_txfm_type_to_func(TxfmType txfm_type) {
+static INLINE TxfmFuncSSE2 fwd_txfm_type_to_func_sse4(TxfmType txfm_type) {
     switch (txfm_type) {
     case TXFM_TYPE_DCT32: return fdct32_sse4_1; break;
     case TXFM_TYPE_DCT64: return fdct64_new_sse4_1; break;
@@ -3079,8 +3079,8 @@ static INLINE void fwd_txfm2d_sse4_1(const int16_t *input, int32_t *output, cons
     const int8_t      *stage_range_row = cfg->stage_range_row;
     const int8_t       cos_bit_col     = cfg->cos_bit_col;
     const int8_t       cos_bit_row     = cfg->cos_bit_row;
-    const TxfmFuncSSE2 txfm_func_col   = fwd_txfm_type_to_func(cfg->txfm_type_col);
-    const TxfmFuncSSE2 txfm_func_row   = fwd_txfm_type_to_func(cfg->txfm_type_row);
+    const TxfmFuncSSE2 txfm_func_col   = fwd_txfm_type_to_func_sse4(cfg->txfm_type_col);
+    const TxfmFuncSSE2 txfm_func_row   = fwd_txfm_type_to_func_sse4(cfg->txfm_type_row);
     ASSERT(txfm_func_col);
     ASSERT(txfm_func_row);
     __m128i *buf_128         = (__m128i *)txfm_buf;
@@ -3666,7 +3666,7 @@ void svt_av1_fwd_txfm2d_64x64_sse4_1(int16_t *input, int32_t *output, uint32_t s
                                      TxType tx_type, uint8_t bd) {
     DECLARE_ALIGNED(16, int32_t, txfm_buf[4096]);
     Txfm2dFlipCfg cfg;
-    av1_transform_config(tx_type, TX_64X64, &cfg);
+    svt_aom_transform_config(tx_type, TX_64X64, &cfg);
     (void)bd;
     const int     txfm_size       = tx_size_wide[cfg.tx_size];
     const int8_t *shift           = cfg.shift;
@@ -3827,7 +3827,7 @@ void svt_av1_fwd_txfm2d_32x32_sse4_1(int16_t *input, int32_t *output, uint32_t s
                                      TxType tx_type, uint8_t bd) {
     DECLARE_ALIGNED(16, int32_t, txfm_buf[1024]);
     Txfm2dFlipCfg cfg;
-    av1_transform_config(tx_type, TX_32X32, &cfg);
+    svt_aom_transform_config(tx_type, TX_32X32, &cfg);
     (void)bd;
     fwd_txfm2d_sse4_1(input, output, stride, &cfg, txfm_buf);
 }

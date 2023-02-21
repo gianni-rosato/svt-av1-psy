@@ -41,9 +41,9 @@
 
 #define SUPERRES_INVALID_STATE 0x7fffffff
 
-EbPictureBufferDesc *get_ref_pic_buffer(PictureControlSet *pcs, uint8_t is_highbd, uint8_t list_idx,
-                                        uint8_t ref_idx);
-int                  av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
+EbPictureBufferDesc *svt_aom_get_ref_pic_buffer(PictureControlSet *pcs, uint8_t is_highbd,
+                                                uint8_t list_idx, uint8_t ref_idx);
+int                  svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 Bool                 check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift);
 
 static INLINE int32_t derive_rmv_setting(const SequenceControlSet      *scs,
@@ -55,26 +55,27 @@ static INLINE int32_t derive_rmv_setting(const SequenceControlSet      *scs,
     return rmv;
 }
 
-static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
+static INLINE int svt_aom_is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
 }
 
-static INLINE int is_interintra_allowed_mode(const PredictionMode mode) {
+static INLINE int svt_aom_is_interintra_allowed_mode(const PredictionMode mode) {
     return (mode >= SINGLE_INTER_MODE_START) && (mode < SINGLE_INTER_MODE_END);
 }
 
-static INLINE int is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
+static INLINE int svt_aom_is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
     return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
 }
 int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, PredictionMode mode,
                               const MvReferenceFrame ref_frame[2]) {
-    return enable_inter_intra && is_interintra_allowed_bsize((const BlockSize)sb_type) &&
-        is_interintra_allowed_mode(mode) && is_interintra_allowed_ref(ref_frame);
+    return enable_inter_intra && svt_aom_is_interintra_allowed_bsize((const BlockSize)sb_type) &&
+        svt_aom_is_interintra_allowed_mode(mode) && svt_aom_is_interintra_allowed_ref(ref_frame);
 }
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
-uint8_t is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
-                           const MeSbResults *me_results, uint8_t list_idx, uint8_t ref_idx) {
+uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
+                                   const MeSbResults *me_results, uint8_t list_idx,
+                                   uint8_t ref_idx) {
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[me_block_offset];
     const MeCandidate *me_block_results = &me_results->me_candidate_array[me_cand_offset];
     for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i) {
@@ -140,7 +141,7 @@ void precompute_obmc_data(PictureControlSet *pcs, ModeDecisionContext *ctx);
 
 //static uint32_t  AntiContouringIntraMode[11] = { EB_INTRA_PLANAR, EB_INTRA_DC, EB_INTRA_HORIZONTAL, EB_INTRA_VERTICAL,
 //EB_INTRA_MODE_2, EB_INTRA_MODE_6, EB_INTRA_MODE_14, EB_INTRA_MODE_18, EB_INTRA_MODE_22, EB_INTRA_MODE_30, EB_INTRA_MODE_34 };
-int32_t have_newmv_in_inter_mode(PredictionMode mode) {
+int32_t svt_aom_have_newmv_in_inter_mode(PredictionMode mode) {
     return (mode == NEWMV || mode == NEW_NEWMV || mode == NEAREST_NEWMV || mode == NEW_NEARESTMV ||
             mode == NEAR_NEWMV || mode == NEW_NEARMV);
 }
@@ -153,7 +154,7 @@ MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
 };
 extern uint32_t stage1ModesArray[];
 
-uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
+uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
 int32_t svt_av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost, int32_t *mvcost[2],
                             int32_t weight);
 int32_t svt_av1_mv_bit_cost_light(const MV *mv, const MV *ref);
@@ -177,7 +178,7 @@ static int64_t pick_interintra_wedge(PictureControlSet *pcs, ModeDecisionContext
                                      const BlockSize bsize, const uint8_t *const p0,
                                      const uint8_t *const p1, uint8_t *src_buf, uint32_t src_stride,
                                      int8_t *wedge_index_out) {
-    assert(is_interintra_wedge_used(bsize));
+    assert(svt_aom_is_interintra_wedge_used(bsize));
     // assert(cpi->common.seq_params.enable_interintra_compound);
 
     const int bw = block_size_wide[bsize];
@@ -214,10 +215,10 @@ void precompute_intra_pred_for_inter_intra(PictureControlSet *pcs, ModeDecisionC
     }
 }
 
-void        combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
-                               int wedge_sign, BlockSize bsize, BlockSize plane_bsize, uint8_t *comppred,
-                               int compstride, const uint8_t *interpred, int interstride,
-                               const uint8_t *intrapred, int intrastride);
+void svt_aom_combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
+                                int wedge_sign, BlockSize bsize, BlockSize plane_bsize,
+                                uint8_t *comppred, int compstride, const uint8_t *interpred,
+                                int interstride, const uint8_t *intrapred, int intrastride);
 static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                ModeDecisionCandidate *cand) {
     SequenceControlSet *scs = pcs->scs;
@@ -264,25 +265,25 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     assert(list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
     //
     if (ref_idx_l0 >= 0)
-        ref_pic_list0 = get_ref_pic_buffer(pcs, ctx->hbd_md, list_idx0, ref_idx_l0);
+        ref_pic_list0 = svt_aom_get_ref_pic_buffer(pcs, ctx->hbd_md, list_idx0, ref_idx_l0);
     else
         ref_pic_list0 = (EbPictureBufferDesc *)NULL;
 
     if (ref_idx_l1 >= 0)
-        ref_pic_list1 = get_ref_pic_buffer(pcs, ctx->hbd_md, list_idx1, ref_idx_l1);
+        ref_pic_list1 = svt_aom_get_ref_pic_buffer(pcs, ctx->hbd_md, list_idx1, ref_idx_l1);
     else
         ref_pic_list1 = (EbPictureBufferDesc *)NULL;
 
     // Use scaled references if resolution of the reference is different from that of the input
     if (ref_pic_list0 != NULL)
-        use_scaled_rec_refs_if_needed(
+        svt_aom_use_scaled_rec_refs_if_needed(
             pcs,
             pcs->ppcs->enhanced_picture_ptr,
             (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr,
             &ref_pic_list0,
             ctx->hbd_md);
     if (ref_pic_list1 != NULL)
-        use_scaled_rec_refs_if_needed(
+        svt_aom_use_scaled_rec_refs_if_needed(
             pcs,
             pcs->ppcs->enhanced_picture_ptr,
             (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr,
@@ -292,39 +293,40 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     pred_desc.buffer_y     = tmp_buf;
 
     //we call the regular inter prediction path here(no compound)
-    av1_inter_prediction(scs,
-                         pcs,
-                         0, //ASSUMPTION: fixed interpolation filter.
-                         ctx->blk_ptr,
-                         cand->ref_frame_type,
-                         &mv_unit,
-                         0, //use_intrabc,
-                         SIMPLE_TRANSLATION,
-                         0,
-                         0,
-                         1, //compound_idx not used
-                         NULL, // interinter_comp not used
-                         NULL,
-                         NULL,
-                         NULL,
-                         0,
-                         0,
-                         0,
-                         0,
-                         ctx->blk_org_x,
-                         ctx->blk_org_y,
-                         bwidth,
-                         bheight,
-                         ref_pic_list0,
-                         ref_pic_list1,
-                         &pred_desc, //output
-                         0, //output org_x,
-                         0, //output org_y,
-                         PICTURE_BUFFER_DESC_LUMA_MASK,
-                         ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
-                         0); // is_16bit_pipeline
+    svt_aom_inter_prediction(scs,
+                             pcs,
+                             0, //ASSUMPTION: fixed interpolation filter.
+                             ctx->blk_ptr,
+                             cand->ref_frame_type,
+                             &mv_unit,
+                             0, //use_intrabc,
+                             SIMPLE_TRANSLATION,
+                             0,
+                             0,
+                             1, //compound_idx not used
+                             NULL, // interinter_comp not used
+                             NULL,
+                             NULL,
+                             NULL,
+                             0,
+                             0,
+                             0,
+                             0,
+                             ctx->blk_org_x,
+                             ctx->blk_org_y,
+                             bwidth,
+                             bheight,
+                             ref_pic_list0,
+                             ref_pic_list1,
+                             &pred_desc, //output
+                             0, //output org_x,
+                             0, //output org_y,
+                             PICTURE_BUFFER_DESC_LUMA_MASK,
+                             ctx->hbd_md ? EB_TEN_BIT : EB_EIGHT_BIT,
+                             0); // is_16bit_pipeline
 
-    assert(is_interintra_wedge_used(ctx->blk_geom->bsize)); //if not I need to add nowedge path!!
+    assert(svt_aom_is_interintra_wedge_used(
+        ctx->blk_geom->bsize)); //if not I need to add nowedge path!!
 
     int64_t        best_interintra_rd = INT64_MAX;
     int            rate_sum;
@@ -342,33 +344,34 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             ctx->md_rate_estimation_ptr->inter_intra_mode_fac_bits[bsize_group][interintra_mode];
         //av1_combine_interintra(xd, bsize, 0, tmp_buf, bw, intrapred, bw);
         if (ctx->hbd_md)
-            combine_interintra_highbd(interintra_mode, //mode,
-                                      0, //use_wedge_interintra,
-                                      0, //cand->interintra_wedge_index,
-                                      0, //int wedge_sign,
-                                      ctx->blk_geom->bsize,
-                                      ctx->blk_geom->bsize, // plane_bsize,
-                                      ii_pred_buf,
-                                      bwidth, /*uint8_t *comppred, int compstride,*/
-                                      tmp_buf,
-                                      bwidth, /*const uint8_t *interpred, int interstride,*/
-                                      ctx->intrapred_buf[j],
-                                      bwidth /*const uint8_t *intrapred,   int intrastride*/,
-                                      bit_depth);
+            svt_aom_combine_interintra_highbd(
+                interintra_mode, //mode,
+                0, //use_wedge_interintra,
+                0, //cand->interintra_wedge_index,
+                0, //int wedge_sign,
+                ctx->blk_geom->bsize,
+                ctx->blk_geom->bsize, // plane_bsize,
+                ii_pred_buf,
+                bwidth, /*uint8_t *comppred, int compstride,*/
+                tmp_buf,
+                bwidth, /*const uint8_t *interpred, int interstride,*/
+                ctx->intrapred_buf[j],
+                bwidth /*const uint8_t *intrapred,   int intrastride*/,
+                bit_depth);
         else
 
-            combine_interintra(interintra_mode, //mode,
-                               0, //use_wedge_interintra,
-                               0, //cand->interintra_wedge_index,
-                               0, //int wedge_sign,
-                               ctx->blk_geom->bsize,
-                               ctx->blk_geom->bsize, // plane_bsize,
-                               ii_pred_buf,
-                               bwidth, /*uint8_t *comppred, int compstride,*/
-                               tmp_buf,
-                               bwidth, /*const uint8_t *interpred, int interstride,*/
-                               ctx->intrapred_buf[j],
-                               bwidth /*const uint8_t *intrapred,   int intrastride*/);
+            svt_aom_combine_interintra(interintra_mode, //mode,
+                                       0, //use_wedge_interintra,
+                                       0, //cand->interintra_wedge_index,
+                                       0, //int wedge_sign,
+                                       ctx->blk_geom->bsize,
+                                       ctx->blk_geom->bsize, // plane_bsize,
+                                       ii_pred_buf,
+                                       bwidth, /*uint8_t *comppred, int compstride,*/
+                                       tmp_buf,
+                                       bwidth, /*const uint8_t *interpred, int interstride,*/
+                                       ctx->intrapred_buf[j],
+                                       bwidth /*const uint8_t *intrapred,   int intrastride*/);
 
         //model_rd_sb_fn[MODELRD_TYPE_INTERINTRA](
         //    cpi, bsize, x, xd, 0, 0, mi_row, mi_col, &rate_sum, &dist_sum,
@@ -439,7 +442,7 @@ static void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext 
         candidatePtr->comp_group_idx            = 1;
         candidatePtr->compound_idx              = 1;
         candidatePtr->interinter_comp.mask_type = 55;
-        search_compound_diff_wedge(pcs, ctx, candidatePtr);
+        svt_aom_search_compound_diff_wedge(pcs, ctx, candidatePtr);
 
     }
     //else if (cur_type == MD_COMP_DIFF1) {
@@ -450,7 +453,7 @@ static void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext 
     else if (cur_type == MD_COMP_WEDGE) {
         candidatePtr->comp_group_idx = 1;
         candidatePtr->compound_idx   = 1;
-        search_compound_diff_wedge(pcs, ctx, candidatePtr);
+        svt_aom_search_compound_diff_wedge(pcs, ctx, candidatePtr);
     } else {
         SVT_ERROR("not used comp type\n");
     }
@@ -473,7 +476,7 @@ void choose_best_av1_mv_pred(ModeDecisionContext            *ctx,
     IntMv   ref_mv[2];
     MV      mv;
 
-    max_drl_index = get_max_drl_index(blk_ptr->av1xd->ref_mv_count[ref_frame], mode);
+    max_drl_index = svt_aom_get_max_drl_index(blk_ptr->av1xd->ref_mv_count[ref_frame], mode);
     // max_drl_index = 1;
 
     if (max_drl_index == 1) {
@@ -488,7 +491,7 @@ void choose_best_av1_mv_pred(ModeDecisionContext            *ctx,
         uint8_t  drli;
         uint32_t best_mv_cost = 0xFFFFFFFF;
         for (drli = 0; drli < max_drl_index; drli++) {
-            get_av1_mv_pred_drl(
+            svt_aom_get_av1_mv_pred_drl(
                 ctx, blk_ptr, ref_frame, is_compound, mode, drli, nearestmv, nearmv, ref_mv);
 
             //compute the rate for this drli Cand
@@ -546,12 +549,12 @@ static void mode_decision_scratch_cand_bf_dctor(EbPtr p) {
 /***************************************
 * Mode Decision Candidate Ctor
 ***************************************/
-EbErrorType mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
-                                       EbBitDepth max_bitdepth, uint8_t sb_size,
-                                       uint32_t             buffer_desc_mask,
-                                       EbPictureBufferDesc *temp_residual,
-                                       EbPictureBufferDesc *temp_recon_ptr, uint64_t *fast_cost,
-                                       uint64_t *full_cost) {
+EbErrorType svt_aom_mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
+                                               EbBitDepth max_bitdepth, uint8_t sb_size,
+                                               uint32_t             buffer_desc_mask,
+                                               EbPictureBufferDesc *temp_residual,
+                                               EbPictureBufferDesc *temp_recon_ptr,
+                                               uint64_t *fast_cost, uint64_t *full_cost) {
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
 
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
@@ -602,8 +605,8 @@ EbErrorType mode_decision_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
     buffer_ptr->full_cost = full_cost;
     return EB_ErrorNone;
 }
-EbErrorType mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
-                                               uint8_t sb_size, EbBitDepth max_bitdepth) {
+EbErrorType svt_aom_mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
+                                                       uint8_t sb_size, EbBitDepth max_bitdepth) {
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
@@ -715,8 +718,8 @@ static Bool mv_is_already_injected(ModeDecisionContext *ctx, Mv mv0, Mv mv1, uin
     }
     return FALSE;
 }
-Bool is_valid_unipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_group,
-                          uint8_t list_idx, uint8_t ref_idx) {
+Bool svt_aom_is_valid_unipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_group,
+                                  uint8_t list_idx, uint8_t ref_idx) {
     if (!ctx->ref_pruning_ctrls.enabled)
         return TRUE;
     if (!ctx->ref_filtering_res[inter_cand_group][list_idx][ref_idx].do_ref &&
@@ -763,17 +766,17 @@ static Bool is_valid_uni_type(struct ModeDecisionContext *ctx, uint8_t inter_typ
             : is_warp_allowed            ? WARP_GROUP
                                          : OBMC_GROUP;
 
-        return is_valid_unipred_ref(
+        return svt_aom_is_valid_unipred_ref(
             ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
         break;
     case 3: // warp
         inter_cand_group = is_warp_allowed ? WARP_GROUP : OBMC_GROUP;
-        return is_valid_unipred_ref(
+        return svt_aom_is_valid_unipred_ref(
             ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
         break;
     case 4: // obmc
         inter_cand_group = OBMC_GROUP;
-        return is_valid_unipred_ref(
+        return svt_aom_is_valid_unipred_ref(
             ctx, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
         break;
     default:
@@ -854,7 +857,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
         const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
         if (inter_direction == 0) {
-            if (!is_valid_unipred_ref(
+            if (!svt_aom_is_valid_unipred_ref(
                     ctx, MIN(TOT_INTER_GROUP - 1, UNI_3x3_GROUP), REF_LIST_0, list0_ref_index))
                 continue;
             for (bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS; ++bipred_index) {
@@ -886,12 +889,12 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
 
                 inside_tile = 1;
                 if (umv0tile)
-                    inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                          to_inject_mv_x,
-                                                          to_inject_mv_y,
-                                                          mi_col,
-                                                          mi_row,
-                                                          ctx->blk_geom->bsize);
+                    inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                                  to_inject_mv_x,
+                                                                  to_inject_mv_y,
+                                                                  mi_col,
+                                                                  mi_row,
+                                                                  ctx->blk_geom->bsize);
                 uint8_t skip_cand = (!inside_tile);
 
                 MvReferenceFrame rf[2];
@@ -980,7 +983,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
         const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
         if (inter_direction == 1) {
-            if (!is_valid_unipred_ref(
+            if (!svt_aom_is_valid_unipred_ref(
                     ctx, MIN(TOT_INTER_GROUP - 1, UNI_3x3_GROUP), REF_LIST_1, list1_ref_index))
                 continue;
             for (bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS; ++bipred_index) {
@@ -1014,12 +1017,12 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
 
                     inside_tile = 1;
                     if (umv0tile)
-                        inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                              to_inject_mv_x,
-                                                              to_inject_mv_y,
-                                                              mi_col,
-                                                              mi_row,
-                                                              ctx->blk_geom->bsize);
+                        inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                                      to_inject_mv_x,
+                                                                      to_inject_mv_y,
+                                                                      mi_col,
+                                                                      mi_row,
+                                                                      ctx->blk_geom->bsize);
                     uint8_t skip_cand = (!inside_tile);
 
                     MvReferenceFrame rf[2];
@@ -1193,13 +1196,14 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                         svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index),
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index)});
 
-                    int     inside_tile = umv0tile ? is_inside_tile_boundary(&(xd->tile),
-                                                                         to_inject_mv_x_l0,
-                                                                         to_inject_mv_y_l0,
-                                                                         mi_col,
-                                                                         mi_row,
-                                                                         ctx->blk_geom->bsize)
-                                                   : 1;
+                    int     inside_tile = umv0tile
+                            ? svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                          to_inject_mv_x_l0,
+                                                          to_inject_mv_y_l0,
+                                                          mi_col,
+                                                          mi_row,
+                                                          ctx->blk_geom->bsize)
+                            : 1;
                     uint8_t skip_cand   = (!inside_tile);
                     Mv      to_inj_mv0  = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                     Mv      to_inj_mv1  = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
@@ -1256,7 +1260,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                     {best_pred_mv[1].as_mv.col, best_pred_mv[1].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (calc_pred_masked_compound(
+                                        if (svt_aom_calc_pred_masked_compound(
                                                 pcs, ctx, &cand_array[cand_total_cnt]))
                                             break;
 
@@ -1315,19 +1319,20 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                         svt_get_ref_frame_type(me_block_results_ptr->ref0_list, list0_ref_index),
                         svt_get_ref_frame_type(me_block_results_ptr->ref1_list, list1_ref_index)});
 
-                    int     inside_tile = umv0tile ? is_inside_tile_boundary(&(xd->tile),
-                                                                         to_inject_mv_x_l0,
-                                                                         to_inject_mv_y_l0,
-                                                                         mi_col,
-                                                                         mi_row,
-                                                                         ctx->blk_geom->bsize) &&
-                            is_inside_tile_boundary(&(xd->tile),
-                                                    to_inject_mv_x_l1,
-                                                    to_inject_mv_y_l1,
-                                                    mi_col,
-                                                    mi_row,
-                                                    ctx->blk_geom->bsize)
-                                                   : 1;
+                    int     inside_tile = umv0tile
+                            ? svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                          to_inject_mv_x_l0,
+                                                          to_inject_mv_y_l0,
+                                                          mi_col,
+                                                          mi_row,
+                                                          ctx->blk_geom->bsize) &&
+                            svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                            to_inject_mv_x_l1,
+                                                            to_inject_mv_y_l1,
+                                                            mi_col,
+                                                            mi_row,
+                                                            ctx->blk_geom->bsize)
+                            : 1;
                     uint8_t skip_cand   = (!inside_tile);
                     Mv      to_inj_mv0  = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
                     Mv      to_inj_mv1  = {{to_inject_mv_x_l1, to_inject_mv_y_l1}};
@@ -1384,7 +1389,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                                     {best_pred_mv[1].as_mv.col, best_pred_mv[1].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (calc_pred_masked_compound(
+                                        if (svt_aom_calc_pred_masked_compound(
                                                 pcs, ctx, &cand_array[cand_total_cnt]))
                                             break;
                                         mask_done = 1;
@@ -1412,7 +1417,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
     return;
 }
 
-uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
+uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
     uint8_t max_drl = 0;
 
     if (mode == NEWMV || mode == NEW_NEWMV) {
@@ -1502,7 +1507,7 @@ static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecis
             ctx->injected_ref_types[ctx->injected_mv_count] = frame_type;
             ++ctx->injected_mv_count;
             //NEAR
-            max_drl_index             = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
+            max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
             uint8_t cap_max_drl_index = 0;
             if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
                 cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_count,
@@ -1574,7 +1579,7 @@ static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecis
             ctx->injected_ref_types[ctx->injected_mv_count] = ref_pair;
             ++ctx->injected_mv_count;
             //NEAR_NEAR
-            max_drl_index = get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
+            max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
 
             uint8_t cap_max_drl_index = 0;
             if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
@@ -1693,7 +1698,7 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
             uint8_t          list_idx   = get_list_idx(rf[0]);
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
             // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
-            if (!is_valid_unipred_ref(
+            if (!svt_aom_is_valid_unipred_ref(
                     ctx, MIN(TOT_INTER_GROUP - 1, NRST_NEAR_GROUP), list_idx, ref_idx))
                 continue;
             //NEAREST
@@ -1708,12 +1713,12 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
             inj_mv       = (ctx->injected_mv_count == 0 ||
                       mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, frame_type) == FALSE);
             if (umv0tile)
-                inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                      to_inject_mv_x,
-                                                      to_inject_mv_y,
-                                                      mi_col,
-                                                      mi_row,
-                                                      ctx->blk_geom->bsize);
+                inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                              to_inject_mv_x,
+                                                              to_inject_mv_y,
+                                                              mi_col,
+                                                              mi_row,
+                                                              ctx->blk_geom->bsize);
             inj_mv = inj_mv && inside_tile;
             if (inj_mv) {
                 uint8_t inter_type;
@@ -1766,7 +1771,7 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                             MvUnit mv_unit;
                             mv_unit.mv[list_idx]   = cand_array[cand_idx].mv[list_idx];
                             mv_unit.pred_direction = list_idx;
-                            local_warp_valid       = warped_motion_parameters(
+                            local_warp_valid       = svt_aom_warped_motion_parameters(
                                 pcs,
                                 ctx->blk_ptr,
                                 &mv_unit,
@@ -1794,13 +1799,13 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
             }
 
             //NEAR
-            max_drl_index             = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
+            max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
             uint8_t cap_max_drl_index = 0;
             if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
                 cap_max_drl_index = MIN(ctx->cand_reduction_ctrls.near_count_ctrls.near_count,
                                         max_drl_index);
             for (drli = 0; drli < cap_max_drl_index; drli++) {
-                get_av1_mv_pred_drl(
+                svt_aom_get_av1_mv_pred_drl(
                     ctx, blk_ptr, frame_type, 0, NEARMV, drli, nearestmv, nearmv, ref_mv);
 
                 to_inject_mv_x = nearmv[0].as_mv.col;
@@ -1810,12 +1815,12 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                 inj_mv    = (ctx->injected_mv_count == 0 ||
                           mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, frame_type) == FALSE);
                 if (umv0tile)
-                    inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                          to_inject_mv_x,
-                                                          to_inject_mv_y,
-                                                          mi_col,
-                                                          mi_row,
-                                                          ctx->blk_geom->bsize);
+                    inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                                  to_inject_mv_x,
+                                                                  to_inject_mv_y,
+                                                                  mi_col,
+                                                                  mi_row,
+                                                                  ctx->blk_geom->bsize);
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
                     uint8_t inter_type;
@@ -1868,7 +1873,7 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                                 MvUnit mv_unit;
                                 mv_unit.mv[list_idx]   = cand_array[cand_idx].mv[list_idx];
                                 mv_unit.pred_direction = list_idx;
-                                local_warp_valid       = warped_motion_parameters(
+                                local_warp_valid       = svt_aom_warped_motion_parameters(
                                     pcs,
                                     ctx->blk_ptr,
                                     &mv_unit,
@@ -1928,18 +1933,18 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                 inj_mv        = (ctx->injected_mv_count == 0 ||
                           mv_is_already_injected(ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
                 if (umv0tile) {
-                    inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                          to_inject_mv_x_l0,
-                                                          to_inject_mv_y_l0,
-                                                          mi_col,
-                                                          mi_row,
-                                                          ctx->blk_geom->bsize) &&
-                        is_inside_tile_boundary(&(xd->tile),
-                                                to_inject_mv_x_l1,
-                                                to_inject_mv_y_l1,
-                                                mi_col,
-                                                mi_row,
-                                                ctx->blk_geom->bsize);
+                    inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                                  to_inject_mv_x_l0,
+                                                                  to_inject_mv_y_l0,
+                                                                  mi_col,
+                                                                  mi_row,
+                                                                  ctx->blk_geom->bsize) &&
+                        svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                        to_inject_mv_x_l1,
+                                                        to_inject_mv_y_l1,
+                                                        mi_col,
+                                                        mi_row,
+                                                        ctx->blk_geom->bsize);
                 }
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
@@ -1967,7 +1972,8 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         //NRST-NRST
                         if (cur_type > MD_COMP_AVG) {
                             if (mask_done != 1) {
-                                if (calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
+                                if (svt_aom_calc_pred_masked_compound(
+                                        pcs, ctx, &cand_array[cand_idx]))
                                     break;
                                 mask_done = 1;
                             }
@@ -1986,13 +1992,13 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         skip_mvp_compound_on_ref_types(ctx, rf)
                     ? MD_COMP_DIST
                     : ctx->inter_comp_ctrls.tot_comp_types;
-                max_drl_index  = get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
+                max_drl_index  = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
                 uint8_t cap_max_drl_index = 0;
                 if (ctx->cand_reduction_ctrls.near_count_ctrls.enabled)
                     cap_max_drl_index = MIN(
                         ctx->cand_reduction_ctrls.near_count_ctrls.near_near_count, max_drl_index);
                 for (drli = 0; drli < cap_max_drl_index; drli++) {
-                    get_av1_mv_pred_drl(
+                    svt_aom_get_av1_mv_pred_drl(
                         ctx, blk_ptr, ref_pair, 1, NEAR_NEARMV, drli, nearestmv, nearmv, ref_mv);
 
                     to_inject_mv_x_l0 = nearmv[0].as_mv.col;
@@ -2007,18 +2013,18 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                                   FALSE);
 
                     if (umv0tile) {
-                        inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                              to_inject_mv_x_l0,
-                                                              to_inject_mv_y_l0,
-                                                              mi_col,
-                                                              mi_row,
-                                                              ctx->blk_geom->bsize) &&
-                            is_inside_tile_boundary(&(xd->tile),
-                                                    to_inject_mv_x_l1,
-                                                    to_inject_mv_y_l1,
-                                                    mi_col,
-                                                    mi_row,
-                                                    ctx->blk_geom->bsize);
+                        inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                                      to_inject_mv_x_l0,
+                                                                      to_inject_mv_y_l0,
+                                                                      mi_col,
+                                                                      mi_row,
+                                                                      ctx->blk_geom->bsize) &&
+                            svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                            to_inject_mv_x_l1,
+                                                            to_inject_mv_y_l1,
+                                                            mi_col,
+                                                            mi_row,
+                                                            ctx->blk_geom->bsize);
                     }
                     inj_mv = inj_mv && inside_tile;
                     if (inj_mv) {
@@ -2039,7 +2045,8 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                             cand_array[cand_idx].ref_frame_type        = ref_pair;
                             if (cur_type > MD_COMP_AVG) {
                                 if (mask_done != 1) {
-                                    if (calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
+                                    if (svt_aom_calc_pred_masked_compound(
+                                            pcs, ctx, &cand_array[cand_idx]))
                                         break;
                                     mask_done = 1;
                                 }
@@ -2085,11 +2092,11 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
             uint8_t list_idx_0 = get_list_idx(rf[0]);
             uint8_t list_idx_1 = get_list_idx(rf[1]);
             if (list_idx_0 != INVALID_REF)
-                if (!is_valid_unipred_ref(
+                if (!svt_aom_is_valid_unipred_ref(
                         ctx, MIN(TOT_INTER_GROUP - 1, NRST_NEW_NEAR_GROUP), list_idx_0, ref_idx_0))
                     continue;
             if (list_idx_1 != INVALID_REF)
-                if (!is_valid_unipred_ref(
+                if (!svt_aom_is_valid_unipred_ref(
                         ctx, MIN(TOT_INTER_GROUP - 1, NRST_NEW_NEAR_GROUP), list_idx_1, ref_idx_1))
                     continue;
             if (rf[1] != NONE_FRAME) {
@@ -2113,26 +2120,27 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                     uint8_t inj_mv      = (ctx->injected_mv_count == 0 ||
                                       mv_is_already_injected(
                                           ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
-                    int     inside_tile = umv0tile ? is_inside_tile_boundary(&(xd->tile),
-                                                                         to_inject_mv_x_l0,
-                                                                         to_inject_mv_y_l0,
-                                                                         mi_col,
-                                                                         mi_row,
-                                                                         ctx->blk_geom->bsize) &&
-                            is_inside_tile_boundary(&(xd->tile),
-                                                    to_inject_mv_x_l1,
-                                                    to_inject_mv_y_l1,
-                                                    mi_col,
-                                                    mi_row,
-                                                    ctx->blk_geom->bsize)
-                                                   : 1;
+                    int     inside_tile = umv0tile
+                            ? svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                          to_inject_mv_x_l0,
+                                                          to_inject_mv_y_l0,
+                                                          mi_col,
+                                                          mi_row,
+                                                          ctx->blk_geom->bsize) &&
+                            svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                            to_inject_mv_x_l1,
+                                                            to_inject_mv_y_l1,
+                                                            mi_col,
+                                                            mi_row,
+                                                            ctx->blk_geom->bsize)
+                            : 1;
                     inj_mv              = inj_mv && inside_tile;
                     inj_mv              = inj_mv &&
-                        is_me_data_present(ctx->me_block_offset,
-                                           ctx->me_cand_offset,
-                                           me_results,
-                                           get_list_idx(rf[1]),
-                                           ref_idx_1);
+                        svt_aom_is_me_data_present(ctx->me_block_offset,
+                                                   ctx->me_cand_offset,
+                                                   me_results,
+                                                   get_list_idx(rf[1]),
+                                                   ref_idx_1);
                     if (inj_mv) {
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2150,21 +2158,22 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                             cand_array[cand_idx].mv[REF_LIST_1].as_int = to_inj_mv1.as_int;
                             cand_array[cand_idx].drl_index             = 0;
                             cand_array[cand_idx].ref_frame_type        = ref_pair;
-                            get_av1_mv_pred_drl(ctx,
-                                                ctx->blk_ptr,
-                                                cand_array[cand_idx].ref_frame_type,
-                                                1, // is_compound
-                                                NEAREST_NEWMV,
-                                                0, //not needed drli,
-                                                nearestmv,
-                                                nearmv,
-                                                ref_mv);
+                            svt_aom_get_av1_mv_pred_drl(ctx,
+                                                        ctx->blk_ptr,
+                                                        cand_array[cand_idx].ref_frame_type,
+                                                        1, // is_compound
+                                                        NEAREST_NEWMV,
+                                                        0, //not needed drli,
+                                                        nearestmv,
+                                                        nearmv,
+                                                        ref_mv);
                             cand_array[cand_idx].pred_mv[REF_LIST_1] = (Mv){
                                 {ref_mv[1].as_mv.col, ref_mv[1].as_mv.row}};
                             //NRST_N
                             if (cur_type > MD_COMP_AVG) {
                                 if (mask_done != 1) {
-                                    if (calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
+                                    if (svt_aom_calc_pred_masked_compound(
+                                            pcs, ctx, &cand_array[cand_idx]))
                                         break;
                                     mask_done = 1;
                                 }
@@ -2199,26 +2208,27 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                     uint8_t inj_mv      = (ctx->injected_mv_count == 0 ||
                                       mv_is_already_injected(
                                           ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
-                    int     inside_tile = umv0tile ? is_inside_tile_boundary(&(xd->tile),
-                                                                         to_inject_mv_x_l0,
-                                                                         to_inject_mv_y_l0,
-                                                                         mi_col,
-                                                                         mi_row,
-                                                                         ctx->blk_geom->bsize) &&
-                            is_inside_tile_boundary(&(xd->tile),
-                                                    to_inject_mv_x_l1,
-                                                    to_inject_mv_y_l1,
-                                                    mi_col,
-                                                    mi_row,
-                                                    ctx->blk_geom->bsize)
-                                                   : 1;
+                    int     inside_tile = umv0tile
+                            ? svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                          to_inject_mv_x_l0,
+                                                          to_inject_mv_y_l0,
+                                                          mi_col,
+                                                          mi_row,
+                                                          ctx->blk_geom->bsize) &&
+                            svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                            to_inject_mv_x_l1,
+                                                            to_inject_mv_y_l1,
+                                                            mi_col,
+                                                            mi_row,
+                                                            ctx->blk_geom->bsize)
+                            : 1;
                     inj_mv              = inj_mv && inside_tile;
                     inj_mv              = inj_mv &&
-                        is_me_data_present(ctx->me_block_offset,
-                                           ctx->me_cand_offset,
-                                           me_results,
-                                           0,
-                                           ref_idx_0);
+                        svt_aom_is_me_data_present(ctx->me_block_offset,
+                                                   ctx->me_cand_offset,
+                                                   me_results,
+                                                   0,
+                                                   ref_idx_0);
                     if (inj_mv) {
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2235,20 +2245,21 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                             cand_array[cand_idx].mv[REF_LIST_1].as_int = to_inj_mv1.as_int;
                             cand_array[cand_idx].drl_index             = 0;
                             cand_array[cand_idx].ref_frame_type        = ref_pair;
-                            get_av1_mv_pred_drl(ctx,
-                                                ctx->blk_ptr,
-                                                cand_array[cand_idx].ref_frame_type,
-                                                1, // is_compound
-                                                NEW_NEARESTMV,
-                                                0, //not needed drli,
-                                                nearestmv,
-                                                nearmv,
-                                                ref_mv);
+                            svt_aom_get_av1_mv_pred_drl(ctx,
+                                                        ctx->blk_ptr,
+                                                        cand_array[cand_idx].ref_frame_type,
+                                                        1, // is_compound
+                                                        NEW_NEARESTMV,
+                                                        0, //not needed drli,
+                                                        nearestmv,
+                                                        nearmv,
+                                                        ref_mv);
                             cand_array[cand_idx].pred_mv[REF_LIST_0] = (Mv){
                                 {ref_mv[0].as_mv.col, ref_mv[0].as_mv.row}};
                             if (cur_type > MD_COMP_AVG) {
                                 if (mask_done != 1) {
-                                    if (calc_pred_masked_compound(pcs, ctx, &cand_array[cand_idx]))
+                                    if (svt_aom_calc_pred_masked_compound(
+                                            pcs, ctx, &cand_array[cand_idx]))
                                         break;
                                     mask_done = 1;
                                 }
@@ -2264,19 +2275,19 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                 }
                 //NEW_NEARMV
                 {
-                    uint8_t max_drl_index = get_max_drl_index(xd->ref_mv_count[ref_pair],
-                                                              NEW_NEARMV);
+                    uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair],
+                                                                      NEW_NEARMV);
 
                     for (uint8_t drli = 0; drli < max_drl_index; drli++) {
-                        get_av1_mv_pred_drl(ctx,
-                                            ctx->blk_ptr,
-                                            ref_pair,
-                                            1,
-                                            NEW_NEARMV,
-                                            drli,
-                                            nearestmv,
-                                            nearmv,
-                                            ref_mv);
+                        svt_aom_get_av1_mv_pred_drl(ctx,
+                                                    ctx->blk_ptr,
+                                                    ref_pair,
+                                                    1,
+                                                    NEW_NEARMV,
+                                                    drli,
+                                                    nearestmv,
+                                                    nearmv,
+                                                    ref_mv);
 
                         //NEW_NEARMV
                         const MeSbResults *me_results =
@@ -2294,11 +2305,11 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                           mv_is_already_injected(
                                               ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
                         inj_mv             = inj_mv &&
-                            is_me_data_present(ctx->me_block_offset,
-                                               ctx->me_cand_offset,
-                                               me_results,
-                                               0,
-                                               ref_idx_0);
+                            svt_aom_is_me_data_present(ctx->me_block_offset,
+                                                       ctx->me_cand_offset,
+                                                       me_results,
+                                                       0,
+                                                       ref_idx_0);
                         if (inj_mv) {
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2320,10 +2331,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                 cand_array[cand_idx].drl_index             = drli;
                                 cand_array[cand_idx].ref_frame_type        = ref_pair;
                                 cand_array[cand_idx].pred_mv[REF_LIST_0]   = (Mv){
-                                      {ref_mv[0].as_mv.col, ref_mv[0].as_mv.row}};
+                                    {ref_mv[0].as_mv.col, ref_mv[0].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (calc_pred_masked_compound(
+                                        if (svt_aom_calc_pred_masked_compound(
                                                 pcs, ctx, &cand_array[cand_idx]))
                                             break;
                                         mask_done = 1;
@@ -2342,19 +2353,19 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                 }
                 //NEAR_NEWMV
                 {
-                    uint8_t max_drl_index = get_max_drl_index(xd->ref_mv_count[ref_pair],
-                                                              NEAR_NEWMV);
+                    uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[ref_pair],
+                                                                      NEAR_NEWMV);
 
                     for (uint8_t drli = 0; drli < max_drl_index; drli++) {
-                        get_av1_mv_pred_drl(ctx,
-                                            ctx->blk_ptr,
-                                            ref_pair,
-                                            1,
-                                            NEAR_NEWMV,
-                                            drli,
-                                            nearestmv,
-                                            nearmv,
-                                            ref_mv);
+                        svt_aom_get_av1_mv_pred_drl(ctx,
+                                                    ctx->blk_ptr,
+                                                    ref_pair,
+                                                    1,
+                                                    NEAR_NEWMV,
+                                                    drli,
+                                                    nearestmv,
+                                                    nearmv,
+                                                    ref_mv);
 
                         //NEAR_NEWMV
                         const MeSbResults *me_results =
@@ -2374,11 +2385,11 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                           mv_is_already_injected(
                                               ctx, to_inj_mv0, to_inj_mv1, ref_pair) == FALSE);
                         inj_mv             = inj_mv &&
-                            is_me_data_present(ctx->me_block_offset,
-                                               ctx->me_cand_offset,
-                                               me_results,
-                                               get_list_idx(rf[1]),
-                                               ref_idx_1);
+                            svt_aom_is_me_data_present(ctx->me_block_offset,
+                                                       ctx->me_cand_offset,
+                                                       me_results,
+                                                       get_list_idx(rf[1]),
+                                                       ref_idx_1);
                         if (inj_mv) {
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
@@ -2400,10 +2411,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                                 cand_array[cand_idx].drl_index             = drli;
                                 cand_array[cand_idx].ref_frame_type        = ref_pair;
                                 cand_array[cand_idx].pred_mv[REF_LIST_1]   = (Mv){
-                                      {ref_mv[1].as_mv.col, ref_mv[1].as_mv.row}};
+                                    {ref_mv[1].as_mv.col, ref_mv[1].as_mv.row}};
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (calc_pred_masked_compound(
+                                        if (svt_aom_calc_pred_masked_compound(
                                                 pcs, ctx, &cand_array[cand_idx]))
                                             break;
                                         mask_done = 1;
@@ -2479,28 +2490,28 @@ static uint8_t wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext 
             mv_unit.mv[list_idx]           = test_mv;
             mv_unit.pred_direction         = list_idx;
             candidate->mv[list_idx].as_int = test_mv.as_int;
-            uint8_t local_warp_valid       = warped_motion_parameters(pcs,
-                                                                ctx->blk_ptr,
-                                                                &mv_unit,
-                                                                ctx->blk_geom,
-                                                                ctx->blk_org_x,
-                                                                ctx->blk_org_y,
-                                                                candidate->ref_frame_type,
-                                                                &candidate->wm_params_l0,
-                                                                &candidate->num_proj_ref);
+            uint8_t local_warp_valid       = svt_aom_warped_motion_parameters(pcs,
+                                                                        ctx->blk_ptr,
+                                                                        &mv_unit,
+                                                                        ctx->blk_geom,
+                                                                        ctx->blk_org_x,
+                                                                        ctx->blk_org_y,
+                                                                        candidate->ref_frame_type,
+                                                                        &candidate->wm_params_l0,
+                                                                        &candidate->num_proj_ref);
 
             if (!local_warp_valid)
                 continue;
 
-            inter_pu_prediction_av1(0, ctx, pcs, cand_bf);
+            svt_aom_inter_pu_prediction_av1(0, ctx, pcs, cand_bf);
 
             int var = fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse);
 
             MV curr = (MV){.col = test_mv.x, .row = test_mv.y};
             if (ctx->approx_inter_rate)
-                var += mv_err_cost_light(&curr, &ref_mv);
+                var += svt_aom_mv_err_cost_light(&curr, &ref_mv);
             else
-                var += mv_err_cost(&curr, &ref_mv, mvjcost, mvcost, error_per_bit);
+                var += svt_aom_mv_err_cost(&curr, &ref_mv, mvjcost, mvcost, error_per_bit);
 
             if (var < best_cost) {
                 best_mv.as_int = test_mv.as_int;
@@ -2541,7 +2552,7 @@ static uint8_t wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext 
             uint32_t     mi_row = ctx->blk_org_y >> MI_SIZE_LOG2;
             uint32_t     mi_col = ctx->blk_org_x >> MI_SIZE_LOG2;
             MacroBlockD *xd     = ctx->blk_ptr->av1xd;
-            inside_tile         = is_inside_tile_boundary(
+            inside_tile         = svt_aom_is_inside_tile_boundary(
                 &(xd->tile), best_mv.x, best_mv.y, mi_col, mi_row, ctx->blk_geom->bsize);
         }
         return inside_tile;
@@ -2739,14 +2750,14 @@ static uint8_t obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisio
             ((EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)
                 ->reference_picture;
 
-        use_scaled_rec_refs_if_needed(
+        svt_aom_use_scaled_rec_refs_if_needed(
             pcs,
             pcs->ppcs->enhanced_picture_ptr,
             (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr,
             &reference_picture,
             EB_8_BIT_MD);
         Yv12BufferConfig ref_buf;
-        link_eb_to_aom_buffer_desc_8bit(reference_picture, &ref_buf);
+        svt_aom_link_eb_to_aom_buffer_desc_8bit(reference_picture, &ref_buf);
 
         struct Buf2D yv12_mb[MAX_MB_PLANE];
         svt_av1_setup_pred_block(ctx->blk_geom->bsize, yv12_mb, &ref_buf, mi_row, mi_col);
@@ -2801,12 +2812,12 @@ static uint8_t obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisio
         int umv0_tile   = derive_rmv_setting(pcs->scs, pcs->ppcs);
         int inside_tile = 1;
         if (umv0_tile) {
-            inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                  candidate->mv[ref_list_idx].x,
-                                                  candidate->mv[ref_list_idx].y,
-                                                  ctx->blk_org_x >> MI_SIZE_LOG2,
-                                                  ctx->blk_org_y >> MI_SIZE_LOG2,
-                                                  ctx->blk_geom->bsize);
+            inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                          candidate->mv[ref_list_idx].x,
+                                                          candidate->mv[ref_list_idx].y,
+                                                          ctx->blk_org_x >> MI_SIZE_LOG2,
+                                                          ctx->blk_org_y >> MI_SIZE_LOG2,
+                                                          ctx->blk_geom->bsize);
         }
         return inside_tile;
     }
@@ -3053,7 +3064,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                NEW_NEWMV
             ************* */
             if (allow_bipred && inter_direction == 2 &&
-                !(ctx->is_intra_bordered &&
+                !(ctx->svt_aom_is_intra_bordered &&
                   ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)) {
                 int16_t to_inject_mv_x_l0 =
                     ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
@@ -3158,7 +3169,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
             NEWMV L0
         ************* */
         if (inter_direction == 0) {
-            if (!is_valid_unipred_ref(
+            if (!svt_aom_is_valid_unipred_ref(
                     ctx, MIN(TOT_INTER_GROUP - 1, PA_ME_GROUP), REF_LIST_0, list0_ref_index))
                 continue;
             int16_t to_inject_mv_x =
@@ -3168,12 +3179,12 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
             inside_tile                = 1;
             if (umv0tile)
-                inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                      to_inject_mv_x,
-                                                      to_inject_mv_y,
-                                                      mi_col,
-                                                      mi_row,
-                                                      ctx->blk_geom->bsize);
+                inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                              to_inject_mv_x,
+                                                              to_inject_mv_y,
+                                                              mi_col,
+                                                              mi_row,
+                                                              ctx->blk_geom->bsize);
             uint8_t skip_cand = (!inside_tile);
             Mv      to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
             if (!skip_cand &&
@@ -3267,7 +3278,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                     mv_unit.mv[REF_LIST_0] =
                                         cand_array[cand_total_cnt].mv[REF_LIST_0];
                                     mv_unit.pred_direction = REF_LIST_0;
-                                    motion_mode_valid      = warped_motion_parameters(
+                                    motion_mode_valid      = svt_aom_warped_motion_parameters(
                                         pcs,
                                         ctx->blk_ptr,
                                         &mv_unit,
@@ -3302,7 +3313,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                NEWMV L1
            ************* */
             if (inter_direction == 1) {
-                if (!is_valid_unipred_ref(
+                if (!svt_aom_is_valid_unipred_ref(
                         ctx, MIN(TOT_INTER_GROUP - 1, PA_ME_GROUP), REF_LIST_1, list1_ref_index))
                     continue;
                 int16_t to_inject_mv_x =
@@ -3313,12 +3324,12 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
 
                 inside_tile = 1;
                 if (umv0tile)
-                    inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                          to_inject_mv_x,
-                                                          to_inject_mv_y,
-                                                          mi_col,
-                                                          mi_row,
-                                                          ctx->blk_geom->bsize);
+                    inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                                  to_inject_mv_x,
+                                                                  to_inject_mv_y,
+                                                                  mi_col,
+                                                                  mi_row,
+                                                                  ctx->blk_geom->bsize);
                 uint8_t skip_cand = !inside_tile;
 
                 Mv to_inj_mv = {{to_inject_mv_x, to_inject_mv_y}};
@@ -3414,7 +3425,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                         mv_unit.mv[REF_LIST_1] =
                                             cand_array[cand_total_cnt].mv[REF_LIST_1];
                                         mv_unit.pred_direction = REF_LIST_1;
-                                        motion_mode_valid      = warped_motion_parameters(
+                                        motion_mode_valid      = svt_aom_warped_motion_parameters(
                                             pcs,
                                             ctx->blk_ptr,
                                             &mv_unit,
@@ -3447,7 +3458,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                NEW_NEWMV
             ************* */
             if (allow_bipred &&
-                !(ctx->is_intra_bordered &&
+                !(ctx->svt_aom_is_intra_bordered &&
                   ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)) {
                 if (inter_direction == 2) {
                     if (!is_valid_bipred_ref(ctx,
@@ -3475,18 +3486,18 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
 
                     inside_tile = 1;
                     if (umv0tile) {
-                        inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                              to_inject_mv_x_l0,
-                                                              to_inject_mv_y_l0,
-                                                              mi_col,
-                                                              mi_row,
-                                                              ctx->blk_geom->bsize) &&
-                            is_inside_tile_boundary(&(xd->tile),
-                                                    to_inject_mv_x_l1,
-                                                    to_inject_mv_y_l1,
-                                                    mi_col,
-                                                    mi_row,
-                                                    ctx->blk_geom->bsize);
+                        inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                                      to_inject_mv_x_l0,
+                                                                      to_inject_mv_y_l0,
+                                                                      mi_col,
+                                                                      mi_row,
+                                                                      ctx->blk_geom->bsize) &&
+                            svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                            to_inject_mv_x_l1,
+                                                            to_inject_mv_y_l1,
+                                                            mi_col,
+                                                            mi_row,
+                                                            ctx->blk_geom->bsize);
                     }
                     uint8_t skip_cand  = (!inside_tile);
                     Mv      to_inj_mv0 = {{to_inject_mv_x_l0, to_inject_mv_y_l0}};
@@ -3546,7 +3557,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                                 //NEW_NEW
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (calc_pred_masked_compound(
+                                        if (svt_aom_calc_pred_masked_compound(
                                                 pcs, ctx, &cand_array[cand_total_cnt]))
                                             break;
                                         mask_done = 1;
@@ -3595,17 +3606,17 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
             uint8_t          list_idx   = get_list_idx(rf[0]);
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 
-            if (!is_valid_unipred_ref(ctx, GLOBAL_GROUP, list_idx, ref_idx))
+            if (!svt_aom_is_valid_unipred_ref(ctx, GLOBAL_GROUP, list_idx, ref_idx))
                 continue;
             // Get gm params
             EbWarpedMotionParams *gm_params = &pcs->ppcs->global_motion[frame_type];
 
-            IntMv mv = gm_get_motion_vector_enc(gm_params,
-                                                pcs->ppcs->frm_hdr.allow_high_precision_mv,
-                                                ctx->blk_geom->bsize,
-                                                mi_col,
-                                                mi_row,
-                                                0 /* force_integer_mv */);
+            IntMv mv = svt_aom_gm_get_motion_vector_enc(gm_params,
+                                                        pcs->ppcs->frm_hdr.allow_high_precision_mv,
+                                                        ctx->blk_geom->bsize,
+                                                        mi_col,
+                                                        mi_row,
+                                                        0 /* force_integer_mv */);
 
             int16_t to_inject_mv_x = mv.as_mv.col;
             int16_t to_inject_mv_y = mv.as_mv.row;
@@ -3613,12 +3624,12 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
             inj_mv =
                 1; // Always test GLOBAL even if MV already injected as rate diff might be significant
             if (umv0tile)
-                inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                      to_inject_mv_x,
-                                                      to_inject_mv_y,
-                                                      mi_col,
-                                                      mi_row,
-                                                      ctx->blk_geom->bsize);
+                inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                              to_inject_mv_x,
+                                                              to_inject_mv_y,
+                                                              mi_col,
+                                                              mi_row,
+                                                              ctx->blk_geom->bsize);
 
             inj_mv = inj_mv && inside_tile;
 
@@ -3691,22 +3702,24 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
             EbWarpedMotionParams *gm_params_1 =
                 &pcs->ppcs->global_motion[svt_get_ref_frame_type(list_idx_1, ref_idx_1)];
 
-            IntMv mv_0 = gm_get_motion_vector_enc(gm_params_0,
-                                                  pcs->ppcs->frm_hdr.allow_high_precision_mv,
-                                                  ctx->blk_geom->bsize,
-                                                  mi_col,
-                                                  mi_row,
-                                                  0 /* force_integer_mv */);
+            IntMv mv_0 = svt_aom_gm_get_motion_vector_enc(
+                gm_params_0,
+                pcs->ppcs->frm_hdr.allow_high_precision_mv,
+                ctx->blk_geom->bsize,
+                mi_col,
+                mi_row,
+                0 /* force_integer_mv */);
 
             int16_t to_inject_mv_x_l0 = mv_0.as_mv.col;
             int16_t to_inject_mv_y_l0 = mv_0.as_mv.row;
 
-            IntMv mv_1 = gm_get_motion_vector_enc(gm_params_1,
-                                                  pcs->ppcs->frm_hdr.allow_high_precision_mv,
-                                                  ctx->blk_geom->bsize,
-                                                  mi_col,
-                                                  mi_row,
-                                                  0 /* force_integer_mv */);
+            IntMv mv_1 = svt_aom_gm_get_motion_vector_enc(
+                gm_params_1,
+                pcs->ppcs->frm_hdr.allow_high_precision_mv,
+                ctx->blk_geom->bsize,
+                mi_col,
+                mi_row,
+                0 /* force_integer_mv */);
 
             int16_t to_inject_mv_x_l1 = mv_1.as_mv.col;
             int16_t to_inject_mv_y_l1 = mv_1.as_mv.row;
@@ -3714,18 +3727,18 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
             inj_mv =
                 1; // Always test GLOBAL-GLOBAL even if MV already injected as rate diff might be significant
             if (umv0tile) {
-                inside_tile = is_inside_tile_boundary(&(xd->tile),
-                                                      to_inject_mv_x_l0,
-                                                      to_inject_mv_y_l0,
-                                                      mi_col,
-                                                      mi_row,
-                                                      ctx->blk_geom->bsize) &&
-                    is_inside_tile_boundary(&(xd->tile),
-                                            to_inject_mv_x_l1,
-                                            to_inject_mv_y_l1,
-                                            mi_col,
-                                            mi_row,
-                                            ctx->blk_geom->bsize);
+                inside_tile = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                              to_inject_mv_x_l0,
+                                                              to_inject_mv_y_l0,
+                                                              mi_col,
+                                                              mi_row,
+                                                              ctx->blk_geom->bsize) &&
+                    svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                    to_inject_mv_x_l1,
+                                                    to_inject_mv_y_l1,
+                                                    mi_col,
+                                                    mi_row,
+                                                    ctx->blk_geom->bsize);
             }
 
             inj_mv = inj_mv && inside_tile;
@@ -3807,12 +3820,12 @@ static void inject_pme_candidates(
                                   mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, frame_type) ==
                                       FALSE);
                 int     inside_tile = (!umv0tile) ||
-                    is_inside_tile_boundary(&(xd->tile),
-                                            to_inject_mv_x,
-                                            to_inject_mv_y,
-                                            mi_col,
-                                            mi_row,
-                                            ctx->blk_geom->bsize);
+                    svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                    to_inject_mv_x,
+                                                    to_inject_mv_y,
+                                                    mi_col,
+                                                    mi_row,
+                                                    ctx->blk_geom->bsize);
                 inj_mv = inj_mv && inside_tile;
                 if (inj_mv) {
                     uint8_t drl_index = 0;
@@ -3898,7 +3911,7 @@ static void inject_pme_candidates(
                                         mv_unit.mv[list_idx] =
                                             cand_array[cand_total_cnt].mv[list_idx];
                                         mv_unit.pred_direction = list_idx;
-                                        motion_mode_valid      = warped_motion_parameters(
+                                        motion_mode_valid      = svt_aom_warped_motion_parameters(
                                             pcs,
                                             ctx->blk_ptr,
                                             &mv_unit,
@@ -3944,18 +3957,18 @@ static void inject_pme_candidates(
 
                 uint8_t inj_mv = 1;
                 if (umv0tile) {
-                    inj_mv = is_inside_tile_boundary(&(xd->tile),
-                                                     to_inject_mv_x_l0,
-                                                     to_inject_mv_y_l0,
-                                                     mi_col,
-                                                     mi_row,
-                                                     ctx->blk_geom->bsize) &&
-                        is_inside_tile_boundary(&(xd->tile),
-                                                to_inject_mv_x_l1,
-                                                to_inject_mv_y_l1,
-                                                mi_col,
-                                                mi_row,
-                                                ctx->blk_geom->bsize);
+                    inj_mv = svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                             to_inject_mv_x_l0,
+                                                             to_inject_mv_y_l0,
+                                                             mi_col,
+                                                             mi_row,
+                                                             ctx->blk_geom->bsize) &&
+                        svt_aom_is_inside_tile_boundary(&(xd->tile),
+                                                        to_inject_mv_x_l1,
+                                                        to_inject_mv_y_l1,
+                                                        mi_col,
+                                                        mi_row,
+                                                        ctx->blk_geom->bsize);
                 }
                 if (inj_mv) {
                     uint8_t to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
@@ -4016,7 +4029,7 @@ static void inject_pme_candidates(
                                 //MVP REFINE
                                 if (cur_type > MD_COMP_AVG) {
                                     if (mask_done != 1) {
-                                        if (calc_pred_masked_compound(
+                                        if (svt_aom_calc_pred_masked_compound(
                                                 pcs, ctx, &cand_array[cand_total_cnt]))
                                             break;
                                         mask_done = 1;
@@ -4069,7 +4082,8 @@ static void inject_inter_candidates_light_pd1(PictureControlSet *pcs, ModeDecisi
     }
     // Inject MVP candidates
     if (ctx->new_nearest_injection &&
-        !(ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled))
+        !(ctx->svt_aom_is_intra_bordered &&
+          ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled))
         inject_mvp_candidates_ii_light_pd1(pcs, ctx, &cand_total_cnt);
 
     // Inject ME candidates
@@ -4084,9 +4098,9 @@ static void inject_inter_candidates_light_pd1(PictureControlSet *pcs, ModeDecisi
     // update the total number of candidates injected
     *candidate_total_cnt = cand_total_cnt;
 }
-void inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                             const SequenceControlSet *scs, SuperBlock *sb_ptr,
-                             uint32_t *candidate_total_cnt) {
+void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                     const SequenceControlSet *scs, SuperBlock *sb_ptr,
+                                     uint32_t *candidate_total_cnt) {
     (void)scs;
 
     FrameHeader *frm_hdr             = &pcs->ppcs->frm_hdr;
@@ -4105,7 +4119,8 @@ void inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
     /**************
          MVP
     ************* */
-    if (!(ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled))
+    if (!(ctx->svt_aom_is_intra_bordered &&
+          ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled))
         if (ctx->new_nearest_injection)
             inject_mvp_candidates_ii(scs, pcs, ctx, &cand_total_cnt);
     //----------------------
@@ -4242,7 +4257,7 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
         nearmv.as_int = 0;
     IntMv dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
     if (dv_ref.as_int == 0)
-        av1_find_ref_dv(&dv_ref, tile, scs->seq_header.sb_mi_size, mi_row, mi_col);
+        svt_aom_find_ref_dv(&dv_ref, tile, scs->seq_header.sb_mi_size, mi_row, mi_col);
     // Ref DV should not have sub-pel.
     assert((dv_ref.as_mv.col & 7) == 0);
     assert((dv_ref.as_mv.row & 7) == 0);
@@ -4251,7 +4266,7 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
 
     /* pointer to current frame */
     Yv12BufferConfig cur_buf;
-    link_eb_to_aom_buffer_desc_8bit(pcs->ppcs->enhanced_picture_ptr, &cur_buf);
+    svt_aom_link_eb_to_aom_buffer_desc_8bit(pcs->ppcs->enhanced_picture_ptr, &cur_buf);
     struct Buf2D yv12_mb[MAX_MB_PLANE];
     svt_av1_setup_pred_block(bsize, yv12_mb, &cur_buf, mi_row, mi_col);
     for (int i = 0; i < num_planes; ++i) x->xdplane[i].pre[0] = yv12_mb[i]; //ref in ME
@@ -4331,7 +4346,7 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
         const MV dv = {.row = mvp_full.row * 8, .col = mvp_full.col * 8};
         if (mv_check_bounds(&x->mv_limits, &dv))
             continue;
-        if (!av1_is_dv_valid(dv, xd, mi_row, mi_col, bsize, scs->seq_header.sb_size_log2))
+        if (!svt_aom_is_dv_valid(dv, xd, mi_row, mi_col, bsize, scs->seq_header.sb_size_log2))
             continue;
 
         // DV should not have sub-pel.
@@ -4873,7 +4888,7 @@ EbErrorType generate_md_stage_0_cand_light_pd0(
             &cand_total_cnt);
     }
 
-    if (slice_type != I_SLICE && ctx->inject_inter_candidates) {
+    if (slice_type != I_SLICE && ctx->svt_aom_inject_inter_candidates) {
         inject_inter_candidates_light_pd0(
             pcs,
             ctx,
@@ -4926,7 +4941,7 @@ void generate_md_stage_0_cand_light_pd1(
             &cand_total_cnt);
     }
 
-    if (slice_type != I_SLICE && ctx->inject_inter_candidates) {
+    if (slice_type != I_SLICE && ctx->svt_aom_inject_inter_candidates) {
             inject_inter_candidates_light_pd1(
                 pcs,
                 ctx,
@@ -4974,7 +4989,7 @@ EbErrorType generate_md_stage_0_cand(
                  dc_cand_only_flag,
                  &cand_total_cnt);
          }
-         if (av1_filter_intra_allowed_bsize(ctx->md_filter_intra_level, ctx->blk_geom->bsize))
+         if (svt_aom_filter_intra_allowed_bsize(ctx->md_filter_intra_level, ctx->blk_geom->bsize))
              inject_filter_intra_candidates(
                  pcs,
                  ctx,
@@ -4995,8 +5010,8 @@ EbErrorType generate_md_stage_0_cand(
                  &cand_total_cnt);
          }
      }
-    if (slice_type != I_SLICE && ctx->inject_inter_candidates) {
-            inject_inter_candidates(
+    if (slice_type != I_SLICE && ctx->svt_aom_inject_inter_candidates) {
+            svt_aom_inject_inter_candidates(
                 pcs,
                 ctx,
                 scs,
@@ -5054,7 +5069,7 @@ uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
 /***************************************
 * Update symbols for light-PD1 path
 ***************************************/
-void product_full_mode_decision_light_pd1(
+void svt_aom_product_full_mode_decision_light_pd1(
     struct ModeDecisionContext *ctx,
     BlkStruct *blk_ptr,
     PictureControlSet *pcs,
@@ -5219,7 +5234,7 @@ void product_full_mode_decision_light_pd1(
 /***************************************
 * Full Mode Decision
 ***************************************/
-uint32_t product_full_mode_decision(
+uint32_t svt_aom_product_full_mode_decision(
     struct ModeDecisionContext *ctx,
     BlkStruct *blk_ptr,
     PictureControlSet *pcs,
@@ -5493,7 +5508,7 @@ static int get_superblock_tpl_column_end(PictureParentControlSet* ppcs_ptr, int 
     return (sb_mi_end + num_mi_w - 1) / num_mi_w;
 }
 
-void  set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs){
+void  svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs){
     PictureParentControlSet *ppcs_ptr = pcs->ppcs;
     Av1Common *cm = ppcs_ptr->av1_cm;
 

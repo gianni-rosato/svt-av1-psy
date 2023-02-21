@@ -208,11 +208,11 @@ static INLINE void dec_build_prediction_by_above_pred(
     svt_memcpy(bakup_abv_mbmi, above_mbmi, sizeof(*bakup_abv_mbmi));
     av1_modify_neighbor_predictor_for_obmc(bakup_abv_mbmi);
 
-    const int num_refs = 1 + has_second_ref(bakup_abv_mbmi);
+    const int num_refs = 1 + svt_aom_has_second_ref(bakup_abv_mbmi);
 
     for (int ref = 0; ref < num_refs; ++ref) {
         const MvReferenceFrame frame = bakup_abv_mbmi->ref_frame[ref];
-        backup_pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
+        backup_pi->block_ref_sf[ref] = svt_aom_get_ref_scale_factors(dec_handle, frame);
 
         if ((!av1_is_valid_scale(backup_pi->block_ref_sf[ref]))) {
             SVT_LOG("\n Reference frame has invalid dimensions \n");
@@ -246,17 +246,17 @@ static INLINE void dec_build_prediction_by_above_pred(
 
         if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y))
             continue;
-        svtav1_predict_inter_block_plane(dec_mod_ctx,
-                                         dec_handle,
-                                         backup_pi,
-                                         plane,
-                                         1 /*obmc*/,
-                                         mi_x,
-                                         mi_y,
-                                         (void *)tmp_recon_buf,
-                                         tmp_recon_stride,
-                                         0 /*some_use_intra*/,
-                                         recon_picture_buf->bit_depth);
+        svt_aom_svtav1_predict_inter_block_plane(dec_mod_ctx,
+                                                 dec_handle,
+                                                 backup_pi,
+                                                 plane,
+                                                 1 /*obmc*/,
+                                                 mi_x,
+                                                 mi_y,
+                                                 (void *)tmp_recon_buf,
+                                                 tmp_recon_stride,
+                                                 0 /*some_use_intra*/,
+                                                 recon_picture_buf->bit_depth);
     }
     free(bakup_abv_mbmi);
     backup_pi->mi = backup_pi_mi;
@@ -300,19 +300,20 @@ static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHa
         uint8_t sub_x = (plane > 0) ? pi->subsampling_x : 0;
         uint8_t sub_y = (plane > 0) ? pi->subsampling_y : 0;
 
-        derive_blk_pointers(recon_picture_buf,
-                            plane,
-                            mi_col * MI_SIZE >> sub_x,
-                            mi_row * MI_SIZE >> sub_y,
-                            &curr_blk_recon_buf[plane],
-                            &curr_recon_stride[plane],
-                            sub_x,
-                            sub_y);
+        svt_aom_derive_blk_pointers(recon_picture_buf,
+                                    plane,
+                                    mi_col * MI_SIZE >> sub_x,
+                                    mi_row * MI_SIZE >> sub_y,
+                                    &curr_blk_recon_buf[plane],
+                                    &curr_recon_stride[plane],
+                                    sub_x,
+                                    sub_y);
     }
 
     for (int above_mi_col = mi_col; above_mi_col < end_col && nb_count < nb_max;
          above_mi_col += mi_step) {
-        BlockModeInfo *above_mi = get_cur_mode_info(dec_handle, mi_row - 1, above_mi_col, NULL);
+        BlockModeInfo *above_mi = svt_aom_get_cur_mode_info(
+            dec_handle, mi_row - 1, above_mi_col, NULL);
 
         mi_step = AOMMIN(mi_size_wide[above_mi->sb_type], mi_size_wide[BLOCK_64X64]);
 
@@ -322,7 +323,7 @@ static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHa
         // to point at the block with chroma information, and set mi_step to 2 to
         // step over the entire pair at the end of the iteration.
         if (mi_step == 1) {
-            above_mi = get_cur_mode_info(dec_handle, mi_row - 1, above_mi_col | 1, NULL);
+            above_mi = svt_aom_get_cur_mode_info(dec_handle, mi_row - 1, above_mi_col | 1, NULL);
             mi_step  = 2;
         }
         if (dec_is_neighbor_overlappable(above_mi)) {
@@ -374,11 +375,11 @@ static INLINE void dec_build_prediction_by_left_pred(
     svt_memcpy(bakup_left_mbmi, left_mbmi, sizeof(*bakup_left_mbmi));
     av1_modify_neighbor_predictor_for_obmc(bakup_left_mbmi);
 
-    const int num_refs = 1 + has_second_ref(bakup_left_mbmi);
+    const int num_refs = 1 + svt_aom_has_second_ref(bakup_left_mbmi);
 
     for (int ref = 0; ref < num_refs; ++ref) {
         const MvReferenceFrame frame = bakup_left_mbmi->ref_frame[ref];
-        backup_pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
+        backup_pi->block_ref_sf[ref] = svt_aom_get_ref_scale_factors(dec_handle, frame);
 
         if ((!av1_is_valid_scale(backup_pi->block_ref_sf[ref]))) {
             SVT_LOG("\n Reference frame has invalid dimensions \n");
@@ -414,17 +415,17 @@ static INLINE void dec_build_prediction_by_left_pred(
             continue;
         // dec_build_inter_predictors(ctxt->cm, pi, j, &backup_mbmi, 1, bw, bh, mi_x,
         //                            mi_y);
-        svtav1_predict_inter_block_plane(dec_mod_ctx,
-                                         dec_handle,
-                                         backup_pi,
-                                         plane,
-                                         1 /*obmc*/,
-                                         mi_x,
-                                         mi_y,
-                                         (void *)tmp_recon_buf,
-                                         tmp_recon_stride,
-                                         0 /*some_use_intra*/,
-                                         recon_picture_buf->bit_depth);
+        svt_aom_svtav1_predict_inter_block_plane(dec_mod_ctx,
+                                                 dec_handle,
+                                                 backup_pi,
+                                                 plane,
+                                                 1 /*obmc*/,
+                                                 mi_x,
+                                                 mi_y,
+                                                 (void *)tmp_recon_buf,
+                                                 tmp_recon_stride,
+                                                 0 /*some_use_intra*/,
+                                                 recon_picture_buf->bit_depth);
     }
     free(bakup_left_mbmi);
     backup_pi->mi = backup_pi_mi;
@@ -468,22 +469,23 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
         int8_t sub_x = (plane > 0) ? pi->subsampling_x : 0;
         int8_t sub_y = (plane > 0) ? pi->subsampling_y : 0;
 
-        derive_blk_pointers(recon_picture_buf,
-                            plane,
-                            mi_col * MI_SIZE >> sub_x,
-                            mi_row * MI_SIZE >> sub_y,
-                            &curr_blk_recon_buf[plane],
-                            &curr_recon_stride[plane],
-                            sub_x,
-                            sub_y);
+        svt_aom_derive_blk_pointers(recon_picture_buf,
+                                    plane,
+                                    mi_col * MI_SIZE >> sub_x,
+                                    mi_row * MI_SIZE >> sub_y,
+                                    &curr_blk_recon_buf[plane],
+                                    &curr_recon_stride[plane],
+                                    sub_x,
+                                    sub_y);
     }
 
     for (int left_mi_row = mi_row; left_mi_row < end_row && nb_count < nb_max;
          left_mi_row += mi_step) {
-        BlockModeInfo *left_mi = get_cur_mode_info(dec_handle, left_mi_row, mi_col - 1, NULL);
-        mi_step                = AOMMIN(mi_size_high[left_mi->sb_type], mi_size_high[BLOCK_64X64]);
+        BlockModeInfo *left_mi = svt_aom_get_cur_mode_info(
+            dec_handle, left_mi_row, mi_col - 1, NULL);
+        mi_step = AOMMIN(mi_size_high[left_mi->sb_type], mi_size_high[BLOCK_64X64]);
         if (mi_step == 1) {
-            left_mi = get_cur_mode_info(dec_handle, left_mi_row | 1, mi_col - 1, NULL);
+            left_mi = svt_aom_get_cur_mode_info(dec_handle, left_mi_row | 1, mi_col - 1, NULL);
             mi_step = 2;
         }
         if (dec_is_neighbor_overlappable(left_mi)) {
@@ -517,8 +519,8 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
     }
 }
 
-void dec_build_obmc_inter_predictors_sb(void *pv_dec_mod_ctxt, EbDecHandle *dec_handle,
-                                        PartitionInfo *pi, int mi_row, int mi_col) {
+void svt_aom_dec_build_obmc_inter_predictors_sb(void *pv_dec_mod_ctxt, EbDecHandle *dec_handle,
+                                                PartitionInfo *pi, int mi_row, int mi_col) {
     DecModCtxt *dec_mod_ctxt = (DecModCtxt *)pv_dec_mod_ctxt;
     uint8_t    *dst_buf[MAX_MB_PLANE];
     dec_mod_ctxt->obmc_ctx.dst_stride[AOM_PLANE_Y] = MAX_SB_SIZE;

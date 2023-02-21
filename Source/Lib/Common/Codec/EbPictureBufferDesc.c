@@ -62,8 +62,8 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
         picture_buffer_desc_init_data_ptr->left_padding +
         picture_buffer_desc_init_data_ptr->right_padding;
 
-    assert_err(pictureBufferDescPtr->stride_y % 8 == 0,
-               "Luma Stride should be n*8 to accomodate 2b-compression flow \n");
+    svt_aom_assert_err(pictureBufferDescPtr->stride_y % 8 == 0,
+                       "Luma Stride should be n*8 to accomodate 2b-compression flow \n");
 
     pictureBufferDescPtr->stride_cb = pictureBufferDescPtr->stride_cr =
         (pictureBufferDescPtr->stride_y + subsampling_x) >> subsampling_x;
@@ -293,8 +293,8 @@ EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBuffe
     }
     return EB_ErrorNone;
 }
-void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc,
-                                     Yv12BufferConfig    *aomBuffDsc) {
+void svt_aom_link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc,
+                                             Yv12BufferConfig    *aomBuffDsc) {
     //forces an 8 bit version
     //NOTe:  Not all fileds are connected. add more connections as needed.
     {
@@ -328,8 +328,9 @@ void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc,
     }
 }
 
-void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc,
-                                uint16_t pad_right, uint16_t pad_bottom, Bool is_16bit) {
+void svt_aom_link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc,
+                                        Yv12BufferConfig *aomBuffDsc, uint16_t pad_right,
+                                        uint16_t pad_bottom, Bool is_16bit) {
     (void)is_16bit;
 
     const int32_t ss_x = 1, ss_y = 1;

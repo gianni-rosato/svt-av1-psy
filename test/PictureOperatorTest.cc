@@ -256,13 +256,13 @@ class Downsample2DTest
 
     void run_test() {
         prepare_data();
-        downsample_2d_c(src_ptr,
-                        stride,
-                        pu_width,
-                        pu_height,
-                        dst_ref_ptr,
-                        decim_stride,
-                        decim_step);
+        svt_aom_downsample_2d_c(src_ptr,
+                                stride,
+                                pu_width,
+                                pu_height,
+                                dst_ref_ptr,
+                                decim_stride,
+                                decim_step);
 
         fn_ptr(src_ptr,
                stride,
@@ -295,6 +295,6 @@ INSTANTIATE_TEST_CASE_P(
     Downsample2D, Downsample2DTest,
     ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
                        ::testing::ValuesIn(DECIM_STEPS),
-                       ::testing::Values(downsample_2d_sse4_1,
-                                         downsample_2d_avx2)));
+                       ::testing::Values(svt_aom_downsample_2d_sse4_1,
+                                         svt_aom_downsample_2d_avx2)));
 }  // namespace

@@ -438,7 +438,7 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
         // fill the input data with random
         prepare_data(input_w, input_h);
 
-        setup_common_rtcd_internal(get_cpu_flags_to_use());
+        svt_aom_setup_common_rtcd_internal(svt_aom_get_cpu_flags_to_use());
 
         // loop the filter type and subpixel position
         const int output_w = block_size_wide[block_idx];

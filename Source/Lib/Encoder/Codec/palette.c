@@ -208,8 +208,8 @@ int svt_get_palette_cache_y(const MacroBlockD *const xd, uint16_t *cache) {
 // differ from 'height' and 'width' when part of the block is outside the
 // right
 // and/or bottom image boundary.
-void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
-                              int *height, int *rows_within_bounds, int *cols_within_bounds) {
+void svt_aom_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
+                                  int *height, int *rows_within_bounds, int *cols_within_bounds) {
     const int block_height = block_size_high[bsize];
     const int block_width  = block_size_wide[bsize];
     const int block_rows   = (xd->mb_to_bottom_edge >= 0)
@@ -304,7 +304,7 @@ static void palette_rd_y(PaletteInfo *palette_info, uint8_t *palette_size_array,
     palette_size_array[0]    = k;
     uint8_t *const color_map = palette_info->color_idx_map;
     int            block_width, block_height, rows, cols;
-    av1_get_block_dimensions(
+    svt_aom_get_block_dimensions(
         bsize, 0, ctx->blk_ptr->av1xd, &block_width, &block_height, &rows, &cols);
     av1_calc_indices(data, centroids, color_map, rows * cols, k, 1);
     extend_palette_color_map(color_map, cols, rows, block_width, block_height);
@@ -333,7 +333,7 @@ void search_palette_luma(PictureControlSet *pcs, ModeDecisionContext *ctx,
     int          block_width, block_height, rows, cols;
     MacroBlockD *xd    = ctx->blk_ptr->av1xd;
     BlockSize    bsize = ctx->blk_geom->bsize;
-    av1_get_block_dimensions(
+    svt_aom_get_block_dimensions(
         ctx->blk_geom->bsize, 0, ctx->blk_ptr->av1xd, &block_width, &block_height, &rows, &cols);
 
     int count_buf[1 << 12]; // Maximum (1 << 12) color levels.
@@ -472,7 +472,7 @@ static void get_palette_params(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr,
                                         : frame_context->palette_y_color_index_cdf;
     params->color_cost          = NULL;
     params->n_colors            = blk_ptr->palette_size[plane];
-    av1_get_block_dimensions(
+    svt_aom_get_block_dimensions(
         bsize, plane, xd, &params->plane_width, NULL, &params->rows, &params->cols);
 }
 
@@ -497,7 +497,7 @@ static void get_palette_params_rate(ModeDecisionCandidate   *cand,
     params->color_cost          = plane ? NULL : (ColorCost)&rate_table->palette_ycolor_fac_bitss;
     params->n_colors            = cand->palette_size[plane];
 
-    av1_get_block_dimensions(
+    svt_aom_get_block_dimensions(
         bsize, plane, xd, &params->plane_width, NULL, &params->rows, &params->cols);
 }
 
@@ -533,7 +533,7 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t, int pl
         for (int j = AOMMIN(k, cols - 1); j >= AOMMAX(0, k - rows + 1); --j) {
             int       i = k - j;
             int       color_new_idx;
-            const int color_ctx = av1_get_palette_color_index_context_optimized(
+            const int color_ctx = svt_aom_get_palette_color_index_context_optimized(
                 color_map, plane_block_width, i, j, &color_new_idx);
             assert(color_new_idx >= 0 && color_new_idx < n);
             if (calc_rate) {

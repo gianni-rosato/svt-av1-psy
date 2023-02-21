@@ -17,7 +17,7 @@
  * - compute_mean8x8_sse2_intrin
  * - svt_compute_mean_of_squared_values8x8_sse2_intrin
  * - compute_sub_mean8x8_sse2_intrin
- * - compute_subd_mean_of_squared_values8x8_sse2_intrin
+ * - svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin
  * - compute_mean8x8_avx2_intrin
  * - svt_compute_interm_var_four8x8_avx2_intrin
  *
@@ -35,7 +35,7 @@
  * - compute_mean8x8_sse2_intrin
  * - svt_compute_mean_of_squared_values8x8_sse2_intrin
  * - svt_compute_sub_mean8x8_sse2_intrin
- * - compute_subd_mean_of_squared_values8x8_sse2_intrin
+ * - svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin
  * - compute_mean8x8_avx2_intrin
  *
  * Test strategy:
@@ -182,10 +182,10 @@ TEST(ComputeMeanTest, run_compute_sub_mean_squared_values_test) {
 
             // compute mean
             uint64_t output_sse2_tst =
-                compute_subd_mean_of_squared_values8x8_sse2_intrin(input_data,
-                                                                   8);
+                svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin(
+                    input_data, 8);
             uint64_t output_c_ref =
-                compute_sub_mean_squared_values_c(input_data, 8, 8, 8);
+                svt_aom_compute_sub_mean_squared_values_c(input_data, 8, 8, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
@@ -210,7 +210,8 @@ TEST(ComputeMeanTest, run_compute_mean_avx2_test) {
 
         // compute mean
         uint64_t output_sse2_squared_tst =
-            compute_subd_mean_of_squared_values8x8_sse2_intrin(input_data, 8);
+            svt_aom_compute_subd_mean_of_squared_values8x8_sse2_intrin(
+                input_data, 8);
         uint64_t output_sse2_tst =
             svt_compute_sub_mean8x8_sse2_intrin(input_data, 8);
 

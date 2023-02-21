@@ -19,10 +19,11 @@
 #include "EbRateControlProcess.h"
 #include "EbUtility.h"
 
-void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureControlSet *pcs,
-                                           SuperBlock *sb_ptr, BlkStruct *blk_ptr);
+void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
+                                                   PictureControlSet *pcs, SuperBlock *sb_ptr,
+                                                   BlkStruct *blk_ptr);
 
-void setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs);
+void svt_aom_setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs);
 
 void find_segment_qps(SegmentationParams *segmentation_params, PictureControlSet *pcs);
 

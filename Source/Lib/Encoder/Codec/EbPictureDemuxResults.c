@@ -21,7 +21,7 @@ static EbErrorType picture_results_ctor(PictureDemuxResults *object_ptr,
     return EB_ErrorNone;
 }
 
-EbErrorType picture_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_aom_picture_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     PictureDemuxResults *obj;
 
     *object_dbl_ptr = NULL;

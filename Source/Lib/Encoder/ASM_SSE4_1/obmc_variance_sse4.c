@@ -270,8 +270,8 @@ static inline void variance_highbd_32x32_sse4_1(const uint16_t *src, int src_str
 /*
 * Helper function to compute variance with 16 bit input for square blocks of size 16 and 32
 */
-uint32_t variance_highbd_sse4_1(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
-                                int w, int h, uint32_t *sse) {
+uint32_t svt_aom_variance_highbd_sse4_1(const uint16_t *a, int a_stride, const uint16_t *b,
+                                        int b_stride, int w, int h, uint32_t *sse) {
     assert(w == h);
 
     int sum = 0;

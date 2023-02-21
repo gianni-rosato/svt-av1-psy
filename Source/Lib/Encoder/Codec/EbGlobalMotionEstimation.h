@@ -16,7 +16,7 @@
 #include "EbPictureBufferDesc.h"
 #include "EbMotionEstimationContext.h"
 
-void global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic);
+void svt_aom_global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic);
 void compute_global_motion(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic,
                            EbPictureBufferDesc *ref_pic, EbWarpedMotionParams *bestWarpedMotion,
                            int allow_high_precision_mv);

@@ -368,7 +368,7 @@ EbErrorType svt_destroy_mutex(EbHandle mutex_handle) {
 /*
     set an atomic variable to an input value
 */
-void atomic_set_u32(AtomicVarU32 *var, uint32_t in) {
+void svt_aom_atomic_set_u32(AtomicVarU32 *var, uint32_t in) {
     svt_block_on_mutex(var->mutex);
     var->obj = in;
     svt_release_mutex(var->mutex);

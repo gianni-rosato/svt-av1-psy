@@ -14,7 +14,7 @@
 
 static void pa_reference_queue_entry_dctor(EbPtr p) { UNUSED(p); }
 
-EbErrorType pa_reference_queue_entry_ctor(PaReferenceEntry* entry_ptr) {
+EbErrorType svt_aom_pa_reference_queue_entry_ctor(PaReferenceEntry* entry_ptr) {
     entry_ptr->dctor    = pa_reference_queue_entry_dctor;
     entry_ptr->is_valid = 0;
 

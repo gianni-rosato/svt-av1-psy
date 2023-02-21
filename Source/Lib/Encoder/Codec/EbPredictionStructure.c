@@ -1016,12 +1016,12 @@ static EbErrorType prediction_structure_config_array_ctor(
 /************************************************
  * Get Prediction Structure
  ************************************************/
-PredictionStructure *get_prediction_structure(PredictionStructureGroup *pred_struct_group_ptr,
-                                              SvtAv1PredStructure       pred_struct,
+PredictionStructure *svt_aom_get_prediction_structure(
+    PredictionStructureGroup *pred_struct_group_ptr, SvtAv1PredStructure pred_struct,
 #if !CLN_REMOVE_REF_CNT
-                                              uint32_t number_of_references,
+    uint32_t number_of_references,
 #endif
-                                              uint32_t levels_of_hierarchy) {
+    uint32_t levels_of_hierarchy) {
     PredictionStructure *pred_struct_ptr;
     uint32_t             pred_struct_index;
 #if !CLN_REMOVE_REF_CNT

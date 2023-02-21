@@ -101,8 +101,8 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs, EbPtr object_
 
     return EB_ErrorNone;
 }
-extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
-                                           uint32_t           inputSize) {
+extern EbErrorType svt_aom_derive_input_resolution(EbInputResolution *input_resolution,
+                                                   uint32_t           inputSize) {
     EbErrorType return_error = EB_ErrorNone;
     if (inputSize < INPUT_SIZE_240p_TH)
         *input_resolution = INPUT_SIZE_240p_RANGE;
@@ -132,14 +132,14 @@ static void svt_sequence_control_set_instance_dctor(EbPtr p) {
 EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr) {
     object_ptr->dctor = svt_sequence_control_set_instance_dctor;
 
-    EB_NEW(object_ptr->encode_context_ptr, encode_context_ctor, NULL);
+    EB_NEW(object_ptr->encode_context_ptr, svt_aom_encode_context_ctor, NULL);
     EB_NEW(object_ptr->scs, svt_sequence_control_set_ctor, NULL);
     object_ptr->scs->encode_context_ptr = object_ptr->encode_context_ptr;
 
     return EB_ErrorNone;
 }
 
-extern EbErrorType b64_geom_init(SequenceControlSet *scs) {
+extern EbErrorType svt_aom_b64_geom_init(SequenceControlSet *scs) {
     EbErrorType return_error = EB_ErrorNone;
     uint16_t    b64_idx;
     uint16_t    raster_scan_blk_index;
@@ -201,7 +201,7 @@ EbErrorType rtime_alloc_sb_geom(SequenceControlSet *scs, uint32_t size) {
     EB_MALLOC_ARRAY(scs->sb_geom, size);
     return EB_ErrorNone;
 }
-EbErrorType sb_geom_init(SequenceControlSet *scs) {
+EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs) {
     uint16_t sb_index;
     uint16_t md_scan_block_index;
     uint16_t picture_sb_width  = (scs->max_input_luma_width + scs->sb_size - 1) / scs->sb_size;
