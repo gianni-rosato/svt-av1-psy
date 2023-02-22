@@ -15,7 +15,7 @@
 #include "EbMotionEstimationContext.h"
 #include "common_dsp_rtcd.h"
 
-uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) {
+static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) {
     int index0, index1;
     //Assumes max CU size is 64
     switch (blk_geom->bsize) {

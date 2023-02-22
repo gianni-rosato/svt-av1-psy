@@ -1440,8 +1440,9 @@ static INLINE void record_samples(MbModeInfo *mbmi, int *pts, int *pts_inref, in
 // Note: Samples returned are at 1/8-pel precision
 // Sample are the neighbor block center point's coordinates relative to the
 // left-top pixel of current block.
-int av1_find_samples(const Av1Common *cm, const BlockSize sb_size, MacroBlockD *xd, int mi_row,
-                     int mi_col, MvReferenceFrame rf0, int *pts, int *pts_inref) {
+static int av1_find_samples(const Av1Common *cm, const BlockSize sb_size, MacroBlockD *xd,
+                            int mi_row, int mi_col, MvReferenceFrame rf0, int *pts,
+                            int *pts_inref) {
     int up_available   = xd->up_available;
     int left_available = xd->left_available;
     int i, mi_step = 1, np = 0;
@@ -1756,7 +1757,8 @@ Bool warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr, MvUnit
 }
 
 //foreach_overlappable_nb_above
-int count_overlappable_nb_above(const Av1Common *cm, MacroBlockD *xd, int32_t mi_col, int nb_max) {
+static int count_overlappable_nb_above(const Av1Common *cm, MacroBlockD *xd, int32_t mi_col,
+                                       int nb_max) {
     int nb_count = 0;
     if (!xd->up_available)
         return nb_count;
@@ -1789,7 +1791,8 @@ int count_overlappable_nb_above(const Av1Common *cm, MacroBlockD *xd, int32_t mi
     return nb_count;
 }
 
-int count_overlappable_nb_left(const Av1Common *cm, MacroBlockD *xd, int32_t mi_row, int nb_max) {
+static int count_overlappable_nb_left(const Av1Common *cm, MacroBlockD *xd, int32_t mi_row,
+                                      int nb_max) {
     int nb_count = 0;
     if (!xd->left_available)
         return nb_count;

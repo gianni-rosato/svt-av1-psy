@@ -85,7 +85,7 @@ uint32_t compute8x4_sad_kernel_c(uint8_t *src, // input parameter, source sample
  * Compute8x8SAD_Default
  *   Unoptimized 8x8 SAD
  *******************************************/
-uint32_t compute8x8_sad_kernel_c(uint8_t *src, // input parameter, source samples Ptr
+static uint32_t compute8x8_sad_kernel_c(uint8_t *src, // input parameter, source samples Ptr
                                  uint32_t src_stride, // input parameter, source stride
                                  uint8_t *ref, // input parameter, reference samples Ptr
                                  uint32_t ref_stride) // input parameter, reference stride
@@ -942,7 +942,7 @@ static void hme_level_0(
 }
 
 // Perform HME Level 1 for one 64x64 block on the given picture
-void hme_level_1(
+static void hme_level_1(
     MeContext *me_ctx, // ME context Ptr, used to get/update ME results
     int16_t    org_x, // Block position in the horizontal direction - quarter resolution
     int16_t    org_y, // Block position in the vertical direction - quarter resolution
@@ -1274,7 +1274,7 @@ uint16_t get_scaled_picture_distance(uint16_t dist) {
  *   performs integer search motion estimation for
  all avaiable references frames
  *******************************************/
-void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index, uint32_t b64_origin_x,
+static void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index, uint32_t b64_origin_x,
     uint32_t b64_origin_y, MeContext *me_ctx,
     EbPictureBufferDesc *input_ptr) {
     SequenceControlSet *scs        = pcs->scs;
@@ -1564,7 +1564,7 @@ void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index, uint32
   using previous stage ME results (Integer Search) for each reference
   frame. keep only the references that are close to the best reference.
 */
-void me_prune_ref(MeContext *me_ctx) {
+static void me_prune_ref(MeContext *me_ctx) {
     uint8_t num_of_list_to_search = me_ctx->num_of_list_to_search;
     for (uint8_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
         uint8_t num_of_ref_pic_to_search = me_ctx->num_of_ref_pic_to_search[list_index];
@@ -1609,7 +1609,7 @@ void me_prune_ref(MeContext *me_ctx) {
 }
 
 /* perform  motion search over a given search area*/
-void prehme_core(MeContext *me_ctx, int16_t org_x, int16_t org_y, uint32_t sb_width,
+static void prehme_core(MeContext *me_ctx, int16_t org_x, int16_t org_y, uint32_t sb_width,
                  uint32_t sb_height, EbPictureBufferDesc *sixteenth_ref_pic_ptr,
                  SearchInfo *prehme_data) {
     int16_t  x_top_left_search_region;
@@ -1708,7 +1708,7 @@ void prehme_core(MeContext *me_ctx, int16_t org_x, int16_t org_y, uint32_t sb_wi
 
     return;
 }
-uint32_t get_zz_sad(EbPictureBufferDesc *ref_pic_ptr, MeContext *me_ctx, uint32_t sb_origin_x,
+static uint32_t get_zz_sad(EbPictureBufferDesc *ref_pic_ptr, MeContext *me_ctx, uint32_t sb_origin_x,
                     uint32_t sb_origin_y, uint32_t sb_width, uint32_t sb_height)
 
 {
@@ -1997,7 +1997,7 @@ static void hme_level0_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_
 /*******************************************
  * performs hierarchical ME level 1 for one 64x64 block (uni-prediction only)
  *******************************************/
-void hme_level1_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t org_y,
+static void hme_level1_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t org_y,
                     MeContext *me_ctx, EbPictureBufferDesc *input_ptr) {
     const uint32_t block_width  = me_ctx->b64_width;
     const uint32_t block_height = me_ctx->b64_height;
@@ -2306,7 +2306,7 @@ void set_final_seach_centre_sb(PictureParentControlSet *pcs, MeContext *me_ctx) 
     }
 }
 // Initialize zz SAD array
-void init_zz_sad(MeContext *me_ctx, uint32_t org_x, uint32_t org_y) {
+static void init_zz_sad(MeContext *me_ctx, uint32_t org_x, uint32_t org_y) {
     const uint32_t block_width  = me_ctx->b64_width;
     const uint32_t block_height = me_ctx->b64_height;
     // List Loop
@@ -2325,7 +2325,7 @@ void init_zz_sad(MeContext *me_ctx, uint32_t org_x, uint32_t org_y) {
 /*******************************************
  * performs hierarchical ME for a 64x64 block for every ref frame
  *******************************************/
-void hme_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t org_y,
+static void hme_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t org_y,
              MeContext *me_ctx, EbPictureBufferDesc *input_ptr) {
     // If needed, initialize the zz sad array
     if (me_ctx->me_early_exit_th)
@@ -2361,7 +2361,7 @@ void hme_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t org_y,
     }
 }
 
-void hme_prune_ref_and_adjust_sr(MeContext *me_ctx) {
+static void hme_prune_ref_and_adjust_sr(MeContext *me_ctx) {
     uint64_t best = (uint64_t)~0;
     for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
         for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
@@ -2418,7 +2418,7 @@ const uint8_t z_to_raster[85] = {0,  1,  2,  3,  4,
                                  74, 81, 82, 75, 76, 83, 84
 
 };
-void construct_me_candidate_array_mrp_off(PictureParentControlSet *pcs, MeContext *me_ctx,
+static void construct_me_candidate_array_mrp_off(PictureParentControlSet *pcs, MeContext *me_ctx,
                                           uint32_t num_of_list_to_search, uint32_t sb_index) {
     // This function should only be called if there is one ref frame in each list
     assert(me_ctx->num_of_ref_pic_to_search[0] == 1);
@@ -2532,7 +2532,7 @@ void construct_me_candidate_array_mrp_off(PictureParentControlSet *pcs, MeContex
         }
     }
 }
-void construct_me_candidate_array(PictureParentControlSet *pcs, MeContext *me_ctx,
+static void construct_me_candidate_array(PictureParentControlSet *pcs, MeContext *me_ctx,
                                   uint32_t num_of_list_to_search, uint32_t sb_index) {
     for (uint32_t n_idx = 0; n_idx < pcs->max_number_of_pus_per_sb; ++n_idx) {
         uint8_t pu_index       = (n_idx > 4) ? z_to_raster[n_idx] : n_idx;
@@ -2666,7 +2666,7 @@ void construct_me_candidate_array(PictureParentControlSet *pcs, MeContext *me_ct
 }
 
 // Active and stationary detection for global motion
-void perform_gm_detection(
+static void perform_gm_detection(
     PictureParentControlSet *pcs, // input parameter, Picture Control Set Ptr
     uint32_t                 sb_index, // input parameter, SB Index
     MeContext
@@ -2792,7 +2792,7 @@ void perform_gm_detection(
 }
 
 // Compute the distortion per block size based on the ME results
-void compute_distortion(
+static void compute_distortion(
     PictureParentControlSet *pcs, // input parameter, Picture Control Set Ptr
     uint32_t                 b64_index, // input parameter, B64 Index
     MeContext

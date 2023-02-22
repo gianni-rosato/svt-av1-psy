@@ -25,7 +25,7 @@ void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride, int32_t src_
                                   Av1Common *cm, int32_t after_cdef,
                                   RestorationStripeBoundaries *boundaries);
 
-void lr_generate_padding(
+static void lr_generate_padding(
     EbByte   src_pic, //output paramter, pointer to the source picture(0,0).
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t
@@ -68,7 +68,7 @@ void lr_generate_padding(
     return;
 }
 
-void lr_generate_padding16_bit(
+static void lr_generate_padding16_bit(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t

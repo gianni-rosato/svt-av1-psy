@@ -1219,8 +1219,9 @@ void svt_av1_apply_temporal_filter_planewise_hbd_sse4_1(
                                             encoder_bit_depth);
     }
 }
-uint32_t calculate_squared_errors_sum_sse4_1(const uint8_t *s, int s_stride, const uint8_t *p,
-                                             int p_stride, unsigned int w, unsigned int h) {
+static uint32_t calculate_squared_errors_sum_sse4_1(const uint8_t *s, int s_stride,
+                                                    const uint8_t *p, int p_stride, unsigned int w,
+                                                    unsigned int h) {
     assert(w % 16 == 0 && "block width must be multiple of 16");
     unsigned int i, j;
 
@@ -1243,9 +1244,10 @@ uint32_t calculate_squared_errors_sum_sse4_1(const uint8_t *s, int s_stride, con
     return _mm_cvtsi128_si32(sum);
 }
 
-uint32_t calculate_squared_errors_sum_highbd_sse4_1(const uint16_t *s, int s_stride,
-                                                    const uint16_t *p, int p_stride, unsigned int w,
-                                                    unsigned int h, int shift_factor) {
+static uint32_t calculate_squared_errors_sum_highbd_sse4_1(const uint16_t *s, int s_stride,
+                                                           const uint16_t *p, int p_stride,
+                                                           unsigned int w, unsigned int h,
+                                                           int shift_factor) {
     assert(w % 16 == 0 && "block width must be multiple of 16");
     unsigned int i, j;
 
@@ -1389,9 +1391,9 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_sse4_1(
     }
 }
 
-uint32_t calculate_squared_errors_sum_no_div_sse4_1(const uint8_t *s, int s_stride,
-                                                    const uint8_t *p, int p_stride, unsigned int w,
-                                                    unsigned int h) {
+static uint32_t calculate_squared_errors_sum_no_div_sse4_1(const uint8_t *s, int s_stride,
+                                                           const uint8_t *p, int p_stride,
+                                                           unsigned int w, unsigned int h) {
     assert(w % 16 == 0 && "block width must be multiple of 16");
     unsigned int i, j;
 
@@ -1414,9 +1416,9 @@ uint32_t calculate_squared_errors_sum_no_div_sse4_1(const uint8_t *s, int s_stri
     return _mm_cvtsi128_si32(sum);
 }
 /*This function return 2 separate squared errors for two block 8xh, return value is stored in output array*/
-void calculate_squared_errors_sum_2x8xh_no_div_sse4_1(const uint8_t *s, int s_stride,
-                                                      const uint8_t *p, int p_stride,
-                                                      unsigned int h, uint32_t *output) {
+static void calculate_squared_errors_sum_2x8xh_no_div_sse4_1(const uint8_t *s, int s_stride,
+                                                             const uint8_t *p, int p_stride,
+                                                             unsigned int h, uint32_t *output) {
     unsigned int i;
 
     __m128i sum[2] = {_mm_setzero_si128()};
@@ -1442,10 +1444,10 @@ void calculate_squared_errors_sum_2x8xh_no_div_sse4_1(const uint8_t *s, int s_st
     output[1] = _mm_cvtsi128_si32(sum[1]);
 }
 
-uint32_t calculate_squared_errors_sum_no_div_highbd_sse4_1(const uint16_t *s, int s_stride,
-                                                           const uint16_t *p, int p_stride,
-                                                           unsigned int w, unsigned int h,
-                                                           int shift_factor) {
+static uint32_t calculate_squared_errors_sum_no_div_highbd_sse4_1(const uint16_t *s, int s_stride,
+                                                                  const uint16_t *p, int p_stride,
+                                                                  unsigned int w, unsigned int h,
+                                                                  int shift_factor) {
     assert(w % 16 == 0 && "block width must be multiple of 16");
     unsigned int i, j;
 
@@ -1469,10 +1471,11 @@ uint32_t calculate_squared_errors_sum_no_div_highbd_sse4_1(const uint16_t *s, in
 }
 
 /*This function return 2 separate squared errors for two block 8xh, return value is stored in output array*/
-void calculate_squared_errors_sum_2x8xh_no_div_highbd_sse4_1(const uint16_t *s, int s_stride,
-                                                             const uint16_t *p, int p_stride,
-                                                             unsigned int h, int shift_factor,
-                                                             uint32_t *output) {
+static void calculate_squared_errors_sum_2x8xh_no_div_highbd_sse4_1(const uint16_t *s, int s_stride,
+                                                                    const uint16_t *p, int p_stride,
+                                                                    unsigned int h,
+                                                                    int          shift_factor,
+                                                                    uint32_t    *output) {
     unsigned int i;
 
     __m128i sum[2] = {_mm_setzero_si128()};

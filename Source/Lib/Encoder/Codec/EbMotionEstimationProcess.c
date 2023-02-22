@@ -628,7 +628,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
 /************************************************
  * Set ME/HME Params for Altref Temporal Filtering
  ************************************************/
-void tf_set_me_hme_params_oq(MeContext *me_ctx, PictureParentControlSet *pcs) {
+static void tf_set_me_hme_params_oq(MeContext *me_ctx, PictureParentControlSet *pcs) {
 
     switch (pcs->tf_ctrls.hme_me_level) {
     case 0:

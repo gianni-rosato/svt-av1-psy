@@ -27,7 +27,7 @@ void dec_init_intra_predictors_12b_internal(void) {
 }
 
 /*TODO: Remove replication and harmonize with encoder after data str. harmonization */
-int32_t dec_get_filt_type(const PartitionInfo *part_info, int32_t plane) {
+static int32_t dec_get_filt_type(const PartitionInfo *part_info, int32_t plane) {
     int ab_sm, le_sm;
     if (plane == 0) {
         const BlockModeInfo *ab = part_info->above_mbmi;

@@ -171,7 +171,7 @@ static const char *get_asm_level_name_str(EbCpuFlags cpu_flags) {
 }
 
 //Get Number of logical processors
-uint32_t get_num_processors() {
+static uint32_t get_num_processors() {
 #ifdef _WIN32
     SYSTEM_INFO sysinfo;
     GetSystemInfo(&sysinfo);
@@ -181,7 +181,7 @@ uint32_t get_num_processors() {
 #endif
 }
 
-EbErrorType init_thread_management_params() {
+static EbErrorType init_thread_management_params() {
 #ifdef _WIN32
     // Initialize group_affinity structure with Current thread info
     GetThreadGroupAffinity(GetCurrentThread(), &group_affinity);
@@ -387,7 +387,7 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
 }
 
 //return max wavefronts in a given picture
-uint32_t get_max_wavefronts(uint32_t width, uint32_t height, uint32_t blk_size) {
+static uint32_t get_max_wavefronts(uint32_t width, uint32_t height, uint32_t blk_size) {
 
     // possible code, needs to be tested
     // return ((height + blk_size / 2) / blk_size) < ((width  + blk_size / 2) / blk_size) ? ((height + blk_size / 2) / blk_size) : ((width  + blk_size / 2) / blk_size);
@@ -401,14 +401,14 @@ uint32_t get_max_wavefronts(uint32_t width, uint32_t height, uint32_t blk_size) 
 *
 * Return true if the pic width is a single SB width
 */
-Bool is_pic_width_single_sb(uint32_t sb_size, uint16_t pic_width) {
+static Bool is_pic_width_single_sb(uint32_t sb_size, uint16_t pic_width) {
     return ((pic_width + (sb_size >> 1)) / sb_size) == 1;
 }
 #if OPT_RPS_CONSTR_2
-EbErrorType load_default_buffer_configuration_settings(
+static EbErrorType load_default_buffer_configuration_settings(
     SequenceControlSet       *scs) {
 #else
-EbErrorType load_default_buffer_configuration_settings(
+static EbErrorType load_default_buffer_configuration_settings(
     EbEncHandle        *enc_handle,
     SequenceControlSet       *scs){
 #endif
@@ -1017,7 +1017,7 @@ static uint32_t enc_dec_port_total_count(void){
  * Input Port Total Count
  *****************************************/
 
-void lib_svt_encoder_send_error_exit(
+static void lib_svt_encoder_send_error_exit(
     EbPtr                    hComponent,
     uint32_t                 error_code);
 
@@ -1192,7 +1192,7 @@ void svt_output_buffer_header_destroyer(    EbPtr p);
 EbErrorType svt_input_y8b_creator(EbPtr *object_dbl_ptr, EbPtr  object_init_data_ptr);
 void svt_input_y8b_destroyer(EbPtr p);
 
-EbErrorType in_cmd_ctor(
+static EbErrorType in_cmd_ctor(
     InputCommand *context_ptr,
     EbPtr object_init_data_ptr)
 {
@@ -1218,7 +1218,7 @@ EbErrorType svt_input_cmd_creator(
     return EB_ErrorNone;
 }
 
-EbErrorType dlf_results_ctor(
+static EbErrorType dlf_results_ctor(
     DlfResults *context_ptr,
     EbPtr object_init_data_ptr)
 {
@@ -1228,7 +1228,7 @@ EbErrorType dlf_results_ctor(
     return EB_ErrorNone;
 }
 
-EbErrorType dlf_results_creator(
+static EbErrorType dlf_results_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
@@ -1257,7 +1257,7 @@ EbErrorType tpl_disp_results_ctor(
 /*
    TPL results creator
 */
-EbErrorType tpl_disp_results_creator(
+static EbErrorType tpl_disp_results_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
@@ -1270,7 +1270,7 @@ EbErrorType tpl_disp_results_creator(
     return EB_ErrorNone;
 }
 
-EbErrorType cdef_results_ctor(
+static EbErrorType cdef_results_ctor(
     CdefResults *context_ptr,
     EbPtr object_init_data_ptr)
 {
@@ -1280,7 +1280,7 @@ EbErrorType cdef_results_ctor(
     return EB_ErrorNone;
 }
 
-EbErrorType cdef_results_creator(
+static EbErrorType cdef_results_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
@@ -1303,7 +1303,7 @@ EbErrorType rest_results_ctor(
     return EB_ErrorNone;
 }
 
-EbErrorType rest_results_creator(
+static EbErrorType rest_results_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
@@ -2452,7 +2452,7 @@ EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component) {
     return EB_ErrorNone;
 }
 
-EbErrorType init_svt_av1_encoder_handle(
+static EbErrorType init_svt_av1_encoder_handle(
     EbComponentType * hComponent);
 /**********************************
 * GetHandle
@@ -3191,7 +3191,7 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
 /*
  * Derive tune Params; 0: use objective mode params, 1: use subjective mode params
  */
-void derive_vq_params(SequenceControlSet* scs) {
+static void derive_vq_params(SequenceControlSet* scs) {
     VqCtrls* vq_ctrl = &scs->vq_ctrls;
 
     if (scs->static_config.tune == 0) {
@@ -3227,7 +3227,7 @@ void derive_vq_params(SequenceControlSet* scs) {
 /*
  * Derive TF Params
  */
-void derive_tf_params(SequenceControlSet *scs) {
+static void derive_tf_params(SequenceControlSet *scs) {
 
     // Do not perform TF if LD or 1 Layer or 1st pass
     Bool do_tf = scs->static_config.enable_tf && scs->static_config.hierarchical_levels >= 1 && scs->static_config.pass != ENC_FIRST_PASS;
@@ -3274,7 +3274,7 @@ void derive_tf_params(SequenceControlSet *scs) {
 /*
  * Set the MRP control
  */
-void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
+static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
     MrpCtrls* mrp_ctrl = &scs->mrp_ctrls;
     switch (mrp_level)
     {
@@ -3494,7 +3494,7 @@ void set_ipp_pass_ctrls(
         ipp_pass_ctrls->bypass_blk_step = 1;
 }
 
-void set_mid_pass_ctrls(
+static void set_mid_pass_ctrls(
     SequenceControlSet* scs,
     uint8_t mid_pass_level) {
 
@@ -3515,7 +3515,7 @@ void set_mid_pass_ctrls(
     }
 }
 
-uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode, uint8_t aq_mode) {
+static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode, uint8_t aq_mode) {
 
     uint8_t tpl_level;
 
@@ -3709,7 +3709,7 @@ static void validate_scaling_params(SequenceControlSet *scs) {
     }
 }
 
-void set_param_based_on_input(SequenceControlSet *scs)
+static void set_param_based_on_input(SequenceControlSet *scs)
 {
     set_multi_pass_params(
         scs);
@@ -4111,7 +4111,7 @@ void set_param_based_on_input(SequenceControlSet *scs)
 extern void read_stat(SequenceControlSet *scs);
 
 extern void setup_two_pass(SequenceControlSet *scs);
-void set_mini_gop_size_controls(MiniGopSizeCtrls *mgs_ctls, uint8_t mg_level,int input_resolution) {
+static void set_mini_gop_size_controls(MiniGopSizeCtrls *mgs_ctls, uint8_t mg_level,int input_resolution) {
     switch (mg_level) {
     case 0:
         mgs_ctls->adptive_enable = 0;
@@ -4195,7 +4195,7 @@ void set_max_mini_gop_size(SequenceControlSet *scs, MiniGopSizeCtrls *mgs_ctls) 
     scs->enable_adaptive_mini_gop = mgs_ctls->adptive_enable;
     scs->max_heirachical_level = scs->static_config.hierarchical_levels;
 }
-void copy_api_from_app(
+static void copy_api_from_app(
     SequenceControlSet       *scs,
     EbSvtAv1EncConfiguration   *config_struct){
 
@@ -4716,7 +4716,7 @@ from the sample application to the library buffers
  * downsample_2d_c_16_zero2bit_skipall
  *      downsample the input by skipping three pixels and zero out the two LSB bit
  ********************************************/
-void downsample_2d_c_16_zero2bit_skipall(uint16_t *input_samples, // input parameter, input samples Ptr
+static void downsample_2d_c_16_zero2bit_skipall(uint16_t *input_samples, // input parameter, input samples Ptr
     uint32_t input_stride, // input parameter, input stride
     uint32_t input_area_width, // input parameter, input area width
     uint32_t input_area_height, // input parameter, input area height
@@ -4749,7 +4749,7 @@ void downsample_2d_c_16_zero2bit_skipall(uint16_t *input_samples, // input param
  * downsample_2d_c_skipall
  *      downsample the input by skipping three pixels
  ********************************************/
-void downsample_2d_c_skipall(uint8_t *input_samples, // input parameter, input samples Ptr
+static void downsample_2d_c_skipall(uint8_t *input_samples, // input parameter, input samples Ptr
     uint32_t input_stride, // input parameter, input stride
     uint32_t input_area_width, // input parameter, input area width
     uint32_t input_area_height, // input parameter, input area height
@@ -5284,7 +5284,7 @@ EB_API EbErrorType svt_av1_get_recon(
 /**********************************
 * Encoder Error Handling
 **********************************/
-void lib_svt_encoder_send_error_exit(
+static void lib_svt_encoder_send_error_exit(
     EbPtr                    hComponent,
     uint32_t                 error_code)
 {
@@ -5342,7 +5342,7 @@ EB_API void svt_av1_print_version(void) {
 /**********************************
 * Encoder Handle Initialization
 **********************************/
-EbErrorType init_svt_av1_encoder_handle(
+static EbErrorType init_svt_av1_encoder_handle(
     EbComponentType * hComponent)
 {
     EbErrorType       return_error = EB_ErrorNone;

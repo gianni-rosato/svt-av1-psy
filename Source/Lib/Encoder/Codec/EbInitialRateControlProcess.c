@@ -38,7 +38,7 @@ typedef struct LadQueue {
 } LadQueue;
 
 /* look ahead queue constructor*/
-EbErrorType lad_queue_entry_ctor(LadQueueEntry *entry_ptr) {
+static EbErrorType lad_queue_entry_ctor(LadQueueEntry *entry_ptr) {
     entry_ptr->pcs = NULL;
     return EB_ErrorNone;
 }
@@ -118,7 +118,7 @@ void print_lad_queue(InitialRateControlContext *ctx, uint8_t log) {
 /*
  store pictures in the lad queue
 */
-void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlContext *ctx) {
+static void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlContext *ctx) {
     LadQueue      *queue       = ctx->lad_queue;
     uint32_t       entry_idx   = pcs->decode_order % REFERENCE_QUEUE_MAX_DEPTH;
     LadQueueEntry *queue_entry = queue->cir_buf[entry_idx];
@@ -130,8 +130,8 @@ void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlContext *
 }
 
 /* send picture out from irc process */
-void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs,
-                          Bool superres_recode) {
+static void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs,
+                                 Bool superres_recode) {
     EbObjectWrapper *out_results_wrapper_ptr;
     // Get Empty Results Object
     svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr,
@@ -143,8 +143,8 @@ void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSe
     out_results_ptr->superres_recode = superres_recode;
     svt_post_full_object(out_results_wrapper_ptr);
 }
-uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index,
-                                uint64_t pic_num) {
+static uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index,
+                                       uint64_t pic_num) {
     for (uint32_t i = 0; i < end_index; i++)
         if (pcs->tpl_group[i]->picture_number == pic_num)
             return 1;
@@ -277,7 +277,7 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
  pictures are stored in dec order.
  only base pictures are hold. the rest including LDP ones are pass-thru
 */
-void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
+static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
     LadQueue      *queue      = ctx->lad_queue;
     LadQueueEntry *head_entry = queue->cir_buf[queue->head];
 

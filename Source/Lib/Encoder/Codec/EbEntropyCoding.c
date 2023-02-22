@@ -497,12 +497,12 @@ static INLINE void set_dc_sign(int32_t *cul_level, int32_t dc_val) {
         *cul_level += 2 << COEFF_CONTEXT_BITS;
 }
 
-int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *ppcs, FRAME_CONTEXT *frame_context,
-                                AomWriter *ec_writer, BlkStruct *blk_ptr, TxSize tx_size,
-                                uint32_t pu_index, uint32_t txb_index, uint32_t intraLumaDir,
-                                int32_t *coeff_buffer_ptr, const uint16_t coeff_stride,
-                                COMPONENT_TYPE component_type, int16_t txb_skip_ctx,
-                                int16_t dc_sign_ctx, int16_t eob) {
+static int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *ppcs, FRAME_CONTEXT *frame_context,
+                                       AomWriter *ec_writer, BlkStruct *blk_ptr, TxSize tx_size,
+                                       uint32_t pu_index, uint32_t txb_index, uint32_t intraLumaDir,
+                                       int32_t *coeff_buffer_ptr, const uint16_t coeff_stride,
+                                       COMPONENT_TYPE component_type, int16_t txb_skip_ctx,
+                                       int16_t dc_sign_ctx, int16_t eob) {
     (void)pu_index;
     (void)coeff_stride;
     const TxSize txs_ctx = (TxSize)((txsize_sqr_map[tx_size] + txsize_sqr_up_map[tx_size] + 1) >>
@@ -1632,7 +1632,7 @@ static void write_inter_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
 }
 
 //extern INLINE int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
-void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlkStruct *blk_ptr) {
+static void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlkStruct *blk_ptr) {
     const int32_t new_mv = blk_ptr->pred_mode == NEWMV || blk_ptr->pred_mode == NEW_NEWMV;
     if (new_mv) {
         int32_t idx;
@@ -1705,7 +1705,7 @@ static void encode_mv_component(AomWriter *w, int32_t comp, NmvComponent *mvcomp
         aom_write_symbol(w, hp, mv_class == MV_CLASS_0 ? mvcomp->class0_hp_cdf : mvcomp->hp_cdf, 2);
 }
 
-MvJointType av1_get_mv_joint_diff(int32_t diff[2]) {
+static MvJointType av1_get_mv_joint_diff(int32_t diff[2]) {
     if (diff[0] == 0)
         return diff[1] == 0 ? MV_JOINT_ZERO : MV_JOINT_HNZVZ;
     else
@@ -1875,12 +1875,12 @@ int32_t svt_av1_get_pred_context_switchable_interp_v2(MvReferenceFrame rf0, MvRe
 
     return filter_type_ctx;
 }
-void write_mb_interp_filter(NeighborArrayUnit *ref_frame_type_neighbor_array, BlockSize bsize,
-                            MvReferenceFrame rf0, MvReferenceFrame rf1,
-                            PictureParentControlSet *pcs, AomWriter *ec_writer, BlkStruct *blk_ptr,
-                            EntropyCoder        *entropy_coder_ptr,
-                            NeighborArrayUnit32 *interpolation_type_neighbor_array,
-                            uint32_t blk_org_x, uint32_t blk_org_y) {
+static void write_mb_interp_filter(NeighborArrayUnit *ref_frame_type_neighbor_array,
+                                   BlockSize bsize, MvReferenceFrame rf0, MvReferenceFrame rf1,
+                                   PictureParentControlSet *pcs, AomWriter *ec_writer,
+                                   BlkStruct *blk_ptr, EntropyCoder *entropy_coder_ptr,
+                                   NeighborArrayUnit32 *interpolation_type_neighbor_array,
+                                   uint32_t blk_org_x, uint32_t blk_org_y) {
     Av1Common *const cm = pcs->av1_cm; //&cpi->common;
     //const MbModeInfo *const mbmi = xd->mi[0];
     //FRAME_CONTEXT *ec_ctx = xd->tile_ctx;
@@ -4467,10 +4467,10 @@ static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, F
     }
 }
 
-EbErrorType ec_update_neighbors(PictureControlSet *pcs, EntropyCodingContext *context_ptr,
-                                uint32_t blk_org_x, uint32_t blk_org_y, BlkStruct *blk_ptr,
-                                uint16_t tile_idx, BlockSize bsize,
-                                EbPictureBufferDesc *coeff_ptr) {
+static EbErrorType ec_update_neighbors(PictureControlSet *pcs, EntropyCodingContext *context_ptr,
+                                       uint32_t blk_org_x, uint32_t blk_org_y, BlkStruct *blk_ptr,
+                                       uint16_t tile_idx, BlockSize bsize,
+                                       EbPictureBufferDesc *coeff_ptr) {
     UNUSED(coeff_ptr);
     EbErrorType        return_error             = EB_ErrorNone;
     NeighborArrayUnit *mode_type_neighbor_array = pcs->mode_type_neighbor_array[tile_idx];
@@ -5059,10 +5059,10 @@ void set_mi_row_col(PictureControlSet *pcs, MacroBlockD *xd, TileInfo *tile, int
             xd->is_sec_rect = 1;
 }
 
-void code_tx_size(PictureControlSet *pcsPtr, uint32_t blk_org_x, uint32_t blk_org_y,
-                  BlkStruct *blk_ptr, const BlockGeom *blk_geom,
-                  NeighborArrayUnit *txfm_context_array, FRAME_CONTEXT *ec_ctx, AomWriter *w,
-                  uint8_t skip) {
+static void code_tx_size(PictureControlSet *pcsPtr, uint32_t blk_org_x, uint32_t blk_org_y,
+                         BlkStruct *blk_ptr, const BlockGeom *blk_geom,
+                         NeighborArrayUnit *txfm_context_array, FRAME_CONTEXT *ec_ctx, AomWriter *w,
+                         uint8_t skip) {
     uint32_t      txfm_context_left_index  = get_neighbor_array_unit_left_index(txfm_context_array,
                                                                           blk_org_y);
     uint32_t      txfm_context_above_index = get_neighbor_array_unit_top_index(txfm_context_array,
@@ -5106,8 +5106,8 @@ static INLINE int get_segment_id(Av1Common *cm, const uint8_t *segment_ids, Bloc
     return segment_id;
 }
 
-int get_spatial_seg_prediction(PictureControlSet *pcs, uint32_t blk_org_x, uint32_t blk_org_y,
-                               int *cdf_index) {
+static int get_spatial_seg_prediction(PictureControlSet *pcs, uint32_t blk_org_x,
+                                      uint32_t blk_org_y, int *cdf_index) {
     int prev_ul = -1; // top left segment_id
     int prev_l  = -1; // left segment_id
     int prev_u  = -1; // top segment_id
@@ -5216,9 +5216,10 @@ void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomW
     //    SVT_LOG("BlockY = %d, BlockX = %d, Segmentation  spatial_pred = %d, skip_coeff = %d, coded_id = %d, pred_cdf = %d \n", blk_org_y>>2, blk_org_x>>2, spatial_pred, skip_coeff, coded_id, *pred_cdf);
 }
 
-void write_inter_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context,
-                            AomWriter *ecWriter, const BlockGeom *blockGeom, uint32_t blk_org_x,
-                            uint32_t blk_org_y, BlkStruct *blk_ptr, Bool skip, int pre_skip) {
+static void write_inter_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context,
+                                   AomWriter *ecWriter, const BlockGeom *blockGeom,
+                                   uint32_t blk_org_x, uint32_t blk_org_y, BlkStruct *blk_ptr,
+                                   Bool skip, int pre_skip) {
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled)
         return;
@@ -5278,9 +5279,10 @@ int is_interintra_allowed(const MbModeInfo *mbmi) {
 
 int is_interintra_wedge_used(BlockSize sb_type);
 
-EbErrorType write_modes_b(PictureControlSet *pcs, EntropyCodingContext *context_ptr,
-                          EntropyCoder *entropy_coder_ptr, SuperBlock *tb_ptr, BlkStruct *blk_ptr,
-                          uint16_t tile_idx, EbPictureBufferDesc *coeff_ptr) {
+static EbErrorType write_modes_b(PictureControlSet *pcs, EntropyCodingContext *context_ptr,
+                                 EntropyCoder *entropy_coder_ptr, SuperBlock *tb_ptr,
+                                 BlkStruct *blk_ptr, uint16_t tile_idx,
+                                 EbPictureBufferDesc *coeff_ptr) {
     UNUSED(tb_ptr);
     EbErrorType         return_error  = EB_ErrorNone;
     FRAME_CONTEXT      *frame_context = entropy_coder_ptr->fc;

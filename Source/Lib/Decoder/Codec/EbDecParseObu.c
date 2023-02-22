@@ -61,7 +61,7 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
 
 void dec_init_intra_predictors_12b_internal(void);
 
-int remap_lr_type[4] = {RESTORE_NONE, RESTORE_SWITCHABLE, RESTORE_WIENER, RESTORE_SGRPROJ};
+static int remap_lr_type[4] = {RESTORE_NONE, RESTORE_SWITCHABLE, RESTORE_WIENER, RESTORE_SGRPROJ};
 
 /* Checks that the remaining bits start with a 1 and ends with 0s.
  * It consumes an additional byte, if already byte aligned before the check. */
@@ -82,7 +82,7 @@ static int byte_alignment(Bitstrm *bs) {
     return 0;
 }
 
-void compute_image_size(SeqHeader *seq_header, FrameHeader *frm) {
+static void compute_image_size(SeqHeader *seq_header, FrameHeader *frm) {
     frm->mi_cols   = 2 * ((frm->frame_size.frame_width + 7) >> 3);
     frm->mi_rows   = 2 * ((frm->frame_size.frame_height + 7) >> 3);
     frm->mi_stride = (ALIGN_POWER_OF_TWO(seq_header->max_frame_width, MAX_SB_SIZE_LOG2)) >>
@@ -107,8 +107,8 @@ static int is_valid_obu_type(int obu_type) {
     return valid_type;
 }
 // Read Operating point parameters
-void read_operating_params_info(Bitstrm *bs, EbOperatingParametersInfo *op_info,
-                                DecoderModelInfo *model_info, int index) {
+static void read_operating_params_info(Bitstrm *bs, EbOperatingParametersInfo *op_info,
+                                       DecoderModelInfo *model_info, int index) {
     if (index > MAX_NUM_OPERATING_POINTS)
         return; // EB_DecUnsupportedBitstream;
     op_info->decoder_buffer_delay = dec_get_bits(bs, model_info->buffer_delay_length_minus_1 + 1);
@@ -120,7 +120,7 @@ void read_operating_params_info(Bitstrm *bs, EbOperatingParametersInfo *op_info,
 }
 
 // Read Timing information
-void read_timing_info(Bitstrm *bs, EbTimingInfo *timing_info) {
+static void read_timing_info(Bitstrm *bs, EbTimingInfo *timing_info) {
     timing_info->num_units_in_display_tick = dec_get_bits(bs, 32);
     PRINT("num_units_in_display_tick", timing_info->num_units_in_display_tick);
     timing_info->time_scale = dec_get_bits(bs, 32);
@@ -138,7 +138,7 @@ void read_timing_info(Bitstrm *bs, EbTimingInfo *timing_info) {
 }
 
 // Read Decoder model information
-void read_decoder_model_info(Bitstrm *bs, DecoderModelInfo *model_info) {
+static void read_decoder_model_info(Bitstrm *bs, DecoderModelInfo *model_info) {
     model_info->buffer_delay_length_minus_1 = dec_get_bits(bs, 5);
     PRINT("buffer_delay_length_minus_1", model_info->buffer_delay_length_minus_1);
     model_info->num_units_in_decoding_tick = dec_get_bits(bs, 32);
@@ -151,7 +151,7 @@ void read_decoder_model_info(Bitstrm *bs, DecoderModelInfo *model_info) {
 }
 
 // Read bit depth
-void read_bit_depth(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_header) {
+static void read_bit_depth(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_header) {
     uint8_t high_bitdepth = dec_get_bits(bs, 1);
     PRINT("high_bitdepth", high_bitdepth);
     if (seq_header->seq_profile == PROFESSIONAL_PROFILE && high_bitdepth) {
@@ -165,7 +165,7 @@ void read_bit_depth(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_heade
 }
 
 // Read Color configuration
-void read_color_config(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_header) {
+static void read_color_config(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_header) {
     read_bit_depth(bs, color_info, seq_header);
     color_info->mono_chrome = (seq_header->seq_profile != HIGH_PROFILE) ? dec_get_bits(bs, 1) : 0;
     PRINT("mono_chrome", color_info->mono_chrome);
@@ -231,7 +231,7 @@ void read_color_config(Bitstrm *bs, EbColorConfig *color_info, SeqHeader *seq_he
     PRINT("separate_uv_delta_q", color_info->separate_uv_delta_q);
 }
 
-void read_temporal_delimitor_obu(uint8_t *seen_frame_header) { *seen_frame_header = 0; }
+static void read_temporal_delimitor_obu(uint8_t *seen_frame_header) { *seen_frame_header = 0; }
 
 // Read Sequence header
 EbErrorType read_sequence_header_obu(Bitstrm *bs, SeqHeader *seq_header) {
@@ -423,7 +423,7 @@ EbErrorType read_sequence_header_obu(Bitstrm *bs, SeqHeader *seq_header) {
 }
 
 // Read OBU header
-EbErrorType read_obu_header(Bitstrm *bs, ObuHeader *header) {
+static EbErrorType read_obu_header(Bitstrm *bs, ObuHeader *header) {
     PRINT_NL;
     if (!bs || !header)
         return EB_ErrorBadParameter;
@@ -471,8 +471,8 @@ EbErrorType read_obu_header(Bitstrm *bs, ObuHeader *header) {
 }
 
 // Read OBU size
-EbErrorType read_obu_size(Bitstrm *bs, size_t bytes_available, size_t *const obu_size,
-                          size_t *const length_field_size) {
+static EbErrorType read_obu_size(Bitstrm *bs, size_t bytes_available, size_t *const obu_size,
+                                 size_t *const length_field_size) {
     size_t u_obu_size = 0;
     dec_get_bits_leb128(bs, bytes_available, &u_obu_size, length_field_size);
 
@@ -484,8 +484,8 @@ EbErrorType read_obu_size(Bitstrm *bs, size_t bytes_available, size_t *const obu
 }
 
 /** Reads OBU header and size */
-EbErrorType read_obu_header_size(Bitstrm *bs, ObuHeader *header, size_t size,
-                                 size_t *const length_size) {
+static EbErrorType read_obu_header_size(Bitstrm *bs, ObuHeader *header, size_t size,
+                                        size_t *const length_size) {
     EbErrorType status;
 
     status = read_obu_header(bs, header);
@@ -555,7 +555,7 @@ static void read_frame_size(Bitstrm *bs, SeqHeader *seq_header, FrameHeader *fra
     assert((frame_info->frame_size.frame_height) <= seq_header->max_frame_height);
 }
 
-void read_render_size(Bitstrm *bs, FrameHeader *frame_info) {
+static void read_render_size(Bitstrm *bs, FrameHeader *frame_info) {
     uint8_t render_and_frame_size_different;
     render_and_frame_size_different = dec_get_bits(bs, 1);
     PRINT_NAME("render_and_frame_size_different");
@@ -602,7 +602,7 @@ static void frame_size_with_refs(Bitstrm *bs, EbDecHandle *dec_handle_ptr,
 }
 
 // Read IP filter parameters
-void read_interpolation_filter(Bitstrm *bs, FrameHeader *frame_info) {
+static void read_interpolation_filter(Bitstrm *bs, FrameHeader *frame_info) {
     uint8_t is_filter_switchable;
     is_filter_switchable = dec_get_bits(bs, 1);
     PRINT_NAME("is_filter_switchable");
@@ -614,8 +614,8 @@ void read_interpolation_filter(Bitstrm *bs, FrameHeader *frame_info) {
 }
 
 // Read Tile information
-void read_tile_info(Bitstrm *bs, TilesInfo *tile_info, SeqHeader *seq_header,
-                    FrameHeader *frame_info) {
+static void read_tile_info(Bitstrm *bs, TilesInfo *tile_info, SeqHeader *seq_header,
+                           FrameHeader *frame_info) {
     int start_sb, i;
     int sb_cols          = seq_header->use_128x128_superblock ? ((frame_info->mi_cols + 31) >> 5)
                                                               : ((frame_info->mi_cols + 15) >> 4);
@@ -728,7 +728,7 @@ void read_tile_info(Bitstrm *bs, TilesInfo *tile_info, SeqHeader *seq_header,
     assert(tile_info->context_update_tile_id < (tile_info->tile_cols * tile_info->tile_rows));
 }
 
-uint8_t read_delta_q(Bitstrm *bs) {
+static uint8_t read_delta_q(Bitstrm *bs) {
     uint8_t delta_q;
     if (dec_get_bits(bs, 1))
         delta_q = dec_get_bits_su(bs, 7);
@@ -737,7 +737,7 @@ uint8_t read_delta_q(Bitstrm *bs) {
     return delta_q;
 }
 
-void read_frame_delta_q_params(Bitstrm *bs, FrameHeader *frame_info) {
+static void read_frame_delta_q_params(Bitstrm *bs, FrameHeader *frame_info) {
     frame_info->delta_q_params.delta_q_res     = 0;
     frame_info->delta_q_params.delta_q_present = 0;
     if (frame_info->quantization_params.base_q_idx > 0) {
@@ -750,7 +750,7 @@ void read_frame_delta_q_params(Bitstrm *bs, FrameHeader *frame_info) {
     PRINT_FRAME("delta_q_present", frame_info->delta_q_params.delta_q_present);
 }
 
-void read_frame_delta_lf_params(Bitstrm *bs, FrameHeader *frame_info) {
+static void read_frame_delta_lf_params(Bitstrm *bs, FrameHeader *frame_info) {
     frame_info->delta_lf_params.delta_lf_present = 0;
     frame_info->delta_lf_params.delta_lf_res     = 0;
     frame_info->delta_lf_params.delta_lf_multi   = 0;
@@ -831,7 +831,8 @@ static INLINE void segfeatures_copy(SegmentationParams *dst, SegmentationParams 
     dst->last_active_seg_id = src->last_active_seg_id;
 }
 
-void read_segmentation_params(Bitstrm *bs, EbDecHandle *dec_handle_ptr, FrameHeader *frame_info) {
+static void read_segmentation_params(Bitstrm *bs, EbDecHandle *dec_handle_ptr,
+                                     FrameHeader *frame_info) {
     SegmentationParams *seg_params = &frame_info->segmentation_params;
     EbDecPicBuf        *cur_buf    = dec_handle_ptr->cur_pic_buf[0];
     EbDecPicBuf        *prev_buf   = dec_handle_ptr->prev_frame;
@@ -934,7 +935,7 @@ static void av1_set_default_ref_and_mode_deltas(int8_t *ref_deltas, int8_t *mode
     mode_deltas[1] = 0;
 }
 
-void read_loop_filter_params(Bitstrm *bs, EbDecHandle *dec_handle, int num_planes) {
+static void read_loop_filter_params(Bitstrm *bs, EbDecHandle *dec_handle, int num_planes) {
     FrameHeader       *frame_info = &dec_handle->frame_header;
     struct LoopFilter *lf         = &frame_info->loop_filter_params;
 
@@ -1011,7 +1012,8 @@ void read_tx_mode(Bitstrm *bs, FrameHeader *frame_info) {
     PRINT_FRAME("tx_mode", frame_info->tx_mode);
 }
 
-void read_lr_params(Bitstrm *bs, FrameHeader *frame_info, SeqHeader *seq_header, int num_planes) {
+static void read_lr_params(Bitstrm *bs, FrameHeader *frame_info, SeqHeader *seq_header,
+                           int num_planes) {
     int uses_lr, uses_chroma_lr;
 
     if (frame_info->coded_lossless || frame_info->allow_intrabc ||
@@ -1070,8 +1072,8 @@ void read_lr_params(Bitstrm *bs, FrameHeader *frame_info, SeqHeader *seq_header,
                 frame_info->lr_params[1].loop_restoration_size);
 }
 
-void read_frame_cdef_params(Bitstrm *bs, FrameHeader *frame_info, SeqHeader *seq_header,
-                            int num_planes) {
+static void read_frame_cdef_params(Bitstrm *bs, FrameHeader *frame_info, SeqHeader *seq_header,
+                                   int num_planes) {
     int i;
     if (frame_info->coded_lossless || frame_info->allow_intrabc || !seq_header->cdef_level) {
         frame_info->cdef_params.cdef_bits           = 0;
@@ -1097,7 +1099,7 @@ void read_frame_cdef_params(Bitstrm *bs, FrameHeader *frame_info, SeqHeader *seq
     }
 }
 
-int decode_subexp(Bitstrm *bs, int numSyms) {
+static int decode_subexp(Bitstrm *bs, int numSyms) {
     int i = 0, mk = 0, k = 3;
 
     while (1) {
@@ -1120,7 +1122,7 @@ int decode_subexp(Bitstrm *bs, int numSyms) {
     return 0;
 }
 
-int decode_unsigned_subexp_with_ref(Bitstrm *bs, int mx, int r) {
+static int decode_unsigned_subexp_with_ref(Bitstrm *bs, int mx, int r) {
     int v = decode_subexp(bs, mx);
     if ((r << 1) <= mx)
         return inverse_recenter(r, v);
@@ -1128,13 +1130,13 @@ int decode_unsigned_subexp_with_ref(Bitstrm *bs, int mx, int r) {
         return mx - 1 - inverse_recenter(mx - 1 - r, v);
 }
 
-int decode_signed_subexp_with_ref(Bitstrm *bs, int low, int high, int r) {
+static int decode_signed_subexp_with_ref(Bitstrm *bs, int low, int high, int r) {
     int x = decode_unsigned_subexp_with_ref(bs, high - low, r - low);
     return x + low;
 }
 
-void read_global_param(Bitstrm *bs, EbDecHandle *dec_handle, TransformationType type, int ref_idx,
-                       int idx, FrameHeader *frame_info) {
+static void read_global_param(Bitstrm *bs, EbDecHandle *dec_handle, TransformationType type,
+                              int ref_idx, int idx, FrameHeader *frame_info) {
     GlobalMotionParams
         prev_gm_params[ALTREF_FRAME +
                        1]; // Need to initialize in setup_past_independence() section: 6.8.2
@@ -1168,8 +1170,8 @@ void read_global_param(Bitstrm *bs, EbDecHandle *dec_handle, TransformationType 
         (decode_signed_subexp_with_ref(bs, -mx, mx + 1, r) << prec_diff) + round;
 }
 
-void read_global_motion_params(Bitstrm *bs, EbDecHandle *dec_handle, FrameHeader *frame_info,
-                               int frame_is_intra) {
+static void read_global_motion_params(Bitstrm *bs, EbDecHandle *dec_handle, FrameHeader *frame_info,
+                                      int frame_is_intra) {
     int                ref, i;
     TransformationType type;
     EbDecPicBuf       *cur_buf = dec_handle->cur_pic_buf[0];
@@ -1228,7 +1230,7 @@ void read_global_motion_params(Bitstrm *bs, EbDecHandle *dec_handle, FrameHeader
     }
 }
 
-uint8_t read_frame_reference_mode(Bitstrm *bs, int frame_is_intra) {
+static uint8_t read_frame_reference_mode(Bitstrm *bs, int frame_is_intra) {
     if (frame_is_intra)
         return SINGLE_REFERENCE;
     else
@@ -1236,8 +1238,8 @@ uint8_t read_frame_reference_mode(Bitstrm *bs, int frame_is_intra) {
 }
 
 // Read skip mode paramters
-void read_skip_mode_params(Bitstrm *bs, FrameHeader *frame_info, int frame_is_intra,
-                           SeqHeader *seq_header, int reference_select) {
+static void read_skip_mode_params(Bitstrm *bs, FrameHeader *frame_info, int frame_is_intra,
+                                  SeqHeader *seq_header, int reference_select) {
     if (frame_is_intra || !reference_select || !seq_header->order_hint_info.enable_order_hint)
         frame_info->skip_mode_params.skip_mode_allowed = 0;
     else {
@@ -1302,15 +1304,16 @@ void read_skip_mode_params(Bitstrm *bs, FrameHeader *frame_info, int frame_is_in
     PRINT_FRAME("skip_mode_present", frame_info->skip_mode_params.skip_mode_flag);
 }
 
-void load_grain_params(EbDecHandle *dec_handle_ptr, AomFilmGrain *grain_params,
-                       int film_grain_params_ref_idx) {
+static void load_grain_params(EbDecHandle *dec_handle_ptr, AomFilmGrain *grain_params,
+                              int film_grain_params_ref_idx) {
     EbDecPicBuf *ref_buf = dec_handle_ptr->ref_frame_map[film_grain_params_ref_idx];
     assert(ref_buf != NULL);
     *grain_params = ref_buf->film_grain_params;
 }
 
 // Read film grain parameters
-void read_film_grain_params(EbDecHandle *dec_handle, Bitstrm *bs, AomFilmGrain *grain_params) {
+static void read_film_grain_params(EbDecHandle *dec_handle, Bitstrm *bs,
+                                   AomFilmGrain *grain_params) {
     SeqHeader   *seq_header = &dec_handle->seq_header;
     FrameHeader *frame_info = &dec_handle->frame_header;
     int          i, num_pos_luma, num_pos_chroma;
@@ -1474,7 +1477,7 @@ EbErrorType reset_parse_ctx(FRAME_CONTEXT *frm_ctx, uint8_t base_qp) {
     return return_error;
 }
 
-void setup_frame_sign_bias(EbDecHandle *dec_handle) {
+static void setup_frame_sign_bias(EbDecHandle *dec_handle) {
     MvReferenceFrame ref_frame;
     for (ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ++ref_frame) {
         const EbDecPicBuf *const buf = get_ref_frame_buf(dec_handle, ref_frame);
@@ -2156,8 +2159,8 @@ void read_uncompressed_header(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeade
     }
 }
 
-EbErrorType read_frame_header_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeader *obu_header,
-                                  int trailing_bit) {
+static EbErrorType read_frame_header_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr,
+                                         ObuHeader *obu_header, int trailing_bit) {
     EbErrorType status = EB_ErrorNone;
 
     int      num_planes = av1_num_planes(&dec_handle_ptr->seq_header.color_config);
@@ -2190,8 +2193,9 @@ EbErrorType read_frame_header_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuH
 }
 
 // Read Tile group information
-EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info,
-                                ObuHeader *obu_header, int *is_last_tg) {
+static EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr,
+                                       TilesInfo *tiles_info, ObuHeader *obu_header,
+                                       int *is_last_tg) {
     EbErrorType status = EB_ErrorNone;
 
     MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;

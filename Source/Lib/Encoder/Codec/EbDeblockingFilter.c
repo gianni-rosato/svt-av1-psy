@@ -776,8 +776,8 @@ void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuf
         }
     }
 }
-uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBufferDesc *recon_ptr,
-                                  int32_t plane)
+static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBufferDesc *recon_ptr,
+                                         int32_t plane)
 
 {
     SequenceControlSet *scs      = pcs->ppcs->scs;

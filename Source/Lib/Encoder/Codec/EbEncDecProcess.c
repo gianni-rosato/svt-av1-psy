@@ -342,8 +342,8 @@ static void reset_enc_dec(EncDecContext *ed_ctx, PictureControlSet *pcs, Sequenc
  *   of the segment-row (b) as this would block other
  *   threads from performing an update (A).
  ******************************************************/
-Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutIndex,
-                             EncDecTasks *taskPtr, EbFifo *srmFifoPtr) {
+static Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOutIndex,
+                                    EncDecTasks *taskPtr, EbFifo *srmFifoPtr) {
     Bool     continue_processing_flag = FALSE;
     uint32_t row_segment_index        = 0;
     uint32_t segment_index;
@@ -2220,7 +2220,8 @@ void set_depth_removal_level_controls(PictureControlSet *pcs, ModeDecisionContex
 /*
  * Control NSQ search
  */
-void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_mv_search_level) {
+static void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt,
+                                          uint8_t              md_nsq_mv_search_level) {
     MdNsqMotionSearchCtrls *md_nsq_me_ctrls = &mdctxt->md_nsq_me_ctrls;
 
     switch (md_nsq_mv_search_level) {
@@ -2614,7 +2615,8 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt,
 /*
  * Control Adaptive ME search
  */
-void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_search_level) {
+static void md_sq_motion_search_controls(ModeDecisionContext *mdctxt,
+                                         uint8_t              md_sq_mv_search_level) {
     MdSqMotionSearchCtrls *md_sq_me_ctrls = &mdctxt->md_sq_me_ctrls;
 
     switch (md_sq_mv_search_level) {
@@ -2736,7 +2738,7 @@ void md_sq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_sq_mv_
 /*
  * Control Subpel search of ME MV(s)
  */
-void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_level) {
+static void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_level) {
     MdSubPelSearchCtrls *md_subpel_me_ctrls = &mdctxt->md_subpel_me_ctrls;
 
     switch (md_subpel_me_level) {
@@ -2928,7 +2930,7 @@ void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_lev
 /*
  * Control Subpel search of PME MV(s)
  */
-void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_level) {
+static void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_level) {
     MdSubPelSearchCtrls *md_subpel_pme_ctrls = &mdctxt->md_subpel_pme_ctrls;
 
     switch (md_subpel_pme_level) {
@@ -3089,9 +3091,9 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
 /*
  * Settings for the parent SQ coeff-area based cycles reduction algorithm.
  */
-void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext *ctx,
-                                                           uint8_t              resolution,
-                                                           uint8_t              cycles_alloc_lvl) {
+static void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext *ctx,
+                                                                  uint8_t              resolution,
+                                                                  uint8_t cycles_alloc_lvl) {
     ParentSqCmplxCtrls *cycle_red_ctrls = &ctx->psq_cplx_ctrls;
     switch (cycles_alloc_lvl) {
     case 0: cycle_red_ctrls->enabled = 0; break;
@@ -3436,8 +3438,8 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
     default: assert(0); break;
     }
 }
-void set_interpolation_search_level_ctrls(ModeDecisionContext *ctx,
-                                          uint8_t              interpolation_search_level) {
+static void set_interpolation_search_level_ctrls(ModeDecisionContext *ctx,
+                                                 uint8_t              interpolation_search_level) {
     InterpolationSearchCtrls *ifs_ctrls = &ctx->ifs_ctrls;
 
     switch (interpolation_search_level) {
@@ -4488,7 +4490,7 @@ uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level) {
 /*
 * This function is used in MD to set the NSQ controls.
 */
-void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
+static void set_nsq_ctrls(ModeDecisionContext *mdctxt, uint8_t nsq_level) {
     NsqCtrls *nsq_ctrls = &mdctxt->nsq_ctrls;
 
     switch (nsq_level) {
@@ -4752,7 +4754,7 @@ void set_inter_intra_ctrls(ModeDecisionContext *mdctxt, uint8_t inter_intra_leve
     default: assert(0); break;
     }
 }
-void set_depth_ctrls(ModeDecisionContext *ctx, uint8_t depth_level) {
+static void set_depth_ctrls(ModeDecisionContext *ctx, uint8_t depth_level) {
     DepthCtrls *depth_ctrls = &ctx->depth_ctrls;
 
     switch (depth_level) {
@@ -4778,7 +4780,7 @@ void set_depth_ctrls(ModeDecisionContext *ctx, uint8_t depth_level) {
     default: assert(0); break;
     }
 }
-void set_lpd0_ctrls(ModeDecisionContext *ctx, uint8_t lpd0_lvl) {
+static void set_lpd0_ctrls(ModeDecisionContext *ctx, uint8_t lpd0_lvl) {
     Lpd0Ctrls *ctrls = &ctx->lpd0_ctrls;
     switch (lpd0_lvl) {
     case 0:
@@ -4847,7 +4849,7 @@ void set_lpd0_ctrls(ModeDecisionContext *ctx, uint8_t lpd0_lvl) {
     }
 }
 
-void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
+static void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
     Lpd1Ctrls *ctrls = &ctx->lpd1_ctrls;
     switch (lpd1_lvl) {
     case 0:
@@ -5125,8 +5127,9 @@ uint8_t svt_aom_get_disallow_below_16x16_picture_level(EncMode enc_mode,
 /*
  * Generate per-SB MD settings (do not change per-PD)
  */
-EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet *scs, PictureControlSet *pcs,
-                                                    ModeDecisionContext *ctx) {
+static EbErrorType signal_derivation_enc_dec_kernel_common(SequenceControlSet  *scs,
+                                                           PictureControlSet   *pcs,
+                                                           ModeDecisionContext *ctx) {
     EbErrorType return_error = EB_ErrorNone;
 
     EncMode enc_mode = pcs->enc_mode;
@@ -5625,8 +5628,8 @@ static void set_txs_controls(ModeDecisionContext *ctx, uint8_t txs_level) {
     default: assert(0); break;
     }
 }
-void set_spatial_sse_full_loop_level(ModeDecisionContext *ctx,
-                                     uint8_t              spatial_sse_full_loop_level) {
+static void set_spatial_sse_full_loop_level(ModeDecisionContext *ctx,
+                                            uint8_t              spatial_sse_full_loop_level) {
     SpatialSSECtrls *spatial_sse_ctrls = &ctx->spatial_sse_ctrls;
 
     switch (spatial_sse_full_loop_level) {
@@ -5659,8 +5662,8 @@ static uint64_t compute_intra_pd0_th(SequenceControlSet *scs, PictureControlSet 
     return use_intra_pd0_th;
 }
 // Compute a qp-aware threshold based on the variance of the SB, used to apply selectively subres
-uint64_t compute_subres_th(SequenceControlSet *scs, PictureControlSet *pcs,
-                           ModeDecisionContext *ctx) {
+static uint64_t compute_subres_th(SequenceControlSet *scs, PictureControlSet *pcs,
+                                  ModeDecisionContext *ctx) {
     uint32_t fast_lambda   = ctx->hbd_md ? ctx->fast_lambda_md[EB_10_BIT_MD]
                                          : ctx->fast_lambda_md[EB_8_BIT_MD];
     uint32_t sb_size       = scs->super_block_size * scs->super_block_size;
@@ -5756,7 +5759,7 @@ void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
     default: assert(0); break;
     }
 }
-void set_cfl_ctrls(ModeDecisionContext *ctx, uint8_t cfl_level) {
+static void set_cfl_ctrls(ModeDecisionContext *ctx, uint8_t cfl_level) {
     CflCtrls *ctrls = &ctx->cfl_ctrls;
 
     switch (cfl_level) {
@@ -6063,8 +6066,9 @@ void set_mds0_controls(ModeDecisionContext *ctx, uint8_t mds0_level) {
 
 // Set signals used for light-pd0 path; only PD0 should call this function
 // assumes NSQ OFF, no 4x4, no chroma, no TXT/TXS/RDOQ/SSSE, SB_64x64
-void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet *scs, PictureControlSet *pcs,
-                                                   ModeDecisionContext *ctx) {
+static void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *scs,
+                                                          PictureControlSet   *pcs,
+                                                          ModeDecisionContext *ctx) {
     Pd0Level pd0_level = ctx->lpd0_ctrls.pd0_level;
 
     ctx->md_disallow_nsq         = 1;
@@ -6953,8 +6957,8 @@ void update_pred_th_offset(ModeDecisionContext *ctx, const BlockGeom *blk_geom, 
         *th_offset = 0;
     }
 }
-uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *mdctxt, const BlockGeom *blk_geom,
-                                             int64_t th_offset) {
+static uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *mdctxt,
+                                                    const BlockGeom *blk_geom, int64_t th_offset) {
     if (mdctxt->depth_refinement_ctrls.parent_to_current_th == MIN_SIGNED_VALUE)
         return FALSE;
     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
@@ -6976,9 +6980,10 @@ uint8_t is_parent_to_current_deviation_small(ModeDecisionContext *mdctxt, const 
     return FALSE;
 }
 
-uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs, ModeDecisionContext *mdctxt,
-                                            const BlockGeom *blk_geom, uint32_t blk_index,
-                                            int64_t th_offset) {
+static uint8_t is_child_to_current_deviation_small(SequenceControlSet  *scs,
+                                                   ModeDecisionContext *mdctxt,
+                                                   const BlockGeom *blk_geom, uint32_t blk_index,
+                                                   int64_t th_offset) {
     if (mdctxt->depth_refinement_ctrls.sub_to_current_th == MIN_SIGNED_VALUE)
         return FALSE;
     const uint32_t ns_d1_offset = blk_geom->d1_depth_offset;
@@ -7218,11 +7223,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 }
 // Initialize structures used to indicate which blocks will be tested at MD.
 // MD data structures should be updated in init_block_data(), not here.
-EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs,
+static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs,
 #if FIX_2042
-                                            ModeDecisionContext *ctx) {
+                                                   ModeDecisionContext *ctx) {
 #else
-                                            ModeDecisionContext *ctx, uint32_t sb_index) {
+                                                   ModeDecisionContext *ctx, uint32_t sb_index) {
 #endif
     memset(ctx->tested_blk_flag, 0, sizeof(uint8_t) * scs->max_block_cnt);
     memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
@@ -7389,8 +7394,8 @@ static void recode_loop_decision_maker(PictureControlSet *pcs, SequenceControlSe
 }
 
 /* for debug/documentation purposes: list all features assumed off for light pd1*/
-void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PictureParentControlSet *ppcs,
-                                  uint8_t use_light_pd1, uint8_t debug_lpd1_features) {
+static void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PictureParentControlSet *ppcs,
+                                         uint8_t use_light_pd1, uint8_t debug_lpd1_features) {
     if (debug_lpd1_features) {
         uint8_t light_pd1;
 
@@ -7425,7 +7430,7 @@ void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PictureParentCont
 }
 /* Light-PD1 classifier used when cost/coeff info is available.  If PD0 is skipped, or the trasnsform is
 not performed, a separate detector (lpd1_detector_skip_pd0) is used. */
-void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
+static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
     // the frame size of reference pics are different if enable reference scaling.
     // sb info can not be reused because super blocks are mismatched, so we set
     // the reference pic unavailable to avoid using wrong info
@@ -7523,8 +7528,8 @@ void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx)
 
 /* Light-PD1 classifier used when cost/coeff info is unavailable.  If PD0 is skipped, or the trasnsform is
 not performed, this detector is used (else lpd1_detector_post_pd0() is used). */
-void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
-                            uint32_t pic_width_in_sb) {
+static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
+                                   uint32_t pic_width_in_sb) {
 #if OPT_LD_P2
     const bool rtc_tune = (pcs->scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
         ? true
@@ -7660,7 +7665,7 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
 }
 
 /* Light-PD0 classifier. */
-void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
+static void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
     Lpd0Ctrls *lpd0_ctrls = &md_ctx->lpd0_ctrls;
     // the frame size of reference pics are different if enable reference scaling.
     // sb info can not be reused because super blocks are mismatched, so we set

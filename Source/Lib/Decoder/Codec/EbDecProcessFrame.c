@@ -64,9 +64,9 @@ void decode_super_block(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_c
     decode_partition(dec_mod_ctxt, mi_row, mi_col, sb_info);
 }
 
-EbErrorType decode_tile_row(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
-                            DecMtParseReconTileInfo *parse_recon_tile_info_array, int32_t tile_col,
-                            int32_t mi_row, int32_t sb_row) {
+static EbErrorType decode_tile_row(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
+                                   DecMtParseReconTileInfo *parse_recon_tile_info_array,
+                                   int32_t tile_col, int32_t mi_row, int32_t sb_row) {
     EbErrorType       status                   = EB_ErrorNone;
     EbDecHandle      *dec_handle_ptr           = (EbDecHandle *)(dec_mod_ctxt->dec_handle_ptr);
     MainFrameBuf     *main_frame_buf           = &dec_handle_ptr->main_frame_buf;

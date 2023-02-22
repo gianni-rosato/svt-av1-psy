@@ -375,7 +375,7 @@ static void read_ref_frames(ParseCtxt *parse_ctxt, PartitionInfo *const pi) {
     }
 }
 
-int has_newmv(PredictionMode mode) {
+static int has_newmv(PredictionMode mode) {
     return (mode == NEWMV || mode == NEW_NEWMV || mode == NEAR_NEWMV || mode == NEW_NEARMV ||
             mode == NEAREST_NEWMV || mode == NEW_NEARESTMV);
 }
@@ -1314,7 +1314,7 @@ static void svt_find_best_ref_mvs(int allow_hp, IntMv *mvlist, IntMv *nearest_mv
     *near_mv    = mvlist[1];
 }
 
-int read_mv_component(SvtReader *r, NmvComponent *mvcomp, int use_subpel, int usehp) {
+static int read_mv_component(SvtReader *r, NmvComponent *mvcomp, int use_subpel, int usehp) {
     int       mag, d, fr, hp;
     const int sign     = svt_read_symbol(r, mvcomp->sign_cdf, 2, ACCT_STR);
     const int mv_class = svt_read_symbol(r, mvcomp->classes_cdf, MV_CLASSES, ACCT_STR);
@@ -1523,7 +1523,7 @@ static INLINE int is_dv_valid(MV dv, ParseCtxt *parse_ctx, PartitionInfo *pi) {
     return 1;
 }
 
-int dec_assign_dv(ParseCtxt *parse_ctxt, PartitionInfo *pi, IntMv *mv, IntMv *ref_mv) {
+static int dec_assign_dv(ParseCtxt *parse_ctxt, PartitionInfo *pi, IntMv *mv, IntMv *ref_mv) {
     SvtReader     *r       = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
     read_mv(r, &mv->as_mv, &ref_mv->as_mv, &frm_ctx->ndvc, MV_SUBPEL_NONE);
@@ -1555,7 +1555,7 @@ void assign_intrabc_mv(ParseCtxt *parse_ctxt, IntMv ref_mvs[INTRA_FRAME + 1][MAX
     dec_assign_dv(parse_ctxt, pi, &mbmi->mv[0], &dv_ref);
 }
 
-void read_interintra_mode(ParseCtxt *parse_ctxt, BlockModeInfo *mbmi) {
+static void read_interintra_mode(ParseCtxt *parse_ctxt, BlockModeInfo *mbmi) {
     SvtReader     *r       = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
     BlockSize      bsize   = mbmi->sb_type;
@@ -1731,7 +1731,7 @@ int find_warp_samples(EbDecHandle *dec_handle, TileInfo *tile, PartitionInfo *pi
     return np;
 }
 
-int has_overlappable_cand(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, PartitionInfo *pi) {
+static int has_overlappable_cand(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, PartitionInfo *pi) {
     int                   mi_row = pi->mi_row;
     int                   mi_col = pi->mi_col;
     const TileInfo *const tile   = &parse_ctx->cur_tile_info;
@@ -1792,7 +1792,8 @@ static INLINE MotionMode is_motion_mode_allowed(EbDecHandle *dec_handle, ParseCt
     }
 }
 
-MotionMode read_motion_mode(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionInfo *pi) {
+static MotionMode read_motion_mode(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
+                                   PartitionInfo *pi) {
     SvtReader     *r                   = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx             = &parse_ctxt->cur_tile_ctx;
     FrameHeader   *frame_info          = &dec_handle->frame_header;
@@ -1845,7 +1846,7 @@ static INLINE int get_comp_group_idx_context(ParseCtxt *parse_ctxt, const Partit
     return AOMMIN(5, above_ctx + left_ctx);
 }
 
-int get_comp_index_context(EbDecHandle *dec_handle, PartitionInfo *pi) {
+static int get_comp_index_context(EbDecHandle *dec_handle, PartitionInfo *pi) {
     BlockModeInfo *mbmi       = pi->mi;
     SeqHeader     *seq_params = &dec_handle->seq_header;
     FrameHeader   *frm_header = &dec_handle->frame_header;
@@ -1906,7 +1907,7 @@ void update_compound_ctx(ParseCtxt *parse_ctxt, PartitionInfo *pi, uint32_t blk_
     memset(left_ctx, comp_grp_idx, bh);
 }
 
-void read_compound_type(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionInfo *pi) {
+static void read_compound_type(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionInfo *pi) {
     SvtReader     *r              = &parse_ctxt->r;
     BlockModeInfo *mbmi           = pi->mi;
     BlockSize      bsize          = mbmi->sb_type;
@@ -2007,7 +2008,7 @@ static InterpFilter get_ref_filter_type(const BlockModeInfo *ref_mbmi, int dir,
                 : SWITCHABLE_FILTERS);
 }
 
-int get_context_interp(PartitionInfo *pi, int dir) {
+static int get_context_interp(PartitionInfo *pi, int dir) {
     const BlockModeInfo *const mbmi = pi->mi;
     const int ctx_offset            = (mbmi->ref_frame[1] > INTRA_FRAME) * INTER_FILTER_COMP_OFFSET;
     assert(dir == 0 || dir == 1);
@@ -2226,8 +2227,8 @@ void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Parti
     }
 }
 
-int get_palette_color_context(uint8_t (*color_map)[COLOR_MAP_STRIDE][COLOR_MAP_STRIDE], int r,
-                              int c, int palette_size, uint8_t *color_order) {
+static int get_palette_color_context(uint8_t (*color_map)[COLOR_MAP_STRIDE][COLOR_MAP_STRIDE],
+                                     int r, int c, int palette_size, uint8_t *color_order) {
     // Get color indices of neighbors.
     int color_neighbors[NUM_PALETTE_NEIGHBORS] = {
         c - 1 >= 0 ? (*color_map)[r][c - 1] : -1,

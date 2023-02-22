@@ -13,8 +13,8 @@
 
 #include "EbMotionEstimationResults.h"
 
-EbErrorType motion_estimation_results_ctor(MotionEstimationResults *context_ptr,
-                                           EbPtr                    object_init_data_ptr) {
+static EbErrorType motion_estimation_results_ctor(MotionEstimationResults *context_ptr,
+                                                  EbPtr                    object_init_data_ptr) {
     (void)context_ptr;
     (void)(object_init_data_ptr);
     return EB_ErrorNone;

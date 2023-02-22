@@ -1235,8 +1235,8 @@ static void av1_encode_generate_recon_16bit(EncDecContext *ed_ctx, uint32_t org_
 static EbAv1EncodeLoopFuncPtr av1_encode_loop_func_table[2] = {av1_encode_loop,
                                                                av1_encode_loop_16bit};
 
-EbAv1GenerateReconFuncPtr av1_enc_gen_recon_func_ptr[2] = {av1_encode_generate_recon,
-                                                           av1_encode_generate_recon_16bit};
+static EbAv1GenerateReconFuncPtr av1_enc_gen_recon_func_ptr[2] = {av1_encode_generate_recon,
+                                                                  av1_encode_generate_recon_16bit};
 
 void store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer, PictureControlSet *pcs,
                           uint32_t sb_x, uint32_t sb_y, uint32_t sb_w, uint32_t sb_h) {
@@ -1278,11 +1278,12 @@ void store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer, Picture
                    from_ptr + row_it * input_sample16bit_buffer->stride_cr,
                    sb_w * 2);
 }
-void update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx);
-void move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu,
-                   BlkStruct *dst_cu);
-void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_addr,
-                               BlkStruct *blk_ptr, PredictionUnit *pu_ptr, EncDecContext *ed_ctx) {
+void        update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx);
+void        move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu,
+                          BlkStruct *dst_cu);
+static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_addr,
+                                      BlkStruct *blk_ptr, PredictionUnit *pu_ptr,
+                                      EncDecContext *ed_ctx) {
     Bool                 is_16bit  = ed_ctx->is_16bit;
     uint32_t             bit_depth = ed_ctx->bit_depth;
     uint8_t              is_inter  = 0; // set to 0 b/c this is the intra path
@@ -1962,8 +1963,8 @@ void convert_recon_16bit_to_8bit(PictureControlSet *pcs, EncDecContext *ctx) {
  * For the given mode info, perform inter prediction, transform and recon.
  * Update relevant neighbour arrays.
  */
-void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs, EncDecContext *ctx,
-                               SuperBlock *sb_ptr, uint32_t sb_addr) {
+static void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs,
+                                      EncDecContext *ctx, SuperBlock *sb_ptr, uint32_t sb_addr) {
     const BlockGeom *blk_geom = ctx->blk_geom;
     BlkStruct       *blk_ptr  = ctx->blk_ptr;
     PredictionUnit  *pu_ptr   = blk_ptr->prediction_unit_array;
@@ -2246,8 +2247,9 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs, 
  * Prepare the input picture for EncDec processing, including any necessary
  * padding, compressing, packing, or bit depth conversion.
  */
-void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs, EncDecContext *ctx,
-                           EbPictureBufferDesc *input_pic, uint32_t sb_org_x, uint32_t sb_org_y) {
+static void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs,
+                                  EncDecContext *ctx, EbPictureBufferDesc *input_pic,
+                                  uint32_t sb_org_x, uint32_t sb_org_y) {
     Bool     is_16bit  = ctx->is_16bit;
     uint32_t sb_width  = MIN(scs->sb_size, pcs->ppcs->aligned_width - sb_org_x);
     uint32_t sb_height = MIN(scs->sb_size, pcs->ppcs->aligned_height - sb_org_y);

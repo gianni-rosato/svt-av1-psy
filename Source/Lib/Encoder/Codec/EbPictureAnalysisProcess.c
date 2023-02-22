@@ -357,7 +357,7 @@ void svt_compute_interm_var_four8x8_c(uint8_t *input_samples, uint16_t input_str
 * compute_block_mean_compute_variance
 *   computes the variance and the block mean of all CUs inside the tree block
 *******************************************/
-EbErrorType compute_block_mean_compute_variance(
+static EbErrorType compute_block_mean_compute_variance(
     SequenceControlSet      *scs,
     PictureParentControlSet *pcs, // input parameter, Picture Control Set Ptr
     EbPictureBufferDesc     *input_padded_picture_ptr, // input parameter, Input Padded Picture
@@ -1925,7 +1925,8 @@ static int32_t apply_denoise_2d(SequenceControlSet *scs, PictureParentControlSet
     return 0;
 }
 
-EbErrorType denoise_estimate_film_grain(SequenceControlSet *scs, PictureParentControlSet *pcs) {
+static EbErrorType denoise_estimate_film_grain(SequenceControlSet      *scs,
+                                               PictureParentControlSet *pcs) {
     EbErrorType return_error = EB_ErrorNone;
 
     FrameHeader *frm_hdr = &pcs->frm_hdr;
@@ -2039,8 +2040,9 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
  ** Compute Picture Variance
  ** Compute Block Mean for all blocks in the picture
  ************************************************/
-void compute_picture_spatial_statistics(SequenceControlSet *scs, PictureParentControlSet *pcs,
-                                        EbPictureBufferDesc *input_padded_picture_ptr) {
+static void compute_picture_spatial_statistics(SequenceControlSet      *scs,
+                                               PictureParentControlSet *pcs,
+                                               EbPictureBufferDesc     *input_padded_picture_ptr) {
     // Variance
     uint64_t pic_tot_variance = 0;
     uint16_t b64_total_count  = pcs->b64_total_count;
@@ -2093,9 +2095,10 @@ void gathering_picture_statistics(SequenceControlSet *scs, PictureParentControlS
 /*
     pad the  2b-compressed picture on the right and bottom edges to reach n.8 for Luma and n.4 for Chroma
 */
-void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_stride,
-                                     uint32_t original_src_width, uint32_t original_src_height,
-                                     uint32_t pad_right, uint32_t pad_bottom) {
+static void pad_2b_compressed_input_picture(uint8_t *src_pic, uint32_t src_stride,
+                                            uint32_t original_src_width,
+                                            uint32_t original_src_height, uint32_t pad_right,
+                                            uint32_t pad_bottom) {
     if (pad_right > 0) {
         uint8_t  last_byte, last_pixel, new_byte;
         uint32_t w_m4 = (original_src_width / 4) * 4;
@@ -2425,8 +2428,8 @@ unsigned int svt_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, c
 
 // Check if the number of color of a block is superior to 1 and inferior
 // to a given threshold.
-Bool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int cols,
-                                int nb_colors_threshold) {
+static Bool is_valid_palette_nb_colors(const uint8_t *src, int stride, int rows, int cols,
+                                       int nb_colors_threshold) {
     Bool has_color[1 << 8]; // Maximum (1 << 8) color levels.
     memset(has_color, 0, (1 << 8) * sizeof(*has_color));
     int nb_colors = 0;

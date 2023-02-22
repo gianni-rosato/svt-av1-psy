@@ -301,37 +301,39 @@ const MiniGopStats* get_mini_gop_stats(const uint32_t mini_gop_index) {
     return &mini_gop_stats_array[mini_gop_index];
 }
 
-uint32_t ns_quarter_off_mult[9 /*Up to 9 part*/][2 /*x+y*/][4 /*Up to 4 ns blocks per part*/] = {
-    //9 means not used.
+static uint32_t ns_quarter_off_mult[9 /*Up to 9 part*/][2 /*x+y*/]
+                                   [4 /*Up to 4 ns blocks per part*/] = {
+                                       //9 means not used.
 
-    //          |   x   |     |   y   |
+                                       //          |   x   |     |   y   |
 
-    /*P=0*/ {{0, 9, 9, 9}, {0, 9, 9, 9}},
-    /*P=1*/ {{0, 0, 9, 9}, {0, 2, 9, 9}},
-    /*P=2*/ {{0, 2, 9, 9}, {0, 0, 9, 9}},
-    /*P=3*/ {{0, 2, 0, 9}, {0, 0, 2, 9}},
-    /*P=4*/ {{0, 0, 2, 9}, {0, 2, 2, 9}},
-    /*P=5*/ {{0, 0, 2, 9}, {0, 2, 0, 9}},
-    /*P=6*/ {{0, 2, 2, 9}, {0, 0, 2, 9}},
-    /*P=7*/ {{0, 0, 0, 0}, {0, 1, 2, 3}},
-    /*P=8*/ {{0, 1, 2, 3}, {0, 0, 0, 0}}};
+                                       /*P=0*/ {{0, 9, 9, 9}, {0, 9, 9, 9}},
+                                       /*P=1*/ {{0, 0, 9, 9}, {0, 2, 9, 9}},
+                                       /*P=2*/ {{0, 2, 9, 9}, {0, 0, 9, 9}},
+                                       /*P=3*/ {{0, 2, 0, 9}, {0, 0, 2, 9}},
+                                       /*P=4*/ {{0, 0, 2, 9}, {0, 2, 2, 9}},
+                                       /*P=5*/ {{0, 0, 2, 9}, {0, 2, 0, 9}},
+                                       /*P=6*/ {{0, 2, 2, 9}, {0, 0, 2, 9}},
+                                       /*P=7*/ {{0, 0, 0, 0}, {0, 1, 2, 3}},
+                                       /*P=8*/ {{0, 1, 2, 3}, {0, 0, 0, 0}}};
 
-uint32_t ns_quarter_size_mult[9 /*Up to 9 part*/][2 /*h+v*/][4 /*Up to 4 ns blocks per part*/] = {
-    //9 means not used.
+static uint32_t ns_quarter_size_mult[9 /*Up to 9 part*/][2 /*h+v*/]
+                                    [4 /*Up to 4 ns blocks per part*/] = {
+                                        //9 means not used.
 
-    //          |   h   |     |   v   |
+                                        //          |   h   |     |   v   |
 
-    /*P=0*/ {{4, 9, 9, 9}, {4, 9, 9, 9}},
-    /*P=1*/ {{4, 4, 9, 9}, {2, 2, 9, 9}},
-    /*P=2*/ {{2, 2, 9, 9}, {4, 4, 9, 9}},
-    /*P=3*/ {{2, 2, 4, 9}, {2, 2, 2, 9}},
-    /*P=4*/ {{4, 2, 2, 9}, {2, 2, 2, 9}},
-    /*P=5*/ {{2, 2, 2, 9}, {2, 2, 4, 9}},
-    /*P=6*/ {{2, 2, 2, 9}, {4, 2, 2, 9}},
-    /*P=7*/ {{4, 4, 4, 4}, {1, 1, 1, 1}},
-    /*P=8*/ {{1, 1, 1, 1}, {4, 4, 4, 4}}};
+                                        /*P=0*/ {{4, 9, 9, 9}, {4, 9, 9, 9}},
+                                        /*P=1*/ {{4, 4, 9, 9}, {2, 2, 9, 9}},
+                                        /*P=2*/ {{2, 2, 9, 9}, {4, 4, 9, 9}},
+                                        /*P=3*/ {{2, 2, 4, 9}, {2, 2, 2, 9}},
+                                        /*P=4*/ {{4, 2, 2, 9}, {2, 2, 2, 9}},
+                                        /*P=5*/ {{2, 2, 2, 9}, {2, 2, 4, 9}},
+                                        /*P=6*/ {{2, 2, 2, 9}, {4, 2, 2, 9}},
+                                        /*P=7*/ {{4, 4, 4, 4}, {1, 1, 1, 1}},
+                                        /*P=8*/ {{1, 1, 1, 1}, {4, 4, 4, 4}}};
 
-BlockSize hvsize_to_bsize[/*H*/ 6][/*V*/ 6] = {
+static BlockSize hvsize_to_bsize[/*H*/ 6][/*V*/ 6] = {
     {BLOCK_4X4, BLOCK_4X8, BLOCK_4X16, BLOCK_INVALID, BLOCK_INVALID, BLOCK_INVALID},
     {BLOCK_8X4, BLOCK_8X8, BLOCK_8X16, BLOCK_8X32, BLOCK_INVALID, BLOCK_INVALID},
     {BLOCK_16X4, BLOCK_16X8, BLOCK_16X16, BLOCK_16X32, BLOCK_16X64, BLOCK_INVALID},
@@ -339,10 +341,10 @@ BlockSize hvsize_to_bsize[/*H*/ 6][/*V*/ 6] = {
     {BLOCK_INVALID, BLOCK_INVALID, BLOCK_64X16, BLOCK_64X32, BLOCK_64X64, BLOCK_64X128},
     {BLOCK_INVALID, BLOCK_INVALID, BLOCK_INVALID, BLOCK_INVALID, BLOCK_128X64, BLOCK_128X128}};
 
-uint32_t max_sb    = 64;
-uint32_t max_depth = 5;
-uint32_t max_part  = 9;
-uint32_t max_num_active_blocks;
+static uint32_t max_sb    = 64;
+static uint32_t max_depth = 5;
+static uint32_t max_part  = 9;
+static uint32_t max_num_active_blocks;
 
 GeomIndex geom_idx;
 //TODO need to remove above globals for multi-channel support
@@ -362,8 +364,8 @@ static INLINE TxSize av1_get_tx_size(BlockSize sb_type, int32_t plane /*, const 
     return av1_get_max_uv_txsize(/*mbmi->*/ sb_type, subsampling_x, subsampling_y);
 }
 
-void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t y,
-                      int32_t is_last_quadrant, uint8_t quad_it) {
+static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t y,
+                             int32_t is_last_quadrant, uint8_t quad_it) {
     //the input block is the parent square block of size sq_size located at pos (x,y)
 
     assert(quad_it <= 3);
@@ -1298,7 +1300,7 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
     }
 }
 
-uint32_t count_total_num_of_active_blks() {
+static uint32_t count_total_num_of_active_blks() {
     uint32_t depth_it, sq_it_y, sq_it_x, part_it, nsq_it;
 
     uint32_t depth_scan_idx = 0;
@@ -1333,7 +1335,7 @@ uint32_t count_total_num_of_active_blks() {
 
     return depth_scan_idx;
 }
-void log_redundancy_similarity(uint32_t max_block_count) {
+static void log_redundancy_similarity(uint32_t max_block_count) {
     uint32_t blk_it, s_it;
 
     for (blk_it = 0; blk_it < max_block_count; blk_it++) {

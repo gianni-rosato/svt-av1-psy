@@ -945,7 +945,7 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
  * non_base_boost
  * Compute a non-base frame boost.
  ******************************************************/
-int8_t non_base_boost(PictureControlSet *pcs) {
+static int8_t non_base_boost(PictureControlSet *pcs) {
     int8_t             q_boost = 0;
     EbReferenceObject *ref_obj_l0 =
         (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
@@ -1606,7 +1606,7 @@ static void av1_rc_init(SequenceControlSet *scs) {
 * process_tpl_stats_frame_kf_gfu_boost
 * update r0, calculate kf and gfu boosts for VBR
 *******************************************************************************/
-void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
+static void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs) {
     PictureParentControlSet *ppcs = pcs->ppcs;
     SequenceControlSet      *scs  = ppcs->scs;
 #if FIX_LAYER_SIGNAL
@@ -1877,7 +1877,7 @@ static int find_closest_qindex_by_rate(int desired_bits_per_mb, PictureParentCon
     // the desired rate.
     return (curr_bit_diff <= prev_bit_diff) ? curr_q : prev_q;
 }
-int max_delta_per_layer[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_LAYERS] = {
+static int max_delta_per_layer[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_LAYERS] = {
     {60}, {60, 5}, {60, 5, 2}, {60, 5, 2, 2}, {60, 5, 2, 2, 2}, {60, 5, 2, 2, 2, 2}};
 static int adjust_q_cbr(PictureParentControlSet *ppcs_ptr, int q) {
     SequenceControlSet *scs                = ppcs_ptr->scs;

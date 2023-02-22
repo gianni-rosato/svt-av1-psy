@@ -45,7 +45,7 @@ void initialize_samples_neighboring_reference_picture_8bit(EbByte   recon_sample
         recon_samples_ptr[sample_count * stride] = 0;
 }
 
-void initialize_samples_neighboring_reference_picture(
+static void initialize_samples_neighboring_reference_picture(
     EbReferenceObject           *reference_object,
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr, EbBitDepth bit_depth) {
     UNUSED(bit_depth);

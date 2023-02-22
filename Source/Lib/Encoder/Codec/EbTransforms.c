@@ -3047,11 +3047,11 @@ static EbErrorType av1_estimate_transform_ONLY_DC(int16_t *residual_buffer,
     return return_error;
 }
 
-EbErrorType av1_estimate_transform_default(int16_t *residual_buffer, uint32_t residual_stride,
-                                           int32_t *coeff_buffer, uint32_t coeff_stride,
-                                           TxSize transform_size, uint64_t *three_quad_energy,
-                                           uint32_t bit_depth, TxType transform_type,
-                                           PlaneType component_type)
+static EbErrorType av1_estimate_transform_default(int16_t *residual_buffer,
+                                                  uint32_t residual_stride, int32_t *coeff_buffer,
+                                                  uint32_t coeff_stride, TxSize transform_size,
+                                                  uint64_t *three_quad_energy, uint32_t bit_depth,
+                                                  TxType transform_type, PlaneType component_type)
 
 {
     EbErrorType return_error = EB_ErrorNone;
@@ -5316,8 +5316,8 @@ void svt_av1_fdct64_new_N2(const int32_t *input, int32_t *output, int8_t cos_bit
     bf1[31] = bf0[62];
 }
 
-void av1_fidentity64_N2_c(const int32_t *input, int32_t *output, int8_t cos_bit,
-                          const int8_t *stage_range) {
+static void av1_fidentity64_N2_c(const int32_t *input, int32_t *output, int8_t cos_bit,
+                                 const int8_t *stage_range) {
     (void)stage_range;
     (void)cos_bit;
     for (int32_t i = 0; i < 32; ++i)
@@ -6922,8 +6922,8 @@ void svt_av1_fdct64_new_N4(const int32_t *input, int32_t *output, int8_t cos_bit
     bf1[15] = bf0[60];
 }
 
-void av1_fidentity64_N4_c(const int32_t *input, int32_t *output, int8_t cos_bit,
-                          const int8_t *stage_range) {
+static void av1_fidentity64_N4_c(const int32_t *input, int32_t *output, int8_t cos_bit,
+                                 const int8_t *stage_range) {
     (void)stage_range;
     (void)cos_bit;
     for (int32_t i = 0; i < 16; ++i)

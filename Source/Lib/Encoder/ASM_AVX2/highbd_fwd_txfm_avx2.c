@@ -4143,8 +4143,8 @@ static INLINE void fidtx8x4_avx2(__m256i *in, __m256i *out, int32_t bit) {
     out[3] = _mm256_add_epi32(in[3], in[3]);
 }
 
-void av1_idtx32_new_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
-                         const int32_t col_num) {
+static void av1_idtx32_new_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
+                                const int32_t col_num) {
     (void)cos_bit;
     for (int32_t i = 0; i < 32; i++) output[i * col_num] = _mm256_slli_epi32(input[i * col_num], 2);
 }
@@ -6568,8 +6568,8 @@ static void fidtx16x16_N2_row_avx2(const __m256i *in, __m256i *out, int8_t bit, 
     }
 }
 
-void av1_idtx32_new_N2_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
-                            const int32_t col_num, int32_t size) {
+static void av1_idtx32_new_N2_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
+                                   const int32_t col_num, int32_t size) {
     (void)cos_bit;
 
     for (int32_t i = 0; i < size; i += 4) {
@@ -6578,7 +6578,7 @@ void av1_idtx32_new_N2_avx2(const __m256i *input, __m256i *output, int8_t cos_bi
     }
 }
 
-void av1_idtx16x32_N2_avx2(const __m256i *input, __m256i *output) {
+static void av1_idtx16x32_N2_avx2(const __m256i *input, __m256i *output) {
     for (int32_t i = 0; i < 32; i += 2) { output[i] = _mm256_slli_epi32(input[i], 2); }
 }
 
@@ -7799,14 +7799,14 @@ static INLINE void av1_round_shift_array_64_N2_avx2(__m256i *input, __m256i *out
     }
 }
 
-void av1_idtx16_new_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
-                         const int32_t col_num) {
+static void av1_idtx16_new_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
+                                const int32_t col_num) {
     (void)cos_bit;
     for (int32_t i = 0; i < 16; i++) output[i * col_num] = _mm256_slli_epi32(input[i * col_num], 2);
 }
 
-void fidtx32x8_N2_avx2(const __m256i *input, __m256i *output, int8_t cos_bit, const int32_t col_num,
-                       int32_t row_num) {
+static void fidtx32x8_N2_avx2(const __m256i *input, __m256i *output, int8_t cos_bit,
+                              const int32_t col_num, int32_t row_num) {
     (void)cos_bit;
     for (int32_t i = 0; i < row_num; i++)
         output[i * col_num] = _mm256_slli_epi32(input[i * col_num], 1);
@@ -7830,7 +7830,7 @@ static void fidtx32x16_N2_avx2(const __m256i *in, __m256i *out, int8_t bit, int3
     }
 }
 
-void av1_idtx32x16_N2_avx2(const __m256i *input, __m256i *output, const int32_t rows) {
+static void av1_idtx32x16_N2_avx2(const __m256i *input, __m256i *output, const int32_t rows) {
     for (int32_t i = 0; i < rows; i++) {
         output[i * 4]     = _mm256_slli_epi32(input[i * 4], 2);
         output[i * 4 + 1] = _mm256_slli_epi32(input[i * 4 + 1], 2);

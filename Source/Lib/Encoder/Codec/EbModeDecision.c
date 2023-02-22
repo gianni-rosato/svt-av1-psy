@@ -105,9 +105,10 @@ Bool warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx
         ctx->blk_geom->bwidth >= 8 && ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled &&
         ctx->inject_new_warp;
 }
-MotionMode obmc_motion_mode_allowed(const PictureControlSet *pcs, struct ModeDecisionContext *ctx,
-                                    const BlockSize bsize, MvReferenceFrame rf0,
-                                    MvReferenceFrame rf1, PredictionMode mode) {
+static MotionMode obmc_motion_mode_allowed(const PictureControlSet    *pcs,
+                                           struct ModeDecisionContext *ctx, const BlockSize bsize,
+                                           MvReferenceFrame rf0, MvReferenceFrame rf1,
+                                           PredictionMode mode) {
     // check if should cap the max block size for obmc
     if (ctx->obmc_ctrls.max_blk_size_16x16)
         if (block_size_wide[bsize] > 16 || block_size_high[bsize] > 16)
@@ -143,8 +144,9 @@ int32_t have_newmv_in_inter_mode(PredictionMode mode) {
     return (mode == NEWMV || mode == NEW_NEWMV || mode == NEAREST_NEWMV || mode == NEW_NEARESTMV ||
             mode == NEAR_NEWMV || mode == NEW_NEARMV);
 }
-MvReferenceFrame to_ref_frame[2][4] = {{LAST_FRAME, LAST2_FRAME, LAST3_FRAME, GOLDEN_FRAME},
-                                       {BWDREF_FRAME, ALTREF2_FRAME, ALTREF_FRAME, INVALID_REF}};
+static MvReferenceFrame to_ref_frame[2][4] = {
+    {LAST_FRAME, LAST2_FRAME, LAST3_FRAME, GOLDEN_FRAME},
+    {BWDREF_FRAME, ALTREF2_FRAME, ALTREF_FRAME, INVALID_REF}};
 
 MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
     return to_ref_frame[list][ref_idx];
@@ -212,12 +214,12 @@ void precompute_intra_pred_for_inter_intra(PictureControlSet *pcs, ModeDecisionC
     }
 }
 
-void combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
-                        int wedge_sign, BlockSize bsize, BlockSize plane_bsize, uint8_t *comppred,
-                        int compstride, const uint8_t *interpred, int interstride,
-                        const uint8_t *intrapred, int intrastride);
-void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                        ModeDecisionCandidate *cand) {
+void        combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
+                               int wedge_sign, BlockSize bsize, BlockSize plane_bsize, uint8_t *comppred,
+                               int compstride, const uint8_t *interpred, int interstride,
+                               const uint8_t *intrapred, int intrastride);
+static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                               ModeDecisionCandidate *cand) {
     SequenceControlSet *scs = pcs->scs;
     DECLARE_ALIGNED(16, uint8_t, tmp_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, ii_pred_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
@@ -420,11 +422,11 @@ void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     // Enable wedge search if source variance and edge strength are above the thresholds.
 }
 
-COMPOUND_TYPE to_av1_compound_lut[] = {
+static COMPOUND_TYPE to_av1_compound_lut[] = {
     COMPOUND_AVERAGE, COMPOUND_DISTWTD, COMPOUND_DIFFWTD, COMPOUND_WEDGE};
 
-void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                             ModeDecisionCandidate *candidatePtr, MD_COMP_TYPE cur_type) {
+static void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                    ModeDecisionCandidate *candidatePtr, MD_COMP_TYPE cur_type) {
     candidatePtr->interinter_comp.type = to_av1_compound_lut[cur_type];
 
     if (cur_type == MD_COMP_AVG) {
@@ -662,7 +664,7 @@ EbErrorType mode_decision_scratch_cand_bf_ctor(ModeDecisionCandidateBuffer *buff
 /***************************************
 * return true if the MV candidate is already injected
 ***************************************/
-Bool mv_is_already_injected(ModeDecisionContext *ctx, Mv mv0, Mv mv1, uint8_t ref_type) {
+static Bool mv_is_already_injected(ModeDecisionContext *ctx, Mv mv0, Mv mv1, uint8_t ref_type) {
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_type);
 
@@ -725,8 +727,8 @@ Bool is_valid_unipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_gr
     }
 }
 // Determine if the MV-to-MVP difference satisfies the mv_diff restriction
-Bool is_valid_mv_diff(IntMv best_pred_mv[2], Mv mv0, Mv mv1, uint8_t is_compound,
-                      uint8_t allow_high_precision_mv) {
+static Bool is_valid_mv_diff(IntMv best_pred_mv[2], Mv mv0, Mv mv1, uint8_t is_compound,
+                             uint8_t allow_high_precision_mv) {
     uint8_t mv_diff_max_bit = 14 + (allow_high_precision_mv ? 1 : 0);
 
     if (is_compound) {
@@ -746,8 +748,9 @@ Bool is_valid_mv_diff(IntMv best_pred_mv[2], Mv mv0, Mv mv1, uint8_t is_compound
 }
 // Determine if a unipred reference is valid, based on the current
 // prediction type (i.e. inter_cand_group)
-Bool is_valid_uni_type(struct ModeDecisionContext *ctx, uint8_t inter_type, uint8_t is_ii_allowed,
-                       uint8_t is_warp_allowed, uint8_t list_idx, uint8_t ref_idx) {
+static Bool is_valid_uni_type(struct ModeDecisionContext *ctx, uint8_t inter_type,
+                              uint8_t is_ii_allowed, uint8_t is_warp_allowed, uint8_t list_idx,
+                              uint8_t ref_idx) {
     uint8_t inter_cand_group = TOT_INTER_GROUP;
 
     switch (inter_type) {
@@ -780,9 +783,9 @@ Bool is_valid_uni_type(struct ModeDecisionContext *ctx, uint8_t inter_type, uint
     }
 }
 
-Bool is_valid_bipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_group,
-                         uint8_t list_idx_0, uint8_t ref_idx_0, uint8_t list_idx_1,
-                         uint8_t ref_idx_1) {
+static Bool is_valid_bipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_group,
+                                uint8_t list_idx_0, uint8_t ref_idx_0, uint8_t list_idx_1,
+                                uint8_t ref_idx_1) {
     if (!ctx->ref_pruning_ctrls.enabled)
         return TRUE;
     // Both ref should be 1 for bipred refs to be valid: if 1 is not best_refs then there is a chance to exit the injection
@@ -800,8 +803,9 @@ Bool is_valid_bipred_ref(struct ModeDecisionContext *ctx, uint8_t inter_cand_gro
 }
 // Determine if a bipred reference is valid, based on the current
 // prediction type (i.e. inter_cand_group)
-Bool is_valid_bi_type(struct ModeDecisionContext *ctx, MD_COMP_TYPE cur_type, uint8_t list_idx_0,
-                      uint8_t ref_idx_0, uint8_t list_idx_1, uint8_t ref_idx_1) {
+static Bool is_valid_bi_type(struct ModeDecisionContext *ctx, MD_COMP_TYPE cur_type,
+                             uint8_t list_idx_0, uint8_t ref_idx_0, uint8_t list_idx_1,
+                             uint8_t ref_idx_1) {
     switch (cur_type) {
     case MD_COMP_AVG: return TRUE; break;
     case MD_COMP_DIST:
@@ -821,9 +825,9 @@ Bool is_valid_bi_type(struct ModeDecisionContext *ctx, MD_COMP_TYPE cur_type, ui
 }
 #define BIPRED_3x3_REFINMENT_POSITIONS 8
 
-int8_t allow_refinement_flag[BIPRED_3x3_REFINMENT_POSITIONS] = {1, 0, 1, 0, 1, 0, 1, 0};
-int8_t bipred_3x3_x_pos[BIPRED_3x3_REFINMENT_POSITIONS]      = {-1, -1, 0, 1, 1, 1, 0, -1};
-int8_t bipred_3x3_y_pos[BIPRED_3x3_REFINMENT_POSITIONS]      = {0, 1, 1, 1, 0, -1, -1, -1};
+static int8_t allow_refinement_flag[BIPRED_3x3_REFINMENT_POSITIONS] = {1, 0, 1, 0, 1, 0, 1, 0};
+static int8_t bipred_3x3_x_pos[BIPRED_3x3_REFINMENT_POSITIONS]      = {-1, -1, 0, 1, 1, 1, 0, -1};
+static int8_t bipred_3x3_y_pos[BIPRED_3x3_REFINMENT_POSITIONS]      = {0, 1, 1, 1, 0, -1, -1, -1};
 
 void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureControlSet *pcs,
                                       ModeDecisionContext *ctx, SuperBlock *sb_ptr,
@@ -1111,14 +1115,14 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
 
     return;
 }
-void bipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureControlSet *pcs,
-                                     ModeDecisionContext *ctx, SuperBlock *sb_ptr,
-                                     uint32_t me_sb_addr, uint32_t *candidate_total_cnt) {
+static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureControlSet *pcs,
+                                            ModeDecisionContext *ctx, SuperBlock *sb_ptr,
+                                            uint32_t me_sb_addr, uint32_t *candidate_total_cnt) {
     UNUSED(sb_ptr);
     uint32_t           cand_total_cnt = (*candidate_total_cnt);
-    FrameHeader       *frm_hdr        = &pcs->ppcs->frm_hdr;
+    const FrameHeader *frm_hdr        = &pcs->ppcs->frm_hdr;
     const MeSbResults *me_results     = pcs->ppcs->pa_me_data->me_results[me_sb_addr];
-    uint8_t            total_me_cnt   = me_results->total_me_candidate_index[ctx->me_block_offset];
+    const uint8_t      total_me_cnt   = me_results->total_me_candidate_index[ctx->me_block_offset];
     const MeCandidate *me_block_results = &me_results->me_candidate_array[ctx->me_cand_offset];
     ModeDecisionCandidate *cand_array   = ctx->fast_cand_array;
     Bool         is_compound_enabled    = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
@@ -1440,8 +1444,8 @@ UniPred L1 : NEARST         + upto 3x NEAR
 BIPred     : NEARST_NEARST  + upto 3x NEAR_NEAR
 **********************************************************************
 **********************************************************************/
-void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                        uint32_t *candTotCnt) {
+static void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                               uint32_t *candTotCnt) {
     BlkStruct   *blk_ptr        = ctx->blk_ptr;
     FrameHeader *frm_hdr        = &pcs->ppcs->frm_hdr;
     Bool         allow_compound = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? FALSE : TRUE;
@@ -1659,8 +1663,8 @@ UniPred L1 : NEARST         + upto 3x NEAR
 BIPred     : NEARST_NEARST  + upto 3x NEAR_NEAR
 **********************************************************************
 **********************************************************************/
-void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureControlSet *pcs,
-                              ModeDecisionContext *ctx, uint32_t *candTotCnt) {
+static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureControlSet *pcs,
+                                     ModeDecisionContext *ctx, uint32_t *candTotCnt) {
     BlkStruct             *blk_ptr        = ctx->blk_ptr;
     FrameHeader           *frm_hdr        = &pcs->ppcs->frm_hdr;
     Bool                   allow_compound = (frm_hdr->reference_mode == SINGLE_REFERENCE ||
@@ -2056,8 +2060,9 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureControlSet *
     *candTotCnt = cand_idx;
 }
 
-void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs, PictureControlSet *pcs,
-                                            ModeDecisionContext *ctx, uint32_t *candTotCnt) {
+static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs,
+                                                   PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                                   uint32_t *candTotCnt) {
     uint32_t               cand_idx   = *candTotCnt;
     ModeDecisionCandidate *cand_array = ctx->fast_cand_array;
     MacroBlockD           *xd         = ctx->blk_ptr->av1xd;
@@ -2811,10 +2816,10 @@ static uint8_t obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisio
 /*
    inject ME candidates for Light PD0
 */
-void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, PictureControlSet *pcs,
-                                     Bool is_compound_enabled, Bool allow_bipred,
-                                     uint32_t me_sb_addr, uint32_t me_block_offset,
-                                     uint32_t *candidate_total_cnt) {
+static void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, PictureControlSet *pcs,
+                                            Bool is_compound_enabled, Bool allow_bipred,
+                                            uint32_t me_sb_addr, uint32_t me_block_offset,
+                                            uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array       = ctx->fast_cand_array;
     uint32_t               cand_total_cnt   = (*candidate_total_cnt);
     const MeSbResults     *me_results       = pcs->ppcs->pa_me_data->me_results[me_sb_addr];
@@ -2919,10 +2924,10 @@ void inject_new_candidates_light_pd0(struct ModeDecisionContext *ctx, PictureCon
     // update the total number of candidates injected
     (*candidate_total_cnt) = cand_total_cnt;
 }
-void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
-                                     Bool is_compound_enabled, Bool allow_bipred,
-                                     uint32_t me_sb_addr, uint32_t me_block_offset,
-                                     uint32_t *candidate_total_cnt) {
+static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
+                                            Bool is_compound_enabled, Bool allow_bipred,
+                                            uint32_t me_sb_addr, uint32_t me_block_offset,
+                                            uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array       = ctx->fast_cand_array;
     IntMv                  best_pred_mv[2]  = {{0}, {0}};
     uint32_t               cand_total_cnt   = (*candidate_total_cnt);
@@ -3120,10 +3125,10 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
     // update the total number of candidates injected
     (*candidate_total_cnt) = cand_total_cnt;
 }
-void inject_new_candidates(const SequenceControlSet *scs, struct ModeDecisionContext *ctx,
-                           PictureControlSet *pcs, Bool is_compound_enabled, Bool allow_bipred,
-                           uint32_t me_sb_addr, uint32_t me_block_offset,
-                           uint32_t *candidate_total_cnt) {
+static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDecisionContext *ctx,
+                                  PictureControlSet *pcs, Bool is_compound_enabled,
+                                  Bool allow_bipred, uint32_t me_sb_addr, uint32_t me_block_offset,
+                                  uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array       = ctx->fast_cand_array;
     IntMv                  best_pred_mv[2]  = {{0}, {0}};
     uint32_t               cand_total_cnt   = (*candidate_total_cnt);
@@ -3564,9 +3569,9 @@ void inject_new_candidates(const SequenceControlSet *scs, struct ModeDecisionCon
     // update the total number of candidates injected
     (*candidate_total_cnt) = cand_total_cnt;
 }
-void inject_global_candidates(const SequenceControlSet *scs, struct ModeDecisionContext *ctx,
-                              PictureControlSet *pcs, Bool is_compound_enabled, Bool allow_bipred,
-                              uint32_t *candidate_total_cnt) {
+static void inject_global_candidates(const SequenceControlSet *scs, struct ModeDecisionContext *ctx,
+                                     PictureControlSet *pcs, Bool is_compound_enabled,
+                                     Bool allow_bipred, uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array     = ctx->fast_cand_array;
     uint32_t               cand_total_cnt = (*candidate_total_cnt);
     uint8_t                inj_mv;
@@ -3766,7 +3771,7 @@ void inject_global_candidates(const SequenceControlSet *scs, struct ModeDecision
     // update the total number of candidates injected
     (*candidate_total_cnt) = cand_total_cnt;
 }
-void inject_pme_candidates(
+static void inject_pme_candidates(
     //const SequenceControlSet   *scs,
     struct ModeDecisionContext *ctx, PictureControlSet *pcs, Bool is_compound_enabled,
     Bool allow_bipred, uint32_t *candidate_total_cnt) {
@@ -4033,8 +4038,8 @@ void inject_pme_candidates(
     }
     (*candidate_total_cnt) = cand_total_cnt;
 }
-void inject_inter_candidates_light_pd0(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                       uint32_t *candidate_total_cnt) {
+static void inject_inter_candidates_light_pd0(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                              uint32_t *candidate_total_cnt) {
     FrameHeader *frm_hdr             = &pcs->ppcs->frm_hdr;
     Bool         is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
 
@@ -4046,8 +4051,8 @@ void inject_inter_candidates_light_pd0(PictureControlSet *pcs, ModeDecisionConte
                                     ctx->me_block_offset,
                                     candidate_total_cnt);
 }
-void inject_inter_candidates_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                       uint32_t *candidate_total_cnt) {
+static void inject_inter_candidates_light_pd1(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                              uint32_t *candidate_total_cnt) {
     FrameHeader *frm_hdr             = &pcs->ppcs->frm_hdr;
     uint32_t     cand_total_cnt      = *candidate_total_cnt;
     Bool         is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
@@ -4169,14 +4174,14 @@ static INLINE int mv_check_bounds(const MvLimits *mv_limits, const MV *mv) {
     return (mv->row >> 3) < mv_limits->row_min || (mv->row >> 3) > mv_limits->row_max ||
         (mv->col >> 3) < mv_limits->col_min || (mv->col >> 3) > mv_limits->col_max;
 }
-void assert_release(int statement) {
+static void assert_release(int statement) {
     if (statement == 0)
         SVT_LOG("ASSERT_ERRRR\n");
 }
 
-void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                     const SequenceControlSet *scs, BlkStruct *blk_ptr, MV *dv_cand,
-                     uint8_t *num_dv_cand) {
+static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                            const SequenceControlSet *scs, BlkStruct *blk_ptr, MV *dv_cand,
+                            uint8_t *num_dv_cand) {
     IntraBcContext  x_st;
     IntraBcContext *x           = &x_st;
     uint32_t        full_lambda = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD]
@@ -4356,9 +4361,9 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext
     mv_cost_params->mvcost[0]     = ctx->md_rate_estimation_ptr->nmvcoststack[0];
     mv_cost_params->mvcost[1]     = ctx->md_rate_estimation_ptr->nmvcoststack[1];
 }
-void inject_intra_bc_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                const SequenceControlSet *scs, BlkStruct *blk_ptr,
-                                uint32_t *cand_cnt) {
+static void inject_intra_bc_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                       const SequenceControlSet *scs, BlkStruct *blk_ptr,
+                                       uint32_t *cand_cnt) {
     MV      dv_cand[2];
     uint8_t num_dv_cand = 0;
 
@@ -4698,7 +4703,7 @@ void  inject_filter_intra_candidates(
 
     return;
 }
-void inject_zz_backup_candidate(
+static void inject_zz_backup_candidate(
      PictureControlSet   *pcs,
     struct ModeDecisionContext *ctx,
     uint32_t *candidate_total_cnt) {

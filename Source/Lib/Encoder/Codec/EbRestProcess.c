@@ -170,8 +170,8 @@ extern void get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_pt
 // condition between threads.
 //
 // Return a pointer to the recon pic to be used during the restoration search.
-EbPictureBufferDesc *get_own_recon(SequenceControlSet *scs, PictureControlSet *pcs,
-                                   RestContext *context_ptr, Bool is_16bit) {
+static EbPictureBufferDesc *get_own_recon(SequenceControlSet *scs, PictureControlSet *pcs,
+                                          RestContext *context_ptr, Bool is_16bit) {
     const uint32_t ss_x = scs->subsampling_x;
     const uint32_t ss_y = scs->subsampling_y;
 
@@ -334,9 +334,10 @@ void set_unscaled_input_16bit(PictureControlSet *pcs) {
     }
 }
 
-void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
-                             int32_t blk_col_px, int32_t blk_row_px, void **pp_blk_recon_buf,
-                             int32_t *recon_stride, int32_t sub_x, int32_t sub_y, Bool use_highbd) {
+static void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
+                                    int32_t blk_col_px, int32_t blk_row_px, void **pp_blk_recon_buf,
+                                    int32_t *recon_stride, int32_t sub_x, int32_t sub_y,
+                                    Bool use_highbd) {
     int32_t block_offset;
 
     if (plane == 0) {
@@ -372,8 +373,9 @@ void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t pla
     }
 }
 
-EbErrorType copy_recon_enc(SequenceControlSet *scs, EbPictureBufferDesc *recon_picture_src,
-                           EbPictureBufferDesc *recon_picture_dst, int num_planes, int skip_copy) {
+static EbErrorType copy_recon_enc(SequenceControlSet *scs, EbPictureBufferDesc *recon_picture_src,
+                                  EbPictureBufferDesc *recon_picture_dst, int num_planes,
+                                  int skip_copy) {
     recon_picture_dst->org_x        = recon_picture_src->org_x;
     recon_picture_dst->org_y        = recon_picture_src->org_y;
     recon_picture_dst->origin_bot_y = recon_picture_src->origin_bot_y;

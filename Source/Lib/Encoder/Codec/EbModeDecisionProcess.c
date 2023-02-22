@@ -551,8 +551,8 @@ static void av1_lambda_assign_md(PictureControlSet *pcs, ModeDecisionContext *ct
     ctx->full_sb_lambda_md[1] = ctx->full_lambda_md[1];
 }
 
-void av1_lambda_assign(PictureControlSet *pcs, uint32_t *fast_lambda, uint32_t *full_lambda,
-                       uint8_t bit_depth, uint16_t qp_index, Bool multiply_lambda) {
+static void av1_lambda_assign(PictureControlSet *pcs, uint32_t *fast_lambda, uint32_t *full_lambda,
+                              uint8_t bit_depth, uint16_t qp_index, Bool multiply_lambda) {
     if (bit_depth == 8) {
         *full_lambda = (uint32_t)svt_aom_compute_rd_mult(
             pcs, (uint8_t)qp_index, (uint8_t)qp_index, bit_depth);

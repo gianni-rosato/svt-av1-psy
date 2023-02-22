@@ -189,7 +189,7 @@ void svt_av1_end_first_pass(PictureParentControlSet *pcs) {
 #define INVALID_ROW -1
 // Accumulates motion vector stats.
 // Modifies member variables of "stats".
-void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row, const int mb_col,
+static void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row, const int mb_col,
                          const int mb_rows, const int mb_cols, MV *last_mv, FRAME_STATS *stats) {
     if (is_zero_mv(&best_mv))
         return;
@@ -402,7 +402,7 @@ void setup_firstpass_data_seg(PictureParentControlSet *ppcs_ptr, int32_t segment
         }
     }
 }
-void first_pass_frame_end(PictureParentControlSet *pcs, uint8_t skip_frame,
+static void first_pass_frame_end(PictureParentControlSet *pcs, uint8_t skip_frame,
                           uint8_t bypass_blk_step, const double ts_duration) {
     SequenceControlSet *scs = pcs->scs;
     const uint32_t      mb_cols = (scs->max_input_luma_width + 16 - 1) / 16;

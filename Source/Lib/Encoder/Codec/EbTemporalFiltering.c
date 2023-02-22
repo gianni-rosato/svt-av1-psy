@@ -1315,7 +1315,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
     }
 }
 /* calculates SSE*/
-uint32_t calculate_squared_errors_sum(const uint8_t *s, int s_stride, const uint8_t *p,
+static uint32_t calculate_squared_errors_sum(const uint8_t *s, int s_stride, const uint8_t *p,
                                       int p_stride, unsigned int w, unsigned int h) {
     unsigned int i, j;
     uint32_t     sum = 0;
@@ -1329,7 +1329,7 @@ uint32_t calculate_squared_errors_sum(const uint8_t *s, int s_stride, const uint
 }
 
 /* calculates SSE for 10bit*/
-uint32_t calculate_squared_errors_sum_highbd(const uint16_t *s, int s_stride, const uint16_t *p,
+static uint32_t calculate_squared_errors_sum_highbd(const uint16_t *s, int s_stride, const uint16_t *p,
                                              int p_stride,
                                              unsigned int w, unsigned int h, int shift_factor) {
     unsigned int i, j;

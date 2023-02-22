@@ -151,7 +151,7 @@ void recon_coef_dctor(EbPtr p) {
     }
     EB_DELETE_PTR_ARRAY(obj->quantized_coeff, obj->b64_total_count);
 }
-void picture_control_set_dctor(EbPtr p) {
+static void picture_control_set_dctor(EbPtr p) {
     PictureControlSet *obj      = (PictureControlSet *)p;
     uint16_t           tile_cnt = obj->tile_row_count * obj->tile_column_count;
     uint8_t            depth;
@@ -282,7 +282,7 @@ typedef struct InitData {
 } InitData;
 
 #define DIM(array) (sizeof(array) / sizeof(array[0]))
-EbErrorType create_neighbor_array_units(InitData *data, size_t count) {
+static EbErrorType create_neighbor_array_units(InitData *data, size_t count) {
     for (size_t i = 0; i < count; i++) {
         EB_NEW(*data[i].na_unit_dbl_ptr,
                neighbor_array_unit_ctor,
@@ -312,7 +312,7 @@ EbErrorType rtime_alloc_palette_tokens(SequenceControlSet *scs, PictureControlSe
     return EB_ErrorNone;
 }
 
-EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
+static EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
 
     EbPictureBufferDescInitData input_pic_buf_desc_init_data;
@@ -409,7 +409,8 @@ uint32_t get_out_buffer_size(uint32_t picture_width, uint32_t picture_height) {
         return (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(picture_width * picture_height));
 }
 
-EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object_init_data_ptr) {
+static EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr,
+                                            EbPtr              object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
 
     EbPictureBufferDescInitData coeff_buffer_desc_init_data;
@@ -1336,8 +1337,8 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DELETE_PTR_ARRAY(obj->tpl_disp_segment_ctrl, tile_cnt);
     EB_DESTROY_MUTEX(obj->pcs_total_rate_mutex);
 }
-EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
-                                            EbPtr                    object_init_data_ptr) {
+static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
+                                                   EbPtr                    object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr    = (PictureControlSetInitData *)object_init_data_ptr;
     EbErrorType                return_error     = EB_ErrorNone;
     const uint16_t             picture_sb_width = (uint16_t)((init_data_ptr->picture_width +
@@ -1557,7 +1558,7 @@ static void me_dctor(EbPtr p) {
     if (obj->tpl_src_stats_buffer)
         EB_FREE_ARRAY(obj->tpl_src_stats_buffer);
 }
-EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr) {
+static EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr    = (PictureControlSetInitData *)object_init_data_ptr;
     EbErrorType                return_error     = EB_ErrorNone;
     const uint16_t             picture_sb_width = (uint16_t)((init_data_ptr->picture_width +

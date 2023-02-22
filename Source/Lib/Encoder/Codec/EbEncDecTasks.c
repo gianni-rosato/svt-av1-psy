@@ -13,7 +13,7 @@
 
 #include "EbEncDecTasks.h"
 
-EbErrorType enc_dec_tasks_ctor(EncDecTasks *context_ptr, EbPtr object_init_data_ptr) {
+static EbErrorType enc_dec_tasks_ctor(EncDecTasks *context_ptr, EbPtr object_init_data_ptr) {
     (void)context_ptr;
     (void)object_init_data_ptr;
 

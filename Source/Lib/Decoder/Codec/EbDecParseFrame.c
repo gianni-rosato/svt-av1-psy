@@ -52,7 +52,8 @@ void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header, int32_t t
     assert(cur_tile_info->mi_col_end > cur_tile_info->mi_col_start);
 }
 
-void clear_above_context(ParseCtxt *parse_ctxt, int mi_col_start, int mi_col_end, int num_threads) {
+static void clear_above_context(ParseCtxt *parse_ctxt, int mi_col_start, int mi_col_end,
+                                int num_threads) {
     SeqHeader *seq_params = parse_ctxt->seq_header;
     int        num_planes = av1_num_planes(&seq_params->color_config);
     int        width      = mi_col_end - mi_col_start;
@@ -84,7 +85,7 @@ void clear_above_context(ParseCtxt *parse_ctxt, int mi_col_start, int mi_col_end
            width * sizeof(uint8_t));
 }
 
-void clear_left_context(ParseCtxt *parse_ctxt) {
+static void clear_left_context(ParseCtxt *parse_ctxt) {
     SeqHeader *seq_params = parse_ctxt->seq_header;
 
     /* Maintained only for 1 left SB! */
@@ -112,11 +113,11 @@ void clear_left_context(ParseCtxt *parse_ctxt) {
            blk_cnt * sizeof(parse_ctxt->parse_left_nbr4x4_ctxt->left_tx_ht[0]));
 }
 
-void clear_cdef(int8_t *sb_cdef_strength, int32_t cdef_factor) {
+static void clear_cdef(int8_t *sb_cdef_strength, int32_t cdef_factor) {
     memset(sb_cdef_strength, -1, cdef_factor * sizeof(*sb_cdef_strength));
 }
 
-void clear_loop_filter_delta(ParseCtxt *parse_ctx) {
+static void clear_loop_filter_delta(ParseCtxt *parse_ctx) {
     for (int lf_id = 0; lf_id < FRAME_LF_COUNT; ++lf_id) parse_ctx->delta_lf[lf_id] = 0;
 }
 

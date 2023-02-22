@@ -44,7 +44,7 @@ static int32_t av1_get_upscale_convolve_step(int in_length, int out_length) {
     return ((in_length << RS_SCALE_SUBPEL_BITS) + out_length / 2) / out_length;
 }
 
-int32_t get_upscale_convolve_x0(int in_length, int out_length, int32_t x_step_qn) {
+static int32_t get_upscale_convolve_x0(int in_length, int out_length, int32_t x_step_qn) {
     const int     err = out_length * x_step_qn - (in_length << RS_SCALE_SUBPEL_BITS);
     const int32_t x0  = (-((out_length - in_length) << (RS_SCALE_SUBPEL_BITS - 1)) +
                         out_length / 2) /
@@ -156,9 +156,10 @@ void upscale_normative_rect(const uint8_t *const input, int height, int width, i
     }
 }
 
-void highbd_upscale_normative_rect(const uint8_t *const input, int height, int width, int in_stride,
-                                   uint8_t *output, int height2, int width2, int out_stride,
-                                   int x_step_qn, int x0_qn, int pad_left, int pad_right, int bd) {
+static void highbd_upscale_normative_rect(const uint8_t *const input, int height, int width,
+                                          int in_stride, uint8_t *output, int height2, int width2,
+                                          int out_stride, int x_step_qn, int x0_qn, int pad_left,
+                                          int pad_right, int bd) {
     assert(width > 0);
     assert(height > 0);
     assert(width2 > 0);

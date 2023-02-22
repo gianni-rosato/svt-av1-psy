@@ -252,9 +252,10 @@ void svt_av1_highbd_quantize_b_facade(const TranLow *coeff_ptr, intptr_t n_coeff
     assert(qparam->log_scale <= 2);
 }
 
-void av1_quantize_b_facade_ii(const TranLow *coeff_ptr, intptr_t n_coeffs, const MacroblockPlane *p,
-                              TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr, uint16_t *eob_ptr,
-                              const ScanOrder *sc, const QuantParam *qparam) {
+static void av1_quantize_b_facade_ii(const TranLow *coeff_ptr, intptr_t n_coeffs,
+                                     const MacroblockPlane *p, TranLow *qcoeff_ptr,
+                                     TranLow *dqcoeff_ptr, uint16_t *eob_ptr, const ScanOrder *sc,
+                                     const QuantParam *qparam) {
     const QmVal *qm_ptr  = qparam->qmatrix;
     const QmVal *iqm_ptr = qparam->iqmatrix;
     if (qm_ptr || iqm_ptr) {
@@ -2482,9 +2483,9 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_bloc
 }
 
 /// compute the cost of curr depth, and the depth above
-void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSet *pcs,
-                         uint32_t curr_depth_mds, uint32_t above_depth_mds, uint32_t step,
-                         uint64_t *above_depth_cost, uint64_t *curr_depth_cost) {
+static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSet *pcs,
+                                uint32_t curr_depth_mds, uint32_t above_depth_mds, uint32_t step,
+                                uint64_t *above_depth_cost, uint64_t *curr_depth_cost) {
     uint32_t full_lambda = ctx->hbd_md ? ctx->full_sb_lambda_md[EB_10_BIT_MD]
                                        : ctx->full_sb_lambda_md[EB_8_BIT_MD];
 

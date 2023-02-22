@@ -13,8 +13,8 @@
 
 #include "EbPictureAnalysisResults.h"
 
-EbErrorType picture_analysis_result_ctor(PictureAnalysisResults *object_ptr,
-                                         EbPtr                   object_init_data_ptr) {
+static EbErrorType picture_analysis_result_ctor(PictureAnalysisResults *object_ptr,
+                                                EbPtr                   object_init_data_ptr) {
     (void)object_ptr;
     (void)object_init_data_ptr;
 

@@ -157,8 +157,8 @@ void neighbor_array_unit_reset(NeighborArrayUnit *na_unit_ptr) {
 /*************************************************
  * Neighbor Array Unit Get Top Index
  *************************************************/
-uint32_t get_neighbor_array_unit_top_left_index_32(NeighborArrayUnit32 *na_unit_ptr, int32_t loc_x,
-                                                   int32_t loc_y) {
+static uint32_t get_neighbor_array_unit_top_left_index_32(NeighborArrayUnit32 *na_unit_ptr,
+                                                          int32_t loc_x, int32_t loc_y) {
     return na_unit_ptr->left_array_size + (loc_x >> na_unit_ptr->granularity_top_left_log2) -
         (loc_y >> na_unit_ptr->granularity_top_left_log2);
 }

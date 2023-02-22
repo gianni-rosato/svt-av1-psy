@@ -48,7 +48,7 @@ extern Bool           alternate_groups;
 #elif defined(__linux__)
 extern cpu_set_t group_affinity;
 #endif
-void *dec_all_stage_kernel(void *input_ptr);
+static void *dec_all_stage_kernel(void *input_ptr);
 /*ToDo : Remove all these replications */
 void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, int32_t plane_start,
                                     int32_t plane_end);
@@ -107,7 +107,7 @@ void dec_display_timer(char s[], struct EbDecTimer *timer, int th_cnt, FILE *fp)
 
 /* Row MT Simple Q functions */
 /* Return the sb_row_to_process */
-int32_t get_sb_row_to_process(DecMtRowInfo *sb_row_info) {
+static int32_t get_sb_row_to_process(DecMtRowInfo *sb_row_info) {
     int32_t sb_row_to_process = -1;
     //lock mutex
     svt_block_on_mutex(sb_row_info->sbrow_mutex);
@@ -429,7 +429,7 @@ void svt_av1_queue_parse_jobs(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info
     //dec_handle_ptr->start_thread_process = TRUE;
 }
 
-EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num) {
+static EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num) {
     EbErrorType status = EB_ErrorNone;
 
     TilesInfo     *tiles_info      = &dec_handle_ptr->frame_header.tiles_info;
@@ -485,8 +485,8 @@ void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
     }
 }
 
-EbErrorType decode_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num,
-                            DecModCtxt *dec_mod_ctxt) {
+static EbErrorType decode_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num,
+                                   DecModCtxt *dec_mod_ctxt) {
     return start_decode_tile(
         dec_handle_ptr, dec_mod_ctxt, &dec_handle_ptr->frame_header.tiles_info, tile_num);
 }
@@ -1053,9 +1053,9 @@ void svt_av1_queue_lr_jobs(EbDecHandle *dec_handle_ptr) {
     dec_mt_frame_data->lr_sb_row_info.sb_row_to_process = 0;
 }
 
-void pad_pre_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, int32_t sb_size,
-                int32_t num_rows, uint8_t **curr_blk_recon_buf, int *rec_stride,
-                uint32_t frame_width, uint32_t frame_height, int sx, int sy) {
+static void pad_pre_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, int32_t sb_size,
+                       int32_t num_rows, uint8_t **curr_blk_recon_buf, int *rec_stride,
+                       uint32_t frame_width, uint32_t frame_height, int sx, int sy) {
     /* Current SB row */
     uint32_t row = sb_row * sb_size;
 
@@ -1081,9 +1081,10 @@ void pad_pre_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, int32_t 
             flags);
 }
 
-void pad_post_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, int32_t sb_size,
-                 int32_t num_rows, int *rec_stride, uint32_t pad_width, uint32_t pad_height,
-                 uint32_t shift, uint32_t frame_width, uint32_t frame_height, int sx, int sy) {
+static void pad_post_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, int32_t sb_size,
+                        int32_t num_rows, int *rec_stride, uint32_t pad_width, uint32_t pad_height,
+                        uint32_t shift, uint32_t frame_width, uint32_t frame_height, int sx,
+                        int sy) {
     /* Do padding of Nth row after the completion of
        LR of (N+1) row to avoid possible corruption of
        recon buffers. */
@@ -1284,7 +1285,7 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThread
         ;
 }
 
-void *dec_all_stage_kernel(void *input_ptr) {
+static void *dec_all_stage_kernel(void *input_ptr) {
     // Context
     DecThreadCtxt  *thread_ctxt    = (DecThreadCtxt *)input_ptr;
     EbDecHandle    *dec_handle_ptr = thread_ctxt->dec_handle_ptr;

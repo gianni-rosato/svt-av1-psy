@@ -794,7 +794,7 @@ static EbErrorType generate_picture_window_split(
 *
 *
 ***************************************************************************************************/
-EbErrorType handle_incomplete_picture_window_map(
+static EbErrorType handle_incomplete_picture_window_map(
     uint32_t                       hierarchical_level,
     PictureDecisionContext        *context_ptr,
     EncodeContext                 *encode_context_ptr) {
@@ -1121,7 +1121,7 @@ static void set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_
     }
 }
 
-uint8_t pf_gi[16] = { 0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60 };
+static uint8_t pf_gi[16] = { 0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60 };
 
 void set_cdef_controls(PictureParentControlSet *pcs, uint8_t cdef_level, Bool fast_decode) {
 
@@ -6254,7 +6254,7 @@ void initialize_overlay_frame(PictureParentControlSet     *pcs) {
   ret number of past picture(not including current) in mg buffer.
 
 */
-int32_t avail_past_pictures(PictureParentControlSet**buf, uint32_t buf_size, uint64_t input_pic)
+static int32_t avail_past_pictures(PictureParentControlSet**buf, uint32_t buf_size, uint64_t input_pic)
 {
     //buffer has at least curr picture
     int32_t tot_past = 0;
@@ -6301,7 +6301,7 @@ Bool is_delayed_intra(PictureParentControlSet *pcs) {
 /*
   Performs first pass in ME process
 */
-void process_first_pass_frame(
+static void process_first_pass_frame(
     SequenceControlSet      *scs, PictureParentControlSet *pcs, PictureDecisionContext  *context_ptr) {
     int16_t seg_idx;
 
@@ -6761,7 +6761,7 @@ store this input  picture to be used for TF-ing of upcoming base
 increment live count of the required ressources to be used by TF of upcoming base.
 will be released once TF is done
 */
-void low_delay_store_tf_pictures(
+static void low_delay_store_tf_pictures(
     SequenceControlSet      *scs,
     PictureParentControlSet *pcs,
     PictureDecisionContext  *ctx)
@@ -6785,7 +6785,7 @@ void low_delay_store_tf_pictures(
 /*
  TF is done, release ressources and reset the tf picture buffer.
 */
-void low_delay_release_tf_pictures(
+static void low_delay_release_tf_pictures(
     PictureDecisionContext  *ctx)
 {
     for (uint32_t pic_it = 0; pic_it < ctx->tf_pic_arr_cnt; pic_it++) {
@@ -6810,7 +6810,7 @@ void low_delay_release_tf_pictures(
 /*
   Performs Motion Compensated Temporal Filtering in ME process
 */
-void mctf_frame(
+static void mctf_frame(
     SequenceControlSet      *scs,
     PictureParentControlSet *pcs,
     PictureDecisionContext  *context_ptr) {
@@ -6882,7 +6882,7 @@ void mctf_frame(
 }
 
 
-void send_picture_out(
+static void send_picture_out(
     SequenceControlSet      *scs,
     PictureParentControlSet *pcs,
     PictureDecisionContext  *ctx)
@@ -7021,7 +7021,7 @@ void print_pre_ass_buffer(EncodeContext *ctx, PictureParentControlSet *pcs, uint
 }
 #endif
 
-PaReferenceEntry * search_ref_in_ref_queue_pa(
+static PaReferenceEntry * search_ref_in_ref_queue_pa(
     EncodeContext *encode_context_ptr,
     uint64_t ref_poc)
 {
@@ -7038,7 +7038,7 @@ PaReferenceEntry * search_ref_in_ref_queue_pa(
 /*
  * Copy TF params: sps -> pcs
  */
-void copy_tf_params(SequenceControlSet *scs, PictureParentControlSet *pcs) {
+static void copy_tf_params(SequenceControlSet *scs, PictureParentControlSet *pcs) {
 
     // Map TF settings sps -> pcs
    if (scs->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS)

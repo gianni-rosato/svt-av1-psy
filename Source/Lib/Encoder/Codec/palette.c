@@ -283,9 +283,9 @@ static AOM_INLINE void extend_palette_color_map(uint8_t *const color_map, int or
         svt_memcpy(color_map + j * new_width, color_map + (orig_height - 1) * new_width, new_width);
     }
 }
-void palette_rd_y(PaletteInfo *palette_info, uint8_t *palette_size_array, ModeDecisionContext *ctx,
-                  BlockSize bsize, const int *data, int *centroids, int n, uint16_t *color_cache,
-                  int n_cache, int bit_depth) {
+static void palette_rd_y(PaletteInfo *palette_info, uint8_t *palette_size_array,
+                         ModeDecisionContext *ctx, BlockSize bsize, const int *data, int *centroids,
+                         int n, uint16_t *color_cache, int n_cache, int bit_depth) {
     optimize_palette_colors(color_cache, n_cache, n, 1, centroids);
     int k = av1_remove_duplicates(centroids, n);
     if (k < PALETTE_MIN_SIZE) {

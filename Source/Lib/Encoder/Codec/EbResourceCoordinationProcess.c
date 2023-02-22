@@ -160,7 +160,7 @@ uint8_t get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoratio
 Input   : encoder mode and tune
 Output  : Pre-Analysis signal(s)
 ******************************************************/
-EbErrorType signal_derivation_pre_analysis_oq_pcs(PictureParentControlSet *pcs) {
+static EbErrorType signal_derivation_pre_analysis_oq_pcs(PictureParentControlSet *pcs) {
     EbErrorType return_error = EB_ErrorNone;
     // Derive HME Flag
     // Set here to allocate resources for the downsampled pictures used in HME (generated in PictureAnalysis)

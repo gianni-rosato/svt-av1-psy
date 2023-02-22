@@ -59,7 +59,7 @@ MvJointType svt_av1_get_mv_joint(const MV *mv) {
     else
         return mv->col == 0 ? MV_JOINT_HZVNZ : MV_JOINT_HNZVNZ;
 }
-int32_t mv_cost(const MV *mv, const int32_t *joint_cost, int32_t *const comp_cost[2]) {
+static int32_t mv_cost(const MV *mv, const int32_t *joint_cost, int32_t *const comp_cost[2]) {
     int32_t jn_c = svt_av1_get_mv_joint(mv);
     int32_t res  = joint_cost[jn_c] + comp_cost[0][CLIP3(MV_LOW, MV_UPP, mv->row)] +
         comp_cost[1][CLIP3(MV_LOW, MV_UPP, mv->col)];
@@ -113,11 +113,11 @@ void svt_av1_txb_init_levels_c(const TranLow *const coeff, const int32_t width,
     }
 }
 
-int32_t av1_transform_type_rate_estimation(struct ModeDecisionContext *ctx,
-                                           uint8_t allow_update_cdf, FRAME_CONTEXT *fc,
-                                           struct ModeDecisionCandidateBuffer *cand_bf_ptr,
-                                           Bool is_inter, TxSize transform_size,
-                                           TxType transform_type, Bool reduced_tx_set_used) {
+static int32_t av1_transform_type_rate_estimation(struct ModeDecisionContext *ctx,
+                                                  uint8_t allow_update_cdf, FRAME_CONTEXT *fc,
+                                                  struct ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                                  Bool is_inter, TxSize transform_size,
+                                                  TxType transform_type, Bool reduced_tx_set_used) {
     //const MbModeInfo *mbmi = &xd->mi[0]->mbmi;
     //const int32_t is_inter = is_inter_block(mbmi);
 
@@ -1037,10 +1037,11 @@ static INLINE uint32_t get_compound_mode_rate(struct ModeDecisionContext *ctx,
 int is_interintra_wedge_used(BlockSize sb_type);
 int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, PredictionMode mode,
                               const MvReferenceFrame ref_frame[2]);
-uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
-                                   ModeDecisionCandidateBuffer *cand_bf, uint64_t luma_distortion,
-                                   uint64_t chroma_distortion, uint64_t lambda,
-                                   PictureControlSet *pcs, CandidateMv *ref_mv_stack) {
+static uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
+                                          ModeDecisionCandidateBuffer *cand_bf,
+                                          uint64_t luma_distortion, uint64_t chroma_distortion,
+                                          uint64_t lambda, PictureControlSet *pcs,
+                                          CandidateMv *ref_mv_stack) {
     ModeDecisionCandidate *cand = cand_bf->cand;
     //NM - fast inter cost estimation
     MdRateEstimationContext *r = ctx->md_rate_estimation_ptr;
@@ -1655,11 +1656,12 @@ EbErrorType av1_full_cost_light_pd0(ModeDecisionContext                *ctx,
 *   @param lambda(input)
 *       lambda is the Lagrange multiplier
 **********************************************************************************/
-EbErrorType av1_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                          struct ModeDecisionCandidateBuffer *cand_bf_ptr, BlkStruct *blk_ptr,
-                          uint64_t *y_distortion, uint64_t *cb_distortion, uint64_t *cr_distortion,
-                          uint64_t lambda, uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits,
-                          uint64_t *cr_coeff_bits, BlockSize bsize) {
+static EbErrorType av1_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                 struct ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                 BlkStruct *blk_ptr, uint64_t *y_distortion,
+                                 uint64_t *cb_distortion, uint64_t *cr_distortion, uint64_t lambda,
+                                 uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits,
+                                 uint64_t *cr_coeff_bits, BlockSize bsize) {
     UNUSED(pcs);
     UNUSED(bsize);
     UNUSED(blk_ptr);
@@ -1781,13 +1783,13 @@ EbErrorType av1_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx,
 *   @param lambda(input)
 *       lambda is the Lagrange multiplier
 **********************************************************************************/
-EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                     struct ModeDecisionCandidateBuffer *cand_bf_ptr,
-                                     BlkStruct *blk_ptr, uint64_t *y_distortion,
-                                     uint64_t *cb_distortion, uint64_t *cr_distortion,
-                                     uint64_t lambda, uint64_t *y_coeff_bits,
-                                     uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
-                                     BlockSize bsize) {
+static EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                            struct ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                            BlkStruct *blk_ptr, uint64_t *y_distortion,
+                                            uint64_t *cb_distortion, uint64_t *cr_distortion,
+                                            uint64_t lambda, uint64_t *y_coeff_bits,
+                                            uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
+                                            BlockSize bsize) {
     UNUSED(bsize);
     UNUSED(pcs);
 

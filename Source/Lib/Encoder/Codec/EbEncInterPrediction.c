@@ -64,7 +64,7 @@ static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_
     return clamped_mv;
 }
 
-void av1_make_masked_scaled_inter_predictor(
+static void av1_make_masked_scaled_inter_predictor(
     uint8_t *src_ptr, uint8_t *src_ptr_2b, uint32_t src_stride, uint8_t *dst_ptr,
     uint32_t dst_stride, BlockSize bsize, uint8_t bwidth, uint8_t bheight,
     InterpFilter interp_filters, const SubpelParams *subpel_params, const ScaleFactors *sf,
@@ -583,10 +583,10 @@ static void pick_interinter_seg(PictureControlSet *pcs, ModeDecisionContext *ctx
     interinter_comp->mask_type = best_mask_type;
 }
 
-void pick_interinter_mask(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                          InterInterCompoundData *interinter_comp, const BlockSize bsize,
-                          const uint8_t *const p0, const uint8_t *const p1,
-                          const int16_t *const residual1, const int16_t *const diff10) {
+static void pick_interinter_mask(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                 InterInterCompoundData *interinter_comp, const BlockSize bsize,
+                                 const uint8_t *const p0, const uint8_t *const p1,
+                                 const int16_t *const residual1, const int16_t *const diff10) {
     if (interinter_comp->type == COMPOUND_WEDGE)
         pick_interinter_wedge(pcs, ctx, interinter_comp, bsize, p0, residual1, diff10);
     else if (interinter_comp->type == COMPOUND_DIFFWTD)
@@ -844,7 +844,7 @@ static void av1_setup_build_prediction_by_left_pred(MacroBlockD *xd, int rel_mi_
     xd->mb_to_bottom_edge = ctxt->mb_to_far_edge +
         (xd->n4_h - rel_mi_row - left_mi_height) * MI_SIZE * 8;
 }
-EbErrorType get_single_prediction_for_obmc_luma_hbd(
+static EbErrorType get_single_prediction_for_obmc_luma_hbd(
     SequenceControlSet *scs, uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit,
     uint16_t pu_origin_x, uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
     EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
@@ -913,7 +913,7 @@ EbErrorType get_single_prediction_for_obmc_luma_hbd(
                              TRUE); // is16bit
     return return_error;
 }
-EbErrorType get_single_prediction_for_obmc_chroma_hbd(
+static EbErrorType get_single_prediction_for_obmc_chroma_hbd(
     SequenceControlSet *scs, uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit,
     uint16_t pu_origin_x, uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
     EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
@@ -1027,13 +1027,11 @@ EbErrorType get_single_prediction_for_obmc_chroma_hbd(
     return return_error;
 }
 
-EbErrorType get_single_prediction_for_obmc_luma(SequenceControlSet *scs, uint32_t interp_filters,
-                                                MacroBlockD *xd, MvUnit *mv_unit,
-                                                uint16_t pu_origin_x, uint16_t pu_origin_y,
-                                                uint8_t bwidth, uint8_t bheight,
-                                                EbPictureBufferDesc *ref_pic_list0,
-                                                EbPictureBufferDesc *prediction_ptr,
-                                                uint16_t dst_origin_x, uint16_t dst_origin_y) {
+static EbErrorType get_single_prediction_for_obmc_luma(
+    SequenceControlSet *scs, uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit,
+    uint16_t pu_origin_x, uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
+    EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
+    uint16_t dst_origin_y) {
     EbErrorType return_error = EB_ErrorNone;
     const int   is_compound  = 0;
     DECLARE_ALIGNED(
@@ -1101,7 +1099,7 @@ EbErrorType get_single_prediction_for_obmc_luma(SequenceControlSet *scs, uint32_
     return return_error;
 }
 
-EbErrorType get_single_prediction_for_obmc_chroma(
+static EbErrorType get_single_prediction_for_obmc_chroma(
     SequenceControlSet *scs, uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit,
     uint16_t pu_origin_x, uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
     EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
@@ -1743,7 +1741,7 @@ void svt_av1_calc_target_weighted_pred_left_c(uint8_t is16bit, MacroBlockD *xd, 
     }
 }
 
-void av1_make_masked_warp_inter_predictor(
+static void av1_make_masked_warp_inter_predictor(
     uint8_t *src_ptr, uint8_t *src_2b_ptr, uint32_t src_stride, uint16_t buf_width,
     uint16_t buf_height, uint8_t *dst_ptr, uint32_t dst_stride, const BlockGeom *blk_geom,
     uint8_t bwidth, uint8_t bheight, ConvolveParams *conv_params, InterInterCompoundData *comp_data,
@@ -2565,11 +2563,11 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
     {2, 2},
 };
 
-void interpolation_filter_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                 ModeDecisionCandidateBuffer *cand_bf_ptr, MvUnit mv_unit,
-                                 EbPictureBufferDesc *ref_pic_list0,
-                                 EbPictureBufferDesc *ref_pic_list1, uint8_t hbd_md,
-                                 uint8_t bit_depth) {
+static void interpolation_filter_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                        ModeDecisionCandidateBuffer *cand_bf_ptr, MvUnit mv_unit,
+                                        EbPictureBufferDesc *ref_pic_list0,
+                                        EbPictureBufferDesc *ref_pic_list1, uint8_t hbd_md,
+                                        uint8_t bit_depth) {
     SequenceControlSet *scs = pcs->scs;
     const Av1Common    *cm  = pcs->ppcs->av1_cm; //&cpi->common;
 
@@ -2839,13 +2837,12 @@ void interpolation_filter_search(PictureControlSet *pcs, ModeDecisionContext *ct
     compound inter-intra:
     perform intra prediction and inter-intra blending
 */
-void inter_intra_prediction(PictureControlSet *pcs, EbPictureBufferDesc *prediction_ptr,
-                            InterIntraMode interintra_mode, uint8_t use_wedge_interintra,
-                            int32_t interintra_wedge_index, NeighborArrayUnit *recon_neigh_y,
-                            NeighborArrayUnit *recon_neigh_cb, NeighborArrayUnit *recon_neigh_cr,
-                            BlkStruct *blk_ptr, const BlockGeom *blk_geom, int16_t pu_origin_x,
-                            uint16_t pu_origin_y, uint16_t dst_origin_x, uint16_t dst_origin_y,
-                            Bool perform_chroma, uint8_t bit_depth, Bool is16bit) {
+static void inter_intra_prediction(
+    PictureControlSet *pcs, EbPictureBufferDesc *prediction_ptr, InterIntraMode interintra_mode,
+    uint8_t use_wedge_interintra, int32_t interintra_wedge_index, NeighborArrayUnit *recon_neigh_y,
+    NeighborArrayUnit *recon_neigh_cb, NeighborArrayUnit *recon_neigh_cr, BlkStruct *blk_ptr,
+    const BlockGeom *blk_geom, int16_t pu_origin_x, uint16_t pu_origin_y, uint16_t dst_origin_x,
+    uint16_t dst_origin_y, Bool perform_chroma, uint8_t bit_depth, Bool is16bit) {
     uint8_t *dst_ptr;
     int32_t  dst_stride;
     int32_t  start_plane = 0;
@@ -3448,11 +3445,11 @@ EbErrorType warped_motion_prediction(
     return return_error;
 }
 
-void compute_subpel_params(SequenceControlSet *scs, int16_t pre_y, int16_t pre_x, MV mv,
-                           const struct ScaleFactors *const sf, uint16_t frame_width,
-                           uint16_t frame_height, uint8_t blk_width, uint8_t blk_height,
-                           MacroBlockD *av1xd, const uint32_t ss_y, const uint32_t ss_x,
-                           SubpelParams *subpel_params, int32_t *pos_y, int32_t *pos_x) {
+static void compute_subpel_params(SequenceControlSet *scs, int16_t pre_y, int16_t pre_x, MV mv,
+                                  const struct ScaleFactors *const sf, uint16_t frame_width,
+                                  uint16_t frame_height, uint8_t blk_width, uint8_t blk_height,
+                                  MacroBlockD *av1xd, const uint32_t ss_y, const uint32_t ss_x,
+                                  SubpelParams *subpel_params, int32_t *pos_y, int32_t *pos_x) {
     const int32_t is_scaled = av1_is_scaled(sf);
 
     if (is_scaled) {
@@ -3563,10 +3560,11 @@ void tf_inter_predictor(SequenceControlSet *scs, uint8_t *src_ptr, uint8_t *dst_
 /*
 
 */
-void enc_make_inter_predictor_light_pd0(uint8_t *src_ptr, uint8_t *src_ptr_2b, uint8_t *dst_ptr,
-                                        SubpelParams *subpel_params, ConvolveParams *conv_params,
-                                        uint8_t blk_width, uint8_t blk_height, int32_t src_stride,
-                                        int32_t dst_stride, uint8_t bit_depth) {
+static void enc_make_inter_predictor_light_pd0(uint8_t *src_ptr, uint8_t *src_ptr_2b,
+                                               uint8_t *dst_ptr, SubpelParams *subpel_params,
+                                               ConvolveParams *conv_params, uint8_t blk_width,
+                                               uint8_t blk_height, int32_t src_stride,
+                                               int32_t dst_stride, uint8_t bit_depth) {
     uint8_t is_highbd = (uint8_t)(bit_depth > EB_EIGHT_BIT);
 
     uint8_t *src_mod = src_ptr;
