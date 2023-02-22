@@ -1245,7 +1245,7 @@ static EbErrorType parse_list(const char *nptr, int32_t *list, size_t n) {
     const char *ptr = nptr;
     char       *endptr;
     size_t      i = 0;
-    memset(list, 0, n * sizeof(int32_t));
+    memset(list, 0, n * sizeof(*list));
     while (*ptr) {
         if (*ptr == '[' || *ptr == ']') {
             ptr++;
@@ -1266,18 +1266,18 @@ static EbErrorType parse_list(const char *nptr, int32_t *list, size_t n) {
     return EB_ErrorNone;
 }
 
-static EbErrorType parse_list64(const char *nptr, int64_t *list, size_t n) {
+static EbErrorType parse_list_u32(const char *nptr, uint32_t *list, size_t n) {
     const char *ptr = nptr;
     char       *endptr;
     size_t      i = 0;
-    memset(list, 0, n * sizeof(int64_t));
+    memset(list, 0, n * sizeof(*list));
     while (*ptr) {
         if (*ptr == '[' || *ptr == ']') {
             ptr++;
             continue;
         }
 
-        int64_t rawval = strtoll(ptr, &endptr, 10);
+        uint32_t rawval = strtoul(ptr, &endptr, 10);
         if (i >= n) {
             return EB_ErrorBadParameter;
         } else if (*endptr == ',' || *endptr == ']') {
@@ -1291,10 +1291,35 @@ static EbErrorType parse_list64(const char *nptr, int64_t *list, size_t n) {
     return EB_ErrorNone;
 }
 
-static size_t count_params(const char *nptr) {
+static EbErrorType parse_list_u64(const char *nptr, uint64_t *list, size_t n) {
     const char *ptr = nptr;
     char       *endptr;
     size_t      i = 0;
+    memset(list, 0, n * sizeof(*list));
+    while (*ptr) {
+        if (*ptr == '[' || *ptr == ']') {
+            ptr++;
+            continue;
+        }
+
+        uint64_t rawval = strtoull(ptr, &endptr, 10);
+        if (i >= n) {
+            return EB_ErrorBadParameter;
+        } else if (*endptr == ',' || *endptr == ']') {
+            endptr++;
+        } else if (*endptr) {
+            return EB_ErrorBadParameter;
+        }
+        list[i++] = rawval;
+        ptr       = endptr;
+    }
+    return EB_ErrorNone;
+}
+
+static uint32_t count_params(const char *nptr) {
+    const char *ptr = nptr;
+    char       *endptr;
+    uint32_t    i = 0;
     while (*ptr) {
         if (*ptr == '[' || *ptr == ']') {
             ptr++;
@@ -1769,6 +1794,39 @@ static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_m
     return EB_ErrorNone;
 }
 
+static EbErrorType str_to_frm_resz_evts(const char *nptr, SvtAv1FrameScaleEvts *evts) {
+    const uint32_t param_count = count_params(nptr);
+    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0)
+        return EB_ErrorBadParameter;
+    if (evts->start_frame_nums)
+        free(evts->start_frame_nums);
+    evts->start_frame_nums = malloc(param_count * sizeof(uint64_t));
+    evts->evt_num          = param_count;
+    return parse_list_u64(nptr, evts->start_frame_nums, param_count);
+}
+
+static EbErrorType str_to_resz_kf_denoms(const char *nptr, SvtAv1FrameScaleEvts *evts) {
+    const uint32_t param_count = count_params(nptr);
+    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0)
+        return EB_ErrorBadParameter;
+    if (evts->resize_kf_denoms)
+        free(evts->resize_kf_denoms);
+    evts->resize_kf_denoms = malloc(param_count * sizeof(uint32_t));
+    evts->evt_num          = param_count;
+    return parse_list_u32(nptr, evts->resize_kf_denoms, param_count);
+}
+
+static EbErrorType str_to_resz_denoms(const char *nptr, SvtAv1FrameScaleEvts *evts) {
+    const uint32_t param_count = count_params(nptr);
+    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0)
+        return EB_ErrorBadParameter;
+    if (evts->resize_denoms)
+        free(evts->resize_denoms);
+    evts->resize_denoms = malloc(param_count * sizeof(uint32_t));
+    evts->evt_num       = param_count;
+    return parse_list_u32(nptr, evts->resize_denoms, param_count);
+}
+
 #define COLOR_OPT(par, opt)                                          \
     do {                                                             \
         if (!strcmp(name, par)) {                                    \
@@ -1861,44 +1919,14 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     if (!strcmp(name, "lambda-scale-factors"))
         return parse_list(value, config_struct->lambda_scale_factors, SVT_AV1_FRAME_UPDATE_TYPES);
 
-    if (!strcmp(name, "frame-resz-events")) {
-        const uint32_t param_count = (uint32_t)count_params(value);
-        if ((config_struct->frame_scale_evts.evt_num != 0 &&
-             config_struct->frame_scale_evts.evt_num != param_count) ||
-            param_count == 0) {
-            return EB_ErrorBadParameter;
-        }
-        config_struct->frame_scale_evts.evt_num          = param_count;
-        config_struct->frame_scale_evts.start_frame_nums = (int64_t *)malloc(param_count *
-                                                                             sizeof(int64_t));
-        return parse_list64(value, config_struct->frame_scale_evts.start_frame_nums, param_count);
-    }
+    if (!strcmp(name, "frame-resz-events"))
+        return str_to_frm_resz_evts(value, &config_struct->frame_scale_evts);
 
-    if (!strcmp(name, "frame-resz-kf-denoms")) {
-        const uint32_t param_count = (uint32_t)count_params(value);
-        if ((config_struct->frame_scale_evts.evt_num != 0 &&
-             config_struct->frame_scale_evts.evt_num != param_count) ||
-            param_count == 0) {
-            return EB_ErrorBadParameter;
-        }
-        config_struct->frame_scale_evts.evt_num          = param_count;
-        config_struct->frame_scale_evts.resize_kf_denoms = (int32_t *)malloc(param_count *
-                                                                             sizeof(int32_t));
-        return parse_list(value, config_struct->frame_scale_evts.resize_kf_denoms, param_count);
-    }
+    if (!strcmp(name, "frame-resz-kf-denoms"))
+        return str_to_resz_kf_denoms(value, &config_struct->frame_scale_evts);
 
-    if (!strcmp(name, "frame-resz-denoms")) {
-        const uint32_t param_count = (uint32_t)count_params(value);
-        if ((config_struct->frame_scale_evts.evt_num != 0 &&
-             config_struct->frame_scale_evts.evt_num != param_count) ||
-            param_count == 0) {
-            return EB_ErrorBadParameter;
-        }
-        config_struct->frame_scale_evts.evt_num       = param_count;
-        config_struct->frame_scale_evts.resize_denoms = (int32_t *)malloc(param_count *
-                                                                          sizeof(int32_t));
-        return parse_list(value, config_struct->frame_scale_evts.resize_denoms, param_count);
-    }
+    if (!strcmp(name, "frame-resz-denoms"))
+        return str_to_resz_denoms(value, &config_struct->frame_scale_evts);
 
     // uint32_t fields
     const struct {

@@ -728,24 +728,20 @@ static EbErrorType realloc_sb_param(SequenceControlSet *scs, PictureParentContro
     return EB_ErrorNone;
 }
 
-static void retrieve_resize_event(PictureParentControlSet *pcs, uint64_t pic_num) {
-    SequenceControlSet *scs = pcs->scs;
+static void retrieve_resize_event(SequenceControlSet *scs, uint64_t pic_num, Bool *rc_reset_flag) {
     if (scs->static_config.resize_mode != RESIZE_RANDOM_ACCESS)
         return;
     const SvtAv1FrameScaleEvts *events = &scs->static_config.frame_scale_evts;
     for (uint32_t i = 0; i < events->evt_num; i++) {
-        if (events->start_frame_nums && ((int64_t)pic_num == events->start_frame_nums[i])) {
-            // update scaling event for future pictures
-            scs->encode_context_ptr->resize_evt.scale_mode     = RESIZE_FIXED;
-            scs->encode_context_ptr->resize_evt.scale_denom    = events->resize_denoms
-                   ? events->resize_denoms[i]
-                   : 8;
-            scs->encode_context_ptr->resize_evt.scale_kf_denom = events->resize_kf_denoms
-                ? events->resize_kf_denoms[i]
-                : 8;
-            // set reset flag of rate control
-            pcs->rc_reset_flag = TRUE;
-        }
+        if (!events->start_frame_nums || pic_num == events->start_frame_nums[i])
+            continue;
+        EbRefFrameScale *target_evt = &scs->encode_context_ptr->resize_evt;
+        // update scaling event for future pictures
+        target_evt->scale_mode     = RESIZE_FIXED;
+        target_evt->scale_denom    = events->resize_denoms ? events->resize_denoms[i] : 8;
+        target_evt->scale_kf_denom = events->resize_kf_denoms ? events->resize_kf_denoms[i] : 8;
+        // set reset flag of rate control
+        *rc_reset_flag = TRUE;
     }
 }
 
@@ -764,7 +760,7 @@ static void update_frame_event(PictureParentControlSet *pcs, uint64_t pic_num) {
         }
         node = node->next;
     }
-    retrieve_resize_event(pcs, pic_num);
+    retrieve_resize_event(pcs->scs, pic_num, &pcs->rc_reset_flag);
     // update current picture scaling event
     pcs->resize_evt = scs->encode_context_ptr->resize_evt;
 }

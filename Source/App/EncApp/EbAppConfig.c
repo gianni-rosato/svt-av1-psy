@@ -596,6 +596,10 @@ static EbErrorType set_resize_events(EbConfig *cfg, const char *token, const cha
         return err;
     if (cfg->frame_scale_evts.evt_num != 0 &&
         cfg->frame_scale_evts.evt_num != cfg->config.frame_scale_evts.evt_num) {
+        fprintf(stderr,
+                "Error: Size for the list passed to %s doesn't match %u\n",
+                token,
+                cfg->frame_scale_evts.evt_num);
         return EB_ErrorBadParameter;
     }
 

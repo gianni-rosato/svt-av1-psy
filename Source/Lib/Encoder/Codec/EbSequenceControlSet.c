@@ -23,11 +23,11 @@ static void free_scale_evts(SvtAv1FrameScaleEvts *evts) {
 
 static void svt_sequence_control_set_dctor(EbPtr p) {
     SequenceControlSet *obj = (SequenceControlSet *)p;
-    if (obj) {
-        EB_FREE_ARRAY(obj->b64_geom);
-        EB_FREE_ARRAY(obj->sb_geom);
-        free_scale_evts(&obj->static_config.frame_scale_evts);
-    }
+    if (!obj)
+        return;
+    EB_FREE_ARRAY(obj->b64_geom);
+    EB_FREE_ARRAY(obj->sb_geom);
+    free_scale_evts(&obj->static_config.frame_scale_evts);
 }
 /**************************************************************************************************
     General notes on how Sequence Control Sets (SCS) are used.

@@ -212,10 +212,10 @@ typedef enum SvtAv1FrameUpdateType {
 } SvtAv1FrameUpdateType;
 
 typedef struct SvtAv1FrameScaleEvts {
-    uint32_t evt_num;
-    int64_t *start_frame_nums;
-    int32_t *resize_kf_denoms;
-    int32_t *resize_denoms;
+    uint32_t  evt_num;
+    uint64_t *start_frame_nums;
+    uint32_t *resize_kf_denoms;
+    uint32_t *resize_denoms;
 } SvtAv1FrameScaleEvts;
 
 // Will contain the EbEncApi which will live in the EncHandle class

@@ -408,24 +408,23 @@ static void *prepare_private_data_list(const EbConfig *app_cfg) {
     EbPrivDataNode *node = NULL;
 
     // REF_FRAME_SCALING_EVENT
-    for (size_t i = 0; i < app_cfg->frame_scale_evts.evt_num; i++) {
-        if (app_cfg->frame_scale_evts.start_frame_nums &&
-            (uint64_t)app_cfg->frame_scale_evts.start_frame_nums[i] ==
-                app_cfg->processed_frame_count) {
-            EbPrivDataNode  *new_node = (EbPrivDataNode *)malloc(sizeof(EbPrivDataNode));
-            EbRefFrameScale *data     = (EbRefFrameScale *)malloc(sizeof(EbRefFrameScale));
+    const SvtAv1FrameScaleEvts *frame_scale_evts = &app_cfg->frame_scale_evts;
+    for (size_t i = 0; i < frame_scale_evts->evt_num; i++) {
+        if (frame_scale_evts->start_frame_nums &&
+            frame_scale_evts->start_frame_nums[i] == app_cfg->processed_frame_count) {
+            EbPrivDataNode  *new_node = malloc(sizeof(*new_node));
+            EbRefFrameScale *data     = malloc(sizeof(*data));
             data->scale_mode          = RESIZE_FIXED;
-            data->scale_denom         = app_cfg->frame_scale_evts.resize_denoms
-                        ? app_cfg->frame_scale_evts.resize_denoms[i]
-                        : 8;
-            data->scale_kf_denom      = app_cfg->frame_scale_evts.resize_kf_denoms
-                     ? app_cfg->frame_scale_evts.resize_kf_denoms[i]
-                     : 8;
-            new_node->size            = sizeof(EbRefFrameScale);
-            new_node->node_type       = REF_FRAME_SCALING_EVENT;
-            new_node->data            = data;
-            new_node->next            = node;
-            node                      = new_node;
+            data->scale_denom = frame_scale_evts->resize_denoms ? frame_scale_evts->resize_denoms[i]
+                                                                : 8;
+            data->scale_kf_denom = frame_scale_evts->resize_kf_denoms
+                ? frame_scale_evts->resize_kf_denoms[i]
+                : 8;
+            new_node->size       = sizeof(EbRefFrameScale);
+            new_node->node_type  = REF_FRAME_SCALING_EVENT;
+            new_node->data       = data;
+            new_node->next       = node;
+            node                 = new_node;
             break;
         }
     }
