@@ -1240,8 +1240,77 @@ void svt_av1_print_lib_params(SequenceControlSet *scs) {
 /**********************************
 * Parse Single Parameter
 **********************************/
+
+static EbErrorType str_to_int64(const char *nptr, int64_t *out, char **nextptr) {
+    char   *endptr;
+    int64_t val;
+
+    val = strtoll(nptr, &endptr, 0);
+
+    if (endptr == nptr || (!nextptr && *endptr))
+        return EB_ErrorBadParameter;
+
+    *out = val;
+    if (nextptr)
+        *nextptr = endptr;
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_int(const char *nptr, int32_t *out, char **nextptr) {
+    char   *endptr;
+    int32_t val;
+
+    val = strtol(nptr, &endptr, 0);
+
+    if (endptr == nptr || (!nextptr && *endptr))
+        return EB_ErrorBadParameter;
+
+    *out = val;
+    if (nextptr)
+        *nextptr = endptr;
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_uint64(const char *nptr, uint64_t *out, char **nextptr) {
+    char    *endptr;
+    uint64_t val;
+
+    if (strtoll(nptr, NULL, 0) < 0) {
+        return EB_ErrorBadParameter;
+    }
+
+    val = strtoull(nptr, &endptr, 0);
+
+    if (endptr == nptr || (!nextptr && *endptr))
+        return EB_ErrorBadParameter;
+
+    *out = val;
+    if (nextptr)
+        *nextptr = endptr;
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_uint(const char *nptr, uint32_t *out, char **nextptr) {
+    char    *endptr;
+    uint32_t val;
+
+    if (strtol(nptr, NULL, 0) < 0) {
+        return EB_ErrorBadParameter;
+    }
+
+    val = strtoul(nptr, &endptr, 0);
+
+    if (endptr == nptr || (!nextptr && *endptr))
+        return EB_ErrorBadParameter;
+
+    *out = val;
+    if (nextptr)
+        *nextptr = endptr;
+    return EB_ErrorNone;
+}
+
 //assume the input list of values are in the format of "[v1,v2,v3,...]"
-static EbErrorType parse_list(const char *nptr, int32_t *list, size_t n) {
+static EbErrorType parse_list_s32(const char *nptr, int32_t *list, size_t n) {
     const char *ptr = nptr;
     char       *endptr;
     size_t      i = 0;
@@ -1252,7 +1321,10 @@ static EbErrorType parse_list(const char *nptr, int32_t *list, size_t n) {
             continue;
         }
 
-        int32_t rawval = strtol(ptr, &endptr, 10);
+        int32_t     rawval;
+        EbErrorType err = str_to_int(ptr, &rawval, &endptr);
+        if (err != EB_ErrorNone)
+            return err;
         if (i >= n) {
             return EB_ErrorBadParameter;
         } else if (*endptr == ',' || *endptr == ']') {
@@ -1277,7 +1349,10 @@ static EbErrorType parse_list_u32(const char *nptr, uint32_t *list, size_t n) {
             continue;
         }
 
-        uint32_t rawval = strtoul(ptr, &endptr, 10);
+        uint32_t    rawval;
+        EbErrorType err = str_to_uint(ptr, &rawval, &endptr);
+        if (err != EB_ErrorNone)
+            return err;
         if (i >= n) {
             return EB_ErrorBadParameter;
         } else if (*endptr == ',' || *endptr == ']') {
@@ -1302,7 +1377,10 @@ static EbErrorType parse_list_u64(const char *nptr, uint64_t *list, size_t n) {
             continue;
         }
 
-        uint64_t rawval = strtoull(ptr, &endptr, 10);
+        uint64_t    rawval;
+        EbErrorType err = str_to_uint64(ptr, &rawval, &endptr);
+        if (err != EB_ErrorNone)
+            return err;
         if (i >= n) {
             return EB_ErrorBadParameter;
         } else if (*endptr == ',' || *endptr == ']') {
@@ -1338,49 +1416,6 @@ static uint32_t count_params(const char *nptr) {
     return i;
 }
 
-static EbErrorType str_to_int64(const char *nptr, int64_t *out) {
-    char   *endptr;
-    int64_t val;
-
-    val = strtoll(nptr, &endptr, 0);
-
-    if (endptr == nptr || *endptr)
-        return EB_ErrorBadParameter;
-
-    *out = val;
-    return EB_ErrorNone;
-}
-
-static EbErrorType str_to_int(const char *nptr, int32_t *out) {
-    char   *endptr;
-    int32_t val;
-
-    val = strtol(nptr, &endptr, 0);
-
-    if (endptr == nptr || *endptr)
-        return EB_ErrorBadParameter;
-
-    *out = val;
-    return EB_ErrorNone;
-}
-
-static EbErrorType str_to_uint(const char *nptr, uint32_t *out) {
-    char    *endptr;
-    uint32_t val;
-
-    if (strtol(nptr, NULL, 0) < 0) {
-        return EB_ErrorBadParameter;
-    }
-
-    val = strtoul(nptr, &endptr, 0);
-
-    if (endptr == nptr || *endptr)
-        return EB_ErrorBadParameter;
-
-    *out = val;
-    return EB_ErrorNone;
-}
-
 #ifdef _MSC_VER
 #define strcasecmp _stricmp
 #endif
@@ -1403,7 +1438,7 @@ static EbErrorType str_to_crf(const char *nptr, EbSvtAv1EncConfiguration *config
     uint32_t    crf;
     EbErrorType return_error;
 
-    return_error = str_to_uint(nptr, &crf);
+    return_error = str_to_uint(nptr, &crf, NULL);
     if (return_error == EB_ErrorBadParameter)
         return return_error;
 
@@ -1834,7 +1869,7 @@ static EbErrorType str_to_resz_denoms(const char *nptr, SvtAv1FrameScaleEvts *ev
             if (return_error == EB_ErrorNone)                        \
                 return return_error;                                 \
             uint32_t val;                                            \
-            return_error = str_to_uint(value, &val);                 \
+            return_error = str_to_uint(value, &val, NULL);           \
             if (return_error == EB_ErrorNone)                        \
                 config_struct->opt = val;                            \
             return return_error;                                     \
@@ -1878,22 +1913,22 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     // custom enum fields
     if (!strcmp(name, "profile"))
         return str_to_profile(value, &config_struct->profile) == EB_ErrorBadParameter
-            ? str_to_uint(value, (uint32_t *)&config_struct->profile)
+            ? str_to_uint(value, (uint32_t *)&config_struct->profile, NULL)
             : EB_ErrorNone;
 
     if (!strcmp(name, "color-format"))
         return str_to_color_fmt(value, &config_struct->encoder_color_format) == EB_ErrorBadParameter
-            ? str_to_uint(value, (uint32_t *)&config_struct->encoder_color_format)
+            ? str_to_uint(value, (uint32_t *)&config_struct->encoder_color_format, NULL)
             : EB_ErrorNone;
 
     if (!strcmp(name, "irefresh-type"))
         return str_to_intra_rt(value, &config_struct->intra_refresh_type) == EB_ErrorBadParameter
-            ? str_to_uint(value, (uint32_t *)&config_struct->intra_refresh_type)
+            ? str_to_uint(value, (uint32_t *)&config_struct->intra_refresh_type, NULL)
             : EB_ErrorNone;
 
     if (!strcmp(name, "sframe-mode"))
         return str_to_sframe_mode(value, &config_struct->sframe_mode) == EB_ErrorBadParameter
-            ? str_to_uint(value, (uint32_t *)&config_struct->sframe_mode)
+            ? str_to_uint(value, (uint32_t *)&config_struct->sframe_mode, NULL)
             : EB_ErrorNone;
 
     if (!strcmp(name, "asm"))
@@ -1911,13 +1946,14 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
 
     // arrays
     if (!strcmp(name, "qindex-offsets"))
-        return parse_list(value, config_struct->qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
+        return parse_list_s32(value, config_struct->qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
 
     if (!strcmp(name, "chroma-qindex-offsets"))
-        return parse_list(value, config_struct->chroma_qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
+        return parse_list_s32(value, config_struct->chroma_qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
 
     if (!strcmp(name, "lambda-scale-factors"))
-        return parse_list(value, config_struct->lambda_scale_factors, SVT_AV1_FRAME_UPDATE_TYPES);
+        return parse_list_s32(
+            value, config_struct->lambda_scale_factors, SVT_AV1_FRAME_UPDATE_TYPES);
 
     if (!strcmp(name, "frame-resz-events"))
         return str_to_frm_resz_evts(value, &config_struct->frame_scale_evts);
@@ -1969,7 +2005,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
 
     for (size_t i = 0; i < uint_opts_size; i++) {
         if (!strcmp(name, uint_opts[i].name)) {
-            return str_to_uint(value, uint_opts[i].out);
+            return str_to_uint(value, uint_opts[i].out, NULL);
         }
     }
 
@@ -2004,7 +2040,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     for (size_t i = 0; i < uint8_opts_size; i++) {
         if (!strcmp(name, uint8_opts[i].name)) {
             uint32_t val;
-            return_error = str_to_uint(value, &val);
+            return_error = str_to_uint(value, &val, NULL);
             if (return_error == EB_ErrorNone)
                 *uint8_opts[i].out = val;
             return return_error;
@@ -2024,7 +2060,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
 
     for (size_t i = 0; i < int64_opts_size; i++) {
         if (!strcmp(name, int64_opts[i].name)) {
-            return str_to_int64(value, int64_opts[i].out);
+            return str_to_int64(value, int64_opts[i].out, NULL);
         }
     }
 
@@ -2054,7 +2090,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
 
     for (size_t i = 0; i < int_opts_size; i++) {
         if (!strcmp(name, int_opts[i].name)) {
-            return str_to_int(value, int_opts[i].out);
+            return str_to_int(value, int_opts[i].out, NULL);
         }
     }
 
@@ -2070,7 +2106,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
     for (size_t i = 0; i < int8_opts_size; i++) {
         if (!strcmp(name, int8_opts[i].name)) {
             int32_t val;
-            return_error = str_to_int(value, &val);
+            return_error = str_to_int(value, &val, NULL);
             if (return_error == EB_ErrorNone)
                 *int8_opts[i].out = val;
             return return_error;
