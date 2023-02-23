@@ -109,34 +109,34 @@ static EbErrorType allocate_frame_buffer(EbConfig *app_cfg, uint8_t *p_buffer) {
     return EB_ErrorNone;
 }
 
-EbErrorType allocate_input_buffers(EbConfig *app_cfg, EbConfig *callback_data) {
+EbErrorType allocate_input_buffers(EbConfig *app_cfg) {
     EB_APP_MALLOC(EbBufferHeaderType *,
-                  callback_data->input_buffer_pool,
+                  app_cfg->input_buffer_pool,
                   sizeof(EbBufferHeaderType),
                   EB_N_PTR,
                   EB_ErrorInsufficientResources);
 
     // Initialize Header
-    callback_data->input_buffer_pool->size = sizeof(EbBufferHeaderType);
+    app_cfg->input_buffer_pool->size = sizeof(EbBufferHeaderType);
 
     EB_APP_MALLOC(uint8_t *,
-                  callback_data->input_buffer_pool->p_buffer,
+                  app_cfg->input_buffer_pool->p_buffer,
                   sizeof(EbSvtIOFormat),
                   EB_N_PTR,
                   EB_ErrorInsufficientResources);
 
     // Allocate frame buffer for the p_buffer
     if (app_cfg->buffered_input == -1)
-        allocate_frame_buffer(app_cfg, callback_data->input_buffer_pool->p_buffer);
+        allocate_frame_buffer(app_cfg, app_cfg->input_buffer_pool->p_buffer);
 
     // Assign the variables
-    callback_data->input_buffer_pool->p_app_private = NULL;
-    callback_data->input_buffer_pool->pic_type      = EB_AV1_INVALID_PICTURE;
+    app_cfg->input_buffer_pool->p_app_private = NULL;
+    app_cfg->input_buffer_pool->pic_type      = EB_AV1_INVALID_PICTURE;
 
     return EB_ErrorNone;
 }
 
-EbErrorType allocate_output_recon_buffers(EbConfig *app_cfg, EbConfig *callback_data) {
+EbErrorType allocate_output_recon_buffers(EbConfig *app_cfg) {
     const size_t luma_size = app_cfg->input_padded_width * app_cfg->input_padded_height;
 
     // both u and v
@@ -146,25 +146,25 @@ EbErrorType allocate_output_recon_buffers(EbConfig *app_cfg, EbConfig *callback_
 
     // Recon Port
     EB_APP_MALLOC(EbBufferHeaderType *,
-                  callback_data->recon_buffer,
+                  app_cfg->recon_buffer,
                   sizeof(EbBufferHeaderType),
                   EB_N_PTR,
                   EB_ErrorInsufficientResources);
 
     // Initialize Header
-    callback_data->recon_buffer->size = sizeof(EbBufferHeaderType);
+    app_cfg->recon_buffer->size = sizeof(EbBufferHeaderType);
 
     if (app_cfg->config.recon_enabled) {
         EB_APP_MALLOC(uint8_t *,
-                      callback_data->recon_buffer->p_buffer,
+                      app_cfg->recon_buffer->p_buffer,
                       frame_size,
                       EB_N_PTR,
                       EB_ErrorInsufficientResources);
     }
 
-    callback_data->recon_buffer->n_alloc_len   = (uint32_t)frame_size;
-    callback_data->recon_buffer->p_app_private = NULL;
-    callback_data->recon_buffer->metadata      = NULL;
+    app_cfg->recon_buffer->n_alloc_len   = (uint32_t)frame_size;
+    app_cfg->recon_buffer->p_app_private = NULL;
+    app_cfg->recon_buffer->metadata      = NULL;
 
     return EB_ErrorNone;
 }
@@ -221,23 +221,23 @@ EbErrorType preload_frames_info_ram(EbConfig *app_cfg) {
 /***********************************
  * Initialize Core & Component
  ***********************************/
-EbErrorType init_encoder(EbConfig *app_cfg, EbConfig *callback_data, uint32_t instance_idx) {
+EbErrorType init_encoder(EbConfig *app_cfg, uint32_t instance_idx) {
     // Allocate a memory table hosting all allocated pointers
     allocate_memory_table(instance_idx);
 
-    callback_data->instance_idx = (uint8_t)instance_idx;
+    app_cfg->instance_idx = (uint8_t)instance_idx;
     // Initialize Port Activity Flags
-    callback_data->output_stream_port_active = APP_PortActive;
+    app_cfg->output_stream_port_active = APP_PortActive;
 
     // Send over all configuration parameters
     // Set the Parameters
-    EbErrorType return_error = svt_av1_enc_set_parameter(callback_data->svt_encoder_handle,
+    EbErrorType return_error = svt_av1_enc_set_parameter(app_cfg->svt_encoder_handle,
                                                          &app_cfg->config);
 
     if (return_error != EB_ErrorNone)
         return return_error;
     // STEP 5: Init Encoder
-    return_error = svt_av1_enc_init(callback_data->svt_encoder_handle);
+    return_error = svt_av1_enc_init(app_cfg->svt_encoder_handle);
 
     if (return_error != EB_ErrorNone) {
         return return_error;
@@ -248,12 +248,12 @@ EbErrorType init_encoder(EbConfig *app_cfg, EbConfig *callback_data, uint32_t in
     ///********************** APPLICATION INIT [START] ******************///
 
     // STEP 6: Allocate input buffers carrying the yuv frames in
-    return_error = allocate_input_buffers(app_cfg, callback_data);
+    return_error = allocate_input_buffers(app_cfg);
 
     if (return_error != EB_ErrorNone)
         return return_error;
     // STEP 7: Allocate output Recon Buffer
-    return_error = allocate_output_recon_buffers(app_cfg, callback_data);
+    return_error = allocate_output_recon_buffers(app_cfg);
 
     if (return_error != EB_ErrorNone)
         return return_error;

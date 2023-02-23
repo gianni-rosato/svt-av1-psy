@@ -413,7 +413,7 @@ static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_con
     EbConfig* app_cfg = c->app_cfg;
 
     if (app_cfg->need_to_skip) {
-        bool skip   = !process_skip(app_cfg, c->app_cfg->input_buffer_pool);
+        bool skip   = !process_skip(app_cfg, app_cfg->input_buffer_pool);
         int  next_c = fgetc(app_cfg->input_file);
         if (!skip && next_c == EOF) {
             fputs("\n[SVT-Error]: Skipped all available frames!\n", stderr);

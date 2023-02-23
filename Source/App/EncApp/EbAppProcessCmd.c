@@ -416,10 +416,9 @@ bool process_skip(EbConfig *app_cfg, EbBufferHeaderType *header_ptr) {
 /************************************/
 void process_input_buffer(EncChannel *channel) {
     EbConfig           *app_cfg          = channel->app_cfg;
-    EbConfig           *app_call_back    = channel->app_cfg;
     uint8_t             is_16bit         = (uint8_t)(app_cfg->config.encoder_bit_depth > 8);
-    EbBufferHeaderType *header_ptr       = app_call_back->input_buffer_pool;
-    EbComponentType    *component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
+    EbBufferHeaderType *header_ptr       = app_cfg->input_buffer_pool;
+    EbComponentType    *component_handle = (EbComponentType *)app_cfg->svt_encoder_handle;
 
     AppExitConditionType return_value = APP_ExitConditionNone;
 
@@ -581,10 +580,9 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
 
 void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t *frame_count) {
     EbConfig            *app_cfg       = channel->app_cfg;
-    EbConfig            *app_call_back = channel->app_cfg;
-    AppPortActiveType   *port_state    = &app_call_back->output_stream_port_active;
+    AppPortActiveType   *port_state    = &app_cfg->output_stream_port_active;
     EbBufferHeaderType  *header_ptr;
-    EbComponentType     *component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
+    EbComponentType     *component_handle = (EbComponentType *)app_cfg->svt_encoder_handle;
     AppExitConditionType return_value     = APP_ExitConditionNone;
     // Per channel variables
     FILE *stream_file = app_cfg->bitstream_file;
@@ -738,10 +736,9 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
 }
 void process_output_recon_buffer(EncChannel *channel) {
     EbConfig           *app_cfg       = channel->app_cfg;
-    EbConfig           *app_call_back = channel->app_cfg;
     EbBufferHeaderType *header_ptr =
-        app_call_back->recon_buffer; // needs to change for buffered input
-    EbComponentType     *component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
+        app_cfg->recon_buffer; // needs to change for buffered input
+    EbComponentType     *component_handle = (EbComponentType *)app_cfg->svt_encoder_handle;
     AppExitConditionType return_value     = APP_ExitConditionNone;
     int32_t              fseek_return_val;
     if (channel->exit_cond_recon != APP_ExitConditionNone) {
