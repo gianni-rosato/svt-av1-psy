@@ -418,7 +418,7 @@ void process_input_buffer(EncChannel *channel) {
     EbConfig           *app_cfg          = channel->app_cfg;
     uint8_t             is_16bit         = (uint8_t)(app_cfg->config.encoder_bit_depth > 8);
     EbBufferHeaderType *header_ptr       = app_cfg->input_buffer_pool;
-    EbComponentType    *component_handle = (EbComponentType *)app_cfg->svt_encoder_handle;
+    EbComponentType    *component_handle = app_cfg->svt_encoder_handle;
 
     AppExitConditionType return_value = APP_ExitConditionNone;
 
@@ -582,7 +582,7 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
     EbConfig            *app_cfg       = channel->app_cfg;
     AppPortActiveType   *port_state    = &app_cfg->output_stream_port_active;
     EbBufferHeaderType  *header_ptr;
-    EbComponentType     *component_handle = (EbComponentType *)app_cfg->svt_encoder_handle;
+    EbComponentType     *component_handle = app_cfg->svt_encoder_handle;
     AppExitConditionType return_value     = APP_ExitConditionNone;
     // Per channel variables
     FILE *stream_file = app_cfg->bitstream_file;

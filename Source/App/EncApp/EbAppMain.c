@@ -227,7 +227,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
             c->return_error = handle_stats_file(
                 app_cfg, enc_pass, &enc_app->rc_twopasses_stats, num_channels);
             if (c->return_error == EB_ErrorNone) {
-                c->return_error = init_encoder(app_cfg, c->app_cfg, inst_cnt);
+                c->return_error = init_encoder(app_cfg, inst_cnt);
             }
             return_error = (EbErrorType)(return_error | c->return_error);
         } else
