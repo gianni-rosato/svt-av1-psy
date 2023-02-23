@@ -1831,34 +1831,46 @@ static EbErrorType str_to_rc_mode(const char *nptr, uint32_t *out, uint8_t *aq_m
 
 static EbErrorType str_to_frm_resz_evts(const char *nptr, SvtAv1FrameScaleEvts *evts) {
     const uint32_t param_count = count_params(nptr);
-    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0)
+    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0) {
+        SVT_ERROR("Error: Size for the list passed to %s doesn't match %u\n",
+                  "frame-resz-events",
+                  evts->evt_num);
         return EB_ErrorBadParameter;
+    }
     if (evts->start_frame_nums)
-        free(evts->start_frame_nums);
-    evts->start_frame_nums = malloc(param_count * sizeof(uint64_t));
-    evts->evt_num          = param_count;
+        EB_FREE(evts->start_frame_nums);
+    EB_MALLOC(evts->start_frame_nums, param_count * sizeof(uint64_t));
+    evts->evt_num = param_count;
     return parse_list_u64(nptr, evts->start_frame_nums, param_count);
 }
 
 static EbErrorType str_to_resz_kf_denoms(const char *nptr, SvtAv1FrameScaleEvts *evts) {
     const uint32_t param_count = count_params(nptr);
-    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0)
+    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0) {
+        SVT_ERROR("Error: Size for the list passed to %s doesn't match %u\n",
+                  "frame-resz-kf-denoms",
+                  evts->evt_num);
         return EB_ErrorBadParameter;
+    }
     if (evts->resize_kf_denoms)
-        free(evts->resize_kf_denoms);
-    evts->resize_kf_denoms = malloc(param_count * sizeof(uint32_t));
-    evts->evt_num          = param_count;
+        EB_FREE(evts->resize_kf_denoms);
+    EB_MALLOC(evts->resize_kf_denoms, param_count * sizeof(uint32_t));
+    evts->evt_num = param_count;
     return parse_list_u32(nptr, evts->resize_kf_denoms, param_count);
 }
 
 static EbErrorType str_to_resz_denoms(const char *nptr, SvtAv1FrameScaleEvts *evts) {
     const uint32_t param_count = count_params(nptr);
-    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0)
+    if ((evts->evt_num != 0 && evts->evt_num != param_count) || param_count == 0) {
+        SVT_ERROR("Error: Size for the list passed to %s doesn't match %u\n",
+                  "frame-resz-denoms",
+                  evts->evt_num);
         return EB_ErrorBadParameter;
+    }
     if (evts->resize_denoms)
-        free(evts->resize_denoms);
-    evts->resize_denoms = malloc(param_count * sizeof(uint32_t));
-    evts->evt_num       = param_count;
+        EB_FREE(evts->resize_denoms);
+    EB_MALLOC(evts->resize_denoms, param_count * sizeof(uint32_t));
+    evts->evt_num = param_count;
     return parse_list_u32(nptr, evts->resize_denoms, param_count);
 }
 

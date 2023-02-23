@@ -733,7 +733,7 @@ static void retrieve_resize_event(SequenceControlSet *scs, uint64_t pic_num, Boo
         return;
     const SvtAv1FrameScaleEvts *events = &scs->static_config.frame_scale_evts;
     for (uint32_t i = 0; i < events->evt_num; i++) {
-        if (!events->start_frame_nums || pic_num == events->start_frame_nums[i])
+        if (!events->start_frame_nums || pic_num != events->start_frame_nums[i])
             continue;
         EbRefFrameScale *target_evt = &scs->encode_context_ptr->resize_evt;
         // update scaling event for future pictures

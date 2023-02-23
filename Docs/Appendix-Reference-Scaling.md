@@ -191,6 +191,25 @@ encoding pipeline. According to internal tests, dynamic mode can be activated
 at about 60% of target bitrate setting compared with the average output
 bitrate in common encoding settings.
 
+Random access of Reference Scaling is allowed either on demand or on the fly. User can set the parameters in list through encoder API for the entire stream (please refer to section of Reference Scaling of [Parameter.md](Parameter.md)), or sends frame resize event as private data with each frame buffer, for example:
+~~~
+  EbPrivDataNode *node = NULL;
+  if (start_resize_frame_nums == processed_frame_count) {
+    EbPrivDataNode  *new_node = malloc(sizeof(*new_node));
+    EbRefFrameScale *data     = malloc(sizeof(*data));
+    data->scale_mode          = RESIZE_FIXED;
+    data->scale_denom         = resize_denoms;
+    data->scale_kf_denom      = resize_kf_denoms;
+    new_node->size            = sizeof(EbRefFrameScale);
+    new_node->node_type       = REF_FRAME_SCALING_EVENT;
+    new_node->data            = data;
+    new_node->next            = node;
+    node                      = new_node;
+  }
+  // prepare other private data ...
+  buffer_header->p_app_private = node;
+~~~
+
 ## 5. Notes
 The feature settings that are described in this document were compiled at
 v1.4.0 of the code and may not reflect the current status of the code. The

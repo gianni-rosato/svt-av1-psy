@@ -4653,9 +4653,9 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->scs);
 
     // free frame scale events after copy to encoder
-    if (config_struct->frame_scale_evts.resize_denoms) free(config_struct->frame_scale_evts.resize_denoms);
-    if (config_struct->frame_scale_evts.resize_kf_denoms) free(config_struct->frame_scale_evts.resize_kf_denoms);
-    if (config_struct->frame_scale_evts.start_frame_nums) free(config_struct->frame_scale_evts.start_frame_nums);
+    if (config_struct->frame_scale_evts.resize_denoms) EB_FREE(config_struct->frame_scale_evts.resize_denoms);
+    if (config_struct->frame_scale_evts.resize_kf_denoms) EB_FREE(config_struct->frame_scale_evts.resize_kf_denoms);
+    if (config_struct->frame_scale_evts.start_frame_nums) EB_FREE(config_struct->frame_scale_evts.start_frame_nums);
     memset(&config_struct->frame_scale_evts, 0, sizeof(SvtAv1FrameScaleEvts));
 
     return return_error;
