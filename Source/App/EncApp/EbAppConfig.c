@@ -1479,7 +1479,6 @@ EbErrorType enc_channel_ctor(EncChannel *c) {
     if (!c->app_cfg)
         return EB_ErrorInsufficientResources;
 
-    memset(c->app_cfg, 0, sizeof(EbConfig));
     c->exit_cond        = APP_ExitConditionError;
     c->exit_cond_output = APP_ExitConditionError;
     c->exit_cond_recon  = APP_ExitConditionError;
