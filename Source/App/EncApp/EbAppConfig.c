@@ -1478,27 +1478,27 @@ EbErrorType enc_channel_ctor(EncChannel *c) {
     c->app_cfg = svt_config_ctor();
     if (!c->app_cfg)
         return EB_ErrorInsufficientResources;
-    c->app_ctx = (EbAppContext *)malloc(sizeof(EbAppContext));
-    if (!c->app_ctx)
+    c->app_cfg = (EbConfig *)malloc(sizeof(EbConfig));
+    if (!c->app_cfg)
         return EB_ErrorInsufficientResources;
-    memset(c->app_ctx, 0, sizeof(EbAppContext));
+    memset(c->app_cfg, 0, sizeof(EbConfig));
     c->exit_cond        = APP_ExitConditionError;
     c->exit_cond_output = APP_ExitConditionError;
     c->exit_cond_recon  = APP_ExitConditionError;
     c->exit_cond_input  = APP_ExitConditionError;
     c->active           = FALSE;
     return svt_av1_enc_init_handle(
-        &c->app_ctx->svt_encoder_handle, c->app_ctx, &c->app_cfg->config);
+        &c->app_cfg->svt_encoder_handle, c->app_cfg, &c->app_cfg->config);
 }
 
 void enc_channel_dctor(EncChannel *c, uint32_t inst_cnt) {
-    EbAppContext *ctx = c->app_ctx;
+    EbConfig *ctx = c->app_cfg;
     if (ctx && ctx->svt_encoder_handle) {
         svt_av1_enc_deinit(ctx->svt_encoder_handle);
         de_init_encoder(ctx, inst_cnt);
     }
     svt_config_dtor(c->app_cfg);
-    free(c->app_ctx);
+    free(c->app_cfg);
 }
 
 /**********************************

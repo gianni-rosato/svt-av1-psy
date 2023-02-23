@@ -227,7 +227,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
             c->return_error = handle_stats_file(
                 app_cfg, enc_pass, &enc_app->rc_twopasses_stats, num_channels);
             if (c->return_error == EB_ErrorNone) {
-                c->return_error = init_encoder(app_cfg, c->app_ctx, inst_cnt);
+                c->return_error = init_encoder(app_cfg, c->app_cfg, inst_cnt);
             }
             return_error = (EbErrorType)(return_error | c->return_error);
         } else
@@ -413,7 +413,7 @@ static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_con
     EbConfig* app_cfg = c->app_cfg;
 
     if (app_cfg->need_to_skip) {
-        bool skip   = !process_skip(app_cfg, c->app_ctx->input_buffer_pool);
+        bool skip   = !process_skip(app_cfg, c->app_cfg->input_buffer_pool);
         int  next_c = fgetc(app_cfg->input_file);
         if (!skip && next_c == EOF) {
             fputs("\n[SVT-Error]: Skipped all available frames!\n", stderr);

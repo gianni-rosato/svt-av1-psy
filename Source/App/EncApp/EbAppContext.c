@@ -109,7 +109,7 @@ static EbErrorType allocate_frame_buffer(EbConfig *app_cfg, uint8_t *p_buffer) {
     return EB_ErrorNone;
 }
 
-EbErrorType allocate_input_buffers(EbConfig *app_cfg, EbAppContext *callback_data) {
+EbErrorType allocate_input_buffers(EbConfig *app_cfg, EbConfig *callback_data) {
     EB_APP_MALLOC(EbBufferHeaderType *,
                   callback_data->input_buffer_pool,
                   sizeof(EbBufferHeaderType),
@@ -136,7 +136,7 @@ EbErrorType allocate_input_buffers(EbConfig *app_cfg, EbAppContext *callback_dat
     return EB_ErrorNone;
 }
 
-EbErrorType allocate_output_recon_buffers(EbConfig *app_cfg, EbAppContext *callback_data) {
+EbErrorType allocate_output_recon_buffers(EbConfig *app_cfg, EbConfig *callback_data) {
     const size_t luma_size = app_cfg->input_padded_width * app_cfg->input_padded_height;
 
     // both u and v
@@ -221,7 +221,7 @@ EbErrorType preload_frames_info_ram(EbConfig *app_cfg) {
 /***********************************
  * Initialize Core & Component
  ***********************************/
-EbErrorType init_encoder(EbConfig *app_cfg, EbAppContext *callback_data, uint32_t instance_idx) {
+EbErrorType init_encoder(EbConfig *app_cfg, EbConfig *callback_data, uint32_t instance_idx) {
     // Allocate a memory table hosting all allocated pointers
     allocate_memory_table(instance_idx);
 
@@ -271,7 +271,7 @@ EbErrorType init_encoder(EbConfig *app_cfg, EbAppContext *callback_data, uint32_
 /***********************************
  * Deinit Components
  ***********************************/
-EbErrorType de_init_encoder(EbAppContext *callback_data_ptr, uint32_t instance_index) {
+EbErrorType de_init_encoder(EbConfig *callback_data_ptr, uint32_t instance_index) {
     EbErrorType       return_error = EB_ErrorNone;
     int32_t           ptr_index    = 0;
     EbMemoryMapEntry *memory_entry = (EbMemoryMapEntry *)0;

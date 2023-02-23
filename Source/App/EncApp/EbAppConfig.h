@@ -17,7 +17,6 @@
 
 #include "EbSvtAv1Enc.h"
 
-typedef struct EbAppContext_ EbAppContext;
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -242,11 +241,22 @@ typedef struct EbConfig {
     Bool eos_flag;
 
     EbSvtAv1EncConfiguration config;
+    // Output Ports Active Flags
+    AppPortActiveType output_stream_port_active;
+
+    // Component Handle
+    EbComponentType *svt_encoder_handle;
+
+    // Buffer Pools
+    EbBufferHeaderType *input_buffer_pool;
+    EbBufferHeaderType *recon_buffer;
+
+    // Instance Index
+    uint8_t instance_idx;
 } EbConfig;
 
 typedef struct EncChannel {
     EbConfig            *app_cfg; // Encoder Configuration
-    EbAppContext        *app_ctx; // Instances App callback date
     EbErrorType          return_error; // Error Handling
     AppExitConditionType exit_cond_output; // Processing loop exit condition
     AppExitConditionType exit_cond_recon; // Processing loop exit condition
