@@ -9,15 +9,12 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-
 #include "EbSvtAv1Enc.h"
 #include "EbAppConfig.h"
 
 /********************************
  * External Function
  ********************************/
-extern EbErrorType init_encoder(EbConfig *app_cfg, EbConfig *callback_data,
-                                uint32_t instance_idx);
+extern EbErrorType init_encoder(EbConfig *app_cfg, EbConfig *callback_data, uint32_t instance_idx);
 
 extern EbErrorType de_init_encoder(EbConfig *callback_data_ptr, uint32_t instance_index);
-
