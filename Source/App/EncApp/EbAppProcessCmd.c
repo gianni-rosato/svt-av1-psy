@@ -579,8 +579,8 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
 }
 
 void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t *frame_count) {
-    EbConfig            *app_cfg       = channel->app_cfg;
-    AppPortActiveType   *port_state    = &app_cfg->output_stream_port_active;
+    EbConfig            *app_cfg    = channel->app_cfg;
+    AppPortActiveType   *port_state = &app_cfg->output_stream_port_active;
     EbBufferHeaderType  *header_ptr;
     EbComponentType     *component_handle = app_cfg->svt_encoder_handle;
     AppExitConditionType return_value     = APP_ExitConditionNone;
@@ -735,9 +735,8 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
     channel->exit_cond_output = return_value;
 }
 void process_output_recon_buffer(EncChannel *channel) {
-    EbConfig           *app_cfg       = channel->app_cfg;
-    EbBufferHeaderType *header_ptr =
-        app_cfg->recon_buffer; // needs to change for buffered input
+    EbConfig            *app_cfg    = channel->app_cfg;
+    EbBufferHeaderType  *header_ptr = app_cfg->recon_buffer; // needs to change for buffered input
     EbComponentType     *component_handle = (EbComponentType *)app_cfg->svt_encoder_handle;
     AppExitConditionType return_value     = APP_ExitConditionNone;
     int32_t              fseek_return_val;
