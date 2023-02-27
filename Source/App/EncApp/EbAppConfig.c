@@ -1495,7 +1495,6 @@ void enc_channel_dctor(EncChannel *c, uint32_t inst_cnt) {
         de_init_encoder(ctx, inst_cnt);
     }
     svt_config_dtor(c->app_cfg);
-    free(c->app_cfg);
 }
 
 /**********************************
