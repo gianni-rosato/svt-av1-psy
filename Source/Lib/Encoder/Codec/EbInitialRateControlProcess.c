@@ -229,25 +229,21 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
         : MIN((pcs->scs->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size);
 #if OPT_STARTUP_MG_SIZE
     if (pcs->scs->static_config.startup_mg_size > 0) {
-        int32_t startup_mg_size = 1 << pcs->scs->static_config.startup_mg_size;
-
         if (pcs->slice_type == I_SLICE) {
             limited_tpl_group_size = MIN(
                 1 + pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) +
                     mg_size,
                 pcs->ext_group_size);
-        }
-        // TODO: (ramon) only handle startup mg after the first key frame for now
-        if (pcs->picture_number == startup_mg_size) {
-            limited_tpl_group_size = MIN(
-                pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) + mg_size,
-                pcs->ext_group_size);
+        } else {
+            const uint32_t startup_mg_size = 1 << pcs->scs->static_config.startup_mg_size;
+            if (pcs->last_idr_picture + startup_mg_size == pcs->picture_number) {
+                limited_tpl_group_size = MIN(
+                    pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) +
+                        mg_size,
+                    pcs->ext_group_size);
+            }
         }
     }
-    /*fprintf(stderr,
-            "\nframe %d, limited_tpl_group_size %d\n",
-            (int)pcs->picture_number,
-            limited_tpl_group_size);*/
 #endif
     for (uint32_t i = 0; i < limited_tpl_group_size; i++) {
         PictureParentControlSet *cur_pcs = pcs->ext_group[i];

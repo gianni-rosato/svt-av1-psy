@@ -802,6 +802,13 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
     return qindex;
 }
 static const double r0_weight[3] = {0.75 /* I_SLICE */, 0.9 /* BASE */, 1 /* NON-BASE */};
+#if OPT_STARTUP_MG_SIZE
+static const double r0_weight_startup_mg[3][3] = {
+    {0.5 /* I_SLICE */, 0.6 /* BASE */, 1 /* NON-BASE */}, // HL2
+    {0.5 /* I_SLICE */, 0.6 /* BASE */, 1 /* NON-BASE */}, // HL3
+    {0.75 /* I_SLICE */, 0.5 /* BASE */, 1 /* NON-BASE */} // HL4
+};
+#endif
 /******************************************************
  * crf_qindex_calc
  * Assign the q_index per frame.
@@ -881,6 +888,23 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
         const unsigned int r0_weight_idx = !frame_is_intra_only(ppcs) + !!temporal_layer;
         assert(r0_weight_idx <= 2);
         double weight = r0_weight[r0_weight_idx];
+#if OPT_STARTUP_MG_SIZE
+        if (pcs->scs->static_config.startup_mg_size > 0) {
+            assert(pcs->scs->static_config.startup_mg_size >= 2 &&
+                   pcs->scs->static_config.startup_mg_size <= 4);
+            if (frame_is_intra_only(ppcs)) {
+                weight = r0_weight_startup_mg[pcs->scs->static_config.startup_mg_size - 2]
+                                             [r0_weight_idx];
+            } else {
+                // base layer weight
+                const uint32_t startup_mg_size = 1 << pcs->scs->static_config.startup_mg_size;
+                if (ppcs->last_idr_picture + startup_mg_size == pcs->picture_number) {
+                    weight = r0_weight_startup_mg[pcs->scs->static_config.startup_mg_size - 2]
+                                                 [r0_weight_idx];
+                }
+            }
+        }
+#endif
         // adjust the weight for base layer frames with shorter minigops
         if (scs->lad_mg && !frame_is_intra_only(ppcs) &&
 #if FIX_LAYER_SIGNAL

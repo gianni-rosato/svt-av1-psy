@@ -6632,7 +6632,7 @@ static EbErrorType derive_tf_window_params(
             if (centre_pcs->hierarchical_levels != pcs->temp_filt_pcs_list[0]->hierarchical_levels ||
                 centre_pcs->hierarchical_levels != context_ptr->mg_pictures_array[idx]->hierarchical_levels) {
 #if OPT_STARTUP_MG_SIZE
-                if (scs->static_config.startup_mg_size == 0) {
+                if (scs->static_config.startup_mg_size == 0 || scs->static_config.startup_mg_size == 4) {
                     centre_pcs->hierarchical_levels = pcs->temp_filt_pcs_list[0]->hierarchical_levels = context_ptr->mg_pictures_array[idx]->hierarchical_levels;
                 } else {
                     pcs->temp_filt_pcs_list[0]->hierarchical_levels = context_ptr->mg_pictures_array[idx]->hierarchical_levels = centre_pcs->hierarchical_levels;
