@@ -117,6 +117,8 @@ void log_error_output(FILE *error_log_file, uint32_t error_code) {
     return;
 }
 
+static void (*read_input)(EbConfig *app_cfg, uint8_t is_16bit, EbBufferHeaderType *header_ptr);
+
 //retunrs the offset from the file start
 static int64_t get_mmap_offset(EbConfig *app_cfg, uint64_t frame_size) {
     const int64_t offset = app_cfg->mmap.file_frame_it * frame_size;
@@ -167,141 +169,6 @@ static void release_memory_mapped_file(EbConfig *app_cfg, uint8_t is_16bit,
     svt_munmap(&app_cfg->mmap, input_ptr->luma, luma_read_size);
     svt_munmap(&app_cfg->mmap, input_ptr->cb, luma_read_size >> (3 - color_format));
     svt_munmap(&app_cfg->mmap, input_ptr->cr, luma_read_size >> (3 - color_format));
-}
-
-void read_input_frames(EbConfig *app_cfg, uint8_t is_16bit, EbBufferHeaderType *header_ptr) {
-    const uint32_t input_padded_width  = app_cfg->input_padded_width;
-    const uint32_t input_padded_height = app_cfg->input_padded_height;
-    FILE          *input_file          = app_cfg->input_file;
-    EbSvtIOFormat *input_ptr           = (EbSvtIOFormat *)header_ptr->p_buffer;
-
-    const uint8_t color_format  = app_cfg->config.encoder_color_format;
-    const uint8_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
-
-    input_ptr->y_stride  = input_padded_width;
-    input_ptr->cr_stride = input_padded_width >> subsampling_x;
-    input_ptr->cb_stride = input_padded_width >> subsampling_x;
-
-    if (app_cfg->buffered_input == -1) {
-        uint64_t read_size = (uint64_t)SIZE_OF_ONE_FRAME_IN_BYTES(
-            input_padded_width, input_padded_height, color_format, is_16bit);
-
-        header_ptr->n_filled_len = 0;
-
-        if (app_cfg->y4m_input) {
-            /* if input is a y4m file, read next line which contains "FRAME" */
-            if (!app_cfg->mmap.enable)
-                read_y4m_frame_delimiter(app_cfg->input_file, app_cfg->error_log_file);
-            else if (app_cfg->processed_frame_count == 0 && app_cfg->mmap.file_frame_it == 0)
-                app_cfg->mmap.y4m_frm_hdr = read_y4m_frame_delimiter(app_cfg->input_file,
-                                                                     app_cfg->error_log_file);
-        }
-        uint64_t luma_read_size   = (uint64_t)input_padded_width * input_padded_height << is_16bit;
-        uint32_t chroma_read_size = ((uint32_t)luma_read_size >> (3 - color_format));
-        uint8_t *eb_input_ptr     = input_ptr->luma;
-        if (!app_cfg->y4m_input && app_cfg->processed_frame_count == 0 &&
-            (app_cfg->input_file == stdin || app_cfg->input_file_is_fifo)) {
-            /* 9 bytes were already buffered during the the YUV4MPEG2 header probe */
-            memcpy(eb_input_ptr, app_cfg->y4m_buf, YUV4MPEG2_IND_SIZE);
-            header_ptr->n_filled_len += YUV4MPEG2_IND_SIZE;
-            eb_input_ptr += YUV4MPEG2_IND_SIZE;
-            header_ptr->n_filled_len += (uint32_t)fread(
-                eb_input_ptr, 1, luma_read_size - YUV4MPEG2_IND_SIZE, input_file);
-        } else {
-            if (app_cfg->mmap.enable) {
-                int64_t offset  = get_mmap_offset(app_cfg, read_size);
-                input_ptr->luma = svt_mmap(&app_cfg->mmap, offset, luma_read_size);
-                header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
-            } else
-                header_ptr->n_filled_len += (uint32_t)fread(
-                    input_ptr->luma, 1, luma_read_size, input_file);
-        }
-
-        if (app_cfg->mmap.enable) {
-            int64_t offset = get_mmap_offset(app_cfg, read_size);
-
-            offset += luma_read_size;
-            input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
-            header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
-
-            offset += chroma_read_size;
-            input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
-            header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
-        } else {
-            header_ptr->n_filled_len += (uint32_t)fread(
-                input_ptr->cb, 1, luma_read_size >> (3 - color_format), input_file);
-            header_ptr->n_filled_len += (uint32_t)fread(
-                input_ptr->cr, 1, luma_read_size >> (3 - color_format), input_file);
-        }
-
-        if (read_size != header_ptr->n_filled_len) {
-            if (app_cfg->mmap.enable) {
-                app_cfg->mmap.file_frame_it = 0;
-
-                int64_t offset  = get_mmap_offset(app_cfg, read_size);
-                input_ptr->luma = svt_mmap(&app_cfg->mmap, offset, luma_read_size);
-                header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
-
-                offset += luma_read_size;
-                input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
-                header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
-
-                offset += chroma_read_size;
-                input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
-                header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
-            } else if (!app_cfg->input_file_is_fifo) {
-                fseek(input_file, 0, SEEK_SET);
-                if (app_cfg->y4m_input == TRUE) {
-                    read_and_skip_y4m_header(app_cfg->input_file);
-                    read_y4m_frame_delimiter(app_cfg->input_file, app_cfg->error_log_file);
-                }
-                header_ptr->n_filled_len = (uint32_t)fread(
-                    input_ptr->luma, 1, luma_read_size, input_file);
-                header_ptr->n_filled_len += (uint32_t)fread(
-                    input_ptr->cb, 1, luma_read_size >> (3 - color_format), input_file);
-                header_ptr->n_filled_len += (uint32_t)fread(
-                    input_ptr->cr, 1, luma_read_size >> (3 - color_format), input_file);
-            }
-        }
-
-        if (feof(input_file) != 0) {
-            if ((input_file == stdin) || (app_cfg->input_file_is_fifo)) {
-                //for a fifo, we only know this when we reach eof
-                app_cfg->frames_to_be_encoded = app_cfg->frames_encoded;
-                if (header_ptr->n_filled_len != read_size) {
-                    // not a completed frame
-                    header_ptr->n_filled_len = 0;
-                }
-            } else {
-                // If we reached the end of file, loop over again
-                fseek(input_file, 0, SEEK_SET);
-            }
-        }
-
-    } else {
-        //Normal unpacked mode:yuv420p10le yuv422p10le yuv444p10le
-        const size_t luma_size   = (input_padded_width * input_padded_height) << is_16bit;
-        const size_t chroma_size = luma_size >> (3 - color_format);
-
-        input_ptr = (EbSvtIOFormat *)header_ptr->p_buffer;
-
-        input_ptr->y_stride  = input_padded_width;
-        input_ptr->cr_stride = input_padded_width >> subsampling_x;
-        input_ptr->cb_stride = input_padded_width >> subsampling_x;
-
-        input_ptr->luma =
-            app_cfg->sequence_buffer[app_cfg->processed_frame_count % app_cfg->buffered_input];
-        input_ptr->cb =
-            app_cfg->sequence_buffer[app_cfg->processed_frame_count % app_cfg->buffered_input] +
-            luma_size;
-        input_ptr->cr =
-            app_cfg->sequence_buffer[app_cfg->processed_frame_count % app_cfg->buffered_input] +
-            luma_size + chroma_size;
-
-        header_ptr->n_filled_len = (uint32_t)(luma_size + 2 * chroma_size);
-    }
-
-    return;
 }
 
 /**
@@ -396,7 +263,8 @@ static bool is_forced_keyframe(const EbConfig *app_cfg, uint64_t pts) {
 bool process_skip(EbConfig *app_cfg, EbBufferHeaderType *header_ptr) {
     const bool is_16bit = app_cfg->config.encoder_bit_depth > 8;
     for (int64_t i = 0; i < app_cfg->frames_to_be_skipped; i++) {
-        read_input_frames(app_cfg, is_16bit, header_ptr);
+        read_input(app_cfg, is_16bit, header_ptr);
+
         if (header_ptr->n_filled_len) {
             app_cfg->mmap.file_frame_it++;
             if (app_cfg->mmap.enable)
@@ -414,6 +282,7 @@ bool process_skip(EbConfig *app_cfg, EbBufferHeaderType *header_ptr) {
 // Reads yuv frames from file and copy
 // them into the input buffer
 /************************************/
+
 void process_input_buffer(EncChannel *channel) {
     EbConfig           *app_cfg          = channel->app_cfg;
     uint8_t             is_16bit         = (uint8_t)(app_cfg->config.encoder_bit_depth > 8);
@@ -449,7 +318,8 @@ void process_input_buffer(EncChannel *channel) {
 
     // If there are bytes left to encode, configure the header
     if (remaining_byte_count != 0 && app_cfg->stop_encoder == FALSE) {
-        read_input_frames(app_cfg, is_16bit, header_ptr);
+        read_input(app_cfg, is_16bit, header_ptr);
+
         if (header_ptr->n_filled_len) {
             // Update the context parameters
             app_cfg->processed_byte_count += header_ptr->n_filled_len;
@@ -507,6 +377,168 @@ double get_psnr(double sse, double max) {
         psnr = 10 * log10(max / sse);
 
     return psnr;
+}
+
+static void mmap_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit,
+                                   EbBufferHeaderType *header_ptr) {
+    const uint32_t input_padded_width  = app_cfg->input_padded_width;
+    const uint32_t input_padded_height = app_cfg->input_padded_height;
+    EbSvtIOFormat *input_ptr           = (EbSvtIOFormat *)header_ptr->p_buffer;
+
+    const uint8_t color_format  = app_cfg->config.encoder_color_format;
+    const uint8_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+
+    input_ptr->y_stride  = input_padded_width;
+    input_ptr->cr_stride = input_padded_width >> subsampling_x;
+    input_ptr->cb_stride = input_padded_width >> subsampling_x;
+
+    size_t read_size = (size_t)SIZE_OF_ONE_FRAME_IN_BYTES(
+        input_padded_width, input_padded_height, color_format, is_16bit);
+
+    header_ptr->n_filled_len = 0;
+
+    /* if input is a y4m file, read next line which contains "FRAME" */
+    if (app_cfg->y4m_input && app_cfg->processed_frame_count == 0 &&
+        app_cfg->mmap.file_frame_it == 0) {
+        app_cfg->mmap.y4m_frm_hdr = read_y4m_frame_delimiter(app_cfg->input_file,
+                                                             app_cfg->error_log_file);
+    }
+    size_t luma_read_size   = (size_t)input_padded_width * input_padded_height << is_16bit;
+    size_t chroma_read_size = ((size_t)luma_read_size >> (3 - color_format));
+
+    int64_t offset  = get_mmap_offset(app_cfg, read_size);
+    input_ptr->luma = svt_mmap(&app_cfg->mmap, offset, luma_read_size);
+    header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
+
+    offset += luma_read_size;
+    input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
+    header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
+
+    offset += chroma_read_size;
+    input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
+    header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
+
+    if (read_size != header_ptr->n_filled_len) {
+        app_cfg->mmap.file_frame_it = 0;
+
+        offset          = get_mmap_offset(app_cfg, read_size);
+        input_ptr->luma = svt_mmap(&app_cfg->mmap, offset, luma_read_size);
+        header_ptr->n_filled_len += (input_ptr->luma ? (uint32_t)luma_read_size : 0);
+
+        offset += luma_read_size;
+        input_ptr->cb = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
+        header_ptr->n_filled_len += (input_ptr->cb ? chroma_read_size : 0);
+
+        offset += chroma_read_size;
+        input_ptr->cr = svt_mmap(&app_cfg->mmap, offset, chroma_read_size);
+        header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
+    }
+}
+
+static void normal_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit,
+                                     EbBufferHeaderType *header_ptr) {
+    const uint32_t input_padded_width  = app_cfg->input_padded_width;
+    const uint32_t input_padded_height = app_cfg->input_padded_height;
+    FILE          *input_file          = app_cfg->input_file;
+    EbSvtIOFormat *input_ptr           = (EbSvtIOFormat *)header_ptr->p_buffer;
+
+    const uint8_t color_format  = app_cfg->config.encoder_color_format;
+    const uint8_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+
+    input_ptr->y_stride  = input_padded_width;
+    input_ptr->cr_stride = input_padded_width >> subsampling_x;
+    input_ptr->cb_stride = input_padded_width >> subsampling_x;
+
+    uint64_t read_size = (uint64_t)SIZE_OF_ONE_FRAME_IN_BYTES(
+        input_padded_width, input_padded_height, color_format, is_16bit);
+
+    header_ptr->n_filled_len = 0;
+
+    if (app_cfg->y4m_input) {
+        /* if input is a y4m file, read next line which contains "FRAME" */
+        read_y4m_frame_delimiter(app_cfg->input_file, app_cfg->error_log_file);
+    }
+    uint64_t luma_read_size = (uint64_t)input_padded_width * input_padded_height << is_16bit;
+    uint8_t *eb_input_ptr   = input_ptr->luma;
+    if (!app_cfg->y4m_input && app_cfg->processed_frame_count == 0 &&
+        (app_cfg->input_file == stdin || app_cfg->input_file_is_fifo)) {
+        /* 9 bytes were already buffered during the the YUV4MPEG2 header probe */
+        memcpy(eb_input_ptr, app_cfg->y4m_buf, YUV4MPEG2_IND_SIZE);
+        header_ptr->n_filled_len += YUV4MPEG2_IND_SIZE;
+        eb_input_ptr += YUV4MPEG2_IND_SIZE;
+        header_ptr->n_filled_len += (uint32_t)fread(
+            eb_input_ptr, 1, luma_read_size - YUV4MPEG2_IND_SIZE, input_file);
+    } else {
+        header_ptr->n_filled_len += (uint32_t)fread(input_ptr->luma, 1, luma_read_size, input_file);
+    }
+
+    header_ptr->n_filled_len += (uint32_t)fread(
+        input_ptr->cb, 1, luma_read_size >> (3 - color_format), input_file);
+    header_ptr->n_filled_len += (uint32_t)fread(
+        input_ptr->cr, 1, luma_read_size >> (3 - color_format), input_file);
+
+    if (read_size != header_ptr->n_filled_len && !app_cfg->input_file_is_fifo) {
+        fseek(input_file, 0, SEEK_SET);
+        if (app_cfg->y4m_input == TRUE) {
+            read_and_skip_y4m_header(app_cfg->input_file);
+            read_y4m_frame_delimiter(app_cfg->input_file, app_cfg->error_log_file);
+        }
+        header_ptr->n_filled_len = (uint32_t)fread(input_ptr->luma, 1, luma_read_size, input_file);
+        header_ptr->n_filled_len += (uint32_t)fread(
+            input_ptr->cb, 1, luma_read_size >> (3 - color_format), input_file);
+        header_ptr->n_filled_len += (uint32_t)fread(
+            input_ptr->cr, 1, luma_read_size >> (3 - color_format), input_file);
+    }
+
+    if (feof(input_file) != 0) {
+        if ((input_file == stdin) || (app_cfg->input_file_is_fifo)) {
+            //for a fifo, we only know this when we reach eof
+            app_cfg->frames_to_be_encoded = app_cfg->frames_encoded;
+            if (header_ptr->n_filled_len != read_size) {
+                // not a completed frame
+                header_ptr->n_filled_len = 0;
+            }
+        } else {
+            // If we reached the end of file, loop over again
+            fseek(input_file, 0, SEEK_SET);
+        }
+    }
+}
+
+static void buffered_read_input_frames(EbConfig *app_cfg, uint8_t is_16bit,
+                                       EbBufferHeaderType *header_ptr) {
+    const uint32_t input_padded_width  = app_cfg->input_padded_width;
+    const uint32_t input_padded_height = app_cfg->input_padded_height;
+    EbSvtIOFormat *input_ptr           = (EbSvtIOFormat *)header_ptr->p_buffer;
+
+    const uint8_t color_format  = app_cfg->config.encoder_color_format;
+    const uint8_t subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
+
+    input_ptr->y_stride  = input_padded_width;
+    input_ptr->cr_stride = input_padded_width >> subsampling_x;
+    input_ptr->cb_stride = input_padded_width >> subsampling_x;
+
+    //Normal unpacked mode:yuv420p10le yuv422p10le yuv444p10le
+    const size_t luma_size   = (input_padded_width * input_padded_height) << is_16bit;
+    const size_t chroma_size = luma_size >> (3 - color_format);
+
+    uint8_t *base =
+        app_cfg->sequence_buffer[app_cfg->processed_frame_count % app_cfg->buffered_input];
+    input_ptr->luma = base;
+    input_ptr->cb   = base + luma_size;
+    input_ptr->cr   = base + luma_size + chroma_size;
+
+    header_ptr->n_filled_len = (uint32_t)(luma_size + 2 * chroma_size);
+}
+
+void init_reader(EbConfig *app_cfg) {
+    if (app_cfg->buffered_input != -1) {
+        read_input = buffered_read_input_frames;
+    } else if (app_cfg->mmap.enable) {
+        read_input = mmap_read_input_frames;
+    } else {
+        read_input = normal_read_input_frames;
+    }
 }
 
 /***************************************
