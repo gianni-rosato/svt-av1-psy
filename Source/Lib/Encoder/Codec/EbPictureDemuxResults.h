@@ -34,10 +34,10 @@ typedef struct PictureDemuxResults {
     EbPicType picture_type;
 
     // Only valid for input pictures
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
 
     // Only valid for reference pictures
-    EbObjectWrapper           *reference_picture_wrapper_ptr;
+    EbObjectWrapper           *ref_pic_wrapper;
     struct SequenceControlSet *scs;
     uint64_t                   picture_number;
     uint64_t                   decode_order;
@@ -55,13 +55,13 @@ extern EbErrorType svt_aom_picture_results_creator(EbPtr *object_dbl_ptr,
 
 typedef struct PictureManagerResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
     uint32_t         segment_index;
     uint8_t          task_type;
     uint8_t          tpl_ref_list0_count;
     uint8_t          tpl_ref_list1_count;
     uint8_t          temporal_layer_index;
-    Bool             is_used_as_reference_flag;
+    Bool             is_ref;
 } PictureManagerResults;
 
 typedef struct PictureManagerResultInitData {

@@ -83,9 +83,9 @@ typedef struct EncDecContext {
 } EncDecContext;
 
 /**************************************
-     * Extern Function Declarations
-     **************************************/
-extern EbErrorType svt_aom_enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
+ * Extern Function Declarations
+ **************************************/
+extern EbErrorType svt_aom_enc_dec_context_ctor(EbThreadContext   *thread_ctx,
                                                 const EbEncHandle *enc_handle_ptr, int index,
                                                 int tasks_index);
 

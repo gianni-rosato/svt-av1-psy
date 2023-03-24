@@ -17,7 +17,7 @@
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_context_ptr,
+extern EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_ctx,
                                              const EbEncHandle *enc_handle_ptr,
                                              EbPtr object_init_data_ptr, int index,
                                              int demux_index);

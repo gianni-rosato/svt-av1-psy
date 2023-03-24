@@ -77,15 +77,15 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                     int32_t fbc, uint32_t *cdef_left, int32_t num_planes, uint16_t *src,
                     int32_t *curr_recon_stride, uint8_t **curr_blk_recon_buf,
                     uint16_t **linebuf_above, uint16_t **linebuf_curr, int32_t stride) {
-    MainFrameBuf        *main_frame_buf    = &dec_handle->main_frame_buf;
-    CurFrameBuf         *frame_buf         = &main_frame_buf->cur_frame_bufs[0];
-    EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
+    MainFrameBuf        *main_frame_buf = &dec_handle->main_frame_buf;
+    CurFrameBuf         *frame_buf      = &main_frame_buf->cur_frame_bufs[0];
+    EbPictureBufferDesc *recon_pic      = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
     int8_t        use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_EIGHT_BIT ||
                          dec_handle->is_16bit_pipeline);
     const int32_t cdef_mask  = 1;
     uint32_t      cdef_count;
-    int32_t       coeff_shift = AOMMAX(recon_picture_ptr->bit_depth - 8, 0);
+    int32_t       coeff_shift = AOMMAX(recon_pic->bit_depth - 8, 0);
     FrameHeader  *frame_info  = &dec_handle->frame_header;
     /*const int32_t stride = (frame_info->mi_cols << MI_SIZE_LOG2) +
         2 * CDEF_HBORDER;*/
@@ -547,7 +547,7 @@ void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag) {
     if (!enable_flag)
         return;
 
-    EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
+    EbPictureBufferDesc *recon_pic = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
     uint8_t      *curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t       curr_recon_stride[MAX_MB_PLANE];
@@ -579,7 +579,7 @@ void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag) {
         mi_high_l2[pli] = MI_SIZE_LOG2 - sub_y;
 
         /*Deriveing  recon pict buffer ptr's*/
-        svt_aom_derive_blk_pointers(recon_picture_ptr,
+        svt_aom_derive_blk_pointers(recon_pic,
                                     pli,
                                     0,
                                     0,

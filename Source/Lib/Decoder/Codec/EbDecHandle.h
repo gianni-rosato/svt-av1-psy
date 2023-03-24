@@ -245,8 +245,9 @@ typedef struct EbDecHandle {
     EbHandle              thread_semaphore;
     struct DecThreadCtxt *thread_ctxt_pa;
 
-    Bool
-        is_16bit_pipeline; // internal bit-depth: when equals 1 internal bit-depth is 16bits regardless of the input bit-depth
+    // internal bit-depth: when equals 1 internal bit-depth is 16bits regardless of the input
+    // bit-depth
+    Bool is_16bit_pipeline;
 } EbDecHandle;
 
 /* Thread level context data */

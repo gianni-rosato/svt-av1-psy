@@ -124,7 +124,7 @@ extern EbErrorType svt_aom_derive_input_resolution(EbInputResolution *input_reso
 
 static void svt_sequence_control_set_instance_dctor(EbPtr p) {
     EbSequenceControlSetInstance *obj = (EbSequenceControlSetInstance *)p;
-    EB_DELETE(obj->encode_context_ptr);
+    EB_DELETE(obj->enc_ctx);
     EB_DESTROY_SEMAPHORE(obj->scs->ref_buffer_available_semaphore);
     EB_DELETE(obj->scs);
 }
@@ -132,9 +132,9 @@ static void svt_sequence_control_set_instance_dctor(EbPtr p) {
 EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr) {
     object_ptr->dctor = svt_sequence_control_set_instance_dctor;
 
-    EB_NEW(object_ptr->encode_context_ptr, svt_aom_encode_context_ctor, NULL);
+    EB_NEW(object_ptr->enc_ctx, svt_aom_encode_context_ctor, NULL);
     EB_NEW(object_ptr->scs, svt_sequence_control_set_ctor, NULL);
-    object_ptr->scs->encode_context_ptr = object_ptr->encode_context_ptr;
+    object_ptr->scs->enc_ctx = object_ptr->enc_ctx;
 
     return EB_ErrorNone;
 }

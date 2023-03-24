@@ -23,21 +23,21 @@
 void svt_av1_reset_loop_restoration(PictureControlSet *piCSetPtr, uint16_t tile_idx);
 
 static void rest_context_dctor(EbPtr p) {
-    EbThreadContext      *thread_context_ptr = (EbThreadContext *)p;
-    EntropyCodingContext *obj                = (EntropyCodingContext *)thread_context_ptr->priv;
+    EbThreadContext      *thread_ctx = (EbThreadContext *)p;
+    EntropyCodingContext *obj        = (EntropyCodingContext *)thread_ctx->priv;
     EB_FREE_ARRAY(obj);
 }
 
 /******************************************************
  * Enc Dec Context Constructor
  ******************************************************/
-EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext   *thread_ctx,
                                                 const EbEncHandle *enc_handle_ptr, int index,
                                                 int rate_control_index) {
     EntropyCodingContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
-    thread_context_ptr->priv  = context_ptr;
-    thread_context_ptr->dctor = rest_context_dctor;
+    thread_ctx->priv  = context_ptr;
+    thread_ctx->dctor = rest_context_dctor;
 
     context_ptr->is_16bit =
         (Bool)(enc_handle_ptr->scs_instance_array[0]->scs->static_config.encoder_bit_depth >
@@ -59,20 +59,20 @@ EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext   *thread_contex
  * Entropy Coding Reset Neighbor Arrays
  ***********************************************/
 static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs, uint16_t tile_idx) {
-    svt_aom_neighbor_array_unit_reset(pcs->mode_type_neighbor_array[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->mode_type_na[tile_idx]);
 
-    svt_aom_neighbor_array_unit_reset(pcs->partition_context_neighbor_array[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->partition_context_na[tile_idx]);
 
-    svt_aom_neighbor_array_unit_reset(pcs->skip_flag_neighbor_array[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->skip_flag_na[tile_idx]);
 
-    svt_aom_neighbor_array_unit_reset(pcs->skip_coeff_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->luma_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->cb_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ref_frame_type_neighbor_array[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->skip_coeff_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->luma_dc_sign_level_coeff_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->cb_dc_sign_level_coeff_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->cr_dc_sign_level_coeff_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ref_frame_type_na[tile_idx]);
 
-    svt_aom_neighbor_array_unit_reset(pcs->intra_luma_mode_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset32(pcs->interpolation_type_neighbor_array[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->intra_luma_mode_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset32(pcs->interpolation_type_na[tile_idx]);
     svt_aom_neighbor_array_unit_reset(pcs->txfm_context_array[tile_idx]);
     svt_aom_neighbor_array_unit_reset(pcs->segmentation_id_pred_array[tile_idx]);
     return;
@@ -191,26 +191,20 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr, Pict
     // pass the ent
     for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
         OutputBitstreamUnit *output_bitstream_ptr =
-            (OutputBitstreamUnit *)(pcs->entropy_coding_info[tile_idx]
-                                        ->entropy_coder_ptr->ec_output_bitstream_ptr);
+            (OutputBitstreamUnit *)(pcs->ec_info[tile_idx]->ec->ec_output_bitstream_ptr);
         //****************************************************************//
-        pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
-            !pcs->ppcs->large_scale_tile;
-        pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
-            pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf &&
-            !frm_hdr->disable_cdf_update;
-        aom_start_encode(&pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer,
-                         output_bitstream_ptr);
+        pcs->ec_info[tile_idx]->ec->ec_writer.allow_update_cdf = !pcs->ppcs->large_scale_tile;
+        pcs->ec_info[tile_idx]->ec->ec_writer.allow_update_cdf =
+            pcs->ec_info[tile_idx]->ec->ec_writer.allow_update_cdf && !frm_hdr->disable_cdf_update;
+        aom_start_encode(&pcs->ec_info[tile_idx]->ec->ec_writer, output_bitstream_ptr);
         // ADD Reset here
         if (pcs->ppcs->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
-            svt_memcpy(pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc,
+            svt_memcpy(pcs->ec_info[tile_idx]->ec->fc,
                        &pcs->ref_frame_context[pcs->ppcs->frm_hdr.primary_ref_frame],
                        sizeof(FRAME_CONTEXT));
         else
-            svt_aom_reset_entropy_coder(scs->encode_context_ptr,
-                                        pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr,
-                                        entropy_coding_qp,
-                                        pcs->slice_type);
+            svt_aom_reset_entropy_coder(
+                scs->enc_ctx, pcs->ec_info[tile_idx]->ec, entropy_coding_qp, pcs->slice_type);
 
         entropy_coding_reset_neighbor_arrays(pcs, tile_idx);
     }
@@ -220,29 +214,30 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr, Pict
 /* Entropy Coding */
 
 /*********************************************************************************
-*
-* @brief
-*  The Entropy Coding process is responsible for producing an AV1 conformant bitstream for each frame.
-*
-* @par Description:
-*  The entropy coder is a frame-based process and is based on multi-symbol arithmetic range coding.
-*  It takes as input the coding decisions and information for each block and produces as output the bitstream
-*  for each frame.
-*
-* @param[in] Coding Decisions
-*  Coding decisions and information for each block.
-*
-* @param[out] bitstream
-*  Bitstream for each block
-*
-********************************************************************************/
+ *
+ * @brief
+ *  The Entropy Coding process is responsible for producing an AV1 conformant bitstream for each
+ *frame.
+ *
+ * @par Description:
+ *  The entropy coder is a frame-based process and is based on multi-symbol arithmetic range coding.
+ *  It takes as input the coding decisions and information for each block and produces as output the
+ *bitstream for each frame.
+ *
+ * @param[in] Coding Decisions
+ *  Coding decisions and information for each block.
+ *
+ * @param[out] bitstream
+ *  Bitstream for each block
+ *
+ ********************************************************************************/
 void *svt_aom_entropy_coding_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext      *thread_context_ptr = (EbThreadContext *)input_ptr;
-    EntropyCodingContext *context_ptr        = (EntropyCodingContext *)thread_context_ptr->priv;
+    EbThreadContext      *thread_ctx  = (EbThreadContext *)input_ptr;
+    EntropyCodingContext *context_ptr = (EntropyCodingContext *)thread_ctx->priv;
 
     // Input
-    EbObjectWrapper *rest_results_wrapper_ptr;
+    EbObjectWrapper *rest_results_wrapper;
 
     // Output
     EbObjectWrapper      *entropy_coding_results_wrapper_ptr;
@@ -250,10 +245,10 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
 
     for (;;) {
         // Get Mode Decision Results
-        EB_GET_FULL_OBJECT(context_ptr->enc_dec_input_fifo_ptr, &rest_results_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->enc_dec_input_fifo_ptr, &rest_results_wrapper);
 
-        RestResults       *rest_results_ptr = (RestResults *)rest_results_wrapper_ptr->object_ptr;
-        PictureControlSet *pcs = (PictureControlSet *)rest_results_ptr->pcs_wrapper_ptr->object_ptr;
+        RestResults        *rest_results = (RestResults *)rest_results_wrapper->object_ptr;
+        PictureControlSet  *pcs = (PictureControlSet *)rest_results->pcs_wrapper->object_ptr;
         SequenceControlSet *scs = pcs->scs;
         // SB Constants
 
@@ -261,7 +256,7 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
 
         uint8_t          sb_size_log2    = (uint8_t)svt_log2f(sb_size);
         uint32_t         pic_width_in_sb = (pcs->ppcs->aligned_width + sb_size - 1) >> sb_size_log2;
-        uint16_t         tile_idx        = rest_results_ptr->tile_index;
+        uint16_t         tile_idx        = rest_results->tile_index;
         Av1Common *const cm              = pcs->ppcs->av1_cm;
         const uint16_t   tile_cnt        = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
         const uint16_t   tile_col        = tile_idx % cm->tiles_info.tile_cols;
@@ -311,7 +306,7 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
                                      sb_ptr,
                                      pcs,
                                      tile_idx,
-                                     pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr,
+                                     pcs->ec_info[tile_idx]->ec,
                                      coeff_picture_ptr);
                 }
             }
@@ -321,12 +316,12 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
         Bool pic_ready = TRUE;
 
         // Current tile ready
-        svt_aom_encode_slice_finish(pcs->entropy_coding_info[tile_idx]->entropy_coder_ptr);
+        svt_aom_encode_slice_finish(pcs->ec_info[tile_idx]->ec);
 
         svt_block_on_mutex(pcs->entropy_coding_pic_mutex);
-        pcs->entropy_coding_info[tile_idx]->entropy_coding_tile_done = TRUE;
+        pcs->ec_info[tile_idx]->entropy_coding_tile_done = TRUE;
         for (uint16_t i = 0; i < tile_cnt; i++) {
-            if (pcs->entropy_coding_info[i]->entropy_coding_tile_done == FALSE) {
+            if (pcs->ec_info[i]->entropy_coding_tile_done == FALSE) {
                 pic_ready = FALSE;
                 break;
             }
@@ -360,14 +355,14 @@ void *svt_aom_entropy_coding_kernel(void *input_ptr) {
                                  &entropy_coding_results_wrapper_ptr);
             entropy_coding_results_ptr = (EntropyCodingResults *)
                                              entropy_coding_results_wrapper_ptr->object_ptr;
-            entropy_coding_results_ptr->pcs_wrapper_ptr = rest_results_ptr->pcs_wrapper_ptr;
+            entropy_coding_results_ptr->pcs_wrapper = rest_results->pcs_wrapper;
 
             // Post EntropyCoding Results
             svt_post_full_object(entropy_coding_results_wrapper_ptr);
         }
 
         // Release Mode Decision Results
-        svt_release_object(rest_results_wrapper_ptr);
+        svt_release_object(rest_results_wrapper);
     }
 
     return NULL;

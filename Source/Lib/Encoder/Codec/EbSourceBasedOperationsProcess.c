@@ -56,8 +56,8 @@ typedef struct TplDispenserContext {
 } TplDispenserContext;
 
 static void source_based_operations_context_dctor(EbPtr p) {
-    EbThreadContext              *thread_context_ptr = (EbThreadContext *)p;
-    SourceBasedOperationsContext *obj = (SourceBasedOperationsContext *)thread_context_ptr->priv;
+    EbThreadContext              *thread_ctx = (EbThreadContext *)p;
+    SourceBasedOperationsContext *obj        = (SourceBasedOperationsContext *)thread_ctx->priv;
     EB_FREE_ARRAY(obj);
 }
 
@@ -66,15 +66,15 @@ static INLINE int coded_to_superres_mi(int mi_col, int denom) {
 }
 
 /************************************************
-* Source Based Operation Context Constructor
-************************************************/
-EbErrorType svt_aom_source_based_operations_context_ctor(EbThreadContext   *thread_context_ptr,
+ * Source Based Operation Context Constructor
+ ************************************************/
+EbErrorType svt_aom_source_based_operations_context_ctor(EbThreadContext   *thread_ctx,
                                                          const EbEncHandle *enc_handle_ptr,
                                                          int tpl_index, int index) {
     SourceBasedOperationsContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
-    thread_context_ptr->priv  = context_ptr;
-    thread_context_ptr->dctor = source_based_operations_context_dctor;
+    thread_ctx->priv  = context_ptr;
+    thread_ctx->dctor = source_based_operations_context_dctor;
 
     context_ptr->initial_rate_control_results_input_fifo_ptr =
         svt_system_resource_get_consumer_fifo(
@@ -90,21 +90,21 @@ EbErrorType svt_aom_source_based_operations_context_ctor(EbThreadContext   *thre
      TPL dispenser context dctor
 */
 static void tpl_disp_context_dctor(EbPtr p) {
-    EbThreadContext     *thread_context_ptr = (EbThreadContext *)p;
-    TplDispenserContext *obj                = (TplDispenserContext *)thread_context_ptr->priv;
+    EbThreadContext     *thread_ctx = (EbThreadContext *)p;
+    TplDispenserContext *obj        = (TplDispenserContext *)thread_ctx->priv;
     EB_FREE_ARRAY(obj);
 }
 /*
      TPL dispenser context cctor
 */
-EbErrorType svt_aom_tpl_disp_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType svt_aom_tpl_disp_context_ctor(EbThreadContext   *thread_ctx,
                                           const EbEncHandle *enc_handle_ptr, int index,
                                           int tasks_index) {
     TplDispenserContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
 
-    thread_context_ptr->priv  = context_ptr;
-    thread_context_ptr->dctor = tpl_disp_context_dctor;
+    thread_ctx->priv  = context_ptr;
+    thread_ctx->dctor = tpl_disp_context_dctor;
 
     context_ptr->tpl_disp_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->tpl_disp_res_srm, index);
@@ -146,7 +146,7 @@ static void tpl_regular_setup_me_refs(PictureParentControlSet *base_pcs,
             cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_number =
                 ref_obj->picture_number;
             cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_ptr =
-                ref_obj->input_padded_picture_ptr;
+                ref_obj->input_padded_pic;
             //not needed for TPL but could be linked.
             cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].sixteenth_picture_ptr =
                 NULL;
@@ -174,10 +174,10 @@ static void tpl_prep_info(PictureParentControlSet *pcs) {
                   0,
                   REF_LIST_MAX_DEPTH * sizeof(EbDownScaledBufDescPtrArray));
 
-        pcs_tpl->tpl_data.tpl_slice_type            = pcs_tpl->slice_type;
-        pcs_tpl->tpl_data.tpl_temporal_layer_index  = pcs_tpl->temporal_layer_index;
-        pcs_tpl->tpl_data.is_used_as_reference_flag = pcs_tpl->is_used_as_reference_flag;
-        pcs_tpl->tpl_data.tpl_decode_order          = pcs_tpl->decode_order;
+        pcs_tpl->tpl_data.tpl_slice_type           = pcs_tpl->slice_type;
+        pcs_tpl->tpl_data.tpl_temporal_layer_index = pcs_tpl->temporal_layer_index;
+        pcs_tpl->tpl_data.is_ref                   = pcs_tpl->is_ref;
+        pcs_tpl->tpl_data.tpl_decode_order         = pcs_tpl->decode_order;
 
         pcs_tpl->tpl_data.base_pcs = pcs;
 
@@ -194,7 +194,7 @@ void generate_lambda_scaling_factor(PictureParentControlSet *pcs, int64_t mc_dep
              : pcs->tpl_ctrls.synth_blk_size == 16                          ? 2
                                                                             : 3;
     const int    step                  = 1 << (tpl_synth_size_offset);
-    const int    mi_cols_sr = ((pcs->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;
+    const int    mi_cols_sr            = ((pcs->enhanced_unscaled_pic->width + 15) / 16) << 2;
     const int    block_size = pcs->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
     const int    num_mi_w   = mi_size_wide[block_size];
     const int    num_mi_h   = mi_size_high[block_size];
@@ -545,9 +545,9 @@ static void tpl_subpel_search(SequenceControlSet *scs, PictureParentControlSet *
     best_mv->row = best_sp_mv.as_mv.row;
 }
 
-static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_ptr,
-                                             SequenceControlSet *scs, PictureParentControlSet *pcs,
-                                             int32_t frame_idx, uint32_t sb_index, int32_t qIndex,
+static void tpl_mc_flow_dispenser_sb_generic(EncodeContext *enc_ctx, SequenceControlSet *scs,
+                                             PictureParentControlSet *pcs, int32_t frame_idx,
+                                             uint32_t sb_index, int32_t qIndex,
                                              uint8_t dispenser_search_level) {
     uint32_t size      = size_array[dispenser_search_level];
     uint32_t blk_start = blk_start_array[dispenser_search_level];
@@ -563,10 +563,9 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                                                     : tx_size_array[dispenser_search_level];
 
     EbPictureBufferDesc *ref_pic_ptr;
-    EbPictureBufferDesc *input_pic = pcs->enhanced_picture_ptr;
-    EbPictureBufferDesc *recon_picture_ptr =
-        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx];
-    TplStats tpl_stats;
+    EbPictureBufferDesc *input_pic = pcs->enhanced_pic;
+    EbPictureBufferDesc *recon_pic = enc_ctx->mc_flow_rec_picture_buffer[frame_idx];
+    TplStats             tpl_stats;
 
     DECLARE_ALIGNED(16, uint8_t, predictor8[(const uint32_t)MAX_TPL_SAMPLES_PER_BLOCK * 2]);
     memset(predictor8, 0, sizeof(predictor8));
@@ -587,12 +586,12 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
     mb_plane.round_qtx       = scs->quants_8bit.y_round[qIndex];
     mb_plane.dequant_qtx     = scs->deq_8bit.y_dequant_qtx[qIndex];
 
-    const uint32_t src_stride      = pcs->enhanced_picture_ptr->stride_y;
+    const uint32_t src_stride      = pcs->enhanced_pic->stride_y;
     B64Geom       *b64_geom        = &scs->b64_geom[sb_index];
     const int      aligned16_width = (pcs->aligned_width + 15) >> 4;
 
     const uint8_t disable_intra_pred = (pcs->tpl_ctrls.disable_intra_pred_nref &&
-                                        (pcs->tpl_data.is_used_as_reference_flag == 0));
+                                        (pcs->tpl_data.is_ref == 0));
     const uint8_t intra_dc_sad_path  = pcs->tpl_ctrls.use_pred_sad_in_intra_search;
 
     for (uint32_t blk_index = blk_start; blk_index <= blk_end; blk_index++) {
@@ -607,19 +606,18 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
         const uint32_t         mb_origin_y   = b64_geom->org_y + blk_stats_ptr->org_y;
 
         // at least half of the block inside
-        if (mb_origin_x + (size >> 1) > pcs->enhanced_picture_ptr->width ||
-            mb_origin_y + (size >> 1) > pcs->enhanced_picture_ptr->height)
+        if (mb_origin_x + (size >> 1) > pcs->enhanced_pic->width ||
+            mb_origin_y + (size >> 1) > pcs->enhanced_pic->height)
             continue;
 
         MacroBlockD xd;
         init_xd_tpl(&xd, pcs->av1_cm, block_size, mb_origin_x, mb_origin_y);
 
-        const int dst_buffer_stride = recon_picture_ptr->stride_y;
+        const int dst_buffer_stride = recon_pic->stride_y;
         const int dst_mb_offset     = mb_origin_y * dst_buffer_stride + mb_origin_x;
-        const int dst_basic_offset  = recon_picture_ptr->org_y * recon_picture_ptr->stride_y +
-            recon_picture_ptr->org_x;
-        uint8_t *dst_buffer = recon_picture_ptr->buffer_y + dst_basic_offset + dst_mb_offset;
-        uint8_t *src_mb     = input_pic->buffer_y + input_pic->org_x + mb_origin_x +
+        const int dst_basic_offset  = recon_pic->org_y * recon_pic->stride_y + recon_pic->org_x;
+        uint8_t  *dst_buffer        = recon_pic->buffer_y + dst_basic_offset + dst_mb_offset;
+        uint8_t  *src_mb            = input_pic->buffer_y + input_pic->org_x + mb_origin_x +
             (input_pic->org_y + mb_origin_y) * src_stride;
 
         int64_t  recon_error = 1, sse = 1;
@@ -644,8 +642,7 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
             int64_t best_intra_cost = INT64_MAX;
             if (!disable_intra_pred) {
                 if (scs->in_loop_ois == 0) {
-                    uint32_t picture_width_in_mb = (pcs->enhanced_picture_ptr->width + size - 1) /
-                        size;
+                    uint32_t picture_width_in_mb = (pcs->enhanced_pic->width + size - 1) / size;
                     OisMbResults *ois_mb_results_ptr =
                         pcs->pa_me_data->ois_mb_results[(mb_origin_y / size) * picture_width_in_mb +
                                                         (mb_origin_x / size)];
@@ -664,8 +661,8 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
                         uint8_t *left0_col  = left0_data + MAX_TPL_SIZE;
 
                         const uint8_t mb_inside = (mb_origin_x + size <=
-                                                   pcs->enhanced_picture_ptr->width) &&
-                            (mb_origin_y + size <= pcs->enhanced_picture_ptr->height);
+                                                   pcs->enhanced_pic->width) &&
+                            (mb_origin_y + size <= pcs->enhanced_pic->height);
                         if (mb_origin_x > 0 && mb_origin_y > 0 && mb_inside)
 
                             get_neighbor_samples_dc(
@@ -1043,10 +1040,10 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
             if (pcs->tpl_data.ref_in_slide_window[list_index][ref_pic_index]) {
                 uint32_t ref_frame_idx = 0;
                 while (ref_frame_idx < MAX_TPL_LA_SW &&
-                       encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
+                       enc_ctx->poc_map_idx[ref_frame_idx] != ref_poc)
                     ref_frame_idx++;
                 assert(ref_frame_idx != MAX_TPL_LA_SW);
-                ref_pic_ptr = encode_context_ptr->mc_flow_rec_picture_buffer[ref_frame_idx];
+                ref_pic_ptr = enc_ctx->mc_flow_rec_picture_buffer[ref_frame_idx];
             } else
                 ref_pic_ptr = (EbPictureBufferDesc *)pcs->tpl_data
                                   .tpl_ref_ds_ptr_array[list_index][ref_pic_index]
@@ -1109,12 +1106,11 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
             above_row = above_data + MAX_TPL_SIZE;
             left_col  = left_data + MAX_TPL_SIZE;
 
-            uint8_t *recon_buffer = recon_picture_ptr->buffer_y + dst_basic_offset;
+            uint8_t *recon_buffer = recon_pic->buffer_y + dst_basic_offset;
 
             if (intra_dc_sad_path) {
-                const uint8_t mb_inside = (mb_origin_x + size <=
-                                           pcs->enhanced_picture_ptr->width) &&
-                    (mb_origin_y + size <= pcs->enhanced_picture_ptr->height);
+                const uint8_t mb_inside = (mb_origin_x + size <= pcs->enhanced_pic->width) &&
+                    (mb_origin_y + size <= pcs->enhanced_pic->height);
                 if (mb_origin_x > 0 && mb_origin_y > 0 && mb_inside)
                     get_neighbor_samples_dc(
                         recon_buffer + mb_origin_x + mb_origin_y * dst_buffer_stride,
@@ -1209,7 +1205,7 @@ static void tpl_mc_flow_dispenser_sb_generic(EncodeContext      *encode_context_
         get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
         int rate_cost = pcs->tpl_ctrls.compute_rate ? rate_estimator(qcoeff, eob, tx_size) : 0;
 
-        if (!disable_intra_pred || (pcs->tpl_data.is_used_as_reference_flag)) {
+        if (!disable_intra_pred || (pcs->tpl_data.is_ref)) {
             if (eob) {
                 svt_aom_inv_transform_recon8bit((int32_t *)dqcoeff,
                                                 dst_buffer,
@@ -1307,9 +1303,9 @@ static Bool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInO
         ++segmentPtr->row_array[0].current_seg_index;
         continue_processing_flag = TRUE;
 
-        //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-        //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
-        //    *segmentInOutIndex);
+        // fprintf(trace, "Start  Pic: %u Seg: %u\n",
+        //     (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper->object_ptr)->picture_number,
+        //     *segmentInOutIndex);
 
         break;
 
@@ -1324,9 +1320,9 @@ static Bool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInO
         ++segmentPtr->row_array[taskPtr->enc_dec_segment_row].current_seg_index;
         continue_processing_flag = TRUE;
 
-        //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-        //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
-        //    *segmentInOutIndex);
+        // fprintf(trace, "Start  Pic: %u Seg: %u\n",
+        //     (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper->object_ptr)->picture_number,
+        //     *segmentInOutIndex);
 
         break;
 
@@ -1351,9 +1347,9 @@ static Bool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInO
                 self_assigned            = TRUE;
                 continue_processing_flag = TRUE;
 
-                //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-                //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
-                //    *segmentInOutIndex);
+                // fprintf(trace, "Start  Pic: %u Seg: %u\n",
+                //     (unsigned) ((PictureControlSet*)
+                //     taskPtr->pcs_wrapper->object_ptr)->picture_number, *segmentInOutIndex);
             }
 
             svt_release_mutex(segmentPtr->row_array[row_segment_index].assignment_mutex);
@@ -1376,30 +1372,30 @@ static Bool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInO
                     ++segmentPtr->row_array[row_segment_index + 1].current_seg_index;
                     continue_processing_flag = TRUE;
 
-                    //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-                    //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
-                    //    *segmentInOutIndex);
+                    // fprintf(trace, "Start  Pic: %u Seg: %u\n",
+                    //     (unsigned) ((PictureControlSet*)
+                    //     taskPtr->pcs_wrapper->object_ptr)->picture_number, *segmentInOutIndex);
                 }
             }
             svt_release_mutex(segmentPtr->row_array[row_segment_index + 1].assignment_mutex);
         }
 
         if (feedback_row_index > 0) {
-            EbObjectWrapper *out_results_wrapper_ptr;
+            EbObjectWrapper *out_results_wrapper;
 
-            svt_get_empty_object(srmFifoPtr, &out_results_wrapper_ptr);
+            svt_get_empty_object(srmFifoPtr, &out_results_wrapper);
 
-            TplDispResults *out_results_ptr = (TplDispResults *)out_results_wrapper_ptr->object_ptr;
-            out_results_ptr->input_type     = TPL_TASKS_ENCDEC_INPUT;
+            TplDispResults *out_results = (TplDispResults *)out_results_wrapper->object_ptr;
+            out_results->input_type     = TPL_TASKS_ENCDEC_INPUT;
 
-            out_results_ptr->enc_dec_segment_row = feedback_row_index;
-            out_results_ptr->tile_group_index    = taskPtr->tile_group_index;
-            out_results_ptr->qIndex              = taskPtr->qIndex;
+            out_results->enc_dec_segment_row = feedback_row_index;
+            out_results->tile_group_index    = taskPtr->tile_group_index;
+            out_results->qIndex              = taskPtr->qIndex;
 
-            out_results_ptr->pcs_wrapper_ptr = taskPtr->pcs_wrapper_ptr;
-            out_results_ptr->pcs             = taskPtr->pcs;
-            out_results_ptr->frame_index     = frame_idx;
-            svt_post_full_object(out_results_wrapper_ptr);
+            out_results->pcs_wrapper = taskPtr->pcs_wrapper;
+            out_results->pcs         = taskPtr->pcs;
+            out_results->frame_index = frame_idx;
+            svt_post_full_object(out_results_wrapper);
         }
 
         break;
@@ -1411,15 +1407,14 @@ static Bool assign_tpl_segments(EncDecSegments *segmentPtr, uint16_t *segmentInO
 }
 
 /************************************************
-* Genrate TPL MC Flow Dispenser  Based on Lookahead
-** LAD Window: sliding window size
-************************************************/
+ * Genrate TPL MC Flow Dispenser  Based on Lookahead
+ ** LAD Window: sliding window size
+ ************************************************/
 
-static void tpl_mc_flow_dispenser(EncodeContext *encode_context_ptr, SequenceControlSet *scs,
+static void tpl_mc_flow_dispenser(EncodeContext *enc_ctx, SequenceControlSet *scs,
                                   int32_t *base_rdmult, PictureParentControlSet *pcs,
                                   int32_t frame_idx, SourceBasedOperationsContext *context_ptr) {
-    EbPictureBufferDesc *recon_picture_ptr =
-        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx];
+    EbPictureBufferDesc *recon_pic = enc_ctx->mc_flow_rec_picture_buffer[frame_idx];
 
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs->static_config.qp];
     if (pcs->tpl_ctrls.enable_tpl_qps) {
@@ -1454,33 +1449,33 @@ static void tpl_mc_flow_dispenser(EncodeContext *encode_context_ptr, SequenceCon
             // reset number of TPLed sbs per pic
             pcs->tpl_disp_coded_sb_count = 0;
 
-            EbObjectWrapper *out_results_wrapper_ptr;
+            EbObjectWrapper *out_results_wrapper;
 
             // TPL dispenser kernel
-            svt_get_empty_object(context_ptr->sbo_output_fifo_ptr, &out_results_wrapper_ptr);
+            svt_get_empty_object(context_ptr->sbo_output_fifo_ptr, &out_results_wrapper);
 
-            TplDispResults *out_results_ptr = (TplDispResults *)out_results_wrapper_ptr->object_ptr;
-            // out_results_ptr->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
-            out_results_ptr->pcs              = pcs;
-            out_results_ptr->input_type       = TPL_TASKS_MDC_INPUT;
-            out_results_ptr->tile_group_index = /*tile_group_idx*/ 0;
+            TplDispResults *out_results = (TplDispResults *)out_results_wrapper->object_ptr;
+            // out_results->pcs_wrapper = pcs->p_pcs_wrapper_ptr;
+            out_results->pcs              = pcs;
+            out_results->input_type       = TPL_TASKS_MDC_INPUT;
+            out_results->tile_group_index = /*tile_group_idx*/ 0;
 
-            out_results_ptr->frame_index = frame_idx;
-            out_results_ptr->qIndex      = qIndex;
+            out_results->frame_index = frame_idx;
+            out_results->qIndex      = qIndex;
 
-            svt_post_full_object(out_results_wrapper_ptr);
+            svt_post_full_object(out_results_wrapper);
 
             svt_block_on_semaphore(pcs->tpl_disp_done_semaphore); // we can do all in // ?
         }
     }
 
     // padding current recon picture
-    svt_aom_generate_padding(recon_picture_ptr->buffer_y,
-                             recon_picture_ptr->stride_y,
-                             recon_picture_ptr->width,
-                             recon_picture_ptr->height,
-                             recon_picture_ptr->org_x,
-                             recon_picture_ptr->org_y);
+    svt_aom_generate_padding(recon_pic->buffer_y,
+                             recon_pic->stride_y,
+                             recon_pic->width,
+                             recon_pic->height,
+                             recon_pic->org_x,
+                             recon_pic->org_y);
 
     return;
 }
@@ -1692,9 +1687,9 @@ void svt_aom_generate_r0beta(PictureParentControlSet *pcs) {
     const int32_t       step                  = 1 << (shift);
     const int32_t       col_step_sr           = coded_to_superres_mi(step, pcs->superres_denom);
     // Super-res upscaled size should be used here.
-    const int32_t mi_cols_sr = ((pcs->enhanced_unscaled_picture_ptr->width + 15) / 16)
+    const int32_t mi_cols_sr = ((pcs->enhanced_unscaled_pic->width + 15) / 16)
         << 2; // picture column boundary
-    const int32_t mi_rows = ((pcs->enhanced_unscaled_picture_ptr->height + 15) / 16)
+    const int32_t mi_rows = ((pcs->enhanced_unscaled_pic->height + 15) / 16)
         << 2; // picture row boundary
 
     for (int row = 0; row < cm->mi_rows; row += step) {
@@ -1773,12 +1768,12 @@ void svt_aom_generate_r0beta(PictureParentControlSet *pcs) {
 }
 
 /************************************************
-* Allocate and initialize buffers needed for tpl
-************************************************/
-static EbErrorType init_tpl_buffers(EncodeContext *encode_context_ptr) {
+ * Allocate and initialize buffers needed for tpl
+ ************************************************/
+static EbErrorType init_tpl_buffers(EncodeContext *enc_ctx) {
     for (int frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
-        encode_context_ptr->poc_map_idx[frame_idx]                = -1;
-        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
+        enc_ctx->poc_map_idx[frame_idx]                = -1;
+        enc_ctx->mc_flow_rec_picture_buffer[frame_idx] = NULL;
     }
     return EB_ErrorNone;
 }
@@ -1882,28 +1877,28 @@ typedef struct TplRefList {
     bool             is_valid;
 } TplRefList;
 /************************************************
-* Genrate TPL MC Flow Based on frames in the tpl group
-************************************************/
-static EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *scs,
+ * Genrate TPL MC Flow Based on frames in the tpl group
+ ************************************************/
+static EbErrorType tpl_mc_flow(EncodeContext *enc_ctx, SequenceControlSet *scs,
                                PictureParentControlSet      *pcs,
                                SourceBasedOperationsContext *context_ptr) {
     int32_t  frames_in_sw         = MIN(MAX_TPL_LA_SW, pcs->tpl_group_size);
-    uint32_t picture_width_in_mb  = (pcs->enhanced_picture_ptr->width + 16 - 1) / 16;
-    uint32_t picture_height_in_mb = (pcs->enhanced_picture_ptr->height + 16 - 1) / 16;
+    uint32_t picture_width_in_mb  = (pcs->enhanced_pic->width + 16 - 1) / 16;
+    uint32_t picture_height_in_mb = (pcs->enhanced_pic->height + 16 - 1) / 16;
 
     if (pcs->tpl_ctrls.synth_blk_size == 8) {
         picture_width_in_mb  = picture_width_in_mb << 1;
         picture_height_in_mb = picture_height_in_mb << 1;
     } else if (pcs->tpl_ctrls.synth_blk_size == 32) {
-        picture_width_in_mb  = (pcs->enhanced_picture_ptr->width + 31) / 32;
-        picture_height_in_mb = (pcs->enhanced_picture_ptr->height + 31) / 32;
+        picture_width_in_mb  = (pcs->enhanced_pic->width + 31) / 32;
+        picture_height_in_mb = (pcs->enhanced_pic->height + 31) / 32;
     }
-    //wait for PA ME to be done.
+    // wait for PA ME to be done.
     for (uint32_t i = 1; i < pcs->tpl_group_size; i++) {
         svt_wait_cond_var(&pcs->tpl_group[i]->me_ready, 0);
     }
     pcs->tpl_is_valid = 0;
-    init_tpl_buffers(encode_context_ptr);
+    init_tpl_buffers(enc_ctx);
 
     TplRefList tpl_ref_list[REF_FRAMES + 1]; // Buffer for each ref pic and current pic
     memset(tpl_ref_list, 0, sizeof(tpl_ref_list[0]) * (REF_FRAMES + 1));
@@ -1913,30 +1908,28 @@ static EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceContro
             init_tpl_segments(scs, pcs, pcs->tpl_group, frames_in_sw);
 
         uint8_t tpl_on;
-        encode_context_ptr->poc_map_idx[0] = pcs->tpl_group[0]->picture_number;
+        enc_ctx->poc_map_idx[0] = pcs->tpl_group[0]->picture_number;
         for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
-            encode_context_ptr->poc_map_idx[frame_idx] = pcs->tpl_group[frame_idx]->picture_number;
+            enc_ctx->poc_map_idx[frame_idx] = pcs->tpl_group[frame_idx]->picture_number;
             // NREF need recon buffer for intra pred
-            EbObjectWrapper *reference_picture_wrapper;
+            EbObjectWrapper *ref_pic_wrapper;
             // Get Empty Reference Picture Object
-            svt_get_empty_object(scs->encode_context_ptr->tpl_reference_picture_pool_fifo_ptr,
-                                 &reference_picture_wrapper);
+            svt_get_empty_object(scs->enc_ctx->tpl_reference_picture_pool_fifo_ptr,
+                                 &ref_pic_wrapper);
             // Give the new Reference a nominal live_count of 1
-            svt_object_inc_live_count(reference_picture_wrapper, 1);
+            svt_object_inc_live_count(ref_pic_wrapper, 1);
 
             for (int i = 0; i < (REF_FRAMES + 1); i++) {
                 // Get empty list entry
                 if (!tpl_ref_list[i].is_valid) {
-                    tpl_ref_list[i].ref = reference_picture_wrapper;
-                    tpl_ref_list[i].refresh_frame_mask =
-                        pcs->tpl_group[frame_idx]->is_used_as_reference_flag
+                    tpl_ref_list[i].ref                = ref_pic_wrapper;
+                    tpl_ref_list[i].refresh_frame_mask = pcs->tpl_group[frame_idx]->is_ref
                         ? pcs->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask
                         : 0;
-                    tpl_ref_list[i].frame_idx = frame_idx;
-                    tpl_ref_list[i].is_valid  = true;
-                    encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] =
-                        ((EbTplReferenceObject *)reference_picture_wrapper->object_ptr)
-                            ->ref_picture_ptr;
+                    tpl_ref_list[i].frame_idx          = frame_idx;
+                    tpl_ref_list[i].is_valid           = true;
+                    enc_ctx->mc_flow_rec_picture_buffer[frame_idx] =
+                        ((EbTplReferenceObject *)ref_pic_wrapper->object_ptr)->ref_picture_ptr;
                     break;
                 }
             }
@@ -1948,7 +1941,7 @@ static EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceContro
             }
             tpl_on = pcs->tpl_valid_pic[frame_idx];
             if (tpl_on)
-                tpl_mc_flow_dispenser(encode_context_ptr,
+                tpl_mc_flow_dispenser(enc_ctx,
                                       scs,
                                       &pcs->tpl_group[frame_idx]->pa_me_data->base_rdmult,
                                       pcs->tpl_group[frame_idx],
@@ -1969,12 +1962,11 @@ static EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceContro
                         pcs->tpl_group[frame_idx]->av1_ref_signal.refresh_frame_mask);
                     if (tpl_ref_list[i].refresh_frame_mask == 0) {
                         svt_release_object(tpl_ref_list[i].ref);
-                        tpl_ref_list[i].ref = NULL;
-                        encode_context_ptr->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] =
-                            NULL;
-                        tpl_ref_list[i].frame_idx          = -1;
-                        tpl_ref_list[i].refresh_frame_mask = 0;
-                        tpl_ref_list[i].is_valid           = false;
+                        tpl_ref_list[i].ref                                            = NULL;
+                        enc_ctx->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] = NULL;
+                        tpl_ref_list[i].frame_idx                                      = -1;
+                        tpl_ref_list[i].refresh_frame_mask                             = 0;
+                        tpl_ref_list[i].is_valid                                       = false;
                     }
                 }
             }
@@ -2039,11 +2031,11 @@ static EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceContro
         // Get empty list entry
         if (tpl_ref_list[i].is_valid) {
             svt_release_object(tpl_ref_list[i].ref);
-            tpl_ref_list[i].ref                                                       = NULL;
-            encode_context_ptr->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] = NULL;
-            tpl_ref_list[i].frame_idx                                                 = -1;
-            tpl_ref_list[i].refresh_frame_mask                                        = 0;
-            tpl_ref_list[i].is_valid                                                  = false;
+            tpl_ref_list[i].ref                                            = NULL;
+            enc_ctx->mc_flow_rec_picture_buffer[tpl_ref_list[i].frame_idx] = NULL;
+            tpl_ref_list[i].frame_idx                                      = -1;
+            tpl_ref_list[i].refresh_frame_mask                             = 0;
+            tpl_ref_list[i].is_valid                                       = false;
         }
     }
 
@@ -2073,8 +2065,8 @@ static EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceContro
 */
 
 void *svt_aom_tpl_disp_kernel(void *input_ptr) {
-    EbThreadContext     *thread_context_ptr = (EbThreadContext *)input_ptr;
-    TplDispenserContext *context_ptr        = (TplDispenserContext *)thread_context_ptr->priv;
+    EbThreadContext     *thread_ctx  = (EbThreadContext *)input_ptr;
+    TplDispenserContext *context_ptr = (TplDispenserContext *)thread_ctx->priv;
     EbObjectWrapper     *in_results_wrapper_ptr;
     TplDispResults      *in_results_ptr;
     for (;;) {
@@ -2157,7 +2149,7 @@ void *svt_aom_tpl_disp_kernel(void *input_ptr) {
                         // TPL dispenser per SB (64)
                         B64Geom *b64_geom = &scs->b64_geom[context_ptr->sb_index];
                         tpl_mc_flow_dispenser_sb_generic(
-                            pcs->scs->encode_context_ptr,
+                            pcs->scs->enc_ctx,
                             scs,
                             pcs,
                             frame_idx,
@@ -2184,7 +2176,7 @@ void *svt_aom_tpl_disp_kernel(void *input_ptr) {
             // Tiles path does not suupport segments
             for (uint32_t sb_index = 0; sb_index < pcs->b64_total_count; ++sb_index) {
                 B64Geom *b64_geom = &scs->b64_geom[sb_index];
-                tpl_mc_flow_dispenser_sb_generic(pcs->scs->encode_context_ptr,
+                tpl_mc_flow_dispenser_sb_generic(pcs->scs->enc_ctx,
                                                  scs,
                                                  pcs,
                                                  frame_idx,
@@ -2203,24 +2195,22 @@ void *svt_aom_tpl_disp_kernel(void *input_ptr) {
 
 static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
                                  PictureParentControlSet *pcs, Bool superres_recode) {
-    EbObjectWrapper    *out_results_wrapper_ptr;
+    EbObjectWrapper    *out_results_wrapper;
     SequenceControlSet *scs = pcs->scs;
     // NB: overlay frames should be non-ref
     // Before sending pics out to pic mgr, ensure that pic mgr can handle them
-    if (pcs->is_used_as_reference_flag && !superres_recode)
+    if (pcs->is_ref && !superres_recode)
         svt_block_on_semaphore(scs->ref_buffer_available_semaphore);
 
     // Get Empty Results Object
-    svt_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr,
-                         &out_results_wrapper_ptr);
+    svt_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr, &out_results_wrapper);
 
-    PictureDemuxResults *out_results_ptr = (PictureDemuxResults *)
-                                               out_results_wrapper_ptr->object_ptr;
-    out_results_ptr->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
-    out_results_ptr->picture_type    = superres_recode ? EB_PIC_SUPERRES_INPUT : EB_PIC_INPUT;
+    PictureDemuxResults *out_results = (PictureDemuxResults *)out_results_wrapper->object_ptr;
+    out_results->pcs_wrapper         = pcs->p_pcs_wrapper_ptr;
+    out_results->picture_type        = superres_recode ? EB_PIC_SUPERRES_INPUT : EB_PIC_INPUT;
 
     // Post the Full Results Object
-    svt_post_full_object(out_results_wrapper_ptr);
+    svt_post_full_object(out_results_wrapper);
 }
 
 /************************************************
@@ -2229,10 +2219,9 @@ static void sbo_send_picture_out(SourceBasedOperationsContext *context_ptr,
  * to identify spatiotemporal characteristics of the input pictures.
  ************************************************/
 void *svt_aom_source_based_operations_kernel(void *input_ptr) {
-    EbThreadContext              *thread_context_ptr = (EbThreadContext *)input_ptr;
-    SourceBasedOperationsContext *context_ptr        = (SourceBasedOperationsContext *)
-                                                    thread_context_ptr->priv;
-    EbObjectWrapper *in_results_wrapper_ptr;
+    EbThreadContext              *thread_ctx  = (EbThreadContext *)input_ptr;
+    SourceBasedOperationsContext *context_ptr = (SourceBasedOperationsContext *)thread_ctx->priv;
+    EbObjectWrapper              *in_results_wrapper_ptr;
 
     for (;;) {
         // Get Input Full Object
@@ -2242,7 +2231,7 @@ void *svt_aom_source_based_operations_kernel(void *input_ptr) {
         InitialRateControlResults *in_results_ptr = (InitialRateControlResults *)
                                                         in_results_wrapper_ptr->object_ptr;
         PictureParentControlSet *pcs = (PictureParentControlSet *)
-                                           in_results_ptr->pcs_wrapper_ptr->object_ptr;
+                                           in_results_ptr->pcs_wrapper->object_ptr;
         SequenceControlSet *scs = pcs->scs;
 
         if (in_results_ptr->superres_recode) {
@@ -2258,7 +2247,7 @@ void *svt_aom_source_based_operations_kernel(void *input_ptr) {
             // tpl ME can be performed on unscaled frames in super-res q-threshold and auto mode
             if (!pcs->frame_superres_enabled && pcs->temporal_layer_index == 0) {
                 tpl_prep_info(pcs);
-                tpl_mc_flow(scs->encode_context_ptr, scs, pcs, context_ptr);
+                tpl_mc_flow(scs->enc_ctx, scs, pcs, context_ptr);
             }
             Bool release_pa_ref = (scs->static_config.superres_mode <= SUPERRES_RANDOM) ? TRUE
                                                                                         : FALSE;

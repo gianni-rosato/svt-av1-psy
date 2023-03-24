@@ -22,9 +22,9 @@
  **************************************/
 typedef struct PictureDecisionResults {
     EbDctor                     dctor;
-    EbObjectWrapper            *pcs_wrapper_ptr;
+    EbObjectWrapper            *pcs_wrapper;
     uint32_t                    segment_index;
-    uint8_t                     task_type; //0:ME   1:Temporal Filtering
+    uint8_t                     task_type; // 0:ME   1:Temporal Filtering
     uint8_t                     lst0_cnt;
     uint8_t                     lst1_cnt;
     uint8_t                     tmp_layer_idx;

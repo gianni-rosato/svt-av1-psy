@@ -224,7 +224,7 @@ int svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval
 double svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
                                                int frame_count);
 
-EbErrorType svt_aom_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType svt_aom_rate_control_context_ctor(EbThreadContext   *thread_ctx,
                                               const EbEncHandle *enc_handle_ptr, int me_port_index);
 
 extern void *svt_aom_rate_control_kernel(void *input_ptr);

@@ -37,36 +37,35 @@ struct ModeDecisionCandidateBuffer;
 struct ModeDecisionCandidate;
 
 /**************************************
-     * Extern Function Declarations
-     **************************************/
+ * Extern Function Declarations
+ **************************************/
 struct EntropyCodingContext;
 extern EbErrorType svt_aom_write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
-                                    PictureControlSet *pcs, uint16_t tile_idx,
-                                    EntropyCoder        *entropy_coder_ptr,
+                                    PictureControlSet *pcs, uint16_t tile_idx, EntropyCoder *ec,
                                     EbPictureBufferDesc *coeff_ptr);
 
 extern int svt_aom_get_wedge_params_bits(BlockSize sb_type);
 
-extern EbErrorType svt_aom_encode_slice_finish(EntropyCoder *entropy_coder_ptr);
+extern EbErrorType svt_aom_encode_slice_finish(EntropyCoder *ec);
 
-extern EbErrorType svt_aom_reset_entropy_coder(EncodeContext *encode_context_ptr,
-                                               EntropyCoder *entropy_coder_ptr, uint32_t qp,
-                                               SliceType slice_type);
+extern EbErrorType svt_aom_reset_entropy_coder(EncodeContext *enc_ctx, EntropyCoder *ec,
+                                               uint32_t qp, SliceType slice_type);
 EbErrorType        svt_aom_txb_estimate_coeff_bits(
-           struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
-           PictureControlSet *pcs, struct ModeDecisionCandidateBuffer *cand_bf_ptr,
-           uint32_t txb_origin_index, uint32_t txb_chroma_origin_index,
-           EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint32_t cb_eob, uint32_t cr_eob,
-           uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
-           TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
+           struct ModeDecisionContext *ctx, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
+           PictureControlSet *pcs, struct ModeDecisionCandidateBuffer *cand_bf, uint32_t txb_origin_index,
+           uint32_t txb_chroma_origin_index, EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob,
+           uint32_t cb_eob, uint32_t cr_eob, uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits,
+           uint64_t *cr_txb_coeff_bits, TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
            COMPONENT_TYPE component_type);
 
-EbErrorType svt_aom_txb_estimate_coeff_bits_light_pd0(
-    struct ModeDecisionContext *md_context, struct ModeDecisionCandidateBuffer *cand_bf_ptr,
-    uint32_t txb_origin_index, EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob,
-    uint64_t *y_txb_coeff_bits, TxSize txsize);
+EbErrorType svt_aom_txb_estimate_coeff_bits_light_pd0(struct ModeDecisionContext         *ctx,
+                                                      struct ModeDecisionCandidateBuffer *cand_bf,
+                                                      uint32_t             txb_origin_index,
+                                                      EbPictureBufferDesc *coeff_buffer_sb,
+                                                      uint32_t y_eob, uint64_t *y_txb_coeff_bits,
+                                                      TxSize txsize);
 //**********************************************************************************************************//
-//onyxc_int.h
+// onyxc_int.h
 static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs) {
     return pcs->frm_hdr.frame_type == KEY_FRAME || pcs->frm_hdr.frame_type == INTRA_ONLY_FRAME;
 }

@@ -19,7 +19,7 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext   *thread_ctx,
                                                       const EbEncHandle *enc_handle_ptr);
 
 extern void *svt_aom_initial_rate_control_kernel(void *input_ptr);

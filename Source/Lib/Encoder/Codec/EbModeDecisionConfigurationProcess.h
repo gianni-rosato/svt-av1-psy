@@ -48,9 +48,9 @@ typedef struct ModeDecisionConfigurationContext {
 } ModeDecisionConfigurationContext;
 
 /**************************************
-     * Extern Function Declarations
-     **************************************/
-EbErrorType svt_aom_mode_decision_configuration_context_ctor(EbThreadContext   *thread_context_ptr,
+ * Extern Function Declarations
+ **************************************/
+EbErrorType svt_aom_mode_decision_configuration_context_ctor(EbThreadContext   *thread_ctx,
                                                              const EbEncHandle *enc_handle_ptr,
                                                              int input_index, int output_index);
 

@@ -904,7 +904,7 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 #if MT_WAIT_PROFILE
     dec_display_timer("SCF", &timer, th_cnt, fp);
 #endif
-    EbPictureBufferDesc *recon_picture_ptr = dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf;
+    EbPictureBufferDesc *recon_pic  = dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf;
     const int32_t        num_planes = av1_num_planes(&dec_handle_ptr->seq_header.color_config);
 
     DECLARE_ALIGNED(16, uint16_t, src[CDEF_INBUF_SIZE]);
@@ -935,7 +935,7 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
         tile_rect_p[pli] = &tile_rect[pli];
 
         /*Deriveing  recon pict buffer ptr's*/
-        svt_aom_derive_blk_pointers(recon_picture_ptr,
+        svt_aom_derive_blk_pointers(recon_pic,
                                     pli,
                                     0,
                                     0,
@@ -1144,15 +1144,15 @@ void svt_aom_dec_av1_loop_restoration_filter_frame_mt(EbDecHandle   *dec_handle,
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle->thread_semaphore
                                                    : thread_ctxt->thread_semaphore);
 
-    EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
-    const int32_t        num_planes        = av1_num_planes(&dec_handle->seq_header.color_config);
+    EbPictureBufferDesc *recon_pic  = dec_handle->cur_pic_buf[0]->ps_pic_buf;
+    const int32_t        num_planes = av1_num_planes(&dec_handle->seq_header.color_config);
 
     for (int32_t pli = 0; pli < num_planes; pli++) {
         int32_t sub_x = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_x;
         int32_t sub_y = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_y;
 
         /*Deriveing  recon pict buffer ptr's*/
-        svt_aom_derive_blk_pointers(recon_picture_ptr,
+        svt_aom_derive_blk_pointers(recon_pic,
                                     pli,
                                     0,
                                     0,

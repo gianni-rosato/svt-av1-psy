@@ -613,7 +613,7 @@ EbErrorType svt_aom_signal_derivation_me_kernel_oq(SequenceControlSet *       sc
     me_context_ptr->me_ctx->skip_frame = 0;
     return return_error;
 };
-void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
+void open_loop_first_pass(struct PictureParentControlSet *ppcs,
                           MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
 
 /******************************************************
@@ -718,8 +718,8 @@ EbErrorType tf_signal_derivation_me_kernel_oq(PictureParentControlSet *  pcs,
 };
 
 static void motion_estimation_context_dctor(EbPtr p) {
-    EbThreadContext *          thread_context_ptr = (EbThreadContext *)p;
-    MotionEstimationContext_t *obj = (MotionEstimationContext_t *)thread_context_ptr->priv;
+    EbThreadContext *          thread_ctx = (EbThreadContext *)p;
+    MotionEstimationContext_t *obj = (MotionEstimationContext_t *)thread_ctx->priv;
     EB_DELETE(obj->me_ctx);
     EB_FREE_ARRAY(obj);
 }
@@ -727,13 +727,13 @@ static void motion_estimation_context_dctor(EbPtr p) {
 /************************************************
  * Motion Analysis Context Constructor
  ************************************************/
-EbErrorType svt_aom_motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr,
+EbErrorType svt_aom_motion_estimation_context_ctor(EbThreadContext *  thread_ctx,
                                            const EbEncHandle *enc_handle_ptr, int index) {
     MotionEstimationContext_t *me_context_ptr;
 
     EB_CALLOC_ARRAY(me_context_ptr, 1);
-    thread_context_ptr->priv                             = me_context_ptr;
-    thread_context_ptr->dctor                            = motion_estimation_context_dctor;
+    thread_ctx->priv                             = me_context_ptr;
+    thread_ctx->dctor                            = motion_estimation_context_dctor;
     me_context_ptr->picture_decision_results_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->picture_decision_results_resource_ptr, index);
     me_context_ptr->motion_estimation_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
@@ -750,10 +750,10 @@ EbErrorType svt_aom_motion_estimation_context_ctor(EbThreadContext *  thread_con
  * so pictures can be processed out of order as long as all inputs are available.
  ************************************************/
 void *svt_aom_motion_estimation_kernel(void *input_ptr) {
-    EbThreadContext *          thread_context_ptr = (EbThreadContext *)input_ptr;
-    MotionEstimationContext_t *me_context_ptr = (MotionEstimationContext_t *)thread_context_ptr->priv;
+    EbThreadContext *          thread_ctx = (EbThreadContext *)input_ptr;
+    MotionEstimationContext_t *me_context_ptr = (MotionEstimationContext_t *)thread_ctx->priv;
     EbObjectWrapper *          in_results_wrapper_ptr;
-    EbObjectWrapper *          out_results_wrapper_ptr;
+    EbObjectWrapper *          out_results_wrapper;
     for (;;) {
         // Get Input Full Object
         EB_GET_FULL_OBJECT(me_context_ptr->picture_decision_results_input_fifo_ptr,
@@ -761,7 +761,7 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
         PictureDecisionResults *in_results_ptr = (PictureDecisionResults *)
                                                      in_results_wrapper_ptr->object_ptr;
         PictureParentControlSet *pcs = (PictureParentControlSet *)
-                                               in_results_ptr->pcs_wrapper_ptr->object_ptr;
+                                               in_results_ptr->pcs_wrapper->object_ptr;
         SequenceControlSet *scs = pcs->scs;
         if (in_results_ptr->task_type == TASK_TFME)
             me_context_ptr->me_ctx->me_type = ME_MCTF;
@@ -787,21 +787,21 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
             (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
             EbPictureBufferDesc *sixteenth_picture_ptr;
             EbPictureBufferDesc *quarter_picture_ptr;
-            EbPictureBufferDesc *input_padded_picture_ptr;
+            EbPictureBufferDesc *input_padded_pic;
             EbPictureBufferDesc *input_pic;
             EbPaReferenceObject *pa_ref_obj_;
 
-            //assert((int)pcs->pa_reference_picture_wrapper_ptr->live_count > 0);
+            //assert((int)pcs->pa_ref_pic_wrapper->live_count > 0);
             pa_ref_obj_ = (EbPaReferenceObject *)
-                              pcs->pa_reference_picture_wrapper_ptr->object_ptr;
+                              pcs->pa_ref_pic_wrapper->object_ptr;
             // Set 1/4 and 1/16 ME input buffer(s); filtered or decimated
             quarter_picture_ptr = (EbPictureBufferDesc *)
                                       pa_ref_obj_->quarter_downsampled_picture_ptr;
             sixteenth_picture_ptr = (EbPictureBufferDesc *)
                                         pa_ref_obj_->sixteenth_downsampled_picture_ptr;
-            input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
+            input_padded_pic = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_pic;
 
-            input_pic = pcs->enhanced_picture_ptr;
+            input_pic = pcs->enhanced_pic;
 
             // Segments
             uint32_t segment_index   = in_results_ptr->segment_index;
@@ -827,7 +827,7 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
                     svt_aom_use_scaled_source_refs_if_needed(pcs,
                                                      input_pic,
                                                      pa_ref_obj_,
-                                                     &input_padded_picture_ptr,
+                                                     &input_padded_pic,
                                                      &quarter_picture_ptr,
                                                      &sixteenth_picture_ptr);
 
@@ -844,17 +844,17 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
                             uint32_t buffer_index = (input_pic->org_y + b64_origin_y) * input_pic->stride_y +
                                 input_pic->org_x + b64_origin_x;
 #ifdef ARCH_X86_64
-                            uint8_t *src_ptr   = &input_padded_picture_ptr->buffer_y[buffer_index];
+                            uint8_t *src_ptr   = &input_padded_pic->buffer_y[buffer_index];
                             uint32_t b64_height = (pcs->aligned_height - b64_origin_y) < BLOCK_SIZE_64
                                 ? pcs->aligned_height - b64_origin_y : BLOCK_SIZE_64;
                             //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2//_MM_HINT_NTA
                             for (uint32_t i = 0; i < b64_height; i++) {
-                                char const *p = (char const *)(src_ptr + i * input_padded_picture_ptr->stride_y);
+                                char const *p = (char const *)(src_ptr + i * input_padded_pic->stride_y);
                                 _mm_prefetch(p, _MM_HINT_T2);
                             }
 #endif
-                            me_context_ptr->me_ctx->b64_src_ptr = &input_padded_picture_ptr->buffer_y[buffer_index];
-                            me_context_ptr->me_ctx->b64_src_stride = input_padded_picture_ptr->stride_y;
+                            me_context_ptr->me_ctx->b64_src_ptr = &input_padded_pic->buffer_y[buffer_index];
+                            me_context_ptr->me_ctx->b64_src_stride = input_padded_pic->stride_y;
 
                             // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
                             if (me_context_ptr->me_ctx->enable_hme_level1_flag) {
@@ -885,7 +885,7 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
                                 if (pcs->slice_type == B_SLICE)
                                     me_context_ptr->me_ctx->num_of_ref_pic_to_search[1] = pcs->ref_list1_count_try;
                                 me_context_ptr->me_ctx->temporal_layer_index = pcs->temporal_layer_index;
-                                me_context_ptr->me_ctx->is_used_as_reference_flag = pcs->is_used_as_reference_flag;
+                                me_context_ptr->me_ctx->is_ref = pcs->is_ref;
 
                                 if (pcs->frame_superres_enabled || pcs->frame_resize_enabled) {
                                     for (int i = 0;  i < me_context_ptr->me_ctx->num_of_list_to_search; i++) {
@@ -893,32 +893,32 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
                                             //assert((int)pcs->ref_pa_pic_ptr_array[i][j]->live_count > 0);
                                             uint8_t sr_denom_idx = svt_aom_get_denom_idx(pcs->superres_denom);
                                             uint8_t resize_denom_idx = svt_aom_get_denom_idx(pcs->resize_denom);
-                                            EbPaReferenceObject *reference_object =
+                                            EbPaReferenceObject *ref_object =
                                                 (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[i][j]->object_ptr;
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].picture_ptr =
-                                                reference_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
+                                                ref_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].quarter_picture_ptr =
-                                                reference_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
+                                                ref_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].sixteenth_picture_ptr =
-                                                reference_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
+                                                ref_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx][resize_denom_idx];
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].picture_number =
-                                                reference_object->picture_number;
+                                                ref_object->picture_number;
                                         }
                                     }
                                 } else {
                                     for (int i = 0; i < me_context_ptr->me_ctx->num_of_list_to_search; i++) {
                                         for (int j = 0; j < me_context_ptr->me_ctx->num_of_ref_pic_to_search[i]; j++) {
                                             //assert((int)pcs->ref_pa_pic_ptr_array[i][j]->live_count > 0);
-                                            EbPaReferenceObject *reference_object =
+                                            EbPaReferenceObject *ref_object =
                                                 (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[i][j]->object_ptr;
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].picture_ptr =
-                                                reference_object->input_padded_picture_ptr;
+                                                ref_object->input_padded_pic;
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].quarter_picture_ptr =
-                                                reference_object->quarter_downsampled_picture_ptr;
+                                                ref_object->quarter_downsampled_picture_ptr;
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].sixteenth_picture_ptr =
-                                                reference_object->sixteenth_downsampled_picture_ptr;
+                                                ref_object->sixteenth_downsampled_picture_ptr;
                                             me_context_ptr->me_ctx->me_ds_ref_array[i][j].picture_number =
-                                                reference_object->picture_number;
+                                                ref_object->picture_number;
                                         }
                                     }
                                 }
@@ -958,18 +958,18 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
             }
             // Get Empty Results Object
             svt_get_empty_object(me_context_ptr->motion_estimation_results_output_fifo_ptr,
-                                 &out_results_wrapper_ptr);
+                                 &out_results_wrapper);
 
-            MotionEstimationResults *out_results_ptr = (MotionEstimationResults *)
-                                                           out_results_wrapper_ptr->object_ptr;
-            out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
-            out_results_ptr->segment_index   = segment_index;
-            out_results_ptr->task_type       = in_results_ptr->task_type;
+            MotionEstimationResults *out_results = (MotionEstimationResults *)
+                                                           out_results_wrapper->object_ptr;
+            out_results->pcs_wrapper = in_results_ptr->pcs_wrapper;
+            out_results->segment_index   = segment_index;
+            out_results->task_type       = in_results_ptr->task_type;
             // Release the Input Results
             svt_release_object(in_results_wrapper_ptr);
 
             // Post the Full Results Object
-            svt_post_full_object(out_results_wrapper_ptr);
+            svt_post_full_object(out_results_wrapper);
         } else if (in_results_ptr->task_type == TASK_TFME) {
             // temporal filtering start
             me_context_ptr->me_ctx->me_type = ME_MCTF;

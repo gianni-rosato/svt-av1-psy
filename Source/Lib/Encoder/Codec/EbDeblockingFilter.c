@@ -316,9 +316,10 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs, const i
                                                                       : (SB64_MIB_SIZE >> scale_horz);
 
     if (pcs->ppcs->frame_superres_enabled || pcs->ppcs->frame_resize_enabled) {
-        // the boundary of last column should use the actual width for frame might be downscaled in super resolution
+        // the boundary of last column should use the actual width for frame might be downscaled in
+        // super resolution
         const uint32_t       sb_size = (scs->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
-        EbPictureBufferDesc *pic_ptr = pcs->ppcs->enhanced_picture_ptr;
+        EbPictureBufferDesc *pic_ptr = pcs->ppcs->enhanced_pic;
         if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
             x_range = (((pic_ptr->width) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
@@ -448,12 +449,14 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs, const i
                                                                       : (SB64_MIB_SIZE >> scale_vert);
     int32_t        x_range = scs->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
                                                                       : (SB64_MIB_SIZE >> scale_horz);
-    uint32_t       mi_stride = pcs->mi_stride;
+
+    uint32_t mi_stride = pcs->mi_stride;
 
     if (pcs->ppcs->frame_superres_enabled || pcs->ppcs->frame_resize_enabled) {
-        // the boundary of last column should use the actual width for frames might be downscaled in super resolution
+        // the boundary of last column should use the actual width for frames might be downscaled in
+        // super resolution
         const uint32_t       sb_size = (scs->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
-        EbPictureBufferDesc *pic_ptr = pcs->ppcs->enhanced_picture_ptr;
+        EbPictureBufferDesc *pic_ptr = pcs->ppcs->enhanced_pic;
         if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
             x_range = (((pic_ptr->width) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
@@ -798,7 +801,7 @@ static uint64_t picture_sse_calculations(PictureControlSet *pcs, EbPictureBuffer
     uint8_t *recon_coeff_buffer;
 
     if (!is_16bit) {
-        EbPictureBufferDesc *input_pic = (EbPictureBufferDesc *)pcs->ppcs->enhanced_picture_ptr;
+        EbPictureBufferDesc *input_pic = (EbPictureBufferDesc *)pcs->ppcs->enhanced_pic;
 
         if (plane == 0) {
             recon_coeff_buffer = (uint8_t *)&(
@@ -1166,22 +1169,22 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
         Bool is_16bit = scs->static_config.encoder_bit_depth > 8 ? TRUE : FALSE;
         if (scs->is_16bit_pipeline || is_16bit) {
             temp_lf_recon_desc_init_data.bit_depth = EB_SIXTEEN_BIT;
-            EB_NEW(pcs->temp_lf_recon_picture16bit_ptr,
+            EB_NEW(pcs->temp_lf_recon_pic_16bit,
                    svt_recon_picture_buffer_desc_ctor,
                    (EbPtr)&temp_lf_recon_desc_init_data);
             if (!is_16bit)
-                pcs->temp_lf_recon_picture16bit_ptr->bit_depth = EB_EIGHT_BIT;
+                pcs->temp_lf_recon_pic_16bit->bit_depth = EB_EIGHT_BIT;
         } else {
             temp_lf_recon_desc_init_data.bit_depth = EB_EIGHT_BIT;
-            EB_NEW(pcs->temp_lf_recon_picture_ptr,
+            EB_NEW(pcs->temp_lf_recon_pic,
                    svt_recon_picture_buffer_desc_ctor,
                    (EbPtr)&temp_lf_recon_desc_init_data);
         }
         const int32_t last_frame_filter_level[4] = {
             lf->filter_level[0], lf->filter_level[1], lf->filter_level_u, lf->filter_level_v};
         EbPictureBufferDesc *temp_lf_recon_buffer = scs->is_16bit_pipeline
-            ? pcs->temp_lf_recon_picture16bit_ptr
-            : pcs->temp_lf_recon_picture_ptr;
+            ? pcs->temp_lf_recon_pic_16bit
+            : pcs->temp_lf_recon_pic;
 
         lf->filter_level[0] = lf->filter_level[1] = search_filter_level(
             srcBuffer,
@@ -1209,8 +1212,8 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
                                                  NULL,
                                                  2,
                                                  0);
-        EB_DELETE(pcs->temp_lf_recon_picture_ptr);
-        EB_DELETE(pcs->temp_lf_recon_picture16bit_ptr);
+        EB_DELETE(pcs->temp_lf_recon_pic);
+        EB_DELETE(pcs->temp_lf_recon_pic_16bit);
     }
 
     return EB_ErrorNone;

@@ -79,11 +79,11 @@ typedef struct ModeDecisionCandidate {
 } ModeDecisionCandidate;
 
 /**************************************
-    * Function Ptrs Definitions
-    **************************************/
+ * Function Ptrs Definitions
+ **************************************/
 typedef EbErrorType (*EbPredictionFunc)(uint8_t hbd_md, struct ModeDecisionContext *ctx,
                                         PictureControlSet                  *pcs,
-                                        struct ModeDecisionCandidateBuffer *cand_bf_ptr);
+                                        struct ModeDecisionCandidateBuffer *cand_bf);
 typedef uint64_t (*EbFastCostFunc)(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                    struct ModeDecisionCandidateBuffer *cand_bf, uint32_t qp,
                                    uint64_t luma_distortion, uint64_t chroma_distortion,
@@ -92,7 +92,7 @@ typedef uint64_t (*EbFastCostFunc)(struct ModeDecisionContext *ctx, BlkStruct *b
                                    uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
                                    uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 typedef EbErrorType (*EbAv1FullCostFunc)(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
-                                         struct ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                         struct ModeDecisionCandidateBuffer *cand_bf,
                                          BlkStruct *blk_ptr, uint64_t *y_distortion,
                                          uint64_t *cb_distortion, uint64_t *cr_distortion,
                                          uint64_t lambda, uint64_t *y_coeff_bits,
@@ -171,16 +171,16 @@ void     svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureCo
 
 typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(struct ModeDecisionContext  *ctx,
                                                         uint32_t                     pu_index,
-                                                        ModeDecisionCandidateBuffer *cand_bf_ptr,
+                                                        ModeDecisionCandidateBuffer *cand_bf,
                                                         uint64_t luma_distortion, uint64_t lambda);
 
-typedef EbErrorType (*EB_INTRA_4x4_FULL_LUMA_COST_FUNC)(ModeDecisionCandidateBuffer *cand_bf_ptr,
+typedef EbErrorType (*EB_INTRA_4x4_FULL_LUMA_COST_FUNC)(ModeDecisionCandidateBuffer *cand_bf,
                                                         uint64_t *y_distortion, uint64_t lambda,
                                                         uint64_t *y_coeff_bits,
                                                         uint32_t  transform_size);
 
 typedef EbErrorType (*EB_FULL_NXN_COST_FUNC)(PictureControlSet           *pcs,
-                                             ModeDecisionCandidateBuffer *cand_bf_ptr, uint32_t qp,
+                                             ModeDecisionCandidateBuffer *cand_bf, uint32_t qp,
                                              uint64_t *y_distortion, uint64_t *cb_distortion,
                                              uint64_t *cr_distortion, uint64_t lambda,
                                              uint64_t lambda_chroma, uint64_t *y_coeff_bits,

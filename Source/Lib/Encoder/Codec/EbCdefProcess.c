@@ -56,20 +56,20 @@ typedef struct CdefContext {
 } CdefContext;
 
 static void cdef_context_dctor(EbPtr p) {
-    EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
-    CdefContext     *obj                = (CdefContext *)thread_context_ptr->priv;
+    EbThreadContext *thread_ctx = (EbThreadContext *)p;
+    CdefContext     *obj        = (CdefContext *)thread_ctx->priv;
     EB_FREE_ARRAY(obj);
 }
 
 /******************************************************
  * Cdef Context Constructor
  ******************************************************/
-EbErrorType svt_aom_cdef_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType svt_aom_cdef_context_ctor(EbThreadContext   *thread_ctx,
                                       const EbEncHandle *enc_handle_ptr, int index) {
     CdefContext *cdef_ctx;
     EB_CALLOC_ARRAY(cdef_ctx, 1);
-    thread_context_ptr->priv  = cdef_ctx;
-    thread_context_ptr->dctor = cdef_context_dctor;
+    thread_ctx->priv  = cdef_ctx;
+    thread_ctx->dctor = cdef_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
     cdef_ctx->cdef_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
@@ -161,11 +161,11 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
 
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in = inbuf + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
-    // tmp_dst is uint16_t to accomodate high bit depth content; 8bit will treat it as a uint8_t buffer
-    // and will not use half of the buffer
+    // tmp_dst is uint16_t to accomodate high bit depth content; 8bit will treat it as a uint8_t
+    // buffer and will not use half of the buffer
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
 
-    EbPictureBufferDesc *input_pic = is_16bit ? pcs->input_frame16bit : ppcs->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_pic = is_16bit ? pcs->input_frame16bit : ppcs->enhanced_pic;
     EbPictureBufferDesc *recon_pic;
     svt_aom_get_recon_pic(pcs, &recon_pic, is_16bit);
 
@@ -382,18 +382,18 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
  ******************************************************/
 void *svt_aom_cdef_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
-    CdefContext        *context_ptr        = (CdefContext *)thread_context_ptr->priv;
+    EbThreadContext    *thread_ctx  = (EbThreadContext *)input_ptr;
+    CdefContext        *context_ptr = (CdefContext *)thread_ctx->priv;
     PictureControlSet  *pcs;
     SequenceControlSet *scs;
 
     //// Input
-    EbObjectWrapper *dlf_results_wrapper_ptr;
-    DlfResults      *dlf_results_ptr;
+    EbObjectWrapper *dlf_results_wrapper;
+    DlfResults      *dlf_results;
 
     //// Output
-    EbObjectWrapper *cdef_results_wrapper_ptr;
-    CdefResults     *cdef_results_ptr;
+    EbObjectWrapper *cdef_results_wrapper;
+    CdefResults     *cdef_results;
 
     // SB Loop variables
 
@@ -401,10 +401,10 @@ void *svt_aom_cdef_kernel(void *input_ptr) {
         FrameHeader *frm_hdr;
 
         // Get DLF Results
-        EB_GET_FULL_OBJECT(context_ptr->cdef_input_fifo_ptr, &dlf_results_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->cdef_input_fifo_ptr, &dlf_results_wrapper);
 
-        dlf_results_ptr = (DlfResults *)dlf_results_wrapper_ptr->object_ptr;
-        pcs             = (PictureControlSet *)dlf_results_ptr->pcs_wrapper_ptr->object_ptr;
+        dlf_results                   = (DlfResults *)dlf_results_wrapper->object_ptr;
+        pcs                           = (PictureControlSet *)dlf_results->pcs_wrapper->object_ptr;
         PictureParentControlSet *ppcs = pcs->ppcs;
         scs                           = pcs->scs;
 
@@ -414,7 +414,7 @@ void *svt_aom_cdef_kernel(void *input_ptr) {
         CdefControls *cdef_ctrls = &pcs->ppcs->cdef_ctrls;
         if (!cdef_ctrls->use_reference_cdef_fs) {
             if (scs->seq_header.cdef_level && pcs->ppcs->cdef_level) {
-                cdef_seg_search(pcs, scs, dlf_results_ptr->segment_index);
+                cdef_seg_search(pcs, scs, dlf_results->segment_index);
             }
         }
         //all seg based search is done. update total processed segments. if all done, finish the search and perfrom application.
@@ -425,7 +425,7 @@ void *svt_aom_cdef_kernel(void *input_ptr) {
             // SVT_LOG("    CDEF all seg here  %i\n", pcs->picture_number);
             if (scs->seq_header.cdef_level && pcs->ppcs->cdef_level) {
                 finish_cdef_search(pcs);
-                if (ppcs->enable_restoration || pcs->ppcs->is_used_as_reference_flag ||
+                if (ppcs->enable_restoration || pcs->ppcs->is_ref ||
                     scs->static_config.recon_enabled) {
                     // Do application iff there are non-zero filters
                     if (frm_hdr->cdef_params.cdef_y_strength[0] != 0 ||
@@ -460,22 +460,21 @@ void *svt_aom_cdef_kernel(void *input_ptr) {
                 recon->width  = pcs->ppcs->render_width;
                 recon->height = pcs->ppcs->render_height;
                 if (is_lr) {
-                    EbPictureBufferDesc *input_pic = is_16bit
-                        ? pcs->input_frame16bit
-                        : pcs->ppcs->enhanced_unscaled_picture_ptr;
+                    EbPictureBufferDesc *input_pic = is_16bit ? pcs->input_frame16bit
+                                                              : pcs->ppcs->enhanced_unscaled_pic;
 
-                    svt_aom_assert_err(pcs->scaled_input_picture_ptr == NULL,
-                                       "pcs_ptr->scaled_input_picture_ptr is not desctoried!");
-                    EbPictureBufferDesc *scaled_input_picture_ptr = NULL;
+                    svt_aom_assert_err(pcs->scaled_input_pic == NULL,
+                                       "pcs_ptr->scaled_input_pic is not desctoried!");
+                    EbPictureBufferDesc *scaled_input_pic = NULL;
                     // downscale input picture if recon is resized
                     Bool is_resized = recon->width != input_pic->width ||
                         recon->height != input_pic->height;
                     if (is_resized) {
                         superres_params_type spr_params = {recon->width, recon->height, 0};
                         svt_aom_downscaled_source_buffer_desc_ctor(
-                            &scaled_input_picture_ptr, input_pic, spr_params);
+                            &scaled_input_pic, input_pic, spr_params);
                         svt_aom_resize_frame(input_pic,
-                                             scaled_input_picture_ptr,
+                                             scaled_input_pic,
                                              scs->static_config.encoder_bit_depth,
                                              av1_num_planes(&scs->seq_header.color_config),
                                              scs->subsampling_x,
@@ -483,7 +482,7 @@ void *svt_aom_cdef_kernel(void *input_ptr) {
                                              input_pic->packed_flag,
                                              PICTURE_BUFFER_DESC_FULL_MASK,
                                              0); // is_2bcompress
-                        pcs->scaled_input_picture_ptr = scaled_input_picture_ptr;
+                        pcs->scaled_input_pic = scaled_input_pic;
                     }
                 }
             }
@@ -503,18 +502,18 @@ void *svt_aom_cdef_kernel(void *input_ptr) {
             for (segment_index = 0; segment_index < pcs->rest_segments_total_count;
                  ++segment_index) {
                 // Get Empty Cdef Results to Rest
-                svt_get_empty_object(context_ptr->cdef_output_fifo_ptr, &cdef_results_wrapper_ptr);
-                cdef_results_ptr = (struct CdefResults *)cdef_results_wrapper_ptr->object_ptr;
-                cdef_results_ptr->pcs_wrapper_ptr = dlf_results_ptr->pcs_wrapper_ptr;
-                cdef_results_ptr->segment_index   = segment_index;
+                svt_get_empty_object(context_ptr->cdef_output_fifo_ptr, &cdef_results_wrapper);
+                cdef_results              = (struct CdefResults *)cdef_results_wrapper->object_ptr;
+                cdef_results->pcs_wrapper = dlf_results->pcs_wrapper;
+                cdef_results->segment_index = segment_index;
                 // Post Cdef Results
-                svt_post_full_object(cdef_results_wrapper_ptr);
+                svt_post_full_object(cdef_results_wrapper);
             }
         }
         svt_release_mutex(pcs->cdef_search_mutex);
 
         // Release Dlf Results
-        svt_release_object(dlf_results_wrapper_ptr);
+        svt_release_object(dlf_results_wrapper);
     }
 
     return NULL;

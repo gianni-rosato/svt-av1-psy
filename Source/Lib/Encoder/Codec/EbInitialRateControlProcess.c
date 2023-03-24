@@ -51,11 +51,11 @@ typedef struct InitialRateControlContext {
 } InitialRateControlContext;
 
 /**************************************
-* Macros
-**************************************/
+ * Macros
+ **************************************/
 static void initial_rate_control_context_dctor(EbPtr p) {
-    EbThreadContext           *thread_context_ptr = (EbThreadContext *)p;
-    InitialRateControlContext *obj = (InitialRateControlContext *)thread_context_ptr->priv;
+    EbThreadContext           *thread_ctx = (EbThreadContext *)p;
+    InitialRateControlContext *obj        = (InitialRateControlContext *)thread_ctx->priv;
 
     EB_DELETE_PTR_ARRAY(obj->lad_queue->cir_buf, REFERENCE_QUEUE_MAX_DEPTH);
     EB_FREE(obj->lad_queue);
@@ -63,14 +63,14 @@ static void initial_rate_control_context_dctor(EbPtr p) {
 }
 
 /************************************************
-* Initial Rate Control Context Constructor
-************************************************/
-EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext   *thread_context_ptr,
+ * Initial Rate Control Context Constructor
+ ************************************************/
+EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext   *thread_ctx,
                                                       const EbEncHandle *enc_handle_ptr) {
     InitialRateControlContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
-    thread_context_ptr->priv  = context_ptr;
-    thread_context_ptr->dctor = initial_rate_control_context_dctor;
+    thread_ctx->priv  = context_ptr;
+    thread_ctx->dctor = initial_rate_control_context_dctor;
 
     context_ptr->motion_estimation_results_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->motion_estimation_results_resource_ptr, 0);
@@ -132,16 +132,15 @@ static void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlCo
 /* send picture out from irc process */
 static void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs,
                                  Bool superres_recode) {
-    EbObjectWrapper *out_results_wrapper_ptr;
+    EbObjectWrapper *out_results_wrapper;
     // Get Empty Results Object
-    svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr,
-                         &out_results_wrapper_ptr);
-    InitialRateControlResults *out_results_ptr = (InitialRateControlResults *)
-                                                     out_results_wrapper_ptr->object_ptr;
-    //SVT_LOG("iRC Out:%lld\n",pcs->picture_number);
-    out_results_ptr->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
-    out_results_ptr->superres_recode = superres_recode;
-    svt_post_full_object(out_results_wrapper_ptr);
+    svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr, &out_results_wrapper);
+    InitialRateControlResults *out_results = (InitialRateControlResults *)
+                                                 out_results_wrapper->object_ptr;
+    // SVT_LOG("iRC Out:%lld\n",pcs->picture_number);
+    out_results->pcs_wrapper     = pcs->p_pcs_wrapper_ptr;
+    out_results->superres_recode = superres_recode;
+    svt_post_full_object(out_results_wrapper);
 }
 static uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index,
                                        uint64_t pic_num) {
@@ -410,33 +409,33 @@ static void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru)
 /* Initial Rate Control Kernel */
 
 /*********************************************************************************
-*
-* @brief
-*  The Initial Rate Control process determines the initial bit budget for each picture
-*  depending on the data gathered in the Picture Analysis and Motion Estimation processes
-*  as well as the settings determined in the Picture Decision process.
-*
-* @par Description:
-*  The Initial Rate Control process employs a sliding window buffer to analyze
-*  multiple pictures if a delay is allowed. Note that no reference picture data is
-*  used in this process.
-*
-* @param[in] Picture
-*  The Initial Rate Control Kernel takes a picture and determines the initial bit budget
-*  for each picture depending on the data that was gathered in Picture Analysis and
-*  Motion Estimation processes
-*
-* @param[out] Bit Budget
-*  Bit Budget is the amount of budgetted bits for a picture
-*
-* @remarks
-*  Temporal noise reduction is currently performed in Initial Rate Control Process.
-*  In the future we might decide to move it to Motion Analysis Process.
-*
-********************************************************************************/
+ *
+ * @brief
+ *  The Initial Rate Control process determines the initial bit budget for each picture
+ *  depending on the data gathered in the Picture Analysis and Motion Estimation processes
+ *  as well as the settings determined in the Picture Decision process.
+ *
+ * @par Description:
+ *  The Initial Rate Control process employs a sliding window buffer to analyze
+ *  multiple pictures if a delay is allowed. Note that no reference picture data is
+ *  used in this process.
+ *
+ * @param[in] Picture
+ *  The Initial Rate Control Kernel takes a picture and determines the initial bit budget
+ *  for each picture depending on the data that was gathered in Picture Analysis and
+ *  Motion Estimation processes
+ *
+ * @param[out] Bit Budget
+ *  Bit Budget is the amount of budgetted bits for a picture
+ *
+ * @remarks
+ *  Temporal noise reduction is currently performed in Initial Rate Control Process.
+ *  In the future we might decide to move it to Motion Analysis Process.
+ *
+ ********************************************************************************/
 void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
-    EbThreadContext           *thread_context_ptr = (EbThreadContext *)input_ptr;
-    InitialRateControlContext *context_ptr = (InitialRateControlContext *)thread_context_ptr->priv;
+    EbThreadContext           *thread_ctx  = (EbThreadContext *)input_ptr;
+    InitialRateControlContext *context_ptr = (InitialRateControlContext *)thread_ctx->priv;
 
     EbObjectWrapper *in_results_wrapper_ptr;
 
@@ -449,7 +448,7 @@ void *svt_aom_initial_rate_control_kernel(void *input_ptr) {
         MotionEstimationResults *in_results_ptr = (MotionEstimationResults *)
                                                       in_results_wrapper_ptr->object_ptr;
         PictureParentControlSet *pcs = (PictureParentControlSet *)
-                                           in_results_ptr->pcs_wrapper_ptr->object_ptr;
+                                           in_results_ptr->pcs_wrapper->object_ptr;
 
         // Set the segment counter
         pcs->me_segments_completion_count++;

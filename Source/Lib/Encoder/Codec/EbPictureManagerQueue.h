@@ -46,7 +46,7 @@ typedef struct ReferenceQueueEntry {
     EbObjectWrapper *reference_object_ptr;
     Bool             release_enable;
     Bool             reference_available;
-    Bool             is_used_as_reference_flag;
+    Bool             is_ref;
     uint64_t         rc_group_index;
     Bool             is_alt_ref;
     Bool             feedback_arrived;
@@ -54,10 +54,10 @@ typedef struct ReferenceQueueEntry {
     uint8_t          temporal_layer_index;
     Bool             frame_context_updated;
     uint8_t          refresh_frame_mask;
-    uint64_t
-        dec_order_of_last_ref; // decode order of the last frame to use the current entry as a reference
-    bool
-        frame_end_cdf_update_required; // True if frame_end_cdf_update_mode is enabled for this frame
+    // decode order of the last frame to use the current entry as a reference
+    uint64_t dec_order_of_last_ref;
+    // True if frame_end_cdf_update_mode is enabled for this frame
+    bool frame_end_cdf_update_required;
     bool is_valid;
 } ReferenceQueueEntry;
 

@@ -33,7 +33,7 @@ void svt_aom_global_motion_estimation(PictureParentControlSet *pcs,
     EbPictureBufferDesc *quarter_picture_ptr;
     EbPictureBufferDesc *sixteenth_ref_pic_ptr;
     EbPictureBufferDesc *sixteenth_picture_ptr;
-    pa_reference_object = (EbPaReferenceObject *)pcs->pa_reference_picture_wrapper_ptr->object_ptr;
+    pa_reference_object = (EbPaReferenceObject *)pcs->pa_ref_pic_wrapper->object_ptr;
     quarter_picture_ptr = (EbPictureBufferDesc *)
                               pa_reference_object->quarter_downsampled_picture_ptr;
     sixteenth_picture_ptr = (EbPictureBufferDesc *)
@@ -111,27 +111,26 @@ void svt_aom_global_motion_estimation(PictureParentControlSet *pcs,
             // Ref Picture Loop
             for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
                  ++ref_pic_index) {
-                EbPaReferenceObject *reference_object;
+                EbPaReferenceObject *ref_object;
                 EbPictureBufferDesc *ref_picture_ptr;
-                reference_object = (EbPaReferenceObject *)pcs
-                                       ->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                                       ->object_ptr;
+                ref_object = (EbPaReferenceObject *)pcs
+                                 ->ref_pa_pic_ptr_array[list_index][ref_pic_index]
+                                 ->object_ptr;
 
                 // Set the source and the reference picture to be used by the global motion search
                 // based on the input search mode
                 if (pcs->gm_downsample_level == GM_DOWN16) {
                     sixteenth_ref_pic_ptr = (EbPictureBufferDesc *)
-                                                reference_object->sixteenth_downsampled_picture_ptr;
+                                                ref_object->sixteenth_downsampled_picture_ptr;
                     ref_picture_ptr = sixteenth_ref_pic_ptr;
                     input_pic       = sixteenth_picture_ptr;
                 } else if (pcs->gm_downsample_level == GM_DOWN) {
                     quarter_ref_pic_ptr = (EbPictureBufferDesc *)
-                                              reference_object->quarter_downsampled_picture_ptr;
+                                              ref_object->quarter_downsampled_picture_ptr;
                     ref_picture_ptr = quarter_ref_pic_ptr;
                     input_pic       = quarter_picture_ptr;
                 } else {
-                    ref_picture_ptr = (EbPictureBufferDesc *)
-                                          reference_object->input_padded_picture_ptr;
+                    ref_picture_ptr = (EbPictureBufferDesc *)ref_object->input_padded_pic;
                 }
 
                 compute_global_motion(

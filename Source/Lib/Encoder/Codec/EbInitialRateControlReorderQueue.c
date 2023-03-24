@@ -14,8 +14,8 @@
 
 EbErrorType svt_aom_initial_rate_control_reorder_entry_ctor(
     InitialRateControlReorderEntry *entry_ptr, uint32_t picture_number) {
-    entry_ptr->picture_number         = picture_number;
-    entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)NULL;
+    entry_ptr->picture_number = picture_number;
+    entry_ptr->ppcs_wrapper   = (EbObjectWrapper *)NULL;
 
     return EB_ErrorNone;
 }

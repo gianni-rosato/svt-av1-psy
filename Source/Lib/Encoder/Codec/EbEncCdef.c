@@ -890,7 +890,7 @@ void finish_cdef_search(PictureControlSet *pcs) {
         pcs,
         &fast_lambda,
         &full_lambda,
-        (uint8_t)pcs->ppcs->enhanced_picture_ptr->bit_depth,
+        (uint8_t)pcs->ppcs->enhanced_pic->bit_depth,
         pcs->ppcs->frm_hdr.quantization_params.base_q_idx,
         FALSE);
     lambda   = full_lambda;

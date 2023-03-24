@@ -72,9 +72,8 @@ void log_error_output(FILE *error_log_file, uint32_t error_code) {
 
         // EB_ENC_PM_ERRORS:
     case EB_ENC_PM_ERROR10:
-        fprintf(
-            error_log_file,
-            "Error: svt_aom_picture_manager_kernel: reference_entry_ptr should never be null!\n");
+        fprintf(error_log_file,
+                "Error: svt_aom_picture_manager_kernel: ref_entry should never be null!\n");
         break;
 
     case EB_ENC_PM_ERROR4:

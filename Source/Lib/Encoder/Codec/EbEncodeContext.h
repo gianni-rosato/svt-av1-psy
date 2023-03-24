@@ -117,8 +117,8 @@ typedef struct EncodeContext {
     uint32_t          input_picture_queue_head_index;
     uint32_t          input_picture_queue_tail_index;
     // Picture Manager List
-    ReferenceQueueEntry **reference_picture_list;
-    uint32_t              reference_picture_list_length;
+    ReferenceQueueEntry **ref_pic_list;
+    uint32_t              ref_pic_list_length;
 
     // Initial Rate Control Reorder Queue
     InitialRateControlReorderEntry **initial_rate_control_reorder_queue;
@@ -199,6 +199,5 @@ typedef struct EncodeContextInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType svt_aom_encode_context_ctor(EncodeContext *encode_context_ptr,
-                                               EbPtr          object_init_data_ptr);
+extern EbErrorType svt_aom_encode_context_ctor(EncodeContext *enc_ctx, EbPtr object_init_data_ptr);
 #endif // EbEncodeContext_h

@@ -476,10 +476,10 @@ void svt_aom_dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int 
     int32_t      curr_recon_stride[MAX_MB_PLANE];
     Av1PixelRect tile_rect[MAX_MB_PLANE];
 
-    EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
-    const int32_t        num_planes        = av1_num_planes(&dec_handle->seq_header.color_config);
+    EbPictureBufferDesc *recon_pic  = dec_handle->cur_pic_buf[0]->ps_pic_buf;
+    const int32_t        num_planes = av1_num_planes(&dec_handle->seq_header.color_config);
 
-    lr_pad_pic(recon_picture_ptr, &dec_handle->frame_header, &dec_handle->seq_header.color_config);
+    lr_pad_pic(recon_pic, &dec_handle->frame_header, &dec_handle->seq_header.color_config);
 
     LrCtxt  *lr_ctxt = (LrCtxt *)dec_handle->pv_lr_ctxt;
     uint8_t *dst     = lr_ctxt->dst;
@@ -489,7 +489,7 @@ void svt_aom_dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int 
         int32_t sub_y = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_y;
 
         /*Deriveing  recon pict buffer ptr's*/
-        svt_aom_derive_blk_pointers(recon_picture_ptr,
+        svt_aom_derive_blk_pointers(recon_pic,
                                     pli,
                                     0,
                                     0,

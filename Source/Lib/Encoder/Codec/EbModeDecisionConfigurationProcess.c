@@ -268,9 +268,9 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
     set_global_motion_field(pcs);
 
     svt_av1_qm_init(pcs->ppcs);
-    MdRateEstimationContext *md_rate_estimation_array;
+    MdRateEstimationContext *md_rate_est_ctx;
 
-    md_rate_estimation_array = pcs->md_rate_estimation_array;
+    md_rate_est_ctx = pcs->md_rate_est_ctx;
 
     if (pcs->ppcs->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
         memcpy(&pcs->md_frame_context,
@@ -281,7 +281,7 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
         svt_aom_init_mode_probs(&pcs->md_frame_context);
     }
     // Initial Rate Estimation of the syntax elements
-    svt_aom_estimate_syntax_rate(md_rate_estimation_array,
+    svt_aom_estimate_syntax_rate(md_rate_est_ctx,
                                  pcs->slice_type == I_SLICE ? TRUE : FALSE,
                                  pcs->pic_filter_intra_level,
                                  pcs->ppcs->frm_hdr.allow_screen_content_tools,
@@ -290,32 +290,31 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
                                  pcs->ppcs->partition_contexts,
                                  &pcs->md_frame_context);
     // Initial Rate Estimation of the Motion vectors
-    svt_aom_estimate_mv_rate(pcs, md_rate_estimation_array, &pcs->md_frame_context);
+    svt_aom_estimate_mv_rate(pcs, md_rate_est_ctx, &pcs->md_frame_context);
     // Initial Rate Estimation of the quantized coefficients
-    svt_aom_estimate_coefficients_rate(md_rate_estimation_array, &pcs->md_frame_context);
+    svt_aom_estimate_coefficients_rate(md_rate_est_ctx, &pcs->md_frame_context);
 }
 
 /******************************************************
-* Compute Tc, and Beta offsets for a given picture
-******************************************************/
+ * Compute Tc, and Beta offsets for a given picture
+ ******************************************************/
 
 static void mode_decision_configuration_context_dctor(EbPtr p) {
-    EbThreadContext                  *thread_context_ptr = (EbThreadContext *)p;
-    ModeDecisionConfigurationContext *obj                = (ModeDecisionConfigurationContext *)
-                                                thread_context_ptr->priv;
+    EbThreadContext                  *thread_ctx = (EbThreadContext *)p;
+    ModeDecisionConfigurationContext *obj = (ModeDecisionConfigurationContext *)thread_ctx->priv;
 
     EB_FREE_ARRAY(obj);
 }
 /******************************************************
  * Mode Decision Configuration Context Constructor
  ******************************************************/
-EbErrorType svt_aom_mode_decision_configuration_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType svt_aom_mode_decision_configuration_context_ctor(EbThreadContext   *thread_ctx,
                                                              const EbEncHandle *enc_handle_ptr,
                                                              int input_index, int output_index) {
     ModeDecisionConfigurationContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
-    thread_context_ptr->priv  = context_ptr;
-    thread_context_ptr->dctor = mode_decision_configuration_context_dctor;
+    thread_ctx->priv  = context_ptr;
+    thread_ctx->dctor = mode_decision_configuration_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
     context_ptr->rate_control_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
@@ -403,7 +402,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     EbErrorType              return_error        = EB_ErrorNone;
     PictureParentControlSet *ppcs                = pcs->ppcs;
     const EncMode            enc_mode            = pcs->enc_mode;
-    const uint8_t            is_ref              = ppcs->is_used_as_reference_flag;
+    const uint8_t            is_ref              = ppcs->is_ref;
     const uint8_t            is_base             = ppcs->temporal_layer_index == 0;
     const uint8_t            is_layer1           = ppcs->temporal_layer_index == 1;
     const EbInputResolution  input_resolution    = ppcs->input_resolution;
@@ -1549,52 +1548,49 @@ static void predict_frame_coeff_lvl(struct PictureControlSet *pcs) {
 /* Mode Decision Configuration Kernel */
 
 /*********************************************************************************
-*
-* @brief
-*  The Mode Decision Configuration Process involves a number of initialization steps,
-*  setting flags for a number of features, and determining the blocks to be considered
-*  in subsequent MD stages.
-*
-* @par Description:
-*  The Mode Decision Configuration Process involves a number of initialization steps,
-*  setting flags for a number of features, and determining the blocks to be considered
-*  in subsequent MD stages. Examples of flags that are set are the flags for filter intra,
-*  eighth-pel, OBMC and warped motion and flags for updating the cumulative density functions
-*  Examples of initializations include initializations for picture chroma QP offsets,
-*  CDEF strength, self-guided restoration filter parameters, quantization parameters,
-*  lambda arrays, mv and coefficient rate estimation arrays.
-*
-*  The set of blocks to be processed in subsequent MD stages is decided in this process as a
-*  function of the picture depth mode (pic_depth_mode).
-*
-* @param[in] Configurations
-*  Configuration flags that are to be set
-*
-* @param[out] Initializations
-*  Initializations for various flags and variables
-*
-********************************************************************************/
+ *
+ * @brief
+ *  The Mode Decision Configuration Process involves a number of initialization steps,
+ *  setting flags for a number of features, and determining the blocks to be considered
+ *  in subsequent MD stages.
+ *
+ * @par Description:
+ *  The Mode Decision Configuration Process involves a number of initialization steps,
+ *  setting flags for a number of features, and determining the blocks to be considered
+ *  in subsequent MD stages. Examples of flags that are set are the flags for filter intra,
+ *  eighth-pel, OBMC and warped motion and flags for updating the cumulative density functions
+ *  Examples of initializations include initializations for picture chroma QP offsets,
+ *  CDEF strength, self-guided restoration filter parameters, quantization parameters,
+ *  lambda arrays, mv and coefficient rate estimation arrays.
+ *
+ *  The set of blocks to be processed in subsequent MD stages is decided in this process as a
+ *  function of the picture depth mode (pic_depth_mode).
+ *
+ * @param[in] Configurations
+ *  Configuration flags that are to be set
+ *
+ * @param[out] Initializations
+ *  Initializations for various flags and variables
+ *
+ ********************************************************************************/
 void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext                  *thread_context_ptr = (EbThreadContext *)input_ptr;
-    ModeDecisionConfigurationContext *context_ptr        = (ModeDecisionConfigurationContext *)
-                                                        thread_context_ptr->priv;
+    EbThreadContext                  *thread_ctx  = (EbThreadContext *)input_ptr;
+    ModeDecisionConfigurationContext *context_ptr = (ModeDecisionConfigurationContext *)
+                                                        thread_ctx->priv;
     // Input
-    EbObjectWrapper *rate_control_results_wrapper_ptr;
+    EbObjectWrapper *rc_results_wrapper;
 
     // Output
-    EbObjectWrapper *enc_dec_tasks_wrapper_ptr;
+    EbObjectWrapper *enc_dec_tasks_wrapper;
 
     for (;;) {
         // Get RateControl Results
-        EB_GET_FULL_OBJECT(context_ptr->rate_control_input_fifo_ptr,
-                           &rate_control_results_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->rate_control_input_fifo_ptr, &rc_results_wrapper);
 
-        RateControlResults *rate_control_results_ptr =
-            (RateControlResults *)rate_control_results_wrapper_ptr->object_ptr;
-        PictureControlSet *pcs = (PictureControlSet *)
-                                     rate_control_results_ptr->pcs_wrapper_ptr->object_ptr;
-        SequenceControlSet *scs = pcs->scs;
+        RateControlResults *rc_results = (RateControlResults *)rc_results_wrapper->object_ptr;
+        PictureControlSet  *pcs        = (PictureControlSet *)rc_results->pcs_wrapper->object_ptr;
+        SequenceControlSet *scs        = pcs->scs;
 
         pcs->coeff_lvl = INVALID_LVL;
         if (scs->static_config.pass != ENC_FIRST_PASS) {
@@ -1610,16 +1606,15 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         if ((pcs->ppcs->frame_superres_enabled == 1 ||
              scs->static_config.resize_mode != RESIZE_NONE) &&
             pcs->slice_type != I_SLICE) {
-            if (pcs->ppcs->is_used_as_reference_flag == TRUE &&
-                pcs->ppcs->reference_picture_wrapper_ptr != NULL) {
-                // update mi_rows and mi_cols for the reference pic wrapper (used in mfmv for other pictures)
-                EbReferenceObject *reference_object =
-                    pcs->ppcs->reference_picture_wrapper_ptr->object_ptr;
-                reference_object->mi_rows = pcs->ppcs->aligned_height >> MI_SIZE_LOG2;
-                reference_object->mi_cols = pcs->ppcs->aligned_width >> MI_SIZE_LOG2;
+            if (pcs->ppcs->is_ref == TRUE && pcs->ppcs->ref_pic_wrapper != NULL) {
+                // update mi_rows and mi_cols for the reference pic wrapper (used in mfmv for other
+                // pictures)
+                EbReferenceObject *ref_object = pcs->ppcs->ref_pic_wrapper->object_ptr;
+                ref_object->mi_rows           = pcs->ppcs->aligned_height >> MI_SIZE_LOG2;
+                ref_object->mi_cols           = pcs->ppcs->aligned_width >> MI_SIZE_LOG2;
             }
 
-            svt_aom_scale_rec_references(pcs, pcs->ppcs->enhanced_picture_ptr, pcs->hbd_md);
+            svt_aom_scale_rec_references(pcs, pcs->ppcs->enhanced_pic, pcs->hbd_md);
         }
 
         FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
@@ -1640,7 +1635,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         set_global_motion_field(pcs);
 
         svt_av1_qm_init(pcs->ppcs);
-        MdRateEstimationContext *md_rate_estimation_array;
+        MdRateEstimationContext *md_rate_est_ctx;
 
         // QP
         context_ptr->qp = pcs->picture_qp;
@@ -1648,7 +1643,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         // QP Index
         context_ptr->qp_index = (uint8_t)frm_hdr->quantization_params.base_q_idx;
 
-        md_rate_estimation_array = pcs->md_rate_estimation_array;
+        md_rate_est_ctx = pcs->md_rate_est_ctx;
         if (pcs->ppcs->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
             memcpy(&pcs->md_frame_context,
                    &pcs->ref_frame_context[pcs->ppcs->frm_hdr.primary_ref_frame],
@@ -1659,7 +1654,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
             svt_aom_init_mode_probs(&pcs->md_frame_context);
         }
         // Initial Rate Estimation of the syntax elements
-        svt_aom_estimate_syntax_rate(md_rate_estimation_array,
+        svt_aom_estimate_syntax_rate(md_rate_est_ctx,
                                      pcs->slice_type == I_SLICE ? TRUE : FALSE,
                                      pcs->pic_filter_intra_level,
                                      pcs->ppcs->frm_hdr.allow_screen_content_tools,
@@ -1669,9 +1664,9 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                                      &pcs->md_frame_context);
         // Initial Rate Estimation of the Motion vectors
         if (scs->static_config.pass != ENC_FIRST_PASS) {
-            svt_aom_estimate_mv_rate(pcs, md_rate_estimation_array, &pcs->md_frame_context);
+            svt_aom_estimate_mv_rate(pcs, md_rate_est_ctx, &pcs->md_frame_context);
             // Initial Rate Estimation of the quantized coefficients
-            svt_aom_estimate_coefficients_rate(md_rate_estimation_array, &pcs->md_frame_context);
+            svt_aom_estimate_coefficients_rate(md_rate_est_ctx, &pcs->md_frame_context);
         }
         if (frm_hdr->allow_intrabc) {
             int            i;
@@ -1718,8 +1713,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                 }
                 svt_aom_rtime_alloc_svt_av1_hash_table_create(&pcs->hash_table);
                 Yv12BufferConfig cpi_source;
-                svt_aom_link_eb_to_aom_buffer_desc_8bit(pcs->ppcs->enhanced_picture_ptr,
-                                                        &cpi_source);
+                svt_aom_link_eb_to_aom_buffer_desc_8bit(pcs->ppcs->enhanced_pic, &cpi_source);
 
                 svt_av1_crc_calculator_init(&pcs->crc_calculator1, 24, 0x5D6DCB);
                 svt_av1_crc_calculator_init(&pcs->crc_calculator2, 24, 0x864CFB);
@@ -1752,8 +1746,7 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                 }
             }
 
-            svt_av1_init3smotion_compensation(&pcs->ss_cfg,
-                                              pcs->ppcs->enhanced_picture_ptr->stride_y);
+            svt_av1_init3smotion_compensation(&pcs->ss_cfg, pcs->ppcs->enhanced_pic->stride_y);
         }
         CdefControls *cdef_ctrls = &pcs->ppcs->cdef_ctrls;
         uint8_t       skip_perc  = pcs->ref_skip_percentage;
@@ -1869,26 +1862,25 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         uint16_t tg_count = pcs->ppcs->tile_group_cols * pcs->ppcs->tile_group_rows;
         for (uint16_t tile_group_idx = 0; tile_group_idx < tg_count; tile_group_idx++) {
             svt_get_empty_object(context_ptr->mode_decision_configuration_output_fifo_ptr,
-                                 &enc_dec_tasks_wrapper_ptr);
+                                 &enc_dec_tasks_wrapper);
 
-            EncDecTasks *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
-            enc_dec_tasks_ptr->pcs_wrapper_ptr  = rate_control_results_ptr->pcs_wrapper_ptr;
-            enc_dec_tasks_ptr->input_type       = rate_control_results_ptr->superres_recode
-                      ? ENCDEC_TASKS_SUPERRES_INPUT
-                      : ENCDEC_TASKS_MDC_INPUT;
-            enc_dec_tasks_ptr->tile_group_index = tile_group_idx;
+            EncDecTasks *enc_dec_tasks = (EncDecTasks *)enc_dec_tasks_wrapper->object_ptr;
+            enc_dec_tasks->pcs_wrapper = rc_results->pcs_wrapper;
+            enc_dec_tasks->input_type  = rc_results->superres_recode ? ENCDEC_TASKS_SUPERRES_INPUT
+                                                                     : ENCDEC_TASKS_MDC_INPUT;
+            enc_dec_tasks->tile_group_index = tile_group_idx;
 
             // Post the Full Results Object
-            svt_post_full_object(enc_dec_tasks_wrapper_ptr);
+            svt_post_full_object(enc_dec_tasks_wrapper);
 
-            if (rate_control_results_ptr->superres_recode) {
+            if (rc_results->superres_recode) {
                 // for superres input, only send one task
                 break;
             }
         }
 
         // Release Rate Control Results
-        svt_release_object(rate_control_results_wrapper_ptr);
+        svt_release_object(rc_results_wrapper);
     }
 
     return NULL;

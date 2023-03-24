@@ -19,11 +19,11 @@
 extern "C" {
 #endif
 /**************************************
-     * Process Results
-     **************************************/
+ * Process Results
+ **************************************/
 typedef struct EntropyCodingResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
 } EntropyCodingResults;
 
 typedef struct EntropyCodingResultsInitData {

@@ -325,8 +325,9 @@ typedef struct IntraBcContext {
     uint8_t        is_exhaustive_allowed;
     CRC_CALCULATOR crc_calculator1;
     CRC_CALCULATOR crc_calculator2;
-    uint8_t
-        approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
+    // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will
+    // be removed)
+    uint8_t approx_inter_rate;
 } IntraBcContext;
 
 typedef struct BlkStruct {
@@ -342,8 +343,9 @@ typedef struct BlkStruct {
     uint8_t                interintra_wedge_index; // ec
     // uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
     int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES]; // ec
-    uint16_t
-        mds_idx; //equivalent of leaf_index in the nscu context. we will keep both for now and use the right one on a case by case basis.
+    // equivalent of leaf_index in the nscu context. we will keep both for now and use the right one
+    // on a case by case basis.
+    uint16_t mds_idx;
     // txb
     uint8_t tx_depth; // ec
     uint8_t compound_idx; // ec
@@ -351,22 +353,22 @@ typedef struct BlkStruct {
 
     unsigned skip_flag_context : 2; // to do
     unsigned prediction_mode_flag : 2; // ec
-    unsigned
-        block_has_coeff : 1; // ec; skip coeff only. as defined in section 6.10.11 of the av1 text
+    // ec; skip coeff only. as defined in section 6.10.11 of the av1 text
+    unsigned block_has_coeff : 1;
     unsigned split_flag_context : 2; // to do
 
     uint8_t qindex; // ec
     uint8_t split_flag;
     uint8_t skip_mode; // ec; skips mode_info + coeff. as defined in section 6.10.10 of the av1 text
-    EbPictureBufferDesc
-        *coeff_tmp; // buffer to store quantized coeffs from MD for the final mode of each block
-    EbPictureBufferDesc
-           *recon_tmp; // buffer to store recon from MD for the final mode of each block
-    uint8_t drl_index; // ec
-    int8_t  drl_ctx[2]; // Store the drl ctx in coding loop to avoid storing
-        // final_ref_mv_stack and ref_mv_count for EC
-    int8_t drl_ctx_near[2]; // Store the drl ctx in coding loop to avoid storing
-        // final_ref_mv_stack and ref_mv_count for EC
+    // buffer to store quantized coeffs from MD for the final mode of each block
+    EbPictureBufferDesc *coeff_tmp;
+    // buffer to store recon from MD for the final mode of each block
+    EbPictureBufferDesc *recon_tmp;
+    uint8_t              drl_index; // ec
+    // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
+    int8_t drl_ctx[2];
+    // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
+    int8_t         drl_ctx_near[2];
     PredictionMode pred_mode; // ec
     uint8_t        skip_coeff_context;
     uint8_t        reference_mode_context;

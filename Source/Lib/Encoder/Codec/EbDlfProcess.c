@@ -30,19 +30,19 @@ extern void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **
                                   Bool is_highbd);
 
 static void dlf_context_dctor(EbPtr p) {
-    EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
-    DlfContext      *obj                = (DlfContext *)thread_context_ptr->priv;
+    EbThreadContext *thread_ctx = (EbThreadContext *)p;
+    DlfContext      *obj        = (DlfContext *)thread_ctx->priv;
     EB_FREE_ARRAY(obj);
 }
 /******************************************************
  * Dlf Context Constructor
  ******************************************************/
-EbErrorType svt_aom_dlf_context_ctor(EbThreadContext   *thread_context_ptr,
-                                     const EbEncHandle *enc_handle_ptr, int index) {
+EbErrorType svt_aom_dlf_context_ctor(EbThreadContext *thread_ctx, const EbEncHandle *enc_handle_ptr,
+                                     int index) {
     DlfContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
-    thread_context_ptr->priv  = context_ptr;
-    thread_context_ptr->dctor = dlf_context_dctor;
+    thread_ctx->priv  = context_ptr;
+    thread_ctx->dctor = dlf_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
     context_ptr->dlf_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
@@ -57,42 +57,42 @@ EbErrorType svt_aom_dlf_context_ctor(EbThreadContext   *thread_context_ptr,
  ******************************************************/
 void *svt_aom_dlf_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
-    DlfContext         *context_ptr        = (DlfContext *)thread_context_ptr->priv;
+    EbThreadContext    *thread_ctx  = (EbThreadContext *)input_ptr;
+    DlfContext         *context_ptr = (DlfContext *)thread_ctx->priv;
     PictureControlSet  *pcs;
     SequenceControlSet *scs;
 
     //// Input
-    EbObjectWrapper *enc_dec_results_wrapper_ptr;
-    EncDecResults   *enc_dec_results_ptr;
+    EbObjectWrapper *enc_dec_results_wrapper;
+    EncDecResults   *enc_dec_results;
 
     //// Output
-    EbObjectWrapper   *dlf_results_wrapper_ptr;
-    struct DlfResults *dlf_results_ptr;
+    EbObjectWrapper   *dlf_results_wrapper;
+    struct DlfResults *dlf_results;
 
     // SB Loop variables
     for (;;) {
         // Get EncDec Results
-        EB_GET_FULL_OBJECT(context_ptr->dlf_input_fifo_ptr, &enc_dec_results_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->dlf_input_fifo_ptr, &enc_dec_results_wrapper);
 
-        enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
-        pcs                 = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
+        enc_dec_results = (EncDecResults *)enc_dec_results_wrapper->object_ptr;
+        pcs             = (PictureControlSet *)enc_dec_results->pcs_wrapper->object_ptr;
         PictureParentControlSet *ppcs = pcs->ppcs;
         scs                           = pcs->scs;
 
         Bool is_16bit = scs->is_16bit_pipeline;
         if (is_16bit && scs->static_config.encoder_bit_depth == EB_EIGHT_BIT) {
-            svt_convert_pic_8bit_to_16bit(pcs->ppcs->enhanced_picture_ptr,
+            svt_convert_pic_8bit_to_16bit(pcs->ppcs->enhanced_pic,
                                           pcs->input_frame16bit,
                                           pcs->ppcs->scs->subsampling_x,
                                           pcs->ppcs->scs->subsampling_y);
             // convert 8-bit recon to 16-bit for it bypass encdec process
             if (pcs->pic_bypass_encdec) {
-                EbPictureBufferDesc *recon_picture_ptr;
+                EbPictureBufferDesc *recon_pic;
                 EbPictureBufferDesc *recon_picture_16bit_ptr;
-                svt_aom_get_recon_pic(pcs, &recon_picture_ptr, 0);
+                svt_aom_get_recon_pic(pcs, &recon_pic, 0);
                 svt_aom_get_recon_pic(pcs, &recon_picture_16bit_ptr, 1);
-                svt_convert_pic_8bit_to_16bit(recon_picture_ptr,
+                svt_convert_pic_8bit_to_16bit(recon_pic,
                                               recon_picture_16bit_ptr,
                                               pcs->ppcs->scs->subsampling_x,
                                               pcs->ppcs->scs->subsampling_y);
@@ -106,9 +106,8 @@ void *svt_aom_dlf_kernel(void *input_ptr) {
             EbPictureBufferDesc *recon_buffer;
             svt_aom_get_recon_pic(pcs, &recon_buffer, is_16bit);
             svt_av1_loop_filter_init(pcs);
-            svt_av1_pick_filter_level((EbPictureBufferDesc *)pcs->ppcs->enhanced_picture_ptr,
-                                      pcs,
-                                      LPF_PICK_FROM_FULL_IMAGE);
+            svt_av1_pick_filter_level(
+                (EbPictureBufferDesc *)pcs->ppcs->enhanced_pic, pcs, LPF_PICK_FROM_FULL_IMAGE);
 
             svt_av1_loop_filter_frame(recon_buffer, pcs, 0, 3);
         }
@@ -141,7 +140,7 @@ void *svt_aom_dlf_kernel(void *input_ptr) {
                 pcs->cdef_input_recon[2] = recon_pic->buffer_cr + (offset_cr << is_16bit);
 
                 EbPictureBufferDesc *input_pic      = is_16bit ? pcs->input_frame16bit
-                                                               : pcs->ppcs->enhanced_picture_ptr;
+                                                               : pcs->ppcs->enhanced_pic;
                 const uint32_t       input_offset_y = input_pic->org_x +
                     input_pic->org_y * input_pic->stride_y;
                 pcs->cdef_input_source[0]      = input_pic->buffer_y + (input_offset_y << is_16bit);
@@ -165,16 +164,16 @@ void *svt_aom_dlf_kernel(void *input_ptr) {
 
         for (segment_index = 0; segment_index < pcs->cdef_segments_total_count; ++segment_index) {
             // Get Empty DLF Results to Cdef
-            svt_get_empty_object(context_ptr->dlf_output_fifo_ptr, &dlf_results_wrapper_ptr);
-            dlf_results_ptr = (struct DlfResults *)dlf_results_wrapper_ptr->object_ptr;
-            dlf_results_ptr->pcs_wrapper_ptr = enc_dec_results_ptr->pcs_wrapper_ptr;
-            dlf_results_ptr->segment_index   = segment_index;
+            svt_get_empty_object(context_ptr->dlf_output_fifo_ptr, &dlf_results_wrapper);
+            dlf_results                = (struct DlfResults *)dlf_results_wrapper->object_ptr;
+            dlf_results->pcs_wrapper   = enc_dec_results->pcs_wrapper;
+            dlf_results->segment_index = segment_index;
             // Post DLF Results
-            svt_post_full_object(dlf_results_wrapper_ptr);
+            svt_post_full_object(dlf_results_wrapper);
         }
 
         // Release EncDec Results
-        svt_release_object(enc_dec_results_wrapper_ptr);
+        svt_release_object(enc_dec_results_wrapper);
     }
 
     return NULL;

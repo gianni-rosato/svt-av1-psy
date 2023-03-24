@@ -191,7 +191,7 @@ extern "C" {
     * all scenarios based on the frame CDF
     ***************************************************************************/
     extern void svt_aom_estimate_syntax_rate(
-        MdRateEstimationContext      *md_rate_estimation_array,
+        MdRateEstimationContext      *md_rate_est_ctx,
         Bool                          is_i_slice,
         uint8_t pic_filter_intra_level,
         uint8_t allow_screen_content_tools,
@@ -204,7 +204,7 @@ extern "C" {
     * based on the frame CDF
     ***************************************************************************/
     extern void svt_aom_estimate_coefficients_rate(
-        MdRateEstimationContext  *md_rate_estimation_array,
+        MdRateEstimationContext  *md_rate_est_ctx,
         FRAME_CONTEXT              *fc);
     /**************************************************************************
     * svt_aom_estimate_mv_rate()
@@ -213,7 +213,7 @@ extern "C" {
     ***************************************************************************/
 extern void svt_aom_estimate_mv_rate(
         struct PictureControlSet *pcs,
-        MdRateEstimationContext  *md_rate_estimation_array,
+        MdRateEstimationContext  *md_rate_est_ctx,
         FRAME_CONTEXT            *fc);
 #define AVG_CDF_WEIGHT_LEFT      3
 #define AVG_CDF_WEIGHT_TOP       1

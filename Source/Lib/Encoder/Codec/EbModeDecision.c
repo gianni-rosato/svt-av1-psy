@@ -224,9 +224,8 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     SequenceControlSet *scs = pcs->scs;
     DECLARE_ALIGNED(16, uint8_t, tmp_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, ii_pred_buf[2 * MAX_INTERINTRA_SB_SQUARE]);
-    //get inter pred for ref0
-    EbPictureBufferDesc *src_pic = ctx->hbd_md ? pcs->input_frame16bit
-                                               : pcs->ppcs->enhanced_picture_ptr;
+    // get inter pred for ref0
+    EbPictureBufferDesc *src_pic = ctx->hbd_md ? pcs->input_frame16bit : pcs->ppcs->enhanced_pic;
     uint16_t *src_buf_hbd = (uint16_t *)src_pic->buffer_y + (ctx->blk_org_x + src_pic->org_x) +
         (ctx->blk_org_y + src_pic->org_y) * src_pic->stride_y;
     uint8_t *src_buf = src_pic->buffer_y + (ctx->blk_org_x + src_pic->org_x) +
@@ -278,14 +277,14 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     if (ref_pic_list0 != NULL)
         svt_aom_use_scaled_rec_refs_if_needed(
             pcs,
-            pcs->ppcs->enhanced_picture_ptr,
+            pcs->ppcs->enhanced_pic,
             (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr,
             &ref_pic_list0,
             ctx->hbd_md);
     if (ref_pic_list1 != NULL)
         svt_aom_use_scaled_rec_refs_if_needed(
             pcs,
-            pcs->ppcs->enhanced_picture_ptr,
+            pcs->ppcs->enhanced_pic,
             (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr,
             &ref_pic_list1,
             ctx->hbd_md);
@@ -334,21 +333,21 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     int            tmp_rate_mv          = 0;
     InterIntraMode best_interintra_mode = INTERINTRA_MODES;
     for (int j = 0; j < INTERINTRA_MODES; ++j) {
-        //if ((!cpi->oxcf.enable_smooth_intra || cpi->sf.disable_smooth_intra) &&
-        //    (InterIntraMode)j == II_SMOOTH_PRED)
-        //  continue;
+        // if ((!cpi->oxcf.enable_smooth_intra || cpi->sf.disable_smooth_intra) &&
+        //     (InterIntraMode)j == II_SMOOTH_PRED)
+        //   continue;
         InterIntraMode interintra_mode = (InterIntraMode)j;
-        //rmode = interintra_mode_cost[mbmi->interintra_mode];
+        // rmode = interintra_mode_cost[mbmi->interintra_mode];
         const int bsize_group = size_group_lookup[ctx->blk_geom->bsize];
         const int rmode =
-            ctx->md_rate_estimation_ptr->inter_intra_mode_fac_bits[bsize_group][interintra_mode];
-        //av1_combine_interintra(xd, bsize, 0, tmp_buf, bw, intrapred, bw);
+            ctx->md_rate_est_ctx->inter_intra_mode_fac_bits[bsize_group][interintra_mode];
+        // av1_combine_interintra(xd, bsize, 0, tmp_buf, bw, intrapred, bw);
         if (ctx->hbd_md)
             svt_aom_combine_interintra_highbd(
-                interintra_mode, //mode,
-                0, //use_wedge_interintra,
-                0, //cand->interintra_wedge_index,
-                0, //int wedge_sign,
+                interintra_mode, // mode,
+                0, // use_wedge_interintra,
+                0, // cand->interintra_wedge_index,
+                0, // int wedge_sign,
                 ctx->blk_geom->bsize,
                 ctx->blk_geom->bsize, // plane_bsize,
                 ii_pred_buf,
@@ -460,9 +459,9 @@ static void determine_compound_mode(PictureControlSet *pcs, ModeDecisionContext 
 }
 
 void choose_best_av1_mv_pred(ModeDecisionContext            *ctx,
-                             struct MdRateEstimationContext *md_rate_estimation_ptr,
-                             BlkStruct *blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
-                             PredictionMode mode, //NEW or NEW_NEW
+                             struct MdRateEstimationContext *md_rate_est_ctx, BlkStruct *blk_ptr,
+                             MvReferenceFrame ref_frame, uint8_t is_compound,
+                             PredictionMode mode, // NEW or NEW_NEW
                              int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
                              uint8_t *bestDrlIndex, // output
                              IntMv    best_pred_mv[2] // output
@@ -503,8 +502,8 @@ void choose_best_av1_mv_pred(ModeDecisionContext            *ctx,
             } else {
                 mv_rate = (uint32_t)svt_av1_mv_bit_cost(&mv,
                                                         &(ref_mv[0].as_mv),
-                                                        md_rate_estimation_ptr->nmv_vec_cost,
-                                                        md_rate_estimation_ptr->nmvcoststack,
+                                                        md_rate_est_ctx->nmv_vec_cost,
+                                                        md_rate_est_ctx->nmvcoststack,
                                                         MV_COST_WEIGHT);
             }
 
@@ -516,8 +515,8 @@ void choose_best_av1_mv_pred(ModeDecisionContext            *ctx,
                 } else {
                     mv_rate += (uint32_t)svt_av1_mv_bit_cost(&mv,
                                                              &(ref_mv[1].as_mv),
-                                                             md_rate_estimation_ptr->nmv_vec_cost,
-                                                             md_rate_estimation_ptr->nmvcoststack,
+                                                             md_rate_est_ctx->nmv_vec_cost,
+                                                             md_rate_est_ctx->nmvcoststack,
                                                              MV_COST_WEIGHT);
                 }
             }
@@ -907,7 +906,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                          FALSE)) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_estimation_ptr,
+                                            ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             to_inject_ref_type,
                                             0,
@@ -1035,7 +1034,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs, PictureCont
                              FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
-                                                ctx->md_rate_estimation_ptr,
+                                                ctx->md_rate_est_ctx,
                                                 ctx->blk_ptr,
                                                 to_inject_ref_type,
                                                 0,
@@ -1213,7 +1212,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                              FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
-                                                ctx->md_rate_estimation_ptr,
+                                                ctx->md_rate_est_ctx,
                                                 ctx->blk_ptr,
                                                 to_inject_ref_type,
                                                 1,
@@ -1342,7 +1341,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                              FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
-                                                ctx->md_rate_estimation_ptr,
+                                                ctx->md_rate_est_ctx,
                                                 ctx->blk_ptr,
                                                 to_inject_ref_type,
                                                 1,
@@ -2444,8 +2443,8 @@ static uint8_t wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext 
     const MV                 neighbors[5] = {{0, 0}, {0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
     // Set info used to get MV cost
-    int     *mvjcost       = ctx->md_rate_estimation_ptr->nmv_vec_cost;
-    int    **mvcost        = ctx->md_rate_estimation_ptr->nmvcoststack;
+    int     *mvjcost       = ctx->md_rate_est_ctx->nmv_vec_cost;
+    int    **mvcost        = ctx->md_rate_est_ctx->nmvcoststack;
     uint32_t full_lambda   = ctx->full_lambda_md[EB_8_BIT_MD]; // 8bit only
     int      error_per_bit = full_lambda >> RD_EPB_SHIFT;
     error_per_bit += (error_per_bit == 0);
@@ -2455,7 +2454,7 @@ static uint8_t wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext 
 
     EbPictureBufferDesc *pred      = cand_bf->pred;
     uint32_t blk_origin_index      = ctx->blk_geom->org_x + ctx->blk_geom->org_y * ctx->sb_size;
-    EbPictureBufferDesc *input_pic = ppcs->enhanced_picture_ptr; // 10BIT not supported
+    EbPictureBufferDesc *input_pic = ppcs->enhanced_pic; // 10BIT not supported
     uint32_t input_origin_index    = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
         (ctx->blk_org_x + input_pic->org_x);
     const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
@@ -2528,10 +2527,10 @@ static uint8_t wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext 
     // Derive pred MV for best WM position
     IntMv best_pred_mv[2] = {{0}, {0}};
     choose_best_av1_mv_pred(ctx,
-                            ctx->md_rate_estimation_ptr,
+                            ctx->md_rate_est_ctx,
                             ctx->blk_ptr,
                             candidate->ref_frame_type,
-                            0, //is_compound -> WM only allowed for unipred candidtes
+                            0, // is_compound -> WM only allowed for unipred candidtes
                             candidate->pred_mode,
                             candidate->mv[list_idx].x,
                             candidate->mv[list_idx].y,
@@ -2646,8 +2645,8 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ct
     const int mi_row = -x->xd->mb_to_top_edge / (8 * MI_SIZE);
     const int mi_col = -x->xd->mb_to_left_edge / (8 * MI_SIZE);
 
-    x->nmv_vec_cost  = ctx->md_rate_estimation_ptr->nmv_vec_cost;
-    x->mv_cost_stack = ctx->md_rate_estimation_ptr->nmvcoststack;
+    x->nmv_vec_cost  = ctx->md_rate_est_ctx->nmv_vec_cost;
+    x->mv_cost_stack = ctx->md_rate_est_ctx->nmvcoststack;
     // Set up limit values for MV components.
     // Mv beyond the range do not produce new/different prediction block.
     const int mi_width   = mi_size_wide[bsize];
@@ -2752,7 +2751,7 @@ static uint8_t obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisio
 
         svt_aom_use_scaled_rec_refs_if_needed(
             pcs,
-            pcs->ppcs->enhanced_picture_ptr,
+            pcs->ppcs->enhanced_pic,
             (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr,
             &reference_picture,
             EB_8_BIT_MD);
@@ -2789,10 +2788,10 @@ static uint8_t obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisio
     candidate->mv[ref_list_idx].x = x->best_mv.as_mv.col;
     candidate->mv[ref_list_idx].y = x->best_mv.as_mv.row;
     choose_best_av1_mv_pred(ctx,
-                            ctx->md_rate_estimation_ptr,
+                            ctx->md_rate_est_ctx,
                             ctx->blk_ptr,
                             candidate->ref_frame_type,
-                            0, //is_compound -> OBMC only allowed for unipred candidtes
+                            0, // is_compound -> OBMC only allowed for unipred candidtes
                             candidate->pred_mode,
                             candidate->mv[ref_list_idx].x,
                             candidate->mv[ref_list_idx].y,
@@ -2974,7 +2973,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                 mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE) {
                 uint8_t drl_index = 0;
                 choose_best_av1_mv_pred(ctx,
-                                        ctx->md_rate_estimation_ptr,
+                                        ctx->md_rate_est_ctx,
                                         ctx->blk_ptr,
                                         to_inject_ref_type,
                                         0,
@@ -3025,7 +3024,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                         FALSE) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_estimation_ptr,
+                                            ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             to_inject_ref_type,
                                             0,
@@ -3064,7 +3063,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                NEW_NEWMV
             ************* */
             if (allow_bipred && inter_direction == 2 &&
-                !(ctx->svt_aom_is_intra_bordered &&
+                !(ctx->is_intra_bordered &&
                   ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)) {
                 int16_t to_inject_mv_x_l0 =
                     ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][me_block_results_ptr->ref0_list]
@@ -3090,7 +3089,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                          FALSE)) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_estimation_ptr,
+                                            ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             to_inject_ref_type,
                                             1,
@@ -3192,7 +3191,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                  mv_is_already_injected(ctx, to_inj_mv, to_inj_mv, to_inject_ref_type) == FALSE)) {
                 uint8_t drl_index = 0;
                 choose_best_av1_mv_pred(ctx,
-                                        ctx->md_rate_estimation_ptr,
+                                        ctx->md_rate_est_ctx,
                                         ctx->blk_ptr,
                                         to_inject_ref_type,
                                         0,
@@ -3339,7 +3338,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                          FALSE)) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_estimation_ptr,
+                                            ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             to_inject_ref_type,
                                             0,
@@ -3458,7 +3457,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                NEW_NEWMV
             ************* */
             if (allow_bipred &&
-                !(ctx->svt_aom_is_intra_bordered &&
+                !(ctx->is_intra_bordered &&
                   ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)) {
                 if (inter_direction == 2) {
                     if (!is_valid_bipred_ref(ctx,
@@ -3508,7 +3507,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                              FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
-                                                ctx->md_rate_estimation_ptr,
+                                                ctx->md_rate_est_ctx,
                                                 ctx->blk_ptr,
                                                 to_inject_ref_type,
                                                 1,
@@ -3830,7 +3829,7 @@ static void inject_pme_candidates(
                 if (inj_mv) {
                     uint8_t drl_index = 0;
                     choose_best_av1_mv_pred(ctx,
-                                            ctx->md_rate_estimation_ptr,
+                                            ctx->md_rate_est_ctx,
                                             ctx->blk_ptr,
                                             frame_type,
                                             0,
@@ -3982,7 +3981,7 @@ static void inject_pme_candidates(
                              FALSE)) {
                         uint8_t drl_index = 0;
                         choose_best_av1_mv_pred(ctx,
-                                                ctx->md_rate_estimation_ptr,
+                                                ctx->md_rate_est_ctx,
                                                 ctx->blk_ptr,
                                                 to_inject_ref_type,
                                                 1,
@@ -4082,8 +4081,7 @@ static void inject_inter_candidates_light_pd1(PictureControlSet *pcs, ModeDecisi
     }
     // Inject MVP candidates
     if (ctx->new_nearest_injection &&
-        !(ctx->svt_aom_is_intra_bordered &&
-          ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled))
+        !(ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled))
         inject_mvp_candidates_ii_light_pd1(pcs, ctx, &cand_total_cnt);
 
     // Inject ME candidates
@@ -4119,8 +4117,7 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
     /**************
          MVP
     ************* */
-    if (!(ctx->svt_aom_is_intra_bordered &&
-          ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled))
+    if (!(ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled))
         if (ctx->new_nearest_injection)
             inject_mvp_candidates_ii(scs, pcs, ctx, &cand_total_cnt);
     //----------------------
@@ -4207,8 +4204,8 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     svt_memcpy(&x->crc_calculator2, &pcs->crc_calculator2, sizeof(pcs->crc_calculator2));
     x->approx_inter_rate = ctx->approx_inter_rate;
     x->xd                = blk_ptr->av1xd;
-    x->nmv_vec_cost      = ctx->md_rate_estimation_ptr->nmv_vec_cost;
-    x->mv_cost_stack     = ctx->md_rate_estimation_ptr->nmvcoststack;
+    x->nmv_vec_cost      = ctx->md_rate_est_ctx->nmv_vec_cost;
+    x->mv_cost_stack     = ctx->md_rate_est_ctx->nmvcoststack;
     BlockSize bsize      = ctx->blk_geom->bsize;
     assert(bsize < BlockSizeS_ALL);
     FrameHeader           *frm_hdr    = &pcs->ppcs->frm_hdr;
@@ -4266,14 +4263,14 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
 
     /* pointer to current frame */
     Yv12BufferConfig cur_buf;
-    svt_aom_link_eb_to_aom_buffer_desc_8bit(pcs->ppcs->enhanced_picture_ptr, &cur_buf);
+    svt_aom_link_eb_to_aom_buffer_desc_8bit(pcs->ppcs->enhanced_pic, &cur_buf);
     struct Buf2D yv12_mb[MAX_MB_PLANE];
     svt_av1_setup_pred_block(bsize, yv12_mb, &cur_buf, mi_row, mi_col);
-    for (int i = 0; i < num_planes; ++i) x->xdplane[i].pre[0] = yv12_mb[i]; //ref in ME
-    //setup src for DV search same as ref
+    for (int i = 0; i < num_planes; ++i) x->xdplane[i].pre[0] = yv12_mb[i]; // ref in ME
+    // setup src for DV search same as ref
     x->plane[0].src = x->xdplane[0].pre[0];
-    //up to two dv candidates will be generated
-    //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
+    // up to two dv candidates will be generated
+    // IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
     enum IntrabcMotionDirection max_dir = pcs->ppcs->intraBC_ctrls.ibc_direction
         ? IBC_MOTION_LEFT
         : IBC_MOTION_DIRECTIONS;
@@ -4372,9 +4369,9 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext
          : MV_COST_ENTROPY;
     mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
     mv_cost_params->sad_per_bit   = svt_aom_get_sad_per_bit(base_q_idx, hbd_md);
-    mv_cost_params->mvjcost       = ctx->md_rate_estimation_ptr->nmv_vec_cost;
-    mv_cost_params->mvcost[0]     = ctx->md_rate_estimation_ptr->nmvcoststack[0];
-    mv_cost_params->mvcost[1]     = ctx->md_rate_estimation_ptr->nmvcoststack[1];
+    mv_cost_params->mvjcost       = ctx->md_rate_est_ctx->nmv_vec_cost;
+    mv_cost_params->mvcost[0]     = ctx->md_rate_est_ctx->nmvcoststack[0];
+    mv_cost_params->mvcost[1]     = ctx->md_rate_est_ctx->nmvcoststack[1];
 }
 static void inject_intra_bc_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                        const SequenceControlSet *scs, BlkStruct *blk_ptr,
@@ -4727,7 +4724,7 @@ static void inject_zz_backup_candidate(
     uint32_t               cand_total_cnt = (*candidate_total_cnt);
     cand_array[cand_total_cnt].drl_index = 0;
     choose_best_av1_mv_pred(ctx,
-        ctx->md_rate_estimation_ptr,
+        ctx->md_rate_est_ctx,
         ctx->blk_ptr,
         svt_get_ref_frame_type(REF_LIST_0, 0),
         0,
@@ -4927,7 +4924,7 @@ void generate_md_stage_0_cand_light_pd1(
     if (ctx->intra_ctrls.enable_intra && ctx->blk_geom->sq_size < 128) {
         uint8_t dc_cand_only_flag = (ctx->intra_ctrls.intra_mode_end == DC_PRED);
         if (ctx->cand_reduction_ctrls.cand_elimination_ctrls.enabled && ctx->cand_reduction_ctrls.cand_elimination_ctrls.dc_only && !dc_cand_only_flag && ctx->md_subpel_me_ctrls.enabled) {
-            uint32_t th = pcs->ppcs->temporal_layer_index == 0 ? 10 : pcs->ppcs->is_used_as_reference_flag ? 30 : 200;
+            uint32_t th = pcs->ppcs->temporal_layer_index == 0 ? 10 : pcs->ppcs->is_ref ? 30 : 200;
             th *= (ctx->blk_geom->bheight * ctx->blk_geom->bwidth * ctx->cand_reduction_ctrls.cand_elimination_ctrls.th_multiplier);
             if (ctx->md_me_dist < th)
                 dc_cand_only_flag = 1;
@@ -4975,7 +4972,7 @@ EbErrorType generate_md_stage_0_cand(
     uint8_t dc_cand_only_flag = ctx->intra_ctrls.enable_intra && (ctx->intra_ctrls.intra_mode_end == DC_PRED);
     if (ctx->cand_reduction_ctrls.cand_elimination_ctrls.enabled)
         eliminate_candidate_based_on_pme_me_results(ctx,
-            pcs->ppcs->is_used_as_reference_flag,
+            pcs->ppcs->is_ref,
             &dc_cand_only_flag);
     //----------------------
     // Intra
@@ -5489,19 +5486,19 @@ uint32_t svt_aom_product_full_mode_decision(
 }
 
 // Return the end column for the current superblock, in unit of TPL blocks.
-static int get_superblock_tpl_column_end(PictureParentControlSet* ppcs_ptr, int mi_col,
+static int get_superblock_tpl_column_end(PictureParentControlSet* ppcs, int mi_col,
     int num_mi_w) {
-    const int mib_size_log2 = ppcs_ptr->scs->seq_header.sb_size == BLOCK_128X128 ? 5 : 4;
+    const int mib_size_log2 = ppcs->scs->seq_header.sb_size == BLOCK_128X128 ? 5 : 4;
     // Find the start column of this superblock.
     const int sb_mi_col_start = (mi_col >> mib_size_log2) << mib_size_log2;
     // Same but in superres upscaled dimension.
     const int sb_mi_col_start_sr =
-        coded_to_superres_mi(sb_mi_col_start, ppcs_ptr->superres_denom);
+        coded_to_superres_mi(sb_mi_col_start, ppcs->superres_denom);
     // Width of this superblock in mi units.
-    const int sb_mi_width = mi_size_wide[ppcs_ptr->scs->seq_header.sb_size];
+    const int sb_mi_width = mi_size_wide[ppcs->scs->seq_header.sb_size];
     // Same but in superres upscaled dimension.
     const int sb_mi_width_sr =
-        coded_to_superres_mi(sb_mi_width, ppcs_ptr->superres_denom);
+        coded_to_superres_mi(sb_mi_width, ppcs->superres_denom);
     // Superblock end in mi units.
     const int sb_mi_end = sb_mi_col_start_sr + sb_mi_width_sr;
     // Superblock end in TPL units.
@@ -5509,19 +5506,19 @@ static int get_superblock_tpl_column_end(PictureParentControlSet* ppcs_ptr, int 
 }
 
 void  svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs){
-    PictureParentControlSet *ppcs_ptr = pcs->ppcs;
-    Av1Common *cm = ppcs_ptr->av1_cm;
+    PictureParentControlSet *ppcs = pcs->ppcs;
+    Av1Common *cm = ppcs->av1_cm;
 
     BlockSize bsize = ctx->blk_geom->bsize;
     int mi_row = ctx->blk_org_y / 4;
     int mi_col = ctx->blk_org_x / 4;
 
     const int mi_col_sr =
-        coded_to_superres_mi(mi_col, ppcs_ptr->superres_denom);
-    const int mi_cols_sr = ((ppcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
+        coded_to_superres_mi(mi_col, ppcs->superres_denom);
+    const int mi_cols_sr = ((ppcs->enhanced_unscaled_pic->width + 15) / 16) << 2;  // picture column boundary
     const int block_mi_width_sr =
-        coded_to_superres_mi(mi_size_wide[bsize], ppcs_ptr->superres_denom);
-    const int bsize_base = ppcs_ptr->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
+        coded_to_superres_mi(mi_size_wide[bsize], ppcs->superres_denom);
+    const int bsize_base = ppcs->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
     const int num_mi_w = mi_size_wide[bsize_base];
     const int num_mi_h = mi_size_high[bsize_base];
     const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
@@ -5531,7 +5528,7 @@ void  svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureContr
 
     // This is required because the end col of superblock may be off by 1 in case
     // of superres.
-    const int sb_bcol_end = get_superblock_tpl_column_end(ppcs_ptr, mi_col, num_mi_w);
+    const int sb_bcol_end = get_superblock_tpl_column_end(ppcs, mi_col, num_mi_w);
     int row, col;
     int32_t base_block_count = 0;
     double geom_mean_of_scale = 0.0;
@@ -5542,7 +5539,7 @@ void  svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureContr
             col < sb_bcol_end;
             ++col) {
             const int index = row * num_cols + col;
-            geom_mean_of_scale += log(ppcs_ptr->pa_me_data->tpl_sb_rdmult_scaling_factors[index]);
+            geom_mean_of_scale += log(ppcs->pa_me_data->tpl_sb_rdmult_scaling_factors[index]);
             ++base_block_count;
         }
     }

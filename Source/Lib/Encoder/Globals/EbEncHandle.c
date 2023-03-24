@@ -592,7 +592,7 @@ static EbErrorType load_default_buffer_configuration_settings(
 #if !OPT_RPS_CONSTR_2
         //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
         PredictionStructure*pred_struct_ptr = svt_aom_get_prediction_structure(
-            enc_handle->scs_instance_array[0]->encode_context_ptr->prediction_structure_group_ptr,
+            enc_handle->scs_instance_array[0]->enc_ctx->prediction_structure_group_ptr,
             enc_handle->scs_instance_array[0]->scs->static_config.pred_structure,
             4,
             scs->static_config.hierarchical_levels);
@@ -1389,10 +1389,10 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
             &(eb_pa_ref_obj_ect_desc_init_data_structure),
             NULL);
         // Set the SequenceControlSet Picture Pool Fifo Ptrs
-        enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->pa_reference_picture_pool_fifo_ptr =
+        enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->pa_reference_picture_pool_fifo_ptr =
             svt_system_resource_get_producer_fifo(enc_handle_ptr->pa_reference_picture_pool_ptr_array[instance_index], 0);
 #if SRM_REPORT
-        enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->pa_reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
+        enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->pa_reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
 #endif
         return 0;
 }
@@ -1436,10 +1436,10 @@ static int create_tpl_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instan
         &(eb_tpl_ref_obj_ect_desc_init_data_structure),
         NULL);
     // Set the SequenceControlSet Picture Pool Fifo Ptrs
-    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->tpl_reference_picture_pool_fifo_ptr =
+    enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->tpl_reference_picture_pool_fifo_ptr =
         svt_system_resource_get_producer_fifo(enc_handle_ptr->tpl_reference_picture_pool_ptr_array[instance_index], 0);
 #if SRM_REPORT
-    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->tpl_reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
+    enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->tpl_reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
 #endif
     return 0;
 }
@@ -1496,23 +1496,23 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     // When decode-order is not enforced at pic mgr, each reference picture must have an allocated reference buffer (for at least one mini-gop) so the
     // list can be enough to hold only the reference buffers.  When decode-order is enforced, only 9 reference buffers are used, so the list must be at least 1 mini-gop
     // otherwise ref_buffer_available_semaphore will block all required pics from being passed to pic mgr.
-    const uint32_t reference_picture_list_length = scs->enable_dec_order ? scs->pa_reference_picture_buffer_init_count : scs->reference_picture_buffer_init_count;
-    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_list_length = reference_picture_list_length;
-    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_list,
-        reference_picture_list_length);
+    const uint32_t ref_pic_list_length = scs->enable_dec_order ? scs->pa_reference_picture_buffer_init_count : scs->reference_picture_buffer_init_count;
+    enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->ref_pic_list_length = ref_pic_list_length;
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->ref_pic_list,
+        ref_pic_list_length);
 
-    for (uint32_t idx = 0; idx < reference_picture_list_length; ++idx) {
-        EB_NEW(enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_list[idx],
+    for (uint32_t idx = 0; idx < ref_pic_list_length; ++idx) {
+        EB_NEW(enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->ref_pic_list[idx],
             svt_aom_reference_queue_entry_ctor);
     }
     EB_CREATE_SEMAPHORE(scs->ref_buffer_available_semaphore,
-        reference_picture_list_length,
-        reference_picture_list_length);
-    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr =
+        ref_pic_list_length,
+        ref_pic_list_length);
+    enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->reference_picture_pool_fifo_ptr =
         svt_system_resource_get_producer_fifo(enc_handle_ptr->reference_picture_pool_ptr_array[instance_index], 0);
 
 #if SRM_REPORT
-    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
+    enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
 #endif
 
     return 0;
@@ -1812,7 +1812,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
                 enc_handle_ptr->scs_instance_array[instance_index]->scs,
                 svt_input_buffer_header_destroyer);
             // Set the SequenceControlSet Overlay input Picture Pool Fifo Ptrs
-            enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->overlay_input_picture_pool_fifo_ptr = svt_system_resource_get_producer_fifo(enc_handle_ptr->overlay_input_picture_pool_ptr_array[instance_index], 0);
+            enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->overlay_input_picture_pool_fifo_ptr = svt_system_resource_get_producer_fifo(enc_handle_ptr->overlay_input_picture_pool_ptr_array[instance_index], 0);
         }
     }
 
@@ -2130,12 +2130,12 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     * App Callbacks
     ************************************/
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index)
-        enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->app_callback_ptr = enc_handle_ptr->app_callback_ptr_array[instance_index];
+        enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->app_callback_ptr = enc_handle_ptr->app_callback_ptr_array[instance_index];
     // svt Output Buffer Fifo Ptrs
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
-        enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->stream_output_fifo_ptr     = svt_system_resource_get_producer_fifo(enc_handle_ptr->output_stream_buffer_resource_ptr_array[instance_index], 0);
+        enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->stream_output_fifo_ptr     = svt_system_resource_get_producer_fifo(enc_handle_ptr->output_stream_buffer_resource_ptr_array[instance_index], 0);
         if (enc_handle_ptr->scs_instance_array[0]->scs->static_config.recon_enabled)
-            enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->recon_output_fifo_ptr  = svt_system_resource_get_producer_fifo(enc_handle_ptr->output_recon_buffer_resource_ptr_array[instance_index], 0);
+            enc_handle_ptr->scs_instance_array[instance_index]->enc_ctx->recon_output_fifo_ptr  = svt_system_resource_get_producer_fifo(enc_handle_ptr->output_recon_buffer_resource_ptr_array[instance_index], 0);
     }
 
     /************************************
@@ -3680,7 +3680,7 @@ void set_multi_pass_params(SequenceControlSet *scs)
             scs->static_config.recode_loop = scs->static_config.enc_mode <= ENC_M2 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
     }
 
-    scs->encode_context_ptr->recode_loop = scs->static_config.recode_loop;
+    scs->enc_ctx->recode_loop = scs->static_config.recode_loop;
 }
 
 static void validate_scaling_params(SequenceControlSet *scs) {
@@ -4621,21 +4621,21 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
     // Initialize the Prediction Structure Group
 #if OPT_RPS_CONSTR_3
     EB_NO_THROW_NEW(
-        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        enc_handle->scs_instance_array[instance_index]->enc_ctx->prediction_structure_group_ptr,
         svt_aom_prediction_structure_group_ctor);
 #else
     EB_NO_THROW_NEW(
-        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        enc_handle->scs_instance_array[instance_index]->enc_ctx->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         enc_handle->scs_instance_array[instance_index]->scs);
 #endif
-    if (!enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
+    if (!enc_handle->scs_instance_array[instance_index]->enc_ctx->prediction_structure_group_ptr) {
         return EB_ErrorInsufficientResources;
     }
 #if !OPT_RPS_CONSTR_3
     // Set the Prediction Structure
     enc_handle->scs_instance_array[instance_index]->scs->pred_struct_ptr = svt_aom_get_prediction_structure(
-        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        enc_handle->scs_instance_array[instance_index]->enc_ctx->prediction_structure_group_ptr,
         enc_handle->scs_instance_array[instance_index]->scs->static_config.pred_structure,
         enc_handle->scs_instance_array[instance_index]->scs->max_ref_count,
         enc_handle->scs_instance_array[instance_index]->scs->max_temporal_layers);
@@ -5124,14 +5124,14 @@ EB_API EbErrorType svt_av1_enc_send_picture(
     enc_handle_ptr->frame_received = true;
 
     // Get new Luma-8b buffer & a new (Chroma-8b + Luma-Chroma-2bit) buffers; Lib will release once done.
-    EbObjectWrapper  *eb_y8b_wrapper_ptr;
+    EbObjectWrapper  *y8b_wrapper;
     svt_get_empty_object(
         enc_handle_ptr->input_y8b_buffer_producer_fifo_ptr,
-        &eb_y8b_wrapper_ptr);
+        &y8b_wrapper);
     //set live count to 1 to be decremented at the end of the encode in RC
-    svt_object_inc_live_count(eb_y8b_wrapper_ptr, 1);
+    svt_object_inc_live_count(y8b_wrapper, 1);
 
-   // svt_object_inc_live_count(eb_y8b_wrapper_ptr, 1);
+   // svt_object_inc_live_count(y8b_wrapper, 1);
 
     svt_get_empty_object(
         enc_handle_ptr->input_buffer_producer_fifo_ptr,
@@ -5145,7 +5145,7 @@ EB_API EbErrorType svt_av1_enc_send_picture(
         enc_handle_ptr->eos_received += p_buffer->flags & EB_BUFFERFLAG_EOS;
 
         //copy the Luma 8bit part into y8b buffer and the rest of samples into the regular buffer
-        EbBufferHeaderType *lib_y8b_hdr = (EbBufferHeaderType*)eb_y8b_wrapper_ptr->object_ptr;
+        EbBufferHeaderType *lib_y8b_hdr = (EbBufferHeaderType*)y8b_wrapper->object_ptr;
         EbBufferHeaderType *lib_reg_hdr = (EbBufferHeaderType*)eb_wrapper_ptr->object_ptr;
         copy_input_buffer(
             enc_handle_ptr->scs_instance_array[0]->scs,
@@ -5163,7 +5163,7 @@ EB_API EbErrorType svt_av1_enc_send_picture(
     InputCommand *input_cmd_obj = (InputCommand*)input_cmd_wrp->object_ptr;
     //Fill the command with two picture buffers
     input_cmd_obj->eb_input_wrapper_ptr = eb_wrapper_ptr;
-    input_cmd_obj->eb_y8b_wrapper_ptr = eb_y8b_wrapper_ptr;
+    input_cmd_obj->y8b_wrapper = y8b_wrapper;
     //Send to Lib
     svt_post_full_object(input_cmd_wrp);
 
@@ -5673,7 +5673,7 @@ EB_API EbErrorType svt_av1_enc_get_stream_info(EbComponentType *    svt_enc_comp
     }
     EbEncHandle         *enc_handle = (EbEncHandle*)svt_enc_component->p_component_private;
     if (stream_info_id == SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT) {
-        EncodeContext*      context = enc_handle->scs_instance_array[0]->encode_context_ptr;
+        EncodeContext*      context = enc_handle->scs_instance_array[0]->enc_ctx;
         SvtAv1FixedBuf*     first_pass_stats = (SvtAv1FixedBuf*)info;
         first_pass_stats->buf = context->stats_out.stat;
         first_pass_stats->sz = context->stats_out.size * sizeof(FIRSTPASS_STATS);

@@ -73,7 +73,7 @@ typedef struct EbReferenceObjectDescInitData {
 
 typedef struct EbPaReferenceObject {
     EbDctor              dctor;
-    EbPictureBufferDesc *input_padded_picture_ptr;
+    EbPictureBufferDesc *input_padded_pic;
     EbPictureBufferDesc *quarter_downsampled_picture_ptr;
     EbPictureBufferDesc *sixteenth_downsampled_picture_ptr;
     // downscaled reference pointers

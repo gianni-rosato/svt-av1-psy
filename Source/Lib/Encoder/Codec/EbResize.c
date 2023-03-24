@@ -175,12 +175,12 @@ const InterpKernel svt_aom_av1_filteredinterp_filters875[(1 << RS_SUBPEL_BITS)] 
 };
 
 void svt_aom_downsample_decimation_input_picture(
-    PictureParentControlSet *pcs, EbPictureBufferDesc *input_padded_picture_ptr,
+    PictureParentControlSet *pcs, EbPictureBufferDesc *input_padded_pic,
     EbPictureBufferDesc *quarter_decimated_picture_ptr,
     EbPictureBufferDesc *sixteenth_decimated_picture_ptr);
 
 void svt_aom_downsample_filtering_input_picture(PictureParentControlSet *pcs,
-                                                EbPictureBufferDesc     *input_padded_picture_ptr,
+                                                EbPictureBufferDesc     *input_padded_pic,
                                                 EbPictureBufferDesc     *quarter_picture_ptr,
                                                 EbPictureBufferDesc     *sixteenth_picture_ptr);
 
@@ -1173,7 +1173,7 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
 static void analyze_hor_freq(PictureParentControlSet *pcs, double *energy) {
     uint64_t freq_energy[16] = {0};
 
-    EbPictureBufferDesc *input_pic = pcs->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_pic = pcs->enhanced_pic;
     uint8_t  *in = input_pic->buffer_y + input_pic->org_x + input_pic->org_y * input_pic->stride_y;
     const int width  = input_pic->width;
     const int height = input_pic->height;
@@ -1236,7 +1236,7 @@ static int av1_superres_in_recode_allowed(SequenceControlSet *scs) {
     // Empirically found to not be beneficial for image coding.
     return static_config->superres_mode == SUPERRES_AUTO &&
         static_config->superres_auto_search_type != SUPERRES_AUTO_SOLO /* &&
-        scs->encode_context_ptr->rc.frames_to_key > 1*/
+        scs->enc_ctx->rc.frames_to_key > 1*/
         ;
 }
 
@@ -1292,8 +1292,7 @@ static uint8_t get_superres_denom_for_qindex(SequenceControlSet *scs, PicturePar
     double energy[16];
     analyze_hor_freq(pcs, energy);
 
-    const double energy_by_q2_thresh = get_energy_by_q2_thresh(&scs->encode_context_ptr->rc,
-                                                               update_type);
+    const double energy_by_q2_thresh = get_energy_by_q2_thresh(&scs->enc_ctx->rc, update_type);
     int          denom               = get_superres_denom_from_qindex_energy(
         qindex, energy, energy_by_q2_thresh, SUPERRES_ENERGY_BY_AC_THRESH);
 
@@ -1304,8 +1303,7 @@ static uint8_t get_superres_denom_for_qindex(SequenceControlSet *scs, PicturePar
     for (int k = 1; k < 16; ++k) printf("%f, ", energy[k]);
     printf("]\n");
     printf("boost = %d\n",
-           (update_type == KF_UPDATE) ? scs->encode_context_ptr->rc.kf_boost
-                                      : scs->encode_context_ptr->rc.gfu_boost);
+           (update_type == KF_UPDATE) ? scs->enc_ctx->rc.kf_boost : scs->enc_ctx->rc.gfu_boost);
     printf("denom = %d\n", denom);
 #endif
 
@@ -1557,8 +1555,7 @@ static EbErrorType allocate_downscaled_reference_pics(
  * Memory allocation for donwscaled source reference pictures
  */
 static EbErrorType allocate_downscaled_source_reference_pics(
-    EbPictureBufferDesc **input_padded_picture_ptr,
-    EbPictureBufferDesc **quarter_downsampled_picture_ptr,
+    EbPictureBufferDesc **input_padded_pic, EbPictureBufferDesc **quarter_downsampled_picture_ptr,
     EbPictureBufferDesc **sixteenth_downsampled_picture_ptr,
     EbPictureBufferDesc *picture_ptr_for_reference, superres_params_type spr_params) {
     EbPictureBufferDescInitData initData;
@@ -1571,10 +1568,11 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_EIGHT_BIT) ? TRUE : FALSE;
     initData.left_padding  = picture_ptr_for_reference->org_x;
     initData.right_padding = picture_ptr_for_reference->org_x;
-    initData.top_padding   = picture_ptr_for_reference->org_y;
-    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y;
 
-    EB_NEW(*input_padded_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
+    initData.top_padding = picture_ptr_for_reference->org_y;
+    initData.bot_padding = picture_ptr_for_reference->origin_bot_y;
+
+    EB_NEW(*input_padded_pic, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
     initData.max_width          = spr_params.encoding_width >> 1;
@@ -1611,7 +1609,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
  */
 void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *pcs,
                              EbPictureBufferDesc *input_pic) {
-    EbPaReferenceObject *reference_object;
+    EbPaReferenceObject *ref_object;
 
     uint8_t        sr_denom_idx     = svt_aom_get_denom_idx(pcs->superres_denom);
     uint8_t        resize_denom_idx = svt_aom_get_denom_idx(pcs->resize_denom);
@@ -1627,36 +1625,32 @@ void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *p
             : (list_index == REF_LIST_0)                                ? pcs->ref_list0_count
                                                                         : pcs->ref_list1_count;
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-            reference_object = (EbPaReferenceObject *)pcs
-                                   ->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                                   ->object_ptr;
+            ref_object = (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[list_index][ref_pic_index]
+                             ->object_ptr;
 
             uint64_t ref_picture_number = pcs->ref_pic_poc_array[list_index][ref_pic_index];
 
-            EbPictureBufferDesc *ref_pic_ptr = reference_object->input_padded_picture_ptr;
+            EbPictureBufferDesc *ref_pic_ptr = ref_object->input_padded_pic;
 
             // if the size of the reference pic is different than the size of the input pic, then scale references
             if (ref_pic_ptr->width != input_pic->width) {
                 Bool do_resize = FALSE;
 
-                svt_block_on_mutex(reference_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
-                if (reference_object
-                        ->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx] ==
-                    NULL) {
+                svt_block_on_mutex(ref_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
+                if (ref_object->downscaled_input_padded_picture_ptr[sr_denom_idx]
+                                                                   [resize_denom_idx] == NULL) {
                     superres_params_type spr_params = {pcs->frame_width, // aligned_width
                                                        pcs->frame_height, // aligned_height
                                                        scs->static_config.superres_mode};
 
                     // Allocate downsampled reference picture buffer descriptors
                     allocate_downscaled_source_reference_pics(
-                        &reference_object
+                        &ref_object
                              ->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx],
-                        &reference_object
-                             ->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx]
-                                                                         [resize_denom_idx],
-                        &reference_object
-                             ->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx]
-                                                                           [resize_denom_idx],
+                        &ref_object->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx]
+                                                                               [resize_denom_idx],
+                        &ref_object->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx]
+                                                                                 [resize_denom_idx],
                         ref_pic_ptr,
                         spr_params);
 
@@ -1664,14 +1658,14 @@ void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *p
                 }
 
                 // skip the duplicated scaling on the same reference picture
-                if (reference_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] !=
+                if (ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] !=
                     ref_picture_number) {
                     do_resize = TRUE;
                 }
 
                 if (do_resize) {
                     EbPictureBufferDesc *down_ref_pic_ptr =
-                        reference_object
+                        ref_object
                             ->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
 
                     // downsample input padded picture buffer
@@ -1690,29 +1684,29 @@ void scale_source_references(SequenceControlSet *scs, PictureParentControlSet *p
                         svt_aom_downsample_filtering_input_picture(
                             pcs,
                             down_ref_pic_ptr,
-                            reference_object
+                            ref_object
                                 ->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx]
                                                                             [resize_denom_idx],
-                            reference_object
+                            ref_object
                                 ->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx]
                                                                               [resize_denom_idx]);
                     } else {
                         svt_aom_downsample_decimation_input_picture(
                             pcs,
                             down_ref_pic_ptr,
-                            reference_object
+                            ref_object
                                 ->downscaled_quarter_downsampled_picture_ptr[sr_denom_idx]
                                                                             [resize_denom_idx],
-                            reference_object
+                            ref_object
                                 ->downscaled_sixteenth_downsampled_picture_ptr[sr_denom_idx]
                                                                               [resize_denom_idx]);
                     }
 
-                    reference_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] =
+                    ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] =
                         ref_picture_number;
                 }
 
-                svt_release_mutex(reference_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
+                svt_release_mutex(ref_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
             }
         }
     }
@@ -1729,9 +1723,8 @@ static void scale_input_references(PictureParentControlSet *pcs,
     uint8_t resize_denom_idx = svt_aom_get_denom_idx(pcs->resize_denom);
 
     // reference structures (padded pictures + downsampled versions)
-    EbPaReferenceObject *src_object = (EbPaReferenceObject *)
-                                          pcs->pa_reference_picture_wrapper_ptr->object_ptr;
-    EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
+    EbPaReferenceObject *src_object = (EbPaReferenceObject *)pcs->pa_ref_pic_wrapper->object_ptr;
+    EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_pic;
     Bool                 do_resize      = FALSE;
 
     svt_block_on_mutex(src_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
@@ -1756,7 +1749,7 @@ static void scale_input_references(PictureParentControlSet *pcs,
     if (do_resize) {
         padded_pic_ptr =
             src_object->downscaled_input_padded_picture_ptr[sr_denom_idx][resize_denom_idx];
-        EbPictureBufferDesc *input_pic = pcs->enhanced_picture_ptr;
+        EbPictureBufferDesc *input_pic = pcs->enhanced_pic;
 
         for (uint32_t row = 0; row < (uint32_t)(input_pic->height + 2 * input_pic->org_y); row++)
             EB_MEMCPY(padded_pic_ptr->buffer_y + row * padded_pic_ptr->stride_y,
@@ -1794,13 +1787,13 @@ static void scale_input_references(PictureParentControlSet *pcs,
  */
 void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *input_pic,
                                   uint8_t hbd_md) {
-    EbReferenceObject *reference_object;
+    EbReferenceObject *ref_object;
 
-    PictureParentControlSet *ppcs_ptr = pcs->ppcs;
-    SequenceControlSet      *scs      = ppcs_ptr->scs;
+    PictureParentControlSet *ppcs = pcs->ppcs;
+    SequenceControlSet      *scs  = ppcs->scs;
 
-    uint8_t        sr_denom_idx     = svt_aom_get_denom_idx(ppcs_ptr->superres_denom);
-    uint8_t        resize_denom_idx = svt_aom_get_denom_idx(ppcs_ptr->resize_denom);
+    uint8_t        sr_denom_idx     = svt_aom_get_denom_idx(ppcs->superres_denom);
+    uint8_t        resize_denom_idx = svt_aom_get_denom_idx(ppcs->resize_denom);
     const int32_t  num_planes       = av1_num_planes(&scs->seq_header.color_config);
     const uint32_t ss_x             = scs->subsampling_x;
     const uint32_t ss_y             = scs->subsampling_y;
@@ -1809,15 +1802,14 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
 
     for (uint8_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
         uint8_t ref_pic_index;
-        uint8_t num_of_ref_pic_to_search = (ppcs_ptr->slice_type == P_SLICE)
-            ? ppcs_ptr->ref_list0_count
-            : (list_index == REF_LIST_0) ? ppcs_ptr->ref_list0_count
-                                         : ppcs_ptr->ref_list1_count;
+        uint8_t num_of_ref_pic_to_search = (ppcs->slice_type == P_SLICE) ? ppcs->ref_list0_count
+            : (list_index == REF_LIST_0)                                 ? ppcs->ref_list0_count
+                                                                         : ppcs->ref_list1_count;
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-            reference_object =
+            ref_object =
                 (EbReferenceObject *)pcs->ref_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
 
-            uint64_t ref_picture_number = ppcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
+            uint64_t ref_picture_number = ppcs->ref_pic_poc_array[list_index][ref_pic_index];
 
             EbPictureBufferDesc *ref_pic_ptr = svt_aom_get_ref_pic_buffer(
                 pcs, hbd_md, list_index, ref_pic_index);
@@ -1825,17 +1817,17 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
             if (ref_pic_ptr->width != input_pic->width) {
                 Bool do_resize = FALSE;
 
-                svt_block_on_mutex(reference_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
+                svt_block_on_mutex(ref_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
 
                 EbPictureBufferDesc *down_ref_pic8bit =
-                    reference_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx];
+                    ref_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx];
 
                 EbPictureBufferDesc *down_ref_pic_ptr = down_ref_pic8bit;
 
                 if (down_ref_pic_ptr != NULL) {
                     if (ref_pic_ptr->bit_depth != down_ref_pic_ptr->bit_depth) {
-                        EB_DELETE(reference_object->downscaled_reference_picture[sr_denom_idx]
-                                                                                [resize_denom_idx]);
+                        EB_DELETE(ref_object->downscaled_reference_picture[sr_denom_idx]
+                                                                          [resize_denom_idx]);
                         down_ref_pic8bit = NULL;
                         down_ref_pic_ptr = NULL;
                     }
@@ -1844,26 +1836,24 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
                 if (down_ref_pic_ptr == NULL) {
                     // Allocate downsampled reference picture buffer descriptors
                     allocate_downscaled_reference_pics(
-                        &reference_object
-                             ->downscaled_reference_picture[sr_denom_idx][resize_denom_idx],
+                        &ref_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx],
                         ref_pic_ptr,
-                        ppcs_ptr);
+                        ppcs);
 
                     down_ref_pic8bit =
-                        reference_object
-                            ->downscaled_reference_picture[sr_denom_idx][resize_denom_idx];
+                        ref_object->downscaled_reference_picture[sr_denom_idx][resize_denom_idx];
                     do_resize = TRUE;
                 }
 
                 // skip the duplicated scaling on the same reference picture
-                if (reference_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] !=
+                if (ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] !=
                     ref_picture_number) {
                     do_resize = TRUE;
                 }
 
                 if (do_resize) {
                     // downsample input padded picture buffer
-                    svt_aom_resize_frame(reference_object->reference_picture,
+                    svt_aom_resize_frame(ref_object->reference_picture,
                                          down_ref_pic8bit,
                                          down_ref_pic8bit->bit_depth,
                                          num_planes,
@@ -1873,12 +1863,12 @@ void svt_aom_scale_rec_references(PictureControlSet *pcs, EbPictureBufferDesc *i
                                          PICTURE_BUFFER_DESC_FULL_MASK, // buffer_enable_mask
                                          0); // is_2bcompress
 
-                    reference_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] =
+                    ref_object->downscaled_picture_number[sr_denom_idx][resize_denom_idx] =
                         ref_picture_number;
                     //printf("rescaled reference picture %d\n", (int)ref_picture_number);
                 }
 
-                svt_release_mutex(reference_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
+                svt_release_mutex(ref_object->resize_mutex[sr_denom_idx][resize_denom_idx]);
             }
         }
     }
@@ -1945,7 +1935,7 @@ void svt_aom_reset_resized_picture(SequenceControlSet *scs, PictureParentControl
     scale_pcs_params(scs, pcs, spr_params, input_pic->width, input_pic->height);
     // delete picture buffer allocated by super-res tool
     // TODO: reuse the buffer if current picture's denominator is the same as previous one's.
-    EB_DELETE(pcs->enhanced_downscaled_picture_ptr);
+    EB_DELETE(pcs->enhanced_downscaled_pic);
 }
 
 static uint8_t calculate_next_resize_scale(const SequenceControlSet      *scs,
@@ -2055,7 +2045,7 @@ static int validate_size_scales(RESIZE_MODE resize_mode, SUPERRES_MODE superres_
  * adjust resolution related parameters
  */
 void svt_aom_init_resize_picture(SequenceControlSet *scs, PictureParentControlSet *pcs) {
-    EbPictureBufferDesc *input_pic = pcs->enhanced_unscaled_picture_ptr;
+    EbPictureBufferDesc *input_pic = pcs->enhanced_unscaled_pic;
 
     superres_params_type spr_params = {input_pic->width, // encoding_width
                                        input_pic->height, // encoding_height
@@ -2114,7 +2104,7 @@ void svt_aom_init_resize_picture(SequenceControlSet *scs, PictureParentControlSe
 
     // delete picture buffer allocated by superres tool
     // TODO: reuse the buffer if current picture's denom is the same as previous one's.
-    EB_DELETE(pcs->enhanced_downscaled_picture_ptr);
+    EB_DELETE(pcs->enhanced_downscaled_pic);
 
     if (spr_params.encoding_width != input_pic->width ||
         spr_params.encoding_height != input_pic->height)
@@ -2128,39 +2118,39 @@ void svt_aom_init_resize_picture(SequenceControlSet *scs, PictureParentControlSe
     if (do_resize) {
         // Allocate downsampled picture buffer descriptor
         svt_aom_downscaled_source_buffer_desc_ctor(
-            &pcs->enhanced_downscaled_picture_ptr, input_pic, spr_params);
+            &pcs->enhanced_downscaled_pic, input_pic, spr_params);
 
         const int32_t  num_planes = av1_num_planes(&scs->seq_header.color_config);
         const uint32_t ss_x       = scs->subsampling_x;
         const uint32_t ss_y       = scs->subsampling_y;
 
         // downsample picture buffer
-        assert(pcs->enhanced_downscaled_picture_ptr);
+        assert(pcs->enhanced_downscaled_pic);
         svt_aom_resize_frame(input_pic,
-                             pcs->enhanced_downscaled_picture_ptr,
-                             pcs->enhanced_downscaled_picture_ptr->bit_depth,
+                             pcs->enhanced_downscaled_pic,
+                             pcs->enhanced_downscaled_pic->bit_depth,
                              num_planes,
                              ss_x,
                              ss_y,
-                             pcs->enhanced_downscaled_picture_ptr->packed_flag,
+                             pcs->enhanced_downscaled_pic->packed_flag,
                              PICTURE_BUFFER_DESC_FULL_MASK, // buffer_enable_mask
                              1); // is_2bcompress
 
         // use downscaled picture instead of original res for mode decision, encoding loop etc
         // after temporal filtering and motion estimation
-        pcs->enhanced_picture_ptr = pcs->enhanced_downscaled_picture_ptr;
+        pcs->enhanced_pic = pcs->enhanced_downscaled_pic;
 
         scale_pcs_params(scs, pcs, spr_params, input_pic->width, input_pic->height);
 
         scale_input_references(pcs, spr_params);
 
         if (pcs->slice_type != I_SLICE) {
-            scale_source_references(scs, pcs, pcs->enhanced_picture_ptr);
+            scale_source_references(scs, pcs, pcs->enhanced_pic);
         }
     } else {
         // pcs previously might be used and dirty in params
         // clean up if current frame doesn't need scaling
-        pcs->enhanced_picture_ptr = pcs->enhanced_unscaled_picture_ptr;
+        pcs->enhanced_pic = pcs->enhanced_unscaled_pic;
         svt_aom_reset_resized_picture(scs, pcs, input_pic);
     }
 }

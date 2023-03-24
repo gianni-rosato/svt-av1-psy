@@ -48,12 +48,12 @@ void        svt_aom_find_init_qp_middle_pass(struct SequenceControlSet      *scs
                                              struct PictureParentControlSet *pcs);
 void        svt_aom_one_pass_rt_rate_alloc(struct PictureParentControlSet *pcs);
 void        svt_aom_process_rc_stat(struct PictureParentControlSet *pcs);
-void        svt_aom_reset_update_frame_target(struct PictureParentControlSet *ppcs_ptr);
-void        svt_av1_twopass_postencode_update(struct PictureParentControlSet *ppcs_ptr);
+void        svt_aom_reset_update_frame_target(struct PictureParentControlSet *ppcs);
+void        svt_av1_twopass_postencode_update(struct PictureParentControlSet *ppcs);
 void        svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs);
-extern void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr);
+extern void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs);
 extern void svt_aom_set_rc_param(struct SequenceControlSet *scs);
-int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
+int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs);
 #ifdef __cplusplus
 } // extern "C"
 #endif

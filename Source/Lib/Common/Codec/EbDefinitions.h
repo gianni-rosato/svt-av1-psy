@@ -124,63 +124,91 @@ typedef struct MrpCtrls {
 typedef struct TfControls {
     // Filtering set
     uint8_t enabled; // Specifies whether the current input will be filtered or not (0: OFF, 1: ON)
-    uint8_t
-        do_chroma; // Specifies whether the U& V planes will be filered or not (0: filter all planes, 1 : filter Y plane only)
-    uint8_t
-        use_medium_filter; // Specifies whether the weights generation will use approximations or not (0: do not use approximations, 1: per-block weights derivation, use an approximated exponential & log, use an approximated noise level)
-    uint8_t
-        use_fast_filter; // Specifies whether the weights derivation will use the distance factor(MV - based correction) and the 5x5 window error or not (0: OFF, 1 : ON)
-    uint8_t
-        use_fixed_point; // Specifies noise-level-estimation and filtering precision (0: use float/double precision, 1: use fixed point precision)
-
+    // Specifies whether the U& V planes will be filered or not (0: filter all planes, 1 : filter Y
+    // plane only)
+    uint8_t do_chroma;
+    // Specifies whether the weights generation will use approximations or not (0: do not use
+    // approximations, 1: per-block weights derivation, use an approximated exponential & log, use
+    // an approximated noise level)
+    uint8_t use_medium_filter;
+    // Specifies whether the weights derivation will use the distance factor(MV - based correction)
+    // and the 5x5 window error or not (0: OFF, 1 : ON)
+    uint8_t use_fast_filter;
+    // Specifies noise-level-estimation and filtering precision (0: use float/double precision, 1:
+    // use fixed point precision)
+    uint8_t use_fixed_point;
     // Number of reference frame(s) set
     uint8_t num_past_pics; // Specifies the default number of frame(s) from past
     uint8_t num_future_pics; // Specifies the default number of frame(s) from future
-    uint8_t
-        noise_adjust_past_pics; // Specifies whether num_past_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
-    uint8_t
-        noise_adjust_future_pics; // Specifies whether num_future_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
-    uint8_t
-        use_intra_for_noise_est; // Specifies whether to use the key- rame noise level for all inputs or to re - compute the noise level for each input
-    uint8_t
-        max_num_past_pics; // Specifies the maximum number of frame(s) from past(after all adjustments)
-    uint8_t
-        max_num_future_pics; // Specifies the maximum number of frame(s) from future(after all adjustments)
+    // Specifies whether num_past_pics will be incremented or not based on the noise level of the
+    // central frame(0: OFF or 1 : ON)
+    uint8_t noise_adjust_past_pics;
+    // Specifies whether num_future_pics will be incremented or not based on the noise level of the
+    // central frame(0: OFF or 1 : ON)
+    uint8_t noise_adjust_future_pics;
+    // Specifies whether to use the key- rame noise level for all inputs or to re - compute the
+    // noise level for each input
+    uint8_t use_intra_for_noise_est;
+    // Specifies the maximum number of frame(s) from past(after all adjustments)
+    uint8_t max_num_past_pics;
+    // Specifies the maximum number of frame(s) from future(after all adjustments)
+    uint8_t max_num_future_pics;
 
     // Motion search
-    uint8_t
-        hme_me_level; // Specifies the accuracy of the ME search (note that ME performs a HME search, then a Full - Pel search).
-    uint8_t
-        half_pel_mode; // Specifies the accuracy of the Half-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function(horizontal & vertical distortions)
-    uint8_t
-        quarter_pel_mode; // Specifies the accuracy of the Quarter-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function(horizontal & vertical distortions)
-    uint8_t
-        eight_pel_mode; // Specifies the accuracy of the Eight-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions)
-    uint8_t
-        use_8bit_subpel; // Specifies whether the Sub-Pel search for a 10bit input will be performed in 8bit resolution(0: OFF, 1 : ON, NA if 8bit input)
-    uint8_t
-        avoid_2d_qpel; // Specifies whether the Sub-Pel positions that require a 2D interpolation will be tested or not (0: OFF, 1 : ON, NA if 16x16 block or if the Sub-Pel mode is set to 1)
-    uint8_t
-        use_2tap; // Specifies the Sub-Pel search filter type(0: regular, 1 : bilinear, NA if 16x16 block or if the Sub - Pel mode is set to 1)
-    uint8_t
-        sub_sampling_shift; // Specifies whether sub-sampled input / prediction will be used at the distortion computation of the Sub-Pel search
-    uint64_t
-        pred_error_32x32_th; // Specifies the 32x32 prediction error(after subpel) under which the subpel for the 16x16 block(s) is bypassed
-    uint32_t
-        me_exit_th; // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the Full-Pel search), NA if use_fast_filter is set 0)
-    uint8_t
-        use_pred_64x64_only_th; // Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default size(s) (32x32 or/ and 16x16) (∞: perform Sub-Pel search for default size(s), else if the deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block, NA if use_fast_filter is set 0)
-    uint8_t
-        subpel_early_exit; // Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not
+    // Specifies the accuracy of the ME search (note that ME performs a HME search, then a Full -
+    // Pel search).
+    uint8_t hme_me_level;
+    // Specifies the accuracy of the Half-Pel search (0: OFF, 1 : perform refinement for the 8
+    // neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions
+    // and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring
+    // positions = function(horizontal & vertical distortions)
+    uint8_t half_pel_mode;
+    // Specifies the accuracy of the Quarter-Pel search (0: OFF, 1 : perform refinement for the 8
+    // neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions
+    // and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring
+    // positions = function(horizontal & vertical distortions)
+    uint8_t quarter_pel_mode;
+    // Specifies the accuracy of the Eight-Pel search (0: OFF, 1 : perform refinement for the 8
+    // neighboring positions)
+    uint8_t eight_pel_mode;
+    // Specifies whether the Sub-Pel search for a 10bit input will be performed in 8bit
+    // resolution(0: OFF, 1 : ON, NA if 8bit input)
+    uint8_t use_8bit_subpel;
+    // Specifies whether the Sub-Pel positions that require a 2D interpolation will be tested or not
+    // (0: OFF, 1 : ON, NA if 16x16 block or if the Sub-Pel mode is set to 1)
+    uint8_t avoid_2d_qpel;
+    // Specifies the Sub-Pel search filter type(0: regular, 1 : bilinear, NA if 16x16 block or if
+    // the Sub - Pel mode is set to 1)
+    uint8_t use_2tap;
+    // Specifies whether sub-sampled input / prediction will be used at the distortion computation
+    // of the Sub-Pel search
+    uint8_t sub_sampling_shift;
+    // Specifies the 32x32 prediction error(after subpel) under which the subpel for the 16x16
+    // block(s) is bypassed
+    uint64_t pred_error_32x32_th;
+    // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else
+    // if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the
+    // Full-Pel search), NA if use_fast_filter is set 0)
+    uint32_t me_exit_th;
+    // Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default
+    // size(s) (32x32 or/ and 16x16) (∞: perform Sub-Pel search for default size(s), else if the
+    // deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less
+    // than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block, NA if
+    // use_fast_filter is set 0)
+    uint8_t use_pred_64x64_only_th;
+    // Specifies whether to early exit the Sub-Pel search based on a pred-error-th or not
+    uint8_t subpel_early_exit;
 } TfControls;
 typedef enum GM_LEVEL {
     GM_FULL   = 0, // Exhaustive search mode.
     GM_DOWN   = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
     GM_DOWN16 = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
-    GM_ADAPT_0 =
-        3, // The search mode is set adaptively (whether GM_FULL or GM_DOWN) based on the average ME distortion
-    GM_ADAPT_1 =
-        4, // The search mode is set adaptively (whether GM_DOWN or GM_DOWN16) based on the average ME distortion, and the picture variance
+    // The search mode is set adaptively (whether GM_FULL or GM_DOWN) based on the
+    // average ME distortion
+    GM_ADAPT_0 = 3,
+    // The search mode is set adaptively (whether GM_DOWN or GM_DOWN16) based on the
+    // average ME distortion, and the picture variance
+    GM_ADAPT_1 = 4,
 } GM_LEVEL;
 typedef enum SqWeightOffsets {
     CONSERVATIVE_OFFSET_0 = 5,

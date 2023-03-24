@@ -256,13 +256,13 @@ static void create_me_context_and_picture_control(
     // set reference picture for alt-refs
     me_context_ptr->me_ctx->alt_ref_reference_ptr =
         (EbPaReferenceObject *)
-            picture_control_set_ptr_frame->pa_reference_picture_wrapper_ptr->object_ptr;
+            picture_control_set_ptr_frame->pa_ref_pic_wrapper->object_ptr;
     me_context_ptr->me_ctx->me_type = ME_MCTF;
 
     // set the buffers with the original, quarter and sixteenth pixels version of the source frame
     EbPaReferenceObject *src_object = (EbPaReferenceObject *)centre_pcs
-                                          ->pa_reference_picture_wrapper_ptr->object_ptr;
-    EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
+                                          ->pa_ref_pic_wrapper->object_ptr;
+    EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_pic;
     // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
     EbPictureBufferDesc *quarter_pic_ptr   = src_object->quarter_downsampled_picture_ptr;
     EbPictureBufferDesc *sixteenth_pic_ptr = src_object->sixteenth_downsampled_picture_ptr;
@@ -4556,7 +4556,7 @@ static EbErrorType produce_temporally_filtered_pic(
         FP_ASSERT(TF_Q_DECAY_THRESHOLD == 20);
 
         int offset_idx;
-        if (!centre_pcs->is_used_as_reference_flag)
+        if (!centre_pcs->is_ref)
             offset_idx = -1;
         else if (centre_pcs->idr_flag)
             offset_idx = 0;
@@ -4622,7 +4622,7 @@ static EbErrorType produce_temporally_filtered_pic(
     else {
         double q_val = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
         int    offset_idx = -1;
-        if (!centre_pcs->is_used_as_reference_flag)
+        if (!centre_pcs->is_ref)
             offset_idx = -1;
         else if (centre_pcs->idr_flag)
             offset_idx = 0;
@@ -4789,19 +4789,19 @@ static EbErrorType produce_temporally_filtered_pic(
                     ctx->num_of_ref_pic_to_search[1] = 0;
                     ctx->temporal_layer_index =
                         centre_pcs->temporal_layer_index;
-                    ctx->is_used_as_reference_flag =
-                        centre_pcs->is_used_as_reference_flag;
+                    ctx->is_ref =
+                        centre_pcs->is_ref;
 
-                    EbPaReferenceObject *reference_object = (EbPaReferenceObject *)
+                    EbPaReferenceObject *ref_object = (EbPaReferenceObject *)
                                                                 ctx->alt_ref_reference_ptr;
                     ctx->me_ds_ref_array[0][0].picture_ptr =
-                        reference_object->input_padded_picture_ptr;
+                        ref_object->input_padded_pic;
                     ctx->me_ds_ref_array[0][0].sixteenth_picture_ptr =
-                        reference_object->sixteenth_downsampled_picture_ptr;
+                        ref_object->sixteenth_downsampled_picture_ptr;
                     ctx->me_ds_ref_array[0][0].quarter_picture_ptr =
-                        reference_object->quarter_downsampled_picture_ptr;
+                        ref_object->quarter_downsampled_picture_ptr;
                     ctx->me_ds_ref_array[0][0].picture_number =
-                        reference_object->picture_number;
+                        ref_object->picture_number;
                     ctx->tf_me_exit_th =
                         centre_pcs->tf_ctrls.me_exit_th;
                     ;
@@ -5223,8 +5223,8 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *centre_pcs) {
     // reference structures (padded pictures + downsampled versions)
     SequenceControlSet *scs = centre_pcs->scs;
     EbPaReferenceObject *src_object = (EbPaReferenceObject *)centre_pcs
-                                          ->pa_reference_picture_wrapper_ptr->object_ptr;
-    EbPictureBufferDesc *input_pic = centre_pcs->enhanced_picture_ptr;
+                                          ->pa_ref_pic_wrapper->object_ptr;
+    EbPictureBufferDesc *input_pic = centre_pcs->enhanced_pic;
 
     // Refine the non-8 padding
     if (((input_pic->width - scs->pad_right) % 8 != 0) ||
@@ -5271,9 +5271,9 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *centre_pcs) {
 // save original enchanced_picture_ptr buffer in a separate buffer (to be replaced by the temporally filtered pic)
 static EbErrorType save_src_pic_buffers(PictureParentControlSet *centre_pcs,
                                         uint32_t ss_y, Bool is_highbd) {
-    // save buffer from full size frame enhanced_unscaled_picture_ptr
+    // save buffer from full size frame enhanced_unscaled_pic
     EbPictureBufferDesc *src_pic_ptr =
-        centre_pcs->enhanced_unscaled_picture_ptr;
+        centre_pcs->enhanced_unscaled_pic;
     assert(src_pic_ptr != NULL);
     // allocate memory for the copy of the original enhanced buffer
     EB_MALLOC_ARRAY(centre_pcs->save_source_picture_ptr[C_Y],
@@ -5331,24 +5331,24 @@ static EbErrorType save_src_pic_buffers(PictureParentControlSet *centre_pcs,
         // if highbd, copy bit inc buffers
         // Y
         svt_c_unpack_compressed_10bit(
-            centre_pcs->enhanced_picture_ptr->buffer_bit_inc_y,
-            centre_pcs->enhanced_picture_ptr->stride_bit_inc_y / 4,
+            centre_pcs->enhanced_pic->buffer_bit_inc_y,
+            centre_pcs->enhanced_pic->stride_bit_inc_y / 4,
             centre_pcs->save_source_picture_bit_inc_ptr[C_Y],
-            centre_pcs->enhanced_picture_ptr->stride_bit_inc_y,
+            centre_pcs->enhanced_pic->stride_bit_inc_y,
             height_y);
         // U
         svt_c_unpack_compressed_10bit(
-            centre_pcs->enhanced_picture_ptr->buffer_bit_inc_cb,
-            centre_pcs->enhanced_picture_ptr->stride_bit_inc_cb / 4,
+            centre_pcs->enhanced_pic->buffer_bit_inc_cb,
+            centre_pcs->enhanced_pic->stride_bit_inc_cb / 4,
             centre_pcs->save_source_picture_bit_inc_ptr[C_U],
-            centre_pcs->enhanced_picture_ptr->stride_bit_inc_cb,
+            centre_pcs->enhanced_pic->stride_bit_inc_cb,
             height_uv);
         // V
         svt_c_unpack_compressed_10bit(
-            centre_pcs->enhanced_picture_ptr->buffer_bit_inc_cr,
-            centre_pcs->enhanced_picture_ptr->stride_bit_inc_cr / 4,
+            centre_pcs->enhanced_pic->buffer_bit_inc_cr,
+            centre_pcs->enhanced_pic->stride_bit_inc_cr / 4,
             centre_pcs->save_source_picture_bit_inc_ptr[C_V],
-            centre_pcs->enhanced_picture_ptr->stride_bit_inc_cr,
+            centre_pcs->enhanced_pic->stride_bit_inc_cr,
             height_uv);
     }
 
@@ -5375,7 +5375,7 @@ EbErrorType svt_av1_init_temporal_filtering(
     assert(pcs_list[index_center] == centre_pcs);
 
     // source central frame picture buffer
-    central_picture_ptr = centre_pcs->enhanced_picture_ptr;
+    central_picture_ptr = centre_pcs->enhanced_pic;
 
     uint32_t encoder_bit_depth =
         centre_pcs->scs->static_config.encoder_bit_depth;
@@ -5397,7 +5397,7 @@ EbErrorType svt_av1_init_temporal_filtering(
                              centre_pcs->future_altref_nframes + 1);
              i++) {
             EbPictureBufferDesc *pic_ptr_ref =
-                pcs_list[i]->enhanced_picture_ptr;
+                pcs_list[i]->enhanced_pic;
             //10bit: for all the reference pictures do the packing once at the beggining.
             if (is_highbd && i != centre_pcs->past_altref_nframes) {
                 EB_MALLOC_ARRAY(pcs_list[i]->altref_buffer_highbd[C_Y],
@@ -5417,7 +5417,7 @@ EbErrorType svt_av1_init_temporal_filtering(
             }
         }
 
-        centre_pcs->temporal_filtering_on =
+        centre_pcs->do_tf =
             TRUE; // set temporal filtering flag ON for current picture
 
         // save original source picture (to be replaced by the temporally filtered pic)
@@ -5450,7 +5450,7 @@ EbErrorType svt_av1_init_temporal_filtering(
     for (int i = 0; i < (centre_pcs->past_altref_nframes +
                          centre_pcs->future_altref_nframes + 1);
          i++)
-        list_input_picture_ptr[i] = pcs_list[i]->enhanced_unscaled_picture_ptr;
+        list_input_picture_ptr[i] = pcs_list[i]->enhanced_unscaled_pic;
 
     produce_temporally_filtered_pic(pcs_list,
                                     list_input_picture_ptr,

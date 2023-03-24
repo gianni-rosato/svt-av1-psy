@@ -48,8 +48,8 @@ typedef struct BlockGeom {
     uint16_t parent_depth_idx_mds; // index of the parent block of a given depth
     uint16_t d1_depth_offset; // offset to the next d1 sq block
     uint16_t ns_depth_offset; // offset to the next nsq block (skip remaining d2 blocks)
-    uint8_t
-                totns; // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
+    // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
+    uint8_t     totns;
     uint8_t     nsi; // non square index within a partition  0..totns-1
     uint8_t     similar; // 1: means that this block is similar (same shape/location) to another
     uint8_t     quadi; // parent square is in which quadrant 0..3

@@ -1183,25 +1183,24 @@ void svt_fast_optimize_b(const TranLow *coeff_ptr, const MacroblockPlane *p, Tra
     const int              shift      = av1_get_tx_scale_tab[tx_size];
     update_coeff_eob_fast(eob, shift, p->dequant_qtx, scan, coeff_ptr, qcoeff_ptr, dqcoeff_ptr);
 }
-void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context,
-                        int16_t dc_sign_context, const TranLow *coeff_ptr, int32_t stride,
-                        intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
-                        TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
-                        const QuantParam *qparam, TxSize tx_size, TxType tx_type, Bool is_inter,
-                        uint8_t use_sharpness, uint8_t delta_q_present, uint8_t picture_qp,
-                        uint32_t lambda, int plane)
+void svt_av1_optimize_b(ModeDecisionContext *ctx, int16_t txb_skip_context, int16_t dc_sign_context,
+                        const TranLow *coeff_ptr, int32_t stride, intptr_t n_coeffs,
+                        const MacroblockPlane *p, TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
+                        uint16_t *eob, const ScanOrder *sc, const QuantParam *qparam,
+                        TxSize tx_size, TxType tx_type, Bool is_inter, uint8_t use_sharpness,
+                        uint8_t delta_q_present, uint8_t picture_qp, uint32_t lambda, int plane)
 
 {
     (void)stride;
     (void)n_coeffs;
     (void)sc;
-    int sharpness = 0; // No Sharpness
-    int fast_mode = (md_context->rdoq_ctrls.eob_fast_y_inter && is_inter && !plane) ||
-            (md_context->rdoq_ctrls.eob_fast_y_intra && !is_inter && !plane) ||
-            (md_context->rdoq_ctrls.eob_fast_uv_inter && is_inter && plane) ||
-            (md_context->rdoq_ctrls.eob_fast_uv_intra && !is_inter && plane)
-        ? 1
-        : 0;
+    int                    sharpness  = 0; // No Sharpness
+    int                    fast_mode  = (ctx->rdoq_ctrls.eob_fast_y_inter && is_inter && !plane) ||
+            (ctx->rdoq_ctrls.eob_fast_y_intra && !is_inter && !plane) ||
+            (ctx->rdoq_ctrls.eob_fast_uv_inter && is_inter && plane) ||
+            (ctx->rdoq_ctrls.eob_fast_uv_intra && !is_inter && plane)
+                            ? 1
+                            : 0;
     const ScanOrder *const scan_order = &av1_scan_orders[tx_size][tx_type];
     const int16_t         *scan       = scan_order->scan;
     const int              shift      = av1_get_tx_scale_tab[tx_size];
@@ -1213,17 +1212,16 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
     const int              height     = get_txb_high_tab[tx_size];
     assert(width == (1 << bwl));
     assert(txs_ctx < TX_SIZES);
-    const LvMapCoeffCost *txb_costs =
-        &md_context->md_rate_estimation_ptr->coeff_fac_bits[txs_ctx][plane_type];
-    const int           eob_multi_size = txsize_log2_minus4[tx_size];
-    const LvMapEobCost *txb_eob_costs =
-        &md_context->md_rate_estimation_ptr->eob_frac_bits[eob_multi_size][plane_type];
+    const LvMapCoeffCost *txb_costs = &ctx->md_rate_est_ctx->coeff_fac_bits[txs_ctx][plane_type];
+    const int             eob_multi_size = txsize_log2_minus4[tx_size];
+    const LvMapEobCost   *txb_eob_costs =
+        &ctx->md_rate_est_ctx->eob_frac_bits[eob_multi_size][plane_type];
     const int non_skip_cost = txb_costs->txb_skip_cost[txb_skip_context][0];
     const int skip_cost     = txb_costs->txb_skip_cost[txb_skip_context][1];
     const int eob_cost      = get_eob_cost(*eob, txb_eob_costs, txb_costs, tx_class);
 
-    int sq_size_idx = 7 - (int)svt_log2f(md_context->blk_geom->sq_size);
-    if (eob_cost < (int)(width * height * sq_size_idx * md_context->rdoq_ctrls.early_exit_th)) {
+    int sq_size_idx = 7 - (int)svt_log2f(ctx->blk_geom->sq_size);
+    if (eob_cost < (int)(width * height * sq_size_idx * ctx->rdoq_ctrls.early_exit_th)) {
         if (skip_cost < non_skip_cost) {
             return;
         }
@@ -1237,7 +1235,7 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
     int       rweight = 100;
     const int rshift  = 2;
     if (use_sharpness && delta_q_present && plane == 0) {
-        int diff = md_context->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
+        int diff = ctx->sb_ptr->qindex - quantizer_to_qindex[picture_qp];
         if (diff < 0) {
             sharpness = 1;
             rweight   = 0;
@@ -1530,10 +1528,9 @@ int32_t svt_av1_compute_cul_level_c(const int16_t *const scan, const int32_t *co
 }
 
 int32_t svt_aom_quantize_inv_quantize(
-    PictureControlSet *pcs, ModeDecisionContext *md_context, int32_t *coeff,
-    const uint32_t coeff_stride, int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex,
-    int32_t segmentation_qp_offset, uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob,
-    uint32_t *cnt_nz_coeff,
+    PictureControlSet *pcs, ModeDecisionContext *ctx, int32_t *coeff, const uint32_t coeff_stride,
+    int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex, int32_t segmentation_qp_offset,
+    uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob, uint32_t *cnt_nz_coeff,
 
     uint32_t component_type, uint32_t bit_depth, TxType tx_type,
     ModeDecisionCandidateBuffer *cand_bf, int16_t txb_skip_context, int16_t dc_sign_context,
@@ -1646,32 +1643,29 @@ int32_t svt_aom_quantize_inv_quantize(
     Bool perform_rdoq;
 
     // If rdoq_level is specified in the command line instruction, set perform_rdoq accordingly.
-    perform_rdoq            = ((md_context->mds_skip_rdoq == FALSE || is_encode_pass) &&
-                    md_context->rdoq_level);
-    const int dequant_shift = md_context->hbd_md ? pcs->ppcs->enhanced_picture_ptr->bit_depth - 5
-                                                 : 3;
+    perform_rdoq            = ((ctx->mds_skip_rdoq == FALSE || is_encode_pass) && ctx->rdoq_level);
+    const int dequant_shift = ctx->hbd_md ? pcs->ppcs->enhanced_pic->bit_depth - 5 : 3;
     const int qstep         = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
     if (!is_encode_pass) {
-        if ((md_context->rdoq_ctrls.dct_dct_only && tx_type != DCT_DCT) ||
-            (md_context->rdoq_ctrls.skip_uv && component_type != COMPONENT_LUMA))
+        if ((ctx->rdoq_ctrls.dct_dct_only && tx_type != DCT_DCT) ||
+            (ctx->rdoq_ctrls.skip_uv && component_type != COMPONENT_LUMA))
             perform_rdoq = 0;
     }
-    if (perform_rdoq && md_context->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
+    if (perform_rdoq && ctx->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
         int       satd  = svt_aom_satd(coeff, n_coeffs);
         const int shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[txsize]);
 
         satd = RIGHT_SIGNED_SHIFT(satd, shift);
-        satd >>= (pcs->ppcs->enhanced_picture_ptr->bit_depth - 8);
-        const int skip_block_trellis = ((uint64_t)satd >
-                                        (uint64_t)md_context->rdoq_ctrls.satd_factor * qstep *
-                                            sqrt_tx_pixels_2d[txsize]);
+        satd >>= (pcs->ppcs->enhanced_pic->bit_depth - 8);
+        const int skip_block_trellis = ((uint64_t)satd > (uint64_t)ctx->rdoq_ctrls.satd_factor *
+                                            qstep * sqrt_tx_pixels_2d[txsize]);
         if (skip_block_trellis)
             perform_rdoq = 0;
     }
 
     if (perform_rdoq &&
-        ((!component_type && md_context->rdoq_ctrls.fp_q_y) ||
-         (component_type && md_context->rdoq_ctrls.fp_q_uv))) {
+        ((!component_type && ctx->rdoq_ctrls.fp_q_y) ||
+         (component_type && ctx->rdoq_ctrls.fp_q_uv))) {
         if ((bit_depth > EB_EIGHT_BIT) || (is_encode_pass && scs->is_16bit_pipeline)) {
             svt_av1_highbd_quantize_fp_facade((TranLow *)coeff,
                                               n_coeffs,
@@ -1714,10 +1708,10 @@ int32_t svt_aom_quantize_inv_quantize(
     }
     if (perform_rdoq && *eob != 0) {
         int eob_perc = (*eob) * 100 / (width * height);
-        if (eob_perc >= md_context->rdoq_ctrls.eob_th) {
+        if (eob_perc >= ctx->rdoq_ctrls.eob_th) {
             perform_rdoq = 0;
         }
-        if (perform_rdoq && (eob_perc >= md_context->rdoq_ctrls.eob_fast_th)) {
+        if (perform_rdoq && (eob_perc >= ctx->rdoq_ctrls.eob_fast_th)) {
             svt_fast_optimize_b((TranLow *)coeff,
                                 &candidate_plane,
                                 quant_coeff,
@@ -1750,7 +1744,7 @@ int32_t svt_aom_quantize_inv_quantize(
     }
     if (perform_rdoq && *eob != 0) {
         // Perform rdoq
-        svt_av1_optimize_b(md_context,
+        svt_av1_optimize_b(ctx,
                            txb_skip_context,
                            dc_sign_context,
                            (TranLow *)coeff,
@@ -1773,7 +1767,7 @@ int32_t svt_aom_quantize_inv_quantize(
     }
 
     *cnt_nz_coeff = *eob;
-    if (!md_context->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
+    if (!ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
         return 0;
 
     // Derive cul_level
@@ -2109,7 +2103,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx,
             if (ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
                 svt_aom_get_txb_ctx(pcs,
                                     COMPONENT_CHROMA,
-                                    ctx->cb_dc_sign_level_coeff_neighbor_array,
+                                    ctx->cb_dc_sign_level_coeff_na,
                                     ROUND_UV(ctx->sb_origin_x + txb_origin_x) >> 1,
                                     ROUND_UV(ctx->sb_origin_y + txb_origin_y) >> 1,
                                     ctx->blk_geom->bsize_uv,
@@ -2269,7 +2263,7 @@ void svt_aom_full_loop_uv(PictureControlSet *pcs, ModeDecisionContext *ctx,
             if (ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
                 svt_aom_get_txb_ctx(pcs,
                                     COMPONENT_CHROMA,
-                                    ctx->cr_dc_sign_level_coeff_neighbor_array,
+                                    ctx->cr_dc_sign_level_coeff_na,
                                     ROUND_UV(ctx->sb_origin_x + txb_origin_x) >> 1,
                                     ROUND_UV(ctx->sb_origin_y + txb_origin_y) >> 1,
                                     ctx->blk_geom->bsize_uv,
@@ -2471,7 +2465,7 @@ uint64_t svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t
                                                       &ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds],
                                                       from_shape_to_part[ctx->blk_geom->shape],
                                                       full_lambda,
-                                                      ctx->md_rate_estimation_ptr);
+                                                      ctx->md_rate_est_ctx);
 
     tot_cost += split_cost;
     if ((d1_block_itr == 0) || (tot_cost < ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].cost)) {
@@ -2516,7 +2510,7 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
                                                    &ctx->md_blk_arr_nsq[above_depth_mds],
                                                    PARTITION_SPLIT,
                                                    full_lambda,
-                                                   ctx->md_rate_estimation_ptr);
+                                                   ctx->md_rate_est_ctx);
 
     // Compute current depth cost
     *curr_depth_cost = ctx->md_local_blk_unit[curr_depth_blk0_mds].cost +
@@ -2594,11 +2588,10 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *ctx,
         *curr_depth_cost += ctx->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
     }
     // Add split rate to the cost of the current depth
-    // Use context index 0 for the split rate as an approximation to skip call to av1_partition_rate_cost
+    // Use context index 0 for the split rate as an approximation to skip call to
+    // av1_partition_rate_cost
     *curr_depth_cost += RDCOST(
-        full_lambda,
-        (uint64_t)ctx->md_rate_estimation_ptr->partition_fac_bits[0][PARTITION_SPLIT],
-        0);
+        full_lambda, (uint64_t)ctx->md_rate_est_ctx->partition_fac_bits[0][PARTITION_SPLIT], 0);
 
     *above_depth_cost = ctx->tested_blk_flag[above_depth_mds]
         ? ctx->md_local_blk_unit[above_depth_mds].cost
@@ -2638,7 +2631,7 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
                                                    &ctx->md_blk_arr_nsq[above_depth_mds],
                                                    PARTITION_SPLIT,
                                                    full_lambda,
-                                                   ctx->md_rate_estimation_ptr);
+                                                   ctx->md_rate_est_ctx);
 
     *curr_depth_cost += above_split_rate;
 

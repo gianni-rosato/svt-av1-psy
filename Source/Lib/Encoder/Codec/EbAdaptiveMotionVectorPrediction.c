@@ -1178,17 +1178,16 @@ void svt_aom_generate_av1_mvp_table(ModeDecisionContext *ctx, BlkStruct *blk_ptr
         MvReferenceFrame rf[2];
         av1_set_ref_frame(rf, ref_frame);
 
-        // Can skip MVP generation for unipred refs if not using any unipred candidates; only supported for LPD1
-        // If block is intra bordered we only inject NEW unipred, so must generate MVPs
-        // If there is only 1 ME candidate, generate MVPs because that candidate will be injected (even if unipred)
+        // Can skip MVP generation for unipred refs if not using any unipred candidates; only
+        // supported for LPD1 If block is intra bordered we only inject NEW unipred, so must
+        // generate MVPs If there is only 1 ME candidate, generate MVPs because that candidate will
+        // be injected (even if unipred)
         if (ctx->cand_reduction_ctrls.reduce_unipred_candidates >= 3 &&
-            ctx->lpd1_ctrls.pd1_level > REGULAR_PD1 && !ctx->svt_aom_is_intra_bordered &&
+            ctx->lpd1_ctrls.pd1_level > REGULAR_PD1 && !ctx->is_intra_bordered &&
             frm_hdr->reference_mode != SINGLE_REFERENCE &&
-            !frm_hdr
-                 ->use_ref_frame_mvs && //MFMV generation re-uses projection information when symetric references are used.
-            //so could not be skipped, as BWD or LAST_BWD might reuse projection info from LAST
-            rf[1] == NONE_FRAME &&
-            ctx->bipred_available &&
+            // MFMV generation re-uses projection information when symetric references are used. so
+            // could not be skipped, as BWD or LAST_BWD might reuse projection info from LAST
+            !frm_hdr->use_ref_frame_mvs && rf[1] == NONE_FRAME && ctx->bipred_available &&
             pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr]
                     ->total_me_candidate_index[ctx->me_block_offset] > 1) {
             continue;

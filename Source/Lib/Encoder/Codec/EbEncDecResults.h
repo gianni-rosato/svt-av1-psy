@@ -19,28 +19,28 @@
 extern "C" {
 #endif
 /**************************************
-     * Process Results
-     **************************************/
+ * Process Results
+ **************************************/
 typedef struct EncDecResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
 } EncDecResults;
 
 typedef struct DlfResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
     uint32_t         segment_index;
 } DlfResults;
 
 typedef struct CdefResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
     uint32_t         segment_index;
 } CdefResults;
 
 typedef struct RestResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
     uint16_t         tile_index;
 } RestResults;
 

@@ -66,7 +66,7 @@ typedef struct SequenceControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor dctor;
     /*!< Encoding context pointer containing the handle pointer */
-    EncodeContext *encode_context_ptr;
+    EncodeContext *enc_ctx;
     /*!< 2ndpass enc mode, available at firstpass encoder */
     /*!< API structure */
     EbSvtAv1EncConfiguration static_config;
@@ -115,14 +115,15 @@ typedef struct SequenceControlSet {
               16 |       32|       48|
       lad mg=2: delay the first MG (1-16) until the next 2 MGs(17-48) are gop , TF, and ME ready
     */
-    uint8_t
-        lad_mg; //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready
-    uint8_t
-        tpl_lad_mg; //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready used for tpl
-    /*!< 1: Specifies that loop restoration filter should use boundary pixels in the search.  Must be
-            set at the sequence level because it requires a buffer allocation to copy the pixels
-            to be used in the search.
-         0: Specifies that loop restoration filter should not use boundary pixels in the search.*/
+    // delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready
+    uint8_t lad_mg;
+    // delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready used for
+    // tpl
+    uint8_t tpl_lad_mg;
+    /*!< 1: Specifies that loop restoration filter should use boundary pixels in the search.  Must
+       be set at the sequence level because it requires a buffer allocation to copy the pixels to be
+       used in the search. 0: Specifies that loop restoration filter should not use boundary pixels
+       in the search.*/
     uint8_t use_boundaries_in_rest_search;
     uint8_t enable_pic_mgr_dec_order; // if enabled: pic mgr starts pictures in dec order
     uint8_t enable_dec_order; // if enabled: encoding are in dec order
@@ -264,8 +265,8 @@ typedef struct SequenceControlSet {
     uint8_t rc_stat_gen_pass_mode;
     int     cqp_base_q_tf;
     int     cqp_base_q;
-    uint8_t
-                    is_short_clip; //less than 200 frames or gop_constraint_rc is set, used in VBR and set in multipass encode
+    // less than 200 frames or gop_constraint_rc is set, used in VBR and set in multipass encode
+    uint8_t         is_short_clip;
     uint8_t         passes;
     IppPassControls ipp_pass_ctrls;
     MidPassControls mid_pass_ctrls;
@@ -439,7 +440,7 @@ typedef struct SequenceControlSet {
 } SequenceControlSet;
 typedef struct EbSequenceControlSetInstance {
     EbDctor             dctor;
-    EncodeContext      *encode_context_ptr;
+    EncodeContext      *enc_ctx;
     SequenceControlSet *scs;
 } EbSequenceControlSetInstance;
 

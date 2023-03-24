@@ -41,16 +41,18 @@ EbErrorType svt_aom_simple_luma_unipred(SequenceControlSet *scs, ScaleFactors sf
                                         EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
                                         uint16_t dst_origin_y, uint8_t bit_depth,
                                         uint8_t subsampling_shift);
-EbErrorType av1_inter_prediction_light_pd1(
-    SequenceControlSet *scs, MvUnit *mv_unit, struct ModeDecisionContext *md_context,
-    uint16_t pu_origin_x, uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
-    EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *ref_pic_list1,
-    EbPictureBufferDesc *pred_pic, uint16_t dst_origin_x, uint16_t dst_origin_y,
-    uint32_t component_mask, uint8_t hbd_md, ScaleFactors *sf0, ScaleFactors *sf1);
+EbErrorType av1_inter_prediction_light_pd1(SequenceControlSet *scs, MvUnit *mv_unit,
+                                           struct ModeDecisionContext *ctx, uint16_t pu_origin_x,
+                                           uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
+                                           EbPictureBufferDesc *ref_pic_list0,
+                                           EbPictureBufferDesc *ref_pic_list1,
+                                           EbPictureBufferDesc *pred_pic, uint16_t dst_origin_x,
+                                           uint16_t dst_origin_y, uint32_t component_mask,
+                                           uint8_t hbd_md, ScaleFactors *sf0, ScaleFactors *sf1);
 EbErrorType svt_aom_inter_prediction(
     SequenceControlSet *scs, PictureControlSet *pcs, uint32_t interp_filters, BlkStruct *blk_ptr,
     uint8_t ref_frame_type, MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode,
-    uint8_t use_precomputed_obmc, struct ModeDecisionContext *md_context, uint8_t compound_idx,
+    uint8_t use_precomputed_obmc, struct ModeDecisionContext *ctx, uint8_t compound_idx,
     InterInterCompoundData *interinter_comp, NeighborArrayUnit *recon_neigh_y,
     NeighborArrayUnit *recon_neigh_cb, NeighborArrayUnit *recon_neigh_cr,
     uint8_t is_interintra_used, InterIntraMode interintra_mode, uint8_t use_wedge_interintra,
@@ -58,14 +60,11 @@ EbErrorType svt_aom_inter_prediction(
     uint8_t bheight, EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *ref_pic_list1,
     EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y,
     uint32_t component_mask, uint8_t bit_depth, uint8_t is_16bit_pipeline);
-void av1_inter_prediction_light_pd0(SequenceControlSet *scs, MvUnit *mv_unit,
-                                    struct ModeDecisionContext *md_context, uint16_t pu_origin_x,
-                                    uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
-                                    EbPictureBufferDesc *ref_pic_list0,
-                                    EbPictureBufferDesc *ref_pic_list1,
-                                    EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
-                                    uint16_t dst_origin_y, uint8_t bit_depth, ScaleFactors *sf0,
-                                    ScaleFactors *sf1);
+void av1_inter_prediction_light_pd0(
+    SequenceControlSet *scs, MvUnit *mv_unit, struct ModeDecisionContext *ctx, uint16_t pu_origin_x,
+    uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *ref_pic_list0,
+    EbPictureBufferDesc *ref_pic_list1, EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
+    uint16_t dst_origin_y, uint8_t bit_depth, ScaleFactors *sf0, ScaleFactors *sf1);
 
 void svt_aom_search_compound_diff_wedge(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
                                         ModeDecisionCandidate *cand);
@@ -75,14 +74,14 @@ Bool svt_aom_calc_pred_masked_compound(PictureControlSet *pcs, struct ModeDecisi
 EbErrorType svt_aom_inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_md,
                                                       struct ModeDecisionContext  *ctx,
                                                       PictureControlSet           *pcs,
-                                                      ModeDecisionCandidateBuffer *cand_bf_ptr);
+                                                      ModeDecisionCandidateBuffer *cand_bf);
 EbErrorType svt_aom_inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_md,
                                                       struct ModeDecisionContext  *ctx,
                                                       PictureControlSet           *pcs,
-                                                      ModeDecisionCandidateBuffer *cand_bf_ptr);
+                                                      ModeDecisionCandidateBuffer *cand_bf);
 EbErrorType svt_aom_inter_pu_prediction_av1(uint8_t hbd_md, struct ModeDecisionContext *ctx,
                                             PictureControlSet           *pcs,
-                                            ModeDecisionCandidateBuffer *cand_bf_ptr);
+                                            ModeDecisionCandidateBuffer *cand_bf);
 
 EbErrorType svt_aom_warped_motion_prediction(
     PictureControlSet *pcs, MvUnit *mv_unit, uint8_t ref_frame_type, uint8_t compound_idx,

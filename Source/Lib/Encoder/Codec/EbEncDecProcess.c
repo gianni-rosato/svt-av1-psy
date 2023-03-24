@@ -97,8 +97,8 @@ static Bool is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t r
 }
 
 static void enc_dec_context_dctor(EbPtr p) {
-    EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
-    EncDecContext   *obj                = (EncDecContext *)thread_context_ptr->priv;
+    EbThreadContext *thread_ctx = (EbThreadContext *)p;
+    EncDecContext   *obj        = (EncDecContext *)thread_ctx->priv;
     EB_DELETE(obj->md_ctx);
     EB_DELETE(obj->residual_buffer);
     EB_DELETE(obj->transform_buffer);
@@ -110,7 +110,7 @@ static void enc_dec_context_dctor(EbPtr p) {
 /******************************************************
  * Enc Dec Context Constructor
  ******************************************************/
-EbErrorType svt_aom_enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType svt_aom_enc_dec_context_ctor(EbThreadContext   *thread_ctx,
                                          const EbEncHandle *enc_handle_ptr, int index,
                                          int tasks_index)
 
@@ -123,8 +123,8 @@ EbErrorType svt_aom_enc_dec_context_ctor(EbThreadContext   *thread_context_ptr,
 
     EncDecContext *ed_ctx;
     EB_CALLOC_ARRAY(ed_ctx, 1);
-    thread_context_ptr->priv  = ed_ctx;
-    thread_context_ptr->dctor = enc_dec_context_dctor;
+    thread_ctx->priv  = ed_ctx;
+    thread_ctx->dctor = enc_dec_context_dctor;
 
     ed_ctx->is_16bit     = enc_handle_ptr->scs_instance_array[0]->scs->is_16bit_pipeline;
     ed_ctx->color_format = color_format;
@@ -238,29 +238,26 @@ static void reset_segmentation_map(SegmentationNeighborMap *segmentation_map) {
  * Reset Mode Decision Neighbor Arrays
  *************************************************/
 static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs, uint16_t tile_idx) {
-    svt_aom_neighbor_array_unit_reset(pcs->ep_intra_luma_mode_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_intra_chroma_mode_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_mv_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_skip_flag_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_mode_type_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_luma_recon_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_cb_recon_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_cr_recon_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(
-        pcs->ep_luma_dc_sign_level_coeff_neighbor_array_update[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(
-        pcs->ep_cb_dc_sign_level_coeff_neighbor_array_update[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(
-        pcs->ep_cr_dc_sign_level_coeff_neighbor_array_update[tile_idx]);
-    svt_aom_neighbor_array_unit_reset(pcs->ep_partition_context_neighbor_array[tile_idx]);
-    // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is_16bit==0?
+    svt_aom_neighbor_array_unit_reset(pcs->ep_intra_luma_mode_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_intra_chroma_mode_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_mv_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_skip_flag_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_mode_type_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_luma_recon_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_cb_recon_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_cr_recon_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_luma_dc_sign_level_coeff_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_cb_dc_sign_level_coeff_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_cr_dc_sign_level_coeff_na[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_luma_dc_sign_level_coeff_na_update[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_cb_dc_sign_level_coeff_na_update[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_cr_dc_sign_level_coeff_na_update[tile_idx]);
+    svt_aom_neighbor_array_unit_reset(pcs->ep_partition_context_na[tile_idx]);
+    // TODO(Joel): 8-bit ep_luma_recon_na (Cb,Cr) when is_16bit==0?
     if (pcs->ppcs->scs->is_16bit_pipeline) {
-        svt_aom_neighbor_array_unit_reset(pcs->ep_luma_recon_neighbor_array16bit[tile_idx]);
-        svt_aom_neighbor_array_unit_reset(pcs->ep_cb_recon_neighbor_array16bit[tile_idx]);
-        svt_aom_neighbor_array_unit_reset(pcs->ep_cr_recon_neighbor_array16bit[tile_idx]);
+        svt_aom_neighbor_array_unit_reset(pcs->ep_luma_recon_na_16bit[tile_idx]);
+        svt_aom_neighbor_array_unit_reset(pcs->ep_cb_recon_na_16bit[tile_idx]);
+        svt_aom_neighbor_array_unit_reset(pcs->ep_cr_recon_na_16bit[tile_idx]);
     }
     return;
 }
@@ -382,9 +379,9 @@ static Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmen
         ++segmentPtr->row_array[0].current_seg_index;
         continue_processing_flag = TRUE;
 
-        //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-        //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
-        //    *segmentInOutIndex);
+        // fprintf(trace, "Start  Pic: %u Seg: %u\n",
+        //     (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper->object_ptr)->picture_number,
+        //     *segmentInOutIndex);
 
         break;
 
@@ -399,9 +396,9 @@ static Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmen
         ++segmentPtr->row_array[taskPtr->enc_dec_segment_row].current_seg_index;
         continue_processing_flag = TRUE;
 
-        //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-        //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
-        //    *segmentInOutIndex);
+        // fprintf(trace, "Start  Pic: %u Seg: %u\n",
+        //     (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper->object_ptr)->picture_number,
+        //     *segmentInOutIndex);
 
         break;
 
@@ -426,9 +423,9 @@ static Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmen
                 self_assigned            = TRUE;
                 continue_processing_flag = TRUE;
 
-                //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-                //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
-                //    *segmentInOutIndex);
+                // fprintf(trace, "Start  Pic: %u Seg: %u\n",
+                //     (unsigned) ((PictureControlSet*)
+                //     taskPtr->pcs_wrapper->object_ptr)->picture_number, *segmentInOutIndex);
             }
 
             svt_release_mutex(segmentPtr->row_array[row_segment_index].assignment_mutex);
@@ -451,9 +448,9 @@ static Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmen
                     ++segmentPtr->row_array[row_segment_index + 1].current_seg_index;
                     continue_processing_flag = TRUE;
 
-                    //fprintf(trace, "Start  Pic: %u Seg: %u\n",
-                    //    (unsigned) ((PictureControlSet*) taskPtr->pcs_wrapper_ptr->object_ptr)->picture_number,
-                    //    *segmentInOutIndex);
+                    // fprintf(trace, "Start  Pic: %u Seg: %u\n",
+                    //     (unsigned) ((PictureControlSet*)
+                    //     taskPtr->pcs_wrapper->object_ptr)->picture_number, *segmentInOutIndex);
                 }
             }
             svt_release_mutex(segmentPtr->row_array[row_segment_index + 1].assignment_mutex);
@@ -462,11 +459,11 @@ static Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmen
         if (feedback_row_index > 0) {
             EbObjectWrapper *wrapper_ptr;
             svt_get_empty_object(srmFifoPtr, &wrapper_ptr);
-            EncDecTasks *feedback_task_ptr         = (EncDecTasks *)wrapper_ptr->object_ptr;
-            feedback_task_ptr->input_type          = ENCDEC_TASKS_ENCDEC_INPUT;
-            feedback_task_ptr->enc_dec_segment_row = feedback_row_index;
-            feedback_task_ptr->pcs_wrapper_ptr     = taskPtr->pcs_wrapper_ptr;
-            feedback_task_ptr->tile_group_index    = taskPtr->tile_group_index;
+            EncDecTasks *feedback_task         = (EncDecTasks *)wrapper_ptr->object_ptr;
+            feedback_task->input_type          = ENCDEC_TASKS_ENCDEC_INPUT;
+            feedback_task->enc_dec_segment_row = feedback_row_index;
+            feedback_task->pcs_wrapper         = taskPtr->pcs_wrapper;
+            feedback_task->tile_group_index    = taskPtr->tile_group_index;
             svt_post_full_object(wrapper_ptr);
         }
 
@@ -478,28 +475,26 @@ static Bool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmen
     return continue_processing_flag;
 }
 void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
-    EncodeContext *encode_context_ptr = scs->encode_context_ptr;
+    EncodeContext *enc_ctx = scs->enc_ctx;
     // The totalNumberOfReconFrames counter has to be write/read protected as
     //   it is used to determine the end of the stream.  If it is not protected
     //   the encoder might not properly terminate.
-    svt_block_on_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
+    svt_block_on_mutex(enc_ctx->total_number_of_recon_frame_mutex);
 
     if (!pcs->ppcs->is_alt_ref) {
         Bool             is_16bit = (scs->static_config.encoder_bit_depth > EB_EIGHT_BIT);
         EbObjectWrapper *output_recon_wrapper_ptr;
         // Get Recon Buffer
-        svt_get_empty_object(scs->encode_context_ptr->recon_output_fifo_ptr,
-                             &output_recon_wrapper_ptr);
+        svt_get_empty_object(scs->enc_ctx->recon_output_fifo_ptr, &output_recon_wrapper_ptr);
         EbBufferHeaderType *output_recon_ptr = (EbBufferHeaderType *)
                                                    output_recon_wrapper_ptr->object_ptr;
         output_recon_ptr->flags = 0;
 
         // START READ/WRITE PROTECTED SECTION
-        if (encode_context_ptr->total_number_of_recon_frames ==
-            encode_context_ptr->terminating_picture_number)
+        if (enc_ctx->total_number_of_recon_frames == enc_ctx->terminating_picture_number)
             output_recon_ptr->flags = EB_BUFFERFLAG_EOS;
 
-        encode_context_ptr->total_number_of_recon_frames++;
+        enc_ctx->total_number_of_recon_frames++;
 
         // STOP READ/WRITE PROTECTED SECTION
         output_recon_ptr->n_filled_len = 0;
@@ -546,10 +541,9 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
                                 svt_recon_picture_buffer_desc_ctor,
                                 (EbPtr)&temp_recon_desc_init_data);
 
-                if (pcs->ppcs->is_used_as_reference_flag == TRUE)
-                    film_grain_ptr =
-                        &((EbReferenceObject *)pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
-                             ->film_grain_params;
+                if (pcs->ppcs->is_ref == TRUE)
+                    film_grain_ptr = &((EbReferenceObject *)pcs->ppcs->ref_pic_wrapper->object_ptr)
+                                          ->film_grain_params;
                 else
                     film_grain_ptr = &pcs->ppcs->frm_hdr.film_grain_params;
 
@@ -579,7 +573,7 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
 
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <=
                                 output_recon_ptr->n_alloc_len),
-                               encode_context_ptr->app_callback_ptr,
+                               enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
 
             // Initialize Y recon buffer
@@ -604,7 +598,7 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
 
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <=
                                 output_recon_ptr->n_alloc_len),
-                               encode_context_ptr->app_callback_ptr,
+                               enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
 
             // Initialize U recon buffer
@@ -628,7 +622,7 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
 
             CHECK_REPORT_ERROR((output_recon_ptr->n_filled_len + sample_total_count <=
                                 output_recon_ptr->n_alloc_len),
-                               encode_context_ptr->app_callback_ptr,
+                               enc_ctx->app_callback_ptr,
                                EB_ENC_ROB_OF_ERROR);
 
             // Initialize V recon buffer
@@ -667,11 +661,12 @@ void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs) {
         // Post the Recon object
         svt_post_full_object(output_recon_wrapper_ptr);
     } else {
-        // Overlay and altref have 1 recon only, which is from overlay pictures. So the recon of the alt_ref is not sent to the application.
-        // However, to hanlde the end of sequence properly, total_number_of_recon_frames is increamented
-        encode_context_ptr->total_number_of_recon_frames++;
+        // Overlay and altref have 1 recon only, which is from overlay pictures. So the recon of the
+        // alt_ref is not sent to the application. However, to hanlde the end of sequence properly,
+        // total_number_of_recon_frames is increamented
+        enc_ctx->total_number_of_recon_frames++;
     }
-    svt_release_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
+    svt_release_mutex(enc_ctx->total_number_of_recon_frame_mutex);
 }
 
 //************************************/
@@ -818,8 +813,8 @@ static double aom_highbd_ssim2(const uint8_t *img1, int stride_img1, const uint8
 }
 
 void free_temporal_filtering_buffer(PictureControlSet *pcs, SequenceControlSet *scs) {
-    // save_source_picture_ptr will be allocated only if temporal_filtering_on is true in svt_av1_init_temporal_filtering().
-    if (!pcs->ppcs->temporal_filtering_on) {
+    // save_source_picture_ptr will be allocated only if do_tf is true in svt_av1_init_temporal_filtering().
+    if (!pcs->ppcs->do_tf) {
         return;
     }
 
@@ -843,8 +838,7 @@ EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet
     const uint32_t ss_y = scs->subsampling_y;
 
     EbPictureBufferDesc *recon_ptr;
-    EbPictureBufferDesc *input_pic = (EbPictureBufferDesc *)
-                                         pcs->ppcs->enhanced_unscaled_picture_ptr;
+    EbPictureBufferDesc *input_pic = (EbPictureBufferDesc *)pcs->ppcs->enhanced_unscaled_pic;
     svt_aom_get_recon_pic(pcs, &recon_ptr, is_16bit);
     // upscale recon if resized
     EbPictureBufferDesc *upscaled_recon = NULL;
@@ -879,7 +873,7 @@ EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet
 
         // if current source picture was temporally filtered, use an alternative buffer which stores
         // the original source picture
-        if (pcs->ppcs->temporal_filtering_on == TRUE) {
+        if (pcs->ppcs->do_tf == TRUE) {
             assert(pcs->ppcs->save_source_picture_width == input_pic->width &&
                    pcs->ppcs->save_source_picture_height == input_pic->height);
             buffer_y  = pcs->ppcs->save_source_picture_ptr[0];
@@ -927,7 +921,7 @@ EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet
         pcs->ppcs->cb_ssim   = cb_ssim;
         pcs->ppcs->cr_ssim   = cr_ssim;
 
-        if (free_memory && pcs->ppcs->temporal_filtering_on == TRUE) {
+        if (free_memory && pcs->ppcs->do_tf == TRUE) {
             EB_FREE_ARRAY(buffer_y);
             EB_FREE_ARRAY(buffer_cb);
             EB_FREE_ARRAY(buffer_cr);
@@ -1071,7 +1065,7 @@ EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet
             EbByte buffer_cr, buffer_bit_inc_cr;
             int    bd, shift;
 
-            if (pcs->ppcs->temporal_filtering_on == TRUE) {
+            if (pcs->ppcs->do_tf == TRUE) {
                 assert(pcs->ppcs->save_source_picture_width == input_pic->width &&
                        pcs->ppcs->save_source_picture_height == input_pic->height);
                 buffer_y          = pcs->ppcs->save_source_picture_ptr[0];
@@ -1088,12 +1082,11 @@ EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet
                                                 ss_y);
 
                 uint8_t *uncompressed_pics[3];
-                EB_MALLOC_ARRAY(uncompressed_pics[0],
-                                pcs->ppcs->enhanced_unscaled_picture_ptr->luma_size);
+                EB_MALLOC_ARRAY(uncompressed_pics[0], pcs->ppcs->enhanced_unscaled_pic->luma_size);
                 EB_MALLOC_ARRAY(uncompressed_pics[1],
-                                pcs->ppcs->enhanced_unscaled_picture_ptr->chroma_size);
+                                pcs->ppcs->enhanced_unscaled_pic->chroma_size);
                 EB_MALLOC_ARRAY(uncompressed_pics[2],
-                                pcs->ppcs->enhanced_unscaled_picture_ptr->chroma_size);
+                                pcs->ppcs->enhanced_unscaled_pic->chroma_size);
 
                 svt_c_unpack_compressed_10bit(input_pic->buffer_bit_inc_y,
                                               input_pic->stride_bit_inc_y / 4,
@@ -1181,7 +1174,7 @@ EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet
             pcs->ppcs->cb_ssim   = cb_ssim;
             pcs->ppcs->cr_ssim   = cr_ssim;
 
-            if (free_memory && pcs->ppcs->temporal_filtering_on == TRUE) {
+            if (free_memory && pcs->ppcs->do_tf == TRUE) {
                 EB_FREE_ARRAY(buffer_y);
                 EB_FREE_ARRAY(buffer_cb);
                 EB_FREE_ARRAY(buffer_cr);
@@ -1189,7 +1182,7 @@ EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet
                 EB_FREE_ARRAY(buffer_bit_inc_cb);
                 EB_FREE_ARRAY(buffer_bit_inc_cr);
             }
-            if (pcs->ppcs->temporal_filtering_on == FALSE) {
+            if (pcs->ppcs->do_tf == FALSE) {
                 EB_FREE_ARRAY(buffer_bit_inc_y);
                 EB_FREE_ARRAY(buffer_bit_inc_cb);
                 EB_FREE_ARRAY(buffer_bit_inc_cr);
@@ -1207,8 +1200,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, B
     const uint32_t ss_y = scs->subsampling_y;
 
     EbPictureBufferDesc *recon_ptr;
-    EbPictureBufferDesc *input_pic = (EbPictureBufferDesc *)
-                                         pcs->ppcs->enhanced_unscaled_picture_ptr;
+    EbPictureBufferDesc *input_pic = (EbPictureBufferDesc *)pcs->ppcs->enhanced_unscaled_pic;
     svt_aom_get_recon_pic(pcs, &recon_ptr, is_16bit);
 
     // upscale recon if resized
@@ -1242,7 +1234,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, B
 
         // if current source picture was temporally filtered, use an alternative buffer which stores
         // the original source picture
-        if (pcs->ppcs->temporal_filtering_on == TRUE) {
+        if (pcs->ppcs->do_tf == TRUE) {
             assert(pcs->ppcs->save_source_picture_width == input_pic->width &&
                    pcs->ppcs->save_source_picture_height == input_pic->height);
             buffer_y  = pcs->ppcs->save_source_picture_ptr[0];
@@ -1319,7 +1311,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, B
         pcs->ppcs->cb_sse   = sse_total[1];
         pcs->ppcs->cr_sse   = sse_total[2];
 
-        if (free_memory && pcs->ppcs->temporal_filtering_on == TRUE) {
+        if (free_memory && pcs->ppcs->do_tf == TRUE) {
             EB_FREE_ARRAY(buffer_y);
             EB_FREE_ARRAY(buffer_cb);
             EB_FREE_ARRAY(buffer_cr);
@@ -1536,7 +1528,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, B
             EbByte buffer_cb, buffer_bit_inc_cb;
             EbByte buffer_cr, buffer_bit_inc_cr;
 
-            if (pcs->ppcs->temporal_filtering_on == TRUE) {
+            if (pcs->ppcs->do_tf == TRUE) {
                 assert(pcs->ppcs->save_source_picture_width == input_pic->width &&
                        pcs->ppcs->save_source_picture_height == input_pic->height);
                 buffer_y          = pcs->ppcs->save_source_picture_ptr[0];
@@ -1553,12 +1545,11 @@ EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, B
                                                 ss_y);
 
                 uint8_t *uncompressed_pics[3];
-                EB_MALLOC_ARRAY(uncompressed_pics[0],
-                                pcs->ppcs->enhanced_unscaled_picture_ptr->luma_size);
+                EB_MALLOC_ARRAY(uncompressed_pics[0], pcs->ppcs->enhanced_unscaled_pic->luma_size);
                 EB_MALLOC_ARRAY(uncompressed_pics[1],
-                                pcs->ppcs->enhanced_unscaled_picture_ptr->chroma_size);
+                                pcs->ppcs->enhanced_unscaled_pic->chroma_size);
                 EB_MALLOC_ARRAY(uncompressed_pics[2],
-                                pcs->ppcs->enhanced_unscaled_picture_ptr->chroma_size);
+                                pcs->ppcs->enhanced_unscaled_pic->chroma_size);
 
                 svt_c_unpack_compressed_10bit(input_pic->buffer_bit_inc_y,
                                               input_pic->stride_bit_inc_y / 4,
@@ -1670,7 +1661,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, B
 
             sse_total[2] = residual_distortion;
 
-            if (free_memory && pcs->ppcs->temporal_filtering_on == TRUE) {
+            if (free_memory && pcs->ppcs->do_tf == TRUE) {
                 EB_FREE_ARRAY(buffer_y);
                 EB_FREE_ARRAY(buffer_cb);
                 EB_FREE_ARRAY(buffer_cr);
@@ -1678,7 +1669,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, B
                 EB_FREE_ARRAY(buffer_bit_inc_cb);
                 EB_FREE_ARRAY(buffer_bit_inc_cr);
             }
-            if (pcs->ppcs->temporal_filtering_on == FALSE) {
+            if (pcs->ppcs->do_tf == FALSE) {
                 EB_FREE_ARRAY(buffer_bit_inc_y);
                 EB_FREE_ARRAY(buffer_bit_inc_cb);
                 EB_FREE_ARRAY(buffer_bit_inc_cr);
@@ -1693,13 +1684,12 @@ EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, B
 }
 
 void pad_ref_and_set_flags(PictureControlSet *pcs, SequenceControlSet *scs) {
-    EbReferenceObject *reference_object = (EbReferenceObject *)
-                                              pcs->ppcs->reference_picture_wrapper_ptr->object_ptr;
+    EbReferenceObject *ref_object = (EbReferenceObject *)pcs->ppcs->ref_pic_wrapper->object_ptr;
 
-    EbPictureBufferDesc
-        *ref_pic_ptr; //= (EbPictureBufferDesc *)reference_object->reference_picture;
-    EbPictureBufferDesc
-        *ref_pic_16bit_ptr; // =   (EbPictureBufferDesc *)reference_object->reference_picture16bit;
+    //= (EbPictureBufferDesc *)ref_object->reference_picture;
+    EbPictureBufferDesc *ref_pic_ptr;
+    // =   (EbPictureBufferDesc *)ref_object->reference_picture16bit;
+    EbPictureBufferDesc *ref_pic_16bit_ptr;
 
     {
         svt_aom_get_recon_pic(pcs, &ref_pic_ptr, 0);
@@ -1854,14 +1844,14 @@ void pad_ref_and_set_flags(PictureControlSet *pcs, SequenceControlSet *scs) {
             (ref_pic_16bit_ptr->height + ss_y + (ref_pic_ptr->org_y << 1)) >> ss_y);
     }
     // set up the ref POC
-    reference_object->ref_poc = pcs->ppcs->picture_number;
+    ref_object->ref_poc = pcs->ppcs->picture_number;
 
     // set up the QP
-    reference_object->qp = (uint8_t)pcs->ppcs->picture_qp;
+    ref_object->qp = (uint8_t)pcs->ppcs->picture_qp;
 
     // set up the Slice Type
-    reference_object->slice_type = pcs->ppcs->slice_type;
-    reference_object->r0         = pcs->ppcs->r0;
+    ref_object->slice_type = pcs->ppcs->slice_type;
+    ref_object->r0         = pcs->ppcs->r0;
 }
 void set_obmc_controls(ModeDecisionContext *mdctxt, uint8_t obmc_mode) {
     ObmcControls *obmc_ctrls = &mdctxt->obmc_ctrls;
@@ -3741,7 +3731,7 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         // reduce_unipred_candidates
         cand_reduction_ctrls->reduce_unipred_candidates =
-            (!pcs->ppcs->is_used_as_reference_flag ||
+            (!pcs->ppcs->is_ref ||
              ((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
               me_8x8_cost_variance < (500 * picture_qp) &&
               me_64x64_distortion < (500 * picture_qp)))
@@ -3783,7 +3773,7 @@ static void set_cand_reduction_ctrls(PictureControlSet *pcs, ModeDecisionContext
 
         // reduce_unipred_candidates
         cand_reduction_ctrls->reduce_unipred_candidates =
-            (!pcs->ppcs->is_used_as_reference_flag ||
+            (!pcs->ppcs->is_ref ||
              ((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
               me_8x8_cost_variance < (500 * picture_qp) &&
               me_64x64_distortion < (500 * picture_qp)))
@@ -5724,7 +5714,7 @@ void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
         break;
     case 3:
         ctrls->zero_y_coeff_exit            = 1;
-        ctrls->chroma_detector_level        = ppcs->is_used_as_reference_flag ? 2 : 3;
+        ctrls->chroma_detector_level        = ppcs->is_ref ? 2 : 3;
         ctrls->skip_nrst_nrst_luma_tx       = 1;
         ctrls->skip_tx_th                   = 25;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -5734,7 +5724,7 @@ void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
         break;
     case 4:
         ctrls->zero_y_coeff_exit            = 1;
-        ctrls->chroma_detector_level        = ppcs->is_used_as_reference_flag ? 2 : 3;
+        ctrls->chroma_detector_level        = ppcs->is_ref ? 2 : 3;
         ctrls->skip_nrst_nrst_luma_tx       = 1;
         ctrls->skip_tx_th                   = 25;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -5744,7 +5734,7 @@ void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
         break;
     case 5:
         ctrls->zero_y_coeff_exit            = 1;
-        ctrls->chroma_detector_level        = ppcs->is_used_as_reference_flag ? 2 : 3;
+        ctrls->chroma_detector_level        = ppcs->is_ref ? 2 : 3;
         ctrls->skip_nrst_nrst_luma_tx       = 1;
         ctrls->skip_tx_th                   = 50;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -5754,7 +5744,7 @@ void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t
         break;
     case 6:
         ctrls->zero_y_coeff_exit            = 1;
-        ctrls->chroma_detector_level        = ppcs->is_used_as_reference_flag ? 2 : 3;
+        ctrls->chroma_detector_level        = ppcs->is_ref ? 2 : 3;
         ctrls->skip_nrst_nrst_luma_tx       = 1;
         ctrls->skip_tx_th                   = 70;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -5836,7 +5826,7 @@ static Bool get_sb_tpl_intra_stats(PictureControlSet *pcs, ModeDecisionContext *
     // Check that TPL data is available and that INTRA was tested in TPL.
     // Note that not all INTRA modes may be tested in TPL.
     if (ppcs->tpl_ctrls.enable && ppcs->tpl_src_data_ready &&
-        (ppcs->is_used_as_reference_flag || !ppcs->tpl_ctrls.disable_intra_pred_nref)) {
+        (ppcs->is_ref || !ppcs->tpl_ctrls.disable_intra_pred_nref)) {
         const int      aligned16_width = (ppcs->aligned_width + 15) >> 4;
         const uint32_t mb_origin_x     = ctx->sb_origin_x;
         const uint32_t mb_origin_y     = ctx->sb_origin_y;
@@ -6017,7 +6007,7 @@ void set_tx_shortcut_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx,
         ctrls->bypass_tx_when_zcoeff = 1;
         ctrls->apply_pf_on_coeffs    = 1;
         ctrls->use_mds3_shortcuts_th = 25;
-        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 1 : 0;
+        ctrls->chroma_detector_level = ppcs->is_ref ? 1 : 0;
         ctrls->use_neighbour_info    = 1;
         break;
     case 5:
@@ -6030,8 +6020,9 @@ void set_tx_shortcut_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx,
     default: assert(0); break;
     }
 
-    // Chroma detector should be used in M12 and below (at least in REF frames) to prevent blurring artifacts in some clips
-    if (tx_shortcut_level && ppcs->is_used_as_reference_flag && pcs->enc_mode <= ENC_M12)
+    // Chroma detector should be used in M12 and below (at least in REF frames) to prevent blurring
+    // artifacts in some clips
+    if (tx_shortcut_level && ppcs->is_ref && pcs->enc_mode <= ENC_M12)
         assert(ctrls->chroma_detector_level &&
                "Chroma detector should be used for ref frames in low presets to prevent blurring "
                "artifacts.");
@@ -6151,12 +6142,12 @@ static void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *s
             } else if (pd0_level <= LPD0_LVL_2) {
                 if (pcs->slice_type == I_SLICE || pcs->ppcs->transition_present == 1)
                     subres_level = 1;
-                else if (pcs->ppcs->is_used_as_reference_flag)
+                else if (pcs->ppcs->is_ref)
                     subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
                 else
                     subres_level = 2;
             } else {
-                if (pcs->ppcs->is_used_as_reference_flag)
+                if (pcs->ppcs->is_ref)
                     subres_level = (ctx->depth_removal_ctrls.enabled &&
                                     (ctx->depth_removal_ctrls.disallow_below_16x16 ||
                                      ctx->depth_removal_ctrls.disallow_below_32x32 ||
@@ -6170,7 +6161,7 @@ static void signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet  *s
             if (pd0_level <= LPD0_LVL_1)
                 subres_level = 0;
             else
-                subres_level = pcs->ppcs->is_used_as_reference_flag ? 0 : 2;
+                subres_level = pcs->ppcs->is_ref ? 0 : 2;
         }
     }
     set_subres_controls(ctx, subres_level);
@@ -6190,7 +6181,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet   *pcs,
                                                    ModeDecisionContext *ctx) {
     Pd1Level                 lpd1_level       = ctx->lpd1_ctrls.pd1_level;
     PictureParentControlSet *ppcs             = pcs->ppcs;
-    const uint8_t            is_ref           = ppcs->is_used_as_reference_flag;
+    const uint8_t            is_ref           = ppcs->is_ref;
     const EbInputResolution  input_resolution = ppcs->input_resolution;
     const uint8_t            is_islice        = pcs->slice_type == I_SLICE;
     const SliceType          slice_type       = pcs->slice_type;
@@ -6430,7 +6421,7 @@ EbErrorType svt_aom_signal_derivation_enc_dec_kernel_oq(SequenceControlSet  *scs
     EncMode                  enc_mode             = pcs->enc_mode;
     uint8_t                  pd_pass              = ctx->pd_pass;
     PictureParentControlSet *ppcs                 = pcs->ppcs;
-    const uint8_t            is_ref               = ppcs->is_used_as_reference_flag;
+    const uint8_t            is_ref               = ppcs->is_ref;
     const uint8_t            is_base              = ppcs->temporal_layer_index == 0;
     const EbInputResolution  input_resolution     = ppcs->input_resolution;
     const uint8_t            is_islice            = pcs->slice_type == I_SLICE;
@@ -7332,7 +7323,7 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
 
     return EB_ErrorNone;
 }
-void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, int *const q,
+void recode_loop_update_q(PictureParentControlSet *ppcs, int *const loop, int *const q,
                           int *const q_low, int *const q_high, const int top_index,
                           const int bottom_index, int *const undershoot_seen,
                           int *const overshoot_seen, int *const low_cr_seen, const int loop_count);
@@ -7342,62 +7333,62 @@ void svt_aom_init_enc_dec_segement(PictureParentControlSet *ppcs);
 
 static void recode_loop_decision_maker(PictureControlSet *pcs, SequenceControlSet *scs,
                                        Bool *do_recode) {
-    PictureParentControlSet *ppcs_ptr           = pcs->ppcs;
-    EncodeContext *const     encode_context_ptr = ppcs_ptr->scs->encode_context_ptr;
-    RATE_CONTROL *const      rc                 = &(encode_context_ptr->rc);
-    int32_t                  loop               = 0;
-    FrameHeader             *frm_hdr            = &ppcs_ptr->frm_hdr;
-    int32_t                  q                  = frm_hdr->quantization_params.base_q_idx;
-    if (ppcs_ptr->loop_count == 0) {
-        ppcs_ptr->q_low  = ppcs_ptr->bottom_index;
-        ppcs_ptr->q_high = ppcs_ptr->top_index;
+    PictureParentControlSet *ppcs    = pcs->ppcs;
+    EncodeContext *const     enc_ctx = ppcs->scs->enc_ctx;
+    RATE_CONTROL *const      rc      = &(enc_ctx->rc);
+    int32_t                  loop    = 0;
+    FrameHeader             *frm_hdr = &ppcs->frm_hdr;
+    int32_t                  q       = frm_hdr->quantization_params.base_q_idx;
+    if (ppcs->loop_count == 0) {
+        ppcs->q_low  = ppcs->bottom_index;
+        ppcs->q_high = ppcs->top_index;
     }
 
     // Update q and decide whether to do a recode loop
-    recode_loop_update_q(ppcs_ptr,
+    recode_loop_update_q(ppcs,
                          &loop,
                          &q,
-                         &ppcs_ptr->q_low,
-                         &ppcs_ptr->q_high,
-                         ppcs_ptr->top_index,
-                         ppcs_ptr->bottom_index,
-                         &ppcs_ptr->undershoot_seen,
-                         &ppcs_ptr->overshoot_seen,
-                         &ppcs_ptr->low_cr_seen,
-                         ppcs_ptr->loop_count);
+                         &ppcs->q_low,
+                         &ppcs->q_high,
+                         ppcs->top_index,
+                         ppcs->bottom_index,
+                         &ppcs->undershoot_seen,
+                         &ppcs->overshoot_seen,
+                         &ppcs->low_cr_seen,
+                         ppcs->loop_count);
 
     // Special case for overlay frame.
-    if (loop && ppcs_ptr->is_overlay && ppcs_ptr->projected_frame_size < rc->max_frame_bandwidth) {
+    if (loop && ppcs->is_overlay && ppcs->projected_frame_size < rc->max_frame_bandwidth) {
         loop = 0;
     }
     *do_recode = loop == 1;
 
     if (*do_recode) {
-        ppcs_ptr->loop_count++;
+        ppcs->loop_count++;
 
         frm_hdr->quantization_params.base_q_idx = (uint8_t)CLIP3(
             (int32_t)quantizer_to_qindex[scs->static_config.min_qp_allowed],
             (int32_t)quantizer_to_qindex[scs->static_config.max_qp_allowed],
             q);
 
-        ppcs_ptr->picture_qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
-                                              (int32_t)scs->static_config.max_qp_allowed,
-                                              (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
-        pcs->picture_qp      = ppcs_ptr->picture_qp;
+        ppcs->picture_qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
+                                          (int32_t)scs->static_config.max_qp_allowed,
+                                          (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+        pcs->picture_qp  = ppcs->picture_qp;
 
         // 2pass QPM with tpl_la
-        if (scs->static_config.enable_adaptive_quantization == 2 && ppcs_ptr->tpl_ctrls.enable &&
-            ppcs_ptr->r0 != 0)
+        if (scs->static_config.enable_adaptive_quantization == 2 && ppcs->tpl_ctrls.enable &&
+            ppcs->r0 != 0)
             svt_aom_sb_qp_derivation_tpl_la(pcs);
         else {
-            ppcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
+            ppcs->frm_hdr.delta_q_params.delta_q_present = 0;
             for (int sb_addr = 0; sb_addr < pcs->sb_total_count; ++sb_addr) {
                 SuperBlock *sb_ptr = pcs->sb_ptr_array[sb_addr];
                 sb_ptr->qindex     = quantizer_to_qindex[pcs->picture_qp];
             }
         }
     } else {
-        ppcs_ptr->loop_count = 0;
+        ppcs->loop_count = 0;
     }
 }
 
@@ -7747,53 +7738,53 @@ static void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
 
 /* EncDec (Encode Decode) Kernel */
 /*********************************************************************************
-*
-* @brief
-*  The EncDec process contains both the mode decision and the encode pass engines
-*  of the encoder. The mode decision encapsulates multiple partitioning decision (PD) stages
-*  and multiple mode decision (MD) stages. At the end of the last mode decision stage,
-*  the winning partition and modes combinations per block get reconstructed in the encode pass
-*  operation which is part of the common section between the encoder and the decoder
-*  Common encoder and decoder tasks such as Intra Prediction, Motion Compensated Prediction,
-*  Transform, Quantization are performed in this process.
-*
-* @par Description:
-*  The EncDec process operates on an SB basis.
-*  The EncDec process takes as input the Motion Vector XY pairs candidates
-*  and corresponding distortion estimates from the Motion Estimation process,
-*  and the picture-level QP from the Rate Control process. All inputs are passed
-*  through the picture structures: PictureControlSet and SequenceControlSet.
-*  local structures of type EncDecContext and ModeDecisionContext contain all parameters
-*  and results corresponding to the SuperBlock being processed.
-*  each of the context structures is local to on thread and thus there's no risk of
-*  affecting (changing) other SBs data in the process.
-*
-* @param[in] Vector
-*  Motion Vector XY pairs from Motion Estimation process
-*
-* @param[in] Distortion Estimates
-*  Distortion estimates from Motion Estimation process
-*
-* @param[in] Picture QP
-*  Picture Quantization Parameter from Rate Control process
-*
-* @param[out] Blocks
-*  The encode pass takes the selected partitioning and coding modes as input from mode decision for each
-*  superblock and produces quantized transfrom coefficients for the residuals and the appropriate syntax
-*  elements to be sent to the entropy coding engine
-*
-********************************************************************************/
+ *
+ * @brief
+ *  The EncDec process contains both the mode decision and the encode pass engines
+ *  of the encoder. The mode decision encapsulates multiple partitioning decision (PD) stages
+ *  and multiple mode decision (MD) stages. At the end of the last mode decision stage,
+ *  the winning partition and modes combinations per block get reconstructed in the encode pass
+ *  operation which is part of the common section between the encoder and the decoder
+ *  Common encoder and decoder tasks such as Intra Prediction, Motion Compensated Prediction,
+ *  Transform, Quantization are performed in this process.
+ *
+ * @par Description:
+ *  The EncDec process operates on an SB basis.
+ *  The EncDec process takes as input the Motion Vector XY pairs candidates
+ *  and corresponding distortion estimates from the Motion Estimation process,
+ *  and the picture-level QP from the Rate Control process. All inputs are passed
+ *  through the picture structures: PictureControlSet and SequenceControlSet.
+ *  local structures of type EncDecContext and ModeDecisionContext contain all parameters
+ *  and results corresponding to the SuperBlock being processed.
+ *  each of the context structures is local to on thread and thus there's no risk of
+ *  affecting (changing) other SBs data in the process.
+ *
+ * @param[in] Vector
+ *  Motion Vector XY pairs from Motion Estimation process
+ *
+ * @param[in] Distortion Estimates
+ *  Distortion estimates from Motion Estimation process
+ *
+ * @param[in] Picture QP
+ *  Picture Quantization Parameter from Rate Control process
+ *
+ * @param[out] Blocks
+ *  The encode pass takes the selected partitioning and coding modes as input from mode decision for
+ *each superblock and produces quantized transfrom coefficients for the residuals and the
+ *appropriate syntax elements to be sent to the entropy coding engine
+ *
+ ********************************************************************************/
 void *svt_aom_mode_decision_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext *thread_context_ptr = (EbThreadContext *)input_ptr;
-    EncDecContext   *ed_ctx             = (EncDecContext *)thread_context_ptr->priv;
+    EbThreadContext *thread_ctx = (EbThreadContext *)input_ptr;
+    EncDecContext   *ed_ctx     = (EncDecContext *)thread_ctx->priv;
 
     // Input
-    EbObjectWrapper *enc_dec_tasks_wrapper_ptr;
+    EbObjectWrapper *enc_dec_tasks_wrapper;
 
     // Output
-    EbObjectWrapper *enc_dec_results_wrapper_ptr;
-    EncDecResults   *enc_dec_results_ptr;
+    EbObjectWrapper *enc_dec_results_wrapper;
+    EncDecResults   *enc_dec_results;
     // SB Loop variables
     SuperBlock *sb_ptr;
     uint16_t    sb_index;
@@ -7819,18 +7810,17 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
 
     for (;;) {
         // Get Mode Decision Results
-        EB_GET_FULL_OBJECT(ed_ctx->mode_decision_input_fifo_ptr, &enc_dec_tasks_wrapper_ptr);
+        EB_GET_FULL_OBJECT(ed_ctx->mode_decision_input_fifo_ptr, &enc_dec_tasks_wrapper);
 
-        EncDecTasks       *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
-        PictureControlSet *pcs               = (PictureControlSet *)
-                                     enc_dec_tasks_ptr->pcs_wrapper_ptr->object_ptr;
-        SequenceControlSet             *scs    = pcs->scs;
-        ModeDecisionContext            *md_ctx = ed_ctx->md_ctx;
-        struct PictureParentControlSet *ppcs   = pcs->ppcs;
-        md_ctx->encoder_bit_depth              = (uint8_t)scs->static_config.encoder_bit_depth;
+        EncDecTasks         *enc_dec_tasks = (EncDecTasks *)enc_dec_tasks_wrapper->object_ptr;
+        PictureControlSet   *pcs    = (PictureControlSet *)enc_dec_tasks->pcs_wrapper->object_ptr;
+        SequenceControlSet  *scs    = pcs->scs;
+        ModeDecisionContext *md_ctx = ed_ctx->md_ctx;
+        struct PictureParentControlSet *ppcs = pcs->ppcs;
+        md_ctx->encoder_bit_depth            = (uint8_t)scs->static_config.encoder_bit_depth;
         md_ctx->corrupted_mv_check = (pcs->ppcs->aligned_width >= (1 << (MV_IN_USE_BITS - 3))) ||
             (pcs->ppcs->aligned_height >= (1 << (MV_IN_USE_BITS - 3)));
-        ed_ctx->tile_group_index = enc_dec_tasks_ptr->tile_group_index;
+        ed_ctx->tile_group_index = enc_dec_tasks->tile_group_index;
         ed_ctx->coded_sb_count   = 0;
         segments_ptr             = pcs->enc_dec_segment_ctrl[ed_ctx->tile_group_index];
         // SB Constants
@@ -7843,18 +7833,18 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
         ed_ctx->tot_skip_coded_area  = 0;
         // Bypass encdec for the first pass
         if (scs->static_config.pass == ENC_FIRST_PASS || svt_aom_is_pic_skipped(pcs->ppcs)) {
-            svt_release_object(pcs->ppcs->me_data_wrapper_ptr);
-            pcs->ppcs->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
-            pcs->ppcs->pa_me_data          = NULL;
+            svt_release_object(pcs->ppcs->me_data_wrapper);
+            pcs->ppcs->me_data_wrapper = (EbObjectWrapper *)NULL;
+            pcs->ppcs->pa_me_data      = NULL;
             // Get Empty EncDec Results
-            svt_get_empty_object(ed_ctx->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
-            enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
-            enc_dec_results_ptr->pcs_wrapper_ptr = enc_dec_tasks_ptr->pcs_wrapper_ptr;
+            svt_get_empty_object(ed_ctx->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper);
+            enc_dec_results              = (EncDecResults *)enc_dec_results_wrapper->object_ptr;
+            enc_dec_results->pcs_wrapper = enc_dec_tasks->pcs_wrapper;
 
             // Post EncDec Results
-            svt_post_full_object(enc_dec_results_wrapper_ptr);
+            svt_post_full_object(enc_dec_results_wrapper);
         } else {
-            if (enc_dec_tasks_ptr->input_type == ENCDEC_TASKS_SUPERRES_INPUT) {
+            if (enc_dec_tasks->input_type == ENCDEC_TASKS_SUPERRES_INPUT) {
                 // do as dorecode do
                 pcs->enc_dec_coded_sb_count = 0;
                 // re-init mode decision configuration for qp update for re-encode frame
@@ -7863,24 +7853,23 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                 svt_aom_init_enc_dec_segement(pcs->ppcs);
 
                 // post tile based encdec task
-                EbObjectWrapper *enc_dec_re_encode_tasks_wrapper_ptr;
+                EbObjectWrapper *enc_dec_re_encode_tasks_wrapper;
                 uint16_t         tg_count = pcs->ppcs->tile_group_cols * pcs->ppcs->tile_group_rows;
                 for (uint16_t tile_group_idx = 0; tile_group_idx < tg_count; tile_group_idx++) {
                     svt_get_empty_object(ed_ctx->enc_dec_feedback_fifo_ptr,
-                                         &enc_dec_re_encode_tasks_wrapper_ptr);
+                                         &enc_dec_re_encode_tasks_wrapper);
 
                     EncDecTasks *enc_dec_re_encode_tasks_ptr =
-                        (EncDecTasks *)enc_dec_re_encode_tasks_wrapper_ptr->object_ptr;
-                    enc_dec_re_encode_tasks_ptr->pcs_wrapper_ptr =
-                        enc_dec_tasks_ptr->pcs_wrapper_ptr;
+                        (EncDecTasks *)enc_dec_re_encode_tasks_wrapper->object_ptr;
+                    enc_dec_re_encode_tasks_ptr->pcs_wrapper      = enc_dec_tasks->pcs_wrapper;
                     enc_dec_re_encode_tasks_ptr->input_type       = ENCDEC_TASKS_MDC_INPUT;
                     enc_dec_re_encode_tasks_ptr->tile_group_index = tile_group_idx;
 
                     // Post the Full Results Object
-                    svt_post_full_object(enc_dec_re_encode_tasks_wrapper_ptr);
+                    svt_post_full_object(enc_dec_re_encode_tasks_wrapper);
                 }
 
-                svt_release_object(enc_dec_tasks_wrapper_ptr);
+                svt_release_object(enc_dec_tasks_wrapper);
                 continue;
             }
 
@@ -7904,7 +7893,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
             // Segment-loop
             while (assign_enc_dec_segments(segments_ptr,
                                            &segment_index,
-                                           enc_dec_tasks_ptr,
+                                           enc_dec_tasks,
                                            ed_ctx->enc_dec_feedback_fifo_ptr) == TRUE) {
                 x_sb_start_index = segments_ptr->x_start_array[segment_index];
                 y_sb_start_index = segments_ptr->y_start_array[segment_index];
@@ -8016,7 +8005,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             if (pcs->cdf_ctrl.update_coef)
                                 svt_aom_estimate_coefficients_rate(ed_ctx->md_ctx->rate_est_table,
                                                                    &pcs->ec_ctx_array[sb_index]);
-                            ed_ctx->md_ctx->md_rate_estimation_ptr = ed_ctx->md_ctx->rate_est_table;
+                            ed_ctx->md_ctx->md_rate_est_ctx = ed_ctx->md_ctx->rate_est_table;
                         }
                         // Configure the SB
                         svt_aom_mode_decision_configure_sb(
@@ -8225,9 +8214,10 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                      sb_origin_y,
                                                      sb_index,
                                                      ed_ctx->md_ctx);
-                        //if (/*ppcs->is_used_as_reference_flag &&*/ md_ctx->hbd_md == 0 && scs->static_config.encoder_bit_depth > EB_EIGHT_BIT)
-                        //    md_ctx->bypass_encdec = 0;
-                        // Encode Pass
+                        // if (/*ppcs->is_ref &&*/ md_ctx->hbd_md == 0 &&
+                        // scs->static_config.encoder_bit_depth > EB_EIGHT_BIT)
+                        //     md_ctx->bypass_encdec = 0;
+                        //  Encode Pass
                         if (!ed_ctx->md_ctx->bypass_encdec) {
                             svt_aom_encode_decode(
                                 scs, pcs, sb_ptr, sb_index, sb_origin_x, sb_origin_y, ed_ctx);
@@ -8253,7 +8243,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                 Bool do_recode = FALSE;
                 if ((scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR ||
                      scs->static_config.max_bit_rate != 0) &&
-                    scs->encode_context_ptr->recode_loop != DISALLOW_RECODE) {
+                    scs->enc_ctx->recode_loop != DISALLOW_RECODE) {
                     recode_loop_decision_maker(pcs, scs, &do_recode);
                 }
 
@@ -8277,73 +8267,69 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                     mode_decision_configuration_init_qp_update(pcs);
                     // init segment for re-encode frame
                     svt_aom_init_enc_dec_segement(pcs->ppcs);
-                    EbObjectWrapper *enc_dec_re_encode_tasks_wrapper_ptr;
+                    EbObjectWrapper *enc_dec_re_encode_tasks_wrapper;
                     uint16_t tg_count = pcs->ppcs->tile_group_cols * pcs->ppcs->tile_group_rows;
                     for (uint16_t tile_group_idx = 0; tile_group_idx < tg_count; tile_group_idx++) {
                         svt_get_empty_object(ed_ctx->enc_dec_feedback_fifo_ptr,
-                                             &enc_dec_re_encode_tasks_wrapper_ptr);
+                                             &enc_dec_re_encode_tasks_wrapper);
 
                         EncDecTasks *enc_dec_re_encode_tasks_ptr =
-                            (EncDecTasks *)enc_dec_re_encode_tasks_wrapper_ptr->object_ptr;
-                        enc_dec_re_encode_tasks_ptr->pcs_wrapper_ptr =
-                            enc_dec_tasks_ptr->pcs_wrapper_ptr;
+                            (EncDecTasks *)enc_dec_re_encode_tasks_wrapper->object_ptr;
+                        enc_dec_re_encode_tasks_ptr->pcs_wrapper      = enc_dec_tasks->pcs_wrapper;
                         enc_dec_re_encode_tasks_ptr->input_type       = ENCDEC_TASKS_MDC_INPUT;
                         enc_dec_re_encode_tasks_ptr->tile_group_index = tile_group_idx;
 
                         // Post the Full Results Object
-                        svt_post_full_object(enc_dec_re_encode_tasks_wrapper_ptr);
+                        svt_post_full_object(enc_dec_re_encode_tasks_wrapper);
                     }
 
                 } else {
                     EB_FREE_ARRAY(pcs->ec_ctx_array);
-                    // Copy film grain data from parent picture set to the reference object for further reference
+                    // Copy film grain data from parent picture set to the reference object for
+                    // further reference
                     if (scs->seq_header.film_grain_params_present) {
-                        if (pcs->ppcs->is_used_as_reference_flag == TRUE &&
-                            pcs->ppcs->reference_picture_wrapper_ptr) {
-                            ((EbReferenceObject *)
-                                 pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
+                        if (pcs->ppcs->is_ref == TRUE && pcs->ppcs->ref_pic_wrapper) {
+                            ((EbReferenceObject *)pcs->ppcs->ref_pic_wrapper->object_ptr)
                                 ->film_grain_params = pcs->ppcs->frm_hdr.film_grain_params;
                         }
                     }
                     // Force each frame to update their data so future frames can use it,
                     // even if the current frame did not use it.  This enables REF frames to
-                    // have the feature off, while NREF frames can have it on.  Used for multi-threading.
-                    if (pcs->ppcs->is_used_as_reference_flag == TRUE &&
-                        pcs->ppcs->reference_picture_wrapper_ptr)
+                    // have the feature off, while NREF frames can have it on.  Used for
+                    // multi-threading.
+                    if (pcs->ppcs->is_ref == TRUE && pcs->ppcs->ref_pic_wrapper)
                         for (int frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame)
-                            ((EbReferenceObject *)
-                                 pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
+                            ((EbReferenceObject *)pcs->ppcs->ref_pic_wrapper->object_ptr)
                                 ->global_motion[frame] = pcs->ppcs->global_motion[frame];
                     svt_memcpy(pcs->ppcs->av1x->sgrproj_restore_cost,
-                               pcs->md_rate_estimation_array->sgrproj_restore_fac_bits,
+                               pcs->md_rate_est_ctx->sgrproj_restore_fac_bits,
                                2 * sizeof(int32_t));
                     svt_memcpy(pcs->ppcs->av1x->switchable_restore_cost,
-                               pcs->md_rate_estimation_array->switchable_restore_fac_bits,
+                               pcs->md_rate_est_ctx->switchable_restore_fac_bits,
                                3 * sizeof(int32_t));
                     svt_memcpy(pcs->ppcs->av1x->wiener_restore_cost,
-                               pcs->md_rate_estimation_array->wiener_restore_fac_bits,
+                               pcs->md_rate_est_ctx->wiener_restore_fac_bits,
                                2 * sizeof(int32_t));
                     pcs->ppcs->av1x->rdmult =
                         ed_ctx->pic_full_lambda[(ed_ctx->bit_depth == EB_TEN_BIT) ? EB_10_BIT_MD
                                                                                   : EB_8_BIT_MD];
                     if (pcs->ppcs->superres_total_recode_loop == 0) {
-                        svt_release_object(pcs->ppcs->me_data_wrapper_ptr);
-                        pcs->ppcs->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
-                        pcs->ppcs->pa_me_data          = NULL;
+                        svt_release_object(pcs->ppcs->me_data_wrapper);
+                        pcs->ppcs->me_data_wrapper = (EbObjectWrapper *)NULL;
+                        pcs->ppcs->pa_me_data      = NULL;
                     }
                     // Get Empty EncDec Results
-                    svt_get_empty_object(ed_ctx->enc_dec_output_fifo_ptr,
-                                         &enc_dec_results_wrapper_ptr);
-                    enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
-                    enc_dec_results_ptr->pcs_wrapper_ptr = enc_dec_tasks_ptr->pcs_wrapper_ptr;
+                    svt_get_empty_object(ed_ctx->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper);
+                    enc_dec_results = (EncDecResults *)enc_dec_results_wrapper->object_ptr;
+                    enc_dec_results->pcs_wrapper = enc_dec_tasks->pcs_wrapper;
 
                     // Post EncDec Results
-                    svt_post_full_object(enc_dec_results_wrapper_ptr);
+                    svt_post_full_object(enc_dec_results_wrapper);
                 }
             }
         }
         // Release Mode Decision Results
-        svt_release_object(enc_dec_tasks_wrapper_ptr);
+        svt_release_object(enc_dec_tasks_wrapper);
     }
     return NULL;
 }

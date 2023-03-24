@@ -102,7 +102,7 @@ typedef struct {
 typedef int(fractional_mv_step_fp)(MacroBlockD *xd, const struct AV1Common *const cm,
                                    const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,
                                    MV *bestmv, int *distortion, unsigned int *sse1, int qp,
-                                   BlockSize bsize, uint8_t svt_aom_is_intra_bordered);
+                                   BlockSize bsize, uint8_t is_intra_bordered);
 extern fractional_mv_step_fp svt_av1_find_best_sub_pixel_tree;
 extern fractional_mv_step_fp svt_av1_find_best_sub_pixel_tree_pruned;
 

@@ -19,11 +19,11 @@
 extern "C" {
 #endif
 /**************************************
-     * Process Results
-     **************************************/
+ * Process Results
+ **************************************/
 typedef struct MotionEstimationResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
     uint32_t         segment_index;
     uint8_t          task_type;
 } MotionEstimationResults;

@@ -1354,7 +1354,7 @@ static void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index,
                 if (!scs->ipp_pass_ctrls.bypass_zz_check ||
                     me_ctx->me_type != ME_FIRST_PASS)
                     if ((x_search_center != 0 || y_search_center != 0) &&
-                        (me_ctx->is_used_as_reference_flag == TRUE)) {
+                        (me_ctx->is_ref == TRUE)) {
 
                         best_hme_sad = check_00_center(
                             ref_pic_ptr,
@@ -1374,7 +1374,7 @@ static void integer_search_b64(PictureParentControlSet *pcs, uint32_t b64_index,
                     }
                 if (me_ctx->me_sr_adjustment_ctrls.enable_me_sr_adjustment == 2) {
                     if ((hme_is_accuarte && (best_hme_sad < (24 * 24))) ||
-                        (me_ctx->is_used_as_reference_flag && me_ctx->search_results[list_index][ref_pic_index].hme_sad < (24 * 24))) {
+                        (me_ctx->is_ref && me_ctx->search_results[list_index][ref_pic_index].hme_sad < (24 * 24))) {
                         search_area_height = search_area_height / 2;
                     }
                 }
@@ -3010,8 +3010,8 @@ EbErrorType svt_aom_open_loop_intra_search_mb(PictureParentControlSet *pcs, uint
             cu_origin_x = b64_geom->org_x + blk_stats_ptr->org_x;
             cu_origin_y = b64_geom->org_y + blk_stats_ptr->org_y;
             if ((blk_stats_ptr->org_x % 16) == 0 && (blk_stats_ptr->org_y % 16) == 0 &&
-                ((pcs->enhanced_picture_ptr->width - cu_origin_x) < 16 ||
-                 (pcs->enhanced_picture_ptr->height - cu_origin_y) < 16))
+                ((pcs->enhanced_pic->width - cu_origin_x) < 16 ||
+                 (pcs->enhanced_pic->height - cu_origin_y) < 16))
                 small_boundary_blk = TRUE;
         }
 
@@ -3033,9 +3033,9 @@ EbErrorType svt_aom_open_loop_intra_search_mb(PictureParentControlSet *pcs, uint
                 pcs->pa_me_data
                     ->ois_mb_results[(cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4)];
             memset(ois_mb_results_ptr, 0, sizeof(*ois_mb_results_ptr));
-            uint8_t *src = input_ptr->buffer_y + pcs->enhanced_picture_ptr->org_x +
+            uint8_t *src = input_ptr->buffer_y + pcs->enhanced_pic->org_x +
                 cu_origin_x +
-                (pcs->enhanced_picture_ptr->org_y + cu_origin_y) * input_ptr->stride_y;
+                (pcs->enhanced_pic->org_y + cu_origin_y) * input_ptr->stride_y;
 
             // Fill Neighbor Arrays
             svt_aom_update_neighbor_samples_array_open_loop_mb(1, // use_top_righ_bottom_left

@@ -22,7 +22,7 @@
 typedef struct PictureDecisionReorderEntry {
     EbDctor          dctor;
     uint64_t         picture_number;
-    EbObjectWrapper *parent_pcs_wrapper_ptr;
+    EbObjectWrapper *ppcs_wrapper;
 } PictureDecisionReorderEntry;
 
 extern EbErrorType svt_aom_picture_decision_reorder_entry_ctor(

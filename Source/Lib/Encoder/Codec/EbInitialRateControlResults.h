@@ -21,7 +21,7 @@
  **************************************/
 typedef struct InitialRateControlResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
     Bool             superres_recode;
 } InitialRateControlResults;
 

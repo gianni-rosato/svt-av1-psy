@@ -23,7 +23,7 @@ extern "C" {
  **************************************/
 typedef struct RateControlResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
     Bool             superres_recode;
 } RateControlResults;
 

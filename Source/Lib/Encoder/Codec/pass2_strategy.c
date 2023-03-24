@@ -113,9 +113,9 @@ static void subtract_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *fram
 }
 
 // This function returns the maximum target rate per frame.
-static int frame_max_bits(const RATE_CONTROL *rc, const EncodeContext *encode_context_ptr) {
+static int frame_max_bits(const RATE_CONTROL *rc, const EncodeContext *enc_ctx) {
     int64_t max_bits = ((int64_t)rc->avg_frame_bandwidth *
-                        (int64_t)encode_context_ptr->two_pass_cfg.vbrmax_section) /
+                        (int64_t)enc_ctx->two_pass_cfg.vbrmax_section) /
         100;
     if (max_bits < 0)
         max_bits = 0;
@@ -197,10 +197,10 @@ static int find_qindex_by_rate_with_correction(int desired_bits_per_mb, aom_bit_
 static int get_twopass_worst_quality(PictureParentControlSet *pcs, const double section_err,
                                      double inactive_zone, int section_target_bandwidth,
                                      double group_weight_factor) {
-    SequenceControlSet         *scs                = pcs->scs;
-    EncodeContext              *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const         rc                 = &encode_context_ptr->rc;
-    const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
+    SequenceControlSet         *scs     = pcs->scs;
+    EncodeContext              *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const         rc      = &enc_ctx->rc;
+    const RateControlCfg *const rc_cfg  = &enc_ctx->rc_cfg;
     uint32_t                    mb_cols;
     uint32_t                    mb_rows;
     if (scs->mid_pass_ctrls.ds) {
@@ -542,11 +542,11 @@ static int av1_calc_arf_boost(const TWO_PASS *twopass, const RATE_CONTROL *rc,
  * \return The target total number of bits for this GF/ARF group.
  */
 static int64_t calculate_total_gf_group_bits(PictureParentControlSet *pcs, double gf_group_err) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
-    TWO_PASS *const     twopass            = &scs->twopass;
-    const int           max_bits           = frame_max_bits(rc, encode_context_ptr);
+    SequenceControlSet *scs      = pcs->scs;
+    EncodeContext      *enc_ctx  = scs->enc_ctx;
+    RATE_CONTROL *const rc       = &enc_ctx->rc;
+    TWO_PASS *const     twopass  = &scs->twopass;
+    const int           max_bits = frame_max_bits(rc, enc_ctx);
     int64_t             total_group_bits;
     // Calculate the bits to be allocated to the group as a whole.
     if ((twopass->kf_group_bits > 0) && (twopass->kf_group_error_left > 0)) {
@@ -683,9 +683,9 @@ static void   allocate_gf_group_bits(PictureParentControlSet *pcs, RATE_CONTROL 
 #define RC_FACTOR_MIN 0.75
 #define RC_FACTOR_MAX 2
 static INLINE void set_baseline_gf_interval(PictureParentControlSet *pcs, int arf_position) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
     if (frame_is_intra_only(pcs) && pcs->idr_flag)
         rc->baseline_gf_interval = MAX(arf_position - 1, 1);
     else
@@ -710,10 +710,10 @@ static void init_gf_stats(GF_GROUP_STATS *gf_stats) {
 
 #define FRAME_OVERHEAD_BITS 200
 static int av1_rc_clamp_iframe_target_size(PictureParentControlSet *pcs, int target) {
-    SequenceControlSet         *scs                = pcs->scs;
-    EncodeContext              *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const         rc                 = &encode_context_ptr->rc;
-    const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
+    SequenceControlSet         *scs     = pcs->scs;
+    EncodeContext              *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const         rc      = &enc_ctx->rc;
+    const RateControlCfg *const rc_cfg  = &enc_ctx->rc_cfg;
     if (rc_cfg->max_intra_bitrate_pct) {
         const int max_rate = rc->avg_frame_bandwidth * rc_cfg->max_intra_bitrate_pct / 100;
         target             = AOMMIN(target, max_rate);
@@ -725,12 +725,12 @@ static int av1_rc_clamp_iframe_target_size(PictureParentControlSet *pcs, int tar
 
 static int av1_calc_pframe_target_size_one_pass_cbr(PictureParentControlSet *pcs,
                                                     SvtAv1FrameUpdateType    frame_update_type) {
-    SequenceControlSet         *scs                = pcs->scs;
-    EncodeContext              *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const         rc                 = &encode_context_ptr->rc;
-    const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
-    const int64_t               diff               = rc->optimal_buffer_level - rc->buffer_level;
-    const int64_t               one_pct_bits       = 1 + rc->optimal_buffer_level / 100;
+    SequenceControlSet         *scs          = pcs->scs;
+    EncodeContext              *enc_ctx      = scs->enc_ctx;
+    RATE_CONTROL *const         rc           = &enc_ctx->rc;
+    const RateControlCfg *const rc_cfg       = &enc_ctx->rc_cfg;
+    const int64_t               diff         = rc->optimal_buffer_level - rc->buffer_level;
+    const int64_t               one_pct_bits = 1 + rc->optimal_buffer_level / 100;
     int min_frame_target = AOMMAX(rc->avg_frame_bandwidth >> 4, FRAME_OVERHEAD_BITS);
     int target;
 
@@ -763,9 +763,9 @@ static int av1_calc_pframe_target_size_one_pass_cbr(PictureParentControlSet *pcs
 }
 // buffer level weights to calculate the target rate for Key frame
 static int av1_calc_iframe_target_size_one_pass_cbr(PictureParentControlSet *pcs) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
     int                 target;
     const int           w = 3;
     if (pcs->picture_number == 0) {
@@ -788,7 +788,7 @@ static int av1_calc_iframe_target_size_one_pass_cbr(PictureParentControlSet *pcs
 static void av1_gop_bit_allocation(PictureParentControlSet *ppcs, RATE_CONTROL *const rc,
                                    int is_key_frame, int gf_interval, int use_arf,
                                    int64_t gf_group_bits);
-int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
+int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs);
 #define MAX_GF_BOOST 5400
 /***********************************************************************************
 * calculate_gf_stats()
@@ -797,9 +797,9 @@ int         svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
 static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf_stats,
                                FIRSTPASS_STATS *this_frame, int *use_alt_ref) {
     SequenceControlSet          *scs        = ppcs->scs;
-    RATE_CONTROL *const          rc         = &scs->encode_context_ptr->rc;
+    RATE_CONTROL *const          rc         = &scs->enc_ctx->rc;
     TWO_PASS *const              twopass    = &scs->twopass;
-    FrameInfo                   *frame_info = &scs->encode_context_ptr->frame_info;
+    FrameInfo                   *frame_info = &scs->enc_ctx->frame_info;
     FIRSTPASS_STATS              next_frame;
     const FIRSTPASS_STATS *const start_pos = twopass->stats_in;
 
@@ -807,7 +807,7 @@ static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf
 
     // Load stats for the current frame.
     double mod_frame_err = calculate_modified_err(
-        frame_info, twopass, &(scs->encode_context_ptr->two_pass_cfg), this_frame);
+        frame_info, twopass, &(scs->enc_ctx->two_pass_cfg), this_frame);
 
     // Note the error of the frame at the start of the group. This will be
     // the GF frame error if we code a normal gf.
@@ -828,7 +828,7 @@ static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf
         ++i;
         // Accumulate error score of frames in this gf group.
         mod_frame_err = calculate_modified_err(
-            frame_info, twopass, &(scs->encode_context_ptr->two_pass_cfg), this_frame);
+            frame_info, twopass, &(scs->enc_ctx->two_pass_cfg), this_frame);
         // accumulate stats for this frame
         accumulate_this_frame_stats(this_frame, mod_frame_err, gf_stats);
 
@@ -890,13 +890,13 @@ static void calculate_gf_stats(PictureParentControlSet *ppcs, GF_GROUP_STATS *gf
     reset_fpf_position(twopass, start_pos);
 }
 /***********************************************************************************
-* calculate_active_worst_quality()
-* Calculate an estimate of the maxq needed for the group.
-************************************************************************************/
+ * calculate_active_worst_quality()
+ * Calculate an estimate of the maxq needed for the group.
+ ************************************************************************************/
 static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GROUP_STATS gf_stats) {
     SequenceControlSet *scs        = ppcs->scs;
-    RATE_CONTROL *const rc         = &scs->encode_context_ptr->rc;
-    FrameInfo          *frame_info = &scs->encode_context_ptr->frame_info;
+    RATE_CONTROL *const rc         = &scs->enc_ctx->rc;
+    FrameInfo          *frame_info = &scs->enc_ctx->frame_info;
 
     // Calculate an estimate of the maxq needed for the group.
     // We are more agressive about correcting for sections
@@ -971,14 +971,14 @@ static void calculate_active_worst_quality(PictureParentControlSet *ppcs, GF_GRO
  * \param[in]    pcs         PictureParentControlSet
  * \param[in]    this_frame      First pass statistics structure
  *
- * \return Nothing is returned. Instead, encode_context_ptr->gf_group is changed.
+ * \return Nothing is returned. Instead, enc_ctx->gf_group is changed.
  */
 static void gf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STATS *this_frame) {
-    SequenceControlSet          *scs                = pcs->scs;
-    EncodeContext               *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const          rc                 = &encode_context_ptr->rc;
-    TWO_PASS *const              twopass            = &scs->twopass;
-    const FIRSTPASS_STATS *const start_pos          = twopass->stats_in;
+    SequenceControlSet          *scs       = pcs->scs;
+    EncodeContext               *enc_ctx   = scs->enc_ctx;
+    RATE_CONTROL *const          rc        = &enc_ctx->rc;
+    TWO_PASS *const              twopass   = &scs->twopass;
+    const FIRSTPASS_STATS *const start_pos = twopass->stats_in;
 #ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif
@@ -1025,9 +1025,9 @@ static void av1_gop_bit_allocation(PictureParentControlSet *ppcs, RATE_CONTROL *
  */
 static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
     SequenceControlSet          *scs                  = pcs->scs;
-    EncodeContext               *encode_context_ptr   = scs->encode_context_ptr;
+    EncodeContext               *enc_ctx              = scs->enc_ctx;
     TWO_PASS *const              twopass              = &scs->twopass;
-    FrameInfo *const             frame_info           = &encode_context_ptr->frame_info;
+    FrameInfo *const             frame_info           = &enc_ctx->frame_info;
     int                          num_stats            = 0;
     double                       modified_error_total = 0.0;
     double                       coded_error_total    = 0.0;
@@ -1044,13 +1044,12 @@ static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame
         if (input_stats(twopass, &this_frame) == EOF)
             break;
     }
-    // Calculate modified_error_min and modified_error_max which is needed in modified_error_total calculation
+    // Calculate modified_error_min and modified_error_max which is needed in modified_error_total
+    // calculation
     const double avg_error = coded_error_total / DOUBLE_DIVIDE_CHECK(num_stats);
 
-    twopass->modified_error_min = (avg_error * encode_context_ptr->two_pass_cfg.vbrmin_section) /
-        100;
-    twopass->modified_error_max = (avg_error * encode_context_ptr->two_pass_cfg.vbrmax_section) /
-        100;
+    twopass->modified_error_min = (avg_error * enc_ctx->two_pass_cfg.vbrmin_section) / 100;
+    twopass->modified_error_max = (avg_error * enc_ctx->two_pass_cfg.vbrmax_section) / 100;
     reset_fpf_position(twopass, start_position);
     this_frame = this_frame_ref;
 
@@ -1058,7 +1057,7 @@ static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame
     while (twopass->stats_in <= twopass->stats_buf_ctx->stats_in_end) {
         // Accumulate error.
         modified_error_total += calculate_modified_err(
-            frame_info, twopass, &(encode_context_ptr->two_pass_cfg), &this_frame);
+            frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
         // Load the next frame's stats.
         if (input_stats(twopass, &this_frame) == EOF)
             break;
@@ -1077,9 +1076,9 @@ static void lap_rc_init(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame
  */
 static double lap_rc_group_error_calc(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
     SequenceControlSet          *scs                  = pcs->scs;
-    EncodeContext               *encode_context_ptr   = scs->encode_context_ptr;
+    EncodeContext               *enc_ctx              = scs->enc_ctx;
     TWO_PASS *const              twopass              = &scs->twopass;
-    FrameInfo *const             frame_info           = &encode_context_ptr->frame_info;
+    FrameInfo *const             frame_info           = &enc_ctx->frame_info;
     int                          num_stats            = 0;
     double                       modified_error_total = 0.0;
     const FIRSTPASS_STATS *const start_position       = twopass->stats_in;
@@ -1090,7 +1089,7 @@ static double lap_rc_group_error_calc(PictureParentControlSet *pcs, FIRSTPASS_ST
         num_stats++;
         // Accumulate error.
         modified_error_total += calculate_modified_err(
-            frame_info, twopass, &(encode_context_ptr->two_pass_cfg), &this_frame);
+            frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
         // Load the next frame's stats.
         if (input_stats(twopass, &this_frame) == EOF)
             break;
@@ -1111,13 +1110,13 @@ static double lap_rc_group_error_calc(PictureParentControlSet *pcs, FIRSTPASS_ST
  */
 static void set_kf_interval_variables(PictureParentControlSet *pcs, FIRSTPASS_STATS *this_frame,
                                       double *kf_group_err, int num_frames_to_detect_scenecut) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
-    TWO_PASS *const     twopass            = &scs->twopass;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
+    TWO_PASS *const     twopass = &scs->twopass;
 
     int              frames_to_key = 0;
-    FrameInfo *const frame_info    = &encode_context_ptr->frame_info;
+    FrameInfo *const frame_info    = &enc_ctx->frame_info;
     if (num_frames_to_detect_scenecut == 0)
         return;
 
@@ -1128,7 +1127,7 @@ static void set_kf_interval_variables(PictureParentControlSet *pcs, FIRSTPASS_ST
         // Accumulate kf group error.
         if (kf_group_err != NULL)
             *kf_group_err += calculate_modified_err(
-                frame_info, twopass, &(encode_context_ptr->two_pass_cfg), this_frame);
+                frame_info, twopass, &(enc_ctx->two_pass_cfg), this_frame);
 
         ++frames_to_key;
         if (input_stats(twopass, this_frame) == EOF)
@@ -1142,10 +1141,10 @@ static void set_kf_interval_variables(PictureParentControlSet *pcs, FIRSTPASS_ST
         rc->frames_to_key = AOMMIN((scs->static_config.intra_period_length + 1), frames_to_key);
 }
 static int64_t get_kf_group_bits(PictureParentControlSet *pcs, double kf_group_err) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
-    TWO_PASS *const     twopass            = &scs->twopass;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
+    TWO_PASS *const     twopass = &scs->twopass;
     int64_t             kf_group_bits;
     if (scs->lap_rc && pcs->frames_in_sw < scs->static_config.intra_period_length &&
         !pcs->end_of_sequence_region)
@@ -1157,10 +1156,10 @@ static int64_t get_kf_group_bits(PictureParentControlSet *pcs, double kf_group_e
     return kf_group_bits;
 }
 static int calc_avg_stats(PictureParentControlSet *pcs, FIRSTPASS_STATS *avg_frame_stat) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
-    TWO_PASS *const     twopass            = &scs->twopass;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
+    TWO_PASS *const     twopass = &scs->twopass;
     FIRSTPASS_STATS     cur_frame;
     av1_zero(cur_frame);
     int num_frames = 0;
@@ -1198,12 +1197,12 @@ static int calc_avg_stats(PictureParentControlSet *pcs, FIRSTPASS_STATS *avg_fra
 static double get_kf_boost_score(PictureParentControlSet *pcs, double kf_raw_err,
                                  double *zero_motion_accumulator, double *sr_accumulator,
                                  int use_avg_stat) {
-    SequenceControlSet         *scs                = pcs->scs;
-    EncodeContext              *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const         rc                 = &encode_context_ptr->rc;
-    TWO_PASS *const             twopass            = &scs->twopass;
-    FrameInfo                  *frame_info         = &encode_context_ptr->frame_info;
-    const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
+    SequenceControlSet         *scs        = pcs->scs;
+    EncodeContext              *enc_ctx    = scs->enc_ctx;
+    RATE_CONTROL *const         rc         = &enc_ctx->rc;
+    TWO_PASS *const             twopass    = &scs->twopass;
+    FrameInfo                  *frame_info = &enc_ctx->frame_info;
+    const RateControlCfg *const rc_cfg     = &enc_ctx->rc_cfg;
     FIRSTPASS_STATS             frame_stat;
     av1_zero(frame_stat);
     int          i = 0, num_stat_used = 0;
@@ -1254,11 +1253,11 @@ static double get_kf_boost_score(PictureParentControlSet *pcs, double kf_raw_err
 // Only works for key frames, and scene change is not detected for now
 /*****************************************************************************/
 static void kf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STATS this_frame) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
-    TWO_PASS *const     twopass            = &scs->twopass;
-    FrameInfo          *frame_info         = &encode_context_ptr->frame_info;
+    SequenceControlSet *scs        = pcs->scs;
+    EncodeContext      *enc_ctx    = scs->enc_ctx;
+    RATE_CONTROL *const rc         = &enc_ctx->rc;
+    TWO_PASS *const     twopass    = &scs->twopass;
+    FrameInfo          *frame_info = &enc_ctx->frame_info;
     FIRSTPASS_STATS     next_frame;
     av1_zero(next_frame);
 
@@ -1278,15 +1277,14 @@ static void kf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STA
     twopass->kf_group_bits       = 0; // Total bits available to kf group
     twopass->kf_group_error_left = 0; // Group modified error score.
     kf_raw_err                   = this_frame.intra_error;
-    kf_mod_err                   = calculate_modified_err(
-        frame_info, twopass, &(encode_context_ptr->two_pass_cfg), &this_frame);
+    kf_mod_err = calculate_modified_err(frame_info, twopass, &(enc_ctx->two_pass_cfg), &this_frame);
     set_kf_interval_variables(
         pcs, &this_frame, &kf_group_err, scs->static_config.intra_period_length + 1);
 
     // Calculate the number of bits that should be assigned to the kf group.
     if ((twopass->bits_left > 0 && twopass->modified_error_left > 0.0) || scs->lap_rc) {
         // Maximum number of bits for a single normal frame (not key frame).
-        const int max_bits = frame_max_bits(rc, encode_context_ptr);
+        const int max_bits = frame_max_bits(rc, enc_ctx);
 
         // Maximum number of bits allocated to the key frame group.
         int64_t max_grp_bits;
@@ -1378,10 +1376,10 @@ static void kf_group_rate_assingment(PictureParentControlSet *pcs, FIRSTPASS_STA
 #define DEFAULT_GRP_WEIGHT 1.0
 
 static int get_section_target_bandwidth(PictureParentControlSet *pcs) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    TWO_PASS *const     twopass            = &scs->twopass;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    TWO_PASS *const     twopass = &scs->twopass;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
     int                 section_target_bandwidth;
     const int frames_left = (int)(twopass->stats_buf_ctx->total_stats->count - pcs->picture_number);
     if (scs->lap_rc)
@@ -1392,11 +1390,11 @@ static int get_section_target_bandwidth(PictureParentControlSet *pcs) {
 }
 
 static void process_first_pass_stats(PictureParentControlSet *pcs, FIRSTPASS_STATS *this_frame) {
-    SequenceControlSet         *scs                = pcs->scs;
-    EncodeContext              *encode_context_ptr = scs->encode_context_ptr;
-    TWO_PASS *const             twopass            = &scs->twopass;
-    RATE_CONTROL *const         rc                 = &encode_context_ptr->rc;
-    const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
+    SequenceControlSet         *scs     = pcs->scs;
+    EncodeContext              *enc_ctx = scs->enc_ctx;
+    TWO_PASS *const             twopass = &scs->twopass;
+    RATE_CONTROL *const         rc      = &enc_ctx->rc;
+    const RateControlCfg *const rc_cfg  = &enc_ctx->rc_cfg;
     uint32_t                    mb_rows;
     if (scs->mid_pass_ctrls.ds) {
         mb_rows = 2 * (scs->max_input_luma_height + 16 - 1) / 16;
@@ -1489,10 +1487,10 @@ static void is_new_gf_group(PictureParentControlSet *pcs) {
 #define DEFAULT_KF_BOOST_RT 2300
 #define DEFAULT_GF_BOOST_RT 2000
 static int set_gf_interval_update_onepass_rt(PictureParentControlSet *pcs) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
-    int                 gf_update          = 0;
+    SequenceControlSet *scs       = pcs->scs;
+    EncodeContext      *enc_ctx   = scs->enc_ctx;
+    RATE_CONTROL *const rc        = &enc_ctx->rc;
+    int                 gf_update = 0;
     // GF update based on frames_till_gf_update_due, also
     // force upddate on resize pending frame or for scene change.
     if ((pcs->frame_offset % MAX_GF_INTERVAL) == 0) {
@@ -1506,25 +1504,24 @@ static int set_gf_interval_update_onepass_rt(PictureParentControlSet *pcs) {
     return gf_update;
 }
 
-void svt_aom_reset_update_frame_target(PictureParentControlSet *ppcs_ptr) {
-    SequenceControlSet *scs                = ppcs_ptr->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
-    rc->buffer_level                       = rc->optimal_buffer_level;
-    rc->bits_off_target                    = rc->optimal_buffer_level;
-    ppcs_ptr->this_frame_target            = av1_calc_pframe_target_size_one_pass_cbr(ppcs_ptr,
-                                                                           SVT_AV1_LF_UPDATE);
+void svt_aom_reset_update_frame_target(PictureParentControlSet *ppcs) {
+    SequenceControlSet *scs     = ppcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL       *rc      = &enc_ctx->rc;
+    rc->buffer_level            = rc->optimal_buffer_level;
+    rc->bits_off_target         = rc->optimal_buffer_level;
+    ppcs->this_frame_target     = av1_calc_pframe_target_size_one_pass_cbr(ppcs, SVT_AV1_LF_UPDATE);
 }
 
-extern void svt_av1_resize_reset_rc(PictureParentControlSet *ppcs_ptr, int32_t resize_width,
+extern void svt_av1_resize_reset_rc(PictureParentControlSet *ppcs, int32_t resize_width,
                                     int32_t resize_height, int32_t prev_width, int32_t prev_height);
-static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs_ptr) {
-    SequenceControlSet *scs                = ppcs_ptr->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL       *rc                 = &encode_context_ptr->rc;
-    RESIZE_ACTION       resize_action      = NO_RESIZE;
-    const int32_t       avg_qp_thr1        = 70;
-    const int32_t       avg_qp_thr2        = 50;
+static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs) {
+    SequenceControlSet *scs           = ppcs->scs;
+    EncodeContext      *enc_ctx       = scs->enc_ctx;
+    RATE_CONTROL       *rc            = &enc_ctx->rc;
+    RESIZE_ACTION       resize_action = NO_RESIZE;
+    const int32_t       avg_qp_thr1   = 70;
+    const int32_t       avg_qp_thr2   = 50;
     // Don't allow for resized frame to go below 160x90, resize in steps of 3/4.
     const int32_t min_width    = (160 * 4) / 3;
     const int32_t min_height   = (90 * 4) / 3;
@@ -1532,7 +1529,7 @@ static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs_ptr) {
 
     // Step 1: check frame type
     // Don't resize on key frame; reset the counters on key frame.
-    if (ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+    if (ppcs->frm_hdr.frame_type == KEY_FRAME) {
         rc->resize_avg_qp           = 0;
         rc->resize_count            = 0;
         rc->resize_buffer_underflow = 0;
@@ -1541,7 +1538,7 @@ static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs_ptr) {
 
     // Step 2: check frame size
     // No resizing down if frame size is below some limit.
-    if ((ppcs_ptr->frame_width * ppcs_ptr->frame_height) < min_width * min_height)
+    if ((ppcs->frame_width * ppcs->frame_height) < min_width * min_height)
         down_size_on = FALSE;
 
     // Step 3: calculate dynamic resize state
@@ -1594,8 +1591,8 @@ static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs_ptr) {
     // If decision is to resize, reset some quantities, and check is we should
     // reduce rate correction factor,
     if (resize_action != NO_RESIZE) {
-        int32_t resize_width     = ppcs_ptr->frame_width; // cpi->oxcf.frm_dim_cfg.width;
-        int32_t resize_height    = ppcs_ptr->frame_height; // cpi->oxcf.frm_dim_cfg.height;
+        int32_t resize_width     = ppcs->frame_width; // cpi->oxcf.frm_dim_cfg.width;
+        int32_t resize_height    = ppcs->frame_height; // cpi->oxcf.frm_dim_cfg.height;
         int32_t resize_scale_num = 1;
         int32_t resize_scale_den = 1;
         if (resize_action == DOWN_THREEFOUR || resize_action == UP_THREEFOUR) {
@@ -1608,16 +1605,16 @@ static void dynamic_resize_one_pass_cbr(PictureParentControlSet *ppcs_ptr) {
         resize_width  = resize_width * resize_scale_num / resize_scale_den;
         resize_height = resize_height * resize_scale_num / resize_scale_den;
         svt_av1_resize_reset_rc(
-            ppcs_ptr, resize_width, resize_height, ppcs_ptr->frame_width, ppcs_ptr->frame_height);
+            ppcs, resize_width, resize_height, ppcs->frame_width, ppcs->frame_height);
     }
     return;
 }
 
 void svt_aom_one_pass_rt_rate_alloc(PictureParentControlSet *pcs) {
-    SequenceControlSet *scs                = pcs->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
-    int                 target             = 0;
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
+    int                 target  = 0;
     // Set frame type.
     if (frame_is_intra_only(pcs))
         rc->kf_boost = DEFAULT_KF_BOOST_RT;
@@ -1657,7 +1654,7 @@ void svt_aom_one_pass_rt_rate_alloc(PictureParentControlSet *pcs) {
     // Set the GF interval and update flag.
     set_gf_interval_update_onepass_rt(pcs);
     // Set target size.
-    if (encode_context_ptr->rc_cfg.mode == AOM_CBR) {
+    if (enc_ctx->rc_cfg.mode == AOM_CBR) {
         if (pcs->frm_hdr.frame_type == KEY_FRAME) {
             target = av1_calc_iframe_target_size_one_pass_cbr(pcs);
         } else {
@@ -1702,11 +1699,11 @@ void svt_aom_process_rc_stat(PictureParentControlSet *pcs) {
 #define MAX_MB_RATE 250
 #define MAXRATE_1080P 2025000
 static void av1_rc_update_framerate(SequenceControlSet *scs /*, int width, int height*/) {
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
-    FrameInfo          *frame_info         = &encode_context_ptr->frame_info;
+    EncodeContext      *enc_ctx    = scs->enc_ctx;
+    RATE_CONTROL *const rc         = &enc_ctx->rc;
+    FrameInfo          *frame_info = &enc_ctx->frame_info;
     int                 vbr_max_bits;
-    const int           MBs = frame_info->num_mbs; //av1_get_MBs(width, height);
+    const int           MBs = frame_info->num_mbs; // av1_get_MBs(width, height);
 
     rc->avg_frame_bandwidth = (int)(scs->static_config.target_bit_rate /*oxcf->target_bandwidth*/ /
                                     scs->double_frame_rate);
@@ -1717,8 +1714,7 @@ static void av1_rc_update_framerate(SequenceControlSet *scs /*, int width, int h
     // a very high rate is given on the command line or the the rate cannnot
     // be acheived because of a user specificed max q (e.g. when the user
     // specifies lossless encode.
-    vbr_max_bits            = (int)(((int64_t)rc->avg_frame_bandwidth *
-                          encode_context_ptr->two_pass_cfg.vbrmax_section) /
+    vbr_max_bits = (int)(((int64_t)rc->avg_frame_bandwidth * enc_ctx->two_pass_cfg.vbrmax_section) /
                          100);
     rc->max_frame_bandwidth = AOMMAX(AOMMAX((MBs * MAX_MB_RATE), MAXRATE_1080P), vbr_max_bits);
 }
@@ -1731,8 +1727,8 @@ void svt_av1_new_framerate(SequenceControlSet *scs, double framerate) {
         scs /*, scs->seq_header.max_frame_width, scs->seq_header.max_frame_height*/);
 }
 void svt_aom_set_rc_param(SequenceControlSet *scs) {
-    EncodeContext *encode_context_ptr = scs->encode_context_ptr;
-    FrameInfo     *frame_info         = &encode_context_ptr->frame_info;
+    EncodeContext *enc_ctx    = scs->enc_ctx;
+    FrameInfo     *frame_info = &enc_ctx->frame_info;
 
     const int is_vbr = scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR;
     if (scs->mid_pass_ctrls.ds) {
@@ -1749,41 +1745,38 @@ void svt_aom_set_rc_param(SequenceControlSet *scs) {
     frame_info->num_mbs   = frame_info->mb_cols * frame_info->mb_rows;
     frame_info->bit_depth = scs->static_config.encoder_bit_depth;
     // input config  from options
-    encode_context_ptr->two_pass_cfg.vbrmin_section = scs->static_config.vbr_min_section_pct;
-    encode_context_ptr->two_pass_cfg.vbrmax_section = scs->static_config.vbr_max_section_pct;
-    encode_context_ptr->two_pass_cfg.vbrbias        = scs->static_config.vbr_bias_pct;
-    encode_context_ptr->rc_cfg.gf_cbr_boost_pct     = 0;
-    encode_context_ptr->rc_cfg.mode = scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR
-        ? AOM_VBR
-        : (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ? AOM_CBR : AOM_Q);
-    encode_context_ptr->rc_cfg.best_allowed_q = (int32_t)
+    enc_ctx->two_pass_cfg.vbrmin_section = scs->static_config.vbr_min_section_pct;
+    enc_ctx->two_pass_cfg.vbrmax_section = scs->static_config.vbr_max_section_pct;
+    enc_ctx->two_pass_cfg.vbrbias        = scs->static_config.vbr_bias_pct;
+    enc_ctx->rc_cfg.gf_cbr_boost_pct     = 0;
+    enc_ctx->rc_cfg.mode           = scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR
+                  ? AOM_VBR
+                  : (scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR ? AOM_CBR : AOM_Q);
+    enc_ctx->rc_cfg.best_allowed_q = (int32_t)
         quantizer_to_qindex[scs->static_config.min_qp_allowed];
-    encode_context_ptr->rc_cfg.worst_allowed_q = (int32_t)
+    enc_ctx->rc_cfg.worst_allowed_q = (int32_t)
         quantizer_to_qindex[scs->static_config.max_qp_allowed];
 
     if (scs->static_config.gop_constraint_rc) {
-        encode_context_ptr->rc_cfg.over_shoot_pct  = 0;
-        encode_context_ptr->rc_cfg.under_shoot_pct = 0;
+        enc_ctx->rc_cfg.over_shoot_pct  = 0;
+        enc_ctx->rc_cfg.under_shoot_pct = 0;
     } else {
-        encode_context_ptr->rc_cfg.over_shoot_pct  = scs->static_config.over_shoot_pct;
-        encode_context_ptr->rc_cfg.under_shoot_pct = scs->static_config.under_shoot_pct;
+        enc_ctx->rc_cfg.over_shoot_pct  = scs->static_config.over_shoot_pct;
+        enc_ctx->rc_cfg.under_shoot_pct = scs->static_config.under_shoot_pct;
     }
-    encode_context_ptr->rc_cfg.cq_level               = quantizer_to_qindex[scs->static_config.qp];
-    encode_context_ptr->rc_cfg.maximum_buffer_size_ms = is_vbr
-        ? 240000
-        : scs->static_config.maximum_buffer_size_ms;
-    encode_context_ptr->rc_cfg.starting_buffer_level_ms = is_vbr
-        ? 60000
-        : scs->static_config.starting_buffer_level_ms;
-    encode_context_ptr->rc_cfg.optimal_buffer_level_ms  = is_vbr
-         ? 60000
-         : scs->static_config.optimal_buffer_level_ms;
+    enc_ctx->rc_cfg.cq_level                 = quantizer_to_qindex[scs->static_config.qp];
+    enc_ctx->rc_cfg.maximum_buffer_size_ms   = is_vbr ? 240000
+                                                      : scs->static_config.maximum_buffer_size_ms;
+    enc_ctx->rc_cfg.starting_buffer_level_ms = is_vbr ? 60000
+                                                      : scs->static_config.starting_buffer_level_ms;
+    enc_ctx->rc_cfg.optimal_buffer_level_ms  = is_vbr ? 60000
+                                                      : scs->static_config.optimal_buffer_level_ms;
 
     // todo: to expose to a cli parameter
-    encode_context_ptr->rc_cfg.max_intra_bitrate_pct = 300;
+    enc_ctx->rc_cfg.max_intra_bitrate_pct = 300;
 
-    encode_context_ptr->sf_cfg.sframe_dist = scs->static_config.sframe_dist;
-    encode_context_ptr->sf_cfg.sframe_mode = scs->static_config.sframe_mode;
+    enc_ctx->sf_cfg.sframe_dist = scs->static_config.sframe_dist;
+    enc_ctx->sf_cfg.sframe_mode = scs->static_config.sframe_mode;
 }
 /******************************************************
  * Read Stat from File
@@ -1806,8 +1799,8 @@ static void read_stat_from_file(SequenceControlSet *scs) {
     twopass->stats_buf_ctx->total_stats->stat_struct.total_num_bits = total_num_bits;
 }
 void svt_av1_init_single_pass_lap(SequenceControlSet *scs) {
-    TWO_PASS *const twopass            = &scs->twopass;
-    EncodeContext  *encode_context_ptr = scs->encode_context_ptr;
+    TWO_PASS *const twopass = &scs->twopass;
+    EncodeContext  *enc_ctx = scs->enc_ctx;
     if (!twopass->stats_buf_ctx->stats_in_end)
         return;
 
@@ -1821,18 +1814,18 @@ void svt_av1_init_single_pass_lap(SequenceControlSet *scs) {
     twopass->modified_error_left = 0.0;
 
     // Reset the vbr bits off target counters
-    encode_context_ptr->rc.vbr_bits_off_target      = 0;
-    encode_context_ptr->rc.vbr_bits_off_target_fast = 0;
+    enc_ctx->rc.vbr_bits_off_target      = 0;
+    enc_ctx->rc.vbr_bits_off_target_fast = 0;
 
-    encode_context_ptr->rc.rate_error_estimate = 0;
+    enc_ctx->rc.rate_error_estimate = 0;
 
     // Static sequence monitor variables.
     twopass->kf_zeromotion_pct = 100;
 }
 void svt_av1_init_second_pass(SequenceControlSet *scs) {
-    TWO_PASS *const twopass            = &scs->twopass;
-    EncodeContext  *encode_context_ptr = scs->encode_context_ptr;
-    FrameInfo      *frame_info         = &encode_context_ptr->frame_info;
+    TWO_PASS *const twopass    = &scs->twopass;
+    EncodeContext  *enc_ctx    = scs->enc_ctx;
+    FrameInfo      *frame_info = &enc_ctx->frame_info;
 
     double           frame_rate;
     FIRSTPASS_STATS *stats;
@@ -1878,39 +1871,35 @@ void svt_av1_init_second_pass(SequenceControlSet *scs) {
         const double           avg_error = stats->coded_error / DOUBLE_DIVIDE_CHECK(stats->count);
         const FIRSTPASS_STATS *s         = twopass->stats_in;
         double                 modified_error_total = 0.0;
-        twopass->modified_error_min                 = (avg_error *
-                                       encode_context_ptr->two_pass_cfg.vbrmin_section) /
-            100;
-        twopass->modified_error_max = (avg_error *
-                                       encode_context_ptr->two_pass_cfg.vbrmax_section) /
-            100;
+        twopass->modified_error_min = (avg_error * enc_ctx->two_pass_cfg.vbrmin_section) / 100;
+        twopass->modified_error_max = (avg_error * enc_ctx->two_pass_cfg.vbrmax_section) / 100;
         while (s < twopass->stats_buf_ctx->stats_in_end) {
             modified_error_total += calculate_modified_err(
-                frame_info, twopass, &(encode_context_ptr->two_pass_cfg), s);
+                frame_info, twopass, &(enc_ctx->two_pass_cfg), s);
             ++s;
         }
         twopass->modified_error_left = modified_error_total;
     }
 
     // Reset the vbr bits off target counters
-    encode_context_ptr->rc.vbr_bits_off_target      = 0;
-    encode_context_ptr->rc.vbr_bits_off_target_fast = 0;
-    encode_context_ptr->rc.rate_error_estimate      = 0;
+    enc_ctx->rc.vbr_bits_off_target      = 0;
+    enc_ctx->rc.vbr_bits_off_target_fast = 0;
+    enc_ctx->rc.rate_error_estimate      = 0;
 
     // Static sequence monitor variables.
     twopass->kf_zeromotion_pct = 100;
 }
 /*********************************************************************************************
-* Find the initial QP to be used in the middle pass based on the target rate
-* and stats from previous pass
-***********************************************************************************************/
+ * Find the initial QP to be used in the middle pass based on the target rate
+ * and stats from previous pass
+ ***********************************************************************************************/
 void svt_aom_find_init_qp_middle_pass(SequenceControlSet *scs, PictureParentControlSet *pcs) {
-    TWO_PASS *const twopass            = &scs->twopass;
-    EncodeContext  *encode_context_ptr = scs->encode_context_ptr;
+    TWO_PASS *const twopass = &scs->twopass;
+    EncodeContext  *enc_ctx = scs->enc_ctx;
     if (scs->static_config.pass == ENC_MIDDLE_PASS && twopass->stats_buf_ctx->total_stats &&
         twopass->stats_buf_ctx->total_left_stats) {
-        RATE_CONTROL *const         rc     = &encode_context_ptr->rc;
-        const RateControlCfg *const rc_cfg = &encode_context_ptr->rc_cfg;
+        RATE_CONTROL *const         rc     = &enc_ctx->rc;
+        const RateControlCfg *const rc_cfg = &enc_ctx->rc_cfg;
         rc->worst_quality                  = rc_cfg->worst_allowed_q;
         rc->best_quality                   = rc_cfg->best_allowed_q;
         uint32_t mb_rows;
@@ -1936,22 +1925,22 @@ void svt_aom_find_init_qp_middle_pass(SequenceControlSet *scs, PictureParentCont
 
         rc->active_worst_quality = tmp_q;
         // For same pred pass, use the estimated QP as the sequence QP
-        scs->static_config.qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
+        scs->static_config.qp    = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
                                                (int32_t)scs->static_config.max_qp_allowed - 4,
                                                (int32_t)((tmp_q + 2) >> 2));
-        encode_context_ptr->rc_cfg.cq_level = scs->static_config.qp << 2;
+        enc_ctx->rc_cfg.cq_level = scs->static_config.qp << 2;
     }
 }
-int svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
-    return frame_is_intra_only(ppcs_ptr) || ppcs_ptr->update_type == SVT_AV1_ARF_UPDATE ||
-        ppcs_ptr->update_type == SVT_AV1_GF_UPDATE;
+int svt_aom_frame_is_kf_gf_arf(PictureParentControlSet *ppcs) {
+    return frame_is_intra_only(ppcs) || ppcs->update_type == SVT_AV1_ARF_UPDATE ||
+        ppcs->update_type == SVT_AV1_GF_UPDATE;
 }
 /*********************************************************************************************
-* Update the internal RC and TWO_PASS struct stats based on the received feedback
-***********************************************************************************************/
+ * Update the internal RC and TWO_PASS struct stats based on the received feedback
+ ***********************************************************************************************/
 void svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs) {
     SequenceControlSet              *scs          = ppcs->scs;
-    EncodeContext                   *enc_cont     = scs->encode_context_ptr;
+    EncodeContext                   *enc_cont     = scs->enc_ctx;
     RATE_CONTROL *const              rc           = &enc_cont->rc;
     const RateControlCfg *const      rc_cfg       = &enc_cont->rc_cfg;
     RateControlIntervalParamContext *rc_param_ptr = ppcs->rate_control_param_ptr;
@@ -2057,19 +2046,19 @@ void svt_av1_twopass_postencode_update_gop_const(PictureParentControlSet *ppcs) 
         }
     }
 }
-void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
-    SequenceControlSet         *scs                = ppcs_ptr->scs;
-    EncodeContext              *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const         rc                 = &encode_context_ptr->rc;
-    TWO_PASS *const             twopass            = &scs->twopass;
-    const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
+void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs) {
+    SequenceControlSet         *scs     = ppcs->scs;
+    EncodeContext              *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const         rc      = &enc_ctx->rc;
+    TWO_PASS *const             twopass = &scs->twopass;
+    const RateControlCfg *const rc_cfg  = &enc_ctx->rc_cfg;
 
     // VBR correction is done through rc->vbr_bits_off_target. Based on the
     // sign of this value, a limited % adjustment is made to the target rate
     // of subsequent frames, to try and push it back towards 0. This method
     // is designed to prevent extreme behaviour at the end of a clip
     // or group of frames.
-    rc->vbr_bits_off_target += ppcs_ptr->base_frame_target - ppcs_ptr->projected_frame_size;
+    rc->vbr_bits_off_target += ppcs->base_frame_target - ppcs->projected_frame_size;
     // Target vs actual bits for this arf group.
     int rate_error_estimate_target = 0;
     // Calculate the pct rc error.
@@ -2084,16 +2073,16 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
     }
 
     // Update the active best quality pyramid.
-    if (!ppcs_ptr->is_overlay) {
-        const int pyramid_level = ppcs_ptr->layer_depth;
+    if (!ppcs->is_overlay) {
+        const int pyramid_level = ppcs->layer_depth;
         int       i;
         for (i = pyramid_level; i <= MAX_ARF_LAYERS; ++i) {
-            rc->active_best_quality[i] = ppcs_ptr->frm_hdr.quantization_params.base_q_idx;
+            rc->active_best_quality[i] = ppcs->frm_hdr.quantization_params.base_q_idx;
         }
     }
 
     // If the rate control is drifting consider adjustment to min or maxq.
-    if (!ppcs_ptr->is_overlay) {
+    if (!ppcs->is_overlay) {
         const int maxq_adj_limit = rc->worst_quality - rc->active_worst_quality;
         const int minq_adj_limit = MINQ_ADJ_LIMIT;
 
@@ -2111,8 +2100,8 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
                     : 1;
         } else {
             // Adjustment for extreme local overshoot.
-            if (ppcs_ptr->projected_frame_size > (2 * ppcs_ptr->base_frame_target) &&
-                ppcs_ptr->projected_frame_size > (2 * rc->avg_frame_bandwidth))
+            if (ppcs->projected_frame_size > (2 * ppcs->base_frame_target) &&
+                ppcs->projected_frame_size > (2 * rc->avg_frame_bandwidth))
                 ++twopass->extend_maxq;
 
             // Unwind undershoot or overshoot adjustment.
@@ -2130,10 +2119,10 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
         // bits back in quickly. One situation where this may happen is if a
         // frame is unexpectedly almost perfectly predicted by the ARF or GF
         // but not very well predcited by the previous frame.
-        if (!svt_aom_frame_is_kf_gf_arf(ppcs_ptr) && !ppcs_ptr->is_overlay) {
-            int fast_extra_thresh = ppcs_ptr->base_frame_target / HIGH_UNDERSHOOT_RATIO;
-            if (ppcs_ptr->projected_frame_size < fast_extra_thresh && rc->rate_error_estimate > 0) {
-                rc->vbr_bits_off_target_fast += fast_extra_thresh - ppcs_ptr->projected_frame_size;
+        if (!svt_aom_frame_is_kf_gf_arf(ppcs) && !ppcs->is_overlay) {
+            int fast_extra_thresh = ppcs->base_frame_target / HIGH_UNDERSHOOT_RATIO;
+            if (ppcs->projected_frame_size < fast_extra_thresh && rc->rate_error_estimate > 0) {
+                rc->vbr_bits_off_target_fast += fast_extra_thresh - ppcs->projected_frame_size;
                 rc->vbr_bits_off_target_fast = AOMMIN(rc->vbr_bits_off_target_fast,
                                                       (4 * rc->avg_frame_bandwidth));
 
@@ -2163,17 +2152,17 @@ int svt_aom_kf_low         = 400;
  * Update the qindex and active worse quality based on the already
  *  spent bits in the sliding window
  ******************************************************/
-void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
-    SequenceControlSet *scs                = ppcs_ptr->scs;
-    EncodeContext      *encode_context_ptr = scs->encode_context_ptr;
-    RATE_CONTROL *const rc                 = &encode_context_ptr->rc;
+void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs) {
+    SequenceControlSet *scs     = ppcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+    RATE_CONTROL *const rc      = &enc_ctx->rc;
 
     uint32_t frame_rate          = ((scs->frame_rate + (1 << (RC_PRECISION - 1))) >> RC_PRECISION);
     int      frames_in_sw        = (int)rc->rate_average_periodin_frames;
     int64_t  spent_bits_sw       = 0, available_bit_sw;
     int      coded_frames_num_sw = 0;
     // Find the start and the end of the sliding window
-    int32_t start_index = ((ppcs_ptr->picture_number / frames_in_sw) * frames_in_sw) %
+    int32_t start_index = ((ppcs->picture_number / frames_in_sw) * frames_in_sw) %
         CODED_FRAMES_STAT_QUEUE_MAX_DEPTH;
     int32_t end_index   = start_index + frames_in_sw;
     frames_in_sw        = (scs->passes > 1)
@@ -2197,7 +2186,7 @@ void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
     available_bit_sw       = MAX(max_bits_sw - spent_bits_sw, 0);
     int64_t max_frame_size = 0;
     // Based on the kf boost, calculate the frame size for I frames
-    if (ppcs_ptr->slice_type == I_SLICE) {
+    if (ppcs->slice_type == I_SLICE) {
         int kf_interval = scs->static_config.intra_period_length > 0
             ? MIN(frames_in_sw, scs->static_config.intra_period_length + 1)
             : frames_in_sw;
@@ -2207,7 +2196,7 @@ void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
             max_frame_size = max_frame_size * 14 / 10;
 #if DEBUG_RC_CAP_LOG
         printf("SW_POC:%lld\t%lld\t%lld\t%d\tboost:%d\n",
-               ppcs_ptr->picture_number,
+               ppcs->picture_number,
                max_bits_sw,
                available_bit_sw,
                max_frame_size,
@@ -2215,25 +2204,25 @@ void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
 #endif
     }
     // Based on the gfu boost, calculate the frame size for I frames
-    else if (ppcs_ptr->temporal_layer_index == 0) {
-        int64_t gf_group_bits = available_bit_sw * (int64_t)(1 << ppcs_ptr->hierarchical_levels) /
+    else if (ppcs->temporal_layer_index == 0) {
+        int64_t gf_group_bits = available_bit_sw * (int64_t)(1 << ppcs->hierarchical_levels) /
             (frames_in_sw - coded_frames_num_sw);
         max_frame_size = calculate_boost_bits(
-            (1 << ppcs_ptr->hierarchical_levels), rc->gfu_boost, gf_group_bits);
+            (1 << ppcs->hierarchical_levels), rc->gfu_boost, gf_group_bits);
         int gfu_low_thr = svt_aom_gf_low_tpl_la +
             (svt_aom_gf_high_tpl_la - svt_aom_gf_low_tpl_la) / 3;
         if (rc->gfu_boost > gfu_low_thr)
             max_frame_size = max_frame_size * 12 / 10;
 #if DEBUG_RC_CAP_LOG
         printf("SW_POC:%lld\t%lld\t%lld\t%d\tboost:%d\n",
-               ppcs_ptr->picture_number,
+               ppcs->picture_number,
                gf_group_bits,
                available_bit_sw,
                max_frame_size,
                rc->gfu_boost);
 #endif
     }
-    FrameHeader *frm_hdr    = &ppcs_ptr->frm_hdr;
+    FrameHeader *frm_hdr    = &ppcs->frm_hdr;
     int32_t      new_qindex = frm_hdr->quantization_params.base_q_idx;
     // Increase the qindex based on the status of the spent bits in the window
     int remaining_frames       = frames_in_sw - coded_frames_num_sw;
@@ -2258,7 +2247,7 @@ void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
     }
 #if DEBUG_RC_CAP_LOG
     printf("SW_POC:%lld\t%lld\t%lld\t%d%%\t%d%%\tadj:\t%d\n",
-           ppcs_ptr->picture_number,
+           ppcs->picture_number,
            max_bits_sw,
            available_bit_sw,
            available_bit_ratio,
@@ -2267,7 +2256,7 @@ void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
 #endif
     new_qindex += adjustment;
     // Increase the active_worse_quality based on the adjustment
-    if (ppcs_ptr->temporal_layer_index == 0)
+    if (ppcs->temporal_layer_index == 0)
         rc->active_worst_quality += (adjustment / 2);
     // Decrease the active_worse_quality where undershoot happens and active_worst_quality is greater than the input QP
     if (available_bit_ratio > available_frames_ratio + 20 && available_frames_ratio < 10 &&
@@ -2284,11 +2273,11 @@ void svt_aom_crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
         (int32_t)quantizer_to_qindex[scs->static_config.max_qp_allowed],
         (int32_t)(new_qindex));
 
-    ppcs_ptr->picture_qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
-                                          (int32_t)scs->static_config.max_qp_allowed,
-                                          (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+    ppcs->picture_qp = (uint8_t)CLIP3((int32_t)scs->static_config.min_qp_allowed,
+                                      (int32_t)scs->static_config.max_qp_allowed,
+                                      (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
     // clip the max frame size to 32 bits
-    ppcs_ptr->max_frame_size = (int)CLIP3(1, (0xFFFFFFFFull >> 1), (uint64_t)max_frame_size);
+    ppcs->max_frame_size = (int)CLIP3(1, (0xFFFFFFFFull >> 1), (uint64_t)max_frame_size);
     // The target is set to 80% of the max.
-    ppcs_ptr->this_frame_target = ppcs_ptr->max_frame_size * 8 / 10;
+    ppcs->this_frame_target = ppcs->max_frame_size * 8 / 10;
 }

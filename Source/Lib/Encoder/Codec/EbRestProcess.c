@@ -69,8 +69,8 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
 #endif
 
 static void rest_context_dctor(EbPtr p) {
-    EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
-    RestContext     *obj                = (RestContext *)thread_context_ptr->priv;
+    EbThreadContext *thread_ctx = (EbThreadContext *)p;
+    RestContext     *obj        = (RestContext *)thread_ctx->priv;
     EB_DELETE(obj->trial_frame_rst);
     // buffer only malloc'd if boundaries are used in rest. search.
     // see scs->seq_header.use_boundaries_in_rest_search
@@ -83,7 +83,7 @@ static void rest_context_dctor(EbPtr p) {
 /******************************************************
  * Rest Context Constructor
  ******************************************************/
-EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_context_ptr,
+EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_ctx,
                                       const EbEncHandle *enc_handle_ptr, EbPtr object_init_data_ptr,
                                       int index, int demux_index) {
     const SequenceControlSet       *scs           = enc_handle_ptr->scs_instance_array[0]->scs;
@@ -93,8 +93,8 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_context_ptr,
         object_init_data_ptr;
     RestContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
-    thread_context_ptr->priv  = context_ptr;
-    thread_context_ptr->dctor = rest_context_dctor;
+    thread_ctx->priv  = context_ptr;
+    thread_ctx->dctor = rest_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
     context_ptr->rest_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
@@ -143,13 +143,13 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_context_ptr,
 extern void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr,
                                   Bool is_highbd) {
     if (!is_highbd) {
-        if (pcs->ppcs->is_used_as_reference_flag == TRUE)
-            *recon_ptr = ((EbReferenceObject *)pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
-                             ->reference_picture;
+        if (pcs->ppcs->is_ref == TRUE)
+            *recon_ptr =
+                ((EbReferenceObject *)pcs->ppcs->ref_pic_wrapper->object_ptr)->reference_picture;
         else
-            *recon_ptr = pcs->ppcs->enc_dec_ptr->recon_picture_ptr; //OMK
+            *recon_ptr = pcs->ppcs->enc_dec_ptr->recon_pic; // OMK
     } else {
-        *recon_ptr = pcs->ppcs->enc_dec_ptr->recon_picture16bit_ptr;
+        *recon_ptr = pcs->ppcs->enc_dec_ptr->recon_pic_16bit;
     }
 
     // recon buffer is created in full resolution, it is resized to difference size
@@ -177,22 +177,20 @@ static EbPictureBufferDesc *get_own_recon(SequenceControlSet *scs, PictureContro
     const uint32_t ss_x = scs->subsampling_x;
     const uint32_t ss_y = scs->subsampling_y;
 
-    EbPictureBufferDesc *recon_picture_ptr;
-    svt_aom_get_recon_pic(pcs, &recon_picture_ptr, is_16bit);
+    EbPictureBufferDesc *recon_pic;
+    svt_aom_get_recon_pic(pcs, &recon_pic, is_16bit);
     // if boundaries are not used, don't need to copy pic to new buffer, as the
     // search will not modify the pic
     if (!scs->use_boundaries_in_rest_search) {
-        return recon_picture_ptr;
+        return recon_pic;
     }
     if (is_16bit) {
-        uint16_t *rec_ptr = (uint16_t *)recon_picture_ptr->buffer_y + recon_picture_ptr->org_x +
-            recon_picture_ptr->org_y * recon_picture_ptr->stride_y;
-        uint16_t *rec_ptr_cb = (uint16_t *)recon_picture_ptr->buffer_cb +
-            recon_picture_ptr->org_x / 2 +
-            recon_picture_ptr->org_y / 2 * recon_picture_ptr->stride_cb;
-        uint16_t *rec_ptr_cr = (uint16_t *)recon_picture_ptr->buffer_cr +
-            recon_picture_ptr->org_x / 2 +
-            recon_picture_ptr->org_y / 2 * recon_picture_ptr->stride_cr;
+        uint16_t *rec_ptr = (uint16_t *)recon_pic->buffer_y + recon_pic->org_x +
+            recon_pic->org_y * recon_pic->stride_y;
+        uint16_t *rec_ptr_cb = (uint16_t *)recon_pic->buffer_cb + recon_pic->org_x / 2 +
+            recon_pic->org_y / 2 * recon_pic->stride_cb;
+        uint16_t *rec_ptr_cr = (uint16_t *)recon_pic->buffer_cr + recon_pic->org_x / 2 +
+            recon_pic->org_y / 2 * recon_pic->stride_cr;
 
         EbPictureBufferDesc *org_rec = context_ptr->org_rec_frame;
         uint16_t            *org_ptr = (uint16_t *)org_rec->buffer_y + org_rec->org_x +
@@ -202,40 +200,38 @@ static EbPictureBufferDesc *get_own_recon(SequenceControlSet *scs, PictureContro
         uint16_t *org_ptr_cr = (uint16_t *)org_rec->buffer_cr + org_rec->org_x / 2 +
             org_rec->org_y / 2 * org_rec->stride_cr;
 
-        for (int r = 0; r < recon_picture_ptr->height; ++r)
+        for (int r = 0; r < recon_pic->height; ++r)
             svt_memcpy(org_ptr + r * org_rec->stride_y,
-                       rec_ptr + r * recon_picture_ptr->stride_y,
-                       recon_picture_ptr->width << 1);
+                       rec_ptr + r * recon_pic->stride_y,
+                       recon_pic->width << 1);
 
-        for (int r = 0; r < (recon_picture_ptr->height >> ss_y); ++r) {
+        for (int r = 0; r < (recon_pic->height >> ss_y); ++r) {
             svt_memcpy(org_ptr_cb + r * org_rec->stride_cb,
-                       rec_ptr_cb + r * recon_picture_ptr->stride_cb,
-                       (recon_picture_ptr->width >> ss_x) << 1);
+                       rec_ptr_cb + r * recon_pic->stride_cb,
+                       (recon_pic->width >> ss_x) << 1);
             svt_memcpy(org_ptr_cr + r * org_rec->stride_cr,
-                       rec_ptr_cr + r * recon_picture_ptr->stride_cr,
-                       (recon_picture_ptr->width >> ss_x) << 1);
+                       rec_ptr_cr + r * recon_pic->stride_cr,
+                       (recon_pic->width >> ss_x) << 1);
         }
     } else {
-        if (pcs->ppcs->is_used_as_reference_flag == TRUE)
-            recon_picture_ptr =
-                ((EbReferenceObject *)pcs->ppcs->reference_picture_wrapper_ptr->object_ptr)
-                    ->reference_picture;
+        if (pcs->ppcs->is_ref == TRUE)
+            recon_pic =
+                ((EbReferenceObject *)pcs->ppcs->ref_pic_wrapper->object_ptr)->reference_picture;
         else
-            recon_picture_ptr = pcs->ppcs->enc_dec_ptr->recon_picture_ptr; //OMK
+            recon_pic = pcs->ppcs->enc_dec_ptr->recon_pic; // OMK
         // if boundaries are not used, don't need to copy pic to new buffer, as the
         // search will not modify the pic
         if (!scs->use_boundaries_in_rest_search) {
-            return recon_picture_ptr;
+            return recon_pic;
         }
         uint8_t *rec_ptr = &(
-            (recon_picture_ptr->buffer_y)[recon_picture_ptr->org_x +
-                                          recon_picture_ptr->org_y * recon_picture_ptr->stride_y]);
-        uint8_t *rec_ptr_cb = &((recon_picture_ptr->buffer_cb)[recon_picture_ptr->org_x / 2 +
-                                                               recon_picture_ptr->org_y / 2 *
-                                                                   recon_picture_ptr->stride_cb]);
-        uint8_t *rec_ptr_cr = &((recon_picture_ptr->buffer_cr)[recon_picture_ptr->org_x / 2 +
-                                                               recon_picture_ptr->org_y / 2 *
-                                                                   recon_picture_ptr->stride_cr]);
+            (recon_pic->buffer_y)[recon_pic->org_x + recon_pic->org_y * recon_pic->stride_y]);
+        uint8_t *rec_ptr_cb = &(
+            (recon_pic
+                 ->buffer_cb)[recon_pic->org_x / 2 + recon_pic->org_y / 2 * recon_pic->stride_cb]);
+        uint8_t *rec_ptr_cr = &(
+            (recon_pic
+                 ->buffer_cr)[recon_pic->org_x / 2 + recon_pic->org_y / 2 * recon_pic->stride_cr]);
 
         EbPictureBufferDesc *org_rec = context_ptr->org_rec_frame;
         uint8_t             *org_ptr = &(
@@ -245,18 +241,18 @@ static EbPictureBufferDesc *get_own_recon(SequenceControlSet *scs, PictureContro
         uint8_t *org_ptr_cr = &(
             (org_rec->buffer_cr)[org_rec->org_x / 2 + org_rec->org_y / 2 * org_rec->stride_cr]);
 
-        for (int r = 0; r < recon_picture_ptr->height; ++r)
+        for (int r = 0; r < recon_pic->height; ++r)
             svt_memcpy(org_ptr + r * org_rec->stride_y,
-                       rec_ptr + r * recon_picture_ptr->stride_y,
-                       recon_picture_ptr->width);
+                       rec_ptr + r * recon_pic->stride_y,
+                       recon_pic->width);
 
-        for (int r = 0; r < (recon_picture_ptr->height >> ss_y); ++r) {
+        for (int r = 0; r < (recon_pic->height >> ss_y); ++r) {
             svt_memcpy(org_ptr_cb + r * org_rec->stride_cb,
-                       rec_ptr_cb + r * recon_picture_ptr->stride_cb,
-                       (recon_picture_ptr->width >> ss_x));
+                       rec_ptr_cb + r * recon_pic->stride_cb,
+                       (recon_pic->width >> ss_x));
             svt_memcpy(org_ptr_cr + r * org_rec->stride_cr,
-                       rec_ptr_cr + r * recon_picture_ptr->stride_cr,
-                       (recon_picture_ptr->width >> ss_x));
+                       rec_ptr_cr + r * recon_pic->stride_cr,
+                       (recon_pic->width >> ss_x));
         }
     }
     return context_ptr->org_rec_frame;
@@ -316,7 +312,7 @@ void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc *src_8bit, EbPictureBuffe
 extern void svt_aom_pack_2d_pic(EbPictureBufferDesc *input_picture, uint16_t *packed[3]);
 
 void set_unscaled_input_16bit(PictureControlSet *pcs) {
-    EbPictureBufferDesc *input_pic  = pcs->ppcs->enhanced_unscaled_picture_ptr;
+    EbPictureBufferDesc *input_pic  = pcs->ppcs->enhanced_unscaled_pic;
     EbPictureBufferDesc *output_pic = pcs->input_frame16bit;
     uint16_t             ss_x       = pcs->ppcs->scs->subsampling_x;
     uint16_t             ss_y       = pcs->ppcs->scs->subsampling_y;
@@ -529,8 +525,7 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
 }
 
 static void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs, SequenceControlSet *scs) {
-    EbReferenceObject *obj = (EbReferenceObject *)
-                                 pcs->ppcs->reference_picture_wrapper_ptr->object_ptr;
+    EbReferenceObject *obj = (EbReferenceObject *)pcs->ppcs->ref_pic_wrapper->object_ptr;
 
     pcs->intra_coded_area = (100 * pcs->intra_coded_area) /
         (pcs->ppcs->aligned_width * pcs->ppcs->aligned_height);
@@ -594,18 +589,18 @@ static void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs, SequenceContr
  ******************************************************/
 void *svt_aom_rest_kernel(void *input_ptr) {
     // Context & SCS & PCS
-    EbThreadContext    *thread_context_ptr = (EbThreadContext *)input_ptr;
-    RestContext        *context_ptr        = (RestContext *)thread_context_ptr->priv;
+    EbThreadContext    *thread_ctx  = (EbThreadContext *)input_ptr;
+    RestContext        *context_ptr = (RestContext *)thread_ctx->priv;
     PictureControlSet  *pcs;
     SequenceControlSet *scs;
 
     //// Input
-    EbObjectWrapper *cdef_results_wrapper_ptr;
-    CdefResults     *cdef_results_ptr;
+    EbObjectWrapper *cdef_results_wrapper;
+    CdefResults     *cdef_results;
 
     //// Output
-    EbObjectWrapper     *rest_results_wrapper_ptr;
-    RestResults         *rest_results_ptr;
+    EbObjectWrapper     *rest_results_wrapper;
+    RestResults         *rest_results;
     EbObjectWrapper     *picture_demux_results_wrapper_ptr;
     PictureDemuxResults *picture_demux_results_rtr;
     // SB Loop variables
@@ -616,10 +611,10 @@ void *svt_aom_rest_kernel(void *input_ptr) {
 
     for (;;) {
         // Get Cdef Results
-        EB_GET_FULL_OBJECT(context_ptr->rest_input_fifo_ptr, &cdef_results_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->rest_input_fifo_ptr, &cdef_results_wrapper);
 
-        cdef_results_ptr = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
-        pcs              = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
+        cdef_results                  = (CdefResults *)cdef_results_wrapper->object_ptr;
+        pcs                           = (PictureControlSet *)cdef_results->pcs_wrapper->object_ptr;
         PictureParentControlSet *ppcs = pcs->ppcs;
         scs                           = pcs->scs;
         FrameHeader *frm_hdr          = &pcs->ppcs->frm_hdr;
@@ -629,21 +624,21 @@ void *svt_aom_rest_kernel(void *input_ptr) {
             // If using boundaries during the filter search, copy the recon pic to a new buffer (to
             // avoid race condition from many threads modifying the same recon pic).
             //
-            // If not using boundaries during the filter search, copy the input recon picture location
-            // to be used in restoration search (save cycles/memory of copying pic to a new buffer).
-            // The recon pic should not be modified during the search, otherwise there will be a race
-            // condition between threads.
-            EbPictureBufferDesc *recon_picture_ptr = get_own_recon(scs, pcs, context_ptr, is_16bit);
-            EbPictureBufferDesc *input_pic         = is_16bit ? pcs->input_frame16bit
-                                                              : pcs->ppcs->enhanced_unscaled_picture_ptr;
+            // If not using boundaries during the filter search, copy the input recon picture
+            // location to be used in restoration search (save cycles/memory of copying pic to a new
+            // buffer). The recon pic should not be modified during the search, otherwise there will
+            // be a race condition between threads.
+            EbPictureBufferDesc *recon_pic = get_own_recon(scs, pcs, context_ptr, is_16bit);
+            EbPictureBufferDesc *input_pic = is_16bit ? pcs->input_frame16bit
+                                                      : pcs->ppcs->enhanced_unscaled_pic;
 
-            EbPictureBufferDesc *scaled_input_picture_ptr = NULL;
+            EbPictureBufferDesc *scaled_input_pic = NULL;
             // downscale input picture if recon is resized
-            Bool is_resized = recon_picture_ptr->width != input_pic->width ||
-                recon_picture_ptr->height != input_pic->height;
+            Bool is_resized = recon_pic->width != input_pic->width ||
+                recon_pic->height != input_pic->height;
             if (is_resized) {
-                scaled_input_picture_ptr = pcs->scaled_input_picture_ptr;
-                input_pic                = scaled_input_picture_ptr;
+                scaled_input_pic = pcs->scaled_input_pic;
+                input_pic        = scaled_input_pic;
             }
 
             // there are padding pixels if input pics are not 8 pixel aligned
@@ -664,7 +659,7 @@ void *svt_aom_rest_kernel(void *input_ptr) {
                                                is_16bit);
 
             Yv12BufferConfig org_fts;
-            svt_aom_link_eb_to_aom_buffer_desc(recon_picture_ptr,
+            svt_aom_link_eb_to_aom_buffer_desc(recon_pic,
                                                &org_fts,
                                                is_resized ? 0 : scs->max_input_pad_right,
                                                is_resized ? 0 : scs->max_input_pad_bottom,
@@ -690,7 +685,7 @@ void *svt_aom_rest_kernel(void *input_ptr) {
                                    &cpi_source,
                                    &trial_frame_rst,
                                    pcs,
-                                   cdef_results_ptr->segment_index);
+                                   cdef_results->segment_index);
         }
 
         //all seg based search is done. update total processed segments. if all done, finish the search and perfrom application.
@@ -702,7 +697,7 @@ void *svt_aom_rest_kernel(void *input_ptr) {
                 rest_finish_search(pcs);
 
                 // Only need recon if REF pic or recon is output
-                if (pcs->ppcs->is_used_as_reference_flag || scs->static_config.recon_enabled) {
+                if (pcs->ppcs->is_ref || scs->static_config.recon_enabled) {
                     if (pcs->rst_info[0].frame_restoration_type != RESTORE_NONE ||
                         pcs->rst_info[1].frame_restoration_type != RESTORE_NONE ||
                         pcs->rst_info[2].frame_restoration_type != RESTORE_NONE) {
@@ -727,10 +722,11 @@ void *svt_aom_rest_kernel(void *input_ptr) {
                 pcs->rst_info[2].frame_restoration_type = RESTORE_NONE;
             }
 
-            // delete scaled_input_picture_ptr after lr finished
-            EB_DELETE(pcs->scaled_input_picture_ptr);
-            if (pcs->ppcs->reference_picture_wrapper_ptr != NULL) {
-                // copy stat to ref object (intra_coded_area, Luminance, Scene change detection flags)
+            // delete scaled_input_pic after lr finished
+            EB_DELETE(pcs->scaled_input_pic);
+            if (pcs->ppcs->ref_pic_wrapper != NULL) {
+                // copy stat to ref object (intra_coded_area, Luminance, Scene change detection
+                // flags)
                 copy_statistics_to_ref_obj_ect(pcs, scs);
             }
 
@@ -738,16 +734,16 @@ void *svt_aom_rest_kernel(void *input_ptr) {
 
             // Pad the reference picture and set ref POC
             if (scs->static_config.pass != ENC_FIRST_PASS) {
-                if (pcs->ppcs->is_used_as_reference_flag == TRUE)
+                if (pcs->ppcs->is_ref == TRUE)
                     pad_ref_and_set_flags(pcs, scs);
                 else {
-                    // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
+                    // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and
+                    // psnr/ssim calculation
                     if (is_16bit && scs->static_config.encoder_bit_depth == EB_EIGHT_BIT) {
-                        EbPictureBufferDesc *ref_pic_ptr =
-                            pcs->ppcs->enc_dec_ptr->recon_picture_ptr;
+                        EbPictureBufferDesc *ref_pic_ptr = pcs->ppcs->enc_dec_ptr->recon_pic;
                         EbPictureBufferDesc *ref_pic_16bit_ptr =
-                            pcs->ppcs->enc_dec_ptr->recon_picture16bit_ptr;
-                        //Y
+                            pcs->ppcs->enc_dec_ptr->recon_pic_16bit;
+                        // Y
                         uint16_t *buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_y);
                         uint8_t  *buf_8bit  = ref_pic_ptr->buffer_y;
                         svt_convert_16bit_to_8bit(
@@ -820,18 +816,17 @@ void *svt_aom_rest_kernel(void *input_ptr) {
                     svt_aom_recon_output(pcs, scs);
                 }
                 // post reference picture task in packetization process if it's superres_recode
-                if (pcs->ppcs->is_used_as_reference_flag) {
+                if (pcs->ppcs->is_ref) {
                     // Get Empty PicMgr Results
                     svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
                                          &picture_demux_results_wrapper_ptr);
 
                     picture_demux_results_rtr = (PictureDemuxResults *)
                                                     picture_demux_results_wrapper_ptr->object_ptr;
-                    picture_demux_results_rtr->reference_picture_wrapper_ptr =
-                        pcs->ppcs->reference_picture_wrapper_ptr;
-                    picture_demux_results_rtr->scs            = pcs->scs;
-                    picture_demux_results_rtr->picture_number = pcs->picture_number;
-                    picture_demux_results_rtr->picture_type   = EB_PIC_REFERENCE;
+                    picture_demux_results_rtr->ref_pic_wrapper = pcs->ppcs->ref_pic_wrapper;
+                    picture_demux_results_rtr->scs             = pcs->scs;
+                    picture_demux_results_rtr->picture_number  = pcs->picture_number;
+                    picture_demux_results_rtr->picture_type    = EB_PIC_REFERENCE;
 
                     // Post Reference Picture
                     svt_post_full_object(picture_demux_results_wrapper_ptr);
@@ -844,20 +839,19 @@ void *svt_aom_rest_kernel(void *input_ptr) {
             for (int tile_row_idx = 0; tile_row_idx < tile_rows; tile_row_idx++) {
                 for (int tile_col_idx = 0; tile_col_idx < tile_cols; tile_col_idx++) {
                     const int tile_idx = tile_row_idx * tile_cols + tile_col_idx;
-                    svt_get_empty_object(context_ptr->rest_output_fifo_ptr,
-                                         &rest_results_wrapper_ptr);
-                    rest_results_ptr = (struct RestResults *)rest_results_wrapper_ptr->object_ptr;
-                    rest_results_ptr->pcs_wrapper_ptr = cdef_results_ptr->pcs_wrapper_ptr;
-                    rest_results_ptr->tile_index      = tile_idx;
+                    svt_get_empty_object(context_ptr->rest_output_fifo_ptr, &rest_results_wrapper);
+                    rest_results = (struct RestResults *)rest_results_wrapper->object_ptr;
+                    rest_results->pcs_wrapper = cdef_results->pcs_wrapper;
+                    rest_results->tile_index  = tile_idx;
                     // Post Rest Results
-                    svt_post_full_object(rest_results_wrapper_ptr);
+                    svt_post_full_object(rest_results_wrapper);
                 }
             }
         }
         svt_release_mutex(pcs->rest_search_mutex);
 
         // Release input Results
-        svt_release_object(cdef_results_wrapper_ptr);
+        svt_release_object(cdef_results_wrapper);
     }
 
     return NULL;

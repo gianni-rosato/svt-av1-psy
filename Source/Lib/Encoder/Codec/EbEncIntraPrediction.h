@@ -27,7 +27,7 @@ struct ModeDecisionCandidate;
 
 extern EbErrorType svt_av1_intra_prediction_cl(uint8_t hbd_md, struct ModeDecisionContext *ctx,
                                                PictureControlSet           *pcs,
-                                               ModeDecisionCandidateBuffer *cand_bf_ptr);
+                                               ModeDecisionCandidateBuffer *cand_bf);
 
 extern EbErrorType svt_aom_update_neighbor_samples_array_open_loop_mb(
     uint8_t use_top_righ_bottom_left, uint8_t update_top_neighbor, uint8_t *above_ref,

@@ -17,9 +17,9 @@
 extern "C" {
 #endif
 /***************************************
-     * Extern Function Declaration
-     ***************************************/
-EbErrorType svt_aom_resource_coordination_context_ctor(EbThreadContext* thread_context_ptr,
+ * Extern Function Declaration
+ ***************************************/
+EbErrorType svt_aom_resource_coordination_context_ctor(EbThreadContext* thread_ctx,
                                                        EbEncHandle*     enc_handle_ptr);
 
 uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,

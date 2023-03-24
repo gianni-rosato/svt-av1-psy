@@ -21,7 +21,7 @@
  **************************************/
 typedef struct PictureAnalysisResults {
     EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
+    EbObjectWrapper *pcs_wrapper;
 } PictureAnalysisResults;
 
 typedef struct PictureAnalysisResultInitData {
