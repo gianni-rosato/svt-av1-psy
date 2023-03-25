@@ -38,6 +38,8 @@
 #include "EbPictureDecisionResults.h"
 #include "EbResize.h"
 #include "EbSourceBasedOperationsProcess.h"
+#include "EncModeConfig.h"
+
 // Specifies the weights of the ref frame in calculating qindex of non base layer frames
 static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {
     100, 100, 100, 100, 100, 100};
@@ -1156,20 +1158,20 @@ int svt_aom_compute_rd_mult(PictureControlSet *pcs, uint8_t q_index, uint8_t me_
     return (int)rdmult;
 }
 static void sb_setup_lambda(PictureControlSet *pcs, SuperBlock *sb_ptr) {
-    const Av1Common *const   cm   = pcs->ppcs->av1_cm;
-    PictureParentControlSet *ppcs = pcs->ppcs;
-    SequenceControlSet      *scs  = ppcs->scs;
+    const Av1Common *const   cm       = pcs->ppcs->av1_cm;
+    PictureParentControlSet *ppcs_ptr = pcs->ppcs;
+    SequenceControlSet      *scs      = ppcs_ptr->scs;
 
     int mi_col = sb_ptr->org_x / 4;
     int mi_row = sb_ptr->org_y / 4;
 
-    const int mi_col_sr = coded_to_superres_mi(mi_col, ppcs->superres_denom);
-    assert(ppcs->enhanced_unscaled_pic);
+    const int mi_col_sr = coded_to_superres_mi(mi_col, ppcs_ptr->superres_denom);
+    assert(ppcs_ptr->enhanced_unscaled_pic);
     // ALIGN_POWER_OF_TWO(pixels, 3) >> 2 ??
-    const int mi_cols_sr     = ((ppcs->enhanced_unscaled_pic->width + 15) / 16) << 2;
+    const int mi_cols_sr     = ((ppcs_ptr->enhanced_unscaled_pic->width + 15) / 16) << 2;
     const int sb_mi_width_sr = coded_to_superres_mi(mi_size_wide[scs->seq_header.sb_size],
-                                                    ppcs->superres_denom);
-    const int bsize_base     = ppcs->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
+                                                    ppcs_ptr->superres_denom);
+    const int bsize_base     = ppcs_ptr->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
     const int num_mi_w       = mi_size_wide[bsize_base];
     const int num_mi_h       = mi_size_high[bsize_base];
     const int num_cols       = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
@@ -1186,17 +1188,18 @@ static void sb_setup_lambda(PictureControlSet *pcs, SuperBlock *sb_ptr) {
         for (col = mi_col_sr / num_mi_h; col < num_cols && col < mi_col_sr / num_mi_h + num_bcols;
              ++col) {
             const int index = row * num_cols + col;
-            log_sum += log(ppcs->pa_me_data->tpl_rdmult_scaling_factors[index]);
+            log_sum += log(ppcs_ptr->pa_me_data->tpl_rdmult_scaling_factors[index]);
             ++base_block_count;
         }
     }
     assert(base_block_count > 0);
 
     uint8_t   bit_depth   = pcs->hbd_md ? 10 : 8;
-    const int orig_rdmult = svt_aom_compute_rd_mult(pcs,
-                                                    ppcs->frm_hdr.quantization_params.base_q_idx,
-                                                    ppcs->frm_hdr.quantization_params.base_q_idx,
-                                                    bit_depth);
+    const int orig_rdmult = svt_aom_compute_rd_mult(
+        pcs,
+        ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+        ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+        bit_depth);
 
     const int new_rdmult = svt_aom_compute_rd_mult(
         pcs,
@@ -1210,12 +1213,12 @@ static void sb_setup_lambda(PictureControlSet *pcs, SuperBlock *sb_ptr) {
     for (row = mi_row / num_mi_w; row < num_rows && row < mi_row / num_mi_w + num_brows; ++row) {
         for (col = mi_col_sr / num_mi_h; col < num_cols && col < mi_col_sr / num_mi_h + num_bcols;
              ++col) {
-            const int index                                        = row * num_cols + col;
-            ppcs->pa_me_data->tpl_sb_rdmult_scaling_factors[index] = scale_adj *
-                ppcs->pa_me_data->tpl_rdmult_scaling_factors[index];
+            const int index                                            = row * num_cols + col;
+            ppcs_ptr->pa_me_data->tpl_sb_rdmult_scaling_factors[index] = scale_adj *
+                ppcs_ptr->pa_me_data->tpl_rdmult_scaling_factors[index];
         }
     }
-    ppcs->blk_lambda_tuning = TRUE;
+    ppcs_ptr->blk_lambda_tuning = TRUE;
 }
 #if OPT_LD_QPM
 /******************************************************************************
@@ -1474,25 +1477,25 @@ static void generate_b64_me_qindex_map(PictureControlSet *pcs) {
  * used in one pass and second pass of two pass encoding
  ******************************************************/
 void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs) {
-    PictureParentControlSet *ppcs = pcs->ppcs;
-    SequenceControlSet      *scs  = pcs->ppcs->scs;
+    PictureParentControlSet *ppcs_ptr = pcs->ppcs;
+    SequenceControlSet      *scs      = pcs->ppcs->scs;
     SuperBlock              *sb_ptr;
     uint32_t                 sb_addr;
-    if (ppcs->r0_based_qps_qpm)
+    if (ppcs_ptr->r0_based_qps_qpm)
         pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 1;
     else
         pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 0;
     // super res pictures scaled with different sb count, should use sb_total_count for each picture
     uint16_t sb_cnt = scs->sb_total_count;
-    if (ppcs->frame_superres_enabled || ppcs->frame_resize_enabled)
-        sb_cnt = ppcs->b64_total_count;
+    if (ppcs_ptr->frame_superres_enabled || ppcs_ptr->frame_resize_enabled)
+        sb_cnt = ppcs_ptr->b64_total_count;
     if ((pcs->ppcs->frm_hdr.delta_q_params.delta_q_present) && (pcs->ppcs->tpl_is_valid == 1)) {
         for (sb_addr = 0; sb_addr < sb_cnt; ++sb_addr) {
             sb_ptr        = pcs->sb_ptr_array[sb_addr];
-            double beta   = ppcs->pa_me_data->tpl_beta[sb_addr];
+            double beta   = ppcs_ptr->pa_me_data->tpl_beta[sb_addr];
             int    offset = svt_av1_get_deltaq_offset(
                 scs->static_config.encoder_bit_depth,
-                ppcs->frm_hdr.quantization_params.base_q_idx,
+                ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
                 beta,
                 pcs->ppcs->slice_type == I_SLICE || pcs->ppcs->transition_present == 1);
             offset = AOMMIN(offset, pcs->ppcs->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
@@ -1500,7 +1503,7 @@ void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs) {
             sb_ptr->qindex = CLIP3(
                 pcs->ppcs->frm_hdr.delta_q_params.delta_q_res,
                 255 - pcs->ppcs->frm_hdr.delta_q_params.delta_q_res,
-                ((int16_t)ppcs->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
+                ((int16_t)ppcs_ptr->frm_hdr.quantization_params.base_q_idx + (int16_t)offset));
 
             sb_setup_lambda(pcs, sb_ptr);
         }

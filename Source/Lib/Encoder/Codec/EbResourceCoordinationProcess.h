@@ -22,9 +22,6 @@ extern "C" {
 EbErrorType svt_aom_resource_coordination_context_ctor(EbThreadContext* thread_ctx,
                                                        EbEncHandle*     enc_handle_ptr);
 
-uint8_t svt_aom_get_enable_restoration(EncMode enc_mode, int8_t config_enable_restoration,
-                                       uint8_t input_resolution, Bool fast_decode);
-
 extern void* svt_aom_resource_coordination_kernel(void* input_ptr);
 #ifdef __cplusplus
 }

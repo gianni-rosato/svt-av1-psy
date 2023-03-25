@@ -15,57 +15,13 @@
 #include "EbTransformUnit.h"
 #include "EbPictureControlSet.h"
 #include "EbUtility.h"
+#include "EncModeConfig.h"
 
 void svt_aom_largest_coding_unit_dctor(EbPtr p) {
     SuperBlock *obj = (SuperBlock *)p;
     EB_FREE_ARRAY(obj->av1xd);
     EB_FREE_ARRAY(obj->final_blk_arr);
     EB_FREE_ARRAY(obj->cu_partition_array);
-}
-/*
-* return the 4x4 level
-Used by svt_aom_signal_derivation_enc_dec_kernel_oq and memory allocation
-*/
-bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type) {
-    (void)slice_type;
-    if (enc_mode <= ENC_M5)
-        return false;
-    else
-        return true;
-}
-// Get the nsq_level used for each preset (to be passed to setting function: set_nsq_ctrls())
-uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base,
-                              InputCoeffLvl coeff_lvl) {
-    uint8_t nsq_level;
-    //set the nsq_level
-    if (enc_mode <= ENC_MRS)
-        nsq_level = 1;
-    else if (enc_mode <= ENC_MR)
-        nsq_level = is_islice ? 2 : 3;
-    else if (enc_mode <= ENC_M0)
-        nsq_level = is_islice ? 2 : 4;
-    else if (enc_mode <= ENC_M1)
-        nsq_level = is_base ? 5 : 6;
-    else if (enc_mode <= ENC_M3)
-        nsq_level = is_base ? 7 : 8;
-    else if (enc_mode <= ENC_M4) {
-        if (coeff_lvl == LOW_LVL)
-            nsq_level = is_base ? 9 : 12;
-        else if (coeff_lvl == HIGH_LVL)
-            nsq_level = is_base ? 11 : 14;
-        else // regular
-            nsq_level = is_base ? 10 : 13;
-    } else if (enc_mode <= ENC_M5) {
-        if (coeff_lvl == LOW_LVL)
-            nsq_level = is_base ? 15 : 0;
-        else if (coeff_lvl == HIGH_LVL)
-            nsq_level = is_base ? 17 : 0;
-        else // regular
-            nsq_level = is_base ? 16 : 0;
-    } else
-        nsq_level = 0;
-
-    return nsq_level;
 }
 /*
 Tasks & Questions

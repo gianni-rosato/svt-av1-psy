@@ -212,6 +212,8 @@ set(all_files
         ransac.h
         vector.c
         vector.h
+        EncModeConfig.c
+        EncModeConfig.h
         )
 
 add_library(ENCODER_CODEC OBJECT ${all_files})

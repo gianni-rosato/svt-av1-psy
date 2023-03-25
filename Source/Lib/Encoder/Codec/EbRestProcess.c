@@ -21,6 +21,7 @@
 #include "EbPictureControlSet.h"
 #include "EbResourceCoordinationProcess.h"
 #include "EbResize.h"
+#include "EncModeConfig.h"
 
 /**************************************
  * Rest Context

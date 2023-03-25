@@ -33,7 +33,7 @@
 #include "mcomp.h"
 #include "av1me.h"
 #include "EbEncInterPrediction.h"
-
+#include "EbResize.h"
 /**************************************
  * Context
  **************************************/
@@ -59,10 +59,6 @@ static void source_based_operations_context_dctor(EbPtr p) {
     EbThreadContext              *thread_ctx = (EbThreadContext *)p;
     SourceBasedOperationsContext *obj        = (SourceBasedOperationsContext *)thread_ctx->priv;
     EB_FREE_ARRAY(obj);
-}
-
-static INLINE int coded_to_superres_mi(int mi_col, int denom) {
-    return (mi_col * denom + SCALE_NUMERATOR / 2) / SCALE_NUMERATOR;
 }
 
 /************************************************

@@ -56,9 +56,6 @@ void svt_aom_residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t inp
                              int16_t *residual, uint32_t residual_offset, uint32_t residual_stride,
                              Bool hbd, uint32_t area_width, uint32_t area_height);
 
-EB_EXTERN EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock *sb_ptr,
-                                              ModeDecisionContext *ctx);
-
 static const uint16_t block_prob_tab[5][9][3][2] = {{{{75, 75}, {43, 43}, {17, 17}},
                                                      {{8, 9}, {29, 29}, {17, 17}},
                                                      {{6, 7}, {7, 7}, {17, 17}},
@@ -1107,8 +1104,6 @@ static const int32_t me_idx_128x128[4][BLOCK_MAX_COUNT_SB_128] = {
      20, 83, 84, 75, 83, 20, 20, 76, 84, 20, 20, 20, 20, 20, 20, 20, 20, 75, 75, 75, 75, 75, 75, 75,
      75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84,
      84, 84, 84, 84, 84}};
-EbErrorType svt_aom_signal_derivation_enc_dec_kernel_oq(
-    SequenceControlSet *sequence_control_set_ptr, PictureControlSet *pcs, ModeDecisionContext *ctx);
 
 void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx,
                         EbPictureBufferDesc *input_pic);

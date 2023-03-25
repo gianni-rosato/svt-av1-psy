@@ -46,8 +46,6 @@ void svt_aom_down_sample_chroma(EbPictureBufferDesc *input_pic,
 
 Bool svt_aom_is_delayed_intra(PictureParentControlSet *pcs);
 
-void svt_aom_set_dlf_controls(PictureParentControlSet *pcs, uint8_t dlf_level, uint8_t bit_depth);
-
 #if FIX_LAYER_SIGNAL
 uint8_t svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels,
                                       uint8_t  type /*I_SLICE, BASE, L1*/,

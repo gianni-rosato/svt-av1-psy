@@ -94,6 +94,7 @@ EbErrorType svt_aom_warped_motion_prediction(
     Bool perform_chroma, Bool is_encode_pass);
 
 const uint8_t *svt_av1_get_obmc_mask(int length);
+
 void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, uint64_t sse,
                        uint32_t *rate, uint64_t *dist, uint8_t simple_model_rd_from_var);
 void svt_aom_enc_make_inter_predictor(
@@ -104,6 +105,9 @@ void svt_aom_enc_make_inter_predictor(
     BlockSize bsize, MacroBlockD *av1xd, int32_t src_stride, int32_t dst_stride, uint8_t plane,
     const uint32_t ss_y, const uint32_t ss_x, uint8_t bit_depth, uint8_t use_intrabc,
     uint8_t is_masked_compound, uint8_t is16bit);
+
+EbPictureBufferDesc *svt_aom_get_ref_pic_buffer(PictureControlSet *pcs, uint8_t is_highbd,
+                                                uint8_t list_idx, uint8_t ref_idx);
 
 #ifdef __cplusplus
 }

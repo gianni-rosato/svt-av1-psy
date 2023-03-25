@@ -25,6 +25,7 @@
 #include "EbPictureDecisionResults.h"
 #include "EbRestoration.h" // RDCOST_DBL
 #include "EbRateControlProcess.h"
+#include "EncModeConfig.h"
 
 #define RDCOST_DBL_WITH_NATIVE_BD_DIST(RM, R, D, BD) \
     RDCOST_DBL((RM), (R), (double)((D) >> (2 * (BD - 8))))

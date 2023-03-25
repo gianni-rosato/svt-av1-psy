@@ -20,9 +20,7 @@
 
 #include "aom_dsp_rtcd.h"
 #include "EbModeDecisionProcess.h"
-
-EbPictureBufferDesc *svt_aom_get_ref_pic_buffer(PictureControlSet *pcs, uint8_t is_highbd,
-                                                uint8_t list_idx, uint8_t ref_idx);
+#include "EbEncInterPrediction.h"
 
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 

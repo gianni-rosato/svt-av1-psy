@@ -19,6 +19,7 @@
 #include "EbUtility.h"
 #include "EbResourceCoordinationProcess.h"
 #include "EbModeDecisionConfigurationProcess.h"
+#include "EncModeConfig.h"
 
 void svt_aom_set_tile_info(PictureParentControlSet *pcs);
 
@@ -85,33 +86,6 @@ void svt_aom_get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref
         (ref_count_used_list0 * ref_count_used_list1) + (ref_count_used_list0 - 1) +
         (ref_count_used_list1 == 3 ? 1 : 0);
 }
-// use this function to set the enable_me_8x8 level
-static uint8_t get_enable_me_8x8(EncMode enc_mode) {
-    uint8_t enable_me_8x8 = 0;
-    if (enc_mode <= ENC_M11)
-        enable_me_8x8 = 1;
-    else
-        enable_me_8x8 = 0;
-
-    return enable_me_8x8;
-}
-#if OPT_LD_M13
-static uint8_t get_enable_me_16x16(EncMode enc_mode, bool rtc_tune) {
-#else
-uint8_t get_enable_me_16x16(EncMode enc_mode) {
-#endif
-    uint8_t enable_me_16x16;
-#if OPT_LD_M13
-    if ((enc_mode <= ENC_M12) || (rtc_tune && (enc_mode <= ENC_M13)))
-#else
-    if (enc_mode <= ENC_M12)
-#endif
-        enable_me_16x16 = 1;
-    else
-        enable_me_16x16 = 0;
-
-    return enable_me_16x16;
-}
 
 EbErrorType svt_aom_me_sb_results_ctor(MeSbResults               *obj_ptr,
                                        PictureControlSetInitData *init_data_ptr) {
@@ -126,12 +100,15 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults               *obj_ptr,
     svt_aom_derive_input_resolution(&resolution,
                                     init_data_ptr->picture_width * init_data_ptr->picture_height);
 #if OPT_LD_M13
-    uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
-        ? get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8
+    uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode,
+                                                        init_data_ptr->rtc_tune)
+        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT
+                                                             : MAX_SB64_PU_COUNT_NO_8X8
         : MAX_SB64_PU_COUNT_WO_16X16;
 #else
-    uint8_t number_of_pus       = get_enable_me_16x16(init_data_ptr->enc_mode)
-              ? get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8
+    uint8_t number_of_pus       = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode)
+              ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT
+                                                                   : MAX_SB64_PU_COUNT_NO_8X8
               : MAX_SB64_PU_COUNT_WO_16X16;
 #endif
 
@@ -1523,15 +1500,15 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     svt_aom_derive_input_resolution(&resolution,
                                     init_data_ptr->picture_width * init_data_ptr->picture_height);
 #if OPT_LD_M13
-    object_ptr->enable_me_16x16 = get_enable_me_16x16(init_data_ptr->enc_mode,
-                                                      init_data_ptr->rtc_tune);
+    object_ptr->enable_me_16x16 = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode,
+                                                              init_data_ptr->rtc_tune);
 #else
-    object_ptr->enable_me_16x16 = get_enable_me_16x16(init_data_ptr->enc_mode);
+    object_ptr->enable_me_16x16 = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode);
 #endif
 
     // 8x8 can only be used if 16x16 is enabled
     object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16
-        ? get_enable_me_8x8(init_data_ptr->enc_mode)
+        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode)
         : 0;
     return return_error;
 }

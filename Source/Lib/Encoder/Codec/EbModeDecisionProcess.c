@@ -15,9 +15,9 @@
 #include "EbModeDecisionProcess.h"
 #include "EbLambdaRateTables.h"
 #include "EbRateControlProcess.h"
+#include "EncModeConfig.h"
 
-uint8_t     svt_aom_get_bypass_encdec(EncMode enc_mode, uint8_t hbd_md, uint8_t encoder_bit_depth);
-void        set_block_based_depth_refinement_controls(ModeDecisionContext *mdctxt,
+void        set_block_based_depth_refinement_controls(ModeDecisionContext *ctx,
                                                       uint8_t block_based_depth_refinement_level);
 int         svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 static void mode_decision_context_dctor(EbPtr p) {
@@ -87,50 +87,10 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->temp_residual);
     EB_DELETE(obj->temp_recon_ptr);
 }
-#if OPT_LD_M11
-uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels,
-                              bool rtc_tune);
-#else
-uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarchical_levels);
-#endif
-uint8_t svt_aom_set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
-void    svt_aom_set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
-                         uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL],
-                         uint8_t pic_type);
 
-uint8_t svt_aom_get_update_cdf_level(EncMode enc_mode, SliceType is_islice, uint8_t is_base);
-uint8_t svt_aom_get_chroma_level(EncMode enc_mode);
-uint8_t svt_aom_set_chroma_controls(ModeDecisionContext *ctx, uint8_t uv_level);
-
-/*
-* return the max canidate count for MDS0
-  Used by candidate injection and memory allocation
-*/
-uint16_t svt_aom_get_max_can_count(EncMode enc_mode) {
-    //NOTE: this is a memory feature and not a speed feature. it should not be have any speed/quality impact.
-    uint16_t mem_max_can_count;
-
-    if (enc_mode <= ENC_M0)
-        mem_max_can_count = 1225;
-    else if (enc_mode <= ENC_M1)
-        mem_max_can_count = 1000;
-    else if (enc_mode <= ENC_M2)
-        mem_max_can_count = 720;
-    else if (enc_mode <= ENC_M3)
-        mem_max_can_count = 576;
-    else if (enc_mode <= ENC_M4)
-        mem_max_can_count = 369;
-    else if (enc_mode <= ENC_M5)
-        mem_max_can_count = 295;
-    else if (enc_mode <= ENC_M6)
-        mem_max_can_count = 236;
-    else if (enc_mode <= ENC_M11)
-        mem_max_can_count = 190;
-    else
-        mem_max_can_count = 80;
-
-    return mem_max_can_count;
-}
+void svt_aom_set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
+                      uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL],
+                      uint8_t pic_type);
 
 /******************************************************
  * Mode Decision Context Constructor

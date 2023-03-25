@@ -1226,10 +1226,7 @@ EbErrorType svt_aom_me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr
 EbErrorType svt_aom_me_sb_results_ctor(MeSbResults               *obj_ptr,
                                        PictureControlSetInitData *init_data_ptr);
 
-void    svt_aom_set_gm_controls(PictureParentControlSet *pcs, uint8_t gm_level);
-uint8_t svt_aom_derive_gm_level(PictureParentControlSet *pcs);
-
-Bool svt_aom_is_pic_skipped(PictureParentControlSet *pcs);
+extern Bool svt_aom_is_pic_skipped(PictureParentControlSet *pcs);
 
 #ifdef __cplusplus
 }

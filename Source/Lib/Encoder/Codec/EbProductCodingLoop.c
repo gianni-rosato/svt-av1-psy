@@ -32,6 +32,8 @@
 #include "limits.h"
 
 #include "EbPackUnPack_C.h"
+#include "EbEncInterPrediction.h"
+#include "EncModeConfig.h"
 
 #include "EbInterPrediction.h"
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
@@ -58,9 +60,8 @@ void precompute_intra_pred_for_inter_intra(PictureControlSet *pcs, ModeDecisionC
 int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 
 void svt_aom_get_recon_pic(PictureControlSet *pcs, EbPictureBufferDesc **recon_ptr, Bool is_highbd);
-extern IntraSize       svt_aom_intra_unit[];
-EbPictureBufferDesc   *svt_aom_get_ref_pic_buffer(PictureControlSet *pcs, uint8_t is_highbd,
-                                                  uint8_t list_idx, uint8_t ref_idx);
+extern IntraSize svt_aom_intra_unit[];
+
 const EbPredictionFunc svt_product_prediction_fun_table_light_pd0[2] = {
     svt_av1_intra_prediction_cl, svt_aom_inter_pu_prediction_av1_light_pd0};
 const EbPredictionFunc svt_product_prediction_fun_table_light_pd1[2] = {
@@ -1012,77 +1013,6 @@ static void product_coding_loop_init_fast_loop(PictureControlSet *pcs, ModeDecis
     return;
 }
 
-static uint32_t hadamard_path(ModeDecisionContext *ctx, uint8_t *input, uint32_t input_origin_index,
-                              uint32_t input_stride, uint8_t *pred, uint32_t blk_origin_index,
-                              uint32_t pred_stride) {
-    uint32_t input_idx, pred_idx, res_idx;
-
-    uint32_t satd_cost = 0;
-
-    const TxSize tx_size = AOMMIN(TX_32X32, max_txsize_lookup[ctx->blk_geom->bsize]);
-
-    const int stepr = tx_size_high_unit[tx_size];
-    const int stepc = tx_size_wide_unit[tx_size];
-    const int txbw  = tx_size_wide[tx_size];
-    const int txbh  = tx_size_high[tx_size];
-
-    const int max_blocks_wide = block_size_wide[ctx->blk_geom->bsize] >> MI_SIZE_LOG2;
-    const int max_blocks_high = block_size_wide[ctx->blk_geom->bsize] >> MI_SIZE_LOG2;
-    int       row, col;
-
-    for (row = 0; row < max_blocks_high; row += stepr) {
-        for (col = 0; col < max_blocks_wide; col += stepc) {
-            input_idx = input_origin_index + (((row * input_stride) + col) << 2);
-            pred_idx  = blk_origin_index + (((row * pred_stride) + col) << 2);
-            res_idx   = 0;
-
-            svt_aom_residual_kernel(input,
-                                    input_idx,
-                                    input_stride,
-                                    pred,
-                                    pred_idx,
-                                    pred_stride,
-                                    (int16_t *)ctx->temp_residual->buffer_y,
-                                    res_idx,
-                                    ctx->temp_residual->stride_y,
-                                    0, // input and pred 8-bit
-                                    txbw,
-                                    txbh);
-
-            switch (tx_size) {
-            case TX_4X4:
-                svt_aom_hadamard_4x4((int16_t *)ctx->temp_residual->buffer_y,
-                                     ctx->temp_residual->stride_y,
-                                     &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]));
-                break;
-
-            case TX_8X8:
-                svt_aom_hadamard_8x8((int16_t *)ctx->temp_residual->buffer_y,
-                                     ctx->temp_residual->stride_y,
-                                     &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]));
-                break;
-
-            case TX_16X16:
-                svt_aom_hadamard_16x16((int16_t *)ctx->temp_residual->buffer_y,
-                                       ctx->temp_residual->stride_y,
-                                       &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]));
-                break;
-
-            case TX_32X32:
-                svt_aom_hadamard_32x32((int16_t *)ctx->temp_residual->buffer_y,
-                                       ctx->temp_residual->stride_y,
-                                       &(((int32_t *)ctx->tx_coeffs->buffer_y)[0]));
-                break;
-
-            default: assert(0);
-            }
-            satd_cost += svt_aom_satd(&(((int32_t *)ctx->tx_coeffs->buffer_y)[0]),
-                                      tx_size_2d[tx_size]);
-        }
-    }
-    return (satd_cost);
-}
-
 /*
 */
 static void fast_loop_core_light_pd0(ModeDecisionCandidateBuffer *cand_bf, PictureControlSet *pcs,
@@ -1433,102 +1363,6 @@ static void fast_loop_core(ModeDecisionCandidateBuffer *cand_bf, PictureControlS
     // Init full cost in case we by pass stage1/stage2
     if (ctx->nic_ctrls.md_staging_mode == MD_STAGING_MODE_0)
         *(cand_bf->full_cost) = *(cand_bf->fast_cost);
-}
-void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) {
-    InterCompCtrls *inter_comp_ctrls = &ctx->inter_comp_ctrls;
-
-    switch (inter_comp_mode) {
-    case 0: //OFF
-        inter_comp_ctrls->tot_comp_types = 1;
-        break;
-    case 1: //FULL
-        inter_comp_ctrls->tot_comp_types = (svt_aom_get_wedge_params_bits(ctx->blk_geom->bsize) ==
-                                            0)
-            ? MD_COMP_WEDGE
-            : MD_COMP_TYPES;
-        inter_comp_ctrls->do_nearest_nearest  = 1;
-        inter_comp_ctrls->do_near_near        = 1;
-        inter_comp_ctrls->do_me               = 1;
-        inter_comp_ctrls->do_pme              = 1;
-        inter_comp_ctrls->do_nearest_near_new = 1;
-        inter_comp_ctrls->do_3x3_bi           = 1;
-
-        inter_comp_ctrls->skip_mvp_on_ref_info = 0;
-        inter_comp_ctrls->use_rate             = 1;
-        inter_comp_ctrls->pred0_to_pred1_mult  = 0;
-
-        break;
-    case 2:
-        inter_comp_ctrls->tot_comp_types = (svt_aom_get_wedge_params_bits(ctx->blk_geom->bsize) ==
-                                            0)
-            ? MD_COMP_WEDGE
-            : MD_COMP_TYPES;
-        inter_comp_ctrls->do_nearest_nearest  = 1;
-        inter_comp_ctrls->do_near_near        = 1;
-        inter_comp_ctrls->do_me               = 1;
-        inter_comp_ctrls->do_pme              = 1;
-        inter_comp_ctrls->do_nearest_near_new = 1;
-        inter_comp_ctrls->do_3x3_bi           = 0;
-
-        inter_comp_ctrls->skip_mvp_on_ref_info = 0;
-        inter_comp_ctrls->use_rate             = 0;
-        inter_comp_ctrls->pred0_to_pred1_mult  = 0;
-
-        break;
-
-    case 3:
-        inter_comp_ctrls->tot_comp_types = (svt_aom_get_wedge_params_bits(ctx->blk_geom->bsize) ==
-                                            0)
-            ? MD_COMP_WEDGE
-            : MD_COMP_TYPES;
-        inter_comp_ctrls->do_nearest_nearest  = 1;
-        inter_comp_ctrls->do_near_near        = 1;
-        inter_comp_ctrls->do_me               = 1;
-        inter_comp_ctrls->do_pme              = 1;
-        inter_comp_ctrls->do_nearest_near_new = 0;
-        inter_comp_ctrls->do_3x3_bi           = 0;
-
-        inter_comp_ctrls->skip_mvp_on_ref_info = 0;
-        inter_comp_ctrls->use_rate             = 0;
-        inter_comp_ctrls->pred0_to_pred1_mult  = 1;
-
-        break;
-    case 4:
-        inter_comp_ctrls->tot_comp_types = (svt_aom_get_wedge_params_bits(ctx->blk_geom->bsize) ==
-                                            0)
-            ? MD_COMP_WEDGE
-            : MD_COMP_TYPES;
-        inter_comp_ctrls->do_nearest_nearest  = 1;
-        inter_comp_ctrls->do_near_near        = 1;
-        inter_comp_ctrls->do_me               = 0;
-        inter_comp_ctrls->do_pme              = 0;
-        inter_comp_ctrls->do_nearest_near_new = 0;
-        inter_comp_ctrls->do_3x3_bi           = 0;
-
-        inter_comp_ctrls->skip_mvp_on_ref_info = 1;
-        inter_comp_ctrls->use_rate             = 0;
-        inter_comp_ctrls->pred0_to_pred1_mult  = 4;
-
-        break;
-    case 5:
-        inter_comp_ctrls->tot_comp_types = (svt_aom_get_wedge_params_bits(ctx->blk_geom->bsize) ==
-                                            0)
-            ? MD_COMP_WEDGE
-            : MD_COMP_TYPES;
-        inter_comp_ctrls->do_nearest_nearest  = 1;
-        inter_comp_ctrls->do_near_near        = 0;
-        inter_comp_ctrls->do_me               = 0;
-        inter_comp_ctrls->do_pme              = 0;
-        inter_comp_ctrls->do_nearest_near_new = 0;
-        inter_comp_ctrls->do_3x3_bi           = 0;
-
-        inter_comp_ctrls->skip_mvp_on_ref_info = 1;
-        inter_comp_ctrls->use_rate             = 0;
-        inter_comp_ctrls->pred0_to_pred1_mult  = 2;
-
-        break;
-    default: assert(0); break;
-    }
 }
 /* Set the max number of NICs for each MD stage, based on the picture type and scaling settings.
 
@@ -7655,20 +7489,6 @@ static void check_similar_block(const BlockGeom *blk_geom, ModeDecisionContext *
     }
 }
 
-/******************************************************
-* Derive md Settings(feature signals) that could be
-  changed  at the block level
-******************************************************/
-
-EbErrorType signal_derivation_block(PictureControlSet *pcs, ModeDecisionContext *ctx) {
-    EbErrorType return_error         = EB_ErrorNone;
-    ctx->spatial_sse_full_loop_level = ctx->spatial_sse_ctrls.spatial_sse_full_loop_level;
-    UNUSED(pcs);
-    // set compound_types_to_try
-    set_inter_comp_controls(ctx, ctx->inter_compound_mode);
-    return return_error;
-}
-
 static void init_chroma_mode(ModeDecisionContext *ctx) {
     Bool use_angle_delta = av1_use_angle_delta(ctx->blk_geom->bsize,
                                                ctx->intra_ctrls.angular_pred_level);
@@ -10023,10 +9843,6 @@ static uint8_t update_skip_nsq_shapes(ModeDecisionContext *ctx) {
     return skip_nsq;
 }
 
-void svt_aom_md_pme_search_controls(ModeDecisionContext *ctx, uint8_t md_pme_level);
-void svt_aom_set_inter_intra_ctrls(ModeDecisionContext *ctx, uint8_t inter_intra_level);
-void svt_aom_set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
-
 // Set the levels used by features which apply aggressive settings for certain blocks (e.g. NSQ stats)
 // Return 1 to skip, else 0
 //
@@ -10528,8 +10344,8 @@ static void process_block(SequenceControlSet *scs, PictureControlSet *pcs, ModeD
     // Reset settings, in case they were over-written by previous block
     // Only reset settings when features that change settings are used.
     if (!ctx->md_disallow_nsq)
-        svt_aom_signal_derivation_enc_dec_kernel_oq(scs, pcs, ctx);
-    signal_derivation_block(pcs, ctx);
+        svt_aom_sig_deriv_enc_dec(scs, pcs, ctx);
+    svt_aom_sig_deriv_block(pcs, ctx);
     // Check current depth cost; if larger than parent, exit early
     // if using pred depth only, you won't skip, so no need to check
     if (!(ctx->pd_pass == PD_PASS_1 && ctx->pred_depth_only))
@@ -10761,171 +10577,6 @@ static void update_d2_decision(SequenceControlSet *scs, PictureControlSet *pcs,
 
         eval_sub_depth_skip(scs, ctx);
     }
-}
-
-EB_EXTERN EbErrorType svt_aom_check_high_freq(PictureControlSet *pcs, SuperBlock *sb_ptr,
-                                              ModeDecisionContext *ctx) {
-    EbErrorType         return_error   = EB_ErrorNone;
-    SequenceControlSet *scs            = pcs->scs;
-    uint8_t             ref_frame_type = NONE_FRAME;
-
-    ctx->sb_ptr = sb_ptr;
-
-    if (pcs->ppcs->me_32x32_distortion[ctx->sb_index] == 0 ||
-        pcs->ppcs->me_8x8_cost_variance[ctx->sb_index] <
-            ctx->detect_high_freq_ctrls.me_8x8_sad_var_th)
-        return return_error;
-
-    EbPictureBufferDesc *input_pic = pcs->ppcs->enhanced_pic;
-
-    MotionEstimationData *pa_me_data = pcs->ppcs->pa_me_data;
-
-    uint32_t blk32_idx_tab[2][4] = {{1, 22, 43, 64}, {25, 294, 563, 832}};
-    uint32_t sum_b32_satd        = 0;
-    uint8_t  is_high_satd        = 0; // the b64 is detected if at least one b32 is detected
-
-    for (uint32_t blk_idx = 0; blk_idx < 4; blk_idx++) {
-        ctx->b32_satd[blk_idx] = (uint32_t)~0;
-
-        uint32_t blk_idx_mds = blk32_idx_tab[scs->svt_aom_geom_idx][blk_idx];
-
-        // block position should be calculated from the values in MD context,
-        // because sb params are different since frames might be downscaled
-        // if super-res or resize is enabled
-        const BlockGeom *blk_geom = ctx->blk_geom = get_blk_geom_mds(blk_idx_mds);
-        ctx->blk_org_x                            = (uint16_t)(ctx->sb_origin_x + blk_geom->org_x);
-        ctx->blk_org_y                            = (uint16_t)(ctx->sb_origin_y + blk_geom->org_y);
-        const uint32_t input_origin_index         = (ctx->blk_org_y + input_pic->org_y) *
-                input_pic->stride_y +
-            (ctx->blk_org_x + input_pic->org_x);
-
-        ctx->me_sb_addr = ctx->sb_ptr->index;
-
-        ctx->me_block_offset = (ctx->blk_geom->svt_aom_geom_idx == GEOM_0)
-            ? me_idx_85[ctx->blk_geom->blkidx_mds]
-            : me_idx[ctx->blk_geom->blkidx_mds];
-
-        ctx->me_cand_offset = ctx->me_block_offset * pa_me_data->max_cand;
-
-        // ME offset(s)
-        FrameHeader *frm_hdr             = &pcs->ppcs->frm_hdr;
-        Bool         is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
-        const MeSbResults *me_results    = pa_me_data->me_results[ctx->me_sb_addr];
-        uint8_t total_me_cnt = me_results->total_me_candidate_index[ctx->me_block_offset];
-
-        const MeCandidate *me_block_results = &me_results->me_candidate_array[ctx->me_cand_offset];
-
-        const uint8_t max_refs = pa_me_data->max_refs;
-        const uint8_t max_l0   = pa_me_data->max_l0;
-
-        for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt;
-             ++me_candidate_index) {
-            const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
-            const uint8_t      inter_direction      = me_block_results_ptr->direction;
-
-            if (inter_direction == 2)
-                break;
-
-            const uint8_t list0_ref_index = me_block_results_ptr->ref_idx_l0;
-            const uint8_t list1_ref_index = me_block_results_ptr->ref_idx_l1;
-            Mv            mv[MAX_NUM_OF_REF_PIC_LIST];
-            /**************
-                NEWMV L0
-            ************* */
-            mv[REF_LIST_0] = (Mv){{0, 0}};
-            if (inter_direction == 0) {
-                const int16_t mv_x =
-                    (me_results->me_mv_array[ctx->me_block_offset * max_refs + list0_ref_index]
-                         .x_mv)
-                    << 1;
-                const int16_t mv_y =
-                    (me_results->me_mv_array[ctx->me_block_offset * max_refs + list0_ref_index]
-                         .y_mv)
-                    << 1;
-                mv[REF_LIST_0] = (Mv){{mv_x, mv_y}};
-                ref_frame_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
-            }
-
-            /**************
-                NEWMV L1
-            ************* */
-            mv[REF_LIST_1] = (Mv){{0, 0}};
-            if (is_compound_enabled) {
-                if (inter_direction == 1) {
-                    const int16_t mv_x = (me_results
-                                              ->me_mv_array[ctx->me_block_offset * max_refs +
-                                                            max_l0 + list0_ref_index]
-                                              .x_mv)
-                        << 1;
-                    const int16_t mv_y = (me_results
-                                              ->me_mv_array[ctx->me_block_offset * max_refs +
-                                                            max_l0 + list0_ref_index]
-                                              .y_mv)
-                        << 1;
-                    mv[REF_LIST_1] = (Mv){{mv_x, mv_y}};
-                    ref_frame_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
-                }
-            }
-
-            MvReferenceFrame rf[2];
-            av1_set_ref_frame(rf, ref_frame_type);
-
-            assert(rf[1] == NONE_FRAME);
-
-            EbPictureBufferDesc *ref_pic;
-            const int8_t         ref_idx_first  = get_ref_frame_idx(rf[0]);
-            const int8_t         list_idx_first = get_list_idx(rf[0]);
-            int32_t              ref_origin_index;
-            int16_t              mv_x, mv_y;
-
-            EbReferenceObject *ref_obj = (EbReferenceObject *)pcs
-                                             ->ref_pic_ptr_array[list_idx_first][ref_idx_first]
-                                             ->object_ptr;
-
-            if (list_idx_first == 0) {
-                ref_pic = svt_aom_get_ref_pic_buffer(pcs, 0, 0, ref_idx_first);
-                mv_x    = mv[REF_LIST_0].x >> 3;
-                mv_y    = mv[REF_LIST_0].y >> 3;
-            } else {
-                ref_pic = svt_aom_get_ref_pic_buffer(pcs, 0, 1, ref_idx_first);
-                mv_x    = mv[REF_LIST_1].x >> 3;
-                mv_y    = mv[REF_LIST_1].y >> 3;
-            }
-            // -------
-            // Use scaled references if resolution of the reference is different from that of the input
-            // -------
-            svt_aom_use_scaled_rec_refs_if_needed(pcs, input_pic, ref_obj, &ref_pic, 0);
-            ref_origin_index = ref_pic->org_x + (ctx->blk_org_x + mv_x) +
-                (ctx->blk_org_y + mv_y + ref_pic->org_y) * ref_pic->stride_y;
-
-            uint32_t satd = hadamard_path(ctx,
-                                          input_pic->buffer_y,
-                                          input_origin_index,
-                                          input_pic->stride_y,
-                                          ref_pic->buffer_y,
-                                          ref_origin_index,
-                                          ref_pic->stride_y);
-
-            ctx->b32_satd[blk_idx] = MIN(ctx->b32_satd[blk_idx], satd);
-        }
-
-        if (ctx->b32_satd[blk_idx] >= ctx->detect_high_freq_ctrls.high_satd_th) {
-            is_high_satd = 1;
-        }
-
-        sum_b32_satd += ctx->b32_satd[blk_idx];
-
-        if (is_high_satd && sum_b32_satd > pcs->ppcs->me_32x32_distortion[ctx->sb_index]) {
-            int dev = ((sum_b32_satd - pcs->ppcs->me_32x32_distortion[ctx->sb_index]) * 100) /
-                pcs->ppcs->me_32x32_distortion[ctx->sb_index];
-            if (dev >= ctx->detect_high_freq_ctrls.satd_to_sad_dev_th) {
-                ctx->high_freq_present = 1;
-                return return_error;
-            }
-        }
-    }
-
-    return return_error;
 }
 
 EB_EXTERN EbErrorType svt_aom_mode_decision_sb_light_pd0(SequenceControlSet    *scs,
