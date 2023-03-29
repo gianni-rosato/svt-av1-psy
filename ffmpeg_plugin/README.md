@@ -1,7 +1,7 @@
 # FFmpeg patches for SVT-AV1
 
 This directory contains patches and backported commits that might be of interest
-to users of libsvtav1 as a single patch file.
+to users of libsvtav1 using FFmpeg tags.
 
 For the original commits the patch was generated from, see <https://gitlab.com/1480c1/FFmpeg/> and look at the svt-av1/n* branches.
 
@@ -11,6 +11,14 @@ Notes:
 
 - The patches for n4.4 have been tested to apply cleanly to n4.4.1 and n4.4.2.
 - The patches for n5.0 have been tested to apply cleanly to n5.0.1.
+
+### n6.0 - [svt-av1/n6.0](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n6.0)
+
+#### Using SVT-AV1 v1.4 with n6.0?
+
+- [fba9d9609f](https://gitlab.com/1480c1/FFmpeg/-/commit/fba9d9609f): Backport patch for additional changes for max_buf_sz
+
+---
 
 ### n5.0 - [svt-av1/n5.0](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n5.0)
 
@@ -35,6 +43,10 @@ Notes:
 - [031f1561cd](https://gitlab.com/1480c1/FFmpeg/-/commit/031f1561cd): Backport patch removing compressed_ten_bit_format
 - [1c6fd7d756](https://gitlab.com/1480c1/FFmpeg/-/commit/1c6fd7d756): Backport patch removing vbv_bufsize
 - [96748ac54f](https://gitlab.com/1480c1/FFmpeg/-/commit/96748ac54f): Backport patch fixing setting of max_buf_sz
+- [fba9d9609f](https://gitlab.com/1480c1/FFmpeg/-/commit/fba9d9609f): Backport patch for additional changes for max_buf_sz
+
+There is an additional patch for libavutil/hwcontext_vulkan that can help with compilation errors on n5.0.
+This patch is not necessary if you have vulkan disabled.
 
 ---
 
@@ -65,6 +77,7 @@ Notes:
 - [031f1561cd](https://gitlab.com/1480c1/FFmpeg/-/commit/031f1561cd): Backport patch removing compressed_ten_bit_format
 - [1c6fd7d756](https://gitlab.com/1480c1/FFmpeg/-/commit/1c6fd7d756): Backport patch removing vbv_bufsize
 - [96748ac54f](https://gitlab.com/1480c1/FFmpeg/-/commit/96748ac54f): Backport patch fixing setting of max_buf_sz
+- [fba9d9609f](https://gitlab.com/1480c1/FFmpeg/-/commit/fba9d9609f): Backport patch for additional changes for max_buf_sz
 
 ## How to build
 

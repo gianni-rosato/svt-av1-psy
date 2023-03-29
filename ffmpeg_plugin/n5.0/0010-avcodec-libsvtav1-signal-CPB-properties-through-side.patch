@@ -1,7 +1,7 @@
-From 013b64acf7e59a76f0606d00011733402404f205 Mon Sep 17 00:00:00 2001
+From f1a56bbd744fd998652d688ff950db7f899af70e Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Jan=20Ekstr=C3=B6m?= <jeebjp@gmail.com>
 Date: Mon, 9 May 2022 21:29:44 +0300
-Subject: [PATCH 09/13] avcodec/libsvtav1: signal CPB properties through side
+Subject: [PATCH 10/17] avcodec/libsvtav1: signal CPB properties through side
  data
 
 This way values such as maxrate/bufsize can be utilized further
@@ -15,10 +15,10 @@ nonzero, adds the CPB properties side data.
  1 file changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/libavcodec/libsvtav1.c b/libavcodec/libsvtav1.c
-index 691bc27133..309ec97f31 100644
+index 0298aa0f99..e4135547e8 100644
 --- a/libavcodec/libsvtav1.c
 +++ b/libavcodec/libsvtav1.c
-@@ -294,8 +294,20 @@ static int config_enc_params(EbSvtAv1EncConfiguration *param,
+@@ -296,8 +296,20 @@ static int config_enc_params(EbSvtAv1EncConfiguration *param,
          param->profile = FF_PROFILE_AV1_HIGH;
      }
  
@@ -42,5 +42,5 @@ index 691bc27133..309ec97f31 100644
      return 0;
  }
 -- 
-2.38.1
+2.40.0
 

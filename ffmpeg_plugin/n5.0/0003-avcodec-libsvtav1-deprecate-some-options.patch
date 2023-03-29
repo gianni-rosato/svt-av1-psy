@@ -1,7 +1,7 @@
-From 8eab6f7e701cf178731b95dbe9ada29a0b8bf9d0 Mon Sep 17 00:00:00 2001
+From e0d999899323a27a25f78e716d3afe39b0ddb033 Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Sun, 13 Mar 2022 15:16:29 -0300
-Subject: [PATCH 07/20] avcodec/libsvtav1: deprecate some options
+Subject: [PATCH 03/17] avcodec/libsvtav1: deprecate some options
 
 svtav1-params should be used for these.
 
@@ -12,7 +12,7 @@ Signed-off-by: James Almer <jamrial@gmail.com>
  2 files changed, 31 insertions(+), 26 deletions(-)
 
 diff --git a/libavcodec/libsvtav1.c b/libavcodec/libsvtav1.c
-index 5b6fe90bb2..00be46e22b 100644
+index fecb9f4aaa..fae2235972 100644
 --- a/libavcodec/libsvtav1.c
 +++ b/libavcodec/libsvtav1.c
 @@ -61,17 +61,19 @@ typedef struct SvtContext {
@@ -127,13 +127,13 @@ index 5b6fe90bb2..00be46e22b 100644
      { "svtav1-params", "Set the SVT-AV1 configuration using a :-separated list of key=value parameters", OFFSET(svtav1_opts), AV_OPT_TYPE_DICT, { 0 }, 0, 0, VE },
  
 diff --git a/libavcodec/version.h b/libavcodec/version.h
-index cfdde46960..6987584670 100644
+index 4d77431842..05740ceff1 100644
 --- a/libavcodec/version.h
 +++ b/libavcodec/version.h
-@@ -168,5 +168,6 @@
- #ifndef FF_API_INIT_PACKET
- #define FF_API_INIT_PACKET         (LIBAVCODEC_VERSION_MAJOR < 60)
- #endif
+@@ -63,5 +63,6 @@
+ #define FF_API_MPEGVIDEO_OPTS      (LIBAVCODEC_VERSION_MAJOR < 60)
+ #define FF_API_FLAG_TRUNCATED      (LIBAVCODEC_VERSION_MAJOR < 60)
+ #define FF_API_SUB_TEXT_FORMAT     (LIBAVCODEC_VERSION_MAJOR < 60)
 +#define FF_API_SVTAV1_OPTS         (LIBAVCODEC_VERSION_MAJOR < 60)
  
  #endif /* AVCODEC_VERSION_H */

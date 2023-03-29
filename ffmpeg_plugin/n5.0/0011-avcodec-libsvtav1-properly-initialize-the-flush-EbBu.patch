@@ -1,7 +1,7 @@
-From 4bd2f0609da17520b3cfe4029e78fdee567be155 Mon Sep 17 00:00:00 2001
+From 18516a0d60667cc676474bf5058f502be3c979b5 Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Mon, 22 Aug 2022 00:05:02 -0300
-Subject: [PATCH 10/13] avcodec/libsvtav1: properly initialize the flush
+Subject: [PATCH 11/17] avcodec/libsvtav1: properly initialize the flush
  EbBufferHeaderType struct
 
 Should fix ticket #9834
@@ -12,10 +12,10 @@ Signed-off-by: James Almer <jamrial@gmail.com>
  1 file changed, 2 insertions(+), 5 deletions(-)
 
 diff --git a/libavcodec/libsvtav1.c b/libavcodec/libsvtav1.c
-index 309ec97f31..b5ed8a6f51 100644
+index e4135547e8..1cb4e854d3 100644
 --- a/libavcodec/libsvtav1.c
 +++ b/libavcodec/libsvtav1.c
-@@ -421,11 +421,8 @@ static int eb_send_frame(AVCodecContext *avctx, const AVFrame *frame)
+@@ -423,11 +423,8 @@ static int eb_send_frame(AVCodecContext *avctx, const AVFrame *frame)
          if (svt_enc->eos_flag == EOS_SENT)
              return 0;
  
@@ -30,5 +30,5 @@ index 309ec97f31..b5ed8a6f51 100644
  
          svt_av1_enc_send_picture(svt_enc->svt_handle, &headerPtrLast);
 -- 
-2.38.1
+2.40.0
 
