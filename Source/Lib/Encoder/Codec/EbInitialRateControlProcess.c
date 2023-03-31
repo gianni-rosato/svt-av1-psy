@@ -23,6 +23,7 @@
 #include "EbLog.h"
 #include "EbPictureDecisionProcess.h"
 #include "firstpass.h"
+#include "EbEncSettings.h"
 /**************************************
  * Context
  **************************************/
@@ -227,14 +228,14 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
         ? MIN(1 + (pcs->scs->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size)
         : MIN((pcs->scs->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size);
 #if OPT_STARTUP_MG_SIZE
-    if (pcs->scs->static_config.startup_mg_size > 0) {
+    if (pcs->scs->static_config.opaque->startup_mg_size > 0) {
         if (pcs->slice_type == I_SLICE) {
             limited_tpl_group_size = MIN(
                 1 + pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) +
                     mg_size,
                 pcs->ext_group_size);
         } else {
-            const uint32_t startup_mg_size = 1 << pcs->scs->static_config.startup_mg_size;
+            const uint32_t startup_mg_size = 1 << pcs->scs->static_config.opaque->startup_mg_size;
             if (pcs->last_idr_picture + startup_mg_size == pcs->picture_number) {
                 limited_tpl_group_size = MIN(
                     pcs->scs->tpl_lad_mg * (1 << pcs->scs->static_config.hierarchical_levels) +

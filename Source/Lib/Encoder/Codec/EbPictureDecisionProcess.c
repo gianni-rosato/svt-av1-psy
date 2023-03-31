@@ -35,6 +35,7 @@
 #include "EbMalloc.h"
 #include "EbInterPrediction.h"
 #include "aom_dsp_rtcd.h"
+#include "EbEncSettings.h"
 
 #include "EbPictureOperators.h"
 /************************************************
@@ -884,7 +885,7 @@ static void get_pred_struct_for_all_frames(
                 pcs->hierarchical_levels);
 
 #if FTR_STARTUP_MG_SIZE
-           if (scs->static_config.startup_mg_size != 0) {
+           if (scs->static_config.opaque->startup_mg_size != 0) {
                if (pcs->idr_flag || pcs->cra_flag) {
                    ctx->enable_startup_mg = true;
                } else if (ctx->enable_startup_mg) {
@@ -5162,7 +5163,7 @@ static EbErrorType derive_tf_window_params(
             if (centre_pcs->hierarchical_levels != pcs->temp_filt_pcs_list[0]->hierarchical_levels ||
                 centre_pcs->hierarchical_levels != pd_ctx->mg_pictures_array[idx]->hierarchical_levels) {
 #if OPT_STARTUP_MG_SIZE
-                if (scs->static_config.startup_mg_size == 0 || scs->static_config.startup_mg_size == 4) {
+                if (scs->static_config.opaque->startup_mg_size == 0 || scs->static_config.opaque->startup_mg_size == 4) {
                     centre_pcs->hierarchical_levels = pcs->temp_filt_pcs_list[0]->hierarchical_levels = pd_ctx->mg_pictures_array[idx]->hierarchical_levels;
                 } else {
                     pcs->temp_filt_pcs_list[0]->hierarchical_levels = pd_ctx->mg_pictures_array[idx]->hierarchical_levels = centre_pcs->hierarchical_levels;
@@ -5832,7 +5833,7 @@ static void set_mini_gop_structure(SequenceControlSet* scs, EncodeContext* enc_c
 #if FTR_STARTUP_MG_SIZE
     uint32_t next_mg_hierarchical_levels = scs->static_config.hierarchical_levels;
     if (ctx->enable_startup_mg) {
-        next_mg_hierarchical_levels = scs->static_config.startup_mg_size;
+        next_mg_hierarchical_levels = scs->static_config.opaque->startup_mg_size;
     }
 #endif
     // Initialize Picture Block Params
@@ -6675,7 +6676,7 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
 #if FTR_STARTUP_MG_SIZE
             uint32_t next_mg_hierarchical_levels = scs->static_config.hierarchical_levels;
             if (ctx->enable_startup_mg) {
-                next_mg_hierarchical_levels = scs->static_config.startup_mg_size;
+                next_mg_hierarchical_levels = scs->static_config.opaque->startup_mg_size;
             }
 #endif
             // Determine if Pictures can be released from the Pre-Assignment Buffer
