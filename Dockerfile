@@ -1,4 +1,4 @@
-FROM buildpack-deps:focal as BUILDER
+FROM buildpack-deps:kinetic as BUILDER
 
 WORKDIR /app
 
