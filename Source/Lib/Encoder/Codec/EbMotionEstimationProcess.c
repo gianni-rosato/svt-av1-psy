@@ -62,6 +62,9 @@ EbErrorType check_00_center(PictureParentControlSet *pcs, EbPictureBufferDesc *r
                             int16_t *y_search_center, uint32_t zz_sad);
 void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
                           MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
+#if OPT_PRED_STRUCT_CLASSIFIER
+void dg_detector_hme_level0(struct PictureParentControlSet *ppcs, uint32_t seg_idx);
+#endif
 
 static void motion_estimation_context_dctor(EbPtr p) {
     EbThreadContext *          thread_ctx = (EbThreadContext *)p;
@@ -113,8 +116,15 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
             me_context_ptr->me_ctx->me_type = ME_MCTF;
         else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME)
             me_context_ptr->me_ctx->me_type = ME_FIRST_PASS;
+#if OPT_PRED_STRUCT_CLASSIFIER
+        else if (in_results_ptr->task_type == TASK_PAME || in_results_ptr->task_type == TASK_SUPERRES_RE_ME)
+            me_context_ptr->me_ctx->me_type = ME_OPEN_LOOP;
+        else if (in_results_ptr->task_type == TASK_DG_DETECTOR_HME)
+            me_context_ptr->me_ctx->me_type = ME_DG_DETECTOR;
+#else
         else // TASK_PAME or TASK_SUPERRES_RE_ME
             me_context_ptr->me_ctx->me_type = ME_OPEN_LOOP;
+#endif
 
         // ME Kernel Signal(s) derivation
         if ((in_results_ptr->task_type == TASK_PAME) ||
@@ -126,8 +136,13 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
 
         else if (in_results_ptr->task_type == TASK_TFME)
             svt_aom_sig_deriv_me_tf(pcs, me_context_ptr->me_ctx);
+#if OPT_PRED_STRUCT_CLASSIFIER
+        else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME)
+            svt_aom_first_pass_sig_deriv_me(scs, pcs, me_context_ptr->me_ctx);
+#else
         else // TASK_FIRST_PASS_ME
             svt_aom_first_pass_sig_deriv_me(scs, pcs, me_context_ptr->me_ctx);
+#endif
 
         if ((in_results_ptr->task_type == TASK_PAME) ||
             (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
@@ -324,14 +339,28 @@ void *svt_aom_motion_estimation_kernel(void *input_ptr) {
 
             // Release the Input Results
             svt_release_object(in_results_wrapper_ptr);
+#if OPT_PRED_STRUCT_CLASSIFIER
+        } else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME) {
+#else
         } else {
+#endif
             // first pass start
             me_context_ptr->me_ctx->me_type = ME_FIRST_PASS;
             open_loop_first_pass(pcs, me_context_ptr, in_results_ptr->segment_index);
 
             // Release the Input Results
             svt_release_object(in_results_wrapper_ptr);
+#if OPT_PRED_STRUCT_CLASSIFIER
+        } else if (in_results_ptr->task_type == TASK_DG_DETECTOR_HME) {
+            // dynamic gop detector
+            dg_detector_hme_level0(pcs, in_results_ptr->segment_index);
+
+            // Release the Input Results
+            svt_release_object(in_results_wrapper_ptr);
         }
+#else
+        }
+#endif
     }
 
     return NULL;
