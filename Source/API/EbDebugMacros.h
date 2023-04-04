@@ -71,6 +71,45 @@ extern "C" {
 #define EN_WARNING_FOR_MISMATCH    1 // create a new warning for mismatch that is expected for recon ON/OFF and stat-report ON/OFF for 10bit path
 #define FIX_2042                   1 // fix for issue 2042, fixes corrupted bitstream when over boundary blocks are disabled
 
+// LD Improvement
+// applicable in all presets
+#define OPT_LD_PD0                 1 // Optimize LPD0 for low delay mode
+#define OPT_LD_MRP3                1 // Optimize MRP setting for low delay mode
+
+#define OPT_LD2_M8                  1 // Optimize M8 in low delay mode
+#define OPT_LD2_M9                  1 // Optimize M9 in low delay mode
+#define OPT_LD2_M10                 1 // Optimize M10 in low delay mode
+#define OPT_LD2_M11                 1 // Optimize M11 in low delay mode
+#define OPT_LD2_M13                 1 // Optimize M13 in low delay mode
+#define OPT_LD_TX_SHORT_CUT_OFF     1 // Fix TX short cut, enable bypassEncdec // to be tested in RA
+#define OPT_LD_MRP5                 1 // Use 3 reference in list 0 --> to create a new level for ld only
+#define OPT_LD_B_FIX                1 // Set the reference information of list 1 in low delay B mode
+#define OPT_LD_PD1_1                1 // Optimize light PD1 setting in low delay mode
+#define OPT_LD_DR                   1 // Optimize depth removal by adding the skip_pd0 option
+#define OPT_LD_SKIPTX               1 // Optimize skip tx based on early skip estimation
+#define OPT_LD_CDEF1                1 // Improve cdef for M12-13
+#define OPT_LD_SKIP_TX_NEAREST_LPD1 1 // Enable lpd1_skip_inter_tx_level for low delay mode
+#define OPT_LD_ME                   1 // loss less changes in ME, disable pre-HME for RTC M13
+#define OPT_LD_RC3                  1 // Improve RC for RTC
+#define OPT_LD_CAND_RED_LVL         1 // optimize candidate reduction controls for low-delay mode
+#define OPT_LD_PALLET               1 // optimize pallet setting for low-delay mode
+#define OPT_LD_SC_TF                1 // optimize TF setting for Screen content in the low-delay mode
+#define OPT_LD_SPEED_M11_M12        1 // speed-up presets M11 and M12
+#define OPT_LD2_SC_M12           1 // Optimize M12 for SC in low delay mode
+#define OPT_LD_SC_PD0            1 // Optimize LPD0 for SC in low delay mode
+#define OPT_LD_SC_HF             1 // Optimize High frequency setting for SC in low delay mode
+#define OPT_LD_SC_ME             1 // Optimize PreHme/me settings for SC in low delay mode
+#define OPT_LD2_SC_M11           1 // Optimize M11 for SC in low delay mode
+#define OPT_LD2_SC_M10           1 // Optimize M10 for SC in low delay mode
+#define OPT_LD2_SC_M9            1 // Optimize M9 for SC in low delay mode
+#define OPT_LD2_SC_M8            1 // Optimize M8 for SC in low delay mode
+
+#define OPT_LD_SC_MDS0           1 // Optimize intra cost syntax generation
+#define OPT_LD_SC_RDOQ           1 // Disable RDOQ for RTC SC in M13
+
+#define OPT_LD_CLEANUP           1 // clean up signal derivation functions with rtc checks
+#define OPT_LD_CLEANUP_II       1 // Refactor rtc check to use block level signals (like fast_decode)
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

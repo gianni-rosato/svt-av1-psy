@@ -573,6 +573,12 @@ void svt_aom_reset_mode_decision(SequenceControlSet *scs, ModeDecisionContext *c
     ctx->bypass_encdec = pcs->pic_bypass_encdec;
     ctx->skip_pd0      = pcs->pic_skip_pd0;
     set_block_based_depth_refinement_controls(ctx, pcs->pic_block_based_depth_refinement_level);
+#if OPT_LD_TX_SHORT_CUT_OFF
+    if (!pcs->rtc_tune || pcs->temporal_layer_index != 0)
+        ctx->rtc_use_N4_dct_dct_shortcut = 1;
+    else
+        ctx->rtc_use_N4_dct_dct_shortcut = 0;
+#endif
     return;
 }
 

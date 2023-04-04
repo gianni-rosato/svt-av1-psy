@@ -422,6 +422,9 @@ typedef struct PictureControlSet {
     uint8_t  pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
     // depth_removal_level signal at the picture level
     uint8_t pic_depth_removal_level;
+#if OPT_LD_DR
+    uint8_t pic_depth_removal_level_rtc;
+#endif
     // block_based_depth_refinement_level signal set at the picture level
     uint8_t pic_block_based_depth_refinement_level;
     // Skip testing remaining blocks at the current depth if (curr_cost * 100 >
@@ -480,6 +483,9 @@ typedef struct PictureControlSet {
     // scaled input picture is only used in loop restoration for recon size is
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_pic;
+#if OPT_LD_SKIPTX
+    bool rtc_tune;
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -677,6 +683,9 @@ typedef struct PaletteCtrls {
     // only 3 candidates with palettes based on the most dominant 7, 5 and 3 colors are tested.
     // Range: [1 (test all), 7 (test one)]
     uint8_t dominant_color_step;
+#if OPT_LD_SC_MDS0
+    uint8_t reduce_palette_cost_precision;
+#endif
 } PaletteCtrls;
 
 #if OPT_LD_QPM
@@ -1104,6 +1113,12 @@ typedef struct PictureParentControlSet {
     StatStruct                      stat_struct;
 #if OPT_LD_QPM
     CyclicRefresh cyclic_refresh;
+#endif
+#if OPT_LD_PD0
+    bool ld_enhanced_base_frame; // enhanced periodic base layer frames used in LD
+#endif
+#if OPT_LD_MRP3
+    bool update_ref_count; // Update ref count
 #endif
     uint8_t      partition_contexts;
     uint8_t      bypass_cost_table_gen;

@@ -2207,13 +2207,23 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
                 (ctx->pred_depth_only && (blk_geom->sq_size < min_sq_size))
             ? 0
             : 1;
+#if OPT_LD_DR
+        if (ctx->skip_pd0) {
+            if (ctx->depth_removal_ctrls.disallow_below_64x64)
+                is_block_tagged = (blk_geom->sq_size != 64) ? 0 : is_block_tagged;
+            else if (ctx->depth_removal_ctrls.disallow_below_32x32)
+                is_block_tagged = (blk_geom->sq_size != 32) ? 0 : is_block_tagged;
+            else if (ctx->depth_removal_ctrls.disallow_below_16x16)
+                is_block_tagged = (blk_geom->sq_size != 16) ? 0 : is_block_tagged;
+        }
+#else
         if (ctx->skip_pd0)
             is_block_tagged = !ctx->depth_removal_ctrls.disallow_below_64x64 &&
                     ctx->depth_removal_ctrls.disallow_below_32x32 && (blk_geom->sq_size != 32)
                 ? 0
                 : is_block_tagged;
-
-            // SQ/NSQ block(s) filter based on the block validity
+#endif
+        // SQ/NSQ block(s) filter based on the block validity
 #if FIX_2042
         if (is_block_tagged) {
 #else
@@ -2442,6 +2452,27 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                     int8_t s_depth = ctx->depth_ctrls.s_depth;
                     int8_t e_depth = ctx->depth_ctrls.e_depth;
 
+#if OPT_LD_DR
+                    if (ctx->skip_pd0) {
+                        SbGeom *sb_geom = &pcs->ppcs->sb_geom[ctx->sb_index];
+                        if (ctx->depth_removal_ctrls.disallow_below_64x64) {
+                            if ((sb_geom->width % 64 == 0) || (sb_geom->height % 64 == 0)) {
+                                s_depth = 0;
+                                e_depth = 0;
+                            }
+                        } else if (ctx->depth_removal_ctrls.disallow_below_32x32) {
+                            if ((sb_geom->width % 32 == 0) || (sb_geom->height % 32 == 0)) {
+                                s_depth = 0;
+                                e_depth = 0;
+                            }
+                        } else if (ctx->depth_removal_ctrls.disallow_below_16x16) {
+                            if ((sb_geom->width % 16 == 0) || (sb_geom->height % 16 == 0)) {
+                                s_depth = 0;
+                                e_depth = 0;
+                            }
+                        }
+                    }
+#else
                     if (ctx->skip_pd0) {
                         SbGeom *sb_geom = &pcs->ppcs->sb_geom[ctx->sb_index];
                         if ((sb_geom->width % 32 == 0) && (sb_geom->height % 32 == 0)) {
@@ -2449,6 +2480,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                             e_depth = 0;
                         }
                     }
+#endif
                     // If multiple depths are selected, perform refinement
                     if (s_depth != 0 || e_depth != 0) {
                         // Check that the start and end depth are in allowed range, given other features
@@ -2591,13 +2623,23 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                 (blk_geom->sq_size < min_sq_size)
             ? 0
             : 1;
+#if OPT_LD_DR
+        if (ctx->skip_pd0) {
+            if (ctx->depth_removal_ctrls.disallow_below_64x64)
+                is_block_tagged = (blk_geom->sq_size != 64) ? 0 : is_block_tagged;
+            else if (ctx->depth_removal_ctrls.disallow_below_32x32)
+                is_block_tagged = (blk_geom->sq_size != 32) ? 0 : is_block_tagged;
+            else if (ctx->depth_removal_ctrls.disallow_below_16x16)
+                is_block_tagged = (blk_geom->sq_size != 16) ? 0 : is_block_tagged;
+        }
+#else
         if (ctx->skip_pd0)
             is_block_tagged = !ctx->depth_removal_ctrls.disallow_below_64x64 &&
                     ctx->depth_removal_ctrls.disallow_below_32x32 && (blk_geom->sq_size != 32)
                 ? 0
                 : is_block_tagged;
-
-            // SQ/NSQ block(s) filter based on the block validity
+#endif
+        // SQ/NSQ block(s) filter based on the block validity
 #if FIX_2042
         if (is_block_tagged) {
 #else
@@ -2868,15 +2910,60 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
 not performed, this detector is used (else lpd1_detector_post_pd0() is used). */
 static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
                                    uint32_t pic_width_in_sb) {
+#if OPT_LD_CLEANUP_II
+    if (md_ctx->pd1_lvl_refinement) {
+        uint32_t me_8x8_cost_variance = pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index];
+        if (md_ctx->pd1_lvl_refinement == 2) {
+            if (pcs->temporal_layer_index > 0)
+                md_ctx->lpd1_ctrls.pd1_level = me_8x8_cost_variance < 3000
+                    ? md_ctx->lpd1_ctrls.pd1_level
+                    : pcs->temporal_layer_index == 1
+                    ? MAX(md_ctx->lpd1_ctrls.pd1_level - 2, REGULAR_PD1)
+                    : MAX(md_ctx->lpd1_ctrls.pd1_level - 1, REGULAR_PD1);
+        } else
+            md_ctx->lpd1_ctrls.pd1_level = me_8x8_cost_variance < 500 ? LPD1_LVL_2
+                : me_8x8_cost_variance < 3000                         ? LPD1_LVL_1
+                                                                      : REGULAR_PD1;
+
+        return;
+    }
+#else
 #if OPT_LD_P2
     const bool rtc_tune = (pcs->scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
         ? true
         : false;
     if (rtc_tune) {
+#endif
         uint32_t me_8x8_cost_variance = pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index];
-        md_ctx->lpd1_ctrls.pd1_level  = me_8x8_cost_variance < 500 ? LPD1_LVL_2
-             : me_8x8_cost_variance < 3000                         ? LPD1_LVL_1
-                                                                   : REGULAR_PD1;
+#if OPT_LD_PD1_1
+#if OPT_LD_SPEED_M11_M12
+#if OPT_LD2_SC_M11
+        if ((!(rtc_tune && pcs->ppcs->sc_class1) &&
+             pcs->ppcs->scs->static_config.enc_mode > ENC_M11) ||
+            ((rtc_tune && pcs->ppcs->sc_class1) &&
+             pcs->ppcs->scs->static_config.enc_mode > ENC_M10)) {
+#else
+        if (pcs->ppcs->scs->static_config.enc_mode > ENC_M11) {
+#endif
+#else
+        if (pcs->ppcs->scs->static_config.enc_mode > ENC_M12) {
+#endif
+            if (pcs->temporal_layer_index > 0)
+                md_ctx->lpd1_ctrls.pd1_level = me_8x8_cost_variance < 3000
+                    ? md_ctx->lpd1_ctrls.pd1_level
+                    :
+                    //  : me_8x8_cost_variance < 3000 ? LPD1_LVL_1
+                    pcs->temporal_layer_index == 1 ? md_ctx->lpd1_ctrls.pd1_level - 2
+                                                   : md_ctx->lpd1_ctrls.pd1_level - 1;
+        } else
+            md_ctx->lpd1_ctrls.pd1_level = me_8x8_cost_variance < 500 ? LPD1_LVL_2
+                : me_8x8_cost_variance < 3000 ? LPD1_LVL_1
+                                              : REGULAR_PD1;
+#else
+    md_ctx->lpd1_ctrls.pd1_level = me_8x8_cost_variance < 500 ? LPD1_LVL_2
+        : me_8x8_cost_variance < 3000                         ? LPD1_LVL_1
+                                                              : REGULAR_PD1;
+#endif
         return;
     }
 #endif
@@ -3374,6 +3461,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         if (ed_ctx->md_ctx->skip_pd0)
                             if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_32x32)
                                 skip_pd_pass_0 = 1;
+#if OPT_LD_DR
+                        if (ed_ctx->md_ctx->skip_pd0)
+                            if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_16x16)
+                                skip_pd_pass_0 = 1;
+#endif
 
                                 // If LPD0 is used, a more conservative level can be set for complex SBs
 #if OPT_LD_P2
@@ -3381,7 +3473,12 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                SVT_AV1_PRED_LOW_DELAY_B)
                             ? true
                             : false;
+#if OPT_LD_SC_PD0
+                        if (!(rtc_tune && !pcs->ppcs->sc_class1) &&
+                            md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
+#else
                         if (!rtc_tune && md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
+#endif
 #else
                         if (md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
 #endif

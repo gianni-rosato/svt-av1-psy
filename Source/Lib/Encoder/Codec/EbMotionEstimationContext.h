@@ -476,6 +476,10 @@ typedef struct MeContext {
     uint8_t      bypass_blk_step;
     uint32_t     b64_width;
     uint32_t     b64_height;
+#if OPT_LD_SC_ME
+    uint8_t  performed_phme[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][2];
+    uint32_t prev_me_stage_based_exit_th;
+#endif
 } MeContext;
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,

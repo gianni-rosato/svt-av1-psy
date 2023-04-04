@@ -862,11 +862,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
 
     if (config->pred_structure == 1) {
-        SVT_WARN(
-            "Instance %u: The low delay encoding mode is a work-in-progress project, and is only "
-            "available for demos, experimentation, and further development uses and should not be "
-            "used for benchmarking until fully implemented.\n",
-            channel_number + 1);
         if (config->tune == 0) {
             SVT_WARN(
                 "Instance %u: Tune 0 is not applicable for low-delay, tune will be forced to 1.\n",

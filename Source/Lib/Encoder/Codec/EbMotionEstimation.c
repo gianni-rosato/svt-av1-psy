@@ -1798,6 +1798,9 @@ static void prehme_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_t or
                                 block_height >> 2,
                                 sixteenth_ref_pic,
                                 prehme_data);
+#if OPT_LD_SC_ME
+                    me_ctx->performed_phme[list_i][ref_i][sr_i] = 1;
+#endif
                 }
             } else {
                 // PW: Does this account for base pictures
@@ -1918,6 +1921,28 @@ static void hme_level0_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_
                     continue;
                 }
             }
+#if OPT_LD_SC_ME
+            if (me_ctx->prev_me_stage_based_exit_th) {
+                uint8_t sr_i = me_ctx->prehme_data[list_index][ref_pic_index][0].sad <=
+                    me_ctx->prehme_data[list_index][ref_pic_index][1].sad
+                    ? 0
+                    : 1;
+                if (me_ctx->performed_phme[list_index][ref_pic_index][sr_i]) {
+                    if (me_ctx->prehme_data[list_index][ref_pic_index][sr_i].sad < (me_ctx->prev_me_stage_based_exit_th >> 4)) {
+                        for (uint32_t sr_idx_y = 0; sr_idx_y < me_ctx->num_hme_sa_h; sr_idx_y++) {
+                            for (uint32_t sr_idx_x = 0; sr_idx_x < me_ctx->num_hme_sa_w; sr_idx_x++) {
+                                me_ctx->x_hme_level0_search_center[list_index][ref_pic_index][sr_idx_x]
+                                    [sr_idx_y] = me_ctx->prehme_data[list_index][ref_pic_index][sr_i].best_mv.as_mv.col;
+                                me_ctx->y_hme_level0_search_center[list_index][ref_pic_index][sr_idx_x]
+                                    [sr_idx_y] = me_ctx->prehme_data[list_index][ref_pic_index][sr_i].best_mv.as_mv.row;
+                                me_ctx->hme_level0_sad[list_index][ref_pic_index][sr_idx_x][sr_idx_y] = me_ctx->prehme_data[list_index][ref_pic_index][sr_i].sad;
+                            }
+                        }
+                        continue;
+                    }
+                }
+            }
+#endif
 
             // Get the sixteenth downsampled reference picture
             uint16_t             dist              = 0;
@@ -2031,6 +2056,19 @@ static void hme_level1_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_
                 }
                 for (uint8_t sr_h = 0; sr_h < me_ctx->num_hme_sa_h; sr_h++) {
                     for (uint8_t sr_w = 0; sr_w < me_ctx->num_hme_sa_w; sr_w++) {
+#if OPT_LD_SC_ME
+                        if (me_ctx->prev_me_stage_based_exit_th) {
+                            if (me_ctx->hme_level0_sad[list_index][ref_pic_index][sr_w][sr_h] < (me_ctx->prev_me_stage_based_exit_th >> 5)) {
+                                me_ctx->x_hme_level1_search_center[list_index][ref_pic_index][sr_w][sr_h] =
+                                    me_ctx->x_hme_level0_search_center[list_index][ref_pic_index][sr_w][sr_h];
+                                me_ctx->y_hme_level1_search_center[list_index][ref_pic_index][sr_w][sr_h] =
+                                    me_ctx->y_hme_level0_search_center[list_index][ref_pic_index][sr_w][sr_h];
+                                me_ctx->hme_level1_sad[list_index][ref_pic_index][sr_w][sr_h] =
+                                    me_ctx->hme_level0_sad[list_index][ref_pic_index][sr_w][sr_h];
+                                continue;
+                            }
+                        }
+#endif
 
                         hme_level_1(me_ctx,
                                     ((int16_t)org_x) >> 1,
@@ -2078,6 +2116,19 @@ static void hme_level2_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_
             if (me_ctx->temporal_layer_index > 0 || list_index == 0) {
                 for (uint8_t sr_h = 0; sr_h < me_ctx->num_hme_sa_h; sr_h++) {
                     for (uint8_t sr_w = 0; sr_w < me_ctx->num_hme_sa_w; sr_w++) {
+#if OPT_LD_SC_ME
+                        if (me_ctx->prev_me_stage_based_exit_th) {
+                            if (me_ctx->hme_level1_sad[list_index][ref_pic_index][sr_w][sr_h] < (me_ctx->prev_me_stage_based_exit_th >> 2)) {
+                                me_ctx->x_hme_level2_search_center[list_index][ref_pic_index][sr_w][sr_h] =
+                                    me_ctx->x_hme_level1_search_center[list_index][ref_pic_index][sr_w][sr_h];
+                                me_ctx->y_hme_level2_search_center[list_index][ref_pic_index][sr_w][sr_h] =
+                                    me_ctx->y_hme_level1_search_center[list_index][ref_pic_index][sr_w][sr_h];
+                                me_ctx->hme_level2_sad[list_index][ref_pic_index][sr_w][sr_h] =
+                                    me_ctx->hme_level1_sad[list_index][ref_pic_index][sr_w][sr_h];
+                                continue;
+                            }
+                        }
+#endif
 
                         hme_level_2(
                             me_ctx,
@@ -2526,6 +2577,60 @@ static void construct_me_candidate_array_mrp_off(PictureParentControlSet *pcs, M
         }
     }
 }
+#if OPT_LD_ME
+static void construct_me_candidate_array_single_ref(PictureParentControlSet *pcs, MeContext *ctx,
+    uint32_t num_of_list_to_search, uint32_t sb_index) {
+    // This function should only be called if there is one ref frame in list 0
+    assert(ctx->num_of_ref_pic_to_search[0] == 1);
+    assert(ctx->num_of_ref_pic_to_search[1] == 0);
+    const uint8_t ref_pic_idx = 0;
+
+    // Set whether the reference from each list is allowed
+    uint8_t blk_do_ref = ctx->search_results[REF_LIST_0][0].do_ref;
+
+    if (num_of_list_to_search < 2 || !ctx->search_results[REF_LIST_1][0].do_ref)
+        num_of_list_to_search = 1;
+
+    // Set the count to 1 for all PUs using memset, which is faster than setting at the end of each loop.  The count will only need
+    // to be updated if both reference frames are allowed.
+    uint8_t number_of_pus = pcs->enable_me_16x16
+        ? pcs->enable_me_8x8 ? pcs->max_number_of_pus_per_sb : MAX_SB64_PU_COUNT_NO_8X8
+        : MAX_SB64_PU_COUNT_WO_16X16;
+    memset(pcs->pa_me_data->me_results[sb_index]->total_me_candidate_index, 1, number_of_pus);
+
+    for (uint8_t n_idx = 0; n_idx < pcs->max_number_of_pus_per_sb; ++n_idx) {
+        const uint8_t pu_index       = z_to_raster[n_idx];
+
+        uint8_t      use_me_pu          = pcs->enable_me_16x16
+            ? pcs->enable_me_8x8 || n_idx < MAX_SB64_PU_COUNT_NO_8X8
+            : n_idx < MAX_SB64_PU_COUNT_WO_16X16;
+        MeCandidate *me_candidate_array = NULL;
+        if (use_me_pu)
+            me_candidate_array =
+            &pcs->pa_me_data->me_results[sb_index]
+            ->me_candidate_array[pu_index * pcs->pa_me_data->max_cand];
+        ctx->me_distortion[pu_index] = ctx->p_sb_best_sad[REF_LIST_0][ref_pic_idx][n_idx];;
+
+        //ME was skipped, so do not add this Unipred candidate
+        if (blk_do_ref == 0)
+            continue;
+
+
+        if (use_me_pu) {
+            me_candidate_array[0].direction  = REF_LIST_0;
+            me_candidate_array[0].ref_idx_l0 = ref_pic_idx;
+            me_candidate_array[0].ref_idx_l1 = ref_pic_idx;
+            me_candidate_array[0].ref0_list  = 0;
+            me_candidate_array[0].ref1_list  = 0;
+
+            pcs->pa_me_data->me_results[sb_index]
+                ->me_mv_array[pu_index * pcs->pa_me_data->max_refs + ref_pic_idx]
+                .as_int = ctx->p_sb_best_mv[0][ref_pic_idx][n_idx];
+        }
+
+    }
+}
+#endif
 static void construct_me_candidate_array(PictureParentControlSet *pcs, MeContext *me_ctx,
                                   uint32_t num_of_list_to_search, uint32_t sb_index) {
     for (uint32_t n_idx = 0; n_idx < pcs->max_number_of_pus_per_sb; ++n_idx) {
@@ -2888,6 +2993,10 @@ static INLINE void init_me_hme_data(MeContext *me_ctx) {
             me_ctx->zz_sad[li][ri] = (uint32_t)~0;
         }
     }
+#if OPT_LD_SC_ME
+    memset(me_ctx->performed_phme,0,
+        sizeof(uint8_t)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH*SEARCH_REGION_COUNT);
+#endif
 }
 /*******************************************
 * motion_estimation
@@ -2948,8 +3057,17 @@ EbErrorType svt_aom_motion_estimation_b64(
 
     if (me_ctx->me_type != ME_MCTF) {
         {
+#if OPT_LD_ME
+            if (me_ctx->num_of_ref_pic_to_search[REF_LIST_0] == 1 &&
+                me_ctx->num_of_ref_pic_to_search[REF_LIST_1] == 0)
+                construct_me_candidate_array_single_ref(
+                    pcs, me_ctx, num_of_list_to_search, b64_index);
+            else if (me_ctx->num_of_ref_pic_to_search[REF_LIST_0] == 1 &&
+                me_ctx->num_of_ref_pic_to_search[REF_LIST_1] == 1)
+#else
             if (me_ctx->num_of_ref_pic_to_search[REF_LIST_0] == 1 &&
                 me_ctx->num_of_ref_pic_to_search[REF_LIST_1] == 1)
+#endif
                 construct_me_candidate_array_mrp_off(
                     pcs, me_ctx, num_of_list_to_search, b64_index);
             else

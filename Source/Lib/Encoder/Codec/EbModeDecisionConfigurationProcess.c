@@ -628,6 +628,10 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         }
 
         FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
+#if OPT_LD_SKIPTX
+        pcs->rtc_tune = (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true
+                                                                                        : false;
+#endif
         // Mode Decision Configuration Kernel Signal(s) derivation
         if (scs->static_config.pass == ENC_FIRST_PASS)
             svt_aom_first_pass_sig_deriv_mode_decision_config(pcs);
@@ -789,10 +793,22 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                                 highest_sg = ref_obj_l1->ref_cdef_strengths[0][fs];
                         }
                     }
-                    int8_t mid_filter             = MIN(63, MAX(0, (lowest_sg + highest_sg) / 2));
-                    cdef_ctrls->pred_y_f          = mid_filter;
-                    cdef_ctrls->pred_uv_f         = 0;
-                    cdef_ctrls->first_pass_fs_num = 0;
+#if OPT_LD_CDEF1
+                    if (pcs->rtc_tune) {
+                        int8_t mid_filter     = MIN(63, MAX(0, MAX(lowest_sg, highest_sg)));
+                        cdef_ctrls->pred_y_f  = mid_filter;
+                        cdef_ctrls->pred_uv_f = 0;
+                    } else {
+                        int8_t mid_filter     = MIN(63, MAX(0, (lowest_sg + highest_sg) / 2));
+                        cdef_ctrls->pred_y_f  = mid_filter;
+                        cdef_ctrls->pred_uv_f = 0;
+                    }
+#else
+                    int8_t mid_filter     = MIN(63, MAX(0, (lowest_sg + highest_sg) / 2));
+                    cdef_ctrls->pred_y_f  = mid_filter;
+                    cdef_ctrls->pred_uv_f = 0;
+#endif
+                    cdef_ctrls->first_pass_fs_num          = 0;
                     cdef_ctrls->default_second_pass_fs_num = 0;
                     // Set cdef to off if pred is.
                     if ((cdef_ctrls->pred_y_f == 0) && (cdef_ctrls->pred_uv_f == 0))

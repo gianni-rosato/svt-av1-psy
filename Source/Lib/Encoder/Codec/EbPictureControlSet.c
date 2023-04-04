@@ -102,8 +102,14 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults               *obj_ptr,
 #if OPT_LD_M13
     uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode,
                                                         init_data_ptr->rtc_tune)
+#if OPT_LD_SPEED_M11_M12
+        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
+            ? SQUARE_PU_COUNT
+            : MAX_SB64_PU_COUNT_NO_8X8
+#else
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT
                                                              : MAX_SB64_PU_COUNT_NO_8X8
+#endif
         : MAX_SB64_PU_COUNT_WO_16X16;
 #else
     uint8_t number_of_pus       = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode)
@@ -1508,7 +1514,11 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
 
     // 8x8 can only be used if 16x16 is enabled
     object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16
+#if OPT_LD_SPEED_M11_M12
+        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
+#else
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode)
+#endif
         : 0;
     return return_error;
 }
