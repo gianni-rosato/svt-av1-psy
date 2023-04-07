@@ -14,6 +14,9 @@
 #include "EbSegmentationParams.h"
 #include "EbMotionEstimationContext.h"
 #include "common_dsp_rtcd.h"
+#if DEBUG_SEGMENT_QP
+#include "EbLog.h"
+#endif
 
 static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) {
     int index0, index1;
@@ -84,6 +87,21 @@ void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
     uint16_t           *variance_ptr        = pcs->ppcs->variance[sb_ptr->index];
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     uint16_t            variance            = get_variance_for_cu(blk_geom, variance_ptr);
+#if FIX_SEGMENT_ISSUE
+    blk_ptr->segment_id = 0;
+    for (int i = MAX_SEGMENTS - 1; i >= 0; i--) {
+        if (variance <= segmentation_params->variance_bin_edge[i]) {
+            int32_t q_index = pcs->ppcs->frm_hdr.quantization_params.base_q_idx +
+                segmentation_params->feature_data[i][SEG_LVL_ALT_Q];
+            // Avoid lossless since SVT-AV1 doesn't support it.
+            // Spec: Uncompressed header syntax and get_qindex(1, segmentID). And spec 5.11.34. Residual syntax. force TX_4X4 when lossless.
+            if (q_index > 0) {
+                blk_ptr->segment_id = i;
+                break;
+            }
+        }
+    }
+#else
     for (int i = 0; i < MAX_SEGMENTS; i++) {
         if (variance <= segmentation_params->variance_bin_edge[i]) {
             blk_ptr->segment_id = i;
@@ -93,6 +111,7 @@ void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
     int32_t q_index = pcs->ppcs->frm_hdr.quantization_params.base_q_idx +
         pcs->ppcs->frm_hdr.segmentation_params.feature_data[blk_ptr->segment_id][SEG_LVL_ALT_Q];
     blk_ptr->qindex = q_index;
+#endif
 }
 
 void svt_aom_setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs) {
@@ -128,7 +147,6 @@ void calculate_segmentation_data(SegmentationParams *segmentation_params) {
 
 void find_segment_qps(SegmentationParams *segmentation_params,
                       PictureControlSet  *pcs) { //QP needs to be specified as qpindex, not qp.
-
     uint16_t    min_var = UINT16_MAX, max_var = MIN_UNSIGNED_VALUE, avg_var = 0;
     const float strength = 2; //to tune
 
@@ -156,11 +174,34 @@ void find_segment_qps(SegmentationParams *segmentation_params,
     uint16_t bin_edge    = min_var_log + step_size;
     uint16_t bin_center  = bin_edge >> 1;
 
+#if FIX_SEGMENT_ISSUE
+    for (int i = MAX_SEGMENTS - 1; i >= 0; i--) {
+#else
     for (int i = 0; i < MAX_SEGMENTS; i++) {
+#endif
         segmentation_params->variance_bin_edge[i]           = POW2(bin_edge);
         segmentation_params->feature_data[i][SEG_LVL_ALT_Q] = ROUND((uint16_t)strength *
                                                                     (MAX(1, bin_center) - avg_var));
         bin_edge += step_size;
         bin_center += step_size;
     }
+#if FIX_SEGMENT_ISSUE
+    if (segmentation_params->feature_data[0][SEG_LVL_ALT_Q] < 0) {
+        // avoid lossless block
+        segmentation_params->feature_data[0][SEG_LVL_ALT_Q] = 0;
+    }
+#endif
+#if DEBUG_SEGMENT_QP
+    SVT_LOG("frame %d, base_qindex %d, seg qp offset: %d %d %d %d %d %d %d %d\n",
+            (int)pcs->picture_number,
+            pcs->ppcs->frm_hdr.quantization_params.base_q_idx,
+            segmentation_params->feature_data[0][SEG_LVL_ALT_Q],
+            segmentation_params->feature_data[1][SEG_LVL_ALT_Q],
+            segmentation_params->feature_data[2][SEG_LVL_ALT_Q],
+            segmentation_params->feature_data[3][SEG_LVL_ALT_Q],
+            segmentation_params->feature_data[4][SEG_LVL_ALT_Q],
+            segmentation_params->feature_data[5][SEG_LVL_ALT_Q],
+            segmentation_params->feature_data[6][SEG_LVL_ALT_Q],
+            segmentation_params->feature_data[7][SEG_LVL_ALT_Q]);
+#endif
 }

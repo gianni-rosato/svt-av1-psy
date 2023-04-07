@@ -113,6 +113,11 @@ const std::vector<TestVideoVector> dummy_444_test_vectors = {
                     8, 0, 0, 100),
 };
 
+const std::vector<TestVideoVector> segment_test_vectors = {
+    std::make_tuple("niklas_1280_720_30.y4m", Y4M_VIDEO_FILE, IMG_FMT_420, 1280,
+                    720, 8, 0, 0, 0),
+};
+
 typedef std::tuple<std::string,              /**< event name */
                    uint32_t,                 /**< frame number */
                    PrivDataType,             /**< event type */

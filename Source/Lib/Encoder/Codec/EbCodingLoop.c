@@ -2452,11 +2452,13 @@ EB_EXTERN void svt_aom_encode_decode(SequenceControlSet *scs, PictureControlSet 
                         : 0;
             blk_ptr->block_has_coeff = 0;
 
+#if !FIX_SEGMENT_ISSUE
             // for now, segmentation independent of sharpness/delta QP.
             if (pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
                 svt_aom_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
                 sb_ptr->qindex = blk_ptr->qindex;
             }
+#endif
             if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
                 ctx->is_inter = blk_ptr->use_intrabc;
 
@@ -2616,6 +2618,7 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
             ctx->blk_org_x = (uint16_t)(sb_org_x + blk_geom->org_x);
             ctx->blk_org_y = (uint16_t)(sb_org_y + blk_geom->org_y);
 
+#if !FIX_SEGMENT_ISSUE
             // for now, segmentation independent of sharpness/delta QP.
             if (pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
                 svt_aom_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
@@ -2623,6 +2626,7 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
             } else {
                 blk_ptr->qindex = sb_ptr->qindex;
             }
+#endif
             if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
                 ctx->tot_intra_coded_area += blk_geom->bwidth * blk_geom->bheight;
                 pcs->sb_intra[sb_addr] = 1;

@@ -780,3 +780,53 @@ INSTANTIATE_TEST_CASE_P(
                                                                "ResizeMode",
                                                                resize_mode)),
     EncTestSetting::GetSettingName);
+
+class SegmentTest : public SvtAv1E2ETestFramework {
+  protected:
+    void config_test() override {
+        enable_decoder = true;
+        enable_recon = true;
+        enable_stat = true;
+        enable_config = true;
+        SvtAv1E2ETestFramework::config_test();
+    }
+};
+
+TEST_P(SegmentTest, AqMode1Test) {
+    run_death_test();
+}
+
+// Test cases of AQ mode 1
+static const std::vector<EncTestSetting> generate_aq_mode_1_settings() {
+    static const std::string test_prefix = "AqMode1_";
+    std::vector<EncTestSetting> settings;
+
+    int count = 0;
+    static const EncSetting param_vecs[] = {
+        {{"AdaptiveQuantization", "1"}, {"QP", "1"}, {"EncoderMode", "8"}},
+        {{"AdaptiveQuantization", "1"}, {"QP", "63"}, {"EncoderMode", "8"}},
+        // target M12 to test light PD1 path
+        {{"AdaptiveQuantization", "1"}, {"QP", "1"}, {"EncoderMode", "12"}},
+        {{"AdaptiveQuantization", "1"}, {"QP", "63"}, {"EncoderMode", "12"}}};
+    // segment
+    for (EncSetting param : param_vecs) {
+        string name = test_prefix + std::to_string(count);
+        EncTestSetting setting{name, param, segment_test_vectors};
+        settings.push_back(setting);
+        count++;
+    }
+    // segment + tiles
+    for (EncSetting param : param_vecs) {
+        string name = test_prefix + std::to_string(count);
+        param.emplace("TileRow", "1");
+        param.emplace("TileCol", "1");
+        EncTestSetting setting{name, param, segment_test_vectors};
+        settings.push_back(setting);
+        count++;
+    }
+    return settings;
+}
+
+INSTANTIATE_TEST_CASE_P(SEGMENTTEST, SegmentTest,
+                        ::testing::ValuesIn(generate_aq_mode_1_settings()),
+                        EncTestSetting::GetSettingName);

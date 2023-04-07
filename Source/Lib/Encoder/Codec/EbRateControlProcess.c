@@ -1512,8 +1512,12 @@ void svt_aom_sb_qp_derivation_tpl_la(PictureControlSet *pcs) {
 
     } else {
         for (sb_addr = 0; sb_addr < sb_cnt; ++sb_addr) {
-            sb_ptr         = pcs->sb_ptr_array[sb_addr];
+            sb_ptr = pcs->sb_ptr_array[sb_addr];
+#if FIX_SEGMENT_ISSUE
+            sb_ptr->qindex = ppcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#else
             sb_ptr->qindex = quantizer_to_qindex[pcs->picture_qp];
+#endif
         }
     }
 }
@@ -3726,7 +3730,11 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                 pcs->ppcs->frm_hdr.delta_q_params.delta_q_present = 0;
                 for (int sb_addr = 0; sb_addr < pcs->sb_total_count; ++sb_addr) {
                     SuperBlock *sb_ptr = pcs->sb_ptr_array[sb_addr];
-                    sb_ptr->qindex     = quantizer_to_qindex[pcs->picture_qp];
+#if FIX_SEGMENT_ISSUE
+                    sb_ptr->qindex = frm_hdr->quantization_params.base_q_idx;
+#else
+                    sb_ptr->qindex = quantizer_to_qindex[pcs->picture_qp];
+#endif
                 }
             }
             if (scs->static_config.rate_control_mode && !is_superres_recode_task) {

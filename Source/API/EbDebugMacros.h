@@ -33,6 +33,8 @@
 extern "C" {
 #endif // __cplusplus
 
+#define FIX_SEGMENT_ISSUE       1
+
 #define FTR_STARTUP_MG_SIZE     1 // specify another mini-gop configuration for the first mini-gop after the key-frame
 #define OPT_STARTUP_MG_SIZE     1 // Optimize startup mini-gop
 
@@ -143,7 +145,7 @@ extern "C" {
 // Quantization matrices
 #define DEBUG_QM_LEVEL          0
 #define DEBUG_STARTUP_MG_SIZE   0
-
+#define DEBUG_SEGMENT_QP        0
 #ifdef __cplusplus
 }
 #endif // __cplusplus

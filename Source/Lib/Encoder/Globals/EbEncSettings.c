@@ -703,6 +703,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
+#if !FIX_SEGMENT_ISSUE
     if (config->enable_adaptive_quantization == 1 &&
         (config->tile_columns > 0 || config->tile_rows > 0)) {
         SVT_ERROR(
@@ -711,6 +712,7 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     if (config->pass > 0 && scs->static_config.enable_overlays) {
         SVT_ERROR(
@@ -775,10 +777,18 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
 
     /* Warnings about the use of features that are incomplete */
     if (config->enable_adaptive_quantization == 1) {
+#if FIX_SEGMENT_ISSUE
+        SVT_WARN(
+            "Instance %u: The adaptive quantization mode using segmentation is at a support level "
+            "only to be available for demos, experimentation, and further development uses and "
+            "should not be used for benchmarking until fully implemented.\n",
+            channel_number + 1);
+#else
         config->enable_adaptive_quantization = 2;
         SVT_WARN(
             "Instance %u: Adaptive quantization mode 1 has been disabled, mode 2 will be forced!\n",
             channel_number + 1);
+#endif
     }
 
     if (config->pass > 1 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {

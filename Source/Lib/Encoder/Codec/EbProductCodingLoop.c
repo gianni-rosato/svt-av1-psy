@@ -54,6 +54,11 @@ void        generate_md_stage_0_cand_light_pd1(SuperBlock *sb_ptr, ModeDecisionC
 EbErrorType generate_md_stage_0_cand_light_pd0(ModeDecisionContext *ctx,
                                                uint32_t            *fast_candidate_total_count,
                                                PictureControlSet   *pcs);
+#if FIX_SEGMENT_ISSUE
+void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
+                                                   PictureControlSet *pcs, SuperBlock *sb_ptr,
+                                                   BlkStruct *blk_ptr);
+#endif
 
 static INLINE int svt_aom_is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
@@ -9202,6 +9207,12 @@ static void md_encode_block_light_pd1(PictureControlSet *pcs, ModeDecisionContex
     BlkStruct *blk_ptr     = ctx->blk_ptr;
     cand_bf_ptr_array      = &(cand_bf_ptr_array_base[0]);
     ctx->blk_lambda_tuning = pcs->ppcs->blk_lambda_tuning;
+#if FIX_SEGMENT_ISSUE
+    if (pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
+        SuperBlock *sb_ptr = ctx->sb_ptr;
+        svt_aom_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
+    }
+#endif
     //Get the new lambda for current block
     if (pcs->ppcs->blk_lambda_tuning) {
         svt_aom_set_tuned_blk_lambda(ctx, pcs);
@@ -9412,6 +9423,12 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     BlkStruct *blk_ptr     = ctx->blk_ptr;
     cand_bf_ptr_array      = &(cand_bf_ptr_array_base[0]);
     ctx->blk_lambda_tuning = pcs->ppcs->blk_lambda_tuning;
+#if FIX_SEGMENT_ISSUE
+    if (pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
+        SuperBlock *sb_ptr = ctx->sb_ptr;
+        svt_aom_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
+    }
+#endif
     //Get the new lambda for current block
     if (pcs->ppcs->blk_lambda_tuning) {
         svt_aom_set_tuned_blk_lambda(ctx, pcs);

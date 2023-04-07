@@ -1551,12 +1551,21 @@ int32_t svt_aom_quantize_inv_quantize(
     MacroblockPlane     candidate_plane;
     const QmVal        *q_matrix  = pcs->ppcs->gqmatrix[qmatrix_level][plane][adjusted_tx_size];
     const QmVal        *iq_matrix = pcs->ppcs->giqmatrix[qmatrix_level][plane][adjusted_tx_size];
-    uint32_t            q_index   = pcs->ppcs->frm_hdr.delta_q_params.delta_q_present
-                     ? qindex
-                     : (uint32_t)CLIP3(
+#if FIX_SEGMENT_ISSUE
+    int32_t q_index = pcs->ppcs->frm_hdr.delta_q_params.delta_q_present
+        ? qindex
+        : pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
+    if (segmentation_qp_offset != 0) {
+        q_index = CLIP3(0, 255, q_index + segmentation_qp_offset);
+    }
+#else
+    uint32_t q_index = pcs->ppcs->frm_hdr.delta_q_params.delta_q_present
+        ? qindex
+        : (uint32_t)CLIP3(
               0,
               255,
               (int32_t)pcs->ppcs->frm_hdr.quantization_params.base_q_idx + segmentation_qp_offset);
+#endif
     if (component_type != COMPONENT_LUMA) {
         const int8_t offset = (component_type == COMPONENT_CHROMA_CB)
             ? pcs->ppcs->frm_hdr.quantization_params
