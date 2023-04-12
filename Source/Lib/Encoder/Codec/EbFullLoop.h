@@ -52,11 +52,16 @@ extern void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext     *ctx,
                                                 uint32_t above_depth_mds, uint32_t step,
                                                 uint64_t *above_depth_cost,
                                                 uint64_t *curr_depth_cost);
-void        svt_aom_compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *ctx,
-                                                          uint32_t above_depth_mds, uint32_t step,
-                                                          uint64_t *above_depth_cost,
-                                                          uint64_t *curr_depth_cost);
-uint64_t    svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_block_itr);
+#if OPT_DEPTH_EARLY_EXIT_RATE
+void svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSet *pcs,
+                                                   ModeDecisionContext     *ctx,
+#else
+void svt_aom_compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *ctx,
+#endif
+                                                   uint32_t above_depth_mds, uint32_t step,
+                                                   uint64_t *above_depth_cost,
+                                                   uint64_t *curr_depth_cost);
+uint64_t svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t d1_block_itr);
 
 static const int av1_get_tx_scale_tab[TX_SIZES_ALL] = {
     0, 0, 0, 1, 2, 0, 0, 0, 0, 1, 1, 2, 2, 0, 0, 0, 0, 1, 1};

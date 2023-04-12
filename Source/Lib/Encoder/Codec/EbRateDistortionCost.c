@@ -1037,8 +1037,10 @@ static INLINE uint32_t get_compound_mode_rate(struct ModeDecisionContext *ctx,
     return comp_rate;
 }
 int svt_aom_is_interintra_wedge_used(BlockSize sb_type);
+#if !OPT_OBMC_TRANS_FACE_OFF
 int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, PredictionMode mode,
                               const MvReferenceFrame ref_frame[2]);
+#endif
 static uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                           ModeDecisionCandidateBuffer *cand_bf,
                                           uint64_t luma_distortion, uint64_t chroma_distortion,
@@ -2094,10 +2096,21 @@ void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecision
  * partition type for a given block.
  */
 uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionContext *ctx,
+#if OPT_DEPTH_EARLY_EXIT_RATE
+                                     uint32_t blk_mds_idx, PartitionType p, uint64_t lambda,
+#else
                                      BlkStruct *blk_ptr, PartitionType p, uint64_t lambda,
+#endif
+#if CLN_PART_CTX
+                                     bool use_accurate_part_ctx,
+#endif
                                      MdRateEstimationContext *md_rate_est_ctx) {
-    const BlockGeom *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
-    const BlockSize  bsize    = blk_geom->bsize;
+#if OPT_DEPTH_EARLY_EXIT_RATE
+    const BlockGeom *blk_geom = get_blk_geom_mds(blk_mds_idx);
+#else
+    const BlockGeom           *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
+#endif
+    const BlockSize bsize = blk_geom->bsize;
     assert(mi_size_wide_log2[bsize] == mi_size_high_log2[bsize]);
     assert(bsize < BlockSizeS_ALL);
     const Bool is_partition_point = (bsize >= BLOCK_8X8);
@@ -2115,7 +2128,17 @@ uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionC
     if (!has_rows && !has_cols) {
         return 0;
     }
-
+#if OPT_DEPTH_EARLY_EXIT_RATE
+    const PartitionContextType left_ctx =
+        ctx->md_local_blk_unit[blk_mds_idx].left_neighbor_partition == (char)(INVALID_NEIGHBOR_DATA)
+        ? 0
+        : ctx->md_local_blk_unit[blk_mds_idx].left_neighbor_partition;
+    const PartitionContextType above_ctx =
+        ctx->md_local_blk_unit[blk_mds_idx].above_neighbor_partition ==
+            (char)(INVALID_NEIGHBOR_DATA)
+        ? 0
+        : ctx->md_local_blk_unit[blk_mds_idx].above_neighbor_partition;
+#else
     const PartitionContextType left_ctx =
         ctx->md_local_blk_unit[blk_ptr->mds_idx].left_neighbor_partition ==
             (char)(INVALID_NEIGHBOR_DATA)
@@ -2126,14 +2149,17 @@ uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionC
             (char)(INVALID_NEIGHBOR_DATA)
         ? 0
         : ctx->md_local_blk_unit[blk_ptr->mds_idx].above_neighbor_partition;
-
+#endif
     const int bsl = mi_size_wide_log2[bsize] - mi_size_wide_log2[BLOCK_8X8];
     assert(bsl >= 0);
 
     const int above = (above_ctx >> bsl) & 1, left = (left_ctx >> bsl) & 1;
-
-    const int      partitio_ploffset = pcs->partition_contexts == 4 ? 0 : PARTITION_PLOFFSET;
-    const uint32_t context_index     = (left * 2 + above) + bsl * partitio_ploffset;
+#if CLN_PART_CTX
+    const int partitio_ploffset = use_accurate_part_ctx ? PARTITION_PLOFFSET : 0;
+#else
+    const int partitio_ploffset = pcs->partition_contexts == 4 ? 0 : PARTITION_PLOFFSET;
+#endif
+    const uint32_t context_index = (left * 2 + above) + bsl * partitio_ploffset;
 
     uint64_t split_rate = 0;
 

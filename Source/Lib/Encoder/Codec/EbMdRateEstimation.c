@@ -74,12 +74,16 @@ int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs
 void svt_aom_estimate_syntax_rate(MdRateEstimationContext *md_rate_est_ctx, Bool is_i_slice,
                                   uint8_t pic_filter_intra_level,
                                   uint8_t allow_screen_content_tools, uint8_t enable_restoration,
+#if CLN_PART_CTX
+                                  uint8_t allow_intrabc,
+#else
                                   uint8_t allow_intrabc, uint8_t partition_contexts,
+#endif
                                   FRAME_CONTEXT *fc) {
     int32_t i, j;
 
     md_rate_est_ctx->initialized = 1;
-    for (i = 0; i < partition_contexts; ++i) {
+    for (i = 0; i < PARTITION_CONTEXTS; ++i) {
         svt_aom_get_syntax_rate_from_cdf(
             md_rate_est_ctx->partition_fac_bits[i], fc->partition_cdf[i], NULL);
 

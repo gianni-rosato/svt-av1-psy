@@ -777,8 +777,13 @@ extern "C" {
     RTCD_EXTERN void(*svt_av1_txb_init_levels)(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
     void svt_av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
     RTCD_EXTERN void(*svt_av1_get_gradient_hist)(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
+#if OPT_GM_WD
+    double svt_av1_compute_cross_correlation_c(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2, uint8_t match_sz);
+    RTCD_EXTERN double(*svt_av1_compute_cross_correlation)(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2, uint8_t match_sz);
+#else
     double svt_av1_compute_cross_correlation_c(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2);
     RTCD_EXTERN double(*svt_av1_compute_cross_correlation)(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2);
+#endif
     void svt_av1_k_means_dim1_c(const int* data, int* centroids, uint8_t* indices, int n, int k, int max_itr);
     RTCD_EXTERN void(*svt_av1_k_means_dim1)(const int* data, int* centroids, uint8_t* indices, int n, int k, int max_itr);
     void svt_av1_k_means_dim2_c(const int* data, int* centroids, uint8_t* indices, int n, int k, int max_itr);
@@ -1571,10 +1576,13 @@ extern "C" {
     int svt_aom_satd_avx2(const TranLow *coeff, int length);
     int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
     void svt_av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
-
+#if OPT_GM_WD
+    double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2, uint8_t match_sz);
+    double svt_av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2, uint8_t match_sz);
+#else
     double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2);
     double svt_av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2);
-
+#endif
     void svt_av1_k_means_dim1_avx2(const int* data, int* centroids, uint8_t* indices, int n, int k, int max_itr);
 
     void svt_av1_k_means_dim2_avx2(const int* data, int* centroids, uint8_t* indices, int n, int k, int max_itr);

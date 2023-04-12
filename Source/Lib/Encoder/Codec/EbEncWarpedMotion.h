@@ -25,7 +25,11 @@ static INLINE int error_measure(int err) { return svt_aom_error_measure_lut[255 
 int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
                            const uint8_t *ref_2b, int width, int height, int stride, uint8_t *dst,
                            int p_col, int p_row, int p_width, int p_height, int p_stride,
-                           int subsampling_x, int subsampling_y, int64_t best_error);
+                           int subsampling_x, int subsampling_y,
+#if OPT_GM_CHESS_REFN
+                           uint8_t chess_refn,
+#endif
+                           int64_t best_error);
 
 // Returns the error between the frame described by 'ref' and the frame
 // described by 'dst'.

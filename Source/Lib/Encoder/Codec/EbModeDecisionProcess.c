@@ -96,7 +96,11 @@ void svt_aom_set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_C
  * Mode Decision Context Constructor
  ******************************************************/
 EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColorFormat color_format,
+#if ENABLE_PRESET_MR
+                                               uint8_t sb_size, EncMode enc_mode,
+#else
                                                uint8_t sb_size, uint8_t enc_mode,
+#endif
                                                uint16_t max_block_cnt, uint32_t encoder_bit_depth,
                                                EbFifo *mode_decision_configuration_input_fifo_ptr,
                                                EbFifo *mode_decision_output_fifo_ptr,

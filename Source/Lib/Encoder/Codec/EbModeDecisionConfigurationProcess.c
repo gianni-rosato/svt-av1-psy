@@ -28,6 +28,7 @@
 #include "EbResize.h"
 #include "EbInvTransforms.h"
 #include "EncModeConfig.h"
+#include "EbGlobalMotionEstimation.h"
 
 #define MAX_MESH_SPEED 5 // Max speed setting for mesh motion method
 static MeshPattern good_quality_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
@@ -76,7 +77,13 @@ void           set_global_motion_field(PictureControlSet *pcs) {
         if (ppcs->is_global_motion[get_list_idx(frame_index)][get_ref_frame_idx(frame_index)])
             ppcs->global_motion[frame_index] = ppcs->svt_aom_global_motion_estimation[get_list_idx(
                 frame_index)][get_ref_frame_idx(frame_index)];
+#if OPT_GM_MIX_DS
+        uint8_t sf = ppcs->gm_downsample_level == GM_DOWN ? 2
+            : ppcs->gm_downsample_level == GM_DOWN16      ? 4
+                                                          : 1;
+        svt_aom_upscale_wm_params(&ppcs->global_motion[frame_index], sf);
 
+#else
         // Upscale the translation parameters by 2, because the search is done on a down-sampled
         // version of the source picture (with a down-sampling factor of 2 in each dimension).
         if (ppcs->gm_downsample_level == GM_DOWN16) {
@@ -102,6 +109,7 @@ void           set_global_motion_field(PictureControlSet *pcs) {
                 GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
                 GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
         }
+#endif
     }
 }
 
@@ -287,7 +295,10 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
                                  pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                  pcs->ppcs->enable_restoration,
                                  pcs->ppcs->frm_hdr.allow_intrabc,
+#if CLN_PART_CTX
+#else
                                  pcs->ppcs->partition_contexts,
+#endif
                                  &pcs->md_frame_context);
     // Initial Rate Estimation of the Motion vectors
     svt_aom_estimate_mv_rate(pcs, md_rate_est_ctx, &pcs->md_frame_context);
@@ -601,7 +612,26 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         RateControlResults *rc_results = (RateControlResults *)rc_results_wrapper->object_ptr;
         PictureControlSet  *pcs        = (PictureControlSet *)rc_results->pcs_wrapper->object_ptr;
         SequenceControlSet *scs        = pcs->scs;
+#if OPT_DEPTH_LEVEL
+        pcs->min_me_clpx = 0;
+        pcs->max_me_clpx = 0;
+        pcs->avg_me_clpx = 0;
+        if (scs->static_config.pass != ENC_FIRST_PASS && pcs->slice_type != I_SLICE) {
+            uint32_t b64_idx;
+            uint64_t avg_me_clpx = 0;
+            uint64_t min_dist    = (uint64_t)~0;
+            uint64_t max_dist    = 0;
 
+            for (b64_idx = 0; b64_idx < pcs->ppcs->b64_total_count; ++b64_idx) {
+                avg_me_clpx += pcs->ppcs->me_8x8_cost_variance[b64_idx];
+                min_dist = MIN(pcs->ppcs->me_8x8_cost_variance[b64_idx], min_dist);
+                max_dist = MAX(pcs->ppcs->me_8x8_cost_variance[b64_idx], max_dist);
+            }
+            pcs->min_me_clpx = min_dist;
+            pcs->max_me_clpx = max_dist;
+            pcs->avg_me_clpx = avg_me_clpx / pcs->ppcs->b64_total_count;
+        }
+#endif
         pcs->coeff_lvl = INVALID_LVL;
         if (scs->static_config.pass != ENC_FIRST_PASS) {
             if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
@@ -674,7 +704,10 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                                      pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                      pcs->ppcs->enable_restoration,
                                      pcs->ppcs->frm_hdr.allow_intrabc,
+#if CLN_PART_CTX
+#else
                                      pcs->ppcs->partition_contexts,
+#endif
                                      &pcs->md_frame_context);
         // Initial Rate Estimation of the Motion vectors
         if (scs->static_config.pass != ENC_FIRST_PASS) {

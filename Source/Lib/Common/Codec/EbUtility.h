@@ -25,14 +25,33 @@ typedef struct BlockList {
     uint8_t  list_size;
     uint16_t blk_mds_table[3]; //stores a max of 3 redundant blocks
 } BlockList_t;
-
+#if OPT_4X8_8X4_GEOM
+typedef enum GeomIndex {
+    GEOM_0, //64x64  ->8x8  NSQ:OFF
+    GEOM_1, //64x64  ->8x8  NSQ:ON (only H & V shapes, but not 8x4 and 4x8)
+    GEOM_2, //64x64  ->8x8  NSQ:ON (only H & V shapes)
+    GEOM_3, //64x64  ->4x4  NSQ:ON (only H & V shapes)
+    GEOM_4, //64x64  ->4x4  NSQ:ON (all shapes)
+    GEOM_5, //128x128->4x4  NSQ:ON (all shapes
+    GEOM_TOT
+} GeomIndex;
+#elif OPT_HV_GEOM
+typedef enum GeomIndex {
+    GEOM_0, //64x64  ->8x8  NSQ:OFF, and 4x4 OFF
+    GEOM_1, //64x64  ->8x8  NSQ:ON (only H & V shapes), and 4x4 OFF
+    GEOM_2, //64x64  ->4x4  NSQ:ON (only H & V shapes), and 4x4 ON
+    GEOM_3, //64x64  ->4x4  NSQ:ON (all shapes), and 4x4 ON
+    GEOM_4, //128x128->4x4  NSQ:ON (all shapes), and 4x4 ON
+    GEOM_TOT
+} GeomIndex;
+#else
 typedef enum GeomIndex {
     GEOM_0, //64x64  ->8x8  NSQ:OFF
     GEOM_1, //64x64  ->4x4  NSQ:ON
     GEOM_2, //128x128->4x4  NSQ:ON
     GEOM_TOT
 } GeomIndex;
-
+#endif
 void svt_aom_build_blk_geom(GeomIndex geom);
 
 typedef struct BlockGeom {
@@ -127,7 +146,55 @@ static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_
 }
 
 #define NOT_USED_VALUE 0
+#if OPT_4X8_8X4_GEOM
+//gives the index of parent from the last qudrant child
+static const uint32_t parent_depth_offset[GEOM_TOT][6] = {
+    {NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 128, 32, 8, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 320, 80, 20, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 512, 128, 32, 8, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
+//gives the index of next quadrant child within a depth
+static const uint32_t ns_depth_offset[GEOM_TOT][6] = {
+    {85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+    {169, 41, 9, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+    {425, 105, 25, 5, NOT_USED_VALUE, NOT_USED_VALUE},
+    {681, 169, 41, 9, 1, NOT_USED_VALUE},
+    {1101, 269, 61, 9, 1, NOT_USED_VALUE},
+    {4421, 1101, 269, 61, 9, 1}};
+//gives the next depth block(first qudrant child) from a given parent square
+static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_VALUE},
+                                                      {5, 5, 5, 1, 1, NOT_USED_VALUE},
+                                                      {5, 5, 5, 5, 1, NOT_USED_VALUE},
+                                                      {5, 5, 5, 5, 1, NOT_USED_VALUE},
+                                                      {25, 25, 25, 5, 1, NOT_USED_VALUE},
+                                                      {17, 25, 25, 25, 5, 1}};
+#elif OPT_HV_GEOM
+//gives the index of parent from the last qudrant child
+static const uint32_t parent_depth_offset[GEOM_TOT][6] = {
+    {NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 320, 80, 20, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 512, 128, 32, 8, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
+//gives the index of next quadrant child within a depth
+static const uint32_t ns_depth_offset[GEOM_TOT][6] = {
+    {85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+    {425, 105, 25, 5, NOT_USED_VALUE, NOT_USED_VALUE},
+    {681, 169, 41, 9, 1, NOT_USED_VALUE},
+    {1101, 269, 61, 9, 1, NOT_USED_VALUE},
+    {4421, 1101, 269, 61, 9, 1}};
+//gives the next depth block(first qudrant child) from a given parent square
+static const uint32_t d1_depth_offset[GEOM_TOT][6] = {
 
+    {1, 1, 1, 1, 1, NOT_USED_VALUE},
+    {5, 5, 5, 5, 1, NOT_USED_VALUE},
+    {5, 5, 5, 5, 1, NOT_USED_VALUE},
+    {25, 25, 25, 5, 1, NOT_USED_VALUE},
+    {17, 25, 25, 25, 5, 1}};
+
+#else
 //gives the index of parent from the last qudrant child
 static const uint32_t parent_depth_offset[GEOM_TOT][6] = {
     {NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
@@ -143,6 +210,7 @@ static const uint32_t ns_depth_offset[GEOM_TOT][6] = {
 static const uint32_t d1_depth_offset[GEOM_TOT][6] = {
 
     {1, 1, 1, 1, 1, NOT_USED_VALUE}, {25, 25, 25, 5, 1, NOT_USED_VALUE}, {17, 25, 25, 25, 5, 1}};
+#endif
 extern BlockGeom svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
 
 static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) {

@@ -65,7 +65,15 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *ctx, BlkStruct *blk_ptr,
      ((int64_t)(D) * ((int64_t)1 << RDDIV_BITS)))
 
 extern uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionContext *ctx,
-                                            BlkStruct *blk_ptr, PartitionType p, uint64_t lambda,
+#if OPT_DEPTH_EARLY_EXIT_RATE
+                                            uint32_t blk_mds_idx,
+#else
+                                            BlkStruct *blk_ptr,
+#endif
+                                            PartitionType p, uint64_t lambda,
+#if CLN_PART_CTX
+                                            bool use_accurate_part_ctx,
+#endif
                                             MdRateEstimationContext *md_rate_est_ctx);
 extern uint64_t svt_aom_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                         ModeDecisionCandidateBuffer *cand_bf, uint32_t qp,

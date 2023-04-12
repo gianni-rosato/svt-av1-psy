@@ -39,17 +39,30 @@ void svt_aom_get_av1_mv_pred_drl(struct ModeDecisionContext *ctx, BlkStruct *blk
                                  IntMv nearmv[2], IntMv ref_mv[2]);
 void svt_aom_update_mi_map(BlkStruct *blk_ptr, uint32_t blk_org_x, uint32_t blk_org_y,
                            const BlockGeom *blk_geom, PictureControlSet *pcs);
-
+#if OPT_USE_NSAMPLES
+uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_org_x,
+                         uint16_t blk_org_y, MvReferenceFrame rf0, PictureControlSet *pcs,
+                         int32_t *pts, int32_t *pts_inref, int *adjacent_samples,
+                         int *top_left_present, int *top_right_present);
+#endif
 void svt_aom_wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size,
                               const BlockGeom *blk_geom, uint16_t blk_org_x, uint16_t blk_org_y,
                               uint8_t ref_frame_type, PictureControlSet *pcs,
                               uint16_t *num_samples);
-
+#if OPT_USE_NSAMPLES
+Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr, MvUnit *mv_unit,
+                                      const BlockGeom *blk_geom, uint16_t blk_org_x,
+                                      uint16_t blk_org_y, uint8_t ref_frame_type,
+                                      EbWarpedMotionParams *wm_params, uint16_t *num_samples,
+                                      uint8_t min_neighbour_perc, uint8_t corner_perc_bias,
+                                      uint16_t lower_band_th, uint16_t upper_band_th,
+                                      Bool shut_approx);
+#else
 Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr, MvUnit *mv_unit,
                                       const BlockGeom *blk_geom, uint16_t blk_org_x,
                                       uint16_t blk_org_y, uint8_t ref_frame_type,
                                       EbWarpedMotionParams *wm_params, uint16_t *num_samples);
-
+#endif
 static INLINE Bool has_overlappable_candidates(const BlkStruct *blk_ptr) {
     return (blk_ptr->prediction_unit_array[0].overlappable_neighbors[0] != 0 ||
             blk_ptr->prediction_unit_array[0].overlappable_neighbors[1] != 0);

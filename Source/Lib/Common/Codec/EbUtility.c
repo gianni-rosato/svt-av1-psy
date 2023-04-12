@@ -363,9 +363,13 @@ static INLINE TxSize av1_get_tx_size(BlockSize sb_type, int32_t plane /*, const 
     uint32_t subsampling_y = plane > 0 ? 1 : 0;
     return av1_get_max_uv_txsize(/*mbmi->*/ sb_type, subsampling_x, subsampling_y);
 }
-
+#if OPT_4X8_8X4_GEOM
+static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t y,
+                             int32_t is_last_quadrant, uint8_t quad_it, uint8_t min_nsq_bsize) {
+#else
 static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t y,
                              int32_t is_last_quadrant, uint8_t quad_it) {
+#endif
     //the input block is the parent square block of size sq_size located at pos (x,y)
 
     assert(quad_it <= 3);
@@ -380,7 +384,10 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
 
         sq_size == 4 ? 1
                      : max_part;
-
+#if OPT_4X8_8X4_GEOM
+    if (sq_size <= min_nsq_bsize)
+        max_part_updated = 1;
+#endif
     d1_it   = 0;
     sqi_mds = *idx_mds;
 
@@ -1308,14 +1315,24 @@ static void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, ui
 
     uint32_t min_size = max_sb >> (max_depth - 1);
     if (halfsize >= min_size) {
+#if OPT_4X8_8X4_GEOM
+        md_scan_all_blks(idx_mds, halfsize, x, y, 0, 0, min_nsq_bsize);
+        md_scan_all_blks(idx_mds, halfsize, x + halfsize, y, 0, 1, min_nsq_bsize);
+        md_scan_all_blks(idx_mds, halfsize, x, y + halfsize, 0, 2, min_nsq_bsize);
+        md_scan_all_blks(idx_mds, halfsize, x + halfsize, y + halfsize, 1, 3, min_nsq_bsize);
+#else
         md_scan_all_blks(idx_mds, halfsize, x, y, 0, 0);
         md_scan_all_blks(idx_mds, halfsize, x + halfsize, y, 0, 1);
         md_scan_all_blks(idx_mds, halfsize, x, y + halfsize, 0, 2);
         md_scan_all_blks(idx_mds, halfsize, x + halfsize, y + halfsize, 1, 3);
+#endif
     }
 }
-
+#if OPT_4X8_8X4_GEOM
+static uint32_t count_total_num_of_active_blks(uint8_t min_nsq_bsize) {
+#else
 static uint32_t count_total_num_of_active_blks() {
+#endif
     uint32_t depth_it, sq_it_y, sq_it_x, part_it, nsq_it;
 
     uint32_t depth_scan_idx = 0;
@@ -1333,7 +1350,10 @@ static uint32_t count_total_num_of_active_blks() {
             : sq_size == 8                         ? MIN(max_part, 3)
             : sq_size == 4                         ? 1
                                                    : max_part;
-
+#if OPT_4X8_8X4_GEOM
+        if (sq_size <= min_nsq_bsize)
+            max_part_updated = 1;
+#endif
         for (sq_it_y = 0; sq_it_y < tot_num_sq; sq_it_y++) {
             for (sq_it_x = 0; sq_it_x < tot_num_sq; sq_it_x++) {
                 for (part_it = 0; part_it < max_part_updated; part_it++) {
@@ -1389,6 +1409,73 @@ static void log_redundancy_similarity(uint32_t max_block_count) {
 void svt_aom_build_blk_geom(GeomIndex geom) {
     uint32_t max_block_count;
     svt_aom_geom_idx = geom;
+#if OPT_4X8_8X4_GEOM
+    uint32_t min_nsq_bsize;
+    if (geom == GEOM_0) {
+        max_sb          = 64;
+        max_depth       = 4;
+        max_part        = 1;
+        max_block_count = 85;
+        min_nsq_bsize   = 8;
+    } else if (geom == GEOM_1) {
+        max_sb          = 64;
+        max_depth       = 4;
+        max_part        = 3;
+        max_block_count = 169;
+        min_nsq_bsize   = 8;
+    } else if (geom == GEOM_2) {
+        max_sb          = 64;
+        max_depth       = 4;
+        max_part        = 3;
+        max_block_count = 425;
+        min_nsq_bsize   = 0;
+    } else if (geom == GEOM_3) {
+        max_sb          = 64;
+        max_depth       = 5;
+        max_part        = 3;
+        max_block_count = 681;
+        min_nsq_bsize   = 0;
+    } else if (geom == GEOM_4) {
+        max_sb          = 64;
+        max_depth       = 5;
+        max_part        = 9;
+        max_block_count = 1101;
+        min_nsq_bsize   = 0;
+    } else {
+        max_sb          = 128;
+        max_depth       = 6;
+        max_part        = 9;
+        max_block_count = 4421;
+        min_nsq_bsize   = 0;
+    }
+#elif OPT_HV_GEOM
+    if (geom == GEOM_0) {
+        max_sb          = 64;
+        max_depth       = 4;
+        max_part        = 1;
+        max_block_count = 85;
+    } else if (geom == GEOM_1) {
+        max_sb          = 64;
+        max_depth       = 4;
+        max_part        = 3;
+        max_block_count = 425;
+    } else if (geom == GEOM_2) {
+        max_sb          = 64;
+        max_depth       = 5;
+        max_part        = 3;
+        max_block_count = 681;
+    } else if (geom == GEOM_3) {
+        max_sb          = 64;
+        max_depth       = 5;
+        max_part        = 9;
+        max_block_count = 1101;
+    } else {
+        max_sb          = 128;
+        max_depth       = 6;
+        max_part        = 9;
+        max_block_count = 4421;
+    }
+#else
     if (geom == GEOM_0) {
         max_sb          = 64;
         max_depth       = 4;
@@ -1405,14 +1492,23 @@ void svt_aom_build_blk_geom(GeomIndex geom) {
         max_part        = 9;
         max_block_count = 4421;
     }
-
+#endif
     //(0)compute total number of blocks using the information provided
+#if OPT_4X8_8X4_GEOM
+    max_num_active_blocks = count_total_num_of_active_blks(min_nsq_bsize);
+    if (max_num_active_blocks != max_block_count)
+        SVT_LOG(" \n\n Error %i blocks\n\n ", max_num_active_blocks);
+    //(2) Construct md scan blk_geom_mds:  use info from dps
+    uint32_t idx_mds = 0;
+    md_scan_all_blks(&idx_mds, max_sb, 0, 0, 0, 0, min_nsq_bsize);
+#else
     max_num_active_blocks = count_total_num_of_active_blks();
     if (max_num_active_blocks != max_block_count)
         SVT_LOG(" \n\n Error %i blocks\n\n ", max_num_active_blocks);
     //(2) Construct md scan svt_aom_blk_geom_mds:  use info from dps
     uint32_t idx_mds = 0;
     md_scan_all_blks(&idx_mds, max_sb, 0, 0, 0, 0);
+#endif
     log_redundancy_similarity(max_block_count);
 }
 uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_128x128) {

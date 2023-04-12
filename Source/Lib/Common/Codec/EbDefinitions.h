@@ -81,6 +81,10 @@ void svt_aom_assert_err(uint32_t condition, char *err_msg);
 #define NUM_MV_HIST 2
 #define MAX_MV_HIST_SIZE 2 * REF_LIST_MAX_DEPTH *NUM_MV_COMPONENTS *NUM_MV_HIST
 
+#if FIX_AVG_Y
+#define INVALID_LUMA 256
+#endif
+
 typedef struct SharpnessCtrls {
     uint8_t scene_transition;
     uint8_t tf;
@@ -123,6 +127,24 @@ typedef struct MrpCtrls {
     uint8_t base_ref_list1_count;
     uint8_t non_base_ref_list0_count;
     uint8_t non_base_ref_list1_count;
+
+#if OPT_LIMIT_NREF
+    // Limit references to (1,1) if it's safe to do so based on avg luma
+    bool safe_limit_nref;
+#endif
+#if OPT_ONLY_L_BWD
+    // Limit candidate types to LAST, BWD and LAST-BWD
+    bool only_l_bwd;
+#endif
+#if OPT_PME_REF0_ONLY
+    // Limit PME to ref index 0 only
+    bool pme_ref0_only;
+#endif
+#if OPT_MRP
+    // Use only best references
+    bool use_best_references;
+#endif
+
 } MrpCtrls;
 typedef struct TfControls {
     // Filtering set
@@ -661,9 +683,18 @@ typedef enum CandClass {
     CAND_CLASS_3,
     CAND_CLASS_TOTAL
 } CandClass;
-
+#if OPT_WARP_REFINEMENT_MDS1 || OPT_OBMC_REFINEMENT_MDS1
+typedef enum MdStage {
+    MD_STAGE_0,
+    MD_STAGE_1,
+    MD_STAGE_2,
+    MD_STAGE_3,
+    MD_STAGE_TOTAL,
+    INVALID_MD_STAGE
+} MdStage;
+#else
 typedef enum MdStage { MD_STAGE_0, MD_STAGE_1, MD_STAGE_2, MD_STAGE_3, MD_STAGE_TOTAL } MdStage;
-
+#endif
 typedef enum MdStagingMode {
     MD_STAGING_MODE_0,
     MD_STAGING_MODE_1,

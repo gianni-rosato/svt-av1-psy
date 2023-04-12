@@ -1576,6 +1576,9 @@ void svt_aom_picture_pre_processing_operations(PictureParentControlSet *pcs,
 static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
     SequenceControlSet *scs, PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic,
     uint64_t *sum_avg_intensity_ttl_regions_luma) {
+#if FIX_AVG_Y
+    *sum_avg_intensity_ttl_regions_luma = 0;
+#endif
     uint32_t region_width  = input_pic->width / scs->picture_analysis_number_of_regions_per_width;
     uint32_t region_height = input_pic->height / scs->picture_analysis_number_of_regions_per_height;
 
@@ -1636,8 +1639,11 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
                             1)) /
                           ((region_width + region_width_offset) *
                            (region_height + region_height_offset)));
-
+#if FIX_AVG_Y
+            *sum_avg_intensity_ttl_regions_luma += sum;
+#else
             (*sum_avg_intensity_ttl_regions_luma) += (sum << 4);
+#endif
             for (uint32_t histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
                  histogram_bin++) { // Loop over the histogram bins
                 pcs->picture_histogram[region_in_picture_width_index]
@@ -1648,6 +1654,10 @@ static void sub_sample_luma_generate_pixel_intensity_histogram_bins(
             }
         }
     }
+
+#if FIX_AVG_Y
+    *sum_avg_intensity_ttl_regions_luma /= (input_pic->width * input_pic->height);
+#endif
 
     return;
 }
@@ -1691,14 +1701,23 @@ static void compute_picture_spatial_statistics(SequenceControlSet      *scs,
 void svt_aom_gathering_picture_statistics(SequenceControlSet *scs, PictureParentControlSet *pcs,
                                           EbPictureBufferDesc *input_padded_pic,
                                           EbPictureBufferDesc *sixteenth_decimated_picture_ptr) {
+#if FIX_AVG_Y
+    pcs->avg_luma = INVALID_LUMA;
+#else
     uint64_t sum_avg_intensity_ttl_regions_luma = 0;
+#endif
     // Histogram bins
     if (scs->static_config.scene_change_detection ||
         scs->vq_ctrls.sharpness_ctrls.scene_transition) {
         // Use 1/16 Luma for Histogram generation
         // 1/16 input ready
+#if FIX_AVG_Y
+        sub_sample_luma_generate_pixel_intensity_histogram_bins(
+            scs, pcs, sixteenth_decimated_picture_ptr, &pcs->avg_luma);
+#else
         sub_sample_luma_generate_pixel_intensity_histogram_bins(
             scs, pcs, sixteenth_decimated_picture_ptr, &sum_avg_intensity_ttl_regions_luma);
+#endif
     }
 
     if (scs->calculate_variance)
@@ -2354,13 +2373,24 @@ void *svt_aom_picture_analysis_kernel(void *input_ptr) {
                 pcs->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_downsampled_picture_ptr;
             }
             // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
-            if (scs->static_config.pass != ENC_FIRST_PASS)
+#if FIX_AVG_Y
+            if (scs->static_config.pass != ENC_FIRST_PASS) {
                 svt_aom_gathering_picture_statistics(
                     scs,
                     pcs,
                     input_padded_pic,
                     (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
 
+                pa_ref_obj_->avg_luma = pcs->avg_luma;
+            }
+#else
+            if (scs->static_config.pass != ENC_FIRST_PASS)
+                svt_aom_gathering_picture_statistics(
+                    scs,
+                    pcs,
+                    input_padded_pic,
+                    (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+#endif
             // If running multi-threaded mode, perform SC detection in svt_aom_picture_analysis_kernel, else in svt_aom_picture_decision_kernel
             if (scs->static_config.logical_processors != 1) {
                 if ((scs->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {

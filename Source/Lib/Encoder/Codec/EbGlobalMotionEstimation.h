@@ -17,8 +17,25 @@
 #include "EbMotionEstimationContext.h"
 
 void svt_aom_global_motion_estimation(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic);
+
+#if OPT_GM_MIX_DS
+void compute_global_motion(PictureParentControlSet *pcs,
+                           EbPictureBufferDesc     *det_input_pic, //src frame for detection
+                           EbPictureBufferDesc     *det_ref_pic, //ref frame for detection
+                           EbPictureBufferDesc     *input_pic, //src frame for refinement
+                           EbPictureBufferDesc     *ref_pic, //ref frame for refinement
+                           uint8_t sf, //downsacle factor between det and refinement
+                           uint8_t chess_refn, EbWarpedMotionParams *best_wm,
+                           int allow_high_precision_mv);
+#else
+
 void compute_global_motion(PictureParentControlSet *pcs, EbPictureBufferDesc *input_pic,
                            EbPictureBufferDesc *ref_pic, EbWarpedMotionParams *bestWarpedMotion,
                            int allow_high_precision_mv);
+#endif
+
+#if OPT_GM_MIX_DS
+void svt_aom_upscale_wm_params(EbWarpedMotionParams *wm_params, uint8_t scale_factor);
+#endif
 
 #endif // EbGlobalMotionEstimation_h

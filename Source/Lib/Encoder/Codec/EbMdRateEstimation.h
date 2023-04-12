@@ -197,7 +197,9 @@ extern "C" {
         uint8_t allow_screen_content_tools,
         uint8_t enable_restoration,
         uint8_t allow_intrabc,
+#if !CLN_PART_CTX
         uint8_t partition_contexts,
+#endif
         FRAME_CONTEXT                  *fc);
     /**************************************************************************
     * Estimate the rate of the quantised coefficient
