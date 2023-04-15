@@ -574,6 +574,10 @@ where $`\alpha`$ is $`1500000`$ for key frames and $`1300000`$ otherwise. The co
 is as in the VBR case. The qindex that provides the closest rate to the target
 frame size is considered.
 
+After the final qindex of the frame is calculated, its value might be updated under some conditions. Some of these conditions are:
+- Adjust qindex based on source content change to avoid overshoot and undershoot
+- Limit the decrease or increase in qindex from previous frames to produce stable video.
+
 ### Updating the buffer fullness level
 
 The buffer fullness level is initialized at starting_buffer_level. Following

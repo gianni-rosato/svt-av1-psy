@@ -9383,7 +9383,14 @@ void svt_aom_sig_deriv_enc_dec_light_pd1(PictureControlSet *pcs, ModeDecisionCon
 #endif
     }
 #endif
-
+#if OPT_LD_SKIPTX
+    // 0: Feature off
+    // Lower the threshold, the more aggressive the feature is
+    ctx->lpd1_bypass_tx_th_div = 0;
+    if (pcs->rtc_tune && !pcs->ppcs->sc_class1) {
+        ctx->lpd1_bypass_tx_th_div = enc_mode <= ENC_M8 ? 0 : enc_mode <= ENC_M10 ? 8 : 6;
+    }
+#endif
     uint8_t rate_est_level = 0;
     if (lpd1_level <= LPD1_LVL_0)
         rate_est_level = 4;
