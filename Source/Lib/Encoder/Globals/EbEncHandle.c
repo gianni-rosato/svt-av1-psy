@@ -56,7 +56,7 @@
 #include "EbRateControlResults.h"
 #include "EbDefinitions.h"
 #include "EbMetadataHandle.h"
-#include "EbSvtAv1Enc.h"
+
 #include "EbPackUnPack_C.h"
 #include "EncModeConfig.h"
 
@@ -4830,7 +4830,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B || scs->static_config.pass != ENC_SINGLE_PASS || scs->static_config.enc_mode >= ENC_M10)
         scs->enable_dg = 0;
     else
-        scs->enable_dg = scs->static_config.opaque->enable_dg;
+        scs->enable_dg = scs->static_config.enable_dg;
 
 
     // Set hbd_md OFF for high encode modes or bitdepth < 10
@@ -5301,6 +5301,9 @@ static void copy_api_from_app(
     // motion field motion vector
     scs->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
 
+    // Dynamic GoP
+    scs->static_config.enable_dg = ((EbSvtAv1EncConfiguration*)config_struct)->enable_dg;
+
     // Decoder Optimization Flag
     scs->static_config.fast_decode = ((EbSvtAv1EncConfiguration*)config_struct)->fast_decode;
 
@@ -5566,9 +5569,9 @@ static void copy_api_from_app(
         scs->static_config.enable_qm = 0;
     }
 
-    scs->static_config.opaque = config_struct->opaque;
-    config_struct->opaque = NULL; // make sure this pointer is "moved" internally
-
+#if FTR_STARTUP_MG_SIZE
+    scs->static_config.startup_mg_size = config_struct->startup_mg_size;
+#endif
     return;
 }
 

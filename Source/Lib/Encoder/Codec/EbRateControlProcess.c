@@ -39,7 +39,6 @@
 #include "EbResize.h"
 #include "EbSourceBasedOperationsProcess.h"
 #include "EncModeConfig.h"
-#include "EbEncSettings.h"
 
 // Specifies the weights of the ref frame in calculating qindex of non base layer frames
 static const int non_base_qindex_weight_ref[EB_MAX_TEMPORAL_LAYERS] = {
@@ -892,19 +891,18 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
         assert(r0_weight_idx <= 2);
         double weight = r0_weight[r0_weight_idx];
 #if OPT_STARTUP_MG_SIZE
-        if (pcs->scs->static_config.opaque->startup_mg_size > 0) {
-            assert(pcs->scs->static_config.opaque->startup_mg_size >= 2 &&
-                   pcs->scs->static_config.opaque->startup_mg_size <= 4);
+        if (pcs->scs->static_config.startup_mg_size > 0) {
+            assert(pcs->scs->static_config.startup_mg_size >= 2 &&
+                   pcs->scs->static_config.startup_mg_size <= 4);
             if (frame_is_intra_only(ppcs)) {
-                weight = r0_weight_startup_mg[pcs->scs->static_config.opaque->startup_mg_size - 2]
+                weight = r0_weight_startup_mg[pcs->scs->static_config.startup_mg_size - 2]
                                              [r0_weight_idx];
             } else {
                 // base layer weight
-                const uint32_t startup_mg_size = 1
-                    << pcs->scs->static_config.opaque->startup_mg_size;
+                const uint32_t startup_mg_size = 1 << pcs->scs->static_config.startup_mg_size;
                 if (ppcs->last_idr_picture + startup_mg_size == pcs->picture_number) {
-                    weight = r0_weight_startup_mg[pcs->scs->static_config.opaque->startup_mg_size -
-                                                  2][r0_weight_idx];
+                    weight = r0_weight_startup_mg[pcs->scs->static_config.startup_mg_size - 2]
+                                                 [r0_weight_idx];
                 }
             }
         }

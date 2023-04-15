@@ -570,12 +570,12 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->opaque->enable_dg > 1) {
+    if (config->enable_dg > 1) {
         SVT_ERROR(
             "Instance %u: Invalid dynamic GoP flag [0 - 1], your "
             "input: %d\n",
             channel_number + 1,
-            config->opaque->enable_dg);
+            config->enable_dg);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -926,19 +926,19 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
     }
 #endif
 #if FTR_STARTUP_MG_SIZE
-    if (config->opaque->startup_mg_size != 0 && config->opaque->startup_mg_size != 2 &&
-        config->opaque->startup_mg_size != 3 && config->opaque->startup_mg_size != 4) {
+    if (config->startup_mg_size != 0 && config->startup_mg_size != 2 &&
+        config->startup_mg_size != 3 && config->startup_mg_size != 4) {
         SVT_ERROR("Instance %u: Startup MG size supported [0, 2, 3, 4]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->opaque->startup_mg_size >= config->hierarchical_levels) {
+    if (config->startup_mg_size >= config->hierarchical_levels) {
         SVT_ERROR("Instance %u: Startup MG size must less than Hierarchical Levels\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->opaque->startup_mg_size != 0 && config->rate_control_mode != 0) {
+    if (config->startup_mg_size != 0 && config->rate_control_mode != 0) {
         SVT_ERROR("Instance %u: Startup MG size feature only supports CRF/CQP rate control mode\n",
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -1004,6 +1004,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->cdef_level                   = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv                  = DEFAULT;
+    config_ptr->enable_dg                    = 1;
     config_ptr->fast_decode                  = 0;
     config_ptr->encoder_color_format         = EB_YUV420;
     // Rate control options
@@ -1083,16 +1084,8 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->min_qm_level = 8;
     config_ptr->max_qm_level = 15;
 
-    if (config_ptr->opaque)
-        free(config_ptr->opaque);
-    config_ptr->opaque             = malloc(sizeof(*config_ptr->opaque));
-    struct SvtAv1PrivOptions *priv = config_ptr->opaque;
-    if (!priv)
-        return EB_ErrorInsufficientResources;
-    priv->enable_dg = 1;
-
 #if FTR_STARTUP_MG_SIZE
-    priv->startup_mg_size = 0;
+    config_ptr->startup_mg_size = 0;
 #endif
     return return_error;
 }
@@ -2056,7 +2049,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"qm-max", &config_struct->max_qm_level},
         {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},
 #if FTR_STARTUP_MG_SIZE
-        {"startup-mg-size", &config_struct->opaque->startup_mg_size},
+        {"startup-mg-size", &config_struct->startup_mg_size},
 #endif
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
@@ -2150,7 +2143,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"fast-decode", &config_struct->fast_decode},
         {"enable-force-key-frames", &config_struct->force_key_frames},
         {"enable-qm", &config_struct->enable_qm},
-        {"enable-dg", &config_struct->opaque->enable_dg},
+        {"enable-dg", &config_struct->enable_dg},
         {"gop-constraint-rc", &config_struct->gop_constraint_rc},
     };
     const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
