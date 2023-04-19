@@ -1276,18 +1276,15 @@ static void obmc_trans_face_off(ModeDecisionCandidateBuffer *cand_bf, PictureCon
 
     if (is_inter_singleref_mode(cand->pred_mode)) {
         MvReferenceFrame rf[2];
-        rf[0] = cand->ref_frame_type;
-        rf[1] = -1;
+        av1_set_ref_frame(rf, cand->ref_frame_type);
 
-        uint8_t is_ii_allowed = svt_is_interintra_allowed(
-            ctx->inter_intra_comp_ctrls.enabled, ctx->blk_geom->bsize, cand->pred_mode, rf);
         uint8_t is_obmc_allowed =
             svt_aom_obmc_motion_mode_allowed(
-                pcs, ctx, ctx->blk_geom->bsize, LAST_FRAME, 2, -1, cand->pred_mode) == OBMC_CAUSAL;
+                pcs, ctx, ctx->blk_geom->bsize, 2, rf[0], -1, cand->pred_mode) == OBMC_CAUSAL;
 
         if (is_inter_mode(cand_bf->cand->pred_mode) && is_obmc_allowed &&
             cand->motion_mode == SIMPLE_TRANSLATION &&
-            (is_ii_allowed == 0 || cand->interintra_mode == 0)) {
+            cand->is_interintra_used == 0) {
             uint32_t luma_fast_dist;
             uint32_t chroma_fast_distortion = 0;
 
