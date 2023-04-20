@@ -768,6 +768,7 @@ much greater detail than this document.
 - [Temporal Dependency Model](Appendix-TPL.md)
 - [Transform Search Appendix](Appendix-TX-Search.md)
 - [Reference Scaling Appendix](Appendix-Reference-Scaling.md)
+- [Dynamic Mini-GoP](Appendix-Dynamic-Mini-GoP.md)
 
 
 ## Notes
