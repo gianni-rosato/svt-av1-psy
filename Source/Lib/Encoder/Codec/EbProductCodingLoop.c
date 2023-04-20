@@ -1280,7 +1280,8 @@ static void obmc_trans_face_off(ModeDecisionCandidateBuffer *cand_bf, PictureCon
 
         uint8_t is_obmc_allowed =
             svt_aom_obmc_motion_mode_allowed(
-                pcs, ctx, ctx->blk_geom->bsize, 2, rf[0], NONE_FRAME, cand->pred_mode) == OBMC_CAUSAL;
+                pcs, ctx, ctx->blk_geom->bsize, 2, rf[0], NONE_FRAME, cand->pred_mode) ==
+            OBMC_CAUSAL;
 
         if (is_inter_mode(cand_bf->cand->pred_mode) && is_obmc_allowed &&
             cand->motion_mode == SIMPLE_TRANSLATION && cand->is_interintra_used == 0) {
