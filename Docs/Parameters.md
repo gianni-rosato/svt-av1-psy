@@ -75,7 +75,7 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of encoding                                               |
 | **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
 | **LogicalProcessors**            | --lp                        | [0, core count of the machine] | 0           | Target (best effort) number of logical cores to be used. 0 means all. Refer to Appendix A.1                   |
-| **PinnedExecution**              | --pin                       | [0-1]                          | 0           | Pin the execution to the first --lp cores. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1         |
+| **PinnedExecution**              | --pin                       | [0-1]                          | 0           | Pin the execution to the first --lp cores. Overwritten to 1 when `--ss` is set. Refer to Appendix A.1         |
 | **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
 | **FastDecode**                   | --fast-decode               | [0,1]                          | 0           | Tune settings to output bitstreams that can be decoded faster, [0 = OFF, 1 = ON]                              |
 | **Tune**                         | --tune                      | [0,1]                          | 1           | Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR]                                   |
@@ -358,7 +358,7 @@ This is an example on how to use them together.
 
 so -lp 4 with --pin 1 would restrict the encoder to work on cpu0-3 and reduce
 the resource allocation to only what's needed to using 4 cores. --lp 4 with
---pin 1, would reduce the allocation to what's needed for 4 cores but not
+--pin 0, would reduce the allocation to what's needed for 4 cores but not
 restrict the encoder to run on cpu 0-3, in this case the encoder might end up
 using more than 4 cores due to the multi-threading nature of the encoder, but
 would at least allow for more multiple -lp4 encodes to run on the same machine

@@ -648,7 +648,7 @@ ConfigEntry config_entry_options[] = {
     {SINGLE_INPUT,
      PRESET_TOKEN,
      "Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with "
-     "a quality tradeoff, default is 10 [-2-13]",
+     "a quality tradeoff, default is 10 [-1-13]",
      set_cfg_generic_token},
 
     {SINGLE_INPUT,
@@ -776,9 +776,9 @@ ConfigEntry config_entry_global_options[] = {
      set_cfg_generic_token},
     {SINGLE_INPUT,
      PIN_TOKEN,
-     "Pin the execution to the first --lp cores. Overwritten to 0 when `--ss` is set. Refer to "
+     "Pin the execution to the first --lp cores. Overwritten to 1 when `--ss` is set. Refer to "
      "Appendix "
-     "A.1 of the user guide, default is 1 [0-1]",
+     "A.1 of the user guide, default is 0 [0-1]",
      set_cfg_generic_token},
     {SINGLE_INPUT,
      TARGET_SOCKET,
