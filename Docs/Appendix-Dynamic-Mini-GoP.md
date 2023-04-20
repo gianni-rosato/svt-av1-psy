@@ -2,7 +2,7 @@
 
 # Dynamic Mini-GoP
 
-SVT-AV1 supports multiple hierarchical prediction structures, including 5-layer and 6-layer prediction structures. Working with a fixed hierarchical prediction structure can lead to a significant degradation in compression efficiency for some clips depending on the complexity of the motion. To avoid this type of performance degradation, it is desired to consider a dynamic hierarchical prediction structure that adapts to the temporal complexity of the clip being encoded. SVT-AV1 achieves this objective by modifying the prediction structure at the mini-GoP level. In the following, a description of reference frame management in SVT-AV1 is presented, followed by an outline of the mini-GoP level decision making with regard to the hierarchical prediction structure.  
+SVT-AV1 supports multiple hierarchical prediction structures, including 5-layer and 6-layer prediction structures. Working with a fixed hierarchical prediction structure can lead to a significant degradation in compression efficiency for some clips depending on the complexity of the motion. To avoid this type of performance degradation, it is desired to consider a dynamic hierarchical prediction structure that adapts to the temporal complexity of the clip being encoded. SVT-AV1 achieves this objective by modifying the prediction structure at the mini-GoP level. In the following, a description of reference frame management in SVT-AV1 is presented, followed by an outline of the mini-GoP level decision making with regard to the hierarchical prediction structure.
 
 ## I. Reference Frame Management
 
@@ -30,8 +30,8 @@ When a reference frame enters the closed loop (picture manager process) it will 
 
 ### Early motion analysis
 
-Motion analysis  is a key step towards the selection of the optimal prediction structure. However, the implementation of the prediction structure happens at an early stage of the encoding flow at the Picture Decision (PD) process, and before the ME process. The latter  performs an exhaustive motion search  for the best selected prediction structure out of the PD process.   
- 
+Motion analysis  is a key step towards the selection of the optimal prediction structure. However, the implementation of the prediction structure happens at an early stage of the encoding flow at the Picture Decision (PD) process, and before the ME process. The latter  performs an exhaustive motion search  for the best selected prediction structure out of the PD process.
+
 Calling the ME process for each single prediction structure candidate is possible, but that will cause a significant performance drop because of the speed cost of ME (especially for the fast modes where ME represents ~25% of the total encoding time).
 The proposed method to decide on temporal complexity is to analyze motion for only the potential  base layer (i.e. temporal layer 0) frame(s), for only the closest past reference, per SB, and using the 1/16th resolution input frame(s) (i.e. source frames) as reference frame(s). For each target base layer frame, this early-ME search returns the normalized distortion, the percentage of complex SB(s), the percentage of active SB(s), and the MV(s) in/out count (i.e. MVs pointing into or out of the picture).
 
@@ -40,19 +40,19 @@ The proposed method to decide on temporal complexity is to analyze motion for on
 |5L/6L Switch|1 + 2 = 3|(31,0), (15,0), (31, 15)|
 |4L/5L/6L switch|1 + 2 + 4 = 7|...|
 |3L/4L/5L/6L switch|1 + 2 + 4 + 8 = 15|...|
-- nL refers to an n layer prediction structure. 
+- nL refers to an n layer prediction structure.
 
-For example, when deciding between a six layer (6L) prediction structure and a five-layer (5L) prediction structure for the fist mini-GoP in a clip, a fist early motion search is performed using the (base layer picture, reference) pair (31, 0), which represents one search, followed by two searches based on the 5L prediction structure using pairs (15,0) and (31, 15), for a total of three searches. 
+For example, when deciding between a six layer (6L) prediction structure and a five-layer (5L) prediction structure for the fist mini-GoP in a clip, a fist early motion search is performed using the (base layer picture, reference) pair (31, 0), which represents one search, followed by two searches based on the 5L prediction structure using pairs (15,0) and (31, 15), for a total of three searches.
 
 ### Prediction structure selection
 
-For the case of switching between 5L and 6L, let top_mini_gop refer to the 6L mini-GoP, and sub_mini_gop_0  and sub_mini_gop_1 refer to the 5L mini-GoPs that result from splitting the 6L min-GoP into two 5L mini-GoPs. Three sets of temporal statistics are available based on the early motion analysis: 
+For the case of switching between 5L and 6L, let top_mini_gop refer to the 6L mini-GoP, and sub_mini_gop_0  and sub_mini_gop_1 refer to the 5L mini-GoPs that result from splitting the 6L min-GoP into two 5L mini-GoPs. Three sets of temporal statistics are available based on the early motion analysis:
 
-- One for the default 6L mini-Gop (e.g. based on the (31,0) early motion analysis). Let top_mini_gop_dist the frame distortion resulting from such analysis. 
-- One for each of the two 5L sub_min_gops (e.g. based on the (15,0) and (31,15) early motion analysis). Let sub_mini_gop_0_dist and  sub_mini_gop_1_dist denote the corresponding frame distortions resulting from such analysis. 
+- One for the default 6L mini-Gop (e.g. based on the (31,0) early motion analysis). Let top_mini_gop_dist the frame distortion resulting from such analysis.
+- One for each of the two 5L sub_min_gops (e.g. based on the (15,0) and (31,15) early motion analysis). Let sub_mini_gop_0_dist and  sub_mini_gop_1_dist denote the corresponding frame distortions resulting from such analysis.
 
-The subdivision of the default 6L into two 5L mini-GoPs will happen if:  
+The subdivision of the default 6L into two 5L mini-GoPs will happen if:
 - (((sub_mini_gop_0_dist + sub_mini_gop_1_dist) / 2) < ((bias * top_mini_gop_dist) / 100))), where bias is added to simulate the rate advantage of the top mini-GoP.
-- High top_mini_gop activity, while both sub_mini_gop_0 and sub_mini_gop_1have similar activities. Activity is defined as non-zero motion vector for each block. 
+- High top_mini_gop activity, while both sub_mini_gop_0 and sub_mini_gop_1have similar activities. Activity is defined as non-zero motion vector for each block.
 - High top_mini_gop block complexity and low sub_mini_gop_0 and sub_mini_gop_1 complexity. Complexity is defined using the motion estimation distortion of each block.
-- High zoom out activity in both sub_mini_gop_0 and sub_mini_gop_1. Zoom out activity is defined using the motion vector(s) direction. 
+- High zoom out activity in both sub_mini_gop_0 and sub_mini_gop_1. Zoom out activity is defined using the motion vector(s) direction.
