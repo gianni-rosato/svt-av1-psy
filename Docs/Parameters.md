@@ -365,6 +365,22 @@ would at least allow for more multiple -lp4 encodes to run on the same machine
 without them being all restricted to run on cpu 0-3 or overflow the memory
 usage.
 
+When we have --pin 0, --lp behaves similarly to a parallelization level, which higher
+values having higher level of parallelism, not necessarily constrained to a number of
+logical processors. To set cpu affinity beyond the first --lp cores, a cpu affinity
+utility such as taskset or numactl to control could be used to pin execution to
+desired threads.
+
+Example:
+
+taskset --cpu-list 0-3  ./SvtAv1EncApp --preset 4 -q 32  --keyint  200  -i input1.y4m -b svt_1.bin  --lp 4
+taskset --cpu-list 4-7  ./SvtAv1EncApp --preset 4 -q 32  --keyint  200  -i input2.y4m -b svt_2.bin  --lp 4
+
+This example will ensure that the first encode will run on the first 4 cores and the second encode will run on the second 4 cores.
+In this example, If CPU utilization is not saturated for --lp 4 for these cores, higher levels of --lp could be employed for a memory
+usage increase
+
+
 Example: 72 core machine:
 
 72 jobs x --lp 1 --pin 0 (In order to maximize the CPU utilization 72 jobs are run simultaneously with each job utilitizing 1 core without being pined to a specific core)

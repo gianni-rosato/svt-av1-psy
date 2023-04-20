@@ -1283,8 +1283,7 @@ static void obmc_trans_face_off(ModeDecisionCandidateBuffer *cand_bf, PictureCon
                 pcs, ctx, ctx->blk_geom->bsize, 2, rf[0], -1, cand->pred_mode) == OBMC_CAUSAL;
 
         if (is_inter_mode(cand_bf->cand->pred_mode) && is_obmc_allowed &&
-            cand->motion_mode == SIMPLE_TRANSLATION &&
-            cand->is_interintra_used == 0) {
+            cand->motion_mode == SIMPLE_TRANSLATION && cand->is_interintra_used == 0) {
             uint32_t luma_fast_dist;
             uint32_t chroma_fast_distortion = 0;
 
