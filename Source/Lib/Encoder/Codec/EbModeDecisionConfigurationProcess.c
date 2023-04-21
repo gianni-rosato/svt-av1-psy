@@ -81,7 +81,6 @@ void           set_global_motion_field(PictureControlSet *pcs) {
             : ppcs->gm_downsample_level == GM_DOWN16      ? 4
                                                           : 1;
         svt_aom_upscale_wm_params(&ppcs->global_motion[frame_index], sf);
-
     }
 }
 
@@ -580,9 +579,9 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         RateControlResults *rc_results = (RateControlResults *)rc_results_wrapper->object_ptr;
         PictureControlSet  *pcs        = (PictureControlSet *)rc_results->pcs_wrapper->object_ptr;
         SequenceControlSet *scs        = pcs->scs;
-        pcs->min_me_clpx = 0;
-        pcs->max_me_clpx = 0;
-        pcs->avg_me_clpx = 0;
+        pcs->min_me_clpx               = 0;
+        pcs->max_me_clpx               = 0;
+        pcs->avg_me_clpx               = 0;
         if (scs->static_config.pass != ENC_FIRST_PASS && pcs->slice_type != I_SLICE) {
             uint32_t b64_idx;
             uint64_t avg_me_clpx = 0;

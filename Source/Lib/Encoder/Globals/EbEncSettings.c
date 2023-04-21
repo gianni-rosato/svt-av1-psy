@@ -703,7 +703,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-
     if (config->pass > 0 && scs->static_config.enable_overlays) {
         SVT_ERROR(
             "Instance %u: The overlay frames feature is currently not supported with multi-pass "

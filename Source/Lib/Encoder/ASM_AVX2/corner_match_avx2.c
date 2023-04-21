@@ -13,7 +13,6 @@
 #include "corner_match.h"
 #include "EbDefinitions.h"
 
-
 /* Compute quad of corr(im1, im2) * MATCH_SZ * stddev(im1), where the
 correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
 of each image, centered at (x1, y1) and (x2, y2) respectively.
@@ -21,14 +20,14 @@ of each image, centered at (x1, y1) and (x2, y2) respectively.
 double svt_av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, int x1, int y1,
                                               unsigned char *im2, int stride2, int x2, int y2,
                                               uint8_t match_sz) {
-    int     i, stride1_i = 0, stride2_i = 0;
-    __m256i temp1, sum_vec, sumsq2_vec, cross_vec, v, v1_1, v2_1;
+    int           i, stride1_i = 0, stride2_i = 0;
+    __m256i       temp1, sum_vec, sumsq2_vec, cross_vec, v, v1_1, v2_1;
     const uint8_t match_sz_by2 = ((match_sz - 1) / 2);
     const uint8_t match_sz_sq  = (match_sz * match_sz);
 
     int           mask_idx = match_sz / 2;
     const __m128i mask     = _mm_loadu_si128((__m128i *)svt_aom_compute_cross_byte_mask[mask_idx]);
-    const __m256i zero = _mm256_setzero_si256();
+    const __m256i zero     = _mm256_setzero_si256();
     __m128i       v1, v2;
 
     sum_vec    = zero;

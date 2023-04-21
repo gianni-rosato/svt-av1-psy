@@ -176,7 +176,7 @@ typedef struct {
     int32_t      resize_count;
     int32_t      last_q[FRAME_TYPES]; // Q used on last encoded frame of the given type.
 
-        // current and previous average base layer ME distortion
+    // current and previous average base layer ME distortion
     uint32_t cur_avg_base_me_dist;
     uint32_t prev_avg_base_me_dist;
 } RATE_CONTROL;
@@ -220,8 +220,8 @@ typedef struct PicMgrPorts {
  **************************************/
 int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, EbBitDepth bit_depth);
 double  svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
-double svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
-                                               int frame_count);
+double  svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
+                                                int frame_count);
 
 EbErrorType svt_aom_rate_control_context_ctor(EbThreadContext   *thread_ctx,
                                               const EbEncHandle *enc_handle_ptr, int me_port_index);

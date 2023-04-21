@@ -87,7 +87,7 @@ void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
     uint16_t           *variance_ptr        = pcs->ppcs->variance[sb_ptr->index];
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     uint16_t            variance            = get_variance_for_cu(blk_geom, variance_ptr);
-    blk_ptr->segment_id = 0;
+    blk_ptr->segment_id                     = 0;
     for (int i = MAX_SEGMENTS - 1; i >= 0; i--) {
         if (variance <= segmentation_params->variance_bin_edge[i]) {
             int32_t q_index = pcs->ppcs->frm_hdr.quantization_params.base_q_idx +

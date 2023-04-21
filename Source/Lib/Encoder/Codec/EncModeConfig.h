@@ -23,7 +23,7 @@ uint8_t svt_aom_get_nic_level(EncMode enc_mode, uint8_t is_base, uint8_t hierarc
 void svt_aom_set_depth_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t depth_level);
 uint8_t svt_aom_get_enable_me_16x16(EncMode enc_mode, bool rtc_tune);
 
-Bool svt_aom_is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t ref_idx);
+Bool    svt_aom_is_ref_same_size(PictureControlSet *pcs, uint8_t list_idx, uint8_t ref_idx);
 uint8_t svt_aom_get_enable_me_8x8(EncMode enc_mode, bool rtc_tune);
 void    svt_aom_set_tpl_extended_controls(PictureParentControlSet *pcs, uint8_t tpl_level);
 void    svt_aom_sig_deriv_mode_decision_config(SequenceControlSet *scs, PictureControlSet *pcs);
@@ -67,7 +67,7 @@ bool svt_aom_get_disallow_4x4(EncMode enc_mode, SliceType slice_type);
 uint8_t svt_aom_get_nsq_level(EncMode enc_mode, uint8_t is_islice, uint8_t is_base,
                               InputCoeffLvl coeff_lvl);
 
-void svt_aom_set_nsq_ctrls(ModeDecisionContext *ctx, uint8_t nsq_level, uint8_t *allow_HVA_HVB,
-                           uint8_t *allow_HV4, uint8_t *min_nsq_bsize);
+void    svt_aom_set_nsq_ctrls(ModeDecisionContext *ctx, uint8_t nsq_level, uint8_t *allow_HVA_HVB,
+                              uint8_t *allow_HV4, uint8_t *min_nsq_bsize);
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width,
                                                uint32_t picture_height);

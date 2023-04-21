@@ -138,7 +138,7 @@ void svt_aom_global_motion_estimation(PictureParentControlSet *pcs,
                     ref_refinement = sixteenth_ref_pic_ptr;
 
                     det_refn_sf = 1;
-                    chess_refn = 0;
+                    chess_refn  = 0;
                 } else if (pcs->gm_downsample_level == GM_DOWN) {
                     inp_detection = quarter_picture_ptr;
                     ref_detection = quarter_ref_pic_ptr;
@@ -147,7 +147,7 @@ void svt_aom_global_motion_estimation(PictureParentControlSet *pcs,
                     ref_refinement = quarter_ref_pic_ptr;
 
                     det_refn_sf = 1;
-                    chess_refn = GM_ADAPT_1 ? pcs->gm_ctrls.chess_rfn : 0;
+                    chess_refn  = GM_ADAPT_1 ? pcs->gm_ctrls.chess_rfn : 0;
                 } else {
                     inp_detection = input_pic;
                     ref_detection = ref_picture_ptr;
@@ -156,7 +156,7 @@ void svt_aom_global_motion_estimation(PictureParentControlSet *pcs,
                     ref_refinement = ref_picture_ptr;
 
                     det_refn_sf = 1;
-                    chess_refn = pcs->gm_ctrls.chess_rfn;
+                    chess_refn  = pcs->gm_ctrls.chess_rfn;
                 }
 
                 compute_global_motion(
@@ -259,7 +259,6 @@ void compute_global_motion(PictureParentControlSet *pcs,
                                                          MAX_CORNERS);
 
         num_frm_corners = num_frm_corners * pcs->gm_ctrls.corners / 4;
-
 
         TransformationType   model;
         EbWarpedMotionParams tmp_wm_params;

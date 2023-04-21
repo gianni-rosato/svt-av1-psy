@@ -63,7 +63,7 @@ class PerformanceCollect {
                 "%\n";
             return print;
         }
-    } * CollectHandle;
+    } *CollectHandle;
 
   public:
     /** Constructor of PerformanceCollect

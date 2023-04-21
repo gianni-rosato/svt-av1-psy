@@ -2990,23 +2990,23 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
     // free MD palette info buffer
     if (pcs->ppcs->palette_level) {
         const uint16_t max_block_cnt = scs->max_block_cnt;
-        uint32_t blk_index = 0;
+        uint32_t       blk_index     = 0;
         while (blk_index < max_block_cnt) {
-            const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-                const uint32_t tot_d1_blocks = !md_ctx->nsq_ctrls.enabled
-                    ? 1
-                    : svt_aom_get_tot_1d_blks(md_ctx, blk_geom->sq_size, md_ctx->md_disallow_nsq);
+            const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
+            const uint32_t   tot_d1_blocks = !md_ctx->nsq_ctrls.enabled
+                  ? 1
+                  : svt_aom_get_tot_1d_blks(md_ctx, blk_geom->sq_size, md_ctx->md_disallow_nsq);
 
-                for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-                    if (md_ctx->md_blk_arr_nsq[idx].palette_mem) {
-                        // if (pcs->ppcs->sb_geom[sb_addr].block_is_inside_md_scan[idx] && is_block_tagged) {
+            for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
+                if (md_ctx->md_blk_arr_nsq[idx].palette_mem) {
+                    // if (pcs->ppcs->sb_geom[sb_addr].block_is_inside_md_scan[idx] && is_block_tagged) {
 
-                        EB_FREE_ARRAY(md_ctx->md_blk_arr_nsq[idx].palette_info->color_idx_map);
+                    EB_FREE_ARRAY(md_ctx->md_blk_arr_nsq[idx].palette_info->color_idx_map);
 
-                        EB_FREE_ARRAY(md_ctx->md_blk_arr_nsq[idx].palette_info);
-                    }
+                    EB_FREE_ARRAY(md_ctx->md_blk_arr_nsq[idx].palette_info);
                 }
-                blk_index += blk_geom->d1_depth_offset;
+            }
+            blk_index += blk_geom->d1_depth_offset;
         }
     }
 

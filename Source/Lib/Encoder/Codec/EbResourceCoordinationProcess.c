@@ -380,11 +380,11 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs) {
     frm_hdr->loop_filter_params.ref_deltas[6] = -1;
     frm_hdr->loop_filter_params.ref_deltas[7] = -1;
 
-    frm_hdr->all_lossless      = 0;
-    frm_hdr->coded_lossless    = 0;
-    frm_hdr->reduced_tx_set    = 0;
-    frm_hdr->reference_mode    = SINGLE_REFERENCE;
-    pcs->frame_context_idx     = 0; /* Context to use/update */
+    frm_hdr->all_lossless   = 0;
+    frm_hdr->coded_lossless = 0;
+    frm_hdr->reduced_tx_set = 0;
+    frm_hdr->reference_mode = SINGLE_REFERENCE;
+    pcs->frame_context_idx  = 0; /* Context to use/update */
     for (int32_t i = 0; i < REF_FRAMES; i++) pcs->fb_of_context_type[i] = 0;
     frm_hdr->primary_ref_frame = PRIMARY_REF_NONE;
     if (pcs->scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR &&

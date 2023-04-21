@@ -83,9 +83,9 @@ typedef struct MdBlkStruct {
     EbWarpedMotionParams wm_params_l0;
     EbWarpedMotionParams wm_params_l1;
     // txb
-    uint8_t u_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
-    uint8_t v_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
-    uint8_t y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+    uint8_t  u_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+    uint8_t  v_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+    uint8_t  y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
     uint16_t cnt_non_zero_h[2];
     uint16_t cnt_non_zero_v[2];
 } MdBlkStruct;
@@ -858,9 +858,9 @@ typedef struct ModeDecisionContext {
     BlkStruct                    *md_blk_arr_nsq;
     uint8_t                      *avail_blk_flag;
     // tells whether this CU is tested in MD.
-    uint8_t   *tested_blk_flag;
-    uint8_t   *do_not_process_blk;
-    MdcSbData *mdc_sb_array;
+    uint8_t         *tested_blk_flag;
+    uint8_t         *do_not_process_blk;
+    MdcSbData       *mdc_sb_array;
     MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];
     uint8_t          tot_ref_frame_types;
 
@@ -1041,7 +1041,7 @@ typedef struct ModeDecisionContext {
     uint32_t sq_weight;
     uint32_t max_part0_to_part1_dev;
     // if true, skip H4/V4 shapes when best partition so far is not H/V
-    uint32_t skip_hv4_on_best_part;
+    uint32_t       skip_hv4_on_best_part;
     IntraCtrls     intra_ctrls;
     MdRateEstCtrls rate_est_ctrls;
     // use coeff rate and slipt flag rate only (no MVP derivation)
@@ -1049,8 +1049,8 @@ typedef struct ModeDecisionContext {
     // Control fast_coeff_est_level per mds
     uint8_t mds_fast_coeff_est_level;
     // Control subres_step per mds
-    uint8_t mds_subres_step;
-    uint8_t md_pic_obmc_level;
+    uint8_t           mds_subres_step;
+    uint8_t           md_pic_obmc_level;
     uint8_t           md_filter_intra_level;
     uint8_t           md_allow_intrabc;
     uint8_t           md_palette_level;
@@ -1080,16 +1080,16 @@ typedef struct ModeDecisionContext {
     RefResults ref_filtering_res[TOT_INTER_GROUP][MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     RefPruningControls ref_pruning_ctrls;
     // Signal to control initial and final pass PD setting(s)
-    PdPass             pd_pass;
-    CflCtrls           cfl_ctrls;
-    TxsControls        txs_ctrls;
-    TxtControls        txt_ctrls;
-    CandReductionCtrls cand_reduction_ctrls;
-    NsqCtrls           nsq_ctrls;
+    PdPass              pd_pass;
+    CflCtrls            cfl_ctrls;
+    TxsControls         txs_ctrls;
+    TxtControls         txt_ctrls;
+    CandReductionCtrls  cand_reduction_ctrls;
+    NsqCtrls            nsq_ctrls;
     DepthEarlyExitCtrls depth_early_exit_ctrls;
-    RdoqCtrls rdoq_ctrls;
-    uint8_t   disallow_4x4;
-    uint8_t   md_disallow_nsq;
+    RdoqCtrls           rdoq_ctrls;
+    uint8_t             disallow_4x4;
+    uint8_t             md_disallow_nsq;
     // was parent_sq_coeff_area_based_cycles_reduction_ctrls
     ParentSqCmplxCtrls   psq_cplx_ctrls;
     uint8_t              sb_size;
@@ -1120,7 +1120,7 @@ typedef struct ModeDecisionContext {
     uint8_t         mds0_best_class;
     uint32_t        mds0_best_idx;
     CandClass       mds0_best_class_it;
-    uint64_t mds0_best_class0_cost;
+    uint64_t        mds0_best_class0_cost;
     uint32_t        mds1_best_idx;
     CandClass       mds1_best_class_it;
     Mds0Ctrls       mds0_ctrls;
@@ -1157,7 +1157,7 @@ typedef struct ModeDecisionContext {
     // is equal to or greater than 32x32
     Lpd1Ctrls lpd1_ctrls;
     // Refines the pd1_level per SB. 0: OFF, 1: conservative 2: Aggressive
-    uint8_t pd1_lvl_refinement;
+    uint8_t         pd1_lvl_refinement;
     SpatialSSECtrls spatial_sse_ctrls;
 
     uint16_t init_max_block_cnt;

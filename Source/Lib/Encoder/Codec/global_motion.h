@@ -66,8 +66,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                          int use_hbd, int bd, uint8_t *ref, uint8_t *ref_2b,
                                          int r_width, int r_height, int r_stride, uint8_t *dst,
                                          int d_width, int d_height, int d_stride, int n_refinements,
-                                         uint8_t chess_refn,
-                                         int64_t best_frame_error);
+                                         uint8_t chess_refn, int64_t best_frame_error);
 
 /*
   Computes "num_motions" candidate global motion parameters between two frames.

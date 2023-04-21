@@ -500,7 +500,7 @@ int64_t pick_wedge_fixed_sign(PictureControlSet *pcs, ModeDecisionContext *ctx,
         const uint8_t *mask = svt_aom_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
         uint64_t       sse  = svt_av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
         sse                 = ROUND_POWER_OF_TWO(sse, bd_round);
-        int64_t rd = sse;
+        int64_t rd          = sse;
         if (ctx->inter_intra_comp_ctrls.use_rd_model) {
             model_rd_with_curvfit(pcs, bsize, sse, N, &rate, &dist, ctx, full_lambda);
             rate += ctx->md_rate_est_ctx->wedge_idx_fac_bits[bsize][wedge_index];
@@ -1229,15 +1229,15 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
     av1_setup_build_prediction_by_above_pred(
         xd, rel_mi_col, above_mi_width, &backup_mbmi, ctxt, num_planes, is16bit);
 
-    ctxt->prediction_ptr.org_x = ctxt->prediction_ptr.org_y       = 0;
-    ctxt->prediction_ptr.buffer_y                                 = ctxt->tmp_buf[0];
-    ctxt->prediction_ptr.buffer_cb                                = ctxt->tmp_buf[1];
-    ctxt->prediction_ptr.buffer_cr                                = ctxt->tmp_buf[2];
-    ctxt->prediction_ptr.stride_y                                 = ctxt->tmp_stride[0];
-    ctxt->prediction_ptr.stride_cb                                = ctxt->tmp_stride[1];
-    ctxt->prediction_ptr.stride_cr                                = ctxt->tmp_stride[2];
-    ctxt->prediction_ptr.width                                    = (uint16_t)ctxt->tmp_width;
-    ctxt->prediction_ptr.height                                   = (uint16_t)ctxt->tmp_height;
+    ctxt->prediction_ptr.org_x = ctxt->prediction_ptr.org_y = 0;
+    ctxt->prediction_ptr.buffer_y                           = ctxt->tmp_buf[0];
+    ctxt->prediction_ptr.buffer_cb                          = ctxt->tmp_buf[1];
+    ctxt->prediction_ptr.buffer_cr                          = ctxt->tmp_buf[2];
+    ctxt->prediction_ptr.stride_y                           = ctxt->tmp_stride[0];
+    ctxt->prediction_ptr.stride_cb                          = ctxt->tmp_stride[1];
+    ctxt->prediction_ptr.stride_cr                          = ctxt->tmp_stride[2];
+    ctxt->prediction_ptr.width                              = (uint16_t)ctxt->tmp_width;
+    ctxt->prediction_ptr.height                             = (uint16_t)ctxt->tmp_height;
 
     ctxt->dst_origin_x = rel_mi_col << MI_SIZE_LOG2;
     ctxt->dst_origin_y = 0;
@@ -1334,15 +1334,15 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
     mi_x = ctxt->mi_col << MI_SIZE_LOG2;
     mi_y = left_mi_row << MI_SIZE_LOG2;
 
-    ctxt->prediction_ptr.org_x = ctxt->prediction_ptr.org_y       = 0;
-    ctxt->prediction_ptr.buffer_y                                 = ctxt->tmp_buf[0];
-    ctxt->prediction_ptr.buffer_cb                                = ctxt->tmp_buf[1];
-    ctxt->prediction_ptr.buffer_cr                                = ctxt->tmp_buf[2];
-    ctxt->prediction_ptr.stride_y                                 = ctxt->tmp_stride[0];
-    ctxt->prediction_ptr.stride_cb                                = ctxt->tmp_stride[1];
-    ctxt->prediction_ptr.stride_cr                                = ctxt->tmp_stride[2];
-    ctxt->prediction_ptr.width                                    = (uint16_t)ctxt->tmp_width;
-    ctxt->prediction_ptr.height                                   = (uint16_t)ctxt->tmp_height;
+    ctxt->prediction_ptr.org_x = ctxt->prediction_ptr.org_y = 0;
+    ctxt->prediction_ptr.buffer_y                           = ctxt->tmp_buf[0];
+    ctxt->prediction_ptr.buffer_cb                          = ctxt->tmp_buf[1];
+    ctxt->prediction_ptr.buffer_cr                          = ctxt->tmp_buf[2];
+    ctxt->prediction_ptr.stride_y                           = ctxt->tmp_stride[0];
+    ctxt->prediction_ptr.stride_cb                          = ctxt->tmp_stride[1];
+    ctxt->prediction_ptr.stride_cr                          = ctxt->tmp_stride[2];
+    ctxt->prediction_ptr.width                              = (uint16_t)ctxt->tmp_width;
+    ctxt->prediction_ptr.height                             = (uint16_t)ctxt->tmp_height;
 
     ctxt->dst_origin_x = 0;
     ctxt->dst_origin_y = rel_mi_row << MI_SIZE_LOG2;
@@ -2855,13 +2855,13 @@ static void inter_intra_prediction(
 
     for (int32_t plane = start_plane; plane < end_plane; ++plane) {
         EbPictureBufferDesc intra_pred_desc;
-        intra_pred_desc.org_x = intra_pred_desc.org_y       = 0;
-        intra_pred_desc.stride_y                            = blk_geom->bwidth;
-        intra_pred_desc.stride_cb                           = blk_geom->bwidth / 2;
-        intra_pred_desc.stride_cr                           = blk_geom->bwidth / 2;
-        intra_pred_desc.buffer_y                            = intra_pred;
-        intra_pred_desc.buffer_cb                           = intra_pred_cb;
-        intra_pred_desc.buffer_cr                           = intra_pred_cr;
+        intra_pred_desc.org_x = intra_pred_desc.org_y = 0;
+        intra_pred_desc.stride_y                      = blk_geom->bwidth;
+        intra_pred_desc.stride_cb                     = blk_geom->bwidth / 2;
+        intra_pred_desc.stride_cr                     = blk_geom->bwidth / 2;
+        intra_pred_desc.buffer_y                      = intra_pred;
+        intra_pred_desc.buffer_cb                     = intra_pred_cb;
+        intra_pred_desc.buffer_cr                     = intra_pred_cr;
 
         const int       ssx         = plane ? 1 : 0;
         const int       ssy         = plane ? 1 : 0;
@@ -4865,13 +4865,13 @@ EbErrorType svt_aom_inter_prediction(
 
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             EbPictureBufferDesc intra_pred_desc;
-            intra_pred_desc.org_x = intra_pred_desc.org_y       = 0;
-            intra_pred_desc.stride_y                            = bwidth;
-            intra_pred_desc.stride_cb                           = bwidth / 2;
-            intra_pred_desc.stride_cr                           = bwidth / 2;
-            intra_pred_desc.buffer_y                            = intra_pred;
-            intra_pred_desc.buffer_cb                           = intra_pred;
-            intra_pred_desc.buffer_cr                           = intra_pred;
+            intra_pred_desc.org_x = intra_pred_desc.org_y = 0;
+            intra_pred_desc.stride_y                      = bwidth;
+            intra_pred_desc.stride_cb                     = bwidth / 2;
+            intra_pred_desc.stride_cr                     = bwidth / 2;
+            intra_pred_desc.buffer_y                      = intra_pred;
+            intra_pred_desc.buffer_cb                     = intra_pred;
+            intra_pred_desc.buffer_cr                     = intra_pred;
 
             const int       ssx         = plane ? 1 : 0;
             const int       ssy         = plane ? 1 : 0;
@@ -5853,8 +5853,8 @@ EbErrorType av1_inter_prediction_obmc(PictureControlSet *pcs, BlkStruct *blk_ptr
     return return_error;
 }
 
-EbErrorType svt_aom_inter_pu_prediction_av1_obmc(uint8_t hbd_md,
-                                                 ModeDecisionContext *ctx, PictureControlSet *pcs,
+EbErrorType svt_aom_inter_pu_prediction_av1_obmc(uint8_t hbd_md, ModeDecisionContext *ctx,
+                                                 PictureControlSet           *pcs,
                                                  ModeDecisionCandidateBuffer *cand_bf) {
     EbErrorType return_error = EB_ErrorNone;
 

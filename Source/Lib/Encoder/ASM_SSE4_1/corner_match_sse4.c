@@ -37,14 +37,14 @@ double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1,
     __m128i sum1_vec = _mm_setzero_si128();
     __m128i sum2_vec = _mm_setzero_si128();
     // 4 32-bit partial sums of squares
-    __m128i sumsq2_vec = _mm_setzero_si128();
-    __m128i cross_vec  = _mm_setzero_si128();
+    __m128i       sumsq2_vec   = _mm_setzero_si128();
+    __m128i       cross_vec    = _mm_setzero_si128();
     const uint8_t match_sz_by2 = ((match_sz - 1) / 2);
     const uint8_t match_sz_sq  = (match_sz * match_sz);
 
     int           mask_idx = match_sz / 2;
     const __m128i mask     = _mm_loadu_si128((__m128i *)svt_aom_compute_cross_byte_mask[mask_idx]);
-    const __m128i zero = _mm_setzero_si128();
+    const __m128i zero     = _mm_setzero_si128();
 
     im1 += (y1 - match_sz_by2) * stride1 + (x1 - match_sz_by2);
     im2 += (y2 - match_sz_by2) * stride2 + (x2 - match_sz_by2);

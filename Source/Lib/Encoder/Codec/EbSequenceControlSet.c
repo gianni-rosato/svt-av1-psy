@@ -246,7 +246,6 @@ EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs) {
                     ? TRUE
                     : FALSE;
 
-
             } else {
                 if (blk_geom->shape != PART_N)
                     blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
@@ -258,7 +257,6 @@ EbErrorType svt_aom_sb_geom_init(SequenceControlSet *scs) {
                       scs->max_input_luma_height))
                     ? FALSE
                     : TRUE;
-
             }
         }
     }

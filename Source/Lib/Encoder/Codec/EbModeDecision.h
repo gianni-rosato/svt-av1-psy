@@ -185,7 +185,6 @@ MotionMode svt_aom_obmc_motion_mode_allowed(const PictureControlSet    *pcs,
                                             uint8_t situation, MvReferenceFrame rf0,
                                             MvReferenceFrame rf1, PredictionMode mode);
 
-
 void svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs);
 
 typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(struct ModeDecisionContext  *ctx,

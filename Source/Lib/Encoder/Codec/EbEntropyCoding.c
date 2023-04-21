@@ -5112,10 +5112,10 @@ static int get_spatial_seg_prediction(PictureControlSet *pcs, MacroBlockD *xd, u
     int prev_l  = -1; // left segment_id
     int prev_u  = -1; // top segment_id
 
-    uint32_t mi_col = blk_org_x >> MI_SIZE_LOG2;
-    uint32_t mi_row = blk_org_y >> MI_SIZE_LOG2;
-    bool left_available = xd->left_available;
-    bool up_available   = xd->up_available;
+    uint32_t                 mi_col           = blk_org_x >> MI_SIZE_LOG2;
+    uint32_t                 mi_row           = blk_org_y >> MI_SIZE_LOG2;
+    bool                     left_available   = xd->left_available;
+    bool                     up_available     = xd->up_available;
     Av1Common               *cm               = pcs->ppcs->av1_cm;
     SegmentationNeighborMap *segmentation_map = pcs->segmentation_neighbor_map;
 
@@ -5201,7 +5201,7 @@ void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomW
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled)
         return;
-    int cdf_num;
+    int       cdf_num;
     const int spatial_pred = get_spatial_seg_prediction(
         pcs, blk_ptr->av1xd, blk_org_x, blk_org_y, &cdf_num);
     if (skip_coeff) {

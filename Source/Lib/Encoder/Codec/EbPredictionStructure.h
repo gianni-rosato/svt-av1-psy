@@ -48,7 +48,7 @@ typedef struct PredictionStructure {
     uint32_t                   pred_struct_entry_count;
     PredictionStructureEntry **pred_struct_entry_ptr_array;
     SvtAv1PredStructure        pred_type;
-    uint32_t pred_struct_period;
+    uint32_t                   pred_struct_period;
     // Section Indices
     uint32_t init_pic_index;
 } PredictionStructure;

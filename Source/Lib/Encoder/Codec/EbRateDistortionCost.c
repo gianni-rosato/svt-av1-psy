@@ -1034,7 +1034,7 @@ static INLINE uint32_t get_compound_mode_rate(struct ModeDecisionContext *ctx,
 
     return comp_rate;
 }
-int svt_aom_is_interintra_wedge_used(BlockSize sb_type);
+int             svt_aom_is_interintra_wedge_used(BlockSize sb_type);
 static uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                           ModeDecisionCandidateBuffer *cand_bf,
                                           uint64_t luma_distortion, uint64_t chroma_distortion,
@@ -2091,10 +2091,10 @@ void svt_aom_coding_loop_context_generation(PictureControlSet *pcs, ModeDecision
  */
 uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionContext *ctx,
                                      uint32_t blk_mds_idx, PartitionType p, uint64_t lambda,
-                                     bool use_accurate_part_ctx,
+                                     bool                     use_accurate_part_ctx,
                                      MdRateEstimationContext *md_rate_est_ctx) {
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_mds_idx);
-    const BlockSize bsize = blk_geom->bsize;
+    const BlockSize  bsize    = blk_geom->bsize;
     assert(mi_size_wide_log2[bsize] == mi_size_high_log2[bsize]);
     assert(bsize < BlockSizeS_ALL);
     const Bool is_partition_point = (bsize >= BLOCK_8X8);
@@ -2124,9 +2124,9 @@ uint64_t svt_aom_partition_rate_cost(PictureParentControlSet *pcs, ModeDecisionC
     const int bsl = mi_size_wide_log2[bsize] - mi_size_wide_log2[BLOCK_8X8];
     assert(bsl >= 0);
 
-    const int above = (above_ctx >> bsl) & 1, left = (left_ctx >> bsl) & 1;
-    const int partitio_ploffset = use_accurate_part_ctx ? PARTITION_PLOFFSET : 0;
-    const uint32_t context_index = (left * 2 + above) + bsl * partitio_ploffset;
+    const int      above = (above_ctx >> bsl) & 1, left = (left_ctx >> bsl) & 1;
+    const int      partitio_ploffset = use_accurate_part_ctx ? PARTITION_PLOFFSET : 0;
+    const uint32_t context_index     = (left * 2 + above) + bsl * partitio_ploffset;
 
     uint64_t split_rate = 0;
 

@@ -101,8 +101,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
                                                EbFifo *mode_decision_configuration_input_fifo_ptr,
                                                EbFifo *mode_decision_output_fifo_ptr,
                                                uint8_t enable_hbd_mode_decision,
-                                               uint8_t cfg_palette,
-                                               bool rtc_tune,
+                                               uint8_t cfg_palette, bool rtc_tune,
                                                uint32_t hierarchical_levels) {
     uint32_t buffer_index;
     uint32_t cand_index;

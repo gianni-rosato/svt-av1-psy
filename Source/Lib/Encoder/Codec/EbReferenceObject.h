@@ -90,7 +90,7 @@ typedef struct EbPaReferenceObject {
     EbHandle resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
     uint64_t picture_number;
     uint64_t avg_luma;
-    uint8_t dummy_obj;
+    uint8_t  dummy_obj;
 } EbPaReferenceObject;
 
 typedef struct EbPaReferenceObjectDescInitData {

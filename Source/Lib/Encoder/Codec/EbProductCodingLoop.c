@@ -52,9 +52,9 @@ void        generate_md_stage_0_cand_light_pd1(SuperBlock *sb_ptr, ModeDecisionC
 EbErrorType generate_md_stage_0_cand_light_pd0(ModeDecisionContext *ctx,
                                                uint32_t            *fast_candidate_total_count,
                                                PictureControlSet   *pcs);
-void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
-                                                   PictureControlSet *pcs, SuperBlock *sb_ptr,
-                                                   BlkStruct *blk_ptr);
+void        svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
+                                                          PictureControlSet *pcs, SuperBlock *sb_ptr,
+                                                          BlkStruct *blk_ptr);
 
 static INLINE int svt_aom_is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
@@ -1453,12 +1453,12 @@ void fast_loop_core(ModeDecisionCandidateBuffer *cand_bf, PictureControlSet *pcs
     const uint32_t input_cr_origin_in_index = loc->input_cb_origin_in_index;
     const uint32_t cu_origin_index          = loc->blk_origin_index;
     const uint32_t cu_chroma_origin_index   = loc->blk_chroma_origin_index;
-    uint32_t luma_fast_dist;
-    uint32_t chroma_fast_distortion = 0;
-    uint32_t full_lambda            = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD]
-                                                  : ctx->full_lambda_md[EB_8_BIT_MD];
-    uint32_t fast_lambda            = ctx->hbd_md ? ctx->fast_lambda_md[EB_10_BIT_MD]
-                                                  : ctx->fast_lambda_md[EB_8_BIT_MD];
+    uint32_t       luma_fast_dist;
+    uint32_t       chroma_fast_distortion = 0;
+    uint32_t       full_lambda            = ctx->hbd_md ? ctx->full_lambda_md[EB_10_BIT_MD]
+                                                        : ctx->full_lambda_md[EB_8_BIT_MD];
+    uint32_t       fast_lambda            = ctx->hbd_md ? ctx->fast_lambda_md[EB_10_BIT_MD]
+                                                        : ctx->fast_lambda_md[EB_8_BIT_MD];
 
     ModeDecisionCandidate *cand = cand_bf->cand;
     EbPictureBufferDesc   *pred = cand_bf->pred;
@@ -4984,8 +4984,8 @@ static void tx_type_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             }
         }
     }
-    uint64_t best_cost_tx_search = (uint64_t)~0;
-    uint64_t dct_dct_cost = (uint64_t)~0;
+    uint64_t       best_cost_tx_search = (uint64_t)~0;
+    uint64_t       dct_dct_cost        = (uint64_t)~0;
     int            best_satd_tx_search = INT_MAX;
     const uint16_t satd_early_exit_th  = only_dct_dct ? 0
          : is_inter
@@ -6931,8 +6931,8 @@ static void full_loop_core_light_pd1(PictureControlSet *pcs, BlkStruct *blk_ptr,
     uint64_t y_coeff_bits;
     uint64_t cb_coeff_bits;
     uint64_t cr_coeff_bits;
-    cand->skip_mode = FALSE;
-    Bool perform_tx = get_perform_tx_flag(pcs, blk_ptr, ctx, cand_bf, cand);
+    cand->skip_mode            = FALSE;
+    Bool          perform_tx   = get_perform_tx_flag(pcs, blk_ptr, ctx, cand_bf, cand);
     const uint8_t recon_needed = do_md_recon(pcs->ppcs, ctx);
 
     // If need 10bit prediction, perform luma compensation before TX
@@ -8610,60 +8610,58 @@ static void calc_scr_to_recon_dist_per_quadrant(
     ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic, const uint32_t input_origin_index,
     const uint32_t input_cb_origin_in_index, ModeDecisionCandidateBuffer *cand_bf,
     const uint32_t blk_origin_index, const uint32_t blk_chroma_origin_index) {
-        EbPictureBufferDesc *recon_ptr = cand_bf->recon;
+    EbPictureBufferDesc *recon_ptr = cand_bf->recon;
 
-        EbSpatialFullDistType spatial_full_dist_type_fun = ctx->hbd_md
-            ? svt_full_distortion_kernel16_bits
-            : svt_spatial_full_distortion_kernel;
+    EbSpatialFullDistType spatial_full_dist_type_fun = ctx->hbd_md
+        ? svt_full_distortion_kernel16_bits
+        : svt_spatial_full_distortion_kernel;
 
-        uint8_t r, c;
-        int32_t quadrant_size = ctx->blk_geom->sq_size >> 1;
+    uint8_t r, c;
+    int32_t quadrant_size = ctx->blk_geom->sq_size >> 1;
 
-        for (r = 0; r < 2; r++) {
-            for (c = 0; c < 2; c++) {
+    for (r = 0; r < 2; r++) {
+        for (c = 0; c < 2; c++) {
+            ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
+                .rec_dist_per_quadrant[c + (r << 1)] = spatial_full_dist_type_fun(
+                input_pic->buffer_y,
+                input_origin_index + c * quadrant_size + (r * quadrant_size) * input_pic->stride_y,
+                input_pic->stride_y,
+                recon_ptr->buffer_y,
+                blk_origin_index + c * quadrant_size + (r * quadrant_size) * recon_ptr->stride_y,
+                recon_ptr->stride_y,
+                (uint32_t)quadrant_size,
+                (uint32_t)quadrant_size);
+            // If quadrant_size == 4 then rec_dist_per_quadrant will have luma only because spatial_full_dist_type_fun does not support smaller than 4x4
+            if (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1 &&
+                quadrant_size > 4) {
                 ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                    .rec_dist_per_quadrant[c + (r << 1)] = spatial_full_dist_type_fun(
-                    input_pic->buffer_y,
-                    input_origin_index + c * quadrant_size +
-                        (r * quadrant_size) * input_pic->stride_y,
-                    input_pic->stride_y,
-                    recon_ptr->buffer_y,
-                    blk_origin_index + c * quadrant_size +
-                        (r * quadrant_size) * recon_ptr->stride_y,
-                    recon_ptr->stride_y,
-                    (uint32_t)quadrant_size,
-                    (uint32_t)quadrant_size);
-                // If quadrant_size == 4 then rec_dist_per_quadrant will have luma only because spatial_full_dist_type_fun does not support smaller than 4x4
-                if (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1 &&
-                    quadrant_size > 4) {
-                    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                        .rec_dist_per_quadrant[c + (r << 1)] += spatial_full_dist_type_fun(
-                        input_pic->buffer_cb,
-                        input_cb_origin_in_index + c * (quadrant_size >> 1) +
-                            (r * (quadrant_size >> 1)) * input_pic->stride_cb,
-                        input_pic->stride_cb,
-                        recon_ptr->buffer_cb,
-                        blk_chroma_origin_index + c * (quadrant_size >> 1) +
-                            (r * (quadrant_size >> 1)) * recon_ptr->stride_cb,
-                        recon_ptr->stride_cb,
-                        (uint32_t)(quadrant_size >> 1),
-                        (uint32_t)(quadrant_size >> 1));
+                    .rec_dist_per_quadrant[c + (r << 1)] += spatial_full_dist_type_fun(
+                    input_pic->buffer_cb,
+                    input_cb_origin_in_index + c * (quadrant_size >> 1) +
+                        (r * (quadrant_size >> 1)) * input_pic->stride_cb,
+                    input_pic->stride_cb,
+                    recon_ptr->buffer_cb,
+                    blk_chroma_origin_index + c * (quadrant_size >> 1) +
+                        (r * (quadrant_size >> 1)) * recon_ptr->stride_cb,
+                    recon_ptr->stride_cb,
+                    (uint32_t)(quadrant_size >> 1),
+                    (uint32_t)(quadrant_size >> 1));
 
-                    ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                        .rec_dist_per_quadrant[c + (r << 1)] += spatial_full_dist_type_fun(
-                        input_pic->buffer_cr,
-                        input_cb_origin_in_index + c * (quadrant_size >> 1) +
-                            (r * (quadrant_size >> 1)) * input_pic->stride_cr,
-                        input_pic->stride_cr,
-                        recon_ptr->buffer_cr,
-                        blk_chroma_origin_index + c * (quadrant_size >> 1) +
-                            (r * (quadrant_size >> 1)) * recon_ptr->stride_cr,
-                        recon_ptr->stride_cr,
-                        (uint32_t)(quadrant_size >> 1),
-                        (uint32_t)(quadrant_size >> 1));
-                }
+                ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
+                    .rec_dist_per_quadrant[c + (r << 1)] += spatial_full_dist_type_fun(
+                    input_pic->buffer_cr,
+                    input_cb_origin_in_index + c * (quadrant_size >> 1) +
+                        (r * (quadrant_size >> 1)) * input_pic->stride_cr,
+                    input_pic->stride_cr,
+                    recon_ptr->buffer_cr,
+                    blk_chroma_origin_index + c * (quadrant_size >> 1) +
+                        (r * (quadrant_size >> 1)) * recon_ptr->stride_cr,
+                    recon_ptr->stride_cr,
+                    (uint32_t)(quadrant_size >> 1),
+                    (uint32_t)(quadrant_size >> 1));
             }
         }
+    }
 }
 static uint8_t is_intra_bordered(const ModeDecisionContext *ctx) {
     MacroBlockD *xd = ctx->blk_ptr->av1xd;
@@ -9577,10 +9575,8 @@ static void md_encode_block_light_pd1(PictureControlSet *pcs, ModeDecisionContex
            pcs->ppcs->ref_frame_type_arr,
            sizeof(MvReferenceFrame) * MODE_CTX_REF_FRAMES);
 
-
     if (pcs->ppcs->scs->mrp_ctrls.use_best_references && pcs->temporal_layer_index > 0)
         determine_best_references(pcs, ctx, ctx->ref_frame_type_arr, &ctx->tot_ref_frame_types);
-
 
     if (!ctx->shut_fast_rate && pcs->slice_type != I_SLICE) {
         svt_aom_generate_av1_mvp_table(ctx,
@@ -9899,7 +9895,7 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     ModeDecisionCandidateBuffer **cand_bf_ptr_array_base = ctx->cand_bf_ptr_array;
     ModeDecisionCandidateBuffer **cand_bf_ptr_array;
     const BlockGeom              *blk_geom = ctx->blk_geom;
-    BlockLocation loc;
+    BlockLocation                 loc;
     loc.input_origin_index = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
         (ctx->blk_org_x + input_pic->org_x);
     loc.input_cb_origin_in_index = ((ctx->round_origin_y >> 1) + (input_pic->org_y >> 1)) *
@@ -9928,7 +9924,6 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
 
     if (pcs->ppcs->scs->mrp_ctrls.use_best_references && pcs->temporal_layer_index > 0)
         determine_best_references(pcs, ctx, ctx->ref_frame_type_arr, &ctx->tot_ref_frame_types);
-
 
     svt_aom_init_xd(pcs, ctx);
     if (!ctx->shut_fast_rate) {
@@ -10037,7 +10032,7 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     ctx->use_tx_shortcuts_mds3  = 0;
     ctx->mds0_best_cost         = (uint64_t)~0;
     ctx->mds0_best_class        = 0;
-    ctx->mds0_best_class0_cost = (uint64_t)~0;
+    ctx->mds0_best_class0_cost  = (uint64_t)~0;
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         //number of next level candidates could not exceed number of curr level candidates
         ctx->md_stage_1_count[cand_class_it] = MIN(ctx->md_stage_0_count[cand_class_it],
@@ -10205,7 +10200,7 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
         ctx->need_hbd_comp_mds3 = 1;
         ctx->scale_palette      = 1;
         // Set the new input picture and offsets
-        input_pic = pcs->input_frame16bit;
+        input_pic                    = pcs->input_frame16bit;
         loc.input_cb_origin_in_index = ((ctx->round_origin_y >> 1) + (input_pic->org_y >> 1)) *
                 input_pic->stride_cb +
             ((ctx->round_origin_x >> 1) + (input_pic->org_x >> 1));

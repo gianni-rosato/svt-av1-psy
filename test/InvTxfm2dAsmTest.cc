@@ -95,8 +95,10 @@ typedef struct {
             is_tx_type_imp                                                  \
     }
 
-#define EMPTY_FUNC_PAIRS(name) \
-    { #name, nullptr, nullptr, nullptr }
+#define EMPTY_FUNC_PAIRS(name)           \
+    {                                    \
+#name, nullptr, nullptr, nullptr \
+    }
 
 static bool is_tx_type_imp_32x32_avx2(const TxType tx_type) {
     switch (tx_type) {

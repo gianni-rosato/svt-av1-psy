@@ -1269,9 +1269,9 @@ int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_mode
         7 - (int32_t)AOMMAX(1 + floor(log2(max_coeff)), ceil(log2(-min_coeff))), 6, 9);
     double   scale_ar_coeff = 1 << film_grain->ar_coeff_shift;
     int32_t *ar_coeffs[3]   = {
-          film_grain->ar_coeffs_y,
-          film_grain->ar_coeffs_cb,
-          film_grain->ar_coeffs_cr,
+        film_grain->ar_coeffs_y,
+        film_grain->ar_coeffs_cb,
+        film_grain->ar_coeffs_cr,
     };
     for (int32_t c = 0; c < 3; ++c) {
         AomEquationSystem *eqns = &noise_model->combined_state[c].eqns;

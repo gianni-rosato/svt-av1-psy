@@ -151,7 +151,7 @@ static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_V
                                                       {5, 5, 5, 5, 1, NOT_USED_VALUE},
                                                       {25, 25, 25, 5, 1, NOT_USED_VALUE},
                                                       {17, 25, 25, 25, 5, 1}};
-extern BlockGeom svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
+extern BlockGeom      svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
 
 static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) {
     return &svt_aom_blk_geom_mds[bidx_mds];

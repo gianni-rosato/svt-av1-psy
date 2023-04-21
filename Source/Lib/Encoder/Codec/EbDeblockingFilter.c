@@ -1007,8 +1007,8 @@ static int32_t search_filter_level(
                     (uint8_t)plane);
 
     best_err = try_filter_frame(sd, temp_lf_recon_buffer, pcs, filt_mid, partial_frame, plane, dir);
-    filt_best        = filt_mid;
-    ss_err[filt_mid] = best_err;
+    filt_best               = filt_mid;
+    ss_err[filt_mid]        = best_err;
     int32_t tot_convergence = 0;
     while (filter_step > 0) {
         const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
@@ -1292,7 +1292,6 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
             lf->filter_level_v = last_frame_filter_level[3];
 
         } else {
-
             lf->filter_level_u = search_filter_level(srcBuffer,
                                                      temp_lf_recon_buffer,
                                                      pcs,

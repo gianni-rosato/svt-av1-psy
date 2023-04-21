@@ -46,9 +46,9 @@ void svt_aom_down_sample_chroma(EbPictureBufferDesc *input_pic,
 
 Bool svt_aom_is_delayed_intra(PictureParentControlSet *pcs);
 
-uint8_t svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels,
-                                      uint8_t  type /*I_SLICE, BASE, L1*/,
-                                      bool     direction /*Past, Future*/);
+uint8_t     svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels,
+                                          uint8_t  type /*I_SLICE, BASE, L1*/,
+                                          bool     direction /*Past, Future*/);
 EbErrorType svt_aom_prediction_structure_group_ctor(
     PredictionStructureGroup *pred_struct_group_ptr);
 bool svt_aom_is_pic_used_as_ref(unsigned hierarchical_levels, unsigned temporal_layer,
@@ -105,10 +105,10 @@ typedef struct PictureDecisionContext {
     uint8_t  cut_short_ra_mg;
     DpbEntry dpb[REF_FRAMES];
     Bool mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
-    uint8_t last_i_picture_sc_class0;
-    uint8_t last_i_picture_sc_class1;
-    uint8_t last_i_picture_sc_class2;
-    uint64_t last_long_base_pic;
+    uint8_t                  last_i_picture_sc_class0;
+    uint8_t                  last_i_picture_sc_class1;
+    uint8_t                  last_i_picture_sc_class2;
+    uint64_t                 last_long_base_pic;
     uint64_t                 key_poc;
     uint8_t                  tf_level;
     uint32_t                 tf_pic_arr_cnt;
@@ -132,8 +132,8 @@ typedef struct PictureDecisionContext {
     uint64_t norm_dist;
     uint8_t  perc_cplx;
     uint8_t  perc_active;
-    int16_t mv_in_out_count;
-    bool enable_startup_mg;
+    int16_t  mv_in_out_count;
+    bool     enable_startup_mg;
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

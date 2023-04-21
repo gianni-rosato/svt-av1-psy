@@ -230,7 +230,7 @@ struct DaalaWriter {
     uint32_t pos;
     uint8_t *buffer;
     uint32_t buffer_size;
-    OutputBitstreamUnit     *
+    OutputBitstreamUnit *
         buffer_parent; // save a pointer to the container holding the buffer, in case the buffer must be resized
     OdEcEnc ec;
     uint8_t allow_update_cdf;
@@ -264,7 +264,7 @@ static INLINE void daala_write_symbol(DaalaWriter *w, int32_t symb, const AomCdf
 // bitwriter.h
 typedef struct DaalaWriter AomWriter;
 static INLINE void         aom_start_encode(AomWriter *bc, OutputBitstreamUnit *buffer) {
-            svt_aom_daala_start_encode(bc, buffer);
+    svt_aom_daala_start_encode(bc, buffer);
 }
 static INLINE int32_t aom_stop_encode(AomWriter *bc) { return svt_aom_daala_stop_encode(bc); }
 

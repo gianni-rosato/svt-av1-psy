@@ -410,7 +410,7 @@ typedef struct PictureControlSet {
     uint32_t max_part0_to_part1_dev;
     // if true, skip H4/V4 shapes when best partition so far is not H/V
     uint32_t skip_hv4_on_best_part;
-    uint8_t inter_intra_level;
+    uint8_t  inter_intra_level;
     uint8_t  txs_level;
     uint8_t  nic_level;
     uint8_t  md_sq_mv_search_level;
@@ -424,8 +424,8 @@ typedef struct PictureControlSet {
     uint8_t pic_depth_removal_level;
     uint8_t pic_depth_removal_level_rtc;
     // block_based_depth_refinement_level signal set at the picture level
-    uint8_t pic_block_based_depth_refinement_level;
-    uint8_t pic_depth_early_exit_lvl;
+    uint8_t          pic_block_based_depth_refinement_level;
+    uint8_t          pic_depth_early_exit_lvl;
     uint8_t          pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
     uint8_t          pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
     Bool             pic_bypass_encdec;
@@ -467,9 +467,9 @@ typedef struct PictureControlSet {
     RestorationInfo rst_info[MAX_MB_PLANE];
     // rst_end_stripe[i] is one more than the index of the bottom stripe
     // for tile row i.
-    int32_t rst_end_stripe[MAX_TILE_ROWS];
-    uint8_t ref_intra_percentage;
-    uint8_t ref_skip_percentage;
+    int32_t  rst_end_stripe[MAX_TILE_ROWS];
+    uint8_t  ref_intra_percentage;
+    uint8_t  ref_skip_percentage;
     uint64_t avg_me_clpx;
     uint64_t min_me_clpx;
     uint64_t max_me_clpx;
@@ -481,7 +481,7 @@ typedef struct PictureControlSet {
     // scaled input picture is only used in loop restoration for recon size is
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_pic;
-    bool rtc_tune;
+    bool                 rtc_tune;
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -510,7 +510,7 @@ typedef struct SbGeom {
     uint8_t  width;
     uint8_t  height;
     uint8_t  is_complete_sb;
-    Bool block_is_allowed[BLOCK_MAX_COUNT_SB_128];
+    Bool     block_is_allowed[BLOCK_MAX_COUNT_SB_128];
 } SbGeom;
 
 typedef struct TileGroupInfo {
@@ -1138,10 +1138,10 @@ typedef struct PictureParentControlSet {
     uint8_t                         is_new_gf_group;
     struct PictureParentControlSet *gf_group[MAX_TPL_GROUP_SIZE];
     StatStruct                      stat_struct;
-    CyclicRefresh cyclic_refresh;
-    bool ld_enhanced_base_frame; // enhanced periodic base layer frames used in LD
-    bool update_ref_count; // Update ref count
-    bool use_accurate_part_ctx;
+    CyclicRefresh                   cyclic_refresh;
+    bool         ld_enhanced_base_frame; // enhanced periodic base layer frames used in LD
+    bool         update_ref_count; // Update ref count
+    bool         use_accurate_part_ctx;
     uint8_t      bypass_cost_table_gen;
     uint16_t     max_can_count;
     uint8_t      enable_me_8x8;
@@ -1150,13 +1150,13 @@ typedef struct PictureParentControlSet {
     IntraBCCtrls intraBC_ctrls;
     PaletteCtrls palette_ctrls;
 
-    uint32_t tf_tot_vert_blks; // total vertical motion blocks in TF
-    uint32_t tf_tot_horz_blks; // total horizontal motion blocks in TF
-    int8_t   tf_motion_direction; // motion direction in TF   -1:invalid   0:horz  1:vert
-    uint8_t  adjust_under_shoot_gf;
-    int32_t  is_noise_level;
-    bool     r0_based_qps_qpm;
-    uint32_t dpb_order_hint[REF_FRAMES]; // spec 6.8.2. ref_order_hint[]
+    uint32_t       tf_tot_vert_blks; // total vertical motion blocks in TF
+    uint32_t       tf_tot_horz_blks; // total horizontal motion blocks in TF
+    int8_t         tf_motion_direction; // motion direction in TF   -1:invalid   0:horz  1:vert
+    uint8_t        adjust_under_shoot_gf;
+    int32_t        is_noise_level;
+    bool           r0_based_qps_qpm;
+    uint32_t       dpb_order_hint[REF_FRAMES]; // spec 6.8.2. ref_order_hint[]
     DGDetectorSeg *dg_detector; // dg detector segments control struct
 } PictureParentControlSet;
 
@@ -1240,7 +1240,7 @@ typedef struct PictureControlSetInitData {
     uint8_t input_resolution;
     uint8_t calculate_variance;
     Bool    is_scale;
-    bool rtc_tune;
+    bool    rtc_tune;
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

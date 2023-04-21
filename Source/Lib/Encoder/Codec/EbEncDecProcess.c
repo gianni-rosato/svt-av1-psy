@@ -1986,12 +1986,12 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext *ctx,
     }
 }
 
-void copy_neighbour_arrays_light_pd0(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                     uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds,
-                                     uint32_t sb_org_x, uint32_t sb_org_y);
-void svt_aom_copy_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                   uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds,
-                                   uint32_t sb_org_x, uint32_t sb_org_y);
+void     copy_neighbour_arrays_light_pd0(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                         uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds,
+                                         uint32_t sb_org_x, uint32_t sb_org_y);
+void     svt_aom_copy_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx,
+                                       uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds,
+                                       uint32_t sb_org_x, uint32_t sb_org_y);
 uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size,
                                  const uint8_t disallow_nsq);
 static INLINE uint32_t get_default_tot_d1_blocks(ModeDecisionContext *ctx,
@@ -2007,7 +2007,7 @@ static void set_parent_to_be_considered(ModeDecisionContext *ctx, MdcSbData *res
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
     if (blk_geom->sq_size < ((sb_size == BLOCK_128X128) ? 128 : 64)) {
         //Set parent to be considered
-        uint32_t parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
+        uint32_t           parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
         const BlockGeom   *parent_blk_geom      = get_blk_geom_mds(parent_depth_idx_mds);
         const unsigned int parent_tot_d1_blocks = get_default_tot_d1_blocks(
             ctx, parent_blk_geom, disallow_nsq);
@@ -2160,8 +2160,7 @@ EbErrorType svt_aom_rtime_alloc_palette_info(BlkStruct *md_blk_arr_nsq) {
 // Initialize structures used to indicate which blocks will be tested at MD.
 // MD data structures should be updated in init_block_data(), not here.
 static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs,
-                                   ModeDecisionContext *ctx,
-                                   Bool is_complete_sb) {
+                                   ModeDecisionContext *ctx, Bool is_complete_sb) {
     memset(ctx->tested_blk_flag, 0, sizeof(uint8_t) * scs->max_block_cnt);
     memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
     if (!ctx->disallow_4x4)
@@ -2317,10 +2316,10 @@ static uint8_t is_child_to_current_deviation_small(SequenceControlSet  *scs,
     assert(blk_geom->depth < 6);
     const uint32_t ns_depth_plus1_offset =
         ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
-    const uint32_t child_block_idx_1     = blk_index + ns_d1_offset;
-    const uint32_t child_block_idx_2     = child_block_idx_1 + ns_depth_plus1_offset;
-    const uint32_t child_block_idx_3     = child_block_idx_2 + ns_depth_plus1_offset;
-    const uint32_t child_block_idx_4     = child_block_idx_3 + ns_depth_plus1_offset;
+    const uint32_t child_block_idx_1 = blk_index + ns_d1_offset;
+    const uint32_t child_block_idx_2 = child_block_idx_1 + ns_depth_plus1_offset;
+    const uint32_t child_block_idx_3 = child_block_idx_2 + ns_depth_plus1_offset;
+    const uint32_t child_block_idx_4 = child_block_idx_3 + ns_depth_plus1_offset;
 
     uint64_t child_cost = 0;
     uint8_t  child_cnt  = 0;
@@ -2401,8 +2400,8 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
     Bool pred_depth_only    = 1;
 
     while (blk_index < scs->max_block_cnt) {
-        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-        uint32_t tot_d1_blocks = svt_aom_get_tot_1d_blks(
+        const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
+        uint32_t         tot_d1_blocks = svt_aom_get_tot_1d_blks(
             ctx, blk_geom->sq_size, !ctx->nsq_ctrls.enabled);
 
         // if the parent square is inside inject this block
@@ -2605,33 +2604,33 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                 : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-                    if (ctx->nsq_ctrls.allow_HVA_HVB == 0) {
-                        // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
-                        // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
-                        // by 1 (as part of the for loop).
-                        if ((idx - blk_index) == 5) {
-                            idx += 11;
-                            continue;
-                        }
+                if (ctx->nsq_ctrls.allow_HVA_HVB == 0) {
+                    // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
+                    // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
+                    // by 1 (as part of the for loop).
+                    if ((idx - blk_index) == 5) {
+                        idx += 11;
+                        continue;
                     }
+                }
 
-                    //  MD palette info buffer
-                    if (pcs->ppcs->palette_level) {
-                        if (ctx->md_blk_arr_nsq[idx].palette_mem == 0) {
-                            svt_aom_rtime_alloc_palette_info(&ctx->md_blk_arr_nsq[idx]);
-                            ctx->md_blk_arr_nsq[idx].palette_mem = 1;
-                        }
+                //  MD palette info buffer
+                if (pcs->ppcs->palette_level) {
+                    if (ctx->md_blk_arr_nsq[idx].palette_mem == 0) {
+                        svt_aom_rtime_alloc_palette_info(&ctx->md_blk_arr_nsq[idx]);
+                        ctx->md_blk_arr_nsq[idx].palette_mem = 1;
                     }
+                }
 
-                    ctx->md_blk_arr_nsq[idx].palette_size[0]                      = 0;
-                    ctx->md_blk_arr_nsq[idx].palette_size[1]                      = 0;
-                    results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = idx;
-                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
-                        to_test_d1_blocks;
-                    results_ptr->split_flag[results_ptr->leaf_count++] = (blk_geom->sq_size >
-                                                                          min_sq_size)
-                        ? TRUE
-                        : FALSE;
+                ctx->md_blk_arr_nsq[idx].palette_size[0]                      = 0;
+                ctx->md_blk_arr_nsq[idx].palette_size[1]                      = 0;
+                results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = idx;
+                results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
+                    to_test_d1_blocks;
+                results_ptr->split_flag[results_ptr->leaf_count++] = (blk_geom->sq_size >
+                                                                      min_sq_size)
+                    ? TRUE
+                    : FALSE;
             }
             blk_index += blk_geom->d1_depth_offset;
         } else {
@@ -3400,7 +3399,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_16x16)
                                 skip_pd_pass_0 = 1;
 
-                                // If LPD0 is used, a more conservative level can be set for complex SBs
+                        // If LPD0 is used, a more conservative level can be set for complex SBs
                         const bool rtc_tune = (scs->static_config.pred_structure ==
                                                SVT_AV1_PRED_LOW_DELAY_B)
                             ? true
@@ -3435,8 +3434,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                         sb_origin_y);
 
                                 // Build the t=0 cand_block_array
-                                build_starting_cand_block_array(
-                                    scs, pcs, ed_ctx->md_ctx);
+                                build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
                                 svt_aom_mode_decision_sb_light_pd0(scs,
                                                                    pcs,
                                                                    mdc_ptr,
@@ -3470,8 +3468,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                               sb_origin_y);
 
                                 // Build the t=0 cand_block_array
-                                build_starting_cand_block_array(
-                                    scs, pcs, ed_ctx->md_ctx);
+                                build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
                                 // PD0 MD Tool(s) : ME_MV(s) as INTER candidate(s), DC as INTRA candidate, luma only, Frequency domain SSE,
                                 // no fast rate (no MVP table generation), MDS0 then MDS3, reduced NIC(s), 1 ref per list,..
                                 svt_aom_mode_decision_sb(scs,
@@ -3531,8 +3528,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                    pcs->ppcs->sb_geom[sb_index].is_complete_sb);
                         else
                             // Build the t=0 cand_block_array
-                            build_starting_cand_block_array(
-                                scs, pcs, ed_ctx->md_ctx);
+                            build_starting_cand_block_array(scs, pcs, ed_ctx->md_ctx);
                         // [PD_PASS_1] Mode Decision - Obtain the final partitioning decision using more accurate info
                         // than previous stages.  Reduce the total number of partitions to 1.
                         // Input : mdc_blk_ptr built @ PD0 refinement

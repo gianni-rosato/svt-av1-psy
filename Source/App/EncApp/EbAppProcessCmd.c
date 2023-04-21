@@ -232,7 +232,7 @@ static void injector(uint64_t processed_frame_count, uint32_t injector_frame_rat
             start_timesu_seconds,
             current_times_seconds,
             current_timesu_seconds);
-        const int buffer_frames = 0; // How far ahead of time should we let it get
+        const int    buffer_frames     = 0; // How far ahead of time should we let it get
         const double injector_interval = (double)(1 << 16) /
             injector_frame_rate; // 1.0 / injector frame rate (in this
         // case, 1.0/encodRate)

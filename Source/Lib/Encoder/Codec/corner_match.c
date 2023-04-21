@@ -23,10 +23,10 @@
 static int32_t compute_variance(unsigned char *im, int stride, int x, int y, uint8_t match_sz) {
     const uint8_t match_sz_by2 = ((match_sz - 1) / 2);
     const uint8_t match_sz_sq  = (match_sz * match_sz);
-    int sum   = 0;
-    int sumsq = 0;
-    int var;
-    int i, j;
+    int           sum          = 0;
+    int           sumsq        = 0;
+    int           var;
+    int           i, j;
     for (i = 0; i < match_sz; ++i)
         for (j = 0; j < match_sz; ++j) {
             sum += im[(i + y - match_sz_by2) * stride + (j + x - match_sz_by2)];

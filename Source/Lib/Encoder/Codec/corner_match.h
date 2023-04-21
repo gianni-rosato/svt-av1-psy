@@ -18,7 +18,6 @@
 #include "EbDebugMacros.h"
 #include "EbDefinitions.h"
 
-
 typedef struct {
     int x, y;
     int rx, ry;

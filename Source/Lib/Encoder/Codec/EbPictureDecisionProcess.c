@@ -3902,9 +3902,9 @@ static void update_pred_struct_and_pic_type(SequenceControlSet* scs, EncodeConte
     else
         pcs->last_idr_picture = enc_ctx->last_idr_picture;
         // Cycle the PredStructPosition if its overflowed
-        enc_ctx->pred_struct_position = (enc_ctx->pred_struct_position == pcs->pred_struct_ptr->pred_struct_entry_count) ?
-            enc_ctx->pred_struct_position - pcs->pred_struct_ptr->pred_struct_period :
-            enc_ctx->pred_struct_position;
+    enc_ctx->pred_struct_position = (enc_ctx->pred_struct_position == pcs->pred_struct_ptr->pred_struct_entry_count) ?
+        enc_ctx->pred_struct_position - pcs->pred_struct_ptr->pred_struct_period :
+        enc_ctx->pred_struct_position;
 
     *pred_position_ptr = pcs->pred_struct_ptr->pred_struct_entry_ptr_array[enc_ctx->pred_struct_position];
 }

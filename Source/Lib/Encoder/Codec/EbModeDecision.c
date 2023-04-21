@@ -328,7 +328,7 @@ static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     assert(svt_aom_is_interintra_wedge_used(
         ctx->blk_geom->bsize)); //if not I need to add nowedge path!!
 
-    int64_t best_interintra_rd = INT64_MAX;
+    int64_t        best_interintra_rd   = INT64_MAX;
     InterIntraMode best_interintra_mode = INTERINTRA_MODES;
     for (int j = 0; j < INTERINTRA_MODES; ++j) {
         // if ((!cpi->oxcf.enable_smooth_intra || cpi->sf.disable_smooth_intra) &&
@@ -1748,8 +1748,8 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                     ? ctx->inter_intra_comp_ctrls.wedge_mode_sq
                     : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
                 uint8_t tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2) : 1;
-                uint8_t is_obmc_allowed =
-                    svt_aom_obmc_motion_mode_allowed(pcs, ctx, bsize, 0, rf[0], rf[1], NEARESTMV) ==
+                uint8_t is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
+                                              pcs, ctx, bsize, 0, rf[0], rf[1], NEARESTMV) ==
                     OBMC_CAUSAL;
                 uint8_t is_warp_allowed = ctx->wm_ctrls.use_wm_for_mvp
                     ? warped_motion_mode_allowed(pcs, ctx)
@@ -1858,9 +1858,9 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         : ctx->inter_intra_comp_ctrls.wedge_mode_nsq;
                     uint8_t tot_inter_types = is_ii_allowed ? (ii_wedge_mode == 1 ? II_COUNT : 2)
                                                             : 1;
-                    uint8_t is_obmc_allowed =
-                        svt_aom_obmc_motion_mode_allowed(
-                            pcs, ctx, bsize, 0, rf[0], rf[1], NEARMV) == OBMC_CAUSAL;
+                    uint8_t is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
+                                                  pcs, ctx, bsize, 0, rf[0], rf[1], NEARMV) ==
+                        OBMC_CAUSAL;
                     uint8_t is_warp_allowed = ctx->wm_ctrls.use_wm_for_mvp
                         ? warped_motion_mode_allowed(pcs, ctx)
                         : 0;
@@ -2486,7 +2486,7 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
     uint32_t full_lambda   = ctx->full_lambda_md[EB_8_BIT_MD]; // 8bit only
     int      error_per_bit = full_lambda >> RD_EPB_SHIFT;
     error_per_bit += (error_per_bit == 0);
-    cand_bf->cand = cand;
+    cand_bf->cand                  = cand;
     EbPictureBufferDesc *pred      = cand_bf->pred;
     uint32_t blk_origin_index      = ctx->blk_geom->org_x + ctx->blk_geom->org_y * ctx->sb_size;
     EbPictureBufferDesc *input_pic = ppcs->enhanced_pic; // 10BIT not supported
@@ -2677,9 +2677,9 @@ int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *ctx, IntraBcCo
                                              int *mvcost[2], int *distortion, unsigned int *sse1,
                                              int is_second, int use_accurate_subpel_search);
 
-int svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x, MV *mvp_full,
-                                   int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
-                                   MV *dst_mv, int is_second);
+int  svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x, MV *mvp_full,
+                                    int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
+                                    MV *dst_mv, int is_second);
 void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                           ModeDecisionCandidate *cand, const MvReferenceFrame *rf,
                           IntMv best_pred_mv, IntraBcContext *x, BlockSize bsize, MV *ref_mv,
@@ -2778,8 +2778,7 @@ void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             break;
         default: assert(0 && "Invalid motion mode!\n");
         }
-    }
-    else {
+    } else {
         x->best_mv.as_mv.col <<= 3;
         x->best_mv.as_mv.row <<= 3;
     }
@@ -3185,7 +3184,7 @@ static void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeD
                         cand_array[cand_total_cnt].motion_mode           = SIMPLE_TRANSLATION;
                         cand_array[cand_total_cnt].ref_frame_type        = to_inject_ref_type;
                         cand_array[cand_total_cnt].pred_mv[REF_LIST_0]   = (Mv){
-                              {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
+                            {best_pred_mv[0].as_mv.col, best_pred_mv[0].as_mv.row}};
                         cand_array[cand_total_cnt].pred_mv[REF_LIST_1] = (Mv){
                             {best_pred_mv[1].as_mv.col, best_pred_mv[1].as_mv.row}};
                         cand_array[cand_total_cnt].comp_group_idx       = 0;
@@ -3455,7 +3454,7 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                         uint8_t       tot_inter_types = is_ii_allowed
                                   ? (ii_wedge_mode == 1 ? II_COUNT : 2)
                                   : 1;
-                        uint8_t is_obmc_allowed =
+                        uint8_t       is_obmc_allowed =
                             svt_aom_obmc_motion_mode_allowed(
                                 pcs, ctx, bsize, 0, to_inject_ref_type, -1, NEWMV) == OBMC_CAUSAL;
                         uint8_t is_warp_allowed = warped_motion_mode_allowed(pcs, ctx);
@@ -3962,7 +3961,7 @@ static void inject_pme_candidates(
                         uint8_t       tot_inter_types = is_ii_allowed
                                   ? (ii_wedge_mode == 1 ? II_COUNT : 2)
                                   : 1;
-                        uint8_t is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
+                        uint8_t       is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
                                                       pcs, ctx, bsize, 0, rf[0], rf[1], NEWMV) ==
                             OBMC_CAUSAL;
                         uint8_t is_warp_allowed = warped_motion_mode_allowed(pcs, ctx);
@@ -4231,8 +4230,9 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
     Bool         is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
 
     Bool allow_bipred = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) ? FALSE : TRUE;
-    uint32_t mi_row   = ctx->blk_org_y >> MI_SIZE_LOG2;
-    uint32_t mi_col   = ctx->blk_org_x >> MI_SIZE_LOG2;
+
+    uint32_t mi_row = ctx->blk_org_y >> MI_SIZE_LOG2;
+    uint32_t mi_col = ctx->blk_org_x >> MI_SIZE_LOG2;
 
     svt_av1_count_overlappable_neighbors(pcs, ctx->blk_ptr, ctx->blk_geom->bsize, mi_row, mi_col);
     const uint8_t is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
