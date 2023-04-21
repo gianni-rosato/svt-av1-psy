@@ -43,9 +43,6 @@ extern "C" {
 #endif
 #endif /* ATTRIBUTE_PACKED */
 typedef enum ATTRIBUTE_PACKED {
-#if !DIS_MRS
-    ENC_MRS = -2, // Highest quality research mode (slowest)
-#endif
     ENC_MR         = -1, //Research mode with higher quality than M0
     ENC_M0         = 0,
     ENC_M1         = 1,
@@ -115,10 +112,6 @@ struct EbSvtAv1MasteringDisplayInfo {
 typedef struct PredictionStructureConfigEntry {
     uint32_t temporal_layer_index;
     uint32_t decode_order;
-#if !OPT_RPS_CONSTR_3
-    int32_t ref_list0[REF_LIST_MAX_DEPTH];
-    int32_t ref_list1[REF_LIST_MAX_DEPTH];
-#endif
 } PredictionStructureConfigEntry;
 
 // super-res modes
@@ -910,7 +903,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *  Default is 1. */
     Bool enable_dg;
 
-#if FTR_STARTUP_MG_SIZE
     /**
      * @brief startup_mg_size
      *
@@ -924,7 +916,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0.
      */
     uint8_t startup_mg_size;
-#endif
 
     /* @brief reference scaling events for random access mode (reize-mode = 4)
      *

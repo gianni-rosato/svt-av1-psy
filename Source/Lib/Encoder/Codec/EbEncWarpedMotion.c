@@ -174,9 +174,7 @@ int64_t svt_av1_calc_frame_error_c(const uint8_t *const ref, int stride, const u
 static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref, int width, int height,
                           int stride, const uint8_t *const dst, int p_col, int p_row, int p_width,
                           int p_height, int p_stride, int subsampling_x, int subsampling_y,
-#if OPT_GM_CHESS_REFN
                           uint8_t chess_refn,
-#endif
                           int64_t best_error) {
     int64_t        gm_sumerr = 0;
     int            warp_w, warp_h;
@@ -186,7 +184,6 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref, in
     ConvolveParams conv_params   = get_conv_params(0, 0, 0, 8);
     conv_params.use_jnt_comp_avg = 0;
 
-#if OPT_GM_CHESS_REFN
 
     int i_itr = 0;
     for (int i = p_row; i < p_row + p_height; i += WARP_ERROR_BLOCK) {
@@ -199,10 +196,6 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref, in
         }
 
         for (int j = jstart; j < p_col + p_width; j += jstep * WARP_ERROR_BLOCK) {
-#else
-    for (int i = p_row; i < p_row + p_height; i += WARP_ERROR_BLOCK) {
-        for (int j = p_col; j < p_col + p_width; j += WARP_ERROR_BLOCK) {
-#endif
             // avoid warping extra 8x8 blocks in the padded region of the frame
             // when p_width and p_height are not multiples of WARP_ERROR_BLOCK
             warp_w = AOMMIN(error_bsize_w, p_col + p_width - j);
@@ -228,14 +221,10 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref, in
                 return gm_sumerr;
         }
 
-#if OPT_GM_CHESS_REFN
         i_itr++;
-#endif
     }
 
-#if OPT_GM_CHESS_REFN
     gm_sumerr = chess_refn ? gm_sumerr * 2 : gm_sumerr;
-#endif
 
     return gm_sumerr;
 }
@@ -258,9 +247,7 @@ int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const 
                            const uint8_t *ref_2b, int width, int height, int stride, uint8_t *dst,
                            int p_col, int p_row, int p_width, int p_height, int p_stride,
                            int subsampling_x, int subsampling_y,
-#if OPT_GM_CHESS_REFN
                            uint8_t chess_refn,
-#endif
 
                            int64_t best_error) {
     if (wm->wmtype <= AFFINE)
@@ -296,9 +283,7 @@ int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const 
                       p_stride,
                       subsampling_x,
                       subsampling_y,
-#if OPT_GM_CHESS_REFN
                       chess_refn,
-#endif
 
                       best_error);
 }

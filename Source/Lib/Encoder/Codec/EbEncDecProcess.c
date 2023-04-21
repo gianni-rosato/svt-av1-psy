@@ -137,7 +137,6 @@ EbErrorType svt_aom_enc_dec_context_ctor(EbThreadContext   *thread_ctx,
                .bot_padding        = 0,
                .split_mode         = FALSE,
            });
-#if OPT_LD_M9
     const bool rtc_tune = (static_config->pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true
                                                                                       : false;
     // Mode Decision Context
@@ -154,21 +153,6 @@ EbErrorType svt_aom_enc_dec_context_ctor(EbThreadContext   *thread_ctx,
            static_config->screen_content_mode,
            rtc_tune,
            static_config->hierarchical_levels);
-#else
-    // Mode Decision Context
-    EB_NEW(context_ptr->ctx,
-           svt_aom_mode_decision_context_ctor,
-           color_format,
-           enc_handle_ptr->scs_instance_array[0]->scs->super_block_size,
-           static_config->enc_mode,
-           enc_handle_ptr->scs_instance_array[0]->scs->max_block_cnt,
-           static_config->encoder_bit_depth,
-           0,
-           0,
-           enable_hbd_mode_decision == DEFAULT ? 2 : enable_hbd_mode_decision,
-           static_config->screen_content_mode,
-           static_config->hierarchical_levels);
-#endif
 
     if (enable_hbd_mode_decision)
         ed_ctx->md_ctx->input_sample16bit_buffer = ed_ctx->input_sample16bit_buffer;
@@ -2008,7 +1992,6 @@ void copy_neighbour_arrays_light_pd0(PictureControlSet *pcs, ModeDecisionContext
 void svt_aom_copy_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                    uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds,
                                    uint32_t sb_org_x, uint32_t sb_org_y);
-#if OPT_GEOM
 uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size,
                                  const uint8_t disallow_nsq);
 static INLINE uint32_t get_default_tot_d1_blocks(ModeDecisionContext *ctx,
@@ -2017,41 +2000,22 @@ static INLINE uint32_t get_default_tot_d1_blocks(ModeDecisionContext *ctx,
     uint32_t tot_d1_blocks = svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, disallow_nsq);
     return tot_d1_blocks;
 }
-#else
-static INLINE unsigned int get_default_tot_d1_blocks(int32_t sq_size) {
-    return sq_size == 128 ? 17 : sq_size > 8 ? 25 : sq_size == 8 ? 5 : 1;
-}
-#endif
-#if OPT_GEOM
 static void set_parent_to_be_considered(ModeDecisionContext *ctx, MdcSbData *results_ptr,
                                         uint32_t blk_index, int32_t sb_size, int8_t pred_depth,
                                         uint8_t pred_sq_idx, int8_t depth_step,
                                         const uint8_t disallow_nsq) {
-#else
-static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_index, int32_t sb_size,
-                                        int8_t pred_depth, uint8_t pred_sq_idx,
-                                        const uint8_t disallow_nsq, int8_t depth_step) {
-#endif
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
     if (blk_geom->sq_size < ((sb_size == BLOCK_128X128) ? 128 : 64)) {
         //Set parent to be considered
         uint32_t parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
-#if OPT_GEOM
         const BlockGeom   *parent_blk_geom      = get_blk_geom_mds(parent_depth_idx_mds);
         const unsigned int parent_tot_d1_blocks = get_default_tot_d1_blocks(
             ctx, parent_blk_geom, disallow_nsq);
-#else
-        const BlockGeom *parent_blk_geom = get_blk_geom_mds(parent_depth_idx_mds);
-        const unsigned int parent_tot_d1_blocks = disallow_nsq
-            ? 1
-            : get_default_tot_d1_blocks(parent_blk_geom->sq_size);
-#endif
         for (uint32_t block_1d_idx = 0; block_1d_idx < parent_tot_d1_blocks; block_1d_idx++) {
             results_ptr->consider_block[parent_depth_idx_mds + block_1d_idx] = 1;
         }
 
         if (depth_step < -1)
-#if OPT_GEOM
             set_parent_to_be_considered(ctx,
                                         results_ptr,
                                         parent_depth_idx_mds,
@@ -2060,18 +2024,8 @@ static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_ind
                                         pred_sq_idx,
                                         depth_step + 1,
                                         disallow_nsq);
-#else
-            set_parent_to_be_considered(results_ptr,
-                                        parent_depth_idx_mds,
-                                        sb_size,
-                                        pred_depth,
-                                        pred_sq_idx,
-                                        disallow_nsq,
-                                        depth_step + 1);
-#endif
     }
 }
-#if OPT_GEOM
 static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                        MdcSbData *results_ptr, uint32_t blk_index,
                                        uint32_t sb_index, int32_t sb_size, int8_t pred_depth,
@@ -2079,14 +2033,6 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                        const uint8_t disallow_nsq) {
     const BlockGeom *blk_geom      = get_blk_geom_mds(blk_index);
     unsigned int     tot_d1_blocks = get_default_tot_d1_blocks(ctx, blk_geom, disallow_nsq);
-#else
-static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                       MdcSbData *results_ptr, uint32_t blk_index,
-                                       uint32_t sb_index, int32_t sb_size, int8_t pred_depth,
-                                       uint8_t pred_sq_idx, int8_t depth_step) {
-    const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-    unsigned int tot_d1_blocks = get_default_tot_d1_blocks(blk_geom->sq_size);
-#endif
 
     if (blk_geom->svt_aom_geom_idx == GEOM_0)
         tot_d1_blocks = 1;
@@ -2105,13 +2051,8 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
         const BlockGeom *child1_blk_geom   = get_blk_geom_mds(child_block_idx_1);
 
         // All child blocks are same sq_size, so will share the same tot_d1_blocks
-#if OPT_GEOM
         const unsigned int child_default_tot_d1_blocks = get_default_tot_d1_blocks(
             ctx, child1_blk_geom, disallow_nsq);
-#else
-        const unsigned int child_default_tot_d1_blocks = get_default_tot_d1_blocks(
-            child1_blk_geom->sq_size);
-#endif
         const unsigned int child_tot_d1_blocks = (!ctx->nsq_ctrls.enabled ||
                                                   !depth_ctrls->allow_nsq_in_child_depths)
             ? 1
@@ -2130,12 +2071,8 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                        sb_size,
                                        pred_depth,
                                        pred_sq_idx,
-#if OPT_GEOM
                                        depth_step > 1 ? depth_step - 1 : 1,
                                        disallow_nsq);
-#else
-                                       depth_step > 1 ? depth_step - 1 : 1);
-#endif
         //Set second child to be considered
         uint32_t child_block_idx_2 = child_block_idx_1 +
             ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
@@ -2153,12 +2090,8 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                        sb_size,
                                        pred_depth,
                                        pred_sq_idx,
-#if OPT_GEOM
                                        depth_step > 1 ? depth_step - 1 : 1,
                                        disallow_nsq);
-#else
-                                       depth_step > 1 ? depth_step - 1 : 1);
-#endif
         //Set third child to be considered
         uint32_t child_block_idx_3 = child_block_idx_2 +
             ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
@@ -2177,12 +2110,8 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                        sb_size,
                                        pred_depth,
                                        pred_sq_idx,
-#if OPT_GEOM
                                        depth_step > 1 ? depth_step - 1 : 1,
                                        disallow_nsq);
-#else
-                                       depth_step > 1 ? depth_step - 1 : 1);
-#endif
         //Set forth child to be considered
         uint32_t child_block_idx_4 = child_block_idx_3 +
             ns_depth_offset[blk_geom->svt_aom_geom_idx][blk_geom->depth + 1];
@@ -2200,12 +2129,8 @@ static void set_child_to_be_considered(PictureControlSet *pcs, ModeDecisionConte
                                        sb_size,
                                        pred_depth,
                                        pred_sq_idx,
-#if OPT_GEOM
                                        depth_step > 1 ? depth_step - 1 : 1,
                                        disallow_nsq);
-#else
-                                       depth_step > 1 ? depth_step - 1 : 1);
-#endif
     }
 }
 uint32_t svt_aom_get_tot_1d_blks(struct ModeDecisionContext *ctx, const int32_t sq_size,
@@ -2236,15 +2161,10 @@ EbErrorType svt_aom_rtime_alloc_palette_info(BlkStruct *md_blk_arr_nsq) {
 // MD data structures should be updated in init_block_data(), not here.
 static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs,
                                    ModeDecisionContext *ctx,
-#if !FIX_2042
-                                   uint32_t sb_index,
-#endif
                                    Bool is_complete_sb) {
     memset(ctx->tested_blk_flag, 0, sizeof(uint8_t) * scs->max_block_cnt);
     memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
-#if OPT_BLOCK_QUEUE_PREP
     if (!ctx->disallow_4x4)
-#endif
         memset(ctx->do_not_process_blk, 0, sizeof(uint8_t) * scs->max_block_cnt);
 
     MdcSbData *results_ptr       = ctx->mdc_sb_array;
@@ -2277,7 +2197,6 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
                 (ctx->pred_depth_only && (blk_geom->sq_size < min_sq_size))
             ? 0
             : 1;
-#if OPT_LD_DR
         if (ctx->skip_pd0) {
             if (ctx->depth_removal_ctrls.disallow_below_64x64)
                 is_block_tagged = (blk_geom->sq_size != 64) ? 0 : is_block_tagged;
@@ -2286,19 +2205,8 @@ static void build_cand_block_array(SequenceControlSet *scs, PictureControlSet *p
             else if (ctx->depth_removal_ctrls.disallow_below_16x16)
                 is_block_tagged = (blk_geom->sq_size != 16) ? 0 : is_block_tagged;
         }
-#else
-        if (ctx->skip_pd0)
-            is_block_tagged = !ctx->depth_removal_ctrls.disallow_below_64x64 &&
-                    ctx->depth_removal_ctrls.disallow_below_32x32 && (blk_geom->sq_size != 32)
-                ? 0
-                : is_block_tagged;
-#endif
         // SQ/NSQ block(s) filter based on the block validity
-#if FIX_2042
         if (is_block_tagged) {
-#else
-        if (pcs->ppcs->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
-#endif
             uint32_t tot_d1_blocks = !ctx->nsq_ctrls.enabled
                 ? 1
                 : svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, ctx->md_disallow_nsq);
@@ -2494,28 +2402,16 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 
     while (blk_index < scs->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-#if OPT_GEOM
         uint32_t tot_d1_blocks = svt_aom_get_tot_1d_blks(
             ctx, blk_geom->sq_size, !ctx->nsq_ctrls.enabled);
 
-#else
-        const unsigned tot_d1_blocks = !ctx->nsq_ctrls.enabled ? 1
-            : blk_geom->sq_size == 128 ? 17
-            : blk_geom->sq_size > 8 ? 25
-            : blk_geom->sq_size == 8 ? 5
-                                     : 1;
-#endif
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed = pcs->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
 
         // derive split_flag
         Bool split_flag = ctx->md_blk_arr_nsq[blk_index].split_flag;
 
-#if FIX_2042
         if (is_blk_allowed) {
-#else
-        if (pcs->ppcs->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
-#endif
             if (blk_geom->shape == PART_N) {
                 if (ctx->md_blk_arr_nsq[blk_index].split_flag == FALSE) {
                     // Add current pred depth block(s)
@@ -2527,7 +2423,6 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                     int8_t s_depth = ctx->depth_ctrls.s_depth;
                     int8_t e_depth = ctx->depth_ctrls.e_depth;
 
-#if OPT_LD_DR
                     if (ctx->skip_pd0) {
                         SbGeom *sb_geom = &pcs->ppcs->sb_geom[ctx->sb_index];
                         if (ctx->depth_removal_ctrls.disallow_below_64x64) {
@@ -2547,15 +2442,6 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                             }
                         }
                     }
-#else
-                    if (ctx->skip_pd0) {
-                        SbGeom *sb_geom = &pcs->ppcs->sb_geom[ctx->sb_index];
-                        if ((sb_geom->width % 32 == 0) && (sb_geom->height % 32 == 0)) {
-                            s_depth = 0;
-                            e_depth = 0;
-                        }
-                    }
-#endif
                     // If multiple depths are selected, perform refinement
                     if (s_depth != 0 || e_depth != 0) {
                         // Check that the start and end depth are in allowed range, given other features
@@ -2637,7 +2523,6 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                         if (e_depth || s_depth)
                             pred_depth_only = 0;
 
-#if OPT_GEOM
                         if (s_depth != 0 && add_parent_depth)
                             set_parent_to_be_considered(ctx,
                                                         results_ptr,
@@ -2659,27 +2544,6 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
                                                        sq_size_idx,
                                                        e_depth,
                                                        !ctx->nsq_ctrls.enabled);
-#else
-                        if (s_depth != 0 && add_parent_depth)
-                            set_parent_to_be_considered(results_ptr,
-                                                        blk_index,
-                                                        scs->seq_header.sb_size,
-                                                        (int8_t)blk_geom->depth,
-                                                        sq_size_idx,
-                                                        !ctx->nsq_ctrls.enabled,
-                                                        s_depth);
-
-                        if (e_depth != 0 && add_sub_depth)
-                            set_child_to_be_considered(pcs,
-                                                       ctx,
-                                                       results_ptr,
-                                                       blk_index,
-                                                       sb_index,
-                                                       scs->seq_header.sb_size,
-                                                       (int8_t)blk_geom->depth,
-                                                       sq_size_idx,
-                                                       e_depth);
-#endif
                     }
                 }
             }
@@ -2693,16 +2557,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs, PictureContro
 // Initialize structures used to indicate which blocks will be tested at MD.
 // MD data structures should be updated in init_block_data(), not here.
 static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, PictureControlSet *pcs,
-#if FIX_2042
                                                    ModeDecisionContext *ctx) {
-#else
-                                                   ModeDecisionContext *ctx, uint32_t sb_index) {
-#endif
     memset(ctx->tested_blk_flag, 0, sizeof(uint8_t) * scs->max_block_cnt);
     memset(ctx->avail_blk_flag, FALSE, sizeof(uint8_t) * scs->max_block_cnt);
-#if OPT_BLOCK_QUEUE_PREP
     if (!ctx->disallow_4x4)
-#endif
         memset(ctx->do_not_process_blk, 0, sizeof(uint8_t) * scs->max_block_cnt);
     MdcSbData *results_ptr       = ctx->mdc_sb_array;
     results_ptr->leaf_count      = 0;
@@ -2725,7 +2583,6 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                 (blk_geom->sq_size < min_sq_size)
             ? 0
             : 1;
-#if OPT_LD_DR
         if (ctx->skip_pd0) {
             if (ctx->depth_removal_ctrls.disallow_below_64x64)
                 is_block_tagged = (blk_geom->sq_size != 64) ? 0 : is_block_tagged;
@@ -2734,19 +2591,8 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
             else if (ctx->depth_removal_ctrls.disallow_below_16x16)
                 is_block_tagged = (blk_geom->sq_size != 16) ? 0 : is_block_tagged;
         }
-#else
-        if (ctx->skip_pd0)
-            is_block_tagged = !ctx->depth_removal_ctrls.disallow_below_64x64 &&
-                    ctx->depth_removal_ctrls.disallow_below_32x32 && (blk_geom->sq_size != 32)
-                ? 0
-                : is_block_tagged;
-#endif
         // SQ/NSQ block(s) filter based on the block validity
-#if FIX_2042
         if (is_block_tagged) {
-#else
-        if (pcs->ppcs->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
-#endif
             const uint32_t tot_d1_blocks = !ctx->nsq_ctrls.enabled
                 ? 1
                 : svt_aom_get_tot_1d_blks(ctx, blk_geom->sq_size, ctx->md_disallow_nsq);
@@ -2759,9 +2605,6 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                 : tot_d1_blocks;
 
             for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
-#if !FIX_2042
-                if (pcs->ppcs->sb_geom[sb_index].block_is_inside_md_scan[idx]) {
-#endif
                     if (ctx->nsq_ctrls.allow_HVA_HVB == 0) {
                         // Index of first HA block is 5; if HA/HB/VA/VB blocks are skipped increase index to bypass the blocks.
                         // idx is increased by 11, rather than 12, because after continue is exectued, idx will be incremented
@@ -2789,9 +2632,6 @@ static EbErrorType build_starting_cand_block_array(SequenceControlSet *scs, Pict
                                                                           min_sq_size)
                         ? TRUE
                         : FALSE;
-#if !FIX_2042
-                }
-#endif
             }
             blk_index += blk_geom->d1_depth_offset;
         } else {
@@ -2938,16 +2778,10 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
                         md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                         continue;
                     } else if (l0_was_intra || l1_was_intra) {
-#if OPT_LPD1_THS
                         md_ctx->lpd1_ctrls.cost_th_dist[pd1_lvl] >>= 2;
                         md_ctx->lpd1_ctrls.cost_th_rate[pd1_lvl] >>= 2;
                         md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >>= 1;
                         md_ctx->lpd1_ctrls.nz_coeff_th[pd1_lvl] >>= 1;
-#else
-                            md_ctx->lpd1_ctrls.cost_th_dist[pd1_lvl] >>= 7;
-                            md_ctx->lpd1_ctrls.coeff_th[pd1_lvl] >>= 6;
-                            md_ctx->lpd1_ctrls.me_8x8_cost_variance_th[pd1_lvl] >>= 4;
-#endif
                     }
                 }
 
@@ -2962,29 +2796,14 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
 
                 const uint32_t lambda =
                     md_ctx->full_sb_lambda_md[EB_8_BIT_MD]; // light-PD1 assumes 8-bit MD
-#if OPT_LPD1_THS
                 const uint32_t rate = md_ctx->lpd1_ctrls.cost_th_rate[pd1_lvl];
-#else
-                const uint32_t rate = md_ctx->lpd1_ctrls.coeff_th[pd1_lvl];
-#endif
                 const uint32_t dist = md_ctx->lpd1_ctrls.cost_th_dist[pd1_lvl];
-#if OPT_LPD1_THS
                 /* dist << 14 is equivalent to 64 * 64 * 4 * dist (64 * 64 so the distortion is the per-pixel SSD) and 4 because
                 the distortion of the 64x64 block is shifted by 2 (same as multiplying by 4) in perform_tx_light_pd0. */
                 const uint64_t low_th      = RDCOST(lambda, rate, (uint64_t)dist << 14);
                 const uint16_t nz_coeff_th = md_ctx->lpd1_ctrls.nz_coeff_th[pd1_lvl];
-#else
-                /* dist << 14 is equivalent to 64 * 64 * 4 * dist (64 * 64 so the distortion is the per-pixel SSD) and 4 because
-                the distortion of the 64x64 block is shifted by 2 (same as multiplying by 4) in perform_tx_light_pd0. */
-                const uint64_t low_th = RDCOST(lambda, 6000 + rate * 500, (uint64_t)dist << 14);
-                const uint16_t coeff_th = md_ctx->lpd1_ctrls.coeff_th[pd1_lvl];
-#endif
                 // If the PD0 cost is very high and the number of non-zero coeffs is high, the block is difficult, so should use regular PD1
-#if OPT_LPD1_THS
                 if (pd0_cost > low_th && nz_coeffs > nz_coeff_th) {
-#else
-                if (pd0_cost > low_th && nz_coeffs > coeff_th) {
-#endif
                     md_ctx->lpd1_ctrls.pd1_level = pd1_lvl - 1;
                 }
 
@@ -3034,7 +2853,6 @@ static void lpd1_detector_post_pd0(PictureControlSet *pcs, ModeDecisionContext *
 not performed, this detector is used (else lpd1_detector_post_pd0() is used). */
 static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
                                    uint32_t pic_width_in_sb) {
-#if OPT_LD_CLEANUP_II
     if (md_ctx->pd1_lvl_refinement) {
         uint32_t me_8x8_cost_variance = pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index];
         if (md_ctx->pd1_lvl_refinement == 2) {
@@ -3051,46 +2869,6 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
 
         return;
     }
-#else
-#if OPT_LD_P2
-    const bool rtc_tune = (pcs->scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B)
-        ? true
-        : false;
-    if (rtc_tune) {
-#endif
-        uint32_t me_8x8_cost_variance = pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index];
-#if OPT_LD_PD1_1
-#if OPT_LD_SPEED_M11_M12
-#if OPT_LD2_SC_M11
-        if ((!(rtc_tune && pcs->ppcs->sc_class1) &&
-             pcs->ppcs->scs->static_config.enc_mode > ENC_M11) ||
-            ((rtc_tune && pcs->ppcs->sc_class1) &&
-             pcs->ppcs->scs->static_config.enc_mode > ENC_M10)) {
-#else
-        if (pcs->ppcs->scs->static_config.enc_mode > ENC_M11) {
-#endif
-#else
-        if (pcs->ppcs->scs->static_config.enc_mode > ENC_M12) {
-#endif
-            if (pcs->temporal_layer_index > 0)
-                md_ctx->lpd1_ctrls.pd1_level = me_8x8_cost_variance < 3000
-                    ? md_ctx->lpd1_ctrls.pd1_level
-                    :
-                    //  : me_8x8_cost_variance < 3000 ? LPD1_LVL_1
-                    pcs->temporal_layer_index == 1 ? md_ctx->lpd1_ctrls.pd1_level - 2
-                                                   : md_ctx->lpd1_ctrls.pd1_level - 1;
-        } else
-            md_ctx->lpd1_ctrls.pd1_level = me_8x8_cost_variance < 500 ? LPD1_LVL_2
-                : me_8x8_cost_variance < 3000 ? LPD1_LVL_1
-                                              : REGULAR_PD1;
-#else
-    md_ctx->lpd1_ctrls.pd1_level = me_8x8_cost_variance < 500 ? LPD1_LVL_2
-        : me_8x8_cost_variance < 3000                         ? LPD1_LVL_1
-                                                              : REGULAR_PD1;
-#endif
-        return;
-    }
-#endif
     const uint16_t left_sb_index = md_ctx->sb_index - 1;
     const uint16_t top_sb_index  = md_ctx->sb_index - (uint16_t)pic_width_in_sb;
 
@@ -3214,12 +2992,8 @@ static void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *
 }
 
 /* Light-PD0 classifier. */
-#if OPT_LPD0_DET
 static void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
                           uint32_t pic_width_in_sb) {
-#else
-static void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
-#endif
     Lpd0Ctrls *lpd0_ctrls = &md_ctx->lpd0_ctrls;
     // the frame size of reference pics are different if enable reference scaling.
     // sb info can not be reused because super blocks are mismatched, so we set
@@ -3276,26 +3050,18 @@ static void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
 
                 // I_SLICE doesn't have ME info
                 if (pcs->slice_type != I_SLICE) {
-#if OPT_LPD0_DET
                     PictureParentControlSet *ppcs       = pcs->ppcs;
                     const uint16_t           sb_index   = md_ctx->sb_index;
                     const uint32_t me_8x8_cost_variance = ppcs->me_8x8_cost_variance[sb_index];
                     const uint32_t me_64x64_distortion  = ppcs->me_64x64_distortion[sb_index];
-#endif
                     /* me_8x8_cost_variance_th is shifted by 5 then mulitplied by the pic QP (max 63).  Therefore, the TH must be less than
                        (((uint32_t)~0) >> 1) to avoid overflow issues from the multiplication. */
                     if (lpd0_ctrls->me_8x8_cost_variance_th[pd0_lvl] < (((uint32_t)~0) >> 1) &&
-#if OPT_LPD0_DET
                         me_8x8_cost_variance >
                             (lpd0_ctrls->me_8x8_cost_variance_th[pd0_lvl] >> 5) * pcs->picture_qp) {
-#else
-                        pcs->ppcs->me_8x8_cost_variance[md_ctx->sb_index] >
-                            (lpd0_ctrls->me_8x8_cost_variance_th[pd0_lvl] >> 5) * pcs->picture_qp) {
-#endif
                         lpd0_ctrls->pd0_level = pd0_lvl - 1;
                         continue;
                     }
-#if OPT_LPD0_DET
                     // If the SB origin of one dimension is zero, then this SB is the first block in a row/column, so won't have neighbours
                     const uint16_t left_sb_index = sb_index - 1;
                     const uint16_t top_sb_index  = sb_index - (uint16_t)pic_width_in_sb;
@@ -3326,7 +3092,6 @@ static void lpd0_detector(PictureControlSet *pcs, ModeDecisionContext *md_ctx) {
                             }
                         }
                     }
-#endif
                 }
             }
         }
@@ -3482,10 +3247,6 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                                  pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                                  pcs->ppcs->enable_restoration,
                                                  pcs->ppcs->frm_hdr.allow_intrabc,
-#if CLN_PART_CTX
-#else
-                                                 pcs->ppcs->partition_contexts,
-#endif
                                                  &pcs->md_frame_context);
                 if (!pcs->cdf_ctrl.update_coef)
                     svt_aom_estimate_coefficients_rate(ed_ctx->md_ctx->rate_est_table,
@@ -3595,10 +3356,6 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                     pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                     pcs->ppcs->enable_restoration,
                                     pcs->ppcs->frm_hdr.allow_intrabc,
-#if CLN_PART_CTX
-#else
-                                    pcs->ppcs->partition_contexts,
-#endif
                                     &pcs->ec_ctx_array[sb_index]);
                             // Initial Rate Estimation of the Motion vectors
                             if (pcs->cdf_ctrl.update_mv)
@@ -3639,32 +3396,18 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                         if (ed_ctx->md_ctx->skip_pd0)
                             if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_32x32)
                                 skip_pd_pass_0 = 1;
-#if OPT_LD_DR
                         if (ed_ctx->md_ctx->skip_pd0)
                             if (ed_ctx->md_ctx->depth_removal_ctrls.disallow_below_16x16)
                                 skip_pd_pass_0 = 1;
-#endif
 
                                 // If LPD0 is used, a more conservative level can be set for complex SBs
-#if OPT_LD_P2
                         const bool rtc_tune = (scs->static_config.pred_structure ==
                                                SVT_AV1_PRED_LOW_DELAY_B)
                             ? true
                             : false;
-#if OPT_LD_SC_PD0
                         if (!(rtc_tune && !pcs->ppcs->sc_class1) &&
                             md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
-#else
-                        if (!rtc_tune && md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
-#endif
-#else
-                        if (md_ctx->lpd0_ctrls.pd0_level > REGULAR_PD0) {
-#endif
-#if OPT_LPD0_DET
                             lpd0_detector(pcs, md_ctx, pic_width_in_sb);
-#else
-                            lpd0_detector(pcs, md_ctx);
-#endif
                         }
 
                         // PD0 is only skipped if there is a single depth to test
@@ -3693,11 +3436,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
 
                                 // Build the t=0 cand_block_array
                                 build_starting_cand_block_array(
-#if FIX_2042
                                     scs, pcs, ed_ctx->md_ctx);
-#else
-                                    scs, pcs, ed_ctx->md_ctx, sb_index);
-#endif
                                 svt_aom_mode_decision_sb_light_pd0(scs,
                                                                    pcs,
                                                                    mdc_ptr,
@@ -3732,11 +3471,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
 
                                 // Build the t=0 cand_block_array
                                 build_starting_cand_block_array(
-#if FIX_2042
                                     scs, pcs, ed_ctx->md_ctx);
-#else
-                                    scs, pcs, ed_ctx->md_ctx, sb_index);
-#endif
                                 // PD0 MD Tool(s) : ME_MV(s) as INTER candidate(s), DC as INTRA candidate, luma only, Frequency domain SSE,
                                 // no fast rate (no MVP table generation), MDS0 then MDS3, reduced NIC(s), 1 ref per list,..
                                 svt_aom_mode_decision_sb(scs,
@@ -3763,11 +3498,7 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                                 lpd1_detector_post_pd0(pcs, md_ctx);
                             // Force pred depth only for modes where that is not the default
                             if (md_ctx->lpd1_ctrls.pd1_level > REGULAR_PD1) {
-#if OPT_DEPTH_LEVEL
                                 svt_aom_set_depth_ctrls(pcs, md_ctx, 0);
-#else
-                                svt_aom_set_depth_ctrls(md_ctx, 0);
-#endif
                                 md_ctx->pred_depth_only = 1;
                             }
                             // Perform Pred_0 depth refinement - add depth(s) to be considered in the next stage(s)
@@ -3797,18 +3528,11 @@ void *svt_aom_mode_decision_kernel(void *input_ptr) {
                             build_cand_block_array(scs,
                                                    pcs,
                                                    ed_ctx->md_ctx,
-#if !FIX_2042
-                                                   sb_index,
-#endif
                                                    pcs->ppcs->sb_geom[sb_index].is_complete_sb);
                         else
                             // Build the t=0 cand_block_array
                             build_starting_cand_block_array(
-#if FIX_2042
                                 scs, pcs, ed_ctx->md_ctx);
-#else
-                                scs, pcs, ed_ctx->md_ctx, sb_index);
-#endif
                         // [PD_PASS_1] Mode Decision - Obtain the final partitioning decision using more accurate info
                         // than previous stages.  Reduce the total number of partitions to 1.
                         // Input : mdc_blk_ptr built @ PD0 refinement

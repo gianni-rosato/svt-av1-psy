@@ -219,11 +219,7 @@ typedef struct EbPictureBufferDescInitData {
 
     uint8_t mfmv;
     Bool    is_16bit_pipeline;
-#if ENABLE_PRESET_MR
     EncMode enc_mode;
-#else
-    int8_t enc_mode;
-#endif
     int32_t sb_total_count;
 } EbPictureBufferDescInitData;
 

@@ -2452,13 +2452,6 @@ EB_EXTERN void svt_aom_encode_decode(SequenceControlSet *scs, PictureControlSet 
                         : 0;
             blk_ptr->block_has_coeff = 0;
 
-#if !FIX_SEGMENT_ISSUE
-            // for now, segmentation independent of sharpness/delta QP.
-            if (pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
-                svt_aom_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
-                sb_ptr->qindex = blk_ptr->qindex;
-            }
-#endif
             if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
                 ctx->is_inter = blk_ptr->use_intrabc;
 
@@ -2618,15 +2611,6 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
             ctx->blk_org_x = (uint16_t)(sb_org_x + blk_geom->org_x);
             ctx->blk_org_y = (uint16_t)(sb_org_y + blk_geom->org_y);
 
-#if !FIX_SEGMENT_ISSUE
-            // for now, segmentation independent of sharpness/delta QP.
-            if (pcs->ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
-                svt_aom_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
-                sb_ptr->qindex = blk_ptr->qindex;
-            } else {
-                blk_ptr->qindex = sb_ptr->qindex;
-            }
-#endif
             if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
                 ctx->tot_intra_coded_area += blk_geom->bwidth * blk_geom->bheight;
                 pcs->sb_intra[sb_addr] = 1;
@@ -3006,25 +2990,9 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
     // free MD palette info buffer
     if (pcs->ppcs->palette_level) {
         const uint16_t max_block_cnt = scs->max_block_cnt;
-#if !FIX_2042
-        const int32_t min_sq_size = (md_ctx->depth_removal_ctrls.enabled &&
-                                     md_ctx->depth_removal_ctrls.disallow_below_64x64)
-            ? 64
-            : (md_ctx->depth_removal_ctrls.enabled &&
-               md_ctx->depth_removal_ctrls.disallow_below_32x32)
-            ? 32
-            : (md_ctx->depth_removal_ctrls.enabled &&
-               md_ctx->depth_removal_ctrls.disallow_below_16x16)
-            ? 16
-            : md_ctx->disallow_4x4 ? 8
-                                   : 4;
-#endif
         uint32_t blk_index = 0;
         while (blk_index < max_block_cnt) {
             const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-#if !FIX_2042
-            if (pcs->ppcs->sb_geom[sb_addr].block_is_inside_md_scan[blk_index]) {
-#endif
                 const uint32_t tot_d1_blocks = !md_ctx->nsq_ctrls.enabled
                     ? 1
                     : svt_aom_get_tot_1d_blks(md_ctx, blk_geom->sq_size, md_ctx->md_disallow_nsq);
@@ -3039,11 +3007,6 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                     }
                 }
                 blk_index += blk_geom->d1_depth_offset;
-#if !FIX_2042
-            } else
-                blk_index += (blk_geom->sq_size > min_sq_size) ? blk_geom->d1_depth_offset
-                                                               : blk_geom->ns_depth_offset;
-#endif
         }
     }
 

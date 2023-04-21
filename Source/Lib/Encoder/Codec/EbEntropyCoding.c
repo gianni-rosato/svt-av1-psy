@@ -2558,17 +2558,9 @@ static void encode_segmentation(PictureParentControlSet *pcs, struct AomWriteBit
             if (segmentation_params->segmentation_update_map) {
                 svt_aom_wb_write_bit(wb, segmentation_params->segmentation_temporal_update);
             }
-#if FIX_SEGMENT_ISSUE
             svt_aom_wb_write_bit(wb, segmentation_params->segmentation_update_data);
-#else
-            svt_aom_wb_write_bit(wb, segmentation_params->segmentation_update_map);
-#endif
         }
-#if FIX_SEGMENT_ISSUE
         if (segmentation_params->segmentation_update_data) {
-#else
-        if (segmentation_params->segmentation_update_map) {
-#endif
             for (int i = 0; i < MAX_SEGMENTS; i++) {
                 for (int j = 0; j < SEG_LVL_MAX; j++) {
                     svt_aom_wb_write_bit(wb, segmentation_params->feature_enabled[i][j]);
@@ -5114,26 +5106,16 @@ static INLINE int svt_aom_get_segment_id(Av1Common *cm, const uint8_t *segment_i
     return segment_id;
 }
 
-#if FIX_SEGMENT_ISSUE
 static int get_spatial_seg_prediction(PictureControlSet *pcs, MacroBlockD *xd, uint32_t blk_org_x,
                                       uint32_t blk_org_y, int *cdf_index) {
-#else
-static int get_spatial_seg_prediction(PictureControlSet *pcs, uint32_t blk_org_x,
-                                      uint32_t blk_org_y, int *cdf_index) {
-#endif
     int prev_ul = -1; // top left segment_id
     int prev_l  = -1; // left segment_id
     int prev_u  = -1; // top segment_id
 
     uint32_t mi_col = blk_org_x >> MI_SIZE_LOG2;
     uint32_t mi_row = blk_org_y >> MI_SIZE_LOG2;
-#if FIX_SEGMENT_ISSUE
     bool left_available = xd->left_available;
     bool up_available   = xd->up_available;
-#else
-    Bool left_available = mi_col > 0 ? TRUE : FALSE;
-    Bool up_available = mi_row > 0 ? TRUE : FALSE;
-#endif
     Av1Common               *cm               = pcs->ppcs->av1_cm;
     SegmentationNeighborMap *segmentation_map = pcs->segmentation_neighbor_map;
 
@@ -5220,12 +5202,8 @@ void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomW
     if (!segmentation_params->segmentation_enabled)
         return;
     int cdf_num;
-#if FIX_SEGMENT_ISSUE
     const int spatial_pred = get_spatial_seg_prediction(
         pcs, blk_ptr->av1xd, blk_org_x, blk_org_y, &cdf_num);
-#else
-    const int spatial_pred = get_spatial_seg_prediction(pcs, blk_org_x, blk_org_y, &cdf_num);
-#endif
     if (skip_coeff) {
         //        SVT_LOG("BlockY = %d, BlockX = %d \n", blk_org_y>>2, blk_org_x>>2);
         update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, spatial_pred);

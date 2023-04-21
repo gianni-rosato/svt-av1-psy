@@ -232,11 +232,7 @@ static void injector(uint64_t processed_frame_count, uint32_t injector_frame_rat
             start_timesu_seconds,
             current_times_seconds,
             current_timesu_seconds);
-#if OPT_LD_LATENCY
         const int buffer_frames = 0; // How far ahead of time should we let it get
-#else
-        const int buffer_frames = 1; // How far ahead of time should we let it get
-#endif
         const double injector_interval = (double)(1 << 16) /
             injector_frame_rate; // 1.0 / injector frame rate (in this
         // case, 1.0/encodRate)
@@ -299,11 +295,7 @@ void process_input_buffer(EncChannel *channel) {
 
     if (channel->exit_cond_input != APP_ExitConditionNone)
         return;
-#if OPT_LD_LATENCY
     if (app_cfg->injector)
-#else
-    if (app_cfg->injector && app_cfg->processed_frame_count)
-#endif
         injector(app_cfg->processed_frame_count, app_cfg->injector_frame_rate);
     total_bytes_to_process_count = (frames_to_be_encoded < 0)
         ? -1

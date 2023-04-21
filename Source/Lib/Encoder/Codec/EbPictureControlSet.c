@@ -47,7 +47,6 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
     rst[1].restoration_unit_size = rst[0].restoration_unit_size >> s;
     rst[2].restoration_unit_size = rst[1].restoration_unit_size;
 }
-#if OPT_PRED_STRUCT_CLASSIFIER
 static void dg_detector_seg_dctor(EbPtr p) {
     DGDetectorSeg *obj = (DGDetectorSeg *)p;
 
@@ -62,7 +61,6 @@ EbErrorType svt_aom_dg_detector_seg_ctor(DGDetectorSeg *obj_ptr) {
     EB_CREATE_MUTEX(obj_ptr->metrics_mutex);
     return EB_ErrorNone;
 }
-#endif
 
 static void segmentation_map_dctor(EbPtr p) {
     SegmentationNeighborMap *obj = (SegmentationNeighborMap *)p;
@@ -115,24 +113,12 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults               *obj_ptr,
     EbInputResolution resolution;
     svt_aom_derive_input_resolution(&resolution,
                                     init_data_ptr->picture_width * init_data_ptr->picture_height);
-#if OPT_LD_M13
     uint8_t number_of_pus = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode,
                                                         init_data_ptr->rtc_tune)
-#if OPT_LD_SPEED_M11_M12
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
             ? SQUARE_PU_COUNT
             : MAX_SB64_PU_COUNT_NO_8X8
-#else
-        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT
-                                                             : MAX_SB64_PU_COUNT_NO_8X8
-#endif
         : MAX_SB64_PU_COUNT_WO_16X16;
-#else
-    uint8_t number_of_pus       = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode)
-              ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode) ? SQUARE_PU_COUNT
-                                                                   : MAX_SB64_PU_COUNT_NO_8X8
-              : MAX_SB64_PU_COUNT_WO_16X16;
-#endif
 
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array, number_of_pus * max_ref_to_alloc);
     EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, number_of_pus * max_cand_to_alloc);
@@ -1329,10 +1315,8 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     uint16_t tile_cnt = 1; /*obj->tile_row_count * obj->tile_column_count;*/
     EB_DELETE_PTR_ARRAY(obj->tpl_disp_segment_ctrl, tile_cnt);
     EB_DESTROY_MUTEX(obj->pcs_total_rate_mutex);
-#if OPT_PRED_STRUCT_CLASSIFIER
     if (obj->dg_detector)
         EB_DELETE(obj->dg_detector);
-#endif
 }
 static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
                                                    EbPtr                    object_init_data_ptr) {
@@ -1525,24 +1509,14 @@ static EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *obje
     EbInputResolution resolution;
     svt_aom_derive_input_resolution(&resolution,
                                     init_data_ptr->picture_width * init_data_ptr->picture_height);
-#if OPT_LD_M13
     object_ptr->enable_me_16x16 = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode,
                                                               init_data_ptr->rtc_tune);
-#else
-    object_ptr->enable_me_16x16 = svt_aom_get_enable_me_16x16(init_data_ptr->enc_mode);
-#endif
 
     // 8x8 can only be used if 16x16 is enabled
     object_ptr->enable_me_8x8 = object_ptr->enable_me_16x16
-#if OPT_LD_SPEED_M11_M12
         ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode, init_data_ptr->rtc_tune)
-#else
-        ? svt_aom_get_enable_me_8x8(init_data_ptr->enc_mode)
-#endif
         : 0;
-#if OPT_PRED_STRUCT_CLASSIFIER
     EB_NEW(object_ptr->dg_detector, svt_aom_dg_detector_seg_ctor);
-#endif
     return return_error;
 }
 static void me_dctor(EbPtr p) {
@@ -1738,16 +1712,6 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs, PictureParentControlSet *p
                       encoding_height))
                     ? TRUE
                     : FALSE;
-#if !FIX_2042
-                if (blk_geom->shape != PART_N)
-                    blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
-
-                pcs->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
-                    ((pcs->sb_geom[sb_index].org_x >= encoding_width) ||
-                     (pcs->sb_geom[sb_index].org_y >= encoding_height))
-                    ? FALSE
-                    : TRUE;
-#endif
             } else {
                 if (blk_geom->shape != PART_N)
                     blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
@@ -1759,15 +1723,6 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs, PictureParentControlSet *p
                       encoding_height))
                     ? FALSE
                     : TRUE;
-#if !FIX_2042
-                pcs->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =
-                    ((pcs->sb_geom[sb_index].org_x + blk_geom->org_x + blk_geom->bwidth >
-                      encoding_width) ||
-                     (pcs->sb_geom[sb_index].org_y + blk_geom->org_y + blk_geom->bheight >
-                      encoding_height))
-                    ? FALSE
-                    : TRUE;
-#endif
             }
         }
     }

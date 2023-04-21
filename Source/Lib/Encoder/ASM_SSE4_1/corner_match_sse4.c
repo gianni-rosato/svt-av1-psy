@@ -13,7 +13,6 @@
 #include "corner_match.h"
 #include "EbDefinitions.h"
 
-#if OPT_GM_WD
 DECLARE_ALIGNED(16, const uint8_t, svt_aom_compute_cross_byte_mask[8][16]) = {
     {255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, //1x1
     {255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, //3x3
@@ -24,25 +23,14 @@ DECLARE_ALIGNED(16, const uint8_t, svt_aom_compute_cross_byte_mask[8][16]) = {
     {255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0}, //13x13
     {255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0}, //15x15
 };
-#else
-DECLARE_ALIGNED(16, static const uint8_t, byte_mask[16]) = {
-    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0};
-#if MATCH_SZ != 13
-#error "Need to change byte_mask in corner_match_sse4.c if MATCH_SZ != 13"
-#endif
-#endif
 
 /* Compute corr(im1, im2) * MATCH_SZ * stddev(im1), where the
    correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
    of each image, centered at (x1, y1) and (x2, y2) respectively.
 */
 double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1, int x1, int y1,
-#if OPT_GM_WD
                                                 unsigned char *im2, int stride2, int x2, int y2,
                                                 uint8_t match_sz) {
-#else
-                                                unsigned char *im2, int stride2, int x2, int y2) {
-#endif
     int i;
     // 2 16-bit partial sums in lanes 0, 4 (== 2 32-bit partial sums in lanes 0,
     // 2)
@@ -51,30 +39,17 @@ double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1,
     // 4 32-bit partial sums of squares
     __m128i sumsq2_vec = _mm_setzero_si128();
     __m128i cross_vec  = _mm_setzero_si128();
-#if OPT_GM_WD
     const uint8_t match_sz_by2 = ((match_sz - 1) / 2);
     const uint8_t match_sz_sq  = (match_sz * match_sz);
 
     int           mask_idx = match_sz / 2;
     const __m128i mask     = _mm_loadu_si128((__m128i *)svt_aom_compute_cross_byte_mask[mask_idx]);
-#else
-    const __m128i mask = _mm_loadu_si128((__m128i *)byte_mask);
-#endif
     const __m128i zero = _mm_setzero_si128();
 
-#if OPT_GM_WD
     im1 += (y1 - match_sz_by2) * stride1 + (x1 - match_sz_by2);
     im2 += (y2 - match_sz_by2) * stride2 + (x2 - match_sz_by2);
-#else
-    im1 += (y1 - MATCH_SZ_BY2) * stride1 + (x1 - MATCH_SZ_BY2);
-    im2 += (y2 - MATCH_SZ_BY2) * stride2 + (x2 - MATCH_SZ_BY2);
-#endif
 
-#if OPT_GM_WD
     for (i = 0; i < match_sz; ++i) {
-#else
-    for (i = 0; i < MATCH_SZ; ++i) {
-#endif
         const __m128i v1 = _mm_and_si128(_mm_loadu_si128((__m128i *)&im1[i * stride1]), mask);
         const __m128i v2 = _mm_and_si128(_mm_loadu_si128((__m128i *)&im2[i * stride2]), mask);
 
@@ -116,13 +91,8 @@ double svt_av1_compute_cross_correlation_sse4_1(unsigned char *im1, int stride1,
     int sumsq2 = _mm_extract_epi32(res, 2);
     int cross  = _mm_extract_epi32(res, 3);
 
-#if OPT_GM_WD
     int var2 = sumsq2 * match_sz_sq - sum2 * sum2;
     int cov  = cross * match_sz_sq - sum1 * sum2;
-#else
-    int var2 = sumsq2 * MATCH_SZ_SQ - sum2 * sum2;
-    int cov  = cross * MATCH_SZ_SQ - sum1 * sum2;
-#endif
 
     if (cov < 0) {
         return 0;

@@ -1439,15 +1439,9 @@ static INLINE void record_samples(MbModeInfo *mbmi, int *pts, int *pts_inref, in
 // Note: Samples returned are at 1/8-pel precision
 // Sample are the neighbor block center point's coordinates relative to the
 // left-top pixel of current block.
-#if OPT_USE_NSAMPLES
 static int av1_find_samples(const Av1Common *cm, const BlockSize sb_size, MacroBlockD *xd,
                             int mi_row, int mi_col, MvReferenceFrame rf0, int *pts, int *pts_inref,
                             int *adjacent_samples, int *top_left_present, int *top_right_present) {
-#else
-static int      av1_find_samples(const Av1Common *cm, const BlockSize sb_size, MacroBlockD *xd,
-                                 int mi_row, int mi_col, MvReferenceFrame rf0, int *pts,
-                                 int *pts_inref) {
-#endif
     int up_available   = xd->up_available;
     int left_available = xd->left_available;
     int i, mi_step = 1, np = 0;
@@ -1476,9 +1470,7 @@ static int      av1_find_samples(const Av1Common *cm, const BlockSize sb_size, M
                 pts += 2;
                 pts_inref += 2;
                 np++;
-#if OPT_USE_NSAMPLES
                 *adjacent_samples += (xd->n4_w << 2);
-#endif
                 if (np >= LEAST_SQUARES_SAMPLES_MAX)
                     return LEAST_SQUARES_SAMPLES_MAX;
             }
@@ -1496,9 +1488,7 @@ static int      av1_find_samples(const Av1Common *cm, const BlockSize sb_size, M
                     pts += 2;
                     pts_inref += 2;
                     np++;
-#if OPT_USE_NSAMPLES
                     *adjacent_samples += (AOMMIN(xd->n4_w, n4_w) << 2);
-#endif
                     if (np >= LEAST_SQUARES_SAMPLES_MAX)
                         return LEAST_SQUARES_SAMPLES_MAX;
                 }
@@ -1523,9 +1513,7 @@ static int      av1_find_samples(const Av1Common *cm, const BlockSize sb_size, M
                 pts += 2;
                 pts_inref += 2;
                 np++;
-#if OPT_USE_NSAMPLES
                 *adjacent_samples += (xd->n4_h << 2);
-#endif
                 if (np >= LEAST_SQUARES_SAMPLES_MAX)
                     return LEAST_SQUARES_SAMPLES_MAX;
             }
@@ -1543,9 +1531,7 @@ static int      av1_find_samples(const Av1Common *cm, const BlockSize sb_size, M
                     pts += 2;
                     pts_inref += 2;
                     np++;
-#if OPT_USE_NSAMPLES
                     *adjacent_samples += (AOMMIN(xd->n4_h, n4_h) << 2);
-#endif
                     if (np >= LEAST_SQUARES_SAMPLES_MAX)
                         return LEAST_SQUARES_SAMPLES_MAX;
                 }
@@ -1564,9 +1550,7 @@ static int      av1_find_samples(const Av1Common *cm, const BlockSize sb_size, M
             pts += 2;
             pts_inref += 2;
             np++;
-#if OPT_USE_NSAMPLES
             *top_left_present = 1;
-#endif
             if (np >= LEAST_SQUARES_SAMPLES_MAX)
                 return LEAST_SQUARES_SAMPLES_MAX;
         }
@@ -1585,9 +1569,7 @@ static int      av1_find_samples(const Av1Common *cm, const BlockSize sb_size, M
             if (mbmi->block_mi.ref_frame[0] == rf0 && mbmi->block_mi.ref_frame[1] == NONE_FRAME) {
                 record_samples(mbmi, pts, pts_inref, 0, -1, xd->n4_w, 1);
                 np++;
-#if OPT_USE_NSAMPLES
                 *top_right_present = 1;
-#endif
                 if (np >= LEAST_SQUARES_SAMPLES_MAX)
                     return LEAST_SQUARES_SAMPLES_MAX;
             }
@@ -1724,16 +1706,10 @@ void svt_aom_wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size,
     *num_samples = np;
 }
 
-#if OPT_USE_NSAMPLES
 uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_org_x,
                          uint16_t blk_org_y, MvReferenceFrame rf0, PictureControlSet *pcs,
                          int32_t *pts, int32_t *pts_inref, int *adjacent_samples,
                          int *top_left_present, int *top_right_present) {
-#else
-static uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_org_x,
-                                uint16_t blk_org_y, MvReferenceFrame rf0, PictureControlSet *pcs,
-                                int32_t *pts, int32_t *pts_inref) {
-#endif
     Av1Common   *cm = pcs->ppcs->av1_cm;
     MacroBlockD *xd = blk_ptr->av1xd;
 
@@ -1742,7 +1718,6 @@ static uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, u
 
     xd->n4_w = blk_geom->bwidth >> MI_SIZE_LOG2;
     xd->n4_h = blk_geom->bheight >> MI_SIZE_LOG2;
-#if OPT_USE_NSAMPLES
     return (uint16_t)av1_find_samples(cm,
                                       pcs->scs->seq_header.sb_size,
                                       xd,
@@ -1754,13 +1729,8 @@ static uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, u
                                       adjacent_samples,
                                       top_left_present,
                                       top_right_present);
-#else
-    return (uint16_t)av1_find_samples(
-        cm, pcs->scs->seq_header.sb_size, xd, mi_row, mi_col, rf0, pts, pts_inref);
-#endif
 }
 
-#if OPT_USE_NSAMPLES
 Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr, MvUnit *mv_unit,
                                       const BlockGeom *blk_geom, uint16_t blk_org_x,
                                       uint16_t blk_org_y, uint8_t ref_frame_type,
@@ -1768,12 +1738,6 @@ Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr
                                       uint8_t min_neighbour_perc, uint8_t corner_perc_bias,
                                       uint16_t lower_band_th, uint16_t upper_band_th,
                                       Bool shut_approx) {
-#else
-Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr, MvUnit *mv_unit,
-                                      const BlockGeom *blk_geom, uint16_t blk_org_x,
-                                      uint16_t blk_org_y, uint8_t ref_frame_type,
-                                      EbWarpedMotionParams *wm_params, uint16_t *num_samples) {
-#endif
     MacroBlockD *xd       = blk_ptr->av1xd;
     BlockSize    bsize    = blk_geom->bsize;
     Bool         apply_wm = FALSE;
@@ -1790,7 +1754,6 @@ Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr
 
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_frame_type);
-#if OPT_USE_NSAMPLES
     int      adjacent_samples  = 0;
     int      top_left_present  = 0;
     int      top_right_present = 0;
@@ -1805,13 +1768,8 @@ Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr
                                         &adjacent_samples,
                                         &top_left_present,
                                         &top_right_present);
-#else
-    uint16_t nsamples = wm_find_samples(
-        blk_ptr, blk_geom, blk_org_x, blk_org_y, rf[0], pcs, pts, pts_inref);
-#endif
     if (nsamples == 0)
         return apply_wm;
-#if OPT_USE_NSAMPLES
     int perc = (adjacent_samples * 100) / (blk_geom->bwidth + blk_geom->bheight);
     if (top_left_present)
         perc += corner_perc_bias;
@@ -1821,7 +1779,6 @@ Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr
 
     if (perc < min_neighbour_perc && !shut_approx)
         return 0;
-#endif
     MV mv;
     mv.col = mv_unit->mv[mv_unit->pred_direction % BI_PRED].x;
     mv.row = mv_unit->mv[mv_unit->pred_direction % BI_PRED].y;
@@ -1832,7 +1789,6 @@ Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr
     apply_wm = !svt_find_projection(
         (int)nsamples, pts, pts_inref, bsize, mv.row, mv.col, wm_params, (int)mi_row, (int)mi_col);
 
-#if OPT_DETECT_ID
     if (apply_wm && !shut_approx) {
         if ((abs(wm_params->alpha) + abs(wm_params->beta)) < lower_band_th &&
             (abs(wm_params->gamma) + abs(wm_params->delta)) < lower_band_th)
@@ -1841,7 +1797,6 @@ Bool svt_aom_warped_motion_parameters(PictureControlSet *pcs, BlkStruct *blk_ptr
             (4 * abs(wm_params->gamma) + 4 * abs(wm_params->delta) > upper_band_th))
             apply_wm = 0;
     }
-#endif
     return apply_wm;
 }
 

@@ -426,11 +426,7 @@ typedef struct SuperBlock {
 extern EbErrorType svt_aom_largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr,
                                                     uint8_t sb_size, uint16_t sb_origin_x,
                                                     uint16_t sb_origin_y, uint16_t sb_index,
-#if ENABLE_PRESET_MR
                                                     EncMode enc_mode, uint16_t max_block_cnt,
-#else
-                                                    uint8_t enc_mode, uint16_t max_block_cnt,
-#endif
 
                                                     struct PictureControlSet *picture_control_set);
 

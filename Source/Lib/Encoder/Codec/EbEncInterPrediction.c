@@ -500,20 +500,12 @@ int64_t pick_wedge_fixed_sign(PictureControlSet *pcs, ModeDecisionContext *ctx,
         const uint8_t *mask = svt_aom_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
         uint64_t       sse  = svt_av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
         sse                 = ROUND_POWER_OF_TWO(sse, bd_round);
-#if OPT_II
         int64_t rd = sse;
         if (ctx->inter_intra_comp_ctrls.use_rd_model) {
             model_rd_with_curvfit(pcs, bsize, sse, N, &rate, &dist, ctx, full_lambda);
             rate += ctx->md_rate_est_ctx->wedge_idx_fac_bits[bsize][wedge_index];
             rd = RDCOST(full_lambda, rate, dist);
         }
-#else
-        model_rd_with_curvfit(pcs, bsize, sse, N, &rate, &dist, ctx, full_lambda);
-        // model_rd_sse_fn[MODELRD_TYPE_MASKED_COMPOUND](cpi, x, bsize, 0, sse, N, &rate, &dist);
-        // rate += x->wedge_idx_cost[bsize][wedge_index];
-        rate += ctx->md_rate_est_ctx->wedge_idx_fac_bits[bsize][wedge_index];
-        int64_t rd = RDCOST(full_lambda, rate, dist);
-#endif
         if (rd < best_rd) {
             *best_wedge_index = wedge_index;
             best_rd           = rd;
@@ -5765,7 +5757,6 @@ EbErrorType svt_aom_inter_pu_prediction_av1(uint8_t hbd_md, ModeDecisionContext 
     return return_error;
 }
 
-#if OPT_OBMC_TRANS_FACE_OFF
 EbErrorType av1_inter_prediction_obmc(PictureControlSet *pcs, BlkStruct *blk_ptr,
                                       uint8_t use_precomputed_obmc, struct ModeDecisionContext *ctx,
                                       uint16_t pu_origin_x, uint16_t pu_origin_y,
@@ -5862,11 +5853,7 @@ EbErrorType av1_inter_prediction_obmc(PictureControlSet *pcs, BlkStruct *blk_ptr
     return return_error;
 }
 
-#if OPT_OBMC_TRANS_FACE_OFF
 EbErrorType svt_aom_inter_pu_prediction_av1_obmc(uint8_t hbd_md,
-#else
-EbErrorType inter_pu_prediction_av1_obmc(uint8_t hbd_md,
-#endif
                                                  ModeDecisionContext *ctx, PictureControlSet *pcs,
                                                  ModeDecisionCandidateBuffer *cand_bf) {
     EbErrorType return_error = EB_ErrorNone;
@@ -5892,4 +5879,3 @@ EbErrorType inter_pu_prediction_av1_obmc(uint8_t hbd_md,
 
     return return_error;
 }
-#endif

@@ -89,9 +89,7 @@ typedef struct EbPaReferenceObject {
                                  [NUM_RESIZE_SCALES + 1]; // save the picture_number for each denom
     EbHandle resize_mutex[NUM_SR_SCALES + 1][NUM_RESIZE_SCALES + 1];
     uint64_t picture_number;
-#if FIX_AVG_Y
     uint64_t avg_luma;
-#endif
     uint8_t dummy_obj;
 } EbPaReferenceObject;
 

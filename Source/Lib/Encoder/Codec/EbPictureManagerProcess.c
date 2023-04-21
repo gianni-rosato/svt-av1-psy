@@ -892,7 +892,6 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                                     child_pcs->ref_pic_ptr_array[REF_LIST_0][0];
 
                             if (entry_ppcs->ref_list1_count == 0) {
-#if OPT_LD_B_FIX
                                 for (uint8_t ref_idx = entry_ppcs->ref_list1_count; ref_idx < 3; ++ref_idx) {
                                     child_pcs->ref_pic_ptr_array[REF_LIST_1][ref_idx] =
                                         child_pcs->ref_pic_ptr_array[REF_LIST_0][0];
@@ -903,11 +902,6 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                                     child_pcs->ref_pic_r0[REF_LIST_1][ref_idx] =
                                         child_pcs->ref_pic_r0[REF_LIST_0][0];
                                 }
-#else
-                                for (uint8_t ref_idx = entry_ppcs->ref_list1_count; ref_idx < 3; ++ref_idx)
-                                    child_pcs->ref_pic_ptr_array[REF_LIST_1][ref_idx] =
-                                        child_pcs->ref_pic_ptr_array[REF_LIST_0][0];
-#endif
                             }
 
                             if (entry_ppcs->slice_type == B_SLICE) {

@@ -96,19 +96,13 @@ void svt_aom_set_nics(NicScalingCtrls *scaling_ctrls, uint32_t mds1_count[CAND_C
  * Mode Decision Context Constructor
  ******************************************************/
 EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColorFormat color_format,
-#if ENABLE_PRESET_MR
                                                uint8_t sb_size, EncMode enc_mode,
-#else
-                                               uint8_t sb_size, uint8_t enc_mode,
-#endif
                                                uint16_t max_block_cnt, uint32_t encoder_bit_depth,
                                                EbFifo *mode_decision_configuration_input_fifo_ptr,
                                                EbFifo *mode_decision_output_fifo_ptr,
                                                uint8_t enable_hbd_mode_decision,
                                                uint8_t cfg_palette,
-#if OPT_LD_M11
                                                bool rtc_tune,
-#endif
                                                uint32_t hierarchical_levels) {
     uint32_t buffer_index;
     uint32_t cand_index;
@@ -131,11 +125,7 @@ EbErrorType svt_aom_mode_decision_context_ctor(ModeDecisionContext *ctx, EbColor
     // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
     for (uint8_t is_base = 0; is_base < 2; is_base++) {
-#if OPT_LD_M11
         uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, hierarchical_levels, rtc_tune);
-#else
-        uint8_t nic_level = svt_aom_get_nic_level(enc_mode, is_base, hierarchical_levels);
-#endif
         uint8_t nic_scaling_level = svt_aom_set_nic_controls(NULL, nic_level);
         min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
     }
@@ -577,12 +567,10 @@ void svt_aom_reset_mode_decision(SequenceControlSet *scs, ModeDecisionContext *c
     ctx->bypass_encdec = pcs->pic_bypass_encdec;
     ctx->skip_pd0      = pcs->pic_skip_pd0;
     set_block_based_depth_refinement_controls(ctx, pcs->pic_block_based_depth_refinement_level);
-#if OPT_LD_TX_SHORT_CUT_OFF
     if (!pcs->rtc_tune || pcs->temporal_layer_index != 0)
         ctx->rtc_use_N4_dct_dct_shortcut = 1;
     else
         ctx->rtc_use_N4_dct_dct_shortcut = 0;
-#endif
     return;
 }
 

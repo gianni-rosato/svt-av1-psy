@@ -310,26 +310,14 @@ void svt_aom_release_pa_reference_objects(SequenceControlSet *scs, PictureParent
     (void)scs;
     // PA Reference Pictures
     if (pcs->slice_type != I_SLICE) {
-#if CLN_REMOVE_REF_CNT
         const uint32_t num_of_list_to_search =
             (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
-#else
-        uint32_t num_of_list_to_search =
-            (pcs->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
-#endif
 
         // List Loop
         for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
             // Release PA Reference Pictures
-#if CLN_REMOVE_REF_CNT
             uint8_t num_of_ref_pic_to_search = (list_index == REF_LIST_0) ? pcs->ref_list0_count
                                                                           : pcs->ref_list1_count;
-#else
-            uint8_t num_of_ref_pic_to_search = (pcs->slice_type == P_SLICE)
-                ? MIN(pcs->ref_list0_count, scs->reference_count)
-                : (list_index == REF_LIST_0) ? MIN(pcs->ref_list0_count, scs->reference_count)
-                                             : MIN(pcs->ref_list1_count, scs->reference_count);
-#endif
 
             for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
                  ++ref_pic_index) {

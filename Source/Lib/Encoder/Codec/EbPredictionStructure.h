@@ -17,36 +17,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if !OPT_RPS_CONSTR_3
-/************************************************
-     * Defines
-     ************************************************/
-#define FLAT_PREDICTION_STRUCTURE_PERIOD 1
-#define TWO_LEVEL_HIERARCHICAL_PREDICTION_STRUCTURE_PERIOD 2
-#define THREE_LEVEL_HIERARCHICAL_PREDICTION_STRUCTURE_PERIOD 4
-#define FOUR_LEVEL_HIERARCHICAL_PREDICTION_STRUCTURE_PERIOD 8
-#define MAX_PREDICTION_STRUCTURE_PERIOD 64
-
-/************************************************
-      * RPS defines
-      ************************************************/
-#define RPS_UNUSED ~0
-#define MAX_NUM_OF_NEGATIVE_REF_PICS 5
-#define MAX_NUM_OF_POSITIVE_REF_PICS 5
-#define MAX_NUM_OF_REF_PICS_TOTAL (MAX_NUM_OF_POSITIVE_REF_PICS + MAX_NUM_OF_NEGATIVE_REF_PICS)
-
-/************************************************
-       * Reference List
-       *
-       *   reference_list - Contains the deltaPOCs of
-       *    the pictures referenced by the current
-       *    picture.
-       ************************************************/
-typedef struct ReferenceList {
-    int32_t *reference_list;
-    uint32_t reference_list_count;
-} ReferenceList;
-#endif
 /************************************************
      * Prediction Structure Config
      *   Contains a collection of basic control data
@@ -64,17 +34,8 @@ typedef struct PredictionStructureConfig {
      *   Structure.
      ************************************************/
 typedef struct PredictionStructureEntry {
-#if !OPT_RPS_CONSTR_3
-    ReferenceList ref_list0;
-    ReferenceList ref_list1;
-    uint32_t      dep_list0_count;
-    uint32_t      dep_list1_count;
-#endif
     uint32_t temporal_layer_index;
     uint32_t decode_order;
-#if !OPT_RPS_CONSTR_3
-    Bool is_referenced;
-#endif
 } PredictionStructureEntry;
 
 /************************************************
@@ -87,18 +48,9 @@ typedef struct PredictionStructure {
     uint32_t                   pred_struct_entry_count;
     PredictionStructureEntry **pred_struct_entry_ptr_array;
     SvtAv1PredStructure        pred_type;
-#if !OPT_RPS_CONSTR_3
-    uint32_t temporal_layer_count;
-#endif
     uint32_t pred_struct_period;
-#if !OPT_RPS_CONSTR_3
-    uint32_t maximum_extent;
-#endif
     // Section Indices
     uint32_t init_pic_index;
-#if !OPT_RPS_CONSTR_3
-    uint32_t steady_state_index;
-#endif
 } PredictionStructure;
 
 /************************************************
@@ -111,28 +63,14 @@ typedef struct PredictionStructureGroup {
     PredictionStructure **prediction_structure_ptr_array;
     uint32_t              prediction_structure_count;
     void                 *priv; /* private member*/
-#if !OPT_RPS_CONSTR_3
-    uint8_t ref_count_used;
-#endif
 } PredictionStructureGroup;
 
 /************************************************
      * Declarations
      ************************************************/
-#if !OPT_RPS_CONSTR_3
-//EbErrorType prediction_structure_group_ctor(
-//   PredictionStructureGroup* pred_struct_group_ptr,
-//   struct SequenceControlSet* scs);
-#endif
-#if CLN_REMOVE_REF_CNT
 extern PredictionStructure *svt_aom_get_prediction_structure(
     PredictionStructureGroup *prediction_structure_group_ptr, SvtAv1PredStructure pred_structure,
     uint32_t levels_of_hierarchy);
-#else
-extern PredictionStructure *svt_aom_get_prediction_structure(
-    PredictionStructureGroup *prediction_structure_group_ptr, SvtAv1PredStructure pred_structure,
-    uint32_t number_of_references, uint32_t levels_of_hierarchy);
-#endif
 typedef enum {
     LAST  = 0,
     LAST2 = 1,

@@ -979,16 +979,12 @@ static int32_t search_filter_level(
     // range.
     int32_t lvl;
     switch (plane) {
-#if DLF_REF
     case 0:
         if (pcs->ppcs->dlf_ctrls.dlf_avg)
             lvl = last_frame_filter_level[0];
         else
             lvl = last_frame_filter_level[dir];
         break;
-#else
-    case 0: lvl = last_frame_filter_level[dir]; break;
-#endif
     case 1: lvl = last_frame_filter_level[2]; break;
     case 2: lvl = last_frame_filter_level[3]; break;
     default: assert(plane >= 0 && plane <= 2); return 0;
@@ -1013,9 +1009,7 @@ static int32_t search_filter_level(
     best_err = try_filter_frame(sd, temp_lf_recon_buffer, pcs, filt_mid, partial_frame, plane, dir);
     filt_best        = filt_mid;
     ss_err[filt_mid] = best_err;
-#if DLF_STEP
     int32_t tot_convergence = 0;
-#endif
     while (filter_step > 0) {
         const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
         const int32_t filt_low  = AOMMAX(filt_mid - filter_step, min_filter_level);
@@ -1059,15 +1053,11 @@ static int32_t search_filter_level(
 
         // Half the step distance if the best filter value was the same as last time
         if (filt_best == filt_mid) {
-#if DLF_STEP
             tot_convergence++;
             if (tot_convergence == pcs->ppcs->dlf_ctrls.early_exit_convergence)
                 filter_step = 0;
             else
                 filter_step /= 2;
-#else
-            filter_step /= 2;
-#endif
             filt_direction = 0;
         } else {
             filt_direction = (filt_best < filt_mid) ? -1 : 1;
@@ -1081,7 +1071,6 @@ static int32_t search_filter_level(
         *best_cost_ret = (double)best_err; //RDCOST_DBL(x->rdmult, 0, best_err);
     return filt_best;
 }
-#if DLF_UV_QP
 EbErrorType qp_based_dlf_param(PictureControlSet *pcs, int32_t *filter_level_y,
                                int32_t *filter_level_uv) {
     SequenceControlSet *scs     = pcs->scs;
@@ -1124,7 +1113,6 @@ EbErrorType qp_based_dlf_param(PictureControlSet *pcs, int32_t *filter_level_y,
 
     return EB_ErrorNone;
 }
-#endif
 /*************************************************************************************************
 * svt_av1_pick_filter_level
 * Choose the optimal loop filter levels
@@ -1245,7 +1233,6 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
                    (EbPtr)&temp_lf_recon_desc_init_data);
         }
 
-#if DLF_REF //avg
         if (pcs->ppcs->dlf_ctrls.dlf_avg && pcs->ppcs->tot_ref_frame_types > 0) {
             int32_t tot_ref_filter_level[2] = {0, 0};
             int32_t tot_ref_filter_level_u  = 0;
@@ -1278,7 +1265,6 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
             lf->filter_level_u  = tot_ref_filter_level_u / tot_refs;
             lf->filter_level_v  = tot_ref_filter_level_v / tot_refs;
         }
-#endif
 
         const int32_t last_frame_filter_level[4] = {
             lf->filter_level[0], lf->filter_level[1], lf->filter_level_u, lf->filter_level_v};
@@ -1295,7 +1281,6 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
             NULL,
             0,
             2);
-#if DLF_UV_QP
         bool use_qp_for_chroma = pcs->ppcs->dlf_ctrls.dlf_avg_uv && pcs->temporal_layer_index > 0;
 
         if (use_qp_for_chroma) {
@@ -1307,7 +1292,6 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
             lf->filter_level_v = last_frame_filter_level[3];
 
         } else {
-#endif
 
             lf->filter_level_u = search_filter_level(srcBuffer,
                                                      temp_lf_recon_buffer,
@@ -1325,9 +1309,7 @@ EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source 
                                                      NULL,
                                                      2,
                                                      0);
-#if DLF_UV_QP
         }
-#endif
         EB_DELETE(pcs->temp_lf_recon_pic);
         EB_DELETE(pcs->temp_lf_recon_pic_16bit);
     }

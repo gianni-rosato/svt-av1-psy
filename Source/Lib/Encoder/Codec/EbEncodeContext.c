@@ -173,9 +173,7 @@ EbErrorType svt_aom_encode_context_ctor(EncodeContext *enc_ctx, EbPtr object_ini
         enc_ctx->rc_param_queue[interval_index]->extend_minq_fast    = 0;
     }
     enc_ctx->rc_param_queue_head_index = 0;
-#if OPT_LD_QPM
     enc_ctx->cr_sb_end = 0;
-#endif
 
     EB_CREATE_MUTEX(enc_ctx->rc_param_queue_mutex);
 

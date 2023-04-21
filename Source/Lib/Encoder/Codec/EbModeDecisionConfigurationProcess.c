@@ -77,39 +77,11 @@ void           set_global_motion_field(PictureControlSet *pcs) {
         if (ppcs->is_global_motion[get_list_idx(frame_index)][get_ref_frame_idx(frame_index)])
             ppcs->global_motion[frame_index] = ppcs->svt_aom_global_motion_estimation[get_list_idx(
                 frame_index)][get_ref_frame_idx(frame_index)];
-#if OPT_GM_MIX_DS
         uint8_t sf = ppcs->gm_downsample_level == GM_DOWN ? 2
             : ppcs->gm_downsample_level == GM_DOWN16      ? 4
                                                           : 1;
         svt_aom_upscale_wm_params(&ppcs->global_motion[frame_index], sf);
 
-#else
-        // Upscale the translation parameters by 2, because the search is done on a down-sampled
-        // version of the source picture (with a down-sampling factor of 2 in each dimension).
-        if (ppcs->gm_downsample_level == GM_DOWN16) {
-            ppcs->global_motion[frame_index].wmmat[0] *= 4;
-            ppcs->global_motion[frame_index].wmmat[1] *= 4;
-            ppcs->global_motion[frame_index].wmmat[0] = (int32_t)clamp(
-                ppcs->global_motion[frame_index].wmmat[0],
-                GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            ppcs->global_motion[frame_index].wmmat[1] = (int32_t)clamp(
-                ppcs->global_motion[frame_index].wmmat[1],
-                GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-        } else if (ppcs->gm_downsample_level == GM_DOWN) {
-            ppcs->global_motion[frame_index].wmmat[0] *= 2;
-            ppcs->global_motion[frame_index].wmmat[1] *= 2;
-            ppcs->global_motion[frame_index].wmmat[0] = (int32_t)clamp(
-                ppcs->global_motion[frame_index].wmmat[0],
-                GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            ppcs->global_motion[frame_index].wmmat[1] = (int32_t)clamp(
-                ppcs->global_motion[frame_index].wmmat[1],
-                GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-        }
-#endif
     }
 }
 
@@ -295,10 +267,6 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs) {
                                  pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                  pcs->ppcs->enable_restoration,
                                  pcs->ppcs->frm_hdr.allow_intrabc,
-#if CLN_PART_CTX
-#else
-                                 pcs->ppcs->partition_contexts,
-#endif
                                  &pcs->md_frame_context);
     // Initial Rate Estimation of the Motion vectors
     svt_aom_estimate_mv_rate(pcs, md_rate_est_ctx, &pcs->md_frame_context);
@@ -612,7 +580,6 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         RateControlResults *rc_results = (RateControlResults *)rc_results_wrapper->object_ptr;
         PictureControlSet  *pcs        = (PictureControlSet *)rc_results->pcs_wrapper->object_ptr;
         SequenceControlSet *scs        = pcs->scs;
-#if OPT_DEPTH_LEVEL
         pcs->min_me_clpx = 0;
         pcs->max_me_clpx = 0;
         pcs->avg_me_clpx = 0;
@@ -631,7 +598,6 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
             pcs->max_me_clpx = max_dist;
             pcs->avg_me_clpx = avg_me_clpx / pcs->ppcs->b64_total_count;
         }
-#endif
         pcs->coeff_lvl = INVALID_LVL;
         if (scs->static_config.pass != ENC_FIRST_PASS) {
             if (pcs->slice_type != I_SLICE && !pcs->ppcs->sc_class1) {
@@ -658,10 +624,8 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         }
 
         FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
-#if OPT_LD_SKIPTX
         pcs->rtc_tune = (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true
                                                                                         : false;
-#endif
         // Mode Decision Configuration Kernel Signal(s) derivation
         if (scs->static_config.pass == ENC_FIRST_PASS)
             svt_aom_first_pass_sig_deriv_mode_decision_config(pcs);
@@ -704,10 +668,6 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                                      pcs->ppcs->frm_hdr.allow_screen_content_tools,
                                      pcs->ppcs->enable_restoration,
                                      pcs->ppcs->frm_hdr.allow_intrabc,
-#if CLN_PART_CTX
-#else
-                                     pcs->ppcs->partition_contexts,
-#endif
                                      &pcs->md_frame_context);
         // Initial Rate Estimation of the Motion vectors
         if (scs->static_config.pass != ENC_FIRST_PASS) {
@@ -826,7 +786,6 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                                 highest_sg = ref_obj_l1->ref_cdef_strengths[0][fs];
                         }
                     }
-#if OPT_LD_CDEF1
                     if (pcs->rtc_tune) {
                         int8_t mid_filter     = MIN(63, MAX(0, MAX(lowest_sg, highest_sg)));
                         cdef_ctrls->pred_y_f  = mid_filter;
@@ -836,11 +795,6 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                         cdef_ctrls->pred_y_f  = mid_filter;
                         cdef_ctrls->pred_uv_f = 0;
                     }
-#else
-                    int8_t mid_filter     = MIN(63, MAX(0, (lowest_sg + highest_sg) / 2));
-                    cdef_ctrls->pred_y_f  = mid_filter;
-                    cdef_ctrls->pred_uv_f = 0;
-#endif
                     cdef_ctrls->first_pass_fs_num          = 0;
                     cdef_ctrls->default_second_pass_fs_num = 0;
                     // Set cdef to off if pred is.

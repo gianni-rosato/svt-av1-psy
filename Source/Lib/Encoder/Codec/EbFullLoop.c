@@ -1551,21 +1551,12 @@ int32_t svt_aom_quantize_inv_quantize(
     MacroblockPlane     candidate_plane;
     const QmVal        *q_matrix  = pcs->ppcs->gqmatrix[qmatrix_level][plane][adjusted_tx_size];
     const QmVal        *iq_matrix = pcs->ppcs->giqmatrix[qmatrix_level][plane][adjusted_tx_size];
-#if FIX_SEGMENT_ISSUE
     int32_t q_index = pcs->ppcs->frm_hdr.delta_q_params.delta_q_present
         ? qindex
         : pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
     if (segmentation_qp_offset != 0) {
         q_index = CLIP3(0, 255, q_index + segmentation_qp_offset);
     }
-#else
-    uint32_t q_index = pcs->ppcs->frm_hdr.delta_q_params.delta_q_present
-        ? qindex
-        : (uint32_t)CLIP3(
-              0,
-              255,
-              (int32_t)pcs->ppcs->frm_hdr.quantization_params.base_q_idx + segmentation_qp_offset);
-#endif
     if (component_type != COMPONENT_LUMA) {
         const int8_t offset = (component_type == COMPONENT_CHROMA_CB)
             ? pcs->ppcs->frm_hdr.quantization_params
@@ -2471,16 +2462,10 @@ uint64_t svt_aom_d1_non_square_block_decision(ModeDecisionContext *ctx, uint32_t
     }
     uint64_t split_cost = svt_aom_partition_rate_cost(ctx->sb_ptr->pcs->ppcs,
                                                       ctx,
-#if OPT_DEPTH_EARLY_EXIT_RATE
                                                       ctx->blk_geom->sqi_mds,
-#else
-                                                      &ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds],
-#endif
                                                       from_shape_to_part[ctx->blk_geom->shape],
                                                       full_lambda,
-#if CLN_PART_CTX
                                                       ctx->sb_ptr->pcs->ppcs->use_accurate_part_ctx,
-#endif
                                                       ctx->md_rate_est_ctx);
 
     tot_cost += split_cost;
@@ -2523,16 +2508,10 @@ static void compute_depth_costs(ModeDecisionContext *ctx, PictureParentControlSe
     // Get split rate for current depth
     above_split_rate = svt_aom_partition_rate_cost(pcs,
                                                    ctx,
-#if OPT_DEPTH_EARLY_EXIT_RATE
                                                    above_depth_mds,
-#else
-                                                   &ctx->md_blk_arr_nsq[above_depth_mds],
-#endif
                                                    PARTITION_SPLIT,
                                                    full_lambda,
-#if CLN_PART_CTX
                                                    pcs->use_accurate_part_ctx,
-#endif
                                                    ctx->md_rate_est_ctx);
 
     // Compute current depth cost
@@ -2597,23 +2576,17 @@ uint32_t svt_aom_d2_inter_depth_block_decision(SequenceControlSet *scs, PictureC
 
     return last_blk_index;
 }
-#if OPT_DEPTH_EARLY_EXIT_RATE
 void svt_aom_compute_depth_costs_md_skip_light_pd0(PictureParentControlSet *pcs,
                                                    ModeDecisionContext     *ctx,
-#else
-void svt_aom_compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *ctx,
-#endif
                                                    uint32_t above_depth_mds, uint32_t step,
                                                    uint64_t *above_depth_cost,
                                                    uint64_t *curr_depth_cost) {
-#if OPT_DEPTH_EARLY_EXIT_RATE
     // If the parent depth is not available, no need to compare costs
     if (!ctx->avail_blk_flag[above_depth_mds]) {
         *above_depth_cost = MAX_MODE_COST;
         *curr_depth_cost  = 0;
         return;
     }
-#endif
     uint32_t full_lambda = ctx->hbd_md ? ctx->full_sb_lambda_md[EB_10_BIT_MD]
                                        : ctx->full_sb_lambda_md[EB_8_BIT_MD];
 
@@ -2623,7 +2596,6 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *ctx,
         uint32_t curr_depth_cur_blk_mds = ctx->blk_geom->sqi_mds - i * step;
         *curr_depth_cost += ctx->md_local_blk_unit[curr_depth_cur_blk_mds].cost;
     }
-#if OPT_DEPTH_EARLY_EXIT_RATE
     // Parent neighbour arrays should be set in case parent depth was not allowed
     ctx->md_local_blk_unit[above_depth_mds].left_neighbor_partition  = INVALID_NEIGHBOR_DATA;
     ctx->md_local_blk_unit[above_depth_mds].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
@@ -2632,38 +2604,20 @@ void svt_aom_compute_depth_costs_md_skip_light_pd0(ModeDecisionContext *ctx,
                                                     above_depth_mds,
                                                     PARTITION_SPLIT,
                                                     full_lambda,
-#if CLN_PART_CTX
                                                     TRUE, // Use accurate split cost for early exit
-#endif
                                                     ctx->md_rate_est_ctx);
 
     *above_depth_cost = ctx->md_local_blk_unit[above_depth_mds].cost;
-#else
-    // Add split rate to the cost of the current depth
-    // Use context index 0 for the split rate as an approximation to skip call to
-    // av1_partition_rate_cost
-    *curr_depth_cost += RDCOST(
-        full_lambda, (uint64_t)ctx->md_rate_est_ctx->partition_fac_bits[0][PARTITION_SPLIT], 0);
-#if OPT_SPLIT_RATE_SHORTCUT
-    *above_depth_cost = ctx->avail_blk_flag[above_depth_mds]
-#else
-    *above_depth_cost = ctx->tested_blk_flag[above_depth_mds]
-#endif
-        ? ctx->md_local_blk_unit[above_depth_mds].cost
-        : MAX_MODE_COST;
-#endif
 }
 void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParentControlSet *pcs,
                                          uint32_t above_depth_mds, uint32_t step,
                                          uint64_t *above_depth_cost, uint64_t *curr_depth_cost) {
-#if OPT_DEPTH_EARLY_EXIT_RATE
     // If the parent depth is not available, no need to compare costs
     if (!ctx->avail_blk_flag[above_depth_mds]) {
         *above_depth_cost = MAX_MODE_COST;
         *curr_depth_cost  = 0;
         return;
     }
-#endif
     uint32_t full_lambda = ctx->hbd_md ? ctx->full_sb_lambda_md[EB_10_BIT_MD]
                                        : ctx->full_sb_lambda_md[EB_8_BIT_MD];
 
@@ -2692,28 +2646,12 @@ void svt_aom_compute_depth_costs_md_skip(ModeDecisionContext *ctx, PictureParent
 
     above_split_rate = svt_aom_partition_rate_cost(pcs,
                                                    ctx,
-#if OPT_DEPTH_EARLY_EXIT_RATE
                                                    above_depth_mds,
-#else
-                                                   &ctx->md_blk_arr_nsq[above_depth_mds],
-#endif
                                                    PARTITION_SPLIT,
                                                    full_lambda,
-#if CLN_PART_CTX
                                                    TRUE, // Use accurate split cost for early exit
-#endif
                                                    ctx->md_rate_est_ctx);
 
     *curr_depth_cost += above_split_rate;
-#if OPT_DEPTH_EARLY_EXIT_RATE
     *above_depth_cost = ctx->md_local_blk_unit[above_depth_mds].cost;
-#else
-#if OPT_SPLIT_RATE_SHORTCUT
-    *above_depth_cost = ctx->avail_blk_flag[above_depth_mds]
-#else
-    *above_depth_cost = ctx->tested_blk_flag[above_depth_mds]
-#endif
-        ? ctx->md_local_blk_unit[above_depth_mds].cost
-        : MAX_MODE_COST;
-#endif
 }

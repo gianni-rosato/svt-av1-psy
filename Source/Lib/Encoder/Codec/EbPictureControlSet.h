@@ -410,11 +410,7 @@ typedef struct PictureControlSet {
     uint32_t max_part0_to_part1_dev;
     // if true, skip H4/V4 shapes when best partition so far is not H/V
     uint32_t skip_hv4_on_best_part;
-#if OPT_II
     uint8_t inter_intra_level;
-#else
-    uint8_t md_inter_intra_level;
-#endif
     uint8_t  txs_level;
     uint8_t  nic_level;
     uint8_t  md_sq_mv_search_level;
@@ -426,19 +422,10 @@ typedef struct PictureControlSet {
     uint8_t  pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
     // depth_removal_level signal at the picture level
     uint8_t pic_depth_removal_level;
-#if OPT_LD_DR
     uint8_t pic_depth_removal_level_rtc;
-#endif
     // block_based_depth_refinement_level signal set at the picture level
     uint8_t pic_block_based_depth_refinement_level;
-#if OPT_DEPTH_RATE_SHORTCUT
     uint8_t pic_depth_early_exit_lvl;
-#else
-    // Skip testing remaining blocks at the current depth if (curr_cost * 100 >
-    // pic_depth_early_exit_th * parent_cost); [0-100], 0 is OFF, lower percentage is more
-    // aggressive
-    uint8_t pic_depth_early_exit_th;
-#endif
     uint8_t          pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
     uint8_t          pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
     Bool             pic_bypass_encdec;
@@ -483,11 +470,9 @@ typedef struct PictureControlSet {
     int32_t rst_end_stripe[MAX_TILE_ROWS];
     uint8_t ref_intra_percentage;
     uint8_t ref_skip_percentage;
-#if OPT_DEPTH_LEVEL
     uint64_t avg_me_clpx;
     uint64_t min_me_clpx;
     uint64_t max_me_clpx;
-#endif
     // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will
     // be removed)
     uint8_t    approx_inter_rate;
@@ -496,9 +481,7 @@ typedef struct PictureControlSet {
     // scaled input picture is only used in loop restoration for recon size is
     // different with input frame when reference scaling is enabled
     EbPictureBufferDesc *scaled_input_pic;
-#if OPT_LD_SKIPTX
     bool rtc_tune;
-#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -527,9 +510,6 @@ typedef struct SbGeom {
     uint8_t  width;
     uint8_t  height;
     uint8_t  is_complete_sb;
-#if !FIX_2042
-    Bool block_is_inside_md_scan[BLOCK_MAX_COUNT_SB_128];
-#endif
     Bool block_is_allowed[BLOCK_MAX_COUNT_SB_128];
 } SbGeom;
 
@@ -626,22 +606,14 @@ typedef struct GmControls {
     // of 2 in each dimension; GM_TRAN_ONLY: Translation only using ME MV.
     uint8_t params_refinement_steps;
     uint8_t downsample_level;
-#if OPT_GM_CORNERS
     //use a fraction of corner points for computing correspondences for RANSAC in detection. 1:1/4   2:2/4   3:3/4   4:all
     uint8_t corners;
-#endif
-#if OPT_GM_CHESS_REFN
     //skip global motion refinement using a chess pattern to skip blocks
     uint8_t chess_rfn;
-#endif
-#if OPT_GM_WD
     //change the window size for correlation calculations. must be odd. N: NxN window size goes from 1 to 15
     uint8_t match_sz;
-#endif
-#if OPT_NO_GLB_INJ
     //Inject global only if Parent SQ is global
     bool inj_psq_glb;
-#endif
 } GmControls;
 typedef struct CdefControls {
     uint8_t enabled;
@@ -691,18 +663,12 @@ typedef struct DlfCtrls {
     // TH, the filter level is set to 0
     uint8_t sb_based_dlf;
     uint8_t min_filter_level;
-#if DLF_REF
     // Start search from average DLF instead of 0
     bool dlf_avg;
-#endif
-#if DLF_UV_QP
     // Use average DLF as a starting point for qp based filter strength selection for Chroma planes
     bool dlf_avg_uv;
-#endif
-#if DLF_STEP
     // Number of convergence points before exiting the filter search, 1 = exit on first convergence point, 2 = exit on second, 0 = off
     uint8_t early_exit_convergence;
-#endif
 } DlfCtrls;
 typedef struct IntraBCCtrls {
     // Shift for full_pixel_exhaustive search threshold:   0: No Shift   1:Shift to left by 1
@@ -724,12 +690,9 @@ typedef struct PaletteCtrls {
     // only 3 candidates with palettes based on the most dominant 7, 5 and 3 colors are tested.
     // Range: [1 (test all), 7 (test one)]
     uint8_t dominant_color_step;
-#if OPT_LD_SC_MDS0
     uint8_t reduce_palette_cost_precision;
-#endif
 } PaletteCtrls;
 
-#if OPT_LD_QPM
 /*!
  * \brief The stucture of Cyclic_Refresh.
  * \ingroup cyclic_refresh
@@ -760,8 +723,6 @@ typedef struct CyclicRefresh {
     int apply_cyclic_refresh;
 
 } CyclicRefresh;
-#endif
-#if OPT_PRED_STRUCT_CLASSIFIER
 // struct stores the metrics used by the dynamic gop detector
 typedef struct DGDetectorMetrics {
     uint64_t tot_dist;
@@ -781,7 +742,6 @@ typedef struct DGDetectorSeg {
     // ensures that only one dynamic gop detector segment is modifying the dg detector metrics at any time
     EbHandle metrics_mutex;
 } DGDetectorSeg;
-#endif
 // CHKN
 //  Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 //  It actually holds only high level Picture based control data:(GOP management,when to start a
@@ -838,10 +798,8 @@ typedef struct PictureParentControlSet {
     uint8_t   temporal_layer_index;
     uint64_t  decode_order;
 
-#if FIX_AVG_Y
     //avg luma intensity of the picture  256: invalid value  0..255 valid value
     uint64_t avg_luma;
-#endif
 
     // Each picture can release up to 8 references from the DPB (8 is the max number of entries in
     // the DPB). Each frame may also release itself at EOS, which is only done in the encoder to
@@ -1180,20 +1138,10 @@ typedef struct PictureParentControlSet {
     uint8_t                         is_new_gf_group;
     struct PictureParentControlSet *gf_group[MAX_TPL_GROUP_SIZE];
     StatStruct                      stat_struct;
-#if OPT_LD_QPM
     CyclicRefresh cyclic_refresh;
-#endif
-#if OPT_LD_PD0
     bool ld_enhanced_base_frame; // enhanced periodic base layer frames used in LD
-#endif
-#if OPT_LD_MRP3
     bool update_ref_count; // Update ref count
-#endif
-#if CLN_PART_CTX
     bool use_accurate_part_ctx;
-#else
-    uint8_t partition_contexts;
-#endif
     uint8_t      bypass_cost_table_gen;
     uint16_t     max_can_count;
     uint8_t      enable_me_8x8;
@@ -1209,9 +1157,7 @@ typedef struct PictureParentControlSet {
     int32_t  is_noise_level;
     bool     r0_based_qps_qpm;
     uint32_t dpb_order_hint[REF_FRAMES]; // spec 6.8.2. ref_order_hint[]
-#if OPT_PRED_STRUCT_CLASSIFIER
     DGDetectorSeg *dg_detector; // dg detector segments control struct
-#endif
 } PictureParentControlSet;
 
 typedef struct TplDispResults {
@@ -1294,9 +1240,7 @@ typedef struct PictureControlSetInitData {
     uint8_t input_resolution;
     uint8_t calculate_variance;
     Bool    is_scale;
-#if OPT_LD_M13
     bool rtc_tune;
-#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

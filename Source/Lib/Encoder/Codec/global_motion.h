@@ -66,9 +66,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                          int use_hbd, int bd, uint8_t *ref, uint8_t *ref_2b,
                                          int r_width, int r_height, int r_stride, uint8_t *dst,
                                          int d_width, int d_height, int d_stride, int n_refinements,
-#if OPT_GM_CHESS_REFN
                                          uint8_t chess_refn,
-#endif
                                          int64_t best_frame_error);
 
 /*
@@ -86,30 +84,13 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
   number of inlier feature points for each motion. Params for which the
   num_inliers entry is 0 should be ignored by the caller.
 */
-#if OPT_GM_CORNERS
 int svt_av1_compute_global_motion(TransformationType type, uint8_t corners,
                                   unsigned char *frm_buffer, int frm_width, int frm_height,
                                   int frm_stride, int *frm_corners, int num_frm_corners,
                                   uint8_t *ref, int ref_stride, int bit_depth,
                                   GlobalMotionEstimationType gm_estimation_type,
                                   int *num_inliers_by_motion, MotionModel *params_by_motion,
-#if OPT_GM_WD
                                   int num_motions, uint8_t match_sz);
-#else
-                                  int num_motions);
-#endif
-#else
-int svt_av1_compute_global_motion(TransformationType type, unsigned char *frm_buffer, int frm_width,
-                                  int frm_height, int frm_stride, int *frm_corners,
-                                  int num_frm_corners, uint8_t *ref, int ref_stride, int bit_depth,
-                                  GlobalMotionEstimationType gm_estimation_type,
-                                  int *num_inliers_by_motion, MotionModel *params_by_motion,
-#if OPT_GM_WD
-                                  int num_motions, uint8_t match_sz);
-#else
-                                  int num_motions);
-#endif
-#endif
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -76,11 +76,6 @@
 #include "aom_dsp_rtcd.h"
 #include "common_dsp_rtcd.h"
 
-#if !OPT_RPS_CONSTR_3
- EbErrorType prediction_structure_group_ctor(
-     PredictionStructureGroup* pred_struct_group_ptr,
-     struct SequenceControlSet* scs);
-#endif
 
  /**************************************
   * Defines
@@ -119,7 +114,6 @@ typedef struct logicalProcessorGroup {
 static processorGroup           *lp_group = NULL;
 #endif
 uint8_t svt_aom_get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
-#if OPT_RPS_CONSTR_2
 /* count number of refs in a steady state MG*/
 static uint16_t get_num_refs_in_one_mg(uint32_t hierarchical_levels, uint32_t referencing_scheme) {
 
@@ -137,10 +131,6 @@ static uint16_t get_num_refs_in_one_mg(uint32_t hierarchical_levels, uint32_t re
 
     return tot_refs;
 }
-#else
-extern uint32_t tot_past_refs[];
-uint32_t  get_num_refs_in_one_mg(PredictionStructure *pred_struct_ptr);
-#endif
 
 static const char *get_asm_level_name_str(EbCpuFlags cpu_flags) {
 
@@ -405,14 +395,8 @@ static uint32_t get_max_wavefronts(uint32_t width, uint32_t height, uint32_t blk
 static Bool is_pic_width_single_sb(uint32_t sb_size, uint16_t pic_width) {
     return ((pic_width + (sb_size >> 1)) / sb_size) == 1;
 }
-#if OPT_RPS_CONSTR_2
 static EbErrorType load_default_buffer_configuration_settings(
     SequenceControlSet       *scs) {
-#else
-static EbErrorType load_default_buffer_configuration_settings(
-    EbEncHandle        *enc_handle,
-    SequenceControlSet       *scs){
-#endif
     EbErrorType           return_error = EB_ErrorNone;
     unsigned int lp_count   = get_num_processors();
     unsigned int core_count = lp_count;
@@ -590,19 +574,7 @@ static EbErrorType load_default_buffer_configuration_settings(
         //Pic-Manager will inject one child at a time.
         min_child = 1;
 
-#if !OPT_RPS_CONSTR_2
-        //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
-        PredictionStructure*pred_struct_ptr = svt_aom_get_prediction_structure(
-            enc_handle->scs_instance_array[0]->enc_ctx->prediction_structure_group_ptr,
-            enc_handle->scs_instance_array[0]->scs->static_config.pred_structure,
-            4,
-            scs->static_config.hierarchical_levels);
-#endif
-#if OPT_RPS_CONSTR_2
         const uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(scs->static_config.hierarchical_levels, scs->mrp_ctrls.referencing_scheme) + 1; //+1: to accomodate one for a delayed-I
-#else
-        const uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(pred_struct_ptr) + 1; //+1: to accomodate one for a delayed-I
-#endif
         const uint16_t num_ref_lad_mgs = num_ref_from_cur_mg * scs->lad_mg;
         const uint8_t dpb_frames = REF_FRAMES; // up to dpb_frame refs from prev MGs can be used (AV1 spec allows holding up to 8 frames for references)
         min_ref = (scs->enable_dec_order) ? dpb_frames + 1 : num_ref_from_cur_mg + num_ref_lad_mgs + dpb_frames;
@@ -1615,9 +1587,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs->input_resolution;
         input_data.is_scale = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.superres_mode > SUPERRES_NONE ||
                               enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.resize_mode > RESIZE_NONE;
-#if OPT_LD_M13
         input_data.rtc_tune = (enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) ? true : false;
-#endif
 
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
@@ -2632,7 +2602,6 @@ void set_tf_64x64_params(
 /*
  * Control TF
  */
-#if FIX_LAYER_SIGNAL
 uint8_t svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels, uint8_t type /*I_SLICE, BASE, L1*/, bool direction /*Past, Future*/) {
     uint8_t max_ref_per;
     if (type == 0) // I_SLICE
@@ -2650,8 +2619,6 @@ uint8_t svt_aom_tf_max_ref_per_struct(uint32_t hierarchical_levels, uint8_t type
 
     return max_ref_per;
 }
-#endif
-#if OPT_LD_TF
 /******************************************************************************
 * tf_ld_controls
 * TF control functions for low delay mode
@@ -2744,7 +2711,6 @@ static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
     scs->tf_params_per_type[1].use_fixed_point = 1;
     scs->tf_params_per_type[2].use_fixed_point = 1;
 }
-#endif
 void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
 
     switch (tf_level)
@@ -2765,11 +2731,7 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = 24;
         scs->tf_params_per_type[0].noise_adjust_future_pics = 1;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 0, 1));
-#else
-        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 32);
-#endif
         scs->tf_params_per_type[0].hme_me_level = 0;
         scs->tf_params_per_type[0].half_pel_mode = 1;
         scs->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -2794,13 +2756,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].num_future_pics = 6;
         scs->tf_params_per_type[1].noise_adjust_past_pics = 1;
         scs->tf_params_per_type[1].noise_adjust_future_pics = 1;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
         scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
-#else
-        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), (scs->static_config.hierarchical_levels < 5) ? 3 : 6);
-        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 6);
-#endif
         scs->tf_params_per_type[1].hme_me_level = 0;
         scs->tf_params_per_type[1].half_pel_mode = 1;
         scs->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -2825,13 +2782,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 1 : 2;
         scs->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs->tf_params_per_type[2].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 0));
         scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 1));
-#else
-        scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, (scs->static_config.hierarchical_levels < 5) ? 1 : 2);
-        scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, (scs->static_config.hierarchical_levels < 5) ? 1 : 2);
-#endif
         scs->tf_params_per_type[2].hme_me_level = 0;
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -2857,11 +2809,7 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = 24;
         scs->tf_params_per_type[0].noise_adjust_future_pics = 1;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 0, 1));
-#else
-        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 32);
-#endif
         scs->tf_params_per_type[0].hme_me_level = 1;
         scs->tf_params_per_type[0].half_pel_mode = 1;
         scs->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -2886,13 +2834,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 3 : 6;
         scs->tf_params_per_type[1].noise_adjust_past_pics = 1;
         scs->tf_params_per_type[1].noise_adjust_future_pics = 1;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
         scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
-#else
-        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), (scs->static_config.hierarchical_levels < 5) ? 3 : 6);
-        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 6);
-#endif
         scs->tf_params_per_type[1].hme_me_level = 1;
         scs->tf_params_per_type[1].half_pel_mode = 1;
         scs->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -2917,13 +2860,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 1 : 2;
         scs->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs->tf_params_per_type[2].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 0));
         scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 1));
-#else
-        scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, (scs->static_config.hierarchical_levels < 5) ? 1 : 2);
-        scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, (scs->static_config.hierarchical_levels < 5) ? 1 : 2);
-#endif
         scs->tf_params_per_type[2].hme_me_level = 1;
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -2944,16 +2882,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].subpel_early_exit = 0;
         break;
     case 3:
-#if OPT_TF
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 8 : 16;
         scs->tf_params_per_type[0].noise_adjust_future_pics = 1;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 0, 1));
-#else
-        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 16);
-#endif
         scs->tf_params_per_type[0].hme_me_level = 2;
         scs->tf_params_per_type[0].half_pel_mode = 1;
         scs->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -2979,13 +2912,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].num_future_pics = 3;
         scs->tf_params_per_type[1].noise_adjust_past_pics = 1;
         scs->tf_params_per_type[1].noise_adjust_future_pics = 1;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
         scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
-#else
-        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), (scs->static_config.hierarchical_levels < 5) ? 3 : 6);
-        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 6);
-#endif
         scs->tf_params_per_type[1].hme_me_level = 2;
         scs->tf_params_per_type[1].half_pel_mode = 1;
         scs->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -3011,13 +2939,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 1 : 2;
         scs->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs->tf_params_per_type[2].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 0));
         scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 1));
-#else
-        scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, (scs->static_config.hierarchical_levels < 5) ? 1 : 2);
-        scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, (scs->static_config.hierarchical_levels < 5) ? 1 : 2);
-#endif
         scs->tf_params_per_type[2].hme_me_level = 1;
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -3037,109 +2960,13 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
             &scs->tf_params_per_type[2].me_exit_th, 0, 0);
         scs->tf_params_per_type[2].subpel_early_exit = 0;
 
-#else
-        // I_SLICE TF Params
-        scs->tf_params_per_type[0].enabled = 1;
-        scs->tf_params_per_type[0].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 8 : 16;
-        scs->tf_params_per_type[0].noise_adjust_future_pics = 1;
-#if FIX_LAYER_SIGNAL
-        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 0, 1));
-#else
-        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 16);
-#endif
-        scs->tf_params_per_type[0].hme_me_level = 2;
-        scs->tf_params_per_type[0].half_pel_mode = 1;
-        scs->tf_params_per_type[0].quarter_pel_mode = 1;
-        scs->tf_params_per_type[0].eight_pel_mode = 0;
-        scs->tf_params_per_type[0].do_chroma = 1;
-        scs->tf_params_per_type[0].pred_error_32x32_th = 20 * 32 * 32;
-        scs->tf_params_per_type[0].sub_sampling_shift = 0;
-        scs->tf_params_per_type[0].use_fast_filter = 0;
-        scs->tf_params_per_type[0].use_medium_filter = 1;
-        scs->tf_params_per_type[0].avoid_2d_qpel = 0;
-        scs->tf_params_per_type[0].use_2tap = 0;
-        scs->tf_params_per_type[0].use_intra_for_noise_est = 0;
-        scs->tf_params_per_type[0].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs->tf_params_per_type[0].use_fast_filter,
-            &scs->tf_params_per_type[0].use_pred_64x64_only_th,
-            &scs->tf_params_per_type[0].me_exit_th, 0, 0);
-        scs->tf_params_per_type[0].subpel_early_exit = 1;
-        // BASE TF Params
-        scs->tf_params_per_type[1].enabled = 1;
-        scs->tf_params_per_type[1].num_past_pics = (scs->static_config.hierarchical_levels < 5) ? 2 : 3;
-        scs->tf_params_per_type[1].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 2 : 3;
-        scs->tf_params_per_type[1].noise_adjust_past_pics = 0;
-        scs->tf_params_per_type[1].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
-        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
-        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
-#else
-        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), 3);
-        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 6);
-#endif
-        scs->tf_params_per_type[1].hme_me_level = 2;
-        scs->tf_params_per_type[1].half_pel_mode = 1;
-        scs->tf_params_per_type[1].quarter_pel_mode = 1;
-        scs->tf_params_per_type[1].eight_pel_mode = 0;
-        scs->tf_params_per_type[1].do_chroma = 1;
-        scs->tf_params_per_type[1].pred_error_32x32_th = 20 * 32 * 32;
-        scs->tf_params_per_type[1].sub_sampling_shift = 0;
-        scs->tf_params_per_type[1].use_fast_filter = 0;
-        scs->tf_params_per_type[1].use_medium_filter = 1;
-        scs->tf_params_per_type[1].avoid_2d_qpel = 0;
-        scs->tf_params_per_type[1].use_2tap = 0;
-        scs->tf_params_per_type[1].use_intra_for_noise_est = 0;
-        scs->tf_params_per_type[1].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs->tf_params_per_type[1].use_fast_filter,
-            &scs->tf_params_per_type[1].use_pred_64x64_only_th,
-            &scs->tf_params_per_type[1].me_exit_th, 0, 0);
-        scs->tf_params_per_type[1].subpel_early_exit = 1;
-        // L1 TF Params
-        scs->tf_params_per_type[2].enabled = 1;
-        scs->tf_params_per_type[2].num_past_pics = 1;
-        scs->tf_params_per_type[2].num_future_pics = 1;
-        scs->tf_params_per_type[2].noise_adjust_past_pics = 0;
-        scs->tf_params_per_type[2].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
-        scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 0));
-        scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 1));
-#else
-        scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, 1);
-        scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, 1);
-#endif
-        scs->tf_params_per_type[2].hme_me_level = 2;
-        scs->tf_params_per_type[2].half_pel_mode = 1;
-        scs->tf_params_per_type[2].quarter_pel_mode = 1;
-        scs->tf_params_per_type[2].eight_pel_mode = 0;
-        scs->tf_params_per_type[2].do_chroma = 1;
-        scs->tf_params_per_type[2].pred_error_32x32_th = 20 * 32 * 32;
-        scs->tf_params_per_type[2].sub_sampling_shift = 0;
-        scs->tf_params_per_type[2].use_fast_filter = 0;
-        scs->tf_params_per_type[2].use_medium_filter = 1;
-        scs->tf_params_per_type[2].avoid_2d_qpel = 0;
-        scs->tf_params_per_type[2].use_2tap = 0;
-        scs->tf_params_per_type[2].use_intra_for_noise_est = 0;
-        scs->tf_params_per_type[2].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs->tf_params_per_type[2].use_fast_filter,
-            &scs->tf_params_per_type[2].use_pred_64x64_only_th,
-            &scs->tf_params_per_type[2].me_exit_th, 0, 0);
-        scs->tf_params_per_type[2].subpel_early_exit = 1;
-#endif
         break;
-#if OPT_TF
     case 4:
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 8 : 16;
         scs->tf_params_per_type[0].noise_adjust_future_pics = 1;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 0, 1));
-#else
-        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 16);
-#endif
         scs->tf_params_per_type[0].hme_me_level = 2;
         scs->tf_params_per_type[0].half_pel_mode = 1;
         scs->tf_params_per_type[0].quarter_pel_mode = 1;
@@ -3164,13 +2991,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 2 : 3;
         scs->tf_params_per_type[1].noise_adjust_past_pics = 0;
         scs->tf_params_per_type[1].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
         scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
-#else
-        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), 3);
-        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 6);
-#endif
         scs->tf_params_per_type[1].hme_me_level = 2;
         scs->tf_params_per_type[1].half_pel_mode = 1;
         scs->tf_params_per_type[1].quarter_pel_mode = 1;
@@ -3195,13 +3017,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].num_future_pics = 1;
         scs->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs->tf_params_per_type[2].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 0));
         scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 2, 1));
-#else
-        scs->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, 1);
-        scs->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels) / 2, 1);
-#endif
         scs->tf_params_per_type[2].hme_me_level = 2;
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
@@ -3222,22 +3039,13 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].subpel_early_exit = 1;
 
         break;
-#endif
 
-#if OPT_TF
     case 5:
-#else
-    case 4:
-#endif
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 8 : 16;
         scs->tf_params_per_type[0].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 0, 1));
-#else
-        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 16);
-#endif
         scs->tf_params_per_type[0].hme_me_level = 2;
         scs->tf_params_per_type[0].half_pel_mode = 2;
         scs->tf_params_per_type[0].quarter_pel_mode = 3;
@@ -3262,13 +3070,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].num_future_pics = (scs->static_config.hierarchical_levels < 5) ? 1 : 2;
         scs->tf_params_per_type[1].noise_adjust_past_pics = 0;
         scs->tf_params_per_type[1].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
         scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
-#else
-        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), 3);
-        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 6);
-#endif
         scs->tf_params_per_type[1].hme_me_level = 2;
         scs->tf_params_per_type[1].half_pel_mode = 2;
         scs->tf_params_per_type[1].quarter_pel_mode = 3;
@@ -3292,20 +3095,12 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
 
         break;
 
-#if OPT_TF
     case 6:
-#else
-    case 5:
-#endif
         // I_SLICE TF Params
         scs->tf_params_per_type[0].enabled = 1;
         scs->tf_params_per_type[0].num_future_pics = 8;
         scs->tf_params_per_type[0].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 0, 1));
-#else
-        scs->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 16);
-#endif
         scs->tf_params_per_type[0].hme_me_level = 2;
         scs->tf_params_per_type[0].half_pel_mode = 2;
         scs->tf_params_per_type[0].quarter_pel_mode = 3;
@@ -3330,13 +3125,8 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].num_future_pics = 1;
         scs->tf_params_per_type[1].noise_adjust_past_pics = 0;
         scs->tf_params_per_type[1].noise_adjust_future_pics = 0;
-#if FIX_LAYER_SIGNAL
         scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 0));
         scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), svt_aom_tf_max_ref_per_struct(scs->static_config.hierarchical_levels, 1, 1));
-#else
-        scs->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs->static_config.hierarchical_levels), 3);
-        scs->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs->static_config.hierarchical_levels), 6);
-#endif
         scs->tf_params_per_type[1].hme_me_level = 2;
         scs->tf_params_per_type[1].half_pel_mode = 2;
         scs->tf_params_per_type[1].quarter_pel_mode = 3;
@@ -3432,93 +3222,39 @@ static void derive_tf_params(SequenceControlSet *scs) {
     const EncMode enc_mode = scs->static_config.enc_mode;
     const uint32_t hierarchical_levels = scs->static_config.hierarchical_levels;
     uint8_t tf_level = 0;
-#if OPT_LD_TF
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         if (do_tf == 0)
             tf_level = 0;
         else
-#if OPT_LD2_M10
-#if OPT_LD_SC_TF
             tf_level = scs->static_config.screen_content_mode == 1 ? 0 :
             (enc_mode <= ENC_M9 ) ? 1 : enc_mode <= ENC_M12 && (scs->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
-#else
-            tf_level = (enc_mode <= ENC_M9) ? 1 : enc_mode <= ENC_M12 && (scs->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
-#endif
-#else
-            tf_level = enc_mode <= ENC_M10 ? 1 : enc_mode <= ENC_M12 && (scs->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
-#endif
 
         tf_ld_controls(scs, tf_level);
         return;
     }
-#endif
     if (do_tf == 0) {
         tf_level = 0;
     }
-#if !DIS_MRS
-#if TUNE_NEW_M0_MR
-    else if (enc_mode <= ENC_MRS) {
-#else
-    else if (enc_mode <= ENC_MR) {
-#endif
-        tf_level = 1;
-    }
-#endif
     else if (enc_mode <= ENC_M5) {
         tf_level = 2;
     }
-#if OPT_TF
     else if (enc_mode <= ENC_M6) {
         tf_level = 3;
     }
     else if (enc_mode <= ENC_M7) {
         tf_level = 4;
     }
-#if !TUNE_M8
-    else if (enc_mode <= ENC_M8) {
-        if (hierarchical_levels <= 3)
-            tf_level = 5;
-        else
-            tf_level = 4;
-    }
-#endif
-#if TUNE_MRP_M8_5L
     else if (enc_mode <= ENC_M8) {
         if (hierarchical_levels <= 4)
             tf_level = 4;
         else
             tf_level = 5;
     }
-#endif
-#if TUNE_M8_M10
     else if (enc_mode <= ENC_M10) {
-#else
-    else if (enc_mode <= ENC_M9) {
-#endif
         tf_level = 5;
     }
     else
         tf_level = 6;
-#else
-    else if (enc_mode <= ENC_M7) {
-        tf_level = 3;
-    }
-    else if (enc_mode <= ENC_M8) {
-        if (hierarchical_levels <= 3)
-            tf_level = 4;
-        else
-            tf_level = 3;
-    }
-#if TUNE_M8_M10
-    else if (enc_mode <= ENC_M10) {
-#else
-    else if (enc_mode <= ENC_M9) {
-#endif
-        tf_level = 4;
-    }
-    else
-        tf_level = 5;
-#endif
     tf_controls(scs, tf_level);
 }
 /*
@@ -3538,18 +3274,10 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 1;
         mrp_ctrl->non_base_ref_list0_count    = 1;
         mrp_ctrl->non_base_ref_list1_count    = 1;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 0;
-#endif
         break;
 
     case 1:
@@ -3562,18 +3290,10 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 3;
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 0;
-#endif
         break;
 
     case 2:
@@ -3586,18 +3306,10 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 3;
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 0;
-#endif
         break;
 
     case 3:
@@ -3610,18 +3322,10 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 3;
         mrp_ctrl->non_base_ref_list0_count    = 4;
         mrp_ctrl->non_base_ref_list1_count    = 3;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 0;
-#endif
         break;
 
     case 4:
@@ -3634,20 +3338,11 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 2;
         mrp_ctrl->non_base_ref_list0_count    = 3;
         mrp_ctrl->non_base_ref_list1_count    = 2;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 0;
-#endif
         break;
-#if OPT_MRP
     case 5:
         mrp_ctrl->referencing_scheme          = 1;
         mrp_ctrl->sc_base_ref_list0_count     = 2;
@@ -3658,18 +3353,10 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 2;
         mrp_ctrl->non_base_ref_list0_count    = 3;
         mrp_ctrl->non_base_ref_list1_count    = 2;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 1;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 1;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 1;
-#endif
         break;
     case 6:
         mrp_ctrl->referencing_scheme          = 1;
@@ -3681,25 +3368,13 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 2;
         mrp_ctrl->non_base_ref_list0_count    = 3;
         mrp_ctrl->non_base_ref_list1_count    = 2;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 1;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 1;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 1;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 1;
-#endif
         break;
     case 7:
-#if OPT_RPS_CONSTR_2
         mrp_ctrl->referencing_scheme          = 2;
-#else
-        mrp_ctrl->referencing_scheme          = 0;
-#endif
         mrp_ctrl->sc_base_ref_list0_count     = 2;
         mrp_ctrl->sc_base_ref_list1_count     = 2;
         mrp_ctrl->sc_non_base_ref_list0_count = 1;
@@ -3708,26 +3383,13 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count        = 2;
         mrp_ctrl->non_base_ref_list0_count    = 3;
         mrp_ctrl->non_base_ref_list1_count    = 2;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 1;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 1;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 1;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 1;
-#endif
         break;
-#if OPT_LD_MRP2
     case 8:
-#if OPT_RPS_CONSTR_2
         mrp_ctrl->referencing_scheme = 2;
-#else
-        mrp_ctrl->referencing_scheme = 0;
-#endif
         mrp_ctrl->sc_base_ref_list0_count = 2;
         mrp_ctrl->sc_base_ref_list1_count = 2;
         mrp_ctrl->sc_non_base_ref_list0_count = 1;
@@ -3736,26 +3398,14 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count = 2;
         mrp_ctrl->non_base_ref_list0_count = 2;
         mrp_ctrl->non_base_ref_list1_count = 2;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 1;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 1;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 1;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 1;
-#endif
         break;
 
     case 9:
-#if OPT_RPS_CONSTR_2
         mrp_ctrl->referencing_scheme = 2;
-#else
-        mrp_ctrl->referencing_scheme = 0;
-#endif
         mrp_ctrl->sc_base_ref_list0_count = 2;
         mrp_ctrl->sc_base_ref_list1_count = 2;
         mrp_ctrl->sc_non_base_ref_list0_count = 1;
@@ -3764,20 +3414,11 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count = 2;
         mrp_ctrl->non_base_ref_list0_count = 2;
         mrp_ctrl->non_base_ref_list1_count = 2;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 1;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 1;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 1;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 1;
-#endif
         break;
-#if OPT_LD_MRP5
     case 10:
         mrp_ctrl->referencing_scheme = 2;
         mrp_ctrl->sc_base_ref_list0_count = 2;
@@ -3788,18 +3429,10 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count = 2;
         mrp_ctrl->non_base_ref_list0_count = 1;
         mrp_ctrl->non_base_ref_list1_count = 1;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 1;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 1;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 1;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 1;
-#endif
         break;
     case 11:
         mrp_ctrl->referencing_scheme = 0;
@@ -3811,338 +3444,28 @@ static void set_mrp_ctrl(SequenceControlSet* scs, uint8_t mrp_level) {
         mrp_ctrl->base_ref_list1_count = 2;
         mrp_ctrl->non_base_ref_list0_count = 1;
         mrp_ctrl->non_base_ref_list1_count = 1;
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 1;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 1;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 1;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 1;
-#endif
-        break;
-#else
-    case 10:
-        mrp_ctrl->referencing_scheme = 0;
-        mrp_ctrl->sc_base_ref_list0_count = 2;
-        mrp_ctrl->sc_base_ref_list1_count = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count = 2;
-        mrp_ctrl->base_ref_list1_count = 2;
-        mrp_ctrl->non_base_ref_list0_count = 1;
-        mrp_ctrl->non_base_ref_list1_count = 1;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-#endif
-#else
-    case 6:
-#if OPT_RPS_CONSTR_2
-        mrp_ctrl->referencing_scheme          = 2;
-#else
-        mrp_ctrl->referencing_scheme          = 0;
-#endif
-        mrp_ctrl->sc_base_ref_list0_count     = 2;
-        mrp_ctrl->sc_base_ref_list1_count     = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count = 2;
-        mrp_ctrl->base_ref_list1_count        = 2;
-        mrp_ctrl->non_base_ref_list0_count    = 2;
-        mrp_ctrl->non_base_ref_list1_count    = 2;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
         break;
 
-    case 7:
-        mrp_ctrl->referencing_scheme          = 0;
-        mrp_ctrl->sc_base_ref_list0_count     = 2;
-        mrp_ctrl->sc_base_ref_list1_count     = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count        = 2;
-        mrp_ctrl->base_ref_list1_count        = 2;
-        mrp_ctrl->non_base_ref_list0_count    = 1;
-        mrp_ctrl->non_base_ref_list1_count    = 1;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-#endif
-
-#else
-    case 5:
-#if OPT_RPS_CONSTR_2
-        mrp_ctrl->referencing_scheme          = 2;
-#else
-        mrp_ctrl->referencing_scheme          = 0;
-#endif
-        mrp_ctrl->sc_base_ref_list0_count     = 2;
-        mrp_ctrl->sc_base_ref_list1_count     = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count        = 3;
-        mrp_ctrl->base_ref_list1_count        = 2;
-        mrp_ctrl->non_base_ref_list0_count    = 3;
-        mrp_ctrl->non_base_ref_list1_count    = 2;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-#if OPT_LD_MRP2
-    case 6:
-#if OPT_RPS_CONSTR_2
-        mrp_ctrl->referencing_scheme = 2;
-#else
-        mrp_ctrl->referencing_scheme = 0;
-#endif
-        mrp_ctrl->sc_base_ref_list0_count = 2;
-        mrp_ctrl->sc_base_ref_list1_count = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count = 3;
-        mrp_ctrl->base_ref_list1_count = 2;
-        mrp_ctrl->non_base_ref_list0_count = 2;
-        mrp_ctrl->non_base_ref_list1_count = 2;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-
-    case 7:
-#if OPT_RPS_CONSTR_2
-        mrp_ctrl->referencing_scheme = 2;
-#else
-        mrp_ctrl->referencing_scheme = 0;
-#endif
-        mrp_ctrl->sc_base_ref_list0_count = 2;
-        mrp_ctrl->sc_base_ref_list1_count = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count = 2;
-        mrp_ctrl->base_ref_list1_count = 2;
-        mrp_ctrl->non_base_ref_list0_count = 2;
-        mrp_ctrl->non_base_ref_list1_count = 2;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-#if OPT_LD_MRP5
-    case 8:
-        mrp_ctrl->referencing_scheme = 2;
-        mrp_ctrl->sc_base_ref_list0_count = 2;
-        mrp_ctrl->sc_base_ref_list1_count = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count = 3;
-        mrp_ctrl->base_ref_list1_count = 2;
-        mrp_ctrl->non_base_ref_list0_count = 1;
-        mrp_ctrl->non_base_ref_list1_count = 1;
-#if LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
- #if OPT_MRP
-         mrp_ctrl->use_best_references         = 0;
- #endif
-         break;
-
-    case 9:
-        mrp_ctrl->referencing_scheme = 0;
-        mrp_ctrl->sc_base_ref_list0_count = 2;
-        mrp_ctrl->sc_base_ref_list1_count = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count = 2;
-        mrp_ctrl->base_ref_list1_count = 2;
-        mrp_ctrl->non_base_ref_list0_count = 1;
-        mrp_ctrl->non_base_ref_list1_count = 1;
-#if LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-
-#else
-    case 8:
-        mrp_ctrl->referencing_scheme = 0;
-        mrp_ctrl->sc_base_ref_list0_count = 2;
-        mrp_ctrl->sc_base_ref_list1_count = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count = 2;
-        mrp_ctrl->base_ref_list1_count = 2;
-        mrp_ctrl->non_base_ref_list0_count = 1;
-        mrp_ctrl->non_base_ref_list1_count = 1;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-#endif
-#else
-    case 6:
-#if OPT_RPS_CONSTR_2
-        mrp_ctrl->referencing_scheme          = 2;
-#else
-        mrp_ctrl->referencing_scheme          = 0;
-#endif
-        mrp_ctrl->sc_base_ref_list0_count     = 2;
-        mrp_ctrl->sc_base_ref_list1_count     = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count = 2;
-        mrp_ctrl->base_ref_list1_count        = 2;
-        mrp_ctrl->non_base_ref_list0_count    = 2;
-        mrp_ctrl->non_base_ref_list1_count    = 2;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-
-    case 7:
-        mrp_ctrl->referencing_scheme          = 0;
-        mrp_ctrl->sc_base_ref_list0_count     = 2;
-        mrp_ctrl->sc_base_ref_list1_count     = 2;
-        mrp_ctrl->sc_non_base_ref_list0_count = 1;
-        mrp_ctrl->sc_non_base_ref_list1_count = 1;
-        mrp_ctrl->base_ref_list0_count        = 2;
-        mrp_ctrl->base_ref_list1_count        = 2;
-        mrp_ctrl->non_base_ref_list0_count    = 1;
-        mrp_ctrl->non_base_ref_list1_count    = 1;
-#if OPT_LIMIT_NREF
-        mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
-        mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
-        mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
-        mrp_ctrl->use_best_references         = 0;
-#endif
-        break;
-#endif
-#endif
     default:
         assert(0);
         break;
     }
-#if OPT_LD_MRP
     // For low delay mode, list1 references are not used
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
         mrp_ctrl->sc_base_ref_list1_count = 0;
         mrp_ctrl->sc_non_base_ref_list1_count = 0;
         mrp_ctrl->base_ref_list1_count = 0;
         mrp_ctrl->non_base_ref_list1_count = 0;
-#if OPT_LD_MRP3
         mrp_ctrl->referencing_scheme = 0;
-#endif
-#if OPT_LIMIT_NREF
         mrp_ctrl->safe_limit_nref             = 0;
-#endif
-#if OPT_ONLY_L_BWD
         mrp_ctrl->only_l_bwd                  = 0;
-#endif
-#if OPT_PME_REF0_ONLY
         mrp_ctrl->pme_ref0_only               = 0;
-#endif
-#if OPT_MRP
         mrp_ctrl->use_best_references         = 0;
-#endif
     }
-#endif
 }
 
 void set_ipp_pass_ctrls(
@@ -4218,11 +3541,7 @@ static void set_mid_pass_ctrls(
         break;
     }
 }
-#if TUNE_MRP_M8_5L
 static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode, uint8_t aq_mode, uint8_t hierarchical_levels) {
-#else
-static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint8_t pred_structure, uint8_t superres_mode, uint8_t resize_mode, uint8_t aq_mode) {
-#endif
 
     uint8_t tpl_level;
 
@@ -4248,34 +3567,17 @@ static uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_rc, uint
     }
     else if (enc_mode <= ENC_M4)
         tpl_level = 1;
-#if TUNE_M6
     else if (enc_mode <= ENC_M5)
-#else
-    else if (enc_mode <= ENC_M6)
-#endif
         tpl_level = 2;
-#if TUNE_M8
     else if (enc_mode <= ENC_M7)
-#else
-    else if (enc_mode <= ENC_M8)
-#endif
         tpl_level = 4;
-#if TUNE_MRP_M8_5L
     else if (enc_mode <= ENC_M8)
         if (hierarchical_levels <= 4)
             tpl_level = 4;
         else
             tpl_level = 5;
-#endif
-#if TUNE_4K
     else if (enc_mode <= ENC_M10)
         tpl_level = 5;
-#else
-    else if (enc_mode <= ENC_M9)
-        tpl_level = 5;
-    else if (enc_mode <= ENC_M10)
-        tpl_level = 6;
-#endif
     else if (enc_mode <= ENC_M11)
         tpl_level = 7;
     else
@@ -4444,11 +3746,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     // superres_mode and resize_mode may be updated,
     // so should call get_tpl_level() after validate_scaling_params()
     validate_scaling_params(scs);
-#if TUNE_MRP_M8_5L
     scs->tpl_level = get_tpl_level(scs->static_config.enc_mode, scs->static_config.pass, scs->lap_rc, scs->static_config.pred_structure, scs->static_config.superres_mode, scs->static_config.resize_mode, scs->static_config.enable_adaptive_quantization, scs->static_config.hierarchical_levels);
-#else
-    scs->tpl_level = get_tpl_level(scs->static_config.enc_mode, scs->static_config.pass, scs->lap_rc, scs->static_config.pred_structure, scs->static_config.superres_mode, scs->static_config.resize_mode, scs->static_config.enable_adaptive_quantization);
-#endif
 
     uint16_t subsampling_x = scs->subsampling_x;
     uint16_t subsampling_y = scs->subsampling_y;
@@ -4593,19 +3891,12 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             // update the look ahead size
             update_look_ahead(scs);
     }
-#if OPT_LD
     // In low delay mode, sb size is set to 64
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ||
         scs->static_config.pass == ENC_FIRST_PASS ||
         (scs->tpl_level && scs->input_resolution == INPUT_SIZE_240p_RANGE))
-#else
-    // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
-    // in 240P resolution, sb size is set to 64
-    if (scs->static_config.pass == ENC_FIRST_PASS ||
-        (scs->tpl_level && scs->input_resolution == INPUT_SIZE_240p_RANGE))
-#endif
         scs->super_block_size = 64;
     else
         if (scs->static_config.enc_mode <= ENC_M2)
@@ -4638,46 +3929,27 @@ static void set_param_based_on_input(SequenceControlSet *scs)
         SVT_WARN("Fwd key frame is only supported for hierarchical levels 4 at this point. Hierarchical levels are set to 4\n");
     }
     bool disallow_nsq = true;
-#if OPT_NSQ_CTRL
     uint8_t nsq_level;
     uint8_t allow_HVA_HVB = 0;
     uint8_t allow_HV4 = 0;
     uint8_t h_v_only = 1;
-#if OPT_4X8_8X4_GEOM
     uint8_t  min_nsq_bsize = 0;
     uint8_t  no_8x4_4x8 = 1;
-#endif
-#endif
     for (uint8_t is_base = 0; is_base <= 1; is_base++)
         for (uint8_t is_islice = 0; is_islice <= 1; is_islice++)
             for (uint8_t coeff_lvl = 0; coeff_lvl <= HIGH_LVL + 1; coeff_lvl++)
-#if OPT_NSQ_CTRL
             {
                 nsq_level = svt_aom_get_nsq_level(scs->static_config.enc_mode, is_islice, is_base, coeff_lvl);
                 disallow_nsq = MIN(disallow_nsq, (nsq_level == 0 ? 1 : 0));
-#if OPT_4X8_8X4_GEOM
                 svt_aom_set_nsq_ctrls(NULL, nsq_level, &allow_HVA_HVB, &allow_HV4, &min_nsq_bsize);
-#else
-                set_nsq_ctrls(NULL, nsq_level, &allow_HVA_HVB, &allow_HV4);
-#endif
                 h_v_only = h_v_only && !allow_HVA_HVB && !allow_HV4;
-#if OPT_4X8_8X4_GEOM
                 no_8x4_4x8 = no_8x4_4x8 && min_nsq_bsize >= 8;
-#endif
             }
-#else
-                disallow_nsq = MIN(disallow_nsq, (svt_aom_get_nsq_level(scs->static_config.enc_mode, is_islice, is_base, coeff_lvl) == 0 ? 1 : 0));
-#endif
     bool disallow_4x4 = true;
     for (SliceType slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, svt_aom_get_disallow_4x4(scs->static_config.enc_mode, slice_type));
-#if OPT_HV_GEOM
     if (scs->super_block_size == 128) {
-#if OPT_4X8_8X4_GEOM
         scs->svt_aom_geom_idx = GEOM_5;
-#else
-        scs->svt_aom_geom_idx = GEOM_4;
-#endif
         scs->max_block_cnt = 4421;
     }
     else {
@@ -4686,7 +3958,6 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             scs->svt_aom_geom_idx = GEOM_0;
             scs->max_block_cnt = 85;
         }
-#if OPT_4X8_8X4_GEOM
         else if (h_v_only && disallow_4x4 && no_8x4_4x8) {
             scs->svt_aom_geom_idx = GEOM_1;
             scs->max_block_cnt = 169;
@@ -4703,40 +3974,7 @@ static void set_param_based_on_input(SequenceControlSet *scs)
             scs->svt_aom_geom_idx = GEOM_4;
             scs->max_block_cnt = 1101;
         }
-#else
-#if OPT_4X4_GEOM
-        else if (h_v_only && disallow_4x4) {
-            scs->svt_aom_geom_idx = GEOM_1;
-            scs->max_block_cnt = 425;
-        }
-#endif
-        else if (h_v_only) {
-            scs->svt_aom_geom_idx = GEOM_2;
-            scs->max_block_cnt = 681;
-        }
-        else {
-            scs->svt_aom_geom_idx = GEOM_3;
-            scs->max_block_cnt = 1101;
-        }
-#endif
     }
-#else
-    if (scs->super_block_size == 128) {
-        scs->svt_aom_geom_idx = GEOM_2;
-        scs->max_block_cnt = 4421;
-    }
-    else {
-        //SB 64x64
-        if (disallow_nsq && disallow_4x4) {
-            scs->svt_aom_geom_idx = GEOM_0;
-            scs->max_block_cnt = 85;
-        }
-        else {
-            scs->svt_aom_geom_idx = GEOM_1;
-            scs->max_block_cnt = 1101;
-        }
-    }
-#endif
     //printf("\n\nGEOM:%i \n", scs->svt_aom_geom_idx);
     // Configure the padding
     scs->left_padding = BLOCK_SIZE_64 + 4;
@@ -4804,19 +4042,9 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     if (scs->static_config.enable_mfmv == DEFAULT) {
         if (scs->static_config.enc_mode <= ENC_M5)
             scs->mfmv_enabled = 1;
-#if OPT_LD_M11
-#if OPT_LD2_M10
         else if ((scs->static_config.enc_mode <= ENC_M9) ||
             (scs->static_config.pred_structure != SVT_AV1_PRED_LOW_DELAY_B &&
                 scs->static_config.enc_mode <= ENC_M11)) {
-#else
-        else if (scs->static_config.enc_mode <= ENC_M10 ||
-                (scs->static_config.pred_structure != SVT_AV1_PRED_LOW_DELAY_B &&
-                scs->static_config.enc_mode <= ENC_M11)) {
-#endif
-#else
-        else if (scs->static_config.enc_mode <= ENC_M11) {
-#endif
             if (scs->input_resolution <= INPUT_SIZE_1080p_RANGE)
                 scs->mfmv_enabled = 1;
             else
@@ -4843,229 +4071,41 @@ static void set_param_based_on_input(SequenceControlSet *scs)
 
     // MRP level
     uint8_t mrp_level;
-#if OPT_LD_MRP5
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-#if OPT_LD_SPEED_M11_M12
         if (scs->static_config.enc_mode <= ENC_M11) {
-#else
-        if (scs->static_config.enc_mode <= ENC_M12) {
-#endif
-#if OPT_MRP
             mrp_level = 8;
-#else
-            mrp_level = 6;
-#endif
         }
         else {
-#if OPT_MRP
             mrp_level = 10;
-#else
-            mrp_level = 8;
-#endif
         }
     }
     else {
-#if DIS_MRS
         if (scs->static_config.enc_mode <= ENC_M1) {
-#else
-        if (scs->static_config.enc_mode <= ENC_MRS) {
-            mrp_level = 1;
-        }
-        else if (scs->static_config.enc_mode <= ENC_M1) {
-#endif
             mrp_level = 2;
         }
         else if (scs->static_config.enc_mode <= ENC_M4) {
             mrp_level = 3;
         }
-#if OPT_MRP
         else if (scs->static_config.enc_mode <= ENC_M6) {
             mrp_level = 4;
         }
-#if TUNE_M7
         else if (scs->static_config.enc_mode <= ENC_M7) {
             mrp_level = 5;
         }
-#else
-#if TUNE_M6
-        else if (scs->static_config.enc_mode <= ENC_M6) {
-            mrp_level = 4;
-        }
-#else
-        else if (scs->static_config.enc_mode <= ENC_M5) {
-            mrp_level = 4;
-        }
-        else if (scs->static_config.enc_mode <= ENC_M6) {
-            mrp_level = 5;
-        }
-#endif
-#endif
         else if (scs->static_config.enc_mode <= ENC_M8){
-#if TUNE_MRP_M8_5L
             if (scs->static_config.hierarchical_levels <= 4)
-#if OPT_LD_MRP5
                 mrp_level = 11;
-#else
-                mrp_level = 10;
-#endif
             else
                 mrp_level = 6;
         }
-#else
-            mrp_level = 6;
-#endif
-#endif
 
-#if TUNE_M11_M12_M13
     else if (scs->static_config.enc_mode <= ENC_M13) {
-#if OPT_MRP
         mrp_level = 11;
-#else
-        mrp_level = 9;
-#endif
     }
-#else
-    else if (scs->static_config.enc_mode <= ENC_M12) {
-        mrp_level = 9;
-    }
-#endif
         else {
             mrp_level = 0;
         }
     }
-#else
-    if (scs->static_config.enc_mode <= ENC_MRS) {
-        mrp_level = 1;
-    }
-    else if (scs->static_config.enc_mode <= ENC_M1) {
-        mrp_level = 2;
-    }
-    else if (scs->static_config.enc_mode <= ENC_M4) {
-        mrp_level = 3;
-    }
-#if OPT_MRP
-    else if (scs->static_config.enc_mode <= ENC_M6) {
-        mrp_level = 4;
-    }
-#if TUNE_M7
-    else if (scs->static_config.enc_mode <= ENC_M7) {
-        mrp_level = 5;
-    }
-#else
-#if TUNE_M6
-    else if (scs->static_config.enc_mode <= ENC_M6) {
-        mrp_level = 4;
-    }
-#else
-    else if (scs->static_config.enc_mode <= ENC_M5) {
-        mrp_level = 4;
-    }
-    else if (scs->static_config.enc_mode <= ENC_M6) {
-        mrp_level = 5;
-    }
-#endif
-#endif
-    else if (scs->static_config.enc_mode <= ENC_M8){
-#if TUNE_MRP_M8_5L
-        if (scs->static_config.hierarchical_levels <= 4)
-            mrp_level = 10;
-        else
-            mrp_level = 6;
-#else
-        mrp_level = 6;
-#endif
-    }
-#if OPT_LD_MRP2
-    else if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B && scs->static_config.enc_mode <= ENC_M12) {
-        mrp_level = 8;
-    }
-    else if (scs->static_config.enc_mode <= ENC_M7 || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-        if (scs->static_config.hierarchical_levels <= 3)
-            mrp_level = 9;
-        else
-            mrp_level = 7;
-    }
-#if TUNE_M11_M12_M13
-    else if (scs->static_config.enc_mode <= ENC_M13) {
-        mrp_level = 10;
-    }
-#else
-    else if (scs->static_config.enc_mode <= ENC_M12) {
-        mrp_level = 8;
-    }
-#endif
-#else
-#if OPT_LD_MRP
-    else if (scs->static_config.enc_mode <= ENC_M7 || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-#else
-    else if (scs->static_config.enc_mode <= ENC_M7) {
-#endif
-        if (scs->static_config.hierarchical_levels <= 3)
-            mrp_level = 6;
-        else
-            mrp_level = 5;
-    }
-    else if (scs->static_config.enc_mode <= ENC_M12) {
-        mrp_level = 7;
-    }
-#endif
-
-#else
-#if TUNE_M7
-    else if (scs->static_config.enc_mode <= ENC_M7) {
-        mrp_level = 4;
-    }
-#else
-#if TUNE_M6
-    else if (scs->static_config.enc_mode <= ENC_M6) {
-        mrp_level = 4;
-    }
-#else
-    else if (scs->static_config.enc_mode <= ENC_M5) {
-        mrp_level = 4;
-    }
-    else if (scs->static_config.enc_mode <= ENC_M6) {
-        mrp_level = 5;
-    }
-#endif
-#endif
-#if OPT_LD_MRP2
-    else if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B && scs->static_config.enc_mode <= ENC_M12) {
-        mrp_level = 6;
-    }
-    else if (scs->static_config.enc_mode <= ENC_M7 || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-        if (scs->static_config.hierarchical_levels <= 3)
-            mrp_level = 7;
-        else
-            mrp_level = 5;
-    }
-#if TUNE_M11_M12_M13
-    else if (scs->static_config.enc_mode <= ENC_M13) {
-#else
-    else if (scs->static_config.enc_mode <= ENC_M12) {
-#endif
-        mrp_level = 8;
-    }
-#else
-#if OPT_LD_MRP
-    else if (scs->static_config.enc_mode <= ENC_M7 || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-#else
-    else if (scs->static_config.enc_mode <= ENC_M7) {
-#endif
-        if (scs->static_config.hierarchical_levels <= 3)
-            mrp_level = 6;
-        else
-            mrp_level = 5;
-    }
-    else if (scs->static_config.enc_mode <= ENC_M12) {
-        mrp_level = 7;
-    }
-#endif
-#endif
-    else {
-        mrp_level = 0;
-    }
-#endif
     set_mrp_ctrl(scs, mrp_level);
     scs->is_short_clip = scs->static_config.gop_constraint_rc ? 1 : 0; // set to 1 if multipass and less than 200 frames in resourcecordination
 
@@ -5085,19 +4125,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                                                 scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR
         ? 1
         : 0;
-#if OPT_LD_LATENCY_MD
-#if OPT_LD2_M10
     scs->low_latency_kf = ((scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P
         || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
         scs->static_config.enc_mode <= ENC_M9)
-#else
-    scs->low_latency_kf = ((scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P
-         || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
-        scs->static_config.enc_mode <= ENC_M10)
-#endif
         ? 1
         : 0;
-#endif
 }
 /******************************************************
  * Read Stat from File
@@ -5202,10 +4234,6 @@ static void copy_api_from_app(
         ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la = 0;
     }
     scs->enable_qp_scaling_flag = 1;
-#if !CLN_REMOVE_REF_CNT
-    scs->max_ref_count = 1;
-    scs->reference_count = 4;
-#endif
 
     // Set Picture Parameters for statistics gathering
     scs->picture_analysis_number_of_regions_per_width =
@@ -5248,17 +4276,10 @@ static void copy_api_from_app(
     svt_aom_derive_input_resolution(
         &input_resolution,
         scs->max_input_luma_width * scs->max_input_luma_height);
-#if OPT_LD_M13
     if (scs->static_config.pred_structure == SVT_AV1_PRED_RANDOM_ACCESS && scs->static_config.enc_mode > ENC_M12 && input_resolution <= INPUT_SIZE_360p_RANGE) {
         scs->static_config.enc_mode = ENC_M12;
         SVT_WARN("Setting preset to M12 as it is the highest supported preset for 360p and lower resolutions in Random Access mode\n");
     }
-#else
-    if (scs->static_config.enc_mode > ENC_M12 && input_resolution <= INPUT_SIZE_360p_RANGE) {
-        scs->static_config.enc_mode = ENC_M12;
-        SVT_WARN("Setting preset to M12 as it is the highest supported preset for 360p and lower resolutions\n");
-    }
-#endif
     scs->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
     scs->static_config.use_fixed_qindex_offsets = ((EbSvtAv1EncConfiguration*)config_struct)->use_fixed_qindex_offsets;
     scs->static_config.key_frame_chroma_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_chroma_qindex_offset;
@@ -5382,27 +4403,16 @@ static void copy_api_from_app(
     // Set the default hierarchical levels
     if (scs->static_config.hierarchical_levels == 0) {
         scs->static_config.hierarchical_levels = scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ?
-#if OPT_LD
             2 :
-#else
-            3 :
-#endif
             scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_VBR || scs->static_config.rate_control_mode == SVT_AV1_RC_MODE_CBR || !(scs->static_config.enc_mode <= ENC_M12)
                 ? 4
                 : 5;
     }
     if (scs->static_config.pass == ENC_SINGLE_PASS && scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
-#if OPT_LD
         if (scs->static_config.hierarchical_levels != 2) {
             scs->static_config.hierarchical_levels = 2;
             SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 2\n");
         }
-#else
-        if (scs->static_config.hierarchical_levels != 3) {
-            scs->static_config.hierarchical_levels = 3;
-            SVT_WARN("Forced Low delay mode to use HierarchicalLevels = 3\n");
-        }
-#endif
     }
     scs->max_temporal_layers = scs->static_config.hierarchical_levels;
     scs->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
@@ -5569,9 +4579,7 @@ static void copy_api_from_app(
         scs->static_config.enable_qm = 0;
     }
 
-#if FTR_STARTUP_MG_SIZE
     scs->static_config.startup_mg_size = config_struct->startup_mg_size;
-#endif
     return;
 }
 
@@ -5613,35 +4621,14 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         set_max_mini_gop_size(
             enc_handle->scs_instance_array[instance_index]->scs, mgs_ctls);
     // Initialize the Prediction Structure Group
-#if OPT_RPS_CONSTR_3
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->enc_ctx->prediction_structure_group_ptr,
         svt_aom_prediction_structure_group_ctor);
-#else
-    EB_NO_THROW_NEW(
-        enc_handle->scs_instance_array[instance_index]->enc_ctx->prediction_structure_group_ptr,
-        prediction_structure_group_ctor,
-        enc_handle->scs_instance_array[instance_index]->scs);
-#endif
     if (!enc_handle->scs_instance_array[instance_index]->enc_ctx->prediction_structure_group_ptr) {
         return EB_ErrorInsufficientResources;
     }
-#if !OPT_RPS_CONSTR_3
-    // Set the Prediction Structure
-    enc_handle->scs_instance_array[instance_index]->scs->pred_struct_ptr = svt_aom_get_prediction_structure(
-        enc_handle->scs_instance_array[instance_index]->enc_ctx->prediction_structure_group_ptr,
-        enc_handle->scs_instance_array[instance_index]->scs->static_config.pred_structure,
-        enc_handle->scs_instance_array[instance_index]->scs->max_ref_count,
-        enc_handle->scs_instance_array[instance_index]->scs->max_temporal_layers);
-#endif
-#if OPT_RPS_CONSTR_2
     return_error = load_default_buffer_configuration_settings(
         enc_handle->scs_instance_array[instance_index]->scs);
-#else
-    return_error = load_default_buffer_configuration_settings(
-        enc_handle,
-        enc_handle->scs_instance_array[instance_index]->scs);
-#endif
 
     svt_av1_print_lib_params(
         enc_handle->scs_instance_array[instance_index]->scs);

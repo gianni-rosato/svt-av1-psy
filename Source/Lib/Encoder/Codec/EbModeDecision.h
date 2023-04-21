@@ -141,10 +141,8 @@ typedef struct ModeDecisionCandidateBuffer {
     uint8_t   u_has_coeff;
     uint8_t   v_has_coeff;
     uint16_t  y_has_coeff;
-#if OPT_OBMC_TRANS_FACE_OFF
     bool
         valid_pred; // The prediction of SIMPLE_TRANSLATION is not valid when OBMC face-off is used (where OBMC will re-use the pred buffer of SIMPLE_TRANSLATION)
-#endif
 } ModeDecisionCandidateBuffer;
 
 /**************************************
@@ -171,19 +169,14 @@ uint32_t svt_aom_product_full_mode_decision(struct ModeDecisionContext *ctx, Blk
                                             ModeDecisionCandidateBuffer **buffer_ptr_array,
                                             uint32_t                      candidate_total_count,
                                             uint32_t *best_candidate_index_array);
-#if OPT_WARP_REFINEMENT_MDS1
 extern uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
                                             ModeDecisionCandidateBuffer *cand_bf,
                                             ModeDecisionCandidate *can, uint8_t list_idx,
                                             int early_exit);
-#endif
-#if OPT_OBMC_REFINEMENT_MDS1
 extern uint8_t svt_aom_obmc_motion_refinement(PictureControlSet          *pcs,
                                               struct ModeDecisionContext *ctx,
                                               ModeDecisionCandidate *cand, uint8_t ref_list_idx,
                                               int refine_level);
-#endif
-#if OPT_OBMC_TRANS_FACE_OFF
 int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, PredictionMode mode,
                               const MvReferenceFrame ref_frame[2]);
 
@@ -192,7 +185,6 @@ MotionMode svt_aom_obmc_motion_mode_allowed(const PictureControlSet    *pcs,
                                             uint8_t situation, MvReferenceFrame rf0,
                                             MvReferenceFrame rf1, PredictionMode mode);
 
-#endif
 
 void svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs);
 

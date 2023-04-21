@@ -18,12 +18,6 @@
 #include "EbDebugMacros.h"
 #include "EbDefinitions.h"
 
-#if OPT_GM_WD
-#else
-#define MATCH_SZ 13
-#define MATCH_SZ_BY2 ((MATCH_SZ - 1) / 2)
-#define MATCH_SZ_SQ (MATCH_SZ * MATCH_SZ)
-#endif
 
 typedef struct {
     int x, y;
@@ -33,11 +27,7 @@ typedef struct {
 int svt_av1_determine_correspondence(unsigned char *frm, int *frm_corners, int num_frm_corners,
                                      unsigned char *ref, int *ref_corners, int num_ref_corners,
                                      int width, int height, int frm_stride, int ref_stride,
-#if OPT_GM_WD
                                      int *correspondence_pts, uint8_t match_sz);
-#else
-                                     int *correspondence_pts);
-#endif
 
 DECLARE_ALIGNED(16, extern const uint8_t, svt_aom_compute_cross_byte_mask[8][16]);
 

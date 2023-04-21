@@ -703,16 +703,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-#if !FIX_SEGMENT_ISSUE
-    if (config->enable_adaptive_quantization == 1 &&
-        (config->tile_columns > 0 || config->tile_rows > 0)) {
-        SVT_ERROR(
-            "Instance %u: Adaptive quantization using segmentation is not supported in combination "
-            "with tiles.\n",
-            channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif
 
     if (config->pass > 0 && scs->static_config.enable_overlays) {
         SVT_ERROR(
@@ -777,18 +767,11 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
 
     /* Warnings about the use of features that are incomplete */
     if (config->enable_adaptive_quantization == 1) {
-#if FIX_SEGMENT_ISSUE
         SVT_WARN(
             "Instance %u: The adaptive quantization mode using segmentation is at a support level "
             "only to be available for demos, experimentation, and further development uses and "
             "should not be used for benchmarking until fully implemented.\n",
             channel_number + 1);
-#else
-        config->enable_adaptive_quantization = 2;
-        SVT_WARN(
-            "Instance %u: Adaptive quantization mode 1 has been disabled, mode 2 will be forced!\n",
-            channel_number + 1);
-#endif
     }
 
     if (config->pass > 1 && config->rate_control_mode == SVT_AV1_RC_MODE_CQP_OR_CRF) {
@@ -915,7 +898,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#if EN_WARNING_FOR_MISMATCH
     if (config->encoder_bit_depth == 10 &&
         (config->stat_report == 1 || config->recon_enabled == 1) && config->enc_mode >= ENC_M10) {
         SVT_WARN(
@@ -924,8 +906,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
             "(-o) "
             "is or is not specified in the command line\n");
     }
-#endif
-#if FTR_STARTUP_MG_SIZE
     if (config->startup_mg_size != 0 && config->startup_mg_size != 2 &&
         config->startup_mg_size != 3 && config->startup_mg_size != 4) {
         SVT_ERROR("Instance %u: Startup MG size supported [0, 2, 3, 4]\n", channel_number + 1);
@@ -943,7 +923,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
                   channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-#endif
 
     return return_error;
 }
@@ -1084,9 +1063,7 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->min_qm_level = 8;
     config_ptr->max_qm_level = 15;
 
-#if FTR_STARTUP_MG_SIZE
     config_ptr->startup_mg_size = 0;
-#endif
     return return_error;
 }
 
@@ -2048,9 +2025,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"qm-min", &config_struct->min_qm_level},
         {"qm-max", &config_struct->max_qm_level},
         {"use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets},
-#if FTR_STARTUP_MG_SIZE
         {"startup-mg-size", &config_struct->startup_mg_size},
-#endif
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 
