@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.5.0] - 2023-04-25
+
+Encoder
+- Optimize the tradeoffs for M0-M13 speeding up M5-M1 by 15-30% and improving the BDR of M6-M13 by 1-3%
+- Create a new preset MR (--preset -1) to be the quality reference
+- Optimize the tradeoffs for M8-M13 in the low delay encoding mode (!2052 !2096 and !2102) for SC and non-SC modes
+- Add dynamic minigop support for the random access configuration enabled by default in M9 and below
+- Add support to allow users to specify lambda scaling factors through the commandline
+- Rewrite the gstreamer plugin and updating it to be uptodate with the latest API changes
+- Add skip frames feature allowing the user to start encoding after n frames in the file
+- Add ability to specify a smaller startup minigop size for every gop to enable faster prefetching
+- Fix segmentation support and re-enable it with --aq-mode 1 to allow work on the region of interest API
+- Add padding bytes to the EbSvtAv1EncConfiguration configuration structure keep its size unchanged until v2.0
+
+Build, Cleanup and Documentation
+- Major cleanups for unused variables, static functions, and comments formatting
+- Reduce the size of variables
+- Refine app level parsing and reference scaling API calls in the application
+- Add dynamic minigop documentation along with updating the documentation accordingly
+
 ## [1.4.1] - 2022-12-12
 
 Bugfixes:
