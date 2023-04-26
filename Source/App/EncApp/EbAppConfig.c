@@ -81,7 +81,6 @@
 #define FRAME_RATE_NUMERATOR_TOKEN "--fps-num"
 #define FRAME_RATE_DENOMINATOR_TOKEN "--fps-denom"
 #define ENCODER_COLOR_FORMAT "--color-format"
-#define INPUT_COMPRESSED_TEN_BIT_FORMAT "--compressed-ten-bit-format"
 #define HIERARCHICAL_LEVELS_TOKEN "--hierarchical-levels" // no Eval
 #define PRED_STRUCT_TOKEN "--pred-struct"
 #define PROFILE_TOKEN "--profile"
@@ -742,10 +741,6 @@ ConfigEntry config_entry_global_options[] = {
      INPUT_DEPTH_TOKEN,
      "Input video file and output bitstream bit-depth, default is 8 [8, 10]",
      set_cfg_generic_token},
-    {SINGLE_INPUT,
-     INPUT_COMPRESSED_TEN_BIT_FORMAT,
-     "Depreciated and ignored, default is 0 [0-1]",
-     set_cfg_generic_token},
     // Latency
     {SINGLE_INPUT,
      INJECTOR_TOKEN,
@@ -1250,11 +1245,6 @@ ConfigEntry config_entry[] = {
 
     //   Bit depth tokens
     {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "EncoderBitDepth", set_cfg_generic_token},
-
-    {SINGLE_INPUT,
-     INPUT_COMPRESSED_TEN_BIT_FORMAT,
-     "CompressedTenBitFormat",
-     set_cfg_generic_token},
 
     //   Latency
     {SINGLE_INPUT, INJECTOR_TOKEN, "Injector", set_injector},

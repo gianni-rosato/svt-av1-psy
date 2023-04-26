@@ -26,8 +26,7 @@ class Y4MVideoSource : public VideoFileSource {
   public:
     Y4MVideoSource(const std::string &file_name, const VideoColorFormat format,
                    const uint32_t width, const uint32_t height,
-                   const uint8_t bit_depth,
-                   const bool use_compressed_2bit_plan_output);
+                   const uint8_t bit_depth);
     ~Y4MVideoSource();
 
   protected:

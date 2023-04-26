@@ -1540,7 +1540,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.color_format = color_format;
         input_data.b64_size = enc_handle_ptr->scs_instance_array[instance_index]->scs->b64_size;
         input_data.ten_bit_format = enc_handle_ptr->scs_instance_array[instance_index]->scs->ten_bit_format;
-        input_data.compressed_ten_bit_format = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.compressed_ten_bit_format;
         input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs->static_config.enc_mode;
         input_data.speed_control = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs->speed_control_flag;
         input_data.hbd_md = enc_handle_ptr->scs_instance_array[instance_index]->scs->enable_hbd_mode_decision;
@@ -4463,8 +4462,6 @@ static void copy_api_from_app(
     scs->is_16bit_pipeline = ((((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth) > EB_EIGHT_BIT) ? TRUE: FALSE;
     scs->subsampling_x = (scs->chroma_format_idc == EB_YUV444 ? 1 : 2) - 1;
     scs->subsampling_y = (scs->chroma_format_idc >= EB_YUV422 ? 1 : 2) - 1;
-    scs->static_config.compressed_ten_bit_format = ((EbSvtAv1EncConfiguration*)config_struct)->compressed_ten_bit_format;
-
     // Thresholds
     scs->static_config.high_dynamic_range_input = ((EbSvtAv1EncConfiguration*)config_struct)->high_dynamic_range_input;
     scs->static_config.screen_content_mode = ((EbSvtAv1EncConfiguration*)config_struct)->screen_content_mode;

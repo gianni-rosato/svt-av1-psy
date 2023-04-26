@@ -25,8 +25,7 @@
 
 using namespace svt_av1_video_source;
 VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
-                         const uint32_t height, const uint8_t bit_depth,
-                         const bool use_compressed_2bit_plane_output)
+                         const uint32_t height, const uint8_t bit_depth)
     : src_name_("Unknown Source"),
       width_(width),
       height_(height),
@@ -43,10 +42,6 @@ VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
       height_downsize_(0),
       bytes_per_sample_(1),
       blank_frame_interval_(0) {
-    if (bit_depth_ > 8 && use_compressed_2bit_plane_output)
-        svt_compressed_2bit_plane_ = true;
-    else
-        svt_compressed_2bit_plane_ = false;
     frame_qp_list_.clear();
 }
 
@@ -77,7 +72,7 @@ void VideoSource::cal_yuv_plane_param() {
         break;
     default: assert(0); break;
     }
-    bytes_per_sample_ = (bit_depth_ > 8 && !svt_compressed_2bit_plane_) ? 2 : 1;
+    bytes_per_sample_ = (bit_depth_ > 8) ? 2 : 1;
 
     // encoder required 16 pixel alighed in width and height
     if (width_ % 16 != 0)
@@ -160,10 +155,8 @@ EbErrorType VideoSource::init_frame_buffer() {
 VideoFileSource::VideoFileSource(const std::string &file_name,
                                  const VideoColorFormat format,
                                  const uint32_t width, const uint32_t height,
-                                 const uint8_t bit_depth,
-                                 const bool use_compressed_2bit_plane_output)
-    : VideoSource(format, width, height, bit_depth,
-                  use_compressed_2bit_plane_output),
+                                 const uint8_t bit_depth)
+    : VideoSource(format, width, height, bit_depth),
       file_name_(file_name),
       file_handle_(nullptr),
       file_length_(0),
@@ -214,7 +207,7 @@ uint32_t VideoFileSource::read_input_frame() {
     // Read raw data from file
     size_t read_len = 0;
     uint32_t i;
-    if (bit_depth_ <= 8 || !svt_compressed_2bit_plane_) {
+    {
         uint8_t *eb_input_ptr = nullptr;
         // Y
         eb_input_ptr = frame_buffer_->luma;
@@ -255,62 +248,6 @@ uint32_t VideoFileSource::read_input_frame() {
 
             eb_input_ptr += frame_buffer_->cr_stride * bytes_per_sample_;
             filled_len += frame_buffer_->cr_stride * bytes_per_sample_;
-        }
-    } else if (bit_depth_ > 8 && svt_compressed_2bit_plane_) {
-        uint8_t *eb_input_ptr = nullptr;
-        uint8_t *eb_ext_input_ptr = nullptr;
-        // Y
-        uint16_t pix = 0;
-        eb_input_ptr = frame_buffer_->luma;
-
-        for (i = 0; i < height_; ++i) {
-            uint32_t j = 0;
-            for (j = 0; j < width_; ++j) {
-                // Get one pixel
-                if (2 != fread(&pix, 1, 2, file_handle_))
-                    return 0;
-                eb_input_ptr[j] = (uint8_t)(pix >> 2);
-                eb_ext_input_ptr[j / 4] &= (pix & 0x3) << (j % 4);
-            }
-
-            eb_input_ptr += frame_buffer_->y_stride;
-            eb_ext_input_ptr += frame_buffer_->y_stride / 4;
-            filled_len += frame_buffer_->y_stride * 5 / 4;
-        }
-        // Cb
-        eb_input_ptr = frame_buffer_->cb;
-
-        for (i = 0; i < (height_ >> height_downsize_); ++i) {
-            uint32_t j = 0;
-            for (j = 0; j < (width_ >> width_downsize_); ++j) {
-                // Get one pixel
-                if (2 != fread(&pix, 1, 2, file_handle_))
-                    return 0;
-                eb_input_ptr[j] = (uint8_t)(pix >> 2);
-                eb_ext_input_ptr[j / 4] &= (pix & 0x3) << (j % 4);
-            }
-
-            eb_input_ptr += frame_buffer_->cb_stride;
-            eb_ext_input_ptr += frame_buffer_->cb_stride / 4;
-            filled_len += frame_buffer_->cb_stride * 5 / 4;
-        }
-
-        // Cr
-        eb_input_ptr = frame_buffer_->cr;
-
-        for (i = 0; i < (height_ >> height_downsize_); ++i) {
-            uint32_t j = 0;
-            for (j = 0; j < (width_ >> width_downsize_); ++j) {
-                // Get one pixel
-                if (2 != fread(&pix, 1, 2, file_handle_))
-                    return 0;
-                eb_input_ptr[j] = (uint8_t)(pix >> 2);
-                eb_ext_input_ptr[j / 4] &= (pix & 0x3) << (j % 4);
-            }
-
-            eb_input_ptr += frame_buffer_->cr_stride;
-            eb_ext_input_ptr += frame_buffer_->cr_stride / 4;
-            filled_len += frame_buffer_->cr_stride * 5 / 4;
         }
     }
 
@@ -401,7 +338,6 @@ EbErrorType VideoFileSource::open_source(const uint32_t init_pos,
             height_with_padding_,
             (bit_depth_ > 8) ? width_with_padding_ * 2 : width_with_padding_,
             bit_depth_,
-            svt_compressed_2bit_plane_,
             "Y4M Source");
     }
 #endif

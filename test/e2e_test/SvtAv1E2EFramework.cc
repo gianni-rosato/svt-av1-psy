@@ -55,15 +55,13 @@ VideoSource *SvtAv1E2ETestFramework::prepare_video_src(
                                        std::get<2>(vector),
                                        std::get<3>(vector),
                                        std::get<4>(vector),
-                                       (uint8_t)std::get<5>(vector),
-                                       std::get<6>(vector));
+                                       (uint8_t)std::get<5>(vector));
         break;
     case DUMMY_SOURCE:
         video_src = new DummyVideoSource(std::get<2>(vector),
                                          std::get<3>(vector),
                                          std::get<4>(vector),
-                                         (uint8_t)std::get<5>(vector),
-                                         std::get<6>(vector));
+                                         (uint8_t)std::get<5>(vector));
         break;
     default: assert(0); break;
     }
@@ -90,7 +88,6 @@ void SvtAv1E2ETestFramework::setup_src_param(const VideoSource *source,
     config.source_width = source->get_width_with_padding();
     config.source_height = source->get_height_with_padding();
     config.encoder_bit_depth = source->get_bit_depth();
-    config.compressed_ten_bit_format = source->get_compressed_10bit_mode();
 }
 
 SvtAv1E2ETestFramework::SvtAv1E2ETestFramework() : enc_setting(GetParam()) {

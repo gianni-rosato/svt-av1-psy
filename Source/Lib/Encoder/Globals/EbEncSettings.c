@@ -510,17 +510,6 @@ EbErrorType svt_av1_verify_settings(SequenceControlSet *scs) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->compressed_ten_bit_format != 0 && config->compressed_ten_bit_format != 1) {
-        SVT_ERROR("Instance %u: Invalid Compressed Ten Bit Format flag [0 - 1]\n",
-                  channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->compressed_ten_bit_format) {
-        SVT_WARN("Instance %u: Compressed Ten Bit Format has been deprecated and has no effect\n",
-                 channel_number + 1);
-    }
-
     if (config->use_cpu_flags & EB_CPU_FLAGS_INVALID) {
         SVT_ERROR(
             "Instance %u: param '--asm' have invalid value.\n"
@@ -939,7 +928,6 @@ EbErrorType svt_av1_set_default_params(EbSvtAv1EncConfiguration *config_ptr) {
     config_ptr->frame_rate_numerator      = 60000;
     config_ptr->frame_rate_denominator    = 1000;
     config_ptr->encoder_bit_depth         = 8;
-    config_ptr->compressed_ten_bit_format = 0;
     config_ptr->source_width              = 0;
     config_ptr->source_height             = 0;
     config_ptr->forced_max_frame_width    = 0;
@@ -1990,7 +1978,6 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         {"enable-stat-report", &config_struct->stat_report},
         {"scm", &config_struct->screen_content_mode},
         {"input-depth", &config_struct->encoder_bit_depth},
-        {"compressed-ten-bit-format", &config_struct->compressed_ten_bit_format},
         {"forced-max-frame-width", &config_struct->forced_max_frame_width},
         {"forced-max-frame-height", &config_struct->forced_max_frame_height},
     };

@@ -1190,7 +1190,6 @@ typedef struct PictureControlSetInitData {
     uint32_t sb_size;
     // Bool                             is_16bit;
     uint32_t                 ten_bit_format;
-    uint32_t                 compressed_ten_bit_format;
     uint16_t                 enc_dec_segment_col;
     uint16_t                 enc_dec_segment_row;
     EncMode                  enc_mode;

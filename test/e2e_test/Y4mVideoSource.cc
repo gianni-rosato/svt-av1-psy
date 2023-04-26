@@ -34,10 +34,8 @@ static const char Y4M_FRAME_HEADER[Y4M_FRAME_HEADER_LEN + 1] = {
 Y4MVideoSource::Y4MVideoSource(const std::string& file_name,
                                const VideoColorFormat format,
                                const uint32_t width, const uint32_t height,
-                               const uint8_t bit_depth,
-                               const bool use_compressed_2bit_plane_output)
-    : VideoFileSource(file_name, format, width, height, bit_depth,
-                      use_compressed_2bit_plane_output) {
+                               const uint8_t bit_depth)
+    : VideoFileSource(file_name, format, width, height, bit_depth) {
     src_name_ = "Y4M Source";
     header_length_ = 0;
 }
@@ -66,7 +64,6 @@ EbErrorType Y4MVideoSource::parse_file_info() {
     width_ = cfg.config.source_width;
     height_ = cfg.config.source_height;
     bit_depth_ = cfg.config.encoder_bit_depth;
-    svt_compressed_2bit_plane_ = cfg.config.compressed_ten_bit_format;
 
     // y4m video source use the color format type from test vector param for
     // "read_y4m_header" does not output color format info

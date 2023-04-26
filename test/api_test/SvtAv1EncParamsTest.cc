@@ -240,10 +240,6 @@ PARAM_TEST(EncParamSrcHeightTest);
 DEFINE_PARAM_TEST_CLASS(EncParamEncBitDepthTest, encoder_bit_depth);
 PARAM_TEST(EncParamEncBitDepthTest);
 
-/** Test case for compressed_ten_bit_format*/
-DEFINE_PARAM_TEST_CLASS(EncParamCompr10BitFmtTest, compressed_ten_bit_format);
-PARAM_TEST(EncParamCompr10BitFmtTest);
-
 /** Test case for qp*/
 DEFINE_PARAM_TEST_CLASS(EncParamQPTest, qp);
 PARAM_TEST(EncParamQPTest);

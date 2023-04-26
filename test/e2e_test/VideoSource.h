@@ -37,8 +37,7 @@ namespace svt_av1_video_source {
 class VideoSource {
   public:
     VideoSource(const VideoColorFormat format, const uint32_t width,
-                const uint32_t height, const uint8_t bit_depth,
-                const bool use_compressed_2bit_plane_output);
+                const uint32_t height, const uint8_t bit_depth);
     virtual ~VideoSource();
     /*!\brief Prepare stream. */
     virtual EbErrorType open_source(const uint32_t init_pos,
@@ -79,11 +78,6 @@ class VideoSource {
     virtual uint32_t get_frame_count() const {
         return frame_count_;
     }
-    /*!\brief If the return value is true, video source will use svt compressed
-     * 10bit mode for output . */
-    virtual bool get_compressed_10bit_mode() const {
-        return svt_compressed_2bit_plane_;
-    }
     /*!\brief Get the frame qp by index */
     virtual uint32_t get_frame_qp(const uint32_t index) const {
         if (index >= frame_qp_list_.size())
@@ -117,7 +111,6 @@ class VideoSource {
     uint32_t frame_size_;
     EbSvtIOFormat *frame_buffer_;
     VideoColorFormat image_format_;
-    bool svt_compressed_2bit_plane_;
     std::vector<uint32_t> frame_qp_list_;
     int width_downsize_;
     int height_downsize_;
@@ -133,8 +126,7 @@ class VideoFileSource : public VideoSource {
   public:
     VideoFileSource(const std::string &file_name, const VideoColorFormat format,
                     const uint32_t width, const uint32_t height,
-                    const uint8_t bit_depth,
-                    const bool use_compressed_2bit_plane_output);
+                    const uint8_t bit_depth);
     virtual ~VideoFileSource();
     /**
      * @brief      Use this function to get vector path defined by environment
