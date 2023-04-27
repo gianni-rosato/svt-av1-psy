@@ -21,6 +21,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbModeDecisionProcess.h"
 #include "EbEncInterPrediction.h"
+#include "EbLog.h"
 
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 
@@ -2084,8 +2085,17 @@ void svt_aom_init_resize_picture(SequenceControlSet *scs, PictureParentControlSe
                                       input_pic->width,
                                       input_pic->height,
                                       &spr_params,
-                                      &resize_denom))
-                assert(0 && "Invalid scale parameters");
+                                      &resize_denom)) {
+                SVT_ERROR(
+                    "Invalid scale parameters, disable scaling! super-res denom: %u, resize denom: "
+                    "%u resets to %u\n",
+                    spr_params.superres_denom,
+                    resize_denom,
+                    SCALE_NUMERATOR);
+                resize_denom               = SCALE_NUMERATOR;
+                spr_params.encoding_width  = input_pic->width;
+                spr_params.encoding_height = input_pic->height;
+            }
             if (resize_denom != pcs->resize_denom) {
                 // refresh resize info if resize denom is adjusted
                 pcs->resize_denom         = resize_denom;
