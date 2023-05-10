@@ -351,7 +351,7 @@ static EbErrorType set_cfg_input_file(EbConfig *cfg, const char *token, const ch
 }
 static EbErrorType set_cfg_stream_file(EbConfig *cfg, const char *token, const char *value) {
     if (!strcmp(value, "stdout") || !strcmp(value, "-")) {
-        if (cfg->bitstream_file != stdout) {
+        if (cfg->bitstream_file && cfg->bitstream_file != stdout) {
             fclose(cfg->bitstream_file);
         }
         cfg->bitstream_file = stdout;
@@ -361,7 +361,7 @@ static EbErrorType set_cfg_stream_file(EbConfig *cfg, const char *token, const c
 }
 static EbErrorType set_cfg_error_file(EbConfig *cfg, const char *token, const char *value) {
     if (!strcmp(value, "stderr")) {
-        if (cfg->error_log_file != stderr) {
+        if (cfg->error_log_file && cfg->error_log_file != stderr) {
             fclose(cfg->error_log_file);
         }
         cfg->error_log_file = stderr;
