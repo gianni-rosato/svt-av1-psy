@@ -2019,8 +2019,12 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         if (!strcmp(name, uint8_opts[i].name)) {
             uint32_t val;
             return_error = str_to_uint(value, &val, NULL);
-            if (return_error == EB_ErrorNone)
+            if (return_error == EB_ErrorNone) {
+                // add protection if the input param is roll-over
+                if (val > 255)
+                    return EB_ErrorBadParameter;
                 *uint8_opts[i].out = val;
+            }
             return return_error;
         }
     }
@@ -2085,8 +2089,12 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(EbSvtAv1EncConfiguration *config_
         if (!strcmp(name, int8_opts[i].name)) {
             int32_t val;
             return_error = str_to_int(value, &val, NULL);
-            if (return_error == EB_ErrorNone)
+            if (return_error == EB_ErrorNone) {
+                // add protection if the input param is roll-over
+                if (val > 127 || val < -128)
+                    return EB_ErrorBadParameter;
                 *int8_opts[i].out = val;
+            }
             return return_error;
         }
     }
