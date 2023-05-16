@@ -32,7 +32,7 @@ BreakBeforeBraces: Custom
 BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: true
 BreakStringLiterals: true
-ColumnLimit: 100
+ColumnLimit: 120
 CommentPragmas: "^ IWYU pragma:"
 ContinuationIndentWidth: 4
 DerivePointerAlignment: true
