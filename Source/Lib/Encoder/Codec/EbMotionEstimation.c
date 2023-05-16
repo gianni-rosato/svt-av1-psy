@@ -1888,7 +1888,7 @@ static void get_hme_l0_search_area(MeContext *me_ctx, uint8_t list_index,
 //this functions returns the worst quadrant in terms of sad.
 //it is implemented w/o for loops to get away from a VS2022 compiler issue.
 //it then assumes a fixed quadrant sizes of 2 each direction.
-uint8_t get_worst_quadrant( MeContext *me_ctx,uint32_t list_index,uint32_t ref_pic_index ,uint8_t *best_w, uint8_t *best_h){
+static uint8_t get_worst_quadrant( MeContext *me_ctx,uint32_t list_index,uint32_t ref_pic_index ,uint8_t *best_w, uint8_t *best_h){
 
      uint64_t max_sad  = 0;
 
@@ -2017,7 +2017,7 @@ static void hme_level0_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_
                     //get the worst quadrant
                     uint64_t max_sad  = 0;
                     uint8_t  sr_h_max = 0, sr_w_max = 0;
-#if 1
+#if worst_quadrant_fix
                      get_worst_quadrant( 
                                me_ctx,      
                                list_index,
