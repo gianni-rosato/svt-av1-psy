@@ -1885,6 +1885,43 @@ static void get_hme_l0_search_area(MeContext *me_ctx, uint8_t list_index,
     *sa_height = search_area_height;
 }
 
+//this functions returns the worst quadrant in terms of sad.
+//it is implemented w/o for loops to get away from a VS2022 compiler issue.
+//it then assumes a fixed quadrant sizes of 2 each direction.
+uint8_t get_worst_quadrant( MeContext *me_ctx,uint32_t list_index,uint32_t ref_pic_index ,uint8_t *best_w, uint8_t *best_h){
+
+     uint64_t max_sad  = 0;
+
+    if( me_ctx->num_hme_sa_w!=2 || me_ctx->num_hme_sa_h!=2){
+        svt_aom_assert_err(0,"update other quadrant sizes");
+    }else{      
+
+        if (me_ctx->hme_level0_sad[list_index][ref_pic_index][0][0] > max_sad) {
+             max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][0][0];
+             *best_w = 0;
+             *best_h = 0;                               
+        }
+        if (me_ctx->hme_level0_sad[list_index][ref_pic_index][1][0] > max_sad) {
+             max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][1][0];
+             *best_w = 1;
+             *best_h = 0;
+        }
+        if (me_ctx->hme_level0_sad[list_index][ref_pic_index][0][1] > max_sad) {
+             max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][0][1];
+             *best_w = 0;
+             *best_h = 1;
+        }
+        if (me_ctx->hme_level0_sad[list_index][ref_pic_index][1][1] > max_sad) {
+             max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][1][1];
+             *best_w = 1;
+             *best_h = 1;
+        }
+
+    }
+
+    return 0;
+}
+
 /*******************************************
  * performs hierarchical ME level 0 for one 64x64 block (uni-prediction only)
  *******************************************/
@@ -1980,17 +2017,23 @@ static void hme_level0_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_
                     //get the worst quadrant
                     uint64_t max_sad  = 0;
                     uint8_t  sr_h_max = 0, sr_w_max = 0;
+#if 1
+                     get_worst_quadrant( 
+                               me_ctx,      
+                               list_index,
+                               ref_pic_index ,
+                               &sr_w_max, &sr_h_max);
+#else
                     for (uint8_t sr_h = 0; sr_h < me_ctx->num_hme_sa_h; sr_h++) {
-                        for (uint8_t sr_w = 0; sr_w < me_ctx->num_hme_sa_w; sr_w++) {
-                            if (me_ctx->hme_level0_sad[list_index][ref_pic_index][sr_w][sr_h] >
-                                max_sad) {
-                                max_sad =
-                                    me_ctx->hme_level0_sad[list_index][ref_pic_index][sr_w][sr_h];
+                        for (uint8_t sr_w = 0; sr_w < me_ctx->num_hme_sa_w; sr_w++) {                           
+                            if (me_ctx->hme_level0_sad[list_index][ref_pic_index][sr_w][sr_h] > max_sad) {
+                                max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][sr_w][sr_h];
                                 sr_h_max = sr_h;
                                 sr_w_max = sr_w;
                             }
                         }
                     }
+#endif
                     uint8_t sr_i = me_ctx->prehme_data[list_index][ref_pic_index][0].sad <=
                             me_ctx->prehme_data[list_index][ref_pic_index][1].sad
                         ? 0
