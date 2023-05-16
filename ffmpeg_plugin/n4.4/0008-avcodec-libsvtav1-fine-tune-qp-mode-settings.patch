@@ -1,7 +1,7 @@
 From abce9bfb144acc173a7d7d403fcecff915a6e2f1 Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Sun, 13 Mar 2022 15:17:40 -0300
-Subject: [PATCH 08/20] avcodec/libsvtav1: fine tune qp mode settings
+Subject: [PATCH 08/21] avcodec/libsvtav1: fine tune qp mode settings
 
 As requested in https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/1829
 
@@ -28,5 +28,5 @@ index 00be46e22b..8c54372065 100644
  
  #if SVT_AV1_CHECK_VERSION(0, 9, 1)
 -- 
-2.40.0
+2.40.1
 

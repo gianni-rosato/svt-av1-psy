@@ -1,7 +1,7 @@
 From 04de644b8ceaa15d32feb770782005e8e714ae96 Mon Sep 17 00:00:00 2001
 From: James Almer <jamrial@gmail.com>
 Date: Mon, 22 Aug 2022 00:05:02 -0300
-Subject: [PATCH 15/20] avcodec/libsvtav1: properly initialize the flush
+Subject: [PATCH 15/21] avcodec/libsvtav1: properly initialize the flush
  EbBufferHeaderType struct
 
 Should fix ticket #9834
@@ -30,5 +30,5 @@ index 7ed1dd14a5..86ae76176b 100644
  
          svt_av1_enc_send_picture(svt_enc->svt_handle, &headerPtrLast);
 -- 
-2.40.0
+2.40.1
 

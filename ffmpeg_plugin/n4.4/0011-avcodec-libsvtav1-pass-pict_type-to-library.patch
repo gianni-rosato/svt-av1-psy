@@ -1,7 +1,7 @@
 From 409bc75030c577b79c5655e5ba1a0ba6d2526327 Mon Sep 17 00:00:00 2001
 From: Christopher Degawa <ccom@randomderp.com>
 Date: Mon, 25 Apr 2022 17:54:38 -0500
-Subject: [PATCH 11/20] avcodec/libsvtav1: pass pict_type to library
+Subject: [PATCH 11/21] avcodec/libsvtav1: pass pict_type to library
 
 match the behavior of SvtAv1EncApp to ensure pic_type is always set
 before passing it to the library.
@@ -37,5 +37,5 @@ index ef9ae00235..333b22ca4c 100644
  
      return 0;
 -- 
-2.40.0
+2.40.1
 

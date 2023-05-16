@@ -17,6 +17,7 @@ Notes:
 #### Using SVT-AV1 v1.4 with n6.0?
 
 - [fba9d9609f](https://gitlab.com/1480c1/FFmpeg/-/commit/fba9d9609f): Backport patch for additional changes for max_buf_sz
+- [7958325a83](https://gitlab.com/1480c1/FFmpeg/-/commit/7958325a83): Backport patch for allowing -1 for the -preset option
 
 ---
 
@@ -33,6 +34,7 @@ Notes:
 - [70887d44ff](https://gitlab.com/1480c1/FFmpeg/-/commit/70887d44ff): Backport patch for not setting tbr if it's not needed
 - [fe100bc556](https://gitlab.com/1480c1/FFmpeg/-/commit/fe100bc556): Backport patch for passing bitrate properties through cpb side data
 - [fb70e0611b](https://gitlab.com/1480c1/FFmpeg/-/commit/fb70e0611b): Backport patch for fixing segfault on copying metadata from the EOS signal
+- [7958325a83](https://gitlab.com/1480c1/FFmpeg/-/commit/7958325a83): Backport patch for allowing -1 for the -preset option
 
 #### Using SVT-AV1 v1.1 with n5.0?
 
@@ -67,6 +69,7 @@ This patch is not necessary if you have vulkan disabled.
 - [70887d44ff](https://gitlab.com/1480c1/FFmpeg/-/commit/70887d44ff): Backport patch for not setting tbr if it's not needed
 - [fe100bc556](https://gitlab.com/1480c1/FFmpeg/-/commit/fe100bc556): Backport patch for passing bitrate properties through cpb side data
 - [fb70e0611b](https://gitlab.com/1480c1/FFmpeg/-/commit/fb70e0611b): Backport patch for fixing segfault on copying metadata from the EOS signal
+- [7958325a83](https://gitlab.com/1480c1/FFmpeg/-/commit/7958325a83): Backport patch for allowing -1 for the -preset option
 
 #### Using SVT-AV1 v1.1 with n4.4?
 

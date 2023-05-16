@@ -1,7 +1,7 @@
 From 345fcf28e7ed3c60acf5f417da07006c448cf2b6 Mon Sep 17 00:00:00 2001
 From: Christopher Degawa <christopher.degawa@intel.com>
 Date: Thu, 20 Oct 2022 22:55:28 -0500
-Subject: [PATCH 17/20] avcodec/libsvtav1: replace vbv_bufsize with
+Subject: [PATCH 17/21] avcodec/libsvtav1: replace vbv_bufsize with
  maximum_buffer_size_ms
 
 svt-av1 v1.2.0 has deprecated vbv_bufsize in favor of using
@@ -39,5 +39,5 @@ index d2f41e0ed5..b12dad98a0 100644
      if (avctx->bit_rate || avctx->rc_max_rate || avctx->rc_buffer_size) {
          AVCPBProperties *cpb_props = ff_add_cpb_side_data(avctx);
 -- 
-2.40.0
+2.40.1
 
