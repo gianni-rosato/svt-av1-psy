@@ -66,8 +66,6 @@ extern "C" {
 #define DEBUG_QM_LEVEL          0
 #define DEBUG_STARTUP_MG_SIZE   0
 #define DEBUG_SEGMENT_QP        0
-// get_worst_quadrant bug fix
-#define worst_quadrant_fix      1
 #ifdef __cplusplus
 }
 #endif // __cplusplus
