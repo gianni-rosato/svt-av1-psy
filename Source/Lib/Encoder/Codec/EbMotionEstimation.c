@@ -1892,8 +1892,9 @@ static void get_worst_quadrant( MeContext *me_ctx,uint32_t list_index,uint32_t r
 
      uint64_t max_sad  = 0;
 
-    if( me_ctx->num_hme_sa_w!=2 || me_ctx->num_hme_sa_h!=2){
+    if( me_ctx->num_hme_sa_w!=2 || me_ctx->num_hme_sa_h!=2) {
         svt_aom_assert_err(0,"update other quadrant sizes");
+        return;
     }else{      
 
         if (me_ctx->hme_level0_sad[list_index][ref_pic_index][0][0] > max_sad) {
@@ -2014,9 +2015,8 @@ static void hme_level0_b64(PictureParentControlSet *pcs, uint32_t org_x, uint32_
 
                 if (me_ctx->prehme_ctrl.enable) {
                     //get the worst quadrant
-                    uint64_t max_sad  = 0;
                     uint8_t  sr_h_max = 0, sr_w_max = 0;
-                     get_worst_quadrant( 
+                    get_worst_quadrant( 
                                me_ctx,      
                                list_index,
                                ref_pic_index ,
