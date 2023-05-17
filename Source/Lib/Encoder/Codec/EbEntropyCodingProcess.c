@@ -173,52 +173,40 @@ void svt_av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2], const Nm
 /**************************************************
  * Reset Entropy Coding Picture
  **************************************************/
-static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr, PictureControlSet *pcs,
-                                         SequenceControlSet *scs) {
-    uint16_t tile_cnt = pcs->ppcs->av1_cm->tiles_info.tile_rows *
-        pcs->ppcs->av1_cm->tiles_info.tile_cols;
-    uint16_t tile_idx = 0;
-    uint32_t entropy_coding_qp;
-
-    context_ptr->is_16bit = (Bool)(scs->static_config.encoder_bit_depth > EB_EIGHT_BIT);
-    FrameHeader *frm_hdr  = &pcs->ppcs->frm_hdr;
+static void reset_entropy_coding_picture(EntropyCodingContext *ctx, PictureControlSet *pcs, SequenceControlSet *scs) {
+    struct PictureParentControlSet *ppcs     = pcs->ppcs;
+    const uint16_t                  tile_cnt = ppcs->av1_cm->tiles_info.tile_rows * ppcs->av1_cm->tiles_info.tile_cols;
+    ctx->is_16bit                            = scs->static_config.encoder_bit_depth > EB_EIGHT_BIT;
+    const FrameHeader *frm_hdr               = &ppcs->frm_hdr;
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
-    entropy_coding_qp = pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
+    const uint32_t entropy_coding_qp = frm_hdr->quantization_params.base_q_idx;
 
-    for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
-        pcs->ppcs->prev_qindex[tile_idx] = pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
-    }
-    if (pcs->ppcs->frm_hdr.allow_intrabc)
-        assert(pcs->ppcs->frm_hdr.delta_lf_params.delta_lf_present == 0);
-    if (pcs->ppcs->frm_hdr.delta_lf_params.delta_lf_present) {
-        pcs->ppcs->prev_delta_lf_from_base = 0;
-        const int32_t frame_lf_count       = pcs->ppcs->monochrome == 0 ? FRAME_LF_COUNT
-                                                                        : FRAME_LF_COUNT - 2;
-        for (int32_t lf_id = 0; lf_id < frame_lf_count; ++lf_id)
-            pcs->ppcs->prev_delta_lf[lf_id] = 0;
+    for (uint16_t tile_idx = 0; tile_idx < tile_cnt; tile_idx++) ppcs->prev_qindex[tile_idx] = entropy_coding_qp;
+    if (frm_hdr->allow_intrabc)
+        assert(frm_hdr->delta_lf_params.delta_lf_present == 0);
+    if (frm_hdr->delta_lf_params.delta_lf_present) {
+        ppcs->prev_delta_lf_from_base = 0;
+
+        const int frame_lf_count = ppcs->monochrome == 0 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
+        for (int lf_id = 0; lf_id < frame_lf_count; ++lf_id) ppcs->prev_delta_lf[lf_id] = 0;
     }
 
     // pass the ent
-    for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
-        OutputBitstreamUnit *output_bitstream_ptr =
-            (OutputBitstreamUnit *)(pcs->ec_info[tile_idx]->ec->ec_output_bitstream_ptr);
+    for (uint16_t tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
+        EntropyCoder        *ec                   = pcs->ec_info[tile_idx]->ec;
+        OutputBitstreamUnit *output_bitstream_ptr = ec->ec_output_bitstream_ptr;
         //****************************************************************//
-        pcs->ec_info[tile_idx]->ec->ec_writer.allow_update_cdf = !pcs->ppcs->large_scale_tile;
-        pcs->ec_info[tile_idx]->ec->ec_writer.allow_update_cdf =
-            pcs->ec_info[tile_idx]->ec->ec_writer.allow_update_cdf && !frm_hdr->disable_cdf_update;
-        aom_start_encode(&pcs->ec_info[tile_idx]->ec->ec_writer, output_bitstream_ptr);
+        ec->ec_writer.allow_update_cdf = !ppcs->large_scale_tile && !frm_hdr->disable_cdf_update;
+        aom_start_encode(&ec->ec_writer, output_bitstream_ptr);
         // ADD Reset here
-        if (pcs->ppcs->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
-            svt_memcpy(pcs->ec_info[tile_idx]->ec->fc,
-                       &pcs->ref_frame_context[pcs->ppcs->frm_hdr.primary_ref_frame],
-                       sizeof(FRAME_CONTEXT));
+        const uint8_t primary_ref_frame = frm_hdr->primary_ref_frame;
+        if (primary_ref_frame != PRIMARY_REF_NONE)
+            svt_memcpy(ec->fc, &pcs->ref_frame_context[primary_ref_frame], sizeof(FRAME_CONTEXT));
         else
-            svt_aom_reset_entropy_coder(
-                scs->enc_ctx, pcs->ec_info[tile_idx]->ec, entropy_coding_qp, pcs->slice_type);
+            svt_aom_reset_entropy_coder(scs->enc_ctx, ec, entropy_coding_qp, pcs->slice_type);
 
         entropy_coding_reset_neighbor_arrays(pcs, tile_idx);
     }
-    return;
 }
 
 /* Entropy Coding */
