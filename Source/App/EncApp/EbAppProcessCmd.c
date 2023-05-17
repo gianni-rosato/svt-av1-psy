@@ -367,7 +367,7 @@ void process_input_buffer(EncChannel *channel) {
         if (header_ptr->n_filled_len) {
             // Update the context parameters
             app_cfg->processed_byte_count += header_ptr->n_filled_len;
-            header_ptr->p_app_private = (EbPtr)NULL;
+            header_ptr->p_app_private = NULL;
 
             app_cfg->mmap.file_frame_it++;
             app_cfg->frames_encoded = (int32_t)(++app_cfg->processed_frame_count);
@@ -399,20 +399,15 @@ void process_input_buffer(EncChannel *channel) {
             if (app_cfg->mmap.enable)
                 release_memory_mapped_file(app_cfg, is_16bit, header_ptr);
         }
-        if ((app_cfg->processed_frame_count == (uint64_t)app_cfg->frames_to_be_encoded) ||
-            app_cfg->stop_encoder) {
-            header_ptr->n_alloc_len   = 0;
-            header_ptr->n_filled_len  = 0;
-            header_ptr->n_tick_count  = 0;
-            header_ptr->p_app_private = NULL;
-            header_ptr->flags         = EB_BUFFERFLAG_EOS;
-            header_ptr->p_buffer      = NULL;
-            header_ptr->pic_type      = EB_AV1_INVALID_PICTURE;
-            header_ptr->metadata      = NULL;
-            svt_av1_enc_send_picture(component_handle, header_ptr);
+        if ((app_cfg->processed_frame_count == (uint64_t)app_cfg->frames_to_be_encoded) || app_cfg->stop_encoder) {
+            header_ptr->flags = EB_BUFFERFLAG_EOS;
+            svt_av1_enc_send_picture(component_handle,
+                                     &(EbBufferHeaderType){
+                                         .flags    = EB_BUFFERFLAG_EOS,
+                                         .pic_type = EB_AV1_INVALID_PICTURE,
+                                     });
+            return_value = APP_ExitConditionFinished;
         }
-        return_value = (header_ptr->flags == EB_BUFFERFLAG_EOS) ? APP_ExitConditionFinished
-                                                                : return_value;
     }
 
     channel->exit_cond_input = return_value;

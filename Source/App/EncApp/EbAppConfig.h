@@ -46,77 +46,7 @@ typedef enum EncPass {
     MAX_ENC_PASS = 3,
 } EncPass;
 
-/** The EbPtr type is intended to be used to pass pointers to and from the svt
-API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
-*/
-typedef void *EbPtr;
-
 #define WARNING_LENGTH 100
-
-// memory map to be removed and replaced by malloc / free
-typedef enum EbPtrType {
-    EB_N_PTR     = 0, // malloc'd pointer
-    EB_A_PTR     = 1, // malloc'd pointer aligned
-    EB_MUTEX     = 2, // mutex
-    EB_SEMAPHORE = 3, // semaphore
-    EB_THREAD    = 4 // thread handle
-} EbPtrType;
-typedef struct EbMemoryMapEntry {
-    EbPtr     ptr; // points to a memory pointer
-    EbPtrType ptr_type; // pointer type
-} EbMemoryMapEntry;
-
-extern EbMemoryMapEntry *app_memory_map; // App Memory table
-extern uint32_t         *app_memory_map_index; // App Memory index
-extern uint64_t         *total_app_memory; // App Memory malloc'd
-extern uint32_t          app_malloc_count;
-
-#define MAX_APP_NUM_PTR (0x186A0 << 2) // Maximum number of pointers to be allocated for the app
-
-#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, return_type) \
-    pointer = (type)malloc(n_elements);                                      \
-    if (pointer == (type)NULL) {                                             \
-        return return_type;                                                  \
-    } else {                                                                 \
-        app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class;    \
-        app_memory_map[(*(app_memory_map_index))++].ptr  = pointer;          \
-        if (n_elements % 8 == 0) {                                           \
-            *total_app_memory += (n_elements);                               \
-        } else {                                                             \
-            *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8)));  \
-        }                                                                    \
-    }                                                                        \
-    if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) {                        \
-        return return_type;                                                  \
-    }                                                                        \
-    app_malloc_count++;
-
-#define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class, return_type) \
-    (void)return_type;                                                          \
-    pointer = (type)malloc(n_elements);                                         \
-    if (pointer == (type)NULL) {                                                \
-        return_type = EB_ErrorInsufficientResources;                            \
-        fprintf(stderr, "Malloc has failed due to insuffucient resources");     \
-        return;                                                                 \
-    } else {                                                                    \
-        app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class;       \
-        app_memory_map[(*(app_memory_map_index))++].ptr  = pointer;             \
-        if (n_elements % 8 == 0) {                                              \
-            *total_app_memory += (n_elements);                                  \
-        } else {                                                                \
-            *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8)));     \
-        }                                                                       \
-    }                                                                           \
-    if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) {                           \
-        return_type = EB_ErrorInsufficientResources;                            \
-        fprintf(stderr, "Malloc has failed due to insuffucient resources");     \
-        return;                                                                 \
-    }                                                                           \
-    app_malloc_count++;
-
-#define EB_APP_MEMORY()                                                        \
-    fprintf(stderr, "Total Number of Mallocs in App: %u\n", app_malloc_count); \
-    fprintf(stderr, "Total App Memory: %.2lf KB\n\n", *total_app_memory / (double)1024);
 
 #define MAX_CHANNEL_NUMBER 6U
 #define MAX_NUM_TOKENS 210
@@ -283,12 +213,11 @@ void      svt_config_dtor(EbConfig *app_cfg);
 
 EbErrorType     enc_channel_ctor(EncChannel *c);
 void            enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
-EbErrorType     read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
-                                  uint32_t num_channels);
+EbErrorType     read_command_line(int32_t argc, char *const argv[], EncChannel *channels, uint32_t num_channels);
 int             get_version(int argc, char *argv[]);
 extern uint32_t get_help(int32_t argc, char *const argv[]);
 extern uint32_t get_number_of_channels(int32_t argc, char *const argv[]);
 uint32_t        get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS]);
-EbErrorType     handle_stats_file(EbConfig *app_cfg, EncPass pass,
-                                  const SvtAv1FixedBuf *rc_stats_buffer, uint32_t channel_number);
+EbErrorType     handle_stats_file(EbConfig *app_cfg, EncPass pass, const SvtAv1FixedBuf *rc_stats_buffer,
+                                  uint32_t channel_number);
 #endif //EbAppConfig_h
