@@ -1890,35 +1890,35 @@ static void get_hme_l0_search_area(MeContext *me_ctx, uint8_t list_index,
 //it then assumes a fixed quadrant sizes of 2 each direction.
 static void get_worst_quadrant( MeContext *me_ctx,uint32_t list_index,uint32_t ref_pic_index ,uint8_t *best_w, uint8_t *best_h){
 
-     uint64_t max_sad  = 0;
 
     if( me_ctx->num_hme_sa_w!=2 || me_ctx->num_hme_sa_h!=2) {
         svt_aom_assert_err(0,"update other quadrant sizes");
         return;
-    }else{      
+    }     
+    uint64_t max_sad  = 0;
 
-        if (me_ctx->hme_level0_sad[list_index][ref_pic_index][0][0] > max_sad) {
-             max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][0][0];
-             *best_w = 0;
-             *best_h = 0;                               
-        }
-        if (me_ctx->hme_level0_sad[list_index][ref_pic_index][1][0] > max_sad) {
-             max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][1][0];
-             *best_w = 1;
-             *best_h = 0;
-        }
-        if (me_ctx->hme_level0_sad[list_index][ref_pic_index][0][1] > max_sad) {
-             max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][0][1];
-             *best_w = 0;
-             *best_h = 1;
-        }
-        if (me_ctx->hme_level0_sad[list_index][ref_pic_index][1][1] > max_sad) {
-             max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][1][1];
-             *best_w = 1;
-             *best_h = 1;
-        }
-
+    if (me_ctx->hme_level0_sad[list_index][ref_pic_index][0][0] > max_sad) {
+         max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][0][0];
+         *best_w = 0;
+         *best_h = 0;                               
     }
+    if (me_ctx->hme_level0_sad[list_index][ref_pic_index][1][0] > max_sad) {
+         max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][1][0];
+         *best_w = 1;
+         *best_h = 0;
+    }
+    if (me_ctx->hme_level0_sad[list_index][ref_pic_index][0][1] > max_sad) {
+         max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][0][1];
+         *best_w = 0;
+         *best_h = 1;
+    }
+    if (me_ctx->hme_level0_sad[list_index][ref_pic_index][1][1] > max_sad) {
+         max_sad  =  me_ctx->hme_level0_sad[list_index][ref_pic_index][1][1];
+         *best_w = 1;
+         *best_h = 1;
+    }
+
+    
 
 }
 
