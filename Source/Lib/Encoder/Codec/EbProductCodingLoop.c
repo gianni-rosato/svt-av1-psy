@@ -10238,7 +10238,7 @@ uint64_t estimate_ref_frame_type_bits(ModeDecisionContext *ctx, BlkStruct *blk_p
 /*
  * Estimate the rate of signaling all available ref_frame_type
  */
-void svt_aom_estimate_ref_frames_num_bits(struct ModeDecisionContext *ctx, PictureControlSet *pcs) {
+static void estimate_ref_frames_num_bits(struct ModeDecisionContext *ctx, PictureControlSet *pcs) {
     uint64_t     comp_inter_fac_bits_uni = 0;
     uint64_t     comp_inter_fac_bits_bi  = 0;
     FrameHeader *frm_hdr                 = &pcs->ppcs->frm_hdr;
@@ -11306,7 +11306,7 @@ static void md_encode_block_light_pd1(PictureControlSet *pcs, ModeDecisionContex
 #endif
     if (pcs->slice_type != I_SLICE) {
         if (!ctx->shut_fast_rate) {
-            svt_aom_estimate_ref_frames_num_bits(ctx, pcs);
+            estimate_ref_frames_num_bits(ctx, pcs);
         }
     }
 
@@ -11845,7 +11845,7 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
     generate_md_stage_0_cand(ctx->sb_ptr, ctx, &fast_candidate_total_count, pcs);
     if (pcs->slice_type != I_SLICE) {
         if (!ctx->shut_fast_rate) {
-            svt_aom_estimate_ref_frames_num_bits(ctx, pcs);
+            estimate_ref_frames_num_bits(ctx, pcs);
         }
     }
     CandClass cand_class_it;
