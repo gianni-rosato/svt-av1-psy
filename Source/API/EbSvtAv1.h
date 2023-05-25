@@ -79,7 +79,7 @@ typedef enum EbAv1PictureType {
 
 /** The Bool type is intended to be used to represent a true or a false
 value when passing parameters to and from the eBrisk API.  The
-Bool is a 32 bit quantity and is aligned on a 32 bit word boundary.
+Bool is an 8 bit quantity.
 */
 typedef uint8_t Bool;
 #define FALSE 0
