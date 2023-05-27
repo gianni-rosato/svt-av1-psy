@@ -3409,6 +3409,13 @@ static void send_picture_out(
     svt_aom_set_gm_controls(pcs, gm_level);
     pcs->me_processed_b64_count = 0;
 
+#if FIX_ISSUE_2064_ALT
+    // NB: overlay frames should be non-ref
+    // Before sending pics out to pic mgr, ensure that pic mgr can handle them
+    if (pcs->is_ref)
+        svt_block_on_semaphore(scs->ref_buffer_available_semaphore);
+#endif
+
     for (uint32_t segment_index = 0; segment_index < pcs->me_segments_total_count; ++segment_index) {
         // Get Empty Results Object
         svt_get_empty_object(

@@ -204,8 +204,13 @@ typedef enum PicMgrInputPortTypes {
     PIC_MGR_INPUT_PORT_SOP           = 0,
     PIC_MGR_INPUT_PORT_PACKETIZATION = 1,
     PIC_MGR_INPUT_PORT_REST          = 2,
-    PIC_MGR_INPUT_PORT_TOTAL_COUNT   = 3,
-    PIC_MGR_INPUT_PORT_INVALID       = ~0,
+#if FIX_ISSUE_2064
+    PIC_MGR_INPUT_PORT_INIT_RC     = 3,
+    PIC_MGR_INPUT_PORT_TOTAL_COUNT = 4,
+#else
+    PIC_MGR_INPUT_PORT_TOTAL_COUNT = 3,
+#endif
+    PIC_MGR_INPUT_PORT_INVALID = ~0,
 } PicMgrInputPortTypes;
 typedef struct PicMgrPorts {
     PicMgrInputPortTypes type;

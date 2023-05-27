@@ -904,6 +904,9 @@ static PicMgrPorts pic_mgr_ports[] = {
     {PIC_MGR_INPUT_PORT_SOP,            0},
     {PIC_MGR_INPUT_PORT_PACKETIZATION,  0},
     {PIC_MGR_INPUT_PORT_REST,           0},
+#if FIX_ISSUE_2064
+    {PIC_MGR_INPUT_PORT_INIT_RC,        0},
+#endif
     {PIC_MGR_INPUT_PORT_INVALID,        0}
 };
 static uint32_t pic_mgr_port_lookup(
@@ -1749,6 +1752,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     pic_mgr_ports[PIC_MGR_INPUT_PORT_SOP].count = enc_handle_ptr->scs_instance_array[0]->scs->source_based_operations_process_init_count;
     pic_mgr_ports[PIC_MGR_INPUT_PORT_PACKETIZATION].count = EB_PacketizationProcessInitCount;
     pic_mgr_ports[PIC_MGR_INPUT_PORT_REST].count = enc_handle_ptr->scs_instance_array[0]->scs->rest_process_init_count;
+#if FIX_ISSUE_2064
+    pic_mgr_ports[PIC_MGR_INPUT_PORT_INIT_RC].count = enc_handle_ptr->scs_instance_array[0]->scs->initial_rate_control_fifo_init_count;
+#endif
     // Rate Control
     rate_control_ports[RATE_CONTROL_INPUT_PORT_INLME].count = EB_PictureManagerProcessInitCount;
     rate_control_ports[RATE_CONTROL_INPUT_PORT_PACKETIZATION].count = EB_PacketizationProcessInitCount;
@@ -2155,10 +2161,18 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
 
         // Initial Rate Control Context
+#if FIX_ISSUE_2064
+        EB_NEW(
+            enc_handle_ptr->initial_rate_control_context_ptr,
+            svt_aom_initial_rate_control_context_ctor,
+            enc_handle_ptr,
+            pic_mgr_port_lookup(PIC_MGR_INPUT_PORT_INIT_RC, 0));
+#else
         EB_NEW(
             enc_handle_ptr->initial_rate_control_context_ptr,
             svt_aom_initial_rate_control_context_ctor,
             enc_handle_ptr);
+#endif
         // Source Based Operations Context
         EB_ALLOC_PTR_ARRAY(enc_handle_ptr->source_based_operations_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs->source_based_operations_process_init_count);
 

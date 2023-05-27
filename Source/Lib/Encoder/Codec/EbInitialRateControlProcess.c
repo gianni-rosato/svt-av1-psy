@@ -23,6 +23,9 @@
 #include "EbLog.h"
 #include "EbPictureDecisionProcess.h"
 #include "firstpass.h"
+#if FIX_ISSUE_2064
+#include "EbPictureDemuxResults.h"
+#endif
 /**************************************
  * Context
  **************************************/
@@ -47,6 +50,9 @@ typedef struct InitialRateControlContext {
     EbFifo   *motion_estimation_results_input_fifo_ptr;
     EbFifo   *initialrate_control_results_output_fifo_ptr;
     LadQueue *lad_queue;
+#if FIX_ISSUE_2064
+    EbFifo *picture_demux_results_output_fifo_ptr;
+#endif
 
 } InitialRateControlContext;
 
@@ -65,8 +71,13 @@ static void initial_rate_control_context_dctor(EbPtr p) {
 /************************************************
  * Initial Rate Control Context Constructor
  ************************************************/
-EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext   *thread_ctx,
+EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext *thread_ctx,
+#if FIX_ISSUE_2064
+                                                      const EbEncHandle *enc_handle_ptr,
+                                                      int                index) {
+#else
                                                       const EbEncHandle *enc_handle_ptr) {
+#endif
     InitialRateControlContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_ctx->priv  = context_ptr;
@@ -77,6 +88,10 @@ EbErrorType svt_aom_initial_rate_control_context_ctor(EbThreadContext   *thread_
     context_ptr->initialrate_control_results_output_fifo_ptr =
         svt_system_resource_get_producer_fifo(
             enc_handle_ptr->initial_rate_control_results_resource_ptr, 0);
+#if FIX_ISSUE_2064
+    context_ptr->picture_demux_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->picture_demux_results_resource_ptr, index);
+#endif
 
     EB_MALLOC(context_ptr->lad_queue, sizeof(LadQueue));
 
@@ -133,14 +148,35 @@ static void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlCo
 static void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs,
                                  Bool superres_recode) {
     EbObjectWrapper *out_results_wrapper;
+#if FIX_ISSUE_2064
+    if (!superres_recode) {
+        // Get Empty Results Object
+        svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr,
+                             &out_results_wrapper);
+        InitialRateControlResults *out_results = (InitialRateControlResults *)
+                                                     out_results_wrapper->object_ptr;
+        // SVT_LOG("iRC Out:%lld\n",pcs->picture_number);
+        out_results->pcs_wrapper = pcs->p_pcs_wrapper_ptr;
+        svt_post_full_object(out_results_wrapper);
+    } else {
+        // Bypass SBO process (post frame to pic mgr process directly) since TPL will not be applied to
+        // super-res recode frames and these frames are already in EncodeContext::ref_pic_list.
+        svt_get_empty_object(ctx->picture_demux_results_output_fifo_ptr, &out_results_wrapper);
+        PictureDemuxResults *out_results = (PictureDemuxResults *)out_results_wrapper->object_ptr;
+        out_results->pcs_wrapper         = pcs->p_pcs_wrapper_ptr;
+        out_results->picture_type        = EB_PIC_SUPERRES_INPUT;
+        svt_post_full_object(out_results_wrapper);
+    }
+#else
     // Get Empty Results Object
     svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr, &out_results_wrapper);
     InitialRateControlResults *out_results = (InitialRateControlResults *)
                                                  out_results_wrapper->object_ptr;
     // SVT_LOG("iRC Out:%lld\n",pcs->picture_number);
-    out_results->pcs_wrapper     = pcs->p_pcs_wrapper_ptr;
+    out_results->pcs_wrapper = pcs->p_pcs_wrapper_ptr;
     out_results->superres_recode = superres_recode;
     svt_post_full_object(out_results_wrapper);
+#endif
 }
 static uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index,
                                        uint64_t pic_num) {
