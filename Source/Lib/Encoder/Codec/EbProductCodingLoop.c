@@ -10081,84 +10081,66 @@ static void post_mds0_nic_pruning(PictureControlSet *pcs, ModeDecisionContext *c
 }
 // Perform the NIC class pruning and candidate pruning after MSD1
 static void post_mds1_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_stage_cost) {
-    for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
-         cand_class_it++) {
-        uint64_t mds2_cand_th = ctx->nic_ctrls.pruning_ctrls.mds2_cand_base_th;
-        if (mds2_cand_th != (uint64_t)~0 ||
-            ctx->nic_ctrls.pruning_ctrls.mds2_class_th != (uint64_t)~0)
-            if (ctx->md_stage_1_count[cand_class_it] > 0 &&
-                ctx->md_stage_2_count[cand_class_it] > 0 && ctx->bypass_md_stage_1 == FALSE) {
-                uint32_t *cand_buff_indices = ctx->cand_buff_indices[cand_class_it];
-                uint64_t  class_best_cost   = *(
-                    ctx->cand_bf_ptr_array[cand_buff_indices[0]]->full_cost);
+    const struct NicPruningCtrls  pruning_ctrls        = ctx->nic_ctrls.pruning_ctrls;
+    const uint64_t                mds2_cand_th         = pruning_ctrls.mds2_cand_base_th;
+    const uint64_t                mds2_class_th        = pruning_ctrls.mds2_class_th;
+    const uint8_t                 mds2_band_cnt        = pruning_ctrls.mds2_band_cnt;
+    const uint16_t                mds2_relative_dev_th = pruning_ctrls.mds2_relative_dev_th;
+    ModeDecisionCandidateBuffer **cand_bf_arr          = ctx->cand_bf_ptr_array;
+    for (CandClass cidx = CAND_CLASS_0; cidx < CAND_CLASS_TOTAL; cidx++) {
+        if ((mds2_cand_th != (uint64_t)~0 || mds2_class_th != (uint64_t)~0) && ctx->md_stage_1_count[cidx] > 0 &&
+            ctx->md_stage_2_count[cidx] > 0 && ctx->bypass_md_stage_1 == FALSE) {
+            const uint32_t *cand_buff = ctx->cand_buff_indices[cidx];
+            const uint64_t  best_cost = *cand_bf_arr[cand_buff[0]]->full_cost;
 
-                // class pruning
-                if (class_best_cost && best_md_stage_cost &&
-                    (class_best_cost != best_md_stage_cost)) {
-                    if (ctx->nic_ctrls.pruning_ctrls.mds2_class_th == 0) {
-                        ctx->md_stage_2_count[cand_class_it] = 0;
+            // class pruning
+            if (best_cost && best_md_stage_cost && best_cost != best_md_stage_cost) {
+                if (mds2_class_th == 0) {
+                    ctx->md_stage_2_count[cidx] = 0;
+                    continue;
+                }
+                uint64_t dev = ((best_cost - best_md_stage_cost) * 100) / best_md_stage_cost;
+                if (dev) {
+                    if (dev >= mds2_class_th) {
+                        ctx->md_stage_2_count[cidx] = 0;
                         continue;
                     }
-                    uint64_t dev = ((class_best_cost - best_md_stage_cost) * 100) /
-                        best_md_stage_cost;
-                    if (dev) {
-                        if (dev >= ctx->nic_ctrls.pruning_ctrls.mds2_class_th) {
-                            ctx->md_stage_2_count[cand_class_it] = 0;
-                            continue;
-                        } else if (ctx->nic_ctrls.pruning_ctrls.mds2_band_cnt >= 3 &&
-                                   ctx->md_stage_2_count[cand_class_it] > 1) {
-                            uint8_t band_idx =
-                                (uint8_t)(dev * (ctx->nic_ctrls.pruning_ctrls.mds2_band_cnt - 1) /
-                                          ctx->nic_ctrls.pruning_ctrls.mds2_class_th);
-                            ctx->md_stage_2_count[cand_class_it] = DIVIDE_AND_ROUND(
-                                ctx->md_stage_2_count[cand_class_it], band_idx + 1);
-                        }
+                    if (mds2_band_cnt >= 3 && ctx->md_stage_2_count[cidx] > 1) {
+                        uint8_t band_idx            = (uint8_t)(dev * (mds2_band_cnt - 1) / mds2_class_th);
+                        ctx->md_stage_2_count[cidx] = DIVIDE_AND_ROUND(ctx->md_stage_2_count[cidx], band_idx + 1);
                     }
-                }
-                // intra class pruning
-                // candidate pruning
-                if (ctx->md_stage_2_count[cand_class_it] > 0) {
-                    uint32_t cand_count = 1;
-                    if (class_best_cost && cand_count < ctx->md_stage_2_count[cand_class_it]) {
-                        uint16_t mds2_cand_th_rank_factor =
-                            ctx->nic_ctrls.pruning_ctrls.mds2_cand_th_rank_factor;
-                        // When enabled, modify the rank factor based on info from previous MD stages
-                        if (mds2_cand_th_rank_factor) {
-                            if (cand_class_it != ctx->mds1_best_class_it)
-                                mds2_cand_th_rank_factor += 3;
-                            else if (ctx->mds0_best_idx == ctx->mds1_best_idx)
-                                mds2_cand_th_rank_factor += 2;
-                        }
-                        uint16_t mds2_relative_dev_th =
-                            ctx->nic_ctrls.pruning_ctrls.mds2_relative_dev_th;
-                        uint64_t dev =
-                            (((*(ctx->cand_bf_ptr_array[cand_buff_indices[cand_count]]->full_cost) -
-                               class_best_cost) *
-                              100) /
-                             class_best_cost);
-                        uint64_t prev_dev = dev;
-                        while (
-                            (!mds2_relative_dev_th || (dev <= (prev_dev + mds2_relative_dev_th))) &&
-                            (dev <
-                             (mds2_cand_th /
-                              (mds2_cand_th_rank_factor ? (mds2_cand_th_rank_factor * cand_count)
-                                                        : 1)))) {
-                            cand_count++;
-                            // Break out of loop if reached max cand_count to avoid accessing unallocated candidate buffer
-                            if (cand_count >= ctx->md_stage_2_count[cand_class_it])
-                                break;
-                            prev_dev = dev;
-                            dev      = (((*(ctx->cand_bf_ptr_array[cand_buff_indices[cand_count]]
-                                           ->full_cost) -
-                                     class_best_cost) *
-                                    100) /
-                                   class_best_cost);
-                        }
-                    }
-                    ctx->md_stage_2_count[cand_class_it] = cand_count;
                 }
             }
-        ctx->md_stage_2_total_count += ctx->md_stage_2_count[cand_class_it];
+            // intra class pruning
+            // candidate pruning
+            if (ctx->md_stage_2_count[cidx] > 0) {
+                uint32_t cand_count = 1;
+                if (best_cost && cand_count < ctx->md_stage_2_count[cidx]) {
+                    uint16_t mds2_cand_th_rank_factor = pruning_ctrls.mds2_cand_th_rank_factor;
+                    // When enabled, modify the rank factor based on info from previous MD stages
+                    if (mds2_cand_th_rank_factor) {
+                        if (cidx != ctx->mds1_best_class_it)
+                            mds2_cand_th_rank_factor += 3;
+                        else if (ctx->mds0_best_idx == ctx->mds1_best_idx)
+                            mds2_cand_th_rank_factor += 2;
+                    }
+                    uint64_t dev      = (*cand_bf_arr[cand_buff[cand_count]]->full_cost - best_cost) * 100 / best_cost;
+                    uint64_t prev_dev = dev;
+                    while (
+                        (!mds2_relative_dev_th || dev <= prev_dev + mds2_relative_dev_th) &&
+                        (dev < mds2_cand_th / (mds2_cand_th_rank_factor ? mds2_cand_th_rank_factor * cand_count : 1))) {
+                        cand_count++;
+                        // Break out of loop if reached max cand_count to avoid accessing unallocated candidate buffer
+                        if (cand_count >= ctx->md_stage_2_count[cidx])
+                            break;
+                        prev_dev = dev;
+                        dev      = (*cand_bf_arr[cand_buff[cand_count]]->full_cost - best_cost) * 100 / best_cost;
+                    }
+                }
+                ctx->md_stage_2_count[cidx] = cand_count;
+            }
+        }
+        ctx->md_stage_2_total_count += ctx->md_stage_2_count[cidx];
     }
 }
 // Perform the NIC class pruning and candidate pruning after MSD2
