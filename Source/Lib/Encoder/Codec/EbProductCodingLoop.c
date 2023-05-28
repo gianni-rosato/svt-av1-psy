@@ -10145,54 +10145,47 @@ static void post_mds1_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_sta
 }
 // Perform the NIC class pruning and candidate pruning after MSD2
 static void post_mds2_nic_pruning(ModeDecisionContext *ctx, uint64_t best_md_stage_cost) {
-    ctx->md_stage_3_total_count = 0;
-    for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
-         cand_class_it++) {
-        uint64_t mds3_cand_th = ctx->nic_ctrls.pruning_ctrls.mds3_cand_base_th;
-        if (mds3_cand_th != (uint64_t)~0 ||
-            ctx->nic_ctrls.pruning_ctrls.mds3_class_th != (uint64_t)~0)
-            if (ctx->md_stage_2_count[cand_class_it] > 0 &&
-                ctx->md_stage_3_count[cand_class_it] > 0 && ctx->bypass_md_stage_2 == FALSE) {
-                uint32_t *cand_buff_indices = ctx->cand_buff_indices[cand_class_it];
-                uint64_t  class_best_cost   = *(
-                    ctx->cand_bf_ptr_array[cand_buff_indices[0]]->full_cost);
+    const struct NicPruningCtrls  pruning_ctrls = ctx->nic_ctrls.pruning_ctrls;
+    const uint64_t                mds3_cand_th  = pruning_ctrls.mds3_cand_base_th;
+    const uint64_t                mds3_class_th = pruning_ctrls.mds3_class_th;
+    const uint8_t                 mds3_band_cnt = pruning_ctrls.mds3_band_cnt;
+    ModeDecisionCandidateBuffer **cand_bf_arr   = ctx->cand_bf_ptr_array;
+    ctx->md_stage_3_total_count                 = 0;
+    for (CandClass cidx = CAND_CLASS_0; cidx < CAND_CLASS_TOTAL; cidx++) {
+        if ((mds3_cand_th != (uint64_t)~0 || mds3_class_th != (uint64_t)~0) && ctx->md_stage_2_count[cidx] > 0 &&
+            ctx->md_stage_3_count[cidx] > 0 && ctx->bypass_md_stage_2 == FALSE) {
+            const uint32_t *cand_buff = ctx->cand_buff_indices[cidx];
+            const uint64_t  best_cost = *cand_bf_arr[cand_buff[0]]->full_cost;
 
-                // inter class pruning
-                if (class_best_cost && best_md_stage_cost &&
-                    (class_best_cost != best_md_stage_cost)) {
-                    if (ctx->nic_ctrls.pruning_ctrls.mds3_class_th == 0) {
-                        ctx->md_stage_3_count[cand_class_it] = 0;
+            // inter class pruning
+            if (best_cost && best_md_stage_cost && best_cost != best_md_stage_cost) {
+                if (mds3_class_th == 0) {
+                    ctx->md_stage_3_count[cidx] = 0;
+                    continue;
+                }
+                uint64_t dev = ((best_cost - best_md_stage_cost) * 100) / best_md_stage_cost;
+                if (dev) {
+                    if (dev >= mds3_class_th) {
+                        ctx->md_stage_3_count[cidx] = 0;
                         continue;
                     }
-                    uint64_t dev = ((class_best_cost - best_md_stage_cost) * 100) /
-                        best_md_stage_cost;
-                    if (dev) {
-                        if (dev >= ctx->nic_ctrls.pruning_ctrls.mds3_class_th) {
-                            ctx->md_stage_3_count[cand_class_it] = 0;
-                            continue;
-                        } else if (ctx->nic_ctrls.pruning_ctrls.mds3_band_cnt >= 3 &&
-                                   ctx->md_stage_3_count[cand_class_it] > 1) {
-                            uint8_t band_idx =
-                                (uint8_t)(dev * (ctx->nic_ctrls.pruning_ctrls.mds3_band_cnt - 1) /
-                                          ctx->nic_ctrls.pruning_ctrls.mds3_class_th);
-                            ctx->md_stage_3_count[cand_class_it] = DIVIDE_AND_ROUND(
-                                ctx->md_stage_3_count[cand_class_it], band_idx + 1);
-                        }
+                    if (mds3_band_cnt >= 3 && ctx->md_stage_3_count[cidx] > 1) {
+                        const uint8_t band_idx      = (uint8_t)(dev * (mds3_band_cnt - 1) / mds3_class_th);
+                        ctx->md_stage_3_count[cidx] = DIVIDE_AND_ROUND(ctx->md_stage_3_count[cidx], band_idx + 1);
                     }
                 }
-                // intra class pruning
-                uint32_t cand_count = 1;
-                if (class_best_cost)
-                    while (cand_count < ctx->md_stage_3_count[cand_class_it] &&
-                           ((((*(ctx->cand_bf_ptr_array[cand_buff_indices[cand_count]]->full_cost) -
-                               class_best_cost) *
-                              100) /
-                             class_best_cost) < mds3_cand_th)) {
-                        cand_count++;
-                    }
-                ctx->md_stage_3_count[cand_class_it] = cand_count;
             }
-        ctx->md_stage_3_total_count += ctx->md_stage_3_count[cand_class_it];
+            // intra class pruning
+            uint32_t cand_count = 1;
+            if (best_cost)
+                while (
+                    cand_count < ctx->md_stage_3_count[cidx] &&
+                    (((*cand_bf_arr[cand_buff[cand_count]]->full_cost - best_cost) * 100) / best_cost < mds3_cand_th)) {
+                    cand_count++;
+                }
+            ctx->md_stage_3_count[cidx] = cand_count;
+        }
+        ctx->md_stage_3_total_count += ctx->md_stage_3_count[cidx];
     }
 }
 int      svt_aom_get_reference_mode_context_new(const MacroBlockD *xd);
