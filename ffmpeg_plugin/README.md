@@ -11,6 +11,8 @@ Notes:
 
 - The patches for n4.4 have been tested to apply cleanly to n4.4.1 and n4.4.2.
 - The patches for n5.0 have been tested to apply cleanly to n5.0.1.
+- The patches for n5.1 have been tested to apply cleanly to n5.1, n5.1.1, n5.1.2, and n5.1.3.
+  - n5.1 already contains certain patches from the set of n5.0, thus is a subset of n5.0's patches.
 
 ### n6.0 - [svt-av1/n6.0](https://gitlab.com/1480c1/FFmpeg/-/tree/svt-av1/n6.0)
 
