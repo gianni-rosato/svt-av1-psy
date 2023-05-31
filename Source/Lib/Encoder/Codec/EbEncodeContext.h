@@ -186,6 +186,9 @@ typedef struct EncodeContext {
     EbRefFrameScale resize_evt;
     //Superblock end index for cycling refresh through the frame.
     uint32_t cr_sb_end;
+#if FTR_ROI
+    SvtAv1RoiMapEvt *roi_map_evt;
+#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

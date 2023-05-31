@@ -5106,8 +5106,13 @@ static INLINE int svt_aom_get_segment_id(Av1Common *cm, const uint8_t *segment_i
     return segment_id;
 }
 
+#if FTR_ROI
+int svt_av1_get_spatial_seg_prediction(PictureControlSet *pcs, MacroBlockD *xd, uint32_t blk_org_x,
+                                       uint32_t blk_org_y, int *cdf_index) {
+#else
 static int get_spatial_seg_prediction(PictureControlSet *pcs, MacroBlockD *xd, uint32_t blk_org_x,
                                       uint32_t blk_org_y, int *cdf_index) {
+#endif
     int prev_ul = -1; // top left segment_id
     int prev_l  = -1; // left segment_id
     int prev_u  = -1; // top segment_id
@@ -5177,9 +5182,14 @@ int svt_av1_neg_interleave(int x, int ref, int max) {
     }
 }
 
+#if FTR_ROI
+void svt_av1_update_segmentation_map(PictureControlSet *pcs, BlockSize bsize, uint32_t blk_org_x,
+                                     uint32_t blk_org_y, uint8_t segment_id) {
+#else
 static INLINE void update_segmentation_map(PictureControlSet *pcs, BlockSize bsize,
                                            uint32_t blk_org_x, uint32_t blk_org_y,
                                            uint8_t segment_id) {
+#endif
     Av1Common *cm          = pcs->ppcs->av1_cm;
     uint8_t   *segment_ids = pcs->segmentation_neighbor_map->data;
     uint32_t   mi_col      = blk_org_x >> MI_SIZE_LOG2;
@@ -5201,12 +5211,21 @@ void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomW
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled)
         return;
-    int       cdf_num;
+    int cdf_num;
+#if FTR_ROI
+    const int spatial_pred = svt_av1_get_spatial_seg_prediction(
+        pcs, blk_ptr->av1xd, blk_org_x, blk_org_y, &cdf_num);
+#else
     const int spatial_pred = get_spatial_seg_prediction(
         pcs, blk_ptr->av1xd, blk_org_x, blk_org_y, &cdf_num);
+#endif
     if (skip_coeff) {
         //        SVT_LOG("BlockY = %d, BlockX = %d \n", blk_org_y>>2, blk_org_x>>2);
+#if FTR_ROI
+        svt_av1_update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, spatial_pred);
+#else
         update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, spatial_pred);
+#endif
         blk_ptr->segment_id = spatial_pred;
         return;
     }
@@ -5215,7 +5234,11 @@ void write_segment_id(PictureControlSet *pcs, FRAME_CONTEXT *frame_context, AomW
     struct segmentation_probs *segp     = &frame_context->seg;
     AomCdfProb                *pred_cdf = segp->spatial_pred_seg_cdf[cdf_num];
     aom_write_symbol(ecWriter, coded_id, pred_cdf, MAX_SEGMENTS);
+#if FTR_ROI
+    svt_av1_update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, blk_ptr->segment_id);
+#else
     update_segmentation_map(pcs, bsize, blk_org_x, blk_org_y, blk_ptr->segment_id);
+#endif
     //    SVT_LOG("BlockY = %d, BlockX = %d, Segmentation  spatial_pred = %d, skip_coeff = %d, coded_id = %d, pred_cdf = %d \n", blk_org_y>>2, blk_org_x>>2, spatial_pred, skip_coeff, coded_id, *pred_cdf);
 }
 

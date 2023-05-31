@@ -1273,7 +1273,12 @@ void svt_aom_store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer,
                    from_ptr + row_it * input_sample16bit_buffer->stride_cr,
                    sb_w * 2);
 }
-void        svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx);
+#if FTR_ROI
+void svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx,
+                                   PictureControlSet *pcs);
+#else
+void svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx);
+#endif
 void        move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu,
                           BlkStruct *dst_cu);
 static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_addr,
@@ -2929,8 +2934,17 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
                             blk_geom->tx_height_uv[blk_ptr->tx_depth][tu_it];
                 }
             }
+#if FTR_ROI
+            if (!md_ctx->bypass_encdec) {
+                md_ctx->blk_org_x = ctx->blk_org_x;
+                md_ctx->blk_org_y = ctx->blk_org_y;
+                md_ctx->blk_geom  = ctx->blk_geom;
+                svt_aom_update_mi_map_enc_dec(blk_ptr, md_ctx, pcs);
+            }
+#else
             if (!md_ctx->bypass_encdec)
                 svt_aom_update_mi_map_enc_dec(blk_ptr, md_ctx);
+#endif
             if (pcs->cdf_ctrl.update_se) {
                 // Update the partition Neighbor Array
                 PartitionContext partition;

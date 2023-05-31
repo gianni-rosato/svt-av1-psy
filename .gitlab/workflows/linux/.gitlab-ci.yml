@@ -613,3 +613,37 @@ Enc Startup MG Test:
       - "*_dec_order.txt"
   needs:
     - Linux Startup MG Test
+
+Linux ROI map Test:
+  extends: .linux-test-base
+  stage: test
+  script:
+    - |
+      printf "0 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 255 \
+      0 -4 255 255 255 255 255 255 255 255 0 -10 0 0 255 255 255 255 255 0 -2 -6 -2 0 255 255 255 255 0 -2 -4 -6 \
+      -4 0 0 255 255 0 -2 -4 -6 -6 -6 -2 0 255 255 0 -2 -4 -6 -6 -6 -2 0 255\n" >roi-sample-kirland_640_480_30-two-events.txt
+    - |
+      printf "60 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 128 \
+      0 -4 1 1 128 128 128 128 128 1 0 -10 0 0 128 128 128 128 1 0 -2 -6 -2 0 1 128 128 128 0 -2 -4 -6 -4 0 0 128 \
+      128 1 -2 -4 -6 -6 -6 -2 0 128 128 1 -2 -4 -6 -6 -6 -2 0 128" >>roi-sample-kirland_640_480_30-two-events.txt
+    - ./Bin/Release/SvtAv1EncApp --roi-map-file roi-sample-kirland_640_480_30-two-events.txt --keyint 60 -n 120 -q 32 --preset 8 -w 640 -h 480 --fps 30 -i kirland_640_480_30.yuv -b roi.ivf -o roi_recon.yuv
+    - ./Bin/Release/SvtAv1EncApp --roi-map-file roi-sample-kirland_640_480_30-two-events.txt --keyint 60 -n 120 -q 32 --preset 8 --tile-columns 1 -w 640 -h 480 --fps 30 -i kirland_640_480_30.yuv -b roi_tiles.ivf -o roi_tiles_recon.yuv
+  artifacts:
+    paths:
+      - "roi*.ivf"
+      - "roi_*.yuv"
+  needs:
+    - Linux (GCC 11, Static)
+
+Enc ROI map Test:
+  extends: .common-ci-base
+  stage: .post
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  script:
+    - |
+      ffmpeg -hide_banner -i roi.ivf roi_dec.yuv
+      diff -q roi_recon.yuv roi_dec.yuv
+      ffmpeg -hide_banner -i roi_tiles.ivf roi_tiles_dec.yuv
+      diff -q roi_tiles_recon.yuv roi_tiles_dec.yuv
+  needs:
+    - Linux ROI map Test

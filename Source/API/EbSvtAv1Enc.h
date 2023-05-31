@@ -927,7 +927,17 @@ typedef struct EbSvtAv1EncConfiguration {
     SvtAv1FrameScaleEvts frame_scale_evts;
 
     /*Add 64 Byte Padding to Struct to avoid changing the size of the public configuration struct*/
+#if FTR_ROI
+    /* ROI map
+    *
+    * 0 = disable ROI
+    * 1 = enable ROI
+    *  Default is 0. */
+    Bool    enable_roi_map;
+    uint8_t padding[64 - sizeof(Bool)];
+#else
     uint8_t padding[64];
+#endif
 
 } EbSvtAv1EncConfiguration;
 

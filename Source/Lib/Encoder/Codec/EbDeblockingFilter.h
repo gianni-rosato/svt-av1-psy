@@ -56,6 +56,9 @@ void svt_av1_loop_filter_frame(
 
 EbErrorType svt_av1_pick_filter_level(EbPictureBufferDesc *srcBuffer, // source input
                                       PictureControlSet *pcs, LpfPickMethod method);
+#if FTR_ROI
+void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int32_t *filter_level);
+#endif
 
 void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,

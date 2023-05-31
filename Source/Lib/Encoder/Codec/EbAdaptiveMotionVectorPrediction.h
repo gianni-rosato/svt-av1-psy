@@ -33,12 +33,18 @@ void svt_aom_generate_av1_mvp_table(struct ModeDecisionContext *ctx, BlkStruct *
                                     uint16_t blk_org_y, MvReferenceFrame *ref_frames,
                                     uint32_t tot_refs, PictureControlSet *pcs);
 
-void     svt_aom_get_av1_mv_pred_drl(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
-                                     MvReferenceFrame ref_frame, uint8_t is_compound,
-                                     PredictionMode mode, uint8_t drl_index, IntMv nearestmv[2],
-                                     IntMv nearmv[2], IntMv ref_mv[2]);
-void     svt_aom_update_mi_map(BlkStruct *blk_ptr, uint32_t blk_org_x, uint32_t blk_org_y,
-                               const BlockGeom *blk_geom, PictureControlSet *pcs);
+void svt_aom_get_av1_mv_pred_drl(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
+                                 MvReferenceFrame ref_frame, uint8_t is_compound,
+                                 PredictionMode mode, uint8_t drl_index, IntMv nearestmv[2],
+                                 IntMv nearmv[2], IntMv ref_mv[2]);
+#if FTR_ROI
+void svt_aom_update_mi_map(BlkStruct *blk_ptr, uint32_t blk_org_x, uint32_t blk_org_y,
+                           const BlockGeom *blk_geom, PictureControlSet *pcs,
+                           struct ModeDecisionContext *ctx);
+#else
+void svt_aom_update_mi_map(BlkStruct *blk_ptr, uint32_t blk_org_x, uint32_t blk_org_y,
+                           const BlockGeom *blk_geom, PictureControlSet *pcs);
+#endif
 uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_org_x,
                          uint16_t blk_org_y, MvReferenceFrame rf0, PictureControlSet *pcs,
                          int32_t *pts, int32_t *pts_inref, int *adjacent_samples,

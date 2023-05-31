@@ -14,8 +14,12 @@
 #include "EbSegmentationParams.h"
 #include "EbMotionEstimationContext.h"
 #include "common_dsp_rtcd.h"
-#if DEBUG_SEGMENT_QP
+#if DEBUG_SEGMENT_QP || DEBUG_ROI
 #include "EbLog.h"
+#include <inttypes.h>
+#endif
+#if FTR_ROI
+#include "EbDeblockingFilter.h"
 #endif
 
 static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) {
@@ -81,9 +85,65 @@ static uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *varianc
     return (variance_ptr[index0] + variance_ptr[index1]) >> 1;
 }
 
+#if FTR_ROI
+static void roi_map_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
+                                                          PictureControlSet *pcs,
+                                                          SuperBlock *sb_ptr, BlkStruct *blk_ptr) {
+    SequenceControlSet    *scs                 = pcs->ppcs->scs;
+    const SvtAv1RoiMapEvt *roi_map             = pcs->ppcs->roi_map_evt;
+    SegmentationParams    *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
+    const int              stride_b64          = (scs->max_input_luma_width + 63) / 64;
+    uint8_t                segment_id;
+    if (scs->seq_header.sb_size == BLOCK_64X64) {
+        const int column_b64 = sb_ptr->org_x >> 6;
+        const int row_b64    = sb_ptr->org_y >> 6;
+        segment_id           = roi_map->b64_seg_map[row_b64 * stride_b64 + column_b64];
+    } else { // sb128
+        segment_id = MAX_SEGMENTS;
+        // 4 b64 blocks to check intersection
+        int b64_seg_columns[4] = {
+            sb_ptr->org_x, sb_ptr->org_x + 64, sb_ptr->org_x, sb_ptr->org_x + 64};
+        int b64_seg_rows[4] = {
+            sb_ptr->org_y, sb_ptr->org_y, sb_ptr->org_y + 64, sb_ptr->org_y + 64};
+        int blk_org_x = sb_ptr->org_x + blk_geom->org_x;
+        int blk_org_y = sb_ptr->org_y + blk_geom->org_y;
+        for (int i = 0; i < 4; ++i) {
+            if (blk_org_x < b64_seg_columns[i] + 64 &&
+                blk_org_x + blk_geom->bwidth > b64_seg_columns[i] &&
+                blk_org_y < b64_seg_rows[i] + 64 &&
+                blk_org_y + blk_geom->bheight > b64_seg_rows[i]) {
+                const int column_b64 = b64_seg_columns[i] >> 6;
+                const int row_b64    = b64_seg_rows[i] >> 6;
+                segment_id           = MIN(segment_id,
+                                 roi_map->b64_seg_map[row_b64 * stride_b64 + column_b64]);
+            }
+        }
+    }
+
+    for (int i = segment_id; i >= 0; i--) {
+        int32_t q_index = pcs->ppcs->frm_hdr.quantization_params.base_q_idx +
+            segmentation_params->feature_data[i][SEG_LVL_ALT_Q];
+        // Avoid lossless since SVT-AV1 doesn't support it.
+        if (q_index > 0) {
+            blk_ptr->segment_id = i;
+            break;
+        }
+    }
+    assert(pcs->ppcs->frm_hdr.quantization_params.base_q_idx +
+               segmentation_params->feature_data[blk_ptr->segment_id][SEG_LVL_ALT_Q] >
+           0);
+}
+#endif
+
 void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
                                                    PictureControlSet *pcs, SuperBlock *sb_ptr,
                                                    BlkStruct *blk_ptr) {
+#if FTR_ROI
+    if (pcs->ppcs->roi_map_evt != NULL) {
+        roi_map_apply_segmentation_based_quantization(blk_geom, pcs, sb_ptr, blk_ptr);
+        return;
+    }
+#endif
     uint16_t           *variance_ptr        = pcs->ppcs->variance[sb_ptr->index];
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     uint16_t            variance            = get_variance_for_cu(blk_geom, variance_ptr);
@@ -102,7 +162,88 @@ void svt_aom_apply_segmentation_based_quantization(const BlockGeom   *blk_geom,
     }
 }
 
+#if FTR_ROI
+static void roi_map_setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs) {
+    UNUSED(scs);
+    SvtAv1RoiMapEvt    *roi_map                       = pcs->ppcs->roi_map_evt;
+    SegmentationParams *segmentation_params           = &pcs->ppcs->frm_hdr.segmentation_params;
+    segmentation_params->segmentation_enabled         = true;
+    segmentation_params->segmentation_update_data     = true;
+    segmentation_params->segmentation_update_map      = true;
+    segmentation_params->segmentation_temporal_update = false;
+
+    for (int i = 0; i <= roi_map->max_seg_id; i++) {
+        segmentation_params->feature_enabled[i][SEG_LVL_ALT_Q]      = 1;
+        segmentation_params->feature_data[i][SEG_LVL_ALT_Q]         = roi_map->seg_qp[i];
+        segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_Y_V] = 1;
+        segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_Y_H] = 1;
+        segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_U]   = 1;
+        segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_V]   = 1;
+    }
+
+    // setup loop filter data
+    int32_t filter_level[4];
+    uint8_t qindex = pcs->ppcs->frm_hdr.quantization_params.base_q_idx;
+    svt_av1_pick_filter_level_by_q(pcs, qindex, filter_level);
+    for (int i = 0; i <= roi_map->max_seg_id; i++) {
+        uint8_t qindex_seg = CLIP3(
+            0, 255, qindex + segmentation_params->feature_data[i][SEG_LVL_ALT_Q]);
+        int32_t filter_level_seg[4];
+        svt_av1_pick_filter_level_by_q(pcs, qindex_seg, filter_level_seg);
+        if (segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_Y_V]) {
+            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_Y_V] = filter_level_seg[0] -
+                filter_level[0];
+        }
+        if (segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_Y_H]) {
+            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_Y_H] = filter_level_seg[1] -
+                filter_level[1];
+        }
+        if (segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_U]) {
+            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_U] = filter_level_seg[2] -
+                filter_level[2];
+        }
+        if (segmentation_params->feature_enabled[i][SEG_LVL_ALT_LF_V]) {
+            segmentation_params->feature_data[i][SEG_LVL_ALT_LF_V] = filter_level_seg[3] -
+                filter_level[3];
+        }
+    }
+#if DEBUG_ROI
+    if (segmentation_params->feature_enabled[0][SEG_LVL_ALT_LF_Y_V]) {
+        SVT_LOG("frame %" PRIu64 ", lf_y_v: %d %d %d %d %d %d %d %d\n",
+                pcs->picture_number,
+                segmentation_params->feature_data[0][SEG_LVL_ALT_LF_Y_V],
+                segmentation_params->feature_data[1][SEG_LVL_ALT_LF_Y_V],
+                segmentation_params->feature_data[2][SEG_LVL_ALT_LF_Y_V],
+                segmentation_params->feature_data[3][SEG_LVL_ALT_LF_Y_V],
+                segmentation_params->feature_data[4][SEG_LVL_ALT_LF_Y_V],
+                segmentation_params->feature_data[5][SEG_LVL_ALT_LF_Y_V],
+                segmentation_params->feature_data[6][SEG_LVL_ALT_LF_Y_V],
+                segmentation_params->feature_data[7][SEG_LVL_ALT_LF_Y_V]);
+    }
+    if (segmentation_params->feature_enabled[0][SEG_LVL_ALT_LF_Y_H]) {
+        SVT_LOG("frame %" PRIu64 ", lf_y_h: %d %d %d %d %d %d %d %d\n",
+                pcs->picture_number,
+                segmentation_params->feature_data[0][SEG_LVL_ALT_LF_Y_H],
+                segmentation_params->feature_data[1][SEG_LVL_ALT_LF_Y_H],
+                segmentation_params->feature_data[2][SEG_LVL_ALT_LF_Y_H],
+                segmentation_params->feature_data[3][SEG_LVL_ALT_LF_Y_H],
+                segmentation_params->feature_data[4][SEG_LVL_ALT_LF_Y_H],
+                segmentation_params->feature_data[5][SEG_LVL_ALT_LF_Y_H],
+                segmentation_params->feature_data[6][SEG_LVL_ALT_LF_Y_H],
+                segmentation_params->feature_data[7][SEG_LVL_ALT_LF_Y_H]);
+    }
+#endif
+    calculate_segmentation_data(segmentation_params);
+}
+#endif
+
 void svt_aom_setup_segmentation(PictureControlSet *pcs, SequenceControlSet *scs) {
+#if FTR_ROI
+    if (pcs->ppcs->roi_map_evt != NULL) {
+        roi_map_setup_segmentation(pcs, scs);
+        return;
+    }
+#endif
     SegmentationParams *segmentation_params = &pcs->ppcs->frm_hdr.segmentation_params;
     segmentation_params->segmentation_enabled =
         (Bool)(scs->static_config.enable_adaptive_quantization == 1);

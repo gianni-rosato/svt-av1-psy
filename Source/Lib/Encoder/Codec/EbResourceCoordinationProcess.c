@@ -625,12 +625,23 @@ static void update_frame_event(PictureParentControlSet *pcs, uint64_t pic_num) {
             scs->enc_ctx->resize_evt = *(EbRefFrameScale *)node->data;
             // set reset flag of rate control
             pcs->rc_reset_flag = TRUE;
+#if FTR_ROI
+        } else if (node->node_type == ROI_MAP_EVENT) {
+            svt_aom_assert_err(node->size == sizeof(SvtAv1RoiMapEvt *) && node->data,
+                               "invalide private data of type ROI_MAP_EVENT");
+            scs->enc_ctx->roi_map_evt = (SvtAv1RoiMapEvt *)node->data;
+#endif
         }
         node = node->next;
     }
     retrieve_resize_event(pcs->scs, pic_num, &pcs->rc_reset_flag);
     // update current picture scaling event
     pcs->resize_evt = scs->enc_ctx->resize_evt;
+#if FTR_ROI
+    if (scs->static_config.enable_roi_map) {
+        pcs->roi_map_evt = scs->enc_ctx->roi_map_evt;
+    }
+#endif
 }
 
 /* Resource Coordination Kernel */

@@ -34,6 +34,7 @@
 extern "C" {
 #endif // __cplusplus
 
+#define FTR_ROI                 1 // implement region of interest feature
 #define FIX_ISSUE_2064          0
 #define FIX_ISSUE_2064_ALT      1
 
@@ -69,6 +70,7 @@ extern "C" {
 #define DEBUG_QM_LEVEL          0
 #define DEBUG_STARTUP_MG_SIZE   0
 #define DEBUG_SEGMENT_QP        0
+#define DEBUG_ROI               0
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -105,7 +105,11 @@ static void get_ref_skip_percentage(PictureControlSet *pcs, uint8_t *skip_area) 
 static void free_private_data_list(EbBufferHeaderType *p) {
     EbPrivDataNode *p_node = (EbPrivDataNode *)p->p_app_private;
     while (p_node) {
+#if FTR_ROI
+        if ((p_node->node_type != PRIVATE_DATA) && (p_node->node_type != ROI_MAP_EVENT))
+#else
         if (p_node->node_type != PRIVATE_DATA)
+#endif
             EB_FREE(p_node->data);
         EbPrivDataNode *p_tmp = p_node;
         p_node                = p_node->next;

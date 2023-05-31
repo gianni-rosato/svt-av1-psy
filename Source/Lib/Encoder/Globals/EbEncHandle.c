@@ -4591,6 +4591,9 @@ static void copy_api_from_app(
     }
 
     scs->static_config.startup_mg_size = config_struct->startup_mg_size;
+#if FTR_ROI
+    scs->static_config.enable_roi_map = config_struct->enable_roi_map;
+#endif
     return;
 }
 
@@ -5046,7 +5049,11 @@ static EbErrorType copy_private_data_list(EbBufferHeaderType* dst, EbBufferHeade
         p_new_node->node_type = p_src_node->node_type;
         p_new_node->size = p_src_node->size;
         // not copy data from the private data pass through the encoder
+#if FTR_ROI
+        if (p_src_node->node_type == PRIVATE_DATA || p_src_node->node_type == ROI_MAP_EVENT) {
+#else
         if (p_src_node->node_type == PRIVATE_DATA) {
+#endif
             p_new_node->data = p_src_node->data;
         } else {
             EB_MALLOC(p_new_node->data, p_src_node->size);

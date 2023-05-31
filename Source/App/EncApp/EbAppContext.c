@@ -15,9 +15,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
+#if DEBUG_ROI
+#include <inttypes.h>
+#endif
 
 /***************************************
  * Variables Defining a memory table
@@ -214,6 +218,186 @@ EbErrorType preload_frames_info_ram(EbConfig *app_cfg) {
     return return_error;
 }
 
+#if FTR_ROI
+static int compare_seg_qp(const void *qp_first, const void *qp_second) {
+    if (*(const int16_t *)qp_first < *(const int16_t *)qp_second) {
+        return 1;
+    } else if (*(const int16_t *)qp_first == *(const int16_t *)qp_second) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+static EbErrorType parse_rio_map_file(EbConfig *app_cfg) {
+    const int32_t MAX_SEGMENTS = 8;
+    FILE         *file         = app_cfg->roi_map_file;
+    if (file == NULL) {
+        return EB_ErrorBadParameter;
+    }
+
+    // ROI map file format:
+    // One ROI event per line. The event is in below format
+    // <pic_num> <b64_qp_offset> <b64_qp_offset> ... <b64_qp_offset>\n
+    // b64_qp_offset range -255 ~ 255
+    EbErrorType ret = EB_ErrorNone;
+    EB_APP_MALLOC(SvtAv1RoiMap *,
+                  app_cfg->roi_map,
+                  sizeof(SvtAv1RoiMap),
+                  EB_N_PTR,
+                  EB_ErrorInsufficientResources);
+    SvtAv1RoiMap *roi_map = app_cfg->roi_map;
+    roi_map->evt_num      = 0;
+    roi_map->evt_list     = NULL;
+    roi_map->cur_evt      = NULL;
+    const int32_t b64_num = ((app_cfg->config.source_width + 63) / 64) *
+        ((app_cfg->config.source_height + 63) / 64);
+    // Multiplied by 5 because each qp_offset value requires at most 4 chars plus a space.
+    // Multiplied by 2 to make some extra space.
+    const int32_t buf_size = b64_num * 5 * 2;
+    EB_APP_MALLOC(char *, roi_map->buf, buf_size, EB_N_PTR, EB_ErrorInsufficientResources);
+    EB_APP_MALLOC(int16_t *,
+                  roi_map->qp_map,
+                  sizeof(int16_t) * b64_num,
+                  EB_N_PTR,
+                  EB_ErrorInsufficientResources);
+
+    SvtAv1RoiMapEvt *last_evt = NULL;
+    char            *buf      = roi_map->buf;
+    int16_t         *qp_map   = roi_map->qp_map;
+    while (fgets(buf, buf_size, file)) {
+        if ((int32_t)strlen(buf) == buf_size - 1) {
+            fprintf(stderr, "Warning - May exceed the line length limitation of ROI map file\n");
+        }
+        if (buf[0] != '\n') {
+            char    *p              = buf;
+            char    *end            = p;
+            uint64_t picture_number = strtoull(p, &end, 10);
+            if (end == p) {
+                // no new value parsed
+                break;
+            }
+            if (picture_number == ULLONG_MAX || end == NULL) {
+                ret = EB_ErrorBadParameter;
+                break;
+            }
+
+            // allocate a new ROI event
+            SvtAv1RoiMapEvt *evt;
+            EB_APP_MALLOC(SvtAv1RoiMapEvt *,
+                          evt,
+                          sizeof(SvtAv1RoiMapEvt),
+                          EB_N_PTR,
+                          EB_ErrorInsufficientResources);
+            EB_APP_MALLOC(
+                uint8_t *, evt->b64_seg_map, b64_num, EB_N_PTR, EB_ErrorInsufficientResources);
+            evt->next = NULL;
+            if (roi_map->evt_list != NULL) {
+                last_evt->next = evt;
+            } else {
+                roi_map->evt_list = evt;
+            }
+            last_evt = evt;
+
+            evt->start_picture_number = picture_number;
+            memset(evt->seg_qp, 0, sizeof(evt->seg_qp));
+            evt->max_seg_id = -1;
+
+            // 1. parsing qp offset
+            // 2. decide qp offset of each segment from qp offset map
+            // 3. translate qp offset map to a segment id map
+            int i;
+            for (i = 0; i < b64_num; ++i) {
+                p            = end;
+                long int val = strtol(p, &end, 10);
+                if (end == p) {
+                    // no new value parsed
+                    break;
+                }
+                if (val <= 255 && val >= -255) {
+                    qp_map[i] = (int16_t)val;
+                    // map qp offset to segment id
+                    int8_t seg_id = 0;
+                    for (; seg_id <= evt->max_seg_id; ++seg_id) {
+                        if (qp_map[i] == evt->seg_qp[seg_id]) {
+                            break;
+                        }
+                    }
+                    if (seg_id > evt->max_seg_id && evt->max_seg_id < MAX_SEGMENTS) {
+                        evt->seg_qp[seg_id] = qp_map[i];
+                        evt->max_seg_id     = seg_id;
+                    } else if (seg_id > evt->max_seg_id && evt->max_seg_id >= MAX_SEGMENTS) {
+                        ret = EB_ErrorBadParameter;
+                        fprintf(stderr,
+                                "Error: Invalid ROI map file - Maximum number of segment supported "
+                                "by AV1 spec is eight\n");
+                        break;
+                    }
+                } else {
+                    ret = EB_ErrorBadParameter;
+                    fprintf(stderr,
+                            "Error: Invalid ROI map file - Invalid qp offset %ld. The expected "
+                            "range is between -255 and 255\n",
+                            val);
+                    break;
+                }
+            }
+            if (i < b64_num) {
+                ret = EB_ErrorBadParameter;
+                fprintf(stderr,
+                        "Error: Invalid ROI map file - not enough qp offset within a ROI event\n");
+            }
+            if (ret != EB_ErrorNone) {
+                break;
+            }
+
+            // sort seg_qp array in descending order
+            qsort(evt->seg_qp, evt->max_seg_id + 1, sizeof(evt->seg_qp[0]), compare_seg_qp);
+            if (evt->seg_qp[0] < 0) {
+                fprintf(
+                    stderr,
+                    "Warning: All qp offsets are negative may result in undecodable bitstream\n");
+            }
+
+            // translate the qp offset map provided in the ROI map file to a segment id map.
+            for (i = 0; i < b64_num; ++i) {
+                for (int seg_id = 0; seg_id <= evt->max_seg_id; ++seg_id) {
+                    if (qp_map[i] == evt->seg_qp[seg_id]) {
+                        evt->b64_seg_map[i] = seg_id;
+                        break;
+                    }
+                }
+            }
+
+            ++roi_map->evt_num;
+#if DEBUG_ROI
+            fprintf(stdout,
+                    "ROI map event %" PRIu32 ". start picture num %" PRIu64 "\n",
+                    roi_map->evt_num,
+                    evt->start_picture_number);
+            fprintf(stdout, "qp_offset ");
+            for (int i = 0; i <= evt->max_seg_id; ++i) { fprintf(stdout, "%d ", evt->seg_qp[i]); }
+            fprintf(stdout, "\n");
+            int column_b64 = (app_cfg->config.source_width + 63) / 64;
+            int row_b64    = (app_cfg->config.source_height + 63) / 64;
+            for (int i = 0; i < row_b64; ++i) {
+                for (int j = 0; j < column_b64; ++j) {
+                    fprintf(stdout, "%d ", evt->b64_seg_map[i * column_b64 + j]);
+                }
+                fprintf(stdout, "\n");
+            }
+            fprintf(stdout, "\n");
+#endif
+        }
+    }
+
+    if (roi_map->evt_num == 0 && ret == EB_ErrorNone) {
+        // empty roi map file
+        ret = EB_ErrorBadParameter;
+    }
+    return ret;
+}
+#endif
+
 /***************************************
 * Functions Implementation
 ***************************************/
@@ -228,6 +412,17 @@ EbErrorType init_encoder(EbConfig *app_cfg, uint32_t instance_idx) {
     app_cfg->instance_idx = (uint8_t)instance_idx;
     // Initialize Port Activity Flags
     app_cfg->output_stream_port_active = APP_PortActive;
+
+#if FTR_ROI
+    if (app_cfg->roi_map_file != NULL) {
+        // Load ROI map data from file
+        app_cfg->config.enable_roi_map = true;
+        EbErrorType return_error       = parse_rio_map_file(app_cfg);
+        if (return_error != EB_ErrorNone) {
+            return return_error;
+        }
+    }
+#endif
 
     // Send over all configuration parameters
     // Set the Parameters

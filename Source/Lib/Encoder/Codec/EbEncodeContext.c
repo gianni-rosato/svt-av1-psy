@@ -177,5 +177,8 @@ EbErrorType svt_aom_encode_context_ctor(EncodeContext *enc_ctx, EbPtr object_ini
 
     EB_CREATE_MUTEX(enc_ctx->rc_param_queue_mutex);
 
+#if FTR_ROI
+    enc_ctx->roi_map_evt = NULL;
+#endif
     return EB_ErrorNone;
 }

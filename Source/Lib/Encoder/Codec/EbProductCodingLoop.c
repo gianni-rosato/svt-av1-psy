@@ -739,7 +739,12 @@ static void md_update_all_neighbour_arrays(PictureControlSet *pcs, ModeDecisionC
         mode_decision_update_neighbor_arrays(pcs, ctx, last_blk_index_mds);
         if (!ctx->shut_fast_rate || ctx->rate_est_ctrls.update_skip_ctx_dc_sign_ctx ||
             ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)
+#if FTR_ROI
+            svt_aom_update_mi_map(
+                ctx->blk_ptr, ctx->blk_org_x, ctx->blk_org_y, ctx->blk_geom, pcs, ctx);
+#else
             svt_aom_update_mi_map(ctx->blk_ptr, ctx->blk_org_x, ctx->blk_org_y, ctx->blk_geom, pcs);
+#endif
     }
 }
 
@@ -11520,8 +11525,13 @@ EB_EXTERN void svt_aom_mode_decision_sb_light_pd1(SequenceControlSet *scs, Pictu
             }
             if (!ctx->shut_fast_rate ||
                 ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled)
+#if FTR_ROI
+                svt_aom_update_mi_map(
+                    ctx->blk_ptr, ctx->blk_org_x, ctx->blk_org_y, ctx->blk_geom, pcs, ctx);
+#else
                 svt_aom_update_mi_map(
                     ctx->blk_ptr, ctx->blk_org_x, ctx->blk_org_y, ctx->blk_geom, pcs);
+#endif
         }
     }
 }
