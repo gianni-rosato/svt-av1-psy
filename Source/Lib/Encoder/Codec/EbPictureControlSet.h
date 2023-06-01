@@ -669,6 +669,10 @@ typedef struct DlfCtrls {
     bool dlf_avg_uv;
     // Number of convergence points before exiting the filter search, 1 = exit on first convergence point, 2 = exit on second, 0 = off
     uint8_t early_exit_convergence;
+#if OPT_LD_DLF
+    // Threshold used when sb_based_dlf is used to use filter strength zero, there are four levels of thresholds [0..3], 0 = off
+    uint8_t ld_zero_filter_strength_lvl;
+#endif
 } DlfCtrls;
 typedef struct IntraBCCtrls {
     // Shift for full_pixel_exhaustive search threshold:   0: No Shift   1:Shift to left by 1

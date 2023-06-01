@@ -2826,7 +2826,11 @@ static EbErrorType derive_tf_window_params(
     if (is_highbd) {
         EB_MALLOC_ARRAY(centre_pcs->altref_buffer_highbd[C_Y],
             central_picture_ptr->luma_size);
+#if OPT_LD_TF
+        if (pcs->tf_ctrls.chroma_lvl) {
+#else
         if (pcs->tf_ctrls.do_chroma) {
+#endif
             EB_MALLOC_ARRAY(centre_pcs->altref_buffer_highbd[C_U],
                 central_picture_ptr->chroma_size);
             EB_MALLOC_ARRAY(centre_pcs->altref_buffer_highbd[C_V],
@@ -2845,8 +2849,11 @@ static EbErrorType derive_tf_window_params(
             centre_pcs->altref_buffer_highbd[C_Y] +
             central_picture_ptr->org_y * central_picture_ptr->stride_y +
             central_picture_ptr->org_x;
-
+#if OPT_LD_TF
+        if (pcs->tf_ctrls.chroma_lvl) {
+#else
         if (pcs->tf_ctrls.do_chroma) {
+#endif
             altref_buffer_highbd_start[C_U] =
                 centre_pcs->altref_buffer_highbd[C_U] +
                 (central_picture_ptr->org_y >> ss_y) * central_picture_ptr->stride_bit_inc_cb +
@@ -2880,8 +2887,11 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->height,
                     central_picture_ptr->stride_y,
                     encoder_bit_depth);
-
+#if OPT_LD_TF
+        if (pcs->tf_ctrls.chroma_lvl) {
+#else
         if (pcs->tf_ctrls.do_chroma) {
+#endif
             if (pcs->tf_ctrls.use_fixed_point || pcs->tf_ctrls.use_medium_filter) {
                 noise_level_fp16 = svt_estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_U], // U only
                     (central_picture_ptr->width >> 1),
@@ -2941,7 +2951,11 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->width,
                     central_picture_ptr->height,
                     central_picture_ptr->stride_y);
+#if OPT_LD_TF
+        if (pcs->tf_ctrls.chroma_lvl) {
+#else
         if (pcs->tf_ctrls.do_chroma) {
+#endif
             if (pcs->tf_ctrls.use_fixed_point || pcs->tf_ctrls.use_medium_filter) {
                 noise_level_fp16 = svt_estimate_noise_fp16(buffer_u, // U
                     (central_picture_ptr->width >> ss_x),

@@ -522,6 +522,10 @@ static EbErrorType load_default_buffer_configuration_settings(
     scs->rest_segment_column_count =  MIN(rest_seg_w, 6);
     scs->rest_segment_row_count =  MIN(rest_seg_h, 4);
 
+#if OPT_LD_TF
+    scs->tf_segment_column_count = me_seg_w;
+    scs->tf_segment_row_count = me_seg_h;
+#else
     if (scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CQP_OR_CRF)
     {
         scs->tf_segment_column_count = 15;
@@ -530,9 +534,10 @@ static EbErrorType load_default_buffer_configuration_settings(
     }
     else
     {
-        scs->tf_segment_column_count = me_seg_w;//1;//
-        scs->tf_segment_row_count = me_seg_h;//1;//
+        scs->tf_segment_column_count = me_seg_w;
+        scs->tf_segment_row_count = me_seg_h;
     }
+#endif
 
     // adjust buffer count for superres
     uint32_t superres_count = (scs->static_config.superres_mode == SUPERRES_AUTO &&
@@ -2653,10 +2658,18 @@ static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
 
     case 1:
         // I_SLICE TF Params
+#if OPT_LD_TF
+        scs->tf_params_per_type[0].enabled = 0;
+#else
         scs->tf_params_per_type[0].enabled = 1;
+#endif
         // BASE TF Params
         scs->tf_params_per_type[1].enabled = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].num_past_pics = 1;
+#else
         scs->tf_params_per_type[1].num_past_pics = 2;
+#endif
         scs->tf_params_per_type[1].num_future_pics = 0;
         scs->tf_params_per_type[1].noise_adjust_past_pics = 0;
         scs->tf_params_per_type[1].noise_adjust_future_pics = 0;
@@ -2666,11 +2679,18 @@ static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].half_pel_mode = 0;
         scs->tf_params_per_type[1].quarter_pel_mode = 0;
         scs->tf_params_per_type[1].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[1].do_chroma = 1;
+#endif
         scs->tf_params_per_type[1].pred_error_32x32_th = 20 * 32 * 32;
         scs->tf_params_per_type[1].sub_sampling_shift = 0;
         scs->tf_params_per_type[1].use_fast_filter = 0;
         scs->tf_params_per_type[1].use_medium_filter = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].use_zz_based_filter = 1;
+#endif
         scs->tf_params_per_type[1].avoid_2d_qpel = 0;
         scs->tf_params_per_type[1].use_2tap = 0;
         scs->tf_params_per_type[1].use_intra_for_noise_est = 0;
@@ -2698,11 +2718,18 @@ static void tf_ld_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].half_pel_mode = 0;
         scs->tf_params_per_type[1].quarter_pel_mode = 0;
         scs->tf_params_per_type[1].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].chroma_lvl = 2;
+#else
         scs->tf_params_per_type[1].do_chroma = 1;
+#endif
         scs->tf_params_per_type[1].pred_error_32x32_th =  (uint64_t)~0;
         scs->tf_params_per_type[1].sub_sampling_shift = 0;
         scs->tf_params_per_type[1].use_fast_filter = 0;
         scs->tf_params_per_type[1].use_medium_filter = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].use_zz_based_filter = 1;
+#endif
         scs->tf_params_per_type[1].avoid_2d_qpel = 0;
         scs->tf_params_per_type[1].use_2tap = 0;
         scs->tf_params_per_type[1].use_intra_for_noise_est = 0;
@@ -2749,7 +2776,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].half_pel_mode = 1;
         scs->tf_params_per_type[0].quarter_pel_mode = 1;
         scs->tf_params_per_type[0].eight_pel_mode = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[0].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[0].do_chroma = 1;
+#endif
         scs->tf_params_per_type[0].pred_error_32x32_th = 0;
         scs->tf_params_per_type[0].sub_sampling_shift = 0;
         scs->tf_params_per_type[0].use_fast_filter = 0;
@@ -2775,7 +2806,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].half_pel_mode = 1;
         scs->tf_params_per_type[1].quarter_pel_mode = 1;
         scs->tf_params_per_type[1].eight_pel_mode = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[1].do_chroma = 1;
+#endif
         scs->tf_params_per_type[1].pred_error_32x32_th = 0;
         scs->tf_params_per_type[1].sub_sampling_shift = 0;
         scs->tf_params_per_type[1].use_fast_filter = 0;
@@ -2801,7 +2836,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
         scs->tf_params_per_type[2].eight_pel_mode = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[2].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[2].do_chroma = 1;
+#endif
         scs->tf_params_per_type[2].pred_error_32x32_th = 0;
         scs->tf_params_per_type[2].sub_sampling_shift = 0;
         scs->tf_params_per_type[2].use_fast_filter = 0;
@@ -2827,7 +2866,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].half_pel_mode = 1;
         scs->tf_params_per_type[0].quarter_pel_mode = 1;
         scs->tf_params_per_type[0].eight_pel_mode = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[0].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[0].do_chroma = 1;
+#endif
         scs->tf_params_per_type[0].pred_error_32x32_th = 8 * 32 * 32;
         scs->tf_params_per_type[0].sub_sampling_shift = 0;
         scs->tf_params_per_type[0].use_fast_filter = 0;
@@ -2853,7 +2896,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].half_pel_mode = 1;
         scs->tf_params_per_type[1].quarter_pel_mode = 1;
         scs->tf_params_per_type[1].eight_pel_mode = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[1].do_chroma = 1;
+#endif
         scs->tf_params_per_type[1].pred_error_32x32_th = 8 * 32 * 32;
         scs->tf_params_per_type[1].sub_sampling_shift = 0;
         scs->tf_params_per_type[1].use_fast_filter = 0;
@@ -2879,7 +2926,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
         scs->tf_params_per_type[2].eight_pel_mode = 1;
+#if OPT_LD_TF
+        scs->tf_params_per_type[2].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[2].do_chroma = 1;
+#endif
         scs->tf_params_per_type[2].pred_error_32x32_th = 8 * 32 * 32;
         scs->tf_params_per_type[2].sub_sampling_shift = 0;
         scs->tf_params_per_type[2].use_fast_filter = 0;
@@ -2904,7 +2955,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].half_pel_mode = 1;
         scs->tf_params_per_type[0].quarter_pel_mode = 1;
         scs->tf_params_per_type[0].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[0].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[0].do_chroma = 1;
+#endif
         scs->tf_params_per_type[0].pred_error_32x32_th = 20 * 32 * 32;
         scs->tf_params_per_type[0].sub_sampling_shift = 0;
         scs->tf_params_per_type[0].use_fast_filter = 0;
@@ -2931,7 +2986,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].half_pel_mode = 1;
         scs->tf_params_per_type[1].quarter_pel_mode = 1;
         scs->tf_params_per_type[1].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[1].do_chroma = 1;
+#endif
         scs->tf_params_per_type[1].pred_error_32x32_th = 8 * 32 * 32;
         scs->tf_params_per_type[1].sub_sampling_shift = 0;
         scs->tf_params_per_type[1].use_fast_filter = 0;
@@ -2958,7 +3017,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
         scs->tf_params_per_type[2].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[2].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[2].do_chroma = 1;
+#endif
         scs->tf_params_per_type[2].pred_error_32x32_th = 8 * 32 * 32;
         scs->tf_params_per_type[2].sub_sampling_shift = 0;
         scs->tf_params_per_type[2].use_fast_filter = 0;
@@ -2984,7 +3047,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].half_pel_mode = 1;
         scs->tf_params_per_type[0].quarter_pel_mode = 1;
         scs->tf_params_per_type[0].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[0].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[0].do_chroma = 1;
+#endif
         scs->tf_params_per_type[0].pred_error_32x32_th = 20 * 32 * 32;
         scs->tf_params_per_type[0].sub_sampling_shift = 0;
         scs->tf_params_per_type[0].use_fast_filter = 0;
@@ -3010,7 +3077,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].half_pel_mode = 1;
         scs->tf_params_per_type[1].quarter_pel_mode = 1;
         scs->tf_params_per_type[1].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[1].do_chroma = 1;
+#endif
         scs->tf_params_per_type[1].pred_error_32x32_th = 20 * 32 * 32;
         scs->tf_params_per_type[1].sub_sampling_shift = 0;
         scs->tf_params_per_type[1].use_fast_filter = 0;
@@ -3036,7 +3107,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[2].half_pel_mode = 1;
         scs->tf_params_per_type[2].quarter_pel_mode = 1;
         scs->tf_params_per_type[2].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[2].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[2].do_chroma = 1;
+#endif
         scs->tf_params_per_type[2].pred_error_32x32_th = 20 * 32 * 32;
         scs->tf_params_per_type[2].sub_sampling_shift = 0;
         scs->tf_params_per_type[2].use_fast_filter = 0;
@@ -3063,7 +3138,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].half_pel_mode = 2;
         scs->tf_params_per_type[0].quarter_pel_mode = 3;
         scs->tf_params_per_type[0].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[0].chroma_lvl = 0;
+#else
         scs->tf_params_per_type[0].do_chroma = 0;
+#endif
         scs->tf_params_per_type[0].pred_error_32x32_th = (uint64_t)~0;
         scs->tf_params_per_type[0].sub_sampling_shift = 1;
         scs->tf_params_per_type[0].use_fast_filter = 0;
@@ -3089,7 +3168,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].half_pel_mode = 2;
         scs->tf_params_per_type[1].quarter_pel_mode = 3;
         scs->tf_params_per_type[1].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].chroma_lvl = 1;
+#else
         scs->tf_params_per_type[1].do_chroma = 1;
+#endif
         scs->tf_params_per_type[1].pred_error_32x32_th = 20 * 32 * 32;
         scs->tf_params_per_type[1].sub_sampling_shift = 0;
         scs->tf_params_per_type[1].use_fast_filter = 0;
@@ -3118,7 +3201,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[0].half_pel_mode = 2;
         scs->tf_params_per_type[0].quarter_pel_mode = 3;
         scs->tf_params_per_type[0].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[0].chroma_lvl = 0;
+#else
         scs->tf_params_per_type[0].do_chroma = 0;
+#endif
         scs->tf_params_per_type[0].pred_error_32x32_th = (uint64_t)~0;
         scs->tf_params_per_type[0].sub_sampling_shift = 1;
         scs->tf_params_per_type[0].use_fast_filter = 1;
@@ -3144,7 +3231,11 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         scs->tf_params_per_type[1].half_pel_mode = 2;
         scs->tf_params_per_type[1].quarter_pel_mode = 3;
         scs->tf_params_per_type[1].eight_pel_mode = 0;
+#if OPT_LD_TF
+        scs->tf_params_per_type[1].chroma_lvl = 0;
+#else
         scs->tf_params_per_type[1].do_chroma = 0;
+#endif
         scs->tf_params_per_type[1].pred_error_32x32_th = (uint64_t)~0;
         scs->tf_params_per_type[1].sub_sampling_shift = 1;
         scs->tf_params_per_type[1].use_fast_filter = 1;
@@ -3165,13 +3256,19 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         assert(0);
         break;
     }
+
+#if OPT_LD_TF
+    scs->tf_params_per_type[0].use_zz_based_filter = 0;
+    scs->tf_params_per_type[1].use_zz_based_filter = 0;
+    scs->tf_params_per_type[2].use_zz_based_filter = 0;
+#else
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B ||
         scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P)
     {
         //for Low Delay, filter only the base B , as Intra is not delayed.
         //if speed not a concern we can add layer1 B
 
-        // I_SLICE TF Params
+        // I_SLICE TF Params //anaghdin
         scs->tf_params_per_type[0].enabled = 0;
 
         // BASE TF Params
@@ -3184,6 +3281,7 @@ void tf_controls(SequenceControlSet* scs, uint8_t tf_level) {
         // L1 TF Params
         scs->tf_params_per_type[2].enabled = 0;
     }
+#endif
     scs->tf_params_per_type[0].use_fixed_point = 1;
     scs->tf_params_per_type[1].use_fixed_point = 1;
     scs->tf_params_per_type[2].use_fixed_point = 1;
@@ -3240,7 +3338,11 @@ static void derive_tf_params(SequenceControlSet *scs) {
             tf_level = 0;
         else
             tf_level = scs->static_config.screen_content_mode == 1 ? 0 :
-            (enc_mode <= ENC_M9 ) ? 1 : enc_mode <= ENC_M12 && (scs->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
+#if OPT_LD_TF
+            (enc_mode <= ENC_M9 ) ? 1 : enc_mode <= ENC_M13 && (scs->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
+#else
+            (enc_mode <= ENC_M9) ? 1 : enc_mode <= ENC_M12 && (scs->input_resolution >= INPUT_SIZE_720p_RANGE) ? 2 : 0;
+#endif
 
         tf_ld_controls(scs, tf_level);
         return;
@@ -4085,7 +4187,11 @@ static void set_param_based_on_input(SequenceControlSet *scs)
     // MRP level
     uint8_t mrp_level;
     if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+#if OPT_LD_M11
+        if (scs->static_config.enc_mode <= ENC_M10) {
+#else
         if (scs->static_config.enc_mode <= ENC_M11) {
+#endif
             mrp_level = 8;
         }
         else {
@@ -4138,9 +4244,15 @@ static void set_param_based_on_input(SequenceControlSet *scs)
                                                 scs->static_config.rate_control_mode != SVT_AV1_RC_MODE_CBR
         ? 1
         : 0;
+#if OPT_LD_M10
+    scs->low_latency_kf = ((scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P
+        || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
+        scs->static_config.enc_mode <= ENC_M10)
+#else
     scs->low_latency_kf = ((scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_P
         || scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) &&
         scs->static_config.enc_mode <= ENC_M9)
+#endif
         ? 1
         : 0;
 }

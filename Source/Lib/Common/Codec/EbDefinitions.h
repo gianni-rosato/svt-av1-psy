@@ -132,13 +132,24 @@ typedef struct MrpCtrls {
 typedef struct TfControls {
     // Filtering set
     uint8_t enabled; // Specifies whether the current input will be filtered or not (0: OFF, 1: ON)
+#if OPT_LD_TF
+    // Specifies whether the U& V planes will be filered or not (0: OFF (filter plane Y only)
+    // 1: ON (filter all planes) 2: filter Y and decide to filter U and V based on the noise level)
+    uint8_t chroma_lvl;
+#else
     // Specifies whether the U& V planes will be filered or not (0: filter all planes, 1 : filter Y
     // plane only)
     uint8_t do_chroma;
+#endif
     // Specifies whether the weights generation will use approximations or not (0: do not use
     // approximations, 1: per-block weights derivation, use an approximated exponential & log, use
     // an approximated noise level)
     uint8_t use_medium_filter;
+#if OPT_LD_TF
+    // Specifies whether the motion esimation is used or (0, 0) MVs are used (0: use motion estimation
+    // 1: skip motion estimation search and use (0, 0) MVs
+    uint8_t use_zz_based_filter;
+#endif
     // Specifies whether the weights derivation will use the distance factor(MV - based correction)
     // and the 5x5 window error or not (0: OFF, 1 : ON)
     uint8_t use_fast_filter;

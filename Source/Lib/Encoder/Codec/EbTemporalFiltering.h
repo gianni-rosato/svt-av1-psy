@@ -131,6 +131,19 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
     unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count,
     uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count,
     uint32_t encoder_bit_depth);
+#if OPT_LD_TF
+void svt_av1_apply_zz_based_temporal_filter_planewise_medium_c(
+    struct MeContext *me_ctx, const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_pre,
+    const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
+    int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count,
+    uint32_t *v_accum, uint16_t *v_count);
+
+void svt_av1_apply_zz_based_temporal_filter_planewise_medium_hbd_c(
+    struct MeContext *me_ctx, const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_pre,
+    const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
+    int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count,
+    uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
+#endif
 void svt_av1_apply_temporal_filter_planewise_medium_c(
     struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,

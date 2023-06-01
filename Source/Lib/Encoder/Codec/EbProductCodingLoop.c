@@ -1121,16 +1121,40 @@ static void fast_loop_core_light_pd0(ModeDecisionCandidateBuffer *cand_bf, Pictu
         EbSpatialFullDistType spatial_full_dist_type_fun = ctx->hbd_md
             ? svt_full_distortion_kernel16_bits
             : svt_spatial_full_distortion_kernel;
+#if OPT_LD_MDS0
+        if (pcs->rtc_tune && ctx->mds0_ctrls.mds0_dist_type == MDS0_VAR) {
+            if (!ctx->hbd_md) {
+                const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
+                unsigned int            sse;
+                uint8_t                *pred_y = ref_pic->buffer_y + ref_origin_index;
+                uint8_t                *src_y  = input_pic->buffer_y + input_origin_index;
+                *(cand_bf->fast_cost)          = fn_ptr->vf(
+                    pred_y, ref_pic->stride_y, src_y, input_pic->stride_y, &sse);
+            } else {
+                const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
+                unsigned int            sse;
+                uint16_t               *pred_y = ((uint16_t *)ref_pic->buffer_y) + ref_origin_index;
+                uint16_t *src_y       = ((uint16_t *)input_pic->buffer_y) + input_origin_index;
+                *(cand_bf->fast_cost) = fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(pred_y),
+                                                          ref_pic->stride_y,
+                                                          CONVERT_TO_BYTEPTR(src_y),
+                                                          input_pic->stride_y,
+                                                          &sse) >>
+                    1;
+            }
 
-        *(cand_bf->fast_cost) = (uint32_t)(spatial_full_dist_type_fun(input_pic->buffer_y,
-                                                                      input_origin_index,
-                                                                      input_pic->stride_y << 1,
-                                                                      ref_pic->buffer_y,
-                                                                      ref_origin_index,
-                                                                      ref_pic->stride_y << 1,
-                                                                      ctx->blk_geom->bwidth,
-                                                                      ctx->blk_geom->bheight >> 1))
-            << 1;
+        } else
+#endif
+            *(cand_bf->fast_cost) = (uint32_t)(spatial_full_dist_type_fun(
+                                        input_pic->buffer_y,
+                                        input_origin_index,
+                                        input_pic->stride_y << 1,
+                                        ref_pic->buffer_y,
+                                        ref_origin_index,
+                                        ref_pic->stride_y << 1,
+                                        ctx->blk_geom->bwidth,
+                                        ctx->blk_geom->bheight >> 1))
+                << 1;
     } else {
         // intrabc not allowed in light_pd0
         svt_product_prediction_fun_table_light_pd0[is_inter_mode(cand->pred_mode)](
@@ -1141,8 +1165,17 @@ static void fast_loop_core_light_pd0(ModeDecisionCandidateBuffer *cand_bf, Pictu
                 unsigned int            sse;
                 uint8_t                *pred_y = pred->buffer_y + cu_origin_index;
                 uint8_t                *src_y  = input_pic->buffer_y + input_origin_index;
+#if OPT_LD_MDS0
+                if (pcs->rtc_tune)
+                    *(cand_bf->fast_cost) =
+                        fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) / 3;
+                else
+                    *(cand_bf->fast_cost) =
+                        fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >> 2;
+#else
                 *(cand_bf->fast_cost) =
                     fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >> 2;
+#endif
             } else {
                 const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
                 unsigned int            sse;
@@ -1202,8 +1235,17 @@ static void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *cand_bf, Pictu
 
         // The variance is shifted because fast_lambda is used, and variance is much larger than SAD (for which
         // fast_lambda was designed), so a scaling is needed to make the values closer.  3 was chosen empirically.
+#if OPT_LD_MDS0
+        if (pcs->rtc_tune)
+            cand_bf->luma_fast_dist = luma_fast_dist =
+                fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) / 3;
+        else
+            cand_bf->luma_fast_dist = luma_fast_dist =
+                fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >> 3;
+#else
         cand_bf->luma_fast_dist = luma_fast_dist =
             fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >> 3;
+#endif
     } else {
         assert(ctx->mds0_ctrls.mds0_dist_type == MDS0_SAD);
         assert((ctx->blk_geom->bwidth >> 3) < 17);
@@ -1493,8 +1535,17 @@ void fast_loop_core(ModeDecisionCandidateBuffer *cand_bf, PictureControlSet *pcs
             unsigned int            sse;
             uint8_t                *pred_y = pred->buffer_y + cu_origin_index;
             uint8_t                *src_y  = input_pic->buffer_y + input_origin_index;
-            cand_bf->luma_fast_dist        = luma_fast_dist =
+#if OPT_LD_MDS0
+            if (pcs->rtc_tune)
+                cand_bf->luma_fast_dist = luma_fast_dist =
+                    fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) / 3;
+            else
+                cand_bf->luma_fast_dist = luma_fast_dist =
+                    fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >> 2;
+#else
+            cand_bf->luma_fast_dist = luma_fast_dist =
                 fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse) >> 2;
+#endif
         } else {
             const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
             unsigned int            sse;

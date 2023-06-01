@@ -38,6 +38,19 @@ extern "C" {
 #define FIX_ISSUE_2064          0
 #define FIX_ISSUE_2064_ALT      1
 
+#define OPT_SUBPEL_ME_LD        1 // optimize subpel_me for low delay mode
+#define OPT_LPD1_M13            1 // optimize pic_lpd1_lvl for M13
+#define OPT_LD_MDS0             1 // Optimize MDS for better mode selection
+#define OPT_LD_DLF              1 // Bypass dlf application for non-ref
+#define OPT_LD_PD0              1 // Opimize PD0 interdepth decision
+#define OPT_LD_EN_BASE_FRAME    1 // change ld_enchanced_base_frame frequency
+
+#define OPT_LD_TF               1 // TF optimization for low delay mode
+
+#define OPT_LD_M12              1
+#define OPT_LD_M11              1
+#define OPT_LD_M10              1
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
