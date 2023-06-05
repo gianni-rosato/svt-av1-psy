@@ -68,14 +68,12 @@ RUNNING_LOG_DIR = BASE_DIR / "running_logs"
 FINISHED_LOG_DIR = BASE_DIR / "finished_logs"
 ARTIFACT_DIR = BASE_DIR / "artifacts"
 SCRIPT_LOG = BASE_DIR / "offline_ci.log"
+PREVIOUS_JOB = BASE_DIR / "previous_job"
 RUNNING: Set[str] = set()  # list of running jobs
 FAILED: Set[str] = set()  # list of failed jobs
 FINISHED: Set[str] = set()  # list of finished jobs
 QUEUED: Set[str] = set()  # list of queued jobs
 MAX_RUNNERS: int = 5
-
-for directory in (FAILED_LOG_DIR, RUNNING_LOG_DIR, FINISHED_LOG_DIR, ARTIFACT_DIR):
-    directory.mkdir(parents=True, exist_ok=True)
 
 
 class OS(Enum):
@@ -113,7 +111,7 @@ class Job(Dict):
         return self["name"] == other["name"]
 
 
-JOBS: dict = {}
+JOBS: dict[str, Job] = {}
 
 
 HOST_OS: OS = OS.WINDOWS if platform.startswith(
@@ -776,14 +774,28 @@ def stderrprint(*args, **kwargs):
     print(*args, file=stderr, **kwargs)
 
 
-def display_menu():
+def retrieve_previous_jobs() -> set[str]:
+    """
+    Retrieves the previous jobs from the previous_jobs file
+    """
+    try:
+        return {line for line in PREVIOUS_JOB.read_text().splitlines()}
+    except FileNotFoundError:
+        return set()
+
+
+def display_menu(previous_jobs: set[str]):
     """Displays the menu"""
     stderrprint("Menu:")
     stderrprint("\t1. Run all Tests")
     stderrprint("\t2. Run Specific Test(s)")
     stderrprint("\t3. Run Failed Pipeline Tests")
     stderrprint("\t4. List all Tests")
-    stderrprint("\t5. Exit")
+    stderrprint("\t5. Cleanup offline_ci related files")
+    stderrprint("\t6. Exit")
+    if previous_jobs:
+        stderrprint(
+            f"\t7. Run recent tests: {format_set_print(previous_jobs)}")
 
 
 def shunquote(string: str) -> str:
@@ -794,6 +806,14 @@ def shunquote(string: str) -> str:
         except SyntaxError:
             pass
     return string
+
+
+def loose_search_in_dict(search: str, dictionary: dict[str, Job]) -> str:
+    """Loose search in a dictionary"""
+    for item in dictionary:
+        if search.lower() in item.lower():
+            return item
+    return ""
 
 
 def read_tests_from_user() -> Set[str]:
@@ -807,11 +827,16 @@ def read_tests_from_user() -> Set[str]:
         if user_input in ('done', ''):
             break
         user_input = shunquote(user_input)
-        if user_input not in JOBS:
+        job_name = ""
+        if user_input in JOBS:
+            job_name = user_input
+        elif (job_name := loose_search_in_dict(user_input, JOBS)) != "":
+            pass
+        else:
             stderrprint(
                 f"Invalid test name '{user_input}' entered, please try again")
             continue
-        jobs.add(user_input)
+        jobs.add(job_name)
     return jobs
 
 
@@ -822,27 +847,33 @@ async def main():
         return
     user_input = ""
     pipeline = 0
-    jobs = []
+    jobs = set()
     project = DEFAULT_PROJECT_NAME
 
+    previous_jobs = retrieve_previous_jobs()
+
     while True:
-        display_menu()
+        display_menu(previous_jobs)
         try:
-            choice = input("\nEnter your selection: ")
+            choice = int(input("\nEnter your selection: "))
         except EOFError:
             stderrprint("Exiting...")
             return 0
+        except ValueError:
+            stderrprint("Invalid selection, please try again")
+            continue
 
-        if choice == "1":
-            stderrprint("\nYou selected Option 1.")
+        if choice == 1:
             break
-        if choice == "2":
-            stderrprint("\nYou selected Option 2.")
+        if choice == 2:
             stderrprint(
                 "Enter test names, one per line. Enter 'done' or control+D when finished.")
-            jobs.extend(read_tests_from_user())
+            jobs.update(read_tests_from_user())
+            if not jobs:
+                stderrprint("No tests entered!")
+                continue
             break
-        if choice == "3":
+        if choice == 3:
             user_input = input("Enter Pipeline URL: ")
             try:
                 project, pipeline = extract_proj_name_pipe_id(user_input)
@@ -850,21 +881,35 @@ async def main():
                 stderrprint("Invalid URL")
                 continue
             break
-        if choice == "4":
+        if choice == 4:
             stderrprint("Listing all jobs: \n")
             for job in JOBS:
                 print(f"{shquote(str(job))}")
             return 0
-        if choice == "5":
+        if choice == 5:
+            stderrprint("Cleaning up...")
+            shutil.rmtree(str(BASE_DIR), ignore_errors=True)
+            return 0
+        if choice == 6:
             stderrprint("Exiting...")
             return 0
+        if choice == 7 and previous_jobs:
+            jobs = previous_jobs
+            break
         stderrprint("Invalid selection. Please try again.")
+
+    for directory in (FAILED_LOG_DIR, RUNNING_LOG_DIR, FINISHED_LOG_DIR, ARTIFACT_DIR):
+        directory.mkdir(parents=True, exist_ok=True)
+
+    with open(PREVIOUS_JOB, "w") as file:
+        file.write("\n".join(jobs))
 
     job_queue = Queue()
     finished_flag = Event()  # Event to signal that all jobs have been queued
     runners = create_task(start_runners(job_queue, finished_flag))
 
-    stderrprint(job_queue, finished_flag, project, pipeline, jobs)
+    if jobs:
+        stderrprint(f"Queued {len(jobs)} jobs")
     submitter = create_task(create_submitter(
         job_queue, finished_flag, project, pipeline, jobs))
 
@@ -872,11 +917,6 @@ async def main():
     await runners
     return 0
 
-    # await run_all_jobs(*extract_proj_name_pipe_id(
-    # "https://gitlab.com/svt-team/svt-team-p/SVT-AV1/-/pipelines/744695861"))
-
 if __name__ == "__main__":
     dependency_checks()
     asyncio.run(main())
-
-# TODO: add "clean" option to delete the REPO_DIR / {artifacts,logs,failed_logs}
