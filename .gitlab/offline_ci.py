@@ -915,8 +915,8 @@ async def main():
 
     await submitter
     await runners
-    return 0
+    return 1 if FAILED else 0
 
 if __name__ == "__main__":
     dependency_checks()
-    asyncio.run(main())
+    exit(asyncio.run(main()))
