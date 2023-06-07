@@ -25,9 +25,9 @@ static INLINE int32_t dec_is_8x8_block_skip(BlockModeInfo *mbmi) {
     /* To get mode info for special cases wx4, 4xh & 4x4 blocksize */
     /* Skip is set to(Skips[r][c] && Skips[r + 1][c] && Skips[r][c + 1] &&
        Skips[r + 1][c + 1]) as per the Spec sec. 7.15.1 */
-    if (BLOCK_4X4 == mbmi->sb_type)
+    if (BLOCK_4X4 == mbmi->bsize)
         is_skip = mbmi[0].skip && mbmi[1].skip && mbmi[2].skip && mbmi[3].skip;
-    else if (1 == mi_size_wide[mbmi->sb_type] || 1 == mi_size_high[mbmi->sb_type]) {
+    else if (1 == mi_size_wide[mbmi->bsize] || 1 == mi_size_high[mbmi->bsize]) {
         is_skip = mbmi[0].skip && mbmi[1].skip;
     }
     return is_skip;

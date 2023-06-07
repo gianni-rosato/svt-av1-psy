@@ -34,6 +34,7 @@ extern "C" {
     */
 
 // Macros for deblocking filter
+#if !CLN_UNUSED_DEFNS
 #define MAX_SB_SIZE_IN_4X4BLK (BLOCK_SIZE_64 >> 2)
 #define VERTICAL_EDGE_BS_ARRAY_SIZE (MAX_SB_SIZE_IN_4X4BLK * MAX_SB_SIZE_IN_4X4BLK)
 #define HORIZONTAL_EDGE_BS_ARRAY_SIZE (MAX_SB_SIZE_IN_4X4BLK * MAX_SB_SIZE_IN_4X4BLK)
@@ -41,12 +42,16 @@ extern "C" {
 #define MAX_NUMBER_OF_BS_EDGES_PER_TREEBLOCK 128
 #define MAX_NUMBER_OF_LEAFS_PER_TREEBLOCK 64
 #define MAX_NUMBER_OF_4x4_TUs_IN_8x8_LEAF 4
+#endif
 #define MAX_CU_COST (0xFFFFFFFFFFFFFFFFull >> 1)
 #define MAX_MODE_COST \
     (13754408443200 * 8) // RDCOST(6544618, 128 * 128 * 255 * 255, 128 * 128 * 255 * 255) * 8;
+#if !CLN_UNUSED_DEFNS
 #define INVALID_FAST_CANDIDATE_INDEX ~0
 #define MAX_OIS_CANDIDATES 61 //18//18
+#endif
 
+#if !CLN_MISC_CLEANUPS
 static const uint32_t intra_hev_cmode_to_intra_av1_mode[35] = {
     /*SMOOTH_PRED   */ SMOOTH_PRED, // EB_INTRA_PLANAR
     /*DC_PRED       */ DC_PRED, // EB_INTRA_DC
@@ -121,6 +126,7 @@ static const int8_t hevc_mode_to_angle_delta_map[35] = {
     0,
     -2, // EB_INTRA_MODE_31 -> EB_INTRA_MODE_34
 };
+#endif
 static const uint32_t intra_luma_to_chroma[INTRA_MODES] = // EB_INTRA_PLANAR
     {
         UV_DC_PRED, // Average of above and left pixels
@@ -138,6 +144,7 @@ static const uint32_t intra_luma_to_chroma[INTRA_MODES] = // EB_INTRA_PLANAR
         UV_PAETH_PRED, // Predict from the direction of smallest gradient
 };
 
+#if !CLN_UNUSED_DEFNS
 static const TxType chroma_transform_type[14] = {
     /*UV_DC_PRED,          */ DCT_DCT,
     /*UV_V_PRED,           */ ADST_DCT,
@@ -184,7 +191,7 @@ static const uint8_t av1_is_directional[35] = {
 };
 
 struct PictureControlSet;
-
+#endif
 typedef struct {
     IntMv   mfmv0;
     uint8_t ref_frame_offset;
@@ -230,6 +237,7 @@ typedef struct MacroBlockPlane {
 */
 } MacroBlockPlane;
 
+#if !CLN_UNUSED_DEFNS
 typedef struct macroblockd_plane {
     int subsampling_x;
     int subsampling_y;
@@ -259,6 +267,7 @@ typedef struct InterPredParams {
     int                        use_hbd_buf;
     int                        is_intrabc;
 } InterPredParams;
+#endif
 typedef struct MacroBlockD {
     // block dimension in the unit of mode_info.
     uint8_t    n8_w, n8_h;
@@ -288,8 +297,10 @@ typedef struct MacroBlockD {
     FRAME_CONTEXT           *tile_ctx;
     TXFM_CONTEXT            *above_txfm_context;
     TXFM_CONTEXT            *left_txfm_context;
+#if !CLN_UNUSED_DEFNS
     struct macroblockd_plane plane[MAX_MB_PLANE];
-    BlockSize                sb_type;
+#endif
+    BlockSize bsize;
 } MacroBlockD;
 
 typedef struct Macroblock {
@@ -350,12 +361,15 @@ typedef struct BlkStruct {
     uint8_t tx_depth; // ec
     uint8_t compound_idx; // ec
     uint8_t comp_group_idx; // ec
-
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     unsigned skip_flag_context : 2; // to do
+#endif
     unsigned prediction_mode_flag : 2; // ec
     // ec; skip coeff only. as defined in section 6.10.11 of the av1 text
     unsigned block_has_coeff : 1;
+#if !CLN_MISC_CLEANUPS
     unsigned split_flag_context : 2; // to do
+#endif
 
     uint8_t qindex; // ec
     uint8_t split_flag;
@@ -370,10 +384,16 @@ typedef struct BlkStruct {
     // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
     int8_t         drl_ctx_near[2];
     PredictionMode pred_mode; // ec
-    uint8_t        skip_coeff_context;
-    uint8_t        reference_mode_context;
-    uint8_t        compoud_reference_type_context;
-    uint32_t       is_inter_ctx;
+#if !FIX_SKIP_NEIGH_ARRAY
+    uint8_t skip_coeff_context;
+#endif
+#if !CLN_MISC_CLEANUPS
+    uint8_t reference_mode_context;
+    uint8_t compoud_reference_type_context;
+#endif
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
+    uint32_t is_inter_ctx;
+#endif
 
     uint8_t segment_id; // ec
 
@@ -386,6 +406,110 @@ typedef struct BlkStruct {
     uint8_t        use_intrabc;
     uint64_t       total_rate;
 } BlkStruct;
+
+#if OPT_CHILD_PCS
+typedef struct EcBlkStruct {
+    EcTransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
+    EcPredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
+    EcPaletteInfo           *palette_info; // ec
+    uint8_t                  palette_mem; // status of palette info alloc
+    uint8_t                  palette_size[2];
+    IntMv                    predmv[2]; // ec
+    MacroBlockD             *av1xd;
+    EcInterInterCompoundData interinter_comp; // ec
+#if !CLN_MBMI_5
+    uint32_t interp_filters; // ec
+#endif
+    uint8_t interintra_wedge_index; // ec
+
+#if CLN_MBMI_12
+    int16_t inter_mode_ctx;
+#else
+    // uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
+    int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES]; // ec
+#endif
+    // equivalent of leaf_index in the nscu context. we will keep both for now and use the right one
+    // on a case by case basis.
+    uint16_t mds_idx;
+
+#if !CLN_MBMI_7
+    // txb
+    uint8_t tx_depth; // ec
+#endif
+#if !CLN_MBMI_6
+    uint8_t compound_idx; // ec
+    uint8_t comp_group_idx; // ec
+#endif
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
+    unsigned skip_flag_context : 2; // to do
+#endif
+#if !CLN_MBMI_3
+    unsigned prediction_mode_flag : 2; // ec
+#endif
+
+#if !CLN_MBMI
+    // ec; skip coeff only. as defined in section 6.10.11 of the av1 text
+    unsigned block_has_coeff : 1;
+#endif
+#if !CLN_MISC_CLEANUPS
+    unsigned split_flag_context : 2; // to do
+#endif
+
+    uint8_t qindex; // ec
+
+#if !CLN_MBMI_10
+    uint8_t split_flag;
+#endif
+
+#if !CLN_MBMI_2
+    uint8_t skip_mode; // ec; skips mode_info + coeff. as defined in section 6.10.10 of the av1 text
+#endif
+
+#if !SHUT_TEMP_BUFF
+    // buffer to store quantized coeffs from MD for the final mode of each block
+    EbPictureBufferDesc *coeff_tmp;
+    // buffer to store recon from MD for the final mode of each block
+    EbPictureBufferDesc *recon_tmp;
+#endif
+    uint8_t drl_index; // ec
+    // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
+    int8_t drl_ctx[2];
+    // Store the drl ctx in coding loop to avoid storing final_ref_mv_stack and ref_mv_count for EC
+    int8_t drl_ctx_near[2];
+
+#if !CLN_MBMI_4
+    PredictionMode pred_mode; // ec
+#endif
+#if !FIX_SKIP_NEIGH_ARRAY
+    uint8_t skip_coeff_context;
+#endif
+#if !CLN_MISC_CLEANUPS
+    uint8_t reference_mode_context;
+    uint8_t compoud_reference_type_context;
+#endif
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
+    uint32_t is_inter_ctx;
+#endif
+
+    uint8_t segment_id; // ec
+#if !SHUT_PART
+    PartitionType part;
+#endif
+#if !SHUT_BEST_D1_BLK
+    uint32_t best_d1_blk;
+#endif
+    InterIntraMode interintra_mode; // ec
+    uint8_t        is_interintra_used; // ec
+    uint8_t        use_wedge_interintra; // ec
+    uint8_t        filter_intra_mode; // ec
+#if !CLN_MBMI_8
+    uint8_t use_intrabc;
+#endif
+#if !SHUT_TOTAL_RATE
+    uint64_t total_rate;
+#endif
+} EcBlkStruct;
+#endif
 
 typedef struct TplStats {
     int64_t  srcrf_dist;
@@ -410,8 +534,11 @@ typedef struct TplSrcStats {
 typedef struct SuperBlock {
     EbDctor                   dctor;
     struct PictureControlSet *pcs;
-
+#if OPT_CHILD_PCS
+    EcBlkStruct *final_blk_arr;
+#else
     BlkStruct *final_blk_arr;
+#endif
     //for memory free only
     MacroBlockD   *av1xd;
     PartitionType *cu_partition_array;

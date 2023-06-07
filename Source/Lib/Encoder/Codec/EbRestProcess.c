@@ -42,12 +42,17 @@ typedef struct RestContext {
     int32_t *rst_tmpbuf;
 } RestContext;
 
-void        svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3],
-                                    uint32_t ss_x, uint32_t ss_y, Bool include_padding);
-void        svt_aom_copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr);
-void        svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs);
-void        svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
-                                                  int32_t optimized_lr);
+void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3],
+                             uint32_t ss_x, uint32_t ss_y, Bool include_padding);
+void svt_aom_copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr);
+void svt_aom_recon_output(PictureControlSet *pcs, SequenceControlSet *scs);
+#if MEM_SG
+void svt_av1_loop_restoration_filter_frame(int32_t *rst_tmpbuf, Yv12BufferConfig *frame,
+                                           Av1Common *cm, int32_t optimized_lr);
+#else
+void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
+                                           int32_t optimized_lr);
+#endif
 EbErrorType psnr_calculations(PictureControlSet *pcs, SequenceControlSet *scs, Bool free_memory);
 EbErrorType svt_aom_ssim_calculations(PictureControlSet *pcs, SequenceControlSet *scs,
                                       Bool free_memory);
@@ -135,8 +140,12 @@ EbErrorType svt_aom_rest_context_ctor(EbThreadContext   *thread_ctx,
             if (scs->use_boundaries_in_rest_search)
                 context_ptr->org_rec_frame->bit_depth = EB_EIGHT_BIT;
         }
-
-        EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
+#if MEM_SG
+        context_ptr->rst_tmpbuf = NULL;
+        if (svt_aom_get_enable_sg(
+                init_data_ptr->enc_mode, scs->input_resolution, scs->static_config.fast_decode))
+#endif
+            EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
     return EB_ErrorNone;
@@ -702,7 +711,12 @@ void *svt_aom_rest_kernel(void *input_ptr) {
                     if (pcs->rst_info[0].frame_restoration_type != RESTORE_NONE ||
                         pcs->rst_info[1].frame_restoration_type != RESTORE_NONE ||
                         pcs->rst_info[2].frame_restoration_type != RESTORE_NONE) {
+#if MEM_SG
+                        svt_av1_loop_restoration_filter_frame(
+                            context_ptr->rst_tmpbuf, cm->frame_to_show, cm, 0);
+#else
                         svt_av1_loop_restoration_filter_frame(cm->frame_to_show, cm, 0);
+#endif
                     }
                 }
 

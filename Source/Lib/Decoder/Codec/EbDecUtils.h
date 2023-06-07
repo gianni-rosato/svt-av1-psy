@@ -75,7 +75,7 @@ static INLINE int svt_aom_is_interintra_allowed_ref(const MvReferenceFrame rf[2]
 }
 
 static INLINE int svt_aom_is_interintra_allowed(const BlockModeInfo *mbmi) {
-    return svt_aom_is_interintra_allowed_bsize(mbmi->sb_type) &&
+    return svt_aom_is_interintra_allowed_bsize(mbmi->bsize) &&
         svt_aom_is_interintra_allowed_mode(mbmi->mode) &&
         svt_aom_is_interintra_allowed_ref(mbmi->ref_frame);
 }

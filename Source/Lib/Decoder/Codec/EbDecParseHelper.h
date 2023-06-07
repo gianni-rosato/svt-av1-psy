@@ -30,7 +30,7 @@ typedef struct MvCount {
 static INLINE CflAllowedType is_cfl_allowed(PartitionInfo *xd, EbColorConfig *color_cfg,
                                             uint8_t *lossless_array) {
     const BlockModeInfo *mbmi  = xd->mi;
-    const BlockSize      bsize = mbmi->sb_type;
+    const BlockSize      bsize = mbmi->bsize;
     assert(bsize < BlockSizeS_ALL);
     if (lossless_array[mbmi->segment_id]) {
         // In lossless, CfL is available when the partition size is equal to the
@@ -46,9 +46,9 @@ static INLINE CflAllowedType is_cfl_allowed(PartitionInfo *xd, EbColorConfig *co
 
 //extern int is_inter_block(const BlockModeInfo *mbmi);
 
-static INLINE int allow_palette(int allow_screen_content_tools, BlockSize sb_type) {
-    return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&
-        block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
+static INLINE int allow_palette(int allow_screen_content_tools, BlockSize bsize) {
+    return allow_screen_content_tools && block_size_wide[bsize] <= 64 &&
+        block_size_high[bsize] <= 64 && bsize >= BLOCK_8X8;
 }
 
 static INLINE int max_block_wide(PartitionInfo *part_info, int plane_bsize, int subx) {

@@ -39,7 +39,9 @@ static MeshPattern good_quality_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP]
     {{64, 16}, {24, 8}, {12, 4}, {7, 1}},
     {{64, 16}, {24, 8}, {12, 4}, {7, 1}},
 };
+#if !CLN_UNUSED_DEFNS
 static unsigned char good_quality_max_mesh_pct[MAX_MESH_SPEED + 1] = {50, 50, 25, 15, 5, 1};
+#endif
 // TODO: These settings are pretty relaxed, tune them for
 // each speed setting
 static MeshPattern intrabc_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
@@ -50,8 +52,10 @@ static MeshPattern intrabc_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
     {{64, 4}, {16, 1}, {0, 0}, {0, 0}},
     {{64, 4}, {16, 1}, {0, 0}, {0, 0}},
 };
+#if !CLN_UNUSED_DEFNS
 static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = {100, 100, 100, 25, 25, 10};
-void           set_global_motion_field(PictureControlSet *pcs) {
+#endif
+void set_global_motion_field(PictureControlSet *pcs) {
     // Init Global Motion Vector
     uint8_t frame_index;
     for (frame_index = INTRA_FRAME; frame_index <= ALTREF_FRAME; ++frame_index) {
@@ -639,6 +643,12 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         // Init block selection
         // Set reference sg ep
         set_reference_sg_ep(pcs);
+#if GM_REFINFO
+        if (pcs->ppcs->gm_ctrls.use_ref_info) {
+            assert(pcs->slice_type != I_SLICE);
+            svt_aom_global_motion_estimation(pcs->ppcs, pcs->ppcs->enhanced_pic);
+        }
+#endif
         set_global_motion_field(pcs);
 
         svt_av1_qm_init(pcs->ppcs);
@@ -676,14 +686,17 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
         }
         if (frm_hdr->allow_intrabc) {
             int            i;
-            int            speed          = 1;
-            SpeedFeatures *sf             = &pcs->sf;
+            int            speed = 1;
+            SpeedFeatures *sf    = &pcs->sf;
+#if !CLN_UNUSED_DEFNS
             sf->allow_exhaustive_searches = 1;
+#endif
 
             const int mesh_speed           = AOMMIN(speed, MAX_MESH_SPEED);
             sf->exhaustive_searches_thresh = (1 << 25);
-
+#if !CLN_UNUSED_DEFNS
             sf->max_exaustive_pct = good_quality_max_mesh_pct[mesh_speed];
+#endif
             if (mesh_speed > 0)
                 sf->exhaustive_searches_thresh = sf->exhaustive_searches_thresh << 1;
 
@@ -697,7 +710,9 @@ void *svt_aom_mode_decision_configuration_kernel(void *input_ptr) {
                     sf->mesh_patterns[i].range    = intrabc_mesh_patterns[mesh_speed][i].range;
                     sf->mesh_patterns[i].interval = intrabc_mesh_patterns[mesh_speed][i].interval;
                 }
+#if !CLN_UNUSED_DEFNS
                 sf->max_exaustive_pct = intrabc_max_mesh_pct[mesh_speed];
+#endif
             }
 
             {

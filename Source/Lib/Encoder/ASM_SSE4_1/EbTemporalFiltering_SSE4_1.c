@@ -61,7 +61,7 @@ static const int32_t expf_tab_fp16[] = {
     43,    41,    38,    36,    34,    31,    30,    28,    26,    24,    23,    21};
 
 #define SSE_STRIDE (BW + 2)
-
+#if !CLN_TF
 DECLARE_ALIGNED(32, static const uint32_t, sse_bytemask[4][8]) = {
     {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0},
     {0, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0},
@@ -245,7 +245,6 @@ static AOM_FORCE_INLINE __m128i xx_gather_i32(const int32_t *ptr, __m128i idx) {
     _mm_storeu_si128((__m128i *)i, idx);
     return _mm_setr_epi32(ptr[i[0]], ptr[i[1]], ptr[i[2]], ptr[i[3]]);
 }
-
 static void apply_temporal_filter_planewise(struct MeContext *me_ctx, const uint8_t *frame1,
                                             const unsigned int stride, const uint8_t *frame2,
                                             const unsigned int stride2, const int block_width,
@@ -1243,7 +1242,6 @@ static uint32_t calculate_squared_errors_sum_sse4_1(const uint8_t *s, int s_stri
 
     return _mm_cvtsi128_si32(sum);
 }
-
 static uint32_t calculate_squared_errors_sum_highbd_sse4_1(const uint16_t *s, int s_stride,
                                                            const uint16_t *p, int p_stride,
                                                            unsigned int w, unsigned int h,
@@ -1268,7 +1266,6 @@ static uint32_t calculate_squared_errors_sum_highbd_sse4_1(const uint16_t *s, in
 
     return (_mm_cvtsi128_si32(sum) >> shift_factor);
 }
-
 //exp(-x) for x in [0..7]
 static double svt_aom_expf_tab[] = {
     1,        0.904837, 0.818731, 0.740818, 0.67032,  0.606531, 0.548812, 0.496585,
@@ -1284,7 +1281,6 @@ static double svt_aom_expf_tab[] = {
     0.000335
 
 };
-
 void svt_av1_apply_temporal_filter_planewise_fast_sse4_1(struct MeContext *me_ctx,
                                                          const uint8_t *y_src, int y_src_stride,
                                                          const uint8_t *y_pre, int y_pre_stride,
@@ -1390,7 +1386,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_sse4_1(
         }
     }
 }
-
+#endif
 static uint32_t calculate_squared_errors_sum_no_div_sse4_1(const uint8_t *s, int s_stride,
                                                            const uint8_t *p, int p_stride,
                                                            unsigned int w, unsigned int h) {

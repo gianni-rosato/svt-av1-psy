@@ -446,9 +446,9 @@ void svt_av1_cdef_frame(SequenceControlSet *scs, PictureControlSet *pcs) {
                 const uint32_t    lr      = MI_SIZE_64X64 * fbr;
                 ModeInfo        **mi      = pcs->mi_grid_base + lr * cm->mi_stride + lc;
                 const MbModeInfo *mbmi    = &mi[0]->mbmi;
-                const BlockSize   sb_type = mbmi->block_mi.sb_type;
-                if (((fbc & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_128X64)) ||
-                    ((fbr & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_64X128)))
+                const BlockSize   bsize   = mbmi->block_mi.bsize;
+                if (((fbc & 1) && (bsize == BLOCK_128X128 || bsize == BLOCK_128X64)) ||
+                    ((fbr & 1) && (bsize == BLOCK_128X128 || bsize == BLOCK_64X128)))
                     dirinit = 0;
             }
             uint8_t(*dir)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pcs->cdef_dir_data[fbr * nhfb + fbc].dir;
@@ -825,11 +825,11 @@ void finish_cdef_search(PictureControlSet *pcs) {
                 const MbModeInfo *mbmi = &mi[0]->mbmi;
 
                 if (((fbc & 1) &&
-                     (mbmi->block_mi.sb_type == BLOCK_128X128 ||
-                      mbmi->block_mi.sb_type == BLOCK_128X64)) ||
+                     (mbmi->block_mi.bsize == BLOCK_128X128 ||
+                      mbmi->block_mi.bsize == BLOCK_128X64)) ||
                     ((fbr & 1) &&
-                     (mbmi->block_mi.sb_type == BLOCK_128X128 ||
-                      mbmi->block_mi.sb_type == BLOCK_64X128))) {
+                     (mbmi->block_mi.bsize == BLOCK_128X128 ||
+                      mbmi->block_mi.bsize == BLOCK_64X128))) {
                     continue;
                 }
                 // No filtering if the entire filter block is skipped
@@ -843,8 +843,8 @@ void finish_cdef_search(PictureControlSet *pcs) {
             pcs->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
             //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
             //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
-            BlockSize sb_type = pcs->mi_grid_base[sb_index[i]]->mbmi.block_mi.sb_type;
-            switch (sb_type) {
+            BlockSize bsize = pcs->mi_grid_base[sb_index[i]]->mbmi.block_mi.bsize;
+            switch (bsize) {
             case BLOCK_128X128:
                 pcs->mi_grid_base[sb_index[i] + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)
                     best_gi;
@@ -904,11 +904,9 @@ void finish_cdef_search(PictureControlSet *pcs) {
             const MbModeInfo *mbmi = &mi[0]->mbmi;
 
             if (((fbc & 1) &&
-                 (mbmi->block_mi.sb_type == BLOCK_128X128 ||
-                  mbmi->block_mi.sb_type == BLOCK_128X64)) ||
+                 (mbmi->block_mi.bsize == BLOCK_128X128 || mbmi->block_mi.bsize == BLOCK_128X64)) ||
                 ((fbr & 1) &&
-                 (mbmi->block_mi.sb_type == BLOCK_128X128 ||
-                  mbmi->block_mi.sb_type == BLOCK_64X128))) {
+                 (mbmi->block_mi.bsize == BLOCK_128X128 || mbmi->block_mi.bsize == BLOCK_64X128))) {
                 continue;
             }
 
@@ -978,9 +976,9 @@ void finish_cdef_search(PictureControlSet *pcs) {
         pcs->mi_grid_base[sb_index[i]]->mbmi.cdef_strength = (int8_t)best_gi;
         //in case the fb is within a block=128x128 or 128x64, or 64x128, then we genrate param only for the first 64x64.
         //since our mi map deos not have the multi pointer single data assignment, we need to duplicate data.
-        BlockSize sb_type = pcs->mi_grid_base[sb_index[i]]->mbmi.block_mi.sb_type;
+        BlockSize bsize = pcs->mi_grid_base[sb_index[i]]->mbmi.block_mi.bsize;
 
-        switch (sb_type) {
+        switch (bsize) {
         case BLOCK_128X128:
             pcs->mi_grid_base[sb_index[i] + MI_SIZE_64X64]->mbmi.cdef_strength = (int8_t)best_gi;
             pcs->mi_grid_base[sb_index[i] + MI_SIZE_64X64 * pcs->mi_stride]->mbmi.cdef_strength =

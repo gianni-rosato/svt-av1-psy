@@ -54,7 +54,10 @@ void svt_av1_predict_intra_block_16bit(
     int32_t plane, BlockSize bsize, uint32_t txb_org_x_pict, uint32_t txb_org_y_pict,
     uint32_t bl_org_x_pict, uint32_t bl_org_y_pict, uint32_t bl_org_x_mb, uint32_t bl_org_y_mb,
     SeqHeader *seq_header_ptr);
-
+#if CLN_FUNC_DECL
+void svt_aom_precompute_intra_pred_for_inter_intra(PictureControlSet          *pcs,
+                                                   struct ModeDecisionContext *ctx);
+#endif
 #ifdef __cplusplus
 }
 #endif

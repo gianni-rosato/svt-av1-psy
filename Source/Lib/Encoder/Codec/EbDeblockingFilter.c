@@ -154,11 +154,11 @@ static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const Edge
     assert(mbmi != NULL);
 
     TxSize tx_size = (plane == COMPONENT_LUMA)
-        ? (is_skip ? tx_depth_to_tx_size[0][mbmi->block_mi.sb_type]
+        ? (is_skip ? tx_depth_to_tx_size[0][mbmi->block_mi.bsize]
                    : tx_depth_to_tx_size[mbmi->block_mi.tx_depth]
-                                        [mbmi->block_mi.sb_type]) // use max_tx_size
+                                        [mbmi->block_mi.bsize]) // use max_tx_size
         : av1_get_max_uv_txsize(
-              mbmi->block_mi.sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
+              mbmi->block_mi.bsize, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
     assert(tx_size < TX_SIZES_ALL);
 
     // since in case of chrominance or non-square transorm need to convert
@@ -229,9 +229,13 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
 
         // prepare outer edge parameters. deblock the edge if it's an edge of a TU
         {
-            uint32_t       curr_level; // Added to address 4x4 problem
+            uint32_t curr_level; // Added to address 4x4 problem
+#if CLN_MISC_CLEANUPS
+            PredictionMode mode = mbmi->block_mi.mode;
+#else
             PredictionMode mode = (mbmi->block_mi.mode == INTRA_MODE_4x4) ? DC_PRED
                                                                           : mbmi->block_mi.mode;
+#endif
             if (frm_hdr->delta_lf_params.delta_lf_present) {
                 curr_level = svt_aom_get_filter_level_delta_lf(frm_hdr,
                                                                edge_dir,
@@ -259,8 +263,12 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                 const TxSize pv_ts = get_transform_size(
                     mi_prev, edge_dir, plane, plane_ptr, pv_skip);
                 uint32_t pv_lvl;
+#if CLN_MISC_CLEANUPS
+                mode = mi_prev->block_mi.mode;
+#else
                 mode = (mi_prev->block_mi.mode == INTRA_MODE_4x4) ? DC_PRED
                                                                   : mi_prev->block_mi.mode;
+#endif
                 if (frm_hdr->delta_lf_params.delta_lf_present) {
 #if FTR_ROI
                     pv_lvl = svt_aom_get_filter_level_delta_lf(frm_hdr,
@@ -291,7 +299,7 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                 }
 
                 const BlockSize bsize = get_plane_block_size(
-                    mbmi->block_mi.sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
+                    mbmi->block_mi.bsize, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
                 assert(bsize < BlockSizeS_ALL);
                 const int32_t prediction_masks = (edge_dir == VERT_EDGE)
                     ? block_size_wide[bsize] - 1
@@ -1152,9 +1160,14 @@ void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int3
     FrameHeader        *frm_hdr = &pcs->ppcs->frm_hdr;
 
 #if OPT_LD_DLF
+#if ENABLE_LD_DLF_RA
+    const uint8_t in_res           = pcs->ppcs->input_resolution;
+    const int32_t inter_frame_mult = inter_frame_multiplier[in_res];
+#else
     const bool    rtc_tune         = pcs->rtc_tune ? true : false;
     const uint8_t in_res           = pcs->ppcs->input_resolution;
     const int32_t inter_frame_mult = rtc_tune ? inter_frame_multiplier[in_res] : 6017;
+#endif
 #endif
 
     int32_t min_ref_filter_level[2] = {MAX_LOOP_FILTER, MAX_LOOP_FILTER};
@@ -1213,11 +1226,19 @@ void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int3
 
 #if OPT_LD_DLF
     int32_t filt_guess_chroma = filt_guess / 2;
+#if !ENABLE_LD_DLF_RA
     if (pcs->rtc_tune) {
+#endif
         if (pcs->slice_type != I_SLICE) {
+#if ENABLE_LD_DLF_RA
             const uint32_t use_zero_strength_th =
-                disable_dlf_th[pcs->ppcs->dlf_ctrls.ld_zero_filter_strength_lvl][in_res] *
+                disable_dlf_th[pcs->ppcs->dlf_ctrls.zero_filter_strength_lvl][in_res] *
                 (pcs->temporal_layer_index + 1);
+#else
+        const uint32_t use_zero_strength_th =
+            disable_dlf_th[pcs->ppcs->dlf_ctrls.ld_zero_filter_strength_lvl][in_res] *
+            (pcs->temporal_layer_index + 1);
+#endif
             if (use_zero_strength_th) {
                 uint32_t total_me_sad = 0;
                 for (uint16_t b64_index = 0; b64_index < pcs->b64_total_count; ++b64_index) {
@@ -1231,11 +1252,13 @@ void svt_av1_pick_filter_level_by_q(PictureControlSet *pcs, uint8_t qindex, int3
                     filt_guess_chroma = 0;
             }
         }
+#if !ENABLE_LD_DLF_RA
     } else {
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
         filt_guess = filt_guess > pcs->ppcs->dlf_ctrls.min_filter_level ? filt_guess : 0;
         filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
     }
+#endif
 #else
     filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
     filt_guess = filt_guess > pcs->ppcs->dlf_ctrls.min_filter_level ? filt_guess : 0;

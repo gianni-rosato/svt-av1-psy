@@ -462,8 +462,11 @@ typedef struct {
     MapCdf    map_cdf;
     ColorCost color_cost;
 } Av1ColorMapParam;
-
+#if OPT_CHILD_PCS
+static void get_palette_params(FRAME_CONTEXT *frame_context, EcBlkStruct *blk_ptr, int plane,
+#else
 static void get_palette_params(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
+#endif
                                BlockSize bsize, Av1ColorMapParam *params) {
     const MacroBlockD *const xd = blk_ptr->av1xd;
     params->color_map           = blk_ptr->palette_info->color_idx_map;
@@ -474,8 +477,11 @@ static void get_palette_params(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr,
     svt_aom_get_block_dimensions(
         bsize, plane, xd, &params->plane_width, NULL, &params->rows, &params->cols);
 }
-
+#if OPT_CHILD_PCS
+static void get_color_map_params(FRAME_CONTEXT *frame_context, EcBlkStruct *blk_ptr, int plane,
+#else
 static void get_color_map_params(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
+#endif
                                  BlockSize bsize, TxSize tx_size, COLOR_MAP_TYPE type,
                                  Av1ColorMapParam *params) {
     (void)tx_size;
@@ -555,10 +561,15 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t, int pl
     }
     return this_rate;
 }
-
-void svt_av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
+#if OPT_CHILD_PCS
+void svt_av1_tokenize_color_map(FRAME_CONTEXT *frame_context, EcBlkStruct *blk_ptr, int plane,
                                 TOKENEXTRA **t, BlockSize bsize, TxSize tx_size,
                                 COLOR_MAP_TYPE type, int allow_update_cdf) {
+#else
+void        svt_av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
+                                       TOKENEXTRA **t, BlockSize bsize, TxSize tx_size,
+                                       COLOR_MAP_TYPE type, int allow_update_cdf) {
+#endif
     assert(plane == 0 || plane == 1);
     Av1ColorMapParam color_map_params;
     get_color_map_params(frame_context, blk_ptr, plane, bsize, tx_size, type, &color_map_params);

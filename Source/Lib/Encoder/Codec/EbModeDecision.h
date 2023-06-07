@@ -17,7 +17,6 @@
 #include "EbPictureControlSet.h"
 #include "EbCodingUnit.h"
 #include "EbPredictionUnit.h"
-#include "EbSyntaxElements.h"
 #include "EbPictureBufferDesc.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
 #include "EbPictureOperators.h"
@@ -50,7 +49,11 @@ typedef struct ModeDecisionCandidate {
     TxType                 transform_type[MAX_TXB_COUNT];
     TxType                 transform_type_uv;
     uint16_t               num_proj_ref;
-    uint8_t                palette_size[2];
+#if FIX_UV_INTRA_MODE_RATE
+    uint8_t palette_size[PLANE_TYPES];
+#else
+    uint8_t palette_size[2];
+#endif
 
     CandClass      cand_class;
     PredictionMode pred_mode;
@@ -84,6 +87,11 @@ typedef struct ModeDecisionCandidate {
 typedef EbErrorType (*EbPredictionFunc)(uint8_t hbd_md, struct ModeDecisionContext *ctx,
                                         PictureControlSet                  *pcs,
                                         struct ModeDecisionCandidateBuffer *cand_bf);
+#if CLN_FAST_COST_FUNCS
+typedef uint64_t (*EbFastCostFunc)(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
+                                   struct ModeDecisionCandidateBuffer *cand_bf, uint64_t lambda,
+                                   uint64_t luma_distortion, uint64_t chroma_distortion);
+#else
 typedef uint64_t (*EbFastCostFunc)(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
                                    struct ModeDecisionCandidateBuffer *cand_bf, uint32_t qp,
                                    uint64_t luma_distortion, uint64_t chroma_distortion,
@@ -91,6 +99,8 @@ typedef uint64_t (*EbFastCostFunc)(struct ModeDecisionContext *ctx, BlkStruct *b
                                    CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
                                    uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
                                    uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
+#endif
+#if !FIX_SKIP_COST
 typedef EbErrorType (*EbAv1FullCostFunc)(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
                                          struct ModeDecisionCandidateBuffer *cand_bf,
                                          BlkStruct *blk_ptr, uint64_t *y_distortion,
@@ -98,6 +108,7 @@ typedef EbErrorType (*EbAv1FullCostFunc)(PictureControlSet *pcs, struct ModeDeci
                                          uint64_t lambda, uint64_t *y_coeff_bits,
                                          uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
                                          BlockSize bsize);
+#endif
 /**************************************
     * Mode Decision Candidate Buffer
     **************************************/
@@ -177,14 +188,56 @@ extern uint8_t svt_aom_obmc_motion_refinement(PictureControlSet          *pcs,
                                               struct ModeDecisionContext *ctx,
                                               ModeDecisionCandidate *cand, uint8_t ref_list_idx,
                                               int refine_level);
-int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, PredictionMode mode,
-                              const MvReferenceFrame ref_frame[2]);
+#if CLN_FUNC_DECL
+EbErrorType generate_md_stage_0_cand(SuperBlock *sb_ptr, struct ModeDecisionContext *ctx,
+                                     uint32_t *fast_candidate_total_count, PictureControlSet *pcs);
+#if CLN_IND_UV_SEARCH
+void generate_md_stage_0_cand_light_pd1(struct ModeDecisionContext *ctx,
+#else
+void generate_md_stage_0_cand_light_pd1(SuperBlock *sb_ptr, struct ModeDecisionContext *ctx,
+#endif
+                                        uint32_t          *fast_candidate_total_count,
+                                        PictureControlSet *pcs);
+EbErrorType generate_md_stage_0_cand_light_pd0(struct ModeDecisionContext *ctx,
+                                               uint32_t          *fast_candidate_total_count,
+                                               PictureControlSet *pcs);
 
+static INLINE int svt_aom_is_interintra_allowed_bsize(const BlockSize bsize) {
+    return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
+}
+
+static INLINE int svt_aom_is_interintra_allowed_mode(const PredictionMode mode) {
+    return (mode >= SINGLE_INTER_MODE_START) && (mode < SINGLE_INTER_MODE_END);
+}
+
+static INLINE int svt_aom_is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
+    return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
+}
+#endif
+int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, PredictionMode mode,
+                              const MvReferenceFrame ref_frame[2]);
+#if CLN_FUNC_DECL
+int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
+int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size,
+                                 uint32_t mode);
+
+uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
+                                   const MeSbResults *me_results, uint8_t list_idx,
+                                   uint8_t ref_idx);
+
+int32_t svt_aom_have_newmv_in_inter_mode(PredictionMode mode);
+uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
+#endif
 MotionMode svt_aom_obmc_motion_mode_allowed(const PictureControlSet    *pcs,
                                             struct ModeDecisionContext *ctx, const BlockSize bsize,
                                             uint8_t situation, MvReferenceFrame rf0,
                                             MvReferenceFrame rf1, PredictionMode mode);
-
+#if FIX_TXT
+/* For intra prediction, the chroma transform type may not follow the luma type.
+This function will return the intra chroma TX type to be used, which is based on TX size and chroma mode. */
+TxType svt_aom_get_intra_uv_tx_type(UvPredictionMode pred_mode_uv, TxSize tx_size,
+                                    int32_t reduced_tx_set);
+#endif
 void svt_aom_set_tuned_blk_lambda(struct ModeDecisionContext *ctx, PictureControlSet *pcs);
 
 typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(struct ModeDecisionContext  *ctx,
@@ -216,7 +269,7 @@ struct CodingLoopContext_s;
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 int                     svt_aom_get_sad_per_bit(int qidx, EbBitDepth is_hbd);
 
-int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
+int svt_av1_allow_palette(int allow_palette, BlockSize bsize);
 #ifdef __cplusplus
 }
 #endif

@@ -509,7 +509,7 @@ void svt_av1_predict_intra_block(
         return;
     }
 
-    //CHKN BlockSize bsize = mbmi->sb_type;
+    //CHKN BlockSize bsize = mbmi->bsize;
     struct MacroblockdPlane  pd_s;
     struct MacroblockdPlane * pd = &pd_s;
     if (plane == 0)
@@ -655,7 +655,7 @@ void svt_av1_predict_intra_block_16bit(
         return;
     }
 
-    //CHKN BlockSize bsize = mbmi->sb_type;
+    //CHKN BlockSize bsize = mbmi->bsize;
 
     struct MacroblockdPlane  pd_s;
     struct MacroblockdPlane * pd = &pd_s;
@@ -730,7 +730,7 @@ EbErrorType svt_av1_intra_prediction_cl(
 {
     (void) hbd_md;
     EbErrorType return_error = EB_ErrorNone;
-
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     if (!ctx->shut_fast_rate) {
 
          MacroBlockD *xd = ctx->blk_ptr->av1xd;
@@ -741,8 +741,9 @@ EbErrorType svt_av1_intra_prediction_cl(
         if (xd->up_available)
             ctx->intra_luma_top_mode = xd->mi[-xd->mi_stride]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
     }
-    TxSize  tx_size = ctx->blk_geom->txsize[cand_bf->cand->tx_depth][0]; // Nader - Intra 128x128 not supported
-    TxSize  tx_size_chroma = ctx->blk_geom->txsize_uv[cand_bf->cand->tx_depth][0]; //Nader - Intra 128x128 not supported
+#endif
+    TxSize  tx_size = ctx->blk_geom->txsize[cand_bf->cand->tx_depth]; // Nader - Intra 128x128 not supported
+    TxSize  tx_size_chroma = ctx->blk_geom->txsize_uv[cand_bf->cand->tx_depth]; //Nader - Intra 128x128 not supported
     uint32_t sb_size_luma   = pcs->ppcs->scs->sb_size;
     uint32_t sb_size_chroma   = pcs->ppcs->scs->sb_size/2;
 
@@ -854,29 +855,28 @@ EbErrorType svt_av1_intra_prediction_cl(
                     !ED_STAGE,
                     ctx->blk_geom,
                     ctx->blk_ptr->av1xd,
-                    plane ? ctx->blk_geom->bwidth_uv : ctx->blk_geom->bwidth,          //int32_t wpx,
-                    plane ? ctx->blk_geom->bheight_uv : ctx->blk_geom->bheight,          //int32_t hpx,
-                    plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
-                    mode,                                                                           //PredictionMode mode,
+                    plane ? ctx->blk_geom->bwidth_uv : ctx->blk_geom->bwidth,
+                    plane ? ctx->blk_geom->bheight_uv : ctx->blk_geom->bheight,
+                    plane ? tx_size_chroma : tx_size,
+                    mode,
                     plane ? cand_bf->cand->angle_delta[PLANE_TYPE_UV] : cand_bf->cand->angle_delta[PLANE_TYPE_Y],
                     plane==0 ? (cand_bf->cand->palette_info ?
                                     cand_bf->cand->palette_size[0]>0 : 0) : 0,
-                    plane==0 ? cand_bf->cand->palette_info : NULL,    //MD
+                    plane==0 ? cand_bf->cand->palette_info : NULL,
                     plane ? FILTER_INTRA_MODES : cand_bf->cand->filter_intra_mode,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
-                    cand_bf->pred,                                              //uint8_t *dst,
-                    //int32_t dst_stride,
-                    0,                                                                              //int32_t col_off,
-                    0,                                                                              //int32_t row_off,
-                    plane,                                                                          //int32_t plane,
-                    ctx->blk_geom->bsize,       //uint32_t puSize,
+                    cand_bf->pred,
+                    0,
+                    0,
+                    plane,
+                    ctx->blk_geom->bsize,
                     ctx->blk_org_x,
                     ctx->blk_org_y,
-                    ctx->blk_org_x,                  //uint32_t cuOrgX,
-                    ctx->blk_org_y,                  //uint32_t cuOrgY
-                    plane ? ((ctx->blk_geom->org_x >> 3) << 3) / 2 : ctx->blk_geom->org_x,  //uint32_t cuOrgX used only for prediction Ptr
-                    plane ? ((ctx->blk_geom->org_y >> 3) << 3) / 2 : ctx->blk_geom->org_y,   //uint32_t cuOrgY used only for prediction Ptr
+                    ctx->blk_org_x,
+                    ctx->blk_org_y,
+                    plane ? ((ctx->blk_geom->org_x >> 3) << 3) / 2 : ctx->blk_geom->org_x,
+                    plane ? ((ctx->blk_geom->org_y >> 3) << 3) / 2 : ctx->blk_geom->org_y,
                     &pcs->scs->seq_header
             );
         }
@@ -991,28 +991,28 @@ EbErrorType svt_av1_intra_prediction_cl(
                     !ED_STAGE,
                     ctx->blk_geom,
                     ctx->blk_ptr->av1xd,
-                    plane ? ctx->blk_geom->bwidth_uv : ctx->blk_geom->bwidth,          //int32_t wpx,
-                    plane ? ctx->blk_geom->bheight_uv : ctx->blk_geom->bheight,          //int32_t hpx,
-                    plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
-                    mode,                                                                           //PredictionMode mode,
+                    plane ? ctx->blk_geom->bwidth_uv : ctx->blk_geom->bwidth,
+                    plane ? ctx->blk_geom->bheight_uv : ctx->blk_geom->bheight,
+                    plane ? tx_size_chroma : tx_size,
+                    mode,
                     plane ? cand_bf->cand->angle_delta[PLANE_TYPE_UV] : cand_bf->cand->angle_delta[PLANE_TYPE_Y],
                     plane==0 ? (cand_bf->cand->palette_info ?
                                     cand_bf->cand->palette_size[0]>0 : 0) : 0,
-                    plane==0 ? cand_bf->cand->palette_info : NULL,    //MD
+                    plane==0 ? cand_bf->cand->palette_info : NULL,
                     plane ? FILTER_INTRA_MODES : cand_bf->cand->filter_intra_mode,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
-                    cand_bf->pred,                                              //uint8_t *dst,
-                    0,                                                                              //int32_t col_off,
-                    0,                                                                              //int32_t row_off,
-                    plane,                                                                          //int32_t plane,
-                    ctx->blk_geom->bsize,       //uint32_t puSize,
+                    cand_bf->pred,
+                    0,
+                    0,
+                    plane,
+                    ctx->blk_geom->bsize,
                     ctx->blk_org_x,
                     ctx->blk_org_y,
-                    ctx->blk_org_x,                  //uint32_t cuOrgX,
-                    ctx->blk_org_y,                  //uint32_t cuOrgY
-                    plane ? ((ctx->blk_geom->org_x >> 3) << 3) / 2 : ctx->blk_geom->org_x,  //uint32_t cuOrgX used only for prediction Ptr
-                    plane ? ((ctx->blk_geom->org_y >> 3) << 3) / 2 : ctx->blk_geom->org_y,   //uint32_t cuOrgY used only for prediction Ptr
+                    ctx->blk_org_x,
+                    ctx->blk_org_y,
+                    plane ? ((ctx->blk_geom->org_x >> 3) << 3) / 2 : ctx->blk_geom->org_x,
+                    plane ? ((ctx->blk_geom->org_y >> 3) << 3) / 2 : ctx->blk_geom->org_y,
                     &pcs->scs->seq_header
             );
         }
@@ -1021,7 +1021,11 @@ EbErrorType svt_av1_intra_prediction_cl(
     return return_error;
 }
 
+#if CLN_FUNC_DECL
+static EbErrorType intra_luma_prediction_for_interintra(
+#else
 EbErrorType  intra_luma_prediction_for_interintra(
+#endif
         ModeDecisionContext         *ctx,
         PictureControlSet           *pcs,
         InterIntraMode              interintra_mode,
@@ -1029,7 +1033,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
 {
     EbErrorType return_error = EB_ErrorNone;
     uint8_t is_inter = 0; // set to 0 b/c this is an intra path
-
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     if (!ctx->shut_fast_rate) {
 
         MacroBlockD *xd = ctx->blk_ptr->av1xd;
@@ -1040,7 +1044,8 @@ EbErrorType  intra_luma_prediction_for_interintra(
         if (xd->up_available)
             ctx->intra_luma_top_mode = xd->mi[-xd->mi_stride]->mbmi.block_mi.mode >= NEARESTMV ? DC_PRED : xd->mi[-xd->mi_stride]->mbmi.block_mi.mode;
     }
-    TxSize  tx_size = ctx->blk_geom->txsize[0][0];  //CHKN  TOcheck
+#endif
+    TxSize  tx_size = ctx->blk_geom->txsize[0];  //CHKN  TOcheck
     PredictionMode mode = interintra_to_intra_mode[interintra_mode];
     uint32_t        sb_size_luma   = pcs->ppcs->scs->sb_size;
 
@@ -1133,6 +1138,21 @@ EbErrorType  intra_luma_prediction_for_interintra(
     return return_error;
 }
 
+#if CLN_FUNC_DECL
+// For every block, perform DC/V/H/S intra prediction to be used later in inter-intra search
+void svt_aom_precompute_intra_pred_for_inter_intra(PictureControlSet* pcs, ModeDecisionContext* ctx) {
+    uint32_t            j;
+    EbPictureBufferDesc pred_desc;
+    pred_desc.org_x = pred_desc.org_y = 0;
+    pred_desc.stride_y = ctx->blk_geom->bwidth;
+
+    for (j = 0; j < INTERINTRA_MODES; ++j) {
+        InterIntraMode interintra_mode = (InterIntraMode)j;
+        pred_desc.buffer_y = ctx->intrapred_buf[j];
+        intra_luma_prediction_for_interintra(ctx, pcs, interintra_mode, &pred_desc);
+    }
+}
+#endif
 
 EbErrorType svt_aom_update_neighbor_samples_array_open_loop_mb(
         uint8_t                            use_top_righ_bottom_left,

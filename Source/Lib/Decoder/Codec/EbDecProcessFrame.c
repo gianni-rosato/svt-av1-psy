@@ -40,7 +40,7 @@ static void decode_partition(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t
     for (int i = 0; i < sb_info->num_block; i++) {
         int       sub_mi_row = mode_info->mi_row_in_sb;
         int       sub_mi_col = mode_info->mi_col_in_sb;
-        BlockSize subsize    = mode_info->sb_type;
+        BlockSize subsize    = mode_info->bsize;
         svt_aom_decode_block(dec_mod_ctxt,
                              mode_info,
                              mi_row + sub_mi_row,

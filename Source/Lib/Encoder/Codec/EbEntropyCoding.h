@@ -44,7 +44,7 @@ extern EbErrorType svt_aom_write_sb(struct EntropyCodingContext *context_ptr, Su
                                     PictureControlSet *pcs, uint16_t tile_idx, EntropyCoder *ec,
                                     EbPictureBufferDesc *coeff_ptr);
 
-extern int svt_aom_get_wedge_params_bits(BlockSize sb_type);
+extern int svt_aom_get_wedge_params_bits(BlockSize bsize);
 
 extern EbErrorType svt_aom_encode_slice_finish(EntropyCoder *ec);
 
@@ -196,11 +196,16 @@ extern EbErrorType svt_aom_encode_td_av1(uint8_t *bitstream_ptr);
 extern EbErrorType svt_aom_encode_sps_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs);
 
 //*******************************************************************************************//
-
+#if OPT_CHILD_PCS
+MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, uint16_t num_proj_ref,
+                                       uint32_t *overlappable_neighbors, const BlockSize bsize,
+                                       MvReferenceFrame rf0, MvReferenceFrame rf1,
+                                       PredictionMode mode);
+#else
 MotionMode svt_aom_motion_mode_allowed(const PictureControlSet *pcs, const BlkStruct *blk_ptr,
                                        const BlockSize bsize, MvReferenceFrame rf0,
                                        MvReferenceFrame rf1, PredictionMode mode);
-
+#endif
 int svt_aom_is_masked_compound_type(COMPOUND_TYPE type);
 
 int32_t svt_aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v);
@@ -208,6 +213,27 @@ int32_t svt_aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t re
 int     svt_aom_get_comp_index_context_enc(PictureParentControlSet *pcs, int cur_frame_index,
                                            int bck_frame_index, int fwd_frame_index,
                                            const MacroBlockD *xd);
+#if CLN_IFS_PATH
+int svt_aom_get_pred_context_switchable_interp(MvReferenceFrame rf0, MvReferenceFrame rf1,
+                                               const MacroBlockD *xd, int dir);
+#if OPT_CHILD_PCS
+int svt_aom_is_nontrans_global_motion_ec(MvReferenceFrame rf0, MvReferenceFrame rf1,
+                                         PredictionMode pred_mode, BlockSize bsize,
+                                         PictureParentControlSet *pcs);
+#else
+int svt_aom_is_nontrans_global_motion_ec(MvReferenceFrame rf0, MvReferenceFrame rf1,
+                                         BlkStruct *blk_ptr, BlockSize bsize,
+                                         PictureParentControlSet *pcs);
+#endif
+#endif
+#if CLN_REMOVE_NEIGH_ARRAYS_2
+uint8_t svt_av1_get_intra_inter_context(const MacroBlockD *xd);
+void    svt_aom_get_kf_y_mode_ctx(const MacroBlockD *xd, uint8_t *above_ctx, uint8_t *left_ctx);
+uint8_t av1_get_skip_mode_context(const MacroBlockD *xd);
+#endif
+#if FIX_SKIP_NEIGH_ARRAY
+uint8_t av1_get_skip_context(const MacroBlockD *xd);
+#endif
 
 #ifdef __cplusplus
 }

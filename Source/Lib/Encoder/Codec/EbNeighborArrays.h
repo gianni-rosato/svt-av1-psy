@@ -13,7 +13,6 @@
 #define EbNeighborArrays_h
 
 #include "EbDefinitions.h"
-#include "EbSyntaxElements.h"
 #include "EbMotionVectorUnit.h"
 #include "EbObject.h"
 

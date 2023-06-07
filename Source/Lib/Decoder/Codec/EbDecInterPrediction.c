@@ -601,7 +601,7 @@ void svt_make_masked_inter_predictor(PartitionInfo *part_info, int32_t ref, void
                                      int32_t bh, ConvolveParams *conv_params, int32_t plane,
                                      uint8_t *seg_mask, int32_t do_warp, Bool is_16bit) {
     InterInterCompoundData *comp_data = &part_info->mi->inter_inter_compound;
-    const BlockSize         bsize     = part_info->mi->sb_type;
+    const BlockSize         bsize     = part_info->mi->bsize;
     int32_t                 bit_depth = ref_buf->ps_pic_buf->bit_depth;
     //We come here when we have a prediction done using regular path for the ref0 stored in conv_param.dst.
     //use regular path to generate a prediction for ref1 into  a temporary buffer,
@@ -822,7 +822,7 @@ void svt_aom_svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHand
 
     Bool is16b = (bit_depth > EB_EIGHT_BIT) || dec_hdl->is_16bit_pipeline;
 
-    const BlockSize bsize = mi->sb_type;
+    const BlockSize bsize = mi->bsize;
     assert(bsize < BlockSizeS_ALL);
     const int32_t ss_x      = plane ? part_info->subsampling_x : 0;
     const int32_t ss_y      = plane ? part_info->subsampling_y : 0;
@@ -965,7 +965,7 @@ void svt_aom_svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt, EbDecHandle *d
 
     /* scan through sub 8 blocks and see if anyof them is intra */
     some_use_intra        = 0;
-    const BlockSize bsize = part_info->mi->sb_type;
+    const BlockSize bsize = part_info->mi->bsize;
     sub_x                 = part_info->subsampling_x;
     sub_y                 = part_info->subsampling_y;
     bool sub8_w           = (block_size_wide[bsize] == 4) && sub_x;

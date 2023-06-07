@@ -312,7 +312,16 @@ static void assign_film_grain_random_seed(PictureParentControlSet *pcs) {
 static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs) {
     FrameHeader *frm_hdr = &pcs->frm_hdr;
     Av1Common   *cm      = pcs->av1_cm;
-
+#if OPT_TF_REF_PICS
+    pcs->filt_to_unfilt_diff = (uint32_t)~0;
+#endif
+#if GM_PP
+    pcs->gm_pp_detected = false;
+    pcs->gm_pp_enabled  = false;
+#endif
+#if OPT_CMP
+    pcs->is_gm_on = -1;
+#endif
     pcs->gf_interval = 0;
 
     pcs->reference_released                     = 0;

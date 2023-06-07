@@ -60,7 +60,7 @@ static const int32_t expf_tab_fp16[] = {
     43,    41,    38,    36,    34,    31,    30,    28,    26,    24,    23,    21};
 
 #define SSE_STRIDE (BW + 2)
-
+#if !CLN_TF
 DECLARE_ALIGNED(32, static const uint32_t, sse_bytemask[4][8]) = {
     {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0},
     {0, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0},
@@ -1225,7 +1225,6 @@ static double svt_aom_expf_tab[] = {
     0.000335
 
 };
-
 void svt_av1_apply_temporal_filter_planewise_fast_avx2(struct MeContext *me_ctx,
                                                        const uint8_t *y_src, int y_src_stride,
                                                        const uint8_t *y_pre, int y_pre_stride,
@@ -1321,7 +1320,7 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(
         }
     }
 }
-
+#endif
 static uint32_t calculate_squared_errors_sum_no_div_avx2(const uint8_t *s, int s_stride,
                                                          const uint8_t *p, int p_stride,
                                                          unsigned int w, unsigned int h) {
@@ -2434,7 +2433,7 @@ int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int 
     FP_ASSERT((((int64_t)sum * SQRT_PI_BY_2_FP16) / (6 * num)) < ((int64_t)1 << 31));
     return (int32_t)((sum * SQRT_PI_BY_2_FP16) / (6 * num));
 }
-
+#if !CLN_TF
 double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t height,
                                uint16_t stride_y) {
     int64_t sum = 0;
@@ -2635,3 +2634,4 @@ double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height
     const double sigma = (double)sum / (6 * num) * SQRT_PI_BY_2;
     return sigma;
 }
+#endif

@@ -51,6 +51,14 @@ typedef struct SgFilterCtrls {
     // [0,16] - the range of epsilon to test for the self-guided filter selection; lower is more
     // aggressive
     int8_t step_range;
+#if OPT_SG
+    //active when step_range=16 (step based search is off)
+    //There are 16 possible combinations to test indexed from 0..15
+    int8_t start_ep[PLANE_TYPES]; //search start     index
+    int8_t end_ep[PLANE_TYPES]; //search end       index (search stops at end-1)
+    int8_t ep_inc[PLANE_TYPES]; //search increment index
+    int8_t refine[PLANE_TYPES]; //refinement for alpha/beta   1:do the refinment  0:no refinement
+#endif
     // if 1, enable Wiener filtering to be used for chroma planes, else use for luma plane only
     Bool use_chroma;
 } SgFilterCtrls;
@@ -59,8 +67,10 @@ typedef struct Av1Common {
     int32_t      mi_cols;
     int32_t      ref_frame_sign_bias[REF_FRAMES]; /* Two state 0, 1 */
     uint8_t*     last_frame_seg_map;
+#if !CLN_IFS_PATH
     InterpFilter interp_filter;
-    int32_t      mi_stride;
+#endif
+    int32_t mi_stride;
 
     // Marks if we need to use 16bit frame buffers (1: yes, 0: no).
     int32_t                   use_highbitdepth;
@@ -71,8 +81,10 @@ typedef struct Av1Common {
     struct PictureControlSet* child_pcs;
     // Output of loop restoration
     Yv12BufferConfig rst_frame;
+#if !MEM_SG
     // pointer to a scratch buffer used by self-guided restoration
-    int32_t*          rst_tmpbuf;
+    int32_t* rst_tmpbuf;
+#endif
     Yv12BufferConfig* frame_to_show;
     int32_t           byte_alignment;
     int32_t           last_tile_cols, last_tile_rows;

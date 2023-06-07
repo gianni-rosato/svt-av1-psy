@@ -58,7 +58,7 @@ static INLINE int get_tx_size_context(const PartitionInfo *xd, ParseCtxt *parse_
     const BlockModeInfo       *mbmi        = xd->mi;
     const BlockModeInfo *const above_mbmi  = xd->above_mbmi;
     const BlockModeInfo *const left_mbmi   = xd->left_mbmi;
-    const TxSize               max_tx_size = max_txsize_rect_lookup[mbmi->sb_type];
+    const TxSize               max_tx_size = max_txsize_rect_lookup[mbmi->bsize];
     const uint8_t              max_tx_wide = tx_size_wide[max_tx_size];
     const uint8_t              max_tx_high = tx_size_high[max_tx_size];
     const int                  has_above   = xd->up_available;
@@ -72,11 +72,11 @@ static INLINE int get_tx_size_context(const PartitionInfo *xd, ParseCtxt *parse_
 
     if (has_above)
         if (is_inter_block_dec(above_mbmi))
-            above = block_size_wide[above_mbmi->sb_type] >= max_tx_wide;
+            above = block_size_wide[above_mbmi->bsize] >= max_tx_wide;
 
     if (has_left)
         if (is_inter_block_dec(left_mbmi))
-            left = block_size_high[left_mbmi->sb_type] >= max_tx_high;
+            left = block_size_high[left_mbmi->bsize] >= max_tx_high;
 
     if (has_above && has_left)
         return (above + left);
@@ -119,7 +119,7 @@ void svt_aom_update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSi
 
 TxSize svt_aom_read_selected_tx_size(PartitionInfo *xd, ParseCtxt *parse_ctxt) {
     SvtReader      *r            = &parse_ctxt->r;
-    const BlockSize bsize        = xd->mi->sb_type;
+    const BlockSize bsize        = xd->mi->bsize;
     const int32_t   tx_size_cat  = bsize_to_tx_size_cat(bsize);
     const int       max_tx_depth = bsize_to_max_depth(bsize);
     const int       ctx          = get_tx_size_context(xd, parse_ctxt);

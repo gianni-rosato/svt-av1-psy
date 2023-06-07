@@ -2271,7 +2271,9 @@ void svt_ext_all_sad_calculation_8x8_16x16_sse4_1(uint8_t *src, uint32_t src_str
     }
 }
 
+#if !CLN_FUNC_DECL
 int svt_aom_fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
+#endif
 #define UPDATE_BEST_PME_32(s, k, offset)                                \
     tem_sum_1   = _mm_extract_epi32(s, k);                              \
     best_mv.col = mvx + (search_position_start_x + j + offset + k) * 8; \

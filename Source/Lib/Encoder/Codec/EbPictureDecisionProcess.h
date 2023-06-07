@@ -117,7 +117,10 @@ typedef struct PictureDecisionContext {
     PictureParentControlSet *prev_delayed_intra; //Key frame or I of LDP short MG
     uint32_t                 mg_size; //number of active pictures in above array
     PictureParentControlSet *mg_pictures_array_disp_order[1 << MAX_TEMPORAL_LAYERS];
-
+#if GM_PP
+    int64_t base_counter;
+    bool    gm_pp_last_detected;
+#endif
     int64_t mg_progress_id;
 
     int32_t last_i_noise_levels_log1p_fp16[MAX_MB_PLANE];
@@ -134,6 +137,9 @@ typedef struct PictureDecisionContext {
     uint8_t  perc_active;
     int16_t  mv_in_out_count;
     bool     enable_startup_mg;
+#if OPT_TF_REF_PICS
+    uint32_t filt_to_unfilt_diff;
+#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

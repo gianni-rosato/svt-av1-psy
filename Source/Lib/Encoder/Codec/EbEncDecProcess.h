@@ -13,7 +13,6 @@
 #define EbEncDecProcess_h
 
 #include "EbDefinitions.h"
-#include "EbSyntaxElements.h"
 #include "EbModeDecisionProcess.h"
 #include "EbSystemResourceManager.h"
 #include "EbPictureBufferDesc.h"

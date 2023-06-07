@@ -145,7 +145,7 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
     EbByte        ref[3];
     int32_t       stride_src[3];
     int32_t       stride_ref[3];
-    int32_t       bsize[3];
+    int32_t       plane_bsize[3];
     int32_t       mi_wide_l2[3];
     int32_t       mi_high_l2[3];
     int32_t       xdec[3];
@@ -174,7 +174,7 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
         const int subsampling_y = (pli == 0) ? 0 : 1;
         xdec[pli]               = subsampling_x;
         ydec[pli]               = subsampling_y;
-        bsize[pli]              = subsampling_y ? (subsampling_x ? BLOCK_4X4 : BLOCK_8X4)
+        plane_bsize[pli]        = subsampling_y ? (subsampling_x ? BLOCK_4X4 : BLOCK_8X4)
                                                 : (subsampling_x ? BLOCK_4X8 : BLOCK_8X8);
         mi_wide_l2[pli]         = MI_SIZE_LOG2 - subsampling_x;
         mi_high_l2[pli]         = MI_SIZE_LOG2 - subsampling_y;
@@ -199,12 +199,12 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
             BlockSize         bs      = BLOCK_64X64;
             ModeInfo        **mi      = pcs->mi_grid_base + lr * cm->mi_stride + lc;
             const MbModeInfo *mbmi    = &mi[0]->mbmi;
-            const BlockSize   sb_type = mbmi->block_mi.sb_type;
-            if (((fbc & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_128X64)) ||
-                ((fbr & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_64X128)))
+            const BlockSize   bsize   = mbmi->block_mi.bsize;
+            if (((fbc & 1) && (bsize == BLOCK_128X128 || bsize == BLOCK_128X64)) ||
+                ((fbr & 1) && (bsize == BLOCK_128X128 || bsize == BLOCK_64X128)))
                 continue;
-            if (sb_type == BLOCK_128X128 || sb_type == BLOCK_128X64 || sb_type == BLOCK_64X128)
-                bs = sb_type;
+            if (bsize == BLOCK_128X128 || bsize == BLOCK_128X64 || bsize == BLOCK_64X128)
+                bs = bsize;
 
             if (bs == BLOCK_128X128 || bs == BLOCK_128X64) {
                 nhb     = AOMMIN(MI_SIZE_128X128, cm->mi_cols - lc);
@@ -257,7 +257,7 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                 a finite amount before there is no more speed gain.  If the space between processed lines
                 is too large, the intrinsics will begin accessing memory outside the block.
                 */
-                switch (bsize[pli]) {
+                switch (plane_bsize[pli]) {
                 case BLOCK_8X8: subsampling_factor = MIN(subsampling_factor, 4); break;
                 case BLOCK_8X4:
                 case BLOCK_4X8: subsampling_factor = MIN(subsampling_factor, 2); break;
@@ -304,7 +304,7 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                         (uint8_t *)tmp_dst,
                         dlist,
                         cdef_count,
-                        (BlockSize)bsize[pli],
+                        (BlockSize)plane_bsize[pli],
                         coeff_shift,
                         pli,
                         subsampling_factor,
@@ -361,7 +361,7 @@ static void cdef_seg_search(PictureControlSet *pcs, SequenceControlSet *scs,
                         (uint8_t *)tmp_dst,
                         dlist,
                         cdef_count,
-                        (BlockSize)bsize[pli],
+                        (BlockSize)plane_bsize[pli],
                         coeff_shift,
                         pli,
                         subsampling_factor,

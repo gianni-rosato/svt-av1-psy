@@ -20,9 +20,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if !CLN_UNUSED_DEFNS
 #define MAX_PU_SIZE 64
 
 struct ModeDecisionContext;
+#endif
 
 typedef void (*IntraPredFnC)(uint8_t *dst, ptrdiff_t stride, int32_t w, int32_t h,
                              const uint8_t *above, const uint8_t *left);
@@ -35,6 +38,7 @@ typedef void (*IntraPredFn)(uint8_t *dst, ptrdiff_t stride, const uint8_t *above
 typedef void (*IntraHighPredFn)(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
                                 const uint16_t *left, int32_t bd);
 
+#if !CLN_UNUSED_DEFNS
 typedef struct IntraReferenceSamples {
     EbDctor  dctor;
     uint8_t *cb_intra_reference_array;
@@ -101,6 +105,7 @@ typedef struct IntraReference16bitSamples {
 #define STRONG_INTRA_SMOOTHING_BLOCKSIZE 32
 #define SMOOTHING_THRESHOLD 8
 #define SMOOTHING_THRESHOLD_10BIT 32
+#endif
 
 /////####.... For recursive intra prediction.....#####///
 
@@ -179,6 +184,7 @@ void svt_aom_highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSi
                                            const uint16_t *above, const uint16_t *left, int mode,
                                            int bd);
 
+#if !CLN_UNUSED_DEFNS
 typedef void (*EB_INTRA_NOANG_TYPE)(const uint32_t size, uint8_t *ref_samples,
                                     uint8_t       *prediction_ptr,
                                     const uint32_t prediction_buffer_stride, const Bool skip);
@@ -206,6 +212,7 @@ typedef void (*EB_INTRA_ANG_16BIT_TYPE)(
     uint16_t *prediction_ptr, //output parameter, pointer to the prediction
     uint32_t  prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
     const Bool skip, int32_t intra_pred_angle);
+#endif
 
 extern void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, // AMIR-> Changed to 8 bit
                                                int32_t input_stride, int16_t *output_q3,

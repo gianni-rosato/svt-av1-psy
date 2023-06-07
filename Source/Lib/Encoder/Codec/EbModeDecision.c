@@ -40,9 +40,28 @@
     MULTI_LINE_MACRO_END
 
 #define SUPERRES_INVALID_STATE 0x7fffffff
-
-int  svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
-Bool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift);
+#if !CLN_FUNC_DECL
+int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
+#endif
+#if CLN_FUNC_DECL
+static Bool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
+    MV mv;
+    //go to 1/8th if input is 1/4pel
+    mv.row = y_mv << need_shift;
+    mv.col = x_mv << need_shift;
+    /* AV1 limits
+      -16384 < MV_x_in_1/8 or MV_y_in_1/8 < 16384
+      which means in full pel:
+      -2048 < MV_x_in_full_pel or MV_y_in_full_pel < 2048
+    */
+    if (!is_mv_valid(&mv)) {
+        return FALSE;
+    }
+    return TRUE;
+}
+#else
+Bool            check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift);
+#endif
 
 static INLINE int32_t derive_rmv_setting(const SequenceControlSet      *scs,
                                          const PictureParentControlSet *ppcs) {
@@ -52,7 +71,7 @@ static INLINE int32_t derive_rmv_setting(const SequenceControlSet      *scs,
                                                               : 0;
     return rmv;
 }
-
+#if !CLN_FUNC_DECL
 static INLINE int svt_aom_is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
 }
@@ -64,11 +83,24 @@ static INLINE int svt_aom_is_interintra_allowed_mode(const PredictionMode mode) 
 static INLINE int svt_aom_is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
     return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
 }
-int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, PredictionMode mode,
+#endif
+int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize bsize, PredictionMode mode,
                               const MvReferenceFrame ref_frame[2]) {
-    return enable_inter_intra && svt_aom_is_interintra_allowed_bsize((const BlockSize)sb_type) &&
+    return enable_inter_intra && svt_aom_is_interintra_allowed_bsize((const BlockSize)bsize) &&
         svt_aom_is_interintra_allowed_mode(mode) && svt_aom_is_interintra_allowed_ref(ref_frame);
 }
+#if CLN_FUNC_DECL
+int svt_aom_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs) {
+    if (!enable_filter_intra)
+        return 0;
+    return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32;
+}
+int svt_aom_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size,
+                                 uint32_t mode) {
+    return mode == DC_PRED && palette_size == 0 &&
+        svt_aom_filter_intra_allowed_bsize(enable_filter_intra, bsize);
+}
+#endif
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
 uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_offset,
@@ -98,7 +130,11 @@ uint8_t svt_aom_is_me_data_present(uint32_t me_block_offset, uint32_t me_cand_of
 // 3 - Regular uni-pred + Wedge compound Inter Intra + Smooth compound Inter Intra
 
 #define II_COUNT 3
-Bool warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx) {
+#if CLN_FUNC_DECL
+static Bool warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx) {
+#else
+Bool            warped_motion_mode_allowed(PictureControlSet *pcs, ModeDecisionContext *ctx) {
+#endif
     FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
     return frm_hdr->allow_warped_motion && has_overlappable_candidates(ctx->blk_ptr) &&
         ctx->blk_geom->bwidth >= 8 && ctx->blk_geom->bheight >= 8 && ctx->wm_ctrls.enabled &&
@@ -138,7 +174,9 @@ MotionMode svt_aom_obmc_motion_mode_allowed(
         return SIMPLE_TRANSLATION;
 }
 
+#if !CLN_FUNC_DECL
 void precompute_obmc_data(PictureControlSet *pcs, ModeDecisionContext *ctx);
+#endif
 
 //static uint32_t  AntiContouringIntraMode[11] = { EB_INTRA_PLANAR, EB_INTRA_DC, EB_INTRA_HORIZONTAL, EB_INTRA_VERTICAL,
 //EB_INTRA_MODE_2, EB_INTRA_MODE_6, EB_INTRA_MODE_14, EB_INTRA_MODE_18, EB_INTRA_MODE_22, EB_INTRA_MODE_30, EB_INTRA_MODE_34 };
@@ -153,14 +191,41 @@ static MvReferenceFrame to_ref_frame[2][4] = {
 MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx) {
     return to_ref_frame[list][ref_idx];
 };
+#if CLN_FUNC_DECL
+uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
+    uint8_t max_drl = 0;
+
+    if (mode == NEWMV || mode == NEW_NEWMV) {
+        if (refmvCnt < 2)
+            max_drl = 1;
+        else if (refmvCnt == 2)
+            max_drl = 2;
+        else
+            max_drl = 3;
+    }
+
+    if (mode == NEARMV || mode == NEAR_NEARMV || mode == NEAR_NEWMV || mode == NEW_NEARMV) {
+        if (refmvCnt < 3)
+            max_drl = 1;
+        else if (refmvCnt == 3)
+            max_drl = 2;
+        else
+            max_drl = 3;
+    }
+
+    return max_drl;
+}
+#else
 extern uint32_t stage1ModesArray[];
 
 uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
 int32_t svt_av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost, int32_t *mvcost[2],
                             int32_t weight);
 int32_t svt_av1_mv_bit_cost_light(const MV *mv, const MV *ref);
+#endif
 #define MV_COST_WEIGHT 108
 #define MAX_INTERINTRA_SB_SQUARE 32 * 32
+#if !CLN_FUNC_DECL
 EbErrorType intra_luma_prediction_for_interintra(ModeDecisionContext *ctx, PictureControlSet *pcs,
                                                  InterIntraMode       interintra_mode,
                                                  EbPictureBufferDesc *prediction_ptr);
@@ -174,7 +239,7 @@ void model_rd_for_sb_with_curvfit(PictureControlSet *pcs, ModeDecisionContext *c
                                   int plane_to, int mi_row, int mi_col, int *out_rate_sum,
                                   int64_t *out_dist_sum, int *plane_rate, int64_t *plane_sse,
                                   int64_t *plane_dist);
-
+#endif
 static int64_t pick_interintra_wedge(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                      const BlockSize bsize, const uint8_t *const p0,
                                      const uint8_t *const p1, uint8_t *src_buf, uint32_t src_stride,
@@ -184,8 +249,13 @@ static int64_t pick_interintra_wedge(PictureControlSet *pcs, ModeDecisionContext
 
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
+#if CLN_MISC_CLEANUPS // Max interintra bsize is 32x32
+    DECLARE_ALIGNED(32, int16_t, residual1[MAX_INTERINTRA_SB_SQUARE]); // src - pred1
+    DECLARE_ALIGNED(32, int16_t, diff10[MAX_INTERINTRA_SB_SQUARE]); // pred1 - pred0
+#else
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]); // src - pred1
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]); // pred1 - pred0
+#endif
     if (ctx->hbd_md) {
         svt_aom_highbd_subtract_block(
             bh, bw, residual1, bw, src_buf, src_stride, p1, bw, EB_TEN_BIT);
@@ -202,6 +272,7 @@ static int64_t pick_interintra_wedge(PictureControlSet *pcs, ModeDecisionContext
 
     return rd;
 }
+#if !CLN_FUNC_DECL
 //for every CU, perform DC/V/H/S intra prediction to be used later in inter-intra search
 void precompute_intra_pred_for_inter_intra(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     uint32_t            j;
@@ -215,11 +286,11 @@ void precompute_intra_pred_for_inter_intra(PictureControlSet *pcs, ModeDecisionC
         intra_luma_prediction_for_interintra(ctx, pcs, interintra_mode, &pred_desc);
     }
 }
-
 void svt_aom_combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
                                 int wedge_sign, BlockSize bsize, BlockSize plane_bsize,
                                 uint8_t *comppred, int compstride, const uint8_t *interpred,
                                 int interstride, const uint8_t *intrapred, int intrastride);
+#endif
 static void inter_intra_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                ModeDecisionCandidate *cand) {
     SequenceControlSet *scs = pcs->scs;
@@ -1252,6 +1323,10 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                                  cur_type++) {
+#if OPT_CMP
+                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                    continue;
+#endif
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       me_block_results_ptr->ref0_list,
@@ -1381,6 +1456,10 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                                  cur_type++) {
+#if OPT_CMP
+                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                    continue;
+#endif
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       me_block_results_ptr->ref0_list,
@@ -1435,7 +1514,7 @@ static void bipred_3x3_candidates_injection(const SequenceControlSet *scs, Pictu
 
     return;
 }
-
+#if !CLN_FUNC_DECL
 uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
     uint8_t max_drl = 0;
 
@@ -1459,6 +1538,7 @@ uint8_t svt_aom_get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
 
     return max_drl;
 }
+#endif
 /*********************************************************************
 **********************************************************************
         Upto 12 inter Candidated injected
@@ -1989,6 +2069,10 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                     Bool mask_done = 0;
                     for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                          cur_type++) {
+#if OPT_CMP
+                        if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                            continue;
+#endif
                         if (!is_valid_bi_type(
                                 ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                             continue;
@@ -2066,6 +2150,10 @@ static void inject_mvp_candidates_ii(const SequenceControlSet *scs, PictureContr
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                              cur_type++) {
+#if OPT_CMP
+                            if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                continue;
+#endif
                             if (!is_valid_bi_type(
                                     ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
@@ -2180,6 +2268,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                              cur_type++) {
+#if OPT_CMP
+                            if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                continue;
+#endif
                             if (!is_valid_bi_type(
                                     ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
@@ -2268,6 +2360,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                         Bool mask_done = 0;
                         for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                              cur_type++) {
+#if OPT_CMP
+                            if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                continue;
+#endif
                             if (!is_valid_bi_type(
                                     ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                                 continue;
@@ -2349,6 +2445,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                                  cur_type++) {
+#if OPT_CMP
+                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                    continue;
+#endif
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       list_idx_0,
@@ -2429,6 +2529,10 @@ static void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                                  cur_type++) {
+#if OPT_CMP
+                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                    continue;
+#endif
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       list_idx_0,
@@ -2486,16 +2590,20 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
     uint32_t full_lambda   = ctx->full_lambda_md[EB_8_BIT_MD]; // 8bit only
     int      error_per_bit = full_lambda >> RD_EPB_SHIFT;
     error_per_bit += (error_per_bit == 0);
-    cand_bf->cand                  = cand;
-    EbPictureBufferDesc *pred      = cand_bf->pred;
+    cand_bf->cand = cand;
+#if !CLN_OBMC_WARP
+    EbPictureBufferDesc *pred = cand_bf->pred;
+#endif
     uint32_t blk_origin_index      = ctx->blk_geom->org_x + ctx->blk_geom->org_y * ctx->sb_size;
     EbPictureBufferDesc *input_pic = ppcs->enhanced_pic; // 10BIT not supported
     uint32_t input_origin_index    = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
         (ctx->blk_org_x + input_pic->org_x);
     const AomVarianceFnPtr *fn_ptr = &svt_aom_mefn_ptr[ctx->blk_geom->bsize];
     unsigned int            sse;
-    uint8_t                *pred_y = pred->buffer_y + blk_origin_index;
-    uint8_t                *src_y  = input_pic->buffer_y + input_origin_index;
+#if !CLN_OBMC_WARP
+    uint8_t *pred_y = pred->buffer_y + blk_origin_index;
+#endif
+    uint8_t *src_y = input_pic->buffer_y + input_origin_index;
 
     int mv_prec_shift    = ppcs->frm_hdr.allow_high_precision_mv ? 0 : 1;
     int best_cost        = INT_MAX;
@@ -2551,11 +2659,74 @@ uint8_t svt_aom_wm_motion_refinement(PictureControlSet *pcs, ModeDecisionContext
                 shut_approx);
             if (!local_warp_valid)
                 continue;
+#if CLN_OBMC_WARP
+            EbPictureBufferDesc *ref_pic_list0 = (EbPictureBufferDesc *)NULL;
+            EbPictureBufferDesc *ref_pic_list1 = (EbPictureBufferDesc *)NULL;
+            MvReferenceFrame     rf[2];
+            av1_set_ref_frame(rf, cand_bf->cand->ref_frame_type);
+            int8_t  ref_idx_l0 = get_ref_frame_idx(rf[0]);
+            int8_t  ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0])
+                                                     : get_ref_frame_idx(rf[1]);
+            uint8_t list_idx0  = get_list_idx(rf[0]);
+            uint8_t list_idx1  = rf[1] == NONE_FRAME ? get_list_idx(rf[0]) : get_list_idx(rf[1]);
+            assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST && list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
 
+            if (ref_idx_l0 >= 0) {
+                ref_pic_list0 = svt_aom_get_ref_pic_buffer(pcs, 0, list_idx0, ref_idx_l0);
+            }
+
+            if (ref_idx_l1 >= 0) {
+                ref_pic_list1 = svt_aom_get_ref_pic_buffer(pcs, 0, list_idx1, ref_idx_l1);
+            }
+
+            svt_aom_wm_count_samples(ctx->blk_ptr,
+                                     pcs->scs->seq_header.sb_size,
+                                     ctx->blk_geom,
+                                     ctx->blk_org_x,
+                                     ctx->blk_org_y,
+                                     cand->ref_frame_type,
+                                     pcs,
+                                     &cand->num_proj_ref);
+
+            svt_aom_warped_motion_prediction(pcs,
+                                             &mv_unit,
+                                             cand->ref_frame_type,
+                                             cand->compound_idx,
+                                             &cand->interinter_comp,
+                                             ctx->blk_org_x,
+                                             ctx->blk_org_y,
+                                             ctx->blk_ptr,
+                                             ctx->blk_geom,
+                                             ref_pic_list0,
+                                             ref_pic_list1,
+                                             ctx->scratch_prediction_ptr, //cand_bf->pred,
+                                             ctx->blk_geom->org_x,
+                                             ctx->blk_geom->org_y,
+                                             ctx->recon_neigh_y,
+                                             ctx->recon_neigh_cb,
+                                             ctx->recon_neigh_cr,
+                                             cand,
+                                             &cand->wm_params_l0,
+                                             &cand->wm_params_l1,
+                                             EB_EIGHT_BIT,
+#if OPT_WM_UV_ONLY
+                                             PICTURE_BUFFER_DESC_LUMA_MASK,
+#else
+                                             ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1 &&
+                                                 ctx->mds_skip_uv_pred == FALSE,
+#endif
+                                             FALSE);
+
+            int var = fn_ptr->vf(ctx->scratch_prediction_ptr->buffer_y + blk_origin_index,
+                                 ctx->scratch_prediction_ptr->stride_y,
+                                 src_y,
+                                 input_pic->stride_y,
+                                 &sse);
+#else
             svt_aom_inter_pu_prediction_av1(0, ctx, pcs, cand_bf);
 
             int var = fn_ptr->vf(pred_y, pred->stride_y, src_y, input_pic->stride_y, &sse);
-
+#endif
             MV curr = (MV){.col = test_mv.x, .row = test_mv.y};
             if (ctx->approx_inter_rate)
                 var += svt_aom_mv_err_cost_light(&curr, &ref_mv);
@@ -2626,7 +2797,7 @@ static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t 
     dst->height = height;
     dst->stride = stride;
 }
-void svt_av1_setup_pred_block(BlockSize sb_type, struct Buf2D dst[MAX_MB_PLANE],
+void svt_av1_setup_pred_block(BlockSize bsize, struct Buf2D dst[MAX_MB_PLANE],
                               const Yv12BufferConfig *src, int mi_row, int mi_col) {
     dst[0].buf    = src->y_buffer;
     dst[0].stride = src->y_stride;
@@ -2635,7 +2806,7 @@ void svt_av1_setup_pred_block(BlockSize sb_type, struct Buf2D dst[MAX_MB_PLANE],
     dst[1].stride = dst[2].stride = src->uv_stride;
 
     setup_pred_plane(dst,
-                     sb_type,
+                     bsize,
                      dst[0].buf,
                      src->y_crop_width,
                      src->y_crop_height,
@@ -2681,7 +2852,10 @@ int  svt_av1_obmc_full_pixel_search(ModeDecisionContext *ctx, IntraBcContext *x,
                                     int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
                                     MV *dst_mv, int is_second);
 void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                          ModeDecisionCandidate *cand, const MvReferenceFrame *rf,
+                          ModeDecisionCandidate *cand,
+#if !CLN_MISC_CLEANUPS
+                          const MvReferenceFrame *rf,
+#endif
                           IntMv best_pred_mv, IntraBcContext *x, BlockSize bsize, MV *ref_mv,
                           int *rate_mv, int refine_level) {
     bool do_full_refine = 0;
@@ -2755,6 +2929,9 @@ void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     }
     if (do_frac_refine) {
         int dis; /* TODO: use dis in distortion calculation later. */
+#if CLN_MISC_CLEANUPS
+        unsigned int sse1; //unused
+#endif
         switch (cand->motion_mode) {
         case OBMC_CAUSAL:
             svt_av1_find_best_obmc_sub_pixel_tree_up(ctx,
@@ -2772,7 +2949,11 @@ void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                                      x->nmv_vec_cost,
                                                      x->mv_cost_stack,
                                                      &dis,
+#if CLN_MISC_CLEANUPS
+                                                     &sse1,
+#else
                                                      &ctx->pred_sse[rf[0]],
+#endif
                                                      0,
                                                      USE_8_TAPS);
             break;
@@ -2848,7 +3029,9 @@ uint8_t svt_aom_obmc_motion_refinement(PictureControlSet *pcs, struct ModeDecisi
     single_motion_search(pcs,
                          ctx,
                          cand,
+#if !CLN_MISC_CLEANUPS
                          (const MvReferenceFrame[]){cand->ref_frame_type, -1},
+#endif
                          best_mv,
                          x,
                          ctx->blk_geom->bsize,
@@ -3633,6 +3816,10 @@ static void inject_new_candidates(const SequenceControlSet *scs, struct ModeDeci
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                                  cur_type++) {
+#if OPT_CMP
+                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                    continue;
+#endif
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       me_block_results_ptr->ref0_list,
@@ -3852,6 +4039,10 @@ static void inject_global_candidates(const SequenceControlSet *scs, struct ModeD
                 uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
 
                 for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types; cur_type++) {
+#if OPT_CMP
+                    if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                        continue;
+#endif
                     if (!is_valid_bi_type(
                             ctx, cur_type, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1))
                         continue;
@@ -4125,6 +4316,11 @@ static void inject_pme_candidates(
                             Bool mask_done = 0;
                             for (MD_COMP_TYPE cur_type = MD_COMP_AVG; cur_type < tot_comp_types;
                                  cur_type++) {
+#if OPT_CMP
+                                if (ctx->inter_comp_ctrls.no_dist && cur_type == MD_COMP_DIST)
+                                    continue;
+#endif
+
                                 if (!is_valid_bi_type(ctx,
                                                       cur_type,
                                                       list_idx_0,
@@ -4238,8 +4434,13 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
     const uint8_t is_obmc_allowed = svt_aom_obmc_motion_mode_allowed(
                                         pcs, ctx, ctx->blk_geom->bsize, 1, LAST_FRAME, -1, NEWMV) ==
         OBMC_CAUSAL;
+#if CLN_FUNC_DECL
+    if (is_obmc_allowed)
+        svt_aom_precompute_obmc_data(pcs, ctx);
+#else
     if (is_obmc_allowed)
         precompute_obmc_data(pcs, ctx);
+#endif
     /**************
          MVP
     ************* */
@@ -4290,7 +4491,25 @@ void svt_aom_inject_inter_candidates(PictureControlSet *pcs, ModeDecisionContext
     // update the total number of candidates injected
     *candidate_total_cnt = cand_total_cnt;
 }
+#if FIX_TXT
+/* For intra prediction, the chroma transform type may not follow the luma type.
+This function will return the intra chroma TX type to be used, which is based on TX size and chroma mode.
+Refer to section 5.11.40 of the AV1 spec (compute_tx_type). */
+TxType svt_aom_get_intra_uv_tx_type(UvPredictionMode pred_mode_uv, TxSize tx_size,
+                                    int32_t reduced_tx_set) {
+    if (txsize_sqr_up_map[tx_size] > TX_32X32) {
+        return DCT_DCT;
+    }
 
+    // In intra mode, uv planes don't share the same prediction mode as y
+    // plane, so the tx_type should not be shared. Pass DC_PRED as luma mode because the arguement
+    // will not be used.
+    TxType tx_type = intra_mode_to_tx_type(DC_PRED, pred_mode_uv, PLANE_TYPE_UV);
+    assert(tx_type < TX_TYPES);
+    const TxSetType tx_set_type = get_ext_tx_set_type(tx_size, /*is_inter*/ 0, reduced_tx_set);
+    return !av1_ext_tx_used[tx_set_type][tx_type] ? DCT_DCT : tx_type;
+}
+#else
 static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
                                      UvPredictionMode pred_mode_uv, PlaneType plane_type,
                                      TxSize tx_size, int32_t reduced_tx_set) {
@@ -4305,6 +4524,7 @@ static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
     const TxSetType tx_set_type = get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
     return !av1_ext_tx_used[tx_set_type][tx_type] ? DCT_DCT : tx_type;
 }
+#endif
 double svt_av1_convert_qindex_to_q(int32_t qindex, EbBitDepth bit_depth);
 
 // Values are now correlated to quantizer.
@@ -4484,6 +4704,7 @@ static void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < 2; j++) free(x->hash_value_buffer[i][j]);
 }
+#if !CLN_FUNC_DECL
 void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext *ctx,
                              const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult,
                              uint8_t hbd_md) {
@@ -4499,6 +4720,7 @@ void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params, ModeDecisionContext
     mv_cost_params->mvcost[0]     = ctx->md_rate_est_ctx->nmvcoststack[0];
     mv_cost_params->mvcost[1]     = ctx->md_rate_est_ctx->nmvcoststack[1];
 }
+#endif
 static void inject_intra_bc_candidates(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                        const SequenceControlSet *scs, BlkStruct *blk_ptr,
                                        uint32_t *cand_cnt) {
@@ -4619,6 +4841,236 @@ void svt_av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows,
 
      return;
  }
+ #if CLN_IND_UV_SEARCH
+static void inject_intra_candidates(
+    PictureControlSet            *pcs,
+    ModeDecisionContext          *ctx,
+    Bool                        dc_cand_only_flag,
+    uint32_t                     *candidate_total_cnt){
+    FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
+    PredictionMode              intra_mode_start = DC_PRED;
+    PredictionMode              intra_mode_end = dc_cand_only_flag ? DC_PRED : ctx->intra_ctrls.intra_mode_end;
+    uint32_t                    cand_total_cnt = *candidate_total_cnt;
+    ModeDecisionCandidate    *cand_array = ctx->fast_cand_array;
+#if !CLN_CFL_SIGNALLING
+    Bool                      disable_cfl_flag = (MAX(ctx->blk_geom->bheight, ctx->blk_geom->bwidth) > 32) ? TRUE : FALSE;
+    disable_cfl_flag = ctx->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
+#endif
+    const Bool use_angle_delta = av1_use_angle_delta(ctx->blk_geom->bsize, ctx->intra_ctrls.angular_pred_level);
+    const uint8_t disable_angle_prediction = (ctx->intra_ctrls.angular_pred_level == 0);
+    uint8_t directional_mode_skip_mask[INTRA_MODES] = { 0 };
+    if (ctx->intra_ctrls.angular_pred_level >= 4) {
+        for (uint8_t i = D45_PRED; i < INTRA_MODE_END; i++)
+            directional_mode_skip_mask[i] = 1;
+    }
+
+    for (PredictionMode intra_mode = intra_mode_start; intra_mode <= intra_mode_end; ++intra_mode) {
+        if (av1_is_directional_mode(intra_mode) &&
+            (disable_angle_prediction || directional_mode_skip_mask[intra_mode]))
+            continue;
+
+        const uint8_t angle_delta_count = av1_is_directional_mode(intra_mode) && ctx->intra_ctrls.angular_pred_level <= 2 && use_angle_delta ? 7 : 1;
+
+        for (uint8_t angle_delta_counter = 0; angle_delta_counter < angle_delta_count; ++angle_delta_counter) {
+            int32_t angle_delta = CLIP((angle_delta_count == 1 ? 0 : angle_delta_counter - MAX_ANGLE_DELTA), -MAX_ANGLE_DELTA, MAX_ANGLE_DELTA);
+            if ((ctx->intra_ctrls.angular_pred_level >= 2 && (angle_delta == -1 || angle_delta == 1 || angle_delta == -2 || angle_delta == 2)) ||
+                (ctx->intra_ctrls.angular_pred_level >= 3 && angle_delta != 0))
+                continue;
+            cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
+            cand_array[cand_total_cnt].palette_info = NULL;
+            cand_array[cand_total_cnt].pred_mode = intra_mode;
+            cand_array[cand_total_cnt].use_intrabc = 0;
+            cand_array[cand_total_cnt].filter_intra_mode = FILTER_INTRA_MODES;
+            cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
+#if FIX_UV_INTRA_MODE_RATE
+            cand_array[cand_total_cnt].intra_chroma_mode = ctx->ind_uv_avail
+                ? ctx->best_uv_mode[intra_mode]
+                : intra_luma_to_chroma[intra_mode];
+            cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = ctx->ind_uv_avail
+                ? ctx->best_uv_angle[intra_mode]
+                : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y];
+#if !CLN_CFL_SIGNALLING
+            if (!disable_cfl_flag) {
+                cand_array[cand_total_cnt].intra_chroma_mode = UV_CFL_PRED;
+                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+            }
+#endif
+#else
+            // Search the best independent intra chroma mode
+            if (ctx->uv_ctrls.uv_mode == CHROMA_MODE_0) {
+#if FIX_FI_UV_RATE
+                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
+                    (ctx->ind_uv_avail ? ctx->best_uv_mode[intra_mode] : intra_luma_to_chroma[intra_mode]) :
+                    UV_CFL_PRED;
+                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
+                    (ctx->ind_uv_avail ? ctx->best_uv_angle[intra_mode] : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]) :
+                    0;
+#else
+                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
+                    (ctx->ind_uv_avail ? ctx->best_uv_mode[intra_mode][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : intra_luma_to_chroma[intra_mode]) :
+                    UV_CFL_PRED ;
+                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
+                    (ctx->ind_uv_avail ? ctx->best_uv_angle[cand_array[cand_total_cnt].pred_mode][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]) :
+                    0;
+#endif
+            }
+            else {
+                // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
+                const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
+                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
+                    intra_luma_to_chroma[intra_mode] :
+                    (ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) ?
+                    UV_CFL_PRED :
+                    UV_DC_PRED;
+                cand_array[cand_total_cnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[cand_total_cnt].intra_chroma_mode)) ?
+                    UV_DC_PRED : cand_array[cand_total_cnt].intra_chroma_mode;
+                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+            }
+#endif
+            cand_array[cand_total_cnt].cfl_alpha_signs = 0;
+            cand_array[cand_total_cnt].cfl_alpha_idx = 0;
+            cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
+#if !CLN_CFL_SIGNALLING
+            if (cand_array[cand_total_cnt].intra_chroma_mode == UV_CFL_PRED)
+                cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
+            else
+#endif
+                cand_array[cand_total_cnt].transform_type_uv =
+#if FIX_TXT
+                svt_aom_get_intra_uv_tx_type(cand_array[cand_total_cnt].intra_chroma_mode,
+                    ctx->blk_geom->txsize_uv[0],
+                    frm_hdr->reduced_tx_set);
+#else
+                av1_get_tx_type(
+                    0, // is_inter
+                    cand_array[cand_total_cnt].pred_mode,
+                    (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
+                    PLANE_TYPE_UV,
+                    ctx->blk_geom->txsize_uv[0][0],
+                    frm_hdr->reduced_tx_set);
+#endif
+            cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
+            cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+            cand_array[cand_total_cnt].is_interintra_used = 0;
+            INC_MD_CAND_CNT (cand_total_cnt,pcs->ppcs->max_can_count);
+        }
+    }
+
+    // update the total number of candidates injected
+    (*candidate_total_cnt) = cand_total_cnt;
+
+    return;
+}
+
+static void inject_filter_intra_candidates(
+    PictureControlSet            *pcs,
+    ModeDecisionContext          *ctx,
+    uint32_t                     *candidate_total_cnt){
+    FilterIntraMode             intra_mode_start = FILTER_DC_PRED;
+    FilterIntraMode intra_mode_end = ctx->intra_ctrls.intra_mode_end == PAETH_PRED ? FILTER_PAETH_PRED :
+                                     ctx->intra_ctrls.intra_mode_end >= D157_PRED ? FILTER_D157_PRED :
+                                     ctx->intra_ctrls.intra_mode_end >= H_PRED ? FILTER_H_PRED :
+                                     ctx->intra_ctrls.intra_mode_end >= V_PRED ? FILTER_V_PRED :
+                                     FILTER_DC_PRED;
+
+    FilterIntraMode             filter_intra_mode;
+    uint32_t                    cand_total_cnt = *candidate_total_cnt;
+    ModeDecisionCandidate      *cand_array = ctx->fast_cand_array;
+#if !CLN_CFL_SIGNALLING
+    Bool                      disable_cfl_flag = (MAX(ctx->blk_geom->bheight, ctx->blk_geom->bwidth) > 32) ? TRUE : FALSE;
+    disable_cfl_flag = ctx->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
+#endif
+    FrameHeader *frm_hdr = &pcs->ppcs->frm_hdr;
+
+    for (filter_intra_mode = intra_mode_start; filter_intra_mode <= intra_mode_end; ++filter_intra_mode) {
+            cand_array[cand_total_cnt].skip_mode_allowed = FALSE;
+            cand_array[cand_total_cnt].pred_mode = DC_PRED;
+            cand_array[cand_total_cnt].use_intrabc = 0;
+            cand_array[cand_total_cnt].filter_intra_mode = filter_intra_mode;
+            cand_array[cand_total_cnt].palette_info = NULL;
+            cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
+
+#if FIX_UV_INTRA_MODE_RATE
+            cand_array[cand_total_cnt].intra_chroma_mode = ctx->ind_uv_avail
+                ? ctx->best_uv_mode[fimode_to_intramode[filter_intra_mode]]
+                : intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]];
+            cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = ctx->ind_uv_avail
+                ? ctx->best_uv_angle[fimode_to_intramode[filter_intra_mode]]
+                : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y];
+#if !CLN_CFL_SIGNALLING
+            if (!disable_cfl_flag) {
+                cand_array[cand_total_cnt].intra_chroma_mode = UV_CFL_PRED;
+                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+            }
+#endif
+#else
+            // Search the best independent intra chroma mode
+            if (ctx->uv_ctrls.uv_mode == CHROMA_MODE_0) {
+#if FIX_FI_UV_RATE // TODO: should we use DC_PRED instead of filter intra mode?
+                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
+                    (ctx->ind_uv_avail ? ctx->best_uv_mode[fimode_to_intramode[filter_intra_mode]] : intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]]) :
+                    UV_CFL_PRED;
+
+                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
+                    (ctx->ind_uv_avail ? ctx->best_uv_angle[fimode_to_intramode[filter_intra_mode]] : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]) :
+                    0;
+#else
+                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ?
+                    (ctx->ind_uv_avail ? ctx->best_uv_mode[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]]):
+                    UV_CFL_PRED;
+
+                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ? (ctx->ind_uv_avail ? ctx->best_uv_angle[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]] : cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y]):
+                0;
+#endif
+            }
+            else {
+                // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
+                const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
+                cand_array[cand_total_cnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]] :
+                    (ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) ?
+                        UV_CFL_PRED :
+                        UV_DC_PRED;
+
+                cand_array[cand_total_cnt].intra_chroma_mode =  disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[cand_total_cnt].intra_chroma_mode)) ?
+                    UV_DC_PRED : cand_array[cand_total_cnt].intra_chroma_mode;
+                cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+            }
+#endif
+
+            cand_array[cand_total_cnt].cfl_alpha_signs = 0;
+            cand_array[cand_total_cnt].cfl_alpha_idx = 0;
+            cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
+#if !CLN_CFL_SIGNALLING
+            if (cand_array[cand_total_cnt].intra_chroma_mode == UV_CFL_PRED)
+                cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
+            else
+#endif
+                cand_array[cand_total_cnt].transform_type_uv =
+#if FIX_TXT
+                svt_aom_get_intra_uv_tx_type(cand_array[cand_total_cnt].intra_chroma_mode,
+                    ctx->blk_geom->txsize_uv[0],
+                    frm_hdr->reduced_tx_set);
+#else
+                av1_get_tx_type(
+                    0, // is_inter
+                    cand_array[cand_total_cnt].pred_mode,
+                    (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
+                    PLANE_TYPE_UV,
+                    ctx->blk_geom->txsize_uv[0][0],
+                    frm_hdr->reduced_tx_set);
+#endif
+            cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
+            cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+            cand_array[cand_total_cnt].is_interintra_used = 0;
+            INC_MD_CAND_CNT (cand_total_cnt,pcs->ppcs->max_can_count);
+    }
+
+    // update the total number of candidates injected
+    (*candidate_total_cnt) = cand_total_cnt;
+
+    return;
+}
+#else
 // END of Function Declarations
 void  inject_intra_candidates(
     PictureControlSet            *pcs,
@@ -4697,7 +5149,7 @@ void  inject_intra_candidates(
                             cand_array[cand_total_cnt].pred_mode,
                             (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
                             PLANE_TYPE_UV,
-                            ctx->blk_geom->txsize_uv[0][0],
+                            ctx->blk_geom->txsize_uv[0],
                             frm_hdr->reduced_tx_set);
                     cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
                     cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
@@ -4749,7 +5201,7 @@ void  inject_intra_candidates(
                     cand_array[cand_total_cnt].pred_mode,
                     (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
                     PLANE_TYPE_UV,
-                    ctx->blk_geom->txsize_uv[0][0],
+                    ctx->blk_geom->txsize_uv[0],
                     frm_hdr->reduced_tx_set);
             cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
             cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
@@ -4828,7 +5280,7 @@ void  inject_filter_intra_candidates(
                     cand_array[cand_total_cnt].pred_mode,
                     (UvPredictionMode)cand_array[cand_total_cnt].intra_chroma_mode,
                     PLANE_TYPE_UV,
-                    ctx->blk_geom->txsize_uv[0][0],
+                    ctx->blk_geom->txsize_uv[0],
                     frm_hdr->reduced_tx_set);
             cand_array[cand_total_cnt].ref_frame_type = INTRA_FRAME;
             cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
@@ -4841,6 +5293,7 @@ void  inject_filter_intra_candidates(
 
     return;
 }
+#endif
 static void inject_zz_backup_candidate(
      PictureControlSet   *pcs,
     struct ModeDecisionContext *ctx,
@@ -4880,10 +5333,10 @@ static void inject_zz_backup_candidate(
     }
 }
 int svt_av1_allow_palette(int allow_palette,
-    BlockSize sb_type) {
-    assert(sb_type < BlockSizeS_ALL);
-    return allow_palette && block_size_wide[sb_type] <= 64 &&
-        block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
+    BlockSize bsize) {
+    assert(bsize < BlockSizeS_ALL);
+    return allow_palette && block_size_wide[bsize] <= 64 &&
+        block_size_high[bsize] <= 64 && bsize >= BLOCK_8X8;
 }
 void  search_palette_luma(
     PictureControlSet            *pcs,
@@ -4901,20 +5354,25 @@ void  inject_palette_candidates(
 
     uint32_t                  can_total_cnt = *candidate_total_cnt;
     ModeDecisionCandidate    *cand_array = ctx->fast_cand_array;
+#if !CLN_CFL_SIGNALLING
     Bool                    disable_cfl_flag = (MAX(ctx->blk_geom->bheight, ctx->blk_geom->bwidth) > 32) ? TRUE : FALSE;
     disable_cfl_flag = ctx->cfl_ctrls.enabled ? disable_cfl_flag : TRUE;
+#endif
     uint32_t cand_i;
     uint32_t tot_palette_cands = 0;
     PaletteInfo    *palette_cand_array = ctx->palette_cand_array;
     // MD palette search
     uint8_t  * palette_size_array_0  = ctx->palette_size_array_0;
+#if !FIX_UV_INTRA_MODE_RATE
     uint8_t  * palette_size_array_1  = ctx->palette_size_array_1;
+#endif
 
+#if !CLN_IND_UV_SEARCH
     SequenceControlSet *scs = pcs->scs;
     if (scs->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
         disable_cfl_flag = (Bool)scs->disable_cfl_flag;
-
+#endif
     search_palette_luma(
         pcs,
         ctx,
@@ -4924,9 +5382,16 @@ void  inject_palette_candidates(
 
     for (cand_i = 0; cand_i < tot_palette_cands; ++cand_i) {
         cand_array[can_total_cnt].is_interintra_used = 0;
+#if !FIX_UV_INTRA_MODE_RATE
         palette_size_array_1[cand_i] = 0;
+#endif
         cand_array[can_total_cnt].palette_size[0] = palette_size_array_0[cand_i];
+#if FIX_UV_INTRA_MODE_RATE
+        // Palette is not supported for chroma
+        cand_array[can_total_cnt].palette_size[1] = 0;
+#else
         cand_array[can_total_cnt].palette_size[1] = palette_size_array_1[cand_i];
+#endif
         cand_array[can_total_cnt].palette_info = &palette_cand_array[cand_i];
         assert(palette_size_array_0[cand_i] < 9);
         //to re check these fields
@@ -4936,6 +5401,23 @@ void  inject_palette_candidates(
 
         cand_array[can_total_cnt].filter_intra_mode = FILTER_INTRA_MODES;
         cand_array[can_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
+#if FIX_UV_INTRA_MODE_RATE
+        // Palette is not supported for chroma mode, so we can set the intra chroma mode to anything. To use palette
+        // for chroma, we must force DC_PRED to be used for the intra chroma mode
+        assert(cand_array[can_total_cnt].palette_size[1] == 0);
+        cand_array[can_total_cnt].intra_chroma_mode = ctx->ind_uv_avail
+            ? ctx->best_uv_mode[DC_PRED]
+            : intra_luma_to_chroma[DC_PRED];
+        cand_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = ctx->ind_uv_avail
+            ? ctx->best_uv_angle[DC_PRED]
+            : cand_array[can_total_cnt].angle_delta[PLANE_TYPE_Y];
+#if !CLN_CFL_SIGNALLING
+        if (!disable_cfl_flag) {
+            cand_array[can_total_cnt].intra_chroma_mode = UV_CFL_PRED;
+            cand_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+        }
+#endif
+#else
         const int32_t disable_ang_uv = (ctx->blk_geom->bwidth == 4 || ctx->blk_geom->bheight == 4) && ctx->blk_geom->has_uv ? 1 : 0;
         cand_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ?
             intra_luma_to_chroma[DC_PRED] :
@@ -4945,15 +5427,23 @@ void  inject_palette_candidates(
 
         cand_array[can_total_cnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(get_uv_mode(cand_array[can_total_cnt].intra_chroma_mode)) ?
             UV_DC_PRED : cand_array[can_total_cnt].intra_chroma_mode;
+
         cand_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+#endif
         cand_array[can_total_cnt].cfl_alpha_signs = 0;
         cand_array[can_total_cnt].cfl_alpha_idx = 0;
         cand_array[can_total_cnt].transform_type[0] = DCT_DCT;
-
+#if !CLN_CFL_SIGNALLING
         if (cand_array[can_total_cnt].intra_chroma_mode == UV_CFL_PRED)
             cand_array[can_total_cnt].transform_type_uv = DCT_DCT;
         else
+#endif
             cand_array[can_total_cnt].transform_type_uv =
+#if FIX_TXT
+            svt_aom_get_intra_uv_tx_type(cand_array[can_total_cnt].intra_chroma_mode,
+                ctx->blk_geom->txsize_uv[0],
+                pcs->ppcs->frm_hdr.reduced_tx_set);
+#else
             av1_get_tx_type(
                 0, // is_inter
                 cand_array[can_total_cnt].pred_mode,
@@ -4961,6 +5451,7 @@ void  inject_palette_candidates(
                 PLANE_TYPE_UV,
                 ctx->blk_geom->txsize_uv[0][0],
                 pcs->ppcs->frm_hdr.reduced_tx_set);
+#endif
         cand_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
         cand_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
         INC_MD_CAND_CNT (can_total_cnt,pcs->ppcs->max_can_count);
@@ -5034,12 +5525,16 @@ EbErrorType generate_md_stage_0_cand_light_pd0(
    generate candidates for light pd1
 */
 void generate_md_stage_0_cand_light_pd1(
+#if !CLN_IND_UV_SEARCH
     SuperBlock          *sb_ptr,
+#endif
     ModeDecisionContext *ctx,
     uint32_t            *candidate_total_count_ptr,
     PictureControlSet   *pcs)
 {
+#if !CLN_IND_UV_SEARCH
     const SequenceControlSet *scs = pcs->scs;
+#endif
     const SliceType slice_type = pcs->slice_type;
     uint32_t cand_total_cnt = 0;
     // Reset duplicates variables
@@ -5058,8 +5553,10 @@ void generate_md_stage_0_cand_light_pd1(
         inject_intra_candidates(
             pcs,
             ctx,
+#if !CLN_IND_UV_SEARCH
             scs,
             sb_ptr,
+#endif
             dc_cand_only_flag,
             &cand_total_cnt);
     }
@@ -5107,8 +5604,10 @@ EbErrorType generate_md_stage_0_cand(
              inject_intra_candidates(
                  pcs,
                  ctx,
+#if !CLN_IND_UV_SEARCH
                  scs,
                  sb_ptr,
+#endif
                  dc_cand_only_flag,
                  &cand_total_cnt);
          }
@@ -5219,7 +5718,11 @@ void svt_aom_product_full_mode_decision_light_pd1(
             blk_ptr->comp_group_idx = cand->comp_group_idx;
             assert(IMPLIES(blk_ptr->interinter_comp.type == COMPOUND_AVERAGE, (blk_ptr->comp_group_idx == 0 && blk_ptr->compound_idx == 1)));
         }
+#if CLN_IFS_PATH
+        blk_ptr->interp_filters = cand->interp_filters;
+#else
         blk_ptr->interp_filters = 0;
+#endif
 
         // Set MVs
         if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_0)
@@ -5322,8 +5825,8 @@ void svt_aom_product_full_mode_decision_light_pd1(
         int32_t* src_ptr;
         int32_t* dst_ptr;
 
-        uint16_t  bwidth = MIN(ctx->blk_geom->tx_width[blk_ptr->tx_depth][txb_itr], 32);
-        uint16_t  bheight = MIN(ctx->blk_geom->tx_height[blk_ptr->tx_depth][txb_itr], 32);
+        uint16_t  bwidth = MIN(ctx->blk_geom->tx_width[blk_ptr->tx_depth], 32);
+        uint16_t  bheight = MIN(ctx->blk_geom->tx_height[blk_ptr->tx_depth], 32);
 
         if (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].y_has_coeff[txb_itr]) {
             src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
@@ -5332,8 +5835,8 @@ void svt_aom_product_full_mode_decision_light_pd1(
         }
         ctx->coded_area_sb += bwidth * bheight;
 
-        uint16_t bwidth_uv = ctx->blk_geom->tx_width_uv[blk_ptr->tx_depth][txb_itr];
-        uint16_t bheight_uv = ctx->blk_geom->tx_height_uv[blk_ptr->tx_depth][txb_itr];
+        uint16_t bwidth_uv = ctx->blk_geom->tx_width_uv[blk_ptr->tx_depth];
+        uint16_t bheight_uv = ctx->blk_geom->tx_height_uv[blk_ptr->tx_depth];
 
         // Cb
         if (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].u_has_coeff[txb_itr]) {
@@ -5531,7 +6034,11 @@ uint32_t svt_aom_product_full_mode_decision(
         blk_ptr->skip_mode |= !blk_ptr->block_has_coeff;
     }
 
+#if CLN_IFS_PATH
+    assert(IMPLIES(pcs->ppcs->frm_hdr.interpolation_filter == SWITCHABLE && blk_ptr->skip_mode, cand->interp_filters == 0));
+#else
     assert(IMPLIES(blk_ptr->skip_mode, cand->interp_filters == 0));
+#endif
     if (blk_ptr->skip_mode) {
         blk_ptr->block_has_coeff = 0;
         cand_bf->y_has_coeff = 0;
@@ -5557,8 +6064,8 @@ uint32_t svt_aom_product_full_mode_decision(
             txb_ptr->nz_coef_count[0] = cand_bf->eob[0][txb_itr];
             txb_ptr->nz_coef_count[1] = cand_bf->eob[1][txb_itr];
             txb_ptr->nz_coef_count[2] = cand_bf->eob[2][txb_itr];
-            uint16_t  bwidth = MIN(ctx->blk_geom->tx_width[blk_ptr->tx_depth][txb_itr], 32);
-            uint16_t  bheight = MIN(ctx->blk_geom->tx_height[blk_ptr->tx_depth][txb_itr], 32);
+            uint16_t  bwidth = MIN(ctx->blk_geom->tx_width[blk_ptr->tx_depth], 32);
+            uint16_t  bheight = MIN(ctx->blk_geom->tx_height[blk_ptr->tx_depth], 32);
             int32_t* src_ptr = &(((int32_t*)cand_bf->quant->buffer_y)[txb_1d_offset]);
             int32_t* dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_y)[txb_1d_offset]);
 
@@ -5575,8 +6082,8 @@ uint32_t svt_aom_product_full_mode_decision(
 
             if (ctx->blk_geom->has_uv && (blk_ptr->tx_depth == 0 || txb_itr == 0)) {
                 // Cb
-                uint16_t bwidth_uv = ctx->blk_geom->tx_width_uv[blk_ptr->tx_depth][txb_itr];
-                uint16_t bheight_uv = ctx->blk_geom->tx_height_uv[blk_ptr->tx_depth][txb_itr];
+                uint16_t bwidth_uv = ctx->blk_geom->tx_width_uv[blk_ptr->tx_depth];
+                uint16_t bheight_uv = ctx->blk_geom->tx_height_uv[blk_ptr->tx_depth];
                 src_ptr = &(((int32_t*)cand_bf->quant->buffer_cb)[txb_1d_offset_uv]);
                 dst_ptr = &(((int32_t*)ctx->blk_ptr->coeff_tmp->buffer_cb)[txb_1d_offset_uv]);
 

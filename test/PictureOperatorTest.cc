@@ -90,6 +90,21 @@ typedef std::tuple<PUSize, TestPattern> TestParam;
 class PictureOperatorTest : public ::testing::Test,
                             public ::testing::WithParamInterface<TestParam> {
   public:
+#if CLN_UNUSED_DEFNS
+    PictureOperatorTest()
+        : pu_width_(std::get<0>(TEST_GET_PARAM(0))),
+          pu_height_(std::get<1>(TEST_GET_PARAM(0))),
+          test_pattern_(TEST_GET_PARAM(1)) {
+        tst_size = 2 * 64 * 64;
+        tst_stride_ = 2 * 64;
+        tst1_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
+        tst2_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
+        dst1_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
+        dst2_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
+        memset(dst1_aligned_, 0, tst_size * sizeof(dst1_aligned_[0]));
+        memset(dst2_aligned_, 0, tst_size * sizeof(dst2_aligned_[0]));
+    }
+#else
     PictureOperatorTest()
         : pu_width_(std::get<0>(TEST_GET_PARAM(0))),
           pu_height_(std::get<1>(TEST_GET_PARAM(0))),
@@ -103,6 +118,7 @@ class PictureOperatorTest : public ::testing::Test,
         memset(dst1_aligned_, 0, tst_size * sizeof(dst1_aligned_[0]));
         memset(dst2_aligned_, 0, tst_size * sizeof(dst2_aligned_[0]));
     }
+#endif
 
     void TearDown() override {
         if (tst1_aligned_)

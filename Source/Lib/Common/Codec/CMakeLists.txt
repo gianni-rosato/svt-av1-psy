@@ -94,7 +94,6 @@ set(all_files
     EbSegmentationParams.h
     EbSuperRes.c
     EbSuperRes.h
-    EbSyntaxElements.h
     EbSystemResourceManager.c
     EbSystemResourceManager.h
     EbThreads.c

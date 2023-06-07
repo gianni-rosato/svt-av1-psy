@@ -45,4 +45,8 @@ EbErrorType svt_aom_motion_estimation_context_ctor(EbThreadContext   *thread_ctx
 
 extern void *svt_aom_motion_estimation_kernel(void *input_ptr);
 
+#if GM_PP
+void svt_aom_gm_pre_processor(PictureParentControlSet *pcs, PictureParentControlSet **pcs_list);
+#endif
+
 #endif // EbMotionEstimationProcess_h

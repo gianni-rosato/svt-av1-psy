@@ -1316,7 +1316,7 @@ static INLINE void highbd_dc_predictor(uint16_t *dst, ptrdiff_t stride, int32_t 
         dst += stride;
     }
 }
-
+#if !CLN_UNUSED_DEFNS
 //static INLINE void highbd_dc_predictor_rect(uint16_t *dst, ptrdiff_t stride,
 //    int32_t bw, int32_t bh,
 //    const uint16_t *above,
@@ -1444,6 +1444,7 @@ static INLINE void highbd_dc_predictor(uint16_t *dst, ptrdiff_t stride, int32_t 
 //
 //#undef HIGHBD_DC_MULTIPLIER_1X2
 //#undef HIGHBD_DC_MULTIPLIER_1X4
+#endif
 
 #define intra_pred_sized(type, width, height)                                        \
     void svt_aom_##type##_predictor_##width##x##height##_c(                          \

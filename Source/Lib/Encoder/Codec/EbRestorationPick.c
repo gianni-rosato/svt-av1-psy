@@ -360,6 +360,9 @@ static int64_t finer_search_pixel_proj_error(const uint8_t *src8, int32_t width,
                                              int32_t dat_stride, int32_t use_highbitdepth,
                                              int32_t *flt0, int32_t flt0_stride, int32_t *flt1,
                                              int32_t flt1_stride, int32_t start_step, int32_t *xqd,
+#if OPT_SG
+                                             int8_t do_refine,
+#endif
                                              const SgrParamsType *params) {
     int64_t err = get_pixel_proj_error(src8,
                                        width,
@@ -374,6 +377,11 @@ static int64_t finer_search_pixel_proj_error(const uint8_t *src8, int32_t width,
                                        flt1_stride,
                                        xqd,
                                        params);
+#if OPT_SG
+    if (!do_refine)
+        return err;
+#endif
+
     (void)start_step;
     int64_t err2;
     int32_t tap_min[] = {SGRPROJ_PRJ_MIN0, SGRPROJ_PRJ_MIN1};
@@ -589,7 +597,11 @@ static SgrprojInfo search_selfguided_restoration(
     const uint8_t *dat8, int32_t width, int32_t height, int32_t dat_stride, const uint8_t *src8,
     int32_t src_stride, int32_t use_highbitdepth, int32_t bit_depth, int32_t pu_width,
     int32_t pu_height, int32_t *rstbuf, int8_t sg_ref_frame_ep[2],
+#if OPT_SG
+    int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS], SgFilterCtrls *ctrls, int32_t plane, int8_t step) {
+#else
     int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS], int8_t step) {
+#endif
     int32_t *flt0 = rstbuf;
     int32_t *flt1 = flt0 + RESTORATION_UNITPELS_MAX;
     int32_t  ep, bestep = 0;
@@ -599,6 +611,8 @@ static SgrprojInfo search_selfguided_restoration(
     assert(pu_width == (RESTORATION_PROC_UNIT_SIZE >> 1) || pu_width == RESTORATION_PROC_UNIT_SIZE);
     assert(pu_height == (RESTORATION_PROC_UNIT_SIZE >> 1) ||
            pu_height == RESTORATION_PROC_UNIT_SIZE);
+
+#if !OPT_SG
     int8_t mid_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? 0
         : sg_ref_frame_ep[1] < 0                                     ? sg_ref_frame_ep[0]
         : sg_ref_frame_ep[0] < 0                                     ? sg_ref_frame_ep[1]
@@ -610,8 +624,38 @@ static SgrprojInfo search_selfguided_restoration(
           ? SGRPROJ_PARAMS
           : AOMMIN(SGRPROJ_PARAMS, mid_ep + step);
     UNUSED(sg_frame_ep_cnt);
+#else
+    //two types of searches: Ref based (when step<16) and fixed spaced search.
+    //TODO: test the fixed based for fast decode and try to unify.
+    int8_t start_ep, end_ep, ep_inc, do_refine;
+    if (step < 16) {
+        int8_t mid_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? 0
+            : sg_ref_frame_ep[1] < 0 ? sg_ref_frame_ep[0]
+            : sg_ref_frame_ep[0] < 0 ? sg_ref_frame_ep[1]
+                                     : (sg_ref_frame_ep[0] + sg_ref_frame_ep[1]) / 2;
 
+        start_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? 0 : AOMMAX(0, mid_ep - step);
+        end_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0
+            ? SGRPROJ_PARAMS
+            : AOMMIN(SGRPROJ_PARAMS, mid_ep + step);
+        UNUSED(sg_frame_ep_cnt);
+
+        ep_inc = 1;
+        do_refine = 1;
+    } else {
+        plane = plane > 0 ? 1 : 0;
+        start_ep = ctrls->start_ep[plane];
+        end_ep = ctrls->end_ep[plane];
+        ep_inc = ctrls->ep_inc[plane];
+        do_refine = ctrls->refine[plane];
+    }
+#endif
+
+#if OPT_SG
+    for (ep = start_ep; ep < end_ep; ep += ep_inc) {
+#else
     for (ep = start_ep; ep < end_ep; ep++) {
+#endif
         int32_t exq[2];
         apply_sgr(ep,
                   dat8,
@@ -659,6 +703,9 @@ static SgrprojInfo search_selfguided_restoration(
                                                     flt_stride,
                                                     2,
                                                     exqd,
+#if OPT_SG
+                                                    do_refine,
+#endif
                                                     params);
         if (besterr == -1 || err < besterr) {
             bestep     = ep;
@@ -1303,6 +1350,10 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits, const Av1Pix
                                                   rsc->tmpbuf,
                                                   cm->sg_ref_frame_ep,
                                                   cm->sg_frame_ep_cnt,
+#if OPT_SG
+                                                  &cm->sg_filter_ctrls,
+                                                  rsc->plane,
+#endif
                                                   step);
     svt_block_on_mutex(cm->child_pcs->rest_search_mutex);
     cm->sg_frame_ep_cnt[rusi->sgrproj.ep]++;

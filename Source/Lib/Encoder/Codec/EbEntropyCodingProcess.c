@@ -59,20 +59,30 @@ EbErrorType svt_aom_entropy_coding_context_ctor(EbThreadContext   *thread_ctx,
  * Entropy Coding Reset Neighbor Arrays
  ***********************************************/
 static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs, uint16_t tile_idx) {
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     svt_aom_neighbor_array_unit_reset(pcs->mode_type_na[tile_idx]);
+#endif
 
     svt_aom_neighbor_array_unit_reset(pcs->partition_context_na[tile_idx]);
-
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     svt_aom_neighbor_array_unit_reset(pcs->skip_flag_na[tile_idx]);
+#endif
 
+#if !FIX_SKIP_NEIGH_ARRAY
     svt_aom_neighbor_array_unit_reset(pcs->skip_coeff_na[tile_idx]);
+#endif
     svt_aom_neighbor_array_unit_reset(pcs->luma_dc_sign_level_coeff_na[tile_idx]);
     svt_aom_neighbor_array_unit_reset(pcs->cb_dc_sign_level_coeff_na[tile_idx]);
     svt_aom_neighbor_array_unit_reset(pcs->cr_dc_sign_level_coeff_na[tile_idx]);
+#if !CLN_IFS_PATH
     svt_aom_neighbor_array_unit_reset(pcs->ref_frame_type_na[tile_idx]);
-
+#endif
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     svt_aom_neighbor_array_unit_reset(pcs->intra_luma_mode_na[tile_idx]);
+#endif
+#if !CLN_IFS_PATH
     svt_aom_neighbor_array_unit_reset32(pcs->interpolation_type_na[tile_idx]);
+#endif
     svt_aom_neighbor_array_unit_reset(pcs->txfm_context_array[tile_idx]);
     svt_aom_neighbor_array_unit_reset(pcs->segmentation_id_pred_array[tile_idx]);
     return;

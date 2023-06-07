@@ -867,8 +867,11 @@ static void get_pred_struct_for_all_frames(
             }
 #endif
             pcs->pred_structure = scs->static_config.pred_structure;
+#if FIX_ISSUE_2078
+            pcs->hierarchical_levels = pcs->idr_flag ? scs->static_config.hierarchical_levels : (uint8_t)ctx->mini_gop_hierarchical_levels[mini_gop_index];
+#else
             pcs->hierarchical_levels = (pcs->idr_flag || pcs->cra_flag) ? scs->static_config.hierarchical_levels : (uint8_t)ctx->mini_gop_hierarchical_levels[mini_gop_index];
-
+#endif
             pcs->pred_struct_ptr = svt_aom_get_prediction_structure(
                 enc_ctx->prediction_structure_group_ptr,
                 pcs->pred_structure,
@@ -893,7 +896,15 @@ static INLINE void update_list0_only_base(SequenceControlSet* scs, PictureParent
         pcs->ref_list1_count_try = 0;
     }
 }
+#if GM_REFINFO
+void  svt_aom_get_gm_needed_resolutions(uint8_t ds_lvl, bool *gm_need_full, bool *gm_need_quart, bool *gm_need_sixteen) {
 
+    *gm_need_full = (ds_lvl == GM_FULL) || (ds_lvl == GM_ADAPT_0);
+    *gm_need_quart =  (ds_lvl == GM_DOWN) || (ds_lvl == GM_ADAPT_0) || (ds_lvl == GM_ADAPT_1);
+    *gm_need_sixteen =  (ds_lvl == GM_DOWN16) || (ds_lvl == GM_ADAPT_1);
+
+}
+#endif
 Bool svt_aom_is_pic_skipped(PictureParentControlSet *pcs) {
     if (!pcs->is_ref &&
         pcs->scs->rc_stat_gen_pass_mode &&
@@ -2799,7 +2810,131 @@ static void process_first_pass_frame(
 }
 void svt_aom_pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
     uint32_t ss_y, Bool include_padding);
+#if OPT_TF_REF_PICS
+#if INCREASE_REF_PICS
+#define HIGH_BAND 250000
+#endif
+/* modulate_ref_pics()
+ For INTRA, the modulation uses the noise level, and towards increasing the number of ref_pics
+ For BASE and L1, the modulation uses the filt_INTRA-to-unfilterd_INTRA distortion range, and towards decreasing the number of ref_pics
+*/
+#if CLN_TF
+static int ref_pics_modulation(
+    PictureParentControlSet* pcs,
+    int32_t noise_levels_log1p_fp16) {
+#else
+int static ref_pics_modulation(
+    PictureParentControlSet* pcs,
+    int32_t noise_levels_log1p_fp16,
+    double noise_levels) {
+#endif
+    int offset = 0;
 
+    if (pcs->slice_type == I_SLICE) {
+        // Adjust number of filtering frames based on noise and quantization factor.
+        // Basically, we would like to use more frames to filter low-noise frame such
+        // that the filtered frame can provide better predictions for more frames.
+        // Also, when the quantization factor is small enough (lossless compression),
+        // we will not change the number of frames for key frame filtering, which is
+        // to avoid visual quality drop.
+#if !CLN_TF
+        if (pcs->tf_ctrls.use_fixed_point || pcs->tf_ctrls.use_medium_filter) {
+#endif
+            if (noise_levels_log1p_fp16 < 26572 /*FLOAT2FP(log1p(0.5), 16, int32_t)*/) {
+                offset = 6;
+            }
+            else if (noise_levels_log1p_fp16 < 45426 /*FLOAT2FP(log1p(1.0), 16, int32_t)*/) {
+                offset = 4;
+            }
+            else if (noise_levels_log1p_fp16 < 71998 /*FLOAT2FP(log1p(2.0), 16, int32_t)*/) {
+                offset = 2;
+            }
+#if !CLN_TF
+        }
+        else if (noise_levels < 0.5) {
+            offset = 6;
+        }
+        else if (noise_levels < 1.0) {
+            offset = 4;
+        }
+        else if (noise_levels < 2.0) {
+            offset = 2;
+        }
+#endif
+    }
+    else if (pcs->temporal_layer_index == 0) {
+        switch (pcs->tf_ctrls.modulate_pics) {
+        case 0:
+            offset = 0;
+            break;
+        case 1:
+            if (pcs->filt_to_unfilt_diff < 20000)
+                offset = 3;
+#if INCREASE_REF_PICS
+            else if (pcs->filt_to_unfilt_diff > HIGH_BAND)
+                offset = TF_MAX_EXTENSION;
+#endif
+            else
+                offset = 5;
+            break;
+        case 2:
+            if (pcs->filt_to_unfilt_diff < 20000)
+                offset = 1;
+            else if (pcs->filt_to_unfilt_diff < 60000)
+                offset = 3;
+#if INCREASE_REF_PICS
+            else if (pcs->filt_to_unfilt_diff > HIGH_BAND)
+                offset = TF_MAX_EXTENSION;
+#endif
+            else
+                offset = 5;
+            break;
+        case 3:
+            if (pcs->filt_to_unfilt_diff < 60000)
+                offset = 0;
+            else if (pcs->filt_to_unfilt_diff < 120000)
+                offset = 1;
+#if INCREASE_REF_PICS
+            else if (pcs->filt_to_unfilt_diff > HIGH_BAND)
+                offset = TF_MAX_EXTENSION;
+#endif
+            else
+                offset = 2;
+            break;
+        default:
+            break;
+        }
+    } else  {
+        switch (pcs->tf_ctrls.modulate_pics) {
+        case 0:
+            offset = 0;
+            break;
+        case 1:
+            if (pcs->filt_to_unfilt_diff < 20000)
+                offset = 0;
+            else
+                offset = 1;
+            break;
+        case 2:
+            if (pcs->filt_to_unfilt_diff < 60000)
+                offset = 0;
+            else
+                offset = 1;
+            break;
+        case 3:
+            if (pcs->filt_to_unfilt_diff < 120000)
+                offset = 0;
+            else
+                offset = 1;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return offset;
+}
+#endif
 static EbErrorType derive_tf_window_params(
     SequenceControlSet *scs,
     EncodeContext *enc_ctx,
@@ -2816,7 +2951,9 @@ static EbErrorType derive_tf_window_params(
     uint32_t ss_y = centre_pcs->scs->subsampling_y;
     int32_t *noise_levels_log1p_fp16 = &(centre_pcs->noise_levels_log1p_fp16[0]);
     int32_t noise_level_fp16;
+#if !CLN_TF
     double *noise_levels = &(centre_pcs->noise_levels[0]);
+#endif
 
 
     uint8_t do_noise_est = pcs->tf_ctrls.use_intra_for_noise_est ? 0 : 1;
@@ -2869,7 +3006,9 @@ static EbErrorType derive_tf_window_params(
             altref_buffer_highbd_start[C_V] = NOT_USED_VALUE;
         }
 
+#if !CLN_TF
         if (pcs->tf_ctrls.use_fixed_point || pcs->tf_ctrls.use_medium_filter) {
+#endif
             if (do_noise_est)
             {
                 noise_level_fp16 = svt_estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_Y], // Y only
@@ -2879,6 +3018,7 @@ static EbErrorType derive_tf_window_params(
                     encoder_bit_depth);
                 noise_levels_log1p_fp16[C_Y] = svt_aom_noise_log1p_fp16(noise_level_fp16);
             }
+#if !CLN_TF
         }
         else
             if (do_noise_est)
@@ -2887,12 +3027,15 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->height,
                     central_picture_ptr->stride_y,
                     encoder_bit_depth);
+#endif
 #if OPT_LD_TF
         if (pcs->tf_ctrls.chroma_lvl) {
 #else
         if (pcs->tf_ctrls.do_chroma) {
 #endif
+#if !CLN_TF
             if (pcs->tf_ctrls.use_fixed_point || pcs->tf_ctrls.use_medium_filter) {
+#endif
                 noise_level_fp16 = svt_estimate_noise_highbd_fp16(altref_buffer_highbd_start[C_U], // U only
                     (central_picture_ptr->width >> 1),
                     (central_picture_ptr->height >> 1),
@@ -2906,6 +3049,7 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->stride_cb,
                     encoder_bit_depth);
                 noise_levels_log1p_fp16[C_V] = svt_aom_noise_log1p_fp16(noise_level_fp16);
+#if !CLN_TF
             }
             else {
                 noise_levels[1] = svt_estimate_noise_highbd(altref_buffer_highbd_start[C_U], // U only
@@ -2920,6 +3064,7 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->stride_cb,
                     encoder_bit_depth);
             }
+#endif
         }
     }
     else {
@@ -2935,7 +3080,9 @@ static EbErrorType derive_tf_window_params(
             (central_picture_ptr->org_y >> ss_x) * central_picture_ptr->stride_cr +
             (central_picture_ptr->org_x >> ss_x);
 
+#if !CLN_TF
         if (pcs->tf_ctrls.use_fixed_point || pcs->tf_ctrls.use_medium_filter) {
+#endif
             if (do_noise_est)
             {
                 noise_level_fp16 = svt_estimate_noise_fp16(buffer_y, // Y
@@ -2944,6 +3091,7 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->stride_y);
                 noise_levels_log1p_fp16[C_Y] = svt_aom_noise_log1p_fp16(noise_level_fp16);
             }
+#if !CLN_TF
         }
         else
             if (do_noise_est)
@@ -2951,12 +3099,15 @@ static EbErrorType derive_tf_window_params(
                     central_picture_ptr->width,
                     central_picture_ptr->height,
                     central_picture_ptr->stride_y);
+#endif
 #if OPT_LD_TF
         if (pcs->tf_ctrls.chroma_lvl) {
 #else
         if (pcs->tf_ctrls.do_chroma) {
 #endif
+#if !CLN_TF
             if (pcs->tf_ctrls.use_fixed_point || pcs->tf_ctrls.use_medium_filter) {
+#endif
                 noise_level_fp16 = svt_estimate_noise_fp16(buffer_u, // U
                     (central_picture_ptr->width >> ss_x),
                     (central_picture_ptr->height >> ss_y),
@@ -2968,6 +3119,7 @@ static EbErrorType derive_tf_window_params(
                     (central_picture_ptr->height >> ss_y),
                     central_picture_ptr->stride_cr);
                 noise_levels_log1p_fp16[C_V] = svt_aom_noise_log1p_fp16(noise_level_fp16);
+#if !CLN_TF
             }
             else {
                 noise_levels[1] = svt_estimate_noise(buffer_u, // U
@@ -2980,24 +3132,36 @@ static EbErrorType derive_tf_window_params(
                     (central_picture_ptr->height >> ss_y),
                     central_picture_ptr->stride_cr);
             }
+#endif
         }
     }
+#if !CLN_TF
     if (pcs->tf_ctrls.use_fixed_point || pcs->tf_ctrls.use_medium_filter) {
+#endif
         if (do_noise_est) {
             pd_ctx->last_i_noise_levels_log1p_fp16[0] = noise_levels_log1p_fp16[0];
         }
         else {
             noise_levels_log1p_fp16[0] = pd_ctx->last_i_noise_levels_log1p_fp16[0];
         }
+#if !CLN_TF
     }
     else
         if (do_noise_est)
             pd_ctx->last_i_noise_levels[0] = noise_levels[0];
         else
             noise_levels[0] = pd_ctx->last_i_noise_levels[0];
-
+#endif
     // Set is_noise_level for the tf off case
     pcs->is_noise_level = (pd_ctx->last_i_noise_levels_log1p_fp16[0] >= VQ_NOISE_LVL_TH);
+#if OPT_TF_REF_PICS
+    // Adjust the number of filtering frames
+#if CLN_TF
+    int offset = pcs->tf_ctrls.modulate_pics ? ref_pics_modulation(pcs, noise_levels_log1p_fp16[0]) : 0;
+#else
+    int offset = pcs->tf_ctrls.modulate_pics ? ref_pics_modulation(pcs, noise_levels_log1p_fp16[0], noise_levels[0]) : 0;
+#endif
+#else
     // Adjust number of filtering frames based on noise and quantization factor.
     // Basically, we would like to use more frames to filter low-noise frame such
     // that the filtered frame can provide better predictions for more frames.
@@ -3025,14 +3189,21 @@ static EbErrorType derive_tf_window_params(
     else if (noise_levels[0] < 2.0) {
         adjust_num = 2;
     }
-
+#endif
     if (scs->static_config.pred_structure != SVT_AV1_PRED_RANDOM_ACCESS) {
+#if OPT_TF_REF_PICS
+        int num_past_pics = pcs->tf_ctrls.num_past_pics + (pcs->tf_ctrls.modulate_pics ? (offset >> 1) : 0);
+        num_past_pics = MIN(pcs->tf_ctrls.max_num_past_pics, num_past_pics);
+
+        int num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.modulate_pics ? (offset >> 1) : 0);
+        num_future_pics = MIN(pcs->tf_ctrls.max_num_future_pics, num_future_pics);
+#else
         int num_past_pics = pcs->tf_ctrls.num_past_pics + (pcs->tf_ctrls.noise_adjust_past_pics ? (adjust_num >> 1) : 0);
         num_past_pics = MIN(pcs->tf_ctrls.max_num_past_pics, num_past_pics);
 
         int num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.noise_adjust_future_pics ? (adjust_num >> 1) : 0);
         num_future_pics = MIN(pcs->tf_ctrls.max_num_future_pics, num_future_pics);
-
+#endif
         //initilize list
         for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
             pcs->temp_filt_pcs_list[pic_itr] = NULL;
@@ -3096,19 +3267,26 @@ static EbErrorType derive_tf_window_params(
                 pcs->temp_filt_pcs_list[pic_itr] = NULL;
 
             pcs->temp_filt_pcs_list[0] = pcs;
+#if OPT_TF_REF_PICS
+            uint32_t num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.modulate_pics ? offset : 0);
+#else
             uint32_t num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.noise_adjust_future_pics ? adjust_num : 0);
+#endif
             num_future_pics = MIN(pcs->tf_ctrls.max_num_future_pics, num_future_pics);
             // Update the key frame pred structure;
             int32_t idx = search_this_pic(pd_ctx->mg_pictures_array, pd_ctx->mg_size, pcs->picture_number + 1);
 
             if (centre_pcs->hierarchical_levels != pcs->temp_filt_pcs_list[0]->hierarchical_levels ||
                 centre_pcs->hierarchical_levels != pd_ctx->mg_pictures_array[idx]->hierarchical_levels) {
+#if OPT_STARTUP_MG
+                centre_pcs->hierarchical_levels = pcs->temp_filt_pcs_list[0]->hierarchical_levels = pd_ctx->mg_pictures_array[idx]->hierarchical_levels;
+#else
                 if (scs->static_config.startup_mg_size == 0 || scs->static_config.startup_mg_size == 4) {
                     centre_pcs->hierarchical_levels = pcs->temp_filt_pcs_list[0]->hierarchical_levels = pd_ctx->mg_pictures_array[idx]->hierarchical_levels;
                 } else {
                     pcs->temp_filt_pcs_list[0]->hierarchical_levels = pd_ctx->mg_pictures_array[idx]->hierarchical_levels = centre_pcs->hierarchical_levels;
                 }
-
+#endif
                 // tpl setting are updated if hierarchical level has changed
                 svt_aom_set_tpl_extended_controls(centre_pcs, scs->tpl_level);
                 centre_pcs->r0_based_qps_qpm = centre_pcs->tpl_ctrls.enable &&
@@ -3136,7 +3314,11 @@ static EbErrorType derive_tf_window_params(
                     pcs->temp_filt_pcs_list[pic_itr] = NULL;
 
                 pcs->temp_filt_pcs_list[0] = pcs;
+#if OPT_TF_REF_PICS
+                uint32_t num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.modulate_pics ? offset : 0);
+#else
                 uint32_t num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.noise_adjust_future_pics ? adjust_num : 0);
+#endif
                 num_future_pics = MIN(pcs->tf_ctrls.max_num_future_pics, num_future_pics);
                 num_future_pics = MIN((uint8_t)num_future_pics, svt_aom_tf_max_ref_per_struct(pcs->hierarchical_levels, 0, 1));
                 uint32_t num_past_pics = 0;
@@ -3158,12 +3340,18 @@ static EbErrorType derive_tf_window_params(
             }
             else
             {
+#if OPT_TF_REF_PICS
+                int num_past_pics = MAX(1,(int) pcs->tf_ctrls.num_past_pics + offset);
+                int num_future_pics = MAX(1, (int) pcs->tf_ctrls.num_future_pics + offset);
+                num_past_pics = MIN(pcs->tf_ctrls.max_num_past_pics, num_past_pics);
+                num_future_pics = MIN(pcs->tf_ctrls.max_num_future_pics, num_future_pics);
+#else
                 int num_past_pics = pcs->tf_ctrls.num_past_pics + (pcs->tf_ctrls.noise_adjust_past_pics ? (adjust_num >> 1) : 0);
                 num_past_pics = MIN(pcs->tf_ctrls.max_num_past_pics, num_past_pics);
 
                 int num_future_pics = pcs->tf_ctrls.num_future_pics + (pcs->tf_ctrls.noise_adjust_future_pics ? (adjust_num >> 1) : 0);
                 num_future_pics = MIN(pcs->tf_ctrls.max_num_future_pics, num_future_pics);
-
+#endif
                 num_past_pics = MIN(num_past_pics, svt_aom_tf_max_ref_per_struct(pcs->hierarchical_levels, pcs->temporal_layer_index ? 2 : 1, 0));
                 num_future_pics = MIN(num_future_pics, svt_aom_tf_max_ref_per_struct(pcs->hierarchical_levels, pcs->temporal_layer_index ? 2 : 1, 1));
 
@@ -3365,12 +3553,23 @@ static void send_picture_out(
     MrpCtrls* mrp_ctrl = &(scs->mrp_ctrls);
 
     //limit (1,1) for picture that have very close references.
+#if TUNE_11_SEC_TOP
+    if (scs->mrp_ctrls.safe_limit_nref && pcs->slice_type == B_SLICE && pcs->hierarchical_levels>0 &&
+        (pcs->temporal_layer_index >= pcs->hierarchical_levels - 1) ) {
+#else
     if (scs->mrp_ctrls.safe_limit_nref && pcs->slice_type == B_SLICE && !pcs->is_ref) {
+#endif
         EbPaReferenceObject *ref_obj_0 = (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[0][0]->object_ptr;
         EbPaReferenceObject *ref_obj_1 = (EbPaReferenceObject *)pcs->ref_pa_pic_ptr_array[1][0]->object_ptr;
         if (ref_obj_0->avg_luma != INVALID_LUMA && ref_obj_1->avg_luma != INVALID_LUMA) {
+#if TUNE_11_SEC_TOP
+            const int32_t luma_th = 5;
+            if (ABS((int)ref_obj_0->avg_luma - (int)pcs->avg_luma) < luma_th &&
+                ABS((int)ref_obj_1->avg_luma - (int)pcs->avg_luma) < luma_th)
+#else
             if (ABS((int)ref_obj_0->avg_luma - (int)pcs->avg_luma) < 100 &&
                 ABS((int)ref_obj_1->avg_luma - (int)pcs->avg_luma) < 100)
+#endif
             {
                 pcs->ref_list0_count_try = pcs->ref_list1_count_try = 1;
             }
@@ -3418,9 +3617,14 @@ static void send_picture_out(
             svt_aom_init_resize_picture(scs, pcs);
         }
     }
-
+#if FIX_GM_PP
+    bool super_res_off = pcs->frame_superres_enabled == FALSE &&
+        scs->static_config.resize_mode == RESIZE_NONE;
+    svt_aom_set_gm_controls(pcs, svt_aom_derive_gm_level(pcs, super_res_off));
+#else
     uint8_t gm_level = svt_aom_derive_gm_level(pcs);
     svt_aom_set_gm_controls(pcs, gm_level);
+#endif
     pcs->me_processed_b64_count = 0;
 
 #if FIX_ISSUE_2064_ALT
@@ -4214,7 +4418,17 @@ static void process_pics(SequenceControlSet* scs, PictureDecisionContext* ctx) {
     //Process previous delayed Intra if we have one
     if (ctx->prev_delayed_intra) {
         pcs = ctx->prev_delayed_intra;
+#if GM_PP
+        ctx->base_counter = 0;
+        ctx->gm_pp_last_detected = 0;
+#endif
+#if OPT_TF_REF_PICS
+        pcs->filt_to_unfilt_diff = ctx->filt_to_unfilt_diff = (uint32_t)~0;
+#endif
         mctf_frame(scs, pcs, ctx);
+#if OPT_TF_REF_PICS
+        ctx->filt_to_unfilt_diff = pcs->slice_type == I_SLICE ? pcs->filt_to_unfilt_diff : ctx->filt_to_unfilt_diff;
+#endif
     }
 
     //Do TF loop in display order
@@ -4222,7 +4436,23 @@ static void process_pics(SequenceControlSet* scs, PictureDecisionContext* ctx) {
         pcs = ctx->mg_pictures_array_disp_order[pic_i];
 
         if (svt_aom_is_delayed_intra(pcs) == FALSE) {
+#if GM_PP
+            if (pcs->slice_type == B_SLICE && pcs->temporal_layer_index == 0) {
+                pcs->gm_pp_enabled = ctx->base_counter == 0 ?  1 : 0;
+                ctx->base_counter = 1 - ctx->base_counter;
+            }
+#endif
+
+#if OPT_TF_REF_PICS
+            pcs->filt_to_unfilt_diff = ctx->filt_to_unfilt_diff;
+#endif
             mctf_frame(scs, pcs, ctx);
+#if OPT_TF_REF_PICS
+            ctx->filt_to_unfilt_diff = pcs->slice_type == I_SLICE ? pcs->filt_to_unfilt_diff : ctx->filt_to_unfilt_diff;
+#endif
+#if GM_PP
+            ctx->gm_pp_last_detected = pcs->gm_pp_enabled ? pcs->gm_pp_detected : ctx->gm_pp_last_detected;
+#endif
         }
     }
 
@@ -4271,6 +4501,9 @@ static void process_pics(SequenceControlSet* scs, PictureDecisionContext* ctx) {
                     pcs->ext_mg_size = 1;
                 }
             }
+#if GM_PP
+           pcs->gm_pp_detected = ctx->gm_pp_last_detected;
+#endif
             send_picture_out(scs, pcs, ctx);
         }
     }

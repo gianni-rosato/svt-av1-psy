@@ -25,6 +25,18 @@ typedef struct BlockList {
     uint8_t  list_size;
     uint16_t blk_mds_table[3]; //stores a max of 3 redundant blocks
 } BlockList_t;
+#if OPT_32x16_16x32_GEOM
+typedef enum GeomIndex {
+    GEOM_0, //64x64  ->8x8  NSQ:OFF
+    GEOM_1, //64x64  ->8x8  NSQ:ON (only H & V shapes, but not 8x4 and 4x8 and not 16x8 and 8x16)
+    GEOM_2, //64x64  ->8x8  NSQ:ON (only H & V shapes, but not 8x4 and 4x8)
+    GEOM_3, //64x64  ->8x8  NSQ:ON (only H & V shapes)
+    GEOM_4, //64x64  ->4x4  NSQ:ON (only H & V shapes)
+    GEOM_5, //64x64  ->4x4  NSQ:ON (all shapes)
+    GEOM_6, //128x128->4x4  NSQ:ON (all shapes
+    GEOM_TOT
+} GeomIndex;
+#else
 typedef enum GeomIndex {
     GEOM_0, //64x64  ->8x8  NSQ:OFF
     GEOM_1, //64x64  ->8x8  NSQ:ON (only H & V shapes, but not 8x4 and 4x8)
@@ -34,56 +46,51 @@ typedef enum GeomIndex {
     GEOM_5, //128x128->4x4  NSQ:ON (all shapes
     GEOM_TOT
 } GeomIndex;
+#endif
 void svt_aom_build_blk_geom(GeomIndex geom);
 
 typedef struct BlockGeom {
-    GeomIndex svt_aom_geom_idx; //type of geom this block belongs
-    uint8_t   depth; // depth of the block
-    Part      shape; // P_N..P_V4 . P_S is not used.
-    uint8_t   org_x; // orgin x from topleft of sb
-    uint8_t   org_y; // orgin x from topleft of sb
+    Part    shape; // P_N..P_V4 . P_S is not used.
+    uint8_t org_x; // orgin x from topleft of sb
+    uint8_t org_y; // orgin x from topleft of sb
 
-    // index of the block in d1 dimension 0..24  (0 is parent square, 1 top half of H , ...., 24:last quarter of V4)
-    uint8_t  d1i;
-    uint16_t sqi_mds; // index of the parent square in md  scan.
-    uint16_t parent_depth_idx_mds; // index of the parent block of a given depth
-    uint16_t d1_depth_offset; // offset to the next d1 sq block
-    uint16_t ns_depth_offset; // offset to the next nsq block (skip remaining d2 blocks)
-    // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
-    uint8_t     totns;
-    uint8_t     nsi; // non square index within a partition  0..totns-1
-    uint8_t     similar; // 1: means that this block is similar (same shape/location) to another
-    uint8_t     quadi; // parent square is in which quadrant 0..3
-    uint8_t     redund; // 1: means that this block is redundant to another
-    BlockList_t redund_list; // the list where the block is redundant
-    BlockList_t similar_list;
+    uint8_t has_uv;
+    uint8_t sq_size; // size of parent square
 
     uint8_t   bwidth; // block width
     uint8_t   bheight; // block height
     uint8_t   bwidth_uv; // block width for Chroma 4:2:0
     uint8_t   bheight_uv; // block height for Chroma 4:2:0
-    uint8_t   bwidth_log2; // block width log2
-    uint8_t   bheight_log2; // block height log2
     BlockSize bsize; // bloc size
     BlockSize bsize_uv; // bloc size for Chroma 4:2:0
-    uint16_t  txb_count[MAX_VARTX_DEPTH + 1]; //4-2-1
-    TxSize    txsize[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
-    TxSize    txsize_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
-    uint16_t  tx_org_x
-        [2][MAX_VARTX_DEPTH + 1]
-        [MAX_TXB_COUNT]; //origin is SB - separate tables for INTRA (idx 0) and INTER (idx 1)
-    uint16_t tx_org_y
-        [2][MAX_VARTX_DEPTH + 1]
-        [MAX_TXB_COUNT]; //origin is SB - separate tables for INTRA (idx 0) and INTER (idx 1)
-    uint8_t tx_width[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
-    uint8_t tx_height[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
-    uint8_t tx_width_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
-    uint8_t tx_height_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
+    uint8_t   txb_count[MAX_VARTX_DEPTH + 1]; //4-2-1
+    TxSize    txsize[MAX_VARTX_DEPTH + 1];
+    TxSize    txsize_uv[MAX_VARTX_DEPTH + 1];
+    uint8_t   tx_width[MAX_VARTX_DEPTH + 1]; //tx_size_wide
+    uint8_t   tx_height[MAX_VARTX_DEPTH + 1]; //tx_size_high
+    uint8_t   tx_width_uv[MAX_VARTX_DEPTH + 1]; //tx_size_wide
+    uint8_t   tx_height_uv[MAX_VARTX_DEPTH + 1]; //tx_size_high
+
+    //origin is SB - separate tables for INTRA (idx 0) and INTER (idx 1)
+    uint8_t tx_org_x[2][MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
+    uint8_t tx_org_y[2][MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
 
     uint16_t blkidx_mds; // block index in md scan
-    int32_t  has_uv;
-    int32_t  sq_size; // size of parent square
-    int32_t  is_last_quadrant; // only for square bloks, is this the fourth quadrant block?
+    // index of the block in d1 dimension 0..24  (0 is parent square, 1 top half of H , ...., 24:last quarter of V4)
+    uint8_t  d1i;
+    uint16_t sqi_mds; // index of the parent square in md  scan.
+    uint16_t parent_depth_idx_mds; // index of the parent block of a given depth
+    // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
+    uint8_t     totns;
+    uint8_t     nsi; // non square index within a partition  0..totns-1
+    uint8_t     quadi; // parent square is in which quadrant 0..3
+    GeomIndex   svt_aom_geom_idx; //type of geom this block belongs
+    uint8_t     depth; // depth of the block
+    uint16_t    d1_depth_offset; // offset to the next d1 sq block
+    uint16_t    ns_depth_offset; // offset to the next nsq block (skip remaining d2 blocks)
+    uint8_t     is_last_quadrant; // only for square bloks, is this the fourth quadrant block?
+    uint8_t     redund; // 1: means that this block is redundant to another
+    BlockList_t redund_list; // the list where the block is redundant
 } BlockGeom;
 
 static const BlockSize ss_size_lookup[BlockSizeS_ALL][2][2] = {
@@ -128,6 +135,34 @@ static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_
 }
 
 #define NOT_USED_VALUE 0
+#if OPT_32x16_16x32_GEOM
+//gives the index of parent from the last qudrant child
+static const uint32_t parent_depth_offset[GEOM_TOT][6] = {
+    {NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 80, 20, 4, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 128, 32, 8, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 320, 80, 20, NOT_USED_VALUE, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 512, 128, 32, 8, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
+    {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
+//gives the index of next quadrant child within a depth
+static const uint32_t ns_depth_offset[GEOM_TOT][6] = {
+    {85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+    {105, 25, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+    {169, 41, 9, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+    {425, 105, 25, 5, NOT_USED_VALUE, NOT_USED_VALUE},
+    {681, 169, 41, 9, 1, NOT_USED_VALUE},
+    {1101, 269, 61, 9, 1, NOT_USED_VALUE},
+    {4421, 1101, 269, 61, 9, 1}};
+//gives the next depth block(first qudrant child) from a given parent square
+static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_VALUE},
+                                                      {5, 5, 1, 1, 1, NOT_USED_VALUE},
+                                                      {5, 5, 5, 1, 1, NOT_USED_VALUE},
+                                                      {5, 5, 5, 5, 1, NOT_USED_VALUE},
+                                                      {5, 5, 5, 5, 1, NOT_USED_VALUE},
+                                                      {25, 25, 25, 5, 1, NOT_USED_VALUE},
+                                                      {17, 25, 25, 25, 5, 1}};
+#else
 //gives the index of parent from the last qudrant child
 static const uint32_t parent_depth_offset[GEOM_TOT][6] = {
     {NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
@@ -151,7 +186,8 @@ static const uint32_t d1_depth_offset[GEOM_TOT][6] = {{1, 1, 1, 1, 1, NOT_USED_V
                                                       {5, 5, 5, 5, 1, NOT_USED_VALUE},
                                                       {25, 25, 25, 5, 1, NOT_USED_VALUE},
                                                       {17, 25, 25, 25, 5, 1}};
-extern BlockGeom      svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
+#endif
+extern BlockGeom svt_aom_blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
 
 static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) {
     return &svt_aom_blk_geom_mds[bidx_mds];

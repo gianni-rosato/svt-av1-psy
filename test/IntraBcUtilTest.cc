@@ -121,10 +121,12 @@ class DvValiationTest : public ::testing::TestWithParam<DvValidationParam> {
         xd.tile.mi_col_start = 24 * MAX_MIB_SIZE;
         xd.tile.mi_col_end =
             xd.tile.mi_col_start + kTileMaxMibWidth * MAX_MIB_SIZE;
+#if !CLN_UNUSED_DEFNS
         xd.plane[1].subsampling_x = 1;
         xd.plane[1].subsampling_y = 1;
         xd.plane[2].subsampling_x = 1;
         xd.plane[2].subsampling_y = 1;
+#endif
 
         ASSERT_EQ(TEST_GET_PARAM(4),
                   svt_aom_is_dv_valid(TEST_GET_PARAM(0),

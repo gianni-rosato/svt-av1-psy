@@ -165,16 +165,25 @@ struct PredictionUnit;
 typedef struct EbMdcLeafData {
     uint32_t mds_idx;
     uint32_t tot_d1_blocks; // how many d1 bloks every parent square would have
+#if TAG_SUB_PRED_NSQ
+    bool is_child; // does is it belong to the child depth(s); relative to PRED (the output of PD0)
+#endif
 } EbMdcLeafData;
 
 typedef struct MdcSbData {
     uint32_t      leaf_count;
     EbMdcLeafData leaf_data_array[BLOCK_MAX_COUNT_SB_128];
     Bool          split_flag[BLOCK_MAX_COUNT_SB_128];
-    uint8_t       consider_block[BLOCK_MAX_COUNT_SB_128];
-    uint8_t       refined_split_flag[BLOCK_MAX_COUNT_SB_128];
+#if TAG_SUB_PRED_NSQ
+    uint8_t consider_block
+        [BLOCK_MAX_COUNT_SB_128]; // 0: do not encode, 1: current or parent depth(s), 2: child depth(s)
+#else
+    uint8_t consider_block[BLOCK_MAX_COUNT_SB_128];
+#endif
+    uint8_t refined_split_flag[BLOCK_MAX_COUNT_SB_128];
 } MdcSbData;
 
+#if !CLN_UNUSED_DEFNS
 /**************************************
  * MD Segment Control
  **************************************/
@@ -187,12 +196,14 @@ typedef struct MdSegmentCtrl {
     Bool     in_progress;
     uint32_t current_row_idx;
 } MdSegmentCtrl;
-
+#endif
 /**************************************
  * Picture Control Set
  **************************************/
+#if !CLN_UNUSED_DEFNS
 struct CodedTreeblock_s;
 struct SuperBlock;
+#endif
 #define MAX_MESH_STEP 4
 
 typedef struct MeshPattern {
@@ -207,19 +218,20 @@ typedef struct CdfControls {
     uint8_t update_coef; // cdf update for coeffs
 } CdfControls;
 typedef struct SpeedFeatures {
+#if !CLN_UNUSED_DEFNS
     // This allows us to use motion search at other sizes as a starting
     // point for this motion search and limits the search range around it.
     int adaptive_motion_search;
 
     // Flag for allowing some use of exhaustive searches;
     int allow_exhaustive_searches;
-
+#endif
     // Threshold for allowing exhaistive motion search.
     int exhaustive_searches_thresh;
-
+#if !CLN_UNUSED_DEFNS
     // Maximum number of exhaustive searches for a frame.
     int max_exaustive_pct;
-
+#endif
     // Pattern to be used for any exhaustive mesh searches.
     MeshPattern mesh_patterns[MAX_MESH_STEP];
 
@@ -313,10 +325,12 @@ typedef struct PictureControlSet {
     uint32_t    *sb_count_nz_coeffs;
     // qindex per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)
     // Mode Decision Neighbor Arrays
-    uint8_t            *b64_me_qindex;
+    uint8_t *b64_me_qindex;
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     NeighborArrayUnit **md_intra_luma_mode_na[NA_TOT_CNT];
     NeighborArrayUnit **md_skip_flag_na[NA_TOT_CNT];
     NeighborArrayUnit **md_mode_type_na[NA_TOT_CNT];
+#endif
     NeighborArrayUnit **md_luma_recon_na[NA_TOT_CNT];
     NeighborArrayUnit **md_tx_depth_1_luma_recon_na[NA_TOT_CNT];
     NeighborArrayUnit **md_tx_depth_2_luma_recon_na[NA_TOT_CNT];
@@ -334,19 +348,23 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **md_cb_dc_sign_level_coeff_na[NA_TOT_CNT];
     NeighborArrayUnit **md_cr_dc_sign_level_coeff_na[NA_TOT_CNT];
     NeighborArrayUnit **md_txfm_context_array[NA_TOT_CNT];
+#if !FIX_SKIP_NEIGH_ARRAY
     NeighborArrayUnit **md_skip_coeff_na[NA_TOT_CNT];
-    NeighborArrayUnit **md_ref_frame_type_na[NA_TOT_CNT];
-
+#endif
+#if !CLN_IFS_PATH
+    NeighborArrayUnit   **md_ref_frame_type_na[NA_TOT_CNT];
     NeighborArrayUnit32 **md_interpolation_type_na[NA_TOT_CNT];
-
+#endif
     NeighborArrayUnit **mdleaf_partition_na[NA_TOT_CNT];
 
     // Encode Pass Neighbor Arrays
+#if !CLN_REMOVE_NEIGH_ARRAYS
     NeighborArrayUnit **ep_intra_luma_mode_na;
     NeighborArrayUnit **ep_intra_chroma_mode_na;
     NeighborArrayUnit **ep_mv_na;
     NeighborArrayUnit **ep_skip_flag_na;
     NeighborArrayUnit **ep_mode_type_na;
+#endif
     NeighborArrayUnit **ep_luma_recon_na;
     NeighborArrayUnit **ep_cb_recon_na;
     NeighborArrayUnit **ep_cr_recon_na;
@@ -360,13 +378,22 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **ep_cr_dc_sign_level_coeff_na_update;
     NeighborArrayUnit **ep_cb_dc_sign_level_coeff_na_update;
     NeighborArrayUnit **ep_partition_context_na;
+#if FIX_TXS_RATE_UPDATE
+    NeighborArrayUnit **ep_txfm_context_na;
+#endif
 
     // Entropy Coding Neighbor Arrays
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     NeighborArrayUnit **mode_type_na;
+#endif
     NeighborArrayUnit **partition_context_na;
+#if !CLN_REMOVE_NEIGH_ARRAYS_2
     NeighborArrayUnit **intra_luma_mode_na;
     NeighborArrayUnit **skip_flag_na;
+#endif
+#if !FIX_SKIP_NEIGH_ARRAY
     NeighborArrayUnit **skip_coeff_na;
+#endif
     // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one
     // Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit **luma_dc_sign_level_coeff_na;
@@ -375,10 +402,12 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **cr_dc_sign_level_coeff_na;
     // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef.
     // Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit   **cb_dc_sign_level_coeff_na;
-    NeighborArrayUnit   **txfm_context_array;
+    NeighborArrayUnit **cb_dc_sign_level_coeff_na;
+    NeighborArrayUnit **txfm_context_array;
+#if !CLN_IFS_PATH
     NeighborArrayUnit   **ref_frame_type_na;
     NeighborArrayUnit32 **interpolation_type_na;
+#endif
 
     NeighborArrayUnit      **segmentation_id_pred_array;
     SegmentationNeighborMap *segmentation_neighbor_map;
@@ -405,11 +434,9 @@ typedef struct PictureControlSet {
     uint8_t  inter_compound_mode;
     uint8_t  dist_based_ref_pruning;
     uint8_t  spatial_sse_full_loop_level;
-    uint8_t  psq_cplx_lvl;
-    uint32_t sq_weight;
-    uint32_t max_part0_to_part1_dev;
-    // if true, skip H4/V4 shapes when best partition so far is not H/V
+#if !CLN_SKIP_HV4
     uint32_t skip_hv4_on_best_part;
+#endif
     uint8_t  inter_intra_level;
     uint8_t  txs_level;
     uint8_t  nic_level;
@@ -424,8 +451,10 @@ typedef struct PictureControlSet {
     uint8_t pic_depth_removal_level;
     uint8_t pic_depth_removal_level_rtc;
     // block_based_depth_refinement_level signal set at the picture level
-    uint8_t          pic_block_based_depth_refinement_level;
-    uint8_t          pic_depth_early_exit_lvl;
+    uint8_t pic_block_based_depth_refinement_level;
+#if !FIX_DEPTH_EXIT_CHECK
+    uint8_t pic_depth_early_exit_lvl;
+#endif
     uint8_t          pic_lpd0_lvl; // lpd0_lvl signal set at the picture level
     uint8_t          pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
     Bool             pic_bypass_encdec;
@@ -456,8 +485,10 @@ typedef struct PictureControlSet {
     uint16_t sb_total_count;
     // Total SB count of unscaled picture (used for memory alloc/dealloc when superres is used)
     uint16_t sb_total_count_unscaled;
+#if !MEM_SG
     // pointer to a scratch buffer used by self-guided restoration
     int32_t *rst_tmpbuf;
+#endif
 
     EbPictureBufferDesc *temp_lf_recon_pic;
     EbPictureBufferDesc *temp_lf_recon_pic_16bit;
@@ -606,6 +637,12 @@ typedef struct GmControls {
     // of 2 in each dimension; GM_TRAN_ONLY: Translation only using ME MV.
     uint8_t params_refinement_steps;
     uint8_t downsample_level;
+#if GM_REFINFO
+    // do GM in the closed loop instead of the open loop and use reference information 0: off 1: on
+    bool use_ref_info;
+    // do the detection bypass for last layer pictures   0:off     1:last layer     2:last 2 layers 3: last 3 layers
+    uint8_t layer_offset;
+#endif
     //use a fraction of corner points for computing correspondences for RANSAC in detection. 1:1/4   2:2/4   3:3/4   4:all
     uint8_t corners;
     //skip global motion refinement using a chess pattern to skip blocks
@@ -614,6 +651,10 @@ typedef struct GmControls {
     uint8_t match_sz;
     //Inject global only if Parent SQ is global
     bool inj_psq_glb;
+#if GM_PP
+    //enable Pre-processor for GM
+    bool pp_enabled;
+#endif
 } GmControls;
 typedef struct CdefControls {
     uint8_t enabled;
@@ -662,16 +703,23 @@ typedef struct DlfCtrls {
     // when DLF filter level is selected from QP, if the filter level is less than or equal to this
     // TH, the filter level is set to 0
     uint8_t sb_based_dlf;
+#if !ENABLE_LD_DLF_RA
     uint8_t min_filter_level;
+#endif
     // Start search from average DLF instead of 0
     bool dlf_avg;
     // Use average DLF as a starting point for qp based filter strength selection for Chroma planes
     bool dlf_avg_uv;
     // Number of convergence points before exiting the filter search, 1 = exit on first convergence point, 2 = exit on second, 0 = off
     uint8_t early_exit_convergence;
+#if ENABLE_LD_DLF_RA
+    // Threshold used when sb_based_dlf is used to use filter strength zero, there are four levels of thresholds [0..3], 0 = off
+    uint8_t zero_filter_strength_lvl;
+#else
 #if OPT_LD_DLF
     // Threshold used when sb_based_dlf is used to use filter strength zero, there are four levels of thresholds [0..3], 0 = off
     uint8_t ld_zero_filter_strength_lvl;
+#endif
 #endif
 } DlfCtrls;
 typedef struct IntraBCCtrls {
@@ -837,7 +885,10 @@ typedef struct PictureParentControlSet {
     double                                  luma_ssim;
     double                                  cr_ssim;
     double                                  cb_ssim;
-
+#if GM_REFINFO
+    EbPictureBufferDesc *quarter_src_pic;
+    EbPictureBufferDesc *sixteenth_src_pic;
+#endif
     // Pointer array for down scaled pictures
     EbObjectWrapper            *downscaled_pic_wrapper;
     EbDownScaledBufDescPtrArray ds_pics;
@@ -878,6 +929,9 @@ typedef struct PictureParentControlSet {
     Bool                 is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbWarpedMotionParams svt_aom_global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST]
                                                          [REF_LIST_MAX_DEPTH];
+#if OPT_CMP
+    int8_t is_gm_on; //-1 invalid, 1: gm on in one of the ref frames,  0:gm off for all ref frames
+#endif
     uint16_t      me_processed_b64_count;
     EbHandle      me_processed_b64_mutex;
     FirstPassData firstpass_data;
@@ -996,7 +1050,9 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet *overlay_ppcs_ptr;
     struct PictureParentControlSet *alt_ref_ppcs_ptr;
     int32_t                         noise_levels_log1p_fp16[MAX_MB_PLANE];
-    double                          noise_levels[MAX_MB_PLANE];
+#if !CLN_TF
+    double noise_levels[MAX_MB_PLANE];
+#endif
     int32_t                         pic_decision_reorder_queue_idx;
     struct PictureParentControlSet *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
     EbByte                          save_source_picture_ptr[3];
@@ -1088,6 +1144,10 @@ typedef struct PictureParentControlSet {
     TfControls   tf_ctrls;
     GmControls   gm_ctrls;
     GM_LEVEL     gm_downsample_level;
+#if GM_PP
+    bool gm_pp_enabled;
+    bool gm_pp_detected; //gm detection enabled at the pre-processing level
+#endif
     CdefControls cdef_ctrls;
     // RC related variables
     int                             q_low;
@@ -1164,6 +1224,9 @@ typedef struct PictureParentControlSet {
     DGDetectorSeg *dg_detector; // dg detector segments control struct
 #if FTR_ROI
     SvtAv1RoiMapEvt *roi_map_evt;
+#endif
+#if OPT_TF_REF_PICS
+    uint32_t filt_to_unfilt_diff;
 #endif
 } PictureParentControlSet;
 
@@ -1268,7 +1331,10 @@ EbErrorType svt_aom_me_sb_results_ctor(MeSbResults               *obj_ptr,
                                        PictureControlSetInitData *init_data_ptr);
 
 extern Bool svt_aom_is_pic_skipped(PictureParentControlSet *pcs);
-
+#if GM_REFINFO
+void svt_aom_get_gm_needed_resolutions(uint8_t ds_lvl, bool *gm_need_full, bool *gm_need_quart,
+                                       bool *gm_need_sixteen);
+#endif
 #ifdef __cplusplus
 }
 #endif

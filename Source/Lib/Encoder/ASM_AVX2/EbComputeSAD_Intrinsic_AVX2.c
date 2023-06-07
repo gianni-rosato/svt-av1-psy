@@ -4971,7 +4971,9 @@ uint32_t svt_aom_sad_16bit_kernel_avx2(uint16_t *src, // input parameter, source
     }
     return sad;
 }
+#if !CLN_FUNC_DECL
 int svt_aom_fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
+#endif
 #define UPDATE_BEST_PME_32(s, k, offset)                                \
     tem_sum_1   = _mm_extract_epi32(s, k);                              \
     best_mv.col = mvx + (search_position_start_x + j + offset + k) * 8; \

@@ -13,8 +13,6 @@
 #define EbPredictionUnit_h
 
 #include "EbDefinitions.h"
-#include "EbSyntaxElements.h"
-#include "EbDefinitions.h"
 #include "EbMotionVectorUnit.h"
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +33,29 @@ typedef struct PredictionUnit {
     uint8_t    cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
     uint8_t    cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
 } PredictionUnit;
+#if OPT_CHILD_PCS
+typedef struct EcPredictionUnit {
+#if !CLN_MBMI_11
+    Mv mv[MAX_NUM_OF_REF_PIC_LIST]; // 16-bytes
+#endif
+    uint8_t inter_pred_direction_index;
+
+    // Intra Mode
+    int8_t angle_delta[PLANE_TYPES];
+#if !CLN_MBMI_9
+    UvPredictionMode intra_chroma_mode;
+#endif
+    // Inter Mode
+#if !CLN_MBMI_13
+    uint8_t ref_frame_type;
+#endif
+    MotionMode motion_mode;
+    uint16_t   num_proj_ref;
+    uint32_t   overlappable_neighbors[2];
+    uint8_t    cfl_alpha_idx; // Index of the alpha Cb and alpha Cr combination
+    uint8_t    cfl_alpha_signs; // Joint sign of alpha Cb and alpha Cr
+} EcPredictionUnit;
+#endif
 #pragma pack(pop)
 
 #ifdef __cplusplus

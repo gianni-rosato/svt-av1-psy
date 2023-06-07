@@ -791,7 +791,7 @@ extern "C" {
     RTCD_EXTERN void(*svt_av1_apply_filtering_highbd)(const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height, int ss_x, int ss_y, int strength, const int *blk_fw, int use_whole_blk, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
 
     struct MeContext;
-
+#if !CLN_TF
     RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise_fast)(
         struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
         int y_pre_stride, unsigned int block_width,
@@ -801,6 +801,7 @@ extern "C" {
         struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
         int y_pre_stride, unsigned int block_width,
         unsigned int block_height, uint32_t *y_accum, uint16_t *y_count, uint32_t encoder_bit_depth);
+#endif
 #if OPT_LD_TF
     RTCD_EXTERN void(*svt_av1_apply_zz_based_temporal_filter_planewise_medium)(
         struct MeContext *me_ctx, const uint8_t *y_pre,
@@ -831,7 +832,7 @@ extern "C" {
         const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
         unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
         uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
-
+#if !CLN_TF
     RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise)(
         struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
         const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
@@ -847,6 +848,7 @@ extern "C" {
         unsigned int block_height, int ss_x, int ss_y,
         uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
         uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
+#endif
     struct MeContext;
     void svt_aom_get_final_filtered_pixels_c(struct MeContext *me_ctx, EbByte *src_center_ptr_start, uint16_t **altref_buffer_highbd_start, uint32_t **accum, uint16_t **count, const uint32_t *stride, int blk_y_src_offset, int blk_ch_src_offset, uint16_t blk_width_ch, uint16_t blk_height_ch, Bool is_highbd);
     void svt_aom_get_final_filtered_pixels_sse4_1(struct MeContext *me_ctx, EbByte *src_center_ptr_start, uint16_t **altref_buffer_highbd_start, uint32_t **accum, uint16_t **count, const uint32_t *stride, int blk_y_src_offset, int blk_ch_src_offset, uint16_t blk_width_ch, uint16_t blk_height_ch, Bool is_highbd);
@@ -902,10 +904,12 @@ extern "C" {
     int32_t svt_estimate_noise_fp16_c(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
     RTCD_EXTERN int32_t (*svt_estimate_noise_highbd_fp16)(const uint16_t *src, int width, int height, int stride, int bd);
     int32_t svt_estimate_noise_highbd_fp16_c(const uint16_t *src, int width, int height, int stride, int bd);
+#if !CLN_TF
     RTCD_EXTERN double(*svt_estimate_noise)(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
     double svt_estimate_noise_c(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
     RTCD_EXTERN double (*svt_estimate_noise_highbd)(const uint16_t *src, int width, int height, int stride, int bd);
     double svt_estimate_noise_highbd_c(const uint16_t *src, int width, int height, int stride, int bd);
+#endif
     RTCD_EXTERN void(*svt_copy_mi_map_grid)(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols);
     void svt_copy_mi_map_grid_c(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols);
     RTCD_EXTERN void (*svt_av1_add_block_observations_internal)(uint32_t n, const double val, const double recp_sqr_norm, double *buffer, double *buffer_norm, double *b, double *A);
@@ -1690,7 +1694,7 @@ extern "C" {
         uint64_t *mean_of_squared8x8_blocks);
     uint32_t svt_aom_sad_16bit_kernel_avx2(uint16_t *src, uint32_t src_stride, uint16_t *ref,
         uint32_t ref_stride, uint32_t height, uint32_t width);
-
+#if !CLN_TF
     void svt_av1_apply_temporal_filter_planewise_fast_sse4_1(
             struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
             int y_pre_stride, unsigned int block_width,
@@ -1708,6 +1712,8 @@ extern "C" {
         struct MeContext *me_ctx, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
         int y_pre_stride, unsigned int block_width,
         unsigned int block_height, uint32_t *y_accum, uint16_t *y_count, uint32_t encoder_bit_depth);
+#endif
+
 #if OPT_LD_TF
     void svt_av1_apply_zz_based_temporal_filter_planewise_medium_sse4_1(
         struct MeContext *me_ctx, const uint8_t *y_pre,
@@ -1759,7 +1765,7 @@ extern "C" {
         const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
         unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
         uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
-
+#if !CLN_TF
     void svt_av1_apply_temporal_filter_planewise_sse4_1(
         struct MeContext *me_ctx, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
         int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
@@ -1788,6 +1794,8 @@ extern "C" {
         unsigned int block_height, int ss_x, int ss_y,
         uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
         uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
+#endif
+
     uint32_t svt_aom_variance_highbd_sse4_1(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
                               int w, int h, uint32_t *sse);
     uint32_t svt_aom_variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
@@ -1798,8 +1806,10 @@ extern "C" {
 
     int32_t svt_estimate_noise_fp16_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
     int32_t svt_estimate_noise_highbd_fp16_avx2(const uint16_t *src, int width, int height, int stride, int bd);
+#if !CLN_TF
     double svt_estimate_noise_avx2(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
     double svt_estimate_noise_highbd_avx2(const uint16_t *src, int width, int height, int stride, int bd);
+#endif
     void svt_copy_mi_map_grid_avx2(ModeInfo **mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols);
     void svt_av1_add_block_observations_internal_avx2(uint32_t n, const double val, const double recp_sqr_norm, double *buffer, double *buffer_norm, double *b, double *A);
     void svt_av1_pointwise_multiply_avx2(const float *a, float *b, float *c, double *b_d, double *c_d, int32_t n);

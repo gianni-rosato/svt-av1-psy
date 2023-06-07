@@ -239,7 +239,7 @@ static void palette_mode_info(ParseCtxt *parse_ctxt, PartitionInfo *pi) {
     EbColorConfig       *color_info = &parse_ctxt->seq_header->color_config;
     const int            num_planes = color_info->mono_chrome ? 1 : MAX_MB_PLANE;
     BlockModeInfo *const mbmi       = pi->mi;
-    const BlockSize      bsize      = mbmi->sb_type;
+    const BlockSize      bsize      = mbmi->bsize;
     assert(allow_palette(parse_ctxt->frame_header->allow_screen_content_tools, bsize));
     const int bsize_ctx = get_palette_bsize_ctx(bsize);
 
@@ -290,7 +290,7 @@ static INLINE int filter_intra_allowed_bsize(ParseCtxt *parse_ctxt, BlockSize bs
 
 static INLINE int filter_intra_allowed(ParseCtxt *parse_ctxt, const BlockModeInfo *mbmi) {
     return mbmi->mode == DC_PRED && mbmi->palette_size[0] == 0 &&
-        filter_intra_allowed_bsize(parse_ctxt, mbmi->sb_type);
+        filter_intra_allowed_bsize(parse_ctxt, mbmi->bsize);
 }
 
 static void filter_intra_mode_info(ParseCtxt *parse_ctxt, PartitionInfo *xd) {
@@ -301,7 +301,7 @@ static void filter_intra_mode_info(ParseCtxt *parse_ctxt, PartitionInfo *xd) {
 
     if (filter_intra_allowed(parse_ctxt, mbmi)) {
         filter_intra_mode_info->use_filter_intra = svt_read_symbol(
-            r, frm_ctx->filter_intra_cdfs[mbmi->sb_type], 2, ACCT_STR);
+            r, frm_ctx->filter_intra_cdfs[mbmi->bsize], 2, ACCT_STR);
         if (filter_intra_mode_info->use_filter_intra) {
             filter_intra_mode_info->filter_intra_mode = svt_read_symbol(
                 r, frm_ctx->filter_intra_mode_cdf, FILTER_INTRA_MODES, ACCT_STR);
@@ -343,8 +343,8 @@ static void read_cdef(ParseCtxt *parse_ctxt, PartitionInfo *xd) {
             r, parse_ctxt->frame_header->cdef_params.cdef_bits, ACCT_STR);
         /* Populate to nearby 64x64s if needed based on h4 & w4 */
         if (parse_ctxt->seq_header->sb_size == BLOCK_128X128) {
-            int w4 = mi_size_wide[mbmi->sb_type];
-            int h4 = mi_size_high[mbmi->sb_type];
+            int w4 = mi_size_wide[mbmi->bsize];
+            int h4 = mi_size_high[mbmi->bsize];
             for (int i = row; i < row + h4; i += cdf_size) {
                 for (int j = col; j < col + w4; j += cdf_size) {
                     cdef_strength[!!(j & cdf_size) + 2 * !!(i & cdf_size)] = cdef_strength[index];
@@ -357,7 +357,7 @@ static void read_cdef(ParseCtxt *parse_ctxt, PartitionInfo *xd) {
 static void read_delta_qindex(ParseCtxt *parse_ctxt, BlockModeInfo *const mbmi, int32_t *cur_qind,
                               int32_t *sb_delta_q) {
     SvtReader    *r              = &parse_ctxt->r;
-    BlockSize     bsize          = mbmi->sb_type;
+    BlockSize     bsize          = mbmi->bsize;
     DeltaQParams *delta_q_params = &parse_ctxt->frame_header->delta_q_params;
 
     if ((bsize != parse_ctxt->seq_header->sb_size || mbmi->skip == 0)) {
@@ -383,7 +383,7 @@ static int read_delta_lflevel(ParseCtxt *parse_ctxt, AomCdfProb *cdf, BlockModeI
     SvtReader      *r                     = &parse_ctxt->r;
     int             tmp_lvl               = 0;
     int             reduced_delta_lflevel = 0;
-    const BlockSize bsize                 = mbmi->sb_type;
+    const BlockSize bsize                 = mbmi->bsize;
 
     if (bsize == parse_ctxt->seq_header->sb_size && mbmi->skip)
         return delta_lf;
@@ -421,12 +421,12 @@ static int read_skip(ParseCtxt *parse_ctxt, PartitionInfo *xd, int segment_id) {
 int read_skip_mode(ParseCtxt *parse_ctxt, PartitionInfo *xd, int segment_id) {
     SvtReader          *r   = &parse_ctxt->r;
     SegmentationParams *seg = &parse_ctxt->frame_header->segmentation_params;
-    assert(xd->mi->sb_type < BlockSizeS_ALL);
+    assert(xd->mi->bsize < BlockSizeS_ALL);
     if (svt_aom_seg_feature_active(seg, segment_id, SEG_LVL_SKIP) ||
         svt_aom_seg_feature_active(seg, segment_id, SEG_LVL_REF_FRAME) ||
         svt_aom_seg_feature_active(seg, segment_id, SEG_LVL_GLOBALMV) ||
         !parse_ctxt->frame_header->skip_mode_params.skip_mode_flag ||
-        block_size_wide[xd->mi->sb_type] < 8 || block_size_high[xd->mi->sb_type] < 8) {
+        block_size_wide[xd->mi->bsize] < 8 || block_size_high[xd->mi->bsize] < 8) {
         return 0;
     }
     int above_skip_mode = xd->above_mbmi ? xd->above_mbmi->skip_mode : 0;
@@ -567,7 +567,7 @@ static int intra_segment_id(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Part
 
 static INLINE void update_palette_context(ParseCtxt *parse_ctx, int mi_row, int mi_col,
                                           BlockModeInfo *mi) {
-    BlockSize             bsize     = mi->sb_type;
+    BlockSize             bsize     = mi->bsize;
     ParseAboveNbr4x4Ctxt *above_ctx = parse_ctx->parse_above_nbr4x4_ctxt;
     ParseLeftNbr4x4Ctxt  *left_ctx  = parse_ctx->parse_left_nbr4x4_ctxt;
     const int             bw        = mi_size_wide[bsize];
@@ -607,7 +607,7 @@ static void intra_frame_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt
     BlockModeInfo *const      mbmi           = xd->mi;
     const BlockModeInfo      *above_mi       = xd->above_mbmi;
     const BlockModeInfo      *left_mi        = xd->left_mbmi;
-    const BlockSize           bsize          = mbmi->sb_type;
+    const BlockSize           bsize          = mbmi->bsize;
     SegmentationParams *const seg            = &parse_ctxt->frame_header->segmentation_params;
     EbColorConfig             color_config   = parse_ctxt->seq_header->color_config;
     uint8_t                  *lossless_array = &parse_ctxt->frame_header->lossless_array[0];
@@ -738,8 +738,8 @@ static int read_inter_segment_id(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
     uint32_t             mi_row       = xd->mi_row;
     uint32_t             mi_col       = xd->mi_col;
     const int            mi_offset    = mi_row * frame_header->mi_cols + mi_col;
-    const uint32_t       bw           = mi_size_wide[mbmi->sb_type];
-    const uint32_t       bh           = mi_size_high[mbmi->sb_type];
+    const uint32_t       bw           = mi_size_wide[mbmi->bsize];
+    const uint32_t       bh           = mi_size_high[mbmi->bsize];
 
     const int x_mis = AOMMIN(frame_header->mi_cols - mi_col, bw);
     const int y_mis = AOMMIN(frame_header->mi_rows - mi_row, bh);
@@ -755,7 +755,7 @@ static int read_inter_segment_id(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
                         y_mis);
         return dec_handle->cm.last_frame_seg_map
             ? svt_aom_get_segment_id(
-                  frame_header, dec_handle->cm.last_frame_seg_map, mbmi->sb_type, mi_row, mi_col)
+                  frame_header, dec_handle->cm.last_frame_seg_map, mbmi->bsize, mi_row, mi_col)
             : 0;
     }
 
@@ -779,11 +779,8 @@ static int read_inter_segment_id(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
         mbmi->seg_id_predicted = svt_read_symbol(r, segp->pred_cdf[ctx], 2, ACCT_STR);
         if (mbmi->seg_id_predicted) {
             segment_id = dec_handle->cm.last_frame_seg_map
-                ? svt_aom_get_segment_id(frame_header,
-                                         dec_handle->cm.last_frame_seg_map,
-                                         mbmi->sb_type,
-                                         mi_row,
-                                         mi_col)
+                ? svt_aom_get_segment_id(
+                      frame_header, dec_handle->cm.last_frame_seg_map, mbmi->bsize, mi_row, mi_col)
                 : 0;
         } else
             segment_id = read_segment_id(dec_handle, parse_ctxt, xd, 0);
@@ -1096,7 +1093,7 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
 static void intra_block_mode_info(ParseCtxt *parse_ctxt, PartitionInfo *xd) {
     SvtReader      *r     = &parse_ctxt->r;
     BlockModeInfo  *mbmi  = xd->mi;
-    const BlockSize bsize = mbmi->sb_type;
+    const BlockSize bsize = mbmi->bsize;
     mbmi->ref_frame[0]    = INTRA_FRAME;
     mbmi->ref_frame[1]    = NONE_FRAME;
 
@@ -1247,14 +1244,14 @@ static void inter_copy_frame_mvs(EbDecHandle *dec_handle, BlockModeInfo *mi, int
 static void mode_info(EbDecHandle *dec_handle, PartitionInfo *part_info, ParseCtxt *parse_ctxt) {
     BlockModeInfo *mi         = part_info->mi;
     FrameHeader   *frame_info = parse_ctxt->frame_header;
-    //BlockSize bsize = mi->sb_type
+    //BlockSize bsize = mi->bsize
     mi->use_intrabc = 0;
     mi->segment_id  = 0;
 
     uint16_t       mi_row = part_info->mi_row;
     uint16_t       mi_col = part_info->mi_col;
-    const uint32_t bw     = mi_size_wide[mi->sb_type];
-    const uint32_t bh     = mi_size_high[mi->sb_type];
+    const uint32_t bw     = mi_size_wide[mi->bsize];
+    const uint32_t bh     = mi_size_high[mi->bsize];
     const int      x_mis  = AOMMIN(bw, frame_info->mi_cols - mi_col);
     const int      y_mis  = AOMMIN(bh, frame_info->mi_rows - mi_row);
 
@@ -1270,7 +1267,7 @@ static void mode_info(EbDecHandle *dec_handle, PartitionInfo *part_info, ParseCt
 TxSize read_tx_size(ParseCtxt *parse_ctxt, PartitionInfo *xd, int allow_select) {
     BlockModeInfo  *mbmi    = xd->mi;
     const TxMode    tx_mode = parse_ctxt->frame_header->tx_mode;
-    const BlockSize bsize   = xd->mi->sb_type;
+    const BlockSize bsize   = xd->mi->bsize;
     if (parse_ctxt->frame_header->lossless_array[mbmi->segment_id])
         return TX_4X4;
 
@@ -1373,7 +1370,7 @@ static int get_txfm_split_ctx(PartitionInfo *pi, ParseCtxt *parse_ctx, TxSize tx
     int left =
         parse_ctx->parse_left_nbr4x4_ctxt->left_tx_ht[pi->mi_row - parse_ctx->sb_row_mi + blk_row] <
         tx_size_high[tx_size];
-    int size = MIN(64, MAX(block_size_wide[pi->mi->sb_type], block_size_high[pi->mi->sb_type]));
+    int size = MIN(64, MAX(block_size_wide[pi->mi->bsize], block_size_high[pi->mi->bsize]));
 
     TxSize max_tx_size  = find_tx_size(size, size);
     TxSize tx_sz_sqr_up = txsize_sqr_up_map[tx_size];
@@ -1383,7 +1380,7 @@ static int get_txfm_split_ctx(PartitionInfo *pi, ParseCtxt *parse_ctx, TxSize tx
 static void read_var_tx_size(ParseCtxt *parse_ctx, PartitionInfo *pi, TxSize tx_size, int blk_row,
                              int blk_col, int depth, int *num_luma_tus) {
     BlockModeInfo  *mbmi            = pi->mi;
-    const BlockSize bsize           = mbmi->sb_type;
+    const BlockSize bsize           = mbmi->bsize;
     const int       max_blocks_high = max_block_high(pi, bsize, 0);
     const int       max_blocks_wide = max_block_wide(pi, bsize, 0);
     int             txfm_split;
@@ -1575,8 +1572,8 @@ static void read_block_tx_size(ParseCtxt *parse_ctx, PartitionInfo *part_info, B
     } else {
         TxSize tx_size = read_tx_size(parse_ctx, part_info, !mbmi->skip || !inter_block_tx);
 
-        int b4_w = mi_size_wide[mbmi->sb_type];
-        int b4_h = mi_size_high[mbmi->sb_type];
+        int b4_w = mi_size_wide[mbmi->bsize];
+        int b4_h = mi_size_high[mbmi->bsize];
 
         set_txfm_ctxs(
             parse_ctx, tx_size, b4_w, b4_h, mbmi->skip && is_inter_block_dec(mbmi), part_info);
@@ -1697,9 +1694,9 @@ void update_coeff_ctx(ParseCtxt *parse_ctxt, int plane, PartitionInfo *pi, TxSiz
     const int txs_high = tx_size_high_unit[tx_size];
 
     if (pi->mb_to_right_edge < 0) {
-        int       plane_bsize    = (pi->mi->sb_type == BLOCK_INVALID)
+        int       plane_bsize    = (pi->mi->bsize == BLOCK_INVALID)
                      ? BLOCK_INVALID
-                     : ss_size_lookup[pi->mi->sb_type][subx][suby];
+                     : ss_size_lookup[pi->mi->bsize][subx][suby];
         const int blocks_wide    = max_block_wide(pi, plane_bsize, subx);
         const int above_contexts = AOMMIN(txs_wide, (blocks_wide - above_off));
 
@@ -1710,9 +1707,9 @@ void update_coeff_ctx(ParseCtxt *parse_ctxt, int plane, PartitionInfo *pi, TxSiz
     }
 
     if (pi->mb_to_bottom_edge < 0) {
-        int       plane_bsize   = (pi->mi->sb_type == BLOCK_INVALID)
+        int       plane_bsize   = (pi->mi->bsize == BLOCK_INVALID)
                     ? BLOCK_INVALID
-                    : ss_size_lookup[pi->mi->sb_type][subx][suby];
+                    : ss_size_lookup[pi->mi->bsize][subx][suby];
         const int blocks_high   = max_block_high(pi, plane_bsize, suby);
         const int left_contexts = AOMMIN(txs_high, (blocks_high - left_off));
 
@@ -2253,7 +2250,7 @@ static uint16_t parse_transform_block(ParseCtxt *parse_ctx, PartitionInfo *pi, i
     uint16_t eob = 0;
     TXB_CTX  txb_ctx;
 
-    BlockSize bsize = pi->mi->sb_type;
+    BlockSize bsize = pi->mi->bsize;
     int plane_bsize = bsize == BLOCK_INVALID ? BLOCK_INVALID : ss_size_lookup[bsize][sub_x][sub_y];
 
     int txb_w_unit = tx_size_wide_unit[tx_size];
@@ -2261,18 +2258,18 @@ static uint16_t parse_transform_block(ParseCtxt *parse_ctx, PartitionInfo *pi, i
 
     if (pi->mb_to_right_edge < 0) {
         const int blocks_wide = max_block_wide(pi,
-                                               pi->mi->sb_type == BLOCK_INVALID
+                                               pi->mi->bsize == BLOCK_INVALID
                                                    ? BLOCK_INVALID
-                                                   : ss_size_lookup[pi->mi->sb_type][sub_x][sub_y],
+                                                   : ss_size_lookup[pi->mi->bsize][sub_x][sub_y],
                                                sub_x);
         txb_w_unit            = AOMMIN(txb_w_unit, (blocks_wide - blk_col));
     }
 
     if (pi->mb_to_bottom_edge < 0) {
         const int blocks_high = max_block_high(pi,
-                                               pi->mi->sb_type == BLOCK_INVALID
+                                               pi->mi->bsize == BLOCK_INVALID
                                                    ? BLOCK_INVALID
-                                                   : ss_size_lookup[pi->mi->sb_type][sub_x][sub_y],
+                                                   : ss_size_lookup[pi->mi->bsize][sub_x][sub_y],
                                                sub_y);
         txb_h_unit            = AOMMIN(txb_h_unit, (blocks_high - blk_row));
     }
@@ -2482,7 +2479,7 @@ static void parse_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, uint32_t 
         part_info.left_mbmi = svt_aom_get_left_mode_info(dec_handle, mi_row, mi_col, sb_info);
     else
         part_info.left_mbmi = NULL;
-    mode->sb_type = subsize;
+    mode->bsize = subsize;
 
     mode_info(dec_handle, &part_info, parse_ctx);
 
@@ -2498,7 +2495,7 @@ static void parse_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, uint32_t 
 
     if (mode->skip) {
         int num_planes = dec_handle->seq_header.color_config.mono_chrome ? 1 : MAX_MB_PLANE;
-        reset_skip_context(parse_ctx, &part_info, mode->sb_type, num_planes);
+        reset_skip_context(parse_ctx, &part_info, mode->bsize, num_planes);
     }
     parse_residual(parse_ctx, &part_info, subsize);
 

@@ -161,7 +161,7 @@ static INLINE CflAllowedType is_cfl_allowed_with_frame_header(const PartitionInf
 
 {
     const BlockModeInfo *mbmi  = xd->mi;
-    const BlockSize      bsize = mbmi->sb_type;
+    const BlockSize      bsize = mbmi->bsize;
     assert(bsize < BlockSizeS_ALL);
     if (fh->lossless_array[mbmi->segment_id]) {
         // In lossless, CfL is available when the partition size is equal to the
@@ -701,7 +701,7 @@ void svt_aom_svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize
 
     const int angle_delta = mbmi->angle_delta[plane != AOM_PLANE_Y];
 
-    BlockSize bsize = mbmi->sb_type;
+    BlockSize bsize = mbmi->bsize;
     //const struct macroblockd_plane *const pd = &xd->plane[plane];
     const int txw       = tx_size_wide_unit[tx_size];
     const int txh       = tx_size_high_unit[tx_size];

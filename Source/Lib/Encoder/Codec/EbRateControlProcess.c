@@ -808,11 +808,13 @@ static int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ra
     return qindex;
 }
 static const double r0_weight[3] = {0.75 /* I_SLICE */, 0.9 /* BASE */, 1 /* NON-BASE */};
+#if !OPT_STARTUP_MG
 static const double r0_weight_startup_mg[3][3] = {
     {0.5 /* I_SLICE */, 0.6 /* BASE */, 1 /* NON-BASE */}, // HL2
     {0.5 /* I_SLICE */, 0.6 /* BASE */, 1 /* NON-BASE */}, // HL3
     {0.75 /* I_SLICE */, 0.5 /* BASE */, 1 /* NON-BASE */} // HL4
 };
+#endif
 /******************************************************
  * crf_qindex_calc
  * Assign the q_index per frame.
@@ -884,6 +886,7 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
         const unsigned int r0_weight_idx = !frame_is_intra_only(ppcs) + !!temporal_layer;
         assert(r0_weight_idx <= 2);
         double weight = r0_weight[r0_weight_idx];
+#if !OPT_STARTUP_MG
         if (pcs->scs->static_config.startup_mg_size > 0) {
             assert(pcs->scs->static_config.startup_mg_size >= 2 &&
                    pcs->scs->static_config.startup_mg_size <= 4);
@@ -899,6 +902,7 @@ static int crf_qindex_calc(PictureControlSet *pcs, RATE_CONTROL *rc, int qindex)
                 }
             }
         }
+#endif
         // adjust the weight for base layer frames with shorter minigops
         if (scs->lad_mg && !frame_is_intra_only(ppcs) &&
             (ppcs->tpl_group_size < (uint32_t)(2 << pcs->ppcs->hierarchical_levels)))
@@ -3462,8 +3466,14 @@ void *svt_aom_rate_control_kernel(void *input_ptr) {
                         svt_aom_init_resize_picture(scs, pcs->ppcs);
                         if (pcs->ppcs->frame_superres_enabled || pcs->ppcs->frame_resize_enabled) {
                             // reset gm based on super-res on/off
+#if FIX_GM_PP
+                            bool super_res_off = pcs->ppcs->frame_superres_enabled == FALSE &&
+                                scs->static_config.resize_mode == RESIZE_NONE;
+                            svt_aom_set_gm_controls(
+                                pcs->ppcs, svt_aom_derive_gm_level(pcs->ppcs, super_res_off));
+#else
                             svt_aom_set_gm_controls(pcs->ppcs, svt_aom_derive_gm_level(pcs->ppcs));
-
+#endif
                             // Initialize Segments as picture decision process
                             pcs->ppcs->me_segments_completion_count = 0;
                             pcs->ppcs->me_processed_b64_count       = 0;

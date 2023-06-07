@@ -85,6 +85,31 @@ void  svt_aom_free(void *memblk);
 // The 's' values are calculated based on original 'r' and 'e' values in the
 // spec using GenSgrprojVtable().
 // Note: Setting r = 0 skips the filter; with corresponding s = -1 (invalid).
+#if OPT_SG
+//n = (2 * r + 1) * (2 * r + 1);
+//n2e = n * n * ep;
+//s = (((1 << SGRPROJ_MTABLE_BITS) + n2e / 2) / n2e);
+
+const SgrParamsType svt_aom_eb_sgr_params[SGRPROJ_PARAMS] = {
+    //      r0 e0  r1 e1
+    {{2, 1}, {140, 3236}}, // 0  { 2, 12, 1, 4  }
+    {{2, 1}, {112, 2158}}, // 1  { 2, 15, 1, 6  }
+    {{2, 1}, {93, 1618}}, // 2  { 2, 18, 1, 8  }
+    {{2, 1}, {80, 1438}}, // 3  { 2, 21, 1, 9  }
+    {{2, 1}, {70, 1295}}, // 4  { 2, 24, 1, 10 }
+    {{2, 1}, {58, 1177}}, // 5  { 2, 29, 1, 11 }
+    {{2, 1}, {47, 1079}}, // 6  { 2, 36, 1, 12 }
+    {{2, 1}, {37, 996}}, // 7  { 2, 45, 1, 13 }
+    {{2, 1}, {30, 925}}, // 8  { 2, 56, 1, 14 }
+    {{2, 1}, {25, 863}}, // 9  { 2, 68, 1, 15 }
+    {{0, 1}, {-1, 2589}}, // 10 { 0, 0,  1, 5  }
+    {{0, 1}, {-1, 1618}}, // 11 { 0, 0,  1, 8  }
+    {{0, 1}, {-1, 1177}}, // 12 { 0, 0,  1, 11 }
+    {{0, 1}, {-1, 925}}, // 13 { 0, 0,  1, 14 }
+    {{2, 0}, {56, -1}}, // 14 { 2, 30, 0, 0  }
+    {{2, 0}, {22, -1}}, // 15 { 2, 75, 0, 0  }
+};
+#else
 const SgrParamsType svt_aom_eb_sgr_params[SGRPROJ_PARAMS] = {
     {{2, 1}, {140, 3236}},
     {{2, 1}, {112, 2158}},
@@ -103,7 +128,7 @@ const SgrParamsType svt_aom_eb_sgr_params[SGRPROJ_PARAMS] = {
     {{2, 0}, {56, -1}},
     {{2, 0}, {22, -1}},
 };
-
+#endif
 Av1PixelRect svt_aom_whole_frame_rect(FrameSize *frm_size, int32_t sub_x, int32_t sub_y,
                                       int32_t is_uv) {
     Av1PixelRect rect;
@@ -1248,8 +1273,13 @@ static void filter_frame_on_unit(const RestorationTileLimits *limits, const Av1P
                                          rsi->optimized_lr);
 }
 
+#if MEM_SG
+void svt_av1_loop_restoration_filter_frame(int32_t *rst_tmpbuf, Yv12BufferConfig *frame,
+                                           Av1Common *cm, int32_t optimized_lr) {
+#else
 void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
                                            int32_t optimized_lr) {
+#endif
     // assert(!cm->all_lossless);
     const int32_t num_planes = 3; // av1_num_planes(cm);
     typedef void (*CopyFun)(const Yv12BufferConfig *src, Yv12BufferConfig *dst);
@@ -1308,8 +1338,11 @@ void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *c
         ctxt.dst8        = dst->buffers[plane];
         ctxt.data_stride = frame->strides[is_uv];
         ctxt.dst_stride  = dst->strides[is_uv];
-        ctxt.tmpbuf      = cm->rst_tmpbuf;
-
+#if MEM_SG
+        ctxt.tmpbuf = rst_tmpbuf;
+#else
+        ctxt.tmpbuf = cm->rst_tmpbuf;
+#endif
         svt_aom_foreach_rest_unit_in_frame(
             cm, plane, filter_frame_on_tile, filter_frame_on_unit, &ctxt);
 

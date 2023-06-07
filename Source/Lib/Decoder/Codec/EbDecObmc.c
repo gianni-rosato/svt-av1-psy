@@ -273,7 +273,7 @@ static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHa
     // Adjust mb_to_bottom_edge to have the correct value for the OBMC
     // prediction block. This is half the height of the original block,
     // except for 128-wide blocks, where we only use a height of 32.
-    BlockSize bsize            = pi->mi->sb_type;
+    BlockSize bsize            = pi->mi->bsize;
     int       bh4              = mi_size_high[bsize];
     int       bw4              = mi_size_wide[bsize];
     int       currblock_height = bh4 * MI_SIZE;
@@ -315,7 +315,7 @@ static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHa
         BlockModeInfo *above_mi = svt_aom_get_cur_mode_info(
             dec_handle, mi_row - 1, above_mi_col, NULL);
 
-        mi_step = AOMMIN(mi_size_wide[above_mi->sb_type], mi_size_wide[BLOCK_64X64]);
+        mi_step = AOMMIN(mi_size_wide[above_mi->bsize], mi_size_wide[BLOCK_64X64]);
 
         // If we're considering a block with width 4, it should be treated as
         // half of a pair of blocks with chroma information in the second. Move
@@ -442,7 +442,7 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
     // Adjust mb_to_right_edge to have the correct value for the OBMC
     // prediction block. This is half the width of the original block,
     // except for 128-wide blocks, where we only use a width of 32.
-    BlockSize bsize           = pi->mi->sb_type;
+    BlockSize bsize           = pi->mi->bsize;
     int       bh4             = mi_size_high[bsize];
     int       bw4             = mi_size_wide[bsize];
     int       currblock_width = bw4 * MI_SIZE;
@@ -483,7 +483,7 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
          left_mi_row += mi_step) {
         BlockModeInfo *left_mi = svt_aom_get_cur_mode_info(
             dec_handle, left_mi_row, mi_col - 1, NULL);
-        mi_step = AOMMIN(mi_size_high[left_mi->sb_type], mi_size_high[BLOCK_64X64]);
+        mi_step = AOMMIN(mi_size_high[left_mi->bsize], mi_size_high[BLOCK_64X64]);
         if (mi_step == 1) {
             left_mi = svt_aom_get_cur_mode_info(dec_handle, left_mi_row | 1, mi_col - 1, NULL);
             mi_step = 2;

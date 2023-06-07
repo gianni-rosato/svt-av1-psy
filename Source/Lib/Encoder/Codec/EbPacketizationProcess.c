@@ -519,8 +519,13 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
                     svt_aom_init_resize_picture(scs, ppcs);
 
                     // reset gm based on super-res on/off
+#if FIX_GM_PP
+                    bool super_res_off = ppcs->frame_superres_enabled == FALSE &&
+                        scs->static_config.resize_mode == RESIZE_NONE;
+                    svt_aom_set_gm_controls(ppcs, svt_aom_derive_gm_level(ppcs, super_res_off));
+#else
                     svt_aom_set_gm_controls(ppcs, svt_aom_derive_gm_level(ppcs));
-
+#endif
                     // Initialize Segments as picture decision process
                     ppcs->me_segments_completion_count = 0;
                     ppcs->me_processed_b64_count       = 0;
@@ -648,7 +653,10 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
                     EB_FREE_ARRAY(pcs->tile_tok[0][0]);
             }
         }
-
+#if OPT_TF_REF_PICS
+        else if (!scs->static_config.stat_report)
+            free_temporal_filtering_buffer(pcs, scs);
+#endif
         //****************************************************
         // Input Entropy Results into Reordering Queue
         //****************************************************

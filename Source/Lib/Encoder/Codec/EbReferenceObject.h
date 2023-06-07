@@ -69,6 +69,9 @@ typedef struct EbReferenceObject {
 typedef struct EbReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
     int8_t                      hbd_md;
+#if FIX_GM_CI
+    EbSvtAv1EncConfiguration *static_config;
+#endif
 } EbReferenceObjectDescInitData;
 
 typedef struct EbPaReferenceObject {
