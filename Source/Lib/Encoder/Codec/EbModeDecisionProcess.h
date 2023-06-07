@@ -1322,7 +1322,7 @@ typedef struct ModeDecisionContext {
     uint8_t         inject_new_warp;
     TxShortcutCtrls tx_shortcut_ctrls;
     // [TOTAL_REFS_PER_FRAME + 1]
-    uint64_t svt_aom_estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES];
+    uint64_t estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES];
     // Maximum number of candidates MD can support
     uint32_t max_nics;
     // Maximum number of candidates MD can support

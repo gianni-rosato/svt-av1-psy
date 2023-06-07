@@ -10219,11 +10219,11 @@ static void estimate_ref_frames_num_bits(struct ModeDecisionContext *ctx, Pictur
         //single ref/list
         if (rf[1] == NONE_FRAME) {
             MvReferenceFrame ref_frame_type = rf[0];
-            ctx->svt_aom_estimate_ref_frames_num_bits[ref_frame_type] =
+            ctx->estimate_ref_frames_num_bits[ref_frame_type] =
                 estimate_ref_frame_type_bits(ctx, ctx->blk_ptr, ref_frame_type, 0) +
                 comp_inter_fac_bits_uni;
         } else {
-            ctx->svt_aom_estimate_ref_frames_num_bits[ref_pair] =
+            ctx->estimate_ref_frames_num_bits[ref_pair] =
                 estimate_ref_frame_type_bits(ctx, ctx->blk_ptr, ref_pair, 1) +
                 comp_inter_fac_bits_bi;
         }
