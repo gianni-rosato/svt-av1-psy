@@ -102,10 +102,8 @@
 extern "C" {
 #endif
 
-int svt_av1_init_temporal_filtering(PictureParentControlSet  **pcs_list,
-                                    PictureParentControlSet   *centre_pcs,
-                                    MotionEstimationContext_t *me_context_ptr,
-                                    int32_t                    segment_index);
+EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **pcs_list, PictureParentControlSet *centre_pcs,
+                                            MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
 #if !CLN_TF
 void svt_av1_apply_temporal_filter_planewise_fast_c(struct MeContext *me_ctx, const uint8_t *y_src,
                                                     int y_src_stride, const uint8_t *y_pre,
