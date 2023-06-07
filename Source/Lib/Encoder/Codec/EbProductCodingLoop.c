@@ -3262,8 +3262,8 @@ static int md_subpel_search(
 }
 // Copy ME_MVs (generated @ PA) from input buffer (pcs-> .. ->me_results) to local
 // MD buffers (ctx->sb_me_mv) - simplified for LPD1
-void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBufferDesc *input_pic,
-                                  ModeDecisionContext *ctx) {
+static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBufferDesc *input_pic,
+                                         ModeDecisionContext *ctx) {
     // init best ME cost to MAX
     ctx->md_me_dist = (uint32_t)~0;
     for (uint32_t ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
@@ -3377,8 +3377,7 @@ void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBufferDesc *i
 }
 // Copy ME_MVs (generated @ PA) from input buffer (pcs-> .. ->me_results) to local
 // MD buffers (ctx->sb_me_mv)
-void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                        EbPictureBufferDesc *input_pic) {
+static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic) {
     const SequenceControlSet *scs = pcs->scs;
     derive_me_offsets(scs, pcs, ctx);
     uint8_t hbd_md = EB_8_BIT_MD;

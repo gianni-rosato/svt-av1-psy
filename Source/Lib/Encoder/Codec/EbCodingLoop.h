@@ -1183,8 +1183,6 @@ static const int32_t me_idx_128x128[4][BLOCK_MAX_COUNT_SB_128] = {
      75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84,
      84, 84, 84, 84, 84}};
 
-void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                        EbPictureBufferDesc *input_pic);
 void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *ctx,
                                   EbPictureBufferDesc *input_pic);
 #ifdef __cplusplus
