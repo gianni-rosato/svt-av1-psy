@@ -518,6 +518,16 @@ void SvtAv1E2ETestFramework::run_encode_process() {
 
                 // process the output buffer
                 if (return_error != EB_NoErrorEmptyQueue && enc_out) {
+#if OPT_LD_LATENCY2
+                    if (enc_out->flags & EB_BUFFERFLAG_EOS) {
+                        enc_file_eos = true;
+                        printf("Encoder EOS\n");
+                    } else {
+                        // send to reference decoder
+                        TimeAutoCount counter(CONFORMANCE, collect_);
+                        process_compress_data(enc_out);
+                    }
+#else
                     // send to reference decoder
                     TimeAutoCount counter(CONFORMANCE, collect_);
                     process_compress_data(enc_out);
@@ -525,6 +535,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                         enc_file_eos = true;
                         printf("Encoder EOS\n");
                     }
+#endif
                     // check if the process has encounter error, break out if
                     // true, like the recon frame does not match with decoded
                     // frame.

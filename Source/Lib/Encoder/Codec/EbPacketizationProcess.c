@@ -128,6 +128,11 @@ static uint32_t count_frames_in_next_tu(const EncodeContext *enc_ctx, uint32_t *
         //we have a td when we got a displable frame
         if (queue_entry_ptr->show_frame)
             break;
+#if OPT_LD_LATENCY2
+        if (output_stream_ptr->flags & EB_BUFFERFLAG_EOS)
+            break;
+
+#endif
     } while (i < PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
     return i;
 }
@@ -393,6 +398,53 @@ static void release_frames(EncodeContext *enc_ctx, int frames) {
     }
     enc_ctx->packetization_reorder_queue_head_index = get_reorder_queue_pos(enc_ctx, frames);
 }
+#if OPT_LD_LATENCY2
+// Release the pd_dpb and ref_pic_list at the end of the sequence
+void release_references_eos(SequenceControlSet *scs) {
+    EncodeContext *enc_ctx = scs->enc_ctx;
+    // At the end of the sequence release all the refs (needed for MacOS CI tests)
+    svt_block_on_mutex(enc_ctx->pd_dpb_mutex);
+    for (uint8_t i = 0; i < REF_FRAMES; i++) {
+        // Get the current entry at that spot in the DPB
+        PaReferenceEntry *input_entry = enc_ctx->pd_dpb[i];
+
+        // If DPB entry is occupied, release the current entry
+        if (input_entry->is_valid) {
+            // Release the entry at that DPB spot
+            // Release the nominal live_count value
+            svt_release_object(input_entry->input_object_ptr);
+
+            if (input_entry->y8b_wrapper) {
+                //y8b needs to get decremented at the same time of pa ref
+                svt_release_object(input_entry->y8b_wrapper);
+            }
+
+            input_entry->input_object_ptr = (EbObjectWrapper *)NULL;
+            input_entry->is_valid         = false;
+        }
+    }
+    svt_release_mutex(enc_ctx->pd_dpb_mutex);
+
+    svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
+    ReferenceQueueEntry *ref_entry = NULL;
+    for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
+        ref_entry = enc_ctx->ref_pic_list[i];
+        if (ref_entry->is_valid && ref_entry->reference_object_ptr) {
+            // Remove the entry & release the reference if there are no remaining references
+            // Release the nominal live_count value
+            svt_release_object(ref_entry->reference_object_ptr);
+            ref_entry->reference_object_ptr  = (EbObjectWrapper *)NULL;
+            ref_entry->reference_available   = FALSE;
+            ref_entry->is_ref                = FALSE;
+            ref_entry->is_valid              = false;
+            ref_entry->frame_context_updated = FALSE;
+            ref_entry->feedback_arrived      = FALSE;
+            svt_post_semaphore(scs->ref_buffer_available_semaphore);
+        }
+    }
+    svt_release_mutex(enc_ctx->ref_pic_list_mutex);
+}
+#endif
 
 inline static void clear_eos_flag(EbBufferHeaderType *output_stream_ptr) {
     output_stream_ptr->flags &= ~EB_BUFFERFLAG_EOS;
@@ -687,9 +739,11 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
         }
 
         output_stream_ptr->flags = 0;
+#if !OPT_LD_LATENCY2
         if (pcs->ppcs->end_of_sequence_flag) {
             output_stream_ptr->flags |= EB_BUFFERFLAG_EOS;
         }
+#endif
         output_stream_ptr->n_filled_len = 0;
         output_stream_ptr->pts          = pcs->ppcs->input_ptr->pts;
         // we output one temporal unit a time, so dts alwasy equals to pts.
@@ -871,9 +925,10 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
             enc_ctx->sc_frame_out++;
             svt_release_mutex(enc_ctx->sc_buffer_mutex);
         }
-
+#if !FIX_DEADLOCK
         // Post Rate Control Taks
         svt_post_full_object(rate_control_tasks_wrapper_ptr);
+#endif
         if (scs->enable_dec_order || (pcs->ppcs->is_ref == TRUE && pcs->ppcs->ref_pic_wrapper))
             // Post the Full Results Object
             svt_post_full_object(picture_manager_results_wrapper_ptr);
@@ -883,6 +938,10 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
         // Release the Parent PCS then the Child PCS
         assert(entropy_coding_results_ptr->pcs_wrapper->live_count == 1);
         svt_release_object(entropy_coding_results_ptr->pcs_wrapper); // Child
+#if FIX_DEADLOCK
+        // Post Rate Control Task. Be done at the end as RC might release ppcs
+        svt_post_full_object(rate_control_tasks_wrapper_ptr);
+#endif
         // Release the Entropy Coding Result
         svt_release_object(entropy_coding_results_wrapper_ptr);
 
@@ -891,6 +950,10 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
         //****************************************************
         // Look at head of queue and see if we got a td
         uint32_t frames, total_bytes;
+#if OPT_LD_LATENCY2
+        svt_block_on_mutex(enc_ctx->total_number_of_shown_frames_mutex);
+        Bool eos = false;
+#endif
         while ((frames = count_frames_in_next_tu(enc_ctx, &total_bytes))) {
             collect_frames_info(context_ptr, enc_ctx, frames);
             // last frame in a termporal unit is a displable frame. only the last frame has pts.
@@ -898,8 +961,40 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
             queue_entry_ptr           = get_reorder_queue_entry(enc_ctx, frames - 1);
             output_stream_wrapper_ptr = queue_entry_ptr->output_stream_wrapper_ptr;
             output_stream_ptr         = (EbBufferHeaderType *)output_stream_wrapper_ptr->object_ptr;
-            Bool eos                  = output_stream_ptr->flags & EB_BUFFERFLAG_EOS;
+#if OPT_LD_LATENCY2
+            eos = output_stream_ptr->flags & EB_BUFFERFLAG_EOS;
+#else
+            Bool eos = output_stream_ptr->flags & EB_BUFFERFLAG_EOS;
+#endif
+#if OPT_LD_LATENCY2
+            encode_tu(enc_ctx, frames, total_bytes, output_stream_ptr);
 
+            if (eos && queue_entry_ptr->has_show_existing)
+                clear_eos_flag(output_stream_ptr);
+
+            svt_post_full_object(output_stream_wrapper_ptr);
+            if (queue_entry_ptr->has_show_existing) {
+                EbObjectWrapper *existed = pop_undisplayed_frame(enc_ctx);
+                if (existed) {
+                    EbBufferHeaderType *existed_output_stream_ptr = (EbBufferHeaderType *)
+                                                                        existed->object_ptr;
+                    encode_show_existing(enc_ctx, queue_entry_ptr, existed_output_stream_ptr);
+                    if (eos)
+                        set_eos_flag(existed_output_stream_ptr);
+                    svt_post_full_object(existed);
+                }
+            }
+
+            if (queue_entry_ptr->show_frame)
+                enc_ctx->total_number_of_shown_frames++;
+            if (queue_entry_ptr->has_show_existing)
+                enc_ctx->total_number_of_shown_frames++;
+            eos = (enc_ctx->total_number_of_shown_frames == enc_ctx->terminating_picture_number + 1)
+                ? 1
+                : 0;
+            release_frames(enc_ctx, frames);
+
+#else
             encode_tu(enc_ctx, frames, total_bytes, output_stream_ptr);
 
             if (eos && queue_entry_ptr->has_show_existing)
@@ -918,7 +1013,22 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
                 }
             }
             release_frames(enc_ctx, frames);
+#endif
         }
+#if OPT_LD_LATENCY2
+        if (eos) {
+            EbObjectWrapper *tmp_out_str_wrp;
+            svt_get_empty_object(scs->enc_ctx->stream_output_fifo_ptr, &tmp_out_str_wrp);
+            EbBufferHeaderType *tmp_out_str = (EbBufferHeaderType *)tmp_out_str_wrp->object_ptr;
+
+            tmp_out_str->flags        = EB_BUFFERFLAG_EOS;
+            tmp_out_str->n_filled_len = 0;
+
+            svt_post_full_object(tmp_out_str_wrp);
+            release_references_eos(scs);
+        }
+        svt_release_mutex(enc_ctx->total_number_of_shown_frames_mutex);
+#endif
     }
     return NULL;
 }

@@ -389,6 +389,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
 
             // Overlay pics should be NREF
             if (pcs->is_ref) {
+#if OPT_LD_LATENCY2
+                svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
                 for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
                     ref_entry = enc_ctx->ref_pic_list[i];
                     if (!ref_entry->is_valid) {
@@ -419,6 +422,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                                     MAX_ELAPSED_IDR_COUNT),
                                    enc_ctx->app_callback_ptr,
                                    EB_ENC_PM_ERROR6);
+#if OPT_LD_LATENCY2
+                svt_release_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
             }
             break;
 
@@ -429,6 +435,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
             ((EbReferenceObject *)input_pic_demux->ref_pic_wrapper->object_ptr)
                 ->ds_pics.picture_number = input_pic_demux->picture_number;
             // Find the Reference in the Reference List
+#if OPT_LD_LATENCY2
+            svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
             for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
                 ref_entry = enc_ctx->ref_pic_list[i];
                 if (ref_entry->is_valid &&
@@ -448,12 +457,18 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
             CHECK_REPORT_ERROR((ref_entry->picture_number == input_pic_demux->picture_number),
                                enc_ctx->app_callback_ptr,
                                EB_ENC_PM_ERROR8);
+#if OPT_LD_LATENCY2
+            svt_release_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
             break;
         case EB_PIC_FEEDBACK:
             scs     = input_pic_demux->scs;
             enc_ctx = scs->enc_ctx;
 
             // Find the Reference in the Reference Queue
+#if OPT_LD_LATENCY2
+            svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
             for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
                 ref_entry = enc_ctx->ref_pic_list[i];
                 if (ref_entry->is_valid &&
@@ -466,6 +481,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                 // Sometimes the reference may not be in the queue (e.g. if a delayed-I causes a ref
                 // pic to not be needed, it may be dropped from the queue before feedback arrives).
             }
+#if OPT_LD_LATENCY2
+            svt_release_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
             // Update the last decode order
             if (input_pic_demux->decode_order == decode_order)
                 decode_order++;
@@ -531,7 +549,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                             if ((list_idx == 0 && ref_idx >= entry_ppcs->ref_list0_count) ||
                                 (list_idx == 1 && ref_idx >= entry_ppcs->ref_list1_count))
                                 continue;
-
+#if OPT_LD_LATENCY2
+                            svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
                             ref_entry = search_ref_in_ref_queue(enc_ctx, ref_poc);
 
                             if (ref_entry != NULL) {
@@ -554,6 +574,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                             } else {
                                 availability_flag = FALSE;
                             }
+#if OPT_LD_LATENCY2
+                            svt_release_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
                         }
                     }
 
@@ -946,6 +969,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                         svt_post_full_object(out_results_wrapper);
                         // Remove the Input Entry from the Input Queue
                         input_entry->input_object_ptr = (EbObjectWrapper *)NULL;
+#if OPT_LD_LATENCY2
+                        svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
                         for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
                             ref_entry = enc_ctx->ref_pic_list[i];
                             if (ref_entry->is_valid) {
@@ -957,6 +983,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                                 }
                             }
                         }
+#if OPT_LD_LATENCY2
+                        svt_release_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
                     }
                 }
 
@@ -974,6 +1003,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                     ? 0
                     : input_queue_index + 1;
             }
+#if OPT_LD_LATENCY2
+            svt_block_on_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
             for (uint32_t i = 0; i < enc_ctx->ref_pic_list_length; i++) {
                 ref_entry = enc_ctx->ref_pic_list[i];
                 if (ref_entry->is_valid) {
@@ -995,6 +1027,9 @@ void *svt_aom_picture_manager_kernel(void *input_ptr) {
                     }
                 }
             }
+#if OPT_LD_LATENCY2
+            svt_release_mutex(enc_ctx->ref_pic_list_mutex);
+#endif
         }
 
         // Release the Input Picture Demux Results

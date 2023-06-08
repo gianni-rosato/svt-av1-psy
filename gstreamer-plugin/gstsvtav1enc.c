@@ -757,7 +757,9 @@ static GstFlowReturn gst_svtav1enc_dequeue_encoded_frames(GstSvtAv1Enc *svtav1en
         if (output_buf != NULL)
             encode_at_eos = ((output_buf->flags & EB_BUFFERFLAG_EOS) == EB_BUFFERFLAG_EOS);
 
-        if (res == EB_ErrorMax) {
+        if (encode_at_eos) {
+            return GST_FLOW_EOS;
+        } else if (res == EB_ErrorMax) {
             GST_ELEMENT_ERROR(svtav1enc, LIBRARY, ENCODE, (NULL), ("encode failed"));
             return GST_FLOW_ERROR;
         } else if (res != EB_NoErrorEmptyQueue && output_frames && output_buf) {
@@ -792,7 +794,7 @@ static GstFlowReturn gst_svtav1enc_dequeue_encoded_frames(GstSvtAv1Enc *svtav1en
             ret = gst_video_encoder_finish_frame(GST_VIDEO_ENCODER(svtav1enc), frame);
         }
 
-    } while (res == EB_ErrorNone && !encode_at_eos && ret == GST_FLOW_OK);
+    } while (res == EB_ErrorNone && ret == GST_FLOW_OK);
 
     return ret;
 }

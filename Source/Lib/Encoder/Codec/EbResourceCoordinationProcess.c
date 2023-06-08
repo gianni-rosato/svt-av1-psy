@@ -653,6 +653,34 @@ static void update_frame_event(PictureParentControlSet *pcs, uint64_t pic_num) {
 #endif
 }
 
+#if OPT_LD_LATENCY2
+// When the end of sequence recieved, there is no need to inject a new PCS.
+// terminating_picture_number and terminating_sequence_flag_received are set. When all
+// the pictures in the packetiztion queue are processed, EOS is signalled to the application.
+static void set_eos_terminating_signals(PictureParentControlSet *pcs) {
+    SequenceControlSet *scs     = pcs->scs;
+    EncodeContext      *enc_ctx = scs->enc_ctx;
+
+    svt_block_on_mutex(enc_ctx->total_number_of_shown_frames_mutex);
+    enc_ctx->terminating_sequence_flag_received = TRUE;
+    enc_ctx->terminating_picture_number         = pcs->picture_number - 1;
+    // if all the pictures are already processed, send the EOS signal to the app
+    if (enc_ctx->total_number_of_shown_frames == enc_ctx->terminating_picture_number + 1) {
+        EbObjectWrapper *tmp_out_str_wrp;
+        svt_get_empty_object(scs->enc_ctx->stream_output_fifo_ptr, &tmp_out_str_wrp);
+        EbBufferHeaderType *tmp_out_str = (EbBufferHeaderType *)tmp_out_str_wrp->object_ptr;
+
+        tmp_out_str->flags        = EB_BUFFERFLAG_EOS;
+        tmp_out_str->n_filled_len = 0;
+
+        svt_post_full_object(tmp_out_str_wrp);
+        release_references_eos(scs);
+    }
+
+    svt_release_mutex(enc_ctx->total_number_of_shown_frames_mutex);
+}
+#endif
+
 /* Resource Coordination Kernel */
 /*********************************************************************************
  *
@@ -992,7 +1020,73 @@ void *svt_aom_resource_coordination_kernel(void *input_ptr) {
                     }
                 }
             }
+#if OPT_LD_LATENCY2
+            // Get Empty Output Results Object
+            // For the low delay mode, buffering for receiving EOS does not happen
+            if (scs->static_config.pred_structure == SVT_AV1_PRED_LOW_DELAY_B) {
+                PictureParentControlSet *ppcs_out = pcs;
 
+                ppcs_out->end_of_sequence_flag = end_of_sequence_flag;
+                // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
+                if (ppcs_out->is_overlay && end_of_sequence_flag)
+                    ppcs_out->alt_ref_ppcs_ptr->end_of_sequence_flag = TRUE;
+
+                reset_pcs_av1(ppcs_out);
+                if (!ppcs_out->end_of_sequence_flag) {
+                    svt_get_empty_object(context_ptr->resource_coordination_results_output_fifo_ptr,
+                                         &output_wrapper_ptr);
+                    out_results = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;
+
+                    if (scs->static_config.enable_overlays == TRUE) {
+                        // ppcs live_count + 1 for PictureAnalysis & PictureDecision, will svt_release_object(ppcs) at the end of picture_decision_kernel.
+                        svt_object_inc_live_count(pcs_wrapper, 1);
+                    }
+
+                    out_results->pcs_wrapper = pcs_wrapper;
+                    // Post the finished Results Object
+                    svt_post_full_object(output_wrapper_ptr);
+                } else {
+                    // When the end of sequence recieved, there is no need to inject a new PCS.
+                    // terminating_picture_number and terminating_sequence_flag_received are set. When all
+                    // the pictures in the packetiztion queue are processed, EOS is signalled to the application.
+                    set_eos_terminating_signals(ppcs_out);
+                }
+            } else {
+                // Get Empty Output Results Object
+                if (pcs->picture_number > 0 && (prev_pcs_wrapper_ptr != NULL)) {
+                    PictureParentControlSet *ppcs_out = (PictureParentControlSet *)
+                                                            prev_pcs_wrapper_ptr->object_ptr;
+
+                    ppcs_out->end_of_sequence_flag = end_of_sequence_flag;
+                    // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
+                    if (ppcs_out->is_overlay && end_of_sequence_flag)
+                        ppcs_out->alt_ref_ppcs_ptr->end_of_sequence_flag = TRUE;
+
+                    reset_pcs_av1(ppcs_out);
+
+                    svt_get_empty_object(context_ptr->resource_coordination_results_output_fifo_ptr,
+                                         &output_wrapper_ptr);
+                    out_results = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;
+
+                    if (scs->static_config.enable_overlays == TRUE) {
+                        // ppcs live_count + 1 for PictureAnalysis & PictureDecision, will svt_release_object(ppcs) at the end of svt_aom_picture_decision_kernel.
+                        svt_object_inc_live_count(prev_pcs_wrapper_ptr, 1);
+                    }
+
+                    out_results->pcs_wrapper = prev_pcs_wrapper_ptr;
+                    // Post the finished Results Object
+                    svt_post_full_object(output_wrapper_ptr);
+                }
+                if (end_of_sequence_flag) {
+                    // When the end of sequence recieved, there is no need to inject a new PCS.
+                    // terminating_picture_number and terminating_sequence_flag_received are set. When all
+                    // the pictures in the packetiztion queue are processed, EOS is signalled to the application.
+                    set_eos_terminating_signals(pcs);
+                }
+            }
+            prev_pcs_wrapper_ptr = pcs_wrapper;
+
+#else
             // Get Empty Output Results Object
             if (pcs->picture_number > 0 && (prev_pcs_wrapper_ptr != NULL)) {
                 PictureParentControlSet *ppcs_out = (PictureParentControlSet *)
@@ -1019,6 +1113,7 @@ void *svt_aom_resource_coordination_kernel(void *input_ptr) {
                 svt_post_full_object(output_wrapper_ptr);
             }
             prev_pcs_wrapper_ptr = pcs_wrapper;
+#endif
         }
         // Release the Input Command
         svt_release_object(eb_input_cmd_wrapper);

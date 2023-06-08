@@ -4268,7 +4268,9 @@ static void assign_and_release_pa_refs(EncodeContext* enc_ctx, PictureParentCont
                 if ((list_idx == 0 && ref_idx >= pcs->ref_list0_count) ||
                     (list_idx == 1 && ref_idx >= pcs->ref_list1_count))
                     continue;
-
+#if OPT_LD_LATENCY2
+                svt_block_on_mutex(enc_ctx->pd_dpb_mutex);
+#endif
                 PaReferenceEntry* pa_ref_entry = search_ref_in_ref_queue_pa(enc_ctx, ref_poc);
                 assert(pa_ref_entry != NULL);
                 CHECK_REPORT_ERROR((pa_ref_entry),
@@ -4290,10 +4292,14 @@ static void assign_and_release_pa_refs(EncodeContext* enc_ctx, PictureParentCont
                         pa_ref_entry->y8b_wrapper,
                         1);
                 }
+#if OPT_LD_LATENCY2
+                svt_release_mutex(enc_ctx->pd_dpb_mutex);
+#endif
             }
         }
 
         uint8_t released_pics_idx = 0;
+#if !OPT_LD_LATENCY2
         // At the end of the sequence release all the refs (needed for MacOS CI tests)
         if (eos_reached && pic_i == (mg_size - 1)) {
             for (uint8_t i = 0; i < REF_FRAMES; i++) {
@@ -4335,12 +4341,16 @@ static void assign_and_release_pa_refs(EncodeContext* enc_ctx, PictureParentCont
             // because it will not be referenced by any other pics
             return;
         }
+#endif
         // If the pic is added to DPB, add to ref list until all frames that use it have had a chance to reference it
         if (pcs->av1_ref_signal.refresh_frame_mask) {
             //assert(!pcs->is_overlay); // is this true?
             //Update the DPB
             for (uint8_t i = 0; i < REF_FRAMES; i++) {
                 if ((pcs->av1_ref_signal.refresh_frame_mask >> i) & 1) {
+#if OPT_LD_LATENCY2
+                    svt_block_on_mutex(enc_ctx->pd_dpb_mutex);
+#endif
                     // Get the current entry at that spot in the DPB
                     PaReferenceEntry* input_entry = enc_ctx->pd_dpb[i];
 
@@ -4388,6 +4398,9 @@ static void assign_and_release_pa_refs(EncodeContext* enc_ctx, PictureParentCont
                             input_entry->y8b_wrapper,
                             1);
                     }
+#if OPT_LD_LATENCY2
+                    svt_release_mutex(enc_ctx->pd_dpb_mutex);
+#endif
                 }
             }
         }
@@ -4919,12 +4932,12 @@ void* svt_aom_picture_decision_kernel(void *input_ptr) {
                         perform_sc_detection(scs, pcs, ctx);
                         // Update the RC param queue
                         update_rc_param_queue(pcs, enc_ctx);
-
+#if !OPT_LD_LATENCY2
                         if (pcs->end_of_sequence_flag == TRUE) {
                             enc_ctx->terminating_sequence_flag_received = TRUE;
                             enc_ctx->terminating_picture_number = pcs->picture_number_alt;
                         }
-
+#endif
                         // Reset the PA Reference Lists
                         EB_MEMSET(pcs->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
                         EB_MEMSET(pcs->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));

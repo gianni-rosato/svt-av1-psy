@@ -82,6 +82,10 @@ typedef struct EncodeContext {
 
     EbHandle total_number_of_recon_frame_mutex;
     uint64_t total_number_of_recon_frames;
+#if OPT_LD_LATENCY2
+    EbHandle total_number_of_shown_frames_mutex;
+    uint64_t total_number_of_shown_frames;
+#endif
 
     // Overlay input picture fifo
     EbFifo *overlay_input_picture_pool_fifo_ptr;
@@ -111,6 +115,11 @@ typedef struct EncodeContext {
 
     // Picture Decision decoded picture buffer - used to track PA refs
     PaReferenceEntry **pd_dpb;
+#if OPT_LD_LATENCY2
+    // Picture decision and Packetization process both access pd_dpb.
+    // Mutex added for protection
+    EbHandle pd_dpb_mutex;
+#endif
 
     // Picture Manager Circular Queues
     InputQueueEntry **input_picture_queue;
@@ -119,6 +128,11 @@ typedef struct EncodeContext {
     // Picture Manager List
     ReferenceQueueEntry **ref_pic_list;
     uint32_t              ref_pic_list_length;
+#if OPT_LD_LATENCY2
+    // Picture manager and Packetization process both access ref_pic_list.
+    // Mutex added for protection
+    EbHandle ref_pic_list_mutex;
+#endif
 
     // Initial Rate Control Reorder Queue
     InitialRateControlReorderEntry **initial_rate_control_reorder_queue;
