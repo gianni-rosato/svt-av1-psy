@@ -3342,185 +3342,118 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
 }
 // Copy ME_MVs (generated @ PA) from input buffer (pcs-> .. ->me_results) to local
 // MD buffers (ctx->sb_me_mv)
-static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic) {
+static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     const SequenceControlSet *scs = pcs->scs;
     derive_me_offsets(scs, pcs, ctx);
-    uint8_t hbd_md = EB_8_BIT_MD;
-    input_pic      = hbd_md ? pcs->input_frame16bit : pcs->ppcs->enhanced_pic;
+    const uint8_t        hbd_md    = EB_8_BIT_MD;
+    EbPictureBufferDesc *input_pic = pcs->ppcs->enhanced_pic;
+    const BlockGeom     *blk_geom  = ctx->blk_geom;
 
     // Update input origin
-    uint32_t input_origin_index = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
+    const uint32_t input_origin_index = (ctx->blk_org_y + input_pic->org_y) * input_pic->stride_y +
         (ctx->blk_org_x + input_pic->org_x);
-    // Get parent_depth_idx_mds
-    uint16_t parent_depth_idx_mds = ctx->blk_geom->parent_depth_idx_mds;
-    ctx->md_me_dist               = (uint32_t)~0;
+    const uint16_t     parent_depth_mds = blk_geom->parent_depth_idx_mds;
+    const MeSbResults *me_results       = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+    const uint16_t     sqi_mds          = blk_geom->sqi_mds;
+    const uint8_t      max_l0           = pcs->ppcs->pa_me_data->max_l0;
+
+    const uint8_t shut_fast_rate               = ctx->shut_fast_rate;
+
+    const bool          blk_avail_sqi      = ctx->avail_blk_flag[sqi_mds];
+    const bool          b_w_ne_h           = blk_geom->bwidth != blk_geom->bheight;
+    const bool          md_nsq_me_enabled  = ctx->md_nsq_me_ctrls.enabled;
+    const bool          md_sq_me_enabled   = ctx->md_sq_me_ctrls.enabled;
+    MdSubPelSearchCtrls md_subpel_me_ctrls = ctx->md_subpel_me_ctrls;
+#if OPT_SPEL
+    const bool do_subpel = md_subpel_me_ctrls.enabled && blk_geom->sq_size > md_subpel_me_ctrls.min_blk_sz;
+#else
+    const bool do_subpel = md_subpel_me_ctrls.enabled;
+#endif
+
+    ctx->md_me_dist = (uint32_t)~0;
     for (uint32_t ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
-        MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
-        MvReferenceFrame rf[2];
+        const MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
+        MvReferenceFrame       rf[2];
         av1_set_ref_frame(rf, ref_pair);
 
         if (rf[1] == NONE_FRAME) {
-            uint8_t              list_idx = get_list_idx(rf[0]);
-            uint8_t              ref_idx  = get_ref_frame_idx(rf[0]);
-            EbReferenceObject   *ref_obj  = pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-            EbPictureBufferDesc *ref_pic  = svt_aom_get_ref_pic_buffer(
-                pcs, hbd_md, list_idx, ref_idx);
+            const uint8_t        list    = get_list_idx(rf[0]);
+            const uint8_t        ref     = get_ref_frame_idx(rf[0]);
+            EbReferenceObject   *ref_obj = pcs->ref_pic_ptr_array[list][ref]->object_ptr;
+            EbPictureBufferDesc *ref_pic = svt_aom_get_ref_pic_buffer(pcs, hbd_md, list, ref);
             // -------
             // Use scaled references if resolution of the reference is different from that of the input
             // -------
             svt_aom_use_scaled_rec_refs_if_needed(pcs, input_pic, ref_obj, &ref_pic, hbd_md);
 
             // Get the ME MV
-            const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
-            if (svt_aom_is_me_data_present(
-                    ctx->me_block_offset, ctx->me_cand_offset, me_results, list_idx, ref_idx)) {
+            if (svt_aom_is_me_data_present(ctx->me_block_offset, ctx->me_cand_offset, me_results, list, ref)) {
                 int16_t me_mv_x;
                 int16_t me_mv_y;
-                if (ctx->avail_blk_flag[ctx->blk_geom->sqi_mds] &&
+                if (blk_avail_sqi &&
                     // If NSQ then use the MV of SQ as default MV center
-                    (ctx->blk_geom->bwidth != ctx->blk_geom->bheight) &&
+                    b_w_ne_h &&
                     // Not applicable for BLOCK_128X64 and BLOCK_64X128 as the 2nd part of each and BLOCK_128X128 do not share the same me_results
-                    ctx->blk_geom->bsize != BLOCK_64X128 && ctx->blk_geom->bsize != BLOCK_128X64) {
-                    me_mv_x = (ctx->sb_me_mv[ctx->blk_geom->sqi_mds][list_idx][ref_idx][0] + 4) &
-                        ~0x07;
-                    me_mv_y = (ctx->sb_me_mv[ctx->blk_geom->sqi_mds][list_idx][ref_idx][1] + 4) &
-                        ~0x07;
-
-                    clip_mv_on_pic_boundary(ctx->blk_org_x,
-                                            ctx->blk_org_y,
-                                            ctx->blk_geom->bwidth,
-                                            ctx->blk_geom->bheight,
-                                            ref_pic,
-                                            &me_mv_x,
-                                            &me_mv_y);
-
-                } else if (ctx->blk_geom->bsize == BLOCK_4X4 &&
-                           ctx->avail_blk_flag[parent_depth_idx_mds]) {
-                    me_mv_x = (ctx->sb_me_mv[parent_depth_idx_mds][list_idx][ref_idx][0] + 4) &
-                        ~0x07;
-                    me_mv_y = (ctx->sb_me_mv[parent_depth_idx_mds][list_idx][ref_idx][1] + 4) &
-                        ~0x07;
-
-                    clip_mv_on_pic_boundary(ctx->blk_org_x,
-                                            ctx->blk_org_y,
-                                            ctx->blk_geom->bwidth,
-                                            ctx->blk_geom->bheight,
-                                            ref_pic,
-                                            &me_mv_x,
-                                            &me_mv_y);
-
+                    blk_geom->bsize != BLOCK_64X128 && blk_geom->bsize != BLOCK_128X64) {
+                    me_mv_x = (ctx->sb_me_mv[sqi_mds][list][ref][0] + 4) & ~0x07;
+                    me_mv_y = (ctx->sb_me_mv[sqi_mds][list][ref][1] + 4) & ~0x07;
+                } else if (blk_geom->bsize == BLOCK_4X4 && ctx->avail_blk_flag[parent_depth_mds]) {
+                    me_mv_x = (ctx->sb_me_mv[parent_depth_mds][list][ref][0] + 4) & ~0x07;
+                    me_mv_y = (ctx->sb_me_mv[parent_depth_mds][list][ref][1] + 4) & ~0x07;
                 } else {
-                    if (list_idx == 0) {
-                        me_mv_x = (me_results
-                                       ->me_mv_array[ctx->me_block_offset *
-                                                         pcs->ppcs->pa_me_data->max_refs +
-                                                     ref_idx]
-                                       .x_mv)
-                            << 1;
-                        me_mv_y = (me_results
-                                       ->me_mv_array[ctx->me_block_offset *
-                                                         pcs->ppcs->pa_me_data->max_refs +
-                                                     ref_idx]
-                                       .y_mv)
-                            << 1;
-                    } else {
-                        me_mv_x = (me_results
-                                       ->me_mv_array[ctx->me_block_offset *
-                                                         pcs->ppcs->pa_me_data->max_refs +
-                                                     pcs->ppcs->pa_me_data->max_l0 + ref_idx]
-                                       .x_mv)
-                            << 1;
-                        me_mv_y = (me_results
-                                       ->me_mv_array[ctx->me_block_offset *
-                                                         pcs->ppcs->pa_me_data->max_refs +
-                                                     pcs->ppcs->pa_me_data->max_l0 + ref_idx]
-                                       .y_mv)
-                            << 1;
-                    }
-                    clip_mv_on_pic_boundary(ctx->blk_org_x,
-                                            ctx->blk_org_y,
-                                            ctx->blk_geom->bwidth,
-                                            ctx->blk_geom->bheight,
-                                            ref_pic,
-                                            &me_mv_x,
-                                            &me_mv_y);
+                    const MvCandidate *me_mv_array_base = me_results->me_mv_array +
+                        (ctx->me_block_offset * pcs->ppcs->pa_me_data->max_refs + ref);
+                    const MvCandidate mv_cand = me_mv_array_base[list ? max_l0 : 0];
+                    me_mv_x                   = mv_cand.x_mv << 1;
+                    me_mv_y                   = mv_cand.y_mv << 1;
                 }
+                clip_mv_on_pic_boundary(
+                    ctx->blk_org_x, ctx->blk_org_y, blk_geom->bwidth, blk_geom->bheight, ref_pic, &me_mv_x, &me_mv_y);
                 // Set ref MV
-                // Could use ctx->mvp_array[list_idx][ref_idx][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
-                ctx->ref_mv.col = ctx->shut_fast_rate
-                    ? 0
-                    : (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                           .ed_ref_mv_stack[rf[0]][0]
-                           .this_mv.as_mv.col +
-                       4) &
-                        ~0x07;
-                ctx->ref_mv.row = ctx->shut_fast_rate
-                    ? 0
-                    : (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                           .ed_ref_mv_stack[rf[0]][0]
-                           .this_mv.as_mv.row +
-                       4) &
-                        ~0x07;
-                if (ctx->blk_geom->bwidth != ctx->blk_geom->bheight) {
-                    if (ctx->md_nsq_me_ctrls.enabled) {
-                        md_nsq_motion_search(pcs,
-                                             ctx,
-                                             input_pic,
-                                             input_origin_index,
-                                             list_idx,
-                                             ref_idx,
-                                             me_results,
-                                             &me_mv_x,
-                                             &me_mv_y);
+                // Could use ctx->mvp_array[list][ref_idx][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
+                const MV as_mv  = ctx->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[rf[0]][0].this_mv.as_mv;
+                ctx->ref_mv.col = shut_fast_rate ? 0 : (as_mv.col + 4) & ~0x07;
+                ctx->ref_mv.row = shut_fast_rate ? 0 : (as_mv.row + 4) & ~0x07;
+                if (b_w_ne_h) {
+                    if (md_nsq_me_enabled) {
+                        md_nsq_motion_search(
+                            pcs, ctx, input_pic, input_origin_index, list, ref, me_results, &me_mv_x, &me_mv_y);
                     }
-                } else if (ctx->md_sq_me_ctrls.enabled) {
-                    md_sq_motion_search(pcs,
-                                        ctx,
-                                        input_pic,
-                                        input_origin_index,
-                                        list_idx,
-                                        ref_idx,
-                                        &me_mv_x,
-                                        &me_mv_y);
+                } else if (md_sq_me_enabled) {
+                    md_sq_motion_search(pcs, ctx, input_pic, input_origin_index, list, ref, &me_mv_x, &me_mv_y);
                 }
-                ctx->post_subpel_me_mv_cost[list_idx][ref_idx] = (int32_t)~0;
-                ctx->fp_me_mv[list_idx][ref_idx].col           = me_mv_x;
-                ctx->fp_me_mv[list_idx][ref_idx].row           = me_mv_y;
-#if OPT_SPEL
+                ctx->post_subpel_me_mv_cost[list][ref] = (int32_t)~0;
+                ctx->fp_me_mv[list][ref].col           = me_mv_x;
+                ctx->fp_me_mv[list][ref].row           = me_mv_y;
 
-                if (ctx->md_subpel_me_ctrls.enabled &&
-                    ctx->blk_geom->sq_size > ctx->md_subpel_me_ctrls.min_blk_sz) {
-#else
-                if (ctx->md_subpel_me_ctrls.enabled) {
-#endif
-                    ctx->post_subpel_me_mv_cost[list_idx][ref_idx] = (uint32_t)md_subpel_search(
+                if (do_subpel) {
+                    ctx->post_subpel_me_mv_cost[list][ref] = md_subpel_search(
 #if OPT_SPEL
                         SPEL_ME,
 #endif
                         pcs,
                         ctx,
-                        ctx->md_subpel_me_ctrls,
+                        md_subpel_me_ctrls,
                         pcs->ppcs->enhanced_pic, // 10BIT not supported
-                        list_idx,
-                        ref_idx,
+                        list,
+                        ref,
                         &me_mv_x,
                         &me_mv_y);
-                    if (ctx->post_subpel_me_mv_cost[list_idx][ref_idx] < ctx->md_me_dist)
-                        ctx->md_me_dist = ctx->post_subpel_me_mv_cost[list_idx][ref_idx];
+                    if (ctx->post_subpel_me_mv_cost[list][ref] < ctx->md_me_dist)
+                        ctx->md_me_dist = ctx->post_subpel_me_mv_cost[list][ref];
                 }
                 // Copy ME MV after subpel
-                ctx->sub_me_mv[list_idx][ref_idx].col                          = me_mv_x;
-                ctx->sub_me_mv[list_idx][ref_idx].row                          = me_mv_y;
-                ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][list_idx][ref_idx][0] = me_mv_x;
-                ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][list_idx][ref_idx][1] = me_mv_y;
-                clip_mv_on_pic_boundary(
-                    ctx->blk_org_x,
-                    ctx->blk_org_y,
-                    ctx->blk_geom->bwidth,
-                    ctx->blk_geom->bheight,
-                    ref_pic,
-                    &ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][list_idx][ref_idx][0],
-                    &ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][list_idx][ref_idx][1]);
+                ctx->sub_me_mv[list][ref].col                     = me_mv_x;
+                ctx->sub_me_mv[list][ref].row                     = me_mv_y;
+                ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][0] = me_mv_x;
+                ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][1] = me_mv_y;
+                clip_mv_on_pic_boundary(ctx->blk_org_x,
+                                        ctx->blk_org_y,
+                                        blk_geom->bwidth,
+                                        blk_geom->bheight,
+                                        ref_pic,
+                                        &ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][0],
+                                        &ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][1]);
             }
         }
     }
@@ -11742,7 +11675,7 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
 #endif
     if (pcs->slice_type != I_SLICE)
         // Read and (if needed) perform 1/8 Pel ME MVs refinement
-        read_refine_me_mvs(pcs, ctx, input_pic);
+        read_refine_me_mvs(pcs, ctx);
     // Initialized for eliminate_candidate_based_on_pme_me_results()
     ctx->pme_res[0][0].dist = ctx->pme_res[1][0].dist = 0xFFFFFFFF;
     // Perform md reference pruning
