@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include "EbDefinitions.h"
+#include "EbMotionEstimationLcuResults.h"
 #include "EbUtility.h"
 #include "EbTransformUnit.h"
 #include "EbRateDistortionCost.h"
@@ -3266,86 +3267,51 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
                                          ModeDecisionContext *ctx) {
     // init best ME cost to MAX
     ctx->md_me_dist = (uint32_t)~0;
-    for (uint32_t ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
-        MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
-        MvReferenceFrame rf[2];
+    // Get the ME MV
+    const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
+    const BlockGeom   *blk_geom   = ctx->blk_geom;
+    const uint8_t max_l0                       = pcs->ppcs->pa_me_data->max_l0;
+
+    const bool subpel_enabled = ctx->md_subpel_me_ctrls.enabled;
+    const bool skip_zero_mv   = ctx->md_subpel_me_ctrls.skip_zz_mv;
+
+    const bool skip_subpel_1 = !ctx->intra_ctrls.enable_intra || ctx->intra_ctrls.intra_mode_end == DC_PRED;
+    const bool skip_subpel_2 = ctx->is_intra_bordered && ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled;
+    const bool no_mv_stack   = ctx->shut_fast_rate || ctx->cand_reduction_ctrls.reduce_unipred_candidates >= 3;
+
+    for (int ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
+        const MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
+        MvReferenceFrame       rf[2];
         av1_set_ref_frame(rf, ref_pair);
 
         if (rf[1] == NONE_FRAME) {
-            uint8_t list_idx = get_list_idx(rf[0]);
-            uint8_t ref_idx  = get_ref_frame_idx(rf[0]);
+            const uint8_t list = get_list_idx(rf[0]);
+            const uint8_t ref  = get_ref_frame_idx(rf[0]);
 
-            // Get the ME MV
-            const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
-
-            if (svt_aom_is_me_data_present(
-                    ctx->me_block_offset, ctx->me_cand_offset, me_results, list_idx, ref_idx)) {
-                EbPictureBufferDesc *ref_pic = svt_aom_get_ref_pic_buffer(
-                    pcs, 0, list_idx, ref_idx);
-                EbReferenceObject *ref_obj =
-                    (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+            if (svt_aom_is_me_data_present(ctx->me_block_offset, ctx->me_cand_offset, me_results, list, ref)) {
+                EbPictureBufferDesc *ref_pic = svt_aom_get_ref_pic_buffer(pcs, 0, list, ref);
+                EbReferenceObject   *ref_obj = pcs->ref_pic_ptr_array[list][ref]->object_ptr;
                 // -------
                 // Use scaled references if resolution of the reference is different from that of the input
                 // -------
-                svt_aom_use_scaled_rec_refs_if_needed(
-                    pcs, input_pic, ref_obj, &ref_pic, ctx->hbd_md);
+                svt_aom_use_scaled_rec_refs_if_needed(pcs, input_pic, ref_obj, &ref_pic, ctx->hbd_md);
 
-                int16_t me_mv_x;
-                int16_t me_mv_y;
-                if (list_idx == 0) {
-                    me_mv_x =
-                        (me_results
-                             ->me_mv_array[ctx->me_block_offset * pcs->ppcs->pa_me_data->max_refs +
-                                           ref_idx]
-                             .x_mv)
-                        << 1;
-                    me_mv_y =
-                        (me_results
-                             ->me_mv_array[ctx->me_block_offset * pcs->ppcs->pa_me_data->max_refs +
-                                           ref_idx]
-                             .y_mv)
-                        << 1;
-                } else {
-                    me_mv_x =
-                        (me_results
-                             ->me_mv_array[ctx->me_block_offset * pcs->ppcs->pa_me_data->max_refs +
-                                           pcs->ppcs->pa_me_data->max_l0 + ref_idx]
-                             .x_mv)
-                        << 1;
-                    me_mv_y =
-                        (me_results
-                             ->me_mv_array[ctx->me_block_offset * pcs->ppcs->pa_me_data->max_refs +
-                                           pcs->ppcs->pa_me_data->max_l0 + ref_idx]
-                             .y_mv)
-                        << 1;
-                }
-                uint8_t skip_subpel =
-                    (ctx->is_intra_bordered &&
-                     ctx->cand_reduction_ctrls.use_neighbouring_mode_ctrls.enabled) ||
-                    (ctx->md_subpel_me_ctrls.skip_zz_mv && me_mv_x == 0 && me_mv_y == 0);
+                const MvCandidate *me_mv_array_base = me_results->me_mv_array +
+                    (ctx->me_block_offset * pcs->ppcs->pa_me_data->max_refs + ref);
+                const MvCandidate mv_cand = me_mv_array_base[list ? max_l0 : 0];
+                int16_t           me_mv_x = mv_cand.x_mv << 1;
+                int16_t           me_mv_y = mv_cand.y_mv << 1;
                 // can only skip if using dc only b/c otherwise need cost at candidate generation
-                skip_subpel &= (!ctx->intra_ctrls.enable_intra) ||
-                    (ctx->intra_ctrls.intra_mode_end == DC_PRED);
+                const bool skip_subpel = skip_subpel_1 &&
+                    (skip_subpel_2 || (skip_zero_mv && me_mv_x == 0 && me_mv_y == 0));
 
-                if (ctx->md_subpel_me_ctrls.enabled && !skip_subpel) {
-                    // Could use ctx->mvp_array[list_idx][ref_idx][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
-                    ctx->ref_mv.col                                = ctx->shut_fast_rate ||
-                            ctx->cand_reduction_ctrls.reduce_unipred_candidates >= 3
-                                                       ? 0
-                                                       : (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                               .ed_ref_mv_stack[rf[0]][0]
-                               .this_mv.as_mv.col +
-                           4) &
-                            ~0x07;
-                    ctx->ref_mv.row                                = ctx->shut_fast_rate ||
-                            ctx->cand_reduction_ctrls.reduce_unipred_candidates >= 3
-                                                       ? 0
-                                                       : (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                               .ed_ref_mv_stack[rf[0]][0]
-                               .this_mv.as_mv.row +
-                           4) &
-                            ~0x07;
-                    ctx->post_subpel_me_mv_cost[list_idx][ref_idx] = (uint32_t)md_subpel_search(
+                if (subpel_enabled && !skip_subpel) {
+                    const MV as_mv =
+                        ctx->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[rf[0]][0].this_mv.as_mv;
+                    // Could use ctx->mvp_array[list][ref][0], but that requires the single ref MVP array to be init'd, but it is not in light-PD1 path
+                    ctx->ref_mv.col                        = no_mv_stack ? 0 : (as_mv.col + 4) & ~0x07;
+                    ctx->ref_mv.row                        = no_mv_stack ? 0 : (as_mv.row + 4) & ~0x07;
+                    ctx->post_subpel_me_mv_cost[list][ref] = md_subpel_search(
 #if OPT_SPEL
                         SPEL_ME,
 #endif
@@ -3353,24 +3319,23 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
                         ctx,
                         ctx->md_subpel_me_ctrls,
                         pcs->ppcs->enhanced_pic, // 10BIT not supported
-                        list_idx,
-                        ref_idx,
+                        list,
+                        ref,
                         &me_mv_x,
                         &me_mv_y);
 
-                    if (ctx->post_subpel_me_mv_cost[list_idx][ref_idx] < ctx->md_me_dist)
-                        ctx->md_me_dist = ctx->post_subpel_me_mv_cost[list_idx][ref_idx];
+                    if (ctx->post_subpel_me_mv_cost[list][ref] < ctx->md_me_dist)
+                        ctx->md_me_dist = ctx->post_subpel_me_mv_cost[list][ref];
                 }
-                ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][list_idx][ref_idx][0] = me_mv_x;
-                ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][list_idx][ref_idx][1] = me_mv_y;
-                clip_mv_on_pic_boundary(
-                    ctx->blk_org_x,
-                    ctx->blk_org_y,
-                    ctx->blk_geom->bwidth,
-                    ctx->blk_geom->bheight,
-                    ref_pic,
-                    &ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][list_idx][ref_idx][0],
-                    &ctx->sb_me_mv[ctx->blk_geom->blkidx_mds][list_idx][ref_idx][1]);
+                ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][0] = me_mv_x;
+                ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][1] = me_mv_y;
+                clip_mv_on_pic_boundary(ctx->blk_org_x,
+                                        ctx->blk_org_y,
+                                        blk_geom->bwidth,
+                                        blk_geom->bheight,
+                                        ref_pic,
+                                        &ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][0],
+                                        &ctx->sb_me_mv[blk_geom->blkidx_mds][list][ref][1]);
             }
         }
     }
