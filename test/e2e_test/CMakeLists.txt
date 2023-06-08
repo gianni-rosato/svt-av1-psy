@@ -21,6 +21,8 @@ link_directories(${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} ${CMAKE_LIBRARY_OUTPUT_DIRECT
 
 set(all_files
     ../../Source/App/EncApp/EbAppInputy4m.c
+    ../../Source/App/EncApp/EbAppContext.c
+    ../../Source/App/EncApp/EbAppOutputivf.c
     CompareTools.h
     ConfigEncoder.cc
     ConfigEncoder.h

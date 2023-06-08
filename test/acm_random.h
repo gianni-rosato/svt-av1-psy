@@ -13,6 +13,7 @@
 #ifndef AOM_TEST_ACM_RANDOM_H_
 #define AOM_TEST_ACM_RANDOM_H_
 
+#include <cstdint>
 #include "gtest/gtest.h"
 
 namespace libaom_test {
