@@ -1332,6 +1332,10 @@ void svt_aom_cyclic_refresh_init(PictureParentControlSet *ppcs) {
     cr->percent_refresh = 20;
     if (ppcs->picture_number > (uint64_t)(4 * (1 << scs->max_heirachical_level) * 100 / 20))
         cr->percent_refresh = 15;
+#if OPT_LD_SC_RC
+    if (ppcs->sc_class1)
+        cr->percent_refresh += 5;
+#endif
 
     if (cr->apply_cyclic_refresh) {
         cr->sb_start            = scs->enc_ctx->cr_sb_end;
@@ -1349,6 +1353,10 @@ void svt_aom_cyclic_refresh_init(PictureParentControlSet *ppcs) {
         cr->rate_ratio_qdelta = 2;
     else
         cr->rate_ratio_qdelta = 3;
+#if OPT_LD_SC_RC
+    if (ppcs->sc_class1)
+        cr->rate_ratio_qdelta += 0.5;
+#endif
 }
 /*
 * Derives a qindex per 64x64 using ME distortions (to be used for lambda modulation only; not at Q/Q-1)

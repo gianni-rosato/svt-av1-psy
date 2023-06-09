@@ -5722,6 +5722,9 @@ static EbErrorType produce_temporally_filtered_pic_ld(
                     ctx->search_results[0][0].hme_sc_x = 0;
                     ctx->search_results[0][0].hme_sc_y = 0;
 
+                    ctx->tf_64x64_mv_x = 0;
+                    ctx->tf_64x64_mv_y = 0;
+
                     tf_64x64_inter_prediction(centre_pcs,
                         ctx,
                         pcs_list[frame_index],
@@ -6226,6 +6229,7 @@ EbErrorType svt_av1_init_temporal_filtering(
     EbPictureBufferDesc *central_picture_ptr;
 #if OPT_LD_TF
 #if CLN_TF
+    me_context_ptr->me_ctx->tf_ctrls = centre_pcs->tf_ctrls;
     bool high_chroma_noise_lvl = (centre_pcs->noise_levels_log1p_fp16[0] < centre_pcs->noise_levels_log1p_fp16[1] ||
             centre_pcs->noise_levels_log1p_fp16[0] < centre_pcs->noise_levels_log1p_fp16[2]) ? true : false;
     me_context_ptr->me_ctx->tf_chroma = centre_pcs->tf_ctrls.chroma_lvl == 1 ? 1 :
@@ -6243,9 +6247,8 @@ EbErrorType svt_av1_init_temporal_filtering(
 #endif
 #else
     me_context_ptr->me_ctx->tf_chroma = centre_pcs->tf_ctrls.do_chroma;
-#endif
-
     me_context_ptr->me_ctx->tf_ctrls = centre_pcs->tf_ctrls;
+#endif
 
     me_context_ptr->me_ctx->tf_tot_horz_blks =
         me_context_ptr->me_ctx->tf_tot_vert_blks = 0;
@@ -6285,7 +6288,11 @@ EbErrorType svt_av1_init_temporal_filtering(
             if (is_highbd && i != centre_pcs->past_altref_nframes) {
                 EB_MALLOC_ARRAY(pcs_list[i]->altref_buffer_highbd[C_Y],
                                 central_picture_ptr->luma_size);
+#if OPT_LD_TF
+                if (centre_pcs->tf_ctrls.chroma_lvl) {
+#else
                 if (me_context_ptr->me_ctx->tf_chroma) {
+#endif
                     EB_MALLOC_ARRAY(pcs_list[i]->altref_buffer_highbd[C_U],
                                     central_picture_ptr->chroma_size);
                     EB_MALLOC_ARRAY(pcs_list[i]->altref_buffer_highbd[C_V],
@@ -6414,7 +6421,11 @@ EbErrorType svt_av1_init_temporal_filtering(
                               ss_y,
                               TRUE);
             EB_FREE_ARRAY(centre_pcs->altref_buffer_highbd[C_Y]);
+#if OPT_LD_TF
+            if (centre_pcs->tf_ctrls.chroma_lvl) {
+#else
             if (me_context_ptr->me_ctx->tf_chroma) {
+#endif
                 EB_FREE_ARRAY(centre_pcs->altref_buffer_highbd[C_U]);
                 EB_FREE_ARRAY(centre_pcs->altref_buffer_highbd[C_V]);
             }
@@ -6422,8 +6433,13 @@ EbErrorType svt_av1_init_temporal_filtering(
                                  centre_pcs->future_altref_nframes + 1);
                  i++) {
                 if (i != centre_pcs->past_altref_nframes) {
+
                     EB_FREE_ARRAY(pcs_list[i]->altref_buffer_highbd[C_Y]);
+#if OPT_LD_TF
+                    if (centre_pcs->tf_ctrls.chroma_lvl) {
+#else
                     if (me_context_ptr->me_ctx->tf_chroma) {
+#endif
                         EB_FREE_ARRAY(pcs_list[i]->altref_buffer_highbd[C_U]);
                         EB_FREE_ARRAY(pcs_list[i]->altref_buffer_highbd[C_V]);
                     }
