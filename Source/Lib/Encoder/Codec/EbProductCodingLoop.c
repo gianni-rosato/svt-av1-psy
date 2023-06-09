@@ -3762,92 +3762,79 @@ void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *c
  * Read/store all nearest/near MVs for a block for single ref case, and save the best distortion for each ref.
  */
 #if CLN_MVP_ARR
-static void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                       EbPictureBufferDesc *input_pic) {
-    uint8_t hbd_md = EB_8_BIT_MD;
-    input_pic      = hbd_md ? pcs->input_frame16bit : pcs->ppcs->enhanced_pic;
+static void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionContext *ctx) {
+    const uint8_t        hbd_md    = EB_8_BIT_MD;
+    EbPictureBufferDesc *input_pic = pcs->ppcs->enhanced_pic;
 #else
 static void build_single_ref_mvp_array(ModeDecisionContext *ctx) {
 #endif
-    for (uint32_t ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
-        MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
+    const MacroBlockD *xd                      = ctx->blk_ptr->av1xd;
+    const BlockGeom   *blk_geom                = ctx->blk_geom;
+    const bool shut_fast_rate                  = ctx->shut_fast_rate;
+    for (int ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
+        const MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
 
-        MacroBlockD     *xd = ctx->blk_ptr->av1xd;
         MvReferenceFrame rf[2];
         av1_set_ref_frame(rf, ref_pair);
         // Single ref
         if (rf[1] == NONE_FRAME) {
-            MvReferenceFrame frame_type = rf[0];
-            uint8_t          list_idx   = get_list_idx(rf[0]);
-            uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
+            const MvReferenceFrame frame_type = rf[0];
+            const uint8_t          list       = get_list_idx(rf[0]);
+            const uint8_t          ref        = get_ref_frame_idx(rf[0]);
 #if CLN_MVP_ARR
-            EbReferenceObject   *ref_obj = pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-            EbPictureBufferDesc *ref_pic = svt_aom_get_ref_pic_buffer(
-                pcs, hbd_md, list_idx, ref_idx);
+            EbReferenceObject   *ref_obj = pcs->ref_pic_ptr_array[list][ref]->object_ptr;
+            EbPictureBufferDesc *ref_pic = svt_aom_get_ref_pic_buffer(pcs, hbd_md, list, ref);
             // -------
             // Use scaled references if resolution of the reference is different from that of the input
             // -------
             svt_aom_use_scaled_rec_refs_if_needed(pcs, input_pic, ref_obj, &ref_pic, hbd_md);
 #endif
-            if (ctx->shut_fast_rate) {
-                ctx->mvp_array[list_idx][ref_idx][0].col = 0;
-                ctx->mvp_array[list_idx][ref_idx][0].row = 0;
-                ctx->mvp_count[list_idx][ref_idx]        = 1;
+            if (shut_fast_rate) {
+                ctx->mvp_array[list][ref][0].col = 0;
+                ctx->mvp_array[list][ref][0].row = 0;
+                ctx->mvp_count[list][ref]        = 1;
                 continue;
             }
-            uint8_t drli, max_drl_index;
-            int8_t  mvp_count = 0;
+            int8_t mvp_count = 0;
 
             //NEAREST
-            ctx->mvp_array[list_idx][ref_idx][mvp_count].col =
-                (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                     .ed_ref_mv_stack[frame_type][0]
-                     .this_mv.as_mv.col +
-                 4) &
-                ~0x07;
-            ctx->mvp_array[list_idx][ref_idx][mvp_count].row =
-                (ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                     .ed_ref_mv_stack[frame_type][0]
-                     .this_mv.as_mv.row +
-                 4) &
-                ~0x07;
+            const MV as_mv = ctx->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][0].this_mv.as_mv;
+            ctx->mvp_array[list][ref][mvp_count].col = (as_mv.col + 4) & ~0x07;
+            ctx->mvp_array[list][ref][mvp_count].row = (as_mv.row + 4) & ~0x07;
 #if CLN_MVP_ARR
             clip_mv_on_pic_boundary(ctx->blk_org_x,
                                     ctx->blk_org_y,
-                                    ctx->blk_geom->bwidth,
-                                    ctx->blk_geom->bheight,
+                                    blk_geom->bwidth,
+                                    blk_geom->bheight,
                                     ref_pic,
-                                    &ctx->mvp_array[list_idx][ref_idx][mvp_count].col,
-                                    &ctx->mvp_array[list_idx][ref_idx][mvp_count].row);
+                                    &ctx->mvp_array[list][ref][mvp_count].col,
+                                    &ctx->mvp_array[list][ref][mvp_count].row);
 #endif
             mvp_count++;
 
             //NEAR
-            max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
+            const uint8_t max_drl_index = svt_aom_get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
 
-            for (drli = 0; drli < max_drl_index; drli++) {
-                IntMv nearmv = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds]
-                                   .ed_ref_mv_stack[frame_type][1 + drli]
-                                   .this_mv;
-                if (((nearmv.as_mv.col + 4) & ~0x07) != ctx->mvp_array[list_idx][ref_idx][0].col &&
-                    ((nearmv.as_mv.row + 4) & ~0x07) != ctx->mvp_array[list_idx][ref_idx][0].row) {
-                    ctx->mvp_array[list_idx][ref_idx][mvp_count].col = (nearmv.as_mv.col + 4) &
-                        ~0x07;
-                    ctx->mvp_array[list_idx][ref_idx][mvp_count].row = (nearmv.as_mv.row + 4) &
-                        ~0x07;
+            for (int drli = 0; drli < max_drl_index; drli++) {
+                const MV nearmv =
+                    ctx->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][1 + drli].this_mv.as_mv;
+                if (((nearmv.col + 4) & ~0x07) != ctx->mvp_array[list][ref][0].col &&
+                    ((nearmv.row + 4) & ~0x07) != ctx->mvp_array[list][ref][0].row) {
+                    ctx->mvp_array[list][ref][mvp_count].col = (nearmv.col + 4) & ~0x07;
+                    ctx->mvp_array[list][ref][mvp_count].row = (nearmv.row + 4) & ~0x07;
 #if CLN_MVP_ARR
                     clip_mv_on_pic_boundary(ctx->blk_org_x,
                                             ctx->blk_org_y,
-                                            ctx->blk_geom->bwidth,
-                                            ctx->blk_geom->bheight,
+                                            blk_geom->bwidth,
+                                            blk_geom->bheight,
                                             ref_pic,
-                                            &ctx->mvp_array[list_idx][ref_idx][mvp_count].col,
-                                            &ctx->mvp_array[list_idx][ref_idx][mvp_count].row);
+                                            &ctx->mvp_array[list][ref][mvp_count].col,
+                                            &ctx->mvp_array[list][ref][mvp_count].row);
 #endif
                     mvp_count++;
                 }
             }
-            ctx->mvp_count[list_idx][ref_idx] = mvp_count;
+            ctx->mvp_count[list][ref] = mvp_count;
         }
     }
 }
@@ -11669,7 +11656,7 @@ static void md_encode_block(PictureControlSet *pcs, ModeDecisionContext *ctx, ui
         (ctx->md_sq_me_ctrls.enabled || ctx->updated_enable_pme || ctx->ref_pruning_ctrls.enabled))
 #endif
 #if CLN_MVP_ARR
-        build_single_ref_mvp_array(pcs, ctx, input_pic);
+        build_single_ref_mvp_array(pcs, ctx);
 #else
         build_single_ref_mvp_array(ctx);
 #endif
