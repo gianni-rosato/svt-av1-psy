@@ -1280,9 +1280,8 @@ void svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx,
 #else
 void svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx);
 #endif
-static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_addr,
-                                      BlkStruct *blk_ptr, PredictionUnit *pu_ptr,
-                                      EncDecContext *ed_ctx) {
+static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_addr, BlkStruct *blk_ptr,
+                                      PredictionUnit *pu_ptr, EncDecContext *ed_ctx) {
     Bool                 is_16bit  = ed_ctx->is_16bit;
     uint32_t             bit_depth = ed_ctx->bit_depth;
     uint8_t              is_inter  = 0; // set to 0 b/c this is the intra path

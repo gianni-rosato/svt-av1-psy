@@ -3270,7 +3270,7 @@ static void read_refine_me_mvs_light_pd1(PictureControlSet *pcs, EbPictureBuffer
     // Get the ME MV
     const MeSbResults *me_results = pcs->ppcs->pa_me_data->me_results[ctx->me_sb_addr];
     const BlockGeom   *blk_geom   = ctx->blk_geom;
-    const uint8_t max_l0                       = pcs->ppcs->pa_me_data->max_l0;
+    const uint8_t      max_l0     = pcs->ppcs->pa_me_data->max_l0;
 
     const bool subpel_enabled = ctx->md_subpel_me_ctrls.enabled;
     const bool skip_zero_mv   = ctx->md_subpel_me_ctrls.skip_zz_mv;
@@ -3357,7 +3357,7 @@ static void read_refine_me_mvs(PictureControlSet *pcs, ModeDecisionContext *ctx)
     const uint16_t     sqi_mds          = blk_geom->sqi_mds;
     const uint8_t      max_l0           = pcs->ppcs->pa_me_data->max_l0;
 
-    const uint8_t shut_fast_rate               = ctx->shut_fast_rate;
+    const uint8_t shut_fast_rate = ctx->shut_fast_rate;
 
     const bool          blk_avail_sqi      = ctx->avail_blk_flag[sqi_mds];
     const bool          b_w_ne_h           = blk_geom->bwidth != blk_geom->bheight;
@@ -3768,9 +3768,9 @@ static void build_single_ref_mvp_array(PictureControlSet *pcs, ModeDecisionConte
 #else
 static void build_single_ref_mvp_array(ModeDecisionContext *ctx) {
 #endif
-    const MacroBlockD *xd                      = ctx->blk_ptr->av1xd;
-    const BlockGeom   *blk_geom                = ctx->blk_geom;
-    const bool shut_fast_rate                  = ctx->shut_fast_rate;
+    const MacroBlockD *xd             = ctx->blk_ptr->av1xd;
+    const BlockGeom   *blk_geom       = ctx->blk_geom;
+    const bool         shut_fast_rate = ctx->shut_fast_rate;
     for (int ref_it = 0; ref_it < ctx->tot_ref_frame_types; ++ref_it) {
         const MvReferenceFrame ref_pair = ctx->ref_frame_type_arr[ref_it];
 
@@ -10079,13 +10079,12 @@ static void estimate_ref_frames_num_bits(struct ModeDecisionContext *ctx, Pictur
 
         //single ref/list
         if (rf[1] == NONE_FRAME) {
-            MvReferenceFrame ref_frame_type = rf[0];
-            ctx->estimate_ref_frames_num_bits[ref_frame_type] =
-                estimate_ref_frame_type_bits(ctx, ctx->blk_ptr, ref_frame_type, 0) +
+            MvReferenceFrame ref_frame_type                   = rf[0];
+            ctx->estimate_ref_frames_num_bits[ref_frame_type] = estimate_ref_frame_type_bits(
+                                                                    ctx, ctx->blk_ptr, ref_frame_type, 0) +
                 comp_inter_fac_bits_uni;
         } else {
-            ctx->estimate_ref_frames_num_bits[ref_pair] =
-                estimate_ref_frame_type_bits(ctx, ctx->blk_ptr, ref_pair, 1) +
+            ctx->estimate_ref_frames_num_bits[ref_pair] = estimate_ref_frame_type_bits(ctx, ctx->blk_ptr, ref_pair, 1) +
                 comp_inter_fac_bits_bi;
         }
     }

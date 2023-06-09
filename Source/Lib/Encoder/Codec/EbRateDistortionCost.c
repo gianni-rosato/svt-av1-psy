@@ -1210,11 +1210,10 @@ static uint64_t av1_inter_fast_cost_light(struct ModeDecisionContext *ctx, BlkSt
     const uint32_t mode_context  = svt_aom_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
 #endif
     uint64_t reference_picture_bits_num = 0;
-    reference_picture_bits_num = ctx->estimate_ref_frames_num_bits[cand->ref_frame_type];
+    reference_picture_bits_num          = ctx->estimate_ref_frames_num_bits[cand->ref_frame_type];
     if (is_compound) {
         assert(INTER_COMPOUND_OFFSET(inter_mode) < INTER_COMPOUND_MODES);
-        inter_mode_bits_num +=
-            r->inter_compound_mode_fac_bits[mode_context][INTER_COMPOUND_OFFSET(inter_mode)];
+        inter_mode_bits_num += r->inter_compound_mode_fac_bits[mode_context][INTER_COMPOUND_OFFSET(inter_mode)];
     } else {
         int16_t newmv_ctx = mode_context & NEWMV_CTX_MASK;
         //aom_write_symbol(ec_writer, mode != NEWMV, frame_context->newmv_cdf[newmv_ctx], 2);
@@ -1443,8 +1442,7 @@ uint64_t svt_aom_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk
     if (is_compound) {
         assert(INTER_COMPOUND_OFFSET(inter_mode) < INTER_COMPOUND_MODES);
         inter_mode_bits_num +=
-            ctx->md_rate_est_ctx
-                ->inter_compound_mode_fac_bits[mode_context][INTER_COMPOUND_OFFSET(inter_mode)];
+            ctx->md_rate_est_ctx->inter_compound_mode_fac_bits[mode_context][INTER_COMPOUND_OFFSET(inter_mode)];
     } else {
         // uint32_t newmv_ctx = mode_context & NEWMV_CTX_MASK;
         // inter_mode_bits_num = cand_bf->cand->md_rate_est_ctx->new_mv_mode_fac_bits[mode_ctx][0];
