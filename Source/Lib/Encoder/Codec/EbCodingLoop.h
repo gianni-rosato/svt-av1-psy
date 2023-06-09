@@ -1183,8 +1183,13 @@ static const int32_t me_idx_128x128[4][BLOCK_MAX_COUNT_SB_128] = {
      75, 75, 76, 76, 76, 76, 76, 76, 76, 76, 76, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84,
      84, 84, 84, 84, 84}};
 
-void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                                  EbPictureBufferDesc *input_pic);
+void perform_md_reference_pruning(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBufferDesc *input_pic);
+
+#if OPT_CHILD_PCS
+void svt_aom_move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu, EcBlkStruct *dst_cu);
+#else
+void svt_aom_move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu, BlkStruct *dst_cu);
+#endif
 #ifdef __cplusplus
 }
 #endif

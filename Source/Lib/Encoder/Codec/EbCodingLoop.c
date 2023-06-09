@@ -1280,13 +1280,6 @@ void svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx,
 #else
 void svt_aom_update_mi_map_enc_dec(BlkStruct *blk_ptr, ModeDecisionContext *ctx);
 #endif
-#if OPT_CHILD_PCS
-void move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu,
-                   EcBlkStruct *dst_cu);
-#else
-void move_blk_data(PictureControlSet *pcs, EncDecContext *ed_ctx, BlkStruct *src_cu,
-                   BlkStruct *dst_cu);
-#endif
 static void perform_intra_coding_loop(PictureControlSet *pcs, SuperBlock *sb_ptr, uint32_t sb_addr,
                                       BlkStruct *blk_ptr, PredictionUnit *pu_ptr,
                                       EncDecContext *ed_ctx) {
@@ -3011,7 +3004,7 @@ EB_EXTERN EbErrorType svt_aom_encdec_update(SequenceControlSet *scs, PictureCont
 #else
             BlkStruct *dst_cu = &sb_ptr->final_blk_arr[final_blk_itr];
 #endif
-            move_blk_data(pcs, ctx, src_cu, dst_cu);
+            svt_aom_move_blk_data(pcs, ctx, src_cu, dst_cu);
             sb_ptr->final_blk_arr[final_blk_itr++].av1xd = sb_ptr->av1xd;
             // MFMV Update
             if (scs->mfmv_enabled && pcs->slice_type != I_SLICE && pcs->ppcs->is_ref) {
