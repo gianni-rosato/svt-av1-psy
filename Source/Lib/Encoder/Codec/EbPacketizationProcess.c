@@ -932,16 +932,16 @@ void *svt_aom_packetization_kernel(void *input_ptr) {
         if (scs->enable_dec_order || (pcs->ppcs->is_ref == TRUE && pcs->ppcs->ref_pic_wrapper))
             // Post the Full Results Object
             svt_post_full_object(picture_manager_results_wrapper_ptr);
+#if FIX_DEADLOCK
+        // Post Rate Control Task. Be done after postig to PM as RC might release ppcs
+        svt_post_full_object(rate_control_tasks_wrapper_ptr);
+#endif
         if (pcs->ppcs->frm_hdr.allow_intrabc)
             svt_av1_hash_table_destroy(&pcs->hash_table);
         svt_release_object(pcs->ppcs->enc_dec_ptr->enc_dec_wrapper); // Child
         // Release the Parent PCS then the Child PCS
         assert(entropy_coding_results_ptr->pcs_wrapper->live_count == 1);
         svt_release_object(entropy_coding_results_ptr->pcs_wrapper); // Child
-#if FIX_DEADLOCK
-        // Post Rate Control Task. Be done at the end as RC might release ppcs
-        svt_post_full_object(rate_control_tasks_wrapper_ptr);
-#endif
         // Release the Entropy Coding Result
         svt_release_object(entropy_coding_results_wrapper_ptr);
 

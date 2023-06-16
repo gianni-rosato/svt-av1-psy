@@ -10699,12 +10699,15 @@ void svt_aom_sig_deriv_enc_dec_light_pd0(SequenceControlSet *scs, PictureControl
 #if OPT_BIAS_PARENT
     ctx->d2_parent_bias = 1000;
 #endif
-
+#if OPT_LD_MDS0
+    set_mds0_controls(ctx, 4);
+#endif
     if (pd0_level == VERY_LIGHT_PD0)
         return;
-
+#if !OPT_LD_MDS0
     uint8_t mds0_level = 4;
     set_mds0_controls(ctx, mds0_level);
+#endif
     svt_aom_set_chroma_controls(ctx, 0 /*chroma off*/);
 
     // Using PF in LPD0 may cause some VQ issues

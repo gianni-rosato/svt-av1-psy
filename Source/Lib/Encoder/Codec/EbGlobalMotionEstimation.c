@@ -90,7 +90,7 @@ void svt_aom_gm_pre_processor(PictureParentControlSet *pcs, PictureParentControl
 #endif
 
     for (uint32_t ref_idx = 0; ref_idx < 2; ++ref_idx) {
-        if (ref_pcs_list[ref_idx] == NULL)
+        if (ref_pcs_list[ref_idx] == NULL || ref_pcs_list[ref_idx] == pcs /*as curr might have TF underway*/)
             continue;
         EbPaReferenceObject *ref_obj       = ref_pcs_list[ref_idx]->pa_ref_pic_wrapper->object_ptr;
         EbPictureBufferDesc *ref_pic       = ref_obj->input_padded_pic;

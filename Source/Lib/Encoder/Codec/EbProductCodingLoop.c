@@ -9277,12 +9277,12 @@ static void search_best_mds3_uv_mode(PictureControlSet *pcs, EbPictureBufferDesc
     }
     uv_mode_total_count = uv_mode_total_count - start_fast_buffer_index;
 
-    ctx->mds_skip_rdoq      = 0;
-    ctx->uv_intra_comp_only = TRUE;
-    ctx->mds_skip_uv_pred   = FALSE;
-    ctx->end_plane          = (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1)
-                 ? (int)MAX_MB_PLANE
-                 : 1;
+    ctx->mds_skip_rdoq            = 0;
+    ctx->mds_spatial_sse          = ctx->spatial_sse_full_loop_level;
+    ctx->mds_fast_coeff_est_level = 1;
+    ctx->uv_intra_comp_only       = TRUE;
+    ctx->mds_skip_uv_pred         = FALSE;
+    ctx->end_plane = (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
     assert(ctx->mds_skip_uv_pred == FALSE);
 
     // Perform full-loop search for all UV modes
@@ -9507,12 +9507,14 @@ static void search_best_independent_uv_mode(PictureControlSet *pcs, EbPictureBuf
     uv_mode_total_count = uv_mode_total_count - start_fast_buffer_index;
 
     // Prepare fast-loop search settings
-    ctx->mds_skip_rdoq      = 0;
+    ctx->mds_skip_rdoq = 0;
+#if CLN_CFL_SIGNALLING
+    ctx->mds_spatial_sse          = ctx->spatial_sse_full_loop_level;
+    ctx->mds_fast_coeff_est_level = 1;
+#endif
     ctx->uv_intra_comp_only = TRUE;
     ctx->mds_skip_uv_pred   = FALSE;
-    ctx->end_plane          = (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1)
-                 ? (int)MAX_MB_PLANE
-                 : 1;
+    ctx->end_plane          = (ctx->blk_geom->has_uv && ctx->uv_ctrls.uv_mode <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
     assert(ctx->mds_skip_uv_pred == FALSE);
 
     // Perform fast-loop search for all candidates
