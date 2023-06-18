@@ -331,11 +331,6 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     EbColorFormat encoder_color_format;
 
-#if !SVT_AV1_CHECK_VERSION(1, 5, 0)
-    /* DEPRECATED: to be removed in 1.5.0. */
-    uint32_t compressed_ten_bit_format;
-#endif
-
     /**
      * @brief Currently unused.
      *

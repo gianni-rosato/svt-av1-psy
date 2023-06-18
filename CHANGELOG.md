@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.6.0] - 2023-06-18
+
+Encoder
+- Improve the tradeoffs for the random access mode across presets M1-M13:
+ - Speeding up the higher quality presets by 30-40%
+ - Improving the BD-rate by 1-2% for the faster presets
+- Improve the tradeoffs for the low delay mode for both scrren content and non-screen content encoding modes
+- Add a toggle to remove the legacy one-frame buffer at the input of the pipeline alowing the low delay mode to operate at sub-frame processing latencies
+- Add a new API allowing the user to specify quantization offsets for a region of interest per frame
+
+Build, cleanup and bug fixes
+- Various cleanups and functional bug fixes
+- Fix the startup minigop size BD-rate loss
+- Add ability to run the ci-testing offline
+
 ## [1.5.0] - 2023-04-25
 
 Encoder
